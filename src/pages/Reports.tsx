@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import { useReports, ReportFilters as ReportFiltersType } from '@/hooks/useReports';
 import { ChartConfig } from "@/components/ui/chart";
@@ -8,6 +7,12 @@ import { MainMetrics } from '@/components/reports/MainMetrics';
 import { PrimaryCharts } from '@/components/reports/PrimaryCharts';
 import { DistributionCharts } from '@/components/reports/DistributionCharts';
 import { DetailTables } from '@/components/reports/DetailTables';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import * as XLSX from 'xlsx';
+import { useClients } from '@/hooks/useClients';
+import { useCranes } from '@/hooks/useCranes';
+import { useOperators } from '@/hooks/useOperators';
 
 const Reports = () => {
   const defaultFilters: ReportFiltersType = {
@@ -24,6 +29,10 @@ const Reports = () => {
   const [appliedFilters, setAppliedFilters] = useState<ReportFiltersType>(defaultFilters);
 
   const { metrics, loading } = useReports(appliedFilters);
+
+  const { clients } = useClients();
+  const { cranes } = useCranes();
+  const { operators } = useOperators();
 
   const handleDateChange = (field: 'from' | 'to', value: string) => {
     setFilters(prev => ({ ...prev, dateRange: { ...prev.dateRange, [field]: value } }));
@@ -42,24 +51,122 @@ const Reports = () => {
     setAppliedFilters(defaultFilters);
   };
 
-  const exportReport = () => {
+  const getAppliedFilterLabels = () => {
+    const clientLabel = appliedFilters.clientId === 'all' 
+        ? 'Todos los clientes' 
+        : clients.find(c => c.id === appliedFilters.clientId)?.name || appliedFilters.clientId;
+    const craneData = cranes.find(c => c.id === appliedFilters.craneId);
+    const craneLabel = appliedFilters.craneId === 'all'
+        ? 'Todas las grúas'
+        : craneData ? `${craneData.brand} ${craneData.model} (${craneData.licensePlate})` : appliedFilters.craneId;
+    const operatorLabel = appliedFilters.operatorId === 'all'
+        ? 'Todos los operadores'
+        : operators.find(o => o.id === appliedFilters.operatorId)?.name || appliedFilters.operatorId;
+
+    return [
+        [`Rango de Fechas: ${appliedFilters.dateRange.from} a ${appliedFilters.dateRange.to}`],
+        [`Cliente: ${clientLabel}`],
+        [`Grúa: ${craneLabel}`],
+        [`Operador: ${operatorLabel}`]
+    ];
+  }
+
+  const handleExport = (format: 'pdf' | 'excel') => {
     if (!metrics) return;
     
-    const reportData = {
-      filtros: appliedFilters,
-      metricas: metrics,
-      fechaGeneracion: new Date().toISOString()
-    };
-    
-    const dataStr = JSON.stringify(reportData, null, 2);
-    const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
-    
-    const exportFileDefaultName = `reporte-${appliedFilters.dateRange.from}-${appliedFilters.dateRange.to}.json`;
-    
-    const linkElement = document.createElement('a');
-    linkElement.setAttribute('href', dataUri);
-    linkElement.setAttribute('download', exportFileDefaultName);
-    linkElement.click();
+    const exportFileDefaultName = `reporte-${appliedFilters.dateRange.from}-a-${appliedFilters.dateRange.to}`;
+
+    if (format === 'pdf') {
+        const doc = new jsPDF();
+        
+        doc.setFontSize(18);
+        doc.text('Reporte de Operaciones', 14, 22);
+        
+        doc.setFontSize(11);
+        doc.setTextColor(100);
+        doc.text('Filtros Aplicados:', 14, 32);
+        autoTable(doc, { body: getAppliedFilterLabels(), startY: 36, theme: 'plain', styles: { fontSize: 9 } });
+
+        let lastY = (doc as any).lastAutoTable.finalY;
+
+        doc.setFontSize(11);
+        doc.text('Métricas Principales:', 14, lastY + 10);
+        autoTable(doc, {
+            body: [
+                ['Total Servicios', metrics.totalServices],
+                ['Ingresos Totales', `$${metrics.totalRevenue.toLocaleString()}`],
+                ['Valor Promedio', `$${metrics.averageServiceValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`],
+                ['Facturas Pendientes', `${metrics.pendingInvoices} (${metrics.overdueInvoices} vencidas)`],
+            ],
+            startY: lastY + 14,
+            theme: 'grid'
+        });
+        lastY = (doc as any).lastAutoTable.finalY;
+
+        if (metrics.topClients.length > 0) {
+            doc.text('Top Clientes por Ingresos:', 14, lastY + 10);
+            autoTable(doc, {
+                head: [['#', 'Cliente', 'Servicios', 'Ingresos']],
+                body: metrics.topClients.map((c, i) => [i + 1, c.clientName, c.services, `$${c.revenue.toLocaleString()}`]),
+                startY: lastY + 14
+            });
+            lastY = (doc as any).lastAutoTable.finalY;
+        }
+
+        if (metrics.craneUtilization.length > 0) {
+            doc.text('Utilización de Grúas:', 14, lastY + 10);
+            autoTable(doc, {
+                head: [['Grúa', 'Servicios', 'Utilización (%)']],
+                body: metrics.craneUtilization.map(c => [c.craneName, c.services, `${c.utilization.toFixed(1)}%`]),
+                startY: lastY + 14
+            });
+        }
+        
+        doc.save(`${exportFileDefaultName}.pdf`);
+
+    } else if (format === 'excel') {
+        const wb = XLSX.utils.book_new();
+
+        const resumen_ws_data = [
+            ['Reporte de Operaciones'], [],
+            ['Filtros Aplicados'],
+            ...getAppliedFilterLabels(), [],
+            ['Métricas Principales'],
+            ['Métrica', 'Valor'],
+            ['Total Servicios', metrics.totalServices],
+            ['Ingresos Totales', metrics.totalRevenue],
+            ['Valor Promedio', metrics.averageServiceValue],
+            ['Facturas Pendientes', metrics.pendingInvoices],
+            ['Facturas Vencidas', metrics.overdueInvoices],
+            ['Clientes Activos', metrics.activeClients],
+            ['Grúas Activas', metrics.activeCranes],
+            ['Operadores Activos', metrics.activeOperators],
+        ];
+        const resumen_ws = XLSX.utils.aoa_to_sheet(resumen_ws_data);
+        XLSX.utils.book_append_sheet(wb, resumen_ws, 'Resumen');
+
+        if(metrics.servicesByMonth.length > 0) {
+            const services_month_ws = XLSX.utils.json_to_sheet(metrics.servicesByMonth);
+            XLSX.utils.book_append_sheet(wb, services_month_ws, 'Servicios por Mes');
+        }
+
+        if(metrics.topClients.length > 0) {
+            const top_clients_ws = XLSX.utils.json_to_sheet(metrics.topClients.map(c => ({ 'Cliente': c.clientName, 'Servicios': c.services, 'Ingresos': c.revenue })));
+            XLSX.utils.book_append_sheet(wb, top_clients_ws, 'Top Clientes');
+        }
+
+        if(metrics.craneUtilization.length > 0) {
+            const crane_util_ws = XLSX.utils.json_to_sheet(metrics.craneUtilization.map(c => ({ 'Grúa': c.craneName, 'Servicios': c.services, 'Utilización (%)': c.utilization })));
+            XLSX.utils.book_append_sheet(wb, crane_util_ws, 'Utilización Grúas');
+        }
+
+        if(metrics.servicesByStatus.length > 0) {
+            const services_status_ws = XLSX.utils.json_to_sheet(metrics.servicesByStatus);
+            XLSX.utils.book_append_sheet(wb, services_status_ws, 'Servicios por Estado');
+        }
+
+        XLSX.writeFile(wb, `${exportFileDefaultName}.xlsx`);
+    }
   };
 
   const servicesByMonthConfig = { services: { label: 'Servicios', color: '#10b981' } } satisfies ChartConfig;
@@ -88,7 +195,7 @@ const Reports = () => {
 
   return (
     <div className="space-y-6">
-      <ReportsHeader onExport={exportReport} />
+      <ReportsHeader onExport={handleExport} />
       <ReportFilters 
         filters={filters}
         onDateChange={handleDateChange}
