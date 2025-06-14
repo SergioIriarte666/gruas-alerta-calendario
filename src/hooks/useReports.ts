@@ -22,7 +22,14 @@ export interface ReportMetrics {
   craneUtilization: { craneId: string; craneName: string; services: number; utilization: number }[];
 }
 
-export const useReports = (dateRange?: { from: string; to: string }) => {
+export interface ReportFilters {
+  dateRange: { from: string; to: string };
+  clientId: string;
+  craneId: string;
+  operatorId: string;
+}
+
+export const useReports = (filters?: ReportFilters) => {
   const [metrics, setMetrics] = useState<ReportMetrics | null>(null);
   const [loading, setLoading] = useState(true);
   
@@ -33,22 +40,34 @@ export const useReports = (dateRange?: { from: string; to: string }) => {
   const { operators } = useOperators();
 
   useEffect(() => {
-    if (services.length > 0 && clients.length > 0) {
+    if (services.length > 0 && clients.length > 0 && cranes.length > 0 && operators.length > 0) {
       calculateMetrics();
     }
-  }, [services, invoices, clients, cranes, operators, dateRange]);
+  }, [services, invoices, clients, cranes, operators, filters]);
 
   const calculateMetrics = () => {
     setLoading(true);
     
-    // Filtrar servicios por rango de fechas si se proporciona
     let filteredServices = services;
-    if (dateRange) {
+    if (filters) {
+      const { dateRange, clientId, craneId, operatorId } = filters;
+      
       filteredServices = services.filter(service => {
-        const serviceDate = new Date(service.serviceDate);
-        const fromDate = new Date(dateRange.from);
-        const toDate = new Date(dateRange.to);
-        return serviceDate >= fromDate && serviceDate <= toDate;
+        if (dateRange && dateRange.from && dateRange.to) {
+          if (service.serviceDate < dateRange.from || service.serviceDate > dateRange.to) {
+            return false;
+          }
+        }
+        if (clientId && clientId !== 'all' && service.client.id !== clientId) {
+          return false;
+        }
+        if (craneId && craneId !== 'all' && service.crane.id !== craneId) {
+          return false;
+        }
+        if (operatorId && operatorId !== 'all' && service.operator.id !== operatorId) {
+          return false;
+        }
+        return true;
       });
     }
 

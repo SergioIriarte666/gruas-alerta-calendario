@@ -1,31 +1,52 @@
 
 import React, { useState, useMemo } from 'react';
-import { useReports } from '@/hooks/useReports';
+import { useReports, ReportFilters as ReportFiltersType } from '@/hooks/useReports';
 import { ChartConfig } from "@/components/ui/chart";
 import { ReportsHeader } from '@/components/reports/ReportsHeader';
-import { DateRangeFilter } from '@/components/reports/DateRangeFilter';
+import { ReportFilters } from '@/components/reports/ReportFilters';
 import { MainMetrics } from '@/components/reports/MainMetrics';
 import { PrimaryCharts } from '@/components/reports/PrimaryCharts';
 import { DistributionCharts } from '@/components/reports/DistributionCharts';
 import { DetailTables } from '@/components/reports/DetailTables';
 
 const Reports = () => {
-  const [dateRange, setDateRange] = useState({
-    from: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0],
-    to: new Date().toISOString().split('T')[0]
-  });
+  const defaultFilters: ReportFiltersType = {
+    dateRange: {
+      from: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0],
+      to: new Date().toISOString().split('T')[0]
+    },
+    clientId: 'all',
+    craneId: 'all',
+    operatorId: 'all',
+  };
+  
+  const [filters, setFilters] = useState<ReportFiltersType>(defaultFilters);
+  const [appliedFilters, setAppliedFilters] = useState<ReportFiltersType>(defaultFilters);
 
-  const { metrics, loading } = useReports(dateRange);
+  const { metrics, loading } = useReports(appliedFilters);
 
   const handleDateChange = (field: 'from' | 'to', value: string) => {
-    setDateRange(prev => ({ ...prev, [field]: value }));
+    setFilters(prev => ({ ...prev, dateRange: { ...prev.dateRange, [field]: value } }));
+  };
+
+  const handleFilterChange = (field: 'clientId' | 'craneId' | 'operatorId', value: string) => {
+    setFilters(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleUpdate = () => {
+    setAppliedFilters(filters);
+  };
+  
+  const handleClearFilters = () => {
+    setFilters(defaultFilters);
+    setAppliedFilters(defaultFilters);
   };
 
   const exportReport = () => {
     if (!metrics) return;
     
     const reportData = {
-      periodo: dateRange,
+      filtros: appliedFilters,
       metricas: metrics,
       fechaGeneracion: new Date().toISOString()
     };
@@ -33,7 +54,7 @@ const Reports = () => {
     const dataStr = JSON.stringify(reportData, null, 2);
     const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
     
-    const exportFileDefaultName = `reporte-${dateRange.from}-${dateRange.to}.json`;
+    const exportFileDefaultName = `reporte-${appliedFilters.dateRange.from}-${appliedFilters.dateRange.to}.json`;
     
     const linkElement = document.createElement('a');
     linkElement.setAttribute('href', dataUri);
@@ -68,7 +89,13 @@ const Reports = () => {
   return (
     <div className="space-y-6">
       <ReportsHeader onExport={exportReport} />
-      <DateRangeFilter dateRange={dateRange} onDateChange={handleDateChange} onUpdate={() => {}} />
+      <ReportFilters 
+        filters={filters}
+        onDateChange={handleDateChange}
+        onFilterChange={handleFilterChange}
+        onUpdate={handleUpdate}
+        onClear={handleClearFilters}
+      />
 
       {metrics && (
         <div className="space-y-6">
