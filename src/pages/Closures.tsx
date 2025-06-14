@@ -16,6 +16,8 @@ const Closures = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
 
+  console.log('Closures page render - closures:', closures, 'loading:', loading);
+
   // Filter closures by search term
   const filteredClosures = closures.filter(closure =>
     closure.folio.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -45,8 +47,18 @@ const Closures = () => {
   const handleCreateClosure = async (closureData: Omit<ServiceClosure, 'id' | 'folio' | 'createdAt' | 'updatedAt'>) => {
     try {
       await createClosure(closureData);
+      setShowCreateModal(false);
+      toast({
+        title: "Cierre creado",
+        description: "El cierre ha sido creado exitosamente.",
+      });
     } catch (error) {
       console.error('Error creating closure:', error);
+      toast({
+        title: "Error",
+        description: "No se pudo crear el cierre.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -75,6 +87,12 @@ const Closures = () => {
         onDelete={handleDelete}
         onClose={handleClose}
       />
+
+      {closures.length === 0 && !loading && (
+        <div className="text-center py-8">
+          <p className="text-gray-400">No hay cierres disponibles. Crea tu primer cierre para comenzar.</p>
+        </div>
+      )}
 
       <ClosureForm
         open={showCreateModal}
