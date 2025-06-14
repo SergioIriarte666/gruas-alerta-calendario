@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -310,9 +309,10 @@ export const ServiceForm = ({ service, onSubmit, onCancel }: ServiceFormProps) =
               <SelectValue placeholder="Seleccionar estado" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="pending">En Curso</SelectItem>
-              <SelectItem value="closed">Cerrado</SelectItem>
-              <SelectItem value="invoiced">Facturado</SelectItem>
+              <SelectItem value="pending">Pendiente</SelectItem>
+              <SelectItem value="in_progress">En Progreso</SelectItem>
+              <SelectItem value="completed">Completado</SelectItem>
+              <SelectItem value="cancelled">Cancelado</SelectItem>
             </SelectContent>
           </Select>
         </div>

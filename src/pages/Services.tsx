@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Plus, Search, Filter, Eye, Edit, Trash2, Truck, FileText, Upload } from 'lucide-react';
+import { Plus, Search, Filter, Eye, Edit, Trash2, Truck, FileText, Upload, Check } from 'lucide-react';
 import { useServices } from '@/hooks/useServices';
 import { Service } from '@/types';
 import { format } from 'date-fns';
@@ -25,21 +25,18 @@ const Services = () => {
   const [statusFilter, setStatusFilter] = useState<string>('all');
 
   const getStatusBadge = (status: Service['status']) => {
-    const variants = {
-      pending: 'bg-yellow-500 text-white',
-      closed: 'bg-green-500 text-white',
-      invoiced: 'bg-blue-500 text-white'
+    const statusConfig = {
+      pending: { label: 'Pendiente', className: 'bg-yellow-500 text-white' },
+      in_progress: { label: 'En Progreso', className: 'bg-blue-500 text-white' },
+      completed: { label: 'Completado', className: 'bg-green-500 text-white' },
+      cancelled: { label: 'Cancelado', className: 'bg-red-500 text-white' }
     };
 
-    const labels = {
-      pending: 'En Curso',
-      closed: 'Cerrado',
-      invoiced: 'Facturado'
-    };
+    const config = statusConfig[status] || { label: 'Desconocido', className: 'bg-gray-500 text-white' };
 
     return (
-      <Badge className={variants[status]}>
-        {labels[status]}
+      <Badge className={config.className}>
+        {config.label}
       </Badge>
     );
   };
@@ -74,6 +71,12 @@ const Services = () => {
       updateService(editingService.id, serviceData);
       setEditingService(null);
       setIsFormOpen(false);
+    }
+  };
+
+  const handleCloseService = (service: Service) => {
+    if (window.confirm(`¿Estás seguro de que deseas cerrar el servicio ${service.folio}? El estado cambiará a "Completado".`)) {
+      updateService(service.id, { status: 'completed' });
     }
   };
 
@@ -257,6 +260,17 @@ const Services = () => {
                       </TableCell>
                       <TableCell>
                         <div className="flex space-x-1">
+                          {(service.status === 'pending' || service.status === 'in_progress') && (
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className="text-green-400 hover:text-green-300 hover:bg-green-400/10"
+                              onClick={() => handleCloseService(service)}
+                              title="Cerrar Servicio"
+                            >
+                              <Check className="w-4 h-4" />
+                            </Button>
+                          )}
                           <Button 
                             variant="ghost" 
                             size="sm" 
