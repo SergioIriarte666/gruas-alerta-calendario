@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import { useReports, ReportFilters as ReportFiltersType } from '@/hooks/useReports';
 import { ChartConfig } from "@/components/ui/chart";
@@ -8,13 +7,11 @@ import { MainMetrics } from '@/components/reports/MainMetrics';
 import { PrimaryCharts } from '@/components/reports/PrimaryCharts';
 import { DistributionCharts } from '@/components/reports/DistributionCharts';
 import { DetailTables } from '@/components/reports/DetailTables';
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
-import * as XLSX from 'xlsx';
 import { useClients } from '@/hooks/useClients';
 import { useCranes } from '@/hooks/useCranes';
 import { useOperators } from '@/hooks/useOperators';
 import { useSettings } from '@/hooks/useSettings';
+import { exportReport } from '@/utils/reportExporter';
 
 const Reports = () => {
   const defaultFilters: ReportFiltersType = {
@@ -77,144 +74,15 @@ const Reports = () => {
   const handleExport = async (format: 'pdf' | 'excel') => {
     if (!metrics || !settings) return;
     
-    const { company } = settings;
-    const exportFileDefaultName = `reporte-${appliedFilters.dateRange.from}-a-${appliedFilters.dateRange.to}`;
-
-    if (format === 'pdf') {
-        const doc = new jsPDF();
-        let startY = 15;
-
-        // Logo
-        if (company.logo) {
-            try {
-                const img = new Image();
-                img.crossOrigin = 'Anonymous';
-                img.src = company.logo;
-                await new Promise((resolve, reject) => {
-                    img.onload = () => {
-                        const pageWidth = doc.internal.pageSize.getWidth();
-                        const logoWidth = 35;
-                        const logoHeight = (img.height * logoWidth) / img.width;
-                        doc.addImage(img, 'PNG', pageWidth - 14 - logoWidth, startY, logoWidth, logoHeight);
-                        resolve(true);
-                    };
-                    img.onerror = (e) => {
-                        console.error("Error loading logo for PDF", e);
-                        reject(e);
-                    };
-                });
-            } catch (e) {
-                console.error("Could not add logo to PDF.", e);
-            }
-        }
-        
-        // Company Info
-        doc.setFontSize(18);
-        doc.setFont(undefined, 'bold');
-        doc.text(company.name, 14, startY + 7);
-        doc.setFont(undefined, 'normal');
-
-        doc.setFontSize(9);
-        doc.setTextColor(100);
-        doc.text(`RUT: ${company.taxId}`, 14, startY + 14);
-        doc.text(company.address, 14, startY + 19);
-        doc.text(`Tel: ${company.phone} | Email: ${company.email}`, 14, startY + 24);
-        
-        startY += 40;
-
-        // Filters
-        doc.setFontSize(11);
-        doc.setTextColor(0);
-        doc.text('Filtros Aplicados:', 14, startY);
-        autoTable(doc, { body: getAppliedFilterLabels(), startY: startY + 4, theme: 'plain', styles: { fontSize: 9 } });
-
-        let lastY = (doc as any).lastAutoTable.finalY;
-
-        // Main Metrics
-        doc.setFontSize(11);
-        doc.text('Métricas Principales:', 14, lastY + 10);
-        autoTable(doc, {
-            body: [
-                ['Total Servicios', metrics.totalServices],
-                ['Ingresos Totales', `$${metrics.totalRevenue.toLocaleString()}`],
-                ['Valor Promedio', `$${metrics.averageServiceValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`],
-                ['Facturas Pendientes', `${metrics.pendingInvoices} (${metrics.overdueInvoices} vencidas)`],
-            ],
-            startY: lastY + 14,
-            theme: 'grid'
-        });
-        lastY = (doc as any).lastAutoTable.finalY;
-
-        if (metrics.topClients.length > 0) {
-            doc.text('Top Clientes por Ingresos:', 14, lastY + 10);
-            autoTable(doc, {
-                head: [['#', 'Cliente', 'Servicios', 'Ingresos']],
-                body: metrics.topClients.map((c, i) => [i + 1, c.clientName, c.services, `$${c.revenue.toLocaleString()}`]),
-                startY: lastY + 14
-            });
-            lastY = (doc as any).lastAutoTable.finalY;
-        }
-
-        if (metrics.craneUtilization.length > 0) {
-            doc.text('Utilización de Grúas:', 14, lastY + 10);
-            autoTable(doc, {
-                head: [['Grúa', 'Servicios', 'Utilización (%)']],
-                body: metrics.craneUtilization.map(c => [c.craneName, c.services, `${c.utilization.toFixed(1)}%`]),
-                startY: lastY + 14
-            });
-        }
-        
-        doc.save(`${exportFileDefaultName}.pdf`);
-
-    } else if (format === 'excel') {
-        const wb = XLSX.utils.book_new();
-
-        const resumen_ws_data = [
-            [company.name],
-            [`RUT: ${company.taxId}`],
-            [company.address],
-            [`Tel: ${company.phone} | Email: ${company.email}`],
-            company.logo ? [`Logo: ${company.logo}`] : [],
-            [],
-            ['Reporte de Operaciones'], [],
-            ['Filtros Aplicados'],
-            ...getAppliedFilterLabels(), [],
-            ['Métricas Principales'],
-            ['Métrica', 'Valor'],
-            ['Total Servicios', metrics.totalServices],
-            ['Ingresos Totales', metrics.totalRevenue],
-            ['Valor Promedio', metrics.averageServiceValue],
-            ['Facturas Pendientes', metrics.pendingInvoices],
-            ['Facturas Vencidas', metrics.overdueInvoices],
-            ['Clientes Activos', metrics.activeClients],
-            ['Grúas Activas', metrics.activeCranes],
-            ['Operadores Activos', metrics.activeOperators],
-        ];
-        const resumen_ws = XLSX.utils.aoa_to_sheet(resumen_ws_data);
-        XLSX.utils.book_append_sheet(wb, resumen_ws, 'Resumen');
-
-        if(metrics.servicesByMonth.length > 0) {
-            const services_month_ws = XLSX.utils.json_to_sheet(metrics.servicesByMonth);
-            XLSX.utils.book_append_sheet(wb, services_month_ws, 'Servicios por Mes');
-        }
-
-        if(metrics.topClients.length > 0) {
-            const top_clients_ws = XLSX.utils.json_to_sheet(metrics.topClients.map(c => ({ 'Cliente': c.clientName, 'Servicios': c.services, 'Ingresos': c.revenue })));
-            XLSX.utils.book_append_sheet(wb, top_clients_ws, 'Top Clientes');
-        }
-
-        if(metrics.craneUtilization.length > 0) {
-            const crane_util_ws = XLSX.utils.json_to_sheet(metrics.craneUtilization.map(c => ({ 'Grúa': c.craneName, 'Servicios': c.services, 'Utilización (%)': c.utilization })));
-            XLSX.utils.book_append_sheet(wb, crane_util_ws, 'Utilización Grúas');
-        }
-
-        if(metrics.servicesByStatus.length > 0) {
-            const services_status_ws = XLSX.utils.json_to_sheet(metrics.servicesByStatus);
-            XLSX.utils.book_append_sheet(wb, services_status_ws, 'Servicios por Estado');
-        }
-
-        XLSX.writeFile(wb, `${exportFileDefaultName}.xlsx`);
-    }
+    const filterLabels = getAppliedFilterLabels();
+    
+    await exportReport({
+      format,
+      metrics,
+      settings,
+      appliedFilters,
+      filterLabels,
+    });
   };
 
   const servicesByMonthConfig = { services: { label: 'Servicios', color: '#10b981' } } satisfies ChartConfig;
@@ -273,4 +141,3 @@ const Reports = () => {
 };
 
 export default Reports;
-
