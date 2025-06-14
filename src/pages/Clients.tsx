@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -13,11 +12,12 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Plus, Search, Filter, Edit, Trash2, Power } from 'lucide-react';
+import { Plus, Search, Filter, Edit, Trash2, Power, Eye } from 'lucide-react';
 import { useClients } from '@/hooks/useClients';
 import { ClientForm } from '@/components/clients/ClientForm';
 import { Client } from '@/types';
 import { useToast } from '@/hooks/use-toast';
+import { ClientDetailsModal } from '@/components/clients/ClientDetailsModal';
 
 const Clients = () => {
   const { clients, loading, createClient, updateClient, deleteClient, toggleClientStatus } = useClients();
@@ -25,6 +25,8 @@ const Clients = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedClient, setSelectedClient] = useState<Client | undefined>();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+  const [selectedClientForDetails, setSelectedClientForDetails] = useState<Client | null>(null);
 
   const filteredClients = clients.filter(client =>
     client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -80,6 +82,11 @@ const Clients = () => {
   const handleNewClient = () => {
     setSelectedClient(undefined);
     setIsDialogOpen(true);
+  };
+
+  const handleViewDetails = (client: Client) => {
+    setSelectedClientForDetails(client);
+    setIsDetailsModalOpen(true);
   };
 
   if (loading) {
@@ -217,12 +224,22 @@ const Clients = () => {
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        <div className="flex items-center space-x-2">
+                        <div className="flex items-center space-x-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleViewDetails(client)}
+                            className="text-gray-400 hover:text-white hover:bg-white/10"
+                            title="Ver detalles"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </Button>
                           <Button
                             variant="ghost"
                             size="sm"
                             onClick={() => handleEditClient(client)}
-                            className="text-gray-400 hover:text-white"
+                            className="text-gray-400 hover:text-white hover:bg-white/10"
+                            title="Editar cliente"
                           >
                             <Edit className="w-4 h-4" />
                           </Button>
@@ -230,7 +247,8 @@ const Clients = () => {
                             variant="ghost"
                             size="sm"
                             onClick={() => handleToggleStatus(client)}
-                            className="text-gray-400 hover:text-white"
+                            className="text-gray-400 hover:text-white hover:bg-white/10"
+                            title={client.isActive ? 'Desactivar cliente' : 'Activar cliente'}
                           >
                             <Power className="w-4 h-4" />
                           </Button>
@@ -238,7 +256,8 @@ const Clients = () => {
                             variant="ghost"
                             size="sm"
                             onClick={() => handleDeleteClient(client)}
-                            className="text-gray-400 hover:text-red-400"
+                            className="text-gray-400 hover:text-red-400 hover:bg-red-400/10"
+                            title="Eliminar cliente"
                           >
                             <Trash2 className="w-4 h-4" />
                           </Button>
@@ -252,6 +271,16 @@ const Clients = () => {
           )}
         </CardContent>
       </Card>
+      {selectedClientForDetails && (
+        <ClientDetailsModal
+          client={selectedClientForDetails}
+          isOpen={isDetailsModalOpen}
+          onClose={() => {
+            setIsDetailsModalOpen(false);
+            setSelectedClientForDetails(null);
+          }}
+        />
+      )}
     </div>
   );
 };
