@@ -17,7 +17,7 @@ const invoiceSchema = z.object({
   clientId: z.string().min(1, 'Cliente es requerido'),
   issueDate: z.string().min(1, 'Fecha de emisión es requerida'),
   dueDate: z.string().min(1, 'Fecha de vencimiento es requerida'),
-  status: z.enum(['pending', 'paid', 'overdue'] as const)
+  status: z.enum(['draft', 'sent', 'paid', 'overdue', 'cancelled'] as const)
 });
 
 type InvoiceFormData = z.infer<typeof invoiceSchema>;
@@ -49,7 +49,7 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
       clientId: invoice?.clientId || '',
       issueDate: invoice?.issueDate || new Date().toISOString().split('T')[0],
       dueDate: invoice?.dueDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-      status: invoice?.status || 'pending'
+      status: invoice?.status || 'draft'
     }
   });
 
@@ -77,7 +77,7 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
   };
 
   const activeClients = clients.filter(c => c.isActive);
-  const availableServices = services.filter(s => s.status === 'closed');
+  const availableServices = services.filter(s => s.status === 'completed');
 
   return (
     <Card>
@@ -115,9 +115,11 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
                   <SelectValue placeholder="Seleccionar estado" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="pending">Pendiente</SelectItem>
+                  <SelectItem value="draft">Borrador</SelectItem>
+                  <SelectItem value="sent">Enviada</SelectItem>
                   <SelectItem value="paid">Pagada</SelectItem>
                   <SelectItem value="overdue">Vencida</SelectItem>
+                  <SelectItem value="cancelled">Cancelada</SelectItem>
                 </SelectContent>
               </Select>
               {errors.status && (
@@ -156,7 +158,7 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
             <Label>Servicios a Facturar</Label>
             <div className="mt-2 max-h-60 overflow-y-auto border rounded-lg p-4">
               {availableServices.length === 0 ? (
-                <p className="text-gray-500 text-center py-4">No hay servicios cerrados disponibles</p>
+                <p className="text-gray-500 text-center py-4">No hay servicios completados disponibles</p>
               ) : (
                 <div className="space-y-2">
                   {availableServices.map((service) => (

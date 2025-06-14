@@ -68,10 +68,14 @@ const Invoices = () => {
     switch (status) {
       case 'paid':
         return <Badge className="bg-green-100 text-green-800"><CheckCircle className="w-3 h-3 mr-1" />Pagada</Badge>;
-      case 'pending':
-        return <Badge className="bg-yellow-100 text-yellow-800"><Clock className="w-3 h-3 mr-1" />Pendiente</Badge>;
+      case 'draft':
+        return <Badge className="bg-gray-100 text-gray-800"><Clock className="w-3 h-3 mr-1" />Borrador</Badge>;
+      case 'sent':
+        return <Badge className="bg-blue-100 text-blue-800"><Clock className="w-3 h-3 mr-1" />Enviada</Badge>;
       case 'overdue':
         return <Badge className="bg-red-100 text-red-800"><AlertCircle className="w-3 h-3 mr-1" />Vencida</Badge>;
+      case 'cancelled':
+        return <Badge className="bg-gray-100 text-gray-800">Cancelada</Badge>;
       default:
         return <Badge variant="secondary">{status}</Badge>;
     }
@@ -80,7 +84,7 @@ const Invoices = () => {
   // Calcular métricas
   const totalInvoices = invoices.length;
   const pendingAmount = invoices
-    .filter(inv => inv.status === 'pending')
+    .filter(inv => inv.status === 'draft' || inv.status === 'sent')
     .reduce((sum, inv) => sum + inv.total, 0);
   const overdueAmount = invoices
     .filter(inv => inv.status === 'overdue')
@@ -213,7 +217,7 @@ const Invoices = () => {
                     <TableCell>{getStatusBadge(invoice.status)}</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
-                        {invoice.status === 'pending' && (
+                        {(invoice.status === 'draft' || invoice.status === 'sent') && (
                           <Button
                             size="sm"
                             variant="outline"

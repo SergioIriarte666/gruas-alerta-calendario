@@ -58,7 +58,7 @@ export const useReports = (dateRange?: { from: string; to: string }) => {
     const averageServiceValue = totalServices > 0 ? totalRevenue / totalServices : 0;
 
     // Métricas de facturas
-    const pendingInvoices = invoices.filter(inv => inv.status === 'pending').length;
+    const pendingInvoices = invoices.filter(inv => inv.status === 'draft').length;
     const overdueInvoices = invoices.filter(inv => inv.status === 'overdue').length;
 
     // Contadores activos

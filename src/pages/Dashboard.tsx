@@ -105,17 +105,17 @@ const Dashboard = () => {
         />
         
         <MetricCard
-          title="Cerrados"
-          value={metrics.servicesByStatus.closed}
+          title="Completados"
+          value={metrics.servicesByStatus.completed}
           icon={FileText}
-          description="Listos para facturar"
+          description="Servicios terminados"
         />
         
         <MetricCard
-          title="Facturados"
-          value={metrics.servicesByStatus.invoiced}
+          title="Cancelados"
+          value={metrics.servicesByStatus.cancelled}
           icon={DollarSign}
-          description="Proceso completado"
+          description="Servicios cancelados"
         />
       </div>
 

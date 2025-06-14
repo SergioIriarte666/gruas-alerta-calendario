@@ -110,12 +110,12 @@ export const useDashboardData = () => {
           monthlyServices,
           activeClients: 1,
           monthlyRevenue,
-          pendingInvoices: mockInvoices.filter(i => i.status === 'pending').length,
+          pendingInvoices: mockInvoices.filter(i => i.status === 'draft').length,
           overdueInvoices,
           servicesByStatus: {
             pending: mockServices.filter(s => s.status === 'pending').length,
-            closed: mockServices.filter(s => s.status === 'closed').length,
-            invoiced: mockServices.filter(s => s.status === 'invoiced').length,
+            completed: mockServices.filter(s => s.status === 'completed').length,
+            cancelled: mockServices.filter(s => s.status === 'cancelled').length,
           },
           upcomingExpirations: 3
         };
