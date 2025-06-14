@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { Bell, Check, CheckCheck } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -16,6 +17,7 @@ import { es } from 'date-fns/locale';
 
 export const NotificationsDropdown: React.FC = () => {
   const { notifications, markAsRead, markAllAsRead, unreadCount } = useNotifications();
+  const navigate = useNavigate();
 
   const getNotificationIcon = (type: string) => {
     switch (type) {
@@ -30,14 +32,49 @@ export const NotificationsDropdown: React.FC = () => {
     }
   };
 
+  const handleNotificationClick = (notification: any) => {
+    // Mark as read
+    markAsRead(notification.id);
+    
+    // Navigate if action is specified
+    if (notification.actionType === 'navigate' && notification.actionUrl) {
+      // Build URL with query parameters if needed
+      let url = notification.actionUrl;
+      const params = new URLSearchParams();
+      
+      if (notification.actionData?.filter) {
+        params.set('filter', notification.actionData.filter);
+      }
+      
+      if (notification.actionData?.entityId) {
+        params.set('id', notification.actionData.entityId);
+      }
+      
+      if (notification.actionData?.highlight) {
+        params.set('highlight', notification.actionData.highlight);
+      }
+      
+      if (params.toString()) {
+        url += `?${params.toString()}`;
+      }
+      
+      navigate(url);
+    }
+  };
+
+  const handleViewAllNotifications = () => {
+    // For now, just navigate to dashboard or could create a dedicated notifications page
+    navigate('/');
+  };
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="sm" className="relative text-gray-400 hover:text-white">
           <Bell className="w-5 h-5" />
           {unreadCount > 0 && (
-            <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full text-xs flex items-center justify-center text-white">
-              {unreadCount}
+            <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full text-xs flex items-center justify-center text-white">
+              {unreadCount > 9 ? '9+' : unreadCount}
             </span>
           )}
         </Button>
@@ -69,13 +106,13 @@ export const NotificationsDropdown: React.FC = () => {
             No tienes notificaciones
           </div>
         ) : (
-          notifications.slice(0, 5).map((notification) => (
+          notifications.slice(0, 8).map((notification) => (
             <DropdownMenuItem
               key={notification.id}
-              className={`flex flex-col items-start p-3 cursor-pointer hover:bg-white/5 focus:bg-white/5 ${
+              className={`flex flex-col items-start p-3 cursor-pointer hover:bg-white/10 focus:bg-white/10 ${
                 !notification.read ? 'bg-white/5' : ''
               }`}
-              onClick={() => markAsRead(notification.id)}
+              onClick={() => handleNotificationClick(notification)}
             >
               <div className="flex items-start space-x-2 w-full">
                 <span className="text-sm">{getNotificationIcon(notification.type)}</span>
@@ -103,15 +140,34 @@ export const NotificationsDropdown: React.FC = () => {
           ))
         )}
         
-        {notifications.length > 5 && (
+        {notifications.length > 8 && (
           <>
             <DropdownMenuSeparator className="bg-gray-700" />
-            <DropdownMenuItem className="text-center text-gray-400 hover:text-white cursor-pointer">
+            <DropdownMenuItem 
+              className="text-center text-gray-400 hover:text-white hover:bg-white/5 cursor-pointer"
+              onClick={handleViewAllNotifications}
+            >
               Ver todas las notificaciones
             </DropdownMenuItem>
           </>
         )}
       </DropdownMenuContent>
+    </DropdownMenu>
+  );
+};
+</DropdownMenuItem>
+        )}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+};
+</DropdownMenuItem>
+        )}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+};
+</DropdownMenuContent>
     </DropdownMenu>
   );
 };
