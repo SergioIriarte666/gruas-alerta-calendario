@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { 
@@ -16,6 +15,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { useSettings } from '@/hooks/useSettings';
 
 const menuItems = [
   {
@@ -73,6 +73,7 @@ const menuItems = [
 export const Sidebar = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const location = useLocation();
+  const { settings } = useSettings();
 
   return (
     <>
@@ -85,11 +86,15 @@ export const Sidebar = () => {
         <div className="flex items-center justify-between p-4 border-b border-gray-800">
           {!isCollapsed && (
             <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-tms-green rounded-lg flex items-center justify-center">
-                <Truck className="w-5 h-5 text-white" />
-              </div>
+              {settings?.company.logo ? (
+                <img src={settings.company.logo} alt="Company Logo" className="w-8 h-8 rounded-lg object-contain" />
+              ) : (
+                <div className="w-8 h-8 bg-tms-green rounded-lg flex items-center justify-center">
+                  <Truck className="w-5 h-5 text-white" />
+                </div>
+              )}
               <div>
-                <h1 className="text-lg font-bold text-white">TMS Grúas</h1>
+                <h1 className="text-lg font-bold text-white">{settings?.company.name || 'TMS Grúas'}</h1>
                 <p className="text-xs text-gray-400">Sistema de Gestión</p>
               </div>
             </div>

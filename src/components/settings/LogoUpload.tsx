@@ -8,7 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 
 interface LogoUploadProps {
   currentLogo?: string;
-  onLogoChange: (logoData: string | null) => void;
+  onLogoChange: (file: File | null) => void;
   disabled?: boolean;
 }
 
@@ -47,8 +47,14 @@ export const LogoUpload: React.FC<LogoUploadProps> = ({
     return true;
   };
 
-  const processImage = (file: File): Promise<string> => {
+  const processImage = (file: File): Promise<File> => {
     return new Promise((resolve, reject) => {
+      // For SVG, don't process, just return
+      if (file.type === 'image/svg+xml') {
+        resolve(file);
+        return;
+      }
+      
       const reader = new FileReader();
       reader.onload = (e) => {
         const img = new window.Image();
@@ -56,7 +62,6 @@ export const LogoUpload: React.FC<LogoUploadProps> = ({
           const canvas = document.createElement('canvas');
           const ctx = canvas.getContext('2d');
           
-          // Calculate new dimensions (max 200x200, maintain aspect ratio)
           const maxSize = 200;
           let { width, height } = img;
           
@@ -76,8 +81,18 @@ export const LogoUpload: React.FC<LogoUploadProps> = ({
           canvas.height = height;
           
           ctx?.drawImage(img, 0, 0, width, height);
-          const compressedDataUrl = canvas.toDataURL('image/png', 0.8);
-          resolve(compressedDataUrl);
+          
+          canvas.toBlob((blob) => {
+            if (blob) {
+              const processedFile = new File([blob], file.name, {
+                type: 'image/png',
+                lastModified: Date.now(),
+              });
+              resolve(processedFile);
+            } else {
+              reject(new Error('Failed to create blob from canvas'));
+            }
+          }, 'image/png', 0.8);
         };
         img.onerror = () => reject(new Error('Error processing image'));
         img.src = e.target?.result as string;
@@ -92,13 +107,10 @@ export const LogoUpload: React.FC<LogoUploadProps> = ({
 
     setIsProcessing(true);
     try {
-      const logoData = await processImage(file);
-      onLogoChange(logoData);
-      toast({
-        title: "Logotipo cargado",
-        description: "El logotipo se ha cargado correctamente",
-      });
+      const logoFile = await processImage(file);
+      onLogoChange(logoFile);
     } catch (error) {
+      console.error(error);
       toast({
         title: "Error",
         description: "Error al procesar la imagen",
@@ -113,6 +125,7 @@ export const LogoUpload: React.FC<LogoUploadProps> = ({
     e.preventDefault();
     setIsDragging(false);
     
+    if (disabled) return;
     const files = Array.from(e.dataTransfer.files);
     if (files.length > 0) {
       handleFileSelect(files[0]);
@@ -131,10 +144,6 @@ export const LogoUpload: React.FC<LogoUploadProps> = ({
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
-    toast({
-      title: "Logotipo eliminado",
-      description: "El logotipo se ha eliminado correctamente",
-    });
   };
 
   return (
@@ -168,11 +177,10 @@ export const LogoUpload: React.FC<LogoUploadProps> = ({
                   Cambiar
                 </Button>
                 <Button
-                  variant="outline"
+                  variant="destructive"
                   size="sm"
                   onClick={removeLogo}
                   disabled={disabled || isProcessing}
-                  className="border-gray-700 text-red-400 hover:text-red-300"
                 >
                   <Trash2 className="w-4 h-4" />
                 </Button>
@@ -187,7 +195,7 @@ export const LogoUpload: React.FC<LogoUploadProps> = ({
           } ${disabled ? 'opacity-50' : 'cursor-pointer hover:border-gray-600'}`}
           onDrop={handleDrop}
           onDragOver={(e) => e.preventDefault()}
-          onDragEnter={() => setIsDragging(true)}
+          onDragEnter={() => !disabled && setIsDragging(true)}
           onDragLeave={() => setIsDragging(false)}
           onClick={() => !disabled && fileInputRef.current?.click()}
         >
@@ -198,23 +206,15 @@ export const LogoUpload: React.FC<LogoUploadProps> = ({
               </div>
               <div>
                 <p className="text-white font-medium">
-                  {isProcessing ? 'Procesando imagen...' : 'Subir Logotipo'}
+                  {isProcessing ? 'Procesando imagen...' : isDragging ? 'Suelta para subir' : 'Subir Logotipo'}
                 </p>
                 <p className="text-gray-400 text-sm mt-1">
                   Arrastra una imagen aquí o haz clic para seleccionar
                 </p>
                 <p className="text-gray-500 text-xs mt-2">
-                  PNG, JPG o SVG • Máximo 2MB • Se redimensionará automáticamente
+                  PNG, JPG o SVG • Máximo 2MB • Se redimensionará a 200px
                 </p>
               </div>
-              <Button 
-                variant="outline" 
-                disabled={disabled || isProcessing}
-                className="border-gray-700 text-gray-300"
-              >
-                <Upload className="w-4 h-4 mr-2" />
-                Seleccionar Archivo
-              </Button>
             </div>
           </CardContent>
         </Card>

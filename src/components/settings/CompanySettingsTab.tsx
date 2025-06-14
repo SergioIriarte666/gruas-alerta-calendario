@@ -21,7 +21,7 @@ interface CompanySettingsTabProps {
   settings: CompanySettings;
   saving: boolean;
   onSave: (data: CompanySettings) => void;
-  onLogoChange: (logoData: string | null) => void;
+  onLogoChange: (logoFile: File | null) => void;
   onUpdateSettings: (updates: { company: CompanySettings }) => void;
 }
 

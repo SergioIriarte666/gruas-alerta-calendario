@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
@@ -36,9 +35,14 @@ const Settings = () => {
     }
   };
 
-  const handleLogoChange = async (logoData: string | null) => {
-    const result = await updateLogo(logoData);
-    if (!result.success) {
+  const handleLogoChange = async (logoFile: File | null) => {
+    const result = await updateLogo(logoFile);
+    if (result.success) {
+      toast({
+        title: "Logotipo actualizado",
+        description: "El cambio en el logotipo se ha guardado.",
+      });
+    } else {
       toast({
         title: "Error",
         description: result.error || "Error al guardar el logotipo",
@@ -47,7 +51,7 @@ const Settings = () => {
     }
   };
 
-  if (loading) {
+  if (loading || !settings) {
     return (
       <div className="flex items-center justify-center min-h-96">
         <div className="text-white">Cargando configuración...</div>
@@ -85,7 +89,11 @@ const Settings = () => {
             saving={saving}
             onSave={(data) => handleSave('company', data)}
             onLogoChange={handleLogoChange}
-            onUpdateSettings={updateSettings}
+            onUpdateSettings={(updates) => {
+              if (settings) {
+                updateSettings({ ...settings, ...updates });
+              }
+            }}
           />
         </TabsContent>
 
@@ -94,7 +102,11 @@ const Settings = () => {
             settings={settings.user}
             saving={saving}
             onSave={(data) => handleSave('user', data)}
-            onUpdateSettings={updateSettings}
+            onUpdateSettings={(updates) => {
+               if (settings) {
+                updateSettings({ ...settings, ...updates });
+              }
+            }}
           />
         </TabsContent>
 
@@ -103,7 +115,11 @@ const Settings = () => {
             settings={settings.system}
             saving={saving}
             onSave={(data) => handleSave('system', data)}
-            onUpdateSettings={updateSettings}
+            onUpdateSettings={(updates) => {
+               if (settings) {
+                updateSettings({ ...settings, ...updates });
+              }
+            }}
           />
         </TabsContent>
 
@@ -112,7 +128,11 @@ const Settings = () => {
             settings={settings.notifications}
             saving={saving}
             onSave={(data) => handleSave('notifications', data)}
-            onUpdateSettings={updateSettings}
+            onUpdateSettings={(updates) => {
+               if (settings) {
+                updateSettings({ ...settings, ...updates });
+              }
+            }}
           />
         </TabsContent>
       </Tabs>

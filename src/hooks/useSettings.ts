@@ -1,4 +1,7 @@
-import { useState, useEffect } from 'react';
+
+import { useState, useEffect, useCallback } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 interface CompanySettings {
   name: string;
@@ -39,7 +42,6 @@ interface Settings {
   notifications: NotificationSettings;
 }
 
-// Mock data inicial
 const defaultSettings: Settings = {
   company: {
     name: 'TMS Grúas Ltda.',
@@ -75,28 +77,98 @@ export const useSettings = () => {
   const [settings, setSettings] = useState<Settings>(defaultSettings);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const { toast } = useToast();
+
+  const fetchSettings = useCallback(async () => {
+    setLoading(true);
+    try {
+      const { data: companyData, error: companyError } = await supabase
+        .from('company_data')
+        .select('*')
+        .limit(1)
+        .single();
+      
+      if (companyError && companyError.code !== 'PGRST116') { // Ignore no rows found error
+        throw companyError;
+      }
+
+      const savedOtherSettings = localStorage.getItem('tms-settings-others');
+      const otherSettings = savedOtherSettings ? JSON.parse(savedOtherSettings) : {
+        user: defaultSettings.user,
+        system: defaultSettings.system,
+        notifications: defaultSettings.notifications,
+      };
+
+      if (companyData) {
+        setSettings({
+          company: {
+            name: companyData.business_name,
+            address: companyData.address,
+            phone: companyData.phone,
+            email: companyData.email,
+            taxId: companyData.rut,
+            logo: companyData.logo_url || undefined,
+          },
+          ...otherSettings,
+        });
+      } else {
+        const savedSettings = localStorage.getItem('tms-settings');
+        if (savedSettings) {
+          setSettings(JSON.parse(savedSettings));
+        } else {
+          setSettings(defaultSettings);
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching settings:", error);
+      toast({
+        title: "Error",
+        description: "No se pudo cargar la configuración.",
+        variant: "destructive",
+      });
+      setSettings(defaultSettings);
+    } finally {
+      setLoading(false);
+    }
+  }, [toast]);
 
   useEffect(() => {
-    // Simular carga de configuración
-    setTimeout(() => {
-      const savedSettings = localStorage.getItem('tms-settings');
-      if (savedSettings) {
-        setSettings(JSON.parse(savedSettings));
-      }
-      setLoading(false);
-    }, 500);
-  }, []);
+    fetchSettings();
+  }, [fetchSettings]);
 
   const updateSettings = async (newSettings: Partial<Settings>) => {
+    if (!settings) return { success: false, error: 'Configuración no cargada.' };
     setSaving(true);
     try {
       const updatedSettings = { ...settings, ...newSettings };
+      
+      if (newSettings.company) {
+        const { data: existingCompany } = await supabase.from('company_data').select('id').limit(1).single();
+        
+        const companyPayload = {
+          business_name: newSettings.company.name,
+          address: newSettings.company.address,
+          phone: newSettings.company.phone,
+          email: newSettings.company.email,
+          rut: newSettings.company.taxId,
+        };
+
+        if (existingCompany) {
+          const { error } = await supabase.from('company_data').update(companyPayload).eq('id', existingCompany.id);
+          if (error) throw error;
+        } else {
+          const { error } = await supabase.from('company_data').insert(companyPayload).select().single();
+          if (error) throw error;
+        }
+      }
+      
+      const { company, ...otherSettings } = updatedSettings;
+      localStorage.setItem('tms-settings-others', JSON.stringify(otherSettings));
+      
       setSettings(updatedSettings);
       localStorage.setItem('tms-settings', JSON.stringify(updatedSettings));
       
-      // Simular guardado en servidor
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
+      await fetchSettings();
       return { success: true };
     } catch (error) {
       console.error('Error saving settings:', error);
@@ -106,28 +178,60 @@ export const useSettings = () => {
     }
   };
 
-  const updateLogo = async (logoData: string | null) => {
+  const updateLogo = async (logoFile: File | null) => {
+    if (!settings) return { success: false, error: 'Configuración no cargada.' };
     setSaving(true);
     try {
-      const updatedCompanySettings = {
-        ...settings.company,
-        logo: logoData || undefined
-      };
+      let { data: companyData } = await supabase.from('company_data').select('id, logo_url').limit(1).single();
+
+      if (!companyData) {
+        const { data: newCompanyData, error } = await supabase.from('company_data').insert({
+          business_name: settings.company.name,
+          rut: settings.company.taxId,
+          address: settings.company.address,
+          phone: settings.company.phone,
+          email: settings.company.email,
+        }).select('id, logo_url').single();
+
+        if (error) throw error;
+        companyData = newCompanyData;
+      }
+
+      if (companyData.logo_url) {
+        const oldLogoPath = companyData.logo_url.split('/company-assets/')[1];
+        if (oldLogoPath) {
+          await supabase.storage.from('company-assets').remove([oldLogoPath]);
+        }
+      }
+
+      let newLogoUrl: string | undefined = undefined;
+
+      if (logoFile) {
+        const filePath = `public/logo-${Date.now()}`;
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('company-assets')
+          .upload(filePath, logoFile);
+
+        if (uploadError) throw uploadError;
+
+        const { data: urlData } = supabase.storage
+          .from('company-assets')
+          .getPublicUrl(uploadData.path);
+        
+        newLogoUrl = urlData.publicUrl;
+      }
       
-      const updatedSettings = {
-        ...settings,
-        company: updatedCompanySettings
-      };
-      
-      setSettings(updatedSettings);
-      localStorage.setItem('tms-settings', JSON.stringify(updatedSettings));
-      
-      // Simular guardado en servidor
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
+      const { error: dbError } = await supabase
+        .from('company_data')
+        .update({ logo_url: newLogoUrl })
+        .eq('id', companyData.id);
+
+      if (dbError) throw dbError;
+
+      await fetchSettings();
       return { success: true };
     } catch (error) {
-      console.error('Error saving logo:', error);
+      console.error('Error updating logo:', error);
       return { success: false, error: 'Error al guardar el logotipo' };
     } finally {
       setSaving(false);
@@ -137,6 +241,7 @@ export const useSettings = () => {
   const resetSettings = () => {
     setSettings(defaultSettings);
     localStorage.removeItem('tms-settings');
+    localStorage.removeItem('tms-settings-others');
   };
 
   return {
