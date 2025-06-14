@@ -11,6 +11,7 @@ export const useSettings = () => {
 
   const fetchSettings = useCallback(async () => {
     setLoading(true);
+    console.log('Fetching settings...');
     try {
       // Source of truth for company data is Supabase
       const { data: companyData, error: companyError } = await supabase
@@ -22,6 +23,8 @@ export const useSettings = () => {
       if (companyError) {
         throw companyError;
       }
+      
+      console.log('Fetched company data from Supabase:', companyData);
 
       // Other settings are from local storage
       const savedOtherSettings = localStorage.getItem('tms-settings-others');
@@ -43,10 +46,11 @@ export const useSettings = () => {
           phone: companyData.phone || defaultSettings.company.phone,
           email: companyData.email || defaultSettings.company.email,
           taxId: companyData.rut || defaultSettings.company.taxId,
-          logo: companyData.logo_url || undefined,
+          logo: companyData.logo_url ? `${companyData.logo_url}?t=${new Date().getTime()}` : undefined,
         };
       }
       
+      console.log('Final settings object to be set:', finalSettings);
       setSettings(finalSettings);
 
     } catch (error) {
@@ -60,6 +64,7 @@ export const useSettings = () => {
       setSettings(defaultSettings);
     } finally {
       setLoading(false);
+      console.log('Finished fetching settings.');
     }
   }, [toast]);
 
