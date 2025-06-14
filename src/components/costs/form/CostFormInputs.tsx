@@ -83,7 +83,7 @@ export const CostFormInputs = ({
                             <FormControl><SelectTrigger className="bg-white/10"><SelectValue placeholder="Sin asociar" /></SelectTrigger></FormControl>
                             <SelectContent>
                                 <SelectItem value="none">Sin asociar</SelectItem>
-                                {cranes.map(c => <SelectItem key={c.id} value={c.id}>{c.license_plate}</SelectItem>)}
+                                {cranes.map(c => <SelectItem key={c.id} value={c.id}>{c.licensePlate}</SelectItem>)}
                             </SelectContent>
                         </Select>
                     </FormItem>
