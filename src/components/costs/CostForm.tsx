@@ -40,8 +40,8 @@ export const CostForm = ({ isOpen, onClose, cost }: CostFormProps) => {
             crane_id: null,
             operator_id: null,
             service_id: null,
-            service_folio: '',
-            notes: '',
+            service_folio: null,
+            notes: null,
         },
     });
     const { reset } = form;
@@ -54,13 +54,15 @@ export const CostForm = ({ isOpen, onClose, cost }: CostFormProps) => {
                 : new Date().toISOString().split('T')[0];
 
             reset({
-                ...cost,
                 date: dateValue,
+                description: cost.description,
                 amount: Number(cost.amount),
+                category_id: cost.category_id,
                 crane_id: cost.crane_id || null,
                 operator_id: cost.operator_id || null,
                 service_id: cost.service_id || null,
-                service_folio: cost.service_folio || '',
+                service_folio: cost.service_folio || null,
+                notes: cost.notes || null,
             });
         } else {
             reset({
@@ -71,24 +73,30 @@ export const CostForm = ({ isOpen, onClose, cost }: CostFormProps) => {
                 crane_id: null,
                 operator_id: null,
                 service_id: null,
-                service_folio: '',
-                notes: '',
+                service_folio: null,
+                notes: null,
             });
         }
     }, [cost, reset, isOpen]);
     
     const onSubmit = (values: CostFormValues) => {
-        console.log("Submitting values:", values);
+        console.log("Submitting validated values:", values);
         const submissionData = values as CostFormData;
         if (cost) {
             updateCost({ id: cost.id, ...submissionData }, {
                 onSuccess: onClose,
-                onError: (error) => console.error("Update cost failed:", error),
+                onError: (error) => {
+                    console.error("Update cost failed:", error);
+                    console.error("Data that failed:", submissionData);
+                },
             });
         } else {
             addCost(submissionData, {
                 onSuccess: onClose,
-                onError: (error) => console.error("Add cost failed:", error),
+                onError: (error) => {
+                    console.error("Add cost failed:", error);
+                    console.error("Data that failed:", submissionData);
+                },
             });
         }
     };
