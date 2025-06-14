@@ -16,6 +16,7 @@ const ClosuresHeader = ({ onCreateClosure }: ClosuresHeaderProps) => {
       <Button
         onClick={onCreateClosure}
         className="bg-tms-green hover:bg-tms-green/90 text-white"
+        title="Crear un nuevo cierre de servicios"
       >
         <Plus className="w-4 h-4 mr-2" />
         Nuevo Cierre

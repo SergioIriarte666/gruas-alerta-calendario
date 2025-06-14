@@ -104,6 +104,7 @@ export const NotificationSettingsTab: React.FC<NotificationSettingsTabProps> = (
           onClick={() => onSave(settings)}
           disabled={saving}
           className="bg-tms-green hover:bg-tms-green-dark text-white"
+          title="Guardar la configuración de notificaciones"
         >
           <Save className="w-4 h-4 mr-2" />
           {saving ? 'Guardando...' : 'Guardar Notificaciones'}

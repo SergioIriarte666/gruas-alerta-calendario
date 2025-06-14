@@ -117,6 +117,7 @@ export const ServiceForm = ({ service, onSubmit, onCancel }: ServiceFormProps) =
                   "w-full justify-start text-left font-normal",
                   !requestDate && "text-muted-foreground"
                 )}
+                title="Seleccionar fecha de solicitud"
               >
                 <CalendarIcon className="mr-2 h-4 w-4" />
                 {requestDate ? format(requestDate, 'PPP', { locale: es }) : 'Seleccionar fecha'}
@@ -144,6 +145,7 @@ export const ServiceForm = ({ service, onSubmit, onCancel }: ServiceFormProps) =
                   "w-full justify-start text-left font-normal",
                   !serviceDate && "text-muted-foreground"
                 )}
+                title="Seleccionar fecha de servicio"
               >
                 <CalendarIcon className="mr-2 h-4 w-4" />
                 {serviceDate ? format(serviceDate, 'PPP', { locale: es }) : 'Seleccionar fecha'}
@@ -356,10 +358,19 @@ export const ServiceForm = ({ service, onSubmit, onCancel }: ServiceFormProps) =
 
       {/* Buttons */}
       <div className="flex justify-end space-x-4">
-        <Button type="button" variant="outline" onClick={onCancel}>
+        <Button 
+          type="button" 
+          variant="outline" 
+          onClick={onCancel}
+          title="Cancelar la creación o edición del servicio"
+        >
           Cancelar
         </Button>
-        <Button type="submit" className="bg-tms-green hover:bg-tms-green-dark text-white">
+        <Button 
+          type="submit" 
+          className="bg-tms-green hover:bg-tms-green-dark text-white"
+          title={service ? 'Actualizar los datos del servicio' : 'Crear el nuevo servicio'}
+        >
           {service ? 'Actualizar Servicio' : 'Crear Servicio'}
         </Button>
       </div>

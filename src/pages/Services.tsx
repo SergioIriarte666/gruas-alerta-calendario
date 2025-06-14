@@ -124,13 +124,17 @@ const Services = () => {
           <Button 
             onClick={() => setIsCSVUploadOpen(true)}
             className="bg-blue-600 hover:bg-blue-700 text-white"
+            title="Cargar servicios desde un archivo CSV"
           >
             <Upload className="w-4 h-4 mr-2" />
             Carga Masiva
           </Button>
           <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
             <DialogTrigger asChild>
-              <Button className="bg-tms-green hover:bg-tms-green-dark text-white">
+              <Button 
+                className="bg-tms-green hover:bg-tms-green-dark text-white"
+                title="Crear un nuevo servicio"
+              >
                 <Plus className="w-4 h-4 mr-2" />
                 Nuevo Servicio
               </Button>
@@ -202,6 +206,7 @@ const Services = () => {
                 <Button 
                   className="bg-tms-green hover:bg-tms-green-dark text-white"
                   onClick={() => setIsFormOpen(true)}
+                  title="Crear el primer servicio"
                 >
                   <Plus className="w-4 h-4 mr-2" />
                   Crear Primer Servicio
@@ -276,6 +281,7 @@ const Services = () => {
                             size="sm" 
                             className="text-tms-green hover:text-tms-green-light hover:bg-tms-green/10"
                             onClick={() => handleViewDetails(service)}
+                            title="Ver detalles del servicio"
                           >
                             <Eye className="w-4 h-4" />
                           </Button>
@@ -284,6 +290,7 @@ const Services = () => {
                             size="sm" 
                             className="text-blue-400 hover:text-blue-300 hover:bg-blue-400/10"
                             onClick={() => handleEdit(service)}
+                            title="Editar servicio"
                           >
                             <Edit className="w-4 h-4" />
                           </Button>
@@ -292,6 +299,7 @@ const Services = () => {
                             size="sm" 
                             className="text-red-400 hover:text-red-300 hover:bg-red-400/10"
                             onClick={() => handleDelete(service)}
+                            title="Eliminar servicio"
                           >
                             <Trash2 className="w-4 h-4" />
                           </Button>

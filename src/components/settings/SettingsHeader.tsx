@@ -21,6 +21,7 @@ export const SettingsHeader: React.FC<SettingsHeaderProps> = ({ onReset }) => {
           variant="outline"
           onClick={onReset}
           className="border-gray-700 text-gray-300"
+          title="Restablecer la configuración a los valores por defecto"
         >
           <RotateCcw className="w-4 h-4 mr-2" />
           Restablecer

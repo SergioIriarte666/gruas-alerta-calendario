@@ -111,6 +111,7 @@ export const CompanySettingsTab: React.FC<CompanySettingsTabProps> = ({
           onClick={() => onSave(settings)}
           disabled={saving}
           className="bg-tms-green hover:bg-tms-green-dark text-white"
+          title="Guardar los cambios en la información de la empresa"
         >
           <Save className="w-4 h-4 mr-2" />
           {saving ? 'Guardando...' : 'Guardar Cambios'}
