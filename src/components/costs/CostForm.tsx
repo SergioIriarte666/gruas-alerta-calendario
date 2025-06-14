@@ -40,6 +40,7 @@ export const CostForm = ({ isOpen, onClose, cost }: CostFormProps) => {
             crane_id: null,
             operator_id: null,
             service_id: null,
+            service_folio: '',
             notes: '',
         },
     });
@@ -59,6 +60,7 @@ export const CostForm = ({ isOpen, onClose, cost }: CostFormProps) => {
                 crane_id: cost.crane_id || null,
                 operator_id: cost.operator_id || null,
                 service_id: cost.service_id || null,
+                service_folio: cost.service_folio || '',
             });
         } else {
             reset({
@@ -69,20 +71,24 @@ export const CostForm = ({ isOpen, onClose, cost }: CostFormProps) => {
                 crane_id: null,
                 operator_id: null,
                 service_id: null,
+                service_folio: '',
                 notes: '',
             });
         }
     }, [cost, reset, isOpen]);
     
     const onSubmit = (values: CostFormValues) => {
+        console.log("Submitting values:", values);
         const submissionData = values as CostFormData;
         if (cost) {
             updateCost({ id: cost.id, ...submissionData }, {
                 onSuccess: onClose,
+                onError: (error) => console.error("Update cost failed:", error),
             });
         } else {
             addCost(submissionData, {
                 onSuccess: onClose,
+                onError: (error) => console.error("Add cost failed:", error),
             });
         }
     };

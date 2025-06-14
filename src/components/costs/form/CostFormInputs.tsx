@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { UseFormReturn } from 'react-hook-form';
 import { FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
@@ -71,7 +72,7 @@ export const CostFormInputs = ({
                     <FormMessage />
                 </FormItem>
             )} />
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField name="crane_id" control={form.control} render={({ field }) => (
                     <FormItem>
                         <Label>Grúa (Opcional)</Label>
@@ -106,6 +107,13 @@ export const CostFormInputs = ({
                                 {services.map(s => <SelectItem key={s.id} value={s.id}>{s.folio}</SelectItem>)}
                             </SelectContent>
                         </Select>
+                    </FormItem>
+                )} />
+                <FormField name="service_folio" control={form.control} render={({ field }) => (
+                    <FormItem>
+                        <Label>Folio de Servicio (Opcional)</Label>
+                        <FormControl><Input {...field} value={field.value ?? ''} className="bg-white/10" placeholder="Ej: F-1234" /></FormControl>
+                        <FormMessage />
                     </FormItem>
                 )} />
             </div>

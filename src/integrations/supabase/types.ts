@@ -266,6 +266,7 @@ export type Database = {
           id: string
           notes: string | null
           operator_id: string | null
+          service_folio: string | null
           service_id: string | null
           updated_at: string
         }
@@ -280,6 +281,7 @@ export type Database = {
           id?: string
           notes?: string | null
           operator_id?: string | null
+          service_folio?: string | null
           service_id?: string | null
           updated_at?: string
         }
@@ -294,6 +296,7 @@ export type Database = {
           id?: string
           notes?: string | null
           operator_id?: string | null
+          service_folio?: string | null
           service_id?: string | null
           updated_at?: string
         }

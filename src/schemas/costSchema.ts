@@ -9,6 +9,7 @@ export const costSchema = z.object({
     crane_id: z.string().optional().nullable().transform(val => (val === 'none' || !val) ? null : val),
     operator_id: z.string().optional().nullable().transform(val => (val === 'none' || !val) ? null : val),
     service_id: z.string().optional().nullable().transform(val => (val === 'none' || !val) ? null : val),
+    service_folio: z.string().optional().nullable(),
     notes: z.string().optional().nullable(),
 });
 
