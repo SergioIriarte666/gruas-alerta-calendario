@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useVehicleHistory, VehicleHistoryEntry } from '@/hooks/useVehicleHistory';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -11,7 +10,7 @@ import { AlertCircle, History } from 'lucide-react';
 
 interface VehicleHistoryProps {
   licensePlate: string;
-  currentServiceId: string;
+  currentServiceId?: string;
 }
 
 const getStatusBadge = (status: ServiceStatus) => {

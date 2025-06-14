@@ -13,10 +13,10 @@ export interface VehicleHistoryEntry {
   };
 }
 
-const fetchVehicleHistory = async (licensePlate: string, currentServiceId: string): Promise<VehicleHistoryEntry[]> => {
+const fetchVehicleHistory = async (licensePlate: string, currentServiceId?: string): Promise<VehicleHistoryEntry[]> => {
   if (!licensePlate) return [];
 
-  const { data, error } = await supabase
+  let query = supabase
     .from('services')
     .select(`
       id,
@@ -25,9 +25,15 @@ const fetchVehicleHistory = async (licensePlate: string, currentServiceId: strin
       status,
       service_types(name)
     `)
-    .eq('license_plate', licensePlate)
-    .neq('id', currentServiceId)
-    .order('service_date', { ascending: false });
+    .eq('license_plate', licensePlate);
+
+  if (currentServiceId) {
+    query = query.neq('id', currentServiceId);
+  }
+  
+  query = query.order('service_date', { ascending: false });
+
+  const { data, error } = await query;
 
   if (error) {
     console.error('Error fetching vehicle history:', error);
@@ -43,11 +49,11 @@ const fetchVehicleHistory = async (licensePlate: string, currentServiceId: strin
   }));
 };
 
-export const useVehicleHistory = (licensePlate: string, currentServiceId: string) => {
+export const useVehicleHistory = (licensePlate: string, currentServiceId?: string) => {
   const { data, isLoading, error } = useQuery({
     queryKey: ['vehicleHistory', licensePlate, currentServiceId],
     queryFn: () => fetchVehicleHistory(licensePlate, currentServiceId),
-    enabled: !!licensePlate && !!currentServiceId,
+    enabled: !!licensePlate,
   });
 
   return { history: data ?? [], isLoading, error };
