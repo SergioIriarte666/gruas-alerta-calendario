@@ -15,6 +15,7 @@ import Calendar from "./pages/Calendar";
 import Clients from "./pages/Clients";
 import Cranes from "./pages/Cranes";
 import Operators from "./pages/Operators";
+import Costs from "./pages/Costs";
 import Closures from "./pages/Closures";
 import Invoices from "./pages/Invoices";
 import Reports from "./pages/Reports";
@@ -46,6 +47,7 @@ const App = () => (
                         <Route path="/clients" element={<Clients />} />
                         <Route path="/cranes" element={<Cranes />} />
                         <Route path="/operators" element={<Operators />} />
+                        <Route path="/costs" element={<Costs />} />
                         <Route path="/closures" element={<Closures />} />
                         <Route path="/invoices" element={<Invoices />} />
                         <Route path="/reports" element={<Reports />} />
