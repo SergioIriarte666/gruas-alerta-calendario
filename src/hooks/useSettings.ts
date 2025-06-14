@@ -1,8 +1,17 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Settings, defaultSettings } from '@/types/settings';
+
+// 1. Define correct payload structure for company_data:
+interface CompanyDataPayload {
+  business_name: string;
+  address: string;
+  phone: string;
+  email: string;
+  rut: string;
+  logo_url?: string | null;
+}
 
 export const useSettings = () => {
   const [settings, setSettings] = useState<Settings>(defaultSettings);
@@ -105,15 +114,36 @@ export const useSettings = () => {
 
     setSaving(true);
     try {
-      // Payload strictly matches company_data requirements
-      const companyPayload = {
+      // 2. ALWAYS assign all required fields, never let them be undefined
+      const companyPayload: CompanyDataPayload = {
         business_name: settings.company.name || '',
         address: settings.company.address || '',
         phone: settings.company.phone || '',
         email: settings.company.email || '',
         rut: settings.company.taxId || '',
-        logo_url: settings.company.logo || null,
+        logo_url:
+          // logo_url is nullable but explicit; can be string or null
+          typeof settings.company.logo === 'string'
+            ? settings.company.logo
+            : null,
       };
+
+      // 3. VALIDATE required fields before sending (optional, but good dev check):
+      if (
+        !companyPayload.business_name ||
+        !companyPayload.address ||
+        !companyPayload.phone ||
+        !companyPayload.email ||
+        !companyPayload.rut
+      ) {
+        console.warn(
+          '[useSettings] Al menos un campo obligatorio de empresa está vacío.',
+          companyPayload
+        );
+        // podrías retornar error si así lo deseas:
+        // return { success: false, error: 'Faltan campos obligatorios de empresa.' };
+      }
+
       console.log('Intentando guardar datos de empresa (payload enviado):', companyPayload);
 
       // Buscar empresa, si no existe: insertar, si existe: actualizar
@@ -129,7 +159,7 @@ export const useSettings = () => {
       }
 
       if (existingCompany && existingCompany.id) {
-        // Update
+        // UPDATE: Pass a single object (not array) for update
         const { error: updateError } = await supabase
           .from('company_data')
           .update(companyPayload)
@@ -142,10 +172,10 @@ export const useSettings = () => {
         console.log('Empresa actualizada correctamente');
 
       } else {
-        // Insertar nuevo registro (fix type error: use an array with correct typing)
+        // INSERT: Pass an array of exactly-typed objects
         const { data: newCompany, error: insertError } = await supabase
           .from('company_data')
-          .insert([companyPayload])
+          .insert([companyPayload] as CompanyDataPayload[])
           .select()
           .maybeSingle();
 
