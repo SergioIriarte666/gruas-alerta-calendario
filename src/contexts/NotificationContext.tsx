@@ -1,7 +1,8 @@
+
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import { useNotificationsData } from '@/hooks/useNotificationsData';
 
-interface Notification {
+export interface Notification {
   id: string;
   title: string;
   message: string;
