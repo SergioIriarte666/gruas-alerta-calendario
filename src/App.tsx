@@ -8,6 +8,8 @@ import { Layout } from "@/components/layout/Layout";
 import Dashboard from "./pages/Dashboard";
 import Services from "./pages/Services";
 import Calendar from "./pages/Calendar";
+import Clients from "./pages/Clients";
+import Cranes from "./pages/Cranes";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -23,9 +25,9 @@ const App = () => (
             <Route path="/" element={<Dashboard />} />
             <Route path="/calendar" element={<Calendar />} />
             <Route path="/services" element={<Services />} />
+            <Route path="/clients" element={<Clients />} />
+            <Route path="/cranes" element={<Cranes />} />
             {/* Rutas adicionales serán implementadas progresivamente */}
-            <Route path="/clients" element={<div className="text-white">Módulo Clientes - En desarrollo</div>} />
-            <Route path="/cranes" element={<div className="text-white">Módulo Grúas - En desarrollo</div>} />
             <Route path="/operators" element={<div className="text-white">Módulo Operadores - En desarrollo</div>} />
             <Route path="/closures" element={<div className="text-white">Módulo Cierres - En desarrollo</div>} />
             <Route path="/invoices" element={<div className="text-white">Módulo Facturas - En desarrollo</div>} />
