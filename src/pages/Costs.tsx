@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { CostsHeader } from '@/components/costs/CostsHeader';
 import { CostsTable } from '@/components/costs/CostsTable';
 import { CostForm } from '@/components/costs/CostForm';
@@ -12,19 +12,23 @@ const CostsPage = () => {
     const [selectedCost, setSelectedCost] = useState<Cost | null>(null);
     const { data: costs = [], isLoading } = useCosts();
 
-    const handleOpenForm = (cost: Cost | null = null) => {
+    const handleOpenForm = useCallback((cost: Cost | null = null) => {
+        console.log('Opening form for cost:', cost);
         setSelectedCost(cost);
         setIsFormOpen(true);
-    };
+    }, []);
 
-    const handleCloseForm = () => {
+    const handleCloseForm = useCallback(() => {
+        console.log('Closing form');
         setSelectedCost(null);
         setIsFormOpen(false);
-    };
+    }, []);
+
+    console.log('CostsPage rendered, isFormOpen:', isFormOpen);
 
     return (
         <div className="space-y-6">
-            <CostsHeader onAddCost={() => handleOpenForm()} />
+            <CostsHeader onAddCost={handleOpenForm} />
             {isLoading ? (
                 <div className="space-y-2">
                     <Skeleton className="h-12 w-full" />

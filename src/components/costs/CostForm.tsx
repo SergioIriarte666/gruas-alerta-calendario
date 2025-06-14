@@ -36,6 +36,7 @@ const costSchema = z.object({
 });
 
 export const CostForm = ({ isOpen, onClose, cost }: CostFormProps) => {
+    console.log(`CostForm rendered. isOpen: ${isOpen}`);
     const { mutate: addCost, isPending: isAdding } = useAddCost();
     const { mutate: updateCost, isPending: isUpdating } = useUpdateCost();
     
@@ -57,10 +58,12 @@ export const CostForm = ({ isOpen, onClose, cost }: CostFormProps) => {
             notes: '',
         },
     });
+    const { reset } = form;
 
     useEffect(() => {
+        console.log('CostForm useEffect triggered.', { isOpen, costExists: !!cost });
         if (cost) {
-            form.reset({
+            reset({
                 ...cost,
                 date: new Date(cost.date).toISOString().split('T')[0],
                 amount: Number(cost.amount),
@@ -69,7 +72,7 @@ export const CostForm = ({ isOpen, onClose, cost }: CostFormProps) => {
                 service_id: cost.service_id || null,
             });
         } else {
-            form.reset({
+            reset({
                 date: new Date().toISOString().split('T')[0],
                 description: '',
                 amount: 0,
@@ -80,7 +83,7 @@ export const CostForm = ({ isOpen, onClose, cost }: CostFormProps) => {
                 notes: '',
             });
         }
-    }, [cost, form, isOpen]);
+    }, [cost, reset, isOpen]);
     
     const onSubmit = (values: z.infer<typeof costSchema>) => {
         const submissionData = values as CostFormData;
