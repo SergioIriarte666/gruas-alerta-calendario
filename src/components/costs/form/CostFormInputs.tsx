@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { UseFormReturn } from 'react-hook-form';
 import { FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
@@ -8,11 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { CostCategory } from '@/types/costs';
 import { CostFormValues } from '@/schemas/costSchema';
-import { Database } from '@/integrations/supabase/types';
-
-type Crane = Database['public']['Tables']['cranes']['Row'];
-type Operator = Database['public']['Tables']['operators']['Row'];
-type Service = Database['public']['Tables']['services']['Row'];
+import { Crane, Operator, Service } from '@/types';
 
 interface CostFormInputsProps {
     form: UseFormReturn<CostFormValues>;
