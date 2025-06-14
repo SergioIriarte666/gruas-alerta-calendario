@@ -5,6 +5,8 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
+import { UserProvider } from "@/contexts/UserContext";
+import { NotificationProvider } from "@/contexts/NotificationContext";
 import Dashboard from "./pages/Dashboard";
 import Services from "./pages/Services";
 import Calendar from "./pages/Calendar";
@@ -21,27 +23,31 @@ const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Layout>
-          <Routes>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/calendar" element={<Calendar />} />
-            <Route path="/services" element={<Services />} />
-            <Route path="/clients" element={<Clients />} />
-            <Route path="/cranes" element={<Cranes />} />
-            <Route path="/operators" element={<Operators />} />
-            <Route path="/closures" element={<Closures />} />
-            <Route path="/invoices" element={<Invoices />} />
-            <Route path="/reports" element={<Reports />} />
-            <Route path="/settings" element={<Settings />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </Layout>
-      </BrowserRouter>
-    </TooltipProvider>
+    <UserProvider>
+      <NotificationProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Layout>
+              <Routes>
+                <Route path="/" element={<Dashboard />} />
+                <Route path="/calendar" element={<Calendar />} />
+                <Route path="/services" element={<Services />} />
+                <Route path="/clients" element={<Clients />} />
+                <Route path="/cranes" element={<Cranes />} />
+                <Route path="/operators" element={<Operators />} />
+                <Route path="/closures" element={<Closures />} />
+                <Route path="/invoices" element={<Invoices />} />
+                <Route path="/reports" element={<Reports />} />
+                <Route path="/settings" element={<Settings />} />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </Layout>
+          </BrowserRouter>
+        </TooltipProvider>
+      </NotificationProvider>
+    </UserProvider>
   </QueryClientProvider>
 );
 

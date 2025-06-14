@@ -1,5 +1,6 @@
 
-import { Bell, Search, User } from 'lucide-react';
+import { Search, User, Settings } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -10,8 +11,30 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { useToast } from '@/hooks/use-toast';
+import { useUser } from '@/contexts/UserContext';
+import { NotificationsDropdown } from './NotificationsDropdown';
 
 export const Header = () => {
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const { user, logout } = useUser();
+
+  const handleLogout = () => {
+    logout();
+    toast({
+      title: "Sesión cerrada",
+      description: "Has cerrado sesión correctamente",
+    });
+  };
+
+  const handleProfileClick = () => {
+    toast({
+      title: "Perfil",
+      description: "Funcionalidad de perfil en desarrollo",
+    });
+  };
+
   return (
     <header className="bg-black/20 backdrop-blur-lg border-b border-gray-800 px-6 py-4">
       <div className="flex items-center justify-between">
@@ -29,12 +52,7 @@ export const Header = () => {
         {/* Right Section */}
         <div className="flex items-center space-x-4">
           {/* Notifications */}
-          <Button variant="ghost" size="sm" className="relative text-gray-400 hover:text-white">
-            <Bell className="w-5 h-5" />
-            <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full text-xs flex items-center justify-center text-white">
-              3
-            </span>
-          </Button>
+          <NotificationsDropdown />
 
           {/* User Menu */}
           <DropdownMenu>
@@ -43,17 +61,33 @@ export const Header = () => {
                 <User className="w-5 h-5" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="bg-tms-dark border-gray-700">
-              <DropdownMenuLabel className="text-white">Mi Cuenta</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem className="text-gray-300 hover:text-white hover:bg-white/10">
+            <DropdownMenuContent 
+              align="end" 
+              className="bg-tms-dark border-gray-700 min-w-[200px] z-50"
+            >
+              <DropdownMenuLabel className="text-white font-semibold">
+                {user?.name || 'Mi Cuenta'}
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator className="bg-gray-700" />
+              <DropdownMenuItem 
+                className="text-gray-300 hover:text-white hover:bg-white/10 cursor-pointer focus:bg-white/10 focus:text-white"
+                onClick={handleProfileClick}
+              >
+                <User className="w-4 h-4 mr-2" />
                 Perfil
               </DropdownMenuItem>
-              <DropdownMenuItem className="text-gray-300 hover:text-white hover:bg-white/10">
+              <DropdownMenuItem 
+                className="text-gray-300 hover:text-white hover:bg-white/10 cursor-pointer focus:bg-white/10 focus:text-white"
+                onClick={() => navigate('/settings')}
+              >
+                <Settings className="w-4 h-4 mr-2" />
                 Configuración
               </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem className="text-red-400 hover:text-red-300 hover:bg-red-500/10">
+              <DropdownMenuSeparator className="bg-gray-700" />
+              <DropdownMenuItem 
+                className="text-red-400 hover:text-red-300 hover:bg-red-500/10 cursor-pointer focus:bg-red-500/10 focus:text-red-300"
+                onClick={handleLogout}
+              >
                 Cerrar Sesión
               </DropdownMenuItem>
             </DropdownMenuContent>
