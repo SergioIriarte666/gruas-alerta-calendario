@@ -55,6 +55,7 @@ export const useSettings = () => {
           email: companyData.email || defaultSettings.company.email,
           taxId: companyData.rut || defaultSettings.company.taxId,
           logo: companyData.logo_url ? `${companyData.logo_url}?t=${new Date().getTime()}` : undefined,
+          folioFormat: companyData.folio_format || defaultSettings.company.folioFormat,
         };
       }
 

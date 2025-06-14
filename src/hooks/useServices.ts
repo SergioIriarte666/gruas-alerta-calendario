@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Service, ServiceStatus } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
@@ -126,16 +125,12 @@ export const useServices = () => {
     fetchServices();
   }, []);
 
-  const createService = async (serviceData: Omit<Service, 'id' | 'folio' | 'createdAt' | 'updatedAt'>) => {
+  const createService = async (serviceData: Omit<Service, 'id' | 'createdAt' | 'updatedAt'> & { folio: string }) => {
     try {
-      // Generate folio
-      const folioNumber = services.length + 1;
-      const folio = `SRV-${String(folioNumber).padStart(3, '0')}`;
-
       const { data: newService, error } = await supabase
         .from('services')
         .insert({
-          folio,
+          folio: serviceData.folio,
           request_date: serviceData.requestDate,
           service_date: serviceData.serviceDate,
           client_id: serviceData.client.id,
@@ -161,7 +156,6 @@ export const useServices = () => {
       const formattedService: Service = {
         ...serviceData,
         id: newService.id,
-        folio,
         createdAt: newService.created_at,
         updatedAt: newService.updated_at
       };
@@ -170,7 +164,7 @@ export const useServices = () => {
 
       toast({
         title: "Servicio creado",
-        description: `Servicio ${folio} creado exitosamente.`,
+        description: `Servicio ${serviceData.folio} creado exitosamente.`,
       });
 
       return formattedService;

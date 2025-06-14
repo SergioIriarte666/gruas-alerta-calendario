@@ -7,7 +7,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { CalendarIcon, RefreshCw } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
@@ -16,10 +17,12 @@ import { useClients } from '@/hooks/useClients';
 import { useCranes } from '@/hooks/useCranes';
 import { useOperators } from '@/hooks/useOperators';
 import { useServiceTypes } from '@/hooks/useServiceTypes';
+import { useFolioGenerator } from '@/hooks/useFolioGenerator';
+import { useToast } from '@/hooks/use-toast';
 
 interface ServiceFormProps {
   service?: Service | null;
-  onSubmit: (serviceData: Omit<Service, 'id' | 'folio' | 'createdAt' | 'updatedAt'>) => void;
+  onSubmit: (serviceData: Omit<Service, 'id' | 'folio' | 'createdAt' | 'updatedAt'> & { folio: string }) => void;
   onCancel: () => void;
 }
 
@@ -28,6 +31,11 @@ export const ServiceForm = ({ service, onSubmit, onCancel }: ServiceFormProps) =
   const { cranes } = useCranes();
   const { operators } = useOperators();
   const { serviceTypes, loading: serviceTypesLoading } = useServiceTypes();
+  const { generateNextFolio, validateFolioUniqueness, loading: folioLoading } = useFolioGenerator();
+  const { toast } = useToast();
+
+  const [isManualFolio, setIsManualFolio] = useState(false);
+  const [folio, setFolio] = useState(service?.folio || '');
 
   const [formData, setFormData] = useState({
     requestDate: service?.requestDate || format(new Date(), 'yyyy-MM-dd'),
@@ -63,7 +71,19 @@ export const ServiceForm = ({ service, onSubmit, onCancel }: ServiceFormProps) =
     }));
   }, [requestDate, serviceDate]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // Generar folio automático cuando no es manual y no estamos editando
+  useEffect(() => {
+    if (!isManualFolio && !service) {
+      generateNextFolio().then(setFolio);
+    }
+  }, [isManualFolio, service, generateNextFolio]);
+
+  const handleGenerateNewFolio = async () => {
+    const newFolio = await generateNextFolio();
+    setFolio(newFolio);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     const selectedClient = clients.find(c => c.id === formData.clientId);
@@ -72,11 +92,38 @@ export const ServiceForm = ({ service, onSubmit, onCancel }: ServiceFormProps) =
     const selectedServiceType = serviceTypes.find(st => st.id === formData.serviceTypeId);
 
     if (!selectedClient || !selectedCrane || !selectedOperator || !selectedServiceType) {
-      alert('Por favor, selecciona todos los campos requeridos');
+      toast({
+        title: "Error",
+        description: "Por favor, selecciona todos los campos requeridos",
+        variant: "destructive",
+      });
       return;
     }
 
+    if (!folio.trim()) {
+      toast({
+        title: "Error",
+        description: "El folio es requerido",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validar unicidad del folio solo si es manual o estamos creando un nuevo servicio
+    if ((isManualFolio || !service) && service?.folio !== folio) {
+      const isUnique = await validateFolioUniqueness(folio);
+      if (!isUnique) {
+        toast({
+          title: "Error",
+          description: "Este folio ya existe. Por favor, usa un folio diferente.",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
     onSubmit({
+      folio,
       requestDate: formData.requestDate,
       serviceDate: formData.serviceDate,
       client: selectedClient,
@@ -105,6 +152,49 @@ export const ServiceForm = ({ service, onSubmit, onCancel }: ServiceFormProps) =
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
+      {/* Folio Section */}
+      <div className="space-y-4 p-4 border rounded-lg bg-gray-50">
+        <div className="flex items-center justify-between">
+          <Label htmlFor="folio">Folio del Servicio</Label>
+          <div className="flex items-center space-x-2">
+            <Label htmlFor="manual-folio" className="text-sm">Manual</Label>
+            <Switch
+              id="manual-folio"
+              checked={isManualFolio}
+              onCheckedChange={setIsManualFolio}
+              disabled={!!service} // No permitir cambio cuando se edita
+            />
+          </div>
+        </div>
+        <div className="flex space-x-2">
+          <Input
+            id="folio"
+            value={folio}
+            onChange={(e) => setFolio(e.target.value)}
+            placeholder="Ej: SRV-001"
+            required
+            disabled={!isManualFolio && !service}
+            className="flex-1"
+          />
+          {!isManualFolio && !service && (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleGenerateNewFolio}
+              disabled={folioLoading}
+              title="Generar nuevo folio"
+            >
+              <RefreshCw className={cn("w-4 h-4", folioLoading && "animate-spin")} />
+            </Button>
+          )}
+        </div>
+        {!isManualFolio && !service && (
+          <p className="text-xs text-gray-600">
+            El folio se genera automáticamente usando el formato configurado de la empresa.
+          </p>
+        )}
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Fecha de Solicitud */}
         <div className="space-y-2">

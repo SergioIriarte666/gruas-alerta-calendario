@@ -1,4 +1,3 @@
-
 export interface CompanySettings {
   name: string;
   address: string;
@@ -6,6 +5,7 @@ export interface CompanySettings {
   email: string;
   taxId: string;
   logo?: string;
+  folioFormat?: string;
 }
 
 export interface UserSettings {
@@ -45,7 +45,8 @@ export const defaultSettings: Settings = {
     phone: '+56 2 2345 6789',
     email: 'contacto@tmsgruas.cl',
     taxId: '12.345.678-9',
-    logo: undefined
+    logo: undefined,
+    folioFormat: 'SRV-{number}'
   },
   user: {
     theme: 'dark',
