@@ -1,4 +1,3 @@
-
 import * as Papa from 'papaparse';
 import { Service } from '@/types';
 import { CSVServiceRow, validateCSVData, ValidationResult } from './csvValidations';
@@ -105,7 +104,7 @@ export class CSVServiceUploader {
   // Process services in batches
   async processBatch(
     services: Omit<Service, 'id' | 'folio' | 'createdAt' | 'updatedAt'>[],
-    createService: (service: Omit<Service, 'id' | 'folio' | 'createdAt' | 'updatedAt'>) => Service,
+    createService: (service: Omit<Service, 'id' | 'folio' | 'createdAt' | 'updatedAt'>) => Promise<Service>,
     onProgress?: (progress: UploadProgress) => void
   ): Promise<UploadResult> {
     const total = services.length;
@@ -122,7 +121,7 @@ export class CSVServiceUploader {
         // Process each service in the batch
         for (let j = 0; j < batch.length; j++) {
           try {
-            createService(batch[j]);
+            await createService(batch[j]);
             processed++;
           } catch (error) {
             console.error('Error creating service:', error);

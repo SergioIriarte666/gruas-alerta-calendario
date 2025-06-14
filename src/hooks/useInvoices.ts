@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Invoice } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
@@ -35,7 +34,7 @@ export const useInvoices = () => {
         subtotal: Number(invoice.subtotal),
         vat: Number(invoice.vat),
         total: Number(invoice.total),
-        status: invoice.status as 'pending' | 'paid' | 'overdue',
+        status: invoice.status as 'draft' | 'sent' | 'paid' | 'overdue' | 'cancelled',
         paymentDate: invoice.payment_date,
         createdAt: invoice.created_at,
         updatedAt: invoice.updated_at
@@ -107,7 +106,7 @@ export const useInvoices = () => {
         subtotal: Number(newInvoice.subtotal),
         vat: Number(newInvoice.vat),
         total: Number(newInvoice.total),
-        status: newInvoice.status as 'pending' | 'paid' | 'overdue',
+        status: newInvoice.status as 'draft' | 'sent' | 'paid' | 'overdue' | 'cancelled',
         paymentDate: newInvoice.payment_date,
         createdAt: newInvoice.created_at,
         updatedAt: newInvoice.updated_at

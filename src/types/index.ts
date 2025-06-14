@@ -118,8 +118,9 @@ export interface ServiceClosure {
   updatedAt: string;
 }
 
-export type ServiceStatus = 'pending' | 'closed' | 'invoiced';
-export type InvoiceStatus = 'pending' | 'paid' | 'overdue';
+// Updated to match database enums
+export type ServiceStatus = 'pending' | 'in_progress' | 'completed' | 'cancelled';
+export type InvoiceStatus = 'draft' | 'sent' | 'paid' | 'overdue' | 'cancelled';
 export type CraneType = 'light' | 'medium' | 'heavy' | 'taxi' | 'other';
 
 export interface CalendarEvent {
@@ -141,8 +142,8 @@ export interface DashboardMetrics {
   overdueInvoices: number;
   servicesByStatus: {
     pending: number;
-    closed: number;
-    invoiced: number;
+    completed: number;
+    cancelled: number;
   };
   upcomingExpirations: number;
 }
