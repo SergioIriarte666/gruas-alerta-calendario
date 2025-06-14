@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -39,12 +38,12 @@ const Services = () => {
     return matchesSearch && matchesStatus;
   });
 
-  const handleCreateService = (serviceData: Omit<Service, 'id' | 'folio' | 'createdAt' | 'updatedAt'>) => {
+  const handleCreateService = (serviceData: Omit<Service, 'id' | 'createdAt' | 'updatedAt'> & { folio: string }) => {
     createService(serviceData);
     setIsFormOpen(false);
   };
 
-  const handleUpdateService = (serviceData: Omit<Service, 'id' | 'folio' | 'createdAt' | 'updatedAt'>) => {
+  const handleUpdateService = (serviceData: Omit<Service, 'id' | 'createdAt' | 'updatedAt'> & { folio: string }) => {
     if (editingService) {
       updateService(editingService.id, serviceData);
       setEditingService(null);
@@ -76,7 +75,6 @@ const Services = () => {
 
   const handleCSVSuccess = (count: number) => {
     setIsCSVUploadOpen(false);
-    // Could add a toast notification here
     console.log(`${count} servicios cargados exitosamente`);
   };
 
@@ -90,7 +88,6 @@ const Services = () => {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-white">Gestión de Servicios</h1>
@@ -136,7 +133,6 @@ const Services = () => {
         </div>
       </div>
 
-      {/* CSV Upload Modal */}
       <Dialog open={isCSVUploadOpen} onOpenChange={setIsCSVUploadOpen}>
         <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
@@ -149,7 +145,6 @@ const Services = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Filters */}
       <ServiceFilters
         searchTerm={searchTerm}
         onSearchChange={setSearchTerm}
@@ -157,7 +152,6 @@ const Services = () => {
         onStatusChange={setStatusFilter}
       />
 
-      {/* Services Table */}
       <ServicesTable
         services={filteredServices}
         hasInitialServices={services.length > 0}
@@ -168,7 +162,6 @@ const Services = () => {
         onAddNewService={() => setIsFormOpen(true)}
       />
 
-      {/* Service Details Modal */}
       {selectedService && (
         <ServiceDetailsModal
           service={selectedService}
