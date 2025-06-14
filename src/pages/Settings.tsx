@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
@@ -27,14 +26,14 @@ const Settings = () => {
     if (result.success) {
       toast({
         title: "Configuración guardada",
-        description: "Los cambios se han guardado correctamente",
+        description: "Los cambios se han guardado correctamente.",
       });
       console.log('Dispatching settings-updated event after saving settings');
       window.dispatchEvent(new Event('settings-updated'));
     } else {
       toast({
-        title: "Error",
-        description: result.error || "Error al guardar la configuración",
+        title: "Error al guardar",
+        description: result.error || "No se pudo guardar la configuración.",
         variant: "destructive",
       });
     }
@@ -58,14 +57,14 @@ const Settings = () => {
 
       toast({
         title: "Logotipo actualizado",
-        description: "El cambio en el logotipo se ha guardado.",
+        description: "El cambio en el logotipo se ha guardado correctamente.",
       });
       console.log('Dispatching settings-updated event after logo change');
       window.dispatchEvent(new CustomEvent('settings-updated'));
     } else {
       toast({
-        title: "Error",
-        description: result.error || "Error al guardar el logotipo",
+        title: "Error al actualizar logotipo",
+        description: result.error || "Ocurrió un error inesperado al procesar el logo.",
         variant: "destructive",
       });
     }
