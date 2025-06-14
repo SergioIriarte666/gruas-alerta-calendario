@@ -15,11 +15,7 @@ export const useLogoUpdater = () => {
       return { success: false, error: 'Configuración no cargada.' };
     }
     setIsUpdating(true);
-    console.log("updateLogo: Starting logo update process.");
-
-    let oldLogoUrlToDelete: string | null = null;
-    let newLogoUrlWithTimestamp: string | undefined = undefined;
-    let newLogoUrlForDb: string | undefined = undefined;
+    console.log("updateLogo: Starting logo update process.", { hasFile: !!logoFile });
 
     try {
       // Step 1: Get or create company data entry
@@ -32,7 +28,7 @@ export const useLogoUpdater = () => {
       console.log("updateLogo: Fetched company data:", companyData);
 
       if (!companyData) {
-        console.log("updateLogo: No company data found, creating new entry.");
+        console.log("updateLogo: No company data found, creating new entry with settings:", settings.company);
         const { data: newCompanyData, error: companyInsertError } = await supabase.from('company_data').insert({
           business_name: settings.company.name,
           rut: settings.company.taxId,
@@ -49,9 +45,10 @@ export const useLogoUpdater = () => {
         console.log("updateLogo: New company data created:", companyData);
       }
       
-      oldLogoUrlToDelete = companyData.logo_url;
-      console.log("updateLogo: Old logo URL to delete (if any):", oldLogoUrlToDelete);
+      const oldLogoUrl = companyData.logo_url;
+      console.log("updateLogo: Old logo URL to delete (if any):", oldLogoUrl);
 
+      let newLogoUrl: string | undefined = undefined;
 
       // Step 2: Handle logo file upload/removal
       if (logoFile) {
@@ -59,41 +56,35 @@ export const useLogoUpdater = () => {
         const filePath = `public/logo-${Date.now()}-${logoFile.name}`;
         const { data: uploadData, error: uploadError } = await supabase.storage
           .from('company-assets')
-          .upload(filePath, logoFile);
+          .upload(filePath, logoFile, { upsert: true });
 
         if (uploadError) {
           console.error('updateLogo: Storage upload error:', uploadError);
           throw new Error('Error al subir el nuevo logotipo.');
         }
         
-        console.log("updateLogo: Upload successful. Data:", uploadData);
+        console.log("updateLogo: Upload successful. Path:", uploadData.path);
 
         const { data: urlData } = supabase.storage
           .from('company-assets')
           .getPublicUrl(uploadData.path);
         
-        newLogoUrlForDb = urlData.publicUrl;
-        newLogoUrlWithTimestamp = `${urlData.publicUrl}?t=${new Date().getTime()}`;
-        console.log("updateLogo: New public URL for DB:", newLogoUrlForDb);
-        console.log("updateLogo: New public URL with cache buster:", newLogoUrlWithTimestamp);
-      } else {
-        console.log("updateLogo: No logo file provided, logo will be removed.");
-        newLogoUrlForDb = undefined;
-        newLogoUrlWithTimestamp = undefined;
+        newLogoUrl = urlData.publicUrl;
+        console.log("updateLogo: New public URL for DB:", newLogoUrl);
       }
       
       // Step 3: Update database with new logo URL
-      console.log("updateLogo: Updating database with new logo URL.");
+      console.log(`updateLogo: Updating DB for company ID ${companyData.id} with logo URL: ${newLogoUrl}`);
       const { error: dbError } = await supabase
         .from('company_data')
-        .update({ logo_url: newLogoUrlForDb })
+        .update({ logo_url: newLogoUrl })
         .eq('id', companyData.id);
 
       if (dbError) {
         console.error('updateLogo: Database update error:', dbError);
         // If DB update fails, try to remove the newly uploaded file to avoid orphaned files
-        if (newLogoUrlForDb) {
-            const newPath = newLogoUrlForDb.split('/company-assets/')[1];
+        if (newLogoUrl) {
+            const newPath = newLogoUrl.split('/company-assets/')[1];
             if (newPath) {
                 console.log("updateLogo: Rolling back upload. Removing:", newPath);
                 await supabase.storage.from('company-assets').remove([newPath]);
@@ -104,9 +95,11 @@ export const useLogoUpdater = () => {
       console.log("updateLogo: Database updated successfully.");
 
       // Step 4: Remove old logo from storage if new one was saved
-      if (oldLogoUrlToDelete) {
-        const oldLogoPath = oldLogoUrlToDelete.split('/company-assets/')[1];
-        if (oldLogoPath && oldLogoPath !== newLogoUrlForDb?.split('/company-assets/')[1]) {
+      if (oldLogoUrl) {
+        const oldLogoPath = oldLogoUrl.split('/company-assets/')[1]?.split('?')[0];
+        const newLogoPath = newLogoUrl?.split('/company-assets/')[1]?.split('?')[0];
+
+        if (oldLogoPath && oldLogoPath !== newLogoPath) {
           console.log("updateLogo: Removing old logo from storage:", oldLogoPath);
           const { error: removeError } = await supabase.storage.from('company-assets').remove([oldLogoPath]);
           if(removeError) {
@@ -116,7 +109,7 @@ export const useLogoUpdater = () => {
       }
 
       console.log("updateLogo: Process completed successfully.");
-      return { success: true, newLogoUrl: newLogoUrlWithTimestamp };
+      return { success: true, newLogoUrl: newLogoUrl };
 
     } catch (error) {
       console.error('updateLogo: An error occurred in the process.', error);

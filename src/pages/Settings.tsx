@@ -44,18 +44,24 @@ const Settings = () => {
     if (!settings) return;
     const result = await updateLogo(logoFile, settings);
     if (result.success) {
+      // Create a cache-busted URL for immediate UI update
+      const logoForPreview = result.newLogoUrl
+        ? `${result.newLogoUrl}?t=${new Date().getTime()}`
+        : undefined;
+      
       updateSettings({
         company: {
           ...settings.company,
-          logo: result.newLogoUrl,
+          logo: logoForPreview,
         },
       });
+
       toast({
         title: "Logotipo actualizado",
         description: "El cambio en el logotipo se ha guardado.",
       });
       console.log('Dispatching settings-updated event after logo change');
-      window.dispatchEvent(new Event('settings-updated'));
+      window.dispatchEvent(new CustomEvent('settings-updated'));
     } else {
       toast({
         title: "Error",

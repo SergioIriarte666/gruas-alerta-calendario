@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -77,8 +78,10 @@ export const useSettings = () => {
       console.log('Received settings-updated event, refetching settings.');
       fetchSettings();
     };
+    console.log('Setting up settings-updated event listener.');
     window.addEventListener('settings-updated', refetch);
     return () => {
+      console.log('Cleaning up settings-updated event listener.');
       window.removeEventListener('settings-updated', refetch);
     };
   }, [fetchSettings]);
