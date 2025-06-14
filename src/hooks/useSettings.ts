@@ -105,14 +105,14 @@ export const useSettings = () => {
 
     setSaving(true);
     try {
-      // Guardar TODOS los campos relevantes, incluyendo logo
-      const companyPayload: Record<string, any> = {
+      // Payload strictly matches company_data requirements
+      const companyPayload = {
         business_name: settings.company.name || '',
         address: settings.company.address || '',
         phone: settings.company.phone || '',
         email: settings.company.email || '',
         rut: settings.company.taxId || '',
-        logo_url: settings.company.logo || null, // logo_url puede ser undefined/null o string
+        logo_url: settings.company.logo || null,
       };
       console.log('Intentando guardar datos de empresa (payload enviado):', companyPayload);
 
@@ -142,7 +142,7 @@ export const useSettings = () => {
         console.log('Empresa actualizada correctamente');
 
       } else {
-        // Insertar nuevo registro
+        // Insertar nuevo registro (fix type error: use an array with correct typing)
         const { data: newCompany, error: insertError } = await supabase
           .from('company_data')
           .insert([companyPayload])
