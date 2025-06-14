@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { UseFormReturn } from 'react-hook-form';
 import { FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
@@ -84,7 +83,7 @@ export const CostFormInputs = ({
                             <FormControl><SelectTrigger className="bg-white/10"><SelectValue placeholder="Sin asociar" /></SelectTrigger></FormControl>
                             <SelectContent>
                                 <SelectItem value="none">Sin asociar</SelectItem>
-                                {cranes.map(c => <SelectItem key={c.id} value={c.id}>{`${c.brand} ${c.model}`}</SelectItem>)}
+                                {cranes.map(c => <SelectItem key={c.id} value={c.id}>{c.license_plate}</SelectItem>)}
                             </SelectContent>
                         </Select>
                     </FormItem>
