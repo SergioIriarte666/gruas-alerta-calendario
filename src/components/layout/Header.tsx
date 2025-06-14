@@ -1,4 +1,3 @@
-
 import { Search, User, Settings } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -29,10 +28,7 @@ export const Header = () => {
   };
 
   const handleProfileClick = () => {
-    toast({
-      title: "Perfil",
-      description: "Funcionalidad de perfil en desarrollo",
-    });
+    navigate('/profile');
   };
 
   return (
