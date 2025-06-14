@@ -1,5 +1,5 @@
 
-import Papa from 'papaparse';
+import * as Papa from 'papaparse';
 import { Service } from '@/types';
 import { CSVServiceRow, validateCSVData, ValidationResult } from './csvValidations';
 
