@@ -11,6 +11,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Invoice, InvoiceStatus } from '@/types';
 import { useClients } from '@/hooks/useClients';
 import { useServices } from '@/hooks/useServices';
+import ServiceSelector from './ServiceSelector';
+import InvoiceSummary from './InvoiceSummary';
 
 const invoiceSchema = z.object({
   serviceIds: z.array(z.string()).min(1, 'Debe seleccionar al menos un servicio'),
@@ -154,63 +156,22 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
             </div>
           </div>
 
-          <div>
-            <Label className="text-gray-300">Servicios a Facturar</Label>
-            <div className="mt-2 max-h-60 overflow-y-auto border border-gray-700 rounded-lg p-4 bg-white/5">
-              {availableServices.length === 0 ? (
-                <p className="text-gray-400 text-center py-4">No hay servicios completados disponibles</p>
-              ) : (
-                <div className="space-y-2">
-                  {availableServices.map((service) => (
-                    <div
-                      key={service.id}
-                      className={`flex items-center justify-between p-3 border border-gray-700 rounded cursor-pointer hover:bg-white/10 ${
-                        selectedServiceIds.includes(service.id) ? 'bg-tms-green/20 border-tms-green' : ''
-                      }`}
-                      onClick={() => handleServiceToggle(service.id)}
-                    >
-                      <div>
-                        <p className="font-medium text-white">{service.folio}</p>
-                        <p className="text-sm text-gray-300">{service.client.name}</p>
-                        <p className="text-sm text-gray-400">{service.serviceDate}</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-medium text-white">${service.value.toLocaleString()}</p>
-                        <input
-                          type="checkbox"
-                          checked={selectedServiceIds.includes(service.id)}
-                          onChange={() => handleServiceToggle(service.id)}
-                          className="mt-1"
-                        />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-            {errors.serviceIds && (
-              <p className="text-sm text-red-400 mt-1">{errors.serviceIds.message}</p>
-            )}
-          </div>
+          <ServiceSelector
+            services={availableServices}
+            selectedServiceIds={selectedServiceIds}
+            onServiceToggle={handleServiceToggle}
+          />
+          
+          {errors.serviceIds && (
+            <p className="text-sm text-red-400 mt-1">{errors.serviceIds.message}</p>
+          )}
 
           {selectedServices.length > 0 && (
-            <div className="bg-white/10 p-4 rounded-lg border border-gray-700">
-              <h4 className="font-medium text-white mb-3">Resumen de Facturación</h4>
-              <div className="space-y-2">
-                <div className="flex justify-between text-gray-300">
-                  <span>Subtotal:</span>
-                  <span>${subtotal.toLocaleString()}</span>
-                </div>
-                <div className="flex justify-between text-gray-300">
-                  <span>IVA (19%):</span>
-                  <span>${vat.toLocaleString()}</span>
-                </div>
-                <div className="flex justify-between font-bold text-lg border-t border-gray-700 pt-2 text-white">
-                  <span>Total:</span>
-                  <span>${total.toLocaleString()}</span>
-                </div>
-              </div>
-            </div>
+            <InvoiceSummary
+              subtotal={subtotal}
+              vat={vat}
+              total={total}
+            />
           )}
 
           <div className="flex justify-end gap-4">
