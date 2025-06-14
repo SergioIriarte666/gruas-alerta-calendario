@@ -29,9 +29,9 @@ const App = () => (
             <Route path="/services" element={<Services />} />
             <Route path="/clients" element={<Clients />} />
             <Route path="/cranes" element={<Cranes />} />
+            <Route path="/operators" element={<Operators />} />
+            <Route path="/closures" element={<Closures />} />
             {/* Rutas adicionales serán implementadas progresivamente */}
-            <Route path="/operators" element={<div className="text-white">Módulo Operadores - En desarrollo</div>} />
-            <Route path="/closures" element={<div className="text-white">Módulo Cierres - En desarrollo</div>} />
             <Route path="/invoices" element={<div className="text-white">Módulo Facturas - En desarrollo</div>} />
             <Route path="/reports" element={<div className="text-white">Módulo Reportes - En desarrollo</div>} />
             <Route path="/settings" element={<div className="text-white">Configuración - En desarrollo</div>} />
