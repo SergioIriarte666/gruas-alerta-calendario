@@ -11,17 +11,23 @@ export const useServiceClosures = () => {
 
   const fetchClosures = async () => {
     try {
+      console.log('Fetching closures...');
       const { data, error } = await supabase
         .from('service_closures')
-        .select('*')
+        .select(`
+          *,
+          closure_services(service_id)
+        `)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
 
+      console.log('Raw closures data:', data);
+
       const formattedClosures: ServiceClosure[] = data.map(closure => ({
         id: closure.id,
         folio: closure.folio,
-        serviceIds: [], // Will be populated by junction table
+        serviceIds: closure.closure_services?.map((cs: any) => cs.service_id) || [],
         dateRange: {
           from: closure.date_from,
           to: closure.date_to
@@ -33,6 +39,7 @@ export const useServiceClosures = () => {
         updatedAt: closure.updated_at
       }));
 
+      console.log('Formatted closures:', formattedClosures);
       setClosures(formattedClosures);
     } catch (error: any) {
       console.error('Error fetching closures:', error);
@@ -52,6 +59,8 @@ export const useServiceClosures = () => {
 
   const createClosure = async (closureData: Omit<ServiceClosure, 'id' | 'folio' | 'createdAt' | 'updatedAt'>) => {
     try {
+      console.log('Creating closure with data:', closureData);
+      
       // Generate folio
       const count = await supabase
         .from('service_closures')
@@ -73,6 +82,25 @@ export const useServiceClosures = () => {
         .single();
 
       if (error) throw error;
+
+      console.log('Created closure:', data);
+
+      // Create closure-service relationships
+      if (closureData.serviceIds.length > 0) {
+        const closureServices = closureData.serviceIds.map(serviceId => ({
+          closure_id: data.id,
+          service_id: serviceId
+        }));
+
+        const { error: relationError } = await supabase
+          .from('closure_services')
+          .insert(closureServices);
+
+        if (relationError) {
+          console.error('Error creating closure-service relationships:', relationError);
+          throw relationError;
+        }
+      }
 
       const newClosure: ServiceClosure = {
         id: data.id,

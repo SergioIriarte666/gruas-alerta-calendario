@@ -23,7 +23,7 @@ const invoiceSchema = z.object({
 type InvoiceFormData = z.infer<typeof invoiceSchema>;
 
 interface InvoiceFormProps {
-  invoice?: Invoice;
+  invoice?: Invoice | null;
   onSubmit: (data: InvoiceFormData & { subtotal: number; vat: number; total: number }) => void;
   onCancel: () => void;
 }
@@ -80,9 +80,9 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
   const availableServices = services.filter(s => s.status === 'completed');
 
   return (
-    <Card>
+    <Card className="glass-card">
       <CardHeader>
-        <CardTitle>
+        <CardTitle className="text-white">
           {invoice ? 'Editar Factura' : 'Nueva Factura'}
         </CardTitle>
       </CardHeader>
@@ -90,9 +90,9 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
         <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="clientId">Cliente</Label>
+              <Label htmlFor="clientId" className="text-gray-300">Cliente</Label>
               <Select onValueChange={(value) => setValue('clientId', value)}>
-                <SelectTrigger>
+                <SelectTrigger className="bg-white/5 border-gray-700 text-white">
                   <SelectValue placeholder="Seleccionar cliente" />
                 </SelectTrigger>
                 <SelectContent>
@@ -104,14 +104,14 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
                 </SelectContent>
               </Select>
               {errors.clientId && (
-                <p className="text-sm text-red-600 mt-1">{errors.clientId.message}</p>
+                <p className="text-sm text-red-400 mt-1">{errors.clientId.message}</p>
               )}
             </div>
 
             <div>
-              <Label htmlFor="status">Estado</Label>
+              <Label htmlFor="status" className="text-gray-300">Estado</Label>
               <Select onValueChange={(value) => setValue('status', value as InvoiceStatus)}>
-                <SelectTrigger>
+                <SelectTrigger className="bg-white/5 border-gray-700 text-white">
                   <SelectValue placeholder="Seleccionar estado" />
                 </SelectTrigger>
                 <SelectContent>
@@ -123,59 +123,59 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
                 </SelectContent>
               </Select>
               {errors.status && (
-                <p className="text-sm text-red-600 mt-1">{errors.status.message}</p>
+                <p className="text-sm text-red-400 mt-1">{errors.status.message}</p>
               )}
             </div>
 
             <div>
-              <Label htmlFor="issueDate">Fecha de Emisión</Label>
+              <Label htmlFor="issueDate" className="text-gray-300">Fecha de Emisión</Label>
               <Input
                 id="issueDate"
                 type="date"
                 {...register('issueDate')}
-                className="mt-1"
+                className="mt-1 bg-white/5 border-gray-700 text-white"
               />
               {errors.issueDate && (
-                <p className="text-sm text-red-600 mt-1">{errors.issueDate.message}</p>
+                <p className="text-sm text-red-400 mt-1">{errors.issueDate.message}</p>
               )}
             </div>
 
             <div>
-              <Label htmlFor="dueDate">Fecha de Vencimiento</Label>
+              <Label htmlFor="dueDate" className="text-gray-300">Fecha de Vencimiento</Label>
               <Input
                 id="dueDate"
                 type="date"
                 {...register('dueDate')}
-                className="mt-1"
+                className="mt-1 bg-white/5 border-gray-700 text-white"
               />
               {errors.dueDate && (
-                <p className="text-sm text-red-600 mt-1">{errors.dueDate.message}</p>
+                <p className="text-sm text-red-400 mt-1">{errors.dueDate.message}</p>
               )}
             </div>
           </div>
 
           <div>
-            <Label>Servicios a Facturar</Label>
-            <div className="mt-2 max-h-60 overflow-y-auto border rounded-lg p-4">
+            <Label className="text-gray-300">Servicios a Facturar</Label>
+            <div className="mt-2 max-h-60 overflow-y-auto border border-gray-700 rounded-lg p-4 bg-white/5">
               {availableServices.length === 0 ? (
-                <p className="text-gray-500 text-center py-4">No hay servicios completados disponibles</p>
+                <p className="text-gray-400 text-center py-4">No hay servicios completados disponibles</p>
               ) : (
                 <div className="space-y-2">
                   {availableServices.map((service) => (
                     <div
                       key={service.id}
-                      className={`flex items-center justify-between p-3 border rounded cursor-pointer hover:bg-gray-50 ${
-                        selectedServiceIds.includes(service.id) ? 'bg-blue-50 border-blue-300' : ''
+                      className={`flex items-center justify-between p-3 border border-gray-700 rounded cursor-pointer hover:bg-white/10 ${
+                        selectedServiceIds.includes(service.id) ? 'bg-tms-green/20 border-tms-green' : ''
                       }`}
                       onClick={() => handleServiceToggle(service.id)}
                     >
                       <div>
-                        <p className="font-medium">{service.folio}</p>
-                        <p className="text-sm text-gray-600">{service.client.name}</p>
-                        <p className="text-sm text-gray-500">{service.serviceDate}</p>
+                        <p className="font-medium text-white">{service.folio}</p>
+                        <p className="text-sm text-gray-300">{service.client.name}</p>
+                        <p className="text-sm text-gray-400">{service.serviceDate}</p>
                       </div>
                       <div className="text-right">
-                        <p className="font-medium">${service.value.toLocaleString()}</p>
+                        <p className="font-medium text-white">${service.value.toLocaleString()}</p>
                         <input
                           type="checkbox"
                           checked={selectedServiceIds.includes(service.id)}
@@ -189,23 +189,23 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
               )}
             </div>
             {errors.serviceIds && (
-              <p className="text-sm text-red-600 mt-1">{errors.serviceIds.message}</p>
+              <p className="text-sm text-red-400 mt-1">{errors.serviceIds.message}</p>
             )}
           </div>
 
           {selectedServices.length > 0 && (
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <h4 className="font-medium text-gray-900 mb-3">Resumen de Facturación</h4>
+            <div className="bg-white/10 p-4 rounded-lg border border-gray-700">
+              <h4 className="font-medium text-white mb-3">Resumen de Facturación</h4>
               <div className="space-y-2">
-                <div className="flex justify-between">
+                <div className="flex justify-between text-gray-300">
                   <span>Subtotal:</span>
                   <span>${subtotal.toLocaleString()}</span>
                 </div>
-                <div className="flex justify-between">
+                <div className="flex justify-between text-gray-300">
                   <span>IVA (19%):</span>
                   <span>${vat.toLocaleString()}</span>
                 </div>
-                <div className="flex justify-between font-bold text-lg border-t pt-2">
+                <div className="flex justify-between font-bold text-lg border-t border-gray-700 pt-2 text-white">
                   <span>Total:</span>
                   <span>${total.toLocaleString()}</span>
                 </div>
@@ -214,10 +214,10 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
           )}
 
           <div className="flex justify-end gap-4">
-            <Button type="button" variant="outline" onClick={onCancel}>
+            <Button type="button" variant="outline" onClick={onCancel} className="border-gray-700 text-gray-300 hover:text-white">
               Cancelar
             </Button>
-            <Button type="submit">
+            <Button type="submit" className="bg-tms-green hover:bg-tms-green/90">
               {invoice ? 'Actualizar' : 'Crear'} Factura
             </Button>
           </div>

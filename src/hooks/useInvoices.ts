@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Invoice } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
@@ -60,8 +61,11 @@ export const useInvoices = () => {
   const createInvoice = async (invoiceData: Omit<Invoice, 'id' | 'folio' | 'createdAt' | 'updatedAt'>) => {
     try {
       // Generate folio
-      const folioNumber = invoices.length + 1;
-      const folio = `FACT-${String(folioNumber).padStart(3, '0')}`;
+      const count = await supabase
+        .from('invoices')
+        .select('id', { count: 'exact' });
+      
+      const folio = `FACT-${String((count.count || 0) + 1).padStart(3, '0')}`;
 
       // Create invoice
       const { data: newInvoice, error: invoiceError } = await supabase

@@ -9,13 +9,14 @@ import { Plus, Search, Eye, Edit, Trash2, CheckCircle, AlertCircle, Clock } from
 import { useInvoices } from '@/hooks/useInvoices';
 import { InvoiceForm } from '@/components/invoices/InvoiceForm';
 import { Invoice } from '@/types';
-import { toast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 
 const Invoices = () => {
   const { invoices, loading, createInvoice, updateInvoice, deleteInvoice, markAsPaid, getInvoiceWithDetails } = useInvoices();
   const [searchTerm, setSearchTerm] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [editingInvoice, setEditingInvoice] = useState<Invoice | null>(null);
+  const { toast } = useToast();
 
   const filteredInvoices = invoices.filter(invoice => {
     const invoiceWithDetails = getInvoiceWithDetails(invoice);
@@ -132,7 +133,7 @@ const Invoices = () => {
 
       {/* Métricas */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <Card className="bg-white/10 border-white/20">
+        <Card className="glass-card">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium text-gray-300">Total Facturas</CardTitle>
           </CardHeader>
@@ -141,7 +142,7 @@ const Invoices = () => {
           </CardContent>
         </Card>
         
-        <Card className="bg-white/10 border-white/20">
+        <Card className="glass-card">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium text-gray-300">Pendientes</CardTitle>
           </CardHeader>
@@ -150,7 +151,7 @@ const Invoices = () => {
           </CardContent>
         </Card>
         
-        <Card className="bg-white/10 border-white/20">
+        <Card className="glass-card">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium text-gray-300">Vencidas</CardTitle>
           </CardHeader>
@@ -159,7 +160,7 @@ const Invoices = () => {
           </CardContent>
         </Card>
         
-        <Card className="bg-white/10 border-white/20">
+        <Card className="glass-card">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium text-gray-300">Cobradas</CardTitle>
           </CardHeader>
@@ -170,7 +171,7 @@ const Invoices = () => {
       </div>
 
       {/* Filtros */}
-      <Card className="bg-white/10 border-white/20">
+      <Card className="glass-card">
         <CardContent className="p-6">
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="relative flex-1">
@@ -179,7 +180,7 @@ const Invoices = () => {
                 placeholder="Buscar por folio o cliente..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 bg-white/5 border-white/20 text-white placeholder:text-gray-400"
+                className="pl-10 bg-white/5 border-gray-700 text-white placeholder-gray-400"
               />
             </div>
           </div>
@@ -187,14 +188,14 @@ const Invoices = () => {
       </Card>
 
       {/* Tabla de facturas */}
-      <Card className="bg-white/10 border-white/20">
+      <Card className="glass-card">
         <CardHeader>
           <CardTitle className="text-white">Lista de Facturas</CardTitle>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
-              <TableRow className="border-white/20">
+              <TableRow className="border-gray-700">
                 <TableHead className="text-gray-300">Folio</TableHead>
                 <TableHead className="text-gray-300">Cliente</TableHead>
                 <TableHead className="text-gray-300">Fecha Emisión</TableHead>
@@ -208,7 +209,7 @@ const Invoices = () => {
               {filteredInvoices.map((invoice) => {
                 const invoiceWithDetails = getInvoiceWithDetails(invoice);
                 return (
-                  <TableRow key={invoice.id} className="border-white/20">
+                  <TableRow key={invoice.id} className="border-gray-700 hover:bg-white/5">
                     <TableCell className="text-white font-medium">{invoice.folio}</TableCell>
                     <TableCell className="text-white">{invoiceWithDetails.client?.name || 'Cliente no encontrado'}</TableCell>
                     <TableCell className="text-white">{new Date(invoice.issueDate).toLocaleDateString()}</TableCell>
@@ -220,29 +221,29 @@ const Invoices = () => {
                         {(invoice.status === 'draft' || invoice.status === 'sent') && (
                           <Button
                             size="sm"
-                            variant="outline"
+                            variant="ghost"
                             onClick={() => handleMarkAsPaid(invoice.id)}
-                            className="text-green-600 border-green-600 hover:bg-green-600 hover:text-white"
+                            className="text-green-400 hover:text-green-300"
                           >
                             <CheckCircle className="w-4 h-4" />
                           </Button>
                         )}
                         <Button
                           size="sm"
-                          variant="outline"
+                          variant="ghost"
                           onClick={() => {
                             setEditingInvoice(invoice);
                             setShowForm(true);
                           }}
-                          className="text-blue-400 border-blue-400 hover:bg-blue-400 hover:text-white"
+                          className="text-gray-400 hover:text-white"
                         >
                           <Edit className="w-4 h-4" />
                         </Button>
                         <Button
                           size="sm"
-                          variant="outline"
+                          variant="ghost"
                           onClick={() => handleDeleteInvoice(invoice.id)}
-                          className="text-red-400 border-red-400 hover:bg-red-400 hover:text-white"
+                          className="text-red-400 hover:text-red-300"
                         >
                           <Trash2 className="w-4 h-4" />
                         </Button>
