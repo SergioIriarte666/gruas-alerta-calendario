@@ -1,6 +1,5 @@
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Service } from '@/types';
@@ -18,8 +17,12 @@ import {
   Mail,
   Building,
   IdCard,
-  UserCheck
+  UserCheck,
+  Wrench
 } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { VehicleHistory } from './VehicleHistory';
+import React from 'react';
 
 interface ServiceDetailsModalProps {
   service: Service;
@@ -27,25 +30,45 @@ interface ServiceDetailsModalProps {
   onClose: () => void;
 }
 
+const DetailItem: React.FC<{icon: React.ElementType, label: string, value: React.ReactNode, valueClass?: string, isFullWidth?: boolean}> = ({ icon: Icon, label, value, valueClass = '', isFullWidth = false }) => (
+  <div className={`flex items-start space-x-3 ${isFullWidth ? 'col-span-1 md:col-span-2' : ''}`}>
+    <Icon className="w-4 h-4 text-gray-400 mt-1 flex-shrink-0" />
+    <div className="flex-grow">
+      <p className="text-sm text-gray-400">{label}</p>
+      <p className={`font-medium ${valueClass}`}>{value || 'N/A'}</p>
+    </div>
+  </div>
+);
+
+const DetailSection: React.FC<{title: string, icon: React.ElementType, children: React.ReactNode}> = ({ title, icon: Icon, children }) => (
+  <div>
+    <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
+      <Icon className="w-5 h-5 mr-2 text-tms-green"/>
+      {title}
+    </h3>
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+      {children}
+    </div>
+  </div>
+);
+
 export const ServiceDetailsModal = ({ service, isOpen, onClose }: ServiceDetailsModalProps) => {
   const getStatusBadge = (status: Service['status']) => {
     const variants = {
       pending: 'bg-yellow-500 text-white',
-      closed: 'bg-green-500 text-white',
-      invoiced: 'bg-blue-500 text-white'
+      in_progress: 'bg-blue-500 text-white',
+      completed: 'bg-green-500 text-white',
+      cancelled: 'bg-red-500 text-white',
     };
-
     const labels = {
-      pending: 'En Curso',
-      closed: 'Cerrado',
-      invoiced: 'Facturado'
+      pending: 'Pendiente',
+      in_progress: 'En Progreso',
+      completed: 'Completado',
+      cancelled: 'Cancelado',
     };
-
-    return (
-      <Badge className={variants[status]}>
-        {labels[status]}
-      </Badge>
-    );
+    const variant = variants[status] || 'bg-gray-500';
+    const label = labels[status] || 'Desconocido';
+    return <Badge className={variant}>{label}</Badge>;
   };
 
   const formatCurrency = (amount: number) => {
@@ -55,6 +78,8 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose }: ServiceDetails
       minimumFractionDigits: 0
     }).format(amount);
   };
+  
+  const netProfit = service.value - service.operatorCommission;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -66,204 +91,79 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose }: ServiceDetails
           </DialogTitle>
         </DialogHeader>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Información General */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <FileText className="w-5 h-5 text-tms-green" />
-                <span>Información General</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center space-x-3">
-                <Calendar className="w-4 h-4 text-gray-400" />
-                <div>
-                  <p className="text-sm text-gray-400">Fecha de Solicitud</p>
-                  <p className="font-medium">{format(new Date(service.requestDate), 'dd/MM/yyyy', { locale: es })}</p>
-                </div>
-              </div>
+        <Tabs defaultValue="general" className="w-full">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="general">Información General</TabsTrigger>
+            <TabsTrigger value="details">Detalles del Servicio</TabsTrigger>
+            <TabsTrigger value="history">Historial Vehículo</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="general" className="mt-6">
+            <div className="space-y-6">
+                <DetailSection title="Cliente" icon={User}>
+                    <DetailItem icon={User} label="Nombre / Razón Social" value={service.client.name} valueClass="text-lg" />
+                    <DetailItem icon={IdCard} label="RUT" value={service.client.rut} />
+                    <DetailItem icon={Phone} label="Teléfono" value={service.client.phone} />
+                    <DetailItem icon={Mail} label="Email" value={service.client.email} />
+                    <DetailItem icon={MapPin} label="Dirección" value={service.client.address} isFullWidth={true} />
+                </DetailSection>
+                <Separator className="bg-gray-700"/>
+                <DetailSection title="Vehículo" icon={Truck}>
+                    <DetailItem icon={Wrench} label="Marca y Modelo" value={`${service.vehicleBrand} ${service.vehicleModel}`} />
+                    <DetailItem icon={IdCard} label="Patente" value={service.licensePlate} valueClass="text-lg" />
+                </DetailSection>
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="details" className="mt-6">
+            <div className="space-y-6">
+                <DetailSection title="Información del Servicio" icon={FileText}>
+                    <DetailItem icon={FileText} label="Tipo de Servicio" value={service.serviceType.name} />
+                    <DetailItem icon={Building} label="Orden de Compra" value={service.purchaseOrder} />
+                    <DetailItem icon={Calendar} label="Fecha de Solicitud" value={format(new Date(service.requestDate), 'dd/MM/yyyy', { locale: es })} />
+                    <DetailItem icon={Clock} label="Fecha y Hora de Servicio" value={format(new Date(service.serviceDate), "dd/MM/yyyy HH:mm", { locale: es })} />
+                    <DetailItem icon={MapPin} label="Origen" value={service.origin} isFullWidth={true} />
+                    <DetailItem icon={MapPin} label="Destino" value={service.destination} isFullWidth={true} />
+                </DetailSection>
+                <Separator className="bg-gray-700"/>
+                <DetailSection title="Recursos Asignados" icon={Truck}>
+                    <DetailItem 
+                        icon={Truck} 
+                        label="Grúa" 
+                        value={`${service.crane.brand} ${service.crane.model} (${service.crane.licensePlate})`} 
+                    />
+                    <DetailItem 
+                        icon={UserCheck} 
+                        label="Operador" 
+                        value={`${service.operator.name} (${service.operator.rut})`} 
+                    />
+                </DetailSection>
+                 <Separator className="bg-gray-700"/>
+                <DetailSection title="Finanzas" icon={DollarSign}>
+                    <DetailItem icon={DollarSign} label="Valor del Servicio" value={formatCurrency(service.value)} valueClass="text-lg text-tms-green font-bold" />
+                    <DetailItem icon={UserCheck} label="Comisión Operador" value={formatCurrency(service.operatorCommission)} />
+                    <DetailItem icon={DollarSign} label="Ganancia Neta" value={formatCurrency(netProfit)} valueClass="text-lg text-emerald-400 font-bold"/>
+                </DetailSection>
 
-              <div className="flex items-center space-x-3">
-                <Clock className="w-4 h-4 text-gray-400" />
-                <div>
-                  <p className="text-sm text-gray-400">Fecha de Servicio</p>
-                  <p className="font-medium">{format(new Date(service.serviceDate), 'dd/MM/yyyy', { locale: es })}</p>
-                </div>
-              </div>
+                {service.observations && (
+                  <>
+                    <Separator className="bg-gray-700"/>
+                     <div className='pt-6'>
+                        <DetailSection title="Observaciones" icon={FileText}>
+                           <p className="text-gray-300 whitespace-pre-wrap col-span-2">{service.observations}</p>
+                        </DetailSection>
+                     </div>
+                  </>
+                )}
+            </div>
+          </TabsContent>
 
-              <div className="flex items-center space-x-3">
-                <FileText className="w-4 h-4 text-gray-400" />
-                <div>
-                  <p className="text-sm text-gray-400">Tipo de Servicio</p>
-                  <p className="font-medium">{service.serviceType.name}</p>
-                </div>
-              </div>
+          <TabsContent value="history" className="mt-6">
+             <VehicleHistory licensePlate={service.licensePlate} currentServiceId={service.id} />
+          </TabsContent>
+        </Tabs>
 
-              {service.purchaseOrder && (
-                <div className="flex items-center space-x-3">
-                  <Building className="w-4 h-4 text-gray-400" />
-                  <div>
-                    <p className="text-sm text-gray-400">Orden de Compra</p>
-                    <p className="font-medium">{service.purchaseOrder}</p>
-                  </div>
-                </div>
-              )}
-
-              <div className="flex items-center space-x-3">
-                <DollarSign className="w-4 h-4 text-gray-400" />
-                <div>
-                  <p className="text-sm text-gray-400">Valor del Servicio</p>
-                  <p className="font-medium text-lg text-tms-green">{formatCurrency(service.value)}</p>
-                </div>
-              </div>
-
-              <div className="flex items-center space-x-3">
-                <UserCheck className="w-4 h-4 text-gray-400" />
-                <div>
-                  <p className="text-sm text-gray-400">Comisión Operador</p>
-                  <p className="font-medium">{formatCurrency(service.operatorCommission)}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Información del Cliente */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <User className="w-5 h-5 text-tms-green" />
-                <span>Cliente</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <p className="text-sm text-gray-400">Nombre / Razón Social</p>
-                <p className="font-medium text-lg">{service.client.name}</p>
-              </div>
-
-              <div>
-                <p className="text-sm text-gray-400">RUT</p>
-                <p className="font-medium">{service.client.rut}</p>
-              </div>
-
-              <div className="flex items-center space-x-3">
-                <Phone className="w-4 h-4 text-gray-400" />
-                <div>
-                  <p className="text-sm text-gray-400">Teléfono</p>
-                  <p className="font-medium">{service.client.phone}</p>
-                </div>
-              </div>
-
-              <div className="flex items-center space-x-3">
-                <Mail className="w-4 h-4 text-gray-400" />
-                <div>
-                  <p className="text-sm text-gray-400">Email</p>
-                  <p className="font-medium">{service.client.email}</p>
-                </div>
-              </div>
-
-              <div className="flex items-start space-x-3">
-                <MapPin className="w-4 h-4 text-gray-400 mt-1" />
-                <div>
-                  <p className="text-sm text-gray-400">Dirección</p>
-                  <p className="font-medium">{service.client.address}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Información del Vehículo */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Truck className="w-5 h-5 text-tms-green" />
-                <span>Vehículo</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <p className="text-sm text-gray-400">Marca y Modelo</p>
-                <p className="font-medium text-lg">{service.vehicleBrand} {service.vehicleModel}</p>
-              </div>
-
-              <div className="flex items-center space-x-3">
-                <IdCard className="w-4 h-4 text-gray-400" />
-                <div>
-                  <p className="text-sm text-gray-400">Patente</p>
-                  <p className="font-medium text-lg">{service.licensePlate}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Rutas */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <MapPin className="w-5 h-5 text-tms-green" />
-                <span>Ruta del Servicio</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <p className="text-sm text-gray-400">Origen</p>
-                <p className="font-medium">{service.origin}</p>
-              </div>
-
-              <Separator />
-
-              <div>
-                <p className="text-sm text-gray-400">Destino</p>
-                <p className="font-medium">{service.destination}</p>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Recursos Asignados */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Truck className="w-5 h-5 text-tms-green" />
-                <span>Recursos Asignados</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <p className="text-sm text-gray-400">Grúa</p>
-                <p className="font-medium">{service.crane.licensePlate}</p>
-                <p className="text-sm text-gray-500">{service.crane.brand} {service.crane.model}</p>
-              </div>
-
-              <Separator />
-
-              <div>
-                <p className="text-sm text-gray-400">Operador</p>
-                <p className="font-medium">{service.operator.name}</p>
-                <p className="text-sm text-gray-500">RUT: {service.operator.rut}</p>
-                <p className="text-sm text-gray-500">Teléfono: {service.operator.phone}</p>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Observaciones */}
-          {service.observations && (
-            <Card className="lg:col-span-2">
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <FileText className="w-5 h-5 text-tms-green" />
-                  <span>Observaciones</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-gray-300 whitespace-pre-wrap">{service.observations}</p>
-              </CardContent>
-            </Card>
-          )}
-        </div>
-
-        {/* Footer con fechas de creación y actualización */}
-        <div className="flex justify-between text-sm text-gray-400 pt-4 border-t border-gray-700">
+        <div className="flex justify-between text-sm text-gray-400 pt-4 mt-4 border-t border-gray-700">
           <span>Creado: {format(new Date(service.createdAt), 'dd/MM/yyyy HH:mm', { locale: es })}</span>
           <span>Actualizado: {format(new Date(service.updatedAt), 'dd/MM/yyyy HH:mm', { locale: es })}</span>
         </div>
