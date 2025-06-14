@@ -16,7 +16,7 @@ const Closures = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
 
-  console.log('Closures page render - closures:', closures, 'loading:', loading, 'showCreateModal:', showCreateModal);
+  console.log('Closures page render - closures:', closures.length, 'loading:', loading, 'showCreateModal:', showCreateModal);
 
   // Filter closures by search term
   const filteredClosures = closures.filter(closure =>

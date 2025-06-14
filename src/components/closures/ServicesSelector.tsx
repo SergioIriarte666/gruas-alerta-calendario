@@ -1,16 +1,22 @@
 
 import { Label } from '@/components/ui/label';
-import { useServices } from '@/hooks/useServices';
+import { Service } from '@/types';
 
 interface ServicesSelectorProps {
+  services: Service[];
+  loading: boolean;
   clientId: string;
   selectedServiceIds: string[];
   onServiceToggle: (serviceId: string, checked: boolean) => void;
 }
 
-const ServicesSelector = ({ clientId, selectedServiceIds, onServiceToggle }: ServicesSelectorProps) => {
-  const { services, loading } = useServices();
-
+const ServicesSelector = ({ 
+  services, 
+  loading, 
+  clientId, 
+  selectedServiceIds, 
+  onServiceToggle 
+}: ServicesSelectorProps) => {
   console.log('ServicesSelector render - services:', services.length, 'loading:', loading);
 
   const filteredServices = services.filter(service => {
@@ -23,7 +29,11 @@ const ServicesSelector = ({ clientId, selectedServiceIds, onServiceToggle }: Ser
       <div className="space-y-2">
         <Label className="text-gray-300">Servicios</Label>
         <div className="max-h-40 overflow-y-auto border border-gray-700 rounded-md p-2 bg-white/5">
-          <p className="text-gray-400 text-sm">Cargando servicios...</p>
+          <div className="space-y-2">
+            <div className="h-4 bg-gray-700 rounded animate-pulse"></div>
+            <div className="h-4 bg-gray-700 rounded animate-pulse w-3/4"></div>
+            <div className="h-4 bg-gray-700 rounded animate-pulse w-1/2"></div>
+          </div>
         </div>
       </div>
     );
@@ -31,11 +41,11 @@ const ServicesSelector = ({ clientId, selectedServiceIds, onServiceToggle }: Ser
 
   return (
     <div className="space-y-2">
-      <Label className="text-gray-300">Servicios</Label>
+      <Label className="text-gray-300">Servicios Cerrados</Label>
       <div className="max-h-40 overflow-y-auto border border-gray-700 rounded-md p-2 bg-white/5">
         {filteredServices.length === 0 ? (
           <p className="text-gray-400 text-sm">
-            {clientId ? 'No hay servicios disponibles para este cliente' : 'No hay servicios disponibles'}
+            {clientId ? 'No hay servicios cerrados para este cliente' : 'No hay servicios cerrados disponibles'}
           </p>
         ) : (
           filteredServices.map((service) => (

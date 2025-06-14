@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { useServices } from '@/hooks/useServices';
+import { useServicesForClosures } from '@/hooks/useServicesForClosures';
 import { ServiceClosure } from '@/types';
 import DateRangePicker from './DateRangePicker';
 import ClientSelector from './ClientSelector';
@@ -27,7 +27,7 @@ interface FormData {
 }
 
 const ClosureForm = ({ open, onOpenChange, onSubmit }: ClosureFormProps) => {
-  const { services, loading: servicesLoading } = useServices();
+  const { services, loading: servicesLoading } = useServicesForClosures();
   const [formData, setFormData] = useState<FormData>({
     dateFrom: undefined,
     dateTo: undefined,
@@ -108,64 +108,60 @@ const ClosureForm = ({ open, onOpenChange, onSubmit }: ClosureFormProps) => {
           <DialogTitle className="text-white">Nuevo Cierre de Servicios</DialogTitle>
         </DialogHeader>
         
-        {servicesLoading ? (
-          <div className="flex items-center justify-center py-8">
-            <div className="text-white">Cargando datos...</div>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <DateRangePicker
+            dateFrom={formData.dateFrom}
+            dateTo={formData.dateTo}
+            onDateFromChange={(date) => setFormData(prev => ({ ...prev, dateFrom: date }))}
+            onDateToChange={(date) => setFormData(prev => ({ ...prev, dateTo: date }))}
+          />
+
+          <ClientSelector
+            clientId={formData.clientId}
+            onClientChange={handleClientChange}
+          />
+
+          <ServicesSelector
+            services={services}
+            loading={servicesLoading}
+            clientId={formData.clientId}
+            selectedServiceIds={formData.serviceIds}
+            onServiceToggle={handleServiceSelection}
+          />
+
+          {/* Total */}
+          <div className="space-y-2">
+            <Label className="text-gray-300">Total</Label>
+            <Input
+              type="number"
+              value={formData.total}
+              onChange={(e) => setFormData(prev => ({ ...prev, total: Number(e.target.value) }))}
+              className="bg-white/5 border-gray-700 text-white"
+              readOnly
+            />
           </div>
-        ) : (
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <DateRangePicker
-              dateFrom={formData.dateFrom}
-              dateTo={formData.dateTo}
-              onDateFromChange={(date) => setFormData(prev => ({ ...prev, dateFrom: date }))}
-              onDateToChange={(date) => setFormData(prev => ({ ...prev, dateTo: date }))}
-            />
 
-            <ClientSelector
-              clientId={formData.clientId}
-              onClientChange={handleClientChange}
-            />
+          {/* Status */}
+          <div className="space-y-2">
+            <Label className="text-gray-300">Estado</Label>
+            <Select value={formData.status} onValueChange={(value: 'open' | 'closed' | 'invoiced') => setFormData(prev => ({ ...prev, status: value }))}>
+              <SelectTrigger className="bg-white/5 border-gray-700 text-white">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="open">Abierto</SelectItem>
+                <SelectItem value="closed">Cerrado</SelectItem>
+                <SelectItem value="invoiced">Facturado</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
 
-            <ServicesSelector
-              clientId={formData.clientId}
-              selectedServiceIds={formData.serviceIds}
-              onServiceToggle={handleServiceSelection}
-            />
-
-            {/* Total */}
-            <div className="space-y-2">
-              <Label className="text-gray-300">Total</Label>
-              <Input
-                type="number"
-                value={formData.total}
-                onChange={(e) => setFormData(prev => ({ ...prev, total: Number(e.target.value) }))}
-                className="bg-white/5 border-gray-700 text-white"
-                readOnly
-              />
-            </div>
-
-            {/* Status */}
-            <div className="space-y-2">
-              <Label className="text-gray-300">Estado</Label>
-              <Select value={formData.status} onValueChange={(value: 'open' | 'closed' | 'invoiced') => setFormData(prev => ({ ...prev, status: value }))}>
-                <SelectTrigger className="bg-white/5 border-gray-700 text-white">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="open">Abierto</SelectItem>
-                  <SelectItem value="closed">Cerrado</SelectItem>
-                  <SelectItem value="invoiced">Facturado</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <FormActions
-              loading={loading}
-              isFormValid={!!isFormValid}
-              onCancel={() => onOpenChange(false)}
-            />
-          </form>
-        )}
+          <FormActions
+            loading={loading}
+            isFormValid={!!isFormValid}
+            onCancel={() => onOpenChange(false)}
+          />
+        </form>
       </DialogContent>
     </Dialog>
   );
