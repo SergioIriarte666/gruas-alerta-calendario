@@ -1,17 +1,6 @@
+
 import { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Calendar } from '@/components/ui/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Switch } from '@/components/ui/switch';
-import { CalendarIcon, RefreshCw } from 'lucide-react';
 import { format } from 'date-fns';
-import { es } from 'date-fns/locale';
-import { cn } from '@/lib/utils';
 import { Service } from '@/types';
 import { useClients } from '@/hooks/useClients';
 import { useCranes } from '@/hooks/useCranes';
@@ -19,6 +8,15 @@ import { useOperators } from '@/hooks/useOperators';
 import { useServiceTypes } from '@/hooks/useServiceTypes';
 import { useFolioGenerator } from '@/hooks/useFolioGenerator';
 import { useToast } from '@/hooks/use-toast';
+import { FolioSection } from './form/FolioSection';
+import { DateSection } from './form/DateSection';
+import { ClientServiceSection } from './form/ClientServiceSection';
+import { VehicleSection } from './form/VehicleSection';
+import { LocationSection } from './form/LocationSection';
+import { ResourceSection } from './form/ResourceSection';
+import { FinancialSection } from './form/FinancialSection';
+import { ObservationsSection } from './form/ObservationsSection';
+import { FormActions } from './form/FormActions';
 
 interface ServiceFormProps {
   service?: Service | null;
@@ -152,318 +150,75 @@ export const ServiceForm = ({ service, onSubmit, onCancel }: ServiceFormProps) =
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      {/* Folio Section */}
-      <div className="space-y-4 p-4 border rounded-lg bg-gray-50">
-        <div className="flex items-center justify-between">
-          <Label htmlFor="folio">Folio del Servicio</Label>
-          <div className="flex items-center space-x-2">
-            <Label htmlFor="manual-folio" className="text-sm">Manual</Label>
-            <Switch
-              id="manual-folio"
-              checked={isManualFolio}
-              onCheckedChange={setIsManualFolio}
-              disabled={!!service} // No permitir cambio cuando se edita
-            />
-          </div>
-        </div>
-        <div className="flex space-x-2">
-          <Input
-            id="folio"
-            value={folio}
-            onChange={(e) => setFolio(e.target.value)}
-            placeholder="Ej: SRV-001"
-            required
-            disabled={!isManualFolio && !service}
-            className="flex-1"
-          />
-          {!isManualFolio && !service && (
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleGenerateNewFolio}
-              disabled={folioLoading}
-              title="Generar nuevo folio"
-            >
-              <RefreshCw className={cn("w-4 h-4", folioLoading && "animate-spin")} />
-            </Button>
-          )}
-        </div>
-        {!isManualFolio && !service && (
-          <p className="text-xs text-gray-600">
-            El folio se genera automáticamente usando el formato configurado de la empresa.
-          </p>
-        )}
-      </div>
+      <FolioSection
+        folio={folio}
+        onFolioChange={setFolio}
+        isManualFolio={isManualFolio}
+        onManualFolioChange={setIsManualFolio}
+        onGenerateNewFolio={handleGenerateNewFolio}
+        isEditing={!!service}
+        isLoading={folioLoading}
+      />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Fecha de Solicitud */}
-        <div className="space-y-2">
-          <Label htmlFor="requestDate">Fecha de Solicitud</Label>
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                className={cn(
-                  "w-full justify-start text-left font-normal",
-                  !requestDate && "text-muted-foreground"
-                )}
-                title="Seleccionar fecha de solicitud"
-              >
-                <CalendarIcon className="mr-2 h-4 w-4" />
-                {requestDate ? format(requestDate, 'PPP', { locale: es }) : 'Seleccionar fecha'}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0">
-              <Calendar
-                mode="single"
-                selected={requestDate}
-                onSelect={(date) => date && setRequestDate(date)}
-                initialFocus
-              />
-            </PopoverContent>
-          </Popover>
-        </div>
+      <DateSection
+        requestDate={requestDate}
+        serviceDate={serviceDate}
+        onRequestDateChange={setRequestDate}
+        onServiceDateChange={setServiceDate}
+      />
 
-        {/* Fecha de Servicio */}
-        <div className="space-y-2">
-          <Label htmlFor="serviceDate">Fecha de Servicio</Label>
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                className={cn(
-                  "w-full justify-start text-left font-normal",
-                  !serviceDate && "text-muted-foreground"
-                )}
-                title="Seleccionar fecha de servicio"
-              >
-                <CalendarIcon className="mr-2 h-4 w-4" />
-                {serviceDate ? format(serviceDate, 'PPP', { locale: es }) : 'Seleccionar fecha'}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0">
-              <Calendar
-                mode="single"
-                selected={serviceDate}
-                onSelect={(date) => date && setServiceDate(date)}
-                initialFocus
-              />
-            </PopoverContent>
-          </Popover>
-        </div>
+      <ClientServiceSection
+        clientId={formData.clientId}
+        onClientChange={(value) => setFormData(prev => ({ ...prev, clientId: value }))}
+        clients={clients}
+        purchaseOrder={formData.purchaseOrder}
+        onPurchaseOrderChange={(value) => setFormData(prev => ({ ...prev, purchaseOrder: value }))}
+        serviceTypeId={formData.serviceTypeId}
+        onServiceTypeChange={(value) => setFormData(prev => ({ ...prev, serviceTypeId: value }))}
+        serviceTypes={serviceTypes}
+        serviceTypesLoading={serviceTypesLoading}
+      />
 
-        {/* Cliente */}
-        <div className="space-y-2">
-          <Label htmlFor="client">Cliente</Label>
-          <Select value={formData.clientId} onValueChange={(value) => setFormData(prev => ({ ...prev, clientId: value }))}>
-            <SelectTrigger>
-              <SelectValue placeholder="Seleccionar cliente" />
-            </SelectTrigger>
-            <SelectContent>
-              {clients.filter(c => c.isActive).map((client) => (
-                <SelectItem key={client.id} value={client.id}>
-                  {client.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+      <VehicleSection
+        vehicleBrand={formData.vehicleBrand}
+        onVehicleBrandChange={(value) => setFormData(prev => ({ ...prev, vehicleBrand: value }))}
+        vehicleModel={formData.vehicleModel}
+        onVehicleModelChange={(value) => setFormData(prev => ({ ...prev, vehicleModel: value }))}
+        licensePlate={formData.licensePlate}
+        onLicensePlateChange={(value) => setFormData(prev => ({ ...prev, licensePlate: value }))}
+      />
 
-        {/* Orden de Compra */}
-        <div className="space-y-2">
-          <Label htmlFor="purchaseOrder">Orden de Compra (Opcional)</Label>
-          <Input
-            id="purchaseOrder"
-            value={formData.purchaseOrder}
-            onChange={(e) => setFormData(prev => ({ ...prev, purchaseOrder: e.target.value }))}
-            placeholder="Ej: OC-12345"
-          />
-        </div>
+      <LocationSection
+        origin={formData.origin}
+        onOriginChange={(value) => setFormData(prev => ({ ...prev, origin: value }))}
+        destination={formData.destination}
+        onDestinationChange={(value) => setFormData(prev => ({ ...prev, destination: value }))}
+      />
 
-        {/* Marca del Vehículo */}
-        <div className="space-y-2">
-          <Label htmlFor="vehicleBrand">Marca del Vehículo</Label>
-          <Input
-            id="vehicleBrand"
-            value={formData.vehicleBrand}
-            onChange={(e) => setFormData(prev => ({ ...prev, vehicleBrand: e.target.value }))}
-            placeholder="Ej: Volvo"
-            required
-          />
-        </div>
+      <ResourceSection
+        craneId={formData.craneId}
+        onCraneChange={(value) => setFormData(prev => ({ ...prev, craneId: value }))}
+        cranes={cranes}
+        operatorId={formData.operatorId}
+        onOperatorChange={(value) => setFormData(prev => ({ ...prev, operatorId: value }))}
+        operators={operators}
+      />
 
-        {/* Modelo del Vehículo */}
-        <div className="space-y-2">
-          <Label htmlFor="vehicleModel">Modelo del Vehículo</Label>
-          <Input
-            id="vehicleModel"
-            value={formData.vehicleModel}
-            onChange={(e) => setFormData(prev => ({ ...prev, vehicleModel: e.target.value }))}
-            placeholder="Ej: FH16"
-            required
-          />
-        </div>
+      <FinancialSection
+        value={formData.value}
+        onValueChange={(value) => setFormData(prev => ({ ...prev, value }))}
+        operatorCommission={formData.operatorCommission}
+        onOperatorCommissionChange={(value) => setFormData(prev => ({ ...prev, operatorCommission: value }))}
+      />
 
-        {/* Patente */}
-        <div className="space-y-2">
-          <Label htmlFor="licensePlate">Patente</Label>
-          <Input
-            id="licensePlate"
-            value={formData.licensePlate}
-            onChange={(e) => setFormData(prev => ({ ...prev, licensePlate: e.target.value.toUpperCase() }))}
-            placeholder="Ej: AB-CD-12"
-            required
-          />
-        </div>
+      <ObservationsSection
+        status={formData.status}
+        onStatusChange={(value) => setFormData(prev => ({ ...prev, status: value }))}
+        observations={formData.observations}
+        onObservationsChange={(value) => setFormData(prev => ({ ...prev, observations: value }))}
+      />
 
-        {/* Tipo de Servicio */}
-        <div className="space-y-2">
-          <Label htmlFor="serviceType">Tipo de Servicio</Label>
-          <Select value={formData.serviceTypeId} onValueChange={(value) => setFormData(prev => ({ ...prev, serviceTypeId: value }))}>
-            <SelectTrigger>
-              <SelectValue placeholder={serviceTypesLoading ? "Cargando..." : "Seleccionar tipo"} />
-            </SelectTrigger>
-            <SelectContent>
-              {serviceTypes.map((type) => (
-                <SelectItem key={type.id} value={type.id}>
-                  {type.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        {/* Grúa */}
-        <div className="space-y-2">
-          <Label htmlFor="crane">Grúa</Label>
-          <Select value={formData.craneId} onValueChange={(value) => setFormData(prev => ({ ...prev, craneId: value }))}>
-            <SelectTrigger>
-              <SelectValue placeholder="Seleccionar grúa" />
-            </SelectTrigger>
-            <SelectContent>
-              {cranes.filter(c => c.isActive).map((crane) => (
-                <SelectItem key={crane.id} value={crane.id}>
-                  {crane.licensePlate} - {crane.brand} {crane.model}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        {/* Operador */}
-        <div className="space-y-2">
-          <Label htmlFor="operator">Operador</Label>
-          <Select value={formData.operatorId} onValueChange={(value) => setFormData(prev => ({ ...prev, operatorId: value }))}>
-            <SelectTrigger>
-              <SelectValue placeholder="Seleccionar operador" />
-            </SelectTrigger>
-            <SelectContent>
-              {operators.filter(o => o.isActive).map((operator) => (
-                <SelectItem key={operator.id} value={operator.id}>
-                  {operator.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        {/* Valor del Servicio */}
-        <div className="space-y-2">
-          <Label htmlFor="value">Valor del Servicio (CLP)</Label>
-          <Input
-            id="value"
-            type="number"
-            value={formData.value}
-            onChange={(e) => setFormData(prev => ({ ...prev, value: Number(e.target.value) }))}
-            placeholder="150000"
-            required
-          />
-        </div>
-
-        {/* Comisión del Operador */}
-        <div className="space-y-2">
-          <Label htmlFor="operatorCommission">Comisión Operador (CLP)</Label>
-          <Input
-            id="operatorCommission"
-            type="number"
-            value={formData.operatorCommission}
-            onChange={(e) => setFormData(prev => ({ ...prev, operatorCommission: Number(e.target.value) }))}
-            placeholder="15000"
-            required
-          />
-        </div>
-
-        {/* Estado */}
-        <div className="space-y-2">
-          <Label htmlFor="status">Estado</Label>
-          <Select value={formData.status} onValueChange={(value: any) => setFormData(prev => ({ ...prev, status: value }))}>
-            <SelectTrigger>
-              <SelectValue placeholder="Seleccionar estado" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="pending">Pendiente</SelectItem>
-              <SelectItem value="in_progress">En Progreso</SelectItem>
-              <SelectItem value="completed">Completado</SelectItem>
-              <SelectItem value="cancelled">Cancelado</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-
-      {/* Origen */}
-      <div className="space-y-2">
-        <Label htmlFor="origin">Origen</Label>
-        <Input
-          id="origin"
-          value={formData.origin}
-          onChange={(e) => setFormData(prev => ({ ...prev, origin: e.target.value }))}
-          placeholder="Dirección de origen del servicio"
-          required
-        />
-      </div>
-
-      {/* Destino */}
-      <div className="space-y-2">
-        <Label htmlFor="destination">Destino</Label>
-        <Input
-          id="destination"
-          value={formData.destination}
-          onChange={(e) => setFormData(prev => ({ ...prev, destination: e.target.value }))}
-          placeholder="Dirección de destino del servicio"
-          required
-        />
-      </div>
-
-      {/* Observaciones */}
-      <div className="space-y-2">
-        <Label htmlFor="observations">Observaciones</Label>
-        <Textarea
-          id="observations"
-          value={formData.observations}
-          onChange={(e) => setFormData(prev => ({ ...prev, observations: e.target.value }))}
-          placeholder="Observaciones adicionales sobre el servicio..."
-          rows={3}
-        />
-      </div>
-
-      {/* Buttons */}
-      <div className="flex justify-end space-x-4">
-        <Button 
-          type="button" 
-          variant="outline" 
-          onClick={onCancel}
-          title="Cancelar la creación o edición del servicio"
-        >
-          Cancelar
-        </Button>
-        <Button 
-          type="submit" 
-          className="bg-tms-green hover:bg-tms-green-dark text-white"
-          title={service ? 'Actualizar los datos del servicio' : 'Crear el nuevo servicio'}
-        >
-          {service ? 'Actualizar Servicio' : 'Crear Servicio'}
-        </Button>
-      </div>
+      <FormActions onCancel={onCancel} isEditing={!!service} />
     </form>
   );
 };
