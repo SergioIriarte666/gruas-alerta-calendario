@@ -23,6 +23,11 @@ interface CostFormProps {
 
 export const CostForm = ({ isOpen, onClose, cost }: CostFormProps) => {
     console.log(`CostForm rendered. isOpen: ${isOpen}`);
+    console.log('[CostForm] Cost prop received:', cost);
+    console.log('[CostForm] Cost ID:', cost?.id);
+    console.log('[CostForm] Cost type:', typeof cost);
+    console.log('[CostForm] Cost stringified:', JSON.stringify(cost, null, 2));
+    
     const { mutate: addCost, isPending: isAdding } = useAddCost();
     const { mutate: updateCost, isPending: isUpdating } = useUpdateCost();
     const { toast } = useToast();
@@ -51,6 +56,9 @@ export const CostForm = ({ isOpen, onClose, cost }: CostFormProps) => {
     useEffect(() => {
         console.log('[CostForm] useEffect triggered.', { isOpen, costExists: !!cost });
         if (cost) {
+            console.log('[CostForm] Processing existing cost for EDIT:', cost);
+            console.log('[CostForm] Cost has ID:', !!cost.id, 'ID value:', cost.id);
+            
             const dateValue = (cost.date && typeof cost.date === 'string')
                 ? cost.date.split('T')[0]
                 : new Date().toISOString().split('T')[0];
@@ -89,6 +97,8 @@ export const CostForm = ({ isOpen, onClose, cost }: CostFormProps) => {
         console.log("[CostForm] onSubmit triggered. Raw form values:", form.getValues());
         console.log("[CostForm] Zod-validated values:", values);
         console.log("[CostForm] Full 'cost' object at submission:", cost);
+        console.log("[CostForm] Cost ID at submission:", cost?.id);
+        console.log("[CostForm] Cost ID type:", typeof cost?.id);
         
         console.log('--- Type check before submission ---');
         Object.entries(values).forEach(([key, value]) => {

@@ -13,18 +13,21 @@ const CostsPage = () => {
     const { data: costs = [], isLoading } = useCosts();
 
     const handleOpenForm = useCallback((cost: Cost | null = null) => {
-        console.log('Opening form for cost:', cost);
+        console.log('[CostsPage] Opening form for cost:', cost);
+        console.log('[CostsPage] Cost ID:', cost?.id);
+        console.log('[CostsPage] Cost object stringified:', JSON.stringify(cost, null, 2));
         setSelectedCost(cost);
         setIsFormOpen(true);
     }, []);
 
     const handleCloseForm = useCallback(() => {
-        console.log('Closing form');
+        console.log('[CostsPage] Closing form');
         setSelectedCost(null);
         setIsFormOpen(false);
     }, []);
 
     console.log('CostsPage rendered, isFormOpen:', isFormOpen);
+    console.log('[CostsPage] Selected cost state:', selectedCost);
 
     return (
         <div className="space-y-6">
