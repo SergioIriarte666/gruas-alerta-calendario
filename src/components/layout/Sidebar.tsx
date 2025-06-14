@@ -11,7 +11,8 @@ import {
   Menu,
   X,
   Calendar,
-  Building2
+  Building2,
+  Wallet // Import Wallet icon
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -47,6 +48,11 @@ const menuItems = [
     title: 'Operadores',
     href: '/operators',
     icon: Users
+  },
+  {
+    title: 'Costos',
+    href: '/costs',
+    icon: Wallet
   },
   {
     title: 'Cierres',
@@ -113,21 +119,22 @@ export const Sidebar = () => {
         <nav className="flex-1 p-4 space-y-2">
           {menuItems.map((item) => {
             const Icon = item.icon;
-            const isActive = location.pathname === item.href;
+            const isActive = location.pathname === item.href || (item.href !== '/' && location.pathname.startsWith(item.href));
 
             return (
               <Link
                 key={item.href}
                 to={item.href}
                 className={cn(
-                  "nav-link",
-                  isActive && "active"
+                  "flex items-center px-3 py-2 text-gray-300 rounded-md text-sm hover:bg-white/10 hover:text-white transition-colors",
+                  isCollapsed ? 'justify-center' : '',
+                  isActive && "bg-tms-green text-white"
                 )}
                 title={isCollapsed ? item.title : undefined}
               >
-                <Icon className="w-5 h-5 flex-shrink-0" />
+                <Icon className={cn("h-5 w-5", !isCollapsed && "mr-3")} />
                 {!isCollapsed && (
-                  <span className="ml-3 font-medium">{item.title}</span>
+                  <span className="font-medium">{item.title}</span>
                 )}
               </Link>
             );
