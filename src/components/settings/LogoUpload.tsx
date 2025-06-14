@@ -1,4 +1,3 @@
-
 import React, { useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -59,6 +58,7 @@ export const LogoUpload: React.FC<LogoUploadProps> = ({
       reader.onload = (e) => {
         const img = new window.Image();
         img.onload = () => {
+          console.log("LogoUpload: Image loaded into memory. Original dimensions:", img.width, "x", img.height);
           const canvas = document.createElement('canvas');
           const ctx = canvas.getContext('2d');
           
@@ -88,16 +88,24 @@ export const LogoUpload: React.FC<LogoUploadProps> = ({
                 type: 'image/png',
                 lastModified: Date.now(),
               });
+              console.log("LogoUpload: Canvas blob created. Processed file size:", processedFile.size);
               resolve(processedFile);
             } else {
+              console.error("LogoUpload: Failed to create blob from canvas.");
               reject(new Error('Failed to create blob from canvas'));
             }
           }, 'image/png', 0.8);
         };
-        img.onerror = () => reject(new Error('Error processing image'));
+        img.onerror = () => {
+            console.error("LogoUpload: Error loading image from source.");
+            reject(new Error('Error processing image'));
+        };
         img.src = e.target?.result as string;
       };
-      reader.onerror = () => reject(new Error('Error reading file'));
+      reader.onerror = () => {
+        console.error("LogoUpload: Error reading file with FileReader.");
+        reject(new Error('Error reading file'));
+      };
       reader.readAsDataURL(file);
     });
   };
@@ -107,7 +115,9 @@ export const LogoUpload: React.FC<LogoUploadProps> = ({
 
     setIsProcessing(true);
     try {
+      console.log("LogoUpload: Starting image processing for file:", file.name);
       const logoFile = await processImage(file);
+      console.log("LogoUpload: Image processing successful. Resulting file:", logoFile);
       onLogoChange(logoFile);
     } catch (error) {
       console.error(error);
