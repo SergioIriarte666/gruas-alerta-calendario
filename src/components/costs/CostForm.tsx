@@ -42,7 +42,7 @@ export const CostForm = ({ isOpen, onClose, cost }: CostFormProps) => {
     const { data: categories = [], isLoading: isLoadingCategories } = useCostCategories();
     const { cranes, loading: isLoadingCranes } = useCranes();
     const { operators, loading: isLoadingOperators } = useOperators();
-    const { services, isLoading: isLoadingServices } = useServices();
+    const { services, loading: isLoadingServices } = useServices();
 
     const form = useForm<z.infer<typeof costSchema>>({
         resolver: zodResolver(costSchema),
