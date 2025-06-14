@@ -67,6 +67,17 @@ export const useSettings = () => {
     fetchSettings();
   }, [fetchSettings]);
 
+  useEffect(() => {
+    const refetch = () => {
+      console.log('Received settings-updated event, refetching settings.');
+      fetchSettings();
+    };
+    window.addEventListener('settings-updated', refetch);
+    return () => {
+      window.removeEventListener('settings-updated', refetch);
+    };
+  }, [fetchSettings]);
+
   const updateSettings = (updates: Partial<Settings>) => {
     setSettings(prev => ({ ...prev, ...updates }));
   };

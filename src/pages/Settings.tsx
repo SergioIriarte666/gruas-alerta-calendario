@@ -29,6 +29,8 @@ const Settings = () => {
         title: "Configuración guardada",
         description: "Los cambios se han guardado correctamente",
       });
+      console.log('Dispatching settings-updated event after saving settings');
+      window.dispatchEvent(new Event('settings-updated'));
     } else {
       toast({
         title: "Error",
@@ -52,6 +54,8 @@ const Settings = () => {
         title: "Logotipo actualizado",
         description: "El cambio en el logotipo se ha guardado.",
       });
+      console.log('Dispatching settings-updated event after logo change');
+      window.dispatchEvent(new Event('settings-updated'));
     } else {
       toast({
         title: "Error",
