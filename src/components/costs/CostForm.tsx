@@ -88,6 +88,7 @@ export const CostForm = ({ isOpen, onClose, cost }: CostFormProps) => {
     const onSubmit = (values: CostFormValues) => {
         console.log("[CostForm] onSubmit triggered. Raw form values:", form.getValues());
         console.log("[CostForm] Zod-validated values:", values);
+        console.log("[CostForm] Full 'cost' object at submission:", cost);
         
         console.log('--- Type check before submission ---');
         Object.entries(values).forEach(([key, value]) => {
@@ -96,7 +97,7 @@ export const CostForm = ({ isOpen, onClose, cost }: CostFormProps) => {
         console.log('--- End Type check ---');
 
         const submissionData = values as CostFormData;
-        if (cost) {
+        if (cost && cost.id) {
             console.log('[CostForm] Submitting for UPDATE. Data:', { id: cost.id, ...submissionData });
             updateCost({ id: cost.id, ...submissionData }, {
                 onSuccess: () => {
@@ -108,6 +109,13 @@ export const CostForm = ({ isOpen, onClose, cost }: CostFormProps) => {
                     toast({ title: "Error al Actualizar", description: "No se pudo actualizar el costo.", variant: "destructive" });
                     console.error("[CostForm] Data that failed UPDATE:", { id: cost.id, ...submissionData });
                 },
+            });
+        } else if (cost && !cost.id) {
+            console.error("[CostForm] CRITICAL: Attempting to update a cost but ID is missing.", cost);
+            toast({
+                title: "Error Crítico de Datos",
+                description: "No se puede guardar el costo porque falta su ID. Por favor, cierre el formulario y vuelva a intentarlo.",
+                variant: "destructive"
             });
         } else {
             console.log('[CostForm] Submitting for ADD. Data:', submissionData);
