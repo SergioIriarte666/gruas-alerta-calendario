@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -77,8 +78,26 @@ export const useSettings = () => {
     };
   }, [fetchSettings]);
 
+  // FIX: updateSettings deep merge for nested objects
   const updateSettings = (updates: Partial<Settings>) => {
-    setSettings(prev => ({ ...prev, ...updates }));
+    setSettings(prev => {
+      // Deep merge company, user, system, notifications if provided
+      const merged: Settings = {
+        company: updates.company
+          ? { ...prev.company, ...updates.company }
+          : prev.company,
+        user: updates.user
+          ? { ...prev.user, ...updates.user }
+          : prev.user,
+        system: updates.system
+          ? { ...prev.system, ...updates.system }
+          : prev.system,
+        notifications: updates.notifications
+          ? { ...prev.notifications, ...updates.notifications }
+          : prev.notifications,
+      };
+      return merged;
+    });
   };
 
   const saveSettings = async () => {
@@ -86,14 +105,16 @@ export const useSettings = () => {
 
     setSaving(true);
     try {
-      // Asegurar que todos los campos obligatorios estén presentes
-      const companyPayload = {
+      // Guardar TODOS los campos relevantes, incluyendo logo
+      const companyPayload: Record<string, any> = {
         business_name: settings.company.name || '',
         address: settings.company.address || '',
         phone: settings.company.phone || '',
         email: settings.company.email || '',
         rut: settings.company.taxId || '',
+        logo_url: settings.company.logo || null, // logo_url puede ser undefined/null o string
       };
+      console.log('Intentando guardar datos de empresa (payload enviado):', companyPayload);
 
       // Buscar empresa, si no existe: insertar, si existe: actualizar
       const { data: existingCompany, error: selectError } = await supabase
@@ -121,7 +142,7 @@ export const useSettings = () => {
         console.log('Empresa actualizada correctamente');
 
       } else {
-        // Insertar - requerimos todos los campos obligatorios
+        // Insertar nuevo registro
         const { data: newCompany, error: insertError } = await supabase
           .from('company_data')
           .insert([companyPayload])
@@ -138,10 +159,15 @@ export const useSettings = () => {
         console.log('Empresa creada correctamente:', newCompany.id);
       }
 
-      // Otros settings a local storage
+      // Otros settings a local storage (user, system, notifications)
       const { company, ...otherSettings } = settings;
       localStorage.setItem('tms-settings-others', JSON.stringify(otherSettings));
       localStorage.removeItem('tms-settings');
+
+      // **FORZAR ACTUALIZACIÓN** tras guardar para tener datos frescos
+      setTimeout(() => {
+        window.dispatchEvent(new Event('settings-updated'));
+      }, 350);
 
       return { success: true };
     } catch (error) {
