@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Plus, Search, Edit, Trash2, FileText, Calendar, DollarSign } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -10,11 +9,13 @@ import { useServiceClosures } from '@/hooks/useServiceClosures';
 import { useClients } from '@/hooks/useClients';
 import { ServiceClosure } from '@/types';
 import { toast } from '@/hooks/use-toast';
+import ClosureForm from '@/components/closures/ClosureForm';
 
 const Closures = () => {
   const { closures, loading, createClosure, deleteClosure, closeClosure } = useServiceClosures();
   const { clients } = useClients();
   const [searchTerm, setSearchTerm] = useState('');
+  const [showCreateModal, setShowCreateModal] = useState(false);
 
   // Filtrar cierres por término de búsqueda
   const filteredClosures = closures.filter(closure =>
@@ -74,6 +75,14 @@ const Closures = () => {
     return `${fromDate} - ${toDate}`;
   };
 
+  const handleCreateClosure = async (closureData: Omit<ServiceClosure, 'id' | 'folio' | 'createdAt' | 'updatedAt'>) => {
+    try {
+      await createClosure(closureData);
+    } catch (error) {
+      console.error('Error creating closure:', error);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -91,6 +100,7 @@ const Closures = () => {
           <p className="text-gray-400 mt-1">Gestión de cierres por períodos</p>
         </div>
         <Button
+          onClick={() => setShowCreateModal(true)}
           className="bg-tms-green hover:bg-tms-green/90 text-white"
         >
           <Plus className="w-4 h-4 mr-2" />
@@ -240,6 +250,13 @@ const Closures = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* Create Closure Modal */}
+      <ClosureForm
+        open={showCreateModal}
+        onOpenChange={setShowCreateModal}
+        onSubmit={handleCreateClosure}
+      />
     </div>
   );
 };
