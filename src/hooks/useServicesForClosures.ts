@@ -26,7 +26,7 @@ export const useServicesForClosures = () => {
           clients!inner(id, name),
           service_types!inner(id, name)
         `)
-        .eq('status', 'closed')
+        .eq('status', 'completed')
         .order('service_date', { ascending: false })
         .limit(100); // Limit results for better performance
 
@@ -38,7 +38,7 @@ export const useServicesForClosures = () => {
       console.log('Services for closures fetched:', data?.length || 0);
 
       if (!data || data.length === 0) {
-        console.log('No closed services found for closures');
+        console.log('No completed services found for closures');
         setServices([]);
         return;
       }
@@ -81,7 +81,7 @@ export const useServicesForClosures = () => {
           licensePlate: '',
           brand: '',
           model: '',
-          type: 'mobile',
+          type: 'other',
           isActive: true,
           createdAt: '',
           updatedAt: '',
