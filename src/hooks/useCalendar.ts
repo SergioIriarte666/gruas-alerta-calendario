@@ -25,7 +25,6 @@ export const useCalendar = () => {
   const [viewMode, setViewMode] = useState<'month' | 'week' | 'day'>('month');
 
   useEffect(() => {
-    // Inicializar sin datos de prueba
     setLoading(false);
   }, []);
 

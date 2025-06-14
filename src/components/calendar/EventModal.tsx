@@ -68,7 +68,7 @@ export const EventModal = ({ onCreateEvent, selectedDate }: EventModalProps) => 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="bg-tms-green hover:bg-tms-green-dark text-white">
+        <Button className="bg-green-500 hover:bg-green-600 text-white">
           <Plus className="w-4 h-4 mr-2" />
           Nuevo Evento
         </Button>
@@ -158,7 +158,7 @@ export const EventModal = ({ onCreateEvent, selectedDate }: EventModalProps) => 
             <Button type="button" variant="outline" onClick={() => setOpen(false)} className="border-gray-700 text-gray-300">
               Cancelar
             </Button>
-            <Button type="submit" className="bg-tms-green hover:bg-tms-green-dark text-white">
+            <Button type="submit" className="bg-green-500 hover:bg-green-600 text-white">
               Crear Evento
             </Button>
           </div>

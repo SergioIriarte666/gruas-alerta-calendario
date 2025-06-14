@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Clock } from 'lucide-react';
 import { useCalendar, CalendarEvent } from '@/hooks/useCalendar';
 import { EventModal } from '@/components/calendar/EventModal';
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isToday, addMonths, subMonths, startOfWeek, endOfWeek, addDays, startOfDay, endOfDay } from 'date-fns';
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isToday, addMonths, subMonths, startOfWeek, endOfWeek, addDays } from 'date-fns';
 import { es } from 'date-fns/locale';
 
 const Calendar = () => {
@@ -25,7 +25,7 @@ const Calendar = () => {
 
   const getEventTypeColor = (type: CalendarEvent['type']) => {
     switch (type) {
-      case 'service': return 'bg-tms-green text-white';
+      case 'service': return 'bg-green-500 text-white';
       case 'maintenance': return 'bg-blue-500 text-white';
       case 'meeting': return 'bg-purple-500 text-white';
       case 'deadline': return 'bg-red-500 text-white';
@@ -56,7 +56,9 @@ const Calendar = () => {
       } else if (viewMode === 'week') {
         return direction === 'prev' ? addDays(prev, -7) : addDays(prev, 7);
       } else {
-        return direction === 'prev' ? subMonths(prev, 1) : addMonths(prev, 1);
+        const newMonth = direction === 'prev' ? subMonths(currentMonth, 1) : addMonths(currentMonth, 1);
+        setCurrentMonth(newMonth);
+        return prev;
       }
     });
   };
@@ -64,7 +66,9 @@ const Calendar = () => {
   const renderMonthView = () => {
     const monthStart = startOfMonth(currentMonth);
     const monthEnd = endOfMonth(currentMonth);
-    const calendarDays = eachDayOfInterval({ start: monthStart, end: monthEnd });
+    const calendarStart = startOfWeek(monthStart, { weekStartsOn: 0 });
+    const calendarEnd = endOfWeek(monthEnd, { weekStartsOn: 0 });
+    const calendarDays = eachDayOfInterval({ start: calendarStart, end: calendarEnd });
 
     return (
       <div>
@@ -83,20 +87,22 @@ const Calendar = () => {
             const dayEvents = getEventsForDate(day);
             const isSelected = isSameDay(day, selectedDate);
             const isDayToday = isToday(day);
+            const isCurrentMonth = day.getMonth() === currentMonth.getMonth();
 
             return (
               <div
                 key={day.toISOString()}
                 className={`
                   min-h-24 p-2 border border-gray-700 rounded-lg cursor-pointer transition-colors
-                  ${isSelected ? 'bg-tms-green/20 border-tms-green' : 'hover:bg-white/5'}
-                  ${isDayToday ? 'border-tms-green' : ''}
+                  ${isSelected ? 'bg-green-500/20 border-green-500' : 'hover:bg-white/5'}
+                  ${isDayToday ? 'border-green-500' : ''}
+                  ${!isCurrentMonth ? 'opacity-50' : ''}
                 `}
                 onClick={() => setSelectedDate(day)}
               >
                 <div className={`
                   text-sm font-medium mb-1
-                  ${isDayToday ? 'text-tms-green' : 'text-gray-300'}
+                  ${isDayToday ? 'text-green-500' : 'text-gray-300'}
                 `}>
                   {format(day, 'd')}
                 </div>
@@ -151,14 +157,14 @@ const Calendar = () => {
                 key={day.toISOString()}
                 className={`
                   min-h-32 p-2 border border-gray-700 rounded-lg cursor-pointer transition-colors
-                  ${isSelected ? 'bg-tms-green/20 border-tms-green' : 'hover:bg-white/5'}
-                  ${isDayToday ? 'border-tms-green' : ''}
+                  ${isSelected ? 'bg-green-500/20 border-green-500' : 'hover:bg-white/5'}
+                  ${isDayToday ? 'border-green-500' : ''}
                 `}
                 onClick={() => setSelectedDate(day)}
               >
                 <div className={`
                   text-sm font-medium mb-2
-                  ${isDayToday ? 'text-tms-green' : 'text-gray-300'}
+                  ${isDayToday ? 'text-green-500' : 'text-gray-300'}
                 `}>
                   {format(day, 'd MMM', { locale: es })}
                 </div>
@@ -275,13 +281,7 @@ const Calendar = () => {
                 variant="outline" 
                 size="sm" 
                 className="border-gray-700 text-gray-300"
-                onClick={() => {
-                  if (viewMode === 'month') {
-                    navigateMonth('prev');
-                  } else {
-                    navigateDate('prev');
-                  }
-                }}
+                onClick={() => navigateDate('prev')}
               >
                 <ChevronLeft className="w-4 h-4" />
               </Button>
@@ -292,13 +292,7 @@ const Calendar = () => {
                 variant="outline" 
                 size="sm" 
                 className="border-gray-700 text-gray-300"
-                onClick={() => {
-                  if (viewMode === 'month') {
-                    navigateMonth('next');
-                  } else {
-                    navigateDate('next');
-                  }
-                }}
+                onClick={() => navigateDate('next')}
               >
                 <ChevronRight className="w-4 h-4" />
               </Button>
@@ -307,7 +301,7 @@ const Calendar = () => {
               <Button 
                 variant={viewMode === 'day' ? 'default' : 'outline'} 
                 size="sm" 
-                className={viewMode === 'day' ? 'bg-tms-green hover:bg-tms-green-dark text-white' : 'border-gray-700 text-gray-300'}
+                className={viewMode === 'day' ? 'bg-green-500 hover:bg-green-600 text-white' : 'border-gray-700 text-gray-300'}
                 onClick={() => setViewMode('day')}
               >
                 Día
@@ -315,7 +309,7 @@ const Calendar = () => {
               <Button 
                 variant={viewMode === 'week' ? 'default' : 'outline'} 
                 size="sm" 
-                className={viewMode === 'week' ? 'bg-tms-green hover:bg-tms-green-dark text-white' : 'border-gray-700 text-gray-300'}
+                className={viewMode === 'week' ? 'bg-green-500 hover:bg-green-600 text-white' : 'border-gray-700 text-gray-300'}
                 onClick={() => setViewMode('week')}
               >
                 Semana
@@ -323,7 +317,7 @@ const Calendar = () => {
               <Button 
                 variant={viewMode === 'month' ? 'default' : 'outline'} 
                 size="sm" 
-                className={viewMode === 'month' ? 'bg-tms-green hover:bg-tms-green-dark text-white' : 'border-gray-700 text-gray-300'}
+                className={viewMode === 'month' ? 'bg-green-500 hover:bg-green-600 text-white' : 'border-gray-700 text-gray-300'}
                 onClick={() => setViewMode('month')}
               >
                 Mes
@@ -339,7 +333,7 @@ const Calendar = () => {
           <Card className="glass-card">
             <CardHeader>
               <CardTitle className="flex items-center space-x-2 text-white">
-                <CalendarIcon className="w-5 h-5 text-tms-green" />
+                <CalendarIcon className="w-5 h-5 text-green-500" />
                 <span>Vista {viewMode === 'day' ? 'Diaria' : viewMode === 'week' ? 'Semanal' : 'Mensual'}</span>
               </CardTitle>
             </CardHeader>
@@ -417,7 +411,7 @@ const Calendar = () => {
             </Card>
           </div>
         )}
-      </div>
+      </div>  
     </div>
   );
 };
