@@ -16,6 +16,7 @@ import { Service } from '@/types';
 import { useClients } from '@/hooks/useClients';
 import { useCranes } from '@/hooks/useCranes';
 import { useOperators } from '@/hooks/useOperators';
+import { useServiceTypes } from '@/hooks/useServiceTypes';
 
 interface ServiceFormProps {
   service?: Service | null;
@@ -23,17 +24,11 @@ interface ServiceFormProps {
   onCancel: () => void;
 }
 
-const serviceTypes = [
-  { id: '1', name: 'Grúa Pesada', description: 'Servicio de grúa pesada' },
-  { id: '2', name: 'Grúa Mediana', description: 'Servicio de grúa mediana' },
-  { id: '3', name: 'Taxi Grúa', description: 'Servicio de taxi grúa' },
-  { id: '4', name: 'Grúa Liviana', description: 'Servicio de grúa liviana' }
-];
-
 export const ServiceForm = ({ service, onSubmit, onCancel }: ServiceFormProps) => {
   const { clients } = useClients();
   const { cranes } = useCranes();
   const { operators } = useOperators();
+  const { serviceTypes, loading: serviceTypesLoading } = useServiceTypes();
 
   const [formData, setFormData] = useState({
     requestDate: service?.requestDate || format(new Date(), 'yyyy-MM-dd'),
@@ -93,10 +88,12 @@ export const ServiceForm = ({ service, onSubmit, onCancel }: ServiceFormProps) =
       origin: formData.origin,
       destination: formData.destination,
       serviceType: {
-        ...selectedServiceType,
-        isActive: true,
-        createdAt: '',
-        updatedAt: ''
+        id: selectedServiceType.id,
+        name: selectedServiceType.name,
+        description: selectedServiceType.description || '',
+        isActive: selectedServiceType.isActive,
+        createdAt: selectedServiceType.createdAt,
+        updatedAt: selectedServiceType.updatedAt
       },
       value: formData.value,
       crane: selectedCrane,
@@ -233,7 +230,7 @@ export const ServiceForm = ({ service, onSubmit, onCancel }: ServiceFormProps) =
           <Label htmlFor="serviceType">Tipo de Servicio</Label>
           <Select value={formData.serviceTypeId} onValueChange={(value) => setFormData(prev => ({ ...prev, serviceTypeId: value }))}>
             <SelectTrigger>
-              <SelectValue placeholder="Seleccionar tipo" />
+              <SelectValue placeholder={serviceTypesLoading ? "Cargando..." : "Seleccionar tipo"} />
             </SelectTrigger>
             <SelectContent>
               {serviceTypes.map((type) => (

@@ -9,6 +9,96 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      calendar_events: {
+        Row: {
+          client_id: string | null
+          crane_id: string | null
+          created_at: string
+          created_by: string | null
+          date: string
+          description: string | null
+          end_time: string
+          id: string
+          operator_id: string | null
+          service_id: string | null
+          start_time: string
+          status: string
+          title: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          client_id?: string | null
+          crane_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          date: string
+          description?: string | null
+          end_time: string
+          id?: string
+          operator_id?: string | null
+          service_id?: string | null
+          start_time: string
+          status?: string
+          title: string
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string | null
+          crane_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          date?: string
+          description?: string | null
+          end_time?: string
+          id?: string
+          operator_id?: string | null
+          service_id?: string | null
+          start_time?: string
+          status?: string
+          title?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "calendar_events_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "calendar_events_crane_id_fkey"
+            columns: ["crane_id"]
+            isOneToOne: false
+            referencedRelation: "cranes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "calendar_events_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "calendar_events_operator_id_fkey"
+            columns: ["operator_id"]
+            isOneToOne: false
+            referencedRelation: "operators"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "calendar_events_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clients: {
         Row: {
           address: string | null
