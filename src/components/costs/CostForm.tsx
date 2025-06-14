@@ -1,3 +1,4 @@
+
 import React, { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -38,11 +39,11 @@ export const CostForm = ({ isOpen, onClose, cost }: CostFormProps) => {
             description: '',
             amount: 0,
             category_id: '',
-            crane_id: null,
-            operator_id: null,
-            service_id: null,
-            service_folio: null,
-            notes: null,
+            crane_id: 'none',
+            operator_id: 'none',
+            service_id: 'none',
+            service_folio: '',
+            notes: '',
         },
     });
     const { reset } = form;
@@ -59,11 +60,11 @@ export const CostForm = ({ isOpen, onClose, cost }: CostFormProps) => {
                 description: cost.description,
                 amount: Number(cost.amount),
                 category_id: cost.category_id,
-                crane_id: cost.crane_id || null,
-                operator_id: cost.operator_id || null,
-                service_id: cost.service_id || null,
-                service_folio: cost.service_folio || null,
-                notes: cost.notes || null,
+                crane_id: cost.crane_id || 'none',
+                operator_id: cost.operator_id || 'none',
+                service_id: cost.service_id || 'none',
+                service_folio: cost.service_folio || '',
+                notes: cost.notes || '',
             };
             console.log('[CostForm] Resetting form with initial values for EDIT:', initialValues);
             reset(initialValues);
@@ -73,11 +74,11 @@ export const CostForm = ({ isOpen, onClose, cost }: CostFormProps) => {
                 description: '',
                 amount: 0,
                 category_id: '',
-                crane_id: null,
-                operator_id: null,
-                service_id: null,
-                service_folio: null,
-                notes: null,
+                crane_id: 'none',
+                operator_id: 'none',
+                service_id: 'none',
+                service_folio: '',
+                notes: '',
             };
             console.log('[CostForm] Resetting form with default values for NEW:', defaultValues);
             reset(defaultValues);
