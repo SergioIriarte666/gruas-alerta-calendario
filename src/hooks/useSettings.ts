@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -13,16 +12,18 @@ export const useSettings = () => {
   const fetchSettings = useCallback(async () => {
     setLoading(true);
     try {
+      // Source of truth for company data is Supabase
       const { data: companyData, error: companyError } = await supabase
         .from('company_data')
         .select('*')
         .limit(1)
-        .single();
+        .maybeSingle();
       
-      if (companyError && companyError.code !== 'PGRST116') { // Ignore no rows found error
+      if (companyError) {
         throw companyError;
       }
 
+      // Other settings are from local storage
       const savedOtherSettings = localStorage.getItem('tms-settings-others');
       const otherSettings = savedOtherSettings ? JSON.parse(savedOtherSettings) : {
         user: defaultSettings.user,
@@ -30,26 +31,24 @@ export const useSettings = () => {
         notifications: defaultSettings.notifications,
       };
 
+      const finalSettings: Settings = {
+        company: defaultSettings.company, // Start with default
+        ...otherSettings
+      };
+
       if (companyData) {
-        setSettings({
-          company: {
-            name: companyData.business_name,
-            address: companyData.address,
-            phone: companyData.phone,
-            email: companyData.email,
-            taxId: companyData.rut,
-            logo: companyData.logo_url || undefined,
-          },
-          ...otherSettings,
-        });
-      } else {
-        const savedSettings = localStorage.getItem('tms-settings');
-        if (savedSettings) {
-          setSettings(JSON.parse(savedSettings));
-        } else {
-          setSettings(defaultSettings);
-        }
+        finalSettings.company = {
+          name: companyData.business_name || defaultSettings.company.name,
+          address: companyData.address || defaultSettings.company.address,
+          phone: companyData.phone || defaultSettings.company.phone,
+          email: companyData.email || defaultSettings.company.email,
+          taxId: companyData.rut || defaultSettings.company.taxId,
+          logo: companyData.logo_url || undefined,
+        };
       }
+      
+      setSettings(finalSettings);
+
     } catch (error) {
       console.error("Error fetching settings:", error);
       toast({
@@ -57,6 +56,7 @@ export const useSettings = () => {
         description: "No se pudo cargar la configuración.",
         variant: "destructive",
       });
+      // Fallback to defaults on error
       setSettings(defaultSettings);
     } finally {
       setLoading(false);
@@ -87,8 +87,9 @@ export const useSettings = () => {
 
     setSaving(true);
     try {
+      // Always save company data to Supabase
       if (settings.company) {
-        const { data: existingCompany } = await supabase.from('company_data').select('id').limit(1).single();
+        const { data: existingCompany } = await supabase.from('company_data').select('id').limit(1).maybeSingle();
         
         const companyPayload = {
           business_name: settings.company.name,
@@ -107,10 +108,12 @@ export const useSettings = () => {
         }
       }
       
+      // Save other settings to local storage
       const { company, ...otherSettings } = settings;
       localStorage.setItem('tms-settings-others', JSON.stringify(otherSettings));
       
-      localStorage.setItem('tms-settings', JSON.stringify(settings));
+      // Clean up old combined settings from local storage to prevent using stale data
+      localStorage.removeItem('tms-settings');
       
       return { success: true };
     } catch (error) {
@@ -125,6 +128,7 @@ export const useSettings = () => {
     setSettings(defaultSettings);
     localStorage.removeItem('tms-settings');
     localStorage.removeItem('tms-settings-others');
+    // TODO: Consider clearing company_data in Supabase on reset.
   };
 
   return {
