@@ -1,11 +1,14 @@
+
 import React, { useState, useMemo } from 'react';
 import { useReports, ReportFilters as ReportFiltersType } from '@/hooks/useReports';
 import { ChartConfig } from "@/components/ui/chart";
 import { ReportsHeader } from '@/components/reports/ReportsHeader';
 import { ReportFilters } from '@/components/reports/ReportFilters';
 import { MainMetrics } from '@/components/reports/MainMetrics';
+import { ProfitabilityMetrics } from '@/components/reports/ProfitabilityMetrics';
 import { PrimaryCharts } from '@/components/reports/PrimaryCharts';
 import { DistributionCharts } from '@/components/reports/DistributionCharts';
+import { CostCharts } from '@/components/reports/CostCharts';
 import { DetailTables } from '@/components/reports/DetailTables';
 import { useClients } from '@/hooks/useClients';
 import { useCranes } from '@/hooks/useCranes';
@@ -88,13 +91,24 @@ const Reports = () => {
   const servicesByMonthConfig = { services: { label: 'Servicios', color: '#10b981' } } satisfies ChartConfig;
   const revenueByMonthConfig = { revenue: { label: 'Ingresos', color: '#3b82f6' } } satisfies ChartConfig;
   const craneUtilizationConfig = { utilization: { label: 'Utilización', color: '#f59e0b' } } satisfies ChartConfig;
-  const COLORS = ['#10b981', '#f59e0b', '#ef4444', '#3b82f6', '#8b5cf6'];
+  const COLORS = ['#10b981', '#f59e0b', '#ef4444', '#3b82f6', '#8b5cf6', '#ec4899', '#a855f7', '#d946ef'];
 
   const servicesByStatusConfig = useMemo(() => {
     if (!metrics) return {};
     return metrics.servicesByStatus.reduce((acc, item, index) => {
         acc[item.status] = {
             label: item.status,
+            color: COLORS[index % COLORS.length]
+        };
+        return acc;
+    }, {} as ChartConfig);
+  }, [metrics]);
+
+  const costsByCategoryConfig = useMemo(() => {
+    if (!metrics?.costsByCategory) return {};
+    return metrics.costsByCategory.reduce((acc, item, index) => {
+        acc[item.categoryName] = {
+            label: item.categoryName,
             color: COLORS[index % COLORS.length]
         };
         return acc;
@@ -123,6 +137,7 @@ const Reports = () => {
       {metrics && (
         <div className="space-y-6">
           <MainMetrics metrics={metrics} />
+          <ProfitabilityMetrics metrics={metrics} />
           <PrimaryCharts 
             metrics={metrics} 
             servicesByMonthConfig={servicesByMonthConfig} 
@@ -133,6 +148,7 @@ const Reports = () => {
             servicesByStatusConfig={servicesByStatusConfig}
             craneUtilizationConfig={craneUtilizationConfig}
           />
+          <CostCharts metrics={metrics} costsByCategoryConfig={costsByCategoryConfig} />
           <DetailTables metrics={metrics} />
         </div>
       )}
@@ -141,3 +157,4 @@ const Reports = () => {
 };
 
 export default Reports;
+

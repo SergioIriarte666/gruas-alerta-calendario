@@ -1,11 +1,12 @@
-
 import { useState, useEffect } from 'react';
 import { useServices } from './useServices';
 import { useInvoices } from './useInvoices';
 import { useClients } from './useClients';
 import { useCranes } from './useCranes';
 import { useOperators } from './useOperators';
+import { useCosts } from './useCosts';
 import { Service } from '@/types';
+import { Cost } from '@/types/costs';
 
 export interface ReportMetrics {
   totalServices: number;
@@ -16,10 +17,14 @@ export interface ReportMetrics {
   activeClients: number;
   activeCranes: number;
   activeOperators: number;
+  totalCosts: number;
+  netProfit: number;
+  profitMargin: number;
   servicesByMonth: { month: string; services: number; revenue: number }[];
   servicesByStatus: { status: string; count: number; percentage: number }[];
   topClients: { clientId: string; clientName: string; services: number; revenue: number }[];
   craneUtilization: { craneId: string; craneName: string; services: number; utilization: number }[];
+  costsByCategory: { categoryId: string; categoryName: string; total: number; percentage: number }[];
 }
 
 export interface ReportFilters {
@@ -38,12 +43,13 @@ export const useReports = (filters?: ReportFilters) => {
   const { clients } = useClients();
   const { cranes } = useCranes();
   const { operators } = useOperators();
+  const { data: costs = [] } = useCosts();
 
   useEffect(() => {
-    if (services.length > 0 && clients.length > 0 && cranes.length > 0 && operators.length > 0) {
+    if (services.length > 0 && clients.length > 0 && cranes.length > 0 && operators.length > 0 && costs) {
       calculateMetrics();
     }
-  }, [services, invoices, clients, cranes, operators, filters]);
+  }, [services, invoices, clients, cranes, operators, costs, filters]);
 
   const calculateMetrics = () => {
     setLoading(true);
@@ -76,6 +82,23 @@ export const useReports = (filters?: ReportFilters) => {
     const totalRevenue = filteredServices.reduce((sum, service) => sum + service.value, 0);
     const averageServiceValue = totalServices > 0 ? totalRevenue / totalServices : 0;
 
+    // Métricas de costos y rentabilidad
+    const fromDate = filters ? new Date(filters.dateRange.from + 'T00:00:00Z') : null;
+    const toDate = filters ? new Date(filters.dateRange.to + 'T23:59:59Z') : null;
+
+    const filteredCosts = costs.filter(cost => {
+        if (fromDate && toDate) {
+            const costDate = new Date(cost.date);
+            return costDate >= fromDate && costDate <= toDate;
+        }
+        return true;
+    });
+
+    const totalCosts = filteredCosts.reduce((sum, cost) => sum + Number(cost.amount), 0);
+    const netProfit = totalRevenue - totalCosts;
+    const profitMargin = totalRevenue > 0 ? (netProfit / totalRevenue) * 100 : 0;
+    const costsByCategory = calculateCostsByCategory(filteredCosts);
+
     // Métricas de facturas
     const pendingInvoices = invoices.filter(inv => inv.status === 'draft').length;
     const overdueInvoices = invoices.filter(inv => inv.status === 'overdue').length;
@@ -106,10 +129,14 @@ export const useReports = (filters?: ReportFilters) => {
       activeClients,
       activeCranes,
       activeOperators,
+      totalCosts,
+      netProfit,
+      profitMargin,
       servicesByMonth,
       servicesByStatus,
       topClients,
-      craneUtilization
+      craneUtilization,
+      costsByCategory,
     };
 
     setMetrics(calculatedMetrics);
@@ -198,6 +225,32 @@ export const useReports = (filters?: ReportFilters) => {
         };
       })
       .sort((a, b) => b.services - a.services);
+  };
+
+  const calculateCostsByCategory = (costs: Cost[]) => {
+      const categoryData: { [key: string]: { total: number; name: string } } = {};
+      
+      costs.forEach(cost => {
+        const categoryId = cost.category_id;
+        // The cost_categories relation might be null if it was deleted, so we check for it
+        const categoryName = cost.cost_categories?.name || 'Sin categoría';
+
+        if (!categoryData[categoryId]) {
+          categoryData[categoryId] = { total: 0, name: categoryName };
+        }
+        categoryData[categoryId].total += Number(cost.amount);
+      });
+
+      const total = costs.reduce((sum, cost) => sum + Number(cost.amount), 0);
+      
+      return Object.entries(categoryData)
+        .map(([categoryId, data]) => ({
+          categoryId,
+          categoryName: data.name,
+          total: data.total,
+          percentage: total > 0 ? (data.total / total) * 100 : 0
+        }))
+        .sort((a, b) => b.total - a.total);
   };
 
   return {
