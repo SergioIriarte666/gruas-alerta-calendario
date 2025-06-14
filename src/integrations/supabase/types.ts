@@ -9,16 +9,591 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      clients: {
+        Row: {
+          address: string | null
+          created_at: string | null
+          created_by: string | null
+          email: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          phone: string | null
+          rut: string
+          updated_at: string | null
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          email?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          phone?: string | null
+          rut: string
+          updated_at?: string | null
+        }
+        Update: {
+          address?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          email?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          phone?: string | null
+          rut?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clients_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      closure_services: {
+        Row: {
+          closure_id: string
+          id: string
+          service_id: string
+        }
+        Insert: {
+          closure_id: string
+          id?: string
+          service_id: string
+        }
+        Update: {
+          closure_id?: string
+          id?: string
+          service_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "closure_services_closure_id_fkey"
+            columns: ["closure_id"]
+            isOneToOne: false
+            referencedRelation: "service_closures"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "closure_services_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      company_data: {
+        Row: {
+          address: string
+          alert_days: number | null
+          business_name: string
+          created_at: string | null
+          email: string
+          folio_format: string | null
+          id: string
+          invoice_due_days: number | null
+          legal_texts: string | null
+          logo_url: string | null
+          phone: string
+          rut: string
+          updated_at: string | null
+          vat_percentage: number | null
+          website: string | null
+        }
+        Insert: {
+          address: string
+          alert_days?: number | null
+          business_name: string
+          created_at?: string | null
+          email: string
+          folio_format?: string | null
+          id?: string
+          invoice_due_days?: number | null
+          legal_texts?: string | null
+          logo_url?: string | null
+          phone: string
+          rut: string
+          updated_at?: string | null
+          vat_percentage?: number | null
+          website?: string | null
+        }
+        Update: {
+          address?: string
+          alert_days?: number | null
+          business_name?: string
+          created_at?: string | null
+          email?: string
+          folio_format?: string | null
+          id?: string
+          invoice_due_days?: number | null
+          legal_texts?: string | null
+          logo_url?: string | null
+          phone?: string
+          rut?: string
+          updated_at?: string | null
+          vat_percentage?: number | null
+          website?: string | null
+        }
+        Relationships: []
+      }
+      cranes: {
+        Row: {
+          brand: string
+          circulation_permit_expiry: string
+          created_at: string | null
+          created_by: string | null
+          id: string
+          insurance_expiry: string
+          is_active: boolean | null
+          license_plate: string
+          model: string
+          technical_review_expiry: string
+          type: Database["public"]["Enums"]["crane_type"]
+          updated_at: string | null
+        }
+        Insert: {
+          brand: string
+          circulation_permit_expiry: string
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          insurance_expiry: string
+          is_active?: boolean | null
+          license_plate: string
+          model: string
+          technical_review_expiry: string
+          type: Database["public"]["Enums"]["crane_type"]
+          updated_at?: string | null
+        }
+        Update: {
+          brand?: string
+          circulation_permit_expiry?: string
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          insurance_expiry?: string
+          is_active?: boolean | null
+          license_plate?: string
+          model?: string
+          technical_review_expiry?: string
+          type?: Database["public"]["Enums"]["crane_type"]
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cranes_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      invoice_services: {
+        Row: {
+          id: string
+          invoice_id: string
+          service_id: string
+        }
+        Insert: {
+          id?: string
+          invoice_id: string
+          service_id: string
+        }
+        Update: {
+          id?: string
+          invoice_id?: string
+          service_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoice_services_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoice_services_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      invoices: {
+        Row: {
+          client_id: string
+          created_at: string | null
+          created_by: string | null
+          due_date: string
+          folio: string
+          id: string
+          issue_date: string
+          notes: string | null
+          payment_date: string | null
+          status: Database["public"]["Enums"]["invoice_status"] | null
+          subtotal: number
+          total: number
+          updated_at: string | null
+          vat: number
+        }
+        Insert: {
+          client_id: string
+          created_at?: string | null
+          created_by?: string | null
+          due_date: string
+          folio: string
+          id?: string
+          issue_date: string
+          notes?: string | null
+          payment_date?: string | null
+          status?: Database["public"]["Enums"]["invoice_status"] | null
+          subtotal: number
+          total: number
+          updated_at?: string | null
+          vat: number
+        }
+        Update: {
+          client_id?: string
+          created_at?: string | null
+          created_by?: string | null
+          due_date?: string
+          folio?: string
+          id?: string
+          issue_date?: string
+          notes?: string | null
+          payment_date?: string | null
+          status?: Database["public"]["Enums"]["invoice_status"] | null
+          subtotal?: number
+          total?: number
+          updated_at?: string | null
+          vat?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoices_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      operators: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          exam_expiry: string
+          id: string
+          is_active: boolean | null
+          license_number: string
+          name: string
+          phone: string | null
+          rut: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          exam_expiry: string
+          id?: string
+          is_active?: boolean | null
+          license_number: string
+          name: string
+          phone?: string | null
+          rut: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          exam_expiry?: string
+          id?: string
+          is_active?: boolean | null
+          license_number?: string
+          name?: string
+          phone?: string | null
+          rut?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "operators_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string | null
+          email: string
+          full_name: string | null
+          id: string
+          is_active: boolean | null
+          role: Database["public"]["Enums"]["app_role"] | null
+          updated_at: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string | null
+          email: string
+          full_name?: string | null
+          id: string
+          is_active?: boolean | null
+          role?: Database["public"]["Enums"]["app_role"] | null
+          updated_at?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string | null
+          email?: string
+          full_name?: string | null
+          id?: string
+          is_active?: boolean | null
+          role?: Database["public"]["Enums"]["app_role"] | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      service_closures: {
+        Row: {
+          client_id: string | null
+          created_at: string | null
+          created_by: string | null
+          date_from: string
+          date_to: string
+          folio: string
+          id: string
+          status: Database["public"]["Enums"]["closure_status"] | null
+          total: number
+          updated_at: string | null
+        }
+        Insert: {
+          client_id?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          date_from: string
+          date_to: string
+          folio: string
+          id?: string
+          status?: Database["public"]["Enums"]["closure_status"] | null
+          total: number
+          updated_at?: string | null
+        }
+        Update: {
+          client_id?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          date_from?: string
+          date_to?: string
+          folio?: string
+          id?: string
+          status?: Database["public"]["Enums"]["closure_status"] | null
+          total?: number
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_closures_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_closures_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      service_types: {
+        Row: {
+          base_price: number | null
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          base_price?: number | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          base_price?: number | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_types_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      services: {
+        Row: {
+          client_id: string
+          crane_id: string
+          created_at: string | null
+          created_by: string | null
+          destination: string
+          folio: string
+          id: string
+          license_plate: string
+          observations: string | null
+          operator_commission: number | null
+          operator_id: string
+          origin: string
+          purchase_order: string | null
+          request_date: string
+          service_date: string
+          service_type_id: string
+          status: Database["public"]["Enums"]["service_status"] | null
+          updated_at: string | null
+          value: number
+          vehicle_brand: string
+          vehicle_model: string
+        }
+        Insert: {
+          client_id: string
+          crane_id: string
+          created_at?: string | null
+          created_by?: string | null
+          destination: string
+          folio: string
+          id?: string
+          license_plate: string
+          observations?: string | null
+          operator_commission?: number | null
+          operator_id: string
+          origin: string
+          purchase_order?: string | null
+          request_date: string
+          service_date: string
+          service_type_id: string
+          status?: Database["public"]["Enums"]["service_status"] | null
+          updated_at?: string | null
+          value: number
+          vehicle_brand: string
+          vehicle_model: string
+        }
+        Update: {
+          client_id?: string
+          crane_id?: string
+          created_at?: string | null
+          created_by?: string | null
+          destination?: string
+          folio?: string
+          id?: string
+          license_plate?: string
+          observations?: string | null
+          operator_commission?: number | null
+          operator_id?: string
+          origin?: string
+          purchase_order?: string | null
+          request_date?: string
+          service_date?: string
+          service_type_id?: string
+          status?: Database["public"]["Enums"]["service_status"] | null
+          updated_at?: string | null
+          value?: number
+          vehicle_brand?: string
+          vehicle_model?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "services_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "services_crane_id_fkey"
+            columns: ["crane_id"]
+            isOneToOne: false
+            referencedRelation: "cranes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "services_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "services_operator_id_fkey"
+            columns: ["operator_id"]
+            isOneToOne: false
+            referencedRelation: "operators"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "services_service_type_id_fkey"
+            columns: ["service_type_id"]
+            isOneToOne: false
+            referencedRelation: "service_types"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_user_role: {
+        Args: { user_id?: string }
+        Returns: Database["public"]["Enums"]["app_role"]
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "operator" | "viewer"
+      closure_status: "open" | "closed" | "invoiced"
+      crane_type: "light" | "medium" | "heavy" | "taxi" | "other"
+      invoice_status: "draft" | "sent" | "paid" | "overdue" | "cancelled"
+      service_status: "pending" | "in_progress" | "completed" | "cancelled"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -133,6 +708,12 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "operator", "viewer"],
+      closure_status: ["open", "closed", "invoiced"],
+      crane_type: ["light", "medium", "heavy", "taxi", "other"],
+      invoice_status: ["draft", "sent", "paid", "overdue", "cancelled"],
+      service_status: ["pending", "in_progress", "completed", "cancelled"],
+    },
   },
 } as const

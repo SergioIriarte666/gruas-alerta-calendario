@@ -7,6 +7,8 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { UserProvider } from "@/contexts/UserContext";
 import { NotificationProvider } from "@/contexts/NotificationContext";
+import { AuthProvider } from "@/contexts/AuthContext";
+import ProtectedRoute from "@/components/layout/ProtectedRoute";
 import Dashboard from "./pages/Dashboard";
 import Services from "./pages/Services";
 import Calendar from "./pages/Calendar";
@@ -18,38 +20,48 @@ import Invoices from "./pages/Invoices";
 import Reports from "./pages/Reports";
 import Settings from "./pages/Settings";
 import Profile from "./pages/Profile";
+import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <UserProvider>
-      <NotificationProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <Layout>
+    <AuthProvider>
+      <UserProvider>
+        <NotificationProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
               <Routes>
-                <Route path="/" element={<Dashboard />} />
-                <Route path="/calendar" element={<Calendar />} />
-                <Route path="/services" element={<Services />} />
-                <Route path="/clients" element={<Clients />} />
-                <Route path="/cranes" element={<Cranes />} />
-                <Route path="/operators" element={<Operators />} />
-                <Route path="/closures" element={<Closures />} />
-                <Route path="/invoices" element={<Invoices />} />
-                <Route path="/reports" element={<Reports />} />
-                <Route path="/settings" element={<Settings />} />
-                <Route path="/profile" element={<Profile />} />
-                <Route path="*" element={<NotFound />} />
+                <Route path="/auth" element={<Auth />} />
+                <Route path="/*" element={
+                  <ProtectedRoute>
+                    <Layout>
+                      <Routes>
+                        <Route path="/" element={<Dashboard />} />
+                        <Route path="/calendar" element={<Calendar />} />
+                        <Route path="/services" element={<Services />} />
+                        <Route path="/clients" element={<Clients />} />
+                        <Route path="/cranes" element={<Cranes />} />
+                        <Route path="/operators" element={<Operators />} />
+                        <Route path="/closures" element={<Closures />} />
+                        <Route path="/invoices" element={<Invoices />} />
+                        <Route path="/reports" element={<Reports />} />
+                        <Route path="/settings" element={<Settings />} />
+                        <Route path="/profile" element={<Profile />} />
+                        <Route path="*" element={<NotFound />} />
+                      </Routes>
+                    </Layout>
+                  </ProtectedRoute>
+                } />
               </Routes>
-            </Layout>
-          </BrowserRouter>
-        </TooltipProvider>
-      </NotificationProvider>
-    </UserProvider>
+            </BrowserRouter>
+          </TooltipProvider>
+        </NotificationProvider>
+      </UserProvider>
+    </AuthProvider>
   </QueryClientProvider>
 );
 
