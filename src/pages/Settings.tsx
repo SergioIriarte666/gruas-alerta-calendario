@@ -11,6 +11,7 @@ import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { useSettings } from '@/hooks/useSettings';
+import { LogoUpload } from '@/components/settings/LogoUpload';
 import {
   Building2,
   User,
@@ -24,7 +25,7 @@ import {
 } from 'lucide-react';
 
 const Settings = () => {
-  const { settings, loading, saving, updateSettings, resetSettings } = useSettings();
+  const { settings, loading, saving, updateSettings, updateLogo, resetSettings } = useSettings();
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('company');
 
@@ -39,6 +40,17 @@ const Settings = () => {
       toast({
         title: "Error",
         description: result.error || "Error al guardar la configuración",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleLogoChange = async (logoData: string | null) => {
+    const result = await updateLogo(logoData);
+    if (!result.success) {
+      toast({
+        title: "Error",
+        description: result.error || "Error al guardar el logotipo",
         variant: "destructive",
       });
     }
@@ -103,7 +115,17 @@ const Settings = () => {
                 <span>Información de la Empresa</span>
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-6">
+              {/* Logo Upload Section */}
+              <LogoUpload
+                currentLogo={settings.company.logo}
+                onLogoChange={handleLogoChange}
+                disabled={saving}
+              />
+              
+              <Separator className="bg-gray-700" />
+              
+              {/* Company Information */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="company-name" className="text-gray-300">Nombre de la Empresa</Label>

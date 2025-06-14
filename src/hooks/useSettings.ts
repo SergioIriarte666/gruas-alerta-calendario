@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 
 interface CompanySettings {
@@ -47,7 +46,8 @@ const defaultSettings: Settings = {
     address: 'Av. Principal 1234, Santiago, Chile',
     phone: '+56 2 2345 6789',
     email: 'contacto@tmsgruas.cl',
-    taxId: '12.345.678-9'
+    taxId: '12.345.678-9',
+    logo: undefined
   },
   user: {
     theme: 'dark',
@@ -106,6 +106,34 @@ export const useSettings = () => {
     }
   };
 
+  const updateLogo = async (logoData: string | null) => {
+    setSaving(true);
+    try {
+      const updatedCompanySettings = {
+        ...settings.company,
+        logo: logoData || undefined
+      };
+      
+      const updatedSettings = {
+        ...settings,
+        company: updatedCompanySettings
+      };
+      
+      setSettings(updatedSettings);
+      localStorage.setItem('tms-settings', JSON.stringify(updatedSettings));
+      
+      // Simular guardado en servidor
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      return { success: true };
+    } catch (error) {
+      console.error('Error saving logo:', error);
+      return { success: false, error: 'Error al guardar el logotipo' };
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const resetSettings = () => {
     setSettings(defaultSettings);
     localStorage.removeItem('tms-settings');
@@ -116,6 +144,7 @@ export const useSettings = () => {
     loading,
     saving,
     updateSettings,
+    updateLogo,
     resetSettings
   };
 };
