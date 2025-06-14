@@ -1,4 +1,3 @@
-
 import * as z from 'zod';
 
 export const costSchema = z.object({
@@ -14,7 +13,7 @@ export const costSchema = z.object({
             console.log('[Schema Preprocess] crane_id - Output:', result);
             return result;
         },
-        z.string().uuid("ID de grúa inválido").nullable().optional()
+        z.string().nullable().optional()
     ),
     operator_id: z.preprocess(
         (val) => {
@@ -23,7 +22,7 @@ export const costSchema = z.object({
             console.log('[Schema Preprocess] operator_id - Output:', result);
             return result;
         },
-        z.string().uuid("ID de operador inválido").nullable().optional()
+        z.string().nullable().optional()
     ),
     service_id: z.preprocess(
         (val) => {
@@ -32,7 +31,7 @@ export const costSchema = z.object({
             console.log('[Schema Preprocess] service_id - Output:', result);
             return result;
         },
-        z.string().uuid("ID de servicio inválido").nullable().optional()
+        z.string().nullable().optional()
     ),
     
     service_folio: z.preprocess(

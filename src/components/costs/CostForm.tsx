@@ -12,6 +12,7 @@ import { useServices } from '@/hooks/useServices';
 import { costSchema, CostFormValues } from '@/schemas/costSchema';
 import { CostFormInputs } from './form/CostFormInputs';
 import { CostFormActions } from './form/CostFormActions';
+import { useToast } from '@/hooks/use-toast';
 
 interface CostFormProps {
     isOpen: boolean;
@@ -23,6 +24,7 @@ export const CostForm = ({ isOpen, onClose, cost }: CostFormProps) => {
     console.log(`CostForm rendered. isOpen: ${isOpen}`);
     const { mutate: addCost, isPending: isAdding } = useAddCost();
     const { mutate: updateCost, isPending: isUpdating } = useUpdateCost();
+    const { toast } = useToast();
     
     const { data: categories = [], isLoading: isLoadingCategories } = useCostCategories();
     const { cranes, loading: isLoadingCranes } = useCranes();
@@ -96,18 +98,26 @@ export const CostForm = ({ isOpen, onClose, cost }: CostFormProps) => {
         if (cost) {
             console.log('[CostForm] Submitting for UPDATE. Data:', { id: cost.id, ...submissionData });
             updateCost({ id: cost.id, ...submissionData }, {
-                onSuccess: onClose,
+                onSuccess: () => {
+                    toast({ title: "Costo Actualizado", description: "El costo se ha actualizado correctamente." });
+                    onClose();
+                },
                 onError: (error) => {
                     console.error("[CostForm] Update cost failed:", error);
+                    toast({ title: "Error al Actualizar", description: "No se pudo actualizar el costo.", variant: "destructive" });
                     console.error("[CostForm] Data that failed UPDATE:", { id: cost.id, ...submissionData });
                 },
             });
         } else {
             console.log('[CostForm] Submitting for ADD. Data:', submissionData);
             addCost(submissionData, {
-                onSuccess: onClose,
+                onSuccess: () => {
+                    toast({ title: "Costo Agregado", description: "El nuevo costo se ha registrado correctamente." });
+                    onClose();
+                },
                 onError: (error) => {
                     console.error("[CostForm] Add cost failed:", error);
+                    toast({ title: "Error al Agregar", description: "No se pudo registrar el nuevo costo.", variant: "destructive" });
                     console.error("[CostForm] Data that failed ADD:", submissionData);
                 },
             });

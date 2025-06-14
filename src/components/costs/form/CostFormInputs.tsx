@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { UseFormReturn } from 'react-hook-form';
 import { FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
@@ -80,7 +81,7 @@ export const CostFormInputs = ({
                                 console.log('[Input Change] Crane ID selected:', value);
                                 field.onChange(value);
                             }}
-                            value={field.value ?? ''}
+                            value={field.value ?? 'none'}
                             disabled={isLoadingCranes}
                         >
                             <FormControl><SelectTrigger className="bg-white/10"><SelectValue placeholder="Sin asociar" /></SelectTrigger></FormControl>
@@ -99,7 +100,7 @@ export const CostFormInputs = ({
                                 console.log('[Input Change] Operator ID selected:', value);
                                 field.onChange(value);
                             }}
-                            value={field.value ?? ''}
+                            value={field.value ?? 'none'}
                             disabled={isLoadingOperators}
                         >
                             <FormControl><SelectTrigger className="bg-white/10"><SelectValue placeholder="Sin asociar" /></SelectTrigger></FormControl>
@@ -118,7 +119,7 @@ export const CostFormInputs = ({
                                 console.log('[Input Change] Service ID selected:', value);
                                 field.onChange(value);
                             }}
-                            value={field.value ?? ''}
+                            value={field.value ?? 'none'}
                             disabled={isLoadingServices}
                         >
                             <FormControl><SelectTrigger className="bg-white/10"><SelectValue placeholder="Sin asociar" /></SelectTrigger></FormControl>
