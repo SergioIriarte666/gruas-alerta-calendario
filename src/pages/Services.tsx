@@ -1,11 +1,10 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Plus, Search, Filter, Eye, Edit, Trash2, Truck, FileText } from 'lucide-react';
+import { Plus, Search, Filter, Eye, Edit, Trash2, Truck, FileText, Upload } from 'lucide-react';
 import { useServices } from '@/hooks/useServices';
 import { Service } from '@/types';
 import { format } from 'date-fns';
@@ -13,12 +12,14 @@ import { es } from 'date-fns/locale';
 import { ServiceForm } from '@/components/services/ServiceForm';
 import { ServiceDetailsModal } from '@/components/services/ServiceDetailsModal';
 import { ServiceFilters } from '@/components/services/ServiceFilters';
+import { CSVUploadServices } from '@/components/services/CSVUploadServices';
 
 const Services = () => {
   const { services, loading, createService, updateService, deleteService } = useServices();
   const [selectedService, setSelectedService] = useState<Service | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+  const [isCSVUploadOpen, setIsCSVUploadOpen] = useState(false);
   const [editingService, setEditingService] = useState<Service | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -92,6 +93,12 @@ const Services = () => {
     }
   };
 
+  const handleCSVSuccess = (count: number) => {
+    setIsCSVUploadOpen(false);
+    // Could add a toast notification here
+    console.log(`${count} servicios cargados exitosamente`);
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-96">
@@ -110,30 +117,52 @@ const Services = () => {
             Administra todos los servicios de grúa del sistema
           </p>
         </div>
-        <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-          <DialogTrigger asChild>
-            <Button className="bg-tms-green hover:bg-tms-green-dark text-white">
-              <Plus className="w-4 h-4 mr-2" />
-              Nuevo Servicio
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>
-                {editingService ? 'Editar Servicio' : 'Nuevo Servicio'}
-              </DialogTitle>
-            </DialogHeader>
-            <ServiceForm
-              service={editingService}
-              onSubmit={editingService ? handleUpdateService : handleCreateService}
-              onCancel={() => {
-                setIsFormOpen(false);
-                setEditingService(null);
-              }}
-            />
-          </DialogContent>
-        </Dialog>
+        <div className="flex space-x-2">
+          <Button 
+            onClick={() => setIsCSVUploadOpen(true)}
+            className="bg-blue-600 hover:bg-blue-700 text-white"
+          >
+            <Upload className="w-4 h-4 mr-2" />
+            Carga Masiva
+          </Button>
+          <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+            <DialogTrigger asChild>
+              <Button className="bg-tms-green hover:bg-tms-green-dark text-white">
+                <Plus className="w-4 h-4 mr-2" />
+                Nuevo Servicio
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>
+                  {editingService ? 'Editar Servicio' : 'Nuevo Servicio'}
+                </DialogTitle>
+              </DialogHeader>
+              <ServiceForm
+                service={editingService}
+                onSubmit={editingService ? handleUpdateService : handleCreateService}
+                onCancel={() => {
+                  setIsFormOpen(false);
+                  setEditingService(null);
+                }}
+              />
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
+
+      {/* CSV Upload Modal */}
+      <Dialog open={isCSVUploadOpen} onOpenChange={setIsCSVUploadOpen}>
+        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Carga Masiva de Servicios</DialogTitle>
+          </DialogHeader>
+          <CSVUploadServices
+            onClose={() => setIsCSVUploadOpen(false)}
+            onSuccess={handleCSVSuccess}
+          />
+        </DialogContent>
+      </Dialog>
 
       {/* Filters */}
       <ServiceFilters
