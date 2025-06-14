@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { UseFormReturn } from 'react-hook-form';
 import { FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
@@ -76,7 +75,14 @@ export const CostFormInputs = ({
                 <FormField name="crane_id" control={form.control} render={({ field }) => (
                     <FormItem>
                         <Label>Grúa (Opcional)</Label>
-                        <Select onValueChange={field.onChange} value={field.value ?? ''} disabled={isLoadingCranes}>
+                        <Select
+                            onValueChange={(value) => {
+                                console.log('[Input Change] Crane ID selected:', value);
+                                field.onChange(value);
+                            }}
+                            value={field.value ?? ''}
+                            disabled={isLoadingCranes}
+                        >
                             <FormControl><SelectTrigger className="bg-white/10"><SelectValue placeholder="Sin asociar" /></SelectTrigger></FormControl>
                             <SelectContent>
                                 <SelectItem value="none">Sin asociar</SelectItem>
@@ -88,7 +94,14 @@ export const CostFormInputs = ({
                 <FormField name="operator_id" control={form.control} render={({ field }) => (
                     <FormItem>
                         <Label>Operador (Opcional)</Label>
-                        <Select onValueChange={field.onChange} value={field.value ?? ''} disabled={isLoadingOperators}>
+                        <Select
+                            onValueChange={(value) => {
+                                console.log('[Input Change] Operator ID selected:', value);
+                                field.onChange(value);
+                            }}
+                            value={field.value ?? ''}
+                            disabled={isLoadingOperators}
+                        >
                             <FormControl><SelectTrigger className="bg-white/10"><SelectValue placeholder="Sin asociar" /></SelectTrigger></FormControl>
                             <SelectContent>
                                 <SelectItem value="none">Sin asociar</SelectItem>
@@ -100,7 +113,14 @@ export const CostFormInputs = ({
                 <FormField name="service_id" control={form.control} render={({ field }) => (
                     <FormItem>
                         <Label>Servicio (Opcional)</Label>
-                        <Select onValueChange={field.onChange} value={field.value ?? ''} disabled={isLoadingServices}>
+                        <Select
+                            onValueChange={(value) => {
+                                console.log('[Input Change] Service ID selected:', value);
+                                field.onChange(value);
+                            }}
+                            value={field.value ?? ''}
+                            disabled={isLoadingServices}
+                        >
                             <FormControl><SelectTrigger className="bg-white/10"><SelectValue placeholder="Sin asociar" /></SelectTrigger></FormControl>
                             <SelectContent>
                                 <SelectItem value="none">Sin asociar</SelectItem>

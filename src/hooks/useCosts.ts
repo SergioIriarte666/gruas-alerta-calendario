@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Cost, CostFormData } from '@/types/costs';
@@ -31,16 +30,18 @@ export const useCosts = () => {
 };
 
 const addCost = async (costData: CostFormData) => {
+  console.log('[useCosts - addCost] Attempting to add cost with data:', costData);
   const { data, error } = await supabase
     .from('costs')
     .insert([costData])
     .select();
 
   if (error) {
-    console.error('Error adding cost:', error);
+    console.error('[useCosts - addCost] Supabase error:', error);
     throw new Error(error.message);
   }
-
+  
+  console.log('[useCosts - addCost] Successfully added cost. Response:', data);
   return data;
 };
 
@@ -55,6 +56,7 @@ export const useAddCost = () => {
 };
 
 const updateCost = async ({ id, ...costData }: { id: string } & Partial<CostFormData>) => {
+  console.log(`[useCosts - updateCost] Attempting to update cost ID ${id} with data:`, costData);
   const { data, error } = await supabase
     .from('costs')
     .update(costData)
@@ -62,10 +64,11 @@ const updateCost = async ({ id, ...costData }: { id: string } & Partial<CostForm
     .select();
 
   if (error) {
-    console.error('Error updating cost:', error);
+    console.error(`[useCosts - updateCost] Supabase error for ID ${id}:`, error);
     throw new Error(error.message);
   }
-
+  
+  console.log(`[useCosts - updateCost] Successfully updated cost ID ${id}. Response:`, data);
   return data;
 };
 

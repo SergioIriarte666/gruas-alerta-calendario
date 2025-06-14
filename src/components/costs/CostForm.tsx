@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -47,13 +46,13 @@ export const CostForm = ({ isOpen, onClose, cost }: CostFormProps) => {
     const { reset } = form;
 
     useEffect(() => {
-        console.log('CostForm useEffect triggered.', { isOpen, costExists: !!cost });
+        console.log('[CostForm] useEffect triggered.', { isOpen, costExists: !!cost });
         if (cost) {
             const dateValue = (cost.date && typeof cost.date === 'string')
                 ? cost.date.split('T')[0]
                 : new Date().toISOString().split('T')[0];
 
-            reset({
+            const initialValues = {
                 date: dateValue,
                 description: cost.description,
                 amount: Number(cost.amount),
@@ -63,9 +62,11 @@ export const CostForm = ({ isOpen, onClose, cost }: CostFormProps) => {
                 service_id: cost.service_id || null,
                 service_folio: cost.service_folio || null,
                 notes: cost.notes || null,
-            });
+            };
+            console.log('[CostForm] Resetting form with initial values for EDIT:', initialValues);
+            reset(initialValues);
         } else {
-            reset({
+            const defaultValues = {
                 date: new Date().toISOString().split('T')[0],
                 description: '',
                 amount: 0,
@@ -75,27 +76,39 @@ export const CostForm = ({ isOpen, onClose, cost }: CostFormProps) => {
                 service_id: null,
                 service_folio: null,
                 notes: null,
-            });
+            };
+            console.log('[CostForm] Resetting form with default values for NEW:', defaultValues);
+            reset(defaultValues);
         }
     }, [cost, reset, isOpen]);
     
     const onSubmit = (values: CostFormValues) => {
-        console.log("Submitting validated values:", values);
+        console.log("[CostForm] onSubmit triggered. Raw form values:", form.getValues());
+        console.log("[CostForm] Zod-validated values:", values);
+        
+        console.log('--- Type check before submission ---');
+        Object.entries(values).forEach(([key, value]) => {
+          console.log(`[TypeCheck] ${key}: ${value} (Type: ${typeof value})`);
+        });
+        console.log('--- End Type check ---');
+
         const submissionData = values as CostFormData;
         if (cost) {
+            console.log('[CostForm] Submitting for UPDATE. Data:', { id: cost.id, ...submissionData });
             updateCost({ id: cost.id, ...submissionData }, {
                 onSuccess: onClose,
                 onError: (error) => {
-                    console.error("Update cost failed:", error);
-                    console.error("Data that failed:", submissionData);
+                    console.error("[CostForm] Update cost failed:", error);
+                    console.error("[CostForm] Data that failed UPDATE:", { id: cost.id, ...submissionData });
                 },
             });
         } else {
+            console.log('[CostForm] Submitting for ADD. Data:', submissionData);
             addCost(submissionData, {
                 onSuccess: onClose,
                 onError: (error) => {
-                    console.error("Add cost failed:", error);
-                    console.error("Data that failed:", submissionData);
+                    console.error("[CostForm] Add cost failed:", error);
+                    console.error("[CostForm] Data that failed ADD:", submissionData);
                 },
             });
         }
