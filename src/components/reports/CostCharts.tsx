@@ -52,7 +52,10 @@ export const CostCharts = ({ metrics, costsByCategoryConfig }: CostChartsProps) 
                 ))}
               </Pie>
               <ChartLegend
-                content={<ChartLegendContent nameKey="categoryName" layout="vertical" align="right" verticalAlign="middle" />}
+                layout="vertical"
+                align="right"
+                verticalAlign="middle"
+                content={<ChartLegendContent nameKey="categoryName" />}
               />
             </PieChart>
           </ChartContainer>
