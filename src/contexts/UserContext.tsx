@@ -1,5 +1,7 @@
 
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import { useAuth } from './AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 
 interface User {
   id: string;
@@ -31,32 +33,65 @@ interface UserProviderProps {
 }
 
 export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
-  const [user, setUser] = useState<User | null>({
-    id: '1',
-    name: 'Usuario Demo',
-    email: 'demo@tmsgruas.com',
-    role: 'admin'
-  });
+  const { user: authUser, session, signOut, loading: authLoading } = useAuth();
+  const [user, setUser] = useState<User | null>(null);
 
-  const login = (userData: User) => {
-    setUser(userData);
-    localStorage.setItem('user', JSON.stringify(userData));
-  };
+  useEffect(() => {
+    if (authUser && session) {
+      const fetchProfile = async () => {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('id, full_name, email, role')
+          .eq('id', authUser.id)
+          .single();
+
+        if (error && error.code !== 'PGRST116') { // 'PGRST116' es el código para 'no rows returned'
+          console.error("Error fetching user profile", error);
+        } else if (data) {
+          setUser({
+            id: data.id,
+            name: data.full_name || 'Usuario',
+            email: data.email,
+            role: data.role || 'viewer',
+          });
+        }
+      };
+      fetchProfile();
+    } else {
+      setUser(null);
+    }
+  }, [authUser, session]);
+  
+  const login = () => { /* Deprecated: Handled by Auth page */ };
 
   const logout = () => {
-    setUser(null);
-    localStorage.removeItem('user');
+    signOut();
   };
 
-  const updateUser = (userData: Partial<User>) => {
+  const updateUser = async (userData: Partial<User>) => {
     if (user) {
       const updatedUser = { ...user, ...userData };
       setUser(updatedUser);
-      localStorage.setItem('user', JSON.stringify(updatedUser));
+      const { error } = await supabase
+        .from('profiles')
+        .update({ full_name: updatedUser.name, email: updatedUser.email, role: updatedUser.role as any })
+        .eq('id', user.id);
+      
+      if(error) {
+        console.error("Error updating user profile", error);
+      }
     }
   };
 
-  const isAuthenticated = user !== null;
+  const isAuthenticated = !!authUser && !!session;
+
+  if (authLoading) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-gray-900 text-white">
+        <div>Cargando sesión...</div>
+      </div>
+    );
+  }
 
   return (
     <UserContext.Provider value={{

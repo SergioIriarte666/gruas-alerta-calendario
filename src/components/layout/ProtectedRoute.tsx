@@ -1,32 +1,22 @@
 
-import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { ReactNode } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { Navigate, useLocation } from 'react-router-dom';
 
-interface ProtectedRouteProps {
-  children: React.ReactNode;
-}
-
-const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
+const ProtectedRoute = ({ children }: { children: ReactNode }) => {
   const { user, loading } = useAuth();
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    if (!loading && !user) {
-      navigate('/auth');
-    }
-  }, [user, loading, navigate]);
+  const location = useLocation();
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-tms-dark flex items-center justify-center">
-        <div className="text-white">Cargando...</div>
+      <div className="flex items-center justify-center h-screen bg-gray-900 text-white">
+        <div>Cargando...</div>
       </div>
     );
   }
 
   if (!user) {
-    return null;
+    return <Navigate to="/auth" state={{ from: location }} replace />;
   }
 
   return <>{children}</>;
