@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -18,6 +17,47 @@ export interface CalendarEvent {
   createdAt: string;
   updatedAt: string;
 }
+
+// Type guard functions for validation
+const isValidEventType = (type: string): type is CalendarEvent['type'] => {
+  return ['service', 'maintenance', 'meeting', 'deadline', 'other'].includes(type);
+};
+
+const isValidEventStatus = (status: string): status is CalendarEvent['status'] => {
+  return ['scheduled', 'completed', 'cancelled'].includes(status);
+};
+
+// Sanitize event data from database
+const sanitizeEventData = (data: any): CalendarEvent => {
+  // Validate and set default values for type and status
+  const eventType = isValidEventType(data.type) ? data.type : 'other';
+  const eventStatus = isValidEventStatus(data.status) ? data.status : 'scheduled';
+
+  // Log warnings for invalid data
+  if (!isValidEventType(data.type)) {
+    console.warn(`Invalid event type received: ${data.type}, defaulting to 'other'`);
+  }
+  if (!isValidEventStatus(data.status)) {
+    console.warn(`Invalid event status received: ${data.status}, defaulting to 'scheduled'`);
+  }
+
+  return {
+    id: data.id,
+    title: data.title || 'Untitled Event',
+    description: data.description,
+    date: data.date,
+    startTime: data.start_time,
+    endTime: data.end_time,
+    type: eventType,
+    status: eventStatus,
+    serviceId: data.service_id,
+    clientId: data.client_id,
+    operatorId: data.operator_id,
+    craneId: data.crane_id,
+    createdAt: data.created_at,
+    updatedAt: data.updated_at
+  };
+};
 
 export const useCalendar = () => {
   const [events, setEvents] = useState<CalendarEvent[]>([]);
@@ -39,23 +79,8 @@ export const useCalendar = () => {
         return;
       }
 
-      const formattedEvents: CalendarEvent[] = (data || []).map(event => ({
-        id: event.id,
-        title: event.title,
-        description: event.description,
-        date: event.date,
-        startTime: event.start_time,
-        endTime: event.end_time,
-        type: event.type as CalendarEvent['type'],
-        status: event.status as CalendarEvent['status'],
-        serviceId: event.service_id,
-        clientId: event.client_id,
-        operatorId: event.operator_id,
-        craneId: event.crane_id,
-        createdAt: event.created_at,
-        updatedAt: event.updated_at
-      }));
-
+      // Use sanitization function for safe data processing
+      const formattedEvents: CalendarEvent[] = (data || []).map(sanitizeEventData);
       setEvents(formattedEvents);
     } catch (error) {
       console.error('Error loading calendar events:', error);
@@ -93,23 +118,8 @@ export const useCalendar = () => {
         return null;
       }
 
-      const newEvent: CalendarEvent = {
-        id: data.id,
-        title: data.title,
-        description: data.description,
-        date: data.date,
-        startTime: data.start_time,
-        endTime: data.end_time,
-        type: data.type as CalendarEvent['type'],
-        status: data.status as CalendarEvent['status'],
-        serviceId: data.service_id,
-        clientId: data.client_id,
-        operatorId: data.operator_id,
-        craneId: data.crane_id,
-        createdAt: data.created_at,
-        updatedAt: data.updated_at
-      };
-
+      // Use sanitization function for safe data processing
+      const newEvent: CalendarEvent = sanitizeEventData(data);
       setEvents(prev => [...prev, newEvent]);
       return newEvent;
     } catch (error) {
@@ -144,23 +154,8 @@ export const useCalendar = () => {
         return;
       }
 
-      const updatedEvent: CalendarEvent = {
-        id: data.id,
-        title: data.title,
-        description: data.description,
-        date: data.date,
-        startTime: data.start_time,
-        endTime: data.end_time,
-        type: data.type as CalendarEvent['type'],
-        status: data.status as CalendarEvent['status'],
-        serviceId: data.service_id,
-        clientId: data.client_id,
-        operatorId: data.operator_id,
-        craneId: data.crane_id,
-        createdAt: data.created_at,
-        updatedAt: data.updated_at
-      };
-
+      // Use sanitization function for safe data processing
+      const updatedEvent: CalendarEvent = sanitizeEventData(data);
       setEvents(prev => prev.map(event => 
         event.id === id ? updatedEvent : event
       ));
