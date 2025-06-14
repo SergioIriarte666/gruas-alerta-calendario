@@ -20,16 +20,25 @@ interface ClosureFormProps {
   onSubmit: (closure: Omit<ServiceClosure, 'id' | 'folio' | 'createdAt' | 'updatedAt'>) => Promise<void>;
 }
 
+interface FormData {
+  dateFrom: Date | undefined;
+  dateTo: Date | undefined;
+  clientId: string;
+  serviceIds: string[];
+  total: number;
+  status: 'open' | 'closed' | 'invoiced';
+}
+
 const ClosureForm = ({ open, onOpenChange, onSubmit }: ClosureFormProps) => {
   const { clients } = useClients();
   const { services } = useServices();
-  const [formData, setFormData] = useState({
-    dateFrom: undefined as Date | undefined,
-    dateTo: undefined as Date | undefined,
+  const [formData, setFormData] = useState<FormData>({
+    dateFrom: undefined,
+    dateTo: undefined,
     clientId: '',
-    serviceIds: [] as string[],
+    serviceIds: [],
     total: 0,
-    status: 'open' as const
+    status: 'open'
   });
   const [loading, setLoading] = useState(false);
 
@@ -71,12 +80,6 @@ const ClosureForm = ({ open, onOpenChange, onSubmit }: ClosureFormProps) => {
     if (!formData.clientId) return true;
     return service.client.id === formData.clientId;
   });
-
-  const calculateTotal = () => {
-    const selectedServices = services.filter(s => formData.serviceIds.includes(s.id));
-    const total = selectedServices.reduce((sum, service) => sum + service.value, 0);
-    setFormData(prev => ({ ...prev, total }));
-  };
 
   const handleServiceSelection = (serviceId: string, checked: boolean) => {
     setFormData(prev => {
