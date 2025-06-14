@@ -10,6 +10,8 @@ import Services from "./pages/Services";
 import Calendar from "./pages/Calendar";
 import Clients from "./pages/Clients";
 import Cranes from "./pages/Cranes";
+import Operators from "./pages/Operators";
+import Closures from "./pages/Closures";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
