@@ -155,19 +155,3 @@ export const NotificationsDropdown: React.FC = () => {
     </DropdownMenu>
   );
 };
-</DropdownMenuItem>
-        )}
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
-};
-</DropdownMenuItem>
-        )}
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
-};
-</DropdownMenuContent>
-    </DropdownMenu>
-  );
-};
