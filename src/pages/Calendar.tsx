@@ -1,12 +1,15 @@
 
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Clock } from 'lucide-react';
+import { CalendarIcon } from 'lucide-react';
 import { useCalendar, CalendarEvent } from '@/hooks/useCalendar';
-import { EventModal } from '@/components/calendar/EventModal';
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isToday, addMonths, subMonths, startOfWeek, endOfWeek, addDays } from 'date-fns';
+import { CalendarHeader } from '@/components/calendar/CalendarHeader';
+import { CalendarControls } from '@/components/calendar/CalendarControls';
+import { MonthView } from '@/components/calendar/MonthView';
+import { WeekView } from '@/components/calendar/WeekView';
+import { DayView } from '@/components/calendar/DayView';
+import { EventsSidebar } from '@/components/calendar/EventsSidebar';
+import { format, addMonths, subMonths, addDays } from 'date-fns';
 import { es } from 'date-fns/locale';
 
 const Calendar = () => {
@@ -43,12 +46,6 @@ const Calendar = () => {
     }
   };
 
-  const navigateMonth = (direction: 'prev' | 'next') => {
-    setCurrentMonth(prev => 
-      direction === 'prev' ? subMonths(prev, 1) : addMonths(prev, 1)
-    );
-  };
-
   const navigateDate = (direction: 'prev' | 'next') => {
     setSelectedDate(prev => {
       if (viewMode === 'day') {
@@ -63,186 +60,15 @@ const Calendar = () => {
     });
   };
 
-  const renderMonthView = () => {
-    const monthStart = startOfMonth(currentMonth);
-    const monthEnd = endOfMonth(currentMonth);
-    const calendarStart = startOfWeek(monthStart, { weekStartsOn: 0 });
-    const calendarEnd = endOfWeek(monthEnd, { weekStartsOn: 0 });
-    const calendarDays = eachDayOfInterval({ start: calendarStart, end: calendarEnd });
-
-    return (
-      <div>
-        {/* Days of week header */}
-        <div className="grid grid-cols-7 gap-1 mb-4">
-          {['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'].map(day => (
-            <div key={day} className="p-3 text-center text-sm font-medium text-gray-400">
-              {day}
-            </div>
-          ))}
-        </div>
-
-        {/* Calendar grid */}
-        <div className="grid grid-cols-7 gap-1">
-          {calendarDays.map(day => {
-            const dayEvents = getEventsForDate(day);
-            const isSelected = isSameDay(day, selectedDate);
-            const isDayToday = isToday(day);
-            const isCurrentMonth = day.getMonth() === currentMonth.getMonth();
-
-            return (
-              <div
-                key={day.toISOString()}
-                className={`
-                  min-h-24 p-2 border border-gray-700 rounded-lg cursor-pointer transition-colors
-                  ${isSelected ? 'bg-green-500/20 border-green-500' : 'hover:bg-white/5'}
-                  ${isDayToday ? 'border-green-500' : ''}
-                  ${!isCurrentMonth ? 'opacity-50' : ''}
-                `}
-                onClick={() => setSelectedDate(day)}
-              >
-                <div className={`
-                  text-sm font-medium mb-1
-                  ${isDayToday ? 'text-green-500' : 'text-gray-300'}
-                `}>
-                  {format(day, 'd')}
-                </div>
-                <div className="space-y-1">
-                  {dayEvents.slice(0, 2).map(event => (
-                    <div
-                      key={event.id}
-                      className={`
-                        text-xs px-1 py-0.5 rounded truncate
-                        ${getEventTypeColor(event.type)}
-                      `}
-                      title={event.title}
-                    >
-                      {event.title}
-                    </div>
-                  ))}
-                  {dayEvents.length > 2 && (
-                    <div className="text-xs text-gray-400">
-                      +{dayEvents.length - 2} más
-                    </div>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-    );
-  };
-
-  const renderWeekView = () => {
-    const weekStart = startOfWeek(selectedDate, { weekStartsOn: 0 });
-    const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
-
-    return (
-      <div>
-        <div className="grid grid-cols-7 gap-1 mb-4">
-          {['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'].map(day => (
-            <div key={day} className="p-3 text-center text-sm font-medium text-gray-400">
-              {day}
-            </div>
-          ))}
-        </div>
-        <div className="grid grid-cols-7 gap-1">
-          {weekDays.map(day => {
-            const dayEvents = getEventsForDate(day);
-            const isSelected = isSameDay(day, selectedDate);
-            const isDayToday = isToday(day);
-
-            return (
-              <div
-                key={day.toISOString()}
-                className={`
-                  min-h-32 p-2 border border-gray-700 rounded-lg cursor-pointer transition-colors
-                  ${isSelected ? 'bg-green-500/20 border-green-500' : 'hover:bg-white/5'}
-                  ${isDayToday ? 'border-green-500' : ''}
-                `}
-                onClick={() => setSelectedDate(day)}
-              >
-                <div className={`
-                  text-sm font-medium mb-2
-                  ${isDayToday ? 'text-green-500' : 'text-gray-300'}
-                `}>
-                  {format(day, 'd MMM', { locale: es })}
-                </div>
-                <div className="space-y-1">
-                  {dayEvents.map(event => (
-                    <div
-                      key={event.id}
-                      className={`
-                        text-xs px-1 py-0.5 rounded truncate
-                        ${getEventTypeColor(event.type)}
-                      `}
-                      title={`${event.title} - ${event.startTime}`}
-                    >
-                      {event.startTime} {event.title}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-    );
-  };
-
-  const renderDayView = () => {
-    const dayEvents = getEventsForDate(selectedDate).sort((a, b) => 
-      a.startTime.localeCompare(b.startTime)
-    );
-
-    return (
-      <div className="space-y-4">
-        <div className="text-center">
-          <h3 className="text-xl font-semibold text-white mb-2">
-            {format(selectedDate, 'EEEE, d MMMM yyyy', { locale: es })}
-          </h3>
-        </div>
-        
-        {dayEvents.length === 0 ? (
-          <div className="text-center py-12">
-            <Clock className="w-16 h-16 mx-auto mb-4 text-gray-400" />
-            <p className="text-gray-400 mb-4">No hay eventos programados para este día</p>
-            <EventModal onCreateEvent={createEvent} selectedDate={selectedDate} />
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {dayEvents.map(event => (
-              <div key={event.id} className="p-4 rounded-lg bg-white/5 border border-gray-700">
-                <div className="flex items-start justify-between mb-3">
-                  <div>
-                    <h4 className="font-medium text-white text-lg">{event.title}</h4>
-                    <div className="flex items-center space-x-2 mt-1">
-                      <Clock className="w-4 h-4 text-gray-400" />
-                      <span className="text-gray-400 text-sm">{event.startTime} - {event.endTime}</span>
-                    </div>
-                  </div>
-                  <Badge className={getEventTypeColor(event.type)}>
-                    {getEventTypeLabel(event.type)}
-                  </Badge>
-                </div>
-                {event.description && (
-                  <p className="text-gray-300 text-sm">{event.description}</p>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    );
-  };
-
   const getViewTitle = () => {
     switch (viewMode) {
       case 'day':
         return format(selectedDate, 'd MMMM yyyy', { locale: es });
       case 'week':
-        const weekStart = startOfWeek(selectedDate, { weekStartsOn: 0 });
-        const weekEnd = endOfWeek(selectedDate, { weekStartsOn: 0 });
+        const weekStart = new Date(selectedDate);
+        weekStart.setDate(selectedDate.getDate() - selectedDate.getDay());
+        const weekEnd = new Date(weekStart);
+        weekEnd.setDate(weekStart.getDate() + 6);
         return `${format(weekStart, 'd MMM', { locale: es })} - ${format(weekEnd, 'd MMM yyyy', { locale: es })}`;
       case 'month':
         return format(currentMonth, 'MMMM yyyy', { locale: es });
@@ -261,71 +87,14 @@ const Calendar = () => {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-white">Calendario Centralizado</h1>
-          <p className="text-gray-400 mt-2">
-            Vista integrada de servicios, vencimientos y eventos importantes
-          </p>
-        </div>
-        <EventModal onCreateEvent={createEvent} selectedDate={selectedDate} />
-      </div>
+      <CalendarHeader onCreateEvent={createEvent} selectedDate={selectedDate} />
 
-      {/* Calendar Controls */}
-      <Card className="glass-card">
-        <CardContent className="p-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="border-gray-700 text-gray-300"
-                onClick={() => navigateDate('prev')}
-              >
-                <ChevronLeft className="w-4 h-4" />
-              </Button>
-              <h2 className="text-xl font-semibold text-white min-w-64 text-center">
-                {getViewTitle()}
-              </h2>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="border-gray-700 text-gray-300"
-                onClick={() => navigateDate('next')}
-              >
-                <ChevronRight className="w-4 h-4" />
-              </Button>
-            </div>
-            <div className="flex space-x-2">
-              <Button 
-                variant={viewMode === 'day' ? 'default' : 'outline'} 
-                size="sm" 
-                className={viewMode === 'day' ? 'bg-green-500 hover:bg-green-600 text-white' : 'border-gray-700 text-gray-300'}
-                onClick={() => setViewMode('day')}
-              >
-                Día
-              </Button>
-              <Button 
-                variant={viewMode === 'week' ? 'default' : 'outline'} 
-                size="sm" 
-                className={viewMode === 'week' ? 'bg-green-500 hover:bg-green-600 text-white' : 'border-gray-700 text-gray-300'}
-                onClick={() => setViewMode('week')}
-              >
-                Semana
-              </Button>
-              <Button 
-                variant={viewMode === 'month' ? 'default' : 'outline'} 
-                size="sm" 
-                className={viewMode === 'month' ? 'bg-green-500 hover:bg-green-600 text-white' : 'border-gray-700 text-gray-300'}
-                onClick={() => setViewMode('month')}
-              >
-                Mes
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      <CalendarControls 
+        viewTitle={getViewTitle()}
+        viewMode={viewMode}
+        onNavigate={navigateDate}
+        onViewModeChange={setViewMode}
+      />
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* Calendar View */}
@@ -338,78 +107,45 @@ const Calendar = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              {viewMode === 'month' && renderMonthView()}
-              {viewMode === 'week' && renderWeekView()}
-              {viewMode === 'day' && renderDayView()}
+              {viewMode === 'month' && (
+                <MonthView
+                  currentMonth={currentMonth}
+                  selectedDate={selectedDate}
+                  onDateSelect={setSelectedDate}
+                  getEventsForDate={getEventsForDate}
+                  getEventTypeColor={getEventTypeColor}
+                />
+              )}
+              {viewMode === 'week' && (
+                <WeekView
+                  selectedDate={selectedDate}
+                  onDateSelect={setSelectedDate}
+                  getEventsForDate={getEventsForDate}
+                  getEventTypeColor={getEventTypeColor}
+                />
+              )}
+              {viewMode === 'day' && (
+                <DayView
+                  selectedDate={selectedDate}
+                  getEventsForDate={getEventsForDate}
+                  getEventTypeColor={getEventTypeColor}
+                  getEventTypeLabel={getEventTypeLabel}
+                  createEvent={createEvent}
+                />
+              )}
             </CardContent>
           </Card>
         </div>
 
-        {/* Events for selected date - only show in month and week view */}
+        {/* Events Sidebar - only show in month and week view */}
         {(viewMode === 'month' || viewMode === 'week') && (
-          <div className="space-y-4">
-            <Card className="glass-card">
-              <CardHeader>
-                <CardTitle className="text-white">
-                  Eventos del {format(selectedDate, 'd MMMM', { locale: es })}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {getEventsForDate(selectedDate).length === 0 ? (
-                  <div className="text-center py-8">
-                    <p className="text-gray-400 mb-4">
-                      No hay eventos programados para este día
-                    </p>
-                    <EventModal onCreateEvent={createEvent} selectedDate={selectedDate} />
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {getEventsForDate(selectedDate).map(event => (
-                      <div key={event.id} className="p-3 rounded-lg bg-white/5 border border-gray-700">
-                        <div className="flex items-start justify-between mb-2">
-                          <h4 className="font-medium text-white text-sm">{event.title}</h4>
-                          <Badge className={getEventTypeColor(event.type)}>
-                            {getEventTypeLabel(event.type)}
-                          </Badge>
-                        </div>
-                        {event.description && (
-                          <p className="text-gray-400 text-xs mb-2">{event.description}</p>
-                        )}
-                        <div className="flex items-center space-x-4 text-xs text-gray-400">
-                          <div className="flex items-center space-x-1">
-                            <Clock className="w-3 h-3" />
-                            <span>{event.startTime} - {event.endTime}</span>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Event Legend */}
-            <Card className="glass-card">
-              <CardHeader>
-                <CardTitle className="text-white text-sm">Tipos de Eventos</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  {[
-                    { type: 'service' as const, label: 'Servicios' },
-                    { type: 'maintenance' as const, label: 'Mantenimiento' },
-                    { type: 'meeting' as const, label: 'Reuniones' },
-                    { type: 'deadline' as const, label: 'Vencimientos' }
-                  ].map(({ type, label }) => (
-                    <div key={type} className="flex items-center space-x-2">
-                      <div className={`w-3 h-3 rounded ${getEventTypeColor(type)}`} />
-                      <span className="text-gray-300 text-sm">{label}</span>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+          <EventsSidebar
+            selectedDate={selectedDate}
+            getEventsForDate={getEventsForDate}
+            getEventTypeColor={getEventTypeColor}
+            getEventTypeLabel={getEventTypeLabel}
+            createEvent={createEvent}
+          />
         )}
       </div>  
     </div>
