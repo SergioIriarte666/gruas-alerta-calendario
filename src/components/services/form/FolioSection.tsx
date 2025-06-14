@@ -26,7 +26,7 @@ export const FolioSection = ({
   isLoading
 }: FolioSectionProps) => {
   return (
-    <div className="space-y-4 p-4 border rounded-lg bg-gray-50">
+    <div className="space-y-4">
       <div className="flex items-center justify-between">
         <Label htmlFor="folio">Folio del Servicio</Label>
         <div className="flex items-center space-x-2">
@@ -36,6 +36,7 @@ export const FolioSection = ({
             checked={isManualFolio}
             onCheckedChange={onManualFolioChange}
             disabled={isEditing}
+            className="data-[state=checked]:bg-amber-500"
           />
         </div>
       </div>

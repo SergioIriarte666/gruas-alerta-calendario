@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { Service } from '@/types';
@@ -80,6 +79,11 @@ export const ServiceForm = ({ service, onSubmit, onCancel }: ServiceFormProps) =
     const newFolio = await generateNextFolio();
     setFolio(newFolio);
   };
+
+  const compatibleServiceTypes = serviceTypes.map(st => ({
+    ...st,
+    description: st.description || '',
+  }));
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -175,7 +179,7 @@ export const ServiceForm = ({ service, onSubmit, onCancel }: ServiceFormProps) =
         onPurchaseOrderChange={(value) => setFormData(prev => ({ ...prev, purchaseOrder: value }))}
         serviceTypeId={formData.serviceTypeId}
         onServiceTypeChange={(value) => setFormData(prev => ({ ...prev, serviceTypeId: value }))}
-        serviceTypes={serviceTypes}
+        serviceTypes={compatibleServiceTypes}
         serviceTypesLoading={serviceTypesLoading}
       />
 
