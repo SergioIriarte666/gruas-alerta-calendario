@@ -14,6 +14,7 @@ import Operators from "./pages/Operators";
 import Closures from "./pages/Closures";
 import Invoices from "./pages/Invoices";
 import Reports from "./pages/Reports";
+import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -35,8 +36,7 @@ const App = () => (
             <Route path="/closures" element={<Closures />} />
             <Route path="/invoices" element={<Invoices />} />
             <Route path="/reports" element={<Reports />} />
-            {/* Rutas adicionales serán implementadas progresivamente */}
-            <Route path="/settings" element={<div className="text-white">Configuración - En desarrollo</div>} />
+            <Route path="/settings" element={<Settings />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Layout>
