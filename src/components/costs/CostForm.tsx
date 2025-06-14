@@ -22,12 +22,6 @@ interface CostFormProps {
 }
 
 export const CostForm = ({ isOpen, onClose, cost }: CostFormProps) => {
-    console.log(`CostForm rendered. isOpen: ${isOpen}`);
-    console.log('[CostForm] Cost prop received:', cost);
-    console.log('[CostForm] Cost ID:', cost?.id);
-    console.log('[CostForm] Cost type:', typeof cost);
-    console.log('[CostForm] Cost stringified:', JSON.stringify(cost, null, 2));
-    
     const { mutate: addCost, isPending: isAdding } = useAddCost();
     const { mutate: updateCost, isPending: isUpdating } = useUpdateCost();
     const { toast } = useToast();
@@ -54,11 +48,7 @@ export const CostForm = ({ isOpen, onClose, cost }: CostFormProps) => {
     const { reset } = form;
 
     useEffect(() => {
-        console.log('[CostForm] useEffect triggered.', { isOpen, costExists: !!cost });
         if (cost) {
-            console.log('[CostForm] Processing existing cost for EDIT:', cost);
-            console.log('[CostForm] Cost has ID:', !!cost.id, 'ID value:', cost.id);
-            
             const dateValue = (cost.date && typeof cost.date === 'string')
                 ? cost.date.split('T')[0]
                 : new Date().toISOString().split('T')[0];
@@ -74,7 +64,6 @@ export const CostForm = ({ isOpen, onClose, cost }: CostFormProps) => {
                 service_folio: cost.service_folio || '',
                 notes: cost.notes || '',
             };
-            console.log('[CostForm] Resetting form with initial values for EDIT:', initialValues);
             reset(initialValues);
         } else {
             const defaultValues = {
@@ -88,27 +77,13 @@ export const CostForm = ({ isOpen, onClose, cost }: CostFormProps) => {
                 service_folio: '',
                 notes: '',
             };
-            console.log('[CostForm] Resetting form with default values for NEW:', defaultValues);
             reset(defaultValues);
         }
     }, [cost, reset, isOpen]);
     
     const onSubmit = (values: CostFormValues) => {
-        console.log("[CostForm] onSubmit triggered. Raw form values:", form.getValues());
-        console.log("[CostForm] Zod-validated values:", values);
-        console.log("[CostForm] Full 'cost' object at submission:", cost);
-        console.log("[CostForm] Cost ID at submission:", cost?.id);
-        console.log("[CostForm] Cost ID type:", typeof cost?.id);
-        
-        console.log('--- Type check before submission ---');
-        Object.entries(values).forEach(([key, value]) => {
-          console.log(`[TypeCheck] ${key}: ${value} (Type: ${typeof value})`);
-        });
-        console.log('--- End Type check ---');
-
         const submissionData = values as CostFormData;
         if (cost && cost.id) {
-            console.log('[CostForm] Submitting for UPDATE. Data:', { id: cost.id, ...submissionData });
             updateCost({ id: cost.id, ...submissionData }, {
                 onSuccess: () => {
                     toast({ title: "Costo Actualizado", description: "El costo se ha actualizado correctamente." });
@@ -117,7 +92,6 @@ export const CostForm = ({ isOpen, onClose, cost }: CostFormProps) => {
                 onError: (error) => {
                     console.error("[CostForm] Update cost failed:", error);
                     toast({ title: "Error al Actualizar", description: "No se pudo actualizar el costo.", variant: "destructive" });
-                    console.error("[CostForm] Data that failed UPDATE:", { id: cost.id, ...submissionData });
                 },
             });
         } else if (cost && !cost.id) {
@@ -128,7 +102,6 @@ export const CostForm = ({ isOpen, onClose, cost }: CostFormProps) => {
                 variant: "destructive"
             });
         } else {
-            console.log('[CostForm] Submitting for ADD. Data:', submissionData);
             addCost(submissionData, {
                 onSuccess: () => {
                     toast({ title: "Costo Agregado", description: "El nuevo costo se ha registrado correctamente." });
@@ -137,7 +110,6 @@ export const CostForm = ({ isOpen, onClose, cost }: CostFormProps) => {
                 onError: (error) => {
                     console.error("[CostForm] Add cost failed:", error);
                     toast({ title: "Error al Agregar", description: "No se pudo registrar el nuevo costo.", variant: "destructive" });
-                    console.error("[CostForm] Data that failed ADD:", submissionData);
                 },
             });
         }

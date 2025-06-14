@@ -77,10 +77,7 @@ export const CostFormInputs = ({
                     <FormItem>
                         <Label>Grúa (Opcional)</Label>
                         <Select
-                            onValueChange={(value) => {
-                                console.log('[Input Change] Crane ID selected:', value);
-                                field.onChange(value);
-                            }}
+                            onValueChange={field.onChange}
                             value={field.value ?? 'none'}
                             disabled={isLoadingCranes}
                         >
@@ -96,10 +93,7 @@ export const CostFormInputs = ({
                     <FormItem>
                         <Label>Operador (Opcional)</Label>
                         <Select
-                            onValueChange={(value) => {
-                                console.log('[Input Change] Operator ID selected:', value);
-                                field.onChange(value);
-                            }}
+                            onValueChange={field.onChange}
                             value={field.value ?? 'none'}
                             disabled={isLoadingOperators}
                         >
@@ -115,10 +109,7 @@ export const CostFormInputs = ({
                     <FormItem>
                         <Label>Servicio (Opcional)</Label>
                         <Select
-                            onValueChange={(value) => {
-                                console.log('[Input Change] Service ID selected:', value);
-                                field.onChange(value);
-                            }}
+                            onValueChange={field.onChange}
                             value={field.value ?? 'none'}
                             disabled={isLoadingServices}
                         >

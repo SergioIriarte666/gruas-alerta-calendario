@@ -1,3 +1,4 @@
+
 import * as z from 'zod';
 
 export const costSchema = z.object({
@@ -7,49 +8,24 @@ export const costSchema = z.object({
     category_id: z.string().nonempty('La categoría es requerida'),
     
     crane_id: z.preprocess(
-        (val) => {
-            console.log('[Schema Preprocess] crane_id - Input:', val, `(Type: ${typeof val})`);
-            const result = (val === 'none' || val === '' || !val) ? null : val;
-            console.log('[Schema Preprocess] crane_id - Output:', result);
-            return result;
-        },
+        (val) => (val === 'none' || val === '' || !val) ? null : val,
         z.string().nullable().optional()
     ),
     operator_id: z.preprocess(
-        (val) => {
-            console.log('[Schema Preprocess] operator_id - Input:', val, `(Type: ${typeof val})`);
-            const result = (val === 'none' || val === '' || !val) ? null : val;
-            console.log('[Schema Preprocess] operator_id - Output:', result);
-            return result;
-        },
+        (val) => (val === 'none' || val === '' || !val) ? null : val,
         z.string().nullable().optional()
     ),
     service_id: z.preprocess(
-        (val) => {
-            console.log('[Schema Preprocess] service_id - Input:', val, `(Type: ${typeof val})`);
-            const result = (val === 'none' || val === '' || !val) ? null : val;
-            console.log('[Schema Preprocess] service_id - Output:', result);
-            return result;
-        },
+        (val) => (val === 'none' || val === '' || !val) ? null : val,
         z.string().nullable().optional()
     ),
     
     service_folio: z.preprocess(
-        (val) => {
-            console.log('[Schema Preprocess] service_folio - Input:', val, `(Type: ${typeof val})`);
-            const result = (val === '' || !val) ? null : val;
-            console.log('[Schema Preprocess] service_folio - Output:', result);
-            return result;
-        },
+        (val) => (val === '' || !val) ? null : val,
         z.string().nullable().optional()
     ),
     notes: z.preprocess(
-        (val) => {
-            console.log('[Schema Preprocess] notes - Input:', val, `(Type: ${typeof val})`);
-            const result = (val === '' || !val) ? null : val;
-            console.log('[Schema Preprocess] notes - Output:', result);
-            return result;
-        },
+        (val) => (val === '' || !val) ? null : val,
         z.string().nullable().optional()
     ),
 });

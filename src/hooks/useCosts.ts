@@ -30,7 +30,6 @@ export const useCosts = () => {
 };
 
 const addCost = async (costData: CostFormData) => {
-  console.log('[useCosts - addCost] Attempting to add cost with data:', costData);
   const { data, error } = await supabase
     .from('costs')
     .insert([costData])
@@ -41,7 +40,6 @@ const addCost = async (costData: CostFormData) => {
     throw new Error(error.message);
   }
   
-  console.log('[useCosts - addCost] Successfully added cost. Response:', data);
   return data;
 };
 
@@ -56,7 +54,6 @@ export const useAddCost = () => {
 };
 
 const updateCost = async ({ id, ...costData }: { id: string } & Partial<CostFormData>) => {
-  console.log(`[useCosts - updateCost] Attempting to update cost ID ${id} with data:`, costData);
   const { data, error } = await supabase
     .from('costs')
     .update(costData)
@@ -68,7 +65,6 @@ const updateCost = async ({ id, ...costData }: { id: string } & Partial<CostForm
     throw new Error(error.message);
   }
   
-  console.log(`[useCosts - updateCost] Successfully updated cost ID ${id}. Response:`, data);
   return data;
 };
 
@@ -83,20 +79,20 @@ export const useUpdateCost = () => {
 };
 
 const deleteCost = async (id: string) => {
-    const { error } = await supabase.from('costs').delete().eq('id', id);
+  const { error } = await supabase.from('costs').delete().eq('id', id);
 
-    if (error) {
-        console.error('Error deleting cost:', error);
-        throw new Error(error.message);
-    }
+  if (error) {
+    console.error('Error deleting cost:', error);
+    throw new Error(error.message);
+  }
 };
 
 export const useDeleteCost = () => {
-    const queryClient = useQueryClient();
-    return useMutation({
-        mutationFn: deleteCost,
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['costs'] });
-        },
-    });
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: deleteCost,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['costs'] });
+    },
+  });
 };
