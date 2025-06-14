@@ -1,14 +1,12 @@
-
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
-import { Calendar, Download, TrendingUp, Users, Truck, FileText, DollarSign, Clock } from 'lucide-react';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
+import { TrendingUp, Users, Truck, FileText, DollarSign, Clock } from 'lucide-react';
 import { useReports } from '@/hooks/useReports';
-
-const COLORS = ['#10b981', '#f59e0b', '#ef4444', '#3b82f6', '#8b5cf6'];
+import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartConfig } from "@/components/ui/chart";
+import { ReportsHeader } from '@/components/reports/ReportsHeader';
+import { DateRangeFilter } from '@/components/reports/DateRangeFilter';
+import { ReportMetricCard } from '@/components/reports/ReportMetricCard';
 
 const Reports = () => {
   const [dateRange, setDateRange] = useState({
@@ -16,7 +14,7 @@ const Reports = () => {
     to: new Date().toISOString().split('T')[0]
   });
 
-  const { metrics, loading, refreshMetrics } = useReports(dateRange);
+  const { metrics, loading } = useReports(dateRange);
 
   const handleDateChange = (field: 'from' | 'to', value: string) => {
     setDateRange(prev => ({ ...prev, [field]: value }));
@@ -42,6 +40,22 @@ const Reports = () => {
     linkElement.click();
   };
 
+  const servicesByMonthConfig = { services: { label: 'Servicios', color: '#10b981' } } satisfies ChartConfig;
+  const revenueByMonthConfig = { revenue: { label: 'Ingresos', color: '#3b82f6' } } satisfies ChartConfig;
+  const craneUtilizationConfig = { utilization: { label: 'Utilización', color: '#f59e0b' } } satisfies ChartConfig;
+  const COLORS = ['#10b981', '#f59e0b', '#ef4444', '#3b82f6', '#8b5cf6'];
+
+  const servicesByStatusConfig = useMemo(() => {
+    if (!metrics) return {};
+    return metrics.servicesByStatus.reduce((acc, item, index) => {
+        acc[item.status] = {
+            label: item.status,
+            color: COLORS[index % COLORS.length]
+        };
+        return acc;
+    }, {} as ChartConfig);
+  }, [metrics]);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -52,216 +66,117 @@ const Reports = () => {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold text-white">Reportes</h1>
-          <p className="text-gray-300 mt-2">Análisis y métricas del negocio</p>
-        </div>
-        <Button onClick={exportReport} className="bg-tms-green hover:bg-tms-green/90">
-          <Download className="w-4 h-4 mr-2" />
-          Exportar Reporte
-        </Button>
-      </div>
-
-      {/* Filtros de fecha */}
-      <Card className="bg-white/10 border-white/20">
-        <CardHeader>
-          <CardTitle className="text-white flex items-center">
-            <Calendar className="w-5 h-5 mr-2" />
-            Período de Análisis
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
-            <div>
-              <Label htmlFor="from-date" className="text-gray-300">Fecha Inicio</Label>
-              <Input
-                id="from-date"
-                type="date"
-                value={dateRange.from}
-                onChange={(e) => handleDateChange('from', e.target.value)}
-                className="bg-white/5 border-white/20 text-white"
-              />
-            </div>
-            <div>
-              <Label htmlFor="to-date" className="text-gray-300">Fecha Fin</Label>
-              <Input
-                id="to-date"
-                type="date"
-                value={dateRange.to}
-                onChange={(e) => handleDateChange('to', e.target.value)}
-                className="bg-white/5 border-white/20 text-white"
-              />
-            </div>
-            <Button onClick={refreshMetrics} className="bg-tms-green hover:bg-tms-green/90">
-              Actualizar
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+      <ReportsHeader onExport={exportReport} />
+      <DateRangeFilter dateRange={dateRange} onDateChange={handleDateChange} onUpdate={() => {}} />
 
       {metrics && (
         <>
           {/* Métricas principales */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <Card className="bg-white/10 border-white/20">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium text-gray-300 flex items-center">
-                  <Truck className="w-4 h-4 mr-2" />
-                  Total Servicios
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-white">{metrics.totalServices}</div>
-                <p className="text-xs text-gray-400 mt-1">Servicios realizados</p>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-white/10 border-white/20">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium text-gray-300 flex items-center">
-                  <DollarSign className="w-4 h-4 mr-2" />
-                  Ingresos Totales
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-green-400">${metrics.totalRevenue.toLocaleString()}</div>
-                <p className="text-xs text-gray-400 mt-1">Ingresos del período</p>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-white/10 border-white/20">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium text-gray-300 flex items-center">
-                  <TrendingUp className="w-4 h-4 mr-2" />
-                  Valor Promedio
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-blue-400">${metrics.averageServiceValue.toLocaleString()}</div>
-                <p className="text-xs text-gray-400 mt-1">Por servicio</p>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-white/10 border-white/20">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium text-gray-300 flex items-center">
-                  <Clock className="w-4 h-4 mr-2" />
-                  Facturas Pendientes
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-yellow-400">{metrics.pendingInvoices}</div>
-                <p className="text-xs text-gray-400 mt-1">{metrics.overdueInvoices} vencidas</p>
-              </CardContent>
-            </Card>
+            <ReportMetricCard
+              icon={Truck}
+              title="Total Servicios"
+              value={metrics.totalServices}
+              description="Servicios realizados en el período"
+            />
+            <ReportMetricCard
+              icon={DollarSign}
+              title="Ingresos Totales"
+              value={`$${metrics.totalRevenue.toLocaleString()}`}
+              description="Ingresos generados en el período"
+              valueClassName="text-green-400"
+            />
+            <ReportMetricCard
+              icon={TrendingUp}
+              title="Valor Promedio"
+              value={`$${metrics.averageServiceValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+              description="Promedio por servicio"
+              valueClassName="text-blue-400"
+            />
+            <ReportMetricCard
+              icon={Clock}
+              title="Facturas Pendientes"
+              value={metrics.pendingInvoices}
+              description={`${metrics.overdueInvoices} vencidas`}
+              valueClassName="text-yellow-400"
+            />
           </div>
 
           {/* Gráficos principales */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Servicios por mes */}
             <Card className="bg-white/10 border-white/20">
               <CardHeader>
                 <CardTitle className="text-white">Servicios por Mes</CardTitle>
               </CardHeader>
               <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
+                <ChartContainer config={servicesByMonthConfig} className="w-full h-[300px]">
                   <BarChart data={metrics.servicesByMonth}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                     <XAxis dataKey="month" stroke="#9CA3AF" />
                     <YAxis stroke="#9CA3AF" />
-                    <Tooltip 
-                      contentStyle={{ 
-                        backgroundColor: '#1F2937', 
-                        border: '1px solid #374151',
-                        borderRadius: '8px'
-                      }}
-                      labelStyle={{ color: '#F9FAFB' }}
-                    />
-                    <Bar dataKey="services" fill="#10b981" />
+                    <ChartTooltip content={<ChartTooltipContent />} />
+                    <Bar dataKey="services" fill="var(--color-services)" radius={4} />
                   </BarChart>
-                </ResponsiveContainer>
+                </ChartContainer>
               </CardContent>
             </Card>
 
-            {/* Ingresos por mes */}
             <Card className="bg-white/10 border-white/20">
               <CardHeader>
                 <CardTitle className="text-white">Ingresos por Mes</CardTitle>
               </CardHeader>
               <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
+                <ChartContainer config={revenueByMonthConfig} className="w-full h-[300px]">
                   <LineChart data={metrics.servicesByMonth}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                     <XAxis dataKey="month" stroke="#9CA3AF" />
-                    <YAxis stroke="#9CA3AF" />
-                    <Tooltip 
-                      contentStyle={{ 
-                        backgroundColor: '#1F2937', 
-                        border: '1px solid #374151',
-                        borderRadius: '8px'
-                      }}
-                      labelStyle={{ color: '#F9FAFB' }}
-                      formatter={(value) => [`$${Number(value).toLocaleString()}`, 'Ingresos']}
+                    <YAxis stroke="#9CA3AF" tickFormatter={(value) => `$${Number(value).toLocaleString()}`} />
+                    <ChartTooltip 
+                      cursor={false}
+                      content={<ChartTooltipContent indicator="line" formatter={(value) => `$${Number(value).toLocaleString()}`} />}
                     />
-                    <Line 
-                      type="monotone" 
-                      dataKey="revenue" 
-                      stroke="#3b82f6" 
-                      strokeWidth={3}
-                      dot={{ fill: '#3b82f6', strokeWidth: 2, r: 4 }}
-                    />
+                    <Line type="monotone" dataKey="revenue" stroke="var(--color-revenue)" strokeWidth={3} dot={{ fill: 'var(--color-revenue)', r: 5 }} />
                   </LineChart>
-                </ResponsiveContainer>
+                </ChartContainer>
               </CardContent>
             </Card>
           </div>
 
           {/* Gráficos de distribución */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Servicios por estado */}
             <Card className="bg-white/10 border-white/20">
               <CardHeader>
                 <CardTitle className="text-white">Distribución por Estado</CardTitle>
               </CardHeader>
               <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
+                <ChartContainer config={servicesByStatusConfig} className="w-full h-[300px]">
                   <PieChart>
+                    <ChartTooltip content={<ChartTooltipContent nameKey="status" hideLabel />} />
                     <Pie
                       data={metrics.servicesByStatus}
+                      dataKey="count"
+                      nameKey="status"
                       cx="50%"
                       cy="50%"
-                      labelLine={false}
+                      outerRadius={100}
                       label={({ status, percentage }) => `${status}: ${percentage.toFixed(1)}%`}
-                      outerRadius={80}
-                      fill="#8884d8"
-                      dataKey="count"
                     >
-                      {metrics.servicesByStatus.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      {metrics.servicesByStatus.map((entry) => (
+                        <Cell key={`cell-${entry.status}`} fill={`var(--color-${entry.status})`} />
                       ))}
                     </Pie>
-                    <Tooltip 
-                      contentStyle={{ 
-                        backgroundColor: '#1F2937', 
-                        border: '1px solid #374151',
-                        borderRadius: '8px'
-                      }}
-                    />
                   </PieChart>
-                </ResponsiveContainer>
+                </ChartContainer>
               </CardContent>
             </Card>
 
-            {/* Utilización de grúas */}
             <Card className="bg-white/10 border-white/20">
               <CardHeader>
                 <CardTitle className="text-white">Utilización de Grúas</CardTitle>
               </CardHeader>
               <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={metrics.craneUtilization} layout="horizontal">
+                <ChartContainer config={craneUtilizationConfig} className="w-full h-[300px]">
+                   <BarChart data={metrics.craneUtilization} layout="vertical">
                     <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                     <XAxis type="number" stroke="#9CA3AF" />
                     <YAxis 
@@ -271,17 +186,13 @@ const Reports = () => {
                       width={120}
                       fontSize={12}
                     />
-                    <Tooltip 
-                      contentStyle={{ 
-                        backgroundColor: '#1F2937', 
-                        border: '1px solid #374151',
-                        borderRadius: '8px'
-                      }}
-                      formatter={(value) => [`${Number(value).toFixed(1)}%`, 'Utilización']}
+                    <ChartTooltip 
+                      cursor={false} 
+                      content={<ChartTooltipContent indicator="line" formatter={(value) => `${Number(value).toFixed(1)}%`} />} 
                     />
-                    <Bar dataKey="utilization" fill="#f59e0b" />
+                    <Bar dataKey="utilization" fill="var(--color-utilization)" radius={4} />
                   </BarChart>
-                </ResponsiveContainer>
+                </ChartContainer>
               </CardContent>
             </Card>
           </div>
