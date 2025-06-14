@@ -1,6 +1,7 @@
 
 import { Card } from '@/components/ui/card';
 import { LucideIcon } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 interface MetricCardProps {
   title: string;
@@ -9,6 +10,7 @@ interface MetricCardProps {
   changeType?: 'positive' | 'negative' | 'neutral';
   icon: LucideIcon;
   description?: string;
+  linkTo?: string;
 }
 
 export const MetricCard = ({ 
@@ -17,8 +19,11 @@ export const MetricCard = ({
   change, 
   changeType = 'neutral', 
   icon: Icon,
-  description 
+  description,
+  linkTo
 }: MetricCardProps) => {
+  const navigate = useNavigate();
+
   const getChangeColor = () => {
     switch (changeType) {
       case 'positive':
@@ -30,8 +35,19 @@ export const MetricCard = ({
     }
   };
 
+  const handleCardClick = () => {
+    if (linkTo) {
+      navigate(linkTo);
+    }
+  };
+
+  const cardClasses = `metric-card group p-6 h-full ${linkTo ? 'cursor-pointer hover:bg-white/10 transition-colors' : ''}`;
+
   return (
-    <Card className="metric-card group">
+    <Card 
+      className={cardClasses}
+      onClick={handleCardClick}
+    >
       <div className="flex items-start justify-between">
         <div className="flex-1">
           <p className="text-sm font-medium text-gray-400 mb-1">{title}</p>

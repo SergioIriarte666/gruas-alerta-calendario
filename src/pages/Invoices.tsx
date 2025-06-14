@@ -1,5 +1,6 @@
 
 import React, { useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useInvoices } from '@/hooks/useInvoices';
 import { InvoiceForm } from '@/components/invoices/InvoiceForm';
 import { Invoice } from '@/types';
@@ -8,20 +9,38 @@ import InvoicesHeader from '@/components/invoices/InvoicesHeader';
 import InvoicesStats from '@/components/invoices/InvoicesStats';
 import InvoicesSearch from '@/components/invoices/InvoicesSearch';
 import InvoicesTable from '@/components/invoices/InvoicesTable';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
+
+const INVOICE_STATUS_MAP: { [key: string]: string } = {
+  all: 'Todas',
+  draft: 'Borrador',
+  sent: 'Enviada',
+  paid: 'Pagada',
+  overdue: 'Vencida',
+  cancelled: 'Anulada',
+};
 
 const Invoices = () => {
   const { invoices, loading, createInvoice, updateInvoice, deleteInvoice, markAsPaid, getInvoiceWithDetails } = useInvoices();
+  const location = useLocation();
+  const queryParams = new URLSearchParams(location.search);
+  const statusFromQuery = queryParams.get('status');
+
   const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState(statusFromQuery || 'all');
   const [showForm, setShowForm] = useState(false);
   const [editingInvoice, setEditingInvoice] = useState<Invoice | null>(null);
   const { toast } = useToast();
 
   const filteredInvoices = invoices.filter(invoice => {
     const invoiceWithDetails = getInvoiceWithDetails(invoice);
-    return (
+    const matchesSearch = (
       invoice.folio.toLowerCase().includes(searchTerm.toLowerCase()) ||
       invoiceWithDetails.client?.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
+    const matchesStatus = statusFilter === 'all' || invoice.status === statusFilter;
+    return matchesSearch && matchesStatus;
   });
 
   const handleCreateInvoice = (data: any) => {
@@ -97,10 +116,30 @@ const Invoices = () => {
       
       <InvoicesStats invoices={invoices} />
       
-      <InvoicesSearch
-        searchTerm={searchTerm}
-        onSearchChange={setSearchTerm}
-      />
+      <div className="flex flex-col md:flex-row items-center gap-4">
+        <div className="flex-grow">
+          <InvoicesSearch
+            searchTerm={searchTerm}
+            onSearchChange={setSearchTerm}
+          />
+        </div>
+        <div className="flex items-center space-x-1 bg-white/5 p-1 rounded-lg">
+          {Object.entries(INVOICE_STATUS_MAP).map(([statusKey, statusValue]) => (
+            <Button
+              key={statusKey}
+              variant="ghost"
+              size="sm"
+              onClick={() => setStatusFilter(statusKey)}
+              className={cn(
+                'capitalize text-gray-300 hover:text-white px-3 py-1 text-sm',
+                statusFilter === statusKey && 'bg-tms-green text-white hover:bg-tms-green-dark'
+              )}
+            >
+              {statusValue}
+            </Button>
+          ))}
+        </div>
+      </div>
       
       <InvoicesTable
         invoices={filteredInvoices}

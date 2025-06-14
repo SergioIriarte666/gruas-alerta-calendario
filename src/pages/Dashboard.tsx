@@ -68,6 +68,7 @@ const Dashboard = () => {
           changeType="positive"
           icon={Truck}
           description="Servicios completados este mes"
+          linkTo="/services"
         />
         
         <MetricCard
@@ -75,6 +76,7 @@ const Dashboard = () => {
           value={metrics.activeClients}
           icon={Users}
           description="Clientes con servicios vigentes"
+          linkTo="/clients"
         />
         
         <MetricCard
@@ -84,6 +86,7 @@ const Dashboard = () => {
           changeType="positive"
           icon={DollarSign}
           description="Facturación del mes actual"
+          linkTo="/invoices"
         />
         
         <MetricCard
@@ -92,6 +95,7 @@ const Dashboard = () => {
           changeType={metrics.overdueInvoices > 0 ? "negative" : "neutral"}
           icon={AlertTriangle}
           description="Requieren atención inmediata"
+          linkTo="/invoices?status=overdue"
         />
       </div>
 
@@ -102,6 +106,7 @@ const Dashboard = () => {
           value={metrics.servicesByStatus.pending}
           icon={TrendingUp}
           description="Servicios pendientes"
+          linkTo="/services?status=pending,in_progress"
         />
         
         <MetricCard
@@ -109,6 +114,7 @@ const Dashboard = () => {
           value={metrics.servicesByStatus.completed}
           icon={FileText}
           description="Servicios terminados"
+          linkTo="/services?status=completed"
         />
         
         <MetricCard
@@ -116,6 +122,7 @@ const Dashboard = () => {
           value={metrics.servicesByStatus.cancelled}
           icon={DollarSign}
           description="Servicios cancelados"
+          linkTo="/services?status=cancelled"
         />
       </div>
 

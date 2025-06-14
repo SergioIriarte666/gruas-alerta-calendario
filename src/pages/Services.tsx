@@ -1,4 +1,6 @@
+
 import { useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -16,13 +18,17 @@ import { CSVUploadServices } from '@/components/services/CSVUploadServices';
 
 const Services = () => {
   const { services, loading, createService, updateService, deleteService } = useServices();
+  const location = useLocation();
+  const params = new URLSearchParams(location.search);
+  const statusParam = params.get('status');
+  
   const [selectedService, setSelectedService] = useState<Service | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [isCSVUploadOpen, setIsCSVUploadOpen] = useState(false);
   const [editingService, setEditingService] = useState<Service | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [statusFilter, setStatusFilter] = useState<string>(statusParam || 'all');
 
   const getStatusBadge = (status: Service['status']) => {
     const statusConfig = {
@@ -52,11 +58,12 @@ const Services = () => {
   const filteredServices = services.filter(service => {
     const matchesSearch = 
       service.folio.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      service.client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (service.client?.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
       service.licensePlate.toLowerCase().includes(searchTerm.toLowerCase()) ||
       service.vehicleBrand.toLowerCase().includes(searchTerm.toLowerCase());
     
-    const matchesStatus = statusFilter === 'all' || service.status === statusFilter;
+    const statusesToFilter = statusFilter === 'all' ? [] : statusFilter.split(',');
+    const matchesStatus = statusFilter === 'all' || statusesToFilter.includes(service.status);
     
     return matchesSearch && matchesStatus;
   });
