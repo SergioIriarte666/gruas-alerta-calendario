@@ -1,164 +1,110 @@
 
-import { useState, useEffect } from 'react';
-import { DashboardMetrics, Service, Invoice, CalendarEvent } from '@/types';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { DashboardMetrics, Service, CalendarEvent } from '@/types';
+import { startOfMonth, endOfMonth } from 'date-fns';
 
-// Mock data - En producción esto vendría de Supabase
-const mockServices: Service[] = [
-  {
-    id: '1',
-    folio: 'G5N-001',
-    requestDate: '2024-06-14',
-    serviceDate: '2024-06-14',
-    client: {
-      id: '1',
-      name: 'Transportes ABC Ltda.',
-      rut: '76.123.456-7',
-      phone: '+56 9 8765 4321',
-      email: 'contacto@transportesabc.cl',
-      address: 'Av. Principal 123, Santiago',
-      isActive: true,
-      createdAt: '2024-01-15',
-      updatedAt: '2024-01-15'
-    },
-    vehicleBrand: 'Volvo',
-    vehicleModel: 'FH12',
-    licensePlate: 'ABCD-12',
-    origin: 'Santiago Centro',
-    destination: 'Puente Alto',
-    serviceType: {
-      id: '1',
-      name: 'Grúa Pesada',
-      description: 'Servicio de grúa para vehículos pesados',
-      isActive: true,
-      createdAt: '2024-01-01',
-      updatedAt: '2024-01-01'
-    },
-    value: 150000,
-    crane: {
-      id: '1',
-      licensePlate: 'GRUA-01',
-      brand: 'Mercedes',
-      model: 'Actros',
-      type: 'heavy',
-      circulationPermitExpiry: '2024-12-31',
-      insuranceExpiry: '2024-11-30',
-      technicalReviewExpiry: '2024-10-15',
-      isActive: true,
-      createdAt: '2024-01-01',
-      updatedAt: '2024-01-01'
-    },
-    operator: {
-      id: '1',
-      name: 'Carlos Rodríguez',
-      rut: '12.345.678-9',
-      phone: '+56 9 1234 5678',
-      licenseNumber: 'A123456',
-      examExpiry: '2025-03-15',
-      isActive: true,
-      createdAt: '2024-01-01',
-      updatedAt: '2024-01-01'
-    },
-    operatorCommission: 15000,
-    status: 'pending',
-    observations: 'Vehículo en pana por sobrecalentamiento',
-    createdAt: '2024-06-14',
-    updatedAt: '2024-06-14'
-  }
-];
+const fetchDashboardData = async () => {
+  const today = new Date();
+  const startDate = startOfMonth(today);
+  const endDate = endOfMonth(today);
 
-const mockInvoices: Invoice[] = [
-  {
-    id: '1',
-    folio: 'F-001',
-    serviceIds: ['1'],
-    clientId: '1',
-    issueDate: '2024-05-15',
-    dueDate: '2024-06-14',
-    subtotal: 150000,
-    vat: 28500,
-    total: 178500,
-    status: 'overdue',
-    createdAt: '2024-05-15',
-    updatedAt: '2024-05-15'
-  }
-];
+  const [
+    servicesRes,
+    clientsRes,
+    invoicesRes,
+    pendingInvoicesRes
+  ] = await Promise.all([
+    supabase.from('services').select(`
+      id,
+      folio,
+      service_date,
+      client:clients(id, name),
+      vehicle_brand,
+      vehicle_model,
+      license_plate,
+      value,
+      status
+    `).order('service_date', { ascending: false }),
+    supabase.from('clients').select('id', { count: 'exact' }).eq('is_active', true),
+    supabase.from('invoices').select('id, folio, due_date').eq('status', 'overdue'),
+    supabase.from('invoices').select('id', { count: 'exact' }).eq('status', 'draft')
+  ]);
+
+  if (servicesRes.error) throw new Error(`Services Error: ${servicesRes.error.message}`);
+  if (clientsRes.error) throw new Error(`Clients Error: ${clientsRes.error.message}`);
+  if (invoicesRes.error) throw new Error(`Invoices Error: ${invoicesRes.error.message}`);
+  if (pendingInvoicesRes.error) throw new Error(`Pending Invoices Error: ${pendingInvoicesRes.error.message}`);
+
+  const services: Service[] = (servicesRes.data || []).map((s: any) => ({
+      ...s,
+      serviceDate: s.service_date,
+      vehicleBrand: s.vehicle_brand,
+      vehicleModel: s.vehicle_model,
+      licensePlate: s.license_plate,
+      client: s.client || {id: '', name: 'N/A'},
+  })) as Service[];
+  
+  const recentServices = services.slice(0, 5);
+
+  const servicesThisMonth = services.filter(s => {
+    const serviceDate = new Date(s.serviceDate);
+    return serviceDate >= startDate && serviceDate <= endDate;
+  });
+
+  const monthlyServices = servicesThisMonth.length;
+  const monthlyRevenue = servicesThisMonth.reduce((sum, s) => sum + s.value, 0);
+  const activeClients = clientsRes.count ?? 0;
+  const overdueInvoices = invoicesRes.data?.length ?? 0;
+
+  const servicesByStatus = services.reduce((acc, service) => {
+    const status = service.status || 'pending';
+    acc[status] = (acc[status] || 0) + 1;
+    return acc;
+  }, { pending: 0, completed: 0, cancelled: 0 });
+
+  const metrics: DashboardMetrics = {
+    totalServices: services.length,
+    monthlyServices,
+    activeClients,
+    monthlyRevenue,
+    pendingInvoices: pendingInvoicesRes.count ?? 0,
+    overdueInvoices,
+    servicesByStatus,
+    upcomingExpirations: 0,
+  };
+
+  const upcomingEvents: CalendarEvent[] = [];
+  (invoicesRes.data || []).forEach((invoice: any) => {
+    upcomingEvents.push({
+      id: `invoice-${invoice.id}`,
+      title: `Factura ${invoice.folio} vencida`,
+      date: invoice.due_date,
+      type: 'invoice_due',
+      status: 'urgent',
+      entityId: invoice.id,
+      entityType: 'invoice',
+    });
+  });
+  
+  return { metrics, recentServices, upcomingEvents };
+};
 
 export const useDashboardData = () => {
-  const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
-  const [recentServices, setRecentServices] = useState<Service[]>([]);
-  const [upcomingEvents, setUpcomingEvents] = useState<CalendarEvent[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data, isLoading: loading, error } = useQuery({
+    queryKey: ['dashboardData'],
+    queryFn: fetchDashboardData,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
 
-  useEffect(() => {
-    // Simular carga de datos
-    const loadData = async () => {
-      try {
-        // Calcular métricas
-        const currentMonth = new Date().getMonth();
-        const monthlyServices = mockServices.filter(s => 
-          new Date(s.serviceDate).getMonth() === currentMonth
-        ).length;
-
-        const monthlyRevenue = mockServices
-          .filter(s => new Date(s.serviceDate).getMonth() === currentMonth)
-          .reduce((sum, s) => sum + s.value, 0);
-
-        const overdueInvoices = mockInvoices.filter(i => i.status === 'overdue').length;
-
-        const calculatedMetrics: DashboardMetrics = {
-          totalServices: mockServices.length,
-          monthlyServices,
-          activeClients: 1,
-          monthlyRevenue,
-          pendingInvoices: mockInvoices.filter(i => i.status === 'draft').length,
-          overdueInvoices,
-          servicesByStatus: {
-            pending: mockServices.filter(s => s.status === 'pending').length,
-            completed: mockServices.filter(s => s.status === 'completed').length,
-            cancelled: mockServices.filter(s => s.status === 'cancelled').length,
-          },
-          upcomingExpirations: 3
-        };
-
-        // Generar eventos de calendario
-        const events: CalendarEvent[] = [
-          {
-            id: '1',
-            title: 'Vencimiento Seguro Grúa GRUA-01',
-            date: '2024-11-30',
-            type: 'document_expiry',
-            status: 'warning',
-            entityId: '1',
-            entityType: 'crane'
-          },
-          {
-            id: '2',
-            title: 'Factura F-001 vencida',
-            date: '2024-06-14',
-            type: 'invoice_due',
-            status: 'urgent',
-            entityId: '1',
-            entityType: 'invoice'
-          }
-        ];
-
-        setMetrics(calculatedMetrics);
-        setRecentServices(mockServices);
-        setUpcomingEvents(events);
-      } catch (error) {
-        console.error('Error loading dashboard data:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadData();
-  }, []);
+  if (error) {
+    console.error('Error loading dashboard data:', error);
+  }
 
   return {
-    metrics,
-    recentServices,
-    upcomingEvents,
-    loading
+    metrics: data?.metrics ?? null,
+    recentServices: data?.recentServices ?? [],
+    upcomingEvents: data?.upcomingEvents ?? [],
+    loading,
   };
 };

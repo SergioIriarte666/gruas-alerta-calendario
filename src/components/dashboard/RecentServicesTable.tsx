@@ -14,23 +14,20 @@ interface RecentServicesTableProps {
 
 export const RecentServicesTable = ({ services }: RecentServicesTableProps) => {
   const getStatusBadge = (status: Service['status']) => {
-    const variants = {
-      pending: 'status-pending',
-      closed: 'status-closed',
-      invoiced: 'status-invoiced'
-    };
-
-    const labels = {
-      pending: 'En Curso',
-      closed: 'Cerrado',
-      invoiced: 'Facturado'
-    };
-
-    return (
-      <Badge className={`status-badge ${variants[status]}`}>
-        {labels[status]}
-      </Badge>
-    );
+    switch (status) {
+      case 'pending':
+        return <Badge className="bg-amber-500 hover:bg-amber-500/80 text-white font-semibold">En Curso</Badge>;
+      case 'completed':
+        return <Badge className="bg-emerald-500 hover:bg-emerald-500/80 text-white font-semibold">Completado</Badge>;
+      case 'cancelled':
+        return <Badge className="bg-red-500 hover:bg-red-500/80 text-white font-semibold">Cancelado</Badge>;
+      case 'closed':
+        return <Badge className="bg-blue-500 hover:bg-blue-500/80 text-white font-semibold">Cerrado</Badge>;
+      case 'invoiced':
+        return <Badge className="bg-indigo-500 hover:bg-indigo-500/80 text-white font-semibold">Facturado</Badge>;
+      default:
+        return <Badge variant="secondary">{status}</Badge>;
+    }
   };
 
   const formatCurrency = (amount: number) => {
@@ -76,10 +73,10 @@ export const RecentServicesTable = ({ services }: RecentServicesTableProps) => {
                       {service.folio}
                     </TableCell>
                     <TableCell className="text-gray-300">
-                      {format(new Date(service.serviceDate), 'dd/MM/yyyy', { locale: es })}
+                      {service.serviceDate ? format(new Date(service.serviceDate), 'dd/MM/yyyy', { locale: es }) : 'N/A'}
                     </TableCell>
                     <TableCell className="text-gray-300">
-                      {service.client.name}
+                      {service.client?.name ?? 'N/A'}
                     </TableCell>
                     <TableCell className="text-gray-300">
                       {service.vehicleBrand} {service.vehicleModel}
