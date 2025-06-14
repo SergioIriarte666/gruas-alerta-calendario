@@ -17,7 +17,7 @@ import {
   Phone,
   Mail,
   Building,
-  License,
+  IdCard,
   UserCheck
 } from 'lucide-react';
 
@@ -188,7 +188,7 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose }: ServiceDetails
               </div>
 
               <div className="flex items-center space-x-3">
-                <License className="w-4 h-4 text-gray-400" />
+                <IdCard className="w-4 h-4 text-gray-400" />
                 <div>
                   <p className="text-sm text-gray-400">Patente</p>
                   <p className="font-medium text-lg">{service.licensePlate}</p>
