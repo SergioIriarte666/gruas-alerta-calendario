@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -22,15 +22,41 @@ interface CraneFormProps {
 
 export const CraneForm = ({ crane, onSubmit, onCancel }: CraneFormProps) => {
   const [formData, setFormData] = useState({
-    licensePlate: crane?.licensePlate || '',
-    brand: crane?.brand || '',
-    model: crane?.model || '',
-    type: crane?.type || 'light' as CraneType,
-    circulationPermitExpiry: crane?.circulationPermitExpiry || '',
-    insuranceExpiry: crane?.insuranceExpiry || '',
-    technicalReviewExpiry: crane?.technicalReviewExpiry || '',
-    isActive: crane?.isActive ?? true
+    licensePlate: '',
+    brand: '',
+    model: '',
+    type: 'light' as CraneType,
+    circulationPermitExpiry: '',
+    insuranceExpiry: '',
+    technicalReviewExpiry: '',
+    isActive: true
   });
+
+  useEffect(() => {
+    if (crane) {
+      setFormData({
+        licensePlate: crane.licensePlate || '',
+        brand: crane.brand || '',
+        model: crane.model || '',
+        type: crane.type || 'light',
+        circulationPermitExpiry: crane.circulationPermitExpiry || '',
+        insuranceExpiry: crane.insuranceExpiry || '',
+        technicalReviewExpiry: crane.technicalReviewExpiry || '',
+        isActive: crane.isActive ?? true,
+      });
+    } else {
+      setFormData({
+        licensePlate: '',
+        brand: '',
+        model: '',
+        type: 'light',
+        circulationPermitExpiry: '',
+        insuranceExpiry: '',
+        technicalReviewExpiry: '',
+        isActive: true,
+      });
+    }
+  }, [crane]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
