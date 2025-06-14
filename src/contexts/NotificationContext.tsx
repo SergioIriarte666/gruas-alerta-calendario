@@ -1,5 +1,5 @@
-
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import { useNotificationsData } from '@/hooks/useNotificationsData';
 
 interface Notification {
   id: string;
@@ -40,72 +40,21 @@ interface NotificationProviderProps {
 }
 
 export const NotificationProvider: React.FC<NotificationProviderProps> = ({ children }) => {
-  const [notifications, setNotifications] = useState<Notification[]>([
-    {
-      id: '1',
-      title: 'Nuevo servicio programado',
-      message: 'Servicio de grúa para Cliente ABC - Mañana 08:00',
-      type: 'info',
-      timestamp: new Date(),
-      read: false,
-      actionType: 'navigate',
-      actionUrl: '/services',
-      actionData: {
-        filter: 'programado'
-      }
-    },
-    {
-      id: '2', 
-      title: 'Pago recibido',
-      message: 'Factura #1234 - $450.000 CLP pagada por Cliente XYZ',
-      type: 'success',
-      timestamp: new Date(Date.now() - 3600000),
-      read: false,
-      actionType: 'navigate',
-      actionUrl: '/invoices',
-      actionData: {
-        entityId: '1234',
-        highlight: 'invoice-1234'
-      }
-    },
-    {
-      id: '3',
-      title: 'Mantenimiento pendiente',
-      message: 'Grúa GR-001 requiere mantenimiento programado',
-      type: 'warning',
-      timestamp: new Date(Date.now() - 7200000),
-      read: false,
-      actionType: 'navigate',
-      actionUrl: '/cranes',
-      actionData: {
-        entityId: 'GR-001',
-        filter: 'mantenimiento'
-      }
-    },
-    {
-      id: '4',
-      title: 'Servicio completado',
-      message: 'Servicio #789 finalizado correctamente - Cliente DEF',
-      type: 'success',
-      timestamp: new Date(Date.now() - 14400000),
-      read: true,
-      actionType: 'navigate',
-      actionUrl: '/services',
-      actionData: {
-        entityId: '789'
-      }
-    },
-    {
-      id: '5',
-      title: 'Cierre pendiente',
-      message: 'Período semanal listo para cierre - 15 servicios',
-      type: 'info',
-      timestamp: new Date(Date.now() - 21600000),
-      read: false,
-      actionType: 'navigate',
-      actionUrl: '/closures'
-    }
-  ]);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const { notifications: fetchedNotifications } = useNotificationsData();
+
+  useEffect(() => {
+    const storedReadIds = JSON.parse(localStorage.getItem('read_notification_ids') || '[]');
+    const readIds = new Set<string>(storedReadIds);
+    
+    const mergedNotifications = fetchedNotifications.map(n => ({
+        ...n,
+        read: readIds.has(n.id)
+    }));
+      
+    setNotifications(mergedNotifications);
+
+  }, [fetchedNotifications]);
 
   const addNotification = (notification: Omit<Notification, 'id' | 'timestamp' | 'read'>) => {
     const newNotification: Notification = {
@@ -118,6 +67,11 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
   };
 
   const markAsRead = (id: string) => {
+    const storedReadIds = JSON.parse(localStorage.getItem('read_notification_ids') || '[]');
+    const readIds = new Set<string>(storedReadIds);
+    readIds.add(id);
+    localStorage.setItem('read_notification_ids', JSON.stringify(Array.from(readIds)));
+
     setNotifications(prev => 
       prev.map(notification => 
         notification.id === id ? { ...notification, read: true } : notification
@@ -126,6 +80,8 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
   };
 
   const markAllAsRead = () => {
+    const allIds = notifications.map(n => n.id);
+    localStorage.setItem('read_notification_ids', JSON.stringify(allIds));
     setNotifications(prev => 
       prev.map(notification => ({ ...notification, read: true }))
     );
