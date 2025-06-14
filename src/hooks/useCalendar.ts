@@ -18,64 +18,15 @@ export interface CalendarEvent {
   updatedAt: string;
 }
 
-// Mock data
-const mockEvents: CalendarEvent[] = [
-  {
-    id: '1',
-    title: 'Servicio de Grúa - Constructora ABC',
-    description: 'Instalación de vigas en edificio comercial',
-    date: '2024-06-15',
-    startTime: '08:00',
-    endTime: '16:00',
-    type: 'service',
-    status: 'scheduled',
-    serviceId: '1',
-    clientId: '1',
-    operatorId: '1',
-    craneId: '1',
-    createdAt: '2024-06-01T10:00:00Z',
-    updatedAt: '2024-06-01T10:00:00Z'
-  },
-  {
-    id: '2',
-    title: 'Mantenimiento Grúa GT-001',
-    description: 'Revisión técnica mensual',
-    date: '2024-06-18',
-    startTime: '09:00',
-    endTime: '12:00',
-    type: 'maintenance',
-    status: 'scheduled',
-    craneId: '1',
-    createdAt: '2024-06-01T10:00:00Z',
-    updatedAt: '2024-06-01T10:00:00Z'
-  },
-  {
-    id: '3',
-    title: 'Reunión con Cliente',
-    description: 'Planificación proyecto torre residencial',
-    date: '2024-06-20',
-    startTime: '14:00',
-    endTime: '15:30',
-    type: 'meeting',
-    status: 'scheduled',
-    clientId: '2',
-    createdAt: '2024-06-01T10:00:00Z',
-    updatedAt: '2024-06-01T10:00:00Z'
-  }
-];
-
 export const useCalendar = () => {
   const [events, setEvents] = useState<CalendarEvent[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [viewMode, setViewMode] = useState<'month' | 'week' | 'day'>('month');
 
   useEffect(() => {
-    // Simular carga de eventos
-    setTimeout(() => {
-      setEvents(mockEvents);
-      setLoading(false);
-    }, 500);
+    // Inicializar sin datos de prueba
+    setLoading(false);
   }, []);
 
   const createEvent = (eventData: Omit<CalendarEvent, 'id' | 'createdAt' | 'updatedAt'>) => {

@@ -3,8 +3,9 @@ import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Plus, Clock, MapPin } from 'lucide-react';
+import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Clock } from 'lucide-react';
 import { useCalendar, CalendarEvent } from '@/hooks/useCalendar';
+import { EventModal } from '@/components/calendar/EventModal';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isToday, addMonths, subMonths } from 'date-fns';
 import { es } from 'date-fns/locale';
 
@@ -16,6 +17,7 @@ const Calendar = () => {
     setSelectedDate, 
     viewMode, 
     setViewMode,
+    createEvent,
     getEventsForDate 
   } = useCalendar();
   
@@ -69,10 +71,7 @@ const Calendar = () => {
             Vista integrada de servicios, vencimientos y eventos importantes
           </p>
         </div>
-        <Button className="bg-tms-green hover:bg-tms-green-dark text-white">
-          <Plus className="w-4 h-4 mr-2" />
-          Nuevo Evento
-        </Button>
+        <EventModal onCreateEvent={createEvent} selectedDate={selectedDate} />
       </div>
 
       {/* Calendar Controls */}
@@ -210,9 +209,12 @@ const Calendar = () => {
             </CardHeader>
             <CardContent>
               {getEventsForDate(selectedDate).length === 0 ? (
-                <p className="text-gray-400 text-center py-4">
-                  No hay eventos programados para este día
-                </p>
+                <div className="text-center py-8">
+                  <p className="text-gray-400 mb-4">
+                    No hay eventos programados para este día
+                  </p>
+                  <EventModal onCreateEvent={createEvent} selectedDate={selectedDate} />
+                </div>
               ) : (
                 <div className="space-y-3">
                   {getEventsForDate(selectedDate).map(event => (

@@ -61,6 +61,7 @@ export const AlertsPanel = ({ events }: AlertsPanelProps) => {
           <div className="text-center py-8 text-gray-400">
             <Clock className="w-12 h-12 mx-auto mb-4 opacity-50" />
             <p>No hay alertas pendientes</p>
+            <p className="text-sm mt-2">Las alertas aparecerán aquí cuando se programen eventos importantes</p>
           </div>
         ) : (
           events.map((event) => {
