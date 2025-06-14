@@ -41,25 +41,19 @@ const Settings = () => {
 
   const handleLogoChange = async (logoFile: File | null) => {
     if (!settings) return;
+    
+    // El hook 'useLogoUpdater' ahora es más robusto y se encarga de todo.
     const result = await updateLogo(logoFile, settings);
-    if (result.success) {
-      // Create a cache-busted URL for immediate UI update
-      const logoForPreview = result.newLogoUrl
-        ? `${result.newLogoUrl}?t=${new Date().getTime()}`
-        : undefined;
-      
-      updateSettings({
-        company: {
-          ...settings.company,
-          logo: logoForPreview,
-        },
-      });
 
+    if (result.success) {
       toast({
         title: "Logotipo actualizado",
         description: "El cambio en el logotipo se ha guardado correctamente.",
       });
-      console.log('Dispatching settings-updated event after logo change');
+
+      // La única fuente de verdad será el evento que fuerza la recarga de datos.
+      // Se elimina la actualización optimista del estado local.
+      console.log('Dispatching settings-updated event to force global refetch.');
       window.dispatchEvent(new CustomEvent('settings-updated'));
     } else {
       toast({
