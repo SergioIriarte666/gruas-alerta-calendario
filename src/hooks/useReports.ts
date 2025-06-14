@@ -7,7 +7,7 @@ import { useCranes } from './useCranes';
 import { useOperators } from './useOperators';
 import { Service } from '@/types';
 
-interface ReportMetrics {
+export interface ReportMetrics {
   totalServices: number;
   totalRevenue: number;
   averageServiceValue: number;
