@@ -181,6 +181,9 @@ export const useSettings = () => {
   const updateLogo = async (logoFile: File | null) => {
     if (!settings) return { success: false, error: 'Configuración no cargada.' };
     setSaving(true);
+    
+    let oldLogoUrlToDelete: string | null = null;
+    
     try {
       let { data: companyData } = await supabase.from('company_data').select('id, logo_url').limit(1).single();
 
@@ -196,13 +199,8 @@ export const useSettings = () => {
         if (error) throw error;
         companyData = newCompanyData;
       }
-
-      if (companyData.logo_url) {
-        const oldLogoPath = companyData.logo_url.split('/company-assets/')[1];
-        if (oldLogoPath) {
-          await supabase.storage.from('company-assets').remove([oldLogoPath]);
-        }
-      }
+      
+      oldLogoUrlToDelete = companyData.logo_url;
 
       let newLogoUrl: string | undefined = undefined;
 
@@ -228,7 +226,23 @@ export const useSettings = () => {
 
       if (dbError) throw dbError;
 
-      await fetchSettings();
+      if (oldLogoUrlToDelete) {
+        const oldLogoPath = oldLogoUrlToDelete.split('/company-assets/')[1];
+        if (oldLogoPath) {
+          supabase.storage.from('company-assets').remove([oldLogoPath]);
+        }
+      }
+
+      setSettings(prev => {
+        if (!prev) return defaultSettings;
+        return {
+          ...prev,
+          company: {
+            ...prev.company,
+            logo: newLogoUrl,
+          },
+        };
+      });
       return { success: true };
     } catch (error) {
       console.error('Error updating logo:', error);
