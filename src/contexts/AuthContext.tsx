@@ -56,9 +56,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
 
     if (error) {
+      let errorMessage = error.message;
+      
+      // Handle specific error cases with better Spanish messages
+      if (error.message.includes('Invalid login credentials')) {
+        errorMessage = 'Credenciales inválidas. Verifica tu email y contraseña.';
+      } else if (error.message.includes('Email not confirmed')) {
+        errorMessage = 'Tu email no ha sido confirmado. Revisa tu bandeja de entrada.';
+      } else if (error.message.includes('Too many requests')) {
+        errorMessage = 'Demasiados intentos. Espera un momento antes de intentar nuevamente.';
+      }
+
       toast({
         title: "Error de autenticación",
-        description: error.message,
+        description: errorMessage,
         variant: "destructive",
       });
     } else {
@@ -86,9 +97,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
 
     if (error) {
+      let errorMessage = error.message;
+      
+      // Handle specific error cases with better Spanish messages
+      if (error.message.includes('Signups not allowed')) {
+        errorMessage = 'Los registros están deshabilitados temporalmente. Contacta al administrador del sistema para obtener acceso.';
+      } else if (error.message.includes('Password should be at least')) {
+        errorMessage = 'La contraseña debe tener al menos 6 caracteres.';
+      } else if (error.message.includes('Invalid email')) {
+        errorMessage = 'El formato del email no es válido.';
+      } else if (error.message.includes('User already registered')) {
+        errorMessage = 'Este email ya está registrado. Intenta iniciar sesión en su lugar.';
+      }
+
       toast({
         title: "Error de registro",
-        description: error.message,
+        description: errorMessage,
         variant: "destructive",
       });
     } else {
