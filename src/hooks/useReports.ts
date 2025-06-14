@@ -5,6 +5,7 @@ import { useInvoices } from './useInvoices';
 import { useClients } from './useClients';
 import { useCranes } from './useCranes';
 import { useOperators } from './useOperators';
+import { Service } from '@/types';
 
 interface ReportMetrics {
   totalServices: number;
@@ -96,7 +97,7 @@ export const useReports = (dateRange?: { from: string; to: string }) => {
     setLoading(false);
   };
 
-  const calculateServicesByMonth = (services: any[]) => {
+  const calculateServicesByMonth = (services: Service[]) => {
     const monthlyData: { [key: string]: { services: number; revenue: number } } = {};
     
     services.forEach(service => {
@@ -116,7 +117,7 @@ export const useReports = (dateRange?: { from: string; to: string }) => {
       .sort((a, b) => a.month.localeCompare(b.month));
   };
 
-  const calculateServicesByStatus = (services: any[]) => {
+  const calculateServicesByStatus = (services: Service[]) => {
     const statusCounts = services.reduce((acc, service) => {
       acc[service.status] = (acc[service.status] || 0) + 1;
       return acc;
@@ -126,12 +127,12 @@ export const useReports = (dateRange?: { from: string; to: string }) => {
     
     return Object.entries(statusCounts).map(([status, count]) => ({
       status,
-      count,
-      percentage: total > 0 ? (count / total) * 100 : 0
+      count: Number(count),
+      percentage: total > 0 ? (Number(count) / total) * 100 : 0
     }));
   };
 
-  const calculateTopClients = (services: any[]) => {
+  const calculateTopClients = (services: Service[]) => {
     const clientData: { [key: string]: { services: number; revenue: number } } = {};
     
     services.forEach(service => {
@@ -156,7 +157,7 @@ export const useReports = (dateRange?: { from: string; to: string }) => {
       .slice(0, 5);
   };
 
-  const calculateCraneUtilization = (services: any[]) => {
+  const calculateCraneUtilization = (services: Service[]) => {
     const craneData: { [key: string]: number } = {};
     
     services.forEach(service => {
@@ -169,11 +170,12 @@ export const useReports = (dateRange?: { from: string; to: string }) => {
     return Object.entries(craneData)
       .map(([craneId, serviceCount]) => {
         const crane = cranes.find(c => c.id === craneId);
+        const servicesNum = Number(serviceCount);
         return {
           craneId,
           craneName: crane ? `${crane.brand} ${crane.model} (${crane.licensePlate})` : 'Grúa desconocida',
-          services: serviceCount,
-          utilization: totalServices > 0 ? (serviceCount / totalServices) * 100 : 0
+          services: servicesNum,
+          utilization: totalServices > 0 ? (servicesNum / totalServices) * 100 : 0
         };
       })
       .sort((a, b) => b.services - a.services);
