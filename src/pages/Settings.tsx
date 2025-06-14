@@ -1,7 +1,9 @@
+
 import { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { useSettings } from '@/hooks/useSettings';
+import { useLogoUpdater } from '@/hooks/useLogoUpdater';
 import { SettingsHeader } from '@/components/settings/SettingsHeader';
 import { CompanySettingsTab } from '@/components/settings/CompanySettingsTab';
 import { UserSettingsTab } from '@/components/settings/UserSettingsTab';
@@ -15,7 +17,8 @@ import {
 } from 'lucide-react';
 
 const Settings = () => {
-  const { settings, loading, saving, updateSettings, saveSettings, updateLogo, resetSettings } = useSettings();
+  const { settings, loading, saving, updateSettings, saveSettings, resetSettings } = useSettings();
+  const { isUpdating: isLogoUpdating, updateLogo } = useLogoUpdater();
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('company');
 
@@ -36,8 +39,15 @@ const Settings = () => {
   };
 
   const handleLogoChange = async (logoFile: File | null) => {
-    const result = await updateLogo(logoFile);
+    if (!settings) return;
+    const result = await updateLogo(logoFile, settings);
     if (result.success) {
+      updateSettings({
+        company: {
+          ...settings.company,
+          logo: result.newLogoUrl,
+        },
+      });
       toast({
         title: "Logotipo actualizado",
         description: "El cambio en el logotipo se ha guardado.",
@@ -58,6 +68,8 @@ const Settings = () => {
       </div>
     );
   }
+
+  const isSavingForCompany = saving || isLogoUpdating;
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -86,7 +98,7 @@ const Settings = () => {
         <TabsContent value="company">
           <CompanySettingsTab
             settings={settings.company}
-            saving={saving}
+            saving={isSavingForCompany}
             onSave={handleSave}
             onLogoChange={handleLogoChange}
             onUpdateSettings={updateSettings}
