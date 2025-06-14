@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -14,20 +13,18 @@ export const useSettings = () => {
     setLoading(true);
     console.log('Fetching settings...');
     try {
-      // Source of truth for company data is Supabase
       const { data: companyData, error: companyError } = await supabase
         .from('company_data')
         .select('*')
         .limit(1)
         .maybeSingle();
-      
+
       if (companyError) {
         throw companyError;
       }
-      
       console.log('Fetched company data from Supabase:', companyData);
 
-      // Other settings are from local storage
+      // Otros settings desde local storage
       const savedOtherSettings = localStorage.getItem('tms-settings-others');
       const otherSettings = savedOtherSettings ? JSON.parse(savedOtherSettings) : {
         user: defaultSettings.user,
@@ -36,7 +33,7 @@ export const useSettings = () => {
       };
 
       const finalSettings: Settings = {
-        company: defaultSettings.company, // Start with default
+        company: defaultSettings.company,
         ...otherSettings
       };
 
@@ -50,8 +47,7 @@ export const useSettings = () => {
           logo: companyData.logo_url ? `${companyData.logo_url}?t=${new Date().getTime()}` : undefined,
         };
       }
-      
-      console.log('Final settings object to be set:', finalSettings);
+
       setSettings(finalSettings);
 
     } catch (error) {
@@ -61,11 +57,9 @@ export const useSettings = () => {
         description: "No se pudo cargar la configuración.",
         variant: "destructive",
       });
-      // Fallback to defaults on error
       setSettings(defaultSettings);
     } finally {
       setLoading(false);
-      console.log('Finished fetching settings.');
     }
   }, [toast]);
 
@@ -75,13 +69,10 @@ export const useSettings = () => {
 
   useEffect(() => {
     const refetch = () => {
-      console.log('Received settings-updated event, refetching settings.');
       fetchSettings();
     };
-    console.log('Setting up settings-updated event listener.');
     window.addEventListener('settings-updated', refetch);
     return () => {
-      console.log('Cleaning up settings-updated event listener.');
       window.removeEventListener('settings-updated', refetch);
     };
   }, [fetchSettings]);
@@ -95,38 +86,67 @@ export const useSettings = () => {
 
     setSaving(true);
     try {
-      // Always save company data to Supabase
-      if (settings.company) {
-        const { data: existingCompany } = await supabase.from('company_data').select('id').limit(1).maybeSingle();
-        
-        const companyPayload = {
-          business_name: settings.company.name,
-          address: settings.company.address,
-          phone: settings.company.phone,
-          email: settings.company.email,
-          rut: settings.company.taxId,
-        };
+      // Asegurar que todos los campos obligatorios estén presentes
+      const companyPayload = {
+        business_name: settings.company.name || '',
+        address: settings.company.address || '',
+        phone: settings.company.phone || '',
+        email: settings.company.email || '',
+        rut: settings.company.taxId || '',
+      };
 
-        if (existingCompany) {
-          const { error } = await supabase.from('company_data').update(companyPayload).eq('id', existingCompany.id);
-          if (error) throw error;
-        } else {
-          const { error } = await supabase.from('company_data').insert(companyPayload).select().single();
-          if (error) throw error;
-        }
+      // Buscar empresa, si no existe: insertar, si existe: actualizar
+      const { data: existingCompany, error: selectError } = await supabase
+        .from('company_data')
+        .select('id')
+        .limit(1)
+        .maybeSingle();
+
+      if (selectError) {
+        console.error('Error al consultar company_data:', selectError);
+        throw selectError;
       }
-      
-      // Save other settings to local storage
+
+      if (existingCompany && existingCompany.id) {
+        // Update
+        const { error: updateError } = await supabase
+          .from('company_data')
+          .update(companyPayload)
+          .eq('id', existingCompany.id);
+
+        if (updateError) {
+          console.error('Error al actualizar la empresa:', updateError);
+          throw updateError;
+        }
+        console.log('Empresa actualizada correctamente');
+
+      } else {
+        // Insertar - requerimos todos los campos obligatorios
+        const { data: newCompany, error: insertError } = await supabase
+          .from('company_data')
+          .insert([companyPayload])
+          .select()
+          .maybeSingle();
+
+        if (insertError) {
+          console.error('Error al insertar empresa:', insertError);
+          throw insertError;
+        }
+        if (!newCompany || !newCompany.id) {
+          throw new Error('No se pudo crear el registro de empresa');
+        }
+        console.log('Empresa creada correctamente:', newCompany.id);
+      }
+
+      // Otros settings a local storage
       const { company, ...otherSettings } = settings;
       localStorage.setItem('tms-settings-others', JSON.stringify(otherSettings));
-      
-      // Clean up old combined settings from local storage to prevent using stale data
       localStorage.removeItem('tms-settings');
-      
+
       return { success: true };
     } catch (error) {
       console.error('Error saving settings:', error);
-      return { success: false, error: 'Error al guardar la configuración' };
+      return { success: false, error: 'Error al guardar la configuración: ' + (error?.message || 'Desconocido') };
     } finally {
       setSaving(false);
     }
@@ -136,7 +156,7 @@ export const useSettings = () => {
     setSettings(defaultSettings);
     localStorage.removeItem('tms-settings');
     localStorage.removeItem('tms-settings-others');
-    // TODO: Consider clearing company_data in Supabase on reset.
+    // En desarrollo: aquí podríamos limpiar company_data en Supabase si fuera necesario.
   };
 
   return {
