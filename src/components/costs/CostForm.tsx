@@ -29,9 +29,9 @@ const costSchema = z.object({
     description: z.string().min(3, 'La descripción debe tener al menos 3 caracteres'),
     amount: z.coerce.number().positive('El monto debe ser un número positivo'),
     category_id: z.string().nonempty('La categoría es requerida'),
-    crane_id: z.string().optional().nullable().transform(val => val || null),
-    operator_id: z.string().optional().nullable().transform(val => val || null),
-    service_id: z.string().optional().nullable().transform(val => val || null),
+    crane_id: z.string().optional().nullable().transform(val => (val === 'none' || !val) ? null : val),
+    operator_id: z.string().optional().nullable().transform(val => (val === 'none' || !val) ? null : val),
+    service_id: z.string().optional().nullable().transform(val => (val === 'none' || !val) ? null : val),
     notes: z.string().optional().nullable(),
 });
 
@@ -156,7 +156,7 @@ export const CostForm = ({ isOpen, onClose, cost }: CostFormProps) => {
                                     <Select onValueChange={field.onChange} value={field.value || ''} disabled={isLoadingCranes}>
                                         <FormControl><SelectTrigger className="bg-white/10"><SelectValue placeholder="Sin asociar" /></SelectTrigger></FormControl>
                                         <SelectContent>
-                                            <SelectItem value="">Sin asociar</SelectItem>
+                                            <SelectItem value="none">Sin asociar</SelectItem>
                                             {cranes.map(c => <SelectItem key={c.id} value={c.id}>{`${c.brand} ${c.model}`}</SelectItem>)}
                                         </SelectContent>
                                     </Select>
@@ -168,7 +168,7 @@ export const CostForm = ({ isOpen, onClose, cost }: CostFormProps) => {
                                     <Select onValueChange={field.onChange} value={field.value || ''} disabled={isLoadingOperators}>
                                         <FormControl><SelectTrigger className="bg-white/10"><SelectValue placeholder="Sin asociar" /></SelectTrigger></FormControl>
                                         <SelectContent>
-                                            <SelectItem value="">Sin asociar</SelectItem>
+                                            <SelectItem value="none">Sin asociar</SelectItem>
                                             {operators.map(op => <SelectItem key={op.id} value={op.id}>{op.name}</SelectItem>)}
                                         </SelectContent>
                                     </Select>
@@ -180,7 +180,7 @@ export const CostForm = ({ isOpen, onClose, cost }: CostFormProps) => {
                                     <Select onValueChange={field.onChange} value={field.value || ''} disabled={isLoadingServices}>
                                         <FormControl><SelectTrigger className="bg-white/10"><SelectValue placeholder="Sin asociar" /></SelectTrigger></FormControl>
                                         <SelectContent>
-                                            <SelectItem value="">Sin asociar</SelectItem>
+                                            <SelectItem value="none">Sin asociar</SelectItem>
                                             {services.map(s => <SelectItem key={s.id} value={s.id}>{s.folio}</SelectItem>)}
                                         </SelectContent>
                                     </Select>
