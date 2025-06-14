@@ -63,9 +63,15 @@ export const CostForm = ({ isOpen, onClose, cost }: CostFormProps) => {
     useEffect(() => {
         console.log('CostForm useEffect triggered.', { isOpen, costExists: !!cost });
         if (cost) {
+            // Ensure cost.date is a valid string before using it.
+            // If it's not, or not present, default to today's date.
+            const dateValue = (cost.date && typeof cost.date === 'string')
+                ? cost.date.split('T')[0]
+                : new Date().toISOString().split('T')[0];
+
             reset({
                 ...cost,
-                date: new Date(cost.date).toISOString().split('T')[0],
+                date: dateValue,
                 amount: Number(cost.amount),
                 crane_id: cost.crane_id || null,
                 operator_id: cost.operator_id || null,
