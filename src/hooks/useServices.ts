@@ -1,21 +1,18 @@
+
 import { useState, useEffect } from 'react';
 import { Service, ServiceStatus } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { useClients } from './useClients';
-import { useCranes } from './useCranes';
-import { useOperators } from './useOperators';
 
 export const useServices = () => {
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
-  const { clients } = useClients();
-  const { cranes } = useCranes();
-  const { operators } = useOperators();
 
   const fetchServices = async () => {
     try {
+      console.log('Fetching services with joins...');
+      
       const { data, error } = await supabase
         .from('services')
         .select(`
@@ -27,89 +24,107 @@ export const useServices = () => {
         `)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching services:', error);
+        throw error;
+      }
 
-      const formattedServices: Service[] = data.map(service => ({
-        id: service.id,
-        folio: service.folio,
-        requestDate: service.request_date,
-        serviceDate: service.service_date,
-        client: {
-          id: service.clients.id,
-          name: service.clients.name,
-          rut: service.clients.rut,
-          phone: service.clients.phone || '',
-          email: service.clients.email || '',
-          address: service.clients.address || '',
-          isActive: service.clients.is_active,
-          createdAt: '',
-          updatedAt: ''
-        },
-        purchaseOrder: service.purchase_order,
-        vehicleBrand: service.vehicle_brand,
-        vehicleModel: service.vehicle_model,
-        licensePlate: service.license_plate,
-        origin: service.origin,
-        destination: service.destination,
-        serviceType: {
-          id: service.service_types.id,
-          name: service.service_types.name,
-          description: service.service_types.description || '',
-          isActive: service.service_types.is_active,
-          createdAt: '',
-          updatedAt: ''
-        },
-        value: Number(service.value),
-        crane: {
-          id: service.cranes.id,
-          licensePlate: service.cranes.license_plate,
-          brand: service.cranes.brand,
-          model: service.cranes.model,
-          type: service.cranes.type,
-          isActive: service.cranes.is_active,
-          createdAt: '',
-          updatedAt: '',
-          circulationPermitExpiry: '',
-          insuranceExpiry: '',
-          technicalReviewExpiry: ''
-        },
-        operator: {
-          id: service.operators.id,
-          name: service.operators.name,
-          rut: service.operators.rut,
-          phone: service.operators.phone || '',
-          licenseNumber: service.operators.license_number,
-          isActive: service.operators.is_active,
-          createdAt: '',
-          updatedAt: '',
-          examExpiry: ''
-        },
-        operatorCommission: Number(service.operator_commission),
-        status: service.status as ServiceStatus,
-        observations: service.observations,
-        createdAt: service.created_at,
-        updatedAt: service.updated_at
-      }));
+      console.log('Raw services data:', data);
 
+      if (!data || data.length === 0) {
+        console.log('No services found');
+        setServices([]);
+        setLoading(false);
+        return;
+      }
+
+      const formattedServices: Service[] = data.map(service => {
+        try {
+          return {
+            id: service.id,
+            folio: service.folio,
+            requestDate: service.request_date,
+            serviceDate: service.service_date,
+            client: {
+              id: service.clients.id,
+              name: service.clients.name,
+              rut: service.clients.rut,
+              phone: service.clients.phone || '',
+              email: service.clients.email || '',
+              address: service.clients.address || '',
+              isActive: service.clients.is_active,
+              createdAt: '',
+              updatedAt: ''
+            },
+            purchaseOrder: service.purchase_order,
+            vehicleBrand: service.vehicle_brand,
+            vehicleModel: service.vehicle_model,
+            licensePlate: service.license_plate,
+            origin: service.origin,
+            destination: service.destination,
+            serviceType: {
+              id: service.service_types.id,
+              name: service.service_types.name,
+              description: service.service_types.description || '',
+              isActive: service.service_types.is_active,
+              createdAt: '',
+              updatedAt: ''
+            },
+            value: Number(service.value),
+            crane: {
+              id: service.cranes.id,
+              licensePlate: service.cranes.license_plate,
+              brand: service.cranes.brand,
+              model: service.cranes.model,
+              type: service.cranes.type,
+              isActive: service.cranes.is_active,
+              createdAt: '',
+              updatedAt: '',
+              circulationPermitExpiry: '',
+              insuranceExpiry: '',
+              technicalReviewExpiry: ''
+            },
+            operator: {
+              id: service.operators.id,
+              name: service.operators.name,
+              rut: service.operators.rut,
+              phone: service.operators.phone || '',
+              licenseNumber: service.operators.license_number,
+              isActive: service.operators.is_active,
+              createdAt: '',
+              updatedAt: '',
+              examExpiry: ''
+            },
+            operatorCommission: Number(service.operator_commission),
+            status: service.status as ServiceStatus,
+            observations: service.observations,
+            createdAt: service.created_at,
+            updatedAt: service.updated_at
+          };
+        } catch (formatError) {
+          console.error('Error formatting service:', service, formatError);
+          throw formatError;
+        }
+      });
+
+      console.log('Formatted services:', formattedServices);
       setServices(formattedServices);
     } catch (error: any) {
-      console.error('Error fetching services:', error);
+      console.error('Error in fetchServices:', error);
       toast({
         title: "Error",
         description: "No se pudieron cargar los servicios.",
         variant: "destructive",
       });
+      setServices([]);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    // Only fetch when dependencies are available
-    if (clients.length > 0 && cranes.length > 0 && operators.length > 0) {
-      fetchServices();
-    }
-  }, [clients, cranes, operators]);
+    fetchServices();
+  }, []);
 
   const createService = async (serviceData: Omit<Service, 'id' | 'folio' | 'createdAt' | 'updatedAt'>) => {
     try {

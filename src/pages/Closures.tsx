@@ -16,7 +16,7 @@ const Closures = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
 
-  console.log('Closures page render - closures:', closures, 'loading:', loading);
+  console.log('Closures page render - closures:', closures, 'loading:', loading, 'showCreateModal:', showCreateModal);
 
   // Filter closures by search term
   const filteredClosures = closures.filter(closure =>
@@ -46,6 +46,7 @@ const Closures = () => {
 
   const handleCreateClosure = async (closureData: Omit<ServiceClosure, 'id' | 'folio' | 'createdAt' | 'updatedAt'>) => {
     try {
+      console.log('Creating closure with data:', closureData);
       await createClosure(closureData);
       setShowCreateModal(false);
       toast({
@@ -62,6 +63,11 @@ const Closures = () => {
     }
   };
 
+  const handleShowCreateModal = () => {
+    console.log('Opening create modal...');
+    setShowCreateModal(true);
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -72,7 +78,7 @@ const Closures = () => {
 
   return (
     <div className="space-y-6">
-      <ClosuresHeader onCreateClosure={() => setShowCreateModal(true)} />
+      <ClosuresHeader onCreateClosure={handleShowCreateModal} />
       
       <ClosuresStats closures={closures} />
       

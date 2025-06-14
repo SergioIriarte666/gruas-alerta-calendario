@@ -9,19 +9,34 @@ interface ServicesSelectorProps {
 }
 
 const ServicesSelector = ({ clientId, selectedServiceIds, onServiceToggle }: ServicesSelectorProps) => {
-  const { services } = useServices();
+  const { services, loading } = useServices();
+
+  console.log('ServicesSelector render - services:', services.length, 'loading:', loading);
 
   const filteredServices = services.filter(service => {
     if (!clientId) return true;
     return service.client.id === clientId;
   });
 
+  if (loading) {
+    return (
+      <div className="space-y-2">
+        <Label className="text-gray-300">Servicios</Label>
+        <div className="max-h-40 overflow-y-auto border border-gray-700 rounded-md p-2 bg-white/5">
+          <p className="text-gray-400 text-sm">Cargando servicios...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-2">
       <Label className="text-gray-300">Servicios</Label>
       <div className="max-h-40 overflow-y-auto border border-gray-700 rounded-md p-2 bg-white/5">
         {filteredServices.length === 0 ? (
-          <p className="text-gray-400 text-sm">No hay servicios disponibles</p>
+          <p className="text-gray-400 text-sm">
+            {clientId ? 'No hay servicios disponibles para este cliente' : 'No hay servicios disponibles'}
+          </p>
         ) : (
           filteredServices.map((service) => (
             <div key={service.id} className="flex items-center space-x-2 py-1">
