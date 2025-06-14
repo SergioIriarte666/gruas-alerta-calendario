@@ -1,4 +1,3 @@
-
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { DashboardMetrics, Service, CalendarEvent } from '@/types';
@@ -59,7 +58,13 @@ const fetchDashboardData = async () => {
 
   const servicesByStatus = services.reduce((acc, service) => {
     const status = service.status || 'pending';
-    acc[status] = (acc[status] || 0) + 1;
+    if (status === 'pending' || status === 'in_progress') {
+      acc.pending++;
+    } else if (status === 'completed') {
+      acc.completed++;
+    } else if (status === 'cancelled') {
+      acc.cancelled++;
+    }
     return acc;
   }, { pending: 0, completed: 0, cancelled: 0 });
 

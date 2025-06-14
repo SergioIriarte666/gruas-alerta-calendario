@@ -1,8 +1,7 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Service } from '@/types';
+import { Service, ServiceStatus } from '@/types';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Eye, Truck } from 'lucide-react';
@@ -13,18 +12,15 @@ interface RecentServicesTableProps {
 }
 
 export const RecentServicesTable = ({ services }: RecentServicesTableProps) => {
-  const getStatusBadge = (status: Service['status']) => {
+  const getStatusBadge = (status: ServiceStatus) => {
     switch (status) {
       case 'pending':
+      case 'in_progress':
         return <Badge className="bg-amber-500 hover:bg-amber-500/80 text-white font-semibold">En Curso</Badge>;
       case 'completed':
         return <Badge className="bg-emerald-500 hover:bg-emerald-500/80 text-white font-semibold">Completado</Badge>;
       case 'cancelled':
         return <Badge className="bg-red-500 hover:bg-red-500/80 text-white font-semibold">Cancelado</Badge>;
-      case 'closed':
-        return <Badge className="bg-blue-500 hover:bg-blue-500/80 text-white font-semibold">Cerrado</Badge>;
-      case 'invoiced':
-        return <Badge className="bg-indigo-500 hover:bg-indigo-500/80 text-white font-semibold">Facturado</Badge>;
       default:
         return <Badge variant="secondary">{status}</Badge>;
     }
