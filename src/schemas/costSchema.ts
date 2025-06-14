@@ -8,15 +8,15 @@ export const costSchema = z.object({
     category_id: z.string().nonempty('La categoría es requerida'),
     
     crane_id: z.preprocess(
-        (val) => (val === '' || !val) ? null : val,
+        (val) => (val === 'none' || val === '' || !val) ? null : val,
         z.string().uuid("ID de grúa inválido").nullable().optional()
     ),
     operator_id: z.preprocess(
-        (val) => (val === '' || !val) ? null : val,
+        (val) => (val === 'none' || val === '' || !val) ? null : val,
         z.string().uuid("ID de operador inválido").nullable().optional()
     ),
     service_id: z.preprocess(
-        (val) => (val === '' || !val) ? null : val,
+        (val) => (val === 'none' || val === '' || !val) ? null : val,
         z.string().uuid("ID de servicio inválido").nullable().optional()
     ),
     

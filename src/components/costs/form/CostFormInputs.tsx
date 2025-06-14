@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { UseFormReturn } from 'react-hook-form';
 import { FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
@@ -78,7 +79,7 @@ export const CostFormInputs = ({
                         <Select onValueChange={field.onChange} value={field.value ?? ''} disabled={isLoadingCranes}>
                             <FormControl><SelectTrigger className="bg-white/10"><SelectValue placeholder="Sin asociar" /></SelectTrigger></FormControl>
                             <SelectContent>
-                                <SelectItem value="">Sin asociar</SelectItem>
+                                <SelectItem value="none">Sin asociar</SelectItem>
                                 {cranes.map(c => <SelectItem key={c.id} value={c.id}>{`${c.brand} ${c.model}`}</SelectItem>)}
                             </SelectContent>
                         </Select>
@@ -90,7 +91,7 @@ export const CostFormInputs = ({
                         <Select onValueChange={field.onChange} value={field.value ?? ''} disabled={isLoadingOperators}>
                             <FormControl><SelectTrigger className="bg-white/10"><SelectValue placeholder="Sin asociar" /></SelectTrigger></FormControl>
                             <SelectContent>
-                                <SelectItem value="">Sin asociar</SelectItem>
+                                <SelectItem value="none">Sin asociar</SelectItem>
                                 {operators.map(op => <SelectItem key={op.id} value={op.id}>{op.name}</SelectItem>)}
                             </SelectContent>
                         </Select>
@@ -102,7 +103,7 @@ export const CostFormInputs = ({
                         <Select onValueChange={field.onChange} value={field.value ?? ''} disabled={isLoadingServices}>
                             <FormControl><SelectTrigger className="bg-white/10"><SelectValue placeholder="Sin asociar" /></SelectTrigger></FormControl>
                             <SelectContent>
-                                <SelectItem value="">Sin asociar</SelectItem>
+                                <SelectItem value="none">Sin asociar</SelectItem>
                                 {services.map(s => <SelectItem key={s.id} value={s.id}>{s.folio}</SelectItem>)}
                             </SelectContent>
                         </Select>
