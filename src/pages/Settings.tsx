@@ -15,12 +15,12 @@ import {
 } from 'lucide-react';
 
 const Settings = () => {
-  const { settings, loading, saving, updateSettings, updateLogo, resetSettings } = useSettings();
+  const { settings, loading, saving, updateSettings, saveSettings, updateLogo, resetSettings } = useSettings();
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('company');
 
-  const handleSave = async (section: string, data: any) => {
-    const result = await updateSettings({ [section]: data });
+  const handleSave = async () => {
+    const result = await saveSettings();
     if (result.success) {
       toast({
         title: "Configuración guardada",
@@ -87,13 +87,9 @@ const Settings = () => {
           <CompanySettingsTab
             settings={settings.company}
             saving={saving}
-            onSave={(data) => handleSave('company', data)}
+            onSave={handleSave}
             onLogoChange={handleLogoChange}
-            onUpdateSettings={(updates) => {
-              if (settings) {
-                updateSettings({ ...settings, ...updates });
-              }
-            }}
+            onUpdateSettings={updateSettings}
           />
         </TabsContent>
 
@@ -101,12 +97,8 @@ const Settings = () => {
           <UserSettingsTab
             settings={settings.user}
             saving={saving}
-            onSave={(data) => handleSave('user', data)}
-            onUpdateSettings={(updates) => {
-               if (settings) {
-                updateSettings({ ...settings, ...updates });
-              }
-            }}
+            onSave={handleSave}
+            onUpdateSettings={updateSettings}
           />
         </TabsContent>
 
@@ -114,12 +106,8 @@ const Settings = () => {
           <SystemSettingsTab
             settings={settings.system}
             saving={saving}
-            onSave={(data) => handleSave('system', data)}
-            onUpdateSettings={(updates) => {
-               if (settings) {
-                updateSettings({ ...settings, ...updates });
-              }
-            }}
+            onSave={handleSave}
+            onUpdateSettings={updateSettings}
           />
         </TabsContent>
 
@@ -127,12 +115,8 @@ const Settings = () => {
           <NotificationSettingsTab
             settings={settings.notifications}
             saving={saving}
-            onSave={(data) => handleSave('notifications', data)}
-            onUpdateSettings={(updates) => {
-               if (settings) {
-                updateSettings({ ...settings, ...updates });
-              }
-            }}
+            onSave={handleSave}
+            onUpdateSettings={updateSettings}
           />
         </TabsContent>
       </Tabs>

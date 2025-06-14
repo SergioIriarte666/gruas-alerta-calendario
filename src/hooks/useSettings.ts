@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -136,21 +135,24 @@ export const useSettings = () => {
     fetchSettings();
   }, [fetchSettings]);
 
-  const updateSettings = async (newSettings: Partial<Settings>) => {
+  const updateSettings = (updates: Partial<Settings>) => {
+    setSettings(prev => ({ ...prev, ...updates }));
+  };
+
+  const saveSettings = async () => {
     if (!settings) return { success: false, error: 'Configuración no cargada.' };
+
     setSaving(true);
     try {
-      const updatedSettings = { ...settings, ...newSettings };
-      
-      if (newSettings.company) {
+      if (settings.company) {
         const { data: existingCompany } = await supabase.from('company_data').select('id').limit(1).single();
         
         const companyPayload = {
-          business_name: newSettings.company.name,
-          address: newSettings.company.address,
-          phone: newSettings.company.phone,
-          email: newSettings.company.email,
-          rut: newSettings.company.taxId,
+          business_name: settings.company.name,
+          address: settings.company.address,
+          phone: settings.company.phone,
+          email: settings.company.email,
+          rut: settings.company.taxId,
         };
 
         if (existingCompany) {
@@ -162,13 +164,11 @@ export const useSettings = () => {
         }
       }
       
-      const { company, ...otherSettings } = updatedSettings;
+      const { company, ...otherSettings } = settings;
       localStorage.setItem('tms-settings-others', JSON.stringify(otherSettings));
       
-      setSettings(updatedSettings);
-      localStorage.setItem('tms-settings', JSON.stringify(updatedSettings));
+      localStorage.setItem('tms-settings', JSON.stringify(settings));
       
-      await fetchSettings();
       return { success: true };
     } catch (error) {
       console.error('Error saving settings:', error);
@@ -249,6 +249,7 @@ export const useSettings = () => {
     loading,
     saving,
     updateSettings,
+    saveSettings,
     updateLogo,
     resetSettings
   };

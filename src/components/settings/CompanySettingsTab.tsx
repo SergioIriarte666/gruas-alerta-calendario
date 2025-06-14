@@ -20,9 +20,9 @@ interface CompanySettings {
 interface CompanySettingsTabProps {
   settings: CompanySettings;
   saving: boolean;
-  onSave: (data: CompanySettings) => void;
+  onSave: () => void;
   onLogoChange: (logoFile: File | null) => void;
-  onUpdateSettings: (updates: { company: CompanySettings }) => void;
+  onUpdateSettings: (updates: Partial<{ company: CompanySettings }>) => void;
 }
 
 export const CompanySettingsTab: React.FC<CompanySettingsTabProps> = ({
@@ -32,6 +32,10 @@ export const CompanySettingsTab: React.FC<CompanySettingsTabProps> = ({
   onLogoChange,
   onUpdateSettings
 }) => {
+  const handleInputChange = (field: keyof CompanySettings, value: string) => {
+    onUpdateSettings({ company: { ...settings, [field]: value } });
+  };
+
   return (
     <Card className="glass-card">
       <CardHeader>
@@ -55,9 +59,7 @@ export const CompanySettingsTab: React.FC<CompanySettingsTabProps> = ({
             <Input
               id="company-name"
               value={settings.name}
-              onChange={(e) => onUpdateSettings({
-                company: { ...settings, name: e.target.value }
-              })}
+              onChange={(e) => handleInputChange('name', e.target.value)}
               className="bg-white/5 border-gray-700 text-white"
             />
           </div>
@@ -67,9 +69,7 @@ export const CompanySettingsTab: React.FC<CompanySettingsTabProps> = ({
               id="company-email"
               type="email"
               value={settings.email}
-              onChange={(e) => onUpdateSettings({
-                company: { ...settings, email: e.target.value }
-              })}
+              onChange={(e) => handleInputChange('email', e.target.value)}
               className="bg-white/5 border-gray-700 text-white"
             />
           </div>
@@ -78,9 +78,7 @@ export const CompanySettingsTab: React.FC<CompanySettingsTabProps> = ({
             <Input
               id="company-phone"
               value={settings.phone}
-              onChange={(e) => onUpdateSettings({
-                company: { ...settings, phone: e.target.value }
-              })}
+              onChange={(e) => handleInputChange('phone', e.target.value)}
               className="bg-white/5 border-gray-700 text-white"
             />
           </div>
@@ -89,9 +87,7 @@ export const CompanySettingsTab: React.FC<CompanySettingsTabProps> = ({
             <Input
               id="company-taxid"
               value={settings.taxId}
-              onChange={(e) => onUpdateSettings({
-                company: { ...settings, taxId: e.target.value }
-              })}
+              onChange={(e) => handleInputChange('taxId', e.target.value)}
               className="bg-white/5 border-gray-700 text-white"
             />
           </div>
@@ -101,14 +97,12 @@ export const CompanySettingsTab: React.FC<CompanySettingsTabProps> = ({
           <Input
             id="company-address"
             value={settings.address}
-            onChange={(e) => onUpdateSettings({
-              company: { ...settings, address: e.target.value }
-            })}
+            onChange={(e) => handleInputChange('address', e.target.value)}
             className="bg-white/5 border-gray-700 text-white"
           />
         </div>
         <Button 
-          onClick={() => onSave(settings)}
+          onClick={onSave}
           disabled={saving}
           className="bg-tms-green hover:bg-tms-green-dark text-white"
           title="Guardar los cambios en la información de la empresa"
