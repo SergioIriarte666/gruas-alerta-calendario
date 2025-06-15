@@ -1,5 +1,5 @@
 
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { useCalendarEvents } from './useCalendarEvents';
 import { useCalendarNavigation } from './useCalendarNavigation';
 import { getEventsForDate, getEventsForMonth } from '@/utils/calendarHelpers';

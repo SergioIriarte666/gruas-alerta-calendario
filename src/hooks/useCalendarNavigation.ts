@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { CalendarViewMode } from '@/types/calendar';
 
 export const useCalendarNavigation = () => {
