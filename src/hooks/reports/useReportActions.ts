@@ -1,4 +1,3 @@
-
 import { useClients } from '@/hooks/useClients';
 import { useCranes } from '@/hooks/useCranes';
 import { useOperatorsData } from '@/hooks/operators/useOperatorsData';
@@ -6,7 +5,7 @@ import { useCostCategories } from '@/hooks/useCostCategories';
 import { useSettings } from '@/hooks/useSettings';
 import { exportReport } from '@/utils/reportExporter';
 import { generateServiceReport } from '@/utils/serviceReportGenerator';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { ReportFilters, ReportMetrics } from '@/hooks/useReports';
 
 interface UseReportActionsProps {
@@ -19,7 +18,6 @@ interface UseReportActionsProps {
 }
 
 export const useReportActions = ({ appliedFilters, serviceReportFilters, metrics }: UseReportActionsProps) => {
-  const { toast } = useToast();
   const { settings } = useSettings();
   const { clients } = useClients();
   const { cranes } = useCranes();
@@ -66,8 +64,7 @@ export const useReportActions = ({ appliedFilters, serviceReportFilters, metrics
   };
 
   const handleExportServiceReport = async (format: 'pdf' | 'excel') => {
-    toast({
-      title: 'Generando informe...',
+    toast.info('Generando informe...', {
       description: 'Tu informe de servicios se está procesando y la descarga comenzará en breve.',
     });
     try {
@@ -80,10 +77,8 @@ export const useReportActions = ({ appliedFilters, serviceReportFilters, metrics
         }
       });
     } catch (error) {
-      toast({
-        title: 'Error al generar informe',
+      toast.error('Error al generar informe', {
         description: 'Hubo un problema al generar el informe. Inténtalo de nuevo.',
-        variant: 'destructive',
       });
     }
   };

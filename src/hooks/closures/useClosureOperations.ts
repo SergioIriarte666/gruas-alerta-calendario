@@ -1,11 +1,9 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { ServiceClosure } from '@/types';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { formatClosureData, generateClosureFolio } from '@/utils/closureUtils';
 
 export const useClosureOperations = () => {
-  const { toast } = useToast();
 
   const createClosure = async (closureData: Omit<ServiceClosure, 'id' | 'folio' | 'createdAt' | 'updatedAt'>) => {
     try {
@@ -55,18 +53,15 @@ export const useClosureOperations = () => {
       const newClosure: ServiceClosure = formatClosureData(data);
       newClosure.serviceIds = closureData.serviceIds;
       
-      toast({
-        title: "Cierre creado",
+      toast.success("Cierre creado", {
         description: `Cierre ${folio} creado exitosamente.`,
       });
 
       return newClosure;
     } catch (error: any) {
       console.error('Error creating closure:', error);
-      toast({
-        title: "Error",
+      toast.error("Error", {
         description: "No se pudo crear el cierre.",
-        variant: "destructive",
       });
       throw error;
     }
@@ -97,18 +92,15 @@ export const useClosureOperations = () => {
 
       if (error) throw error;
 
-      toast({
-        title: "Cierre actualizado",
+      toast.success("Cierre actualizado", {
         description: "El cierre ha sido actualizado exitosamente.",
       });
 
       return { ...closureData, updatedAt: new Date().toISOString() };
     } catch (error: any) {
       console.error('Error updating closure:', error);
-      toast({
-        title: "Error",
+      toast.error("Error", {
         description: "No se pudo actualizar el cierre.",
-        variant: "destructive",
       });
       throw error;
     }
@@ -123,16 +115,13 @@ export const useClosureOperations = () => {
 
       if (error) throw error;
       
-      toast({
-        title: "Cierre eliminado",
+      toast.success("Cierre eliminado", {
         description: "El cierre ha sido eliminado exitosamente.",
       });
     } catch (error: any) {
       console.error('Error deleting closure:', error);
-      toast({
-        title: "Error",
+      toast.error("Error", {
         description: "No se pudo eliminar el cierre.",
-        variant: "destructive",
       });
       throw error;
     }
@@ -147,18 +136,15 @@ export const useClosureOperations = () => {
 
       if (error) throw error;
 
-      toast({
-        title: "Cierre procesado",
+      toast.success("Cierre procesado", {
         description: "El cierre ha sido procesado exitosamente.",
       });
 
       return { status: 'closed' as const, updatedAt: new Date().toISOString() };
     } catch (error: any) {
       console.error('Error closing closure:', error);
-      toast({
-        title: "Error",
+      toast.error("Error", {
         description: "No se pudo procesar el cierre.",
-        variant: "destructive",
       });
       throw error;
     }

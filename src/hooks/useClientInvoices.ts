@@ -1,14 +1,12 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Invoice } from '@/types';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { formatInvoiceData } from '@/utils/invoiceUtils';
 
 export const useClientInvoices = (clientId: string | null) => {
     const [invoices, setInvoices] = useState<Invoice[]>([]);
     const [loading, setLoading] = useState(true);
-    const { toast } = useToast();
 
     const fetchInvoicesByClient = useCallback(async (id: string) => {
         setLoading(true);
@@ -25,15 +23,13 @@ export const useClientInvoices = (clientId: string | null) => {
             setInvoices(formattedInvoices);
         } catch (error: any) {
             console.error('Error fetching client invoices:', error);
-            toast({
-                title: "Error",
+            toast.error("Error", {
                 description: "No se pudieron cargar las facturas del cliente.",
-                variant: "destructive",
             });
         } finally {
             setLoading(false);
         }
-    }, [toast]);
+    }, []);
 
     useEffect(() => {
         if (clientId) {
@@ -59,3 +55,4 @@ export const useClientInvoices = (clientId: string | null) => {
 
     return { invoices, loading, metrics: invoiceMetrics, refetch: () => clientId && fetchInvoicesByClient(clientId) };
 };
+

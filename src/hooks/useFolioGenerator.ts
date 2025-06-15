@@ -1,12 +1,10 @@
-
 import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useSettings } from '@/hooks/useSettings';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 
 export const useFolioGenerator = () => {
   const { settings } = useSettings();
-  const { toast } = useToast();
   const [loading, setLoading] = useState(false);
 
   const generateNextFolio = useCallback(async (): Promise<string> => {
@@ -43,17 +41,15 @@ export const useFolioGenerator = () => {
       return newFolio;
     } catch (error: any) {
       console.error('Error generating folio:', error);
-      toast({
-        title: "Error",
+      toast.error("Error", {
         description: "No se pudo generar el folio automáticamente.",
-        variant: "destructive",
       });
       // Retornar un folio por defecto en caso de error
       return `SRV-${String(Date.now()).slice(-3)}`;
     } finally {
       setLoading(false);
     }
-  }, [settings.company, toast]);
+  }, [settings.company]);
 
   const validateFolioUniqueness = useCallback(async (folio: string): Promise<boolean> => {
     try {

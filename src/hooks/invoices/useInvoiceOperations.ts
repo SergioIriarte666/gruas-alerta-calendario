@@ -1,11 +1,9 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { Invoice } from '@/types';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { formatInvoiceData, generateInvoiceFolio } from '@/utils/invoiceUtils';
 
 export const useInvoiceOperations = () => {
-  const { toast } = useToast();
 
   const createInvoice = async (invoiceData: Omit<Invoice, 'id' | 'folio' | 'createdAt' | 'updatedAt'>) => {
     try {
@@ -17,7 +15,7 @@ export const useInvoiceOperations = () => {
       const folio = generateInvoiceFolio(count.count || 0);
 
       // Create invoice
-      const { data: newInvoice, error: invoiceError } = await supabase
+      const { data, error: invoiceError } = await supabase
         .from('invoices')
         .insert({
           folio,
@@ -36,34 +34,33 @@ export const useInvoiceOperations = () => {
       if (invoiceError) throw invoiceError;
 
       // Create invoice-service relationships
+      const serviceRelations = [];
       if (invoiceData.serviceIds.length > 0) {
         const invoiceServices = invoiceData.serviceIds.map(serviceId => ({
-          invoice_id: newInvoice.id,
+          invoice_id: data.id,
           service_id: serviceId
         }));
 
-        const { error: relationError } = await supabase
+        const { data: relationsData, error: relationError } = await supabase
           .from('invoice_services')
-          .insert(invoiceServices);
+          .insert(invoiceServices)
+          .select();
 
         if (relationError) throw relationError;
+        serviceRelations.push(...relationsData);
       }
+      
+      const newInvoice = formatInvoiceData({ ...data, invoice_services: serviceRelations });
 
-      const formattedInvoice: Invoice = formatInvoiceData(newInvoice);
-      formattedInvoice.serviceIds = invoiceData.serviceIds;
-
-      toast({
-        title: "Factura creada",
+      toast.success("Factura creada", {
         description: `Factura ${folio} creada exitosamente.`,
       });
 
-      return formattedInvoice;
+      return newInvoice;
     } catch (error: any) {
       console.error('Error creating invoice:', error);
-      toast({
-        title: "Error",
+      toast.error("Error", {
         description: "No se pudo crear la factura.",
-        variant: "destructive",
       });
       throw error;
     }
@@ -89,39 +86,15 @@ export const useInvoiceOperations = () => {
 
       if (error) throw error;
 
-      // Update service relationships if provided
-      if (invoiceData.serviceIds !== undefined) {
-        // Delete existing relationships
-        await supabase
-          .from('invoice_services')
-          .delete()
-          .eq('invoice_id', id);
-
-        // Create new relationships
-        if (invoiceData.serviceIds.length > 0) {
-          const invoiceServices = invoiceData.serviceIds.map(serviceId => ({
-            invoice_id: id,
-            service_id: serviceId
-          }));
-
-          await supabase
-            .from('invoice_services')
-            .insert(invoiceServices);
-        }
-      }
-
-      toast({
-        title: "Factura actualizada",
+      toast.success("Factura actualizada", {
         description: "La factura ha sido actualizada exitosamente.",
       });
 
       return { ...invoiceData, updatedAt: new Date().toISOString() };
     } catch (error: any) {
       console.error('Error updating invoice:', error);
-      toast({
-        title: "Error",
+      toast.error("Error", {
         description: "No se pudo actualizar la factura.",
-        variant: "destructive",
       });
       throw error;
     }
@@ -136,16 +109,13 @@ export const useInvoiceOperations = () => {
 
       if (error) throw error;
       
-      toast({
-        title: "Factura eliminada",
+      toast.success("Factura eliminada", {
         description: "La factura ha sido eliminada exitosamente.",
       });
     } catch (error: any) {
       console.error('Error deleting invoice:', error);
-      toast({
-        title: "Error",
+      toast.error("Error", {
         description: "No se pudo eliminar la factura.",
-        variant: "destructive",
       });
       throw error;
     }
@@ -163,22 +133,15 @@ export const useInvoiceOperations = () => {
 
       if (error) throw error;
 
-      toast({
-        title: "Factura marcada como pagada",
-        description: "El estado de la factura ha sido actualizado.",
+      toast.success("Factura pagada", {
+        description: "La factura ha sido marcada como pagada exitosamente.",
       });
 
-      return {
-        status: 'paid' as const, 
-        paymentDate: new Date().toISOString().split('T')[0],
-        updatedAt: new Date().toISOString()
-      };
+      return { status: 'paid' as const, updatedAt: new Date().toISOString() };
     } catch (error: any) {
       console.error('Error marking invoice as paid:', error);
-      toast({
-        title: "Error",
-        description: "No se pudo actualizar el estado de la factura.",
-        variant: "destructive",
+      toast.error("Error", {
+        description: "No se pudo marcar la factura como pagada.",
       });
       throw error;
     }

@@ -1,13 +1,11 @@
-
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Service } from '@/types';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { useServiceTransformer } from './useServiceTransformer';
 
 export const useServiceFetcher = () => {
   const [loading, setLoading] = useState(true);
-  const { toast } = useToast();
   const { transformRawServiceData } = useServiceTransformer();
 
   const fetchServices = async (): Promise<Service[]> => {
@@ -44,10 +42,8 @@ export const useServiceFetcher = () => {
 
     } catch (error: any) {
       console.error('Error in fetchServices:', error);
-      toast({
-        title: "Error",
+      toast.error("Error", {
         description: "No se pudieron cargar los servicios.",
-        variant: "destructive",
       });
       return [];
     } finally {

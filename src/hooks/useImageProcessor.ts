@@ -1,9 +1,7 @@
-
 import { useState } from 'react';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 
 export const useImageProcessor = () => {
-  const { toast } = useToast();
   const [isProcessing, setIsProcessing] = useState(false);
 
   const validateFile = (file: File): boolean => {
@@ -11,19 +9,15 @@ export const useImageProcessor = () => {
     const maxSize = 2 * 1024 * 1024; // 2MB
 
     if (!validTypes.includes(file.type)) {
-      toast({
-        title: "Formato no válido",
+      toast.error("Formato no válido", {
         description: "Solo se permiten archivos PNG, JPG y SVG",
-        variant: "destructive",
       });
       return false;
     }
 
     if (file.size > maxSize) {
-      toast({
-        title: "Archivo muy grande",
+      toast.error("Archivo muy grande", {
         description: "El archivo debe ser menor a 2MB",
-        variant: "destructive",
       });
       return false;
     }
@@ -106,10 +100,8 @@ export const useImageProcessor = () => {
       return logoFile;
     } catch (error) {
       console.error(error);
-      toast({
-        title: "Error",
+      toast.error("Error", {
         description: "Error al procesar la imagen",
-        variant: "destructive",
       });
       return null;
     } finally {

@@ -1,4 +1,3 @@
-
 import { Menu, Search, User, Settings } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -11,7 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { useUser } from '@/contexts/UserContext';
 import { NotificationsDropdown } from './NotificationsDropdown';
 
@@ -21,13 +20,11 @@ interface HeaderProps {
 
 export const Header = ({ setIsMobileMenuOpen }: HeaderProps) => {
   const navigate = useNavigate();
-  const { toast } = useToast();
   const { user, logout } = useUser();
 
   const handleLogout = () => {
     logout();
-    toast({
-      title: "Sesión cerrada",
+    toast.success("Sesión cerrada", {
       description: "Has cerrado sesión correctamente",
     });
   };

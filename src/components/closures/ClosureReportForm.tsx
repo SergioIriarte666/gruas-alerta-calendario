@@ -1,9 +1,8 @@
-
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import DateRangePicker from './DateRangePicker';
 import ClientSelector from './ClientSelector';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from "sonner";
 import { generateServiceReport } from '@/utils/serviceReportGenerator';
 import { Loader2 } from 'lucide-react';
 
@@ -16,23 +15,18 @@ const ClosureReportForm = ({ onClose }: ClosureReportFormProps) => {
   const [dateTo, setDateTo] = useState<Date | undefined>();
   const [clientId, setClientId] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
-  const { toast } = useToast();
 
   const handleGenerate = async (format: 'pdf' | 'excel') => {
     if (!dateFrom || !dateTo) {
-      toast({
-        title: "Error",
+      toast.error("Error", {
         description: "Por favor, selecciona un rango de fechas.",
-        variant: "destructive",
       });
       return;
     }
 
     if (dateFrom > dateTo) {
-      toast({
-        title: "Error",
+      toast.error("Error", {
         description: "La fecha 'desde' no puede ser posterior a la fecha 'hasta'.",
-        variant: "destructive",
       });
       return;
     }
@@ -47,17 +41,14 @@ const ClosureReportForm = ({ onClose }: ClosureReportFormProps) => {
           clientId: clientId || undefined,
         }
       });
-      toast({
-        title: "Informe generado",
+      toast.success("Informe generado", {
         description: `El informe se ha descargado en formato ${format.toUpperCase()}.`,
       });
       onClose();
     } catch (error) {
       console.error('Error generating report:', error);
-      toast({
-        title: "Error al generar informe",
+      toast.error("Error al generar informe", {
         description: "No se pudo generar el informe. Inténtalo de nuevo.",
-        variant: "destructive",
       });
     } finally {
       setIsGenerating(false);

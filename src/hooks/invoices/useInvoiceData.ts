@@ -1,14 +1,12 @@
-
 import { useState, useEffect } from 'react';
 import { Invoice } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { formatInvoiceData } from '@/utils/invoiceUtils';
 
 export const useInvoiceData = () => {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(true);
-  const { toast } = useToast();
 
   const fetchInvoices = async () => {
     try {
@@ -27,10 +25,8 @@ export const useInvoiceData = () => {
       setInvoices(formattedInvoices);
     } catch (error: any) {
       console.error('Error fetching invoices:', error);
-      toast({
-        title: "Error",
+      toast.error("Error", {
         description: "No se pudieron cargar las facturas.",
-        variant: "destructive",
       });
     } finally {
       setLoading(false);

@@ -1,13 +1,11 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Service } from '@/types';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 
 export const useClientServices = (clientId: string | null) => {
     const [services, setServices] = useState<Service[]>([]);
     const [loading, setLoading] = useState(true);
-    const { toast } = useToast();
 
     const fetchServicesByClient = useCallback(async (id: string) => {
         setLoading(true);
@@ -91,15 +89,13 @@ export const useClientServices = (clientId: string | null) => {
             setServices(formattedServices);
         } catch (error: any) {
             console.error('Error fetching client services:', error);
-            toast({
-                title: "Error",
+            toast.error("Error", {
                 description: "No se pudieron cargar los servicios del cliente.",
-                variant: "destructive",
             });
         } finally {
             setLoading(false);
         }
-    }, [toast]);
+    }, []);
 
     useEffect(() => {
         if (clientId) {

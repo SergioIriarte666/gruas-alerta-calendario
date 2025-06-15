@@ -1,29 +1,24 @@
-
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Operator } from '@/types';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 
 type OperatorCreationData = Omit<Operator, 'id' | 'createdAt' | 'updatedAt'>;
 type OperatorUpdateData = Partial<OperatorCreationData>;
 
 export const useOperatorMutations = () => {
   const queryClient = useQueryClient();
-  const { toast } = useToast();
 
   const onMutationSuccess = (message: string) => {
     queryClient.invalidateQueries({ queryKey: ['operators'] });
-    toast({
-      title: "Éxito",
+    toast.success("Éxito", {
       description: message,
     });
   };
 
   const onMutationError = (error: Error, message: string) => {
-    toast({
-      title: "Error",
+    toast.error("Error", {
       description: message,
-      variant: "destructive",
     });
     console.error(error);
   };

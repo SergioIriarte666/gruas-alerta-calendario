@@ -1,3 +1,4 @@
+
 import React, { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -12,7 +13,7 @@ import { useServices } from '@/hooks/useServices';
 import { costSchema, CostFormValues } from '@/schemas/costSchema';
 import { CostFormInputs } from './form/CostFormInputs';
 import { CostFormActions } from './form/CostFormActions';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 
 interface CostFormProps {
     isOpen: boolean;
@@ -23,7 +24,6 @@ interface CostFormProps {
 export const CostForm = ({ isOpen, onClose, cost }: CostFormProps) => {
     const { mutate: addCost, isPending: isAdding } = useAddCost();
     const { mutate: updateCost, isPending: isUpdating } = useUpdateCost();
-    const { toast } = useToast();
     
     const { data: categories = [], isLoading: isLoadingCategories } = useCostCategories();
     const { cranes, loading: isLoadingCranes } = useCranes();
@@ -85,23 +85,23 @@ export const CostForm = ({ isOpen, onClose, cost }: CostFormProps) => {
         if (cost && cost.id) {
             updateCost({ id: cost.id, ...submissionData }, {
                 onSuccess: () => {
-                    toast({ title: "Costo Actualizado", description: "El costo se ha actualizado correctamente." });
+                    toast.success("Costo Actualizado", { description: "El costo se ha actualizado correctamente." });
                     onClose();
                 },
                 onError: (error) => {
                     console.error("[CostForm] Update cost failed:", error);
-                    toast({ title: "Error al Actualizar", description: "No se pudo actualizar el costo.", variant: "destructive" });
+                    toast.error("Error al Actualizar", { description: "No se pudo actualizar el costo." });
                 },
             });
         } else {
             addCost(submissionData, {
                 onSuccess: () => {
-                    toast({ title: "Costo Agregado", description: "El nuevo costo se ha registrado correctamente." });
+                    toast.success("Costo Agregado", { description: "El nuevo costo se ha registrado correctamente." });
                     onClose();
                 },
                 onError: (error) => {
                     console.error("[CostForm] Add cost failed:", error);
-                    toast({ title: "Error al Agregar", description: "No se pudo registrar el nuevo costo.", variant: "destructive" });
+                    toast.error("Error al Agregar", { description: "No se pudo registrar el nuevo costo." });
                 },
             });
         }

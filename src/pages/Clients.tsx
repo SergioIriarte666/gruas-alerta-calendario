@@ -1,8 +1,7 @@
-
 import { useState } from 'react';
 import { useClients } from '@/hooks/useClients';
 import { Client } from '@/types';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { ClientDetailsModal } from '@/components/clients/ClientDetailsModal';
 import { AppPagination } from '@/components/shared/AppPagination';
 import { ClientsHeader } from '@/components/clients/ClientsHeader';
@@ -11,7 +10,6 @@ import { ClientsTable } from '@/components/clients/ClientsTable';
 
 const Clients = () => {
   const { clients, loading, createClient, updateClient, deleteClient, toggleClientStatus } = useClients();
-  const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedClient, setSelectedClient] = useState<Client | undefined>();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -35,8 +33,7 @@ const Clients = () => {
   const handleCreateClient = (clientData: Omit<Client, 'id' | 'createdAt' | 'updatedAt'>) => {
     createClient(clientData);
     setIsDialogOpen(false);
-    toast({
-      title: "Cliente creado",
+    toast.success("Cliente creado", {
       description: "El cliente ha sido creado exitosamente.",
     });
   };
@@ -46,8 +43,7 @@ const Clients = () => {
       updateClient(selectedClient.id, clientData);
       setIsDialogOpen(false);
       setSelectedClient(undefined);
-      toast({
-        title: "Cliente actualizado",
+      toast.success("Cliente actualizado", {
         description: "Los datos del cliente han sido actualizados.",
       });
     }
@@ -61,18 +57,15 @@ const Clients = () => {
   const handleDeleteClient = (client: Client) => {
     if (window.confirm(`¿Estás seguro de eliminar al cliente "${client.name}"?`)) {
       deleteClient(client.id);
-      toast({
-        title: "Cliente eliminado",
+      toast.error("Cliente eliminado", {
         description: "El cliente ha sido eliminado del sistema.",
-        variant: "destructive",
       });
     }
   };
 
   const handleToggleStatus = (client: Client) => {
     toggleClientStatus(client.id);
-    toast({
-      title: client.isActive ? "Cliente desactivado" : "Cliente activado",
+    toast.info(client.isActive ? "Cliente desactivado" : "Cliente activado", {
       description: `El cliente ha sido ${client.isActive ? 'desactivado' : 'activado'}.`,
     });
   };

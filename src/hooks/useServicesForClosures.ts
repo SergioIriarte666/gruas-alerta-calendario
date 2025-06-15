@@ -1,13 +1,11 @@
-
 import { useState, useEffect } from 'react';
 import { Service } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 
 export const useServicesForClosures = () => {
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(false);
-  const { toast } = useToast();
 
   const fetchServicesForClosures = async () => {
     try {
@@ -110,10 +108,8 @@ export const useServicesForClosures = () => {
       setServices(formattedServices);
     } catch (error: any) {
       console.error('Error in fetchServicesForClosures:', error);
-      toast({
-        title: "Error",
+      toast.error("Error", {
         description: "No se pudieron cargar los servicios para cierres.",
-        variant: "destructive",
       });
       setServices([]);
     } finally {

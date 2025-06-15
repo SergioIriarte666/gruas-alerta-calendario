@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { useSettings } from '@/hooks/useSettings';
 import { useLogoUpdater } from '@/hooks/useLogoUpdater';
 import { SettingsHeader } from '@/components/settings/SettingsHeader';
@@ -18,23 +18,19 @@ import {
 const Settings = () => {
   const { settings, loading, saving, updateSettings, saveSettings, resetSettings } = useSettings();
   const { isUpdating: isLogoUpdating, updateLogo } = useLogoUpdater();
-  const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('company');
 
   const handleSave = async () => {
     const result = await saveSettings();
     if (result.success) {
-      toast({
-        title: "Configuración guardada",
+      toast.success("Configuración guardada", {
         description: "Los cambios se han guardado correctamente.",
       });
       console.log('Dispatching settings-updated event after saving settings');
       window.dispatchEvent(new Event('settings-updated'));
     } else {
-      toast({
-        title: "Error al guardar",
+      toast.error("Error al guardar", {
         description: result.error || "No se pudo guardar la configuración.",
-        variant: "destructive",
       });
     }
   };
@@ -46,8 +42,7 @@ const Settings = () => {
     const result = await updateLogo(logoFile, settings);
 
     if (result.success) {
-      toast({
-        title: "Logotipo actualizado",
+      toast.success("Logotipo actualizado", {
         description: "El cambio en el logotipo se ha guardado correctamente.",
       });
 
@@ -56,10 +51,8 @@ const Settings = () => {
       console.log('Dispatching settings-updated event to force global refetch.');
       window.dispatchEvent(new CustomEvent('settings-updated'));
     } else {
-      toast({
-        title: "Error al actualizar logotipo",
+      toast.error("Error al actualizar logotipo", {
         description: result.error || "Ocurrió un error inesperado al procesar el logo.",
-        variant: "destructive",
       });
     }
   };

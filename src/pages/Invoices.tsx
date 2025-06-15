@@ -3,7 +3,7 @@ import { useLocation } from 'react-router-dom';
 import { useInvoices } from '@/hooks/useInvoices';
 import { InvoiceForm } from '@/components/invoices/InvoiceForm';
 import { Invoice } from '@/types';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import InvoicesHeader from '@/components/invoices/InvoicesHeader';
 import InvoicesStats from '@/components/invoices/InvoicesStats';
 import InvoicesSearch from '@/components/invoices/InvoicesSearch';
@@ -31,7 +31,6 @@ const Invoices = () => {
   const [statusFilter, setStatusFilter] = useState(statusFromQuery || 'all');
   const [showForm, setShowForm] = useState(false);
   const [editingInvoice, setEditingInvoice] = useState<Invoice | null>(null);
-  const { toast } = useToast();
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 10;
 
@@ -54,8 +53,7 @@ const Invoices = () => {
   const handleCreateInvoice = (data: any) => {
     createInvoice(data);
     setShowForm(false);
-    toast({
-      title: "Factura creada",
+    toast.success("Factura creada", {
       description: "La factura ha sido creada exitosamente.",
     });
   };
@@ -65,8 +63,7 @@ const Invoices = () => {
       updateInvoice(editingInvoice.id, data);
       setEditingInvoice(null);
       setShowForm(false);
-      toast({
-        title: "Factura actualizada",
+      toast.success("Factura actualizada", {
         description: "La factura ha sido actualizada exitosamente.",
       });
     }
@@ -75,8 +72,7 @@ const Invoices = () => {
   const handleDeleteInvoice = (id: string) => {
     if (window.confirm('¿Está seguro de que desea eliminar esta factura?')) {
       deleteInvoice(id);
-      toast({
-        title: "Factura eliminada",
+      toast.success("Factura eliminada", {
         description: "La factura ha sido eliminada exitosamente.",
       });
     }
@@ -84,8 +80,7 @@ const Invoices = () => {
 
   const handleMarkAsPaid = (id: string) => {
     markAsPaid(id);
-    toast({
-      title: "Factura marcada como pagada",
+    toast.success("Factura marcada como pagada", {
       description: "El estado de la factura ha sido actualizado.",
     });
   };

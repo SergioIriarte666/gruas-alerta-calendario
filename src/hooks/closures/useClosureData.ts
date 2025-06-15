@@ -1,14 +1,12 @@
-
 import { useState, useEffect } from 'react';
 import { ServiceClosure } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { formatClosureData } from '@/utils/closureUtils';
 
 export const useClosureData = () => {
   const [closures, setClosures] = useState<ServiceClosure[]>([]);
   const [loading, setLoading] = useState(true);
-  const { toast } = useToast();
 
   const fetchClosures = async () => {
     try {
@@ -95,10 +93,8 @@ export const useClosureData = () => {
       setClosures(formattedClosures);
     } catch (error: any) {
       console.error('Error fetching closures:', error);
-      toast({
-        title: "Error",
+      toast.error("Error", {
         description: `No se pudieron cargar los cierres: ${error.message}`,
-        variant: "destructive",
       });
       // Set empty array on error so the page doesn't stay loading
       setClosures([]);

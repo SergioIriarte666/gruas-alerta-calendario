@@ -1,9 +1,8 @@
-
 import { useState } from 'react';
 import { useServiceClosures } from '@/hooks/useServiceClosures';
 import { useClients } from '@/hooks/useClients';
 import { ServiceClosure } from '@/types';
-import { toast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import ClosureForm from '@/components/closures/ClosureForm';
 import ClosuresHeader from '@/components/closures/ClosuresHeader';
 import ClosuresStats from '@/components/closures/ClosuresStats';
@@ -36,8 +35,7 @@ const Closures = () => {
   const handleDelete = (id: string, folio: string) => {
     if (window.confirm(`¿Está seguro de eliminar el cierre "${folio}"?`)) {
       deleteClosure(id);
-      toast({
-        title: "Cierre eliminado",
+      toast.success("Cierre eliminado", {
         description: "El cierre ha sido eliminado exitosamente.",
       });
     }
@@ -46,8 +44,7 @@ const Closures = () => {
   const handleClose = (id: string, folio: string) => {
     if (window.confirm(`¿Está seguro de cerrar el periodo "${folio}"?`)) {
       closeClosure(id);
-      toast({
-        title: "Cierre procesado",
+      toast.success("Cierre procesado", {
         description: "El cierre ha sido procesado exitosamente.",
       });
     }
@@ -58,16 +55,13 @@ const Closures = () => {
       console.log('Creating closure with data:', closureData);
       await createClosure(closureData);
       setShowCreateModal(false);
-      toast({
-        title: "Cierre creado",
+      toast.success("Cierre creado", {
         description: "El cierre ha sido creado exitosamente.",
       });
     } catch (error) {
       console.error('Error creating closure:', error);
-      toast({
-        title: "Error",
+      toast.error("Error", {
         description: "No se pudo crear el cierre.",
-        variant: "destructive",
       });
     }
   };

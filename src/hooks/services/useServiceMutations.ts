@@ -1,10 +1,8 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { Service } from '@/types';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 
 export const useServiceMutations = () => {
-  const { toast } = useToast();
 
   const createService = async (serviceData: Omit<Service, 'id' | 'createdAt' | 'updatedAt'> & { folio: string }) => {
     try {
@@ -41,18 +39,15 @@ export const useServiceMutations = () => {
         updatedAt: newService.updated_at
       };
 
-      toast({
-        title: "Servicio creado",
+      toast.success("Servicio creado", {
         description: `Servicio ${serviceData.folio} creado exitosamente.`,
       });
 
       return formattedService;
     } catch (error: any) {
       console.error('Error creating service:', error);
-      toast({
-        title: "Error",
+      toast.error("Error", {
         description: "No se pudo crear el servicio.",
-        variant: "destructive",
       });
       throw error;
     }
@@ -87,18 +82,15 @@ export const useServiceMutations = () => {
 
       if (error) throw error;
 
-      toast({
-        title: "Servicio actualizado",
+      toast.success("Servicio actualizado", {
         description: "El servicio ha sido actualizado exitosamente.",
       });
 
       return { ...serviceData, updatedAt: new Date().toISOString() };
     } catch (error: any) {
       console.error('Error updating service:', error);
-      toast({
-        title: "Error",
+      toast.error("Error", {
         description: "No se pudo actualizar el servicio.",
-        variant: "destructive",
       });
       throw error;
     }
@@ -113,16 +105,13 @@ export const useServiceMutations = () => {
 
       if (error) throw error;
       
-      toast({
-        title: "Servicio eliminado",
+      toast.success("Servicio eliminado", {
         description: "El servicio ha sido eliminado exitosamente.",
       });
     } catch (error: any) {
       console.error('Error deleting service:', error);
-      toast({
-        title: "Error",
+      toast.error("Error", {
         description: "No se pudo eliminar el servicio.",
-        variant: "destructive",
       });
       throw error;
     }
