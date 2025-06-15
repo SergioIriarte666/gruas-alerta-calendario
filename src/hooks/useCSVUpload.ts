@@ -1,10 +1,11 @@
+
 import { useState, useCallback } from 'react';
 import { CSVServiceUploader, UploadProgress, UploadResult } from '@/utils/csvUpload';
 import { UploadedServiceRow, ValidationResult, validateUploadedData } from '@/utils/csvValidations';
 import { Service } from '@/types';
 import { useClients } from './useClients';
 import { useCranes } from './useCranes';
-import { useOperators } from './useOperators';
+import { useOperatorsData } from '@/hooks/operators/useOperatorsData';
 import { useServices } from './useServices';
 
 interface CSVUploadState {
@@ -30,7 +31,7 @@ export const useCSVUpload = () => {
 
   const { clients } = useClients();
   const { cranes } = useCranes();
-  const { operators } = useOperators();
+  const { data: operators = [] } = useOperatorsData();
   const { services, createService } = useServices();
   const csvUploader = new CSVServiceUploader();
 

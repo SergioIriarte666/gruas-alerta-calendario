@@ -1,7 +1,7 @@
+
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Operator } from '@/types';
-import { useToast } from '@/hooks/use-toast';
 
 const fetchOperators = async (): Promise<Operator[]> => {
   const { data, error } = await supabase
@@ -27,18 +27,8 @@ const fetchOperators = async (): Promise<Operator[]> => {
 };
 
 export const useOperatorsData = () => {
-  const { toast } = useToast();
-
   return useQuery<Operator[], Error>({
     queryKey: ['operators'],
     queryFn: fetchOperators,
-    onError: (error) => {
-      toast({
-        title: "Error",
-        description: "No se pudieron cargar los operadores.",
-        variant: "destructive",
-      });
-      console.error('Error fetching operators:', error);
-    },
   });
 };
