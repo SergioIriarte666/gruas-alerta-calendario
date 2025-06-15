@@ -1,4 +1,3 @@
-
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
@@ -30,7 +29,15 @@ interface ServiceDetailsModalProps {
   onClose: () => void;
 }
 
-const DetailItem: React.FC<{icon: React.ElementType, label: string, value: React.ReactNode, valueClass?: string, isFullWidth?: boolean}> = ({ icon: Icon, label, value, valueClass = '', isFullWidth = false }) => (
+interface DetailItemProps {
+  icon: React.ElementType;
+  label: string;
+  value: React.ReactNode;
+  valueClass?: string;
+  isFullWidth?: boolean;
+}
+
+const DetailItem = ({ icon: Icon, label, value, valueClass = '', isFullWidth = false }: DetailItemProps) => (
   <div className={`flex items-start space-x-3 ${isFullWidth ? 'col-span-1 md:col-span-2' : ''}`}>
     <Icon className="w-4 h-4 text-gray-400 mt-1 flex-shrink-0" />
     <div className="flex-grow">
@@ -40,7 +47,13 @@ const DetailItem: React.FC<{icon: React.ElementType, label: string, value: React
   </div>
 );
 
-const DetailSection: React.FC<{title: string, icon: React.ElementType, children: React.ReactNode}> = ({ title, icon: Icon, children }) => (
+interface DetailSectionProps {
+  title: string;
+  icon: React.ElementType;
+  children: React.ReactNode;
+}
+
+const DetailSection = ({ title, icon: Icon, children }: DetailSectionProps) => (
   <div>
     <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
       <Icon className="w-5 h-5 mr-2 text-tms-green"/>
