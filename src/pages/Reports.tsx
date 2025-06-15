@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo } from 'react';
 import { useReports, ReportFilters as ReportFiltersType } from '@/hooks/useReports';
 import { ChartConfig } from "@/components/ui/chart";
@@ -17,7 +18,7 @@ import { useCostCategories } from '@/hooks/useCostCategories';
 import { useSettings } from '@/hooks/useSettings';
 import { exportReport } from '@/utils/reportExporter';
 import { generateServiceReport } from '@/utils/serviceReportGenerator';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 
 const Reports = () => {
   const { toast } = useToast();
