@@ -1,3 +1,4 @@
+
 import * as React from 'react';
 import { ChartConfig } from "@/components/ui/chart";
 import { ReportMetrics } from '@/hooks/useReports';
@@ -9,7 +10,7 @@ export const useReportCharts = (metrics: ReportMetrics | null) => {
   const revenueByMonthConfig = { revenue: { label: 'Ingresos', color: '#3b82f6' } } satisfies ChartConfig;
   const craneUtilizationConfig = { utilization: { label: 'Utilización', color: '#f59e0b' } } satisfies ChartConfig;
 
-  const servicesByStatusConfig = useMemo(() => {
+  const servicesByStatusConfig = React.useMemo(() => {
     if (!metrics) return {};
     return metrics.servicesByStatus.reduce((acc, item, index) => {
         acc[item.status] = {
@@ -20,7 +21,7 @@ export const useReportCharts = (metrics: ReportMetrics | null) => {
     }, {} as ChartConfig);
   }, [metrics]);
 
-  const costsByCategoryConfig = useMemo(() => {
+  const costsByCategoryConfig = React.useMemo(() => {
     if (!metrics?.costsByCategory) return {};
     return metrics.costsByCategory.reduce((acc, item, index) => {
         acc[item.categoryName] = {
