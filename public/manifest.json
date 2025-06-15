@@ -1,0 +1,25 @@
+
+{
+  "short_name": "TMS Operador",
+  "name": "TMS Grúas - App Operador",
+  "icons": [
+    {
+      "src": "icons/icon-192x192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icons/icon-512x512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "/operator/",
+  "display": "standalone",
+  "scope": "/",
+  "theme_color": "#1e293b",
+  "background_color": "#0f172a",
+  "description": "Aplicación para operadores de TMS Grúas."
+}

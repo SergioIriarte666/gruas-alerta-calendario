@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
+import { OperatorLayout } from "@/components/layout/OperatorLayout";
 import { UserProvider } from "@/contexts/UserContext";
 import { NotificationProvider } from "@/contexts/NotificationContext";
 import { AuthProvider } from "@/contexts/AuthContext";
@@ -23,6 +24,7 @@ import Settings from "./pages/Settings";
 import Profile from "./pages/Profile";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
+import OperatorDashboard from "./pages/OperatorDashboard";
 
 const queryClient = new QueryClient();
 
@@ -37,6 +39,18 @@ const App = () => (
               <Sonner />
               <Routes>
                 <Route path="/auth" element={<Auth />} />
+                
+                <Route path="/operator/*" element={
+                  <ProtectedRoute>
+                    <OperatorLayout>
+                      <Routes>
+                        <Route path="/" element={<OperatorDashboard />} />
+                        <Route path="*" element={<NotFound />} />
+                      </Routes>
+                    </OperatorLayout>
+                  </ProtectedRoute>
+                }/>
+
                 <Route path="/*" element={
                   <ProtectedRoute>
                     <Layout>
