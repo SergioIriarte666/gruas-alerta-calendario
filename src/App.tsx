@@ -25,6 +25,7 @@ import Profile from "./pages/Profile";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 import OperatorDashboard from "./pages/OperatorDashboard";
+import ServiceInspection from "./pages/operator/ServiceInspection";
 
 const queryClient = new QueryClient();
 
@@ -45,6 +46,7 @@ const App = () => (
                     <OperatorLayout>
                       <Routes>
                         <Route path="/" element={<OperatorDashboard />} />
+                        <Route path="/service/:id/inspect" element={<ServiceInspection />} />
                         <Route path="*" element={<NotFound />} />
                       </Routes>
                     </OperatorLayout>
