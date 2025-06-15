@@ -1,7 +1,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Notification } from '@/contexts/NotificationContext';
+import { Notification } from '@/types/notifications';
 import { addDays, startOfToday, isBefore, parseISO, format } from 'date-fns';
 
 const fetchNotificationsData = async (): Promise<Omit<Notification, 'read'>[]> => {

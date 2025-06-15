@@ -1,22 +1,6 @@
-
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import { useNotificationsData } from '@/hooks/useNotificationsData';
-
-export interface Notification {
-  id: string;
-  title: string;
-  message: string;
-  type: 'info' | 'success' | 'warning' | 'error';
-  timestamp: Date;
-  read: boolean;
-  actionType?: 'navigate' | 'filter' | 'highlight';
-  actionUrl?: string;
-  actionData?: {
-    entityId?: string;
-    filter?: string;
-    highlight?: string;
-  };
-}
+import { Notification } from '@/types/notifications';
 
 interface NotificationContextType {
   notifications: Notification[];
@@ -102,4 +86,3 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
     </NotificationContext.Provider>
   );
 }
-
