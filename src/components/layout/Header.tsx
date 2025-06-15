@@ -1,3 +1,4 @@
+
 import { Menu, Search, User, Settings } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -22,11 +23,19 @@ export const Header = ({ setIsMobileMenuOpen }: HeaderProps) => {
   const navigate = useNavigate();
   const { user, logout } = useUser();
 
-  const handleLogout = () => {
-    logout();
-    toast.success("Sesión cerrada", {
-      description: "Has cerrado sesión correctamente",
-    });
+  const handleLogout = async () => {
+    try {
+      await logout();
+      toast.success("Sesión cerrada", {
+        description: "Has cerrado sesión correctamente",
+      });
+      window.location.href = '/auth';
+    } catch (error) {
+      console.error("Logout failed:", error);
+      toast.error("Error al cerrar sesión", {
+        description: "Por favor, intenta de nuevo."
+      });
+    }
   };
 
   const handleProfileClick = () => {

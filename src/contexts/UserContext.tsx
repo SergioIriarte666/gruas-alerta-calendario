@@ -1,6 +1,9 @@
-import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+
+import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
 import { useAuth } from './AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import { Button } from '@/components/ui/button';
+import { cleanupAuthState } from '@/utils/authCleanup';
 
 interface User {
   id: string;
@@ -13,9 +16,11 @@ interface UserContextType {
   user: User | null;
   loading: boolean;
   login: (userData: User) => void;
-  logout: () => void;
+  logout: () => Promise<void>;
   updateUser: (userData: Partial<User>) => void;
   isAuthenticated: boolean;
+  error: string | null;
+  retryFetchProfile: () => void;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -36,22 +41,29 @@ export function UserProvider({ children }: UserProviderProps) {
   const { user: authUser, session, signOut, loading: authLoading } = useAuth();
   const [user, setUser] = useState<User | null>(null);
   const [profileLoading, setProfileLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!authLoading && authUser && session) {
+  const fetchProfile = useCallback(async () => {
+    console.log('fetchProfile called. authUser:', !!authUser, 'session:', !!session, 'authLoading:', authLoading);
+    if (authLoading) return;
+
+    if (authUser && session) {
       setProfileLoading(true);
-      const fetchProfile = async () => {
-        const { data, error } = await supabase
+      setError(null);
+      console.log('Fetching profile for user:', authUser.id);
+      try {
+        const { data, error: fetchError } = await supabase
           .from('profiles')
           .select('id, full_name, email, role')
           .eq('id', authUser.id)
           .single();
 
-        if (error && error.code !== 'PGRST116') { // 'PGRST116' es 'no rows returned'
-          console.error("Error fetching user profile", error);
-          // En caso de un error crítico con la base de datos, cerramos sesión por seguridad.
+        if (fetchError && fetchError.code !== 'PGRST116') {
+          console.error("Error fetching user profile", fetchError);
+          setError("Hubo un error al cargar tu perfil.");
           await signOut();
         } else if (data) {
+          console.log("Profile data received:", data);
           setUser({
             id: data.id,
             name: data.full_name || 'Usuario',
@@ -59,24 +71,51 @@ export function UserProvider({ children }: UserProviderProps) {
             role: data.role || 'viewer',
           });
         } else {
-          // Si no se encuentra un perfil, es un estado inconsistente para un usuario logueado.
-          // El trigger debería prevenir esto. Para cualquier otro caso, cerrar sesión es lo más seguro.
-          console.warn("Profile not found for authenticated user. Logging out to prevent inconsistent state.");
+          console.warn("Profile not found for authenticated user. Logging out...");
+          setError("No se encontró tu perfil. Se cerrará la sesión para proteger tu cuenta.");
           await signOut();
         }
+      } catch (e) {
+        console.error("Catastrophic error fetching profile:", e);
+        setError("Ocurrió un error inesperado al cargar tu perfil.");
+        await signOut();
+      } finally {
         setProfileLoading(false);
-      };
-      fetchProfile();
-    } else if (!authLoading) {
+      }
+    } else {
+      console.log("No authenticated user or session, clearing user data.");
       setUser(null);
       setProfileLoading(false);
+      setError(null);
     }
-  }, [authUser, session, authLoading, signOut]);
+  }, [authLoading, authUser, session, signOut]);
+
+  useEffect(() => {
+    let isMounted = true;
+    
+    const timeoutId = setTimeout(() => {
+        if(isMounted && profileLoading) {
+            console.error('Profile loading timeout.');
+            setProfileLoading(false);
+            setError('La carga de la sesión está tardando demasiado. Por favor, revisa tu conexión a internet y reintenta.');
+        }
+    }, 15000); // 15 second timeout
+
+    fetchProfile();
+
+    return () => {
+        isMounted = false;
+        clearTimeout(timeoutId);
+    };
+  }, [fetchProfile]);
   
   const login = () => { /* Deprecated: Handled by Auth page */ };
 
-  const logout = () => {
-    signOut();
+  const logout = async () => {
+    cleanupAuthState();
+    await signOut();
+    setUser(null);
+    setError(null);
   };
 
   const updateUser = async (userData: Partial<User>) => {
@@ -105,6 +144,17 @@ export function UserProvider({ children }: UserProviderProps) {
     );
   }
 
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center h-screen bg-gray-900 text-white text-center p-4">
+        <h2 className="text-xl font-bold mb-2 text-red-400">Error de Sesión</h2>
+        <p className="mb-4 max-w-md">{error}</p>
+        <Button onClick={fetchProfile} className="bg-tms-green hover:bg-tms-green-dark">Reintentar</Button>
+        <Button variant="link" onClick={logout} className="mt-2 text-gray-400">Cerrar sesión</Button>
+      </div>
+    );
+  }
+
   return (
     <UserContext.Provider value={{
       user,
@@ -112,7 +162,9 @@ export function UserProvider({ children }: UserProviderProps) {
       login,
       logout,
       updateUser,
-      isAuthenticated
+      isAuthenticated,
+      error,
+      retryFetchProfile: fetchProfile
     }}>
       {children}
     </UserContext.Provider>

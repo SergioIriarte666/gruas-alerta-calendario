@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -9,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { cleanupAuthState, performGlobalSignOut } from '@/utils/authCleanup';
 
 const Auth = () => {
   const [email, setEmail] = useState('');
@@ -31,6 +33,10 @@ const Auth = () => {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    
+    cleanupAuthState();
+    await performGlobalSignOut(supabase);
+
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
       toast.error('Error al iniciar sesión', { description: error.message });
@@ -43,11 +49,15 @@ const Auth = () => {
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+
+    cleanupAuthState();
+    await performGlobalSignOut(supabase);
+
     const { error } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        emailRedirectTo: window.location.origin,
+        emailRedirectTo: `${window.location.origin}/`,
       },
     });
     if (error) {
