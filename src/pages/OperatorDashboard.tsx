@@ -11,18 +11,23 @@ import { Badge } from '@/components/ui/badge';
 const OperatorDashboard = () => {
   const { signOut } = useAuth();
   const { user } = useUser();
-  const { services, isLoading, error } = useOperatorServices();
+  const { services, isLoading, error, refetch } = useOperatorServices();
 
   console.log('🏠 OperatorDashboard - Render state:', { 
-    user: user ? { id: user.id, name: user.name, role: user.role } : 'no user',
+    user: user ? { id: user.id, name: user.name, role: user.role, email: user.email } : 'no user',
     servicesCount: services?.length || 0,
     isLoading, 
     error: error?.message || 'no error'
   });
 
-  const handleRefresh = () => {
+  const handleRefresh = async () => {
     console.log('🔄 Manual refresh requested');
-    window.location.reload();
+    try {
+      await refetch();
+      console.log('✅ Refresh completed');
+    } catch (err) {
+      console.error('❌ Refresh failed:', err);
+    }
   };
 
   const renderContent = () => {
@@ -57,6 +62,9 @@ const OperatorDashboard = () => {
                   Usuario: <span className="text-white">{user.name || user.email}</span>
                 </p>
                 <p className="text-sm text-gray-400">
+                  <span className="text-tms-green">Email:</span> {user.email}
+                </p>
+                <p className="text-sm text-gray-400">
                   <span className="text-tms-green">ID:</span> {user.id}
                 </p>
                 <p className="text-sm text-gray-400">
@@ -76,13 +84,16 @@ const OperatorDashboard = () => {
           <Truck className="w-16 h-16 mx-auto mb-4 text-tms-green opacity-50" />
           <h2 className="text-xl font-semibold mb-2 text-white">No hay servicios asignados</h2>
           <p className="text-gray-400 max-w-md mx-auto mb-4">
-            En este momento, no tienes ningún servicio de grúa en curso. Cuando se te asigne uno, aparecerá aquí con todos los detalles necesarios.
+            En este momento, no tienes ningún servicio de grúa en curso. Los nuevos servicios de prueba deberían aparecer aquí.
           </p>
           {user && (
             <div className="mt-4 p-4 bg-slate-700/50 rounded-lg">
               <p className="text-sm text-gray-400">
                 <User className="w-4 h-4 inline mr-1" />
                 Conectado como: <span className="text-white">{user.name || user.email}</span>
+              </p>
+              <p className="text-sm text-gray-400">
+                <span className="text-tms-green">Email:</span> {user.email}
               </p>
               <p className="text-sm text-gray-400">
                 <span className="text-tms-green">Rol:</span> {user.role}
@@ -147,6 +158,9 @@ const OperatorDashboard = () => {
 
       <footer className="text-center text-gray-500 text-sm pt-4">
         <p>TMS Grúas &copy; {new Date().getFullYear()}</p>
+        <p className="text-xs mt-1">
+          Sistema actualizado - Nuevas políticas RLS implementadas
+        </p>
       </footer>
     </div>
   );

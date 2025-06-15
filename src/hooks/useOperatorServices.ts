@@ -14,12 +14,16 @@ const fetchOperatorServices = async (transformRawServiceData: (data: any[]) => S
   }
 
   try {
-    console.log('🔍 Step 1: Getting operator by user_id:', userId);
+    console.log('🔍 Step 1: Getting user session and checking auth');
+    const { data: session } = await supabase.auth.getSession();
+    console.log('🔍 Session status:', session?.session ? 'authenticated' : 'not authenticated');
+    
+    console.log('🔍 Step 2: Getting operator by user_id:', userId);
     
     // Primero obtener el operator_id del usuario actual
     const { data: operatorData, error: operatorError } = await supabase
       .from('operators')
-      .select('id, name, rut')
+      .select('id, name, rut, user_id')
       .eq('user_id', userId)
       .single();
 
@@ -29,8 +33,9 @@ const fetchOperatorServices = async (transformRawServiceData: (data: any[]) => S
       console.error('❌ Error finding operator:', operatorError);
       if (operatorError.code === 'PGRST116') {
         console.log('❌ No operator found for user ID:', userId);
+        return [];
       }
-      return [];
+      throw operatorError;
     }
 
     if (!operatorData) {
@@ -40,9 +45,9 @@ const fetchOperatorServices = async (transformRawServiceData: (data: any[]) => S
 
     console.log('✅ Found operator:', operatorData);
 
-    console.log('🔍 Step 2: Getting services for operator_id:', operatorData.id);
+    console.log('🔍 Step 3: Getting services for operator_id:', operatorData.id);
     
-    // Luego obtener los servicios asignados a este operador
+    // Ahora usar una consulta más específica con la nueva política RLS
     const { data, error } = await supabase
       .from('services')
       .select(`
@@ -57,9 +62,9 @@ const fetchOperatorServices = async (transformRawServiceData: (data: any[]) => S
       .order('service_date', { ascending: true });
 
     console.log('🔍 Services query result:', { 
-      data: data?.length ? `${data.length} services found` : 'No services found', 
+      dataCount: data?.length || 0,
       error,
-      rawData: data 
+      rawDataSample: data?.slice(0, 2) || []
     });
 
     if (error) {
@@ -69,12 +74,14 @@ const fetchOperatorServices = async (transformRawServiceData: (data: any[]) => S
 
     if (!data || data.length === 0) {
       console.log('⚠️ No services found for operator:', operatorData.id);
+      console.log('⚠️ This could be normal if no services are assigned yet');
       return [];
     }
 
-    console.log('🔍 Step 3: Transforming service data...');
+    console.log('🔍 Step 4: Transforming service data...');
     const transformedServices = transformRawServiceData(data);
     console.log('✅ Transformed services:', transformedServices.length, 'services');
+    console.log('✅ Service folios:', transformedServices.map(s => s.folio));
     
     return transformedServices;
 
@@ -88,21 +95,27 @@ export const useOperatorServices = () => {
   const { transformRawServiceData } = useServiceTransformer();
   const { user } = useUser();
 
-  console.log('🔍 useOperatorServices - User context:', user);
+  console.log('🔍 useOperatorServices - User context:', {
+    userId: user?.id,
+    userEmail: user?.email,
+    userRole: user?.role
+  });
 
-  const { data: services, isLoading, error } = useQuery({
+  const { data: services, isLoading, error, refetch } = useQuery({
     queryKey: ['operatorServices', user?.id],
     queryFn: () => fetchOperatorServices(transformRawServiceData, user?.id),
     enabled: !!user?.id,
-    retry: 1,
+    retry: 2,
     staleTime: 30000, // 30 seconds
+    refetchOnWindowFocus: false,
   });
 
   console.log('🔍 useOperatorServices - Query result:', { 
-    services: services?.length || 0, 
+    servicesCount: services?.length || 0, 
     isLoading, 
-    error: error?.message || 'no error'
+    error: error?.message || 'no error',
+    enabled: !!user?.id
   });
 
-  return { services, isLoading, error };
+  return { services, isLoading, error, refetch };
 };
