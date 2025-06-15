@@ -22,6 +22,7 @@ interface HeaderProps {
 export const Header = ({ setIsMobileMenuOpen }: HeaderProps) => {
   const navigate = useNavigate();
   const { user, logout } = useUser();
+  const isAdmin = user?.role === 'admin';
 
   const handleLogout = async () => {
     try {
@@ -92,13 +93,15 @@ export const Header = ({ setIsMobileMenuOpen }: HeaderProps) => {
               <User className="w-4 h-4 mr-2" />
               Perfil
             </DropdownMenuItem>
-            <DropdownMenuItem 
-              className="text-gray-300 hover:text-white hover:bg-white/10 cursor-pointer focus:bg-white/10 focus:text-white"
-              onClick={() => navigate('/settings')}
-            >
-              <Settings className="w-4 h-4 mr-2" />
-              Configuración
-            </DropdownMenuItem>
+            {isAdmin && (
+              <DropdownMenuItem 
+                className="text-gray-300 hover:text-white hover:bg-white/10 cursor-pointer focus:bg-white/10 focus:text-white"
+                onClick={() => navigate('/settings')}
+              >
+                <Settings className="w-4 h-4 mr-2" />
+                Configuración
+              </DropdownMenuItem>
+            )}
             <DropdownMenuSeparator className="bg-gray-700" />
             <DropdownMenuItem 
               className="text-red-400 hover:text-red-300 hover:bg-red-500/10 cursor-pointer focus:bg-red-500/10 focus:text-red-300"

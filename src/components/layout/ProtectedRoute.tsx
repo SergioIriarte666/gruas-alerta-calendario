@@ -33,6 +33,14 @@ const ProtectedRoute = ({ children }: { children: ReactNode }) => {
       // Non-operator trying to access operator routes
       return <Navigate to="/" replace />;
     }
+
+    const adminRoutes = ['/settings'];
+    const isAdminRoute = adminRoutes.some(route => location.pathname.startsWith(route));
+
+    if (isAdminRoute && userRole !== 'admin') {
+      // Non-admin trying to access admin routes
+      return <Navigate to="/" replace />;
+    }
   }
 
   return <>{children}</>;

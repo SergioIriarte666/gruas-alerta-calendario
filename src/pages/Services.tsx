@@ -1,7 +1,8 @@
+
 import { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Plus, Upload } from 'lucide-react';
 import { useServices } from '@/hooks/useServices';
 import { Service } from '@/types';
@@ -11,9 +12,12 @@ import { ServiceFilters } from '@/components/services/ServiceFilters';
 import { CSVUploadServices } from '@/components/services/CSVUploadServices';
 import { ServicesTable } from '@/components/services/ServicesTable';
 import { AppPagination } from '@/components/shared/AppPagination';
+import { useUser } from '@/contexts/UserContext';
 
 const Services = () => {
   const { services, loading, createService, updateService, deleteService } = useServices();
+  const { user } = useUser();
+  const isAdmin = user?.role === 'admin';
   const location = useLocation();
   const params = new URLSearchParams(location.search);
   const statusParam = params.get('status');
@@ -50,6 +54,7 @@ const Services = () => {
   const handleCreateService = (serviceData: Omit<Service, 'id' | 'createdAt' | 'updatedAt'> & { folio: string }) => {
     createService(serviceData);
     setIsFormOpen(false);
+    setEditingService(null);
   };
 
   const handleUpdateService = (serviceData: Omit<Service, 'id' | 'createdAt' | 'updatedAt'> & { folio: string }) => {
@@ -58,6 +63,13 @@ const Services = () => {
       setEditingService(null);
       setIsFormOpen(false);
     }
+  };
+
+  const handleFormOpenChange = (open: boolean) => {
+    if (!open) {
+      setEditingService(null);
+    }
+    setIsFormOpen(open);
   };
 
   const handleCloseService = (service: Service) => {
@@ -105,40 +117,29 @@ const Services = () => {
           </p>
         </div>
         <div className="flex space-x-2">
-          <Button 
-            onClick={() => setIsCSVUploadOpen(true)}
-            className="bg-blue-600 hover:bg-blue-700 text-white"
-            title="Cargar servicios desde un archivo CSV"
-          >
-            <Upload className="w-4 h-4 mr-2" />
-            Carga Masiva
-          </Button>
-          <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-            <DialogTrigger asChild>
+          {isAdmin && (
+            <>
+              <Button 
+                onClick={() => setIsCSVUploadOpen(true)}
+                className="bg-blue-600 hover:bg-blue-700 text-white"
+                title="Cargar servicios desde un archivo CSV"
+              >
+                <Upload className="w-4 h-4 mr-2" />
+                Carga Masiva
+              </Button>
               <Button 
                 className="bg-tms-green hover:bg-tms-green-dark text-white"
                 title="Crear un nuevo servicio"
+                onClick={() => {
+                  setEditingService(null);
+                  setIsFormOpen(true);
+                }}
               >
                 <Plus className="w-4 h-4 mr-2" />
                 Nuevo Servicio
               </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle>
-                  {editingService ? 'Editar Servicio' : 'Nuevo Servicio'}
-                </DialogTitle>
-              </DialogHeader>
-              <ServiceForm
-                service={editingService}
-                onSubmit={editingService ? handleUpdateService : handleCreateService}
-                onCancel={() => {
-                  setIsFormOpen(false);
-                  setEditingService(null);
-                }}
-              />
-            </DialogContent>
-          </Dialog>
+            </>
+          )}
         </div>
       </div>
 
@@ -153,6 +154,23 @@ const Services = () => {
           />
         </DialogContent>
       </Dialog>
+      
+      {isAdmin && (
+         <Dialog open={isFormOpen} onOpenChange={handleFormOpenChange}>
+            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>
+                  {editingService ? 'Editar Servicio' : 'Nuevo Servicio'}
+                </DialogTitle>
+              </DialogHeader>
+              <ServiceForm
+                service={editingService}
+                onSubmit={editingService ? handleUpdateService : handleCreateService}
+                onCancel={() => handleFormOpenChange(false)}
+              />
+            </DialogContent>
+          </Dialog>
+      )}
 
       <ServiceFilters
         searchTerm={searchTerm}
@@ -165,10 +183,10 @@ const Services = () => {
         services={paginatedServices}
         hasInitialServices={services.length > 0}
         onViewDetails={handleViewDetails}
-        onEdit={handleEdit}
-        onDelete={handleDelete}
-        onCloseService={handleCloseService}
-        onAddNewService={() => setIsFormOpen(true)}
+        onEdit={isAdmin ? handleEdit : undefined}
+        onDelete={isAdmin ? handleDelete : undefined}
+        onCloseService={isAdmin ? handleCloseService : undefined}
+        onAddNewService={isAdmin ? () => setIsFormOpen(true) : undefined}
       />
 
       <AppPagination
