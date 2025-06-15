@@ -1,56 +1,11 @@
 
 import jsPDF from 'jspdf';
-import 'jspdf-autotable';
-import { InspectionFormValues } from '@/schemas/inspectionSchema';
-import { Service } from '@/types';
+import { InspectionPDFData } from './pdfTypes';
 import { vehicleEquipment } from '@/data/equipmentData';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
-// Extend jsPDF type to include autoTable
-declare module 'jspdf' {
-  interface jsPDF {
-    autoTable: (options: any) => jsPDF;
-    lastAutoTable: { finalY: number };
-  }
-}
-
-interface InspectionPDFData {
-  service: Service;
-  inspection: InspectionFormValues;
-  companyData?: {
-    businessName: string;
-    rut: string;
-    address: string;
-    phone: string;
-    email: string;
-    logoUrl?: string;
-  };
-}
-
-export const generateInspectionPDF = async (data: InspectionPDFData): Promise<Blob> => {
-  const doc = new jsPDF();
-  const pageWidth = doc.internal.pageSize.width;
-  let yPosition = 20;
-
-  // Header con logo y datos de la empresa
-  doc.setFontSize(20);
-  doc.setTextColor(0, 150, 136); // tms-green
-  doc.text('REPORTE DE INSPECCIÓN PRE-SERVICIO', pageWidth / 2, yPosition, { align: 'center' });
-  yPosition += 15;
-
-  if (data.companyData) {
-    doc.setFontSize(12);
-    doc.setTextColor(0, 0, 0);
-    doc.text(data.companyData.businessName, pageWidth / 2, yPosition, { align: 'center' });
-    yPosition += 8;
-    doc.setFontSize(10);
-    doc.text(`RUT: ${data.companyData.rut}`, pageWidth / 2, yPosition, { align: 'center' });
-    yPosition += 6;
-    doc.text(`${data.companyData.address} | ${data.companyData.phone} | ${data.companyData.email}`, pageWidth / 2, yPosition, { align: 'center' });
-    yPosition += 15;
-  }
-
+export const addServiceInfo = (doc: jsPDF, data: InspectionPDFData, yPosition: number): number => {
   // Información del servicio
   doc.setFontSize(14);
   doc.setTextColor(0, 150, 136);
@@ -76,8 +31,10 @@ export const generateInspectionPDF = async (data: InspectionPDFData): Promise<Bl
     columnStyles: { 0: { fontStyle: 'bold', cellWidth: 40 } },
   });
 
-  yPosition = doc.lastAutoTable.finalY + 15;
+  return doc.lastAutoTable.finalY + 15;
+};
 
+export const addEquipmentChecklist = (doc: jsPDF, data: InspectionPDFData, yPosition: number): number => {
   // Checklist de equipamiento
   doc.setFontSize(14);
   doc.setTextColor(0, 150, 136);
@@ -120,63 +77,11 @@ export const generateInspectionPDF = async (data: InspectionPDFData): Promise<Bl
     }
   });
 
-  yPosition = doc.lastAutoTable.finalY + 15;
+  return doc.lastAutoTable.finalY + 15;
+};
 
-  // Función para agregar fotos
-  const addPhotosSection = async (title: string, photoNames: string[]) => {
-    if (photoNames.length === 0) return;
-
-    // Verificar si necesitamos nueva página
-    if (yPosition > 240) {
-      doc.addPage();
-      yPosition = 20;
-    }
-
-    doc.setFontSize(14);
-    doc.setTextColor(0, 150, 136);
-    doc.text(title, 20, yPosition);
-    yPosition += 10;
-
-    let photosPerRow = 2;
-    let photoWidth = (pageWidth - 60) / photosPerRow;
-    let photoHeight = photoWidth * 0.75;
-
-    for (let i = 0; i < photoNames.length; i += photosPerRow) {
-      // Verificar espacio para fotos
-      if (yPosition + photoHeight > 280) {
-        doc.addPage();
-        yPosition = 20;
-      }
-
-      for (let j = 0; j < photosPerRow && i + j < photoNames.length; j++) {
-        const photoName = photoNames[i + j];
-        const photoData = localStorage.getItem(`photo-${photoName}`);
-        
-        if (photoData) {
-          try {
-            const xPos = 20 + j * (photoWidth + 10);
-            doc.addImage(photoData, 'JPEG', xPos, yPosition, photoWidth, photoHeight);
-            
-            // Agregar nombre de archivo debajo de la foto
-            doc.setFontSize(8);
-            doc.setTextColor(100, 100, 100);
-            doc.text(photoName, xPos, yPosition + photoHeight + 5);
-          } catch (error) {
-            console.warn(`Error al agregar foto ${photoName}:`, error);
-          }
-        }
-      }
-      yPosition += photoHeight + 15;
-    }
-    yPosition += 10;
-  };
-
-  // Agregar secciones de fotos
-  await addPhotosSection('FOTOS ANTES DEL SERVICIO', data.inspection.photosBeforeService);
-  await addPhotosSection('FOTOS DEL VEHÍCULO DEL CLIENTE', data.inspection.photosClientVehicle);
-  await addPhotosSection('FOTOS DEL EQUIPO UTILIZADO', data.inspection.photosEquipmentUsed);
-
-  // Observaciones y firmas
+export const addObservationsAndSignatures = (doc: jsPDF, data: InspectionPDFData, yPosition: number): number => {
+  // Verificar si necesitamos nueva página
   if (yPosition > 200) {
     doc.addPage();
     yPosition = 20;
@@ -186,6 +91,8 @@ export const generateInspectionPDF = async (data: InspectionPDFData): Promise<Bl
   doc.setTextColor(0, 150, 136);
   doc.text('OBSERVACIONES Y FIRMAS', 20, yPosition);
   yPosition += 15;
+
+  const pageWidth = doc.internal.pageSize.width;
 
   if (data.inspection.vehicleObservations) {
     doc.setFontSize(12);
@@ -213,5 +120,5 @@ export const generateInspectionPDF = async (data: InspectionPDFData): Promise<Bl
     columnStyles: { 0: { fontStyle: 'bold', cellWidth: 50 } },
   });
 
-  return doc.output('blob');
+  return doc.lastAutoTable.finalY;
 };
