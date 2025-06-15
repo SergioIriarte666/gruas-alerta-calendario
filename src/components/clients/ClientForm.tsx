@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import * as React from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -20,7 +20,7 @@ interface ClientFormProps {
 }
 
 export const ClientForm = ({ client, onSubmit, onCancel }: ClientFormProps) => {
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = React.useState({
     name: client?.name || '',
     rut: client?.rut || '',
     phone: client?.phone || '',

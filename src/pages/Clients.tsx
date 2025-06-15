@@ -1,4 +1,5 @@
-import { useState } from 'react';
+
+import * as React from 'react';
 import { useClients } from '@/hooks/useClients';
 import { Client } from '@/types';
 import { toast } from 'sonner';
@@ -10,12 +11,12 @@ import { ClientsTable } from '@/components/clients/ClientsTable';
 
 const Clients = () => {
   const { clients, loading, createClient, updateClient, deleteClient, toggleClientStatus } = useClients();
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedClient, setSelectedClient] = useState<Client | undefined>();
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
-  const [selectedClientForDetails, setSelectedClientForDetails] = useState<Client | null>(null);
-  const [currentPage, setCurrentPage] = useState(1);
+  const [searchTerm, setSearchTerm] = React.useState('');
+  const [selectedClient, setSelectedClient] = React.useState<Client | undefined>();
+  const [isDialogOpen, setIsDialogOpen] = React.useState(false);
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = React.useState(false);
+  const [selectedClientForDetails, setSelectedClientForDetails] = React.useState<Client | null>(null);
+  const [currentPage, setCurrentPage] = React.useState(1);
   const ITEMS_PER_PAGE = 10;
 
   const filteredClients = clients.filter(client =>
