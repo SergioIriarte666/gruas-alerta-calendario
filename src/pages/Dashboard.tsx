@@ -1,5 +1,5 @@
 
-import * as React from 'react';
+import React from 'react';
 import { useDashboardData } from '@/hooks/useDashboardData';
 import { MetricCard } from '@/components/dashboard/MetricCard';
 import { AlertsPanel } from '@/components/dashboard/AlertsPanel';

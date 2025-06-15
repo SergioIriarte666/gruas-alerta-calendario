@@ -1,5 +1,5 @@
 
-import * as React from 'react';
+import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { CalendarEvent } from '@/types';
