@@ -7,7 +7,10 @@ export const addPhotosSection = async (
   photoNames: string[], 
   yPosition: number
 ): Promise<number> => {
-  if (photoNames.length === 0) return yPosition;
+  if (!photoNames || photoNames.length === 0) {
+    console.log(`No hay fotos para la sección: ${title}`);
+    return yPosition;
+  }
 
   const pageWidth = doc.internal.pageSize.width;
 
@@ -35,10 +38,11 @@ export const addPhotosSection = async (
 
     for (let j = 0; j < photosPerRow && i + j < photoNames.length; j++) {
       const photoName = photoNames[i + j];
-      const photoData = localStorage.getItem(`photo-${photoName}`);
       
-      if (photoData) {
-        try {
+      try {
+        const photoData = localStorage.getItem(`photo-${photoName}`);
+        
+        if (photoData) {
           const xPos = 20 + j * (photoWidth + 10);
           doc.addImage(photoData, 'JPEG', xPos, yPosition, photoWidth, photoHeight);
           
@@ -46,9 +50,20 @@ export const addPhotosSection = async (
           doc.setFontSize(8);
           doc.setTextColor(100, 100, 100);
           doc.text(photoName, xPos, yPosition + photoHeight + 5);
-        } catch (error) {
-          console.warn(`Error al agregar foto ${photoName}:`, error);
+          console.log(`Foto agregada: ${photoName}`);
+        } else {
+          console.warn(`No se encontró la foto en localStorage: ${photoName}`);
+          // Dibujar un rectángulo placeholder
+          const xPos = 20 + j * (photoWidth + 10);
+          doc.setDrawColor(200, 200, 200);
+          doc.rect(xPos, yPosition, photoWidth, photoHeight);
+          doc.setFontSize(10);
+          doc.setTextColor(150, 150, 150);
+          doc.text('Foto no disponible', xPos + 10, yPosition + photoHeight / 2);
         }
+      } catch (error) {
+        console.error(`Error al procesar foto ${photoName}:`, error);
+        // Continuar con la siguiente foto
       }
     }
     yPosition += photoHeight + 15;
