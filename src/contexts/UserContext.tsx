@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import { useAuth } from './AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -48,8 +47,10 @@ export function UserProvider({ children }: UserProviderProps) {
           .eq('id', authUser.id)
           .single();
 
-        if (error && error.code !== 'PGRST116') { // 'PGRST116' es el código para 'no rows returned'
+        if (error && error.code !== 'PGRST116') { // 'PGRST116' es 'no rows returned'
           console.error("Error fetching user profile", error);
+          // En caso de un error crítico con la base de datos, cerramos sesión por seguridad.
+          await signOut();
         } else if (data) {
           setUser({
             id: data.id,
@@ -57,6 +58,11 @@ export function UserProvider({ children }: UserProviderProps) {
             email: data.email,
             role: data.role || 'viewer',
           });
+        } else {
+          // Si no se encuentra un perfil, es un estado inconsistente para un usuario logueado.
+          // El trigger debería prevenir esto. Para cualquier otro caso, cerrar sesión es lo más seguro.
+          console.warn("Profile not found for authenticated user. Logging out to prevent inconsistent state.");
+          await signOut();
         }
         setProfileLoading(false);
       };
@@ -65,7 +71,7 @@ export function UserProvider({ children }: UserProviderProps) {
       setUser(null);
       setProfileLoading(false);
     }
-  }, [authUser, session, authLoading]);
+  }, [authUser, session, authLoading, signOut]);
   
   const login = () => { /* Deprecated: Handled by Auth page */ };
 
