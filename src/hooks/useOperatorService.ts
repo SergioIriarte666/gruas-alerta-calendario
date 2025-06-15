@@ -11,9 +11,10 @@ const fetchOperatorService = async (serviceId: string, transformRawServiceData: 
     .from('services')
     .select(`
       *,
-      clients(id, name),
-      cranes(id, license_plate, brand, model),
-      service_types(id, name)
+      clients(id, name, rut, phone, email, address, is_active),
+      cranes(id, license_plate, brand, model, type, is_active),
+      operators(id, name, rut, phone, license_number, is_active),
+      service_types(id, name, description, is_active)
     `)
     .eq('id', serviceId)
     .single();
