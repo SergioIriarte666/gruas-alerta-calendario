@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
@@ -8,11 +9,13 @@ import { CompanySettingsTab } from '@/components/settings/CompanySettingsTab';
 import { UserSettingsTab } from '@/components/settings/UserSettingsTab';
 import { SystemSettingsTab } from '@/components/settings/SystemSettingsTab';
 import { NotificationSettingsTab } from '@/components/settings/NotificationSettingsTab';
+import { UserManagementTab } from '@/components/settings/UserManagementTab';
 import {
   Building2,
   User,
   Settings as SettingsIcon,
   Bell,
+  Users,
 } from 'lucide-react';
 
 const Settings = () => {
@@ -38,7 +41,6 @@ const Settings = () => {
   const handleLogoChange = async (logoFile: File | null) => {
     if (!settings) return;
     
-    // El hook 'useLogoUpdater' ahora es más robusto y se encarga de todo.
     const result = await updateLogo(logoFile, settings);
 
     if (result.success) {
@@ -46,8 +48,6 @@ const Settings = () => {
         description: "El cambio en el logotipo se ha guardado correctamente.",
       });
 
-      // La única fuente de verdad será el evento que fuerza la recarga de datos.
-      // Se elimina la actualización optimista del estado local.
       console.log('Dispatching settings-updated event to force global refetch.');
       window.dispatchEvent(new CustomEvent('settings-updated'));
     } else {
@@ -72,7 +72,7 @@ const Settings = () => {
       <SettingsHeader onReset={resetSettings} />
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4 bg-black/20">
+        <TabsList className="grid w-full grid-cols-5 bg-black/20">
           <TabsTrigger value="company" className="flex items-center space-x-2">
             <Building2 className="w-4 h-4" />
             <span>Empresa</span>
@@ -88,6 +88,10 @@ const Settings = () => {
           <TabsTrigger value="notifications" className="flex items-center space-x-2">
             <Bell className="w-4 h-4" />
             <span>Notificaciones</span>
+          </TabsTrigger>
+          <TabsTrigger value="users" className="flex items-center space-x-2">
+            <Users className="w-4 h-4" />
+            <span>Usuarios</span>
           </TabsTrigger>
         </TabsList>
 
@@ -126,6 +130,10 @@ const Settings = () => {
             onSave={handleSave}
             onUpdateSettings={updateSettings}
           />
+        </TabsContent>
+
+        <TabsContent value="users">
+          <UserManagementTab />
         </TabsContent>
       </Tabs>
     </div>

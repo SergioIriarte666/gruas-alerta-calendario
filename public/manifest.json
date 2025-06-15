@@ -1,7 +1,7 @@
 
 {
-  "short_name": "TMS Operador",
-  "name": "TMS Grúas - App Operador",
+  "short_name": "TMS Grúas",
+  "name": "TMS Grúas - Sistema de Gestión",
   "icons": [
     {
       "src": "icons/icon-192x192.png",
@@ -16,10 +16,10 @@
       "purpose": "any maskable"
     }
   ],
-  "start_url": "/operator/",
+  "start_url": "/",
   "display": "standalone",
   "scope": "/",
   "theme_color": "#1e293b",
   "background_color": "#0f172a",
-  "description": "Aplicación para operadores de TMS Grúas."
+  "description": "Sistema de gestión para TMS Grúas - Acceso completo al sistema según rol de usuario."
 }

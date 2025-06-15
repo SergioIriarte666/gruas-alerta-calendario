@@ -14,8 +14,6 @@ const ProtectedRoute = ({ children }: { children: ReactNode }) => {
   }
   
   if (authUser && !profileUser) {
-    // Authenticated user but no profile, could be due to sign-up issue.
-    // Redirect to auth to re-initiate flow.
     console.error("Authenticated user found without a profile. Redirecting to /auth.");
     return <Navigate to="/auth" state={{ from: location }} replace />;
   }
@@ -24,22 +22,29 @@ const ProtectedRoute = ({ children }: { children: ReactNode }) => {
     const isOperatorRoute = location.pathname.startsWith('/operator');
     const userRole = profileUser.role;
 
+    // Redirección automática según el rol del usuario
     if (userRole === 'operator' && !isOperatorRoute) {
-      // Operator trying to access non-operator routes
+      // Operador intentando acceder a rutas no-operador, redirigir a dashboard operador
       return <Navigate to="/operator" replace />;
     }
 
     if (userRole !== 'operator' && isOperatorRoute) {
-      // Non-operator trying to access operator routes
+      // No-operador intentando acceder a rutas de operador, redirigir a dashboard principal
       return <Navigate to="/" replace />;
     }
 
+    // Rutas específicas para administradores
     const adminRoutes = ['/settings'];
     const isAdminRoute = adminRoutes.some(route => location.pathname.startsWith(route));
 
     if (isAdminRoute && userRole !== 'admin') {
-      // Non-admin trying to access admin routes
+      // No-admin intentando acceder a rutas de admin
       return <Navigate to="/" replace />;
+    }
+
+    // Redireccionamiento automático desde la raíz según el rol
+    if (location.pathname === '/' && userRole === 'operator') {
+      return <Navigate to="/operator" replace />;
     }
   }
 
