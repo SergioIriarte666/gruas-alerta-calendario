@@ -1,8 +1,7 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Client } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from '@/components/ui/sonner';
 
 const fetchClients = async (): Promise<Client[]> => {
   const { data, error } = await supabase
@@ -29,7 +28,6 @@ const fetchClients = async (): Promise<Client[]> => {
 
 export const useClients = () => {
   const queryClient = useQueryClient();
-  const { toast } = useToast();
 
   const { data: clients = [], isLoading: loading, refetch } = useQuery<Client[]>({
     queryKey: ['clients'],
@@ -68,17 +66,14 @@ export const useClients = () => {
     },
     onSuccess: (newClient) => {
       queryClient.invalidateQueries({ queryKey: ['clients'] });
-      toast({
-        title: "Cliente creado",
+      toast.success("Cliente creado", {
         description: `Cliente ${newClient.name} creado exitosamente.`,
       });
     },
     onError: (error: any) => {
       console.error('Error creating client:', error);
-      toast({
-        title: "Error",
+      toast.error("Error", {
         description: "No se pudo crear el cliente.",
-        variant: "destructive",
       });
     }
   });
@@ -104,17 +99,14 @@ export const useClients = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['clients'] });
-      toast({
-        title: "Cliente actualizado",
+      toast.success("Cliente actualizado", {
         description: "El cliente ha sido actualizado exitosamente.",
       });
     },
     onError: (error: any) => {
       console.error('Error updating client:', error);
-      toast({
-        title: "Error",
+      toast.error("Error", {
         description: "No se pudo actualizar el cliente.",
-        variant: "destructive",
       });
     }
   });
@@ -130,17 +122,14 @@ export const useClients = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['clients'] });
-      toast({
-        title: "Cliente eliminado",
+      toast.success("Cliente eliminado", {
         description: "El cliente ha sido eliminado exitosamente.",
       });
     },
     onError: (error: any) => {
       console.error('Error deleting client:', error);
-      toast({
-        title: "Error",
+      toast.error("Error", {
         description: "No se pudo eliminar el cliente.",
-        variant: "destructive",
       });
     }
   });
@@ -160,17 +149,14 @@ export const useClients = () => {
     },
     onSuccess: (client) => {
       queryClient.invalidateQueries({ queryKey: ['clients'] });
-      toast({
-        title: "Estado actualizado",
+      toast.success("Estado actualizado", {
         description: `Cliente ${client.isActive ? 'desactivado' : 'activado'} exitosamente.`,
       });
     },
     onError: (error: any) => {
       console.error('Error toggling client status:', error);
-      toast({
-        title: "Error",
+      toast.error("Error", {
         description: "No se pudo cambiar el estado del cliente.",
-        variant: "destructive",
       });
     }
   });
