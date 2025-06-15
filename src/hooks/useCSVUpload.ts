@@ -1,7 +1,6 @@
-
 import { useState, useCallback } from 'react';
 import { CSVServiceUploader, UploadProgress, UploadResult } from '@/utils/csvUpload';
-import { CSVServiceRow, ValidationResult, validateCSVData } from '@/utils/csvValidations';
+import { UploadedServiceRow, ValidationResult, validateUploadedData } from '@/utils/csvValidations';
 import { Service } from '@/types';
 import { useClients } from './useClients';
 import { useCranes } from './useCranes';
@@ -10,7 +9,7 @@ import { useServices } from './useServices';
 
 interface CSVUploadState {
   file: File | null;
-  csvData: CSVServiceRow[];
+  csvData: UploadedServiceRow[];
   validationResult: ValidationResult | null;
   isValidating: boolean;
   isUploading: boolean;
@@ -53,13 +52,21 @@ export const useCSVUpload = () => {
     setState(prev => ({ ...prev, isValidating: true }));
 
     try {
-      const csvData = await csvUploader.parseCSV(state.file);
+      let parsedData: UploadedServiceRow[];
+      if (state.file.name.endsWith('.csv')) {
+        parsedData = await csvUploader.parseCSV(state.file);
+      } else if (/\.(xlsx|xls)$/i.test(state.file.name)) {
+        parsedData = await csvUploader.parseExcel(state.file);
+      } else {
+        throw new Error('Tipo de archivo no soportado. Por favor, suba un archivo .csv o .xlsx.');
+      }
+      
       setState(prev => ({
         ...prev,
-        csvData,
+        csvData: parsedData,
         isValidating: false
       }));
-      return csvData;
+      return parsedData;
     } catch (error) {
       console.error('Error parsing CSV:', error);
       setState(prev => ({
@@ -87,7 +94,7 @@ export const useCSVUpload = () => {
     setState(prev => ({ ...prev, isValidating: true }));
 
     const existingFolios = services.map(s => s.folio);
-    const validationResult = validateCSVData(
+    const validationResult = validateUploadedData(
       state.csvData,
       clients,
       cranes,
@@ -152,6 +159,11 @@ export const useCSVUpload = () => {
     csvUploader.downloadTemplate();
   }, [csvUploader]);
 
+  // Download Excel template
+  const downloadExcelTemplate = useCallback(() => {
+    csvUploader.downloadExcelTemplate();
+  }, [csvUploader]);
+
   // Reset state
   const reset = useCallback(() => {
     setState({
@@ -172,6 +184,7 @@ export const useCSVUpload = () => {
     validateData,
     uploadServices,
     downloadTemplate,
+    downloadExcelTemplate,
     reset
   };
 };

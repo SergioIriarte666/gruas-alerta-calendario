@@ -1,6 +1,7 @@
 import * as Papa from 'papaparse';
+import * as XLSX from 'xlsx';
 import { Service } from '@/types';
-import { CSVServiceRow, validateCSVData, ValidationResult } from './csvValidations';
+import { UploadedServiceRow } from './csvValidations';
 
 export interface UploadProgress {
   total: number;
@@ -22,7 +23,7 @@ export class CSVServiceUploader {
   private batchSize = 50;
 
   // Parse CSV file
-  parseCSV(file: File): Promise<CSVServiceRow[]> {
+  parseCSV(file: File): Promise<UploadedServiceRow[]> {
     return new Promise((resolve, reject) => {
       Papa.parse(file, {
         header: true,
@@ -54,7 +55,7 @@ export class CSVServiceUploader {
           if (results.errors.length > 0) {
             reject(new Error(`Error parsing CSV: ${results.errors[0].message}`));
           } else {
-            resolve(results.data as CSVServiceRow[]);
+            resolve(results.data as UploadedServiceRow[]);
           }
         },
         error: (error) => {
@@ -64,9 +65,62 @@ export class CSVServiceUploader {
     });
   }
 
-  // Convert CSV row to Service object
+  // Parse Excel file
+  parseExcel(file: File): Promise<UploadedServiceRow[]> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        try {
+          const data = event.target?.result;
+          const workbook = XLSX.read(data, { type: 'array', cellDates: true });
+          const sheetName = workbook.SheetNames[0];
+          const worksheet = workbook.Sheets[sheetName];
+          const json: any[][] = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '', raw: false });
+          
+          if (json.length < 2) {
+            resolve([]);
+            return;
+          }
+
+          const headerMap: { [key: string]: string } = {
+            'Folio': 'folio', 'Fecha Solicitud': 'requestDate', 'Fecha Servicio': 'serviceDate',
+            'Cliente RUT': 'clientRut', 'Cliente Nombre': 'clientName', 'Vehículo Marca': 'vehicleBrand',
+            'Vehículo Modelo': 'vehicleModel', 'Patente': 'licensePlate', 'Origen': 'origin',
+            'Destino': 'destination', 'Tipo Servicio': 'serviceType', 'Valor': 'value',
+            'Grúa Patente': 'craneLicensePlate', 'Operador RUT': 'operatorRut',
+            'Comisión Operador': 'operatorCommission', 'Observaciones': 'observations'
+          };
+
+          const rawHeaders = json[0];
+          const headers = rawHeaders.map(h => headerMap[h] || h.toLowerCase().replace(/\s+/g, ''));
+          
+          const rows = json.slice(1);
+
+          const dataRows = rows.map(rowArray => {
+            const rowObject: { [key: string]: any } = {};
+            headers.forEach((header, index) => {
+              let value = rowArray[index];
+              if (['requestDate', 'serviceDate'].includes(header) && value instanceof Date) {
+                value = value.toISOString().split('T')[0];
+              }
+              rowObject[header] = String(value ?? '');
+            });
+            return rowObject as UploadedServiceRow;
+          }).filter(row => row.folio); // Filter out empty rows
+
+          resolve(dataRows);
+        } catch (e) {
+          reject(new Error('Error al procesar el archivo Excel.'));
+        }
+      };
+      reader.onerror = (error) => reject(error);
+      reader.readAsArrayBuffer(file);
+    });
+  }
+
+  // Convert uploaded row to Service object
   convertToService(
-    csvRow: CSVServiceRow,
+    csvRow: UploadedServiceRow,
     clients: any[],
     cranes: any[],
     operators: any[]
@@ -222,5 +276,42 @@ export class CSVServiceUploader {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+  }
+
+  // Download Excel template file
+  downloadExcelTemplate(): void {
+    const sampleData = [{
+      'Folio': 'SRV-001',
+      'Fecha Solicitud': '2024-01-15',
+      'Fecha Servicio': '2024-01-16',
+      'Cliente RUT': '12.345.678-9',
+      'Cliente Nombre': 'Transportes Ejemplo Ltda.',
+      'Vehículo Marca': 'Mercedes',
+      'Vehículo Modelo': 'Actros',
+      'Patente': 'ABCD-12',
+      'Origen': 'Santiago Centro',
+      'Destino': 'Las Condes',
+      'Tipo Servicio': 'Grúa Pesada',
+      'Valor': 150000,
+      'Grúa Patente': 'GRUA-01',
+      'Operador RUT': '16.123.456-7',
+      'Comisión Operador': 15000,
+      'Observaciones': 'Servicio de ejemplo'
+    }];
+
+    const worksheet = XLSX.utils.json_to_sheet(sampleData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Servicios');
+
+    // Add cell formatting hints
+    worksheet['B1'].c = [{a:"Días", t:"Formato: YYYY-MM-DD"}];
+    worksheet['C1'].c = [{a:"Días", t:"Formato: YYYY-MM-DD"}];
+    worksheet['D1'].c = [{a:"Días", t:"Formato: 12.345.678-9"}];
+    worksheet['H1'].c = [{a:"Días", t:"Formato: AAAA-12"}];
+    worksheet['M1'].c = [{a:"Días", t:"Formato: AAAA-12"}];
+    worksheet['N1'].c = [{a:"Días", t:"Formato: 12.345.678-9"}];
+
+
+    XLSX.writeFile(workbook, 'plantilla_servicios.xlsx');
   }
 }

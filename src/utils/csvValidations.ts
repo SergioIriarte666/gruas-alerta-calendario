@@ -1,7 +1,25 @@
-
 import { Client, Crane, Operator } from '@/types';
 
 export interface CSVServiceRow {
+  folio: string;
+  requestDate: string;
+  serviceDate: string;
+  clientRut: string;
+  clientName: string;
+  vehicleBrand: string;
+  vehicleModel: string;
+  licensePlate: string;
+  origin: string;
+  destination: string;
+  serviceType: string;
+  value: string;
+  craneLicensePlate: string;
+  operatorRut: string;
+  operatorCommission: string;
+  observations?: string;
+}
+
+export interface UploadedServiceRow {
   folio: string;
   requestDate: string;
   serviceDate: string;
@@ -30,7 +48,7 @@ export interface ValidationError {
 export interface ValidationResult {
   isValid: boolean;
   errors: ValidationError[];
-  validRows: CSVServiceRow[];
+  validRows: UploadedServiceRow[];
 }
 
 // RUT validation for Chilean format
@@ -65,7 +83,7 @@ export const validateNumericValue = (value: string): boolean => {
 };
 
 // Validate CSV row format
-export const validateCSVRowFormat = (row: CSVServiceRow, rowIndex: number): ValidationError[] => {
+export const validateUploadedRowFormat = (row: UploadedServiceRow, rowIndex: number): ValidationError[] => {
   const errors: ValidationError[] = [];
 
   // Required fields validation
@@ -76,12 +94,12 @@ export const validateCSVRowFormat = (row: CSVServiceRow, rowIndex: number): Vali
   ];
 
   requiredFields.forEach(field => {
-    if (!row[field as keyof CSVServiceRow] || String(row[field as keyof CSVServiceRow]).trim() === '') {
+    if (!row[field as keyof UploadedServiceRow] || String(row[field as keyof UploadedServiceRow]).trim() === '') {
       errors.push({
         row: rowIndex,
         field,
         message: `Campo obligatorio faltante`,
-        value: row[field as keyof CSVServiceRow]
+        value: row[field as keyof UploadedServiceRow]
       });
     }
   });
@@ -167,7 +185,7 @@ export const validateCSVRowFormat = (row: CSVServiceRow, rowIndex: number): Vali
 
 // Validate references against existing data
 export const validateReferences = (
-  rows: CSVServiceRow[],
+  rows: UploadedServiceRow[],
   clients: Client[],
   cranes: Crane[],
   operators: Operator[]
@@ -213,7 +231,7 @@ export const validateReferences = (
 };
 
 // Check for duplicate folios
-export const validateUniqueFolios = (rows: CSVServiceRow[], existingFolios: string[]): ValidationError[] => {
+export const validateUniqueFolios = (rows: UploadedServiceRow[], existingFolios: string[]): ValidationError[] => {
   const errors: ValidationError[] = [];
   const seenFolios = new Set<string>();
 
@@ -241,19 +259,19 @@ export const validateUniqueFolios = (rows: CSVServiceRow[], existingFolios: stri
 };
 
 // Full validation function
-export const validateCSVData = (
-  csvData: CSVServiceRow[],
+export const validateUploadedData = (
+  csvData: UploadedServiceRow[],
   clients: Client[],
   cranes: Crane[],
   operators: Operator[],
   existingFolios: string[]
 ): ValidationResult => {
   const allErrors: ValidationError[] = [];
-  const validRows: CSVServiceRow[] = [];
+  const validRows: UploadedServiceRow[] = [];
 
   // Format validation
   csvData.forEach((row, index) => {
-    const formatErrors = validateCSVRowFormat(row, index);
+    const formatErrors = validateUploadedRowFormat(row, index);
     allErrors.push(...formatErrors);
   });
 

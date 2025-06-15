@@ -37,16 +37,18 @@ export const CSVUploadServices = ({ onClose, onSuccess }: CSVUploadServicesProps
     validateData,
     uploadServices,
     downloadTemplate,
+    downloadExcelTemplate,
     reset
   } = useCSVUpload();
 
   // Handle file selection
   const handleFileSelect = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = event.target.files?.[0];
-    if (selectedFile && selectedFile.type === 'text/csv') {
+    const allowedTypes = ['text/csv', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/vnd.ms-excel'];
+    if (selectedFile && allowedTypes.includes(selectedFile.type)) {
       setFile(selectedFile);
     } else {
-      alert('Por favor seleccione un archivo CSV válido');
+      alert('Por favor seleccione un archivo CSV o Excel válido.');
     }
   }, [setFile]);
 
@@ -54,10 +56,11 @@ export const CSVUploadServices = ({ onClose, onSuccess }: CSVUploadServicesProps
   const handleDrop = useCallback((event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     const droppedFile = event.dataTransfer.files[0];
-    if (droppedFile && droppedFile.type === 'text/csv') {
+    const allowedTypes = ['text/csv', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/vnd.ms-excel'];
+    if (droppedFile && allowedTypes.includes(droppedFile.type)) {
       setFile(droppedFile);
     } else {
-      alert('Por favor seleccione un archivo CSV válido');
+      alert('Por favor seleccione un archivo CSV o Excel válido.');
     }
   }, [setFile]);
 
@@ -109,17 +112,27 @@ export const CSVUploadServices = ({ onClose, onSuccess }: CSVUploadServicesProps
         <div>
           <h2 className="text-2xl font-bold text-white">Carga Masiva de Servicios</h2>
           <p className="text-gray-400 mt-1">
-            Importa múltiples servicios desde un archivo CSV
+            Importa múltiples servicios desde un archivo CSV o Excel
           </p>
         </div>
-        <Button
-          variant="outline"
-          onClick={downloadTemplate}
-          className="border-tms-green text-tms-green hover:bg-tms-green hover:text-white"
-        >
-          <Download className="w-4 h-4 mr-2" />
-          Descargar Plantilla
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={downloadTemplate}
+            className="border-tms-green text-tms-green hover:bg-tms-green hover:text-white"
+          >
+            <Download className="w-4 h-4 mr-2" />
+            Plantilla CSV
+          </Button>
+          <Button
+            variant="outline"
+            onClick={downloadExcelTemplate}
+            className="border-blue-500 text-blue-400 hover:bg-blue-500 hover:text-white"
+          >
+            <Download className="w-4 h-4 mr-2" />
+            Plantilla Excel
+          </Button>
+        </div>
       </div>
 
       {/* File Upload Area */}
@@ -138,11 +151,11 @@ export const CSVUploadServices = ({ onClose, onSuccess }: CSVUploadServicesProps
           >
             <Upload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
             <p className="text-gray-300 mb-4">
-              Arrastra tu archivo CSV aquí o haz clic para seleccionar
+              Arrastra tu archivo CSV o Excel aquí o haz clic para seleccionar
             </p>
             <input
               type="file"
-              accept=".csv"
+              accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel"
               onChange={handleFileSelect}
               className="hidden"
               id="csv-upload"
