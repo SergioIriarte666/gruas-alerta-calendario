@@ -6,7 +6,7 @@ import { useCranes } from '@/hooks/useCranes';
 import { useOperatorsData } from '@/hooks/operators/useOperatorsData';
 import { useServiceTypes } from '@/hooks/useServiceTypes';
 import { useFolioGenerator } from '@/hooks/useFolioGenerator';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { FolioSection } from './form/FolioSection';
 import { DateSection } from './form/DateSection';
 import { ClientServiceSection } from './form/ClientServiceSection';
@@ -29,7 +29,6 @@ export const ServiceForm = ({ service, onSubmit, onCancel }: ServiceFormProps) =
   const { data: operators = [] } = useOperatorsData();
   const { serviceTypes, loading: serviceTypesLoading } = useServiceTypes();
   const { generateNextFolio, validateFolioUniqueness, loading: folioLoading } = useFolioGenerator();
-  const { toast } = useToast();
 
   const [isManualFolio, setIsManualFolio] = useState(false);
   const [folio, setFolio] = useState(service?.folio || '');
@@ -94,19 +93,15 @@ export const ServiceForm = ({ service, onSubmit, onCancel }: ServiceFormProps) =
     const selectedServiceType = serviceTypes.find(st => st.id === formData.serviceTypeId);
 
     if (!selectedClient || !selectedCrane || !selectedOperator || !selectedServiceType) {
-      toast({
-        title: "Error",
+      toast.error("Error", {
         description: "Por favor, selecciona todos los campos requeridos",
-        variant: "destructive",
       });
       return;
     }
 
     if (!folio.trim()) {
-      toast({
-        title: "Error",
+      toast.error("Error", {
         description: "El folio es requerido",
-        variant: "destructive",
       });
       return;
     }
@@ -115,10 +110,8 @@ export const ServiceForm = ({ service, onSubmit, onCancel }: ServiceFormProps) =
     if ((isManualFolio || !service) && service?.folio !== folio) {
       const isUnique = await validateFolioUniqueness(folio);
       if (!isUnique) {
-        toast({
-          title: "Error",
+        toast.error("Error", {
           description: "Este folio ya existe. Por favor, usa un folio diferente.",
-          variant: "destructive",
         });
         return;
       }

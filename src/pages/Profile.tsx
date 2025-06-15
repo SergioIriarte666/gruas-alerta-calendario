@@ -1,4 +1,3 @@
-
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -8,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { useUser } from '@/contexts/UserContext';
 
 const profileSchema = z.object({
@@ -35,7 +34,6 @@ type ProfileFormData = z.infer<typeof profileSchema>;
 
 const Profile = () => {
   const navigate = useNavigate();
-  const { toast } = useToast();
   const { user, updateUser } = useUser();
 
   const form = useForm<ProfileFormData>({
@@ -57,8 +55,7 @@ const Profile = () => {
       email: data.email,
     });
 
-    toast({
-      title: "Perfil actualizado",
+    toast.success("Perfil actualizado", {
       description: "Los cambios se han guardado correctamente",
     });
   };

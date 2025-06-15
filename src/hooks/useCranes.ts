@@ -1,8 +1,7 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Crane } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 
 const fetchCranes = async (): Promise<Crane[]> => {
   const { data, error } = await supabase
@@ -31,7 +30,6 @@ const fetchCranes = async (): Promise<Crane[]> => {
 
 export const useCranes = () => {
   const queryClient = useQueryClient();
-  const { toast } = useToast();
 
   const { data: cranes = [], isLoading: loading, refetch } = useQuery<Crane[]>({
     queryKey: ['cranes'],
@@ -72,17 +70,14 @@ export const useCranes = () => {
     },
     onSuccess: (newCrane) => {
       queryClient.invalidateQueries({ queryKey: ['cranes'] });
-      toast({
-        title: "Grúa creada",
+      toast.success("Grúa creada", {
         description: `Grúa ${newCrane.licensePlate} creada exitosamente.`,
       });
     },
     onError: (error: any) => {
       console.error('Error creating crane:', error);
-      toast({
-        title: "Error",
+      toast.error("Error", {
         description: "No se pudo crear la grúa.",
-        variant: "destructive",
       });
     },
   });
@@ -104,17 +99,14 @@ export const useCranes = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['cranes'] });
-      toast({
-        title: "Grúa actualizada",
+      toast.success("Grúa actualizada", {
         description: "La grúa ha sido actualizada exitosamente.",
       });
     },
     onError: (error: any) => {
       console.error('Error updating crane:', error);
-      toast({
-        title: "Error",
+      toast.error("Error", {
         description: "No se pudo actualizar la grúa.",
-        variant: "destructive",
       });
     },
   });
@@ -126,17 +118,14 @@ export const useCranes = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['cranes'] });
-      toast({
-        title: "Grúa eliminada",
+      toast.success("Grúa eliminada", {
         description: "La grúa ha sido eliminada exitosamente.",
       });
     },
     onError: (error: any) => {
       console.error('Error deleting crane:', error);
-      toast({
-        title: "Error",
+      toast.error("Error", {
         description: "No se pudo eliminar la grúa.",
-        variant: "destructive",
       });
     },
   });
@@ -156,17 +145,14 @@ export const useCranes = () => {
     },
     onSuccess: (crane) => {
       queryClient.invalidateQueries({ queryKey: ['cranes'] });
-      toast({
-        title: "Estado actualizado",
+      toast.success("Estado actualizado", {
         description: `Grúa ${crane.isActive ? 'desactivada' : 'activada'} exitosamente.`,
       });
     },
     onError: (error: any) => {
       console.error('Error toggling crane status:', error);
-      toast({
-        title: "Error",
+      toast.error("Error", {
         description: "No se pudo cambiar el estado de la grúa.",
-        variant: "destructive",
       });
     },
   });

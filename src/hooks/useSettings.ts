@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { Settings, defaultSettings } from '@/types/settings';
 
 // 1. Define correct payload structure for company_data:
@@ -17,7 +17,6 @@ export const useSettings = () => {
   const [settings, setSettings] = useState<Settings>(defaultSettings);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const { toast } = useToast();
 
   const fetchSettings = useCallback(async () => {
     setLoading(true);
@@ -63,16 +62,14 @@ export const useSettings = () => {
 
     } catch (error) {
       console.error("Error fetching settings:", error);
-      toast({
-        title: "Error",
+      toast.error("Error", {
         description: "No se pudo cargar la configuración.",
-        variant: "destructive",
       });
       setSettings(defaultSettings);
     } finally {
       setLoading(false);
     }
-  }, [toast]);
+  }, []);
 
   useEffect(() => {
     fetchSettings();

@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -17,11 +16,9 @@ import { Plus, Search, Filter, Edit, Trash2, Power, AlertTriangle } from 'lucide
 import { useCranes } from '@/hooks/useCranes';
 import { CraneForm } from '@/components/cranes/CraneForm';
 import { Crane } from '@/types';
-import { useToast } from '@/hooks/use-toast';
 
 const Cranes = () => {
   const { cranes, loading, createCrane, updateCrane, deleteCrane, toggleCraneStatus } = useCranes();
-  const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCrane, setSelectedCrane] = useState<Crane | undefined>();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -35,10 +32,6 @@ const Cranes = () => {
   const handleCreateCrane = (craneData: Omit<Crane, 'id' | 'createdAt' | 'updatedAt'>) => {
     createCrane(craneData);
     setIsDialogOpen(false);
-    toast({
-      title: "Grúa creada",
-      description: "La grúa ha sido creada exitosamente.",
-    });
   };
 
   const handleUpdateCrane = (craneData: Omit<Crane, 'id' | 'createdAt' | 'updatedAt'>) => {
@@ -46,10 +39,6 @@ const Cranes = () => {
       updateCrane(selectedCrane.id, craneData);
       setIsDialogOpen(false);
       setSelectedCrane(undefined);
-      toast({
-        title: "Grúa actualizada",
-        description: "Los datos de la grúa han sido actualizados.",
-      });
     }
   };
 
@@ -61,20 +50,11 @@ const Cranes = () => {
   const handleDeleteCrane = (crane: Crane) => {
     if (window.confirm(`¿Estás seguro de eliminar la grúa "${crane.licensePlate}"?`)) {
       deleteCrane(crane.id);
-      toast({
-        title: "Grúa eliminada",
-        description: "La grúa ha sido eliminada del sistema.",
-        variant: "destructive",
-      });
     }
   };
 
   const handleToggleStatus = (crane: Crane) => {
     toggleCraneStatus(crane.id);
-    toast({
-      title: crane.isActive ? "Grúa desactivada" : "Grúa activada",
-      description: `La grúa ha sido ${crane.isActive ? 'desactivada' : 'activada'}.`,
-    });
   };
 
   const handleNewCrane = () => {
