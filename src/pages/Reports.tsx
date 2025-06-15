@@ -12,7 +12,7 @@ import { CostCharts } from '@/components/reports/CostCharts';
 import { DetailTables } from '@/components/reports/DetailTables';
 import { useClients } from '@/hooks/useClients';
 import { useCranes } from '@/hooks/useCranes';
-import { useOperators } from '@/hooks/useOperators';
+import { useOperatorsData } from '@/hooks/operators/useOperatorsData';
 import { useCostCategories } from '@/hooks/useCostCategories';
 import { useSettings } from '@/hooks/useSettings';
 import { exportReport } from '@/utils/reportExporter';
@@ -49,7 +49,7 @@ const Reports = () => {
 
   const { clients } = useClients();
   const { cranes } = useCranes();
-  const { operators } = useOperators();
+  const { data: operators = [] } = useOperatorsData();
   const { data: costCategories = [] } = useCostCategories();
 
   const handleDateChange = (field: 'from' | 'to', value: string) => {

@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -8,7 +7,7 @@ import { Cost, CostFormData } from '@/types/costs';
 import { useAddCost, useUpdateCost } from '@/hooks/useCosts';
 import { useCostCategories } from '@/hooks/useCostCategories';
 import { useCranes } from '@/hooks/useCranes';
-import { useOperators } from '@/hooks/useOperators';
+import { useOperatorsData } from '@/hooks/operators/useOperatorsData';
 import { useServices } from '@/hooks/useServices';
 import { costSchema, CostFormValues } from '@/schemas/costSchema';
 import { CostFormInputs } from './form/CostFormInputs';
@@ -28,7 +27,7 @@ export const CostForm = ({ isOpen, onClose, cost }: CostFormProps) => {
     
     const { data: categories = [], isLoading: isLoadingCategories } = useCostCategories();
     const { cranes, loading: isLoadingCranes } = useCranes();
-    const { operators, loading: isLoadingOperators } = useOperators();
+    const { data: operators = [], isLoading: isLoadingOperators } = useOperatorsData();
     const { services, loading: isLoadingServices } = useServices();
 
     const form = useForm<CostFormValues>({

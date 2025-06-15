@@ -1,4 +1,3 @@
-
 import * as React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,7 +7,7 @@ import { Calendar, FilterX, FileText } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useClients } from '@/hooks/useClients';
 import { useCranes } from '@/hooks/useCranes';
-import { useOperators } from '@/hooks/useOperators';
+import { useOperatorsData } from '@/hooks/operators/useOperatorsData';
 import { useCostCategories } from '@/hooks/useCostCategories';
 import { ReportFilters as ReportFiltersType } from '@/hooks/useReports';
 
@@ -40,7 +39,7 @@ export const ReportFilters = ({
 }: ReportFiltersProps) => {
     const { clients, loading: clientsLoading } = useClients();
     const { cranes, loading: cranesLoading } = useCranes();
-    const { operators, loading: operatorsLoading } = useOperators();
+    const { data: operators = [], isLoading: operatorsLoading } = useOperatorsData();
     const { data: costCategories = [], isLoading: costCategoriesLoading } = useCostCategories();
 
     return (

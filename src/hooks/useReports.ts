@@ -3,7 +3,7 @@ import { useServices } from './useServices';
 import { useInvoices } from './useInvoices';
 import { useClients } from './useClients';
 import { useCranes } from './useCranes';
-import { useOperators } from './useOperators';
+import { useOperatorsData } from './operators/useOperatorsData';
 import { useCosts } from './useCosts';
 import { useCostCategories } from './useCostCategories';
 import { Service } from '@/types';
@@ -47,7 +47,7 @@ export const useReports = (filters?: ReportFilters) => {
   const { invoices } = useInvoices();
   const { clients } = useClients();
   const { cranes } = useCranes();
-  const { operators } = useOperators();
+  const { data: operators = [] } = useOperatorsData();
   const { data: costs = [] } = useCosts();
   const { data: costCategories = [] } = useCostCategories();
 

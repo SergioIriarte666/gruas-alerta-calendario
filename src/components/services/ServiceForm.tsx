@@ -3,7 +3,7 @@ import { format } from 'date-fns';
 import { Service } from '@/types';
 import { useClients } from '@/hooks/useClients';
 import { useCranes } from '@/hooks/useCranes';
-import { useOperators } from '@/hooks/useOperators';
+import { useOperatorsData } from '@/hooks/operators/useOperatorsData';
 import { useServiceTypes } from '@/hooks/useServiceTypes';
 import { useFolioGenerator } from '@/hooks/useFolioGenerator';
 import { useToast } from '@/hooks/use-toast';
@@ -26,7 +26,7 @@ interface ServiceFormProps {
 export const ServiceForm = ({ service, onSubmit, onCancel }: ServiceFormProps) => {
   const { clients } = useClients();
   const { cranes } = useCranes();
-  const { operators } = useOperators();
+  const { data: operators = [] } = useOperatorsData();
   const { serviceTypes, loading: serviceTypesLoading } = useServiceTypes();
   const { generateNextFolio, validateFolioUniqueness, loading: folioLoading } = useFolioGenerator();
   const { toast } = useToast();
