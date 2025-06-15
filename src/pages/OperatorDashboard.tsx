@@ -1,14 +1,22 @@
 
 import { useAuth } from '@/contexts/AuthContext';
+import { useUser } from '@/contexts/UserContext';
 import { Button } from '@/components/ui/button';
-import { LogOut, Truck } from 'lucide-react';
+import { LogOut, Truck, User, RefreshCw } from 'lucide-react';
 import { useOperatorServices } from '@/hooks/useOperatorServices';
 import { AssignedServiceCard } from '@/components/operator/AssignedServiceCard';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Badge } from '@/components/ui/badge';
 
 const OperatorDashboard = () => {
-  const { user, signOut } = useAuth();
-  const { services, isLoading } = useOperatorServices();
+  const { signOut } = useAuth();
+  const { user } = useUser();
+  const { services, isLoading, error } = useOperatorServices();
+
+  console.log('OperatorDashboard - User:', user);
+  console.log('OperatorDashboard - Services:', services);
+  console.log('OperatorDashboard - Loading:', isLoading);
+  console.log('OperatorDashboard - Error:', error);
 
   const renderContent = () => {
     if (isLoading) {
@@ -16,6 +24,21 @@ const OperatorDashboard = () => {
         <div className="space-y-4">
           <Skeleton className="h-44 w-full bg-slate-700 rounded-lg" />
           <Skeleton className="h-44 w-full bg-slate-700 rounded-lg" />
+        </div>
+      );
+    }
+
+    if (error) {
+      return (
+        <div className="text-center bg-red-900/20 border border-red-500/30 p-8 rounded-lg">
+          <h2 className="text-xl font-semibold mb-2 text-red-400">Error al cargar servicios</h2>
+          <p className="text-gray-400 max-w-md mx-auto mb-4">
+            Hubo un problema al cargar tus servicios asignados. Por favor, recarga la página o contacta al administrador.
+          </p>
+          <Button onClick={() => window.location.reload()} variant="outline" className="border-red-500 text-red-400">
+            <RefreshCw className="w-4 h-4 mr-2" />
+            Recargar
+          </Button>
         </div>
       );
     }
@@ -28,13 +51,29 @@ const OperatorDashboard = () => {
           <p className="text-gray-400 max-w-md mx-auto">
             En este momento, no tienes ningún servicio de grúa en curso. Cuando se te asigne uno, aparecerá aquí con todos los detalles necesarios.
           </p>
+          {user && (
+            <div className="mt-4 p-4 bg-slate-700/50 rounded-lg">
+              <p className="text-sm text-gray-400">
+                <User className="w-4 h-4 inline mr-1" />
+                Conectado como: <span className="text-white">{user.name}</span>
+              </p>
+              <p className="text-sm text-gray-400">
+                <span className="text-tms-green">Rol:</span> {user.role}
+              </p>
+            </div>
+          )}
         </div>
       );
     }
 
     return (
       <div className="space-y-4">
-        <h2 className="text-xl font-semibold text-white">Tus Servicios Asignados</h2>
+        <div className="flex items-center justify-between">
+          <h2 className="text-xl font-semibold text-white">Tus Servicios Asignados</h2>
+          <Badge className="bg-tms-green/20 text-tms-green border border-tms-green/30">
+            {services.length} servicio{services.length !== 1 ? 's' : ''}
+          </Badge>
+        </div>
         {services.map(service => (
           <AssignedServiceCard key={service.id} service={service} />
         ))}
@@ -47,7 +86,14 @@ const OperatorDashboard = () => {
       <header className="flex justify-between items-center pb-4 border-b border-slate-700">
         <div>
           <h1 className="text-2xl font-bold text-tms-green">Portal del Operador</h1>
-          <p className="text-gray-400">Bienvenido, {user?.email}</p>
+          <p className="text-gray-400">
+            Bienvenido, {user?.name || user?.email}
+            {user?.role && (
+              <Badge className="ml-2 bg-blue-500/20 text-blue-300 border border-blue-500/30">
+                {user.role}
+              </Badge>
+            )}
+          </p>
         </div>
         <Button onClick={signOut} variant="ghost" className="text-gray-300 hover:bg-slate-700 hover:text-white">
           <LogOut className="w-4 h-4 mr-2" />
