@@ -1,4 +1,5 @@
 
+import * as React from 'react';
 import { useState } from 'react';
 import { useDashboardData } from '@/hooks/useDashboardData';
 import { MetricCard } from '@/components/dashboard/MetricCard';
