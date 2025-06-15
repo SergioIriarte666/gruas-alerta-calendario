@@ -1,5 +1,4 @@
-
-import { useState } from 'react';
+import * as React from 'react';
 import { ReportFilters as ReportFiltersType } from '@/hooks/useReports';
 
 const defaultFilters: ReportFiltersType = {
@@ -22,9 +21,9 @@ const defaultServiceReportFilters = {
 };
 
 export const useReportFilters = () => {
-  const [filters, setFilters] = useState<ReportFiltersType>(defaultFilters);
-  const [appliedFilters, setAppliedFilters] = useState<ReportFiltersType>(defaultFilters);
-  const [serviceReportFilters, setServiceReportFilters] = useState(defaultServiceReportFilters);
+  const [filters, setFilters] = React.useState<ReportFiltersType>(defaultFilters);
+  const [appliedFilters, setAppliedFilters] = React.useState<ReportFiltersType>(defaultFilters);
+  const [serviceReportFilters, setServiceReportFilters] = React.useState(defaultServiceReportFilters);
 
   const handleDateChange = (field: 'from' | 'to', value: string) => {
     setFilters(prev => ({ ...prev, dateRange: { ...prev.dateRange, [field]: value } }));

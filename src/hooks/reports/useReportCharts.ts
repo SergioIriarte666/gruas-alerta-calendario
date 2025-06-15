@@ -1,5 +1,4 @@
-
-import { useMemo } from 'react';
+import * as React from 'react';
 import { ChartConfig } from "@/components/ui/chart";
 import { ReportMetrics } from '@/hooks/useReports';
 

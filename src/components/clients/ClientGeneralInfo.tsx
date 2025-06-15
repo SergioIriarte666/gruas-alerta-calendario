@@ -1,4 +1,5 @@
 
+import * as React from 'react';
 import { Client } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { User, Phone, Mail, MapPin, CheckCircle, XCircle, CalendarClock } from 'lucide-react';
