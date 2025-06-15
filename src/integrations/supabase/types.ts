@@ -839,6 +839,18 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_all_users: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          id: string
+          email: string
+          full_name: string
+          role: Database["public"]["Enums"]["app_role"]
+          is_active: boolean
+          created_at: string
+          updated_at: string
+        }[]
+      }
       get_operator_id_by_user: {
         Args: { p_user_id: string }
         Returns: string
@@ -846,6 +858,17 @@ export type Database = {
       get_user_role: {
         Args: { user_id?: string }
         Returns: Database["public"]["Enums"]["app_role"]
+      }
+      toggle_user_status: {
+        Args: { user_id: string; new_status: boolean }
+        Returns: undefined
+      }
+      update_user_role: {
+        Args: {
+          user_id: string
+          new_role: Database["public"]["Enums"]["app_role"]
+        }
+        Returns: undefined
       }
     }
     Enums: {

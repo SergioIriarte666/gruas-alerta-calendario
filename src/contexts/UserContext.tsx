@@ -1,5 +1,5 @@
 
-import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
+import * as React from 'react';
 import { useAuth } from './AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -23,10 +23,10 @@ interface UserContextType {
   retryFetchProfile: () => void;
 }
 
-const UserContext = createContext<UserContextType | undefined>(undefined);
+const UserContext = React.createContext<UserContextType | undefined>(undefined);
 
 export const useUser = () => {
-  const context = useContext(UserContext);
+  const context = React.useContext(UserContext);
   if (context === undefined) {
     throw new Error('useUser must be used within a UserProvider');
   }
@@ -34,16 +34,16 @@ export const useUser = () => {
 };
 
 interface UserProviderProps {
-  children: ReactNode;
+  children: React.ReactNode;
 }
 
 export function UserProvider({ children }: UserProviderProps) {
   const { user: authUser, session, signOut, loading: authLoading } = useAuth();
-  const [user, setUser] = useState<User | null>(null);
-  const [profileLoading, setProfileLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [user, setUser] = React.useState<User | null>(null);
+  const [profileLoading, setProfileLoading] = React.useState(true);
+  const [error, setError] = React.useState<string | null>(null);
 
-  const fetchProfile = useCallback(async () => {
+  const fetchProfile = React.useCallback(async () => {
     console.log('fetchProfile called. authUser:', !!authUser, 'session:', !!session, 'authLoading:', authLoading);
     if (authLoading) return;
 
@@ -90,7 +90,7 @@ export function UserProvider({ children }: UserProviderProps) {
     }
   }, [authLoading, authUser, session, signOut]);
 
-  useEffect(() => {
+  React.useEffect(() => {
     let isMounted = true;
     
     const timeoutId = setTimeout(() => {

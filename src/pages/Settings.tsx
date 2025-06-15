@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import * as React from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import { useSettings } from '@/hooks/useSettings';
@@ -21,7 +21,7 @@ import {
 const Settings = () => {
   const { settings, loading, saving, updateSettings, saveSettings, resetSettings } = useSettings();
   const { isUpdating: isLogoUpdating, updateLogo } = useLogoUpdater();
-  const [activeTab, setActiveTab] = useState('company');
+  const [activeTab, setActiveTab] = React.useState('company');
 
   const handleSave = async () => {
     const result = await saveSettings();

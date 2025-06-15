@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import * as React from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -13,7 +13,7 @@ interface OperatorFormProps {
 }
 
 export const OperatorForm = ({ operator, onSubmit, onCancel }: OperatorFormProps) => {
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = React.useState({
     name: operator?.name || '',
     rut: operator?.rut || '',
     phone: operator?.phone || '',

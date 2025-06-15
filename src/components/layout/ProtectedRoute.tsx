@@ -1,10 +1,10 @@
 
-import React, { ReactNode } from 'react';
+import * as React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUser } from '@/contexts/UserContext';
 import { Navigate, useLocation } from 'react-router-dom';
 
-const ProtectedRoute = ({ children }: { children: ReactNode }) => {
+const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user: authUser } = useAuth();
   const { user: profileUser } = useUser();
   const location = useLocation();
