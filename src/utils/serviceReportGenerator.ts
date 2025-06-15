@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { exportServiceReport } from './serviceReportExporter';
 import { Service } from '@/types';
 import { Settings } from '@/types/settings';
-import { format } from 'date-fns';
+import { format as formatDate } from 'date-fns';
 
 interface GenerateReportArgs {
   format: 'pdf' | 'excel';
@@ -26,8 +26,8 @@ const fetchServicesForReport = async (filters: GenerateReportArgs['filters']): P
       operator:operators!inner(*),
       serviceType:service_types!inner(*)
     `)
-    .gte('service_date', format(dateFrom, 'yyyy-MM-dd'))
-    .lte('service_date', format(dateTo, 'yyyy-MM-dd'));
+    .gte('service_date', formatDate(dateFrom, 'yyyy-MM-dd'))
+    .lte('service_date', formatDate(dateTo, 'yyyy-MM-dd'));
 
   if (clientId) {
     query = query.eq('client_id', clientId);
@@ -63,8 +63,10 @@ const fetchSettings = async (): Promise<Settings> => {
     }
     if (!data) {
       return {
-        company: { name: 'Mi Empresa', taxId: '', address: '', phone: '', email: ''},
-        system: { folioFormat: '', invoiceDueDays: 30, vatPercentage: 19, alertDays: 30 }
+        company: { name: 'Mi Empresa', taxId: '', address: '', phone: '', email: '', folioFormat: 'SRV-{number}'},
+        system: { autoBackup: true, backupFrequency: 'daily', dataRetention: 12, maintenanceMode: false },
+        user: { theme: 'dark', language: 'es', timezone: 'America/Santiago', dateFormat: 'DD/MM/YYYY', currency: 'CLP' },
+        notifications: { emailNotifications: true, serviceReminders: true, invoiceAlerts: true, overdueNotifications: true, systemUpdates: false }
       }
     }
     return {
@@ -75,12 +77,27 @@ const fetchSettings = async (): Promise<Settings> => {
         phone: data.phone,
         email: data.email,
         logo: data.logo_url || undefined,
+        folioFormat: data.folio_format || 'SRV-{number}',
       },
       system: {
-        folioFormat: data.folio_format || 'SRV-{number}',
-        invoiceDueDays: data.invoice_due_days || 30,
-        vatPercentage: data.vat_percentage || 19,
-        alertDays: data.alert_days || 30,
+        autoBackup: false,
+        backupFrequency: 'daily',
+        dataRetention: 12,
+        maintenanceMode: false,
+      },
+      user: {
+        theme: 'dark',
+        language: 'es',
+        timezone: 'America/Santiago',
+        dateFormat: 'DD/MM/YYYY',
+        currency: 'CLP',
+      },
+      notifications: {
+        emailNotifications: false,
+        serviceReminders: false,
+        invoiceAlerts: false,
+        overdueNotifications: false,
+        systemUpdates: false,
       }
     };
 }
@@ -114,8 +131,8 @@ export const generateServiceReport = async ({ format, filters }: GenerateReportA
     settings,
     appliedFilters: {
       dateRange: {
-        from: format(filters.dateFrom, 'yyyy-MM-dd'),
-        to: format(filters.dateTo, 'yyyy-MM-dd'),
+        from: formatDate(filters.dateFrom, 'yyyy-MM-dd'),
+        to: formatDate(filters.dateTo, 'yyyy-MM-dd'),
       },
       client: clientName || (filters.clientId ? 'Desconocido' : 'Todos'),
     },

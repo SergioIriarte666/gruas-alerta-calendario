@@ -4,7 +4,7 @@ import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
 import { Service } from '@/types';
 import { Settings } from '@/types/settings';
-import { format } from 'date-fns';
+import { format as formatDate } from 'date-fns';
 import { es } from 'date-fns/locale';
 
 interface AppliedFilters {
@@ -70,7 +70,7 @@ export const exportServiceReport = async ({ format, services, settings, appliedF
     startY += 10;
     
     const filterLabels = [
-        ['Período', `${format(new Date(appliedFilters.dateRange.from + 'T00:00:00'), 'P', { locale: es })} - ${format(new Date(appliedFilters.dateRange.to + 'T00:00:00'), 'P', { locale: es })}`],
+        ['Período', `${formatDate(new Date(appliedFilters.dateRange.from + 'T00:00:00'), 'P', { locale: es })} - ${formatDate(new Date(appliedFilters.dateRange.to + 'T00:00:00'), 'P', { locale: es })}`],
         ['Cliente', appliedFilters.client]
     ];
     doc.setFontSize(11);
@@ -90,7 +90,7 @@ export const exportServiceReport = async ({ format, services, settings, appliedF
         head: [['Folio', 'Fecha', 'Cliente', 'Origen-Destino', 'Estado', 'Valor']],
         body: services.map(s => [
             s.folio,
-            format(new Date(s.serviceDate + 'T00:00:00'), 'dd/MM/yy'),
+            formatDate(new Date(s.serviceDate + 'T00:00:00'), 'dd/MM/yy'),
             s.client.name,
             `${s.origin} / ${s.destination}`,
             s.status,
@@ -121,7 +121,7 @@ export const exportServiceReport = async ({ format, services, settings, appliedF
     
     const services_data = services.map(s => ({
         'Folio': s.folio,
-        'Fecha Servicio': format(new Date(s.serviceDate + 'T00:00:00'), 'yyyy-MM-dd'),
+        'Fecha Servicio': formatDate(new Date(s.serviceDate + 'T00:00:00'), 'yyyy-MM-dd'),
         'Cliente': s.client.name,
         'RUT Cliente': s.client.rut,
         'Origen': s.origin,
