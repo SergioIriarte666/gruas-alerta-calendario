@@ -1,8 +1,6 @@
-
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
-import { useNavigate } from 'react-router-dom';
 
 interface AuthContextType {
   session: Session | null;
@@ -17,7 +15,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const navigate = useNavigate();
 
   useEffect(() => {
     setLoading(true);
@@ -33,7 +30,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setUser(currentUser);
       
       if (_event === 'SIGNED_OUT') {
-        navigate('/auth');
+        window.location.href = '/auth';
       } else if (_event === 'SIGNED_IN' && currentUser) {
         try {
           const { data: profile, error } = await supabase
@@ -44,24 +41,24 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
           if (error && error.code !== 'PGRST116') { // Ignorar error si no encuentra perfil
              console.error("Error fetching profile on sign-in:", error);
-             navigate('/'); // Redirección por defecto en caso de error
+             window.location.href = '/'; // Redirección por defecto en caso de error
              return;
           }
 
           if (profile?.role === 'operator') {
-            navigate('/operator');
+            window.location.href = '/operator';
           } else {
-            navigate('/');
+            window.location.href = '/';
           }
         } catch (e) {
             console.error("Exception fetching profile on sign-in:", e);
-            navigate('/'); // Redirección por defecto en caso de excepción
+            window.location.href = '/'; // Redirección por defecto en caso de excepción
         }
       }
     });
 
     return () => subscription.unsubscribe();
-  }, [navigate]);
+  }, []);
 
   const signOut = async () => {
     await supabase.auth.signOut();
