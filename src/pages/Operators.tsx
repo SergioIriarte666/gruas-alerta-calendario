@@ -2,7 +2,8 @@
 import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { OperatorForm } from '@/components/operators/OperatorForm';
-import { useOperators } from '@/hooks/useOperators';
+import { useOperatorsData } from '@/hooks/operators/useOperatorsData';
+import { useOperatorMutations } from '@/hooks/operators/useOperatorMutations';
 import { Operator } from '@/types';
 import { AppPagination } from '@/components/shared/AppPagination';
 import { OperatorsHeader } from '@/components/operators/OperatorsHeader';
@@ -10,7 +11,11 @@ import { OperatorsFilters } from '@/components/operators/OperatorsFilters';
 import { OperatorsTable } from '@/components/operators/OperatorsTable';
 
 const Operators = () => {
-  const { operators, loading, createOperator, updateOperator, deleteOperator, toggleOperatorStatus } = useOperators();
+  const { data: operatorsData, isLoading: loading } = useOperatorsData();
+  const { createOperator, updateOperator, deleteOperator, toggleOperatorStatus } = useOperatorMutations();
+  
+  const operators = operatorsData || [];
+  
   const [searchTerm, setSearchTerm] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingOperator, setEditingOperator] = useState<Operator | undefined>();
@@ -42,7 +47,7 @@ const Operators = () => {
 
   const handleSubmit = (data: Omit<Operator, 'id' | 'createdAt' | 'updatedAt'>) => {
     if (editingOperator) {
-      updateOperator(editingOperator.id, data);
+      updateOperator({ id: editingOperator.id, operatorData: data });
     } else {
       createOperator(data);
     }
@@ -57,7 +62,10 @@ const Operators = () => {
   };
 
   const handleToggleStatus = (id: string, currentStatus: boolean, name: string) => {
-    toggleOperatorStatus(id);
+    const action = currentStatus ? 'desactivar' : 'activar';
+    if (window.confirm(`¿Está seguro de ${action} al operador "${name}"?`)) {
+      toggleOperatorStatus(id);
+    }
   };
 
   if (loading) {
