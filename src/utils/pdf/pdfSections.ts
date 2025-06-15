@@ -1,8 +1,18 @@
+
 import jsPDF from 'jspdf';
+import 'jspdf-autotable';
 import { InspectionPDFData } from './pdfTypes';
 import { vehicleEquipment } from '@/data/equipmentData';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+
+// Extend jsPDF interface to include autoTable
+declare module 'jspdf' {
+  interface jsPDF {
+    autoTable: (options: any) => void;
+    lastAutoTable: { finalY: number };
+  }
+}
 
 export const addServiceInfo = (doc: jsPDF, data: InspectionPDFData, yPosition: number): number => {
   // Información del servicio
@@ -41,27 +51,11 @@ export const addEquipmentChecklist = (doc: jsPDF, data: InspectionPDFData, yPosi
   yPosition += 10;
 
   const equipmentData: string[][] = [];
+  const checkedItems = data.inspection.equipment || [];
   
   vehicleEquipment.forEach(category => {
     // Agregar cabecera de categoría
     equipmentData.push([category.name, '', 'CATEGORÍA']);
-    
-    // Determinar qué campo usar según la categoría
-    let checkedItems: string[] = [];
-    switch (category.id) {
-      case 'keys_collected':
-        checkedItems = data.inspection.keysCollected || [];
-        break;
-      case 'documents_collected':
-        checkedItems = data.inspection.documentsCollected || [];
-        break;
-      case 'client_exclusive_use':
-        checkedItems = data.inspection.clientExclusiveUse || [];
-        break;
-      default:
-        checkedItems = data.inspection.equipment || [];
-        break;
-    }
     
     // Agregar elementos de la categoría
     category.items.forEach(item => {

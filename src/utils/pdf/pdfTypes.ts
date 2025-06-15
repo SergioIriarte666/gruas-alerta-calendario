@@ -5,9 +5,6 @@ export interface InspectionPDFData {
   service: Service;
   inspection: {
     equipment?: string[];
-    keysCollected?: string[];
-    documentsCollected?: string[];
-    clientExclusiveUse?: string[];
     vehicleObservations?: string;
     operatorSignature?: string;
     clientName?: string;

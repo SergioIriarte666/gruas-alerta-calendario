@@ -23,19 +23,6 @@ export const VehicleEquipmentChecklist = ({ form }: VehicleEquipmentChecklistPro
     form.setValue('equipment', [], { shouldValidate: true });
   };
 
-  const getFieldNameForCategory = (categoryId: string): keyof InspectionFormValues => {
-    switch (categoryId) {
-      case 'keys_collected':
-        return 'keysCollected';
-      case 'documents_collected':
-        return 'documentsCollected';
-      case 'client_exclusive_use':
-        return 'clientExclusiveUse';
-      default:
-        return 'equipment';
-    }
-  };
-
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
@@ -48,8 +35,6 @@ export const VehicleEquipmentChecklist = ({ form }: VehicleEquipmentChecklistPro
       
       <Accordion type="multiple" defaultValue={vehicleEquipment.map(c => c.id)} className="w-full">
         {vehicleEquipment.map((category) => {
-          const fieldName = getFieldNameForCategory(category.id);
-          
           return (
             <AccordionItem key={category.id} value={category.id} className="border-slate-700">
               <AccordionTrigger className="text-tms-green hover:no-underline">{category.name}</AccordionTrigger>
@@ -59,8 +44,9 @@ export const VehicleEquipmentChecklist = ({ form }: VehicleEquipmentChecklistPro
                     <FormField
                       key={item.id}
                       control={form.control}
-                      name={fieldName}
+                      name="equipment"
                       render={({ field }) => {
+                        const fieldValue = Array.isArray(field.value) ? field.value : [];
                         return (
                           <FormItem
                             key={item.id}
@@ -69,12 +55,12 @@ export const VehicleEquipmentChecklist = ({ form }: VehicleEquipmentChecklistPro
                             <FormControl>
                               <Checkbox
                                 className="border-slate-500 data-[state=checked]:bg-tms-green data-[state=checked]:border-tms-green"
-                                checked={field.value?.includes(item.id)}
+                                checked={fieldValue.includes(item.id)}
                                 onCheckedChange={(checked) => {
                                   return checked
-                                    ? field.onChange([...(field.value || []), item.id])
+                                    ? field.onChange([...fieldValue, item.id])
                                     : field.onChange(
-                                        field.value?.filter(
+                                        fieldValue.filter(
                                           (value) => value !== item.id
                                         )
                                       );

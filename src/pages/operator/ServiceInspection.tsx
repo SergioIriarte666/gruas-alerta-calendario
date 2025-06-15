@@ -1,3 +1,4 @@
+
 import { useParams, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -27,9 +28,6 @@ const ServiceInspection = () => {
     resolver: zodResolver(inspectionFormSchema),
     defaultValues: {
       equipment: [],
-      keysCollected: [],
-      documentsCollected: [],
-      clientExclusiveUse: [],
       vehicleObservations: '',
       operatorSignature: '',
       clientName: '',
@@ -60,80 +58,54 @@ const ServiceInspection = () => {
     },
   });
 
-  const saveInspectionMutation = useMutation({
+  const processInspectionMutation = useMutation({
     mutationFn: async (values: InspectionFormValues) => {
-      if (!id || !service?.operator?.id) {
-        throw new Error('Faltan datos del servicio o del operador.');
+      if (!service) {
+        throw new Error('Faltan datos del servicio.');
       }
       
-      const inspectionData = {
-        service_id: id,
-        operator_id: service.operator.id,
-        equipment_checklist: values.equipment,
-        keys_collected: values.keysCollected,
-        documents_collected: values.documentsCollected,
-        client_exclusive_use: values.clientExclusiveUse,
-        vehicle_observations: values.vehicleObservations,
-        operator_signature: values.operatorSignature,
-        client_name: values.clientName,
-        client_rut: values.clientRut,
-        photos_before_service: values.photosBeforeService,
-        photos_client_vehicle: values.photosClientVehicle,
-        photos_equipment_used: values.photosEquipmentUsed,
-      };
+      console.log('Generando PDF con datos de inspección:', values);
       
-      const { error } = await supabase.from('inspections').insert(inspectionData);
-
-      if (error) {
-        console.error('Error saving inspection:', error);
-        throw new Error(`Error al guardar la inspección: ${error.message}`);
-      }
-
+      // Generar y descargar PDF directamente
+      const pdfBlob = await generateInspectionPDF({
+        service: service,
+        inspection: values,
+      });
+      
+      const url = URL.createObjectURL(pdfBlob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `Inspeccion-${service.folio}-${new Date().toISOString().split('T')[0]}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      
+      // Limpiar fotos temporales del localStorage
+      [...values.photosBeforeService, ...values.photosClientVehicle, ...values.photosEquipmentUsed]
+        .forEach(photoName => {
+          localStorage.removeItem(`photo-${photoName}`);
+        });
+      
       return values;
     },
-    onSuccess: async (values) => {
-      toast.success('Inspección guardada.');
+    onSuccess: () => {
+      toast.success('PDF de inspección generado y descargado');
       
-      // Generar y descargar PDF
-      try {
-        const pdfBlob = await generateInspectionPDF({
-          service: service!,
-          inspection: values,
-        });
-        
-        const url = URL.createObjectURL(pdfBlob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `Inspeccion-${service!.folio}-${new Date().toISOString().split('T')[0]}.pdf`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
-        
-        toast.success('PDF generado y descargado');
-        
-        // Limpiar fotos temporales del localStorage
-        [...values.photosBeforeService, ...values.photosClientVehicle, ...values.photosEquipmentUsed]
-          .forEach(photoName => {
-            localStorage.removeItem(`photo-${photoName}`);
-          });
-        
-      } catch (error) {
-        console.error('Error generando PDF:', error);
-        toast.error('Error al generar el PDF');
-      }
-      
+      // Iniciar servicio después de generar el PDF
       if (id) {
         updateServiceStatusMutation.mutate(id);
       }
     },
     onError: (error: Error) => {
-      toast.error(error.message);
+      console.error('Error generando PDF:', error);
+      toast.error('Error al generar el PDF de inspección');
     },
   });
 
   const onSubmit = (values: InspectionFormValues) => {
-    saveInspectionMutation.mutate(values);
+    console.log('Datos del formulario:', values);
+    processInspectionMutation.mutate(values);
   };
   
   if (isLoading) {
@@ -269,9 +241,9 @@ const ServiceInspection = () => {
           </Card>
 
           <div className="flex justify-end">
-            <Button type="submit" className="bg-tms-green hover:bg-tms-green/90 text-slate-900 font-bold flex items-center gap-2" disabled={saveInspectionMutation.isPending || updateServiceStatusMutation.isPending}>
+            <Button type="submit" className="bg-tms-green hover:bg-tms-green/90 text-slate-900 font-bold flex items-center gap-2" disabled={processInspectionMutation.isPending || updateServiceStatusMutation.isPending}>
               <Download className="w-4 h-4" />
-              {saveInspectionMutation.isPending ? 'Guardando Inspección...' : updateServiceStatusMutation.isPending ? 'Iniciando Servicio...' : 'Guardar e Iniciar Servicio'}
+              {processInspectionMutation.isPending ? 'Generando PDF...' : updateServiceStatusMutation.isPending ? 'Iniciando Servicio...' : 'Generar PDF e Iniciar Servicio'}
             </Button>
           </div>
         </form>
