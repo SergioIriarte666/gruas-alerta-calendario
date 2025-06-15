@@ -1,4 +1,8 @@
-import { useState } from 'react';
+
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
+import { useUser } from '@/contexts/UserContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
@@ -12,6 +16,19 @@ const Auth = () => {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+  const { user: authUser } = useAuth();
+  const { user: profileUser } = useUser();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (authUser && profileUser) {
+      if (profileUser.role === 'operator') {
+        navigate('/operator', { replace: true });
+      } else {
+        navigate('/', { replace: true });
+      }
+    }
+  }, [authUser, profileUser, navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();

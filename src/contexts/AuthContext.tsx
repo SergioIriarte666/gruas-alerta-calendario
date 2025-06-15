@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -24,37 +25,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setLoading(false);
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
-      const currentUser = session?.user ?? null;
-      setUser(currentUser);
-      
-      if (_event === 'SIGNED_OUT') {
-        window.location.href = '/auth';
-      } else if (_event === 'SIGNED_IN' && currentUser) {
-        try {
-          const { data: profile, error } = await supabase
-            .from('profiles')
-            .select('role')
-            .eq('id', currentUser.id)
-            .single();
-
-          if (error && error.code !== 'PGRST116') { // Ignorar error si no encuentra perfil
-             console.error("Error fetching profile on sign-in:", error);
-             window.location.href = '/'; // Redirección por defecto en caso de error
-             return;
-          }
-
-          if (profile?.role === 'operator') {
-            window.location.href = '/operator';
-          } else {
-            window.location.href = '/';
-          }
-        } catch (e) {
-            console.error("Exception fetching profile on sign-in:", e);
-            window.location.href = '/'; // Redirección por defecto en caso de excepción
-        }
-      }
+      setUser(session?.user ?? null);
     });
 
     return () => subscription.unsubscribe();

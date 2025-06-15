@@ -12,6 +12,7 @@ interface User {
 
 interface UserContextType {
   user: User | null;
+  loading: boolean;
   login: (userData: User) => void;
   logout: () => void;
   updateUser: (userData: Partial<User>) => void;
@@ -35,9 +36,11 @@ interface UserProviderProps {
 export function UserProvider({ children }: UserProviderProps) {
   const { user: authUser, session, signOut, loading: authLoading } = useAuth();
   const [user, setUser] = useState<User | null>(null);
+  const [profileLoading, setProfileLoading] = useState(true);
 
   useEffect(() => {
-    if (authUser && session) {
+    if (!authLoading && authUser && session) {
+      setProfileLoading(true);
       const fetchProfile = async () => {
         const { data, error } = await supabase
           .from('profiles')
@@ -55,12 +58,14 @@ export function UserProvider({ children }: UserProviderProps) {
             role: data.role || 'viewer',
           });
         }
+        setProfileLoading(false);
       };
       fetchProfile();
-    } else {
+    } else if (!authLoading) {
       setUser(null);
+      setProfileLoading(false);
     }
-  }, [authUser, session]);
+  }, [authUser, session, authLoading]);
   
   const login = () => { /* Deprecated: Handled by Auth page */ };
 
@@ -84,8 +89,9 @@ export function UserProvider({ children }: UserProviderProps) {
   };
 
   const isAuthenticated = !!authUser && !!session;
+  const isLoading = authLoading || profileLoading;
 
-  if (authLoading) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center h-screen bg-gray-900 text-white">
         <div>Cargando sesión...</div>
@@ -96,6 +102,7 @@ export function UserProvider({ children }: UserProviderProps) {
   return (
     <UserContext.Provider value={{
       user,
+      loading: isLoading,
       login,
       logout,
       updateUser,
@@ -105,4 +112,3 @@ export function UserProvider({ children }: UserProviderProps) {
     </UserContext.Provider>
   );
 }
-
