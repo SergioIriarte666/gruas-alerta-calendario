@@ -1,7 +1,8 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { DashboardMetrics, Service, CalendarEvent } from '@/types';
 import { startOfMonth, endOfMonth } from 'date-fns';
+import { useEffect } from 'react';
 
 const fetchDashboardData = async () => {
   const today = new Date();
@@ -96,11 +97,31 @@ const fetchDashboardData = async () => {
 };
 
 export const useDashboardData = () => {
+  const queryClient = useQueryClient();
   const { data, isLoading: loading, error } = useQuery({
     queryKey: ['dashboardData'],
     queryFn: fetchDashboardData,
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
+
+  useEffect(() => {
+    const handleChanges = (payload: any) => {
+      console.log('Real-time change received:', payload);
+      queryClient.invalidateQueries({ queryKey: ['dashboardData'] });
+    };
+
+    const channel = supabase
+      .channel('dashboard-realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'services' }, handleChanges)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'invoices' }, handleChanges)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'costs' }, handleChanges)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'clients' }, handleChanges)
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
 
   if (error) {
     console.error('Error loading dashboard data:', error);

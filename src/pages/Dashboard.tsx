@@ -12,6 +12,7 @@ import {
   TrendingUp
 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Badge } from '@/components/ui/badge';
 
 const Dashboard = () => {
   const { metrics, recentServices, upcomingEvents, loading } = useDashboardData();
@@ -51,9 +52,15 @@ const Dashboard = () => {
     <div className="space-y-6 animate-fade-in">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-white mb-2">
-          Dashboard Principal
-        </h1>
+        <div className="flex items-center gap-x-3 mb-2">
+          <h1 className="text-3xl font-bold text-white">
+            Dashboard Principal
+          </h1>
+          <Badge className="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 mr-2 animate-pulse"></span>
+            En vivo
+          </Badge>
+        </div>
         <p className="text-gray-400">
           Vista general del sistema de gestión de grúas
         </p>
