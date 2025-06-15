@@ -18,6 +18,7 @@ import { ClientForm } from '@/components/clients/ClientForm';
 import { Client } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 import { ClientDetailsModal } from '@/components/clients/ClientDetailsModal';
+import { AppPagination } from '@/components/shared/AppPagination';
 
 const Clients = () => {
   const { clients, loading, createClient, updateClient, deleteClient, toggleClientStatus } = useClients();
@@ -27,11 +28,19 @@ const Clients = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [selectedClientForDetails, setSelectedClientForDetails] = useState<Client | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 10;
 
   const filteredClients = clients.filter(client =>
     client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     client.rut.includes(searchTerm) ||
     client.email.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const totalPages = Math.ceil(filteredClients.length / ITEMS_PER_PAGE);
+  const paginatedClients = filteredClients.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
   );
 
   const handleCreateClient = (clientData: Omit<Client, 'id' | 'createdAt' | 'updatedAt'>) => {
@@ -197,7 +206,7 @@ const Clients = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredClients.map((client) => (
+                  {paginatedClients.map((client) => (
                     <TableRow key={client.id} className="border-gray-700 hover:bg-white/5">
                       <TableCell>
                         <div className="font-medium text-white">{client.name}</div>
@@ -271,6 +280,12 @@ const Clients = () => {
           )}
         </CardContent>
       </Card>
+      <AppPagination 
+        className="py-4"
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={setCurrentPage}
+      />
       {selectedClientForDetails && (
         <ClientDetailsModal
           client={selectedClientForDetails}

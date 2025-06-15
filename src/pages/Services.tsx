@@ -10,6 +10,7 @@ import { ServiceDetailsModal } from '@/components/services/ServiceDetailsModal';
 import { ServiceFilters } from '@/components/services/ServiceFilters';
 import { CSVUploadServices } from '@/components/services/CSVUploadServices';
 import { ServicesTable } from '@/components/services/ServicesTable';
+import { AppPagination } from '@/components/shared/AppPagination';
 
 const Services = () => {
   const { services, loading, createService, updateService, deleteService } = useServices();
@@ -24,6 +25,8 @@ const Services = () => {
   const [editingService, setEditingService] = useState<Service | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>(statusParam || 'all');
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 10;
 
   const filteredServices = services.filter(service => {
     const matchesSearch = 
@@ -37,6 +40,12 @@ const Services = () => {
     
     return matchesSearch && matchesStatus;
   });
+
+  const totalPages = Math.ceil(filteredServices.length / ITEMS_PER_PAGE);
+  const paginatedServices = filteredServices.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
 
   const handleCreateService = (serviceData: Omit<Service, 'id' | 'createdAt' | 'updatedAt'> & { folio: string }) => {
     createService(serviceData);
@@ -153,13 +162,19 @@ const Services = () => {
       />
 
       <ServicesTable
-        services={filteredServices}
+        services={paginatedServices}
         hasInitialServices={services.length > 0}
         onViewDetails={handleViewDetails}
         onEdit={handleEdit}
         onDelete={handleDelete}
         onCloseService={handleCloseService}
         onAddNewService={() => setIsFormOpen(true)}
+      />
+
+      <AppPagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={setCurrentPage}
       />
 
       {selectedService && (

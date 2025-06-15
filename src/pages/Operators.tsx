@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Plus, Search, Edit, Trash2, ToggleLeft, ToggleRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -11,12 +10,15 @@ import { OperatorForm } from '@/components/operators/OperatorForm';
 import { useOperators } from '@/hooks/useOperators';
 import { Operator } from '@/types';
 import { toast } from '@/hooks/use-toast';
+import { AppPagination } from '@/components/shared/AppPagination';
 
 const Operators = () => {
   const { operators, loading, createOperator, updateOperator, deleteOperator, toggleOperatorStatus } = useOperators();
   const [searchTerm, setSearchTerm] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingOperator, setEditingOperator] = useState<Operator | undefined>();
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 10;
 
   // Filtrar operadores por término de búsqueda
   const filteredOperators = operators.filter(operator =>
@@ -24,6 +26,12 @@ const Operators = () => {
     operator.rut.includes(searchTerm) ||
     operator.phone.includes(searchTerm) ||
     operator.licenseNumber.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const totalPages = Math.ceil(filteredOperators.length / ITEMS_PER_PAGE);
+  const paginatedOperators = filteredOperators.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
   );
 
   const handleCreate = () => {
@@ -145,7 +153,7 @@ const Operators = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredOperators.map((operator) => {
+              {paginatedOperators.map((operator) => {
                 const expiryStatus = getExpiryStatus(operator.examExpiry);
                 return (
                   <TableRow key={operator.id} className="border-gray-700 hover:bg-white/5">
@@ -216,6 +224,12 @@ const Operators = () => {
           )}
         </CardContent>
       </Card>
+
+      <AppPagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={setCurrentPage}
+      />
 
       {/* Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useInvoices } from '@/hooks/useInvoices';
@@ -11,6 +10,7 @@ import InvoicesSearch from '@/components/invoices/InvoicesSearch';
 import InvoicesTable from '@/components/invoices/InvoicesTable';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { AppPagination } from '@/components/shared/AppPagination';
 
 const INVOICE_STATUS_MAP: { [key: string]: string } = {
   all: 'Todas',
@@ -32,6 +32,8 @@ const Invoices = () => {
   const [showForm, setShowForm] = useState(false);
   const [editingInvoice, setEditingInvoice] = useState<Invoice | null>(null);
   const { toast } = useToast();
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 10;
 
   const filteredInvoices = invoices.filter(invoice => {
     const invoiceWithDetails = getInvoiceWithDetails(invoice);
@@ -42,6 +44,12 @@ const Invoices = () => {
     const matchesStatus = statusFilter === 'all' || invoice.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
+
+  const totalPages = Math.ceil(filteredInvoices.length / ITEMS_PER_PAGE);
+  const paginatedInvoices = filteredInvoices.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
 
   const handleCreateInvoice = (data: any) => {
     createInvoice(data);
@@ -142,11 +150,17 @@ const Invoices = () => {
       </div>
       
       <InvoicesTable
-        invoices={filteredInvoices}
+        invoices={paginatedInvoices}
         onEdit={handleEditInvoice}
         onDelete={handleDeleteInvoice}
         onMarkAsPaid={handleMarkAsPaid}
         getInvoiceWithDetails={getInvoiceWithDetails}
+      />
+
+      <AppPagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={setCurrentPage}
       />
     </div>
   );
