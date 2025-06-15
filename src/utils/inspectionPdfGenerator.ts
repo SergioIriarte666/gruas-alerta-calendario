@@ -7,6 +7,14 @@ import { vehicleEquipment } from '@/data/equipmentData';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
+// Extend jsPDF type to include autoTable
+declare module 'jspdf' {
+  interface jsPDF {
+    autoTable: (options: any) => jsPDF;
+    lastAutoTable: { finalY: number };
+  }
+}
+
 interface InspectionPDFData {
   service: Service;
   inspection: InspectionFormValues;
@@ -68,7 +76,7 @@ export const generateInspectionPDF = async (data: InspectionPDFData): Promise<Bl
     columnStyles: { 0: { fontStyle: 'bold', cellWidth: 40 } },
   });
 
-  yPosition = (doc as any).lastAutoTable.finalY + 15;
+  yPosition = doc.lastAutoTable.finalY + 15;
 
   // Checklist de equipamiento
   doc.setFontSize(14);
@@ -112,7 +120,7 @@ export const generateInspectionPDF = async (data: InspectionPDFData): Promise<Bl
     }
   });
 
-  yPosition = (doc as any).lastAutoTable.finalY + 15;
+  yPosition = doc.lastAutoTable.finalY + 15;
 
   // Función para agregar fotos
   const addPhotosSection = async (title: string, photoNames: string[]) => {
