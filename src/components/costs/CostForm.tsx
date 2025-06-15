@@ -94,13 +94,6 @@ export const CostForm = ({ isOpen, onClose, cost }: CostFormProps) => {
                     toast({ title: "Error al Actualizar", description: "No se pudo actualizar el costo.", variant: "destructive" });
                 },
             });
-        } else if (cost && !cost.id) {
-            console.error("[CostForm] CRITICAL: Attempting to update a cost but ID is missing.", cost);
-            toast({
-                title: "Error Crítico de Datos",
-                description: "No se puede guardar el costo porque falta su ID. Por favor, cierre el formulario y vuelva a intentarlo.",
-                variant: "destructive"
-            });
         } else {
             addCost(submissionData, {
                 onSuccess: () => {
