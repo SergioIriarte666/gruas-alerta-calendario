@@ -28,7 +28,6 @@ const ServiceInspection = () => {
       equipment: [],
       vehicleObservations: '',
       operatorSignature: '',
-      clientSignature: '',
       clientName: '',
       clientRut: '',
     },
@@ -51,15 +50,45 @@ const ServiceInspection = () => {
     },
     onError: (error) => {
       toast.error(error.message);
-    }
+    },
+  });
+
+  const saveInspectionMutation = useMutation({
+    mutationFn: async (values: InspectionFormValues) => {
+      if (!id || !service?.operator?.id) {
+        throw new Error('Faltan datos del servicio o del operador.');
+      }
+      
+      const inspectionData = {
+        service_id: id,
+        operator_id: service.operator.id,
+        equipment_checklist: values.equipment,
+        vehicle_observations: values.vehicleObservations,
+        operator_signature: values.operatorSignature,
+        client_name: values.clientName,
+        client_rut: values.clientRut,
+      };
+      
+      const { error } = await supabase.from('inspections').insert(inspectionData);
+
+      if (error) {
+        console.error('Error saving inspection:', error);
+        throw new Error(`Error al guardar la inspección: ${error.message}`);
+      }
+    },
+    onSuccess: () => {
+      toast.success('Inspección guardada.');
+      if (id) {
+        updateServiceStatusMutation.mutate(id);
+      }
+    },
+    onError: (error: Error) => {
+      toast.error(error.message);
+    },
   });
 
   const onSubmit = (values: InspectionFormValues) => {
-    console.log('Inspection data:', values);
-    // TODO: Save inspection data to a new table 'inspections'
-    if (id) {
-      updateServiceStatusMutation.mutate(id);
-    }
+    saveInspectionMutation.mutate(values);
   };
   
   if (isLoading) {
@@ -154,8 +183,8 @@ const ServiceInspection = () => {
           </Card>
 
           <div className="flex justify-end">
-            <Button type="submit" className="bg-tms-green hover:bg-tms-green/90 text-slate-900 font-bold" disabled={updateServiceStatusMutation.isPending}>
-              {updateServiceStatusMutation.isPending ? 'Iniciando...' : 'Iniciar Servicio'}
+            <Button type="submit" className="bg-tms-green hover:bg-tms-green/90 text-slate-900 font-bold" disabled={saveInspectionMutation.isPending || updateServiceStatusMutation.isPending}>
+              {saveInspectionMutation.isPending ? 'Guardando Inspección...' : updateServiceStatusMutation.isPending ? 'Iniciando Servicio...' : 'Iniciar Servicio'}
             </Button>
           </div>
         </form>

@@ -391,6 +391,57 @@ export type Database = {
           },
         ]
       }
+      inspections: {
+        Row: {
+          client_name: string | null
+          client_rut: string | null
+          created_at: string
+          equipment_checklist: string[]
+          id: string
+          operator_id: string
+          operator_signature: string
+          service_id: string
+          vehicle_observations: string | null
+        }
+        Insert: {
+          client_name?: string | null
+          client_rut?: string | null
+          created_at?: string
+          equipment_checklist: string[]
+          id?: string
+          operator_id: string
+          operator_signature: string
+          service_id: string
+          vehicle_observations?: string | null
+        }
+        Update: {
+          client_name?: string | null
+          client_rut?: string | null
+          created_at?: string
+          equipment_checklist?: string[]
+          id?: string
+          operator_id?: string
+          operator_signature?: string
+          service_id?: string
+          vehicle_observations?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inspections_operator_id_fkey"
+            columns: ["operator_id"]
+            isOneToOne: false
+            referencedRelation: "operators"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inspections_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       invoice_services: {
         Row: {
           id: string

@@ -7,7 +7,6 @@ export const inspectionFormSchema = z.object({
   }),
   vehicleObservations: z.string().optional(),
   operatorSignature: z.string().min(1, 'La firma es requerida'),
-  clientSignature: z.string().optional(),
   clientName: z.string().optional(),
   clientRut: z.string().optional(),
 });
