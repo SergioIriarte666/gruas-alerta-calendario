@@ -1,4 +1,5 @@
 
+import { useState } from 'react';
 import { useDashboardData } from '@/hooks/useDashboardData';
 import { MetricCard } from '@/components/dashboard/MetricCard';
 import { AlertsPanel } from '@/components/dashboard/AlertsPanel';
@@ -13,9 +14,22 @@ import {
 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
+import { ServiceDetailsModal } from '@/components/services/ServiceDetailsModal';
+import { useServiceDetails } from '@/hooks/useServiceDetails';
 
 const Dashboard = () => {
-  const { metrics, recentServices, upcomingEvents, loading } = useDashboardData();
+  const { metrics, recentServices, upcomingEvents, loading: dashboardLoading } = useDashboardData();
+  const [selectedServiceId, setSelectedServiceId] = useState<string | null>(null);
+
+  const { data: selectedService, isLoading: detailsLoading } = useServiceDetails(selectedServiceId);
+
+  const handleViewDetails = (serviceId: string) => {
+    setSelectedServiceId(serviceId);
+  };
+  
+  const handleCloseDetails = () => {
+    setSelectedServiceId(null);
+  };
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('es-CL', {
@@ -25,7 +39,7 @@ const Dashboard = () => {
     }).format(amount);
   };
 
-  if (loading) {
+  if (dashboardLoading) {
     return (
       <div className="space-y-6">
         {/* Metrics Skeleton */}
@@ -137,7 +151,7 @@ const Dashboard = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Recent Services */}
         <div className="lg:col-span-2">
-          <RecentServicesTable services={recentServices} />
+          <RecentServicesTable services={recentServices} onViewDetails={handleViewDetails} />
         </div>
 
         {/* Alerts Panel */}
@@ -145,6 +159,14 @@ const Dashboard = () => {
           <AlertsPanel events={upcomingEvents} />
         </div>
       </div>
+
+      {selectedService && (
+        <ServiceDetailsModal
+          service={selectedService}
+          isOpen={!!selectedServiceId && !detailsLoading}
+          onClose={handleCloseDetails}
+        />
+      )}
     </div>
   );
 };

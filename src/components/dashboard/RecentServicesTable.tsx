@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
@@ -9,9 +10,10 @@ import { Button } from '@/components/ui/button';
 
 interface RecentServicesTableProps {
   services: Service[];
+  onViewDetails: (serviceId: string) => void;
 }
 
-export const RecentServicesTable = ({ services }: RecentServicesTableProps) => {
+export const RecentServicesTable = ({ services, onViewDetails }: RecentServicesTableProps) => {
   const getStatusBadge = (status: ServiceStatus) => {
     switch (status) {
       case 'pending':
@@ -85,7 +87,13 @@ export const RecentServicesTable = ({ services }: RecentServicesTableProps) => {
                       {getStatusBadge(service.status)}
                     </TableCell>
                     <TableCell>
-                      <Button variant="ghost" size="sm" className="text-tms-green hover:text-tms-green-light">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-tms-green hover:text-tms-green-light"
+                        onClick={() => onViewDetails(service.id)}
+                        title="Ver detalles del servicio"
+                      >
                         <Eye className="w-4 h-4" />
                       </Button>
                     </TableCell>
