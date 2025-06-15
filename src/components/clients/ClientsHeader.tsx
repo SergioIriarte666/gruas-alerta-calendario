@@ -1,7 +1,6 @@
 
 import * as React from 'react';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogTrigger } from '@/components/ui/dialog';
 import { Plus } from 'lucide-react';
 import { ClientForm } from '@/components/clients/ClientForm';
 import { Client } from '@/types';
@@ -33,16 +32,15 @@ export const ClientsHeader = ({
           Administra la información de todos los clientes del sistema
         </p>
       </div>
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogTrigger asChild>
-          <Button 
-            onClick={handleNewClient}
-            className="bg-tms-green hover:bg-tms-green-dark text-white"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Nuevo Cliente
-          </Button>
-        </DialogTrigger>
+      <Button 
+        onClick={handleNewClient}
+        className="bg-tms-green hover:bg-tms-green-dark text-white"
+      >
+        <Plus className="w-4 h-4 mr-2" />
+        Nuevo Cliente
+      </Button>
+      
+      {isDialogOpen && (
         <ClientForm
           client={selectedClient}
           onSubmit={selectedClient ? handleUpdateClient : handleCreateClient}
@@ -51,7 +49,7 @@ export const ClientsHeader = ({
             setSelectedClient(undefined);
           }}
         />
-      </Dialog>
+      )}
     </div>
   );
 };
