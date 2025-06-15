@@ -400,6 +400,9 @@ export type Database = {
           id: string
           operator_id: string
           operator_signature: string
+          photos_before_service: string[] | null
+          photos_client_vehicle: string[] | null
+          photos_equipment_used: string[] | null
           service_id: string
           vehicle_observations: string | null
         }
@@ -411,6 +414,9 @@ export type Database = {
           id?: string
           operator_id: string
           operator_signature: string
+          photos_before_service?: string[] | null
+          photos_client_vehicle?: string[] | null
+          photos_equipment_used?: string[] | null
           service_id: string
           vehicle_observations?: string | null
         }
@@ -422,6 +428,9 @@ export type Database = {
           id?: string
           operator_id?: string
           operator_signature?: string
+          photos_before_service?: string[] | null
+          photos_client_vehicle?: string[] | null
+          photos_equipment_used?: string[] | null
           service_id?: string
           vehicle_observations?: string | null
         }

@@ -11,10 +11,12 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { VehicleEquipmentChecklist } from '@/components/operator/VehicleEquipmentChecklist';
-import { ArrowLeft, User, Signature } from 'lucide-react';
+import { PhotoCapture } from '@/components/operator/PhotoCapture';
+import { ArrowLeft, User, Signature, Download } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { generateInspectionPDF } from '@/utils/inspectionPdfGenerator';
 
 const ServiceInspection = () => {
   const { id } = useParams<{ id: string }>();
@@ -30,6 +32,9 @@ const ServiceInspection = () => {
       operatorSignature: '',
       clientName: '',
       clientRut: '',
+      photosBeforeService: [],
+      photosClientVehicle: [],
+      photosEquipmentUsed: [],
     },
   });
 
@@ -67,6 +72,9 @@ const ServiceInspection = () => {
         operator_signature: values.operatorSignature,
         client_name: values.clientName,
         client_rut: values.clientRut,
+        photos_before_service: values.photosBeforeService,
+        photos_client_vehicle: values.photosClientVehicle,
+        photos_equipment_used: values.photosEquipmentUsed,
       };
       
       const { error } = await supabase.from('inspections').insert(inspectionData);
@@ -75,9 +83,41 @@ const ServiceInspection = () => {
         console.error('Error saving inspection:', error);
         throw new Error(`Error al guardar la inspección: ${error.message}`);
       }
+
+      return values;
     },
-    onSuccess: () => {
+    onSuccess: async (values) => {
       toast.success('Inspección guardada.');
+      
+      // Generar y descargar PDF
+      try {
+        const pdfBlob = await generateInspectionPDF({
+          service: service!,
+          inspection: values,
+        });
+        
+        const url = URL.createObjectURL(pdfBlob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `Inspeccion-${service!.folio}-${new Date().toISOString().split('T')[0]}.pdf`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        
+        toast.success('PDF generado y descargado');
+        
+        // Limpiar fotos temporales del localStorage
+        [...values.photosBeforeService, ...values.photosClientVehicle, ...values.photosEquipmentUsed]
+          .forEach(photoName => {
+            localStorage.removeItem(`photo-${photoName}`);
+          });
+        
+      } catch (error) {
+        console.error('Error generando PDF:', error);
+        toast.error('Error al generar el PDF');
+      }
+      
       if (id) {
         updateServiceStatusMutation.mutate(id);
       }
@@ -134,6 +174,47 @@ const ServiceInspection = () => {
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
           <VehicleEquipmentChecklist form={form} />
           
+          {/* Sección de Fotografías */}
+          <div className="space-y-6">
+            <h3 className="text-lg font-semibold text-white">Documentación Fotográfica</h3>
+            
+            <FormField
+              control={form.control}
+              name="photosBeforeService"
+              render={({ field }) => (
+                <PhotoCapture
+                  title="Fotos Antes del Servicio"
+                  photos={field.value}
+                  onPhotosChange={field.onChange}
+                />
+              )}
+            />
+            
+            <FormField
+              control={form.control}
+              name="photosClientVehicle"
+              render={({ field }) => (
+                <PhotoCapture
+                  title="Fotos del Vehículo del Cliente"
+                  photos={field.value}
+                  onPhotosChange={field.onChange}
+                />
+              )}
+            />
+            
+            <FormField
+              control={form.control}
+              name="photosEquipmentUsed"
+              render={({ field }) => (
+                <PhotoCapture
+                  title="Fotos del Equipo Utilizado"
+                  photos={field.value}
+                  onPhotosChange={field.onChange}
+                />
+              )}
+            />
+          </div>
+          
           <Card className="bg-slate-800 border-slate-700">
             <CardHeader><CardTitle>Observaciones y Firmas</CardTitle></CardHeader>
             <CardContent className="space-y-6">
@@ -183,8 +264,9 @@ const ServiceInspection = () => {
           </Card>
 
           <div className="flex justify-end">
-            <Button type="submit" className="bg-tms-green hover:bg-tms-green/90 text-slate-900 font-bold" disabled={saveInspectionMutation.isPending || updateServiceStatusMutation.isPending}>
-              {saveInspectionMutation.isPending ? 'Guardando Inspección...' : updateServiceStatusMutation.isPending ? 'Iniciando Servicio...' : 'Iniciar Servicio'}
+            <Button type="submit" className="bg-tms-green hover:bg-tms-green/90 text-slate-900 font-bold flex items-center gap-2" disabled={saveInspectionMutation.isPending || updateServiceStatusMutation.isPending}>
+              <Download className="w-4 h-4" />
+              {saveInspectionMutation.isPending ? 'Guardando Inspección...' : updateServiceStatusMutation.isPending ? 'Iniciando Servicio...' : 'Guardar e Iniciar Servicio'}
             </Button>
           </div>
         </form>

@@ -9,6 +9,9 @@ export const inspectionFormSchema = z.object({
   operatorSignature: z.string().min(1, 'La firma es requerida'),
   clientName: z.string().optional(),
   clientRut: z.string().optional(),
+  photosBeforeService: z.array(z.string()).default([]),
+  photosClientVehicle: z.array(z.string()).default([]),
+  photosEquipmentUsed: z.array(z.string()).default([]),
 });
 
 export type InspectionFormValues = z.infer<typeof inspectionFormSchema>;
