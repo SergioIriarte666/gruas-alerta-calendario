@@ -1,9 +1,9 @@
 
 import React from 'react';
-import Calendar from './Calendar';
+import Dashboard from './Dashboard';
 
 const Index = () => {
-  return <Calendar />;
+  return <Dashboard />;
 };
 
 export default Index;
