@@ -1,6 +1,5 @@
 
 import * as React from 'react';
-import { useState } from 'react';
 import { useDashboardData } from '@/hooks/useDashboardData';
 import { MetricCard } from '@/components/dashboard/MetricCard';
 import { AlertsPanel } from '@/components/dashboard/AlertsPanel';
@@ -20,7 +19,7 @@ import { useServiceDetails } from '@/hooks/useServiceDetails';
 
 const Dashboard = () => {
   const { metrics, recentServices, upcomingEvents, loading: dashboardLoading } = useDashboardData();
-  const [selectedServiceId, setSelectedServiceId] = useState<string | null>(null);
+  const [selectedServiceId, setSelectedServiceId] = React.useState<string | null>(null);
 
   const { data: selectedService, isLoading: detailsLoading } = useServiceDetails(selectedServiceId);
 

@@ -1,4 +1,5 @@
 
+import * as React from 'react';
 import { Card } from '@/components/ui/card';
 import { LucideIcon } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
