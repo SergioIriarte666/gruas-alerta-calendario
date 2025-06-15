@@ -2,6 +2,7 @@
 import * as React from 'react';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
+import { Dialog } from '@/components/ui/dialog';
 import { ClientForm } from '@/components/clients/ClientForm';
 import { Client } from '@/types';
 
@@ -40,7 +41,7 @@ export const ClientsHeader = ({
         Nuevo Cliente
       </Button>
       
-      {isDialogOpen && (
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <ClientForm
           client={selectedClient}
           onSubmit={selectedClient ? handleUpdateClient : handleCreateClient}
@@ -49,7 +50,7 @@ export const ClientsHeader = ({
             setSelectedClient(undefined);
           }}
         />
-      )}
+      </Dialog>
     </div>
   );
 };
