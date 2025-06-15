@@ -1,6 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { exportServiceReport } from './serviceReportExporter';
+import { exportServiceReport } from './reportExporter';
 import { Service } from '@/types';
 import { Settings } from '@/types/settings';
 import { format as formatDate } from 'date-fns';
@@ -20,11 +20,33 @@ const fetchServicesForReport = async (filters: GenerateReportArgs['filters']): P
   let query = supabase
     .from('services')
     .select(`
-      *,
-      client:clients!inner(*),
-      crane:cranes!inner(*),
-      operator:operators!inner(*),
-      serviceType:service_types!inner(*)
+      id,
+      folio,
+      service_date,
+      origin,
+      destination,
+      status,
+      value,
+      client:clients!inner(
+        id,
+        name,
+        rut
+      ),
+      crane:cranes!inner(
+        id,
+        license_plate,
+        brand,
+        model
+      ),
+      operator:operators!inner(
+        id,
+        name
+      ),
+      serviceType:service_types!inner(
+        id,
+        name
+      ),
+      observations
     `)
     .gte('service_date', formatDate(dateFrom, 'yyyy-MM-dd'))
     .lte('service_date', formatDate(dateTo, 'yyyy-MM-dd'));
@@ -42,6 +64,7 @@ const fetchServicesForReport = async (filters: GenerateReportArgs['filters']): P
   
   const formattedServices: Service[] = data.map((s: any) => ({
     ...s,
+    serviceDate: s.service_date,
     client: s.client,
     crane: s.crane,
     operator: s.operator,
@@ -117,24 +140,29 @@ const fetchClientName = async (clientId: string): Promise<string> => {
 }
 
 export const generateServiceReport = async ({ format, filters }: GenerateReportArgs) => {
-  const services = await fetchServicesForReport(filters);
-  const settings = await fetchSettings();
-  
-  let clientName: string | undefined;
-  if (filters.clientId) {
-      clientName = await fetchClientName(filters.clientId);
-  }
+  try {
+    const services = await fetchServicesForReport(filters);
+    const settings = await fetchSettings();
+    
+    let clientName: string | undefined;
+    if (filters.clientId) {
+        clientName = await fetchClientName(filters.clientId);
+    }
 
-  await exportServiceReport({
-    format,
-    services,
-    settings,
-    appliedFilters: {
-      dateRange: {
-        from: formatDate(filters.dateFrom, 'yyyy-MM-dd'),
-        to: formatDate(filters.dateTo, 'yyyy-MM-dd'),
+    await exportServiceReport({
+      format,
+      services,
+      settings,
+      appliedFilters: {
+        dateRange: {
+          from: formatDate(filters.dateFrom, 'yyyy-MM-dd'),
+          to: formatDate(filters.dateTo, 'yyyy-MM-dd'),
+        },
+        client: clientName || (filters.clientId ? 'Desconocido' : 'Todos'),
       },
-      client: clientName || (filters.clientId ? 'Desconocido' : 'Todos'),
-    },
-  });
+    });
+  } catch (error) {
+    console.error("Failed to generate service report:", error);
+    // Here you could add a toast notification to inform the user
+  }
 };

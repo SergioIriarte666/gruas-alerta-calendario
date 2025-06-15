@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import { useReports, ReportFilters as ReportFiltersType } from '@/hooks/useReports';
 import { ChartConfig } from "@/components/ui/chart";
@@ -15,8 +14,12 @@ import { useCranes } from '@/hooks/useCranes';
 import { useOperators } from '@/hooks/useOperators';
 import { useSettings } from '@/hooks/useSettings';
 import { exportReport } from '@/utils/reportExporter';
+import { generateServiceReport } from '@/utils/serviceReportGenerator';
+import { useToast } from '@/components/ui/use-toast';
 
 const Reports = () => {
+  const { toast } = useToast();
+
   const defaultFilters: ReportFiltersType = {
     dateRange: {
       from: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0],
@@ -29,6 +32,14 @@ const Reports = () => {
   
   const [filters, setFilters] = useState<ReportFiltersType>(defaultFilters);
   const [appliedFilters, setAppliedFilters] = useState<ReportFiltersType>(defaultFilters);
+
+  const [serviceReportFilters, setServiceReportFilters] = useState({
+    dateRange: {
+      from: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0],
+      to: new Date().toISOString().split('T')[0]
+    },
+    clientId: 'all',
+  });
 
   const { metrics, loading } = useReports(appliedFilters);
   const { settings } = useSettings();
@@ -43,6 +54,14 @@ const Reports = () => {
 
   const handleFilterChange = (field: 'clientId' | 'craneId' | 'operatorId', value: string) => {
     setFilters(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleServiceReportDateChange = (field: 'from' | 'to', value: string) => {
+    setServiceReportFilters(prev => ({ ...prev, dateRange: { ...prev.dateRange, [field]: value } }));
+  };
+
+  const handleServiceReportFilterChange = (field: 'clientId', value: string) => {
+    setServiceReportFilters(prev => ({ ...prev, [field]: value }));
   };
 
   const handleUpdate = () => {
@@ -88,6 +107,29 @@ const Reports = () => {
     });
   };
 
+  const handleExportServiceReport = async (format: 'pdf' | 'excel') => {
+    toast({
+      title: 'Generando informe...',
+      description: 'Tu informe de servicios se está procesando y la descarga comenzará en breve.',
+    });
+    try {
+      await generateServiceReport({
+        format,
+        filters: {
+          dateFrom: new Date(serviceReportFilters.dateRange.from),
+          dateTo: new Date(serviceReportFilters.dateRange.to),
+          clientId: serviceReportFilters.clientId === 'all' ? undefined : serviceReportFilters.clientId,
+        }
+      });
+    } catch (error) {
+      toast({
+        title: 'Error al generar informe',
+        description: 'Hubo un problema al generar el informe. Inténtalo de nuevo.',
+        variant: 'destructive',
+      });
+    }
+  };
+
   const servicesByMonthConfig = { services: { label: 'Servicios', color: '#10b981' } } satisfies ChartConfig;
   const revenueByMonthConfig = { revenue: { label: 'Ingresos', color: '#3b82f6' } } satisfies ChartConfig;
   const craneUtilizationConfig = { utilization: { label: 'Utilización', color: '#f59e0b' } } satisfies ChartConfig;
@@ -125,13 +167,16 @@ const Reports = () => {
 
   return (
     <div className="space-y-6">
-      <ReportsHeader onExport={handleExport} />
+      <ReportsHeader onExport={handleExport} onExportServiceReport={handleExportServiceReport} />
       <ReportFilters 
         filters={filters}
         onDateChange={handleDateChange}
         onFilterChange={handleFilterChange}
         onUpdate={handleUpdate}
         onClear={handleClearFilters}
+        serviceReportFilters={serviceReportFilters}
+        onServiceReportDateChange={handleServiceReportDateChange}
+        onServiceReportFilterChange={handleServiceReportFilterChange}
       />
 
       {metrics && (
@@ -157,4 +202,3 @@ const Reports = () => {
 };
 
 export default Reports;
-

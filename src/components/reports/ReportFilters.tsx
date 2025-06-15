@@ -4,12 +4,17 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Calendar, FilterX } from 'lucide-react';
+import { Calendar, FilterX, FileText } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useClients } from '@/hooks/useClients';
 import { useCranes } from '@/hooks/useCranes';
 import { useOperators } from '@/hooks/useOperators';
 import { ReportFilters as ReportFiltersType } from '@/hooks/useReports';
+
+interface ServiceReportFilters {
+  dateRange: { from: string; to: string };
+  clientId: string;
+}
 
 interface ReportFiltersProps {
   filters: ReportFiltersType;
@@ -17,19 +22,32 @@ interface ReportFiltersProps {
   onFilterChange: (field: 'clientId' | 'craneId' | 'operatorId', value: string) => void;
   onUpdate: () => void;
   onClear: () => void;
+  serviceReportFilters: ServiceReportFilters;
+  onServiceReportDateChange: (field: 'from' | 'to', value: string) => void;
+  onServiceReportFilterChange: (field: 'clientId', value: string) => void;
 }
 
-export const ReportFilters = ({ filters, onDateChange, onFilterChange, onUpdate, onClear }: ReportFiltersProps) => {
+export const ReportFilters = ({ 
+  filters, 
+  onDateChange, 
+  onFilterChange, 
+  onUpdate, 
+  onClear,
+  serviceReportFilters,
+  onServiceReportDateChange,
+  onServiceReportFilterChange,
+}: ReportFiltersProps) => {
     const { clients, loading: clientsLoading } = useClients();
     const { cranes, loading: cranesLoading } = useCranes();
     const { operators, loading: operatorsLoading } = useOperators();
 
     return (
+      <>
         <Card className="bg-white/10 border-white/20">
             <CardHeader>
                 <CardTitle className="text-white flex items-center">
                     <Calendar className="w-5 h-5 mr-2" />
-                    Filtros del Reporte
+                    Filtros de Métricas
                 </CardTitle>
             </CardHeader>
             <CardContent>
@@ -111,5 +129,53 @@ export const ReportFilters = ({ filters, onDateChange, onFilterChange, onUpdate,
                 </div>
             </CardContent>
         </Card>
+
+        <Card className="bg-white/10 border-white/20 mt-6">
+            <CardHeader>
+                <CardTitle className="text-white flex items-center">
+                    <FileText className="w-5 h-5 mr-2" />
+                    Filtros para Informe de Servicios
+                </CardTitle>
+            </CardHeader>
+            <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-end">
+                    <div>
+                        <Label htmlFor="sr-from-date" className="text-gray-300">Fecha Inicio</Label>
+                        <Input
+                            id="sr-from-date"
+                            type="date"
+                            value={serviceReportFilters.dateRange.from}
+                            onChange={(e) => onServiceReportDateChange('from', e.target.value)}
+                            className="bg-white/5 border-white/20 text-white"
+                        />
+                    </div>
+                    <div>
+                        <Label htmlFor="sr-to-date" className="text-gray-300">Fecha Fin</Label>
+                        <Input
+                            id="sr-to-date"
+                            type="date"
+                            value={serviceReportFilters.dateRange.to}
+                            onChange={(e) => onServiceReportDateChange('to', e.target.value)}
+                            className="bg-white/5 border-white/20 text-white"
+                        />
+                    </div>
+                    <div>
+                        <Label htmlFor="sr-client-filter" className="text-gray-300">Cliente</Label>
+                        <Select value={serviceReportFilters.clientId} onValueChange={(v) => onServiceReportFilterChange('clientId', v)} disabled={clientsLoading}>
+                            <SelectTrigger id="sr-client-filter" className="bg-white/5 border-white/20 text-white">
+                                <SelectValue placeholder="Todos" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">Todos los clientes</SelectItem>
+                                {clients.map(client => (
+                                    <SelectItem key={client.id} value={client.id}>{client.name}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                </div>
+            </CardContent>
+        </Card>
+      </>
     );
 };
