@@ -19,25 +19,26 @@ const ProtectedRoute = ({ children }: { children: ReactNode }) => {
   }
 
   if (profileUser) {
-    const isOperatorRoute = location.pathname.startsWith('/operator');
+    // Verificar rutas específicas del portal de operadores (no gestión de operadores)
+    const isOperatorPortalRoute = location.pathname === '/operator' || location.pathname.startsWith('/operator/');
     const userRole = profileUser.role;
 
     // Redirección automática según el rol del usuario
-    if (userRole === 'operator' && !isOperatorRoute) {
-      // Operador intentando acceder a rutas no-operador, redirigir a dashboard operador
+    if (userRole === 'operator' && !isOperatorPortalRoute) {
+      // Operador intentando acceder a rutas no-operador, redirigir a portal operador
       return <Navigate to="/operator" replace />;
     }
 
-    if (userRole !== 'operator' && isOperatorRoute) {
-      // No-operador intentando acceder a rutas de operador, redirigir a dashboard principal
+    if (userRole !== 'operator' && isOperatorPortalRoute) {
+      // No-operador intentando acceder al portal de operador, redirigir a dashboard principal
       return <Navigate to="/" replace />;
     }
 
     // Rutas específicas para administradores
-    const adminRoutes = ['/settings'];
-    const isAdminRoute = adminRoutes.some(route => location.pathname.startsWith(route));
+    const adminOnlyRoutes = ['/settings'];
+    const isAdminOnlyRoute = adminOnlyRoutes.some(route => location.pathname.startsWith(route));
 
-    if (isAdminRoute && userRole !== 'admin') {
+    if (isAdminOnlyRoute && userRole !== 'admin') {
       // No-admin intentando acceder a rutas de admin
       return <Navigate to="/" replace />;
     }
