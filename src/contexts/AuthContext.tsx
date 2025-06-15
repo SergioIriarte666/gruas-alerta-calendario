@@ -27,13 +27,36 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setLoading(false);
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setSession(session);
-      setUser(session?.user ?? null);
+      const currentUser = session?.user ?? null;
+      setUser(currentUser);
+      
       if (_event === 'SIGNED_OUT') {
         navigate('/auth');
-      } else if (_event === 'SIGNED_IN') {
-        navigate('/');
+      } else if (_event === 'SIGNED_IN' && currentUser) {
+        try {
+          const { data: profile, error } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', currentUser.id)
+            .single();
+
+          if (error && error.code !== 'PGRST116') { // Ignorar error si no encuentra perfil
+             console.error("Error fetching profile on sign-in:", error);
+             navigate('/'); // Redirección por defecto en caso de error
+             return;
+          }
+
+          if (profile?.role === 'operator') {
+            navigate('/operator');
+          } else {
+            navigate('/');
+          }
+        } catch (e) {
+            console.error("Exception fetching profile on sign-in:", e);
+            navigate('/'); // Redirección por defecto en caso de excepción
+        }
       }
     });
 

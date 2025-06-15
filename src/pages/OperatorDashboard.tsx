@@ -2,9 +2,45 @@
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { LogOut, Truck } from 'lucide-react';
+import { useOperatorServices } from '@/hooks/useOperatorServices';
+import { AssignedServiceCard } from '@/components/operator/AssignedServiceCard';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const OperatorDashboard = () => {
   const { user, signOut } = useAuth();
+  const { services, isLoading } = useOperatorServices();
+
+  const renderContent = () => {
+    if (isLoading) {
+      return (
+        <div className="space-y-4">
+          <Skeleton className="h-44 w-full bg-slate-700 rounded-lg" />
+          <Skeleton className="h-44 w-full bg-slate-700 rounded-lg" />
+        </div>
+      );
+    }
+    
+    if (!services || services.length === 0) {
+      return (
+        <div className="text-center bg-slate-800 p-8 rounded-lg border border-slate-700">
+          <Truck className="w-16 h-16 mx-auto mb-4 text-tms-green opacity-50" />
+          <h2 className="text-xl font-semibold mb-2 text-white">No hay servicios asignados</h2>
+          <p className="text-gray-400 max-w-md mx-auto">
+            En este momento, no tienes ningún servicio de grúa en curso. Cuando se te asigne uno, aparecerá aquí con todos los detalles necesarios.
+          </p>
+        </div>
+      );
+    }
+
+    return (
+      <div className="space-y-4">
+        <h2 className="text-xl font-semibold text-white">Tus Servicios Asignados</h2>
+        {services.map(service => (
+          <AssignedServiceCard key={service.id} service={service} />
+        ))}
+      </div>
+    );
+  };
 
   return (
     <div className="space-y-8 animate-fade-in">
@@ -19,13 +55,7 @@ const OperatorDashboard = () => {
         </Button>
       </header>
       
-      <div className="text-center bg-slate-800 p-8 rounded-lg border border-slate-700">
-        <Truck className="w-16 h-16 mx-auto mb-4 text-tms-green opacity-50" />
-        <h2 className="text-xl font-semibold mb-2 text-white">No hay servicios asignados</h2>
-        <p className="text-gray-400 max-w-md mx-auto">
-          En este momento, no tienes ningún servicio de grúa en curso. Cuando se te asigne uno, aparecerá aquí con todos los detalles necesarios.
-        </p>
-      </div>
+      {renderContent()}
 
       <footer className="text-center text-gray-500 text-sm pt-4">
         <p>TMS Grúas &copy; {new Date().getFullYear()}</p>

@@ -502,6 +502,7 @@ export type Database = {
           phone: string | null
           rut: string
           updated_at: string | null
+          user_id: string | null
         }
         Insert: {
           created_at?: string | null
@@ -514,6 +515,7 @@ export type Database = {
           phone?: string | null
           rut: string
           updated_at?: string | null
+          user_id?: string | null
         }
         Update: {
           created_at?: string | null
@@ -526,8 +528,16 @@ export type Database = {
           phone?: string | null
           rut?: string
           updated_at?: string | null
+          user_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_operators_user_id"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "operators_created_by_fkey"
             columns: ["created_by"]
@@ -778,6 +788,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_operator_id_by_user: {
+        Args: { p_user_id: string }
+        Returns: string
+      }
       get_user_role: {
         Args: { user_id?: string }
         Returns: Database["public"]["Enums"]["app_role"]
