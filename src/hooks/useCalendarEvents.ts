@@ -1,12 +1,11 @@
-
-import { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { CalendarEvent } from '@/types/calendar';
 import { sanitizeEventData } from '@/utils/calendarValidation';
 
 export const useCalendarEvents = () => {
   const [events, setEvents] = useState<CalendarEvent[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
   const loadEvents = async () => {
     try {
