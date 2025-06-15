@@ -1,8 +1,9 @@
+
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { DashboardMetrics, Service, CalendarEvent } from '@/types';
 import { startOfMonth, endOfMonth } from 'date-fns';
-import { useEffect } from 'react';
 
 const fetchDashboardData = async () => {
   const today = new Date();
