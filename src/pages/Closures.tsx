@@ -9,12 +9,21 @@ import ClosuresHeader from '@/components/closures/ClosuresHeader';
 import ClosuresStats from '@/components/closures/ClosuresStats';
 import ClosuresSearch from '@/components/closures/ClosuresSearch';
 import ClosuresTable from '@/components/closures/ClosuresTable';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+} from "@/components/ui/sheet";
+import ClosureReportForm from '@/components/closures/ClosureReportForm';
 
 const Closures = () => {
   const { closures, loading, createClosure, deleteClosure, closeClosure } = useServiceClosures();
   const { clients } = useClients();
   const [searchTerm, setSearchTerm] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showReportSheet, setShowReportSheet] = useState(false);
 
   console.log('Closures page render - closures:', closures.length, 'loading:', loading, 'showCreateModal:', showCreateModal);
 
@@ -67,6 +76,10 @@ const Closures = () => {
     console.log('Opening create modal...');
     setShowCreateModal(true);
   };
+  
+  const handleShowReportSheet = () => {
+    setShowReportSheet(true);
+  };
 
   if (loading) {
     return (
@@ -78,7 +91,10 @@ const Closures = () => {
 
   return (
     <div className="space-y-6">
-      <ClosuresHeader onCreateClosure={handleShowCreateModal} />
+      <ClosuresHeader 
+        onCreateClosure={handleShowCreateModal}
+        onGenerateReport={handleShowReportSheet}
+      />
       
       <ClosuresStats closures={closures} />
       
@@ -99,6 +115,18 @@ const Closures = () => {
           <p className="text-gray-400">No hay cierres disponibles. Crea tu primer cierre para comenzar.</p>
         </div>
       )}
+
+      <Sheet open={showReportSheet} onOpenChange={setShowReportSheet}>
+        <SheetContent className="bg-gray-900 border-gray-800 text-white w-full sm:w-3/4 md:w-1/2 lg:w-1/3">
+          <SheetHeader>
+            <SheetTitle>Generar Informe de Servicios</SheetTitle>
+            <SheetDescription className="text-gray-400">
+              Selecciona el rango de fechas y un cliente para generar el informe.
+            </SheetDescription>
+          </SheetHeader>
+          <ClosureReportForm onClose={() => setShowReportSheet(false)} />
+        </SheetContent>
+      </Sheet>
 
       <ClosureForm
         open={showCreateModal}
