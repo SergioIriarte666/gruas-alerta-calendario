@@ -1,54 +1,43 @@
 
-import { useState, useEffect } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Client } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
+const fetchClients = async (): Promise<Client[]> => {
+  const { data, error } = await supabase
+    .from('clients')
+    .select('*')
+    .order('name', { ascending: true });
+
+  if (error) throw error;
+
+  const formattedClients: Client[] = data.map(client => ({
+    id: client.id,
+    name: client.name,
+    rut: client.rut,
+    phone: client.phone || '',
+    email: client.email || '',
+    address: client.address || '',
+    isActive: client.is_active ?? false,
+    createdAt: client.created_at,
+    updatedAt: client.updated_at
+  }));
+
+  return formattedClients;
+};
+
 export const useClients = () => {
-  const [clients, setClients] = useState<Client[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  const fetchClients = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('clients')
-        .select('*')
-        .order('created_at', { ascending: false });
+  const { data: clients = [], isLoading: loading, refetch } = useQuery<Client[]>({
+    queryKey: ['clients'],
+    queryFn: fetchClients
+  });
 
-      if (error) throw error;
-
-      const formattedClients: Client[] = data.map(client => ({
-        id: client.id,
-        name: client.name,
-        rut: client.rut,
-        phone: client.phone || '',
-        email: client.email || '',
-        address: client.address || '',
-        isActive: client.is_active || false,
-        createdAt: client.created_at,
-        updatedAt: client.updated_at
-      }));
-
-      setClients(formattedClients);
-    } catch (error: any) {
-      console.error('Error fetching clients:', error);
-      toast({
-        title: "Error",
-        description: "No se pudieron cargar los clientes.",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchClients();
-  }, []);
-
-  const createClient = async (clientData: Omit<Client, 'id' | 'createdAt' | 'updatedAt'>) => {
-    try {
+  const createClientMutation = useMutation({
+    mutationFn: async (clientData: Omit<Client, 'id' | 'createdAt' | 'updatedAt'>) => {
       const { data, error } = await supabase
         .from('clients')
         .insert({
@@ -75,28 +64,27 @@ export const useClients = () => {
         createdAt: data.created_at,
         updatedAt: data.updated_at
       };
-
-      setClients(prev => [newClient, ...prev]);
-      
+      return newClient;
+    },
+    onSuccess: (newClient) => {
+      queryClient.invalidateQueries({ queryKey: ['clients'] });
       toast({
         title: "Cliente creado",
-        description: `Cliente ${clientData.name} creado exitosamente.`,
+        description: `Cliente ${newClient.name} creado exitosamente.`,
       });
-
-      return newClient;
-    } catch (error: any) {
+    },
+    onError: (error: any) => {
       console.error('Error creating client:', error);
       toast({
         title: "Error",
         description: "No se pudo crear el cliente.",
         variant: "destructive",
       });
-      throw error;
     }
-  };
+  });
 
-  const updateClient = async (id: string, clientData: Partial<Client>) => {
-    try {
+  const updateClientMutation = useMutation({
+    mutationFn: async ({ id, clientData }: { id: string, clientData: Partial<Client> }) => {
       const updateData: any = {};
       
       if (clientData.name !== undefined) updateData.name = clientData.name;
@@ -112,18 +100,16 @@ export const useClients = () => {
         .eq('id', id);
 
       if (error) throw error;
-
-      setClients(prev => prev.map(client => 
-        client.id === id 
-          ? { ...client, ...clientData, updatedAt: new Date().toISOString() }
-          : client
-      ));
-
+      return { id, ...clientData };
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['clients'] });
       toast({
         title: "Cliente actualizado",
         description: "El cliente ha sido actualizado exitosamente.",
       });
-    } catch (error: any) {
+    },
+    onError: (error: any) => {
       console.error('Error updating client:', error);
       toast({
         title: "Error",
@@ -131,24 +117,25 @@ export const useClients = () => {
         variant: "destructive",
       });
     }
-  };
+  });
 
-  const deleteClient = async (id: string) => {
-    try {
+  const deleteClientMutation = useMutation({
+    mutationFn: async (id: string) => {
       const { error } = await supabase
         .from('clients')
         .delete()
         .eq('id', id);
 
       if (error) throw error;
-
-      setClients(prev => prev.filter(client => client.id !== id));
-      
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['clients'] });
       toast({
         title: "Cliente eliminado",
         description: "El cliente ha sido eliminado exitosamente.",
       });
-    } catch (error: any) {
+    },
+    onError: (error: any) => {
       console.error('Error deleting client:', error);
       toast({
         title: "Error",
@@ -156,31 +143,29 @@ export const useClients = () => {
         variant: "destructive",
       });
     }
-  };
+  });
 
-  const toggleClientStatus = async (id: string) => {
-    try {
+  const toggleClientStatusMutation = useMutation({
+    mutationFn: async (id: string) => {
       const client = clients.find(c => c.id === id);
-      if (!client) return;
-
+      if (!client) throw new Error('Client not found');
+      
       const { error } = await supabase
         .from('clients')
         .update({ is_active: !client.isActive })
         .eq('id', id);
 
       if (error) throw error;
-
-      setClients(prev => prev.map(client => 
-        client.id === id 
-          ? { ...client, isActive: !client.isActive, updatedAt: new Date().toISOString() }
-          : client
-      ));
-
+      return client;
+    },
+    onSuccess: (client) => {
+      queryClient.invalidateQueries({ queryKey: ['clients'] });
       toast({
         title: "Estado actualizado",
         description: `Cliente ${client.isActive ? 'desactivado' : 'activado'} exitosamente.`,
       });
-    } catch (error: any) {
+    },
+    onError: (error: any) => {
       console.error('Error toggling client status:', error);
       toast({
         title: "Error",
@@ -188,15 +173,15 @@ export const useClients = () => {
         variant: "destructive",
       });
     }
-  };
+  });
 
   return {
     clients,
     loading,
-    createClient,
-    updateClient,
-    deleteClient,
-    toggleClientStatus,
-    refetch: fetchClients
+    createClient: createClientMutation.mutateAsync,
+    updateClient: (id: string, clientData: Partial<Client>) => updateClientMutation.mutateAsync({ id, clientData }),
+    deleteClient: deleteClientMutation.mutateAsync,
+    toggleClientStatus: toggleClientStatusMutation.mutateAsync,
+    refetch,
   };
 };
