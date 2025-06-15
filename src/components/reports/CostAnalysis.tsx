@@ -7,6 +7,7 @@ import { ReportMetrics } from '@/hooks/useReports';
 import { ReportMetricCard } from './ReportMetricCard';
 import { format as formatDate } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { DollarSign, Percent } from 'lucide-react';
 
 interface CostAnalysisProps {
   metrics: ReportMetrics;
@@ -26,12 +27,14 @@ export const CostAnalysis = ({ metrics }: CostAnalysisProps) => {
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <ReportMetricCard
-          label="Costo Promedio por Servicio"
+          title="Costo Promedio por Servicio"
+          icon={DollarSign}
           value={`$${metrics.averageCostPerService.toLocaleString('es-CL', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`}
           description="Costo total / N° de servicios"
         />
         <ReportMetricCard
-          label="Ratio Costo/Ingreso"
+          title="Ratio Costo/Ingreso"
+          icon={Percent}
           value={`${metrics.costRevenueRatio.toFixed(1)}%`}
           description="Porcentaje de ingresos destinado a costos"
         />
