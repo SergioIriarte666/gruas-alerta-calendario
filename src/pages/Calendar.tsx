@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { CalendarIcon } from 'lucide-react';
@@ -9,7 +8,7 @@ import { MonthView } from '@/components/calendar/MonthView';
 import { WeekView } from '@/components/calendar/WeekView';
 import { DayView } from '@/components/calendar/DayView';
 import { EventsSidebar } from '@/components/calendar/EventsSidebar';
-import { format, addMonths, subMonths, addDays } from 'date-fns';
+import { format, addMonths, subMonths, addDays, startOfWeek, endOfWeek } from 'date-fns';
 import { es } from 'date-fns/locale';
 
 const Calendar = () => {
@@ -65,11 +64,9 @@ const Calendar = () => {
       case 'day':
         return format(selectedDate, 'd MMMM yyyy', { locale: es });
       case 'week':
-        const weekStart = new Date(selectedDate);
-        weekStart.setDate(selectedDate.getDate() - selectedDate.getDay());
-        const weekEnd = new Date(weekStart);
-        weekEnd.setDate(weekStart.getDate() + 6);
-        return `${format(weekStart, 'd MMM', { locale: es })} - ${format(weekEnd, 'd MMM yyyy', { locale: es })}`;
+        const weekStartVal = startOfWeek(selectedDate, { weekStartsOn: 1 });
+        const weekEndVal = endOfWeek(selectedDate, { weekStartsOn: 1 });
+        return `${format(weekStartVal, 'd MMM', { locale: es })} - ${format(weekEndVal, 'd MMM yyyy', { locale: es })}`;
       case 'month':
         return format(currentMonth, 'MMMM yyyy', { locale: es });
       default:
