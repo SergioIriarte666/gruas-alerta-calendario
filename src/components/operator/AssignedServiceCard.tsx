@@ -1,5 +1,5 @@
 
-import * as React from 'react';
+import React from 'react';
 import { Service } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Truck, Calendar, MapPin, User, ChevronRight } from 'lucide-react';
