@@ -1,4 +1,3 @@
-
 import { useParams, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -28,6 +27,9 @@ const ServiceInspection = () => {
     resolver: zodResolver(inspectionFormSchema),
     defaultValues: {
       equipment: [],
+      keysCollected: [],
+      documentsCollected: [],
+      clientExclusiveUse: [],
       vehicleObservations: '',
       operatorSignature: '',
       clientName: '',
@@ -68,6 +70,9 @@ const ServiceInspection = () => {
         service_id: id,
         operator_id: service.operator.id,
         equipment_checklist: values.equipment,
+        keys_collected: values.keysCollected,
+        documents_collected: values.documentsCollected,
+        client_exclusive_use: values.clientExclusiveUse,
         vehicle_observations: values.vehicleObservations,
         operator_signature: values.operatorSignature,
         client_name: values.clientName,

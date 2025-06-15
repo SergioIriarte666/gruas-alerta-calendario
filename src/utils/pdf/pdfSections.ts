@@ -1,4 +1,3 @@
-
 import jsPDF from 'jspdf';
 import { InspectionPDFData } from './pdfTypes';
 import { vehicleEquipment } from '@/data/equipmentData';
@@ -35,10 +34,10 @@ export const addServiceInfo = (doc: jsPDF, data: InspectionPDFData, yPosition: n
 };
 
 export const addEquipmentChecklist = (doc: jsPDF, data: InspectionPDFData, yPosition: number): number => {
-  // Checklist de equipamiento
+  // Inventario del vehículo
   doc.setFontSize(14);
   doc.setTextColor(0, 150, 136);
-  doc.text('CHECKLIST DE EQUIPAMIENTO DE GRÚA', 20, yPosition);
+  doc.text('INVENTARIO DEL VEHÍCULO', 20, yPosition);
   yPosition += 10;
 
   const equipmentData: string[][] = [];
@@ -47,9 +46,26 @@ export const addEquipmentChecklist = (doc: jsPDF, data: InspectionPDFData, yPosi
     // Agregar cabecera de categoría
     equipmentData.push([category.name, '', 'CATEGORÍA']);
     
+    // Determinar qué campo usar según la categoría
+    let checkedItems: string[] = [];
+    switch (category.id) {
+      case 'keys_collected':
+        checkedItems = data.inspection.keysCollected || [];
+        break;
+      case 'documents_collected':
+        checkedItems = data.inspection.documentsCollected || [];
+        break;
+      case 'client_exclusive_use':
+        checkedItems = data.inspection.clientExclusiveUse || [];
+        break;
+      default:
+        checkedItems = data.inspection.equipment || [];
+        break;
+    }
+    
     // Agregar elementos de la categoría
     category.items.forEach(item => {
-      const isChecked = data.inspection.equipment?.includes(item.id) || false;
+      const isChecked = checkedItems.includes(item.id);
       const status = isChecked ? '✓' : '✗';
       equipmentData.push(['', item.name, status]);
     });
@@ -104,7 +120,7 @@ export const addObservationsAndSignatures = (doc: jsPDF, data: InspectionPDFData
   if (data.inspection.vehicleObservations) {
     doc.setFontSize(12);
     doc.setTextColor(0, 0, 0);
-    doc.text('Observaciones del equipo:', 20, yPosition);
+    doc.text('Observaciones del vehículo:', 20, yPosition);
     yPosition += 8;
     doc.setFontSize(10);
     const splitText = doc.splitTextToSize(data.inspection.vehicleObservations, pageWidth - 40);
