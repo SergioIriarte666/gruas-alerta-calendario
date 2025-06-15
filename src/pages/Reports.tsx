@@ -7,11 +7,13 @@ import { MainMetrics } from '@/components/reports/MainMetrics';
 import { ProfitabilityMetrics } from '@/components/reports/ProfitabilityMetrics';
 import { PrimaryCharts } from '@/components/reports/PrimaryCharts';
 import { DistributionCharts } from '@/components/reports/DistributionCharts';
+import { CostAnalysis } from '@/components/reports/CostAnalysis';
 import { CostCharts } from '@/components/reports/CostCharts';
 import { DetailTables } from '@/components/reports/DetailTables';
 import { useClients } from '@/hooks/useClients';
 import { useCranes } from '@/hooks/useCranes';
 import { useOperators } from '@/hooks/useOperators';
+import { useCostCategories } from '@/hooks/useCostCategories';
 import { useSettings } from '@/hooks/useSettings';
 import { exportReport } from '@/utils/reportExporter';
 import { generateServiceReport } from '@/utils/serviceReportGenerator';
@@ -28,6 +30,7 @@ const Reports = () => {
     clientId: 'all',
     craneId: 'all',
     operatorId: 'all',
+    costCategoryId: 'all',
   };
   
   const [filters, setFilters] = useState<ReportFiltersType>(defaultFilters);
@@ -47,12 +50,13 @@ const Reports = () => {
   const { clients } = useClients();
   const { cranes } = useCranes();
   const { operators } = useOperators();
+  const { data: costCategories = [] } = useCostCategories();
 
   const handleDateChange = (field: 'from' | 'to', value: string) => {
     setFilters(prev => ({ ...prev, dateRange: { ...prev.dateRange, [field]: value } }));
   };
 
-  const handleFilterChange = (field: 'clientId' | 'craneId' | 'operatorId', value: string) => {
+  const handleFilterChange = (field: 'clientId' | 'craneId' | 'operatorId' | 'costCategoryId', value: string) => {
     setFilters(prev => ({ ...prev, [field]: value }));
   };
 
@@ -84,12 +88,16 @@ const Reports = () => {
     const operatorLabel = appliedFilters.operatorId === 'all'
         ? 'Todos los operadores'
         : operators.find(o => o.id === appliedFilters.operatorId)?.name || appliedFilters.operatorId;
+    const costCategoryLabel = appliedFilters.costCategoryId === 'all'
+        ? 'Todas las categorías'
+        : costCategories.find(c => c.id === appliedFilters.costCategoryId)?.name || appliedFilters.costCategoryId;
 
     return [
         [`Rango de Fechas: ${appliedFilters.dateRange.from} a ${appliedFilters.dateRange.to}`],
         [`Cliente: ${clientLabel}`],
         [`Grúa: ${craneLabel}`],
-        [`Operador: ${operatorLabel}`]
+        [`Operador: ${operatorLabel}`],
+        [`Categoría de Costo: ${costCategoryLabel}`]
     ];
   }
 
@@ -104,6 +112,7 @@ const Reports = () => {
       settings,
       appliedFilters,
       filterLabels,
+      costCategories,
     });
   };
 
@@ -193,7 +202,11 @@ const Reports = () => {
             servicesByStatusConfig={servicesByStatusConfig}
             craneUtilizationConfig={craneUtilizationConfig}
           />
+
+          <h2 className="text-2xl font-bold text-white pt-6 border-t border-white/20">Análisis de Costos</h2>
+          <CostAnalysis metrics={metrics} />
           <CostCharts metrics={metrics} costsByCategoryConfig={costsByCategoryConfig} />
+
           <DetailTables metrics={metrics} />
         </div>
       )}

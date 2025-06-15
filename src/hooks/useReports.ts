@@ -5,8 +5,9 @@ import { useClients } from './useClients';
 import { useCranes } from './useCranes';
 import { useOperators } from './useOperators';
 import { useCosts } from './useCosts';
+import { useCostCategories } from './useCostCategories';
 import { Service } from '@/types';
-import { Cost } from '@/types/costs';
+import { Cost, CostCategory } from '@/types/costs';
 
 export interface ReportMetrics {
   totalServices: number;
@@ -25,6 +26,9 @@ export interface ReportMetrics {
   topClients: { clientId: string; clientName: string; services: number; revenue: number }[];
   craneUtilization: { craneId: string; craneName: string; services: number; utilization: number }[];
   costsByCategory: { categoryId: string; categoryName: string; total: number; percentage: number }[];
+  costsByMonth: { month: string; total: number }[];
+  averageCostPerService: number;
+  costRevenueRatio: number;
 }
 
 export interface ReportFilters {
@@ -32,6 +36,7 @@ export interface ReportFilters {
   clientId: string;
   craneId: string;
   operatorId: string;
+  costCategoryId: string;
 }
 
 export const useReports = (filters?: ReportFilters) => {
@@ -44,19 +49,20 @@ export const useReports = (filters?: ReportFilters) => {
   const { cranes } = useCranes();
   const { operators } = useOperators();
   const { data: costs = [] } = useCosts();
+  const { data: costCategories = [] } = useCostCategories();
 
   useEffect(() => {
-    if (services.length > 0 && clients.length > 0 && cranes.length > 0 && operators.length > 0 && costs) {
+    if (services.length > 0 && clients.length > 0 && cranes.length > 0 && operators.length > 0 && costs && costCategories) {
       calculateMetrics();
     }
-  }, [services, invoices, clients, cranes, operators, costs, filters]);
+  }, [services, invoices, clients, cranes, operators, costs, costCategories, filters]);
 
   const calculateMetrics = () => {
     setLoading(true);
     
     let filteredServices = services;
     if (filters) {
-      const { dateRange, clientId, craneId, operatorId } = filters;
+      const { dateRange, clientId, craneId, operatorId, costCategoryId } = filters;
       
       filteredServices = services.filter(service => {
         if (dateRange && dateRange.from && dateRange.to) {
@@ -71,6 +77,9 @@ export const useReports = (filters?: ReportFilters) => {
           return false;
         }
         if (operatorId && operatorId !== 'all' && service.operator.id !== operatorId) {
+          return false;
+        }
+        if (costCategoryId && costCategoryId !== 'all' && costCategories.find(c => c.id === costCategoryId)) {
           return false;
         }
         return true;
@@ -89,7 +98,10 @@ export const useReports = (filters?: ReportFilters) => {
     const filteredCosts = costs.filter(cost => {
         if (fromDate && toDate) {
             const costDate = new Date(cost.date);
-            return costDate >= fromDate && costDate <= toDate;
+            if (costDate < fromDate || costDate > toDate) return false;
+        }
+        if (filters?.costCategoryId && filters.costCategoryId !== 'all' && cost.category_id !== filters.costCategoryId) {
+            return false;
         }
         return true;
     });
@@ -97,7 +109,10 @@ export const useReports = (filters?: ReportFilters) => {
     const totalCosts = filteredCosts.reduce((sum, cost) => sum + Number(cost.amount), 0);
     const netProfit = totalRevenue - totalCosts;
     const profitMargin = totalRevenue > 0 ? (netProfit / totalRevenue) * 100 : 0;
-    const costsByCategory = calculateCostsByCategory(filteredCosts);
+    const costsByCategory = calculateCostsByCategory(filteredCosts, costCategories);
+    const averageCostPerService = totalServices > 0 ? totalCosts / totalServices : 0;
+    const costRevenueRatio = totalRevenue > 0 ? (totalCosts / totalRevenue) * 100 : 0;
+    const costsByMonth = calculateCostsByMonth(filteredCosts);
 
     // Métricas de facturas
     const pendingInvoices = invoices.filter(inv => inv.status === 'draft').length;
@@ -137,6 +152,9 @@ export const useReports = (filters?: ReportFilters) => {
       topClients,
       craneUtilization,
       costsByCategory,
+      costsByMonth,
+      averageCostPerService,
+      costRevenueRatio,
     };
 
     setMetrics(calculatedMetrics);
@@ -227,13 +245,31 @@ export const useReports = (filters?: ReportFilters) => {
       .sort((a, b) => b.services - a.services);
   };
 
-  const calculateCostsByCategory = (costs: Cost[]) => {
+  const calculateCostsByMonth = (costs: Cost[]) => {
+    const monthlyData: { [key: string]: { total: number } } = {};
+    
+    costs.forEach(cost => {
+      const date = new Date(cost.date);
+      const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+      
+      if (!monthlyData[monthKey]) {
+        monthlyData[monthKey] = { total: 0 };
+      }
+      
+      monthlyData[monthKey].total += Number(cost.amount);
+    });
+
+    return Object.entries(monthlyData)
+      .map(([month, data]) => ({ month, ...data }))
+      .sort((a, b) => a.month.localeCompare(b.month));
+  };
+
+  const calculateCostsByCategory = (costs: Cost[], categories: CostCategory[]) => {
       const categoryData: { [key: string]: { total: number; name: string } } = {};
       
       costs.forEach(cost => {
         const categoryId = cost.category_id;
-        // The cost_categories relation might be null if it was deleted, so we check for it
-        const categoryName = cost.cost_categories?.name || 'Sin categoría';
+        const categoryName = categories.find(c => c.id === categoryId)?.name || cost.cost_categories?.name || 'Sin categoría';
 
         if (!categoryData[categoryId]) {
           categoryData[categoryId] = { total: 0, name: categoryName };

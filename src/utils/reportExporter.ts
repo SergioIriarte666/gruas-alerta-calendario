@@ -1,10 +1,10 @@
-
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
 import { ReportMetrics, ReportFilters } from '@/hooks/useReports';
 import { Settings } from '@/types/settings';
 import { Service } from '@/types';
+import { CostCategory } from '@/types/costs';
 import { format as formatDate } from 'date-fns';
 import { es } from 'date-fns/locale';
 
@@ -15,6 +15,7 @@ interface ExportReportArgs {
   settings: Settings;
   appliedFilters: ReportFilters;
   filterLabels: string[][];
+  costCategories: CostCategory[];
 }
 
 export const exportReport = async ({ format, metrics, settings, appliedFilters, filterLabels }: ExportReportArgs) => {
@@ -81,6 +82,8 @@ export const exportReport = async ({ format, metrics, settings, appliedFilters, 
               ['Total Costos', `$${metrics.totalCosts.toLocaleString()}`],
               ['Beneficio Neto', `$${metrics.netProfit.toLocaleString()}`],
               ['Margen de Beneficio', `${metrics.profitMargin.toFixed(1)}%`],
+              ['Costo Promedio/Servicio', `$${metrics.averageCostPerService.toLocaleString('es-CL', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`],
+              ['Ratio Costo/Ingreso', `${metrics.costRevenueRatio.toFixed(1)}%`],
               ['Valor Promedio', `$${metrics.averageServiceValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`],
               ['Facturas Pendientes', `${metrics.pendingInvoices} (${metrics.overdueInvoices} vencidas)`],
           ],
@@ -104,6 +107,16 @@ export const exportReport = async ({ format, metrics, settings, appliedFilters, 
           autoTable(doc, {
               head: [['Categoría', 'Total', '% del Total']],
               body: metrics.costsByCategory.map(c => [c.categoryName, `$${c.total.toLocaleString()}`, `${c.percentage.toFixed(1)}%`]),
+              startY: lastY + 14
+          });
+          lastY = (doc as any).lastAutoTable.finalY;
+      }
+      
+      if (metrics.costsByMonth.length > 0) {
+          doc.text('Tendencia de Costos Mensuales:', 14, lastY + 10);
+          autoTable(doc, {
+              head: [['Mes', 'Costo Total']],
+              body: metrics.costsByMonth.map(c => [formatDate(new Date(c.month + '-02T00:00:00'), "MMM yyyy", { locale: es }), `$${c.total.toLocaleString()}`]),
               startY: lastY + 14
           });
           lastY = (doc as any).lastAutoTable.finalY;
@@ -140,6 +153,8 @@ export const exportReport = async ({ format, metrics, settings, appliedFilters, 
           ['Total Costos', metrics.totalCosts],
           ['Beneficio Neto', metrics.netProfit],
           ['Margen de Beneficio (%)', metrics.profitMargin.toFixed(2)],
+          ['Costo Promedio/Servicio', metrics.averageCostPerService],
+          ['Ratio Costo/Ingreso (%)', metrics.costRevenueRatio],
           ['Valor Promedio', metrics.averageServiceValue],
           ['Facturas Pendientes', metrics.pendingInvoices],
       ];
@@ -149,6 +164,14 @@ export const exportReport = async ({ format, metrics, settings, appliedFilters, 
       if(metrics.servicesByMonth.length > 0) {
           const services_month_ws = XLSX.utils.json_to_sheet(metrics.servicesByMonth);
           XLSX.utils.book_append_sheet(wb, services_month_ws, 'Servicios por Mes');
+      }
+
+      if(metrics.costsByMonth.length > 0) {
+          const costs_month_ws = XLSX.utils.json_to_sheet(metrics.costsByMonth.map(c => ({ 
+              'Mes': formatDate(new Date(c.month + '-02T00:00:00'), "MMM yyyy", { locale: es }), 
+              'Costo Total': c.total 
+          })));
+          XLSX.utils.book_append_sheet(wb, costs_month_ws, 'Costos por Mes');
       }
 
       if(metrics.costsByCategory.length > 0) {

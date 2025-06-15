@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useClients } from '@/hooks/useClients';
 import { useCranes } from '@/hooks/useCranes';
 import { useOperators } from '@/hooks/useOperators';
+import { useCostCategories } from '@/hooks/useCostCategories';
 import { ReportFilters as ReportFiltersType } from '@/hooks/useReports';
 
 interface ServiceReportFilters {
@@ -19,7 +20,7 @@ interface ServiceReportFilters {
 interface ReportFiltersProps {
   filters: ReportFiltersType;
   onDateChange: (field: 'from' | 'to', value: string) => void;
-  onFilterChange: (field: 'clientId' | 'craneId' | 'operatorId', value: string) => void;
+  onFilterChange: (field: 'clientId' | 'craneId' | 'operatorId' | 'costCategoryId', value: string) => void;
   onUpdate: () => void;
   onClear: () => void;
   serviceReportFilters: ServiceReportFilters;
@@ -40,6 +41,7 @@ export const ReportFilters = ({
     const { clients, loading: clientsLoading } = useClients();
     const { cranes, loading: cranesLoading } = useCranes();
     const { operators, loading: operatorsLoading } = useOperators();
+    const { data: costCategories = [], isLoading: costCategoriesLoading } = useCostCategories();
 
     return (
       <>
@@ -51,7 +53,7 @@ export const ReportFilters = ({
                 </CardTitle>
             </CardHeader>
             <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6 gap-4 items-end">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
                     <div>
                         <Label htmlFor="from-date" className="text-gray-300">Fecha Inicio</Label>
                         <Input
@@ -118,7 +120,22 @@ export const ReportFilters = ({
                         </Select>
                     </div>
 
-                    <div className="flex gap-2">
+                    <div>
+                        <Label htmlFor="cost-category-filter" className="text-gray-300">Categoría de Costo</Label>
+                        <Select value={filters.costCategoryId} onValueChange={(v) => onFilterChange('costCategoryId', v)} disabled={costCategoriesLoading}>
+                            <SelectTrigger id="cost-category-filter" className="bg-white/5 border-white/20 text-white">
+                                <SelectValue placeholder="Todas" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">Todas las categorías</SelectItem>
+                                {costCategories.map(category => (
+                                    <SelectItem key={category.id} value={category.id}>{category.name}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+
+                    <div className="flex gap-2 lg:col-start-4">
                         <Button onClick={onUpdate} className="bg-tms-green hover:bg-tms-green/90 flex-1">
                             Actualizar
                         </Button>
