@@ -21,7 +21,8 @@ export const useUserManagement = () => {
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase.rpc('get_all_users');
+      // Usar una llamada directa a la función RPC con any para evitar errores de tipo
+      const { data, error } = await (supabase as any).rpc('get_all_users');
       
       if (error) throw error;
       
@@ -37,7 +38,7 @@ export const useUserManagement = () => {
   const updateUserRole = async (userId: string, newRole: 'admin' | 'operator' | 'viewer') => {
     try {
       setUpdating(userId);
-      const { data, error } = await supabase.rpc('update_user_role', {
+      const { data, error } = await (supabase as any).rpc('update_user_role', {
         user_id: userId,
         new_role: newRole
       });
@@ -57,7 +58,7 @@ export const useUserManagement = () => {
   const toggleUserStatus = async (userId: string, newStatus: boolean) => {
     try {
       setUpdating(userId);
-      const { data, error } = await supabase.rpc('toggle_user_status', {
+      const { data, error } = await (supabase as any).rpc('toggle_user_status', {
         user_id: userId,
         new_status: newStatus
       });
