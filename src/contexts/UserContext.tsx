@@ -32,7 +32,7 @@ interface UserProviderProps {
   children: ReactNode;
 }
 
-export const UserProvider = ({ children }: UserProviderProps) => {
+export function UserProvider({ children }: UserProviderProps) {
   const { user: authUser, session, signOut, loading: authLoading } = useAuth();
   const [user, setUser] = useState<User | null>(null);
 
@@ -104,4 +104,5 @@ export const UserProvider = ({ children }: UserProviderProps) => {
       {children}
     </UserContext.Provider>
   );
-};
+}
+

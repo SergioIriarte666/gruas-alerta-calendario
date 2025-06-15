@@ -40,7 +40,7 @@ interface NotificationProviderProps {
   children: ReactNode;
 }
 
-export const NotificationProvider = ({ children }: NotificationProviderProps) => {
+export function NotificationProvider({ children }: NotificationProviderProps) {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const { notifications: fetchedNotifications } = useNotificationsData();
 
@@ -101,4 +101,5 @@ export const NotificationProvider = ({ children }: NotificationProviderProps) =>
       {children}
     </NotificationContext.Provider>
   );
-};
+}
+
