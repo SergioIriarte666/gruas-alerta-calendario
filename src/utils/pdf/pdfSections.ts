@@ -118,7 +118,7 @@ const addDashboardMetrics = (doc: jsPDF, data: InspectionPDFData, yPosition: num
   doc.setFont('helvetica', 'normal');
   doc.text('ESTADO', card3X + 5, yPosition + 25);
   
-  // Círculo de estado
+  // Círculo de estado - CORREGIDO
   const circleX = card3X + cardWidth - 15;
   const circleY = yPosition + 15;
   const statusColor = completionRate === 100 ? COLORS.success : COLORS.warning;
