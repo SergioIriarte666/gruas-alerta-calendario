@@ -18,11 +18,11 @@ export const addServiceInfo = (doc: jsPDF, data: InspectionPDFData, yPosition: n
     const serviceData = [
       ['Folio:', data.service.folio || 'N/A'],
       ['Cliente:', data.service.client?.name || 'N/A'],
-      ['Fecha de Servicio:', new Date(data.service.service_date).toLocaleDateString('es-CL')],
+      ['Fecha de Servicio:', new Date(data.service.serviceDate).toLocaleDateString('es-CL')],
       ['Origen:', data.service.origin],
       ['Destino:', data.service.destination],
-      ['Vehículo:', `${data.service.vehicle_brand} ${data.service.vehicle_model} - ${data.service.license_plate}`],
-      ['Grúa:', data.service.crane?.license_plate || 'N/A'],
+      ['Vehículo:', `${data.service.vehicleBrand} ${data.service.vehicleModel} - ${data.service.licensePlate}`],
+      ['Grúa:', data.service.crane?.licensePlate || 'N/A'],
       ['Operador:', data.service.operator?.name || 'N/A'],
     ];
 
