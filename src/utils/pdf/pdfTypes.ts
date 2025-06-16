@@ -19,5 +19,6 @@ export interface InspectionPDFData {
     address: string;
     phone: string;
     email: string;
+    logoUrl?: string;
   };
 }

@@ -30,6 +30,8 @@ export const addPhotosSection = async (
     let photoWidth = (pageWidth - 60) / photosPerRow;
     let photoHeight = photoWidth * 0.75;
 
+    let validPhotosAdded = 0;
+
     for (let i = 0; i < photoNames.length; i += photosPerRow) {
       // Verificar espacio para fotos
       if (yPosition + photoHeight > 280) {
@@ -52,66 +54,51 @@ export const addPhotosSection = async (
           if (photoData && photoData.startsWith('data:image')) {
             const xPos = 20 + j * (photoWidth + 10);
             
-            // Verificar que la imagen sea válida antes de agregarla
-            const img = new Image();
-            img.onload = () => {
-              try {
-                doc.addImage(photoData, 'JPEG', xPos, yPosition, photoWidth, photoHeight);
-                console.log(`Foto agregada exitosamente: ${photoName}`);
-              } catch (imageError) {
-                console.error(`Error al agregar imagen ${photoName}:`, imageError);
-                // Dibujar placeholder en caso de error
-                doc.setDrawColor(200, 200, 200);
-                doc.rect(xPos, yPosition, photoWidth, photoHeight);
-                doc.setFontSize(8);
-                doc.setTextColor(150, 150, 150);
-                doc.text('Error al cargar imagen', xPos + 10, yPosition + photoHeight / 2);
-              }
-            };
-            
-            img.onerror = () => {
-              console.error(`Imagen corrupta: ${photoName}`);
-              // Dibujar placeholder para imagen corrupta
-              const xPos = 20 + j * (photoWidth + 10);
-              doc.setDrawColor(200, 200, 200);
-              doc.rect(xPos, yPosition, photoWidth, photoHeight);
+            try {
+              // Comprimir imagen si es muy grande
+              const compressedImageData = await compressImageForPDF(photoData);
+              doc.addImage(compressedImageData, 'JPEG', xPos, yPosition, photoWidth, photoHeight);
+              
+              // Agregar watermark con timestamp
               doc.setFontSize(8);
-              doc.setTextColor(150, 150, 150);
-              doc.text('Imagen corrupta', xPos + 10, yPosition + photoHeight / 2);
-            };
-            
-            // Intentar cargar la imagen de forma síncrona para PDF
-            doc.addImage(photoData, 'JPEG', xPos, yPosition, photoWidth, photoHeight);
-            
-            // Agregar nombre de archivo debajo de la foto
-            doc.setFontSize(8);
-            doc.setTextColor(100, 100, 100);
-            doc.text(photoName, xPos, yPosition + photoHeight + 5);
-            console.log(`Foto procesada: ${photoName}`);
+              doc.setTextColor(255, 255, 255);
+              doc.text(new Date().toLocaleString('es-CL'), xPos + 2, yPosition + photoHeight - 2);
+              
+              // Agregar nombre de archivo debajo de la foto
+              doc.setFontSize(8);
+              doc.setTextColor(100, 100, 100);
+              doc.text(photoName, xPos, yPosition + photoHeight + 5);
+              
+              validPhotosAdded++;
+              console.log(`Foto procesada exitosamente: ${photoName}`);
+            } catch (imageError) {
+              console.error(`Error al agregar imagen ${photoName}:`, imageError);
+              // Dibujar placeholder en caso de error
+              drawPhotoPlaceholder(doc, xPos, yPosition, photoWidth, photoHeight, 'Error al cargar imagen');
+            }
           } else {
             console.warn(`No se encontró la foto en localStorage o formato inválido: ${photoName}`);
             // Dibujar un rectángulo placeholder
             const xPos = 20 + j * (photoWidth + 10);
-            doc.setDrawColor(200, 200, 200);
-            doc.rect(xPos, yPosition, photoWidth, photoHeight);
+            drawPhotoPlaceholder(doc, xPos, yPosition, photoWidth, photoHeight, 'Foto no disponible');
             doc.setFontSize(8);
-            doc.setTextColor(150, 150, 150);
-            doc.text('Foto no disponible', xPos + 10, yPosition + photoHeight / 2);
+            doc.setTextColor(100, 100, 100);
             doc.text(photoName, xPos, yPosition + photoHeight + 5);
           }
         } catch (error) {
           console.error(`Error al procesar foto ${photoName}:`, error);
           // Continuar con la siguiente foto sin interrumpir el proceso
           const xPos = 20 + j * (photoWidth + 10);
-          doc.setDrawColor(255, 0, 0);
-          doc.rect(xPos, yPosition, photoWidth, photoHeight);
-          doc.setFontSize(8);
-          doc.setTextColor(255, 0, 0);
-          doc.text('Error de procesamiento', xPos + 5, yPosition + photoHeight / 2);
+          drawPhotoPlaceholder(doc, xPos, yPosition, photoWidth, photoHeight, 'Error de procesamiento');
         }
       }
       yPosition += photoHeight + 15;
     }
+
+    // Agregar resumen de fotos
+    doc.setFontSize(10);
+    doc.setTextColor(100, 100, 100);
+    doc.text(`Total de fotos procesadas: ${validPhotosAdded} de ${photoNames.length}`, 20, yPosition);
     yPosition += 10;
 
     return yPosition;
@@ -120,4 +107,73 @@ export const addPhotosSection = async (
     // Retornar una posición segura en caso de error
     return yPosition + 50;
   }
+};
+
+const compressImageForPDF = async (imageData: string): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    try {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        if (!ctx) {
+          resolve(imageData); // Return original if compression fails
+          return;
+        }
+        
+        // Calcular nuevas dimensiones manteniendo aspect ratio
+        const maxWidth = 800;
+        const maxHeight = 600;
+        let { width, height } = img;
+        
+        if (width > height) {
+          if (width > maxWidth) {
+            height = (height * maxWidth) / width;
+            width = maxWidth;
+          }
+        } else {
+          if (height > maxHeight) {
+            width = (width * maxHeight) / height;
+            height = maxHeight;
+          }
+        }
+        
+        canvas.width = width;
+        canvas.height = height;
+        
+        // Dibujar imagen redimensionada
+        ctx.drawImage(img, 0, 0, width, height);
+        
+        // Convertir a JPEG con calidad reducida
+        const compressedData = canvas.toDataURL('image/jpeg', 0.7);
+        resolve(compressedData);
+      };
+      
+      img.onerror = () => {
+        console.warn('Error comprimiendo imagen, usando original');
+        resolve(imageData);
+      };
+      
+      img.src = imageData;
+    } catch (error) {
+      console.warn('Error en compresión de imagen:', error);
+      resolve(imageData);
+    }
+  });
+};
+
+const drawPhotoPlaceholder = (
+  doc: jsPDF, 
+  x: number, 
+  y: number, 
+  width: number, 
+  height: number, 
+  message: string
+) => {
+  doc.setDrawColor(200, 200, 200);
+  doc.rect(x, y, width, height);
+  doc.setFontSize(8);
+  doc.setTextColor(150, 150, 150);
+  doc.text(message, x + 10, y + height / 2);
 };
