@@ -1,81 +1,69 @@
 
-import { EquipmentCategory } from '@/types/equipment';
+export interface EquipmentItem {
+  id: string;
+  name: string;
+}
+
+export interface EquipmentCategory {
+  id: string;
+  name: string;
+  items: EquipmentItem[];
+}
 
 export const vehicleEquipment: EquipmentCategory[] = [
   {
-    id: 'vehicle_equipment',
-    name: 'Equipamiento del Vehículo',
+    id: 'safety',
+    name: 'Equipos de Seguridad',
     items: [
-      { id: 'espejo_interno', name: 'Espejo Interno' },
-      { id: 'sombrilla', name: 'Sombrilla' },
-      { id: 'encendedor', name: 'Encendedor' },
-      { id: 'radio', name: 'Radio' },
-      { id: 'cint_seguridad', name: 'Cint. Seguridad' },
-      { id: 'tag', name: 'TAG' },
-      { id: 'piso_goma', name: 'Piso Goma' },
-      { id: 'parlantes', name: 'Parlantes' },
-      { id: 'cenicero', name: 'Cenicero' },
-      { id: 'consola', name: 'Consola' },
-      { id: 'emblemas', name: 'Emblemas' },
-      { id: 'chaleco_reflectante', name: 'Chaleco Reflectante' },
-      { id: 'espejo_exterior', name: 'Espejo Exterior' },
-      { id: 'limp_parab', name: 'Limp. Parab.' },
-      { id: 'neblineros', name: 'Neblineros' },
-      { id: 'antena', name: 'Antena' },
-      { id: 'rueda_del_izq', name: 'Rueda Del Izq.' },
-      { id: 'extintor_10k', name: 'Extintor 10 K.' },
-      { id: 'rueda_del_der', name: 'Rueda Del Der.' },
-      { id: 'rueda_tra_izq', name: 'Rueda Tra.Izq.' },
-      { id: 'rueda_tra_der', name: 'Rueda Tra.Der.' },
-      { id: 'tapa_ruedas', name: 'Tapa Ruedas' },
-      { id: 'tapa_bencina', name: 'Tapa Bencina' },
-      { id: 'cunas', name: 'Cuñas' },
-      { id: 'bateria', name: 'Batería' },
-      { id: 'tapa_radiador', name: 'Tapa Radiador' },
-      { id: 'triangulos', name: 'Triángulos' },
-      { id: 'gata', name: 'Gata' },
-      { id: 'rueda_rpto', name: 'Rueda Rpto.' },
-      { id: 'baliza', name: 'Baliza' },
-      { id: 'extintor', name: 'Extintor' },
-      { id: 'botiquin', name: 'Botiquín' },
-      { id: 'llave_rueda', name: 'Llave Rueda' },
-      { id: 'caja_invierno', name: 'Caja Invierno' },
-      { id: 'pertiga', name: 'Pértiga' },
-    ],
+      { id: 'safety-cone', name: 'Conos de seguridad' },
+      { id: 'warning-triangle', name: 'Triángulos de emergencia' },
+      { id: 'reflective-vest', name: 'Chaleco reflectante' },
+      { id: 'first-aid-kit', name: 'Botiquín de primeros auxilios' },
+      { id: 'fire-extinguisher', name: 'Extintor' },
+      { id: 'safety-lights', name: 'Luces de emergencia' }
+    ]
   },
   {
-    id: 'keys_collected',
-    name: 'Llaves Recogidas',
+    id: 'tools',
+    name: 'Herramientas',
     items: [
-      { id: 'llave_contacto', name: 'Llave de contacto' },
-      { id: 'llave_repuesto', name: 'Llave de repuesto' },
-      { id: 'control_remoto', name: 'Control remoto' },
-      { id: 'llave_combustible', name: 'Llave de combustible' },
-      { id: 'llaves_adicionales', name: 'Llaves adicionales' },
-    ],
+      { id: 'wrench-set', name: 'Juego de llaves' },
+      { id: 'screwdriver-set', name: 'Destornilladores' },
+      { id: 'tire-iron', name: 'Llave de ruedas' },
+      { id: 'jack', name: 'Gata hidráulica' },
+      { id: 'cable-cutter', name: 'Cortador de cables' },
+      { id: 'hammer', name: 'Martillo' }
+    ]
   },
   {
-    id: 'documents_collected',
-    name: 'Documentos Recogidos',
+    id: 'lifting',
+    name: 'Equipo de Elevación',
     items: [
-      { id: 'permiso_circulacion', name: 'Permiso de circulación' },
-      { id: 'seguro_obligatorio', name: 'Seguro obligatorio' },
-      { id: 'revision_tecnica', name: 'Revisión técnica' },
-      { id: 'certificado_gases', name: 'Certificado de gases' },
-      { id: 'padron', name: 'Padrón' },
-      { id: 'factura_compra', name: 'Factura de compra' },
-      { id: 'manual_propietario', name: 'Manual del propietario' },
-      { id: 'tarjeta_servicio', name: 'Tarjeta de servicio' },
-    ],
+      { id: 'chains', name: 'Cadenas de elevación' },
+      { id: 'straps', name: 'Correas de amarre' },
+      { id: 'hooks', name: 'Ganchos de seguridad' },
+      { id: 'shackles', name: 'Grilletes' },
+      { id: 'slings', name: 'Eslingas' },
+      { id: 'blocks', name: 'Bloques de madera' }
+    ]
   },
   {
-    id: 'client_exclusive_use',
-    name: 'Uso Exclusivo del Cliente',
+    id: 'communication',
+    name: 'Comunicación',
     items: [
-      { id: 'objetos_personales', name: 'Objetos personales' },
-      { id: 'documentos_personales', name: 'Documentos personales' },
-      { id: 'equipos_electronicos', name: 'Equipos electrónicos' },
-      { id: 'otros_objetos', name: 'Otros objetos de valor' },
-    ],
+      { id: 'radio', name: 'Radio comunicador' },
+      { id: 'phone', name: 'Teléfono móvil' },
+      { id: 'whistle', name: 'Silbato de emergencia' }
+    ]
   },
+  {
+    id: 'documentation',
+    name: 'Documentación',
+    items: [
+      { id: 'license', name: 'Licencia de conducir' },
+      { id: 'vehicle-registration', name: 'Permiso de circulación' },
+      { id: 'insurance', name: 'Seguro vigente' },
+      { id: 'inspection-forms', name: 'Formularios de inspección' }
+    ]
+  }
 ];

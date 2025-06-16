@@ -37,10 +37,10 @@ const queryClient = new QueryClient({
 const App: React.FC = () => {
   return (
     <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <AuthProvider>
-          <UserProvider>
-            <NotificationProvider>
+      <AuthProvider>
+        <UserProvider>
+          <NotificationProvider>
+            <BrowserRouter>
               <Routes>
                 <Route path="/auth" element={<Auth />} />
                 
@@ -74,10 +74,10 @@ const App: React.FC = () => {
                 
                 <Route path="*" element={<NotFound />} />
               </Routes>
-            </NotificationProvider>
-          </UserProvider>
-        </AuthProvider>
-      </BrowserRouter>
+            </BrowserRouter>
+          </NotificationProvider>
+        </UserProvider>
+      </AuthProvider>
     </QueryClientProvider>
   );
 };
