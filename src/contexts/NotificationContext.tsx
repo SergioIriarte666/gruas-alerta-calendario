@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import { useNotificationsData } from '@/hooks/useNotificationsData';
 import { Notification } from '@/types/notifications';
@@ -24,21 +25,25 @@ interface NotificationProviderProps {
   children: ReactNode;
 }
 
-export function NotificationProvider({ children }: NotificationProviderProps) {
+export const NotificationProvider: React.FC<NotificationProviderProps> = ({ children }) => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const { notifications: fetchedNotifications } = useNotificationsData();
 
   useEffect(() => {
-    const storedReadIds = JSON.parse(localStorage.getItem('read_notification_ids') || '[]');
-    const readIds = new Set<string>(storedReadIds);
-    
-    const mergedNotifications = fetchedNotifications.map(n => ({
-        ...n,
-        read: readIds.has(n.id)
-    }));
+    try {
+      const storedReadIds = JSON.parse(localStorage.getItem('read_notification_ids') || '[]');
+      const readIds = new Set<string>(storedReadIds);
       
-    setNotifications(mergedNotifications);
-
+      const mergedNotifications = fetchedNotifications.map(n => ({
+          ...n,
+          read: readIds.has(n.id)
+      }));
+        
+      setNotifications(mergedNotifications);
+    } catch (error) {
+      console.error('Error loading notifications:', error);
+      setNotifications(fetchedNotifications.map(n => ({ ...n, read: false })));
+    }
   }, [fetchedNotifications]);
 
   const addNotification = (notification: Omit<Notification, 'id' | 'timestamp' | 'read'>) => {
@@ -52,37 +57,47 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
   };
 
   const markAsRead = (id: string) => {
-    const storedReadIds = JSON.parse(localStorage.getItem('read_notification_ids') || '[]');
-    const readIds = new Set<string>(storedReadIds);
-    readIds.add(id);
-    localStorage.setItem('read_notification_ids', JSON.stringify(Array.from(readIds)));
+    try {
+      const storedReadIds = JSON.parse(localStorage.getItem('read_notification_ids') || '[]');
+      const readIds = new Set<string>(storedReadIds);
+      readIds.add(id);
+      localStorage.setItem('read_notification_ids', JSON.stringify(Array.from(readIds)));
 
-    setNotifications(prev => 
-      prev.map(notification => 
-        notification.id === id ? { ...notification, read: true } : notification
-      )
-    );
+      setNotifications(prev => 
+        prev.map(notification => 
+          notification.id === id ? { ...notification, read: true } : notification
+        )
+      );
+    } catch (error) {
+      console.error('Error marking notification as read:', error);
+    }
   };
 
   const markAllAsRead = () => {
-    const allIds = notifications.map(n => n.id);
-    localStorage.setItem('read_notification_ids', JSON.stringify(allIds));
-    setNotifications(prev => 
-      prev.map(notification => ({ ...notification, read: true }))
-    );
+    try {
+      const allIds = notifications.map(n => n.id);
+      localStorage.setItem('read_notification_ids', JSON.stringify(allIds));
+      setNotifications(prev => 
+        prev.map(notification => ({ ...notification, read: true }))
+      );
+    } catch (error) {
+      console.error('Error marking all notifications as read:', error);
+    }
   };
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
+  const value: NotificationContextType = {
+    notifications,
+    addNotification,
+    markAsRead,
+    markAllAsRead,
+    unreadCount
+  };
+
   return (
-    <NotificationContext.Provider value={{
-      notifications,
-      addNotification,
-      markAsRead,
-      markAllAsRead,
-      unreadCount
-    }}>
+    <NotificationContext.Provider value={value}>
       {children}
     </NotificationContext.Provider>
   );
-}
+};
