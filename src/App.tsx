@@ -83,8 +83,8 @@ const AppContent: React.FC = () => {
       <AuthProvider>
         <UserProvider>
           <NotificationProvider>
-            <Sonner />
             <AppRoutes />
+            <Sonner />
           </NotificationProvider>
         </UserProvider>
       </AuthProvider>
