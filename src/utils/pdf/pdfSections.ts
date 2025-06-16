@@ -3,187 +3,189 @@ import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import { InspectionPDFData } from './pdfTypes';
 import { vehicleEquipment } from '@/data/equipmentData';
-import { format } from 'date-fns';
-import { es } from 'date-fns/locale';
-
-// Extend jsPDF interface to include autoTable
-declare module 'jspdf' {
-  interface jsPDF {
-    autoTable: (options: any) => jsPDF;
-    lastAutoTable: { finalY: number };
-  }
-}
 
 export const addServiceInfo = (doc: jsPDF, data: InspectionPDFData, yPosition: number): number => {
   try {
-    // Información del servicio mejorada
-    doc.setFontSize(14);
+    const pageWidth = doc.internal.pageSize.width;
+    
+    // Título de la sección
+    doc.setFontSize(12);
     doc.setTextColor(0, 150, 136);
-    doc.text('DATOS DEL SERVICIO', 20, yPosition);
-    yPosition += 10;
+    doc.text('INFORMACIÓN DEL SERVICIO', 20, yPosition);
+    yPosition += 8;
 
+    // Crear tabla con información del servicio
     const serviceData = [
-      ['Folio:', data.service.folio || 'No especificado'],
-      ['Cliente:', data.service.client?.name || 'No especificado'],
-      ['RUT Cliente:', data.service.client?.rut || 'No especificado'],
-      ['Tipo de Servicio:', data.service.serviceType?.name || 'No especificado'],
-      ['Fecha:', data.service.serviceDate ? format(new Date(data.service.serviceDate), "dd 'de' MMMM 'de' yyyy", { locale: es }) : 'No especificado'],
-      ['Valor del Servicio:', `$${(data.service.value || 0).toLocaleString('es-CL')}`],
-      ['Origen:', data.service.origin || 'No especificado'],
-      ['Destino:', data.service.destination || 'No especificado'],
-      ['Vehículo:', `${data.service.vehicleBrand || ''} ${data.service.vehicleModel || ''} - ${data.service.licensePlate || ''}`.trim()],
-      ['Grúa:', `${data.service.crane?.licensePlate || 'No asignada'} (${data.service.crane?.brand || ''} ${data.service.crane?.model || ''})`.trim()],
-      ['Operador:', data.service.operator?.name || 'No asignado'],
-      ['Orden de Compra:', data.service.purchaseOrder || 'No especificada'],
+      ['Folio:', data.service.folio || 'N/A'],
+      ['Cliente:', data.service.client?.name || 'N/A'],
+      ['Fecha de Servicio:', new Date(data.service.service_date).toLocaleDateString('es-CL')],
+      ['Origen:', data.service.origin],
+      ['Destino:', data.service.destination],
+      ['Vehículo:', `${data.service.vehicle_brand} ${data.service.vehicle_model} - ${data.service.license_plate}`],
+      ['Grúa:', data.service.crane?.license_plate || 'N/A'],
+      ['Operador:', data.service.operator?.name || 'N/A'],
     ];
 
-    doc.autoTable({
+    (doc as any).autoTable({
       startY: yPosition,
+      head: [],
       body: serviceData,
       theme: 'grid',
-      styles: { fontSize: 9, cellPadding: 3 },
-      columnStyles: { 
-        0: { fontStyle: 'bold', cellWidth: 50, fillColor: [240, 240, 240] },
-        1: { cellWidth: 120 }
+      columnStyles: {
+        0: { cellWidth: 40, fontStyle: 'bold' },
+        1: { cellWidth: 130 }
       },
+      styles: {
+        fontSize: 9,
+        cellPadding: 3,
+      },
+      headStyles: {
+        fillColor: [0, 150, 136],
+        textColor: [255, 255, 255],
+      },
+      margin: { left: 20, right: 20 },
     });
 
-    return doc.lastAutoTable.finalY + 15;
+    yPosition = (doc as any).lastAutoTable.finalY + 15;
+
+    console.log('Información del servicio agregada correctamente');
+    return yPosition;
   } catch (error) {
     console.error('Error en addServiceInfo:', error);
-    return yPosition + 80;
+    return yPosition + 50;
   }
 };
 
 export const addEquipmentChecklist = (doc: jsPDF, data: InspectionPDFData, yPosition: number): number => {
   try {
-    // Verificar si necesitamos nueva página
+    const pageWidth = doc.internal.pageSize.width;
+    
+    // Verificar si necesitamos una nueva página
     if (yPosition > 200) {
       doc.addPage();
       yPosition = 20;
     }
 
-    // Inventario del vehículo mejorado
-    doc.setFontSize(14);
+    // Título de la sección
+    doc.setFontSize(12);
     doc.setTextColor(0, 150, 136);
-    doc.text('INVENTARIO DEL VEHÍCULO', 20, yPosition);
-    yPosition += 10;
+    doc.text('INVENTARIO DE EQUIPOS Y ACCESORIOS', 20, yPosition);
+    yPosition += 8;
 
-    const equipmentData: string[][] = [];
-    const checkedItems = data.inspection.equipment || [];
-    
-    console.log('Equipment seleccionado:', checkedItems);
+    // Crear un mapa de los elementos seleccionados
+    const selectedEquipment = data.inspection.equipment || [];
+    console.log('Equipos seleccionados:', selectedEquipment);
+
+    // Obtener detalles de los equipos seleccionados
+    const equipmentDetails: Array<[string, string, string]> = [];
     
     vehicleEquipment.forEach(category => {
-      // Agregar cabecera de categoría
-      equipmentData.push([category.name, '', 'CATEGORÍA']);
+      const categoryItems = category.items.filter(item => 
+        selectedEquipment.includes(item.id)
+      );
       
-      // Agregar elementos de la categoría con estado correcto
-      category.items.forEach(item => {
-        const isChecked = checkedItems.includes(item.id);
-        const status = isChecked ? '✓ SÍ' : '✗ NO';
-        equipmentData.push(['', item.name, status]);
-      });
-      
-      // Agregar línea separadora entre categorías
-      if (category !== vehicleEquipment[vehicleEquipment.length - 1]) {
-        equipmentData.push(['', '', '']);
+      if (categoryItems.length > 0) {
+        // Agregar encabezado de categoría
+        equipmentDetails.push([category.name, '', '✓']);
+        
+        // Agregar elementos de la categoría
+        categoryItems.forEach(item => {
+          equipmentDetails.push(['', item.name, '✓']);
+        });
       }
     });
 
-    doc.autoTable({
-      head: [['Categoría', 'Elemento', 'Estado']],
-      body: equipmentData,
+    if (equipmentDetails.length === 0) {
+      equipmentDetails.push(['Sin equipos seleccionados', '', '']);
+    }
+
+    // Crear tabla con el inventario
+    (doc as any).autoTable({
       startY: yPosition,
-      theme: 'grid',
-      styles: { fontSize: 8, cellPadding: 2 },
-      columnStyles: { 
-        0: { cellWidth: 45, fontStyle: 'bold' },
-        1: { cellWidth: 100 },
-        2: { cellWidth: 25, halign: 'center', fontStyle: 'bold' }
+      head: [['Categoría/Elemento', 'Descripción', 'Estado']],
+      body: equipmentDetails,
+      theme: 'striped',
+      columnStyles: {
+        0: { cellWidth: 70, fontStyle: function(data: any) {
+          return data.row.raw[1] === '' ? 'bold' : 'normal';
+        }},
+        1: { cellWidth: 80 },
+        2: { cellWidth: 20, halign: 'center' }
       },
-      didParseCell: (data) => {
-        if (data.row.raw && data.row.raw.length > 2) {
-          if (data.row.raw[2] === 'CATEGORÍA') {
-            data.cell.styles.fillColor = [0, 150, 136];
-            data.cell.styles.textColor = [255, 255, 255];
-            data.cell.styles.fontStyle = 'bold';
-          }
-          if (data.row.raw[2] === '✓ SÍ') {
-            data.cell.styles.textColor = [0, 150, 0];
-            data.cell.styles.fontStyle = 'bold';
-          }
-          if (data.row.raw[2] === '✗ NO') {
-            data.cell.styles.textColor = [200, 0, 0];
-            data.cell.styles.fontStyle = 'bold';
-          }
-        }
-      }
+      styles: {
+        fontSize: 9,
+        cellPadding: 2,
+        textColor: [0, 0, 0],
+      },
+      headStyles: {
+        fillColor: [0, 150, 136],
+        textColor: [255, 255, 255],
+        fontStyle: 'bold'
+      },
+      alternateRowStyles: {
+        fillColor: [245, 245, 245]
+      },
+      margin: { left: 20, right: 20 },
     });
 
-    return doc.lastAutoTable.finalY + 15;
+    yPosition = (doc as any).lastAutoTable.finalY + 15;
+
+    console.log('Checklist de equipos agregado correctamente');
+    return yPosition;
   } catch (error) {
     console.error('Error en addEquipmentChecklist:', error);
-    return yPosition + 100;
+    return yPosition + 50;
   }
 };
 
 export const addObservationsAndSignatures = (doc: jsPDF, data: InspectionPDFData, yPosition: number): number => {
   try {
-    // Verificar si necesitamos nueva página
+    const pageWidth = doc.internal.pageSize.width;
+    
+    // Verificar si necesitamos una nueva página
     if (yPosition > 220) {
       doc.addPage();
       yPosition = 20;
     }
 
-    doc.setFontSize(14);
-    doc.setTextColor(0, 150, 136);
-    doc.text('OBSERVACIONES Y FIRMAS', 20, yPosition);
-    yPosition += 15;
-
-    const pageWidth = doc.internal.pageSize.width;
-
-    // Observaciones del vehículo
+    // Observaciones
     if (data.inspection.vehicleObservations) {
       doc.setFontSize(12);
-      doc.setTextColor(0, 0, 0);
-      doc.text('Observaciones del vehículo:', 20, yPosition);
-      yPosition += 8;
+      doc.setTextColor(0, 150, 136);
+      doc.text('OBSERVACIONES DEL VEHÍCULO', 20, yPosition);
+      yPosition += 10;
+
       doc.setFontSize(10);
-      const splitText = doc.splitTextToSize(data.inspection.vehicleObservations, pageWidth - 40);
-      doc.text(splitText, 20, yPosition);
-      yPosition += splitText.length * 5 + 15;
+      doc.setTextColor(0, 0, 0);
+      const splitObservations = doc.splitTextToSize(data.inspection.vehicleObservations, pageWidth - 40);
+      doc.text(splitObservations, 20, yPosition);
+      yPosition += splitObservations.length * 5 + 15;
     }
 
-    // Información de firmas y validación
-    const signaturesData = [
-      ['Firma del Operador:', data.inspection.operatorSignature || 'No especificado'],
-      ['Cliente (si presente):', data.inspection.clientName || 'No especificado'],
-      ['RUT del Cliente:', data.inspection.clientRut || 'No especificado'],
-      ['Fecha de Inspección:', format(new Date(), "dd/MM/yyyy HH:mm", { locale: es })],
-      ['Valor del Servicio:', `$${(data.service.value || 0).toLocaleString('es-CL')}`],
-      ['Estado del Servicio:', data.service.status || 'En proceso'],
-    ];
+    // Firmas
+    doc.setFontSize(12);
+    doc.setTextColor(0, 150, 136);
+    doc.text('FIRMAS Y VALIDACIÓN', 20, yPosition);
+    yPosition += 20;
 
-    doc.autoTable({
-      startY: yPosition,
-      body: signaturesData,
-      theme: 'grid',
-      styles: { fontSize: 10, cellPadding: 4 },
-      columnStyles: { 
-        0: { fontStyle: 'bold', cellWidth: 60, fillColor: [240, 240, 240] },
-        1: { cellWidth: 110 }
-      },
-    });
+    // Firma del operador
+    doc.setFontSize(10);
+    doc.setTextColor(0, 0, 0);
+    doc.text('_____________________________', 30, yPosition);
+    doc.text('Firma del Operador', 30, yPosition + 8);
+    doc.text(`${data.inspection.operatorSignature}`, 30, yPosition + 16);
 
-    // Agregar nota al pie
-    const finalY = doc.lastAutoTable.finalY + 20;
-    doc.setFontSize(8);
-    doc.setTextColor(100, 100, 100);
-    doc.text('Este documento certifica el estado del vehículo e inventario al momento de la inspección pre-servicio.', 20, finalY);
-    doc.text(`Documento generado automáticamente el ${format(new Date(), "dd/MM/yyyy 'a las' HH:mm", { locale: es })}`, 20, finalY + 8);
+    // Firma del cliente (si existe)
+    if (data.inspection.clientName) {
+      doc.text('_____________________________', pageWidth - 100, yPosition);
+      doc.text('Firma del Cliente', pageWidth - 100, yPosition + 8);
+      doc.text(`${data.inspection.clientName}`, pageWidth - 100, yPosition + 16);
+    }
 
-    return finalY + 20;
+    yPosition += 30;
+
+    console.log('Observaciones y firmas agregadas correctamente');
+    return yPosition;
   } catch (error) {
     console.error('Error en addObservationsAndSignatures:', error);
     return yPosition + 50;

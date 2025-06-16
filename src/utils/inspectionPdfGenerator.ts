@@ -109,8 +109,8 @@ export const generateInspectionPDF = async (data: {
 
     console.log('Generando PDF con datos completos:', pdfData);
 
-    // Add header corporativo
-    let yPosition = addPDFHeader(doc, pdfData);
+    // Add header corporativo (ahora es asíncrono)
+    let yPosition = await addPDFHeader(doc, pdfData);
     console.log('Header agregado, yPosition:', yPosition);
 
     // Add service information

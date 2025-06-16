@@ -2,19 +2,50 @@
 import jsPDF from 'jspdf';
 import { InspectionPDFData } from './pdfTypes';
 
-export const addPDFHeader = (doc: jsPDF, data: InspectionPDFData): number => {
+const loadImageAsBase64 = async (url: string): Promise<string | null> => {
+  try {
+    console.log('Cargando imagen desde:', url);
+    const response = await fetch(url);
+    if (!response.ok) {
+      console.warn('Error al cargar imagen:', response.status);
+      return null;
+    }
+    
+    const blob = await response.blob();
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = () => resolve(null);
+      reader.readAsDataURL(blob);
+    });
+  } catch (error) {
+    console.warn('Error procesando imagen:', error);
+    return null;
+  }
+};
+
+export const addPDFHeader = async (doc: jsPDF, data: InspectionPDFData): Promise<number> => {
   const pageWidth = doc.internal.pageSize.width;
   let yPosition = 20;
 
   try {
-    // Intentar cargar logo si está disponible
+    // Intentar cargar y agregar logo si está disponible
     if (data.companyData?.logoUrl) {
       try {
         console.log('Intentando cargar logo:', data.companyData.logoUrl);
-        // Por ahora, procedemos sin logo ya que requiere manejo async
-        // En versiones futuras se puede implementar carga async del logo
+        const logoBase64 = await loadImageAsBase64(data.companyData.logoUrl);
+        
+        if (logoBase64) {
+          console.log('Logo cargado exitosamente, agregando al PDF');
+          // Agregar logo en la esquina superior izquierda
+          doc.addImage(logoBase64, 'PNG', 20, yPosition, 40, 20);
+          // Ajustar posición del texto para dar espacio al logo
+          yPosition += 25;
+        } else {
+          console.warn('No se pudo cargar el logo, continuando sin él');
+        }
       } catch (error) {
-        console.warn('No se pudo cargar el logo:', error);
+        console.warn('Error al procesar logo:', error);
       }
     }
 
