@@ -12,7 +12,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { toast } from 'sonner';
+import { useToast } from '@/components/ui/custom-toast';
 import { useUser } from '@/contexts/UserContext';
 import { NotificationsDropdown } from './NotificationsDropdown';
 
@@ -23,19 +23,24 @@ interface HeaderProps {
 export const Header = ({ setIsMobileMenuOpen }: HeaderProps) => {
   const navigate = useNavigate();
   const { user, logout } = useUser();
+  const { toast } = useToast();
   const isAdmin = user?.role === 'admin';
 
   const handleLogout = async () => {
     try {
       await logout();
-      toast.success("Sesión cerrada", {
-        description: "Has cerrado sesión correctamente",
+      toast({
+        type: 'success',
+        title: 'Sesión cerrada',
+        description: 'Has cerrado sesión correctamente'
       });
       window.location.href = '/auth';
     } catch (error) {
       console.error("Logout failed:", error);
-      toast.error("Error al cerrar sesión", {
-        description: "Por favor, intenta de nuevo."
+      toast({
+        type: 'error',
+        title: 'Error al cerrar sesión',
+        description: 'Por favor, intenta de nuevo.'
       });
     }
   };

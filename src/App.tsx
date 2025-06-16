@@ -1,6 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
-import { Toaster as Sonner } from "@/components/ui/sonner";
+import React from 'react';
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
@@ -77,25 +76,18 @@ const AppRoutes: React.FC = () => {
   );
 };
 
-const AppContent: React.FC = () => {
-  return (
-    <BrowserRouter>
-      <AuthProvider>
-        <UserProvider>
-          <NotificationProvider>
-            <AppRoutes />
-            <Sonner />
-          </NotificationProvider>
-        </UserProvider>
-      </AuthProvider>
-    </BrowserRouter>
-  );
-};
-
 const App: React.FC = () => {
   return (
     <QueryClientProvider client={queryClient}>
-      <AppContent />
+      <BrowserRouter>
+        <AuthProvider>
+          <UserProvider>
+            <NotificationProvider>
+              <AppRoutes />
+            </NotificationProvider>
+          </UserProvider>
+        </AuthProvider>
+      </BrowserRouter>
     </QueryClientProvider>
   );
 };

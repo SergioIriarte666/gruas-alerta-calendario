@@ -13,7 +13,7 @@ import { ServiceDetailsCard } from '@/components/operator/ServiceDetailsCard';
 import { InspectionFormSections } from '@/components/operator/InspectionFormSections';
 import { PDFProgress } from '@/components/operator/PDFProgress';
 import { ArrowLeft, Download } from 'lucide-react';
-import { toast } from 'sonner';
+import { useToast } from '@/components/ui/custom-toast';
 
 const ServiceInspection = () => {
   const {
@@ -30,6 +30,8 @@ const ServiceInspection = () => {
     handleManualDownload,
     navigate
   } = useServiceInspection();
+
+  const { toast } = useToast();
 
   const form = useForm<InspectionFormValues>({
     resolver: zodResolver(inspectionFormSchema),
@@ -52,10 +54,10 @@ const ServiceInspection = () => {
     if (id) {
       const savedData = loadFormData();
       if (savedData) {
-        toast.info('Datos del formulario restaurados');
+        toast({ type: 'info', title: 'Datos del formulario restaurados' });
       }
     }
-  }, [id, loadFormData]);
+  }, [id, loadFormData, toast]);
 
   const onSubmit = (values: InspectionFormValues) => {
     console.log('Datos del formulario:', values);
@@ -63,7 +65,7 @@ const ServiceInspection = () => {
     // Validar antes de procesar
     const validationErrors = validateFormBeforeSubmit(values);
     if (validationErrors.length > 0) {
-      validationErrors.forEach(error => toast.error(error));
+      validationErrors.forEach(error => toast({ type: 'error', title: error }));
       return;
     }
     

@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUser } from '@/contexts/UserContext';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
+import { useToast } from '@/components/ui/custom-toast';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -19,6 +19,7 @@ const Auth = () => {
   const { user: authUser, session, loading: authLoading } = useAuth();
   const { user: profileUser, loading: profileLoading } = useUser();
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   useEffect(() => {
     if (!authLoading && !profileLoading && authUser && profileUser) {
@@ -39,9 +40,9 @@ const Auth = () => {
 
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
-      toast.error('Error al iniciar sesión', { description: error.message });
+      toast({ type: 'error', title: 'Error al iniciar sesión', description: error.message });
     } else {
-      toast.success('Inicio de sesión exitoso', { description: '¡Bienvenido de vuelta!' });
+      toast({ type: 'success', title: 'Inicio de sesión exitoso', description: '¡Bienvenido de vuelta!' });
     }
     setLoading(false);
   };
@@ -61,9 +62,9 @@ const Auth = () => {
       },
     });
     if (error) {
-      toast.error('Error en el registro', { description: error.message });
+      toast({ type: 'error', title: 'Error en el registro', description: error.message });
     } else {
-      toast.info('Registro exitoso', { description: 'Por favor, revisa tu correo para confirmar tu cuenta.' });
+      toast({ type: 'info', title: 'Registro exitoso', description: 'Por favor, revisa tu correo para confirmar tu cuenta.' });
     }
     setLoading(false);
   };
