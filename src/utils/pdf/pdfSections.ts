@@ -1,3 +1,4 @@
+
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import { InspectionPDFData } from './pdfTypes';
@@ -75,42 +76,40 @@ export const addEquipmentChecklist = (doc: jsPDF, data: InspectionPDFData, yPosi
     const selectedEquipment = data.inspection.equipment || [];
     console.log('Equipos seleccionados:', selectedEquipment);
 
-    // Crear lista de todos los elementos con su estado
-    const equipmentDetails: Array<[string, string]> = [];
-    
-    vehicleEquipment[0].items.forEach(item => {
+    // Obtener todos los elementos del inventario
+    const allItems = vehicleEquipment[0].items;
+    console.log('Total de elementos en inventario:', allItems.length);
+
+    // Crear tabla con todos los elementos y su estado
+    const equipmentTableData = allItems.map(item => {
       const isSelected = selectedEquipment.includes(item.id);
-      equipmentDetails.push([item.name, isSelected ? '✓' : '✗']);
+      return [item.name, isSelected ? '✓' : '✗'];
     });
 
-    if (equipmentDetails.length === 0) {
-      equipmentDetails.push(['Sin equipos disponibles', '']);
-    }
-
-    // Crear tabla con el inventario en columnas
-    const itemsPerColumn = Math.ceil(equipmentDetails.length / 3);
-    const columns: Array<[string, string, string, string, string, string]> = [];
+    // Dividir en 3 columnas para mejor presentación
+    const itemsPerColumn = Math.ceil(equipmentTableData.length / 3);
+    const tableRows: Array<[string, string, string, string, string, string]> = [];
     
     for (let i = 0; i < itemsPerColumn; i++) {
-      const col1 = equipmentDetails[i] || ['', ''];
-      const col2 = equipmentDetails[i + itemsPerColumn] || ['', ''];
-      const col3 = equipmentDetails[i + itemsPerColumn * 2] || ['', ''];
+      const col1 = equipmentTableData[i] || ['', ''];
+      const col2 = equipmentTableData[i + itemsPerColumn] || ['', ''];
+      const col3 = equipmentTableData[i + itemsPerColumn * 2] || ['', ''];
       
-      columns.push([col1[0], col1[1], col2[0], col2[1], col3[0], col3[1]]);
+      tableRows.push([col1[0], col1[1], col2[0], col2[1], col3[0], col3[1]]);
     }
 
     (doc as any).autoTable({
       startY: yPosition,
       head: [['Elemento', '✓', 'Elemento', '✓', 'Elemento', '✓']],
-      body: columns,
+      body: tableRows,
       theme: 'striped',
       columnStyles: {
-        0: { cellWidth: 50 },
-        1: { cellWidth: 10, halign: 'center' },
-        2: { cellWidth: 50 },
-        3: { cellWidth: 10, halign: 'center' },
-        4: { cellWidth: 50 },
-        5: { cellWidth: 10, halign: 'center' }
+        0: { cellWidth: 50, fontSize: 8 },
+        1: { cellWidth: 10, halign: 'center', fontSize: 10 },
+        2: { cellWidth: 50, fontSize: 8 },
+        3: { cellWidth: 10, halign: 'center', fontSize: 10 },
+        4: { cellWidth: 50, fontSize: 8 },
+        5: { cellWidth: 10, halign: 'center', fontSize: 10 }
       },
       styles: {
         fontSize: 8,
@@ -120,7 +119,8 @@ export const addEquipmentChecklist = (doc: jsPDF, data: InspectionPDFData, yPosi
       headStyles: {
         fillColor: [0, 150, 136],
         textColor: [255, 255, 255],
-        fontStyle: 'bold'
+        fontStyle: 'bold',
+        fontSize: 9
       },
       alternateRowStyles: {
         fillColor: [245, 245, 245]
@@ -129,6 +129,15 @@ export const addEquipmentChecklist = (doc: jsPDF, data: InspectionPDFData, yPosi
     });
 
     yPosition = (doc as any).lastAutoTable.finalY + 15;
+
+    // Resumen de elementos seleccionados
+    const selectedCount = selectedEquipment.length;
+    const totalCount = allItems.length;
+    
+    doc.setFontSize(10);
+    doc.setTextColor(60, 60, 60);
+    doc.text(`Elementos verificados: ${selectedCount} de ${totalCount}`, 20, yPosition);
+    yPosition += 10;
 
     console.log('Checklist de equipos agregado correctamente');
     return yPosition;
