@@ -17,7 +17,7 @@ const COLORS = {
 };
 
 // Función para crear header moderno
-const addModernHeader = (doc: jsPDF): number => {
+const addModernHeader = (doc: jsPDF, data: InspectionPDFData): number => {
   const pageWidth = doc.internal.pageSize.width;
   
   // Fondo del header
@@ -28,20 +28,43 @@ const addModernHeader = (doc: jsPDF): number => {
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(18);
   doc.setFont('helvetica', 'bold');
-  doc.text('REPORTE DE INSPECCIÓN PRE-SERVICIO', 20, 15);
+  doc.text('REPORTE DE INSPECCION PRE-SERVICIO', 20, 15);
   
-  // Subtítulo
+  // Subtítulo - Nombre de la empresa
   doc.setFontSize(11);
   doc.setFont('helvetica', 'normal');
-  doc.text('TMS - Transport Management System', 20, 25);
+  doc.text(data.companyData.businessName || 'TMS - Transport Management System', 20, 25);
   
   // Información de contacto en la derecha
   doc.setFontSize(8);
-  doc.text('RUT: 12.345.678-9', pageWidth - 60, 12);
-  doc.text('Tel: +56 9 1234 5678', pageWidth - 60, 18);
-  doc.text('contacto@tms.cl', pageWidth - 60, 24);
+  doc.text(`RUT: ${data.companyData.rut || 'N/A'}`, pageWidth - 80, 12);
+  doc.text(`Tel: ${data.companyData.phone || 'N/A'}`, pageWidth - 80, 18);
+  doc.text(data.companyData.email || 'contacto@empresa.cl', pageWidth - 80, 24);
   
   return 45; // Retorna posición Y después del header
+};
+
+// Función para agregar información de la empresa después del header
+const addCompanyInfo = (doc: jsPDF, data: InspectionPDFData, yPosition: number): number => {
+  const pageWidth = doc.internal.pageSize.width;
+  
+  // Información de la empresa en formato simple
+  doc.setFontSize(9);
+  doc.setTextColor(100, 100, 100);
+  doc.setFont('helvetica', 'normal');
+  
+  const companyInfo = `${data.companyData.businessName || 'Empresa'} | RUT: ${data.companyData.rut || 'N/A'} | ${data.companyData.address || 'Direccion no disponible'}`;
+  const phoneEmail = `Tel: ${data.companyData.phone || 'N/A'} | Email: ${data.companyData.email || 'N/A'}`;
+  
+  doc.text(companyInfo, 20, yPosition);
+  doc.text(phoneEmail, 20, yPosition + 8);
+  
+  // Línea separadora
+  doc.setDrawColor(200, 200, 200);
+  doc.setLineWidth(0.5);
+  doc.line(20, yPosition + 15, pageWidth - 20, yPosition + 15);
+  
+  return yPosition + 25;
 };
 
 // Función para crear métricas dashboard
@@ -435,9 +458,11 @@ export const addObservationsAndSignatures = (doc: jsPDF, data: InspectionPDFData
 
     yPosition += signatureHeight + 25;
 
-    // Footer con timestamp - con más espacio
+    // Footer con información de la empresa
     doc.setFontSize(8);
     doc.setTextColor(100, 100, 100);
+    doc.text(`${data.companyData.businessName || 'Empresa'} - ${data.companyData.address || 'Direccion no disponible'}`, 20, yPosition);
+    yPosition += 8;
     doc.text(`Documento generado automaticamente el ${new Date().toLocaleString('es-CL')}`, 20, yPosition);
 
     console.log('Observaciones y firmas agregadas correctamente');
@@ -452,7 +477,8 @@ export const addObservationsAndSignatures = (doc: jsPDF, data: InspectionPDFData
 export const createDashboardPDF = (data: InspectionPDFData): jsPDF => {
   const doc = new jsPDF();
   
-  let yPosition = addModernHeader(doc);
+  let yPosition = addModernHeader(doc, data);
+  yPosition = addCompanyInfo(doc, data, yPosition);
   yPosition = addDashboardMetrics(doc, data, yPosition);
   yPosition = addServiceInfo(doc, data, yPosition);
   yPosition = addEquipmentChecklist(doc, data, yPosition);
