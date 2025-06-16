@@ -1,4 +1,3 @@
-
 import jsPDF from 'jspdf';
 import { InspectionPDFData } from './pdfTypes';
 
@@ -24,6 +23,35 @@ const loadImageAsBase64 = async (url: string): Promise<string | null> => {
   }
 };
 
+const getImageDimensions = (base64: string): Promise<{width: number, height: number}> => {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      resolve({ width: img.width, height: img.height });
+    };
+    img.onerror = () => {
+      resolve({ width: 100, height: 50 }); // Dimensiones por defecto
+    };
+    img.src = base64;
+  });
+};
+
+const calculateLogoDimensions = (originalWidth: number, originalHeight: number, maxWidth: number = 50, maxHeight: number = 30) => {
+  // Calcular el ratio de aspecto
+  const aspectRatio = originalWidth / originalHeight;
+  
+  let width = maxWidth;
+  let height = maxWidth / aspectRatio;
+  
+  // Si la altura calculada excede el máximo, ajustar por altura
+  if (height > maxHeight) {
+    height = maxHeight;
+    width = maxHeight * aspectRatio;
+  }
+  
+  return { width, height };
+};
+
 export const addPDFHeader = async (doc: jsPDF, data: InspectionPDFData): Promise<number> => {
   const pageWidth = doc.internal.pageSize.width;
   let yPosition = 20;
@@ -36,11 +64,27 @@ export const addPDFHeader = async (doc: jsPDF, data: InspectionPDFData): Promise
         const logoBase64 = await loadImageAsBase64(data.companyData.logoUrl);
         
         if (logoBase64) {
-          console.log('Logo cargado exitosamente, agregando al PDF');
-          // Agregar logo en la esquina superior izquierda
-          doc.addImage(logoBase64, 'PNG', 20, yPosition, 40, 20);
+          console.log('Logo cargado exitosamente, calculando dimensiones...');
+          
+          // Obtener dimensiones originales de la imagen
+          const { width: originalWidth, height: originalHeight } = await getImageDimensions(logoBase64);
+          console.log('Dimensiones originales:', { originalWidth, originalHeight });
+          
+          // Calcular dimensiones manteniendo proporciones (máximo 50x30)
+          const { width: logoWidth, height: logoHeight } = calculateLogoDimensions(
+            originalWidth, 
+            originalHeight, 
+            50, // Ancho máximo
+            30  // Alto máximo
+          );
+          
+          console.log('Dimensiones calculadas para PDF:', { logoWidth, logoHeight });
+          
+          // Agregar logo en la esquina superior izquierda con proporciones correctas
+          doc.addImage(logoBase64, 'PNG', 20, yPosition, logoWidth, logoHeight);
+          
           // Ajustar posición del texto para dar espacio al logo
-          yPosition += 25;
+          yPosition += Math.max(logoHeight + 5, 25);
         } else {
           console.warn('No se pudo cargar el logo, continuando sin él');
         }
@@ -52,7 +96,7 @@ export const addPDFHeader = async (doc: jsPDF, data: InspectionPDFData): Promise
     // Header principal mejorado
     doc.setFontSize(18);
     doc.setTextColor(0, 150, 136); // tms-green
-    doc.text('REPORTE DE INSPECCIÓN PRE-SERVICIO', pageWidth / 2, yPosition, { align: 'center' });
+    doc.text('REPORTE DE INSPECCION PRE-SERVICIO', pageWidth / 2, yPosition, { align: 'center' });
     yPosition += 12;
 
     // Información de la empresa
