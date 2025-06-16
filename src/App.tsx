@@ -1,7 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
 import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
@@ -79,32 +78,13 @@ const AppRoutes: React.FC = () => {
 };
 
 const AppContent: React.FC = () => {
-  const [isReactReady, setIsReactReady] = useState(false);
-
-  useEffect(() => {
-    // Use double requestAnimationFrame to ensure React is fully mounted and DOM is ready
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        setIsReactReady(true);
-      });
-    });
-  }, []);
-
   return (
     <BrowserRouter>
       <AuthProvider>
         <UserProvider>
           <NotificationProvider>
-            {isReactReady ? (
-              <TooltipProvider>
-                <Sonner />
-                <AppRoutes />
-              </TooltipProvider>
-            ) : (
-              <div className="flex items-center justify-center min-h-screen bg-gray-900">
-                <div className="text-white">Loading...</div>
-              </div>
-            )}
+            <Sonner />
+            <AppRoutes />
           </NotificationProvider>
         </UserProvider>
       </AuthProvider>
