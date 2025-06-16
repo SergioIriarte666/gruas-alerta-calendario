@@ -1,5 +1,5 @@
 
-import jsPDF from 'jspdf';
+iimport jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import { InspectionPDFData } from './pdfTypes';
 import { vehicleEquipment } from '@/data/equipmentData';
@@ -72,19 +72,55 @@ export const addEquipmentChecklist = (doc: jsPDF, data: InspectionPDFData, yPosi
     doc.text('INVENTARIO DE EQUIPOS Y ACCESORIOS', 20, yPosition);
     yPosition += 8;
 
-    // Crear un mapa de los elementos seleccionados
+    // OBTENER DATOS DE EQUIPOS
+    console.log('=== DEBUGGING VEHICLE EQUIPMENT ===');
+    console.log('vehicleEquipment completo:', vehicleEquipment);
+    
+    // Validar que vehicleEquipment existe y tiene datos
+    if (!vehicleEquipment || !Array.isArray(vehicleEquipment) || vehicleEquipment.length === 0) {
+      console.error('vehicleEquipment no está disponible o está vacío');
+      doc.setFontSize(10);
+      doc.setTextColor(200, 50, 50);
+      doc.text('Error: No se pudo cargar el inventario de equipos', 20, yPosition);
+      return yPosition + 20;
+    }
+
+    // Obtener items de la primera categoría (Inspección del Vehículo)
+    const firstCategory = vehicleEquipment[0];
+    console.log('Primera categoría:', firstCategory);
+    
+    if (!firstCategory || !firstCategory.items || !Array.isArray(firstCategory.items)) {
+      console.error('La primera categoría no tiene items válidos');
+      doc.setFontSize(10);
+      doc.setTextColor(200, 50, 50);
+      doc.text('Error: No hay elementos en la categoría de inspección', 20, yPosition);
+      return yPosition + 20;
+    }
+
+    const allItems = firstCategory.items;
+    console.log('Items encontrados:', allItems.length);
+    console.log('Primeros 3 items:', allItems.slice(0, 3));
+
+    // Obtener equipos seleccionados
     const selectedEquipment = data.inspection.equipment || [];
     console.log('Equipos seleccionados:', selectedEquipment);
-
-    // Obtener todos los elementos del inventario
-    const allItems = vehicleEquipment[0].items;
-    console.log('Total de elementos en inventario:', allItems.length);
+    console.log('Tipo de elementos seleccionados:', selectedEquipment.map(item => typeof item));
 
     // Crear tabla con todos los elementos y su estado
+    // IMPORTANTE: Convertir ambos a string para comparación segura
     const equipmentTableData = allItems.map(item => {
-      const isSelected = selectedEquipment.includes(item.id);
+      const itemId = String(item.id);
+      const isSelected = selectedEquipment.some(selectedId => String(selectedId) === itemId);
+      
+      // Debug para los primeros elementos
+      if (allItems.indexOf(item) < 3) {
+        console.log(`Item: ${item.name}, ID: ${itemId}, Seleccionado: ${isSelected}`);
+      }
+      
       return [item.name, isSelected ? '✓' : '✗'];
     });
+
+    console.log('Total de filas en tabla:', equipmentTableData.length);
 
     // Dividir en 3 columnas para mejor presentación
     const itemsPerColumn = Math.ceil(equipmentTableData.length / 3);
@@ -98,6 +134,9 @@ export const addEquipmentChecklist = (doc: jsPDF, data: InspectionPDFData, yPosi
       tableRows.push([col1[0], col1[1], col2[0], col2[1], col3[0], col3[1]]);
     }
 
+    console.log('Filas de tabla generadas:', tableRows.length);
+
+    // Generar la tabla
     (doc as any).autoTable({
       startY: yPosition,
       head: [['Elemento', '✓', 'Elemento', '✓', 'Elemento', '✓']],
@@ -140,10 +179,20 @@ export const addEquipmentChecklist = (doc: jsPDF, data: InspectionPDFData, yPosi
     yPosition += 10;
 
     console.log('Checklist de equipos agregado correctamente');
+    console.log('=== FIN DEBUGGING ===');
     return yPosition;
+    
   } catch (error) {
     console.error('Error en addEquipmentChecklist:', error);
-    return yPosition + 50;
+    console.error('Stack trace:', error.stack);
+    
+    // Mostrar error en el PDF
+    doc.setFontSize(10);
+    doc.setTextColor(255, 0, 0);
+    doc.text(`Error crítico: ${error.message}`, 20, yPosition);
+    yPosition += 15;
+    
+    return yPosition;
   }
 };
 
