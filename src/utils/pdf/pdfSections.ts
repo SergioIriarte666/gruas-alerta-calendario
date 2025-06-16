@@ -57,7 +57,7 @@ const addDashboardMetrics = (doc: jsPDF, data: InspectionPDFData, yPosition: num
   doc.setTextColor(17, 24, 39);
   doc.setFontSize(16);
   doc.setFont('helvetica', 'bold');
-  doc.text('📊 RESUMEN EJECUTIVO', 20, yPosition);
+  doc.text('RESUMEN EJECUTIVO', 20, yPosition);
   yPosition += 15;
   
   // Card 1: Progreso general
@@ -135,11 +135,11 @@ export const addServiceInfo = (doc: jsPDF, data: InspectionPDFData, yPosition: n
   try {
     const pageWidth = doc.internal.pageSize.width;
     
-    // Título de la sección con icono
+    // Título de la sección
     doc.setFontSize(14);
     doc.setTextColor(17, 24, 39);
     doc.setFont('helvetica', 'bold');
-    doc.text('📋 INFORMACIÓN DEL SERVICIO', 20, yPosition);
+    doc.text('INFORMACIÓN DEL SERVICIO', 20, yPosition);
     yPosition += 12;
 
     // Folio destacado
@@ -218,11 +218,11 @@ export const addEquipmentChecklist = (doc: jsPDF, data: InspectionPDFData, yPosi
       yPosition = 20;
     }
 
-    // Título de la sección con icono
+    // Título de la sección
     doc.setFontSize(14);
     doc.setTextColor(17, 24, 39);
     doc.setFont('helvetica', 'bold');
-    doc.text('🔧 INVENTARIO DE EQUIPOS Y ACCESORIOS', 20, yPosition);
+    doc.text('INVENTARIO DE EQUIPOS Y ACCESORIOS', 20, yPosition);
     yPosition += 15;
 
     // Obtener datos
@@ -253,7 +253,7 @@ export const addEquipmentChecklist = (doc: jsPDF, data: InspectionPDFData, yPosi
       
       return [
         item.name, 
-        isSelected ? '✅' : '❌',
+        isSelected ? 'SI' : 'NO',
         isSelected ? 'OK' : 'FALTANTE'
       ];
     });
@@ -275,15 +275,15 @@ export const addEquipmentChecklist = (doc: jsPDF, data: InspectionPDFData, yPosi
     // Tabla con diseño dashboard
     autoTable(doc, {
       startY: yPosition,
-      head: [['ELEMENTO', '✓', 'ESTADO', 'ELEMENTO', '✓', 'ESTADO']],
+      head: [['ELEMENTO', 'VERIF', 'ESTADO', 'ELEMENTO', 'VERIF', 'ESTADO']],
       body: tableRows,
       theme: 'striped',
       columnStyles: {
-        0: { cellWidth: 50, fontSize: 8, textColor: [17, 24, 39] },
-        1: { cellWidth: 12, halign: 'center', fontSize: 12 },
+        0: { cellWidth: 45, fontSize: 8, textColor: [17, 24, 39] },
+        1: { cellWidth: 15, halign: 'center', fontSize: 8, fontStyle: 'bold' },
         2: { cellWidth: 20, fontSize: 7, textColor: [99, 102, 241], fontStyle: 'bold' },
-        3: { cellWidth: 50, fontSize: 8, textColor: [17, 24, 39] },
-        4: { cellWidth: 12, halign: 'center', fontSize: 12 },
+        3: { cellWidth: 45, fontSize: 8, textColor: [17, 24, 39] },
+        4: { cellWidth: 15, halign: 'center', fontSize: 8, fontStyle: 'bold' },
         5: { cellWidth: 20, fontSize: 7, textColor: [99, 102, 241], fontStyle: 'bold' }
       },
       styles: {
@@ -322,7 +322,7 @@ export const addEquipmentChecklist = (doc: jsPDF, data: InspectionPDFData, yPosi
     doc.setTextColor(20, 184, 166);
     doc.setFontSize(12);
     doc.setFont('helvetica', 'bold');
-    doc.text(`📈 RESUMEN: ${selectedCount} de ${totalCount} elementos verificados (${percentage}%)`, 25, yPosition + 15);
+    doc.text(`RESUMEN: ${selectedCount} de ${totalCount} elementos verificados (${percentage}%)`, 25, yPosition + 15);
 
     console.log('Checklist de equipos agregado correctamente');
     return yPosition + 35;
@@ -332,7 +332,7 @@ export const addEquipmentChecklist = (doc: jsPDF, data: InspectionPDFData, yPosi
     
     doc.setFontSize(10);
     doc.setTextColor(239, 68, 68);
-    doc.text(`❌ Error crítico: ${error.message}`, 20, yPosition);
+    doc.text(`Error crítico: ${error.message}`, 20, yPosition);
     return yPosition + 15;
   }
 };
@@ -352,7 +352,7 @@ export const addObservationsAndSignatures = (doc: jsPDF, data: InspectionPDFData
       doc.setFontSize(14);
       doc.setTextColor(17, 24, 39);
       doc.setFont('helvetica', 'bold');
-      doc.text('💬 OBSERVACIONES DEL VEHÍCULO', 20, yPosition);
+      doc.text('OBSERVACIONES DEL VEHÍCULO', 20, yPosition);
       yPosition += 15;
 
       // Card para observaciones
@@ -374,12 +374,12 @@ export const addObservationsAndSignatures = (doc: jsPDF, data: InspectionPDFData
     doc.setFontSize(14);
     doc.setTextColor(17, 24, 39);
     doc.setFont('helvetica', 'bold');
-    doc.text('✍️ FIRMAS Y VALIDACIÓN', 20, yPosition);
+    doc.text('FIRMAS Y VALIDACIÓN', 20, yPosition);
     yPosition += 20;
 
     // Cards para firmas
-    const signatureWidth = (pageWidth - 60) / 2;
-    const signatureHeight = 50;
+    const signatureWidth = (pageWidth - 70) / 2; // Más espacio entre cards
+    const signatureHeight = 60; // Altura aumentada
 
     // Firma del operador
     doc.setFillColor(248, 250, 252);
@@ -388,38 +388,40 @@ export const addObservationsAndSignatures = (doc: jsPDF, data: InspectionPDFData
     doc.setLineWidth(1);
     doc.roundedRect(20, yPosition, signatureWidth, signatureHeight, 3, 3, 'S');
 
-    doc.setFontSize(10);
+    doc.setFontSize(11);
     doc.setTextColor(17, 24, 39);
     doc.setFont('helvetica', 'bold');
-    doc.text('OPERADOR', 25, yPosition + 12);
+    doc.text('OPERADOR', 25, yPosition + 15);
+    doc.setFontSize(9);
     doc.setFont('helvetica', 'normal');
-    doc.text(`${data.inspection.operatorSignature}`, 25, yPosition + 35);
+    doc.text(`${data.inspection.operatorSignature}`, 25, yPosition + 40);
     
-    // Línea de firma
+    // Línea de firma del operador
     doc.setDrawColor(20, 184, 166);
     doc.setLineWidth(0.5);
-    doc.line(25, yPosition + 42, 25 + signatureWidth - 10, yPosition + 42);
+    doc.line(25, yPosition + 50, 25 + signatureWidth - 10, yPosition + 50);
 
     // Firma del cliente (si existe)
     if (data.inspection.clientName) {
-      const clientX = 30 + signatureWidth;
+      const clientX = 40 + signatureWidth; // Más separación
       doc.setFillColor(248, 250, 252);
       doc.roundedRect(clientX, yPosition, signatureWidth, signatureHeight, 3, 3, 'F');
       doc.setDrawColor(99, 102, 241);
       doc.setLineWidth(1);
       doc.roundedRect(clientX, yPosition, signatureWidth, signatureHeight, 3, 3, 'S');
 
-      doc.setFontSize(10);
+      doc.setFontSize(11);
       doc.setTextColor(17, 24, 39);
       doc.setFont('helvetica', 'bold');
-      doc.text('CLIENTE', clientX + 5, yPosition + 12);
+      doc.text('CLIENTE', clientX + 5, yPosition + 15);
+      doc.setFontSize(9);
       doc.setFont('helvetica', 'normal');
-      doc.text(`${data.inspection.clientName}`, clientX + 5, yPosition + 35);
+      doc.text(`${data.inspection.clientName}`, clientX + 5, yPosition + 40);
       
-      // Línea de firma
+      // Línea de firma del cliente
       doc.setDrawColor(99, 102, 241);
       doc.setLineWidth(0.5);
-      doc.line(clientX + 5, yPosition + 42, clientX + signatureWidth - 5, yPosition + 42);
+      doc.line(clientX + 5, yPosition + 50, clientX + signatureWidth - 5, yPosition + 50);
     }
 
     yPosition += signatureHeight + 20;
@@ -427,7 +429,7 @@ export const addObservationsAndSignatures = (doc: jsPDF, data: InspectionPDFData
     // Footer con timestamp
     doc.setFontSize(8);
     doc.setTextColor(17, 24, 39);
-    doc.text(`🕒 Documento generado automáticamente el ${new Date().toLocaleString('es-CL')}`, 20, yPosition);
+    doc.text(`Documento generado automáticamente el ${new Date().toLocaleString('es-CL')}`, 20, yPosition);
 
     console.log('Observaciones y firmas agregadas correctamente');
     return yPosition + 10;
