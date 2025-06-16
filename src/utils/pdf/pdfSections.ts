@@ -121,7 +121,8 @@ const addDashboardMetrics = (doc: jsPDF, data: InspectionPDFData, yPosition: num
   // Círculo de estado
   const circleX = card3X + cardWidth - 15;
   const circleY = yPosition + 15;
-  doc.setFillColor(completionRate === 100 ? ...COLORS.success : ...COLORS.warning);
+  const statusColor = completionRate === 100 ? COLORS.success : COLORS.warning;
+  doc.setFillColor(...statusColor);
   doc.circle(circleX, circleY, 4, 'F');
   
   return yPosition + cardHeight + 20;
