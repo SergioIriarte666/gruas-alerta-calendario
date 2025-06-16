@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -36,7 +36,70 @@ const queryClient = new QueryClient({
   },
 });
 
+const AppRoutes: React.FC = () => {
+  return (
+    <Routes>
+      <Route path="/auth" element={<Auth />} />
+      
+      <Route path="/operator/*" element={
+        <ProtectedRoute>
+          <OperatorLayout>
+            <Routes>
+              <Route path="/" element={<OperatorDashboard />} />
+              <Route path="/service/:id/inspect" element={<ServiceInspection />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </OperatorLayout>
+        </ProtectedRoute>
+      }/>
+
+      <Route path="/*" element={
+        <ProtectedRoute>
+          <Layout>
+            <Routes>
+              <Route path="/" element={<Dashboard />} />
+              <Route path="/calendar" element={<Calendar />} />
+              <Route path="/services" element={<Services />} />
+              <Route path="/clients" element={<Clients />} />
+              <Route path="/cranes" element={<Cranes />} />
+              <Route path="/operators" element={<Operators />} />
+              <Route path="/costs" element={<Costs />} />
+              <Route path="/closures" element={<Closures />} />
+              <Route path="/invoices" element={<Invoices />} />
+              <Route path="/reports" element={<Reports />} />
+              <Route path="/settings" element={<Settings />} />
+              <Route path="/profile" element={<Profile />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </Layout>
+        </ProtectedRoute>
+      } />
+    </Routes>
+  );
+};
+
 const AppContent: React.FC = () => {
+  const [isReactReady, setIsReactReady] = useState(false);
+
+  useEffect(() => {
+    // Ensure React is fully initialized before rendering TooltipProvider
+    setIsReactReady(true);
+  }, []);
+
+  if (!isReactReady) {
+    return (
+      <BrowserRouter>
+        <AuthProvider>
+          <UserProvider>
+            <NotificationProvider>
+              <div>Loading...</div>
+            </NotificationProvider>
+          </UserProvider>
+        </AuthProvider>
+      </BrowserRouter>
+    );
+  }
+
   return (
     <BrowserRouter>
       <AuthProvider>
@@ -44,43 +107,7 @@ const AppContent: React.FC = () => {
           <NotificationProvider>
             <TooltipProvider>
               <Sonner />
-              <Routes>
-                <Route path="/auth" element={<Auth />} />
-                
-                <Route path="/operator/*" element={
-                  <ProtectedRoute>
-                    <OperatorLayout>
-                      <Routes>
-                        <Route path="/" element={<OperatorDashboard />} />
-                        <Route path="/service/:id/inspect" element={<ServiceInspection />} />
-                        <Route path="*" element={<NotFound />} />
-                      </Routes>
-                    </OperatorLayout>
-                  </ProtectedRoute>
-                }/>
-
-                <Route path="/*" element={
-                  <ProtectedRoute>
-                    <Layout>
-                      <Routes>
-                        <Route path="/" element={<Dashboard />} />
-                        <Route path="/calendar" element={<Calendar />} />
-                        <Route path="/services" element={<Services />} />
-                        <Route path="/clients" element={<Clients />} />
-                        <Route path="/cranes" element={<Cranes />} />
-                        <Route path="/operators" element={<Operators />} />
-                        <Route path="/costs" element={<Costs />} />
-                        <Route path="/closures" element={<Closures />} />
-                        <Route path="/invoices" element={<Invoices />} />
-                        <Route path="/reports" element={<Reports />} />
-                        <Route path="/settings" element={<Settings />} />
-                        <Route path="/profile" element={<Profile />} />
-                        <Route path="*" element={<NotFound />} />
-                      </Routes>
-                    </Layout>
-                  </ProtectedRoute>
-                } />
-              </Routes>
+              <AppRoutes />
             </TooltipProvider>
           </NotificationProvider>
         </UserProvider>
