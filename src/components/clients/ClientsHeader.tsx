@@ -2,9 +2,13 @@
 import * as React from 'react';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
-import { Dialog, DialogTrigger } from '@/components/ui/dialog';
 import { ClientForm } from '@/components/clients/ClientForm';
 import { Client } from '@/types';
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 
 interface ClientsHeaderProps {
   isDialogOpen: boolean;
@@ -34,8 +38,8 @@ export const ClientsHeader = ({
         </p>
       </div>
       
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogTrigger asChild>
+      <AlertDialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <AlertDialogTrigger asChild>
           <Button 
             onClick={handleNewClient}
             className="bg-tms-green hover:bg-tms-green-dark text-white"
@@ -43,17 +47,19 @@ export const ClientsHeader = ({
             <Plus className="w-4 h-4 mr-2" />
             Nuevo Cliente
           </Button>
-        </DialogTrigger>
+        </AlertDialogTrigger>
         
-        <ClientForm
-          client={selectedClient}
-          onSubmit={selectedClient ? handleUpdateClient : handleCreateClient}
-          onCancel={() => {
-            setIsDialogOpen(false);
-            setSelectedClient(undefined);
-          }}
-        />
-      </Dialog>
+        <AlertDialogContent className="max-w-4xl">
+          <ClientForm
+            client={selectedClient}
+            onSubmit={selectedClient ? handleUpdateClient : handleCreateClient}
+            onCancel={() => {
+              setIsDialogOpen(false);
+              setSelectedClient(undefined);
+            }}
+          />
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

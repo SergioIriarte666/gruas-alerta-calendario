@@ -4,13 +4,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import {
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
 import { Client } from '@/types';
 
 interface ClientFormProps {
@@ -39,15 +32,15 @@ export const ClientForm = ({ client, onSubmit, onCancel }: ClientFormProps) => {
   };
 
   return (
-    <DialogContent className="sm:max-w-[600px] bg-tms-dark border-gray-700">
-      <DialogHeader>
-        <DialogTitle className="text-white">
+    <div className="bg-tms-dark border-gray-700 p-6">
+      <div className="mb-6">
+        <h2 className="text-xl font-semibold text-white">
           {client ? 'Editar Cliente' : 'Nuevo Cliente'}
-        </DialogTitle>
-        <DialogDescription className="text-gray-400">
+        </h2>
+        <p className="text-gray-400 mt-1">
           {client ? 'Modifica los datos del cliente' : 'Ingresa los datos del nuevo cliente'}
-        </DialogDescription>
-      </DialogHeader>
+        </p>
+      </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -120,7 +113,7 @@ export const ClientForm = ({ client, onSubmit, onCancel }: ClientFormProps) => {
           </Label>
         </div>
 
-        <DialogFooter>
+        <div className="flex justify-end space-x-2 pt-4">
           <Button
             type="button"
             variant="outline"
@@ -135,8 +128,8 @@ export const ClientForm = ({ client, onSubmit, onCancel }: ClientFormProps) => {
           >
             {client ? 'Actualizar' : 'Crear'} Cliente
           </Button>
-        </DialogFooter>
+        </div>
       </form>
-    </DialogContent>
+    </div>
   );
 };
