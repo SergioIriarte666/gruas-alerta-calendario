@@ -1,4 +1,3 @@
-
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import { InspectionPDFData } from './pdf/pdfTypes';
@@ -20,9 +19,35 @@ interface CompanyData {
 
 const fetchCompanyData = async (): Promise<CompanyData> => {
   try {
+    console.log('=== OBTENIENDO DATOS DE EMPRESA ===');
+    
+    // Primero intentar obtener una empresa activa (si existe el campo is_active)
+    const { data: activeData, error: activeError } = await supabase
+      .from('company_data')
+      .select('*')
+      .eq('is_active', true)
+      .maybeSingle();
+    
+    if (!activeError && activeData) {
+      console.log('Empresa activa encontrada:', activeData);
+      return {
+        businessName: activeData.business_name || 'TMS - Transport Management System',
+        rut: activeData.rut || '12.345.678-9',
+        address: activeData.address || 'Av. Principal 123, Santiago',
+        phone: activeData.phone || '+56 9 1234 5678',
+        email: activeData.email || 'contacto@tms.cl',
+        logoUrl: activeData.logo_url
+      };
+    }
+    
+    console.log('No hay empresa activa, buscando el registro más reciente...');
+    
+    // Si no hay empresa activa, tomar el registro más reciente
     const { data, error } = await supabase
       .from('company_data')
       .select('*')
+      .order('created_at', { ascending: false })
+      .limit(1)
       .maybeSingle();
     
     if (error) {
@@ -34,6 +59,14 @@ const fetchCompanyData = async (): Promise<CompanyData> => {
       console.log('No company data found, using defaults');
       return getDefaultCompanyData();
     }
+    
+    console.log('Datos de empresa obtenidos:', {
+      businessName: data.business_name,
+      rut: data.rut,
+      address: data.address,
+      phone: data.phone,
+      email: data.email
+    });
     
     return {
       businessName: data.business_name || 'TMS - Transport Management System',
@@ -49,13 +82,16 @@ const fetchCompanyData = async (): Promise<CompanyData> => {
   }
 };
 
-const getDefaultCompanyData = (): CompanyData => ({
-  businessName: 'TMS - Transport Management System',
-  rut: '12.345.678-9',
-  address: 'Av. Principal 123, Santiago',
-  phone: '+56 9 1234 5678',
-  email: 'contacto@tms.cl'
-});
+const getDefaultCompanyData = (): CompanyData => {
+  console.log('Usando datos de empresa por defecto');
+  return {
+    businessName: 'TMS - Transport Management System',
+    rut: '12.345.678-9',
+    address: 'Av. Principal 123, Santiago',
+    phone: '+56 9 1234 5678',
+    email: 'contacto@tms.cl'
+  };
+};
 
 const validateInspectionData = (data: {
   service: Service;
@@ -97,7 +133,7 @@ export const generateInspectionPDF = async (data: {
 
     // Obtener datos de la empresa
     const companyData = await fetchCompanyData();
-    console.log('Datos de empresa obtenidos:', companyData);
+    console.log('=== DATOS DE EMPRESA FINALES ===', companyData);
 
     const doc = new jsPDF();
     
@@ -107,7 +143,11 @@ export const generateInspectionPDF = async (data: {
       companyData
     };
 
-    console.log('Generando PDF con datos completos:', pdfData);
+    console.log('Generando PDF con datos completos:', {
+      serviceId: pdfData.service.id,
+      companyName: pdfData.companyData.businessName,
+      equipmentCount: pdfData.inspection.equipment?.length || 0
+    });
 
     // Add header corporativo (ahora es asíncrono)
     let yPosition = await addPDFHeader(doc, pdfData);
