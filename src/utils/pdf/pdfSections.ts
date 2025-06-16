@@ -21,11 +21,11 @@ const addModernHeader = (doc: jsPDF): number => {
   const pageWidth = doc.internal.pageSize.width;
   
   // Fondo del header
-  doc.setFillColor(...COLORS.primary);
+  doc.setFillColor(20, 184, 166);
   doc.rect(0, 0, pageWidth, 35, 'F');
   
   // Título principal
-  doc.setTextColor(...COLORS.white);
+  doc.setTextColor(255, 255, 255);
   doc.setFontSize(18);
   doc.setFont('helvetica', 'bold');
   doc.text('REPORTE DE INSPECCIÓN PRE-SERVICIO', 20, 15);
@@ -54,7 +54,7 @@ const addDashboardMetrics = (doc: jsPDF, data: InspectionPDFData, yPosition: num
   const completionRate = allItems.length > 0 ? Math.round((selectedEquipment.length / allItems.length) * 100) : 0;
   
   // Título de sección
-  doc.setTextColor(...COLORS.dark);
+  doc.setTextColor(17, 24, 39);
   doc.setFontSize(16);
   doc.setFont('helvetica', 'bold');
   doc.text('📊 RESUMEN EJECUTIVO', 20, yPosition);
@@ -65,13 +65,13 @@ const addDashboardMetrics = (doc: jsPDF, data: InspectionPDFData, yPosition: num
   const cardHeight = 35;
   
   // Card 1 - Progreso
-  doc.setFillColor(...COLORS.light);
+  doc.setFillColor(248, 250, 252);
   doc.roundedRect(20, yPosition, cardWidth, cardHeight, 3, 3, 'F');
-  doc.setDrawColor(...COLORS.primary);
+  doc.setDrawColor(20, 184, 166);
   doc.setLineWidth(1);
   doc.roundedRect(20, yPosition, cardWidth, cardHeight, 3, 3, 'S');
   
-  doc.setTextColor(...COLORS.primary);
+  doc.setTextColor(20, 184, 166);
   doc.setFontSize(24);
   doc.setFont('helvetica', 'bold');
   doc.text(`${completionRate}%`, 25, yPosition + 15);
@@ -84,17 +84,17 @@ const addDashboardMetrics = (doc: jsPDF, data: InspectionPDFData, yPosition: num
   const progressWidth = (progressBarWidth * completionRate) / 100;
   doc.setFillColor(230, 230, 230);
   doc.rect(25, yPosition + 28, progressBarWidth, 3, 'F');
-  doc.setFillColor(...COLORS.success);
+  doc.setFillColor(34, 197, 94);
   doc.rect(25, yPosition + 28, progressWidth, 3, 'F');
   
   // Card 2 - Elementos verificados
   const card2X = 30 + cardWidth;
-  doc.setFillColor(...COLORS.light);
+  doc.setFillColor(248, 250, 252);
   doc.roundedRect(card2X, yPosition, cardWidth, cardHeight, 3, 3, 'F');
-  doc.setDrawColor(...COLORS.success);
+  doc.setDrawColor(34, 197, 94);
   doc.roundedRect(card2X, yPosition, cardWidth, cardHeight, 3, 3, 'S');
   
-  doc.setTextColor(...COLORS.success);
+  doc.setTextColor(34, 197, 94);
   doc.setFontSize(20);
   doc.setFont('helvetica', 'bold');
   doc.text(`${selectedEquipment.length}/${allItems.length}`, card2X + 5, yPosition + 15);
@@ -104,12 +104,12 @@ const addDashboardMetrics = (doc: jsPDF, data: InspectionPDFData, yPosition: num
   
   // Card 3 - Estado del servicio
   const card3X = 40 + cardWidth * 2;
-  doc.setFillColor(...COLORS.light);
+  doc.setFillColor(248, 250, 252);
   doc.roundedRect(card3X, yPosition, cardWidth, cardHeight, 3, 3, 'F');
-  doc.setDrawColor(...COLORS.secondary);
+  doc.setDrawColor(99, 102, 241);
   doc.roundedRect(card3X, yPosition, cardWidth, cardHeight, 3, 3, 'S');
   
-  doc.setTextColor(...COLORS.secondary);
+  doc.setTextColor(99, 102, 241);
   doc.setFontSize(12);
   doc.setFont('helvetica', 'bold');
   const status = completionRate === 100 ? 'COMPLETO' : 'EN PROCESO';
@@ -121,8 +121,11 @@ const addDashboardMetrics = (doc: jsPDF, data: InspectionPDFData, yPosition: num
   // Círculo de estado - CORREGIDO
   const circleX = card3X + cardWidth - 15;
   const circleY = yPosition + 15;
-  const statusColor = completionRate === 100 ? COLORS.success : COLORS.warning;
-  doc.setFillColor(...statusColor);
+  if (completionRate === 100) {
+    doc.setFillColor(34, 197, 94); // Verde
+  } else {
+    doc.setFillColor(251, 146, 60); // Naranja
+  }
   doc.circle(circleX, circleY, 4, 'F');
   
   return yPosition + cardHeight + 20;
@@ -134,16 +137,16 @@ export const addServiceInfo = (doc: jsPDF, data: InspectionPDFData, yPosition: n
     
     // Título de la sección con icono
     doc.setFontSize(14);
-    doc.setTextColor(...COLORS.dark);
+    doc.setTextColor(17, 24, 39);
     doc.setFont('helvetica', 'bold');
     doc.text('📋 INFORMACIÓN DEL SERVICIO', 20, yPosition);
     yPosition += 12;
 
     // Folio destacado
-    doc.setFillColor(...COLORS.primary);
+    doc.setFillColor(20, 184, 166);
     doc.roundedRect(20, yPosition, pageWidth - 40, 25, 3, 3, 'F');
     
-    doc.setTextColor(...COLORS.white);
+    doc.setTextColor(255, 255, 255);
     doc.setFontSize(11);
     doc.setFont('helvetica', 'bold');
     doc.text(`FOLIO: ${data.service.folio || 'N/A'}`, 25, yPosition + 10);
@@ -175,18 +178,18 @@ export const addServiceInfo = (doc: jsPDF, data: InspectionPDFData, yPosition: n
         0: { 
           cellWidth: 45, 
           fontStyle: 'bold',
-          textColor: COLORS.dark,
+          textColor: [17, 24, 39],
           fontSize: 9
         },
         1: { 
           cellWidth: 125,
-          textColor: COLORS.dark,
+          textColor: [17, 24, 39],
           fontSize: 9
         }
       },
       styles: {
         cellPadding: 6,
-        lineColor: COLORS.light,
+        lineColor: [248, 250, 252],
         lineWidth: 0.5,
       },
       alternateRowStyles: {
@@ -217,7 +220,7 @@ export const addEquipmentChecklist = (doc: jsPDF, data: InspectionPDFData, yPosi
 
     // Título de la sección con icono
     doc.setFontSize(14);
-    doc.setTextColor(...COLORS.dark);
+    doc.setTextColor(17, 24, 39);
     doc.setFont('helvetica', 'bold');
     doc.text('🔧 INVENTARIO DE EQUIPOS Y ACCESORIOS', 20, yPosition);
     yPosition += 15;
@@ -226,7 +229,7 @@ export const addEquipmentChecklist = (doc: jsPDF, data: InspectionPDFData, yPosi
     if (!vehicleEquipment || !Array.isArray(vehicleEquipment) || vehicleEquipment.length === 0) {
       console.error('vehicleEquipment no está disponible');
       doc.setFontSize(10);
-      doc.setTextColor(...COLORS.danger);
+      doc.setTextColor(239, 68, 68);
       doc.text('Error: No se pudo cargar el inventario de equipos', 20, yPosition);
       return yPosition + 20;
     }
@@ -235,7 +238,7 @@ export const addEquipmentChecklist = (doc: jsPDF, data: InspectionPDFData, yPosi
     if (!firstCategory?.items || !Array.isArray(firstCategory.items)) {
       console.error('No hay elementos en la categoría');
       doc.setFontSize(10);
-      doc.setTextColor(...COLORS.danger);
+      doc.setTextColor(239, 68, 68);
       doc.text('Error: No hay elementos en la categoría de inspección', 20, yPosition);
       return yPosition + 20;
     }
@@ -276,23 +279,23 @@ export const addEquipmentChecklist = (doc: jsPDF, data: InspectionPDFData, yPosi
       body: tableRows,
       theme: 'striped',
       columnStyles: {
-        0: { cellWidth: 50, fontSize: 8, textColor: COLORS.dark },
+        0: { cellWidth: 50, fontSize: 8, textColor: [17, 24, 39] },
         1: { cellWidth: 12, halign: 'center', fontSize: 12 },
-        2: { cellWidth: 20, fontSize: 7, textColor: COLORS.secondary, fontStyle: 'bold' },
-        3: { cellWidth: 50, fontSize: 8, textColor: COLORS.dark },
+        2: { cellWidth: 20, fontSize: 7, textColor: [99, 102, 241], fontStyle: 'bold' },
+        3: { cellWidth: 50, fontSize: 8, textColor: [17, 24, 39] },
         4: { cellWidth: 12, halign: 'center', fontSize: 12 },
-        5: { cellWidth: 20, fontSize: 7, textColor: COLORS.secondary, fontStyle: 'bold' }
+        5: { cellWidth: 20, fontSize: 7, textColor: [99, 102, 241], fontStyle: 'bold' }
       },
       styles: {
         fontSize: 8,
         cellPadding: 4,
-        textColor: COLORS.dark,
+        textColor: [17, 24, 39],
         lineColor: [220, 220, 220],
         lineWidth: 0.5,
       },
       headStyles: {
-        fillColor: COLORS.primary,
-        textColor: COLORS.white,
+        fillColor: [20, 184, 166],
+        textColor: [255, 255, 255],
         fontStyle: 'bold',
         fontSize: 9
       },
@@ -310,13 +313,13 @@ export const addEquipmentChecklist = (doc: jsPDF, data: InspectionPDFData, yPosi
     const percentage = Math.round((selectedCount / totalCount) * 100);
     
     // Card de resumen
-    doc.setFillColor(...COLORS.light);
+    doc.setFillColor(248, 250, 252);
     doc.roundedRect(20, yPosition, pageWidth - 40, 25, 3, 3, 'F');
-    doc.setDrawColor(...COLORS.primary);
+    doc.setDrawColor(20, 184, 166);
     doc.setLineWidth(1);
     doc.roundedRect(20, yPosition, pageWidth - 40, 25, 3, 3, 'S');
     
-    doc.setTextColor(...COLORS.primary);
+    doc.setTextColor(20, 184, 166);
     doc.setFontSize(12);
     doc.setFont('helvetica', 'bold');
     doc.text(`📈 RESUMEN: ${selectedCount} de ${totalCount} elementos verificados (${percentage}%)`, 25, yPosition + 15);
@@ -328,7 +331,7 @@ export const addEquipmentChecklist = (doc: jsPDF, data: InspectionPDFData, yPosi
     console.error('Error en addEquipmentChecklist:', error);
     
     doc.setFontSize(10);
-    doc.setTextColor(...COLORS.danger);
+    doc.setTextColor(239, 68, 68);
     doc.text(`❌ Error crítico: ${error.message}`, 20, yPosition);
     return yPosition + 15;
   }
@@ -347,21 +350,21 @@ export const addObservationsAndSignatures = (doc: jsPDF, data: InspectionPDFData
     // Observaciones con diseño moderno
     if (data.inspection.vehicleObservations) {
       doc.setFontSize(14);
-      doc.setTextColor(...COLORS.dark);
+      doc.setTextColor(17, 24, 39);
       doc.setFont('helvetica', 'bold');
       doc.text('💬 OBSERVACIONES DEL VEHÍCULO', 20, yPosition);
       yPosition += 15;
 
       // Card para observaciones
       const observationHeight = 30;
-      doc.setFillColor(...COLORS.light);
+      doc.setFillColor(248, 250, 252);
       doc.roundedRect(20, yPosition, pageWidth - 40, observationHeight, 3, 3, 'F');
-      doc.setDrawColor(...COLORS.warning);
+      doc.setDrawColor(251, 146, 60);
       doc.setLineWidth(1);
       doc.roundedRect(20, yPosition, pageWidth - 40, observationHeight, 3, 3, 'S');
 
       doc.setFontSize(10);
-      doc.setTextColor(...COLORS.dark);
+      doc.setTextColor(17, 24, 39);
       const splitObservations = doc.splitTextToSize(data.inspection.vehicleObservations, pageWidth - 50);
       doc.text(splitObservations, 25, yPosition + 12);
       yPosition += observationHeight + 20;
@@ -369,7 +372,7 @@ export const addObservationsAndSignatures = (doc: jsPDF, data: InspectionPDFData
 
     // Firmas con diseño profesional
     doc.setFontSize(14);
-    doc.setTextColor(...COLORS.dark);
+    doc.setTextColor(17, 24, 39);
     doc.setFont('helvetica', 'bold');
     doc.text('✍️ FIRMAS Y VALIDACIÓN', 20, yPosition);
     yPosition += 20;
@@ -379,42 +382,42 @@ export const addObservationsAndSignatures = (doc: jsPDF, data: InspectionPDFData
     const signatureHeight = 50;
 
     // Firma del operador
-    doc.setFillColor(...COLORS.light);
+    doc.setFillColor(248, 250, 252);
     doc.roundedRect(20, yPosition, signatureWidth, signatureHeight, 3, 3, 'F');
-    doc.setDrawColor(...COLORS.primary);
+    doc.setDrawColor(20, 184, 166);
     doc.setLineWidth(1);
     doc.roundedRect(20, yPosition, signatureWidth, signatureHeight, 3, 3, 'S');
 
     doc.setFontSize(10);
-    doc.setTextColor(...COLORS.dark);
+    doc.setTextColor(17, 24, 39);
     doc.setFont('helvetica', 'bold');
     doc.text('OPERADOR', 25, yPosition + 12);
     doc.setFont('helvetica', 'normal');
     doc.text(`${data.inspection.operatorSignature}`, 25, yPosition + 35);
     
     // Línea de firma
-    doc.setDrawColor(...COLORS.primary);
+    doc.setDrawColor(20, 184, 166);
     doc.setLineWidth(0.5);
     doc.line(25, yPosition + 42, 25 + signatureWidth - 10, yPosition + 42);
 
     // Firma del cliente (si existe)
     if (data.inspection.clientName) {
       const clientX = 30 + signatureWidth;
-      doc.setFillColor(...COLORS.light);
+      doc.setFillColor(248, 250, 252);
       doc.roundedRect(clientX, yPosition, signatureWidth, signatureHeight, 3, 3, 'F');
-      doc.setDrawColor(...COLORS.secondary);
+      doc.setDrawColor(99, 102, 241);
       doc.setLineWidth(1);
       doc.roundedRect(clientX, yPosition, signatureWidth, signatureHeight, 3, 3, 'S');
 
       doc.setFontSize(10);
-      doc.setTextColor(...COLORS.dark);
+      doc.setTextColor(17, 24, 39);
       doc.setFont('helvetica', 'bold');
       doc.text('CLIENTE', clientX + 5, yPosition + 12);
       doc.setFont('helvetica', 'normal');
       doc.text(`${data.inspection.clientName}`, clientX + 5, yPosition + 35);
       
       // Línea de firma
-      doc.setDrawColor(...COLORS.secondary);
+      doc.setDrawColor(99, 102, 241);
       doc.setLineWidth(0.5);
       doc.line(clientX + 5, yPosition + 42, clientX + signatureWidth - 5, yPosition + 42);
     }
@@ -423,7 +426,7 @@ export const addObservationsAndSignatures = (doc: jsPDF, data: InspectionPDFData
 
     // Footer con timestamp
     doc.setFontSize(8);
-    doc.setTextColor(...COLORS.dark);
+    doc.setTextColor(17, 24, 39);
     doc.text(`🕒 Documento generado automáticamente el ${new Date().toLocaleString('es-CL')}`, 20, yPosition);
 
     console.log('Observaciones y firmas agregadas correctamente');
