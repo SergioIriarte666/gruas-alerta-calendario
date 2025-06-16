@@ -12,58 +12,44 @@ export interface EquipmentCategory {
 
 export const vehicleEquipment: EquipmentCategory[] = [
   {
-    id: 'safety',
-    name: 'Equipos de Seguridad',
+    id: 'vehicle-inspection',
+    name: 'Inspección del Vehículo',
     items: [
-      { id: 'safety-cone', name: 'Conos de seguridad' },
-      { id: 'warning-triangle', name: 'Triángulos de emergencia' },
-      { id: 'reflective-vest', name: 'Chaleco reflectante' },
-      { id: 'first-aid-kit', name: 'Botiquín de primeros auxilios' },
-      { id: 'fire-extinguisher', name: 'Extintor' },
-      { id: 'safety-lights', name: 'Luces de emergencia' }
-    ]
-  },
-  {
-    id: 'tools',
-    name: 'Herramientas',
-    items: [
-      { id: 'wrench-set', name: 'Juego de llaves' },
-      { id: 'screwdriver-set', name: 'Destornilladores' },
-      { id: 'tire-iron', name: 'Llave de ruedas' },
-      { id: 'jack', name: 'Gata hidráulica' },
-      { id: 'cable-cutter', name: 'Cortador de cables' },
-      { id: 'hammer', name: 'Martillo' }
-    ]
-  },
-  {
-    id: 'lifting',
-    name: 'Equipo de Elevación',
-    items: [
-      { id: 'chains', name: 'Cadenas de elevación' },
-      { id: 'straps', name: 'Correas de amarre' },
-      { id: 'hooks', name: 'Ganchos de seguridad' },
-      { id: 'shackles', name: 'Grilletes' },
-      { id: 'slings', name: 'Eslingas' },
-      { id: 'blocks', name: 'Bloques de madera' }
-    ]
-  },
-  {
-    id: 'communication',
-    name: 'Comunicación',
-    items: [
-      { id: 'radio', name: 'Radio comunicador' },
-      { id: 'phone', name: 'Teléfono móvil' },
-      { id: 'whistle', name: 'Silbato de emergencia' }
-    ]
-  },
-  {
-    id: 'documentation',
-    name: 'Documentación',
-    items: [
-      { id: 'license', name: 'Licencia de conducir' },
-      { id: 'vehicle-registration', name: 'Permiso de circulación' },
-      { id: 'insurance', name: 'Seguro vigente' },
-      { id: 'inspection-forms', name: 'Formularios de inspección' }
+      { id: 'espejo-interno', name: 'Espejo Interno' },
+      { id: 'piso-goma', name: 'Piso Goma' },
+      { id: 'espejo-exterior', name: 'Espejo Exterior' },
+      { id: 'rueda-del-der', name: 'Rueda Del.Der.' },
+      { id: 'bateria', name: 'Batería' },
+      { id: 'extintor', name: 'Extintor' },
+      { id: 'sombrilla', name: 'Sombrilla' },
+      { id: 'parlantes', name: 'Parlantes' },
+      { id: 'limp-parab', name: 'Limp. Parab.' },
+      { id: 'rueda-tra-izq', name: 'Rueda Tra.Izq.' },
+      { id: 'tapa-radiador', name: 'Tapa Radiador' },
+      { id: 'botiquin', name: 'Botiquín' },
+      { id: 'encendedor', name: 'Encendedor' },
+      { id: 'cenicero', name: 'Cenicero' },
+      { id: 'neblineros', name: 'Neblineros' },
+      { id: 'rueda-tra-der', name: 'Rueda Tra.Der.' },
+      { id: 'triangulos', name: 'Triángulos' },
+      { id: 'llave-rueda', name: 'Llave Rueda' },
+      { id: 'radio', name: 'Radio' },
+      { id: 'consola', name: 'Consola' },
+      { id: 'antena', name: 'Antena' },
+      { id: 'tapa-ruedas', name: 'Tapa Ruedas' },
+      { id: 'gata', name: 'Gata' },
+      { id: 'caja-invierno', name: 'Caja Invierno' },
+      { id: 'cint-seguridad', name: 'Cint. Seguridad' },
+      { id: 'emblemas', name: 'Emblemas' },
+      { id: 'rueda-del-izq', name: 'Rueda Del Izq.' },
+      { id: 'tapa-bencina', name: 'Tapa Bencina' },
+      { id: 'rueda-rpto', name: 'Rueda Rpto.' },
+      { id: 'pertiga', name: 'Pertiga' },
+      { id: 'tag', name: 'TAG' },
+      { id: 'chaleco-reflectante', name: 'Chaleco Reflectante' },
+      { id: 'extintor-10k', name: 'Extintor 10 K.' },
+      { id: 'cunas', name: 'Cuñas' },
+      { id: 'baliza', name: 'Baliza' }
     ]
   }
 ];

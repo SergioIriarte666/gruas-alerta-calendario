@@ -1,4 +1,3 @@
-
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import { InspectionPDFData } from './pdfTypes';
@@ -76,44 +75,45 @@ export const addEquipmentChecklist = (doc: jsPDF, data: InspectionPDFData, yPosi
     const selectedEquipment = data.inspection.equipment || [];
     console.log('Equipos seleccionados:', selectedEquipment);
 
-    // Obtener detalles de los equipos seleccionados
-    const equipmentDetails: Array<[string, string, string]> = [];
+    // Crear lista de todos los elementos con su estado
+    const equipmentDetails: Array<[string, string]> = [];
     
-    vehicleEquipment.forEach(category => {
-      const categoryItems = category.items.filter(item => 
-        selectedEquipment.includes(item.id)
-      );
-      
-      if (categoryItems.length > 0) {
-        // Agregar encabezado de categoría
-        equipmentDetails.push([category.name, '', '✓']);
-        
-        // Agregar elementos de la categoría
-        categoryItems.forEach(item => {
-          equipmentDetails.push(['', item.name, '✓']);
-        });
-      }
+    vehicleEquipment[0].items.forEach(item => {
+      const isSelected = selectedEquipment.includes(item.id);
+      equipmentDetails.push([item.name, isSelected ? '✓' : '✗']);
     });
 
     if (equipmentDetails.length === 0) {
-      equipmentDetails.push(['Sin equipos seleccionados', '', '']);
+      equipmentDetails.push(['Sin equipos disponibles', '']);
     }
 
-    // Crear tabla con el inventario
+    // Crear tabla con el inventario en columnas
+    const itemsPerColumn = Math.ceil(equipmentDetails.length / 3);
+    const columns: Array<[string, string, string, string, string, string]> = [];
+    
+    for (let i = 0; i < itemsPerColumn; i++) {
+      const col1 = equipmentDetails[i] || ['', ''];
+      const col2 = equipmentDetails[i + itemsPerColumn] || ['', ''];
+      const col3 = equipmentDetails[i + itemsPerColumn * 2] || ['', ''];
+      
+      columns.push([col1[0], col1[1], col2[0], col2[1], col3[0], col3[1]]);
+    }
+
     (doc as any).autoTable({
       startY: yPosition,
-      head: [['Categoría/Elemento', 'Descripción', 'Estado']],
-      body: equipmentDetails,
+      head: [['Elemento', '✓', 'Elemento', '✓', 'Elemento', '✓']],
+      body: columns,
       theme: 'striped',
       columnStyles: {
-        0: { cellWidth: 70, fontStyle: function(data: any) {
-          return data.row.raw[1] === '' ? 'bold' : 'normal';
-        }},
-        1: { cellWidth: 80 },
-        2: { cellWidth: 20, halign: 'center' }
+        0: { cellWidth: 50 },
+        1: { cellWidth: 10, halign: 'center' },
+        2: { cellWidth: 50 },
+        3: { cellWidth: 10, halign: 'center' },
+        4: { cellWidth: 50 },
+        5: { cellWidth: 10, halign: 'center' }
       },
       styles: {
-        fontSize: 9,
+        fontSize: 8,
         cellPadding: 2,
         textColor: [0, 0, 0],
       },

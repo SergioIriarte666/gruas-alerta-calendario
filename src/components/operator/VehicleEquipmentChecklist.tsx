@@ -1,7 +1,6 @@
 
 import React from 'react';
 import { UseFormReturn } from 'react-hook-form';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Checkbox } from "@/components/ui/checkbox";
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Button } from '@/components/ui/button';
@@ -33,54 +32,42 @@ export const VehicleEquipmentChecklist = ({ form }: VehicleEquipmentChecklistPro
         </div>
       </div>
       
-      <Accordion type="multiple" defaultValue={vehicleEquipment.map(c => c.id)} className="w-full">
-        {vehicleEquipment.map((category) => {
-          return (
-            <AccordionItem key={category.id} value={category.id} className="border-slate-700">
-              <AccordionTrigger className="text-tms-green hover:no-underline">{category.name}</AccordionTrigger>
-              <AccordionContent>
-                <div className="space-y-2 p-4 bg-slate-800/50 rounded-md">
-                  {category.items.map((item) => (
-                    <FormField
-                      key={item.id}
-                      control={form.control}
-                      name="equipment"
-                      render={({ field }) => {
-                        const fieldValue = Array.isArray(field.value) ? field.value : [];
-                        return (
-                          <FormItem
-                            key={item.id}
-                            className="flex flex-row items-start space-x-3 space-y-0"
-                          >
-                            <FormControl>
-                              <Checkbox
-                                className="border-slate-500 data-[state=checked]:bg-tms-green data-[state=checked]:border-tms-green"
-                                checked={fieldValue.includes(item.id)}
-                                onCheckedChange={(checked) => {
-                                  return checked
-                                    ? field.onChange([...fieldValue, item.id])
-                                    : field.onChange(
-                                        fieldValue.filter(
-                                          (value) => value !== item.id
-                                        )
-                                      );
-                                }}
-                              />
-                            </FormControl>
-                            <FormLabel className="font-normal text-gray-300">
-                              {item.name}
-                            </FormLabel>
-                          </FormItem>
-                        );
-                      }}
-                    />
-                  ))}
-                </div>
-              </AccordionContent>
-            </AccordionItem>
-          );
-        })}
-      </Accordion>
+      <div className="bg-slate-800/50 rounded-md p-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2">
+          {vehicleEquipment[0].items.map((item) => (
+            <FormField
+              key={item.id}
+              control={form.control}
+              name="equipment"
+              render={({ field }) => {
+                const fieldValue = Array.isArray(field.value) ? field.value : [];
+                return (
+                  <FormItem className="flex flex-row items-start space-x-2 space-y-0">
+                    <FormControl>
+                      <Checkbox
+                        className="border-slate-500 data-[state=checked]:bg-tms-green data-[state=checked]:border-tms-green mt-1"
+                        checked={fieldValue.includes(item.id)}
+                        onCheckedChange={(checked) => {
+                          return checked
+                            ? field.onChange([...fieldValue, item.id])
+                            : field.onChange(
+                                fieldValue.filter(
+                                  (value) => value !== item.id
+                                )
+                              );
+                        }}
+                      />
+                    </FormControl>
+                    <FormLabel className="font-normal text-gray-300 text-sm leading-tight">
+                      {item.name}
+                    </FormLabel>
+                  </FormItem>
+                );
+              }}
+            />
+          ))}
+        </div>
+      </div>
       <FormMessage className="text-red-400">{form.formState.errors.equipment?.message}</FormMessage>
     </div>
   );
