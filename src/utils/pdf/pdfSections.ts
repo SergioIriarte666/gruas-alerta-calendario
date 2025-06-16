@@ -341,8 +341,8 @@ export const addObservationsAndSignatures = (doc: jsPDF, data: InspectionPDFData
   try {
     const pageWidth = doc.internal.pageSize.width;
     
-    // Verificar si necesitamos una nueva página
-    if (yPosition > 200) {
+    // Verificar si necesitamos una nueva página para las firmas
+    if (yPosition > 180) {
       doc.addPage();
       yPosition = 20;
     }
@@ -352,7 +352,7 @@ export const addObservationsAndSignatures = (doc: jsPDF, data: InspectionPDFData
       doc.setFontSize(14);
       doc.setTextColor(17, 24, 39);
       doc.setFont('helvetica', 'bold');
-      doc.text('OBSERVACIONES DEL VEHÍCULO', 20, yPosition);
+      doc.text('OBSERVACIONES DEL VEHICULO', 20, yPosition);
       yPosition += 15;
 
       // Card para observaciones
@@ -370,16 +370,22 @@ export const addObservationsAndSignatures = (doc: jsPDF, data: InspectionPDFData
       yPosition += observationHeight + 20;
     }
 
+    // Verificar espacio para firmas antes de agregarlas
+    if (yPosition > 200) {
+      doc.addPage();
+      yPosition = 20;
+    }
+
     // Firmas con diseño profesional
     doc.setFontSize(14);
     doc.setTextColor(17, 24, 39);
     doc.setFont('helvetica', 'bold');
-    doc.text('FIRMAS Y VALIDACIÓN', 20, yPosition);
-    yPosition += 20;
+    doc.text('FIRMAS Y VALIDACION', 20, yPosition);
+    yPosition += 25;
 
-    // Cards para firmas
-    const signatureWidth = (pageWidth - 70) / 2; // Más espacio entre cards
-    const signatureHeight = 60; // Altura aumentada
+    // Cards para firmas con más espacio
+    const signatureWidth = (pageWidth - 80) / 2; // Más espacio entre cards
+    const signatureHeight = 70; // Altura aumentada
 
     // Firma del operador
     doc.setFillColor(248, 250, 252);
@@ -388,51 +394,54 @@ export const addObservationsAndSignatures = (doc: jsPDF, data: InspectionPDFData
     doc.setLineWidth(1);
     doc.roundedRect(20, yPosition, signatureWidth, signatureHeight, 3, 3, 'S');
 
-    doc.setFontSize(11);
+    doc.setFontSize(12);
     doc.setTextColor(17, 24, 39);
     doc.setFont('helvetica', 'bold');
-    doc.text('OPERADOR', 25, yPosition + 15);
+    doc.text('OPERADOR', 25, yPosition + 18);
+    
+    // Espacio para firma manuscrita
     doc.setFontSize(9);
     doc.setFont('helvetica', 'normal');
-    doc.text(`${data.inspection.operatorSignature}`, 25, yPosition + 40);
+    doc.text(`${data.inspection.operatorSignature}`, 25, yPosition + 45);
     
     // Línea de firma del operador
     doc.setDrawColor(20, 184, 166);
     doc.setLineWidth(0.5);
-    doc.line(25, yPosition + 50, 25 + signatureWidth - 10, yPosition + 50);
+    doc.line(25, yPosition + 55, 25 + signatureWidth - 10, yPosition + 55);
 
-    // Firma del cliente (si existe)
+    // Firma del cliente (si existe) - Bien separada
     if (data.inspection.clientName) {
-      const clientX = 40 + signatureWidth; // Más separación
+      const clientX = 50 + signatureWidth; // Más separación
       doc.setFillColor(248, 250, 252);
       doc.roundedRect(clientX, yPosition, signatureWidth, signatureHeight, 3, 3, 'F');
       doc.setDrawColor(99, 102, 241);
       doc.setLineWidth(1);
       doc.roundedRect(clientX, yPosition, signatureWidth, signatureHeight, 3, 3, 'S');
 
-      doc.setFontSize(11);
+      doc.setFontSize(12);
       doc.setTextColor(17, 24, 39);
       doc.setFont('helvetica', 'bold');
-      doc.text('CLIENTE', clientX + 5, yPosition + 15);
+      doc.text('CLIENTE', clientX + 5, yPosition + 18);
+      
       doc.setFontSize(9);
       doc.setFont('helvetica', 'normal');
-      doc.text(`${data.inspection.clientName}`, clientX + 5, yPosition + 40);
+      doc.text(`${data.inspection.clientName}`, clientX + 5, yPosition + 45);
       
       // Línea de firma del cliente
       doc.setDrawColor(99, 102, 241);
       doc.setLineWidth(0.5);
-      doc.line(clientX + 5, yPosition + 50, clientX + signatureWidth - 5, yPosition + 50);
+      doc.line(clientX + 5, yPosition + 55, clientX + signatureWidth - 5, yPosition + 55);
     }
 
-    yPosition += signatureHeight + 20;
+    yPosition += signatureHeight + 25;
 
-    // Footer con timestamp
+    // Footer con timestamp - con más espacio
     doc.setFontSize(8);
-    doc.setTextColor(17, 24, 39);
-    doc.text(`Documento generado automáticamente el ${new Date().toLocaleString('es-CL')}`, 20, yPosition);
+    doc.setTextColor(100, 100, 100);
+    doc.text(`Documento generado automaticamente el ${new Date().toLocaleString('es-CL')}`, 20, yPosition);
 
     console.log('Observaciones y firmas agregadas correctamente');
-    return yPosition + 10;
+    return yPosition + 15;
   } catch (error) {
     console.error('Error en addObservationsAndSignatures:', error);
     return yPosition + 50;
