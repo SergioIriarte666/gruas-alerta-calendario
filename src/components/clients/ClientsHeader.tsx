@@ -2,7 +2,7 @@
 import * as React from 'react';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
-import { Dialog } from '@/components/ui/dialog';
+import { Dialog, DialogTrigger } from '@/components/ui/dialog';
 import { ClientForm } from '@/components/clients/ClientForm';
 import { Client } from '@/types';
 
@@ -33,15 +33,18 @@ export const ClientsHeader = ({
           Administra la información de todos los clientes del sistema
         </p>
       </div>
-      <Button 
-        onClick={handleNewClient}
-        className="bg-tms-green hover:bg-tms-green-dark text-white"
-      >
-        <Plus className="w-4 h-4 mr-2" />
-        Nuevo Cliente
-      </Button>
       
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogTrigger asChild>
+          <Button 
+            onClick={handleNewClient}
+            className="bg-tms-green hover:bg-tms-green-dark text-white"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Nuevo Cliente
+          </Button>
+        </DialogTrigger>
+        
         <ClientForm
           client={selectedClient}
           onSubmit={selectedClient ? handleUpdateClient : handleCreateClient}
