@@ -82,12 +82,12 @@ const AppContent: React.FC = () => {
   const [isReactReady, setIsReactReady] = useState(false);
 
   useEffect(() => {
-    // Use a timeout to ensure React is fully mounted
-    const timer = setTimeout(() => {
-      setIsReactReady(true);
-    }, 0);
-    
-    return () => clearTimeout(timer);
+    // Use double requestAnimationFrame to ensure React is fully mounted and DOM is ready
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        setIsReactReady(true);
+      });
+    });
   }, []);
 
   return (
