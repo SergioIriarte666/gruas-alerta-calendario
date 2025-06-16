@@ -2,7 +2,9 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useState, useEffect } from 'react';
 import { useOperatorService } from '@/hooks/useOperatorService';
+import { useFormPersistence } from '@/hooks/useFormPersistence';
 import { inspectionFormSchema, InspectionFormValues } from '@/schemas/inspectionSchema';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Textarea } from '@/components/ui/textarea';
@@ -12,17 +14,23 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { VehicleEquipmentChecklist } from '@/components/operator/VehicleEquipmentChecklist';
 import { PhotoCapture } from '@/components/operator/PhotoCapture';
-import { ArrowLeft, User, Signature, Download } from 'lucide-react';
+import { PDFProgress } from '@/components/operator/PDFProgress';
+import { ArrowLeft, User, Signature, Download, AlertTriangle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { generateInspectionPDF } from '@/utils/inspectionPdfGenerator';
+import { createPDFGenerator } from '@/utils/enhancedPdfGenerator';
 
 const ServiceInspection = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { data: service, isLoading, error } = useOperatorService(id!);
+  
+  const [pdfProgress, setPdfProgress] = useState(0);
+  const [pdfStep, setPdfStep] = useState('');
+  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+  const [pdfDownloadUrl, setPdfDownloadUrl] = useState<string>();
 
   const form = useForm<InspectionFormValues>({
     resolver: zodResolver(inspectionFormSchema),
@@ -38,6 +46,18 @@ const ServiceInspection = () => {
     },
   });
 
+  const { loadFormData, clearFormData } = useFormPersistence(form, id || '');
+
+  // Cargar datos guardados al montar el componente
+  useEffect(() => {
+    if (id) {
+      const savedData = loadFormData();
+      if (savedData) {
+        toast.info('Datos del formulario restaurados');
+      }
+    }
+  }, [id, loadFormData]);
+
   const updateServiceStatusMutation = useMutation({
     mutationFn: async (serviceId: string) => {
       const { error } = await supabase
@@ -50,6 +70,10 @@ const ServiceInspection = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['operatorServices'] });
       queryClient.invalidateQueries({ queryKey: ['operatorService', id] });
+      
+      // Limpiar datos guardados después del éxito
+      clearFormData();
+      
       toast.success('Servicio iniciado con éxito');
       navigate('/operator');
     },
@@ -64,24 +88,31 @@ const ServiceInspection = () => {
         throw new Error('Faltan datos del servicio.');
       }
       
-      console.log('Generando PDF con datos de inspección:', values);
+      setIsGeneratingPDF(true);
+      setPdfProgress(0);
+      setPdfStep('Iniciando generación...');
       
-      // Generar y descargar PDF directamente
-      const pdfBlob = await generateInspectionPDF({
+      const pdfGenerator = createPDFGenerator((progress, step) => {
+        setPdfProgress(progress);
+        setPdfStep(step);
+      });
+      
+      const { blob, downloadUrl } = await pdfGenerator.generateWithProgress({
         service: service,
         inspection: values,
       });
       
-      const url = URL.createObjectURL(pdfBlob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `Inspeccion-${service.folio}-${new Date().toISOString().split('T')[0]}.pdf`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
+      setPdfDownloadUrl(downloadUrl);
       
-      // Limpiar fotos temporales del localStorage
+      // Intentar descarga automática
+      const filename = `Inspeccion-${service.folio}-${new Date().toISOString().split('T')[0]}.pdf`;
+      const downloadSuccess = await pdfGenerator.downloadPDF(blob, filename, downloadUrl);
+      
+      if (!downloadSuccess) {
+        toast.warning('La descarga automática falló. Usa el botón de descarga manual.');
+      }
+      
+      // Limpiar fotos temporales del localStorage después de la generación exitosa
       [...values.photosBeforeService, ...values.photosClientVehicle, ...values.photosEquipmentUsed]
         .forEach(photoName => {
           localStorage.removeItem(`photo-${photoName}`);
@@ -90,21 +121,79 @@ const ServiceInspection = () => {
       return values;
     },
     onSuccess: () => {
-      toast.success('PDF de inspección generado y descargado');
+      toast.success('PDF de inspección generado exitosamente');
       
-      // Iniciar servicio después de generar el PDF
-      if (id) {
-        updateServiceStatusMutation.mutate(id);
-      }
+      // Pequeño delay antes de iniciar el servicio para que el usuario vea el PDF
+      setTimeout(() => {
+        if (id) {
+          updateServiceStatusMutation.mutate(id);
+        }
+      }, 2000);
     },
     onError: (error: Error) => {
       console.error('Error generando PDF:', error);
-      toast.error('Error al generar el PDF de inspección');
+      toast.error(`Error al generar el PDF: ${error.message}`);
+      setIsGeneratingPDF(false);
+      setPdfProgress(0);
     },
+    onSettled: () => {
+      // Reset del estado de generación después de 5 segundos
+      setTimeout(() => {
+        setIsGeneratingPDF(false);
+        setPdfProgress(0);
+        setPdfStep('');
+        if (pdfDownloadUrl) {
+          URL.revokeObjectURL(pdfDownloadUrl);
+          setPdfDownloadUrl(undefined);
+        }
+      }, 5000);
+    }
   });
+
+  const handleManualDownload = () => {
+    if (pdfDownloadUrl) {
+      const link = document.createElement('a');
+      link.href = pdfDownloadUrl;
+      link.download = `Inspeccion-${service?.folio}-${new Date().toISOString().split('T')[0]}.pdf`;
+      link.click();
+      toast.success('Descarga iniciada');
+    }
+  };
+
+  const validateFormBeforeSubmit = (values: InspectionFormValues): string[] => {
+    const errors: string[] = [];
+    
+    if (!values.operatorSignature?.trim()) {
+      errors.push('La firma del operador es obligatoria');
+    }
+    
+    if (!values.equipment || values.equipment.length === 0) {
+      errors.push('Debe seleccionar al menos un elemento del inventario');
+    }
+    
+    const totalPhotos = [
+      ...(values.photosBeforeService || []),
+      ...(values.photosClientVehicle || []),
+      ...(values.photosEquipmentUsed || [])
+    ].length;
+    
+    if (totalPhotos === 0) {
+      errors.push('Debe tomar al menos una fotografía');
+    }
+    
+    return errors;
+  };
 
   const onSubmit = (values: InspectionFormValues) => {
     console.log('Datos del formulario:', values);
+    
+    // Validar antes de procesar
+    const validationErrors = validateFormBeforeSubmit(values);
+    if (validationErrors.length > 0) {
+      validationErrors.forEach(error => toast.error(error));
+      return;
+    }
+    
     processInspectionMutation.mutate(values);
   };
   
@@ -127,7 +216,15 @@ const ServiceInspection = () => {
   }
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-6 animate-fade-in relative">
+      <PDFProgress 
+        isGenerating={isGeneratingPDF}
+        progress={pdfProgress}
+        currentStep={pdfStep}
+        onManualDownload={handleManualDownload}
+        downloadUrl={pdfDownloadUrl}
+      />
+
       <header className="flex items-center gap-4">
         <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="text-white">
           <ArrowLeft />
@@ -241,9 +338,16 @@ const ServiceInspection = () => {
           </Card>
 
           <div className="flex justify-end">
-            <Button type="submit" className="bg-tms-green hover:bg-tms-green/90 text-slate-900 font-bold flex items-center gap-2" disabled={processInspectionMutation.isPending || updateServiceStatusMutation.isPending}>
+            <Button 
+              type="submit" 
+              className="bg-tms-green hover:bg-tms-green/90 text-slate-900 font-bold flex items-center gap-2" 
+              disabled={processInspectionMutation.isPending || updateServiceStatusMutation.isPending || isGeneratingPDF}
+            >
               <Download className="w-4 h-4" />
-              {processInspectionMutation.isPending ? 'Generando PDF...' : updateServiceStatusMutation.isPending ? 'Iniciando Servicio...' : 'Generar PDF e Iniciar Servicio'}
+              {isGeneratingPDF ? 'Generando PDF...' : 
+               processInspectionMutation.isPending ? 'Procesando...' : 
+               updateServiceStatusMutation.isPending ? 'Iniciando Servicio...' : 
+               'Generar PDF e Iniciar Servicio'}
             </Button>
           </div>
         </form>
