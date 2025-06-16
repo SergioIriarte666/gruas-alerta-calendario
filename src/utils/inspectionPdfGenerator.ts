@@ -79,17 +79,6 @@ const validateInspectionData = (data: {
     errors.push('Debe seleccionar al menos un elemento del inventario');
   }
   
-  // Verificar que hay al menos una foto
-  const totalPhotos = [
-    ...(data.inspection.photosBeforeService || []),
-    ...(data.inspection.photosClientVehicle || []),
-    ...(data.inspection.photosEquipmentUsed || [])
-  ].length;
-  
-  if (totalPhotos === 0) {
-    console.warn('No hay fotos adjuntas - PDF se generará sin imágenes');
-  }
-  
   return errors;
 };
 
@@ -98,7 +87,7 @@ export const generateInspectionPDF = async (data: {
   inspection: InspectionFormValues;
 }): Promise<Blob> => {
   try {
-    console.log('Iniciando generación de PDF con validación mejorada:', data);
+    console.log('Iniciando generación de PDF con datos:', data);
 
     // Validar datos de entrada
     const validationErrors = validateInspectionData(data);
@@ -106,7 +95,7 @@ export const generateInspectionPDF = async (data: {
       throw new Error(`Errores de validación: ${validationErrors.join(', ')}`);
     }
 
-    // Obtener datos reales de la empresa
+    // Obtener datos de la empresa
     const companyData = await fetchCompanyData();
     console.log('Datos de empresa obtenidos:', companyData);
 
@@ -118,21 +107,21 @@ export const generateInspectionPDF = async (data: {
       companyData
     };
 
-    console.log('Datos del PDF preparados:', pdfData);
+    console.log('Generando PDF con datos completos:', pdfData);
 
-    // Add header con logo si está disponible
-    let yPosition = await addPDFHeaderWithLogo(doc, pdfData);
+    // Add header corporativo
+    let yPosition = addPDFHeader(doc, pdfData);
     console.log('Header agregado, yPosition:', yPosition);
 
-    // Add service information mejorada
-    yPosition = addEnhancedServiceInfo(doc, pdfData, yPosition);
+    // Add service information
+    yPosition = addServiceInfo(doc, pdfData, yPosition);
     console.log('Información de servicio agregada, yPosition:', yPosition);
 
     // Add equipment checklist
     yPosition = addEquipmentChecklist(doc, pdfData, yPosition);
     console.log('Checklist agregado, yPosition:', yPosition);
 
-    // Add photos sections con mejor manejo de errores
+    // Add photos sections
     try {
       if (data.inspection.photosBeforeService && data.inspection.photosBeforeService.length > 0) {
         console.log('Procesando fotos antes del servicio:', data.inspection.photosBeforeService);
@@ -146,7 +135,6 @@ export const generateInspectionPDF = async (data: {
       }
     } catch (photoError) {
       console.error('Error procesando fotos antes del servicio:', photoError);
-      // Continuar con el resto del PDF
     }
 
     try {
@@ -162,7 +150,6 @@ export const generateInspectionPDF = async (data: {
       }
     } catch (photoError) {
       console.error('Error procesando fotos del vehículo:', photoError);
-      // Continuar con el resto del PDF
     }
 
     try {
@@ -178,11 +165,10 @@ export const generateInspectionPDF = async (data: {
       }
     } catch (photoError) {
       console.error('Error procesando fotos del equipo:', photoError);
-      // Continuar con el resto del PDF
     }
 
-    // Add observations and signatures mejoradas
-    addEnhancedObservationsAndSignatures(doc, pdfData, yPosition);
+    // Add observations and signatures
+    addObservationsAndSignatures(doc, pdfData, yPosition);
     console.log('Observaciones y firmas agregadas');
 
     console.log('PDF generado exitosamente');
@@ -190,144 +176,5 @@ export const generateInspectionPDF = async (data: {
   } catch (error) {
     console.error('Error crítico generando PDF:', error);
     throw new Error(`Error al generar el PDF de inspección: ${error instanceof Error ? error.message : 'Error desconocido'}`);
-  }
-};
-
-const addPDFHeaderWithLogo = async (doc: jsPDF, data: InspectionPDFData): Promise<number> => {
-  const pageWidth = doc.internal.pageSize.width;
-  let yPosition = 20;
-
-  // Intentar cargar logo si está disponible
-  if (data.companyData.logoUrl) {
-    try {
-      const img = new Image();
-      img.crossOrigin = 'Anonymous';
-      
-      await new Promise((resolve, reject) => {
-        img.onload = () => {
-          try {
-            const logoWidth = 30;
-            const logoHeight = (img.height * logoWidth) / img.width;
-            doc.addImage(img, 'PNG', 20, yPosition, logoWidth, logoHeight);
-            console.log('Logo agregado al PDF');
-            resolve(true);
-          } catch (error) {
-            console.error('Error agregando logo:', error);
-            reject(error);
-          }
-        };
-        img.onerror = reject;
-        img.src = data.companyData.logoUrl!;
-      });
-    } catch (error) {
-      console.warn('No se pudo cargar el logo, continuando sin él:', error);
-    }
-  }
-
-  // Header con información de la empresa
-  doc.setFontSize(20);
-  doc.setTextColor(0, 150, 136); // tms-green
-  doc.text('REPORTE DE INSPECCIÓN PRE-SERVICIO', pageWidth / 2, yPosition, { align: 'center' });
-  yPosition += 15;
-
-  doc.setFontSize(12);
-  doc.setTextColor(0, 0, 0);
-  doc.text(data.companyData.businessName, pageWidth / 2, yPosition, { align: 'center' });
-  yPosition += 8;
-  doc.setFontSize(10);
-  doc.text(`RUT: ${data.companyData.rut}`, pageWidth / 2, yPosition, { align: 'center' });
-  yPosition += 6;
-  doc.text(`${data.companyData.address} | ${data.companyData.phone} | ${data.companyData.email}`, pageWidth / 2, yPosition, { align: 'center' });
-  yPosition += 15;
-
-  return yPosition;
-};
-
-const addEnhancedServiceInfo = (doc: jsPDF, data: InspectionPDFData, yPosition: number): number => {
-  try {
-    // Información del servicio con más detalles
-    doc.setFontSize(14);
-    doc.setTextColor(0, 150, 136);
-    doc.text('DATOS DEL SERVICIO', 20, yPosition);
-    yPosition += 10;
-
-    const serviceData = [
-      ['Folio:', data.service.folio || 'No especificado'],
-      ['Cliente:', data.service.client?.name || 'No especificado'],
-      ['RUT Cliente:', data.service.client?.rut || 'No especificado'],
-      ['Tipo de Servicio:', data.service.serviceType?.name || 'No especificado'],
-      ['Fecha:', data.service.serviceDate ? new Date(data.service.serviceDate).toLocaleDateString('es-CL') : 'No especificado'],
-      ['Valor del Servicio:', `$${(data.service.value || 0).toLocaleString('es-CL')}`],
-      ['Origen:', data.service.origin || 'No especificado'],
-      ['Destino:', data.service.destination || 'No especificado'],
-      ['Vehículo:', `${data.service.vehicleBrand || ''} ${data.service.vehicleModel || ''} - ${data.service.licensePlate || ''}`.trim()],
-      ['Grúa:', `${data.service.crane?.licensePlate || 'No asignada'} (${data.service.crane?.brand || ''} ${data.service.crane?.model || ''})`.trim()],
-      ['Operador:', data.service.operator?.name || 'No asignado'],
-      ['Orden de Compra:', data.service.purchaseOrder || 'No especificada'],
-    ];
-
-    (doc as any).autoTable({
-      startY: yPosition,
-      body: serviceData,
-      theme: 'plain',
-      styles: { fontSize: 10, cellPadding: 2 },
-      columnStyles: { 0: { fontStyle: 'bold', cellWidth: 50 } },
-    });
-
-    return (doc as any).lastAutoTable.finalY + 15;
-  } catch (error) {
-    console.error('Error en addEnhancedServiceInfo:', error);
-    return yPosition + 50; // Fallback position
-  }
-};
-
-const addEnhancedObservationsAndSignatures = (doc: jsPDF, data: InspectionPDFData, yPosition: number): number => {
-  try {
-    // Verificar si necesitamos nueva página
-    if (yPosition > 200) {
-      doc.addPage();
-      yPosition = 20;
-    }
-
-    doc.setFontSize(14);
-    doc.setTextColor(0, 150, 136);
-    doc.text('OBSERVACIONES Y FIRMAS', 20, yPosition);
-    yPosition += 15;
-
-    const pageWidth = doc.internal.pageSize.width;
-
-    if (data.inspection.vehicleObservations) {
-      doc.setFontSize(12);
-      doc.setTextColor(0, 0, 0);
-      doc.text('Observaciones del vehículo:', 20, yPosition);
-      yPosition += 8;
-      doc.setFontSize(10);
-      const splitText = doc.splitTextToSize(data.inspection.vehicleObservations, pageWidth - 40);
-      doc.text(splitText, 20, yPosition);
-      yPosition += splitText.length * 5 + 10;
-    }
-
-    const signaturesData = [
-      ['Firma del Operador:', data.inspection.operatorSignature || 'No especificado'],
-      ['Cliente (si presente):', data.inspection.clientName || 'No especificado'],
-      ['RUT del Cliente:', data.inspection.clientRut || 'No especificado'],
-      ['Fecha de Inspección:', new Date().toLocaleDateString('es-CL')],
-      ['Hora de Inspección:', new Date().toLocaleTimeString('es-CL')],
-      ['Valor del Servicio:', `$${(data.service.value || 0).toLocaleString('es-CL')}`],
-      ['Estado del Servicio:', data.service.status || 'No especificado'],
-    ];
-
-    (doc as any).autoTable({
-      startY: yPosition,
-      body: signaturesData,
-      theme: 'plain',
-      styles: { fontSize: 10, cellPadding: 3 },
-      columnStyles: { 0: { fontStyle: 'bold', cellWidth: 60 } },
-    });
-
-    return (doc as any).lastAutoTable.finalY;
-  } catch (error) {
-    console.error('Error en addEnhancedObservationsAndSignatures:', error);
-    return yPosition + 50; // Fallback position
   }
 };
