@@ -82,33 +82,29 @@ const AppContent: React.FC = () => {
   const [isReactReady, setIsReactReady] = useState(false);
 
   useEffect(() => {
-    // Ensure React is fully initialized before rendering TooltipProvider
-    setIsReactReady(true);
+    // Use a timeout to ensure React is fully mounted
+    const timer = setTimeout(() => {
+      setIsReactReady(true);
+    }, 0);
+    
+    return () => clearTimeout(timer);
   }, []);
-
-  if (!isReactReady) {
-    return (
-      <BrowserRouter>
-        <AuthProvider>
-          <UserProvider>
-            <NotificationProvider>
-              <div>Loading...</div>
-            </NotificationProvider>
-          </UserProvider>
-        </AuthProvider>
-      </BrowserRouter>
-    );
-  }
 
   return (
     <BrowserRouter>
       <AuthProvider>
         <UserProvider>
           <NotificationProvider>
-            <TooltipProvider>
-              <Sonner />
-              <AppRoutes />
-            </TooltipProvider>
+            {isReactReady ? (
+              <TooltipProvider>
+                <Sonner />
+                <AppRoutes />
+              </TooltipProvider>
+            ) : (
+              <div className="flex items-center justify-center min-h-screen bg-gray-900">
+                <div className="text-white">Loading...</div>
+              </div>
+            )}
           </NotificationProvider>
         </UserProvider>
       </AuthProvider>
