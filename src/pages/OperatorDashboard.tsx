@@ -43,12 +43,21 @@ const OperatorDashboard = () => {
 
     if (error) {
       console.log('❌ Rendering error state:', error.message);
+      
+      // Mensaje específico para usuarios sin operador asignado
+      const isNoOperatorError = error.message.includes('No operator found') || error.message.includes('operator');
+      
       return (
         <div className="text-center bg-red-900/20 border border-red-500/30 p-8 rounded-lg">
           <AlertCircle className="w-16 h-16 mx-auto mb-4 text-red-400" />
-          <h2 className="text-xl font-semibold mb-2 text-red-400">Error al cargar servicios</h2>
+          <h2 className="text-xl font-semibold mb-2 text-red-400">
+            {isNoOperatorError ? 'Usuario no asignado como operador' : 'Error al cargar servicios'}
+          </h2>
           <p className="text-gray-400 max-w-md mx-auto mb-4">
-            {error.message || 'Hubo un problema al cargar tus servicios asignados.'}
+            {isNoOperatorError 
+              ? 'Tu usuario no está configurado como operador. Contacta al administrador para que te asigne servicios.'
+              : (error.message || 'Hubo un problema al cargar tus servicios asignados.')
+            }
           </p>
           <div className="space-y-3">
             <Button onClick={handleRefresh} variant="outline" className="border-red-500 text-red-400 hover:bg-red-500/10">
@@ -84,19 +93,19 @@ const OperatorDashboard = () => {
           <Truck className="w-16 h-16 mx-auto mb-4 text-tms-green opacity-50" />
           <h2 className="text-xl font-semibold mb-2 text-white">No hay servicios asignados</h2>
           <p className="text-gray-400 max-w-md mx-auto mb-4">
-            En este momento, no tienes ningún servicio de grúa en curso. Los nuevos servicios de prueba deberían aparecer aquí.
+            En este momento, no tienes ningún servicio de grúa pendiente o en progreso. Los nuevos servicios asignados aparecerán aquí.
           </p>
           {user && (
             <div className="mt-4 p-4 bg-slate-700/50 rounded-lg">
               <p className="text-sm text-gray-400">
                 <User className="w-4 h-4 inline mr-1" />
-                Conectado como: <span className="text-white">{user.name || user.email}</span>
+                Operador: <span className="text-white">{user.name || user.email}</span>
               </p>
               <p className="text-sm text-gray-400">
                 <span className="text-tms-green">Email:</span> {user.email}
               </p>
               <p className="text-sm text-gray-400">
-                <span className="text-tms-green">Rol:</span> {user.role}
+                <span className="text-tms-green">Estado:</span> <span className="text-tms-green">Activo y listo para servicios</span>
               </p>
             </div>
           )}
@@ -159,7 +168,7 @@ const OperatorDashboard = () => {
       <footer className="text-center text-gray-500 text-sm pt-4">
         <p>TMS Grúas &copy; {new Date().getFullYear()}</p>
         <p className="text-xs mt-1">
-          Sistema actualizado - Nuevas políticas RLS implementadas
+          ✅ Sistema configurado correctamente - Operador asignado
         </p>
       </footer>
     </div>
