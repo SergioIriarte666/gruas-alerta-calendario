@@ -19,27 +19,31 @@ const Clients = () => {
   const [currentPage, setCurrentPage] = React.useState(1);
   const ITEMS_PER_PAGE = 10;
 
-  const filteredClients = clients.filter(client =>
-    client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    client.rut.includes(searchTerm) ||
-    client.email.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredClients = React.useMemo(() => 
+    clients.filter(client =>
+      client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      client.rut.includes(searchTerm) ||
+      client.email.toLowerCase().includes(searchTerm.toLowerCase())
+    ), [clients, searchTerm]
   );
 
   const totalPages = Math.ceil(filteredClients.length / ITEMS_PER_PAGE);
-  const paginatedClients = filteredClients.slice(
-    (currentPage - 1) * ITEMS_PER_PAGE,
-    currentPage * ITEMS_PER_PAGE
+  const paginatedClients = React.useMemo(() => 
+    filteredClients.slice(
+      (currentPage - 1) * ITEMS_PER_PAGE,
+      currentPage * ITEMS_PER_PAGE
+    ), [filteredClients, currentPage, ITEMS_PER_PAGE]
   );
 
-  const handleCreateClient = (clientData: Omit<Client, 'id' | 'createdAt' | 'updatedAt'>) => {
+  const handleCreateClient = React.useCallback((clientData: Omit<Client, 'id' | 'createdAt' | 'updatedAt'>) => {
     createClient(clientData);
     setIsDialogOpen(false);
     toast.success("Cliente creado", {
       description: "El cliente ha sido creado exitosamente.",
     });
-  };
+  }, [createClient]);
 
-  const handleUpdateClient = (clientData: Omit<Client, 'id' | 'createdAt' | 'updatedAt'>) => {
+  const handleUpdateClient = React.useCallback((clientData: Omit<Client, 'id' | 'createdAt' | 'updatedAt'>) => {
     if (selectedClient) {
       updateClient(selectedClient.id, clientData);
       setIsDialogOpen(false);
@@ -48,38 +52,43 @@ const Clients = () => {
         description: "Los datos del cliente han sido actualizados.",
       });
     }
-  };
+  }, [selectedClient, updateClient]);
 
-  const handleEditClient = (client: Client) => {
+  const handleEditClient = React.useCallback((client: Client) => {
     setSelectedClient(client);
     setIsDialogOpen(true);
-  };
+  }, []);
 
-  const handleDeleteClient = (client: Client) => {
+  const handleDeleteClient = React.useCallback((client: Client) => {
     if (window.confirm(`¿Estás seguro de eliminar al cliente "${client.name}"?`)) {
       deleteClient(client.id);
       toast.error("Cliente eliminado", {
         description: "El cliente ha sido eliminado del sistema.",
       });
     }
-  };
+  }, [deleteClient]);
 
-  const handleToggleStatus = (client: Client) => {
+  const handleToggleStatus = React.useCallback((client: Client) => {
     toggleClientStatus(client.id);
     toast.info(client.isActive ? "Cliente desactivado" : "Cliente activado", {
       description: `El cliente ha sido ${client.isActive ? 'desactivado' : 'activado'}.`,
     });
-  };
+  }, [toggleClientStatus]);
 
-  const handleNewClient = () => {
+  const handleNewClient = React.useCallback(() => {
     setSelectedClient(undefined);
     setIsDialogOpen(true);
-  };
+  }, []);
 
-  const handleViewDetails = (client: Client) => {
+  const handleViewDetails = React.useCallback((client: Client) => {
     setSelectedClientForDetails(client);
     setIsDetailsModalOpen(true);
-  };
+  }, []);
+
+  const handleCloseDetailsModal = React.useCallback(() => {
+    setIsDetailsModalOpen(false);
+    setSelectedClientForDetails(null);
+  }, []);
 
   if (loading) {
     return (
@@ -125,10 +134,7 @@ const Clients = () => {
         <ClientDetailsModal
           client={selectedClientForDetails}
           isOpen={isDetailsModalOpen}
-          onClose={() => {
-            setIsDetailsModalOpen(false);
-            setSelectedClientForDetails(null);
-          }}
+          onClose={handleCloseDetailsModal}
         />
       )}
     </div>

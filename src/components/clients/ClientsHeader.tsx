@@ -24,10 +24,29 @@ export const ClientsHeader = ({
   handleCreateClient,
   handleUpdateClient,
 }: ClientsHeaderProps) => {
-  const handleCloseModal = () => {
+  const handleCloseModal = React.useCallback(() => {
     setIsDialogOpen(false);
     setSelectedClient(undefined);
-  };
+  }, [setIsDialogOpen, setSelectedClient]);
+
+  // Handle escape key
+  React.useEffect(() => {
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && isDialogOpen) {
+        handleCloseModal();
+      }
+    };
+
+    if (isDialogOpen) {
+      document.addEventListener('keydown', handleEscape);
+      document.body.style.overflow = 'hidden';
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleEscape);
+      document.body.style.overflow = 'unset';
+    };
+  }, [isDialogOpen, handleCloseModal]);
 
   return (
     <div className="flex items-center justify-between">
@@ -46,13 +65,25 @@ export const ClientsHeader = ({
         Nuevo Cliente
       </Button>
 
-      {/* Modal simple sin Radix UI */}
+      {/* Simple Modal Implementation */}
       {isDialogOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80">
-          <div className="relative bg-tms-dark border border-gray-700 rounded-lg shadow-lg max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center"
+          style={{ backgroundColor: 'rgba(0, 0, 0, 0.8)' }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              handleCloseModal();
+            }
+          }}
+        >
+          <div 
+            className="relative bg-tms-dark border border-gray-700 rounded-lg shadow-lg max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
             <button
               onClick={handleCloseModal}
-              className="absolute right-4 top-4 text-gray-400 hover:text-white z-10"
+              className="absolute right-4 top-4 text-gray-400 hover:text-white z-10 p-1 rounded-full hover:bg-gray-700 transition-colors"
+              aria-label="Cerrar modal"
             >
               <X className="h-4 w-4" />
             </button>
