@@ -1,5 +1,5 @@
 import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import autoTable from 'jspdf-autotable';
 import { InspectionPDFData } from './pdfTypes';
 import { vehicleEquipment } from '@/data/equipmentData';
 
@@ -25,7 +25,7 @@ export const addServiceInfo = (doc: jsPDF, data: InspectionPDFData, yPosition: n
       ['Operador:', data.service.operator?.name || 'N/A'],
     ];
 
-    (doc as any).autoTable({
+    autoTable(doc, {
       startY: yPosition,
       head: [],
       body: serviceData,
@@ -116,7 +116,7 @@ export const addEquipmentChecklist = (doc: jsPDF, data: InspectionPDFData, yPosi
       tableRows.push([col1[0], col1[1], col2[0], col2[1], col3[0], col3[1]]);
     }
 
-    (doc as any).autoTable({
+    autoTable(doc, {
       startY: yPosition,
       head: [['Elemento', '✓', 'Elemento', '✓', 'Elemento', '✓']],
       body: tableRows,
@@ -169,8 +169,8 @@ export const addObservationsAndSignatures = (doc: jsPDF, data: InspectionPDFData
   try {
     const pageWidth = doc.internal.pageSize.width;
     
-    // Verificar si necesitamos una nueva página
-    if (yPosition > 220) {
+    // Verificar si necesitamos una nueva página para las firmas
+    if (yPosition > 180) {
       doc.addPage();
       yPosition = 20;
     }
@@ -187,6 +187,12 @@ export const addObservationsAndSignatures = (doc: jsPDF, data: InspectionPDFData
       const splitObservations = doc.splitTextToSize(data.inspection.vehicleObservations, pageWidth - 40);
       doc.text(splitObservations, 20, yPosition);
       yPosition += splitObservations.length * 5 + 15;
+    }
+
+    // Verificar espacio para firmas antes de agregarlas
+    if (yPosition > 200) {
+      doc.addPage();
+      yPosition = 20;
     }
 
     // Firmas
@@ -209,7 +215,7 @@ export const addObservationsAndSignatures = (doc: jsPDF, data: InspectionPDFData
       doc.text(`${data.inspection.clientName}`, pageWidth - 100, yPosition + 16);
     }
 
-    yPosition += 30;
+    yPosition += 35;
 
     // Footer con información de la empresa
     doc.setFontSize(8);
