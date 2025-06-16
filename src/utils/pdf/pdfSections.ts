@@ -1,6 +1,5 @@
-
 import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import autoTable from 'jspdf-autotable';
 import { InspectionPDFData } from './pdfTypes';
 import { vehicleEquipment } from '@/data/equipmentData';
 
@@ -26,7 +25,7 @@ export const addServiceInfo = (doc: jsPDF, data: InspectionPDFData, yPosition: n
       ['Operador:', data.service.operator?.name || 'N/A'],
     ];
 
-    (doc as any).autoTable({
+    autoTable(doc, {
       startY: yPosition,
       head: [],
       body: serviceData,
@@ -137,7 +136,7 @@ export const addEquipmentChecklist = (doc: jsPDF, data: InspectionPDFData, yPosi
     console.log('Filas de tabla generadas:', tableRows.length);
 
     // Generar la tabla
-    (doc as any).autoTable({
+    autoTable(doc, {
       startY: yPosition,
       head: [['Elemento', '✓', 'Elemento', '✓', 'Elemento', '✓']],
       body: tableRows,
