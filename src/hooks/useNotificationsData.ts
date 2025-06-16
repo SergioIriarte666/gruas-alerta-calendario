@@ -90,7 +90,6 @@ const fetchNotificationsData = async (): Promise<Omit<Notification, 'read'>[]> =
   return notifications.sort((a,b) => b.timestamp.getTime() - a.timestamp.getTime());
 };
 
-
 export const useNotificationsData = () => {
   const { data, isLoading, error } = useQuery({
     queryKey: ['notificationsData'],
