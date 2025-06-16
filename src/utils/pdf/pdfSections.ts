@@ -1,5 +1,5 @@
 
-iimport jsPDF from 'jspdf';
+import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import { InspectionPDFData } from './pdfTypes';
 import { vehicleEquipment } from '@/data/equipmentData';
