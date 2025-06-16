@@ -13,6 +13,8 @@ export const generateInspectionPDF = async (data: {
   inspection: InspectionFormValues;
 }): Promise<Blob> => {
   try {
+    console.log('Iniciando generación de PDF con datos:', data);
+
     const doc = new jsPDF();
     
     const pdfData: InspectionPDFData = {
@@ -27,7 +29,7 @@ export const generateInspectionPDF = async (data: {
       }
     };
 
-    console.log('Iniciando generación de PDF con datos:', pdfData);
+    console.log('Datos del PDF preparados:', pdfData);
 
     // Add header
     let yPosition = addPDFHeader(doc, pdfData);
@@ -42,34 +44,52 @@ export const generateInspectionPDF = async (data: {
     console.log('Checklist agregado, yPosition:', yPosition);
 
     // Add photos sections if they exist
-    if (data.inspection.photosBeforeService && data.inspection.photosBeforeService.length > 0) {
-      yPosition = await addPhotosSection(
-        doc, 
-        'FOTOS ANTES DEL SERVICIO', 
-        data.inspection.photosBeforeService, 
-        yPosition
-      );
-      console.log('Fotos antes del servicio agregadas, yPosition:', yPosition);
+    try {
+      if (data.inspection.photosBeforeService && data.inspection.photosBeforeService.length > 0) {
+        console.log('Procesando fotos antes del servicio:', data.inspection.photosBeforeService);
+        yPosition = await addPhotosSection(
+          doc, 
+          'FOTOS ANTES DEL SERVICIO', 
+          data.inspection.photosBeforeService, 
+          yPosition
+        );
+        console.log('Fotos antes del servicio agregadas, yPosition:', yPosition);
+      }
+    } catch (photoError) {
+      console.error('Error procesando fotos antes del servicio:', photoError);
+      // Continuar con el resto del PDF
     }
 
-    if (data.inspection.photosClientVehicle && data.inspection.photosClientVehicle.length > 0) {
-      yPosition = await addPhotosSection(
-        doc, 
-        'FOTOS DEL VEHÍCULO DEL CLIENTE', 
-        data.inspection.photosClientVehicle, 
-        yPosition
-      );
-      console.log('Fotos del vehículo agregadas, yPosition:', yPosition);
+    try {
+      if (data.inspection.photosClientVehicle && data.inspection.photosClientVehicle.length > 0) {
+        console.log('Procesando fotos del vehículo:', data.inspection.photosClientVehicle);
+        yPosition = await addPhotosSection(
+          doc, 
+          'FOTOS DEL VEHÍCULO DEL CLIENTE', 
+          data.inspection.photosClientVehicle, 
+          yPosition
+        );
+        console.log('Fotos del vehículo agregadas, yPosition:', yPosition);
+      }
+    } catch (photoError) {
+      console.error('Error procesando fotos del vehículo:', photoError);
+      // Continuar con el resto del PDF
     }
 
-    if (data.inspection.photosEquipmentUsed && data.inspection.photosEquipmentUsed.length > 0) {
-      yPosition = await addPhotosSection(
-        doc, 
-        'FOTOS DEL EQUIPO UTILIZADO', 
-        data.inspection.photosEquipmentUsed, 
-        yPosition
-      );
-      console.log('Fotos del equipo agregadas, yPosition:', yPosition);
+    try {
+      if (data.inspection.photosEquipmentUsed && data.inspection.photosEquipmentUsed.length > 0) {
+        console.log('Procesando fotos del equipo:', data.inspection.photosEquipmentUsed);
+        yPosition = await addPhotosSection(
+          doc, 
+          'FOTOS DEL EQUIPO UTILIZADO', 
+          data.inspection.photosEquipmentUsed, 
+          yPosition
+        );
+        console.log('Fotos del equipo agregadas, yPosition:', yPosition);
+      }
+    } catch (photoError) {
+      console.error('Error procesando fotos del equipo:', photoError);
+      // Continuar con el resto del PDF
     }
 
     // Add observations and signatures
@@ -79,7 +99,7 @@ export const generateInspectionPDF = async (data: {
     console.log('PDF generado exitosamente');
     return doc.output('blob');
   } catch (error) {
-    console.error('Error generando PDF:', error);
-    throw new Error('Error al generar el PDF de inspección');
+    console.error('Error crítico generando PDF:', error);
+    throw new Error(`Error al generar el PDF de inspección: ${error instanceof Error ? error.message : 'Error desconocido'}`);
   }
 };

@@ -1,14 +1,9 @@
 
 import * as React from 'react';
 import { Button } from '@/components/ui/button';
-import { Plus } from 'lucide-react';
+import { Plus, X } from 'lucide-react';
 import { ClientForm } from '@/components/clients/ClientForm';
 import { Client } from '@/types';
-import {
-  AlertDialog,
-  AlertDialogContent,
-  AlertDialogTrigger,
-} from '@/components/ui/alert-dialog';
 
 interface ClientsHeaderProps {
   isDialogOpen: boolean;
@@ -29,6 +24,11 @@ export const ClientsHeader = ({
   handleCreateClient,
   handleUpdateClient,
 }: ClientsHeaderProps) => {
+  const handleCloseModal = () => {
+    setIsDialogOpen(false);
+    setSelectedClient(undefined);
+  };
+
   return (
     <div className="flex items-center justify-between">
       <div>
@@ -38,28 +38,33 @@ export const ClientsHeader = ({
         </p>
       </div>
       
-      <AlertDialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <AlertDialogTrigger asChild>
-          <Button 
-            onClick={handleNewClient}
-            className="bg-tms-green hover:bg-tms-green-dark text-white"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Nuevo Cliente
-          </Button>
-        </AlertDialogTrigger>
-        
-        <AlertDialogContent className="max-w-4xl">
-          <ClientForm
-            client={selectedClient}
-            onSubmit={selectedClient ? handleUpdateClient : handleCreateClient}
-            onCancel={() => {
-              setIsDialogOpen(false);
-              setSelectedClient(undefined);
-            }}
-          />
-        </AlertDialogContent>
-      </AlertDialog>
+      <Button 
+        onClick={handleNewClient}
+        className="bg-tms-green hover:bg-tms-green-dark text-white"
+      >
+        <Plus className="w-4 h-4 mr-2" />
+        Nuevo Cliente
+      </Button>
+
+      {/* Modal simple sin Radix UI */}
+      {isDialogOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80">
+          <div className="relative bg-tms-dark border border-gray-700 rounded-lg shadow-lg max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <button
+              onClick={handleCloseModal}
+              className="absolute right-4 top-4 text-gray-400 hover:text-white z-10"
+            >
+              <X className="h-4 w-4" />
+            </button>
+            
+            <ClientForm
+              client={selectedClient}
+              onSubmit={selectedClient ? handleUpdateClient : handleCreateClient}
+              onCancel={handleCloseModal}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 };
