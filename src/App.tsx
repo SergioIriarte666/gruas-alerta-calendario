@@ -36,57 +36,63 @@ const queryClient = new QueryClient({
   },
 });
 
+const AppContent: React.FC = () => {
+  return (
+    <BrowserRouter>
+      <AuthProvider>
+        <UserProvider>
+          <NotificationProvider>
+            <TooltipProvider>
+              <Sonner />
+              <Routes>
+                <Route path="/auth" element={<Auth />} />
+                
+                <Route path="/operator/*" element={
+                  <ProtectedRoute>
+                    <OperatorLayout>
+                      <Routes>
+                        <Route path="/" element={<OperatorDashboard />} />
+                        <Route path="/service/:id/inspect" element={<ServiceInspection />} />
+                        <Route path="*" element={<NotFound />} />
+                      </Routes>
+                    </OperatorLayout>
+                  </ProtectedRoute>
+                }/>
+
+                <Route path="/*" element={
+                  <ProtectedRoute>
+                    <Layout>
+                      <Routes>
+                        <Route path="/" element={<Dashboard />} />
+                        <Route path="/calendar" element={<Calendar />} />
+                        <Route path="/services" element={<Services />} />
+                        <Route path="/clients" element={<Clients />} />
+                        <Route path="/cranes" element={<Cranes />} />
+                        <Route path="/operators" element={<Operators />} />
+                        <Route path="/costs" element={<Costs />} />
+                        <Route path="/closures" element={<Closures />} />
+                        <Route path="/invoices" element={<Invoices />} />
+                        <Route path="/reports" element={<Reports />} />
+                        <Route path="/settings" element={<Settings />} />
+                        <Route path="/profile" element={<Profile />} />
+                        <Route path="*" element={<NotFound />} />
+                      </Routes>
+                    </Layout>
+                  </ProtectedRoute>
+                } />
+              </Routes>
+            </TooltipProvider>
+          </NotificationProvider>
+        </UserProvider>
+      </AuthProvider>
+    </BrowserRouter>
+  );
+};
+
 const App: React.FC = () => {
   return (
     <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <AuthProvider>
-          <UserProvider>
-            <NotificationProvider>
-              <TooltipProvider>
-                <Sonner />
-                <Routes>
-                  <Route path="/auth" element={<Auth />} />
-                  
-                  <Route path="/operator/*" element={
-                    <ProtectedRoute>
-                      <OperatorLayout>
-                        <Routes>
-                          <Route path="/" element={<OperatorDashboard />} />
-                          <Route path="/service/:id/inspect" element={<ServiceInspection />} />
-                          <Route path="*" element={<NotFound />} />
-                        </Routes>
-                      </OperatorLayout>
-                    </ProtectedRoute>
-                  }/>
-
-                  <Route path="/*" element={
-                    <ProtectedRoute>
-                      <Layout>
-                        <Routes>
-                          <Route path="/" element={<Dashboard />} />
-                          <Route path="/calendar" element={<Calendar />} />
-                          <Route path="/services" element={<Services />} />
-                          <Route path="/clients" element={<Clients />} />
-                          <Route path="/cranes" element={<Cranes />} />
-                          <Route path="/operators" element={<Operators />} />
-                          <Route path="/costs" element={<Costs />} />
-                          <Route path="/closures" element={<Closures />} />
-                          <Route path="/invoices" element={<Invoices />} />
-                          <Route path="/reports" element={<Reports />} />
-                          <Route path="/settings" element={<Settings />} />
-                          <Route path="/profile" element={<Profile />} />
-                          <Route path="*" element={<NotFound />} />
-                        </Routes>
-                      </Layout>
-                    </ProtectedRoute>
-                  } />
-                </Routes>
-              </TooltipProvider>
-            </NotificationProvider>
-          </UserProvider>
-        </AuthProvider>
-      </BrowserRouter>
+      <AppContent />
     </QueryClientProvider>
   );
 };
