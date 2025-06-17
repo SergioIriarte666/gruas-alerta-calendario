@@ -1,7 +1,8 @@
 
 {
   "short_name": "TMS Grúas",
-  "name": "TMS Grúas - Sistema de Gestión",
+  "name": "TMS Grúas - Sistema de Gestión Profesional",
+  "description": "Sistema integral de gestión para servicios de grúa. Control completo desde registro hasta facturación con capacidades offline avanzadas.",
   "icons": [
     {
       "src": "icons/icon-192x192.png",
@@ -14,6 +15,11 @@
       "type": "image/png",
       "sizes": "512x512",
       "purpose": "any maskable"
+    },
+    {
+      "src": "icons/icon-96x96.png",
+      "type": "image/png",
+      "sizes": "96x96"
     }
   ],
   "start_url": "/",
@@ -21,5 +27,102 @@
   "scope": "/",
   "theme_color": "#1e293b",
   "background_color": "#0f172a",
-  "description": "Sistema de gestión para TMS Grúas - Acceso completo al sistema según rol de usuario."
+  "orientation": "portrait-primary",
+  "categories": ["business", "productivity", "utilities"],
+  "lang": "es-ES",
+  "dir": "ltr",
+  "prefer_related_applications": false,
+  "shortcuts": [
+    {
+      "name": "Portal Operador",
+      "short_name": "Operador",
+      "description": "Acceso directo para operadores de grúa - Trabajo offline disponible",
+      "url": "/operator?utm_source=homescreen",
+      "icons": [
+        {
+          "src": "icons/icon-96x96.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Nuevo Servicio",
+      "short_name": "Servicio",
+      "description": "Crear nuevo servicio rápidamente",
+      "url": "/services?action=new&utm_source=homescreen",
+      "icons": [
+        {
+          "src": "icons/icon-96x96.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Carga Masiva",
+      "short_name": "CSV",
+      "description": "Cargar servicios desde Excel/CSV con validación inteligente",
+      "url": "/services?action=bulk&utm_source=homescreen",
+      "icons": [
+        {
+          "src": "icons/icon-96x96.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Dashboard",
+      "short_name": "Dashboard",
+      "description": "Métricas y reportes del sistema",
+      "url": "/?utm_source=homescreen",
+      "icons": [
+        {
+          "src": "icons/icon-96x96.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "screenshots/desktop-dashboard.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Dashboard principal con métricas en tiempo real"
+    },
+    {
+      "src": "screenshots/mobile-operator.png",
+      "sizes": "390x844",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Portal del operador - Trabajo offline"
+    }
+  ],
+  "related_applications": [],
+  "edge_side_panel": {
+    "preferred_width": 400
+  },
+  "handle_links": "preferred",
+  "launch_handler": {
+    "client_mode": "navigate-existing"
+  },
+  "share_target": {
+    "action": "/services?action=new",
+    "method": "GET",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url"
+    }
+  },
+  "protocol_handlers": [
+    {
+      "protocol": "web+tms",
+      "url": "/?handler=%s"
+    }
+  ]
 }
