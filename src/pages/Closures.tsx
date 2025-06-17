@@ -1,9 +1,11 @@
+
 import { useState } from 'react';
 import { useServiceClosures } from '@/hooks/useServiceClosures';
 import { useClients } from '@/hooks/useClients';
 import { ServiceClosure } from '@/types';
 import { toast } from 'sonner';
 import ClosureForm from '@/components/closures/ClosureForm';
+import { EditClosureForm } from '@/components/closures/EditClosureForm';
 import ClosuresHeader from '@/components/closures/ClosuresHeader';
 import ClosuresStats from '@/components/closures/ClosuresStats';
 import ClosuresSearch from '@/components/closures/ClosuresSearch';
@@ -18,11 +20,12 @@ import {
 import ClosureReportForm from '@/components/closures/ClosureReportForm';
 
 const Closures = () => {
-  const { closures, loading, createClosure, deleteClosure, closeClosure } = useServiceClosures();
+  const { closures, loading, createClosure, updateClosure, deleteClosure, closeClosure } = useServiceClosures();
   const { clients } = useClients();
   const [searchTerm, setSearchTerm] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showReportSheet, setShowReportSheet] = useState(false);
+  const [editingClosure, setEditingClosure] = useState<ServiceClosure | null>(null);
 
   console.log('Closures page render - closures:', closures.length, 'loading:', loading, 'showCreateModal:', showCreateModal);
 
@@ -46,6 +49,36 @@ const Closures = () => {
       closeClosure(id);
       toast.success("Cierre procesado", {
         description: "El cierre ha sido procesado exitosamente.",
+      });
+    }
+  };
+
+  const handleEdit = (closure: ServiceClosure) => {
+    setEditingClosure(closure);
+  };
+
+  const handleUpdateClosure = async (data: any) => {
+    if (!editingClosure) return;
+    
+    try {
+      const updateData = {
+        dateRange: {
+          from: data.dateFrom,
+          to: data.dateTo
+        },
+        clientId: data.clientId || undefined,
+        status: data.status
+      };
+      
+      await updateClosure(editingClosure.id, updateData);
+      setEditingClosure(null);
+      toast.success("Cierre actualizado", {
+        description: "El cierre ha sido actualizado exitosamente.",
+      });
+    } catch (error) {
+      console.error('Error updating closure:', error);
+      toast.error("Error", {
+        description: "No se pudo actualizar el cierre.",
       });
     }
   };
@@ -83,6 +116,18 @@ const Closures = () => {
     );
   }
 
+  if (editingClosure) {
+    return (
+      <div className="space-y-6">
+        <EditClosureForm
+          closure={editingClosure}
+          onSubmit={handleUpdateClosure}
+          onCancel={() => setEditingClosure(null)}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <ClosuresHeader 
@@ -100,6 +145,7 @@ const Closures = () => {
       <ClosuresTable
         closures={filteredClosures}
         clients={clients}
+        onEdit={handleEdit}
         onDelete={handleDelete}
         onClose={handleClose}
       />

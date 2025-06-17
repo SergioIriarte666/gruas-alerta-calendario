@@ -10,11 +10,12 @@ import { Client } from '@/types';
 interface ClosuresTableProps {
   closures: ServiceClosure[];
   clients: Client[];
+  onEdit: (closure: ServiceClosure) => void;
   onDelete: (id: string, folio: string) => void;
   onClose: (id: string, folio: string) => void;
 }
 
-const ClosuresTable = ({ closures, clients, onDelete, onClose }: ClosuresTableProps) => {
+const ClosuresTable = ({ closures, clients, onEdit, onDelete, onClose }: ClosuresTableProps) => {
   const getClientName = (clientId?: string) => {
     if (!clientId) return 'Todos los clientes';
     const client = clients.find(c => c.id === clientId);
@@ -37,8 +38,10 @@ const ClosuresTable = ({ closures, clients, onDelete, onClose }: ClosuresTablePr
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('es-CL', {
       style: 'currency',
-      currency: 'CLP'
-    }).format(amount);
+      currency: 'CLP',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    }).format(Math.round(amount));
   };
 
   const formatDateRange = (dateRange: { from: string; to: string }) => {
@@ -96,6 +99,7 @@ const ClosuresTable = ({ closures, clients, onDelete, onClose }: ClosuresTablePr
                         size="sm"
                         onClick={() => onClose(closure.id, closure.folio)}
                         className="text-blue-400 hover:text-blue-300"
+                        title="Cerrar periodo"
                       >
                         <FileText className="w-4 h-4" />
                       </Button>
@@ -103,7 +107,9 @@ const ClosuresTable = ({ closures, clients, onDelete, onClose }: ClosuresTablePr
                     <Button
                       variant="ghost"
                       size="sm"
+                      onClick={() => onEdit(closure)}
                       className="text-gray-400 hover:text-white"
+                      title="Editar cierre"
                     >
                       <Edit className="w-4 h-4" />
                     </Button>
@@ -112,6 +118,7 @@ const ClosuresTable = ({ closures, clients, onDelete, onClose }: ClosuresTablePr
                       size="sm"
                       onClick={() => onDelete(closure.id, closure.folio)}
                       className="text-red-400 hover:text-red-300"
+                      title="Eliminar cierre"
                     >
                       <Trash2 className="w-4 h-4" />
                     </Button>
