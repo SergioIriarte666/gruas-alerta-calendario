@@ -124,31 +124,3 @@ const ToastComponent: React.FC<{ toast: Toast; onRemove: (id: string) => void }>
     </div>
   );
 };
-
-// Helper functions for easy usage
-export const toast = {
-  success: (title: string, description?: string) => {
-    const context = React.useContext(ToastContext);
-    if (context) {
-      context.toast({ type: 'success', title, description });
-    }
-  },
-  error: (title: string, description?: string) => {
-    const context = React.useContext(ToastContext);
-    if (context) {
-      context.toast({ type: 'error', title, description });
-    }
-  },
-  info: (title: string, description?: string) => {
-    const context = React.useContext(ToastContext);
-    if (context) {
-      context.toast({ type: 'info', title, description });
-    }
-  },
-  warning: (title: string, description?: string) => {
-    const context = React.useContext(ToastContext);
-    if (context) {
-      context.toast({ type: 'warning', title, description });
-    }
-  }
-};

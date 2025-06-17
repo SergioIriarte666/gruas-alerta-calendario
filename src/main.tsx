@@ -24,7 +24,9 @@ if (!container) throw new Error('Failed to find the root element');
 
 const root = createRoot(container);
 root.render(
-  <ToastProvider>
-    <App />
-  </ToastProvider>
+  <React.StrictMode>
+    <ToastProvider>
+      <App />
+    </ToastProvider>
+  </React.StrictMode>
 );
