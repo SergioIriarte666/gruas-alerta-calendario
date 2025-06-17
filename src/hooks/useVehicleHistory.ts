@@ -11,10 +11,18 @@ export interface VehicleHistoryEntry {
   serviceType: {
     name: string;
   };
+  client: {
+    name: string;
+  };
+  value: number;
+  origin: string;
+  destination: string;
 }
 
 const fetchVehicleHistory = async (licensePlate: string, currentServiceId?: string): Promise<VehicleHistoryEntry[]> => {
   if (!licensePlate) return [];
+
+  console.log('Fetching vehicle history for license plate:', licensePlate);
 
   let query = supabase
     .from('services')
@@ -23,7 +31,11 @@ const fetchVehicleHistory = async (licensePlate: string, currentServiceId?: stri
       folio,
       service_date,
       status,
-      service_types(name)
+      value,
+      origin,
+      destination,
+      service_types!inner(name),
+      clients!inner(name)
     `)
     .eq('license_plate', licensePlate);
 
@@ -40,12 +52,18 @@ const fetchVehicleHistory = async (licensePlate: string, currentServiceId?: stri
     throw new Error('Could not fetch vehicle history');
   }
 
+  console.log(`Found ${data?.length || 0} services for license plate ${licensePlate}:`, data);
+
   return (data || []).map((item: any) => ({
-      id: item.id,
-      folio: item.folio,
-      serviceDate: item.service_date,
-      status: item.status,
-      serviceType: item.service_types || { name: 'Desconocido' },
+    id: item.id,
+    folio: item.folio,
+    serviceDate: item.service_date,
+    status: item.status,
+    serviceType: item.service_types || { name: 'Desconocido' },
+    client: item.clients || { name: 'Desconocido' },
+    value: Number(item.value || 0),
+    origin: item.origin || '',
+    destination: item.destination || ''
   }));
 };
 

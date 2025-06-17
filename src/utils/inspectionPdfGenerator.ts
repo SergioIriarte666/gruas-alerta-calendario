@@ -1,3 +1,4 @@
+
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import { InspectionPDFData } from './pdf/pdfTypes';
@@ -21,28 +22,6 @@ const fetchCompanyData = async (): Promise<CompanyData> => {
   try {
     console.log('=== OBTENIENDO DATOS DE EMPRESA ===');
     
-    // Primero intentar obtener una empresa activa (si existe el campo is_active)
-    const { data: activeData, error: activeError } = await supabase
-      .from('company_data')
-      .select('*')
-      .eq('is_active', true)
-      .maybeSingle();
-    
-    if (!activeError && activeData) {
-      console.log('Empresa activa encontrada:', activeData);
-      return {
-        businessName: activeData.business_name || 'TMS - Transport Management System',
-        rut: activeData.rut || '12.345.678-9',
-        address: activeData.address || 'Av. Principal 123, Santiago',
-        phone: activeData.phone || '+56 9 1234 5678',
-        email: activeData.email || 'contacto@tms.cl',
-        logoUrl: activeData.logo_url
-      };
-    }
-    
-    console.log('No hay empresa activa, buscando el registro más reciente...');
-    
-    // Si no hay empresa activa, tomar el registro más reciente
     const { data, error } = await supabase
       .from('company_data')
       .select('*')
