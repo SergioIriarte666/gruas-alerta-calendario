@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Connection Status } from './ConnectionStatus';
+import { ConnectionStatus } from './ConnectionStatus';
 import { InstallPrompt } from './InstallPrompt';
 import { SyncIndicator } from './SyncIndicator';
 import { UpdateNotification } from './UpdateNotification';

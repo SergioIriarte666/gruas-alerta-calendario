@@ -21,6 +21,7 @@ const Calendar = () => {
     viewMode, 
     setViewMode,
     createEvent,
+    deleteEvent,
     getEventsForDate 
   } = useCalendar();
   
@@ -129,6 +130,7 @@ const Calendar = () => {
                   getEventTypeColor={getEventTypeColor}
                   getEventTypeLabel={getEventTypeLabel}
                   createEvent={createEvent}
+                  deleteEvent={deleteEvent}
                 />
               )}
             </CardContent>
@@ -143,6 +145,7 @@ const Calendar = () => {
             getEventTypeColor={getEventTypeColor}
             getEventTypeLabel={getEventTypeLabel}
             createEvent={createEvent}
+            deleteEvent={deleteEvent}
           />
         )}
       </div>  
