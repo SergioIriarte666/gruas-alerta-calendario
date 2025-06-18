@@ -3,10 +3,12 @@ import { useState, useEffect } from 'react';
 import { Service } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useServiceTransformer } from './services/useServiceTransformer';
 
 export const useServicesForClosures = () => {
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(false);
+  const { transformRawServiceData } = useServiceTransformer();
 
   const fetchAvailableServices = async () => {
     try {
@@ -18,10 +20,10 @@ export const useServicesForClosures = () => {
         .from('services')
         .select(`
           *,
-          client:clients(id, name, rut),
-          crane:cranes(id, license_plate, brand, model),
-          operator:operators(id, name),
-          service_type:service_types(id, name)
+          clients!inner(id, name, rut, phone, email, address, is_active),
+          cranes!inner(id, license_plate, brand, model, type, is_active),
+          operators!inner(id, name, rut, phone, license_number, is_active),
+          service_types!inner(id, name, description, is_active)
         `)
         .eq('status', 'completed')
         .order('service_date', { ascending: false });
@@ -47,13 +49,15 @@ export const useServicesForClosures = () => {
       console.log('Services already in closures:', usedServiceIds.size);
 
       // Filter out services that are already in closures
-      const availableServices = servicesData?.filter(service => 
+      const availableServicesData = servicesData?.filter(service => 
         !usedServiceIds.has(service.id)
       ) || [];
 
-      console.log('Available services for new closures:', availableServices.length);
+      console.log('Available services for new closures:', availableServicesData.length);
 
-      setServices(availableServices);
+      // Transform the raw data to match the Service type
+      const transformedServices = transformRawServiceData(availableServicesData);
+      setServices(transformedServices);
     } catch (error: any) {
       console.error('Error fetching available services for closures:', error);
       toast.error("Error", {
