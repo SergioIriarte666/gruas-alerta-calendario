@@ -49,7 +49,19 @@
 
     **Nota**: En un entorno de producción, estos valores deben gestionarse como variables de entorno.
 
-## 4. Ejecutar el Proyecto
+4.  **Configurar Row Level Security (RLS)**:
+    - Las políticas RLS ya están definidas en las migraciones.
+    - Asegúrese de que estén activas para proteger los datos según los roles de usuario.
+
+## 4. Configuración PWA
+
+El proyecto incluye funcionalidades de Progressive Web App (PWA):
+
+1.  **Service Worker**: Ya está configurado en `public/sw.js`
+2.  **Web App Manifest**: Configurado en `public/manifest.json`
+3.  **Instalación**: Los usuarios pueden instalar la app como nativa
+
+## 5. Ejecutar el Proyecto
 
 Una vez completada la configuración, puede iniciar el servidor de desarrollo:
 
@@ -59,13 +71,50 @@ npm run dev
 
 La aplicación estará disponible en `http://localhost:8080`.
 
-## 5. Deployment
+## 6. Configuración Inicial de Datos
 
-Para desplegar la aplicación en producción, puede generar una build estática:
+### Crear Usuario Administrador
+```sql
+-- En el SQL Editor de Supabase
+INSERT INTO profiles (id, email, full_name, role) 
+VALUES (uuid_generate_v4(), 'admin@empresa.com', 'Administrador', 'admin');
+```
+
+### Crear Usuario Operador
+```sql
+-- Crear perfil de operador
+INSERT INTO profiles (id, email, full_name, role) 
+VALUES (uuid_generate_v4(), 'operador@empresa.com', 'Juan Pérez', 'operator');
+
+-- Vincular con registro de operador
+UPDATE operators 
+SET user_id = (SELECT id FROM profiles WHERE email = 'operador@empresa.com')
+WHERE name = 'Juan Pérez';
+```
+
+## 7. Deployment
+
+Para desplegar la aplicación en producción:
 
 ```bash
 npm run build
 ```
 
-El contenido de la carpeta `dist/` puede ser desplegado en cualquier servicio de hosting de sitios estáticos como Vercel, Netlify, AWS S3, etc. Asegúrese de configurar las variables de entorno de Supabase en su proveedor de hosting.
+El contenido de la carpeta `dist/` puede ser desplegado en cualquier servicio de hosting de sitios estáticos como Vercel, Netlify, AWS S3, etc. 
 
+### Variables de Entorno en Producción
+Asegúrese de configurar las siguientes variables de entorno:
+- `VITE_SUPABASE_URL`
+- `VITE_SUPABASE_ANON_KEY`
+
+## 8. Troubleshooting
+
+### Problemas Comunes
+
+1. **Error de conexión a Supabase**: Verificar URLs y keys de API
+2. **Políticas RLS**: Asegurar que las políticas estén activas
+3. **PWA no funciona**: Verificar que el sitio esté servido sobre HTTPS
+4. **Operadores sin acceso**: Verificar vinculación user_id en tabla operators
+
+### Logs de Debugging
+El sistema incluye logs extensivos en consola para facilitar el debugging en desarrollo.
