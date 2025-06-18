@@ -57,9 +57,9 @@ export const useServiceTransformer = () => {
             updatedAt: ''
           },
           purchaseOrder: service.purchase_order,
-          vehicleBrand: service.vehicle_brand,
-          vehicleModel: service.vehicle_model,
-          licensePlate: service.license_plate,
+          vehicleBrand: service.vehicle_brand || '',
+          vehicleModel: service.vehicle_model || '',
+          licensePlate: service.license_plate || '',
           origin: service.origin,
           destination: service.destination,
           serviceType: service.service_types ? {

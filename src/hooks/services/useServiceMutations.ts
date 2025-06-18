@@ -14,9 +14,9 @@ export const useServiceMutations = () => {
           service_date: serviceData.serviceDate,
           client_id: serviceData.client.id,
           purchase_order: serviceData.purchaseOrder,
-          vehicle_brand: serviceData.vehicleBrand,
-          vehicle_model: serviceData.vehicleModel,
-          license_plate: serviceData.licensePlate,
+          vehicle_brand: serviceData.vehicleBrand || null,
+          vehicle_model: serviceData.vehicleModel || null,
+          license_plate: serviceData.licensePlate || null,
           origin: serviceData.origin,
           destination: serviceData.destination,
           service_type_id: serviceData.serviceType.id,
@@ -62,9 +62,9 @@ export const useServiceMutations = () => {
       if (serviceData.serviceDate !== undefined) updateData.service_date = serviceData.serviceDate;
       if (serviceData.client !== undefined) updateData.client_id = serviceData.client.id;
       if (serviceData.purchaseOrder !== undefined) updateData.purchase_order = serviceData.purchaseOrder;
-      if (serviceData.vehicleBrand !== undefined) updateData.vehicle_brand = serviceData.vehicleBrand;
-      if (serviceData.vehicleModel !== undefined) updateData.vehicle_model = serviceData.vehicleModel;
-      if (serviceData.licensePlate !== undefined) updateData.license_plate = serviceData.licensePlate;
+      if (serviceData.vehicleBrand !== undefined) updateData.vehicle_brand = serviceData.vehicleBrand || null;
+      if (serviceData.vehicleModel !== undefined) updateData.vehicle_model = serviceData.vehicleModel || null;
+      if (serviceData.licensePlate !== undefined) updateData.license_plate = serviceData.licensePlate || null;
       if (serviceData.origin !== undefined) updateData.origin = serviceData.origin;
       if (serviceData.destination !== undefined) updateData.destination = serviceData.destination;
       if (serviceData.serviceType !== undefined) updateData.service_type_id = serviceData.serviceType.id;

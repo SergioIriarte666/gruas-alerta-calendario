@@ -106,6 +106,24 @@ export const ServiceForm = ({ service, onSubmit, onCancel }: ServiceFormProps) =
       return;
     }
 
+    // Get selected service type for vehicle validation
+    const selectedServiceType = serviceTypes.find(st => st.id === formData.serviceTypeId);
+
+    // Check if vehicle info is required for this service type
+    const isVehicleInfoOptional = selectedServiceType.name.toLowerCase().includes('taxi') ||
+                                  selectedServiceType.name.toLowerCase().includes('transporte de materiales') ||
+                                  selectedServiceType.name.toLowerCase().includes('transporte de suministros');
+
+    // Validate vehicle information if required
+    if (!isVehicleInfoOptional) {
+      if (!formData.vehicleBrand.trim() || !formData.vehicleModel.trim() || !formData.licensePlate.trim()) {
+        toast.error("Error", {
+          description: "La información del vehículo es requerida para este tipo de servicio",
+        });
+        return;
+      }
+    }
+
     // Validar unicidad del folio solo si es manual o estamos creando un nuevo servicio
     if ((isManualFolio || !service) && service?.folio !== folio) {
       const isUnique = await validateFolioUniqueness(folio);
@@ -123,9 +141,9 @@ export const ServiceForm = ({ service, onSubmit, onCancel }: ServiceFormProps) =
       serviceDate: formData.serviceDate,
       client: selectedClient,
       purchaseOrder: formData.purchaseOrder,
-      vehicleBrand: formData.vehicleBrand,
-      vehicleModel: formData.vehicleModel,
-      licensePlate: formData.licensePlate,
+      vehicleBrand: formData.vehicleBrand || '',
+      vehicleModel: formData.vehicleModel || '',
+      licensePlate: formData.licensePlate || '',
       origin: formData.origin,
       destination: formData.destination,
       serviceType: {
@@ -183,6 +201,7 @@ export const ServiceForm = ({ service, onSubmit, onCancel }: ServiceFormProps) =
         onVehicleModelChange={(value) => setFormData(prev => ({ ...prev, vehicleModel: value }))}
         licensePlate={formData.licensePlate}
         onLicensePlateChange={(value) => setFormData(prev => ({ ...prev, licensePlate: value }))}
+        serviceTypeName={selectedServiceType?.name}
       />
 
       <LocationSection

@@ -10,6 +10,7 @@ Eres una IA especializada en el desarrollo y mantenimiento del Sistema de Gesti�
 - **Sistema de roles** (admin, operator, viewer) con Row Level Security (RLS)
 - **Portal especializado para operadores** con funcionalidades móviles
 - **Gestión completa** de servicios, clientes, grúas, operadores, costos y facturación
+- **Servicios especiales** con campos opcionales (taxi, transporte de materiales)
 - **Cierres de servicios** para prevenir doble facturación
 - **Inspecciones digitales** con firmas y fotos
 - **Reportes avanzados** con gráficos y análisis de rentabilidad
@@ -58,6 +59,22 @@ Para portal del operador:
 Pending → In Progress → Completed → Incluido en Cierre → Facturado
 ```
 
+### Tipos de Servicios Especiales
+```typescript
+// Servicios con información de vehículo opcional
+const OPTIONAL_VEHICLE_SERVICES = [
+  'taxi',
+  'transporte de materiales',
+  'transporte de suministros'
+];
+
+// Validación condicional basada en tipo de servicio
+const isVehicleInfoOptional = serviceTypeName && 
+  OPTIONAL_VEHICLE_SERVICES.some(type => 
+    serviceTypeName.toLowerCase().includes(type)
+  );
+```
+
 ### Sistema de Cierres (CRÍTICO)
 - Solo servicios `completed` no incluidos en cierres anteriores
 - Previene doble facturación
@@ -102,7 +119,19 @@ useEffect(() => { fetch('/api/services'); }, []);
 const transformedServices = transformRawServiceData(supabaseData);
 ```
 
-### 5. Row Level Security
+### 5. Validación Condicional de Servicios
+```typescript
+// Validar campos de vehículo según tipo de servicio
+const isVehicleInfoOptional = selectedServiceType.name.toLowerCase().includes('taxi') ||
+                              selectedServiceType.name.toLowerCase().includes('transporte de materiales') ||
+                              selectedServiceType.name.toLowerCase().includes('transporte de suministros');
+
+if (!isVehicleInfoOptional && (!vehicleBrand || !vehicleModel || !licensePlate)) {
+  throw new Error('Información de vehículo requerida');
+}
+```
+
+### 6. Row Level Security
 ```sql
 -- Todas las políticas deben considerar roles
 CREATE POLICY "Users can view services based on role" ON services
@@ -134,13 +163,25 @@ export const useServices = () => {
 };
 ```
 
-### 2. Componentes de Formulario
+### 2. Componentes de Formulario con Validación Condicional
 ```typescript
-// Siempre usar react-hook-form + zod
-const form = useForm<ServiceFormData>({
-  resolver: zodResolver(serviceSchema),
-  defaultValues: initialValues,
-});
+// Validación condicional para servicios especiales
+const VehicleSection = ({ serviceTypeName, ...props }) => {
+  const isOptional = serviceTypeName && (
+    serviceTypeName.toLowerCase().includes('taxi') ||
+    serviceTypeName.toLowerCase().includes('transporte de materiales')
+  );
+
+  return (
+    <div>
+      <Label>
+        Marca del Vehículo {!isOptional && <span className="text-red-500">*</span>}
+      </Label>
+      {isOptional && <p className="text-xs text-gray-400">Opcional para este tipo de servicio</p>}
+      <Input required={!isOptional} {...props} />
+    </div>
+  );
+};
 ```
 
 ### 3. PWA Patterns
@@ -172,7 +213,22 @@ const availableServices = services.filter(service =>
 );
 ```
 
-### 2. Inspecciones Digitales
+### 2. Servicios con Campos Opcionales
+```typescript
+// Manejar campos de vehículo opcionales
+const createService = (serviceData) => {
+  const isVehicleOptional = checkServiceTypeForOptionalVehicle(serviceData.serviceType);
+  
+  return supabase.from('services').insert({
+    ...serviceData,
+    vehicle_brand: serviceData.vehicleBrand || null,
+    vehicle_model: serviceData.vehicleModel || null,
+    license_plate: serviceData.licensePlate || null
+  });
+};
+```
+
+### 3. Inspecciones Digitales
 ```typescript
 interface Inspection {
   service_id: string;
@@ -185,7 +241,7 @@ interface Inspection {
 }
 ```
 
-### 3. Sincronización PWA
+### 4. Sincronización PWA
 ```typescript
 // Almacenar acciones offline
 const storeOfflineAction = (action: OfflineAction) => {
@@ -325,6 +381,19 @@ const HugeComponent = () => {
 const [services, setServices] = useState([]);
 ```
 
+### 5. ❌ Validación Rígida de Vehículos
+```typescript
+// MAL - Requerir siempre información de vehículo
+if (!vehicleBrand || !vehicleModel || !licensePlate) {
+  throw new Error('Vehicle info required');
+}
+
+// BIEN - Validación condicional
+if (!isVehicleInfoOptional && (!vehicleBrand || !vehicleModel || !licensePlate)) {
+  throw new Error('Vehicle info required for this service type');
+}
+```
+
 ## Flujos de Trabajo Específicos
 
 ### 1. Nuevo Módulo
@@ -348,6 +417,13 @@ const [services, setServices] = useState([]);
 3. Funcionalidad offline crítica
 4. Captura de datos en terreno
 5. Sincronización robusta
+
+### 4. Servicios con Campos Opcionales
+1. Identificar tipos de servicio especiales
+2. Implementar validación condicional
+3. Actualizar UI para mostrar campos opcionales
+4. Manejar datos null/empty en base de datos
+5. Actualizar transformaciones de datos
 
 ## Consideraciones de Performance
 
@@ -378,4 +454,27 @@ queryClient.setQueryData(['services'], (old) => ({
 }));
 ```
 
-Recuerda: Este sistema es crítico para operaciones de empresas de grúas. La confiabilidad, seguridad y funcionalidad offline son prioritarias. Siempre piensa en el operador en terreno usando dispositivos móviles sin conexión constante.
+## Consideraciones Especiales para Servicios
+
+### 1. Tipos de Servicio con Campos Opcionales
+- **Taxi**: Transporte de pasajeros, vehículo del cliente
+- **Transporte de Materiales**: Materiales/suministros sin vehículo específico
+- **Otros servicios especializados**: Según configuración
+
+### 2. Validación Inteligente
+```typescript
+// Detectar automáticamente si campos son opcionales
+const detectOptionalFields = (serviceTypeName: string) => {
+  const optionalTypes = ['taxi', 'transporte de materiales', 'transporte de suministros'];
+  return optionalTypes.some(type => 
+    serviceTypeName.toLowerCase().includes(type)
+  );
+};
+```
+
+### 3. UI Adaptativa
+- Mostrar claramente cuando campos son opcionales
+- Incluir texto explicativo
+- Manejar visualmente servicios sin vehículo específico
+
+Recuerda: Este sistema es crítico para operaciones de empresas de grúas. La confiabilidad, seguridad y funcionalidad offline son prioritarias. Siempre piensa en el operador en terreno usando dispositivos móviles sin conexión constante. Los servicios especiales requieren flexibilidad en la captura de datos sin comprometer la integridad del sistema.

@@ -8,9 +8,9 @@ export const serviceFormSchema = z.object({
   serviceDate: z.string(),
   clientId: z.string().min(1, 'El cliente es requerido'),
   purchaseOrder: z.string().optional(),
-  vehicleBrand: z.string().min(1, 'La marca del vehículo es requerida'),
-  vehicleModel: z.string().min(1, 'El modelo del vehículo es requerido'),
-  licensePlate: z.string().min(1, 'La patente es requerida'),
+  vehicleBrand: z.string().optional(),
+  vehicleModel: z.string().optional(),
+  licensePlate: z.string().optional(),
   origin: z.string().min(1, 'El origen es requerido'),
   destination: z.string().min(1, 'El destino es requerido'),
   serviceTypeId: z.string().min(1, 'El tipo de servicio es requerido'),
@@ -20,6 +20,12 @@ export const serviceFormSchema = z.object({
   operatorCommission: z.number().min(0, 'La comisión debe ser mayor o igual a 0'),
   status: z.enum(['pending', 'in_progress', 'completed', 'cancelled']),
   observations: z.string().optional()
+}).refine((data) => {
+  // Get service type name to determine if vehicle info is required
+  // This will be handled in the form component
+  return true;
+}, {
+  message: "Validación de campos de vehículo"
 });
 
 export type ServiceFormValues = z.infer<typeof serviceFormSchema>;

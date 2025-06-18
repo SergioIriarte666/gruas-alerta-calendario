@@ -54,10 +54,22 @@ Vista visual de todos los eventos programados:
 ### 4.3. Servicios
 Gestión completa de servicios de grúas:
 - **Crear Servicio**: Formulario completo con cliente, grúa, operador, vehículo
+- **Servicios Especiales**: 
+  - **Taxi**: Transporte de pasajeros (información de vehículo opcional)
+  - **Transporte de Materiales**: Traslado de materiales y suministros (información de vehículo opcional)
 - **Importar Servicios**: Carga masiva via CSV/Excel con plantilla descargable
 - **Filtros Avanzados**: Por estado, fecha, cliente, operador, tipo de servicio
 - **Estados**: `pending`, `in_progress`, `completed`, `cancelled`
 - **Acciones**: Ver detalles, editar, cambiar estado
+
+#### 4.3.1. Tipos de Servicios Especiales
+El sistema reconoce automáticamente ciertos tipos de servicios donde la información del vehículo no es requerida:
+
+- **Servicios de Taxi**: Para transporte de pasajeros
+- **Transporte de Materiales**: Para traslado de materiales y suministros
+- **Otros servicios especializados**: Según configuración de tipos de servicio
+
+Para estos servicios, los campos de marca, modelo y patente del vehículo son opcionales y aparecen claramente marcados en el formulario.
 
 ### 4.4. Clientes
 Gestión de base de datos de clientes:
@@ -130,7 +142,7 @@ Vista simplificada enfocada en trabajo de campo:
 ### 5.2. Inspección de Servicios
 Herramienta completa para trabajo en terreno:
 - **Checklist de Equipos**: Verificación de grúa y herramientas
-- **Inspección de Vehículo**: Estado del vehículo a trasladar
+- **Inspección de Vehículo**: Estado del vehículo a trasladar (si aplica)
 - **Captura de Fotos**: Registro visual del servicio
 - **Firmas Digitales**: Cliente y operador
 - **Observaciones**: Notas del servicio
@@ -165,12 +177,18 @@ Herramienta completa para trabajo en terreno:
 ### 7.1. Registro de Servicio Completo
 1. Crear servicio desde Dashboard o Calendario
 2. Asignar cliente, grúa y operador
-3. Completar información del vehículo
+3. Completar información del vehículo (si aplica)
 4. Operador realiza inspección en terreno
 5. Servicio se marca como completado
 6. Incluir en cierre para facturación
 
-### 7.2. Facturación por Período
+### 7.2. Registro de Servicios Especiales
+1. Seleccionar tipo de servicio (Taxi, Transporte de Materiales)
+2. El sistema automáticamente hace opcionales los campos de vehículo
+3. Completar solo la información requerida
+4. Proceder normalmente con el flujo de servicio
+
+### 7.3. Facturación por Período
 1. Crear cierre con rango de fechas
 2. Filtrar por cliente (opcional)
 3. Seleccionar servicios completados
@@ -178,7 +196,7 @@ Herramienta completa para trabajo en terreno:
 5. Generar factura desde cierre
 6. Enviar PDF al cliente
 
-### 7.3. Trabajo del Operador
+### 7.4. Trabajo del Operador
 1. Login al portal del operador
 2. Ver servicios asignados
 3. Seleccionar servicio pendiente
@@ -194,6 +212,7 @@ Herramienta completa para trabajo en terreno:
 - Revisar alertas de vencimientos regularmente
 - Crear cierres periódicos para facturación ordenada
 - Monitorear reportes de rentabilidad mensualmente
+- Utilizar tipos de servicio especiales para simplificar registro
 
 ### 8.2. Para Operadores
 - Instalar la app PWA en el dispositivo móvil
@@ -207,6 +226,7 @@ Herramienta completa para trabajo en terreno:
 - Usar filtros para encontrar información rápidamente
 - Aprovechar la carga masiva para migración de datos
 - Configurar notificaciones según necesidades
+- Aprovechar los tipos de servicio especiales para agilizar el proceso
 
 ## 9. Resolución de Problemas
 
@@ -224,6 +244,11 @@ Herramienta completa para trabajo en terreno:
 - Verificar indicador PWA de elementos pendientes
 - Forzar sincronización manual
 - Verificar logs en consola del navegador
+
+### 9.4. Problemas con Campos de Vehículo
+- Verificar que el tipo de servicio permita campos opcionales
+- Para servicios especiales (taxi, materiales), los campos son opcionales
+- Contactar administrador para configurar tipos de servicio especiales
 
 ## 10. Soporte y Contacto
 

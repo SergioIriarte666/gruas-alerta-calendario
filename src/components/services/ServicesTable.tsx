@@ -1,4 +1,3 @@
-
 import { Service } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -98,82 +97,95 @@ export const ServicesTable = ({
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {services.map((service) => (
-                  <TableRow key={service.id} className="border-gray-700 hover:bg-white/5">
-                    <TableCell className="font-medium text-tms-green">
-                      {service.folio}
-                    </TableCell>
-                    <TableCell className="text-gray-300">
-                      {format(new Date(service.serviceDate), 'dd/MM/yyyy', { locale: es })}
-                    </TableCell>
-                    <TableCell className="text-gray-300">
-                      <div className="font-medium">{service.client.name}</div>
-                      <div className="text-sm text-gray-500">{service.client.rut}</div>
-                    </TableCell>
-                    <TableCell className="text-gray-300">
-                      <div className="font-medium">{service.vehicleBrand} {service.vehicleModel}</div>
-                      <div className="text-sm text-gray-500">{service.licensePlate}</div>
-                    </TableCell>
-                    <TableCell className="text-gray-300 max-w-48">
-                      <div className="truncate">{service.origin}</div>
-                      <div className="text-sm text-gray-500 truncate">→ {service.destination}</div>
-                    </TableCell>
-                    <TableCell className="text-gray-300">
-                      {service.crane.licensePlate}
-                    </TableCell>
-                    <TableCell className="text-gray-300">
-                      {service.operator.name}
-                    </TableCell>
-                    <TableCell className="text-gray-300 font-medium">
-                      {formatCurrency(service.value)}
-                    </TableCell>
-                    <TableCell>
-                      {getStatusBadge(service.status)}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex space-x-1">
-                        {(service.status === 'pending' || service.status === 'in_progress') && (
+                {services.map((service) => {
+                  // Check if vehicle info is available
+                  const hasVehicleInfo = service.vehicleBrand && service.vehicleModel && service.licensePlate;
+                  
+                  return (
+                    <TableRow key={service.id} className="border-gray-700 hover:bg-white/5">
+                      <TableCell className="font-medium text-tms-green">
+                        {service.folio}
+                      </TableCell>
+                      <TableCell className="text-gray-300">
+                        {format(new Date(service.serviceDate), 'dd/MM/yyyy', { locale: es })}
+                      </TableCell>
+                      <TableCell className="text-gray-300">
+                        <div className="font-medium">{service.client.name}</div>
+                        <div className="text-sm text-gray-500">{service.client.rut}</div>
+                      </TableCell>
+                      <TableCell className="text-gray-300">
+                        {hasVehicleInfo ? (
+                          <div>
+                            <div className="font-medium">{service.vehicleBrand} {service.vehicleModel}</div>
+                            <div className="text-sm text-gray-500">{service.licensePlate}</div>
+                          </div>
+                        ) : (
+                          <div className="text-sm text-gray-500 italic">
+                            Sin vehículo específico
+                          </div>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-gray-300 max-w-48">
+                        <div className="truncate">{service.origin}</div>
+                        <div className="text-sm text-gray-500 truncate">→ {service.destination}</div>
+                      </TableCell>
+                      <TableCell className="text-gray-300">
+                        {service.crane.licensePlate}
+                      </TableCell>
+                      <TableCell className="text-gray-300">
+                        {service.operator.name}
+                      </TableCell>
+                      <TableCell className="text-gray-300 font-medium">
+                        {formatCurrency(service.value)}
+                      </TableCell>
+                      <TableCell>
+                        {getStatusBadge(service.status)}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex space-x-1">
+                          {(service.status === 'pending' || service.status === 'in_progress') && (
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className="text-green-400 hover:text-green-300 hover:bg-green-400/10"
+                              onClick={() => onCloseService(service)}
+                              title="Cerrar Servicio"
+                            >
+                              <Check className="w-4 h-4" />
+                            </Button>
+                          )}
                           <Button 
                             variant="ghost" 
                             size="sm" 
-                            className="text-green-400 hover:text-green-300 hover:bg-green-400/10"
-                            onClick={() => onCloseService(service)}
-                            title="Cerrar Servicio"
+                            className="text-tms-green hover:text-tms-green-light hover:bg-tms-green/10"
+                            onClick={() => onViewDetails(service)}
+                            title="Ver detalles del servicio"
                           >
-                            <Check className="w-4 h-4" />
+                            <Eye className="w-4 h-4" />
                           </Button>
-                        )}
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          className="text-tms-green hover:text-tms-green-light hover:bg-tms-green/10"
-                          onClick={() => onViewDetails(service)}
-                          title="Ver detalles del servicio"
-                        >
-                          <Eye className="w-4 h-4" />
-                        </Button>
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          className="text-blue-400 hover:text-blue-300 hover:bg-blue-400/10"
-                          onClick={() => onEdit(service)}
-                          title="Editar servicio"
-                        >
-                          <Edit className="w-4 h-4" />
-                        </Button>
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          className="text-red-400 hover:text-red-300 hover:bg-red-400/10"
-                          onClick={() => onDelete(service)}
-                          title="Eliminar servicio"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="text-blue-400 hover:text-blue-300 hover:bg-blue-400/10"
+                            onClick={() => onEdit(service)}
+                            title="Editar servicio"
+                          >
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="text-red-400 hover:text-red-300 hover:bg-red-400/10"
+                            onClick={() => onDelete(service)}
+                            title="Eliminar servicio"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           </div>
