@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { Service } from '@/types';
@@ -106,9 +107,6 @@ export const ServiceForm = ({ service, onSubmit, onCancel }: ServiceFormProps) =
       return;
     }
 
-    // Get selected service type for vehicle validation
-    const selectedServiceType = serviceTypes.find(st => st.id === formData.serviceTypeId);
-
     // Check if vehicle info is required for this service type
     const isVehicleInfoOptional = selectedServiceType.name.toLowerCase().includes('taxi') ||
                                   selectedServiceType.name.toLowerCase().includes('transporte de materiales') ||
@@ -162,6 +160,9 @@ export const ServiceForm = ({ service, onSubmit, onCancel }: ServiceFormProps) =
       observations: formData.observations
     });
   };
+
+  // Get the selected service type for the VehicleSection component
+  const selectedServiceType = serviceTypes.find(st => st.id === formData.serviceTypeId);
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
