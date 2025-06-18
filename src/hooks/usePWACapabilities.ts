@@ -1,6 +1,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { useUser } from '@/contexts/UserContext';
+import type { BeforeInstallPromptEvent, ServiceWorkerRegistrationWithSync } from '@/types/pwa';
 
 interface InstallPrompt {
   canInstall: boolean;
@@ -52,9 +53,12 @@ export const usePWACapabilities = (): PWACapabilities => {
     const handleOnline = () => {
       setIsOnline(true);
       // Trigger background sync cuando vuelve la conexión
-      if ('serviceWorker' in navigator && 'sync' in window.ServiceWorkerRegistration.prototype) {
+      if ('serviceWorker' in navigator) {
         navigator.serviceWorker.ready.then(registration => {
-          registration.sync.register('offline-action');
+          const syncRegistration = registration as ServiceWorkerRegistrationWithSync;
+          if ('sync' in syncRegistration && syncRegistration.sync) {
+            syncRegistration.sync.register('offline-action');
+          }
         });
       }
     };
@@ -72,9 +76,9 @@ export const usePWACapabilities = (): PWACapabilities => {
 
   // Detectar install prompt
   useEffect(() => {
-    const handleBeforeInstallPrompt = (e: Event) => {
+    const handleBeforeInstallPrompt = (e: BeforeInstallPromptEvent) => {
       e.preventDefault();
-      setInstallPrompt(e as BeforeInstallPromptEvent);
+      setInstallPrompt(e);
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
@@ -178,7 +182,8 @@ export const usePWACapabilities = (): PWACapabilities => {
       const result = await installPrompt.prompt();
       console.log('Install prompt result:', result);
       
-      if (result.outcome === 'accepted') {
+      const choice = await installPrompt.userChoice;
+      if (choice.outcome === 'accepted') {
         setIsInstalled(true);
         setInstallPrompt(null);
       }
