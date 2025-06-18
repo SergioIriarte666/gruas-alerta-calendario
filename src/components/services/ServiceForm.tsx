@@ -1,12 +1,9 @@
-import { useState, useEffect } from 'react';
-import { format } from 'date-fns';
-import { Service } from '@/types';
+
 import { useClients } from '@/hooks/useClients';
 import { useCranes } from '@/hooks/useCranes';
 import { useOperatorsData } from '@/hooks/operators/useOperatorsData';
 import { useServiceTypes } from '@/hooks/useServiceTypes';
-import { useFolioGenerator } from '@/hooks/useFolioGenerator';
-import { toast } from 'sonner';
+import { Service } from '@/types';
 import { FolioSection } from './form/FolioSection';
 import { DateSection } from './form/DateSection';
 import { ClientServiceSection } from './form/ClientServiceSection';
@@ -16,6 +13,9 @@ import { ResourceSection } from './form/ResourceSection';
 import { FinancialSection } from './form/FinancialSection';
 import { ObservationsSection } from './form/ObservationsSection';
 import { FormActions } from './form/FormActions';
+import { useServiceFormData } from '@/hooks/services/useServiceFormData';
+import { useServiceFormEffects } from '@/hooks/services/useServiceFormEffects';
+import { useServiceFormSubmission } from '@/hooks/services/useServiceFormSubmission';
 
 interface ServiceFormProps {
   service?: Service | null;
@@ -28,143 +28,45 @@ export const ServiceForm = ({ service, onSubmit, onCancel }: ServiceFormProps) =
   const { cranes } = useCranes();
   const { data: operators = [] } = useOperatorsData();
   const { serviceTypes, loading: serviceTypesLoading } = useServiceTypes();
-  const { generateNextFolio, validateFolioUniqueness, loading: folioLoading } = useFolioGenerator();
 
-  const [isManualFolio, setIsManualFolio] = useState(false);
-  const [folio, setFolio] = useState(service?.folio || '');
+  const {
+    isManualFolio,
+    setIsManualFolio,
+    folio,
+    setFolio,
+    formData,
+    setFormData,
+    requestDate,
+    setRequestDate,
+    serviceDate,
+    setServiceDate
+  } = useServiceFormData(service);
 
-  const [formData, setFormData] = useState({
-    requestDate: service?.requestDate || format(new Date(), 'yyyy-MM-dd'),
-    serviceDate: service?.serviceDate || format(new Date(), 'yyyy-MM-dd'),
-    clientId: service?.client.id || '',
-    purchaseOrder: service?.purchaseOrder || '',
-    vehicleBrand: service?.vehicleBrand || '',
-    vehicleModel: service?.vehicleModel || '',
-    licensePlate: service?.licensePlate || '',
-    origin: service?.origin || '',
-    destination: service?.destination || '',
-    serviceTypeId: service?.serviceType.id || '',
-    value: service?.value || 0,
-    craneId: service?.crane.id || '',
-    operatorId: service?.operator.id || '',
-    operatorCommission: service?.operatorCommission || 0,
-    status: service?.status || 'pending' as const,
-    observations: service?.observations || ''
+  const { handleGenerateNewFolio, folioLoading } = useServiceFormEffects(
+    isManualFolio,
+    service,
+    setFolio
+  );
+
+  const { handleSubmit } = useServiceFormSubmission({
+    service,
+    onSubmit,
+    clients,
+    cranes,
+    operators,
+    serviceTypes
   });
-
-  const [requestDate, setRequestDate] = useState<Date>(
-    service?.requestDate ? new Date(service.requestDate) : new Date()
-  );
-  const [serviceDate, setServiceDate] = useState<Date>(
-    service?.serviceDate ? new Date(service.serviceDate) : new Date()
-  );
-
-  useEffect(() => {
-    setFormData(prev => ({
-      ...prev,
-      requestDate: format(requestDate, 'yyyy-MM-dd'),
-      serviceDate: format(serviceDate, 'yyyy-MM-dd')
-    }));
-  }, [requestDate, serviceDate]);
-
-  // Generar folio automático cuando no es manual y no estamos editando
-  useEffect(() => {
-    if (!isManualFolio && !service) {
-      generateNextFolio().then(setFolio);
-    }
-  }, [isManualFolio, service, generateNextFolio]);
-
-  const handleGenerateNewFolio = async () => {
-    const newFolio = await generateNextFolio();
-    setFolio(newFolio);
-  };
 
   const compatibleServiceTypes = serviceTypes.map(st => ({
     ...st,
     description: st.description || '',
   }));
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    const selectedClient = clients.find(c => c.id === formData.clientId);
-    const selectedCrane = cranes.find(c => c.id === formData.craneId);
-    const selectedOperator = operators.find(o => o.id === formData.operatorId);
-    const selectedServiceType = serviceTypes.find(st => st.id === formData.serviceTypeId);
-
-    if (!selectedClient || !selectedCrane || !selectedOperator || !selectedServiceType) {
-      toast.error("Error", {
-        description: "Por favor, selecciona todos los campos requeridos",
-      });
-      return;
-    }
-
-    if (!folio.trim()) {
-      toast.error("Error", {
-        description: "El folio es requerido",
-      });
-      return;
-    }
-
-    // Get selected service type for vehicle validation
-    const selectedServiceType = serviceTypes.find(st => st.id === formData.serviceTypeId);
-
-    // Check if vehicle info is required for this service type
-    const isVehicleInfoOptional = selectedServiceType.name.toLowerCase().includes('taxi') ||
-                                  selectedServiceType.name.toLowerCase().includes('transporte de materiales') ||
-                                  selectedServiceType.name.toLowerCase().includes('transporte de suministros');
-
-    // Validate vehicle information if required
-    if (!isVehicleInfoOptional) {
-      if (!formData.vehicleBrand.trim() || !formData.vehicleModel.trim() || !formData.licensePlate.trim()) {
-        toast.error("Error", {
-          description: "La información del vehículo es requerida para este tipo de servicio",
-        });
-        return;
-      }
-    }
-
-    // Validar unicidad del folio solo si es manual o estamos creando un nuevo servicio
-    if ((isManualFolio || !service) && service?.folio !== folio) {
-      const isUnique = await validateFolioUniqueness(folio);
-      if (!isUnique) {
-        toast.error("Error", {
-          description: "Este folio ya existe. Por favor, usa un folio diferente.",
-        });
-        return;
-      }
-    }
-
-    onSubmit({
-      folio,
-      requestDate: formData.requestDate,
-      serviceDate: formData.serviceDate,
-      client: selectedClient,
-      purchaseOrder: formData.purchaseOrder,
-      vehicleBrand: formData.vehicleBrand || '',
-      vehicleModel: formData.vehicleModel || '',
-      licensePlate: formData.licensePlate || '',
-      origin: formData.origin,
-      destination: formData.destination,
-      serviceType: {
-        id: selectedServiceType.id,
-        name: selectedServiceType.name,
-        description: selectedServiceType.description || '',
-        isActive: selectedServiceType.isActive,
-        createdAt: selectedServiceType.createdAt,
-        updatedAt: selectedServiceType.updatedAt
-      },
-      value: formData.value,
-      crane: selectedCrane,
-      operator: selectedOperator,
-      operatorCommission: formData.operatorCommission,
-      status: formData.status,
-      observations: formData.observations
-    });
-  };
+  // Get the selected service type for the VehicleSection component
+  const selectedServiceType = serviceTypes.find(st => st.id === formData.serviceTypeId);
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={(e) => handleSubmit(e, folio, formData, isManualFolio)} className="space-y-6">
       <FolioSection
         folio={folio}
         onFolioChange={setFolio}
