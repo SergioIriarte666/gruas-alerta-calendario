@@ -10,6 +10,8 @@ import DateRangePicker from './DateRangePicker';
 import ClientSelector from './ClientSelector';
 import ServicesSelector from './ServicesSelector';
 import FormActions from './FormActions';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { AlertCircle } from 'lucide-react';
 
 interface ClosureFormProps {
   open: boolean;
@@ -27,7 +29,7 @@ interface FormData {
 }
 
 const ClosureForm = ({ open, onOpenChange, onSubmit }: ClosureFormProps) => {
-  const { services, loading: servicesLoading } = useServicesForClosures();
+  const { services, loading: servicesLoading, refetch } = useServicesForClosures();
   const [formData, setFormData] = useState<FormData>({
     dateFrom: undefined,
     dateTo: undefined,
@@ -68,6 +70,9 @@ const ClosureForm = ({ open, onOpenChange, onSubmit }: ClosureFormProps) => {
         total: 0,
         status: 'open'
       });
+      
+      // Refresh available services after creating closure
+      refetch();
       onOpenChange(false);
     } catch (error) {
       console.error('Error creating closure:', error);
@@ -109,6 +114,14 @@ const ClosureForm = ({ open, onOpenChange, onSubmit }: ClosureFormProps) => {
         </DialogHeader>
         
         <form onSubmit={handleSubmit} className="space-y-4">
+          <Alert className="border-blue-500/50 bg-blue-500/10">
+            <AlertCircle className="h-4 w-4 text-blue-400" />
+            <AlertDescription className="text-blue-200">
+              Solo se pueden incluir servicios completados que no hayan sido facturados previamente.
+              Una vez incluido en un cierre, el servicio no estará disponible para futuros cierres.
+            </AlertDescription>
+          </Alert>
+
           <DateRangePicker
             dateFrom={formData.dateFrom}
             dateTo={formData.dateTo}

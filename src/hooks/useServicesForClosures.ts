@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Service } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
@@ -7,109 +8,56 @@ export const useServicesForClosures = () => {
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(false);
 
-  const fetchServicesForClosures = async () => {
+  const fetchAvailableServices = async () => {
     try {
-      console.log('Fetching services for closures (simplified)...');
       setLoading(true);
+      console.log('Fetching available services for closures...');
       
-      // Fetch only essential data for closures to improve performance
-      const { data, error } = await supabase
+      // First, get all completed services
+      const { data: servicesData, error: servicesError } = await supabase
         .from('services')
         .select(`
-          id,
-          folio,
-          service_date,
-          value,
-          status,
-          clients!inner(id, name),
-          service_types!inner(id, name)
+          *,
+          client:clients(id, name, rut),
+          crane:cranes(id, license_plate, brand, model),
+          operator:operators(id, name),
+          service_type:service_types(id, name)
         `)
         .eq('status', 'completed')
-        .order('service_date', { ascending: false })
-        .limit(100); // Limit results for better performance
+        .order('service_date', { ascending: false });
 
-      if (error) {
-        console.error('Error fetching services for closures:', error);
-        throw error;
+      if (servicesError) {
+        console.error('Error fetching services:', servicesError);
+        throw servicesError;
       }
 
-      console.log('Services for closures fetched:', data?.length || 0);
+      console.log('All completed services:', servicesData?.length);
 
-      if (!data || data.length === 0) {
-        console.log('No completed services found for closures');
-        setServices([]);
-        return;
+      // Get all service IDs that are already included in closures
+      const { data: closureServices, error: closureError } = await supabase
+        .from('closure_services')
+        .select('service_id');
+
+      if (closureError) {
+        console.error('Error fetching closure services:', closureError);
+        throw closureError;
       }
 
-      const formattedServices: Service[] = data.map(service => ({
-        id: service.id,
-        folio: service.folio,
-        serviceDate: service.service_date,
-        value: Number(service.value),
-        status: service.status as Service['status'],
-        client: {
-          id: service.clients.id,
-          name: service.clients.name,
-          rut: '',
-          phone: '',
-          email: '',
-          address: '',
-          isActive: true,
-          createdAt: '',
-          updatedAt: ''
-        },
-        serviceType: {
-          id: service.service_types.id,
-          name: service.service_types.name,
-          description: '',
-          isActive: true,
-          createdAt: '',
-          updatedAt: ''
-        },
-        // Minimal required fields for closures
-        requestDate: service.service_date,
-        purchaseOrder: '',
-        vehicleBrand: '',
-        vehicleModel: '',
-        licensePlate: '',
-        origin: '',
-        destination: '',
-        crane: {
-          id: '',
-          licensePlate: '',
-          brand: '',
-          model: '',
-          type: 'other',
-          isActive: true,
-          createdAt: '',
-          updatedAt: '',
-          circulationPermitExpiry: '',
-          insuranceExpiry: '',
-          technicalReviewExpiry: ''
-        },
-        operator: {
-          id: '',
-          name: '',
-          rut: '',
-          phone: '',
-          licenseNumber: '',
-          isActive: true,
-          createdAt: '',
-          updatedAt: '',
-          examExpiry: ''
-        },
-        operatorCommission: 0,
-        observations: '',
-        createdAt: '',
-        updatedAt: ''
-      }));
+      const usedServiceIds = new Set(closureServices?.map(cs => cs.service_id) || []);
+      console.log('Services already in closures:', usedServiceIds.size);
 
-      console.log('Formatted services for closures:', formattedServices.length);
-      setServices(formattedServices);
+      // Filter out services that are already in closures
+      const availableServices = servicesData?.filter(service => 
+        !usedServiceIds.has(service.id)
+      ) || [];
+
+      console.log('Available services for new closures:', availableServices.length);
+
+      setServices(availableServices);
     } catch (error: any) {
-      console.error('Error in fetchServicesForClosures:', error);
+      console.error('Error fetching available services for closures:', error);
       toast.error("Error", {
-        description: "No se pudieron cargar los servicios para cierres.",
+        description: "No se pudieron cargar los servicios disponibles para cierre.",
       });
       setServices([]);
     } finally {
@@ -118,12 +66,12 @@ export const useServicesForClosures = () => {
   };
 
   useEffect(() => {
-    fetchServicesForClosures();
+    fetchAvailableServices();
   }, []);
 
   return {
     services,
     loading,
-    refetch: fetchServicesForClosures
+    refetch: fetchAvailableServices
   };
 };

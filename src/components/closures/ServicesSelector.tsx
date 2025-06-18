@@ -41,11 +41,17 @@ const ServicesSelector = ({
 
   return (
     <div className="space-y-2">
-      <Label className="text-gray-300">Servicios Cerrados</Label>
+      <Label className="text-gray-300">Servicios Disponibles para Cierre</Label>
+      <div className="text-xs text-gray-400 mb-2">
+        Solo se muestran servicios completados que no han sido incluidos en cierres anteriores
+      </div>
       <div className="max-h-40 overflow-y-auto border border-gray-700 rounded-md p-2 bg-white/5">
         {filteredServices.length === 0 ? (
           <p className="text-gray-400 text-sm">
-            {clientId ? 'No hay servicios cerrados para este cliente' : 'No hay servicios cerrados disponibles'}
+            {clientId 
+              ? 'No hay servicios disponibles para este cliente' 
+              : 'No hay servicios completados disponibles para cierre'
+            }
           </p>
         ) : (
           filteredServices.map((service) => (
@@ -58,7 +64,13 @@ const ServicesSelector = ({
                 className="text-tms-green"
               />
               <label htmlFor={service.id} className="text-sm text-gray-300 flex-1">
-                {service.folio} - {service.client.name} - ${service.value.toLocaleString()}
+                <div className="flex justify-between items-center">
+                  <span>{service.folio} - {service.client.name}</span>
+                  <span className="font-medium">${service.value.toLocaleString()}</span>
+                </div>
+                <div className="text-xs text-gray-500">
+                  {service.serviceDate} • {service.licensePlate}
+                </div>
               </label>
             </div>
           ))
