@@ -2,7 +2,7 @@
 import React from 'react';
 import Dashboard from './Dashboard';
 
-const Index = () => {
+const Index: React.FC = () => {
   return <Dashboard />;
 };
 

@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useDashboardData } from '@/hooks/useDashboardData';
 import { MetricCard } from '@/components/dashboard/MetricCard';
 import { AlertsPanel } from '@/components/dashboard/AlertsPanel';
@@ -17,9 +17,9 @@ import { Badge } from '@/components/ui/badge';
 import { ServiceDetailsModal } from '@/components/services/ServiceDetailsModal';
 import { useServiceDetails } from '@/hooks/useServiceDetails';
 
-const Dashboard = () => {
+const Dashboard: React.FC = () => {
   const { metrics, recentServices, upcomingEvents, loading: dashboardLoading } = useDashboardData();
-  const [selectedServiceId, setSelectedServiceId] = React.useState<string | null>(null);
+  const [selectedServiceId, setSelectedServiceId] = useState<string | null>(null);
 
   const { data: selectedService, isLoading: detailsLoading } = useServiceDetails(selectedServiceId);
 
