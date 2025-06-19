@@ -29,16 +29,17 @@ export const FolioSection = ({
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <Label htmlFor="folio">Folio del Servicio</Label>
-        <div className="flex items-center space-x-2">
-          <Label htmlFor="manual-folio" className="text-sm">Manual</Label>
-          <Switch
-            id="manual-folio"
-            checked={isManualFolio}
-            onCheckedChange={onManualFolioChange}
-            disabled={isEditing}
-            className="data-[state=checked]:bg-amber-500"
-          />
-        </div>
+        {!isEditing && (
+          <div className="flex items-center space-x-2">
+            <Label htmlFor="manual-folio" className="text-sm">Manual</Label>
+            <Switch
+              id="manual-folio"
+              checked={isManualFolio}
+              onCheckedChange={onManualFolioChange}
+              className="data-[state=checked]:bg-amber-500"
+            />
+          </div>
+        )}
       </div>
       <div className="flex space-x-2">
         <Input
@@ -47,7 +48,7 @@ export const FolioSection = ({
           onChange={(e) => onFolioChange(e.target.value)}
           placeholder="Ej: SRV-001"
           required
-          disabled={!isManualFolio && !isEditing}
+          disabled={(!isManualFolio && !isEditing) || isLoading}
           className="flex-1"
         />
         {!isManualFolio && !isEditing && (
@@ -65,6 +66,11 @@ export const FolioSection = ({
       {!isManualFolio && !isEditing && (
         <p className="text-xs text-gray-600">
           El folio se genera automáticamente usando el formato configurado de la empresa.
+        </p>
+      )}
+      {isEditing && (
+        <p className="text-xs text-amber-600">
+          El folio no se puede cambiar al editar un servicio existente.
         </p>
       )}
     </div>
