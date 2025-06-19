@@ -6,7 +6,7 @@ import { EntityFinders } from './entityFinders';
 import { DataValidators } from './dataValidators';
 import { RowMapper } from './rowMapper';
 
-export { MappedServiceData, MappingResult } from './types';
+export type { MappedServiceData, MappingResult } from './types';
 
 export class DataMapper {
   private context: DataMapperContext = {
