@@ -157,6 +157,7 @@ export class DataMapper {
       description: serviceType.description || '',
       basePrice: serviceType.base_price,
       isActive: serviceType.is_active,
+      vehicleInfoOptional: serviceType.vehicle_info_optional || false,
       createdAt: serviceType.created_at,
       updatedAt: serviceType.updated_at
     }));
