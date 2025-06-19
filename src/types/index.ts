@@ -1,4 +1,3 @@
-
 export interface Service {
   id: string;
   folio: string;
@@ -65,6 +64,7 @@ export interface ServiceType {
   name: string;
   description: string;
   isActive: boolean;
+  vehicleInfoOptional?: boolean;
   createdAt: string;
   updatedAt: string;
 }

@@ -30,10 +30,8 @@ export const useServiceFormValidation = () => {
       return { isValid: false };
     }
 
-    // Check if vehicle info is required for this service type
-    const isVehicleInfoOptional = selectedServiceType.name.toLowerCase().includes('taxi') ||
-                                  selectedServiceType.name.toLowerCase().includes('transporte de materiales') ||
-                                  selectedServiceType.name.toLowerCase().includes('transporte de suministros');
+    // Check if vehicle info is required based on database field
+    const isVehicleInfoOptional = selectedServiceType.vehicleInfoOptional;
 
     // Validate vehicle information if required
     if (!isVehicleInfoOptional) {

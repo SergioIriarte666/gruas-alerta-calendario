@@ -1,4 +1,3 @@
-
 import { useClients } from '@/hooks/useClients';
 import { useCranes } from '@/hooks/useCranes';
 import { useOperatorsData } from '@/hooks/operators/useOperatorsData';
@@ -103,7 +102,7 @@ export const ServiceForm = ({ service, onSubmit, onCancel }: ServiceFormProps) =
         onVehicleModelChange={(value) => setFormData(prev => ({ ...prev, vehicleModel: value }))}
         licensePlate={formData.licensePlate}
         onLicensePlateChange={(value) => setFormData(prev => ({ ...prev, licensePlate: value }))}
-        serviceTypeName={selectedServiceType?.name}
+        isVehicleInfoOptional={selectedServiceType?.vehicleInfoOptional || false}
       />
 
       <LocationSection

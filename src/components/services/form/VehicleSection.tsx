@@ -9,7 +9,7 @@ interface VehicleSectionProps {
   onVehicleModelChange: (value: string) => void;
   licensePlate: string;
   onLicensePlateChange: (value: string) => void;
-  serviceTypeName?: string;
+  isVehicleInfoOptional?: boolean;
 }
 
 export const VehicleSection = ({
@@ -19,15 +19,8 @@ export const VehicleSection = ({
   onVehicleModelChange,
   licensePlate,
   onLicensePlateChange,
-  serviceTypeName
+  isVehicleInfoOptional = false
 }: VehicleSectionProps) => {
-  // Check if vehicle info is optional based on service type
-  const isVehicleInfoOptional = serviceTypeName && (
-    serviceTypeName.toLowerCase().includes('taxi') ||
-    serviceTypeName.toLowerCase().includes('transporte de materiales') ||
-    serviceTypeName.toLowerCase().includes('transporte de suministros')
-  );
-
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
       {/* Marca del Vehículo */}

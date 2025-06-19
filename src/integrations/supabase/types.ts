@@ -704,6 +704,7 @@ export type Database = {
           is_active: boolean | null
           name: string
           updated_at: string | null
+          vehicle_info_optional: boolean
         }
         Insert: {
           base_price?: number | null
@@ -714,6 +715,7 @@ export type Database = {
           is_active?: boolean | null
           name: string
           updated_at?: string | null
+          vehicle_info_optional?: boolean
         }
         Update: {
           base_price?: number | null
@@ -724,6 +726,7 @@ export type Database = {
           is_active?: boolean | null
           name?: string
           updated_at?: string | null
+          vehicle_info_optional?: boolean
         }
         Relationships: [
           {
