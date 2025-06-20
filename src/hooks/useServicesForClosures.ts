@@ -85,9 +85,7 @@ export const useServicesForClosures = (options: UseServicesForClosuresOptions = 
         const isInvoiced = invoicedServiceIds.has(service.id);
         const isAvailable = !isInClosure && !isInvoiced;
         
-        if (!isAvailable) {
-          console.log(`Service ${service.folio} (${service.id}) excluded: inClosure=${isInClosure}, invoiced=${isInvoiced}`);
-        }
+        console.log(`Service ${service.folio} (${service.id}): inClosure=${isInClosure}, invoiced=${isInvoiced}, available=${isAvailable}`);
         
         return isAvailable;
       }) || [];
@@ -97,6 +95,7 @@ export const useServicesForClosures = (options: UseServicesForClosuresOptions = 
 
       // Transform the raw data to match the Service type
       const transformedServices = transformRawServiceData(availableServicesData);
+      console.log('Transformed services:', transformedServices.length);
       setServices(transformedServices);
     } catch (error: any) {
       console.error('Error fetching available services for closures:', error);

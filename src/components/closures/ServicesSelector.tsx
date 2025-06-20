@@ -19,12 +19,16 @@ const ServicesSelector = ({
   selectedServiceIds, 
   onServiceToggle 
 }: ServicesSelectorProps) => {
-  console.log('ServicesSelector render - services:', services.length, 'loading:', loading);
+  console.log('ServicesSelector render - services:', services.length, 'loading:', loading, 'clientId:', clientId);
 
   const filteredServices = services.filter(service => {
     if (!clientId) return true;
-    return service.client.id === clientId;
+    const matches = service.client.id === clientId;
+    console.log(`Service ${service.folio} - client ${service.client.id} matches ${clientId}: ${matches}`);
+    return matches;
   });
+
+  console.log('Filtered services for client:', filteredServices.length);
 
   if (loading) {
     return (
@@ -59,7 +63,7 @@ const ServicesSelector = ({
           <strong>¿Por qué no veo algunos servicios?</strong><br />
           • Solo se muestran servicios completados del rango de fechas seleccionado<br />
           • Se excluyen servicios ya incluidos en cierres anteriores<br />
-          • Se excluyen servicios ya facturados
+          • Se excluyen servicios ya facturados (status: facturado)
         </AlertDescription>
       </Alert>
 
@@ -68,13 +72,18 @@ const ServicesSelector = ({
           <div className="text-center py-4">
             <p className="text-gray-400 text-sm">
               {clientId 
-                ? 'No hay servicios disponibles para este cliente en el rango de fechas seleccionado' 
+                ? `No hay servicios disponibles para este cliente en el rango de fechas seleccionado` 
                 : 'No hay servicios completados disponibles para cierre en el rango de fechas seleccionado'
               }
             </p>
             <p className="text-gray-500 text-xs mt-2">
               Los servicios ya facturados o incluidos en cierres anteriores no aparecen aquí.
             </p>
+            {services.length > 0 && clientId && (
+              <p className="text-yellow-400 text-xs mt-1">
+                Hay {services.length} servicio(s) disponible(s) para otros clientes.
+              </p>
+            )}
           </div>
         ) : (
           <div className="space-y-1">
@@ -100,7 +109,7 @@ const ServicesSelector = ({
                     <span className="font-medium text-tms-green">${service.value.toLocaleString()}</span>
                   </div>
                   <div className="text-xs text-gray-500">
-                    {service.serviceDate} • {service.licensePlate}
+                    {service.serviceDate} • {service.licensePlate} • Status: {service.status}
                   </div>
                 </label>
               </div>
