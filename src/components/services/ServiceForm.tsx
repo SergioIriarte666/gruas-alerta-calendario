@@ -1,3 +1,4 @@
+
 import { useClients } from '@/hooks/useClients';
 import { useCranes } from '@/hooks/useCranes';
 import { useOperatorsData } from '@/hooks/operators/useOperatorsData';
@@ -15,6 +16,9 @@ import { FormActions } from './form/FormActions';
 import { useServiceFormData } from '@/hooks/services/useServiceFormData';
 import { useServiceFormEffects } from '@/hooks/services/useServiceFormEffects';
 import { useServiceFormSubmission } from '@/hooks/services/useServiceFormSubmission';
+import { useUser } from '@/contexts/UserContext';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { AlertTriangle } from 'lucide-react';
 
 interface ServiceFormProps {
   service?: Service | null;
@@ -27,6 +31,7 @@ export const ServiceForm = ({ service, onSubmit, onCancel }: ServiceFormProps) =
   const { cranes } = useCranes();
   const { data: operators = [] } = useOperatorsData();
   const { serviceTypes, loading: serviceTypesLoading } = useServiceTypes();
+  const { user } = useUser();
 
   const {
     isManualFolio,
@@ -63,79 +68,111 @@ export const ServiceForm = ({ service, onSubmit, onCancel }: ServiceFormProps) =
 
   // Get the selected service type for the VehicleSection component
   const selectedServiceType = serviceTypes.find(st => st.id === formData.serviceTypeId);
+  
+  // Check if service is invoiced and user permissions
+  const isInvoiced = service?.status === 'invoiced';
+  const isAdmin = user?.role === 'admin';
+  const canEdit = !isInvoiced || isAdmin;
 
   return (
-    <form onSubmit={(e) => handleSubmit(e, folio, formData, isManualFolio)} className="space-y-6">
-      <FolioSection
-        folio={folio}
-        onFolioChange={setFolio}
-        isManualFolio={isManualFolio}
-        onManualFolioChange={setIsManualFolio}
-        onGenerateNewFolio={handleGenerateNewFolio}
-        isEditing={!!service}
-        isLoading={folioLoading}
-      />
+    <div className="space-y-6">
+      {/* Warning alert for invoiced services */}
+      {isInvoiced && (
+        <Alert className="border-purple-500/50 bg-purple-500/10">
+          <AlertTriangle className="h-4 w-4 text-purple-400" />
+          <AlertDescription className="text-purple-200">
+            {isAdmin 
+              ? "Este servicio está facturado. Como administrador, puedes editarlo pero ten cuidado."
+              : "Este servicio está facturado y no puede ser editado."
+            }
+          </AlertDescription>
+        </Alert>
+      )}
 
-      <DateSection
-        requestDate={requestDate}
-        serviceDate={serviceDate}
-        onRequestDateChange={setRequestDate}
-        onServiceDateChange={setServiceDate}
-      />
+      <form onSubmit={(e) => handleSubmit(e, folio, formData, isManualFolio)} className="space-y-6">
+        <FolioSection
+          folio={folio}
+          onFolioChange={setFolio}
+          isManualFolio={isManualFolio}
+          onManualFolioChange={setIsManualFolio}
+          onGenerateNewFolio={handleGenerateNewFolio}
+          isEditing={!!service}
+          isLoading={folioLoading}
+          disabled={!canEdit}
+        />
 
-      <ClientServiceSection
-        clientId={formData.clientId}
-        onClientChange={(value) => setFormData(prev => ({ ...prev, clientId: value }))}
-        clients={clients}
-        purchaseOrder={formData.purchaseOrder}
-        onPurchaseOrderChange={(value) => setFormData(prev => ({ ...prev, purchaseOrder: value }))}
-        serviceTypeId={formData.serviceTypeId}
-        onServiceTypeChange={(value) => setFormData(prev => ({ ...prev, serviceTypeId: value }))}
-        serviceTypes={compatibleServiceTypes}
-        serviceTypesLoading={serviceTypesLoading}
-      />
+        <DateSection
+          requestDate={requestDate}
+          serviceDate={serviceDate}
+          onRequestDateChange={setRequestDate}
+          onServiceDateChange={setServiceDate}
+          disabled={!canEdit}
+        />
 
-      <VehicleSection
-        vehicleBrand={formData.vehicleBrand}
-        onVehicleBrandChange={(value) => setFormData(prev => ({ ...prev, vehicleBrand: value }))}
-        vehicleModel={formData.vehicleModel}
-        onVehicleModelChange={(value) => setFormData(prev => ({ ...prev, vehicleModel: value }))}
-        licensePlate={formData.licensePlate}
-        onLicensePlateChange={(value) => setFormData(prev => ({ ...prev, licensePlate: value }))}
-        isVehicleInfoOptional={selectedServiceType?.vehicleInfoOptional || false}
-      />
+        <ClientServiceSection
+          clientId={formData.clientId}
+          onClientChange={(value) => setFormData(prev => ({ ...prev, clientId: value }))}
+          clients={clients}
+          purchaseOrder={formData.purchaseOrder}
+          onPurchaseOrderChange={(value) => setFormData(prev => ({ ...prev, purchaseOrder: value }))}
+          serviceTypeId={formData.serviceTypeId}
+          onServiceTypeChange={(value) => setFormData(prev => ({ ...prev, serviceTypeId: value }))}
+          serviceTypes={compatibleServiceTypes}
+          serviceTypesLoading={serviceTypesLoading}
+          disabled={!canEdit}
+        />
 
-      <LocationSection
-        origin={formData.origin}
-        onOriginChange={(value) => setFormData(prev => ({ ...prev, origin: value }))}
-        destination={formData.destination}
-        onDestinationChange={(value) => setFormData(prev => ({ ...prev, destination: value }))}
-      />
+        <VehicleSection
+          vehicleBrand={formData.vehicleBrand}
+          onVehicleBrandChange={(value) => setFormData(prev => ({ ...prev, vehicleBrand: value }))}
+          vehicleModel={formData.vehicleModel}
+          onVehicleModelChange={(value) => setFormData(prev => ({ ...prev, vehicleModel: value }))}
+          licensePlate={formData.licensePlate}
+          onLicensePlateChange={(value) => setFormData(prev => ({ ...prev, licensePlate: value }))}
+          isVehicleInfoOptional={selectedServiceType?.vehicleInfoOptional || false}
+          disabled={!canEdit}
+        />
 
-      <ResourceSection
-        craneId={formData.craneId}
-        onCraneChange={(value) => setFormData(prev => ({ ...prev, craneId: value }))}
-        cranes={cranes}
-        operatorId={formData.operatorId}
-        onOperatorChange={(value) => setFormData(prev => ({ ...prev, operatorId: value }))}
-        operators={operators}
-      />
+        <LocationSection
+          origin={formData.origin}
+          onOriginChange={(value) => setFormData(prev => ({ ...prev, origin: value }))}
+          destination={formData.destination}
+          onDestinationChange={(value) => setFormData(prev => ({ ...prev, destination: value }))}
+          disabled={!canEdit}
+        />
 
-      <FinancialSection
-        value={formData.value}
-        onValueChange={(value) => setFormData(prev => ({ ...prev, value }))}
-        operatorCommission={formData.operatorCommission}
-        onOperatorCommissionChange={(value) => setFormData(prev => ({ ...prev, operatorCommission: value }))}
-      />
+        <ResourceSection
+          craneId={formData.craneId}
+          onCraneChange={(value) => setFormData(prev => ({ ...prev, craneId: value }))}
+          cranes={cranes}
+          operatorId={formData.operatorId}
+          onOperatorChange={(value) => setFormData(prev => ({ ...prev, operatorId: value }))}
+          operators={operators}
+          disabled={!canEdit}
+        />
 
-      <ObservationsSection
-        status={formData.status}
-        onStatusChange={(value) => setFormData(prev => ({ ...prev, status: value }))}
-        observations={formData.observations}
-        onObservationsChange={(value) => setFormData(prev => ({ ...prev, observations: value }))}
-      />
+        <FinancialSection
+          value={formData.value}
+          onValueChange={(value) => setFormData(prev => ({ ...prev, value }))}
+          operatorCommission={formData.operatorCommission}
+          onOperatorCommissionChange={(value) => setFormData(prev => ({ ...prev, operatorCommission: value }))}
+          disabled={!canEdit}
+        />
 
-      <FormActions onCancel={onCancel} isEditing={!!service} />
-    </form>
+        <ObservationsSection
+          status={formData.status}
+          onStatusChange={(value) => setFormData(prev => ({ ...prev, status: value }))}
+          observations={formData.observations}
+          onObservationsChange={(value) => setFormData(prev => ({ ...prev, observations: value }))}
+          disabled={!canEdit}
+        />
+
+        <FormActions 
+          onCancel={onCancel} 
+          isEditing={!!service} 
+          disabled={!canEdit}
+        />
+      </form>
+    </div>
   );
 };

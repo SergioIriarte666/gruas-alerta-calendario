@@ -888,7 +888,12 @@ export type Database = {
       closure_status: "open" | "closed" | "invoiced"
       crane_type: "light" | "medium" | "heavy" | "taxi" | "other"
       invoice_status: "draft" | "sent" | "paid" | "overdue" | "cancelled"
-      service_status: "pending" | "in_progress" | "completed" | "cancelled"
+      service_status:
+        | "pending"
+        | "in_progress"
+        | "completed"
+        | "cancelled"
+        | "invoiced"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1008,7 +1013,13 @@ export const Constants = {
       closure_status: ["open", "closed", "invoiced"],
       crane_type: ["light", "medium", "heavy", "taxi", "other"],
       invoice_status: ["draft", "sent", "paid", "overdue", "cancelled"],
-      service_status: ["pending", "in_progress", "completed", "cancelled"],
+      service_status: [
+        "pending",
+        "in_progress",
+        "completed",
+        "cancelled",
+        "invoiced",
+      ],
     },
   },
 } as const

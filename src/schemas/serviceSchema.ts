@@ -18,7 +18,7 @@ export const serviceFormSchema = z.object({
   craneId: z.string().min(1, 'La grúa es requerida'),
   operatorId: z.string().min(1, 'El operador es requerido'),
   operatorCommission: z.number().min(0, 'La comisión debe ser mayor o igual a 0'),
-  status: z.enum(['pending', 'in_progress', 'completed', 'cancelled']),
+  status: z.enum(['pending', 'in_progress', 'completed', 'cancelled', 'invoiced']),
   observations: z.string().optional()
 });
 

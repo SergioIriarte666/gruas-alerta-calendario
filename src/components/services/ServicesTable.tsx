@@ -1,3 +1,4 @@
+
 import { Service } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -11,10 +12,10 @@ interface ServicesTableProps {
   services: Service[];
   hasInitialServices: boolean;
   onViewDetails: (service: Service) => void;
-  onEdit: (service: Service) => void;
-  onDelete: (service: Service) => void;
-  onCloseService: (service: Service) => void;
-  onAddNewService: () => void;
+  onEdit?: (service: Service) => void;
+  onDelete?: (service: Service) => void;
+  onCloseService?: (service: Service) => void;
+  onAddNewService?: () => void;
 }
 
 const getStatusBadge = (status: Service['status']) => {
@@ -22,7 +23,8 @@ const getStatusBadge = (status: Service['status']) => {
     pending: { label: 'Pendiente', className: 'bg-yellow-500 text-white' },
     in_progress: { label: 'En Progreso', className: 'bg-blue-500 text-white' },
     completed: { label: 'Completado', className: 'bg-green-500 text-white' },
-    cancelled: { label: 'Cancelado', className: 'bg-red-500 text-white' }
+    cancelled: { label: 'Cancelado', className: 'bg-red-500 text-white' },
+    invoiced: { label: 'Facturado', className: 'bg-purple-500 text-white' }
   };
   const config = statusConfig[status] || { label: 'Desconocido', className: 'bg-gray-500 text-white' };
   return <Badge className={config.className}>{config.label}</Badge>;
@@ -68,7 +70,7 @@ export const ServicesTable = ({
                 : 'Intenta ajustar los filtros de búsqueda'
               }
             </p>
-            {!hasInitialServices && (
+            {!hasInitialServices && onAddNewService && (
               <Button 
                 className="bg-tms-green hover:bg-tms-green-dark text-white"
                 onClick={onAddNewService}
@@ -100,6 +102,7 @@ export const ServicesTable = ({
                 {services.map((service) => {
                   // Check if vehicle info is available
                   const hasVehicleInfo = service.vehicleBrand && service.vehicleModel && service.licensePlate;
+                  const isInvoiced = service.status === 'invoiced';
                   
                   return (
                     <TableRow key={service.id} className="border-gray-700 hover:bg-white/5">
@@ -143,7 +146,8 @@ export const ServicesTable = ({
                       </TableCell>
                       <TableCell>
                         <div className="flex space-x-1">
-                          {(service.status === 'pending' || service.status === 'in_progress') && (
+                          {/* Only show close button for pending/in_progress services */}
+                          {(service.status === 'pending' || service.status === 'in_progress') && onCloseService && (
                             <Button 
                               variant="ghost" 
                               size="sm" 
@@ -154,6 +158,7 @@ export const ServicesTable = ({
                               <Check className="w-4 h-4" />
                             </Button>
                           )}
+                          
                           <Button 
                             variant="ghost" 
                             size="sm" 
@@ -163,24 +168,58 @@ export const ServicesTable = ({
                           >
                             <Eye className="w-4 h-4" />
                           </Button>
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
-                            className="text-blue-400 hover:text-blue-300 hover:bg-blue-400/10"
-                            onClick={() => onEdit(service)}
-                            title="Editar servicio"
-                          >
-                            <Edit className="w-4 h-4" />
-                          </Button>
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
-                            className="text-red-400 hover:text-red-300 hover:bg-red-400/10"
-                            onClick={() => onDelete(service)}
-                            title="Eliminar servicio"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
+                          
+                          {/* Disable edit for invoiced services */}
+                          {onEdit && !isInvoiced && (
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className="text-blue-400 hover:text-blue-300 hover:bg-blue-400/10"
+                              onClick={() => onEdit(service)}
+                              title="Editar servicio"
+                            >
+                              <Edit className="w-4 h-4" />
+                            </Button>
+                          )}
+                          
+                          {/* Show disabled edit button for invoiced services with tooltip */}
+                          {onEdit && isInvoiced && (
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className="text-gray-500 cursor-not-allowed"
+                              disabled
+                              title="No se puede editar un servicio facturado"
+                            >
+                              <Edit className="w-4 h-4" />
+                            </Button>
+                          )}
+                          
+                          {/* Disable delete for invoiced services */}
+                          {onDelete && !isInvoiced && (
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className="text-red-400 hover:text-red-300 hover:bg-red-400/10"
+                              onClick={() => onDelete(service)}
+                              title="Eliminar servicio"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          )}
+                          
+                          {/* Show disabled delete button for invoiced services */}
+                          {onDelete && isInvoiced && (
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className="text-gray-500 cursor-not-allowed"
+                              disabled
+                              title="No se puede eliminar un servicio facturado"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          )}
                         </div>
                       </TableCell>
                     </TableRow>

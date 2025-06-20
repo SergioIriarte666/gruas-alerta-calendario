@@ -1,5 +1,5 @@
 
-import { CheckCircle, Edit, Trash2, AlertCircle, Clock } from 'lucide-react';
+import { CheckCircle, Edit, Trash2, AlertCircle, Clock, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -20,7 +20,7 @@ const InvoicesTable = ({ invoices, onEdit, onDelete, onMarkAsPaid, getInvoiceWit
       case 'paid':
         return <Badge className="bg-green-100 text-green-800"><CheckCircle className="w-3 h-3 mr-1" />Pagada</Badge>;
       case 'draft':
-        return <Badge className="bg-gray-100 text-gray-800"><Clock className="w-3 h-3 mr-1" />Borrador</Badge>;
+        return <Badge className="bg-gray-100 text-gray-800"><FileText className="w-3 h-3 mr-1" />Borrador</Badge>;
       case 'sent':
         return <Badge className="bg-blue-100 text-blue-800"><Clock className="w-3 h-3 mr-1" />Enviada</Badge>;
       case 'overdue':
@@ -47,6 +47,7 @@ const InvoicesTable = ({ invoices, onEdit, onDelete, onMarkAsPaid, getInvoiceWit
               <TableHead className="text-gray-300">Fecha Vencimiento</TableHead>
               <TableHead className="text-gray-300">Total</TableHead>
               <TableHead className="text-gray-300">Estado</TableHead>
+              <TableHead className="text-gray-300">Servicios</TableHead>
               <TableHead className="text-gray-300">Acciones</TableHead>
             </TableRow>
           </TableHeader>
@@ -61,6 +62,11 @@ const InvoicesTable = ({ invoices, onEdit, onDelete, onMarkAsPaid, getInvoiceWit
                   <TableCell className="text-white">{new Date(invoice.dueDate).toLocaleDateString()}</TableCell>
                   <TableCell className="text-white">${invoice.total.toLocaleString()}</TableCell>
                   <TableCell>{getStatusBadge(invoice.status)}</TableCell>
+                  <TableCell className="text-white">
+                    <Badge className="bg-purple-100 text-purple-800">
+                      {invoice.serviceIds.length} Facturado{invoice.serviceIds.length !== 1 ? 's' : ''}
+                    </Badge>
+                  </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
                       {(invoice.status === 'draft' || invoice.status === 'sent') && (

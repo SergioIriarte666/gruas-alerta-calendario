@@ -1,3 +1,4 @@
+
 export interface Service {
   id: string;
   folio: string;
@@ -118,8 +119,8 @@ export interface ServiceClosure {
   updatedAt: string;
 }
 
-// Updated to match database enums
-export type ServiceStatus = 'pending' | 'in_progress' | 'completed' | 'cancelled';
+// Updated to match database enums - Added 'invoiced' status
+export type ServiceStatus = 'pending' | 'in_progress' | 'completed' | 'cancelled' | 'invoiced';
 export type InvoiceStatus = 'draft' | 'sent' | 'paid' | 'overdue' | 'cancelled';
 export type CraneType = 'light' | 'medium' | 'heavy' | 'taxi' | 'other';
 

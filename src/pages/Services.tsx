@@ -13,10 +13,12 @@ import { CSVUploadServices } from '@/components/services/CSVUploadServices';
 import { ServicesTable } from '@/components/services/ServicesTable';
 import { AppPagination } from '@/components/shared/AppPagination';
 import { useUser } from '@/contexts/UserContext';
+import { useToast } from '@/components/ui/custom-toast';
 
 const Services = () => {
   const { services, loading, createService, updateService, deleteService } = useServices();
   const { user } = useUser();
+  const { toast } = useToast();
   const isAdmin = user?.role === 'admin';
   const location = useLocation();
   const params = new URLSearchParams(location.search);
@@ -73,6 +75,15 @@ const Services = () => {
   };
 
   const handleCloseService = (service: Service) => {
+    if (service.status === 'invoiced') {
+      toast({
+        type: "error",
+        title: "Error",
+        description: "No se puede cerrar un servicio que ya está facturado.",
+      });
+      return;
+    }
+
     if (window.confirm(`¿Estás seguro de que deseas cerrar el servicio ${service.folio}? El estado cambiará a "Completado".`)) {
       updateService(service.id, { status: 'completed' });
     }
@@ -84,11 +95,29 @@ const Services = () => {
   };
 
   const handleEdit = (service: Service) => {
+    if (service.status === 'invoiced' && user?.role !== 'admin') {
+      toast({
+        type: "error",
+        title: "Error",
+        description: "No se puede editar un servicio facturado. Solo los administradores pueden hacerlo.",
+      });
+      return;
+    }
+    
     setEditingService(service);
     setIsFormOpen(true);
   };
 
   const handleDelete = (service: Service) => {
+    if (service.status === 'invoiced') {
+      toast({
+        type: "error",
+        title: "Error",
+        description: "No se puede eliminar un servicio facturado.",
+      });
+      return;
+    }
+
     if (confirm(`¿Estás seguro de que deseas eliminar el servicio ${service.folio}?`)) {
       deleteService(service.id);
     }
