@@ -63,7 +63,7 @@ export const useServicesForClosures = (options: UseServicesForClosuresOptions = 
         throw closureError;
       }
 
-      // Get all service IDs that are already invoiced
+      // Get all service IDs that are already in invoices (invoice_services table)
       const { data: invoicedServices, error: invoiceError } = await supabase
         .from('invoice_services')
         .select('service_id');
@@ -77,15 +77,15 @@ export const useServicesForClosures = (options: UseServicesForClosuresOptions = 
       const invoicedServiceIds = new Set(invoicedServices?.map(is => is.service_id) || []);
 
       console.log('Services already in closures:', usedServiceIds.size, Array.from(usedServiceIds));
-      console.log('Services already invoiced:', invoicedServiceIds.size, Array.from(invoicedServiceIds));
+      console.log('Services already in invoices (invoice_services):', invoicedServiceIds.size, Array.from(invoicedServiceIds));
 
-      // Filter out services that are already in closures OR already invoiced
+      // Filter out services that are already in closures OR already in invoices
       const availableServicesData = servicesData?.filter(service => {
         const isInClosure = usedServiceIds.has(service.id);
-        const isInvoiced = invoicedServiceIds.has(service.id);
-        const isAvailable = !isInClosure && !isInvoiced;
+        const isInInvoice = invoicedServiceIds.has(service.id);
+        const isAvailable = !isInClosure && !isInInvoice;
         
-        console.log(`Service ${service.folio} (${service.id}): inClosure=${isInClosure}, invoiced=${isInvoiced}, available=${isAvailable}`);
+        console.log(`Service ${service.folio} (${service.id}): inClosure=${isInClosure}, inInvoice=${isInInvoice}, available=${isAvailable}`);
         
         return isAvailable;
       }) || [];

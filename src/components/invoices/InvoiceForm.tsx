@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Invoice, InvoiceStatus } from '@/types';
 import { useClients } from '@/hooks/useClients';
-import { useServices } from '@/hooks/useServices';
+import { useServicesForInvoices } from '@/hooks/useServicesForInvoices';
 import ServiceSelector from './ServiceSelector';
 import InvoiceSummary from './InvoiceSummary';
 
@@ -36,7 +36,7 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
   onCancel
 }) => {
   const { clients } = useClients();
-  const { services } = useServices();
+  const { services } = useServicesForInvoices();
   
   const {
     register,
@@ -79,7 +79,6 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
   };
 
   const activeClients = clients.filter(c => c.isActive);
-  const availableServices = services.filter(s => s.status === 'completed');
 
   return (
     <Card className="glass-card">
@@ -157,7 +156,6 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
           </div>
 
           <ServiceSelector
-            services={availableServices}
             selectedServiceIds={selectedServiceIds}
             onServiceToggle={handleServiceToggle}
           />
