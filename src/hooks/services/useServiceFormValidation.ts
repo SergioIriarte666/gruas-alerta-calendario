@@ -33,9 +33,9 @@ export const useServiceFormValidation = () => {
     // Check if vehicle info is required based on database field
     const isVehicleInfoOptional = selectedServiceType.vehicleInfoOptional;
 
-    // Validate vehicle information if required
+    // Validate vehicle information only if required (not optional)
     if (!isVehicleInfoOptional) {
-      if (!formData.vehicleBrand.trim() || !formData.vehicleModel.trim() || !formData.licensePlate.trim()) {
+      if (!formData.vehicleBrand?.trim() || !formData.vehicleModel?.trim() || !formData.licensePlate?.trim()) {
         toast.error("Error", {
           description: "La información del vehículo es requerida para este tipo de servicio",
         });

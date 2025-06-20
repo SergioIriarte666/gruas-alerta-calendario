@@ -20,12 +20,6 @@ export const serviceFormSchema = z.object({
   operatorCommission: z.number().min(0, 'La comisión debe ser mayor o igual a 0'),
   status: z.enum(['pending', 'in_progress', 'completed', 'cancelled']),
   observations: z.string().optional()
-}).refine((data) => {
-  // Get service type name to determine if vehicle info is required
-  // This will be handled in the form component
-  return true;
-}, {
-  message: "Validación de campos de vehículo"
 });
 
 export type ServiceFormValues = z.infer<typeof serviceFormSchema>;

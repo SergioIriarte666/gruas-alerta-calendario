@@ -58,6 +58,13 @@ export class RowMapper {
         errors.push(commissionValidation.error!);
       }
 
+      // Validate vehicle information only if required for this service type
+      if (serviceType && !serviceType.vehicleInfoOptional) {
+        if (!rowData.vehicleBrand?.trim() || !rowData.vehicleModel?.trim() || !rowData.licensePlate?.trim()) {
+          errors.push(`Información del vehículo es requerida para el tipo de servicio: ${serviceType.name}`);
+        }
+      }
+
       // Check for warnings
       if (client && rowData.clientName && client.name !== rowData.clientName) {
         warnings.push(`Nombre de cliente no coincide exactamente: "${rowData.clientName}" vs "${client.name}"`);
@@ -69,9 +76,9 @@ export class RowMapper {
           requestDate: requestDateValidation.fixedDate!,
           serviceDate: serviceDateValidation.fixedDate!,
           clientId: client!.id,
-          vehicleBrand: rowData.vehicleBrand.toString().trim(),
-          vehicleModel: rowData.vehicleModel.toString().trim(),
-          licensePlate: rowData.licensePlate.toString().toUpperCase().trim(),
+          vehicleBrand: rowData.vehicleBrand ? rowData.vehicleBrand.toString().trim() : '',
+          vehicleModel: rowData.vehicleModel ? rowData.vehicleModel.toString().trim() : '',
+          licensePlate: rowData.licensePlate ? rowData.licensePlate.toString().toUpperCase().trim() : '',
           origin: rowData.origin.toString().trim(),
           destination: rowData.destination.toString().trim(),
           serviceTypeId: serviceType!.id,
