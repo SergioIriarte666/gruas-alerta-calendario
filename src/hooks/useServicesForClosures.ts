@@ -51,6 +51,7 @@ export const useServicesForClosures = (options: UseServicesForClosuresOptions = 
       }
 
       console.log('Completed services found:', servicesData?.length);
+      console.log('Service folios found:', servicesData?.map(s => s.folio).join(', '));
 
       // Get all service IDs that are already included in closures
       const { data: closureServices, error: closureError } = await supabase
@@ -75,15 +76,24 @@ export const useServicesForClosures = (options: UseServicesForClosuresOptions = 
       const usedServiceIds = new Set(closureServices?.map(cs => cs.service_id) || []);
       const invoicedServiceIds = new Set(invoicedServices?.map(is => is.service_id) || []);
 
-      console.log('Services already in closures:', usedServiceIds.size);
-      console.log('Services already invoiced:', invoicedServiceIds.size);
+      console.log('Services already in closures:', usedServiceIds.size, Array.from(usedServiceIds));
+      console.log('Services already invoiced:', invoicedServiceIds.size, Array.from(invoicedServiceIds));
 
       // Filter out services that are already in closures OR already invoiced
-      const availableServicesData = servicesData?.filter(service => 
-        !usedServiceIds.has(service.id) && !invoicedServiceIds.has(service.id)
-      ) || [];
+      const availableServicesData = servicesData?.filter(service => {
+        const isInClosure = usedServiceIds.has(service.id);
+        const isInvoiced = invoicedServiceIds.has(service.id);
+        const isAvailable = !isInClosure && !isInvoiced;
+        
+        if (!isAvailable) {
+          console.log(`Service ${service.folio} (${service.id}) excluded: inClosure=${isInClosure}, invoiced=${isInvoiced}`);
+        }
+        
+        return isAvailable;
+      }) || [];
 
       console.log('Available services for new closures:', availableServicesData.length);
+      console.log('Available service folios:', availableServicesData.map(s => s.folio).join(', '));
 
       // Transform the raw data to match the Service type
       const transformedServices = transformRawServiceData(availableServicesData);

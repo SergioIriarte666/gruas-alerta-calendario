@@ -59,7 +59,7 @@ const ServicesSelector = ({
           <strong>¿Por qué no veo algunos servicios?</strong><br />
           • Solo se muestran servicios completados del rango de fechas seleccionado<br />
           • Se excluyen servicios ya incluidos en cierres anteriores<br />
-          • Se excluyen servicios ya facturados (como el servicio 2714358 que ya fue procesado)
+          • Se excluyen servicios ya facturados
         </AlertDescription>
       </Alert>
 
