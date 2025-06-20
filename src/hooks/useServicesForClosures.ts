@@ -5,18 +5,24 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useServiceTransformer } from './services/useServiceTransformer';
 
-export const useServicesForClosures = () => {
+interface UseServicesForClosuresOptions {
+  dateFrom?: Date;
+  dateTo?: Date;
+}
+
+export const useServicesForClosures = (options: UseServicesForClosuresOptions = {}) => {
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(false);
   const { transformRawServiceData } = useServiceTransformer();
+  const { dateFrom, dateTo } = options;
 
   const fetchAvailableServices = async () => {
     try {
       setLoading(true);
-      console.log('Fetching available services for closures...');
+      console.log('Fetching available services for closures with date filter:', { dateFrom, dateTo });
       
-      // First, get all completed services
-      const { data: servicesData, error: servicesError } = await supabase
+      // Build the query for completed services
+      let servicesQuery = supabase
         .from('services')
         .select(`
           *,
@@ -28,12 +34,22 @@ export const useServicesForClosures = () => {
         .eq('status', 'completed')
         .order('service_date', { ascending: false });
 
+      // Add date range filter if provided
+      if (dateFrom) {
+        servicesQuery = servicesQuery.gte('service_date', dateFrom.toISOString().split('T')[0]);
+      }
+      if (dateTo) {
+        servicesQuery = servicesQuery.lte('service_date', dateTo.toISOString().split('T')[0]);
+      }
+
+      const { data: servicesData, error: servicesError } = await servicesQuery;
+
       if (servicesError) {
         console.error('Error fetching services:', servicesError);
         throw servicesError;
       }
 
-      console.log('All completed services:', servicesData?.length);
+      console.log('Completed services found:', servicesData?.length);
 
       // Get all service IDs that are already included in closures
       const { data: closureServices, error: closureError } = await supabase
@@ -45,12 +61,25 @@ export const useServicesForClosures = () => {
         throw closureError;
       }
 
-      const usedServiceIds = new Set(closureServices?.map(cs => cs.service_id) || []);
-      console.log('Services already in closures:', usedServiceIds.size);
+      // Get all service IDs that are already invoiced
+      const { data: invoicedServices, error: invoiceError } = await supabase
+        .from('invoice_services')
+        .select('service_id');
 
-      // Filter out services that are already in closures
+      if (invoiceError) {
+        console.error('Error fetching invoiced services:', invoiceError);
+        throw invoiceError;
+      }
+
+      const usedServiceIds = new Set(closureServices?.map(cs => cs.service_id) || []);
+      const invoicedServiceIds = new Set(invoicedServices?.map(is => is.service_id) || []);
+
+      console.log('Services already in closures:', usedServiceIds.size);
+      console.log('Services already invoiced:', invoicedServiceIds.size);
+
+      // Filter out services that are already in closures OR already invoiced
       const availableServicesData = servicesData?.filter(service => 
-        !usedServiceIds.has(service.id)
+        !usedServiceIds.has(service.id) && !invoicedServiceIds.has(service.id)
       ) || [];
 
       console.log('Available services for new closures:', availableServicesData.length);
@@ -71,7 +100,7 @@ export const useServicesForClosures = () => {
 
   useEffect(() => {
     fetchAvailableServices();
-  }, []);
+  }, [dateFrom, dateTo]);
 
   return {
     services,

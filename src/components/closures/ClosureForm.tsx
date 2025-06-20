@@ -29,7 +29,6 @@ interface FormData {
 }
 
 const ClosureForm = ({ open, onOpenChange, onSubmit }: ClosureFormProps) => {
-  const { services, loading: servicesLoading, refetch } = useServicesForClosures();
   const [formData, setFormData] = useState<FormData>({
     dateFrom: undefined,
     dateTo: undefined,
@@ -38,6 +37,13 @@ const ClosureForm = ({ open, onOpenChange, onSubmit }: ClosureFormProps) => {
     total: 0,
     status: 'open'
   });
+  
+  // Pass date range to the hook for filtering
+  const { services, loading: servicesLoading, refetch } = useServicesForClosures({
+    dateFrom: formData.dateFrom,
+    dateTo: formData.dateTo
+  });
+  
   const [loading, setLoading] = useState(false);
 
   console.log('ClosureForm render - open:', open, 'servicesLoading:', servicesLoading, 'services count:', services.length);
@@ -104,6 +110,14 @@ const ClosureForm = ({ open, onOpenChange, onSubmit }: ClosureFormProps) => {
     setFormData(prev => ({ ...prev, clientId, serviceIds: [], total: 0 }));
   };
 
+  const handleDateFromChange = (date: Date | undefined) => {
+    setFormData(prev => ({ ...prev, dateFrom: date, serviceIds: [], total: 0 }));
+  };
+
+  const handleDateToChange = (date: Date | undefined) => {
+    setFormData(prev => ({ ...prev, dateTo: date, serviceIds: [], total: 0 }));
+  };
+
   const isFormValid = formData.dateFrom && formData.dateTo;
 
   return (
@@ -117,7 +131,7 @@ const ClosureForm = ({ open, onOpenChange, onSubmit }: ClosureFormProps) => {
           <Alert className="border-blue-500/50 bg-blue-500/10">
             <AlertCircle className="h-4 w-4 text-blue-400" />
             <AlertDescription className="text-blue-200">
-              Solo se pueden incluir servicios completados que no hayan sido facturados previamente.
+              Solo se pueden incluir servicios completados del rango de fechas seleccionado que no hayan sido facturados previamente.
               Una vez incluido en un cierre, el servicio no estará disponible para futuros cierres.
             </AlertDescription>
           </Alert>
@@ -125,8 +139,8 @@ const ClosureForm = ({ open, onOpenChange, onSubmit }: ClosureFormProps) => {
           <DateRangePicker
             dateFrom={formData.dateFrom}
             dateTo={formData.dateTo}
-            onDateFromChange={(date) => setFormData(prev => ({ ...prev, dateFrom: date }))}
-            onDateToChange={(date) => setFormData(prev => ({ ...prev, dateTo: date }))}
+            onDateFromChange={handleDateFromChange}
+            onDateToChange={handleDateToChange}
           />
 
           <ClientSelector

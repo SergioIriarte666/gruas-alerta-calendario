@@ -43,14 +43,14 @@ const ServicesSelector = ({
     <div className="space-y-2">
       <Label className="text-gray-300">Servicios Disponibles para Cierre</Label>
       <div className="text-xs text-gray-400 mb-2">
-        Solo se muestran servicios completados que no han sido incluidos en cierres anteriores
+        Solo se muestran servicios completados del rango de fechas seleccionado que no han sido incluidos en cierres anteriores ni facturados
       </div>
       <div className="max-h-40 overflow-y-auto border border-gray-700 rounded-md p-2 bg-white/5">
         {filteredServices.length === 0 ? (
           <p className="text-gray-400 text-sm">
             {clientId 
-              ? 'No hay servicios disponibles para este cliente' 
-              : 'No hay servicios completados disponibles para cierre'
+              ? 'No hay servicios disponibles para este cliente en el rango de fechas seleccionado' 
+              : 'No hay servicios completados disponibles para cierre en el rango de fechas seleccionado'
             }
           </p>
         ) : (
