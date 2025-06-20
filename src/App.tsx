@@ -8,6 +8,7 @@ import { UserProvider } from "@/contexts/UserContext";
 import { NotificationProvider } from "@/contexts/NotificationContext";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ToastProvider } from "@/components/ui/custom-toast";
+import { useTheme } from "@/hooks/useTheme";
 import ProtectedRoute from "@/components/layout/ProtectedRoute";
 import Dashboard from "./pages/Dashboard";
 import Services from "./pages/Services";
@@ -35,50 +36,57 @@ const queryClient = new QueryClient({
   },
 });
 
+const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  useTheme(); // Aplicar tema globalmente
+  return <>{children}</>;
+};
+
 const App: React.FC = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <UserProvider>
-          <NotificationProvider>
-            <ToastProvider>
-              <BrowserRouter>
-                <Routes>
-                  <Route path="/auth" element={<Auth />} />
-                  
-                  <Route path="/operator" element={
-                    <ProtectedRoute>
-                      <OperatorLayout />
-                    </ProtectedRoute>
-                  }>
-                    <Route index element={<OperatorDashboard />} />
-                    <Route path="service/:id/inspect" element={<ServiceInspection />} />
-                  </Route>
+          <ThemeProvider>
+            <NotificationProvider>
+              <ToastProvider>
+                <BrowserRouter>
+                  <Routes>
+                    <Route path="/auth" element={<Auth />} />
+                    
+                    <Route path="/operator" element={
+                      <ProtectedRoute>
+                        <OperatorLayout />
+                      </ProtectedRoute>
+                    }>
+                      <Route index element={<OperatorDashboard />} />
+                      <Route path="service/:id/inspect" element={<ServiceInspection />} />
+                    </Route>
 
-                  <Route path="/" element={
-                    <ProtectedRoute>
-                      <Layout />
-                    </ProtectedRoute>
-                  }>
-                    <Route index element={<Dashboard />} />
-                    <Route path="calendar" element={<Calendar />} />
-                    <Route path="services" element={<Services />} />
-                    <Route path="clients" element={<Clients />} />
-                    <Route path="cranes" element={<Cranes />} />
-                    <Route path="operators" element={<Operators />} />
-                    <Route path="costs" element={<Costs />} />
-                    <Route path="closures" element={<Closures />} />
-                    <Route path="invoices" element={<Invoices />} />
-                    <Route path="reports" element={<Reports />} />
-                    <Route path="settings" element={<Settings />} />
-                    <Route path="profile" element={<Profile />} />
-                  </Route>
-                  
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
-              </BrowserRouter>
-            </ToastProvider>
-          </NotificationProvider>
+                    <Route path="/" element={
+                      <ProtectedRoute>
+                        <Layout />
+                      </ProtectedRoute>
+                    }>
+                      <Route index element={<Dashboard />} />
+                      <Route path="calendar" element={<Calendar />} />
+                      <Route path="services" element={<Services />} />
+                      <Route path="clients" element={<Clients />} />
+                      <Route path="cranes" element={<Cranes />} />
+                      <Route path="operators" element={<Operators />} />
+                      <Route path="costs" element={<Costs />} />
+                      <Route path="closures" element={<Closures />} />
+                      <Route path="invoices" element={<Invoices />} />
+                      <Route path="reports" element={<Reports />} />
+                      <Route path="settings" element={<Settings />} />
+                      <Route path="profile" element={<Profile />} />
+                    </Route>
+                    
+                    <Route path="*" element={<NotFound />} />
+                  </Routes>
+                </BrowserRouter>
+              </ToastProvider>
+            </NotificationProvider>
+          </ThemeProvider>
         </UserProvider>
       </AuthProvider>
     </QueryClientProvider>

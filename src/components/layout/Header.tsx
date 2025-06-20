@@ -50,12 +50,12 @@ export const Header = ({ setIsMobileMenuOpen }: HeaderProps) => {
   };
 
   return (
-    <header className="flex h-16 items-center justify-between bg-black/20 backdrop-blur-lg border-b border-gray-800 px-4 sm:px-6">
+    <header className="flex h-16 items-center justify-between bg-card/50 backdrop-blur-lg border-b border-border px-4 sm:px-6 transition-colors duration-300">
       <div className="flex items-center gap-4">
         <Button
           variant="ghost"
           size="icon"
-          className="lg:hidden text-gray-300 hover:text-white"
+          className="lg:hidden text-muted-foreground hover:text-foreground"
           onClick={() => setIsMobileMenuOpen(true)}
         >
           <Menu className="h-6 w-6" />
@@ -64,10 +64,10 @@ export const Header = ({ setIsMobileMenuOpen }: HeaderProps) => {
         
         {/* Search */}
         <div className="hidden lg:block relative max-w-md flex-1">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
           <Input
             placeholder="Buscar servicios, clientes, facturas..."
-            className="pl-10 bg-white/5 border-gray-700 text-white placeholder-gray-400 focus:border-tms-green"
+            className="pl-10 bg-input border-border text-foreground placeholder-muted-foreground focus:border-tms-green"
           />
         </div>
       </div>
@@ -80,20 +80,20 @@ export const Header = ({ setIsMobileMenuOpen }: HeaderProps) => {
         {/* User Menu */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="text-gray-300 hover:text-white rounded-full">
+            <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground rounded-full">
               <User className="w-5 h-5" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent 
             align="end" 
-            className="bg-tms-dark border-gray-700 min-w-[200px] z-50"
+            className="bg-card border-border min-w-[200px] z-50"
           >
-            <DropdownMenuLabel className="text-white font-semibold">
+            <DropdownMenuLabel className="text-foreground font-semibold">
               {user?.name || 'Mi Cuenta'}
             </DropdownMenuLabel>
-            <DropdownMenuSeparator className="bg-gray-700" />
+            <DropdownMenuSeparator className="bg-border" />
             <DropdownMenuItem 
-              className="text-gray-300 hover:text-white hover:bg-white/10 cursor-pointer focus:bg-white/10 focus:text-white"
+              className="text-muted-foreground hover:text-foreground hover:bg-accent cursor-pointer focus:bg-accent focus:text-foreground"
               onClick={handleProfileClick}
             >
               <User className="w-4 h-4 mr-2" />
@@ -101,14 +101,14 @@ export const Header = ({ setIsMobileMenuOpen }: HeaderProps) => {
             </DropdownMenuItem>
             {isAdmin && (
               <DropdownMenuItem 
-                className="text-gray-300 hover:text-white hover:bg-white/10 cursor-pointer focus:bg-white/10 focus:text-white"
+                className="text-muted-foreground hover:text-foreground hover:bg-accent cursor-pointer focus:bg-accent focus:text-foreground"
                 onClick={() => navigate('/settings')}
               >
                 <Settings className="w-4 h-4 mr-2" />
                 Configuración
               </DropdownMenuItem>
             )}
-            <DropdownMenuSeparator className="bg-gray-700" />
+            <DropdownMenuSeparator className="bg-border" />
             <DropdownMenuItem 
               className="text-red-400 hover:text-red-300 hover:bg-red-500/10 cursor-pointer focus:bg-red-500/10 focus:text-red-300"
               onClick={handleLogout}

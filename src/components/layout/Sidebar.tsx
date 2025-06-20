@@ -90,8 +90,8 @@ export const Sidebar = ({ isCollapsed, setIsCollapsed, isMobileMenuOpen, setIsMo
   const { settings } = useSettings();
 
   const MobileNavContent = () => (
-    <div className='flex flex-col h-full'>
-      <div className="flex items-center p-4 border-b border-gray-800 h-16">
+    <div className='flex flex-col h-full bg-card'>
+      <div className="flex items-center p-4 border-b border-border h-16">
         <div className="flex items-center space-x-3">
           {settings?.company.logo ? (
             <img src={settings.company.logo} alt="Company Logo" className="w-8 h-8 rounded-lg object-contain" />
@@ -101,8 +101,8 @@ export const Sidebar = ({ isCollapsed, setIsCollapsed, isMobileMenuOpen, setIsMo
             </div>
           )}
           <div>
-            <h1 className="text-lg font-bold text-white">{settings?.company.name || 'TMS Grúas'}</h1>
-            <p className="text-xs text-gray-400">Sistema de Gestión</p>
+            <h1 className="text-lg font-bold text-foreground">{settings?.company.name || 'TMS Grúas'}</h1>
+            <p className="text-xs text-muted-foreground">Sistema de Gestión</p>
           </div>
         </div>
       </div>
@@ -117,7 +117,7 @@ export const Sidebar = ({ isCollapsed, setIsCollapsed, isMobileMenuOpen, setIsMo
               to={item.href}
               onClick={() => setIsMobileMenuOpen(false)}
               className={cn(
-                "flex items-center px-3 py-2 text-gray-300 rounded-md text-sm hover:bg-white/10 hover:text-white transition-colors",
+                "flex items-center px-3 py-2 text-muted-foreground rounded-md text-sm hover:bg-accent hover:text-foreground transition-colors",
                 isActive && "bg-tms-green text-white"
               )}
             >
@@ -127,8 +127,8 @@ export const Sidebar = ({ isCollapsed, setIsCollapsed, isMobileMenuOpen, setIsMo
           );
         })}
       </nav>
-      <div className="p-4 border-t border-gray-800">
-        <div className="text-xs text-gray-500 text-center">
+      <div className="p-4 border-t border-border">
+        <div className="text-xs text-muted-foreground text-center">
           <p>TMS Grúas v1.0</p>
           <p className="mt-1">© 2024 Sistema Profesional</p>
         </div>
@@ -140,11 +140,11 @@ export const Sidebar = ({ isCollapsed, setIsCollapsed, isMobileMenuOpen, setIsMo
     <>
       {/* Sidebar Desktop */}
       <div className={cn(
-        "hidden lg:flex lg:flex-col lg:fixed lg:inset-y-0 lg:z-50 bg-gradient-to-b from-tms-darker to-tms-dark border-r border-gray-800 transition-all duration-300",
+        "hidden lg:flex lg:flex-col lg:fixed lg:inset-y-0 lg:z-50 bg-card border-r border-border transition-all duration-300",
         isCollapsed ? "lg:w-16" : "lg:w-64"
       )}>
         {/* Header */}
-        <div className="flex items-center justify-between p-4 h-16 border-b border-gray-800">
+        <div className="flex items-center justify-between p-4 h-16 border-b border-border">
           {!isCollapsed && (
             <div className="flex items-center space-x-3">
               {settings?.company.logo ? (
@@ -155,8 +155,8 @@ export const Sidebar = ({ isCollapsed, setIsCollapsed, isMobileMenuOpen, setIsMo
                 </div>
               )}
               <div>
-                <h1 className="text-lg font-bold text-white">{settings?.company.name || 'TMS Grúas'}</h1>
-                <p className="text-xs text-gray-400">Sistema de Gestión</p>
+                <h1 className="text-lg font-bold text-foreground">{settings?.company.name || 'TMS Grúas'}</h1>
+                <p className="text-xs text-muted-foreground">Sistema de Gestión</p>
               </div>
             </div>
           )}
@@ -164,7 +164,7 @@ export const Sidebar = ({ isCollapsed, setIsCollapsed, isMobileMenuOpen, setIsMo
             variant="ghost"
             size="sm"
             onClick={() => setIsCollapsed(!isCollapsed)}
-            className="text-gray-400 hover:text-white"
+            className="text-muted-foreground hover:text-foreground"
           >
             {isCollapsed ? <Menu className="w-5 h-5" /> : <X className="w-5 h-5" />}
           </Button>
@@ -181,7 +181,7 @@ export const Sidebar = ({ isCollapsed, setIsCollapsed, isMobileMenuOpen, setIsMo
                 key={item.href}
                 to={item.href}
                 className={cn(
-                  "flex items-center px-3 py-2 text-gray-300 rounded-md text-sm hover:bg-white/10 hover:text-white transition-colors",
+                  "flex items-center px-3 py-2 text-muted-foreground rounded-md text-sm hover:bg-accent hover:text-foreground transition-colors",
                   isCollapsed ? 'justify-center' : '',
                   isActive && "bg-tms-green text-white"
                 )}
@@ -198,8 +198,8 @@ export const Sidebar = ({ isCollapsed, setIsCollapsed, isMobileMenuOpen, setIsMo
 
         {/* Footer */}
         {!isCollapsed && (
-          <div className="p-4 border-t border-gray-800">
-            <div className="text-xs text-gray-500 text-center">
+          <div className="p-4 border-t border-border">
+            <div className="text-xs text-muted-foreground text-center">
               <p>TMS Grúas v1.0</p>
               <p className="mt-1">© 2024 Sistema Profesional</p>
             </div>
@@ -209,7 +209,7 @@ export const Sidebar = ({ isCollapsed, setIsCollapsed, isMobileMenuOpen, setIsMo
 
       {/* Sidebar Mobile */}
       <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
-        <SheetContent side="left" className="p-0 w-[280px] bg-gradient-to-b from-tms-darker to-tms-dark border-r-0 flex flex-col">
+        <SheetContent side="left" className="p-0 w-[280px] border-r-0 flex flex-col">
           <MobileNavContent />
         </SheetContent>
       </Sheet>
