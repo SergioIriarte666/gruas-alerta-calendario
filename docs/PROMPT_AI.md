@@ -11,7 +11,7 @@ Eres una IA especializada en el desarrollo y mantenimiento del Sistema de Gesti�
 - **Portal especializado para operadores** con funcionalidades móviles
 - **Gestión completa** de servicios, clientes, grúas, operadores, costos y facturación
 - **Servicios especiales** con campos opcionales (taxi, transporte de materiales)
-- **Cierres de servicios** para prevenir doble facturación
+- **Cierres de servicios** con **prevención automática de doble facturación**
 - **Inspecciones digitales** con firmas y fotos
 - **Reportes avanzados** con gráficos y análisis de rentabilidad
 
@@ -48,6 +48,21 @@ type UserRole = 'admin' | 'operator' | 'viewer';
 // Viewer: Solo lectura de datos
 ```
 
+### Estados de Servicios CRÍTICOS
+```typescript
+type ServiceStatus = 'pending' | 'in_progress' | 'completed' | 'cancelled' | 'invoiced';
+
+// FLUJO CRÍTICO:
+// pending → in_progress → completed → invoiced (automático al facturar)
+```
+
+### Sistema de Prevención de Doble Facturación
+```typescript
+// CRÍTICO: Trigger automático al crear facturas
+// Servicios pasan automáticamente de 'completed' a 'invoiced'
+// Servicios 'invoiced' NO aparecen en cierres futuros
+```
+
 ### Vinculación Usuario-Operador
 Para portal del operador:
 1. Usuario con rol 'operator' en tabla `profiles`
@@ -56,10 +71,10 @@ Para portal del operador:
 
 ### Flujo de Servicios
 ```
-Pending → In Progress → Completed → Incluido en Cierre → Facturado
+Pending → In Progress → Completed → Invoiced (automático)
 ```
 
-### Tipos de Servicios Especiales
+### Tipos de Servicio con Campos Opcionales
 ```typescript
 // Servicios con información de vehículo opcional
 const OPTIONAL_VEHICLE_SERVICES = [
@@ -68,30 +83,49 @@ const OPTIONAL_VEHICLE_SERVICES = [
   'transporte de suministros'
 ];
 
-// Validación condicional basada en tipo de servicio
-const isVehicleInfoOptional = serviceTypeName && 
-  OPTIONAL_VEHICLE_SERVICES.some(type => 
-    serviceTypeName.toLowerCase().includes(type)
-  );
+// Campo en service_types: vehicle_info_optional boolean
+const isVehicleInfoOptional = serviceType?.vehicle_info_optional || false;
 ```
 
-### Sistema de Cierres (CRÍTICO)
+### Sistema de Cierres (CRÍTICO PARA FACTURACIÓN)
 - Solo servicios `completed` no incluidos en cierres anteriores
-- Previene doble facturación
+- Excluye automáticamente servicios `invoiced`
+- Previene doble facturación mediante filtros y triggers
 - Estados: open → closed → invoiced
 
 ## Reglas de Desarrollo ESTRICTAS
 
-### 1. Tipado TypeScript
+### 1. Estados de Servicios - NO TOCAR SISTEMA EXISTENTE
 ```typescript
-// CORRECTO - Usar tipos del sistema
-const service: Service = transformRawServiceData(rawData);
+// CORRECTO - Respetar estados existentes
+const availableForClosure = services.filter(s => 
+  s.status === 'completed' && !isAlreadyInvoiced(s.id)
+);
 
-// INCORRECTO - Evitar any
-const service: any = rawData;
+// INCORRECTO - NO cambiar lógica de estados
+const services = allServices; // Sin filtrado por status
 ```
 
-### 2. Componentes Shadcn/ui
+### 2. Trigger de Facturación - MANTENER INTACTO
+```sql
+-- CRÍTICO: NO MODIFICAR este trigger
+CREATE TRIGGER trigger_update_service_status_on_invoice
+  AFTER INSERT ON invoice_services
+  FOR EACH ROW
+  EXECUTE FUNCTION update_service_status_on_invoice();
+```
+
+### 3. Filtros en Cierres - LÓGICA CRÍTICA
+```typescript
+// OBLIGATORIO en useServicesForClosures
+const excludeInvoiced = services.filter(service => {
+  const isInClosure = usedServiceIds.has(service.id);
+  const isInvoiced = invoicedServiceIds.has(service.id);
+  return !isInClosure && !isInvoiced;
+});
+```
+
+### 4. Componentes Shadcn/ui
 ```typescript
 // CORRECTO - Siempre usar shadcn/ui
 import { Button } from '@/components/ui/button';
@@ -100,7 +134,7 @@ import { Button } from '@/components/ui/button';
 const CustomButton = ({ children }) => <button>{children}</button>;
 ```
 
-### 3. TanStack Query Obligatorio
+### 5. TanStack Query Obligatorio
 ```typescript
 // CORRECTO - Para toda interacción con Supabase
 const { data, isLoading } = useQuery({
@@ -113,25 +147,23 @@ const [services, setServices] = useState([]);
 useEffect(() => { fetch('/api/services'); }, []);
 ```
 
-### 4. Transformación de Datos
+### 6. Transformación de Datos
 ```typescript
 // SIEMPRE transformar datos de Supabase (snake_case) a tipos del sistema (camelCase)
 const transformedServices = transformRawServiceData(supabaseData);
 ```
 
-### 5. Validación Condicional de Servicios
+### 7. Validación Condicional de Servicios
 ```typescript
 // Validar campos de vehículo según tipo de servicio
-const isVehicleInfoOptional = selectedServiceType.name.toLowerCase().includes('taxi') ||
-                              selectedServiceType.name.toLowerCase().includes('transporte de materiales') ||
-                              selectedServiceType.name.toLowerCase().includes('transporte de suministros');
+const isVehicleInfoOptional = serviceType?.vehicle_info_optional || false;
 
 if (!isVehicleInfoOptional && (!vehicleBrand || !vehicleModel || !licensePlate)) {
   throw new Error('Información de vehículo requerida');
 }
 ```
 
-### 6. Row Level Security
+### 8. Row Level Security
 ```sql
 -- Todas las políticas deben considerar roles
 CREATE POLICY "Users can view services based on role" ON services
@@ -163,28 +195,63 @@ export const useServices = () => {
 };
 ```
 
-### 2. Componentes de Formulario con Validación Condicional
+### 2. Hook de Cierres CON FILTRADO CRÍTICO
+```typescript
+// useServicesForClosures - LÓGICA CRÍTICA
+export const useServicesForClosures = (options) => {
+  const fetchAvailableServices = async () => {
+    // 1. Solo servicios completed
+    const servicesQuery = supabase
+      .from('services')
+      .select('*')
+      .eq('status', 'completed');
+
+    // 2. Excluir servicios en cierres anteriores
+    const { data: closureServices } = await supabase
+      .from('closure_services')
+      .select('service_id');
+
+    // 3. Excluir servicios ya facturados
+    const { data: invoicedServices } = await supabase
+      .from('invoice_services')
+      .select('service_id');
+
+    // 4. CRÍTICO: Filtrar servicios disponibles
+    const usedServiceIds = new Set([
+      ...closureServices.map(cs => cs.service_id),
+      ...invoicedServices.map(is => is.service_id)
+    ]);
+
+    const availableServices = servicesData.filter(service => 
+      !usedServiceIds.has(service.id)
+    );
+  };
+};
+```
+
+### 3. Componentes de Formulario con Validación Condicional
 ```typescript
 // Validación condicional para servicios especiales
-const VehicleSection = ({ serviceTypeName, ...props }) => {
-  const isOptional = serviceTypeName && (
-    serviceTypeName.toLowerCase().includes('taxi') ||
-    serviceTypeName.toLowerCase().includes('transporte de materiales')
-  );
+const VehicleSection = ({ serviceType, ...props }) => {
+  const isOptional = serviceType?.vehicle_info_optional || false;
 
   return (
     <div>
       <Label>
         Marca del Vehículo {!isOptional && <span className="text-red-500">*</span>}
       </Label>
-      {isOptional && <p className="text-xs text-gray-400">Opcional para este tipo de servicio</p>}
+      {isOptional && (
+        <p className="text-xs text-gray-400">
+          Opcional para este tipo de servicio
+        </p>
+      )}
       <Input required={!isOptional} {...props} />
     </div>
   );
 };
 ```
 
-### 3. PWA Patterns
+### 4. PWA Patterns
 ```typescript
 // Detectar funcionalidades PWA
 const { isOnline, syncStatus, offlineActions } = usePWACapabilities();
@@ -195,7 +262,7 @@ if (!isOnline && action) {
 }
 ```
 
-### 4. Portal del Operador
+### 5. Portal del Operador
 ```typescript
 // Redirección automática para operadores
 if (userRole === 'operator' && !isOperatorPortalRoute) {
@@ -205,19 +272,28 @@ if (userRole === 'operator' && !isOperatorPortalRoute) {
 
 ## Funcionalidades Críticas del Sistema
 
-### 1. Cierres de Servicios
+### 1. Cierres de Servicios - NUNCA MODIFICAR SIN ENTENDER
 ```typescript
 // CRÍTICO: Solo servicios completed no en cierres anteriores
 const availableServices = services.filter(service => 
-  service.status === 'completed' && !usedServiceIds.has(service.id)
+  service.status === 'completed' && 
+  !usedServiceIds.has(service.id) &&
+  !invoicedServiceIds.has(service.id)
 );
 ```
 
-### 2. Servicios con Campos Opcionales
+### 2. Estados de Servicios - FLUJO AUTOMÁTICO
+```typescript
+// AUTOMÁTICO: completed → invoiced al crear factura
+// TRIGGER: update_service_status_on_invoice
+// NO INTERFERIR con este proceso
+```
+
+### 3. Servicios con Campos Opcionales
 ```typescript
 // Manejar campos de vehículo opcionales
 const createService = (serviceData) => {
-  const isVehicleOptional = checkServiceTypeForOptionalVehicle(serviceData.serviceType);
+  const isVehicleOptional = serviceData.serviceType?.vehicle_info_optional;
   
   return supabase.from('services').insert({
     ...serviceData,
@@ -228,7 +304,7 @@ const createService = (serviceData) => {
 };
 ```
 
-### 3. Inspecciones Digitales
+### 4. Inspecciones Digitales
 ```typescript
 interface Inspection {
   service_id: string;
@@ -241,7 +317,7 @@ interface Inspection {
 }
 ```
 
-### 4. Sincronización PWA
+### 5. Sincronización PWA
 ```typescript
 // Almacenar acciones offline
 const storeOfflineAction = (action: OfflineAction) => {
@@ -265,10 +341,12 @@ src/
 ├── components/
 │   ├── services/       # Por módulo
 │   ├── operator/       # Portal operador
+│   ├── closures/       # Sistema de cierres
 │   ├── pwa/           # Funcionalidades PWA
 │   └── ui/            # Shadcn/ui
 ├── hooks/
 │   ├── services/      # Hooks específicos por módulo
+│   ├── closures/      # Hooks de cierres
 │   └── pwa/           # Hooks PWA
 ├── pages/             # Páginas principales
 ├── types/             # Definiciones de tipos
@@ -290,6 +368,37 @@ console.log('Operation details:', { data, user, timestamp });
 ```typescript
 // Siempre responsive con Tailwind
 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+```
+
+## Logs y Debugging OBLIGATORIOS
+
+### 1. En Cierres (useServicesForClosures)
+```typescript
+console.log('Fetching services with date filter:', { dateFrom, dateTo });
+console.log('Completed services found:', servicesData?.length);
+console.log('Services already in closures:', usedServiceIds.size);
+console.log('Services already invoiced:', invoicedServiceIds.size);
+console.log('Available services for closures:', availableServicesData.length);
+```
+
+### 2. En ServicesSelector
+```typescript
+console.log('ServicesSelector render:', { 
+  servicesCount: services.length, 
+  loading, 
+  clientId 
+});
+console.log('Filtered services for client:', filteredServices.length);
+```
+
+### 3. En Estados de Servicios
+```typescript
+console.log('Service status check:', {
+  folio: service.folio,
+  status: service.status,
+  isCompleted: service.status === 'completed',
+  isInvoiced: service.status === 'invoiced'
+});
 ```
 
 ## Funcionalidades PWA Específicas
@@ -316,9 +425,10 @@ const storeOfflineData = (key: string, data: any) => {
 
 ### 1. Console Logs Extensivos
 ```typescript
-// SIEMPRE incluir logs detallados
+// SIEMPRE incluir logs detallados para cierres y facturación
 console.log('Service creation:', { serviceData, userId, timestamp });
-console.log('Query result:', { data: data?.length, loading, error });
+console.log('Closure filtering:', { totalServices, availableServices, excludedCount });
+console.log('Invoice creation:', { serviceIds, totalAmount, clientId });
 ```
 
 ### 2. Error Boundaries
@@ -331,22 +441,20 @@ console.log('Query result:', { data: data?.length, loading, error });
 
 ## Reglas de Modificación del Sistema
 
-### 1. NO Cambiar Funcionalidad Existente
-- Solo añadir o mejorar características
-- Mantener compatibilidad con datos existentes
-- Preservar flujos de trabajo establecidos
+### 1. NO Cambiar Funcionalidad de Facturación
+- El trigger `update_service_status_on_invoice` es CRÍTICO
+- Los filtros en cierres son ESENCIALES para prevenir doble facturación
+- Estados de servicios `completed` → `invoiced` son AUTOMÁTICOS
 
-### 2. Documentación OBLIGATORIA
+### 2. NO Modificar Lógica de Cierres Sin Entender
+- `useServicesForClosures` contiene lógica crítica
+- Filtros por `closure_services` e `invoice_services` son OBLIGATORIOS
+- ServicesSelector debe mostrar solo servicios disponibles
+
+### 3. Documentación OBLIGATORIA
 - Actualizar documentación en cada cambio
 - Incluir ejemplos de uso
-- Documentar breaking changes
-
-### 3. Migration Strategy
-```sql
--- Siempre usar migraciones para cambios de DB
--- Incluir rollback plan
--- Validar datos existentes
-```
+- Documentar breaking changes especialmente en facturación
 
 ### 4. PWA Considerations
 - Considerar funcionalidad offline en nuevas características
@@ -355,19 +463,31 @@ console.log('Query result:', { data: data?.length, loading, error });
 
 ## Patrones Anti-Pattern (EVITAR)
 
-### 1. ❌ Fetch Directo
+### 1. ❌ Modificar Estados de Servicios Sin Trigger
+```typescript
+// MAL - Cambiar status manualmente
+await supabase.from('services').update({ status: 'invoiced' });
+```
+
+### 2. ❌ Crear Cierres Sin Filtros
+```typescript
+// MAL - Incluir servicios ya facturados
+const allServices = await supabase.from('services').select('*');
+```
+
+### 3. ❌ Fetch Directo
 ```typescript
 // MAL - No usar fetch directo
 const data = await fetch('/api/services');
 ```
 
-### 2. ❌ Any Types
+### 4. ❌ Any Types
 ```typescript
 // MAL - Evitar any
 const handleData = (data: any) => { /* ... */ };
 ```
 
-### 3. ❌ Componentes Monolíticos
+### 5. ❌ Componentes Monolíticos
 ```typescript
 // MAL - Componentes muy grandes
 const HugeComponent = () => {
@@ -375,13 +495,13 @@ const HugeComponent = () => {
 };
 ```
 
-### 4. ❌ Estado Local Innecesario
+### 6. ❌ Estado Local Innecesario
 ```typescript
 // MAL - Estado que debería ser server state
 const [services, setServices] = useState([]);
 ```
 
-### 5. ❌ Validación Rígida de Vehículos
+### 7. ❌ Validación Rígida de Vehículos
 ```typescript
 // MAL - Requerir siempre información de vehículo
 if (!vehicleBrand || !vehicleModel || !licensePlate) {
@@ -392,6 +512,12 @@ if (!vehicleBrand || !vehicleModel || !licensePlate) {
 if (!isVehicleInfoOptional && (!vehicleBrand || !vehicleModel || !licensePlate)) {
   throw new Error('Vehicle info required for this service type');
 }
+```
+
+### 8. ❌ Modificar Triggers de Facturación
+```sql
+-- MAL - NO modificar triggers existentes sin extrema necesidad
+-- El sistema de prevención de doble facturación depende de estos triggers
 ```
 
 ## Flujos de Trabajo Específicos
@@ -420,17 +546,25 @@ if (!isVehicleInfoOptional && (!vehicleBrand || !vehicleModel || !licensePlate))
 
 ### 4. Servicios con Campos Opcionales
 1. Identificar tipos de servicio especiales
-2. Implementar validación condicional
-3. Actualizar UI para mostrar campos opcionales
-4. Manejar datos null/empty en base de datos
-5. Actualizar transformaciones de datos
+2. Configurar `vehicle_info_optional` en service_types
+3. Implementar validación condicional
+4. Actualizar UI para mostrar campos opcionales
+5. Manejar datos null/empty en base de datos
+6. Actualizar transformaciones de datos
+
+### 5. Modificaciones a Facturación (EXTREMO CUIDADO)
+1. **NUNCA** modificar triggers sin análisis completo
+2. **SIEMPRE** probar en entorno de desarrollo
+3. **OBLIGATORIO** mantener logs de debugging
+4. **CRÍTICO** verificar que no se rompa prevención de doble facturación
+5. **ESENCIAL** actualizar documentación técnica
 
 ## Consideraciones de Performance
 
 ### 1. Optimizaciones de Consulta
 ```typescript
 // Selects específicos, no SELECT *
-.select('id, folio, client:clients(name), status')
+.select('id, folio, status, client:clients(name), value')
 ```
 
 ### 2. Paginación
@@ -464,11 +598,8 @@ queryClient.setQueryData(['services'], (old) => ({
 ### 2. Validación Inteligente
 ```typescript
 // Detectar automáticamente si campos son opcionales
-const detectOptionalFields = (serviceTypeName: string) => {
-  const optionalTypes = ['taxi', 'transporte de materiales', 'transporte de suministros'];
-  return optionalTypes.some(type => 
-    serviceTypeName.toLowerCase().includes(type)
-  );
+const detectOptionalFields = (serviceType: ServiceType) => {
+  return serviceType?.vehicle_info_optional || false;
 };
 ```
 
@@ -477,4 +608,22 @@ const detectOptionalFields = (serviceTypeName: string) => {
 - Incluir texto explicativo
 - Manejar visualmente servicios sin vehículo específico
 
-Recuerda: Este sistema es crítico para operaciones de empresas de grúas. La confiabilidad, seguridad y funcionalidad offline son prioritarias. Siempre piensa en el operador en terreno usando dispositivos móviles sin conexión constante. Los servicios especiales requieren flexibilidad en la captura de datos sin comprometer la integridad del sistema.
+## CRÍTICO - Sistema de Prevención de Doble Facturación
+
+### Componentes Esenciales (NO TOCAR):
+1. **Trigger**: `trigger_update_service_status_on_invoice`
+2. **Función**: `update_service_status_on_invoice()`
+3. **Filtros en useServicesForClosures**: Exclusión de servicios invoiced
+4. **Estados automáticos**: completed → invoiced
+
+### Verificaciones Obligatorias:
+```typescript
+// SIEMPRE verificar antes de modificar cierres
+const isServiceAvailableForClosure = (service: Service) => {
+  return service.status === 'completed' && 
+         !isInPreviousClosure(service.id) &&
+         !isAlreadyInvoiced(service.id);
+};
+```
+
+Recuerda: Este sistema es crítico para operaciones de empresas de grúas. La confiabilidad, seguridad y funcionalidad offline son prioritarias. La prevención de doble facturación es AUTOMÁTICA y CRÍTICA - no debe modificarse sin análisis exhaustivo. Siempre piensa en el operador en terreno usando dispositivos móviles sin conexión constante. Los servicios especiales requieren flexibilidad en la captura de datos sin comprometer la integridad del sistema.

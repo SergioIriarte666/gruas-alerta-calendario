@@ -87,7 +87,17 @@ WHERE name = 'Juan Pérez';
 #### Servicios (`services`)
 - Núcleo del sistema
 - Relacionado con clientes, operadores, grúas y tipos de servicio
-- Estados: `pending`, `in_progress`, `completed`, `cancelled`
+- Estados: `pending`, `in_progress`, `completed`, `cancelled`, `invoiced`
+
+#### Estados de Servicios y Transiciones
+```mermaid
+graph LR
+    A[pending] --> B[in_progress]
+    B --> C[completed]
+    C --> D[invoiced]
+    A --> E[cancelled]
+    B --> E
+```
 
 #### Clientes (`clients`)
 - Información de contacto y facturación
@@ -101,6 +111,24 @@ WHERE name = 'Juan Pérez';
 #### Grúas (`cranes`)
 - Información técnica y documentación
 - Mantenimiento y revisiones
+
+#### Tipos de Servicio (`service_types`)
+- Configuración de servicios especiales
+- Campo `vehicle_info_optional` para servicios como taxi o transporte de materiales
+
+### Sistema de Cierres y Facturación
+
+#### Flujo de Cierres
+1. **Servicios Completados**: Solo servicios con status `completed`
+2. **Filtrado**: Excluye servicios ya en cierres anteriores o facturados
+3. **Agrupación**: Por período de fechas y/o cliente específico
+4. **Cierre**: Cambio de status `open` → `closed`
+5. **Facturación**: Generación de factura desde cierre cerrado
+
+#### Prevención de Doble Facturación
+- Trigger automático: Al crear factura → servicios cambian a `invoiced`
+- Filtros en cierres: Excluyen servicios `invoiced` automáticamente
+- Validaciones en UI: Solo muestran servicios disponibles
 
 ### Row Level Security (RLS)
 
@@ -136,10 +164,13 @@ src/
 │   │   └── ProtectedRoute.tsx   # Rutas protegidas
 │   ├── operator/         # Componentes específicos del operador
 │   ├── services/         # Gestión de servicios
+│   │   └── form/         # Componentes del formulario de servicios
+│   ├── closures/         # Sistema de cierres
 │   ├── clients/          # Gestión de clientes
 │   └── ui/              # Componentes de UI reutilizables
-├── pages/               # Páginas principales
 ├── hooks/               # Custom hooks
+│   ├── services/        # Hooks específicos de servicios
+│   └── closures/        # Hooks de cierres
 ├── contexts/            # Contextos de React
 ├── types/               # Definiciones de tipos
 └── utils/               # Utilidades
@@ -157,6 +188,11 @@ Maneja la autorización y redirección basada en roles:
 - **Layout**: Interface completa para admin/viewer
 - **OperatorLayout**: Interface simplificada para operadores
 
+#### ServicesSelector (Cierres)
+- Filtra servicios disponibles para cierres
+- Excluye servicios ya facturados o en cierres
+- Muestra información clara sobre exclusiones
+
 ## Portal del Operador
 
 ### Características Específicas
@@ -170,6 +206,7 @@ Maneja la autorización y redirección basada en roles:
 - Checklist de equipos y vehículos
 - Captura de firmas digitales
 - Observaciones y notas
+- Fotos del servicio y equipos
 
 #### Navegación Restringida
 - Solo acceso a funcionalidades relacionadas con sus servicios
@@ -187,6 +224,29 @@ graph TD
     F --> G[Capturar Firma]
     G --> H[Actualizar Estado]
 ```
+
+## Servicios con Campos Opcionales
+
+### Tipos de Servicio Especiales
+- **Taxi**: Transporte de pasajeros (vehículo del cliente)
+- **Transporte de Materiales**: Sin vehículo específico
+- **Transporte de Suministros**: Diversos materiales
+
+### Implementación Técnica
+```typescript
+// Detección automática de campos opcionales
+const isVehicleInfoOptional = serviceType?.vehicle_info_optional || false;
+
+// Validación condicional
+if (!isVehicleInfoOptional && (!vehicleBrand || !vehicleModel)) {
+  throw new Error('Vehicle info required');
+}
+```
+
+### UI Adaptativa
+- Campos marcados claramente como opcionales
+- Texto explicativo sobre tipos de servicio
+- Validación visual diferenciada
 
 ## PWA (Progressive Web App)
 
@@ -222,6 +282,22 @@ graph TD
 }
 ```
 
+## Triggers y Automatización
+
+### Trigger de Facturación
+```sql
+-- Automático: servicios → invoiced al crear factura
+CREATE TRIGGER trigger_update_service_status_on_invoice
+  AFTER INSERT ON invoice_services
+  FOR EACH ROW
+  EXECUTE FUNCTION update_service_status_on_invoice();
+```
+
+### Funciones de Base de Datos
+- `get_user_role()`: Obtiene rol del usuario
+- `get_operator_id_by_user()`: Vincula usuario con operador
+- `update_service_status_on_invoice()`: Actualiza status automáticamente
+
 ## Seguridad
 
 ### Autenticación
@@ -255,7 +331,7 @@ graph TD
 ## Monitoring y Debugging
 
 ### Logging
-- Console logs para desarrollo
+- Console logs extensivos para desarrollo
 - Error boundaries para captura de errores
 - Métricas de performance
 
@@ -289,4 +365,4 @@ graph TD
 - Testing automatizado
 - Rollback capabilities
 
-Esta arquitectura proporciona una base sólida, escalable y segura para la gestión integral de empresas de grúas, con especial énfasis en la experiencia del operador en campo.
+Esta arquitectura proporciona una base sólida, escalable y segura para la gestión integral de empresas de grúas, con especial énfasis en la experiencia del operador en campo y la consistencia de datos en el sistema de facturación.
