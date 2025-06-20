@@ -60,7 +60,7 @@ const InvoicesTable = ({ invoices, onEdit, onDelete, onMarkAsPaid, getInvoiceWit
                   <TableCell className="text-white">{invoiceWithDetails.client?.name || 'Cliente no encontrado'}</TableCell>
                   <TableCell className="text-white">{new Date(invoice.issueDate).toLocaleDateString()}</TableCell>
                   <TableCell className="text-white">{new Date(invoice.dueDate).toLocaleDateString()}</TableCell>
-                  <TableCell className="text-white">${invoice.total.toLocaleString()}</TableCell>
+                  <TableCell className="text-white">${Math.round(invoice.total).toLocaleString()}</TableCell>
                   <TableCell>{getStatusBadge(invoice.status)}</TableCell>
                   <TableCell className="text-white">
                     <Badge className="bg-purple-100 text-purple-800">

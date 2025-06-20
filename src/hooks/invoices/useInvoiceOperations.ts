@@ -15,6 +15,11 @@ export const useInvoiceOperations = () => {
       
       const folio = generateInvoiceFolio(count.count || 0);
 
+      // Ensure integer values
+      const subtotal = Math.round(invoiceData.subtotal);
+      const vat = Math.round(invoiceData.vat);
+      const total = Math.round(invoiceData.total);
+
       // Create invoice
       const { data, error: invoiceError } = await supabase
         .from('invoices')
@@ -23,9 +28,9 @@ export const useInvoiceOperations = () => {
           client_id: invoiceData.clientId,
           issue_date: invoiceData.issueDate,
           due_date: invoiceData.dueDate,
-          subtotal: invoiceData.subtotal,
-          vat: invoiceData.vat,
-          total: invoiceData.total,
+          subtotal,
+          vat,
+          total,
           status: invoiceData.status,
           payment_date: invoiceData.paymentDate,
         })
@@ -67,9 +72,9 @@ export const useInvoiceOperations = () => {
       if (invoiceData.clientId !== undefined) updateData.client_id = invoiceData.clientId;
       if (invoiceData.issueDate !== undefined) updateData.issue_date = invoiceData.issueDate;
       if (invoiceData.dueDate !== undefined) updateData.due_date = invoiceData.dueDate;
-      if (invoiceData.subtotal !== undefined) updateData.subtotal = invoiceData.subtotal;
-      if (invoiceData.vat !== undefined) updateData.vat = invoiceData.vat;
-      if (invoiceData.total !== undefined) updateData.total = invoiceData.total;
+      if (invoiceData.subtotal !== undefined) updateData.subtotal = Math.round(invoiceData.subtotal);
+      if (invoiceData.vat !== undefined) updateData.vat = Math.round(invoiceData.vat);
+      if (invoiceData.total !== undefined) updateData.total = Math.round(invoiceData.total);
       if (invoiceData.status !== undefined) updateData.status = invoiceData.status;
       if (invoiceData.paymentDate !== undefined) updateData.payment_date = invoiceData.paymentDate;
 

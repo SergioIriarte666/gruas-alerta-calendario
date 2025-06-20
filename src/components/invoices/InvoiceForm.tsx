@@ -54,9 +54,9 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
   const selectedClosureId = watch('closureId');
   const selectedClosure = closures.find(c => c.id === selectedClosureId);
   
-  // Calculate totals from selected closure
-  const subtotal = selectedClosure?.total || 0;
-  const vat = subtotal * 0.19; // 19% IVA
+  // Calculate totals from selected closure with integer values
+  const subtotal = Math.round(selectedClosure?.total || 0);
+  const vat = Math.round(subtotal * 0.19); // 19% IVA
   const total = subtotal + vat;
 
   const handleFormSubmit = (data: InvoiceFormData) => {

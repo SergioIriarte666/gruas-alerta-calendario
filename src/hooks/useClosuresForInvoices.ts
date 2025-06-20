@@ -13,8 +13,8 @@ export const useClosuresForInvoices = () => {
     try {
       setLoading(true);
       
-      // Solo obtener cierres cerrados que no han sido facturados
-      const { data, error } = await supabase
+      // Obtener todos los cierres cerrados
+      const { data: allClosures, error: closuresError } = await supabase
         .from('service_closures')
         .select(`
           *,
@@ -23,9 +23,23 @@ export const useClosuresForInvoices = () => {
         .eq('status', 'closed')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (closuresError) throw closuresError;
 
-      const formattedClosures: ServiceClosure[] = data.map(formatClosureData);
+      // Obtener todos los closure_ids que ya están facturados
+      const { data: invoicedClosures, error: invoicedError } = await supabase
+        .from('invoice_closures')
+        .select('closure_id');
+
+      if (invoicedError) throw invoicedError;
+
+      const invoicedClosureIds = new Set(invoicedClosures?.map(ic => ic.closure_id) || []);
+
+      // Filtrar cierres que NO han sido facturados
+      const availableClosures = allClosures?.filter(closure => 
+        !invoicedClosureIds.has(closure.id)
+      ) || [];
+
+      const formattedClosures: ServiceClosure[] = availableClosures.map(formatClosureData);
       setClosures(formattedClosures);
     } catch (error: any) {
       console.error('Error fetching closures for invoices:', error);

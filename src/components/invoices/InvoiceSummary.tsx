@@ -12,15 +12,15 @@ const InvoiceSummary = ({ subtotal, vat, total }: InvoiceSummaryProps) => {
       <div className="space-y-2">
         <div className="flex justify-between text-gray-300">
           <span>Subtotal:</span>
-          <span>${subtotal.toLocaleString()}</span>
+          <span>${Math.round(subtotal).toLocaleString()}</span>
         </div>
         <div className="flex justify-between text-gray-300">
           <span>IVA (19%):</span>
-          <span>${vat.toLocaleString()}</span>
+          <span>${Math.round(vat).toLocaleString()}</span>
         </div>
         <div className="flex justify-between font-bold text-lg border-t border-gray-700 pt-2 text-white">
           <span>Total:</span>
-          <span>${total.toLocaleString()}</span>
+          <span>${Math.round(total).toLocaleString()}</span>
         </div>
       </div>
     </div>
