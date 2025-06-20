@@ -13,13 +13,15 @@ interface DateSectionProps {
   serviceDate: Date;
   onRequestDateChange: (date: Date) => void;
   onServiceDateChange: (date: Date) => void;
+  disabled?: boolean;
 }
 
 export const DateSection = ({
   requestDate,
   serviceDate,
   onRequestDateChange,
-  onServiceDateChange
+  onServiceDateChange,
+  disabled = false
 }: DateSectionProps) => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -35,6 +37,7 @@ export const DateSection = ({
                 !requestDate && "text-muted-foreground"
               )}
               title="Seleccionar fecha de solicitud"
+              disabled={disabled}
             >
               <CalendarIcon className="mr-2 h-4 w-4" />
               {requestDate ? format(requestDate, 'PPP', { locale: es }) : 'Seleccionar fecha'}
@@ -46,6 +49,7 @@ export const DateSection = ({
               selected={requestDate}
               onSelect={(date) => date && onRequestDateChange(date)}
               initialFocus
+              disabled={disabled}
             />
           </PopoverContent>
         </Popover>
@@ -63,6 +67,7 @@ export const DateSection = ({
                 !serviceDate && "text-muted-foreground"
               )}
               title="Seleccionar fecha de servicio"
+              disabled={disabled}
             >
               <CalendarIcon className="mr-2 h-4 w-4" />
               {serviceDate ? format(serviceDate, 'PPP', { locale: es }) : 'Seleccionar fecha'}
@@ -74,6 +79,7 @@ export const DateSection = ({
               selected={serviceDate}
               onSelect={(date) => date && onServiceDateChange(date)}
               initialFocus
+              disabled={disabled}
             />
           </PopoverContent>
         </Popover>

@@ -7,13 +7,15 @@ interface LocationSectionProps {
   onOriginChange: (value: string) => void;
   destination: string;
   onDestinationChange: (value: string) => void;
+  disabled?: boolean;
 }
 
 export const LocationSection = ({
   origin,
   onOriginChange,
   destination,
-  onDestinationChange
+  onDestinationChange,
+  disabled = false
 }: LocationSectionProps) => {
   return (
     <div className="space-y-6">
@@ -26,6 +28,7 @@ export const LocationSection = ({
           onChange={(e) => onOriginChange(e.target.value)}
           placeholder="Dirección de origen del servicio"
           required
+          disabled={disabled}
         />
       </div>
 
@@ -38,6 +41,7 @@ export const LocationSection = ({
           onChange={(e) => onDestinationChange(e.target.value)}
           placeholder="Dirección de destino del servicio"
           required
+          disabled={disabled}
         />
       </div>
     </div>

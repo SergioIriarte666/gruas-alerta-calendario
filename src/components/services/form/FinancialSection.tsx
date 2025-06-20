@@ -7,13 +7,15 @@ interface FinancialSectionProps {
   onValueChange: (value: number) => void;
   operatorCommission: number;
   onOperatorCommissionChange: (value: number) => void;
+  disabled?: boolean;
 }
 
 export const FinancialSection = ({
   value,
   onValueChange,
   operatorCommission,
-  onOperatorCommissionChange
+  onOperatorCommissionChange,
+  disabled = false
 }: FinancialSectionProps) => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -27,6 +29,7 @@ export const FinancialSection = ({
           onChange={(e) => onValueChange(Number(e.target.value))}
           placeholder="150000"
           required
+          disabled={disabled}
         />
       </div>
 
@@ -40,6 +43,7 @@ export const FinancialSection = ({
           onChange={(e) => onOperatorCommissionChange(Number(e.target.value))}
           placeholder="15000"
           required
+          disabled={disabled}
         />
       </div>
     </div>

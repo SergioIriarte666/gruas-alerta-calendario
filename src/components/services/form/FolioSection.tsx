@@ -14,6 +14,7 @@ interface FolioSectionProps {
   onGenerateNewFolio: () => void;
   isEditing: boolean;
   isLoading: boolean;
+  disabled?: boolean;
 }
 
 export const FolioSection = ({
@@ -23,7 +24,8 @@ export const FolioSection = ({
   onManualFolioChange,
   onGenerateNewFolio,
   isEditing,
-  isLoading
+  isLoading,
+  disabled = false
 }: FolioSectionProps) => {
   return (
     <div className="space-y-4">
@@ -37,6 +39,7 @@ export const FolioSection = ({
               checked={isManualFolio}
               onCheckedChange={onManualFolioChange}
               className="data-[state=checked]:bg-amber-500"
+              disabled={disabled}
             />
           </div>
         )}
@@ -48,7 +51,7 @@ export const FolioSection = ({
           onChange={(e) => onFolioChange(e.target.value)}
           placeholder="Ej: SRV-001"
           required
-          disabled={(!isManualFolio && !isEditing) || isLoading}
+          disabled={(!isManualFolio && !isEditing) || isLoading || disabled}
           className="flex-1"
         />
         {!isManualFolio && !isEditing && (
@@ -56,7 +59,7 @@ export const FolioSection = ({
             type="button"
             variant="outline"
             onClick={onGenerateNewFolio}
-            disabled={isLoading}
+            disabled={isLoading || disabled}
             title="Generar nuevo folio"
           >
             <RefreshCw className={cn("w-4 h-4", isLoading && "animate-spin")} />

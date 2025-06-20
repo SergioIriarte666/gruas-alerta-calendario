@@ -9,20 +9,22 @@ interface ObservationsSectionProps {
   onStatusChange: (status: ServiceStatus) => void;
   observations: string;
   onObservationsChange: (value: string) => void;
+  disabled?: boolean;
 }
 
 export const ObservationsSection = ({
   status,
   onStatusChange,
   observations,
-  onObservationsChange
+  onObservationsChange,
+  disabled = false
 }: ObservationsSectionProps) => {
   return (
     <div className="space-y-6">
       {/* Estado */}
       <div className="space-y-2">
         <Label htmlFor="status">Estado</Label>
-        <Select value={status} onValueChange={onStatusChange}>
+        <Select value={status} onValueChange={onStatusChange} disabled={disabled}>
           <SelectTrigger>
             <SelectValue placeholder="Seleccionar estado" />
           </SelectTrigger>
@@ -44,6 +46,7 @@ export const ObservationsSection = ({
           onChange={(e) => onObservationsChange(e.target.value)}
           placeholder="Observaciones adicionales sobre el servicio..."
           rows={3}
+          disabled={disabled}
         />
       </div>
     </div>

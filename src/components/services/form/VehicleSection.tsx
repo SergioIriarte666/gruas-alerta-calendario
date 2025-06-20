@@ -10,6 +10,7 @@ interface VehicleSectionProps {
   licensePlate: string;
   onLicensePlateChange: (value: string) => void;
   isVehicleInfoOptional?: boolean;
+  disabled?: boolean;
 }
 
 export const VehicleSection = ({
@@ -19,7 +20,8 @@ export const VehicleSection = ({
   onVehicleModelChange,
   licensePlate,
   onLicensePlateChange,
-  isVehicleInfoOptional = false
+  isVehicleInfoOptional = false,
+  disabled = false
 }: VehicleSectionProps) => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -37,6 +39,7 @@ export const VehicleSection = ({
           onChange={(e) => onVehicleBrandChange(e.target.value)}
           placeholder="Ej: Volvo"
           required={!isVehicleInfoOptional}
+          disabled={disabled}
         />
       </div>
 
@@ -54,6 +57,7 @@ export const VehicleSection = ({
           onChange={(e) => onVehicleModelChange(e.target.value)}
           placeholder="Ej: FH16"
           required={!isVehicleInfoOptional}
+          disabled={disabled}
         />
       </div>
 
@@ -71,6 +75,7 @@ export const VehicleSection = ({
           onChange={(e) => onLicensePlateChange(e.target.value.toUpperCase())}
           placeholder="Ej: AB-CD-12"
           required={!isVehicleInfoOptional}
+          disabled={disabled}
         />
       </div>
     </div>

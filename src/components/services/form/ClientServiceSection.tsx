@@ -14,6 +14,7 @@ interface ClientServiceSectionProps {
   onServiceTypeChange: (serviceTypeId: string) => void;
   serviceTypes: ServiceType[];
   serviceTypesLoading: boolean;
+  disabled?: boolean;
 }
 
 export const ClientServiceSection = ({
@@ -25,14 +26,15 @@ export const ClientServiceSection = ({
   serviceTypeId,
   onServiceTypeChange,
   serviceTypes,
-  serviceTypesLoading
+  serviceTypesLoading,
+  disabled = false
 }: ClientServiceSectionProps) => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
       {/* Cliente */}
       <div className="space-y-2">
         <Label htmlFor="client">Cliente</Label>
-        <Select value={clientId} onValueChange={onClientChange}>
+        <Select value={clientId} onValueChange={onClientChange} disabled={disabled}>
           <SelectTrigger>
             <SelectValue placeholder="Seleccionar cliente" />
           </SelectTrigger>
@@ -54,13 +56,14 @@ export const ClientServiceSection = ({
           value={purchaseOrder}
           onChange={(e) => onPurchaseOrderChange(e.target.value)}
           placeholder="Ej: OC-12345"
+          disabled={disabled}
         />
       </div>
 
       {/* Tipo de Servicio */}
       <div className="space-y-2 md:col-span-2">
         <Label htmlFor="serviceType">Tipo de Servicio</Label>
-        <Select value={serviceTypeId} onValueChange={onServiceTypeChange}>
+        <Select value={serviceTypeId} onValueChange={onServiceTypeChange} disabled={disabled || serviceTypesLoading}>
           <SelectTrigger>
             <SelectValue placeholder={serviceTypesLoading ? "Cargando..." : "Seleccionar tipo"} />
           </SelectTrigger>

@@ -10,6 +10,7 @@ interface ResourceSectionProps {
   operatorId: string;
   onOperatorChange: (operatorId: string) => void;
   operators: Operator[];
+  disabled?: boolean;
 }
 
 export const ResourceSection = ({
@@ -18,14 +19,15 @@ export const ResourceSection = ({
   cranes,
   operatorId,
   onOperatorChange,
-  operators
+  operators,
+  disabled = false
 }: ResourceSectionProps) => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
       {/* Grúa */}
       <div className="space-y-2">
         <Label htmlFor="crane">Grúa</Label>
-        <Select value={craneId} onValueChange={onCraneChange}>
+        <Select value={craneId} onValueChange={onCraneChange} disabled={disabled}>
           <SelectTrigger>
             <SelectValue placeholder="Seleccionar grúa" />
           </SelectTrigger>
@@ -42,7 +44,7 @@ export const ResourceSection = ({
       {/* Operador */}
       <div className="space-y-2">
         <Label htmlFor="operator">Operador</Label>
-        <Select value={operatorId} onValueChange={onOperatorChange}>
+        <Select value={operatorId} onValueChange={onOperatorChange} disabled={disabled}>
           <SelectTrigger>
             <SelectValue placeholder="Seleccionar operador" />
           </SelectTrigger>
