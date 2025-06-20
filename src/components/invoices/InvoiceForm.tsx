@@ -9,14 +9,12 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Invoice, InvoiceStatus } from '@/types';
-import { useClients } from '@/hooks/useClients';
-import { useServicesForInvoices } from '@/hooks/useServicesForInvoices';
-import ServiceSelector from './ServiceSelector';
+import { useClosuresForInvoices } from '@/hooks/useClosuresForInvoices';
+import ClosureSelector from './ClosureSelector';
 import InvoiceSummary from './InvoiceSummary';
 
 const invoiceSchema = z.object({
-  serviceIds: z.array(z.string()).min(1, 'Debe seleccionar al menos un servicio'),
-  clientId: z.string().min(1, 'Cliente es requerido'),
+  closureId: z.string().min(1, 'Debe seleccionar un cierre'),
   issueDate: z.string().min(1, 'Fecha de emisión es requerida'),
   dueDate: z.string().min(1, 'Fecha de vencimiento es requerida'),
   status: z.enum(['draft', 'sent', 'paid', 'overdue', 'cancelled'] as const)
@@ -26,7 +24,7 @@ type InvoiceFormData = z.infer<typeof invoiceSchema>;
 
 interface InvoiceFormProps {
   invoice?: Invoice | null;
-  onSubmit: (data: InvoiceFormData & { subtotal: number; vat: number; total: number }) => void;
+  onSubmit: (data: InvoiceFormData & { subtotal: number; vat: number; total: number; clientId: string }) => void;
   onCancel: () => void;
 }
 
@@ -35,8 +33,7 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
   onSubmit,
   onCancel
 }) => {
-  const { clients } = useClients();
-  const { services } = useServicesForInvoices();
+  const { closures } = useClosuresForInvoices();
   
   const {
     register,
@@ -47,38 +44,36 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
   } = useForm<InvoiceFormData>({
     resolver: zodResolver(invoiceSchema),
     defaultValues: {
-      serviceIds: invoice?.serviceIds || [],
-      clientId: invoice?.clientId || '',
+      closureId: invoice?.closureId || '',
       issueDate: invoice?.issueDate || new Date().toISOString().split('T')[0],
       dueDate: invoice?.dueDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
       status: invoice?.status || 'draft'
     }
   });
 
-  const selectedServiceIds = watch('serviceIds');
-  const selectedServices = services.filter(s => selectedServiceIds.includes(s.id));
-  const subtotal = selectedServices.reduce((sum, service) => sum + service.value, 0);
+  const selectedClosureId = watch('closureId');
+  const selectedClosure = closures.find(c => c.id === selectedClosureId);
+  
+  // Calculate totals from selected closure
+  const subtotal = selectedClosure?.total || 0;
   const vat = subtotal * 0.19; // 19% IVA
   const total = subtotal + vat;
 
   const handleFormSubmit = (data: InvoiceFormData) => {
+    if (!selectedClosure) return;
+
     onSubmit({
       ...data,
       subtotal,
       vat,
-      total
+      total,
+      clientId: selectedClosure.clientId || ''
     });
   };
 
-  const handleServiceToggle = (serviceId: string) => {
-    const currentIds = selectedServiceIds;
-    const newIds = currentIds.includes(serviceId)
-      ? currentIds.filter(id => id !== serviceId)
-      : [...currentIds, serviceId];
-    setValue('serviceIds', newIds);
+  const handleClosureChange = (closureId: string) => {
+    setValue('closureId', closureId);
   };
-
-  const activeClients = clients.filter(c => c.isActive);
 
   return (
     <Card className="glass-card">
@@ -90,25 +85,6 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
       <CardContent>
         <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="clientId" className="text-gray-300">Cliente</Label>
-              <Select onValueChange={(value) => setValue('clientId', value)}>
-                <SelectTrigger className="bg-white/5 border-gray-700 text-white">
-                  <SelectValue placeholder="Seleccionar cliente" />
-                </SelectTrigger>
-                <SelectContent>
-                  {activeClients.map((client) => (
-                    <SelectItem key={client.id} value={client.id}>
-                      {client.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {errors.clientId && (
-                <p className="text-sm text-red-400 mt-1">{errors.clientId.message}</p>
-              )}
-            </div>
-
             <div>
               <Label htmlFor="status" className="text-gray-300">Estado</Label>
               <Select onValueChange={(value) => setValue('status', value as InvoiceStatus)}>
@@ -155,16 +131,16 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
             </div>
           </div>
 
-          <ServiceSelector
-            selectedServiceIds={selectedServiceIds}
-            onServiceToggle={handleServiceToggle}
+          <ClosureSelector
+            selectedClosureId={selectedClosureId}
+            onClosureChange={handleClosureChange}
           />
           
-          {errors.serviceIds && (
-            <p className="text-sm text-red-400 mt-1">{errors.serviceIds.message}</p>
+          {errors.closureId && (
+            <p className="text-sm text-red-400 mt-1">{errors.closureId.message}</p>
           )}
 
-          {selectedServices.length > 0 && (
+          {selectedClosure && (
             <InvoiceSummary
               subtotal={subtotal}
               vat={vat}

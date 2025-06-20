@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { Invoice } from '@/types';
 import { toast } from 'sonner';
@@ -33,24 +34,17 @@ export const useInvoiceOperations = () => {
 
       if (invoiceError) throw invoiceError;
 
-      // Create invoice-service relationships
-      const serviceRelations = [];
-      if (invoiceData.serviceIds.length > 0) {
-        const invoiceServices = invoiceData.serviceIds.map(serviceId => ({
+      // Create invoice-closure relationship
+      const { error: relationError } = await supabase
+        .from('invoice_closures')
+        .insert({
           invoice_id: data.id,
-          service_id: serviceId
-        }));
+          closure_id: invoiceData.closureId
+        });
 
-        const { data: relationsData, error: relationError } = await supabase
-          .from('invoice_services')
-          .insert(invoiceServices)
-          .select();
-
-        if (relationError) throw relationError;
-        serviceRelations.push(...relationsData);
-      }
+      if (relationError) throw relationError;
       
-      const newInvoice = formatInvoiceData({ ...data, invoice_services: serviceRelations });
+      const newInvoice = formatInvoiceData({ ...data, invoice_closures: [{ closure_id: invoiceData.closureId }] });
 
       toast.success("Factura creada", {
         description: `Factura ${folio} creada exitosamente.`,
@@ -85,6 +79,16 @@ export const useInvoiceOperations = () => {
         .eq('id', id);
 
       if (error) throw error;
+
+      // Update closure relationship if closureId changed
+      if (invoiceData.closureId !== undefined) {
+        const { error: relationError } = await supabase
+          .from('invoice_closures')
+          .update({ closure_id: invoiceData.closureId })
+          .eq('invoice_id', id);
+
+        if (relationError) throw relationError;
+      }
 
       toast.success("Factura actualizada", {
         description: "La factura ha sido actualizada exitosamente.",

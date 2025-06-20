@@ -91,7 +91,7 @@ export interface CompanyData {
 export interface Invoice {
   id: string;
   folio: string;
-  serviceIds: string[];
+  closureId: string;
   clientId: string;
   issueDate: string;
   dueDate: string;

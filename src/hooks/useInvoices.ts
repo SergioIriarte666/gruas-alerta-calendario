@@ -1,13 +1,13 @@
 
 import { useInvoiceData } from './invoices/useInvoiceData';
 import { useInvoiceOperations } from './invoices/useInvoiceOperations';
-import { useServices } from './useServices';
+import { useClosuresForInvoices } from './useClosuresForInvoices';
 import { useClients } from './useClients';
 
 export const useInvoices = () => {
   const { invoices, loading, addInvoice, updateInvoice: updateInvoiceInState, removeInvoice, refetch } = useInvoiceData();
   const { createInvoice: createInvoiceOp, updateInvoice: updateInvoiceOp, deleteInvoice: deleteInvoiceOp, markAsPaid: markAsPaidOp } = useInvoiceOperations();
-  const { services } = useServices();
+  const { closures } = useClosuresForInvoices();
   const { clients } = useClients();
 
   const createInvoice = async (invoiceData: Parameters<typeof createInvoiceOp>[0]) => {
@@ -33,12 +33,12 @@ export const useInvoices = () => {
 
   const getInvoiceWithDetails = (invoice: typeof invoices[0]) => {
     const client = clients.find(c => c.id === invoice.clientId);
-    const invoiceServices = services.filter(s => invoice.serviceIds.includes(s.id));
+    const closure = closures.find(c => c.id === invoice.closureId);
     
     return {
       ...invoice,
       client,
-      services: invoiceServices
+      closure
     };
   };
 

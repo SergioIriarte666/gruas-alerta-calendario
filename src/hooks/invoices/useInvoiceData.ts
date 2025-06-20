@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Invoice } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
@@ -14,7 +15,7 @@ export const useInvoiceData = () => {
         .from('invoices')
         .select(`
           *,
-          invoice_services(service_id)
+          invoice_closures(closure_id)
         `)
         .order('created_at', { ascending: false });
 

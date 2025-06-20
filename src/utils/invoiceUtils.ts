@@ -4,7 +4,7 @@ import { Invoice } from '@/types';
 export const formatInvoiceData = (data: any): Invoice => ({
   id: data.id,
   folio: data.folio,
-  serviceIds: data.invoice_services?.map((is: any) => is.service_id) || [],
+  closureId: data.invoice_closures?.[0]?.closure_id || '',
   clientId: data.client_id,
   issueDate: data.issue_date,
   dueDate: data.due_date,

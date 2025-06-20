@@ -451,6 +451,42 @@ export type Database = {
           },
         ]
       }
+      invoice_closures: {
+        Row: {
+          closure_id: string
+          created_at: string
+          id: string
+          invoice_id: string
+        }
+        Insert: {
+          closure_id: string
+          created_at?: string
+          id?: string
+          invoice_id: string
+        }
+        Update: {
+          closure_id?: string
+          created_at?: string
+          id?: string
+          invoice_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoice_closures_closure_id_fkey"
+            columns: ["closure_id"]
+            isOneToOne: false
+            referencedRelation: "service_closures"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoice_closures_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       invoice_services: {
         Row: {
           id: string

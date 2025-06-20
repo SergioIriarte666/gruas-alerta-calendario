@@ -47,7 +47,7 @@ const InvoicesTable = ({ invoices, onEdit, onDelete, onMarkAsPaid, getInvoiceWit
               <TableHead className="text-gray-300">Fecha Vencimiento</TableHead>
               <TableHead className="text-gray-300">Total</TableHead>
               <TableHead className="text-gray-300">Estado</TableHead>
-              <TableHead className="text-gray-300">Servicios</TableHead>
+              <TableHead className="text-gray-300">Cierre</TableHead>
               <TableHead className="text-gray-300">Acciones</TableHead>
             </TableRow>
           </TableHeader>
@@ -64,7 +64,7 @@ const InvoicesTable = ({ invoices, onEdit, onDelete, onMarkAsPaid, getInvoiceWit
                   <TableCell>{getStatusBadge(invoice.status)}</TableCell>
                   <TableCell className="text-white">
                     <Badge className="bg-purple-100 text-purple-800">
-                      {invoice.serviceIds.length} Facturado{invoice.serviceIds.length !== 1 ? 's' : ''}
+                      {invoiceWithDetails.closure?.folio || 'Cierre no encontrado'}
                     </Badge>
                   </TableCell>
                   <TableCell>
