@@ -12,7 +12,7 @@ export const Layout = () => {
 
   return (
     <React.Fragment>
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-gradient-tms">
         <Sidebar 
           isCollapsed={isSidebarCollapsed}
           setIsCollapsed={setIsSidebarCollapsed}

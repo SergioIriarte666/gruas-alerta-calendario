@@ -74,7 +74,7 @@ export default {
 				sm: 'calc(var(--radius) - 4px)'
 			},
 			backgroundImage: {
-				'gradient-tms': 'linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 50%, #6da813 100%)',
+				'gradient-tms': 'linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 50%, rgba(109,168,19,0.1) 100%)',
 				'gradient-tms-card': 'linear-gradient(135deg, rgba(10,10,10,0.9) 0%, rgba(26,26,26,0.8) 50%, rgba(109,168,19,0.1) 100%)',
 			},
 			keyframes: {

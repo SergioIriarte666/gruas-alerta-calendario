@@ -9,81 +9,46 @@ export const useTheme = () => {
     const applyTheme = () => {
       const root = document.documentElement;
       const body = document.body;
-      const theme = settings?.user.theme || 'system';
       
-      // Limpiar clases existentes
-      root.classList.remove('dark', 'light');
-      body.classList.remove('dark', 'light');
-      
-      if (theme === 'system') {
-        const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-        const appliedTheme = systemPrefersDark ? 'dark' : 'light';
-        root.classList.add(appliedTheme);
-        body.classList.add(appliedTheme);
-      } else {
-        root.classList.add(theme);
-        body.classList.add(theme);
-      }
+      // Siempre aplicar tema oscuro
+      root.classList.remove('light');
+      root.classList.add('dark');
+      body.classList.remove('light');
+      body.classList.add('dark');
 
       // Forzar actualización del DOM
-      root.setAttribute('data-theme', theme);
-      body.setAttribute('data-theme', theme);
+      root.setAttribute('data-theme', 'dark');
+      body.setAttribute('data-theme', 'dark');
     };
 
     applyTheme();
+  }, []);
 
-    // Escuchar cambios en las preferencias del sistema
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    const handleSystemThemeChange = () => {
-      if (settings?.user.theme === 'system') {
-        applyTheme();
-      }
-    };
-
-    mediaQuery.addEventListener('change', handleSystemThemeChange);
-
-    return () => {
-      mediaQuery.removeEventListener('change', handleSystemThemeChange);
-    };
-  }, [settings?.user.theme]);
-
-  // Aplicar tema inmediatamente cuando se carga la página
+  // Forzar tema oscuro desde el inicio
   useEffect(() => {
-    const initTheme = () => {
-      const root = document.documentElement;
-      const body = document.body;
-      const savedTheme = settings?.user.theme || 'system';
-      
-      if (savedTheme === 'system') {
-        const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-        const appliedTheme = systemPrefersDark ? 'dark' : 'light';
-        root.classList.add(appliedTheme);
-        body.classList.add(appliedTheme);
-      } else {
-        root.classList.add(savedTheme);
-        body.classList.add(savedTheme);
-      }
-      
-      root.setAttribute('data-theme', savedTheme);
-      body.setAttribute('data-theme', savedTheme);
-    };
-
-    initTheme();
+    const root = document.documentElement;
+    const body = document.body;
+    
+    root.classList.add('dark');
+    body.classList.add('dark');
+    root.setAttribute('data-theme', 'dark');
+    body.setAttribute('data-theme', 'dark');
   }, []);
 
   const setTheme = (theme: 'light' | 'dark' | 'system') => {
+    // Mantener siempre oscuro independientemente de la configuración
     if (settings) {
       updateSettings({
         user: {
           ...settings.user,
-          theme
+          theme: 'dark' // Forzar tema oscuro
         }
       });
     }
   };
 
   return {
-    theme: settings?.user.theme || 'system',
+    theme: 'dark' as const,
     setTheme
   };
 };
