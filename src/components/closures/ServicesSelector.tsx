@@ -45,15 +45,7 @@ const ServicesSelector = ({
           </div>}
       </div>
       
-      <Alert className="border-blue-500/50 bg-blue-500/10">
-        <InfoIcon className="h-4 w-4 text-blue-400" />
-        <AlertDescription className="text-blue-200 text-xs">
-          <strong>¿Por qué no veo algunos servicios?</strong><br />
-          • Solo se muestran servicios completados del rango de fechas seleccionado<br />
-          • Se excluyen servicios ya incluidos en cierres anteriores<br />
-          • Se excluyen servicios ya facturados (status: facturado)
-        </AlertDescription>
-      </Alert>
+      
 
       <div className="max-h-40 overflow-y-auto border border-gray-700 rounded-md p-2 bg-white/5">
         {filteredServices.length === 0 ? <div className="text-center py-4">
