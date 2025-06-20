@@ -31,6 +31,8 @@ export const useServices = () => {
         ? { ...service, ...updatedData }
         : service
     ));
+    // Force refresh to ensure data consistency
+    await loadServices();
   };
 
   const deleteService = async (id: string) => {

@@ -1,9 +1,8 @@
-
 import { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Plus, Upload } from 'lucide-react';
+import { Plus, Upload, RefreshCw } from 'lucide-react';
 import { useServices } from '@/hooks/useServices';
 import { Service } from '@/types';
 import { ServiceForm } from '@/components/services/ServiceForm';
@@ -16,7 +15,7 @@ import { useUser } from '@/contexts/UserContext';
 import { useToast } from '@/components/ui/custom-toast';
 
 const Services = () => {
-  const { services, loading, createService, updateService, deleteService } = useServices();
+  const { services, loading, createService, updateService, deleteService, refetch } = useServices();
   const { user } = useUser();
   const { toast } = useToast();
   const isAdmin = user?.role === 'admin';
@@ -32,6 +31,7 @@ const Services = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>(statusParam || 'all');
   const [currentPage, setCurrentPage] = useState(1);
+  const [refreshing, setRefreshing] = useState(false);
   const ITEMS_PER_PAGE = 10;
 
   const filteredServices = services.filter(service => {
@@ -52,6 +52,26 @@ const Services = () => {
     (currentPage - 1) * ITEMS_PER_PAGE,
     currentPage * ITEMS_PER_PAGE
   );
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await refetch();
+      toast({
+        type: "success",
+        title: "Datos actualizados",
+        description: "La lista de servicios se ha actualizado correctamente.",
+      });
+    } catch (error) {
+      toast({
+        type: "error",
+        title: "Error",
+        description: "No se pudieron actualizar los datos.",
+      });
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   const handleCreateService = (serviceData: Omit<Service, 'id' | 'createdAt' | 'updatedAt'> & { folio: string }) => {
     createService(serviceData);
@@ -154,6 +174,16 @@ const Services = () => {
           </p>
         </div>
         <div className="flex space-x-2">
+          <Button 
+            onClick={handleRefresh}
+            disabled={refreshing}
+            variant="outline"
+            className="border-gray-600 text-gray-300 hover:bg-gray-700"
+            title="Actualizar datos"
+          >
+            <RefreshCw className={`w-4 h-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+            Actualizar
+          </Button>
           {isAdmin && (
             <>
               <Button 
