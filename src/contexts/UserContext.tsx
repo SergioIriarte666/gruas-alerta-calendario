@@ -42,15 +42,16 @@ export function UserProvider({ children }: UserProviderProps) {
   const [user, setUser] = React.useState<User | null>(null);
   const [profileLoading, setProfileLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
+  const [retryCount, setRetryCount] = React.useState(0);
+  const maxRetries = 3;
+  const retryDelay = 2000;
 
-  const fetchProfile = React.useCallback(async () => {
-    console.log('fetchProfile called. authUser:', !!authUser, 'session:', !!session, 'authLoading:', authLoading);
+  const fetchProfile = React.useCallback(async (attempt = 0) => {
+    console.log('fetchProfile called. authUser:', !!authUser, 'session:', !!session, 'authLoading:', authLoading, 'attempt:', attempt);
     if (authLoading) return;
 
     if (authUser && session) {
       setProfileLoading(true);
-      setError(null);
-      console.log('Fetching profile for user:', authUser.id);
       try {
         const { data, error: fetchError } = await supabase
           .from('profiles')
@@ -59,9 +60,7 @@ export function UserProvider({ children }: UserProviderProps) {
           .single();
 
         if (fetchError && fetchError.code !== 'PGRST116') {
-          console.error("Error fetching user profile", fetchError);
-          setError("Hubo un error al cargar tu perfil.");
-          await signOut();
+          throw fetchError;
         } else if (data) {
           console.log("Profile data received:", data);
           setUser({
@@ -70,15 +69,48 @@ export function UserProvider({ children }: UserProviderProps) {
             email: data.email,
             role: data.role || 'viewer',
           });
+          setError(null);
+          setRetryCount(0);
         } else {
-          console.warn("Profile not found for authenticated user. Logging out...");
-          setError("No se encontró tu perfil. Se cerrará la sesión para proteger tu cuenta.");
-          await signOut();
+          console.warn("Profile not found for authenticated user.");
+          // Only logout if we've exceeded retry attempts
+          if (attempt >= maxRetries) {
+            setError("No se encontró tu perfil. Se cerrará la sesión para proteger tu cuenta.");
+            await signOut();
+          } else {
+            throw new Error("Profile not found");
+          }
         }
       } catch (e) {
-        console.error("Catastrophic error fetching profile:", e);
-        setError("Ocurrió un error inesperado al cargar tu perfil.");
-        await signOut();
+        console.error("Error fetching profile:", e);
+        
+        // Check if it's a network error or temporary issue
+        const isNetworkError = e?.message?.includes('fetch') || 
+                              e?.message?.includes('network') ||
+                              e?.code === 'PGRST301' ||
+                              !navigator.onLine;
+        
+        if (isNetworkError && attempt < maxRetries) {
+          console.log(`Network error detected, retrying in ${retryDelay}ms (attempt ${attempt + 1}/${maxRetries})`);
+          setError(`Problema de conectividad. Reintentando... (${attempt + 1}/${maxRetries})`);
+          setRetryCount(attempt + 1);
+          
+          setTimeout(() => {
+            fetchProfile(attempt + 1);
+          }, retryDelay * (attempt + 1)); // Exponential backoff
+          return;
+        }
+        
+        // If it's a critical error or we've exceeded retries
+        if (attempt >= maxRetries) {
+          setError("Error persistente al cargar tu perfil. Se cerrará la sesión por seguridad.");
+          await signOut();
+        } else {
+          setError("Error temporal al cargar tu perfil. Reintentando...");
+          setTimeout(() => {
+            fetchProfile(attempt + 1);
+          }, retryDelay);
+        }
       } finally {
         setProfileLoading(false);
       }
@@ -87,19 +119,21 @@ export function UserProvider({ children }: UserProviderProps) {
       setUser(null);
       setProfileLoading(false);
       setError(null);
+      setRetryCount(0);
     }
   }, [authLoading, authUser, session, signOut]);
 
   React.useEffect(() => {
     let isMounted = true;
     
+    // Timeout más largo para dar más tiempo
     const timeoutId = setTimeout(() => {
-        if(isMounted && profileLoading) {
+        if(isMounted && profileLoading && authUser) {
             console.error('Profile loading timeout.');
             setProfileLoading(false);
-            setError('La carga de la sesión está tardando demasiado. Por favor, revisa tu conexión a internet y reintenta.');
+            setError('La carga de la sesión está tardando demasiado. Verifica tu conexión.');
         }
-    }, 15000); // 15 second timeout
+    }, 30000); // 30 second timeout instead of 15
 
     fetchProfile();
 
@@ -108,6 +142,29 @@ export function UserProvider({ children }: UserProviderProps) {
         clearTimeout(timeoutId);
     };
   }, [fetchProfile]);
+
+  // Listen for network status changes
+  React.useEffect(() => {
+    const handleOnline = () => {
+      if (error && authUser && !user) {
+        console.log('Network back online, retrying profile fetch');
+        setError(null);
+        fetchProfile();
+      }
+    };
+
+    const handleOffline = () => {
+      setError('Sin conexión a internet. Algunos datos pueden no estar actualizados.');
+    };
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, [error, authUser, user, fetchProfile]);
   
   const login = () => { /* Deprecated: Handled by Auth page */ };
 
@@ -116,6 +173,7 @@ export function UserProvider({ children }: UserProviderProps) {
     await signOut();
     setUser(null);
     setError(null);
+    setRetryCount(0);
   };
 
   const updateUser = async (userData: Partial<User>) => {
@@ -133,24 +191,54 @@ export function UserProvider({ children }: UserProviderProps) {
     }
   };
 
+  const retryFetchProfile = () => {
+    setError(null);
+    setRetryCount(0);
+    fetchProfile();
+  };
+
   const isAuthenticated = !!authUser && !!session;
   const isLoading = authLoading || profileLoading;
 
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-screen bg-gray-900 text-white">
-        <div>Cargando sesión...</div>
+        <div className="text-center">
+          <div className="mb-4">Cargando sesión...</div>
+          {retryCount > 0 && (
+            <div className="text-sm text-gray-400">
+              Reintento {retryCount}/{maxRetries}
+            </div>
+          )}
+        </div>
       </div>
     );
   }
 
-  if (error) {
+  if (error && !user) {
+    const isNetworkError = error.includes('conectividad') || error.includes('conexión');
+    
     return (
       <div className="flex flex-col items-center justify-center h-screen bg-gray-900 text-white text-center p-4">
-        <h2 className="text-xl font-bold mb-2 text-red-400">Error de Sesión</h2>
+        <h2 className="text-xl font-bold mb-2 text-red-400">
+          {isNetworkError ? 'Problema de Conexión' : 'Error de Sesión'}
+        </h2>
         <p className="mb-4 max-w-md">{error}</p>
-        <Button onClick={fetchProfile} className="bg-tms-green hover:bg-tms-green-dark">Reintentar</Button>
-        <Button variant="link" onClick={logout} className="mt-2 text-gray-400">Cerrar sesión</Button>
+        <div className="space-y-2">
+          <Button onClick={retryFetchProfile} className="bg-tms-green hover:bg-tms-green-dark">
+            Reintentar
+          </Button>
+          {!isNetworkError && (
+            <Button variant="link" onClick={logout} className="mt-2 text-gray-400">
+              Cerrar sesión
+            </Button>
+          )}
+        </div>
+        {!navigator.onLine && (
+          <div className="mt-4 text-sm text-yellow-400">
+            ⚠️ Sin conexión a internet
+          </div>
+        )}
       </div>
     );
   }
@@ -164,7 +252,7 @@ export function UserProvider({ children }: UserProviderProps) {
       updateUser,
       isAuthenticated,
       error,
-      retryFetchProfile: fetchProfile
+      retryFetchProfile
     }}>
       {children}
     </UserContext.Provider>

@@ -16,9 +16,12 @@ import { FormActions } from './form/FormActions';
 import { useServiceFormData } from '@/hooks/services/useServiceFormData';
 import { useServiceFormEffects } from '@/hooks/services/useServiceFormEffects';
 import { useServiceFormSubmission } from '@/hooks/services/useServiceFormSubmission';
+import { useGenericFormPersistence } from '@/hooks/useGenericFormPersistence';
 import { useUser } from '@/contexts/UserContext';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, Save } from 'lucide-react';
+import { useToast } from '@/components/ui/custom-toast';
+import { useEffect, useState } from 'react';
 
 interface ServiceFormProps {
   service?: Service | null;
@@ -32,6 +35,8 @@ export const ServiceForm = ({ service, onSubmit, onCancel }: ServiceFormProps) =
   const { data: operators = [] } = useOperatorsData();
   const { serviceTypes, loading: serviceTypesLoading } = useServiceTypes();
   const { user } = useUser();
+  const { toast } = useToast();
+  const [showPersistedDataAlert, setShowPersistedDataAlert] = useState(false);
 
   const {
     isManualFolio,
@@ -61,6 +66,69 @@ export const ServiceForm = ({ service, onSubmit, onCancel }: ServiceFormProps) =
     serviceTypes
   });
 
+  // Form persistence
+  const persistenceKey = service ? `edit-service-${service.id}` : 'new-service';
+  const persistenceData = {
+    folio,
+    isManualFolio,
+    formData,
+    requestDate: requestDate.toISOString(),
+    serviceDate: serviceDate.toISOString()
+  };
+
+  const { clearFormData, hasPersistedData } = useGenericFormPersistence(
+    persistenceData,
+    (data) => {
+      if (typeof data === 'function') return;
+      setFolio(data.folio || '');
+      setIsManualFolio(data.isManualFolio || false);
+      setFormData(data.formData || formData);
+      if (data.requestDate) setRequestDate(new Date(data.requestDate));
+      if (data.serviceDate) setServiceDate(new Date(data.serviceDate));
+    },
+    { 
+      key: persistenceKey,
+      debounceMs: 2000 // Save every 2 seconds
+    }
+  );
+
+  // Check for persisted data on mount
+  useEffect(() => {
+    if (!service && hasPersistedData()) {
+      setShowPersistedDataAlert(true);
+    }
+  }, [service, hasPersistedData]);
+
+  const handleFormSubmit = async (e: React.FormEvent) => {
+    try {
+      await handleSubmit(e, folio, formData, isManualFolio);
+      // Clear persisted data on successful submission
+      clearFormData();
+      toast({
+        type: 'success',
+        title: 'Servicio guardado',
+        description: 'El servicio se ha guardado correctamente'
+      });
+    } catch (error) {
+      console.error('Error submitting form:', error);
+      toast({
+        type: 'error',
+        title: 'Error al guardar',
+        description: 'No se pudo guardar el servicio. Los datos se mantienen guardados localmente.'
+      });
+    }
+  };
+
+  const handleDiscardPersistedData = () => {
+    clearFormData();
+    setShowPersistedDataAlert(false);
+    toast({
+      type: 'info',
+      title: 'Datos descartados',
+      description: 'Se han eliminado los datos guardados anteriormente'
+    });
+  };
+
   const compatibleServiceTypes = serviceTypes.map(st => ({
     ...st,
     description: st.description || '',
@@ -77,7 +145,31 @@ export const ServiceForm = ({ service, onSubmit, onCancel }: ServiceFormProps) =
 
   return (
     <div className="space-y-6">
-      {/* Warning alert for invoiced services - updated message for admins */}
+      {/* Persisted data alert */}
+      {showPersistedDataAlert && (
+        <Alert className="border-blue-500/50 bg-blue-500/10">
+          <Save className="h-4 w-4 text-blue-400" />
+          <AlertDescription className="text-blue-200 flex items-center justify-between">
+            <span>Se encontraron datos guardados anteriormente. ¿Deseas continuar desde donde lo dejaste?</span>
+            <div className="ml-4 space-x-2">
+              <button 
+                onClick={() => setShowPersistedDataAlert(false)}
+                className="text-blue-300 hover:text-blue-100 underline text-sm"
+              >
+                Continuar
+              </button>
+              <button 
+                onClick={handleDiscardPersistedData}
+                className="text-blue-300 hover:text-blue-100 underline text-sm"
+              >
+                Descartar
+              </button>
+            </div>
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {/* Warning alert for invoiced services */}
       {isInvoiced && (
         <Alert className="border-purple-500/50 bg-purple-500/10">
           <AlertTriangle className="h-4 w-4 text-purple-400" />
@@ -90,7 +182,7 @@ export const ServiceForm = ({ service, onSubmit, onCancel }: ServiceFormProps) =
         </Alert>
       )}
 
-      <form onSubmit={(e) => handleSubmit(e, folio, formData, isManualFolio)} className="space-y-6">
+      <form onSubmit={handleFormSubmit} className="space-y-6">
         <FolioSection
           folio={folio}
           onFolioChange={setFolio}
@@ -174,6 +266,14 @@ export const ServiceForm = ({ service, onSubmit, onCancel }: ServiceFormProps) =
           disabled={!canEdit}
         />
       </form>
+
+      {/* Auto-save indicator */}
+      <div className="fixed bottom-4 right-4 z-50">
+        <div className="bg-gray-800/90 text-white text-xs px-3 py-1 rounded-full flex items-center space-x-2">
+          <Save className="w-3 h-3" />
+          <span>Guardado automático activo</span>
+        </div>
+      </div>
     </div>
   );
 };

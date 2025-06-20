@@ -3,6 +3,7 @@ import React from 'react';
 import { Outlet } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { Header } from './Header';
+import { ConnectionStatus } from '@/components/shared/ConnectionStatus';
 import { cn } from '@/lib/utils';
 
 export const Layout = () => {
@@ -29,6 +30,9 @@ export const Layout = () => {
             <Outlet />
           </main>
         </div>
+        
+        {/* Connection Status Indicator */}
+        <ConnectionStatus />
       </div>
     </React.Fragment>
   );
