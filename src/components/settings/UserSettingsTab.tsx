@@ -25,7 +25,7 @@ export const UserSettingsTab: React.FC<UserSettingsTabProps> = ({
   return (
     <Card className="glass-card">
       <CardHeader>
-        <CardTitle className="flex items-center space-x-2 text-white">
+        <CardTitle className="flex items-center space-x-2 text-foreground">
           <Palette className="w-5 h-5 text-tms-green" />
           <span>Preferencias de Usuario</span>
         </CardTitle>
@@ -33,14 +33,14 @@ export const UserSettingsTab: React.FC<UserSettingsTabProps> = ({
       <CardContent className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-2">
-            <Label className="text-gray-300">Tema</Label>
+            <Label className="text-muted-foreground">Tema</Label>
             <Select 
               value={settings.theme} 
               onValueChange={(value) => onUpdateSettings({
                 user: { ...settings, theme: value as 'light' | 'dark' | 'system' }
               })}
             >
-              <SelectTrigger className="bg-white/5 border-gray-700 text-white">
+              <SelectTrigger className="bg-background border-border text-foreground">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -52,14 +52,14 @@ export const UserSettingsTab: React.FC<UserSettingsTabProps> = ({
           </div>
           
           <div className="space-y-2">
-            <Label className="text-gray-300">Idioma</Label>
+            <Label className="text-muted-foreground">Idioma</Label>
             <Select 
               value={settings.language} 
               onValueChange={(value) => onUpdateSettings({
                 user: { ...settings, language: value as 'es' | 'en' }
               })}
             >
-              <SelectTrigger className="bg-white/5 border-gray-700 text-white">
+              <SelectTrigger className="bg-background border-border text-foreground">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -70,14 +70,14 @@ export const UserSettingsTab: React.FC<UserSettingsTabProps> = ({
           </div>
           
           <div className="space-y-2">
-            <Label className="text-gray-300">Formato de Fecha</Label>
+            <Label className="text-muted-foreground">Formato de Fecha</Label>
             <Select 
               value={settings.dateFormat} 
               onValueChange={(value) => onUpdateSettings({
                 user: { ...settings, dateFormat: value as 'DD/MM/YYYY' | 'MM/DD/YYYY' | 'YYYY-MM-DD' }
               })}
             >
-              <SelectTrigger className="bg-white/5 border-gray-700 text-white">
+              <SelectTrigger className="bg-background border-border text-foreground">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -89,14 +89,14 @@ export const UserSettingsTab: React.FC<UserSettingsTabProps> = ({
           </div>
           
           <div className="space-y-2">
-            <Label className="text-gray-300">Moneda</Label>
+            <Label className="text-muted-foreground">Moneda</Label>
             <Select 
               value={settings.currency} 
               onValueChange={(value) => onUpdateSettings({
                 user: { ...settings, currency: value as 'CLP' | 'USD' | 'EUR' }
               })}
             >
-              <SelectTrigger className="bg-white/5 border-gray-700 text-white">
+              <SelectTrigger className="bg-background border-border text-foreground">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -108,12 +108,12 @@ export const UserSettingsTab: React.FC<UserSettingsTabProps> = ({
           </div>
         </div>
 
-        <Separator className="bg-gray-700" />
+        <Separator className="bg-border" />
 
         <div className="flex items-center justify-between">
           <div>
-            <Label className="text-gray-300">Notificaciones</Label>
-            <p className="text-sm text-gray-500">Recibir notificaciones en el sistema</p>
+            <Label className="text-muted-foreground">Notificaciones</Label>
+            <p className="text-sm text-muted-foreground">Recibir notificaciones en el sistema</p>
           </div>
           <Switch 
             checked={settings.notifications}

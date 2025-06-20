@@ -4,10 +4,14 @@ import { Outlet } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { Header } from './Header';
 import { cn } from '@/lib/utils';
+import { useTheme } from '@/hooks/useTheme';
 
 export const Layout = () => {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = React.useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
+  
+  // Inicializar el tema
+  useTheme();
 
   return (
     <React.Fragment>
