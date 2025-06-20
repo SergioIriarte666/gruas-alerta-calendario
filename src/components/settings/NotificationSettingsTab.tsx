@@ -6,20 +6,13 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
 import { Bell, Save } from 'lucide-react';
-
-interface NotificationSettings {
-  emailNotifications: boolean;
-  serviceReminders: boolean;
-  invoiceAlerts: boolean;
-  overdueNotifications: boolean;
-  systemUpdates: boolean;
-}
+import type { NotificationSettings } from '@/types/settings';
 
 interface NotificationSettingsTabProps {
   settings: NotificationSettings;
   saving: boolean;
-  onSave: (data: NotificationSettings) => void;
-  onUpdateSettings: (updates: { notifications: NotificationSettings }) => void;
+  onSave: () => void;
+  onUpdateSettings: (updates: Partial<NotificationSettings>) => void;
 }
 
 export const NotificationSettingsTab: React.FC<NotificationSettingsTabProps> = ({
@@ -41,16 +34,16 @@ export const NotificationSettingsTab: React.FC<NotificationSettingsTabProps> = (
           <div className="flex items-center justify-between">
             <div>
               <Label className="text-gray-300">Notificaciones por Email</Label>
-              <p className="text-sm text-gray-500">Recibir notificaciones generales por correo</p>
+              <p className="text-sm text-gray-500">Recibir notificaciones por correo electrónico</p>
             </div>
             <Switch 
               checked={settings.emailNotifications}
-              onCheckedChange={(checked) => onUpdateSettings({
-                notifications: { ...settings, emailNotifications: checked }
-              })}
+              onCheckedChange={(checked) => onUpdateSettings({ emailNotifications: checked })}
             />
           </div>
+          
           <Separator className="bg-gray-700" />
+          
           <div className="flex items-center justify-between">
             <div>
               <Label className="text-gray-300">Recordatorios de Servicios</Label>
@@ -58,35 +51,38 @@ export const NotificationSettingsTab: React.FC<NotificationSettingsTabProps> = (
             </div>
             <Switch 
               checked={settings.serviceReminders}
-              onCheckedChange={(checked) => onUpdateSettings({
-                notifications: { ...settings, serviceReminders: checked }
-              })}
+              onCheckedChange={(checked) => onUpdateSettings({ serviceReminders: checked })}
             />
           </div>
+          
+          <Separator className="bg-gray-700" />
+          
           <div className="flex items-center justify-between">
             <div>
               <Label className="text-gray-300">Alertas de Facturas</Label>
-              <p className="text-sm text-gray-500">Notificaciones sobre facturas pendientes</p>
+              <p className="text-sm text-gray-500">Notificaciones sobre facturas nuevas</p>
             </div>
             <Switch 
               checked={settings.invoiceAlerts}
-              onCheckedChange={(checked) => onUpdateSettings({
-                notifications: { ...settings, invoiceAlerts: checked }
-              })}
+              onCheckedChange={(checked) => onUpdateSettings({ invoiceAlerts: checked })}
             />
           </div>
+          
+          <Separator className="bg-gray-700" />
+          
           <div className="flex items-center justify-between">
             <div>
-              <Label className="text-gray-300">Facturas Vencidas</Label>
+              <Label className="text-gray-300">Notificaciones de Vencimientos</Label>
               <p className="text-sm text-gray-500">Alertas sobre facturas vencidas</p>
             </div>
             <Switch 
               checked={settings.overdueNotifications}
-              onCheckedChange={(checked) => onUpdateSettings({
-                notifications: { ...settings, overdueNotifications: checked }
-              })}
+              onCheckedChange={(checked) => onUpdateSettings({ overdueNotifications: checked })}
             />
           </div>
+          
+          <Separator className="bg-gray-700" />
+          
           <div className="flex items-center justify-between">
             <div>
               <Label className="text-gray-300">Actualizaciones del Sistema</Label>
@@ -94,20 +90,18 @@ export const NotificationSettingsTab: React.FC<NotificationSettingsTabProps> = (
             </div>
             <Switch 
               checked={settings.systemUpdates}
-              onCheckedChange={(checked) => onUpdateSettings({
-                notifications: { ...settings, systemUpdates: checked }
-              })}
+              onCheckedChange={(checked) => onUpdateSettings({ systemUpdates: checked })}
             />
           </div>
         </div>
+        
         <Button 
-          onClick={() => onSave(settings)}
+          onClick={onSave}
           disabled={saving}
           className="bg-tms-green hover:bg-tms-green-dark text-white"
-          title="Guardar la configuración de notificaciones"
         >
           <Save className="w-4 h-4 mr-2" />
-          {saving ? 'Guardando...' : 'Guardar Notificaciones'}
+          {saving ? 'Guardando...' : 'Guardar Configuración'}
         </Button>
       </CardContent>
     </Card>

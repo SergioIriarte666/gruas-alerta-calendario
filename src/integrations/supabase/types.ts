@@ -896,6 +896,51 @@ export type Database = {
           },
         ]
       }
+      system_settings: {
+        Row: {
+          auto_backup: boolean
+          backup_frequency: string
+          created_at: string
+          data_retention: number
+          email_notifications: boolean
+          id: string
+          invoice_alerts: boolean
+          maintenance_mode: boolean
+          overdue_notifications: boolean
+          service_reminders: boolean
+          system_updates: boolean
+          updated_at: string
+        }
+        Insert: {
+          auto_backup?: boolean
+          backup_frequency?: string
+          created_at?: string
+          data_retention?: number
+          email_notifications?: boolean
+          id?: string
+          invoice_alerts?: boolean
+          maintenance_mode?: boolean
+          overdue_notifications?: boolean
+          service_reminders?: boolean
+          system_updates?: boolean
+          updated_at?: string
+        }
+        Update: {
+          auto_backup?: boolean
+          backup_frequency?: string
+          created_at?: string
+          data_retention?: number
+          email_notifications?: boolean
+          id?: string
+          invoice_alerts?: boolean
+          maintenance_mode?: boolean
+          overdue_notifications?: boolean
+          service_reminders?: boolean
+          system_updates?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

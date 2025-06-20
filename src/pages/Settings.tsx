@@ -3,6 +3,7 @@ import * as React from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import { useSettings } from '@/hooks/useSettings';
+import { useSystemSettings } from '@/hooks/useSystemSettings';
 import { useLogoUpdater } from '@/hooks/useLogoUpdater';
 import { SettingsHeader } from '@/components/settings/SettingsHeader';
 import { CompanySettingsTab } from '@/components/settings/CompanySettingsTab';
@@ -20,6 +21,15 @@ import {
 
 const Settings = () => {
   const { settings, loading, saving, updateSettings, saveSettings, resetSettings } = useSettings();
+  const { 
+    systemSettings, 
+    notificationSettings, 
+    loading: systemLoading, 
+    saving: systemSaving,
+    updateSystemSettings,
+    updateNotificationSettings,
+    saveSettings: saveSystemSettings
+  } = useSystemSettings();
   const { isUpdating: isLogoUpdating, updateLogo } = useLogoUpdater();
   const [activeTab, setActiveTab] = React.useState('company');
 
@@ -34,6 +44,19 @@ const Settings = () => {
     } else {
       toast.error("Error al guardar", {
         description: result.error || "No se pudo guardar la configuración.",
+      });
+    }
+  };
+
+  const handleSystemSave = async () => {
+    const result = await saveSystemSettings();
+    if (result.success) {
+      toast.success("Configuración del sistema guardada", {
+        description: "Los cambios se han guardado correctamente.",
+      });
+    } else {
+      toast.error("Error al guardar", {
+        description: result.error || "No se pudo guardar la configuración del sistema.",
       });
     }
   };
@@ -57,7 +80,7 @@ const Settings = () => {
     }
   };
 
-  if (loading || !settings) {
+  if (loading || systemLoading || !settings) {
     return (
       <div className="flex items-center justify-center min-h-96">
         <div className="text-white">Cargando configuración...</div>
@@ -116,19 +139,19 @@ const Settings = () => {
 
         <TabsContent value="system">
           <SystemSettingsTab
-            settings={settings.system}
-            saving={saving}
-            onSave={handleSave}
-            onUpdateSettings={updateSettings}
+            settings={systemSettings}
+            saving={systemSaving}
+            onSave={handleSystemSave}
+            onUpdateSettings={updateSystemSettings}
           />
         </TabsContent>
 
         <TabsContent value="notifications">
           <NotificationSettingsTab
-            settings={settings.notifications}
-            saving={saving}
-            onSave={handleSave}
-            onUpdateSettings={updateSettings}
+            settings={notificationSettings}
+            saving={systemSaving}
+            onSave={handleSystemSave}
+            onUpdateSettings={updateNotificationSettings}
           />
         </TabsContent>
 

@@ -1,3 +1,4 @@
+
 export interface CompanySettings {
   name: string;
   address: string;
@@ -5,21 +6,20 @@ export interface CompanySettings {
   email: string;
   taxId: string;
   logo?: string;
-  folioFormat?: string;
+  folioFormat: string;
 }
 
 export interface UserSettings {
-  theme: 'light' | 'dark' | 'system';
   language: 'es' | 'en';
+  theme: 'light' | 'dark' | 'system';
   timezone: string;
-  dateFormat: 'DD/MM/YYYY' | 'MM/DD/YYYY' | 'YYYY-MM-DD';
-  currency: 'CLP' | 'USD' | 'EUR';
+  notifications: boolean;
 }
 
 export interface SystemSettings {
   autoBackup: boolean;
   backupFrequency: 'daily' | 'weekly' | 'monthly';
-  dataRetention: number; // months
+  dataRetention: number;
   maintenanceMode: boolean;
 }
 
@@ -40,32 +40,30 @@ export interface Settings {
 
 export const defaultSettings: Settings = {
   company: {
-    name: 'TMS Grúas Ltda.',
-    address: 'Av. Principal 1234, Santiago, Chile',
-    phone: '+56 2 2345 6789',
-    email: 'contacto@tmsgruas.cl',
-    taxId: '12.345.678-9',
-    logo: undefined,
-    folioFormat: 'SRV-{number}'
+    name: '',
+    address: '',
+    phone: '',
+    email: '',
+    taxId: '',
+    folioFormat: 'SRV-{number}',
   },
   user: {
-    theme: 'dark',
     language: 'es',
+    theme: 'system',
     timezone: 'America/Santiago',
-    dateFormat: 'DD/MM/YYYY',
-    currency: 'CLP'
+    notifications: true,
   },
   system: {
     autoBackup: true,
     backupFrequency: 'daily',
     dataRetention: 12,
-    maintenanceMode: false
+    maintenanceMode: false,
   },
   notifications: {
     emailNotifications: true,
     serviceReminders: true,
     invoiceAlerts: true,
     overdueNotifications: true,
-    systemUpdates: false
-  }
+    systemUpdates: false,
+  },
 };
