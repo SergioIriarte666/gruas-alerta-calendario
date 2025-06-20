@@ -472,6 +472,20 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "fk_invoice_closures_closure_id"
+            columns: ["closure_id"]
+            isOneToOne: false
+            referencedRelation: "service_closures"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_invoice_closures_invoice_id"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "invoice_closures_closure_id_fkey"
             columns: ["closure_id"]
             isOneToOne: false
