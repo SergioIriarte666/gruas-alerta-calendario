@@ -7,6 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Plus, Eye, Edit, Trash2, Truck, Check } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { useUser } from '@/contexts/UserContext';
 
 interface ServicesTableProps {
   services: Service[];
@@ -47,6 +48,9 @@ export const ServicesTable = ({
   onCloseService,
   onAddNewService,
 }: ServicesTableProps) => {
+  const { user } = useUser();
+  const isAdmin = user?.role === 'admin';
+
   return (
     <Card className="glass-card">
       <CardHeader>
@@ -169,53 +173,39 @@ export const ServicesTable = ({
                             <Eye className="w-4 h-4" />
                           </Button>
                           
-                          {/* Disable edit for invoiced services */}
-                          {onEdit && !isInvoiced && (
+                          {/* Administrators can edit invoiced services */}
+                          {onEdit && (
                             <Button 
                               variant="ghost" 
                               size="sm" 
-                              className="text-blue-400 hover:text-blue-300 hover:bg-blue-400/10"
+                              className={isInvoiced && !isAdmin 
+                                ? "text-gray-500 cursor-not-allowed" 
+                                : "text-blue-400 hover:text-blue-300 hover:bg-blue-400/10"}
                               onClick={() => onEdit(service)}
-                              title="Editar servicio"
+                              title={isInvoiced && !isAdmin 
+                                ? "No se puede editar un servicio facturado" 
+                                : isInvoiced && isAdmin 
+                                  ? "⚠️ Editar servicio facturado (solo admin)" 
+                                  : "Editar servicio"}
+                              disabled={isInvoiced && !isAdmin}
                             >
                               <Edit className="w-4 h-4" />
                             </Button>
                           )}
                           
-                          {/* Show disabled edit button for invoiced services with tooltip */}
-                          {onEdit && isInvoiced && (
+                          {/* Delete button - disabled for invoiced services */}
+                          {onDelete && (
                             <Button 
                               variant="ghost" 
                               size="sm" 
-                              className="text-gray-500 cursor-not-allowed"
-                              disabled
-                              title="No se puede editar un servicio facturado"
-                            >
-                              <Edit className="w-4 h-4" />
-                            </Button>
-                          )}
-                          
-                          {/* Disable delete for invoiced services */}
-                          {onDelete && !isInvoiced && (
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
-                              className="text-red-400 hover:text-red-300 hover:bg-red-400/10"
-                              onClick={() => onDelete(service)}
-                              title="Eliminar servicio"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          )}
-                          
-                          {/* Show disabled delete button for invoiced services */}
-                          {onDelete && isInvoiced && (
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
-                              className="text-gray-500 cursor-not-allowed"
-                              disabled
-                              title="No se puede eliminar un servicio facturado"
+                              className={isInvoiced 
+                                ? "text-gray-500 cursor-not-allowed" 
+                                : "text-red-400 hover:text-red-300 hover:bg-red-400/10"}
+                              onClick={isInvoiced ? undefined : () => onDelete(service)}
+                              title={isInvoiced 
+                                ? "No se puede eliminar un servicio facturado" 
+                                : "Eliminar servicio"}
+                              disabled={isInvoiced}
                             >
                               <Trash2 className="w-4 h-4" />
                             </Button>

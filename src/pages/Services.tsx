@@ -95,6 +95,7 @@ const Services = () => {
   };
 
   const handleEdit = (service: Service) => {
+    // Administrators can edit invoiced services, but show a warning
     if (service.status === 'invoiced' && user?.role !== 'admin') {
       toast({
         type: "error",
@@ -102,6 +103,13 @@ const Services = () => {
         description: "No se puede editar un servicio facturado. Solo los administradores pueden hacerlo.",
       });
       return;
+    }
+    
+    // Show warning for admins editing invoiced services
+    if (service.status === 'invoiced' && user?.role === 'admin') {
+      if (!window.confirm(`⚠️ ADVERTENCIA: Este servicio está facturado.\n\nComo administrador puedes editarlo, pero ten cuidado con los cambios ya que puede afectar la facturación.\n\n¿Deseas continuar?`)) {
+        return;
+      }
     }
     
     setEditingService(service);

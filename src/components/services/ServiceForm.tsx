@@ -72,18 +72,19 @@ export const ServiceForm = ({ service, onSubmit, onCancel }: ServiceFormProps) =
   // Check if service is invoiced and user permissions
   const isInvoiced = service?.status === 'invoiced';
   const isAdmin = user?.role === 'admin';
+  // Administrators CAN edit invoiced services
   const canEdit = !isInvoiced || isAdmin;
 
   return (
     <div className="space-y-6">
-      {/* Warning alert for invoiced services */}
+      {/* Warning alert for invoiced services - updated message for admins */}
       {isInvoiced && (
         <Alert className="border-purple-500/50 bg-purple-500/10">
           <AlertTriangle className="h-4 w-4 text-purple-400" />
           <AlertDescription className="text-purple-200">
             {isAdmin 
-              ? "Este servicio está facturado. Como administrador, puedes editarlo pero ten cuidado."
-              : "Este servicio está facturado y no puede ser editado."
+              ? "⚠️ CUIDADO: Este servicio está facturado. Como administrador, puedes editarlo, pero ten precaución con los cambios."
+              : "Este servicio está facturado y no puede ser editado. Solo los administradores pueden hacerlo."
             }
           </AlertDescription>
         </Alert>

@@ -21,7 +21,7 @@ export const useServiceFormValidation = () => {
     const selectedOperator = operators.find(o => o.id === formData.operatorId);
     const selectedServiceType = serviceTypes.find(st => st.id === formData.serviceTypeId);
 
-    // Check if service is invoiced and user is not admin
+    // Check if service is invoiced and user is not admin - REMOVE THIS RESTRICTION FOR ADMINS
     if (service?.status === 'invoiced' && user?.role !== 'admin') {
       toast({
         type: "error",
