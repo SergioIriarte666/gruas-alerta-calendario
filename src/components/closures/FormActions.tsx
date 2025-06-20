@@ -4,10 +4,12 @@ import { Button } from '@/components/ui/button';
 interface FormActionsProps {
   loading: boolean;
   isFormValid: boolean;
+  hasSelectedServices: boolean;
+  selectedServicesCount: number;
   onCancel: () => void;
 }
 
-const FormActions = ({ loading, isFormValid, onCancel }: FormActionsProps) => {
+const FormActions = ({ loading, isFormValid, hasSelectedServices, selectedServicesCount, onCancel }: FormActionsProps) => {
   return (
     <div className="flex justify-end space-x-2 pt-4">
       <Button
@@ -22,10 +24,17 @@ const FormActions = ({ loading, isFormValid, onCancel }: FormActionsProps) => {
       <Button
         type="submit"
         disabled={loading || !isFormValid}
-        className="bg-tms-green hover:bg-tms-green/90"
-        title="Crear un nuevo cierre de servicios"
+        className="bg-tms-green hover:bg-tms-green/90 disabled:opacity-50"
+        title={!hasSelectedServices 
+          ? "Selecciona al menos un servicio para crear el cierre" 
+          : `Crear cierre con ${selectedServicesCount} servicio${selectedServicesCount !== 1 ? 's' : ''}`
+        }
       >
-        {loading ? 'Creando...' : 'Crear Cierre'}
+        {loading ? 'Creando...' : 
+         hasSelectedServices 
+           ? `Crear Cierre (${selectedServicesCount} servicio${selectedServicesCount !== 1 ? 's' : ''})` 
+           : 'Crear Cierre'
+        }
       </Button>
     </div>
   );

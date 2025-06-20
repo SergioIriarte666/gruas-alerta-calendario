@@ -52,6 +52,12 @@ const ClosureForm = ({ open, onOpenChange, onSubmit }: ClosureFormProps) => {
     e.preventDefault();
     if (!formData.dateFrom || !formData.dateTo) return;
 
+    // Validate that at least one service is selected
+    if (formData.serviceIds.length === 0) {
+      console.log('No services selected, preventing submission');
+      return;
+    }
+
     console.log('Submitting closure form with data:', formData);
 
     setLoading(true);
@@ -118,7 +124,8 @@ const ClosureForm = ({ open, onOpenChange, onSubmit }: ClosureFormProps) => {
     setFormData(prev => ({ ...prev, dateTo: date, serviceIds: [], total: 0 }));
   };
 
-  const isFormValid = formData.dateFrom && formData.dateTo;
+  // Updated validation: require dates AND at least one service selected
+  const isFormValid = formData.dateFrom && formData.dateTo && formData.serviceIds.length > 0;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -156,6 +163,16 @@ const ClosureForm = ({ open, onOpenChange, onSubmit }: ClosureFormProps) => {
             onServiceToggle={handleServiceSelection}
           />
 
+          {/* Show validation error when no services are selected */}
+          {formData.dateFrom && formData.dateTo && formData.serviceIds.length === 0 && !servicesLoading && (
+            <Alert className="border-red-500/50 bg-red-500/10">
+              <AlertCircle className="h-4 w-4 text-red-400" />
+              <AlertDescription className="text-red-200">
+                Debes seleccionar al menos un servicio para crear un cierre.
+              </AlertDescription>
+            </Alert>
+          )}
+
           {/* Total */}
           <div className="space-y-2">
             <Label className="text-gray-300">Total</Label>
@@ -186,6 +203,8 @@ const ClosureForm = ({ open, onOpenChange, onSubmit }: ClosureFormProps) => {
           <FormActions
             loading={loading}
             isFormValid={!!isFormValid}
+            hasSelectedServices={formData.serviceIds.length > 0}
+            selectedServicesCount={formData.serviceIds.length}
             onCancel={() => onOpenChange(false)}
           />
         </form>
