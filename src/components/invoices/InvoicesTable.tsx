@@ -63,9 +63,15 @@ const InvoicesTable = ({ invoices, onEdit, onDelete, onMarkAsPaid, getInvoiceWit
                   <TableCell className="text-white">${Math.round(invoice.total).toLocaleString()}</TableCell>
                   <TableCell>{getStatusBadge(invoice.status)}</TableCell>
                   <TableCell className="text-white">
-                    <Badge className="bg-purple-100 text-purple-800">
-                      {invoiceWithDetails.closure?.folio || 'Cierre no encontrado'}
-                    </Badge>
+                    {invoiceWithDetails.closure ? (
+                      <Badge className="bg-purple-100 text-purple-800">
+                        {invoiceWithDetails.closure.folio}
+                      </Badge>
+                    ) : (
+                      <Badge className="bg-gray-100 text-gray-800">
+                        Cierre no encontrado
+                      </Badge>
+                    )}
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">

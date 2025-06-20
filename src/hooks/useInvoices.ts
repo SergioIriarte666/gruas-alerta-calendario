@@ -1,13 +1,13 @@
 
 import { useInvoiceData } from './invoices/useInvoiceData';
 import { useInvoiceOperations } from './invoices/useInvoiceOperations';
-import { useClosuresForInvoices } from './useClosuresForInvoices';
+import { useServiceClosures } from './useServiceClosures';
 import { useClients } from './useClients';
 
 export const useInvoices = () => {
   const { invoices, loading, addInvoice, updateInvoice: updateInvoiceInState, removeInvoice, refetch } = useInvoiceData();
   const { createInvoice: createInvoiceOp, updateInvoice: updateInvoiceOp, deleteInvoice: deleteInvoiceOp, markAsPaid: markAsPaidOp } = useInvoiceOperations();
-  const { closures } = useClosuresForInvoices();
+  const { closures } = useServiceClosures();
   const { clients } = useClients();
 
   const createInvoice = async (invoiceData: Parameters<typeof createInvoiceOp>[0]) => {
