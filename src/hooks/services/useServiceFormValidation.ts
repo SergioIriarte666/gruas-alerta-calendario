@@ -1,8 +1,10 @@
 
-import { toast } from 'sonner';
+import { useToast } from '@/components/ui/custom-toast';
 import { Client, Crane, Operator, ServiceType } from '@/types';
 
 export const useServiceFormValidation = () => {
+  const { toast } = useToast();
+
   const validateForm = (
     folio: string,
     formData: any,
@@ -17,14 +19,18 @@ export const useServiceFormValidation = () => {
     const selectedServiceType = serviceTypes.find(st => st.id === formData.serviceTypeId);
 
     if (!selectedClient || !selectedCrane || !selectedOperator || !selectedServiceType) {
-      toast.error("Error", {
+      toast({
+        type: "error",
+        title: "Error",
         description: "Por favor, selecciona todos los campos requeridos",
       });
       return { isValid: false };
     }
 
     if (!folio.trim()) {
-      toast.error("Error", {
+      toast({
+        type: "error",
+        title: "Error",
         description: "El folio es requerido",
       });
       return { isValid: false };
@@ -36,7 +42,9 @@ export const useServiceFormValidation = () => {
     // Validate vehicle information only if required (not optional)
     if (!isVehicleInfoOptional) {
       if (!formData.vehicleBrand?.trim() || !formData.vehicleModel?.trim() || !formData.licensePlate?.trim()) {
-        toast.error("Error", {
+        toast({
+          type: "error",
+          title: "Error",
           description: "La información del vehículo es requerida para este tipo de servicio",
         });
         return { isValid: false };

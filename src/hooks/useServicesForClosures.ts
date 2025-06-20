@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { Service } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
+import { useToast } from '@/components/ui/custom-toast';
 import { useServiceTransformer } from './services/useServiceTransformer';
 
 interface UseServicesForClosuresOptions {
@@ -14,6 +14,7 @@ export const useServicesForClosures = (options: UseServicesForClosuresOptions = 
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(false);
   const { transformRawServiceData } = useServiceTransformer();
+  const { toast } = useToast();
   const { dateFrom, dateTo } = options;
 
   const fetchAvailableServices = async () => {
@@ -89,7 +90,9 @@ export const useServicesForClosures = (options: UseServicesForClosuresOptions = 
       setServices(transformedServices);
     } catch (error: any) {
       console.error('Error fetching available services for closures:', error);
-      toast.error("Error", {
+      toast({
+        type: "error",
+        title: "Error",
         description: "No se pudieron cargar los servicios disponibles para cierre.",
       });
       setServices([]);
