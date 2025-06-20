@@ -14,6 +14,8 @@ export interface UserSettings {
   theme: 'light' | 'dark' | 'system';
   timezone: string;
   notifications: boolean;
+  dateFormat: 'DD/MM/YYYY' | 'MM/DD/YYYY' | 'YYYY-MM-DD';
+  currency: 'CLP' | 'USD' | 'EUR';
 }
 
 export interface SystemSettings {
@@ -52,6 +54,8 @@ export const defaultSettings: Settings = {
     theme: 'system',
     timezone: 'America/Santiago',
     notifications: true,
+    dateFormat: 'DD/MM/YYYY',
+    currency: 'CLP',
   },
   system: {
     autoBackup: true,

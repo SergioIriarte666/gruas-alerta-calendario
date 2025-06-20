@@ -4,21 +4,16 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
+import { Separator } from '@/components/ui/separator';
 import { Palette, Save } from 'lucide-react';
-
-interface UserSettings {
-  theme: 'light' | 'dark' | 'system';
-  language: 'es' | 'en';
-  timezone: string;
-  dateFormat: 'DD/MM/YYYY' | 'MM/DD/YYYY' | 'YYYY-MM-DD';
-  currency: 'CLP' | 'USD' | 'EUR';
-}
+import type { UserSettings } from '@/types/settings';
 
 interface UserSettingsTabProps {
   settings: UserSettings;
   saving: boolean;
-  onSave: (data: UserSettings) => void;
-  onUpdateSettings: (updates: { user: UserSettings }) => void;
+  onSave: () => void;
+  onUpdateSettings: (updates: Partial<{ user: UserSettings }>) => void;
 }
 
 export const UserSettingsTab: React.FC<UserSettingsTabProps> = ({
@@ -55,6 +50,7 @@ export const UserSettingsTab: React.FC<UserSettingsTabProps> = ({
               </SelectContent>
             </Select>
           </div>
+          
           <div className="space-y-2">
             <Label className="text-gray-300">Idioma</Label>
             <Select 
@@ -72,12 +68,13 @@ export const UserSettingsTab: React.FC<UserSettingsTabProps> = ({
               </SelectContent>
             </Select>
           </div>
+          
           <div className="space-y-2">
             <Label className="text-gray-300">Formato de Fecha</Label>
             <Select 
               value={settings.dateFormat} 
               onValueChange={(value) => onUpdateSettings({
-                user: { ...settings, dateFormat: value as any }
+                user: { ...settings, dateFormat: value as 'DD/MM/YYYY' | 'MM/DD/YYYY' | 'YYYY-MM-DD' }
               })}
             >
               <SelectTrigger className="bg-white/5 border-gray-700 text-white">
@@ -90,6 +87,7 @@ export const UserSettingsTab: React.FC<UserSettingsTabProps> = ({
               </SelectContent>
             </Select>
           </div>
+          
           <div className="space-y-2">
             <Label className="text-gray-300">Moneda</Label>
             <Select 
@@ -109,8 +107,24 @@ export const UserSettingsTab: React.FC<UserSettingsTabProps> = ({
             </Select>
           </div>
         </div>
+
+        <Separator className="bg-gray-700" />
+
+        <div className="flex items-center justify-between">
+          <div>
+            <Label className="text-gray-300">Notificaciones</Label>
+            <p className="text-sm text-gray-500">Recibir notificaciones en el sistema</p>
+          </div>
+          <Switch 
+            checked={settings.notifications}
+            onCheckedChange={(checked) => onUpdateSettings({ 
+              user: { ...settings, notifications: checked } 
+            })}
+          />
+        </div>
+        
         <Button 
-          onClick={() => onSave(settings)}
+          onClick={onSave}
           disabled={saving}
           className="bg-tms-green hover:bg-tms-green-dark text-white"
         >

@@ -88,7 +88,14 @@ const fetchSettings = async (): Promise<Settings> => {
       return {
         company: { name: 'Mi Empresa', taxId: '', address: '', phone: '', email: '', folioFormat: 'SRV-{number}'},
         system: { autoBackup: true, backupFrequency: 'daily', dataRetention: 12, maintenanceMode: false },
-        user: { theme: 'dark', language: 'es', timezone: 'America/Santiago', dateFormat: 'DD/MM/YYYY', currency: 'CLP' },
+        user: { 
+          theme: 'dark', 
+          language: 'es', 
+          timezone: 'America/Santiago', 
+          notifications: true,
+          dateFormat: 'DD/MM/YYYY', 
+          currency: 'CLP' 
+        },
         notifications: { emailNotifications: true, serviceReminders: true, invoiceAlerts: true, overdueNotifications: true, systemUpdates: false }
       }
     }
@@ -112,6 +119,7 @@ const fetchSettings = async (): Promise<Settings> => {
         theme: 'dark',
         language: 'es',
         timezone: 'America/Santiago',
+        notifications: true,
         dateFormat: 'DD/MM/YYYY',
         currency: 'CLP',
       },

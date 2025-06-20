@@ -52,7 +52,7 @@ export const useSystemSettings = () => {
       if (data) {
         setSystemSettings({
           autoBackup: data.auto_backup,
-          backupFrequency: data.backup_frequency,
+          backupFrequency: data.backup_frequency as 'daily' | 'weekly' | 'monthly',
           dataRetention: data.data_retention,
           maintenanceMode: data.maintenance_mode,
         });
