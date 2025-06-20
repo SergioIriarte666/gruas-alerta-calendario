@@ -16,7 +16,7 @@ export const useServicesForInvoices = () => {
       setLoading(true);
       console.log('Fetching services available for invoicing...');
       
-      // Obtener todos los servicios completados
+      // Obtener servicios completados que NO estén facturados (status != 'invoiced')
       const { data: servicesData, error: servicesError } = await supabase
         .from('services')
         .select(`
@@ -26,7 +26,7 @@ export const useServicesForInvoices = () => {
           operators!inner(id, name, rut, phone, license_number, is_active),
           service_types!inner(id, name, description, is_active)
         `)
-        .eq('status', 'completed')
+        .eq('status', 'completed')  // Solo servicios completados
         .order('service_date', { ascending: false });
 
       if (servicesError) {
@@ -34,32 +34,10 @@ export const useServicesForInvoices = () => {
         throw servicesError;
       }
 
-      console.log('Services with completed status:', servicesData?.length);
+      console.log('Available services for invoicing (completed, not invoiced):', servicesData?.length);
+      console.log('Available service folios:', servicesData?.map(s => s.folio).join(', '));
 
-      // Obtener servicios que YA están en facturas (invoice_services)
-      const { data: invoicedServiceIds, error: invoiceError } = await supabase
-        .from('invoice_services')
-        .select('service_id');
-
-      if (invoiceError) {
-        console.error('Error fetching invoiced services:', invoiceError);
-        throw invoiceError;
-      }
-
-      const alreadyInvoicedIds = new Set(invoicedServiceIds?.map(is => is.service_id) || []);
-      console.log('Services already in invoice_services:', alreadyInvoicedIds.size);
-
-      // Filtrar servicios que NO están en facturas
-      const availableServicesData = servicesData?.filter(service => {
-        const isAlreadyInvoiced = alreadyInvoicedIds.has(service.id);
-        console.log(`Service ${service.folio}: already in invoice = ${isAlreadyInvoiced}`);
-        return !isAlreadyInvoiced;
-      }) || [];
-
-      console.log('Available services for invoicing:', availableServicesData.length);
-      console.log('Available service folios:', availableServicesData.map(s => s.folio).join(', '));
-
-      const transformedServices = transformRawServiceData(availableServicesData);
+      const transformedServices = transformRawServiceData(servicesData || []);
       setServices(transformedServices);
     } catch (error: any) {
       console.error('Error fetching available services for invoices:', error);

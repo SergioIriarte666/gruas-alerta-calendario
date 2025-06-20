@@ -22,7 +22,7 @@ export const useServicesForClosures = (options: UseServicesForClosuresOptions = 
       setLoading(true);
       console.log('Fetching available services for closures with date filter:', { dateFrom, dateTo });
       
-      // Build the query for completed services
+      // Build the query for completed services that are NOT invoiced
       let servicesQuery = supabase
         .from('services')
         .select(`
@@ -32,7 +32,8 @@ export const useServicesForClosures = (options: UseServicesForClosuresOptions = 
           operators!inner(id, name, rut, phone, license_number, is_active),
           service_types!inner(id, name, description, is_active)
         `)
-        .eq('status', 'completed')
+        .eq('status', 'completed')  // Solo servicios completados
+        .neq('status', 'invoiced')  // Que NO estén facturados
         .order('service_date', { ascending: false });
 
       // Add date range filter if provided
@@ -50,7 +51,7 @@ export const useServicesForClosures = (options: UseServicesForClosuresOptions = 
         throw servicesError;
       }
 
-      console.log('Completed services found:', servicesData?.length);
+      console.log('Completed, non-invoiced services found:', servicesData?.length);
       console.log('Service folios found:', servicesData?.map(s => s.folio).join(', '));
 
       // Get all service IDs that are already included in closures
@@ -63,29 +64,15 @@ export const useServicesForClosures = (options: UseServicesForClosuresOptions = 
         throw closureError;
       }
 
-      // Get all service IDs that are already in invoices (invoice_services table)
-      const { data: invoicedServices, error: invoiceError } = await supabase
-        .from('invoice_services')
-        .select('service_id');
-
-      if (invoiceError) {
-        console.error('Error fetching invoiced services:', invoiceError);
-        throw invoiceError;
-      }
-
       const usedServiceIds = new Set(closureServices?.map(cs => cs.service_id) || []);
-      const invoicedServiceIds = new Set(invoicedServices?.map(is => is.service_id) || []);
-
       console.log('Services already in closures:', usedServiceIds.size, Array.from(usedServiceIds));
-      console.log('Services already in invoices (invoice_services):', invoicedServiceIds.size, Array.from(invoicedServiceIds));
 
-      // Filter out services that are already in closures OR already in invoices
+      // Filter out services that are already in closures
       const availableServicesData = servicesData?.filter(service => {
         const isInClosure = usedServiceIds.has(service.id);
-        const isInInvoice = invoicedServiceIds.has(service.id);
-        const isAvailable = !isInClosure && !isInInvoice;
+        const isAvailable = !isInClosure;
         
-        console.log(`Service ${service.folio} (${service.id}): inClosure=${isInClosure}, inInvoice=${isInInvoice}, available=${isAvailable}`);
+        console.log(`Service ${service.folio} (${service.id}): inClosure=${isInClosure}, available=${isAvailable}`);
         
         return isAvailable;
       }) || [];
