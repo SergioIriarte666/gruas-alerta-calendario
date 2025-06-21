@@ -1,7 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { Client, Crane, Operator } from '@/types';
-import { ServiceType } from '@/hooks/useServiceTypes';
+import { Client, Crane, Operator, ServiceType } from '@/types';
 
 export class DataLoaders {
   async loadClients(): Promise<Client[]> {

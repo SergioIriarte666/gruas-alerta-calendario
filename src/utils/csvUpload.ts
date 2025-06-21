@@ -1,317 +1,181 @@
-import * as Papa from 'papaparse';
-import * as XLSX from 'xlsx';
-import { Service } from '@/types';
-import { UploadedServiceRow } from './csvValidations';
+import { parse } from 'papaparse';
+import { DataMapper } from './dataMapper';
+import { MappedServiceData } from './dataMapper';
 
-export interface UploadProgress {
-  total: number;
-  processed: number;
-  percentage: number;
-  currentBatch: number;
-  totalBatches: number;
+interface CSVRow {
+  folio: string;
+  requestDate: string;
+  serviceDate: string;
+  clientRut: string;
+  clientName: string;
+  vehicleBrand: string;
+  vehicleModel: string;
+  licensePlate: string;
+  origin: string;
+  destination: string;
+  serviceType: string;
+  value: string;
+  craneLicensePlate: string;
+  operatorRut: string;
+  operatorCommission: string;
+  observations: string;
 }
 
-export interface UploadResult {
+interface CSVUploadResult {
   success: boolean;
-  processed: number;
-  errors: number;
   message: string;
-  failedRows?: number[];
+  data?: MappedServiceData[];
+  errors?: string[];
+  warnings?: string[];
 }
 
-export class CSVServiceUploader {
-  private batchSize = 50;
+export const processCSV = async (file: File, dataMapper: DataMapper): Promise<CSVUploadResult> => {
+  return new Promise((resolve, reject) => {
+    parse<CSVRow>(file, {
+      header: true,
+      skipEmptyLines: true,
+      transformHeader: (header) => dataMapper.mapHeaders(header.trim()).trim(),
+      complete: async (results) => {
+        if (results.errors.length > 0) {
+          console.error('CSV Parsing Errors:', results.errors);
+          return resolve({
+            success: false,
+            message: 'Error al analizar el archivo CSV.',
+            errors: results.errors.map(error => error.message)
+          });
+        }
 
-  // Parse CSV file
-  parseCSV(file: File): Promise<UploadedServiceRow[]> {
-    return new Promise((resolve, reject) => {
-      Papa.parse(file, {
-        header: true,
-        skipEmptyLines: true,
-        transformHeader: (header: string) => {
-          // Map Spanish headers to English field names
-          const headerMap: { [key: string]: string } = {
-            'Folio': 'folio',
-            'Fecha Solicitud': 'requestDate',
-            'Fecha Servicio': 'serviceDate',
-            'Cliente RUT': 'clientRut',
-            'Cliente Nombre': 'clientName',
-            'Vehículo Marca': 'vehicleBrand',
-            'Vehículo Modelo': 'vehicleModel',
-            'Patente': 'licensePlate',
-            'Origen': 'origin',
-            'Destino': 'destination',
-            'Tipo Servicio': 'serviceType',
-            'Valor': 'value',
-            'Grúa Patente': 'craneLicensePlate',
-            'Operador RUT': 'operatorRut',
-            'Comisión Operador': 'operatorCommission',
-            'Observaciones': 'observations'
-          };
-          
-          return headerMap[header] || header.toLowerCase().replace(/\s+/g, '');
-        },
-        complete: (results) => {
-          if (results.errors.length > 0) {
-            reject(new Error(`Error parsing CSV: ${results.errors[0].message}`));
+        const headerValidation = dataMapper.validateHeaders(results.meta.fields || []);
+        if (!headerValidation.valid) {
+          console.error('CSV Header Errors:', headerValidation);
+          const missingHeaders = headerValidation.missing.map(header => `Falta la columna "${header}"`);
+          const extraHeaders = headerValidation.extra.map(header => `Columna no reconocida "${header}"`);
+          return resolve({
+            success: false,
+            message: 'Error en las columnas del archivo CSV.',
+            errors: [...missingHeaders, ...extraHeaders]
+          });
+        }
+
+        const mappedServices: MappedServiceData[] = [];
+        const allErrors: string[] = [];
+        const allWarnings: string[] = [];
+
+        for (const row of results.data) {
+          const mappingResult = await dataMapper.mapRowData(row);
+
+          if (mappingResult.success) {
+            mappedServices.push(mappingResult.data!);
           } else {
-            resolve(results.data as UploadedServiceRow[]);
+            allErrors.push(...mappingResult.errors);
           }
-        },
-        error: (error) => {
-          reject(new Error(`Error reading file: ${error.message}`));
+          allWarnings.push(...mappingResult.warnings);
         }
-      });
-    });
-  }
 
-  // Parse Excel file
-  parseExcel(file: File): Promise<UploadedServiceRow[]> {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        try {
-          const data = event.target?.result;
-          const workbook = XLSX.read(data, { type: 'array', cellDates: true });
-          const sheetName = workbook.SheetNames[0];
-          const worksheet = workbook.Sheets[sheetName];
-          const json: any[][] = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '', raw: false });
-          
-          if (json.length < 2) {
-            resolve([]);
-            return;
-          }
-
-          const headerMap: { [key: string]: string } = {
-            'Folio': 'folio', 'Fecha Solicitud': 'requestDate', 'Fecha Servicio': 'serviceDate',
-            'Cliente RUT': 'clientRut', 'Cliente Nombre': 'clientName', 'Vehículo Marca': 'vehicleBrand',
-            'Vehículo Modelo': 'vehicleModel', 'Patente': 'licensePlate', 'Origen': 'origin',
-            'Destino': 'destination', 'Tipo Servicio': 'serviceType', 'Valor': 'value',
-            'Grúa Patente': 'craneLicensePlate', 'Operador RUT': 'operatorRut',
-            'Comisión Operador': 'operatorCommission', 'Observaciones': 'observations'
-          };
-
-          const rawHeaders = json[0];
-          const headers = rawHeaders.map(h => headerMap[h] || h.toLowerCase().replace(/\s+/g, ''));
-          
-          const rows = json.slice(1);
-
-          const dataRows = rows.map(rowArray => {
-            const rowObject: { [key: string]: any } = {};
-            headers.forEach((header, index) => {
-              let value = rowArray[index];
-              if (['requestDate', 'serviceDate'].includes(header) && value instanceof Date) {
-                value = value.toISOString().split('T')[0];
-              }
-              rowObject[header] = String(value ?? '');
-            });
-            return rowObject as UploadedServiceRow;
-          }).filter(row => row.folio); // Filter out empty rows
-
-          resolve(dataRows);
-        } catch (e) {
-          reject(new Error('Error al procesar el archivo Excel.'));
+        if (allErrors.length > 0) {
+          console.error('Data Mapping Errors:', allErrors);
+          return resolve({
+            success: false,
+            message: 'Error al procesar los datos del archivo CSV.',
+            errors: allErrors,
+            warnings: allWarnings
+          });
         }
-      };
-      reader.onerror = (error) => reject(error);
-      reader.readAsArrayBuffer(file);
-    });
-  }
 
-  // Convert uploaded row to Service object
-  convertToService(
-    csvRow: UploadedServiceRow,
-    clients: any[],
-    cranes: any[],
-    operators: any[]
-  ): Omit<Service, 'id' | 'folio' | 'createdAt' | 'updatedAt'> {
-    const client = clients.find(c => c.rut === csvRow.clientRut);
-    const crane = cranes.find(c => c.licensePlate === csvRow.craneLicensePlate);
-    const operator = operators.find(o => o.rut === csvRow.operatorRut);
+        resolve({
+          success: true,
+          message: 'Archivo CSV procesado exitosamente.',
+          data: mappedServices,
+          warnings: allWarnings
+        });
+      },
+      error: (error) => {
+        console.error('CSV Processing Error:', error);
+        reject(error);
+      }
+    });
+  });
+};
+
+export const createServiceFromCsvRow = async (row: any, dataMapper: DataMapper) => {
+  try {
+    // Find existing entities
+    const foundClient = dataMapper.findClientByRut(row.clientRut) || dataMapper.findClientByName(row.clientName);
+    const foundCrane = dataMapper.findCraneByPlate(row.craneLicensePlate);
+    const foundOperator = dataMapper.findOperatorByRut(row.operatorRut);
+    const foundServiceType = dataMapper.findServiceTypeByName(row.serviceType);
+
+    if (!foundClient) {
+      console.warn(`Client not found for RUT: ${row.clientRut} or Name: ${row.clientName}`);
+      return { success: false, error: `Cliente no encontrado: ${row.clientRut || row.clientName}` };
+    }
+
+    if (!foundCrane) {
+      console.warn(`Crane not found for License Plate: ${row.craneLicensePlate}`);
+      return { success: false, error: `Grúa no encontrada: ${row.craneLicensePlate}` };
+    }
+
+    if (!foundOperator) {
+      console.warn(`Operator not found for RUT: ${row.operatorRut}`);
+      return { success: false, error: `Operador no encontrado: ${row.operatorRut}` };
+    }
+
+    if (!foundServiceType) {
+      console.warn(`Service Type not found for Name: ${row.serviceType}`);
+      return { success: false, error: `Tipo de servicio no encontrado: ${row.serviceType}` };
+    }
+
+    // Manual transformation and validation
+    const requestDate = dataMapper.fixDateFormat(row.requestDate);
+    const serviceDate = dataMapper.fixDateFormat(row.serviceDate);
+
+    if (!requestDate || !serviceDate) {
+      return { success: false, error: 'Formato de fecha inválido. Utilice DD-MM-AAAA.' };
+    }
+
+    const value = parseFloat(row.value) || 0;
+    const operatorCommission = parseFloat(row.operatorCommission) || 0;
 
     return {
-      requestDate: csvRow.requestDate,
-      serviceDate: csvRow.serviceDate,
-      client,
-      vehicleBrand: csvRow.vehicleBrand,
-      vehicleModel: csvRow.vehicleModel,
-      licensePlate: csvRow.licensePlate.toUpperCase(),
-      origin: csvRow.origin,
-      destination: csvRow.destination,
-      serviceType: {
-        id: '1',
-        name: csvRow.serviceType,
-        description: csvRow.serviceType,
-        isActive: true,
-        createdAt: '',
-        updatedAt: ''
-      },
-      value: parseFloat(csvRow.value),
-      crane,
-      operator,
-      operatorCommission: parseFloat(csvRow.operatorCommission),
-      status: 'pending',
-      observations: csvRow.observations || ''
-    };
-  }
-
-  // Process services in batches
-  async processBatch(
-    services: Omit<Service, 'id' | 'folio' | 'createdAt' | 'updatedAt'>[],
-    createService: (service: Omit<Service, 'id' | 'folio' | 'createdAt' | 'updatedAt'>) => Promise<Service>,
-    onProgress?: (progress: UploadProgress) => void
-  ): Promise<UploadResult> {
-    const total = services.length;
-    const totalBatches = Math.ceil(total / this.batchSize);
-    let processed = 0;
-    let errors = 0;
-    const failedRows: number[] = [];
-
-    try {
-      for (let i = 0; i < totalBatches; i++) {
-        const batch = services.slice(i * this.batchSize, (i + 1) * this.batchSize);
-        const currentBatch = i + 1;
-
-        // Process each service in the batch
-        for (let j = 0; j < batch.length; j++) {
-          try {
-            await createService(batch[j]);
-            processed++;
-          } catch (error) {
-            console.error('Error creating service:', error);
-            errors++;
-            failedRows.push(i * this.batchSize + j);
-          }
-
-          // Update progress
-          if (onProgress) {
-            onProgress({
-              total,
-              processed: processed + errors,
-              percentage: Math.round(((processed + errors) / total) * 100),
-              currentBatch,
-              totalBatches
-            });
-          }
-        }
-
-        // Small delay between batches to prevent UI blocking
-        await new Promise(resolve => setTimeout(resolve, 100));
+      success: true,
+      data: {
+        folio: row.folio,
+        requestDate,
+        serviceDate,
+        clientId: foundClient.id,
+        vehicleBrand: row.vehicleBrand || '',
+        vehicleModel: row.vehicleModel || '',
+        licensePlate: row.licensePlate || '',
+        origin: row.origin,
+        destination: row.destination,
+        // Ensure all required properties are provided
+        serviceType: {
+          id: foundServiceType.id,
+          name: foundServiceType.name,
+          description: foundServiceType.description || '',
+          basePrice: foundServiceType.basePrice,
+          isActive: true,
+          vehicleInfoOptional: foundServiceType.vehicleInfoOptional || false,
+          purchaseOrderRequired: foundServiceType.purchaseOrderRequired || false,
+          originRequired: foundServiceType.originRequired !== false,
+          destinationRequired: foundServiceType.destinationRequired !== false,
+          craneRequired: foundServiceType.craneRequired !== false,
+          operatorRequired: foundServiceType.operatorRequired !== false,
+          vehicleBrandRequired: foundServiceType.vehicleBrandRequired !== false,
+          vehicleModelRequired: foundServiceType.vehicleModelRequired !== false,
+          licensePlateRequired: foundServiceType.licensePlateRequired !== false,
+          createdAt: '',
+          updatedAt: ''
+        },
+        value,
+        craneId: foundCrane.id,
+        operatorId: foundOperator.id,
+        operatorCommission,
+        observations: row.observations || ''
       }
-
-      return {
-        success: errors === 0,
-        processed,
-        errors,
-        message: errors === 0 
-          ? `${processed} servicios cargados exitosamente`
-          : `${processed} servicios cargados, ${errors} errores`,
-        failedRows: failedRows.length > 0 ? failedRows : undefined
-      };
-
-    } catch (error) {
-      return {
-        success: false,
-        processed,
-        errors: total - processed,
-        message: `Error durante la carga: ${error instanceof Error ? error.message : 'Error desconocido'}`,
-        failedRows
-      };
-    }
+    };
+  } catch (error: any) {
+    console.error("Error creating service from CSV row:", error);
+    return { success: false, error: `Error al crear el servicio: ${error.message || error}` };
   }
-
-  // Generate CSV template
-  generateTemplate(): string {
-    const headers = [
-      'Folio',
-      'Fecha Solicitud',
-      'Fecha Servicio',
-      'Cliente RUT',
-      'Cliente Nombre',
-      'Vehículo Marca',
-      'Vehículo Modelo',
-      'Patente',
-      'Origen',
-      'Destino',
-      'Tipo Servicio',
-      'Valor',
-      'Grúa Patente',
-      'Operador RUT',
-      'Comisión Operador',
-      'Observaciones'
-    ];
-
-    const sampleData = [
-      'SRV-001',
-      '2024-01-15',
-      '2024-01-16',
-      '12.345.678-9',
-      'Transportes Ejemplo Ltda.',
-      'Mercedes',
-      'Actros',
-      'ABCD-12',
-      'Santiago Centro',
-      'Las Condes',
-      'Grúa Pesada',
-      '150000',
-      'GRUA-01',
-      '16.123.456-7',
-      '15000',
-      'Servicio de ejemplo'
-    ];
-
-    return [headers.join(','), sampleData.join(',')].join('\n');
-  }
-
-  // Download template file
-  downloadTemplate(): void {
-    const csvContent = this.generateTemplate();
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    const url = URL.createObjectURL(blob);
-    
-    link.setAttribute('href', url);
-    link.setAttribute('download', 'plantilla_servicios.csv');
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  }
-
-  // Download Excel template file
-  downloadExcelTemplate(): void {
-    const sampleData = [{
-      'Folio': 'SRV-001',
-      'Fecha Solicitud': '2024-01-15',
-      'Fecha Servicio': '2024-01-16',
-      'Cliente RUT': '12.345.678-9',
-      'Cliente Nombre': 'Transportes Ejemplo Ltda.',
-      'Vehículo Marca': 'Mercedes',
-      'Vehículo Modelo': 'Actros',
-      'Patente': 'ABCD-12',
-      'Origen': 'Santiago Centro',
-      'Destino': 'Las Condes',
-      'Tipo Servicio': 'Grúa Pesada',
-      'Valor': 150000,
-      'Grúa Patente': 'GRUA-01',
-      'Operador RUT': '16.123.456-7',
-      'Comisión Operador': 15000,
-      'Observaciones': 'Servicio de ejemplo'
-    }];
-
-    const worksheet = XLSX.utils.json_to_sheet(sampleData);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Servicios');
-
-    // Add cell formatting hints
-    worksheet['B1'].c = [{a:"Días", t:"Formato: YYYY-MM-DD"}];
-    worksheet['C1'].c = [{a:"Días", t:"Formato: YYYY-MM-DD"}];
-    worksheet['D1'].c = [{a:"Días", t:"Formato: 12.345.678-9"}];
-    worksheet['H1'].c = [{a:"Días", t:"Formato: AAAA-12"}];
-    worksheet['M1'].c = [{a:"Días", t:"Formato: AAAA-12"}];
-    worksheet['N1'].c = [{a:"Días", t:"Formato: 12.345.678-9"}];
-
-
-    XLSX.writeFile(workbook, 'plantilla_servicios.xlsx');
-  }
-}
+};

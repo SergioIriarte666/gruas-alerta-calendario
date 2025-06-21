@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Service } from '@/types';
@@ -17,7 +18,7 @@ export const useClientServices = (clientId: string | null) => {
                     clients!inner(id, name, rut, phone, email, address, is_active),
                     cranes(id, license_plate, brand, model, type, is_active),
                     operators(id, name, rut, phone, license_number, is_active),
-                    service_types(id, name, description, is_active)
+                    service_types(id, name, description, base_price, is_active, vehicle_info_optional, purchase_order_required, origin_required, destination_required, crane_required, operator_required, vehicle_brand_required, vehicle_model_required, license_plate_required, created_at, updated_at)
                 `)
                 .eq('client_id', id)
                 .order('service_date', { ascending: false });
@@ -50,9 +51,19 @@ export const useClientServices = (clientId: string | null) => {
                   id: service.service_types.id,
                   name: service.service_types.name,
                   description: service.service_types.description || '',
+                  basePrice: service.service_types.base_price,
                   isActive: service.service_types.is_active,
-                  createdAt: '',
-                  updatedAt: ''
+                  vehicleInfoOptional: service.service_types.vehicle_info_optional || false,
+                  purchaseOrderRequired: service.service_types.purchase_order_required || false,
+                  originRequired: service.service_types.origin_required !== false,
+                  destinationRequired: service.service_types.destination_required !== false,
+                  craneRequired: service.service_types.crane_required !== false,
+                  operatorRequired: service.service_types.operator_required !== false,
+                  vehicleBrandRequired: service.service_types.vehicle_brand_required !== false,
+                  vehicleModelRequired: service.service_types.vehicle_model_required !== false,
+                  licensePlateRequired: service.service_types.license_plate_required !== false,
+                  createdAt: service.service_types.created_at || '',
+                  updatedAt: service.service_types.updated_at || ''
                 },
                 value: Number(service.value),
                 crane: {
