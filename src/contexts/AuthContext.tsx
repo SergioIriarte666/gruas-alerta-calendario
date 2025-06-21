@@ -18,17 +18,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    let mounted = true;
+    console.log('AuthProvider: Inicializando...');
     
-    // Set up auth listener
+    // Set up auth listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         console.log('Auth state changed:', event, !!session);
-        if (mounted) {
-          setSession(session);
-          setUser(session?.user ?? null);
-          setLoading(false);
-        }
+        setSession(session);
+        setUser(session?.user ?? null);
+        setLoading(false);
       }
     );
 
@@ -37,37 +35,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       try {
         const { data: { session }, error } = await supabase.auth.getSession();
         
-        if (mounted) {
-          if (error) {
-            console.error('Error getting session:', error);
-          }
-          setSession(session);
-          setUser(session?.user ?? null);
-          setLoading(false);
+        if (error) {
+          console.error('Error getting session:', error);
         }
+        
+        console.log('Initial session:', !!session);
+        setSession(session);
+        setUser(session?.user ?? null);
+        setLoading(false);
       } catch (error) {
         console.error('Error initializing auth:', error);
-        if (mounted) {
-          setSession(null);
-          setUser(null);
-          setLoading(false);
-        }
+        setSession(null);
+        setUser(null);
+        setLoading(false);
       }
     };
 
     getInitialSession();
 
-    // Safety timeout
-    const timeoutId = setTimeout(() => {
-      if (mounted && loading) {
-        console.warn('Auth initialization timed out');
-        setLoading(false);
-      }
-    }, 5000);
-
     return () => {
-      mounted = false;
-      clearTimeout(timeoutId);
       subscription.unsubscribe();
     };
   }, []);
