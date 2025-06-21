@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -24,12 +24,14 @@ type InvoiceFormData = z.infer<typeof invoiceSchema>;
 
 interface InvoiceFormProps {
   invoice?: Invoice | null;
+  preselectedClosureId?: string | null;
   onSubmit: (data: InvoiceFormData & { subtotal: number; vat: number; total: number; clientId: string }) => void;
   onCancel: () => void;
 }
 
 export const InvoiceForm: React.FC<InvoiceFormProps> = ({
   invoice,
+  preselectedClosureId,
   onSubmit,
   onCancel
 }) => {
@@ -44,12 +46,19 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
   } = useForm<InvoiceFormData>({
     resolver: zodResolver(invoiceSchema),
     defaultValues: {
-      closureId: invoice?.closureId || '',
+      closureId: invoice?.closureId || preselectedClosureId || '',
       issueDate: invoice?.issueDate || new Date().toISOString().split('T')[0],
       dueDate: invoice?.dueDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
       status: invoice?.status || 'draft'
     }
   });
+
+  // Set preselected closure when available
+  useEffect(() => {
+    if (preselectedClosureId && !invoice) {
+      setValue('closureId', preselectedClosureId);
+    }
+  }, [preselectedClosureId, invoice, setValue]);
 
   const selectedClosureId = watch('closureId');
   const selectedClosure = closures.find(c => c.id === selectedClosureId);
@@ -80,6 +89,11 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
       <CardHeader>
         <CardTitle className="text-white">
           {invoice ? 'Editar Factura' : 'Nueva Factura'}
+          {preselectedClosureId && (
+            <span className="text-sm font-normal text-tms-green ml-2">
+              (Cierre preseleccionado)
+            </span>
+          )}
         </CardTitle>
       </CardHeader>
       <CardContent>

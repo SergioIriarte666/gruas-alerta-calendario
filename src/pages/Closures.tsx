@@ -1,5 +1,5 @@
-
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useServiceClosures } from '@/hooks/useServiceClosures';
 import { useClients } from '@/hooks/useClients';
 import { ServiceClosure } from '@/types';
@@ -10,6 +10,7 @@ import ClosuresHeader from '@/components/closures/ClosuresHeader';
 import ClosuresStats from '@/components/closures/ClosuresStats';
 import ClosuresSearch from '@/components/closures/ClosuresSearch';
 import ClosuresTable from '@/components/closures/ClosuresTable';
+import InvoiceConfirmationDialog from '@/components/closures/InvoiceConfirmationDialog';
 import {
   Sheet,
   SheetContent,
@@ -22,10 +23,13 @@ import ClosureReportForm from '@/components/closures/ClosureReportForm';
 const Closures = () => {
   const { closures, loading, createClosure, updateClosure, deleteClosure, closeClosure } = useServiceClosures();
   const { clients } = useClients();
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showReportSheet, setShowReportSheet] = useState(false);
   const [editingClosure, setEditingClosure] = useState<ServiceClosure | null>(null);
+  const [showInvoiceDialog, setShowInvoiceDialog] = useState(false);
+  const [createdClosure, setCreatedClosure] = useState<ServiceClosure | null>(null);
 
   console.log('Closures page render - closures:', closures.length, 'loading:', loading, 'showCreateModal:', showCreateModal);
 
@@ -86,8 +90,10 @@ const Closures = () => {
   const handleCreateClosure = async (closureData: Omit<ServiceClosure, 'id' | 'folio' | 'createdAt' | 'updatedAt'>) => {
     try {
       console.log('Creating closure with data:', closureData);
-      await createClosure(closureData);
+      const newClosure = await createClosure(closureData);
       setShowCreateModal(false);
+      setCreatedClosure(newClosure);
+      setShowInvoiceDialog(true);
       toast.success("Cierre creado", {
         description: "El cierre ha sido creado exitosamente.",
       });
@@ -96,6 +102,25 @@ const Closures = () => {
       toast.error("Error", {
         description: "No se pudo crear el cierre.",
       });
+    }
+  };
+
+  const handleInvoiceConfirm = () => {
+    if (createdClosure) {
+      navigate('/invoices', { 
+        state: { 
+          preselectedClosureId: createdClosure.id 
+        } 
+      });
+    }
+    setShowInvoiceDialog(false);
+    setCreatedClosure(null);
+  };
+
+  const handleInvoiceDialogClose = (open: boolean) => {
+    setShowInvoiceDialog(open);
+    if (!open) {
+      setCreatedClosure(null);
     }
   };
 
@@ -172,6 +197,13 @@ const Closures = () => {
         open={showCreateModal}
         onOpenChange={setShowCreateModal}
         onSubmit={handleCreateClosure}
+      />
+
+      <InvoiceConfirmationDialog
+        open={showInvoiceDialog}
+        onOpenChange={handleInvoiceDialogClose}
+        closure={createdClosure}
+        onConfirm={handleInvoiceConfirm}
       />
     </div>
   );

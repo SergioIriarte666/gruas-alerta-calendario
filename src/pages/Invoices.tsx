@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useInvoices } from '@/hooks/useInvoices';
 import { InvoiceForm } from '@/components/invoices/InvoiceForm';
@@ -32,7 +32,18 @@ const Invoices = () => {
   const [showForm, setShowForm] = useState(false);
   const [editingInvoice, setEditingInvoice] = useState<Invoice | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [preselectedClosureId, setPreselectedClosureId] = useState<string | null>(null);
   const ITEMS_PER_PAGE = 10;
+
+  // Check for preselected closure from navigation state
+  useEffect(() => {
+    if (location.state?.preselectedClosureId) {
+      setPreselectedClosureId(location.state.preselectedClosureId);
+      setShowForm(true);
+      // Clear the state to prevent it from persisting on page refresh
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
 
   const filteredInvoices = invoices.filter(invoice => {
     const invoiceWithDetails = getInvoiceWithDetails(invoice);
@@ -53,6 +64,7 @@ const Invoices = () => {
   const handleCreateInvoice = (data: any) => {
     createInvoice(data);
     setShowForm(false);
+    setPreselectedClosureId(null);
     toast.success("Factura creada", {
       description: "La factura ha sido creada exitosamente.",
     });
@@ -63,6 +75,7 @@ const Invoices = () => {
       updateInvoice(editingInvoice.id, data);
       setEditingInvoice(null);
       setShowForm(false);
+      setPreselectedClosureId(null);
       toast.success("Factura actualizada", {
         description: "La factura ha sido actualizada exitosamente.",
       });
@@ -95,10 +108,12 @@ const Invoices = () => {
       <div className="space-y-6">
         <InvoiceForm
           invoice={editingInvoice}
+          preselectedClosureId={preselectedClosureId}
           onSubmit={editingInvoice ? handleUpdateInvoice : handleCreateInvoice}
           onCancel={() => {
             setShowForm(false);
             setEditingInvoice(null);
+            setPreselectedClosureId(null);
           }}
         />
       </div>
