@@ -57,14 +57,14 @@ export const Sidebar = ({
     { name: 'Configuración', href: '/settings', icon: Settings, adminOnly: true },
   ];
 
+  // Always show menu items - let the backend/ProtectedRoute handle access control
   const filteredNavigation = navigationItems.filter(item => {
-    const isAdmin = user?.role === 'admin';
-    const shouldShow = !item.adminOnly || isAdmin;
-    console.log(`Menu item "${item.name}": adminOnly=${item.adminOnly}, isAdmin=${isAdmin}, showing=${shouldShow}`);
-    return shouldShow;
+    if (!item.adminOnly) return true;
+    // For admin-only items, show them if user exists and is admin
+    return user && user.role === 'admin';
   });
 
-  console.log('Visible menu items:', filteredNavigation.map(item => item.name));
+  console.log('Sidebar - User role:', user?.role, 'Filtered items:', filteredNavigation.map(item => item.name));
 
   const isActive = (href: string) => {
     if (href === '/') return location.pathname === '/';

@@ -1,3 +1,4 @@
+
 import * as React from 'react';
 import { useAuth } from './AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -148,7 +149,8 @@ export function UserProvider({ children }: UserProviderProps) {
     isLoading, 
     isAuthenticated, 
     hasUser: !!user, 
-    userRole: user?.role 
+    userRole: user?.role,
+    error 
   });
 
   return (
