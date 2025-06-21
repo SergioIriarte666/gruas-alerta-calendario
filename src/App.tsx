@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/sonner";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -23,7 +22,7 @@ import Profile from "./pages/Profile";
 import OperatorDashboard from "./pages/OperatorDashboard";
 import ServiceInspection from "./pages/operator/ServiceInspection";
 import NotFound from "./pages/NotFound";
-import { ProtectedRoute } from "@/components/layout/ProtectedRoute";
+import ProtectedRoute from "@/components/layout/ProtectedRoute";
 import { PWAWrapper } from "@/components/pwa/PWAWrapper";
 import "./App.css";
 
