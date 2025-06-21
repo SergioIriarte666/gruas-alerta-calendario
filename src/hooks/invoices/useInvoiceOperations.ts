@@ -9,11 +9,13 @@ export const useInvoiceOperations = () => {
   const createInvoice = async (invoiceData: Omit<Invoice, 'id' | 'folio' | 'createdAt' | 'updatedAt'>) => {
     try {
       // Generate folio
-      const count = await supabase
+      const { count, error: countError } = await supabase
         .from('invoices')
         .select('id', { count: 'exact' });
+
+      if (countError) throw countError;
       
-      const folio = generateInvoiceFolio(count.count || 0);
+      const folio = generateInvoiceFolio(count || 0);
 
       // Ensure integer values
       const subtotal = Math.round(invoiceData.subtotal);
@@ -58,8 +60,8 @@ export const useInvoiceOperations = () => {
       return newInvoice;
     } catch (error: any) {
       console.error('Error creating invoice:', error);
-      toast.error("Error", {
-        description: "No se pudo crear la factura.",
+      toast.error("Error al crear factura", {
+        description: error.message || "No se pudo crear la factura.",
       });
       throw error;
     }
@@ -102,8 +104,8 @@ export const useInvoiceOperations = () => {
       return { ...invoiceData, updatedAt: new Date().toISOString() };
     } catch (error: any) {
       console.error('Error updating invoice:', error);
-      toast.error("Error", {
-        description: "No se pudo actualizar la factura.",
+      toast.error("Error al actualizar factura", {
+        description: error.message || "No se pudo actualizar la factura.",
       });
       throw error;
     }
@@ -123,8 +125,8 @@ export const useInvoiceOperations = () => {
       });
     } catch (error: any) {
       console.error('Error deleting invoice:', error);
-      toast.error("Error", {
-        description: "No se pudo eliminar la factura.",
+      toast.error("Error al eliminar factura", {
+        description: error.message || "No se pudo eliminar la factura.",
       });
       throw error;
     }
@@ -149,8 +151,8 @@ export const useInvoiceOperations = () => {
       return { status: 'paid' as const, updatedAt: new Date().toISOString() };
     } catch (error: any) {
       console.error('Error marking invoice as paid:', error);
-      toast.error("Error", {
-        description: "No se pudo marcar la factura como pagada.",
+      toast.error("Error al marcar como pagada", {
+        description: error.message || "No se pudo marcar la factura como pagada.",
       });
       throw error;
     }

@@ -64,6 +64,7 @@ const Services = () => {
         description: "La lista de servicios se ha actualizado correctamente.",
       });
     } catch (error) {
+      console.error('Error refreshing services:', error);
       toast({
         type: "error",
         title: "Error",
@@ -74,17 +75,45 @@ const Services = () => {
     }
   };
 
-  const handleCreateService = (serviceData: Omit<Service, 'id' | 'createdAt' | 'updatedAt'> & { folio: string }) => {
-    createService(serviceData);
-    setIsFormOpen(false);
-    setEditingService(null);
+  const handleCreateService = async (serviceData: Omit<Service, 'id' | 'createdAt' | 'updatedAt'> & { folio: string }) => {
+    try {
+      await createService(serviceData);
+      setIsFormOpen(false);
+      setEditingService(null);
+      toast({
+        type: "success",
+        title: "Servicio creado",
+        description: "El servicio se ha creado exitosamente.",
+      });
+    } catch (error) {
+      console.error('Error creating service:', error);
+      toast({
+        type: "error",
+        title: "Error",
+        description: "No se pudo crear el servicio.",
+      });
+    }
   };
 
-  const handleUpdateService = (serviceData: Omit<Service, 'id' | 'createdAt' | 'updatedAt'> & { folio: string }) => {
+  const handleUpdateService = async (serviceData: Omit<Service, 'id' | 'createdAt' | 'updatedAt'> & { folio: string }) => {
     if (editingService) {
-      updateService(editingService.id, serviceData);
-      setEditingService(null);
-      setIsFormOpen(false);
+      try {
+        await updateService(editingService.id, serviceData);
+        setEditingService(null);
+        setIsFormOpen(false);
+        toast({
+          type: "success",
+          title: "Servicio actualizado",
+          description: "El servicio se ha actualizado exitosamente.",
+        });
+      } catch (error) {
+        console.error('Error updating service:', error);
+        toast({
+          type: "error",
+          title: "Error",
+          description: "No se pudo actualizar el servicio.",
+        });
+      }
     }
   };
 
@@ -95,7 +124,7 @@ const Services = () => {
     setIsFormOpen(open);
   };
 
-  const handleCloseService = (service: Service) => {
+  const handleCloseService = async (service: Service) => {
     if (service.status === 'invoiced') {
       toast({
         type: "error",
@@ -106,7 +135,21 @@ const Services = () => {
     }
 
     if (window.confirm(`¿Estás seguro de que deseas cerrar el servicio ${service.folio}? El estado cambiará a "Completado".`)) {
-      updateService(service.id, { status: 'completed' });
+      try {
+        await updateService(service.id, { status: 'completed' });
+        toast({
+          type: "success",
+          title: "Servicio cerrado",
+          description: "El servicio se ha cerrado exitosamente.",
+        });
+      } catch (error) {
+        console.error('Error closing service:', error);
+        toast({
+          type: "error",
+          title: "Error",
+          description: "No se pudo cerrar el servicio.",
+        });
+      }
     }
   };
 
@@ -137,7 +180,7 @@ const Services = () => {
     setIsFormOpen(true);
   };
 
-  const handleDelete = (service: Service) => {
+  const handleDelete = async (service: Service) => {
     if (service.status === 'invoiced') {
       toast({
         type: "error",
@@ -148,13 +191,31 @@ const Services = () => {
     }
 
     if (confirm(`¿Estás seguro de que deseas eliminar el servicio ${service.folio}?`)) {
-      deleteService(service.id);
+      try {
+        await deleteService(service.id);
+        toast({
+          type: "success",
+          title: "Servicio eliminado",
+          description: "El servicio se ha eliminado exitosamente.",
+        });
+      } catch (error) {
+        console.error('Error deleting service:', error);
+        toast({
+          type: "error",
+          title: "Error",
+          description: "No se pudo eliminar el servicio.",
+        });
+      }
     }
   };
 
   const handleCSVSuccess = (count: number) => {
     setIsCSVUploadOpen(false);
-    console.log(`${count} servicios cargados exitosamente`);
+    toast({
+      type: "success",
+      title: "Carga masiva exitosa",
+      description: `${count} servicios cargados exitosamente.`,
+    });
   };
 
   if (loading) {

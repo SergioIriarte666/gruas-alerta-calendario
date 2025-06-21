@@ -11,23 +11,37 @@ export const useInvoiceData = () => {
 
   const fetchInvoices = async () => {
     try {
-      const { data, error } = await supabase
+      setLoading(true);
+      
+      // First get invoices
+      const { data: invoicesData, error: invoicesError } = await supabase
         .from('invoices')
-        .select(`
-          *,
-          invoice_closures(closure_id)
-        `)
+        .select('*')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (invoicesError) throw invoicesError;
 
-      const formattedInvoices: Invoice[] = data.map(formatInvoiceData);
+      // Then get invoice_closures relationships
+      const { data: closuresData, error: closuresError } = await supabase
+        .from('invoice_closures')
+        .select('invoice_id, closure_id');
+
+      if (closuresError) throw closuresError;
+
+      // Format invoices with closure relationships
+      const formattedInvoices: Invoice[] = invoicesData.map(invoice => {
+        const closureRelation = closuresData.find(rel => rel.invoice_id === invoice.id);
+        return formatInvoiceData({
+          ...invoice,
+          invoice_closures: closureRelation ? [{ closure_id: closureRelation.closure_id }] : []
+        });
+      });
 
       setInvoices(formattedInvoices);
     } catch (error: any) {
       console.error('Error fetching invoices:', error);
-      toast.error("Error", {
-        description: "No se pudieron cargar las facturas.",
+      toast.error("Error al cargar facturas", {
+        description: "No se pudieron cargar las facturas. Verifica la conexión.",
       });
     } finally {
       setLoading(false);

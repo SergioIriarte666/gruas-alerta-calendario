@@ -17,14 +17,17 @@ export const useInvoices = () => {
     const fetchRelatedData = async () => {
       try {
         const [closuresData, clientsData] = await Promise.all([
-          supabase.from('service_closures').select('*'),
-          supabase.from('clients').select('*')
+          supabase.from('service_closures').select('*').throwOnError(),
+          supabase.from('clients').select('*').throwOnError()
         ]);
 
-        if (closuresData.data) setClosures(closuresData.data);
-        if (clientsData.data) setClients(clientsData.data);
+        setClosures(closuresData.data || []);
+        setClients(clientsData.data || []);
       } catch (error) {
         console.error('Error fetching related data:', error);
+        toast.error("Error", {
+          description: "No se pudieron cargar los datos relacionados.",
+        });
       }
     };
 
@@ -72,10 +75,7 @@ export const useInvoices = () => {
 
   const getInvoiceWithDetails = (invoice: Invoice) => {
     const closure = closures.find(c => 
-      invoices.some(inv => 
-        inv.id === invoice.id && 
-        inv.closureId === c.id
-      )
+      invoice.closureId === c.id
     );
     
     const client = clients.find(c => c.id === invoice.clientId);
