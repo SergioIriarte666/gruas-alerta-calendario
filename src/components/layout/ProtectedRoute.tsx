@@ -9,8 +9,8 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user: profileUser, loading: profileLoading } = useUser();
   const location = useLocation();
 
-  // Mostrar loading mientras se inicializa la autenticación o se carga el perfil
-  if (authLoading || (authUser && profileLoading)) {
+  // Mostrar loading mientras se inicializa la autenticación
+  if (authLoading) {
     return (
       <div className="flex items-center justify-center h-screen bg-gray-900 text-white">
         <div className="text-center">
@@ -26,8 +26,20 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     return <Navigate to="/auth" state={{ from: location }} replace />;
   }
   
-  // Si hay usuario autenticado pero no hay perfil, redirigir a auth
-  if (authUser && !profileUser) {
+  // Si hay usuario autenticado pero aún se está cargando el perfil, mostrar loading
+  if (authUser && profileLoading) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-gray-900 text-white">
+        <div className="text-center">
+          <div className="mb-4">Cargando perfil...</div>
+          <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin mx-auto"></div>
+        </div>
+      </div>
+    );
+  }
+  
+  // Si hay usuario autenticado pero no hay perfil después de cargar, redirigir a auth
+  if (authUser && !profileLoading && !profileUser) {
     console.error("Usuario autenticado sin perfil. Redirigiendo a /auth.");
     return <Navigate to="/auth" state={{ from: location }} replace />;
   }

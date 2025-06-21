@@ -87,6 +87,7 @@ export function UserProvider({ children }: UserProviderProps) {
       } else {
         setUser(null);
         setError(null);
+        setProfileLoading(false);
       }
     }
   }, [authUser, session, authLoading, fetchProfile]);
