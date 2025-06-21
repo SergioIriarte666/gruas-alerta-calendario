@@ -35,8 +35,8 @@ export const SystemSettingsTab: React.FC<SystemSettingsTabProps> = ({
       <Card 
         className="glass-card settings-card"
         style={{
-          backgroundColor: '#000000 !important',
-          border: '1px solid #9cfa24 !important',
+          backgroundColor: '#000000',
+          border: '1px solid #9cfa24',
           borderRadius: '8px',
           backdropFilter: 'blur(8px)'
         }}
@@ -153,15 +153,15 @@ export const SystemSettingsTab: React.FC<SystemSettingsTabProps> = ({
         </CardContent>
       </Card>
 
-      {/* SECCIÓN DE GESTIÓN DE RESPALDOS */}
+      {/* SECCIÓN DE GESTIÓN DE RESPALDOS - Forzada a renderizar */}
       <div 
         className="backup-section-container"
         style={{ 
           backgroundColor: '#000000', 
           padding: '8px',
-          display: 'block !important',
-          visibility: 'visible !important',
-          opacity: '1 !important'
+          display: 'block',
+          visibility: 'visible',
+          opacity: 1
         }}
         data-component="backup-management"
       >
