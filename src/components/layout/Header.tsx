@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Menu, Search, User, Settings } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -9,21 +8,26 @@ import { useToast } from '@/components/ui/custom-toast';
 import { useUser } from '@/contexts/UserContext';
 import { useSettings } from '@/hooks/useSettings';
 import { NotificationsDropdown } from './NotificationsDropdown';
-
 interface HeaderProps {
   setIsMobileMenuOpen: (open: boolean) => void;
 }
-
-export const Header = ({ setIsMobileMenuOpen }: HeaderProps) => {
+export const Header = ({
+  setIsMobileMenuOpen
+}: HeaderProps) => {
   const navigate = useNavigate();
-  const { user, logout } = useUser();
-  const { settings } = useSettings();
-  const { toast } = useToast();
+  const {
+    user,
+    logout
+  } = useUser();
+  const {
+    settings
+  } = useSettings();
+  const {
+    toast
+  } = useToast();
   const isAdmin = user?.role === 'admin';
-
   const companyName = settings?.company?.name || 'Gruas 5 Norte';
   const companyLogo = settings?.company?.logo;
-
   const handleLogout = async () => {
     try {
       await logout();
@@ -32,7 +36,9 @@ export const Header = ({ setIsMobileMenuOpen }: HeaderProps) => {
         title: 'Sesión cerrada',
         description: 'Has cerrado sesión correctamente'
       });
-      navigate('/auth', { replace: true });
+      navigate('/auth', {
+        replace: true
+      });
     } catch (error) {
       console.error("Header: Logout failed:", error);
       toast({
@@ -42,35 +48,19 @@ export const Header = ({ setIsMobileMenuOpen }: HeaderProps) => {
       });
     }
   };
-
   const handleProfileClick = () => {
     navigate('/profile');
   };
-
-  return (
-    <header 
-      className="flex h-16 items-center justify-between backdrop-blur-lg border-b border-gray-700/50 px-4 sm:px-6 transition-colors duration-300 bg-black"
-    >
+  return <header className="flex h-16 items-center justify-between backdrop-blur-lg border-b border-gray-700/50 px-4 sm:px-6 transition-colors duration-300 bg-black">
       <div className="flex items-center gap-4">
-        <Button
-          variant="ghost"
-          size="icon"
-          className="lg:hidden text-white hover:text-black hover:bg-tms-green"
-          onClick={() => setIsMobileMenuOpen(true)}
-        >
+        <Button variant="ghost" size="icon" onClick={() => setIsMobileMenuOpen(true)} className="lg:hidden hover:bg-tms-green text-zinc-950">
           <Menu className="h-6 w-6" />
           <span className="sr-only">Abrir menú</span>
         </Button>
 
         {/* Company branding */}
         <div className="flex items-center space-x-3">
-          {companyLogo && (
-            <img 
-              src={companyLogo} 
-              alt="Logo empresa" 
-              className="h-8 w-8 object-contain"
-            />
-          )}
+          {companyLogo && <img src={companyLogo} alt="Logo empresa" className="h-8 w-8 object-contain" />}
           <div className="hidden sm:block">
             <h1 className="text-lg font-semibold text-white">{companyName}</h1>
             <p className="text-xs text-white">Sistema de Gestión</p>
@@ -79,10 +69,7 @@ export const Header = ({ setIsMobileMenuOpen }: HeaderProps) => {
         
         <div className="hidden lg:block relative max-w-md flex-1">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white w-4 h-4" />
-          <Input
-            placeholder="Buscar servicios, clientes, facturas..."
-            className="pl-10 bg-gray-800/50 border-gray-600 text-white placeholder-white/70 focus:border-tms-green focus:ring-tms-green"
-          />
+          <Input placeholder="Buscar servicios, clientes, facturas..." className="pl-10 bg-gray-800/50 border-gray-600 text-white placeholder-white/70 focus:border-tms-green focus:ring-tms-green" />
         </div>
       </div>
 
@@ -91,11 +78,7 @@ export const Header = ({ setIsMobileMenuOpen }: HeaderProps) => {
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="text-white hover:text-black hover:bg-tms-green rounded-full bg-tms-green/20 border border-tms-green/30"
-            >
+            <Button variant="ghost" size="icon" className="text-white hover:text-black hover:bg-tms-green rounded-full bg-tms-green/20 border border-tms-green/30">
               <User className="w-5 h-5 text-tms-green" />
             </Button>
           </DropdownMenuTrigger>
@@ -104,32 +87,20 @@ export const Header = ({ setIsMobileMenuOpen }: HeaderProps) => {
               {user?.name || 'Mi Cuenta'}
             </DropdownMenuLabel>
             <DropdownMenuSeparator className="bg-tms-green/30" />
-            <DropdownMenuItem
-              className="text-white hover:text-black hover:bg-tms-green cursor-pointer focus:bg-tms-green focus:text-black"
-              onClick={handleProfileClick}
-            >
+            <DropdownMenuItem className="text-white hover:text-black hover:bg-tms-green cursor-pointer focus:bg-tms-green focus:text-black" onClick={handleProfileClick}>
               <User className="w-4 h-4 mr-2" />
               Perfil
             </DropdownMenuItem>
-            {isAdmin && (
-              <DropdownMenuItem
-                className="text-white hover:text-black hover:bg-tms-green cursor-pointer focus:bg-tms-green focus:text-black"
-                onClick={() => navigate('/settings')}
-              >
+            {isAdmin && <DropdownMenuItem className="text-white hover:text-black hover:bg-tms-green cursor-pointer focus:bg-tms-green focus:text-black" onClick={() => navigate('/settings')}>
                 <Settings className="w-4 h-4 mr-2" />
                 Configuración
-              </DropdownMenuItem>
-            )}
+              </DropdownMenuItem>}
             <DropdownMenuSeparator className="bg-tms-green/30" />
-            <DropdownMenuItem
-              className="text-red-400 hover:text-red-300 hover:bg-red-500/10 cursor-pointer focus:bg-red-500/10 focus:text-red-300"
-              onClick={handleLogout}
-            >
+            <DropdownMenuItem className="text-red-400 hover:text-red-300 hover:bg-red-500/10 cursor-pointer focus:bg-red-500/10 focus:text-red-300" onClick={handleLogout}>
               Cerrar Sesión
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
-    </header>
-  );
+    </header>;
 };
