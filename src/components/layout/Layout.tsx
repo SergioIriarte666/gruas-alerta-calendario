@@ -1,12 +1,15 @@
 
 import React from 'react';
-import { Outlet } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { Header } from './Header';
 import { ConnectionStatus } from '@/components/shared/ConnectionStatus';
 import { cn } from '@/lib/utils';
 
-export const Layout = () => {
+interface LayoutProps {
+  children: React.ReactNode;
+}
+
+export const Layout = ({ children }: LayoutProps) => {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = React.useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
 
@@ -26,7 +29,7 @@ export const Layout = () => {
       )}>
         <Header setIsMobileMenuOpen={setIsMobileMenuOpen} />
         <main className="p-4 sm:p-6">
-          <Outlet />
+          {children}
         </main>
       </div>
       

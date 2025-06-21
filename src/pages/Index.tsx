@@ -1,13 +1,10 @@
 
 import React from 'react';
-import { Layout } from '@/components/layout/Layout';
+import { Navigate } from 'react-router-dom';
 
 const Index: React.FC = () => {
-  return (
-    <Layout>
-      {/* The content will be rendered by the Outlet in Layout */}
-    </Layout>
-  );
+  // Redirigir directamente al dashboard
+  return <Navigate to="/dashboard" replace />;
 };
 
 export default Index;

@@ -1,151 +1,140 @@
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { ServiceTypeConfig, ServiceTypeFormData } from '@/types/serviceTypes';
 import { toast } from 'sonner';
+import { ServiceTypeConfig } from '@/types/serviceTypes';
+
+interface CreateServiceTypeData {
+  name: string;
+  description?: string;
+  base_price?: number;
+  vehicle_info_optional?: boolean;
+  purchase_order_required?: boolean;
+  origin_required?: boolean;
+  destination_required?: boolean;
+  crane_required?: boolean;
+  operator_required?: boolean;
+  vehicle_brand_required?: boolean;
+  vehicle_model_required?: boolean;
+  license_plate_required?: boolean;
+}
 
 export const useServiceTypesManagement = () => {
-  const [serviceTypes, setServiceTypes] = useState<ServiceTypeConfig[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
 
-  const fetchServiceTypes = async () => {
-    try {
-      setLoading(true);
+  const { data: serviceTypes = [], isLoading: loading, refetch } = useQuery({
+    queryKey: ['service-types'],
+    queryFn: async (): Promise<ServiceTypeConfig[]> => {
       const { data, error } = await supabase
         .from('service_types')
         .select('*')
         .order('name');
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error loading service types:', error);
+        throw new Error('Error al cargar tipos de servicio');
+      }
 
-      const formattedData: ServiceTypeConfig[] = (data || []).map(item => ({
+      return (data || []).map(item => ({
         id: item.id,
         name: item.name,
-        description: item.description,
-        basePrice: item.base_price,
+        description: item.description || '',
+        basePrice: item.base_price || 0,
         isActive: item.is_active,
-        vehicleInfoOptional: item.vehicle_info_optional,
-        purchaseOrderRequired: item.purchase_order_required,
-        originRequired: item.origin_required,
-        destinationRequired: item.destination_required,
-        craneRequired: item.crane_required,
-        operatorRequired: item.operator_required,
-        vehicleBrandRequired: item.vehicle_brand_required,
-        vehicleModelRequired: item.vehicle_model_required,
-        licensePlateRequired: item.license_plate_required,
+        vehicleInfoOptional: item.vehicle_info_optional || false,
+        purchaseOrderRequired: item.purchase_order_required || false,
+        originRequired: item.origin_required !== false,
+        destinationRequired: item.destination_required !== false,
+        craneRequired: item.crane_required !== false,
+        operatorRequired: item.operator_required !== false,
+        vehicleBrandRequired: item.vehicle_brand_required !== false,
+        vehicleModelRequired: item.vehicle_model_required !== false,
+        licensePlateRequired: item.license_plate_required !== false,
         createdAt: item.created_at,
         updatedAt: item.updated_at
       }));
-
-      setServiceTypes(formattedData);
-    } catch (error: any) {
-      console.error('Error fetching service types:', error);
-      toast.error('Error al cargar tipos de servicio', {
-        description: error.message
-      });
-    } finally {
-      setLoading(false);
     }
-  };
+  });
 
-  const createServiceType = async (data: ServiceTypeFormData) => {
-    try {
+  const createMutation = useMutation({
+    mutationFn: async (data: CreateServiceTypeData) => {
       const { error } = await supabase
         .from('service_types')
-        .insert({
-          name: data.name,
-          description: data.description,
-          base_price: data.basePrice,
-          is_active: data.isActive,
-          vehicle_info_optional: data.vehicleInfoOptional,
-          purchase_order_required: data.purchaseOrderRequired,
-          origin_required: data.originRequired,
-          destination_required: data.destinationRequired,
-          crane_required: data.craneRequired,
-          operator_required: data.operatorRequired,
-          vehicle_brand_required: data.vehicleBrandRequired,
-          vehicle_model_required: data.vehicleModelRequired,
-          license_plate_required: data.licensePlateRequired
-        });
+        .insert([data]);
 
-      if (error) throw error;
-
-      await fetchServiceTypes();
+      if (error) {
+        console.error('Error creating service type:', error);
+        throw new Error('Error al crear tipo de servicio');
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['service-types'] });
       toast.success('Tipo de servicio creado exitosamente');
-    } catch (error: any) {
-      console.error('Error creating service type:', error);
+    },
+    onError: (error: any) => {
       toast.error('Error al crear tipo de servicio', {
         description: error.message
       });
-      throw error;
     }
-  };
+  });
 
-  const updateServiceType = async (id: string, data: ServiceTypeFormData) => {
-    try {
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: Partial<CreateServiceTypeData> }) => {
       const { error } = await supabase
         .from('service_types')
-        .update({
-          name: data.name,
-          description: data.description,
-          base_price: data.basePrice,
-          is_active: data.isActive,
-          vehicle_info_optional: data.vehicleInfoOptional,
-          purchase_order_required: data.purchaseOrderRequired,
-          origin_required: data.originRequired,
-          destination_required: data.destinationRequired,
-          crane_required: data.craneRequired,
-          operator_required: data.operatorRequired,
-          vehicle_brand_required: data.vehicleBrandRequired,
-          vehicle_model_required: data.vehicleModelRequired,
-          license_plate_required: data.licensePlateRequired,
-          updated_at: new Date().toISOString()
-        })
+        .update(data)
         .eq('id', id);
 
-      if (error) throw error;
-
-      await fetchServiceTypes();
+      if (error) {
+        console.error('Error updating service type:', error);
+        throw new Error('Error al actualizar tipo de servicio');
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['service-types'] });
       toast.success('Tipo de servicio actualizado exitosamente');
-    } catch (error: any) {
-      console.error('Error updating service type:', error);
+    },
+    onError: (error: any) => {
       toast.error('Error al actualizar tipo de servicio', {
         description: error.message
       });
-      throw error;
     }
-  };
+  });
 
-  const deleteServiceType = async (id: string) => {
-    try {
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
       const { error } = await supabase
         .from('service_types')
         .delete()
         .eq('id', id);
 
-      if (error) throw error;
-
-      await fetchServiceTypes();
+      if (error) {
+        console.error('Error deleting service type:', error);
+        throw new Error('Error al eliminar tipo de servicio');
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['service-types'] });
       toast.success('Tipo de servicio eliminado exitosamente');
-    } catch (error: any) {
-      console.error('Error deleting service type:', error);
+    },
+    onError: (error: any) => {
       toast.error('Error al eliminar tipo de servicio', {
         description: error.message
       });
-      throw error;
     }
-  };
-
-  useEffect(() => {
-    fetchServiceTypes();
-  }, []);
+  });
 
   return {
     serviceTypes,
     loading,
-    createServiceType,
-    updateServiceType,
-    deleteServiceType,
-    refetch: fetchServiceTypes
+    refetch,
+    createServiceType: createMutation.mutate,
+    updateServiceType: (id: string, data: Partial<CreateServiceTypeData>) => 
+      updateMutation.mutate({ id, data }),
+    deleteServiceType: deleteMutation.mutate,
+    isCreating: createMutation.isPending,
+    isUpdating: updateMutation.isPending,
+    isDeleting: deleteMutation.isPending
   };
 };

@@ -1,9 +1,11 @@
+
 import { Toaster } from "@/components/ui/sonner";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { UserProvider } from "@/contexts/UserContext";
 import { NotificationProvider } from "@/contexts/NotificationContext";
+import { Layout } from "@/components/layout/Layout";
 import Index from "./pages/Index";
 import Dashboard from "./pages/Dashboard";
 import Services from "./pages/Services";
@@ -46,19 +48,19 @@ function App() {
                 <Routes>
                   <Route path="/auth" element={<Auth />} />
                   <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
-                  <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-                  <Route path="/services" element={<ProtectedRoute><Services /></ProtectedRoute>} />
-                  <Route path="/service-types" element={<ProtectedRoute><ServiceTypes /></ProtectedRoute>} />
-                  <Route path="/clients" element={<ProtectedRoute><Clients /></ProtectedRoute>} />
-                  <Route path="/cranes" element={<ProtectedRoute><Cranes /></ProtectedRoute>} />
-                  <Route path="/operators" element={<ProtectedRoute><Operators /></ProtectedRoute>} />
-                  <Route path="/costs" element={<ProtectedRoute><Costs /></ProtectedRoute>} />
-                  <Route path="/calendar" element={<ProtectedRoute><Calendar /></ProtectedRoute>} />
-                  <Route path="/reports" element={<ProtectedRoute><Reports /></ProtectedRoute>} />
-                  <Route path="/invoices" element={<ProtectedRoute><Invoices /></ProtectedRoute>} />
-                  <Route path="/closures" element={<ProtectedRoute><Closures /></ProtectedRoute>} />
-                  <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
-                  <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+                  <Route path="/dashboard" element={<ProtectedRoute><Layout><Dashboard /></Layout></ProtectedRoute>} />
+                  <Route path="/services" element={<ProtectedRoute><Layout><Services /></Layout></ProtectedRoute>} />
+                  <Route path="/service-types" element={<ProtectedRoute><Layout><ServiceTypes /></Layout></ProtectedRoute>} />
+                  <Route path="/clients" element={<ProtectedRoute><Layout><Clients /></Layout></ProtectedRoute>} />
+                  <Route path="/cranes" element={<ProtectedRoute><Layout><Cranes /></Layout></ProtectedRoute>} />
+                  <Route path="/operators" element={<ProtectedRoute><Layout><Operators /></Layout></ProtectedRoute>} />
+                  <Route path="/costs" element={<ProtectedRoute><Layout><Costs /></Layout></ProtectedRoute>} />
+                  <Route path="/calendar" element={<ProtectedRoute><Layout><Calendar /></Layout></ProtectedRoute>} />
+                  <Route path="/reports" element={<ProtectedRoute><Layout><Reports /></Layout></ProtectedRoute>} />
+                  <Route path="/invoices" element={<ProtectedRoute><Layout><Invoices /></Layout></ProtectedRoute>} />
+                  <Route path="/closures" element={<ProtectedRoute><Layout><Closures /></Layout></ProtectedRoute>} />
+                  <Route path="/settings" element={<ProtectedRoute><Layout><Settings /></Layout></ProtectedRoute>} />
+                  <Route path="/profile" element={<ProtectedRoute><Layout><Profile /></Layout></ProtectedRoute>} />
                   <Route path="/operator" element={<ProtectedRoute><OperatorDashboard /></ProtectedRoute>} />
                   <Route path="/operator/service/:serviceId/inspection" element={<ProtectedRoute><ServiceInspection /></ProtectedRoute>} />
                   <Route path="*" element={<NotFound />} />
