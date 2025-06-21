@@ -70,45 +70,67 @@ const ToastComponent: React.FC<{ toast: Toast; onRemove: (id: string) => void }>
   const getIcon = () => {
     switch (toast.type) {
       case 'success':
-        return <CheckCircle className="w-5 h-5 text-green-500" />;
+        return <CheckCircle className="w-5 h-5 text-tms-green" />;
       case 'error':
-        return <AlertCircle className="w-5 h-5 text-red-500" />;
+        return <AlertCircle className="w-5 h-5 text-red-400" />;
       case 'warning':
-        return <AlertCircle className="w-5 h-5 text-yellow-500" />;
+        return <AlertCircle className="w-5 h-5 text-yellow-400" />;
       case 'info':
-        return <Info className="w-5 h-5 text-blue-500" />;
+        return <Info className="w-5 h-5 text-blue-400" />;
     }
   };
 
   const getBorderColor = () => {
     switch (toast.type) {
       case 'success':
-        return 'border-green-500';
+        return 'border-l-tms-green';
       case 'error':
-        return 'border-red-500';
+        return 'border-l-red-400';
       case 'warning':
-        return 'border-yellow-500';
+        return 'border-l-yellow-400';
       case 'info':
-        return 'border-blue-500';
+        return 'border-l-blue-400';
+    }
+  };
+
+  const getBackgroundColor = () => {
+    switch (toast.type) {
+      case 'success':
+        return 'bg-tms-green/10 border-tms-green/30';
+      case 'error':
+        return 'bg-red-500/10 border-red-500/30';
+      case 'warning':
+        return 'bg-yellow-500/10 border-yellow-500/30';
+      case 'info':
+        return 'bg-blue-500/10 border-blue-500/30';
     }
   };
 
   return (
-    <div className={cn(
-      "bg-white dark:bg-gray-800 border-l-4 rounded-lg shadow-lg p-4 min-w-[300px] animate-in slide-in-from-right-full",
-      getBorderColor()
-    )}>
+    <div 
+      className={cn(
+        "border-l-4 rounded-lg shadow-lg p-4 min-w-[300px] animate-in slide-in-from-right-full border",
+        getBorderColor(),
+        getBackgroundColor()
+      )}
+      style={{
+        background: '#000000',
+        borderColor: toast.type === 'success' ? '#9cfa24' : 
+                   toast.type === 'error' ? '#ef4444' : 
+                   toast.type === 'warning' ? '#f59e0b' : '#3b82f6'
+      }}
+    >
       <div className="flex items-start justify-between">
         <div className="flex items-start space-x-3">
           {getIcon()}
           <div className="flex-1">
             {toast.title && (
-              <h4 className="font-semibold text-gray-900 dark:text-white text-sm">
+              <h4 className="font-semibold text-white text-sm" style={{ color: '#ffffff !important' }}>
                 {toast.title}
               </h4>
             )}
             {toast.description && (
-              <p className="text-gray-600 dark:text-gray-300 text-sm mt-1">
+              <p className="text-white/90 text-sm mt-1" style={{ color: 'rgba(255, 255, 255, 0.9) !important' }}>
                 {toast.description}
               </p>
             )}
@@ -116,7 +138,8 @@ const ToastComponent: React.FC<{ toast: Toast; onRemove: (id: string) => void }>
         </div>
         <button
           onClick={() => onRemove(toast.id)}
-          className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 ml-2"
+          className="text-white/70 hover:text-white ml-2 transition-colors"
+          style={{ color: 'rgba(255, 255, 255, 0.7)' }}
         >
           <X className="w-4 h-4" />
         </button>
