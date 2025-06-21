@@ -41,7 +41,7 @@ export const useInvoiceOperations = () => {
 
       if (invoiceError) throw invoiceError;
 
-      // Create invoice-closure relationship
+      // Create invoice-closure relationship with improved error handling
       const { error: relationError } = await supabase
         .from('invoice_closures')
         .insert({
@@ -49,7 +49,34 @@ export const useInvoiceOperations = () => {
           closure_id: invoiceData.closureId
         });
 
-      if (relationError) throw relationError;
+      if (relationError) {
+        // Check for specific validation errors
+        if (relationError.message.includes('mismo cliente')) {
+          toast.error("Error de validación", {
+            description: "La factura y el cierre deben pertenecer al mismo cliente.",
+          });
+        } else if (relationError.message.includes('cerrados')) {
+          toast.error("Estado del cierre inválido", {
+            description: "Solo se pueden facturar cierres que estén cerrados.",
+          });
+        } else if (relationError.message.includes('ya ha sido facturado')) {
+          toast.error("Cierre ya facturado", {
+            description: "Este cierre ya ha sido facturado anteriormente.",
+          });
+        } else if (relationError.message.includes('permission denied') || relationError.message.includes('row-level security')) {
+          toast.error("Permisos insuficientes", {
+            description: "No tienes permisos para crear esta relación. Contacta a un administrador.",
+          });
+        } else {
+          toast.error("Error al vincular cierre", {
+            description: relationError.message || "Error desconocido al vincular el cierre con la factura.",
+          });
+        }
+        
+        // Delete the created invoice if the relationship failed
+        await supabase.from('invoices').delete().eq('id', data.id);
+        throw relationError;
+      }
       
       const newInvoice = formatInvoiceData({ ...data, invoice_closures: [{ closure_id: invoiceData.closureId }] });
 
@@ -60,9 +87,16 @@ export const useInvoiceOperations = () => {
       return newInvoice;
     } catch (error: any) {
       console.error('Error creating invoice:', error);
-      toast.error("Error al crear factura", {
-        description: error.message || "No se pudo crear la factura.",
-      });
+      
+      // Don't show toast again if we already handled it above
+      if (!error.message?.includes('mismo cliente') && 
+          !error.message?.includes('cerrados') && 
+          !error.message?.includes('ya ha sido facturado') &&
+          !error.message?.includes('permission denied')) {
+        toast.error("Error al crear factura", {
+          description: error.message || "No se pudo crear la factura.",
+        });
+      }
       throw error;
     }
   };
@@ -85,7 +119,14 @@ export const useInvoiceOperations = () => {
         .update(updateData)
         .eq('id', id);
 
-      if (error) throw error;
+      if (error) {
+        if (error.message.includes('permission denied') || error.message.includes('row-level security')) {
+          toast.error("Permisos insuficientes", {
+            description: "No tienes permisos para actualizar esta factura. Contacta a un administrador.",
+          });
+        }
+        throw error;
+      }
 
       // Update closure relationship if closureId changed
       if (invoiceData.closureId !== undefined) {
@@ -94,7 +135,19 @@ export const useInvoiceOperations = () => {
           .update({ closure_id: invoiceData.closureId })
           .eq('invoice_id', id);
 
-        if (relationError) throw relationError;
+        if (relationError) {
+          // Handle relation update errors
+          if (relationError.message.includes('mismo cliente')) {
+            toast.error("Error de validación", {
+              description: "La factura y el cierre deben pertenecer al mismo cliente.",
+            });
+          } else if (relationError.message.includes('permission denied')) {
+            toast.error("Permisos insuficientes", {
+              description: "No tienes permisos para actualizar esta relación.",
+            });
+          }
+          throw relationError;
+        }
       }
 
       toast.success("Factura actualizada", {
@@ -104,9 +157,13 @@ export const useInvoiceOperations = () => {
       return { ...invoiceData, updatedAt: new Date().toISOString() };
     } catch (error: any) {
       console.error('Error updating invoice:', error);
-      toast.error("Error al actualizar factura", {
-        description: error.message || "No se pudo actualizar la factura.",
-      });
+      
+      if (!error.message?.includes('permission denied') && 
+          !error.message?.includes('mismo cliente')) {
+        toast.error("Error al actualizar factura", {
+          description: error.message || "No se pudo actualizar la factura.",
+        });
+      }
       throw error;
     }
   };
@@ -118,16 +175,26 @@ export const useInvoiceOperations = () => {
         .delete()
         .eq('id', id);
 
-      if (error) throw error;
+      if (error) {
+        if (error.message.includes('permission denied') || error.message.includes('row-level security')) {
+          toast.error("Permisos insuficientes", {
+            description: "No tienes permisos para eliminar esta factura. Contacta a un administrador.",
+          });
+        }
+        throw error;
+      }
       
       toast.success("Factura eliminada", {
         description: "La factura ha sido eliminada exitosamente.",
       });
     } catch (error: any) {
       console.error('Error deleting invoice:', error);
-      toast.error("Error al eliminar factura", {
-        description: error.message || "No se pudo eliminar la factura.",
-      });
+      
+      if (!error.message?.includes('permission denied')) {
+        toast.error("Error al eliminar factura", {
+          description: error.message || "No se pudo eliminar la factura.",
+        });
+      }
       throw error;
     }
   };
@@ -142,7 +209,14 @@ export const useInvoiceOperations = () => {
         })
         .eq('id', id);
 
-      if (error) throw error;
+      if (error) {
+        if (error.message.includes('permission denied') || error.message.includes('row-level security')) {
+          toast.error("Permisos insuficientes", {
+            description: "No tienes permisos para actualizar esta factura. Contacta a un administrador.",
+          });
+        }
+        throw error;
+      }
 
       toast.success("Factura pagada", {
         description: "La factura ha sido marcada como pagada exitosamente.",
@@ -151,9 +225,12 @@ export const useInvoiceOperations = () => {
       return { status: 'paid' as const, updatedAt: new Date().toISOString() };
     } catch (error: any) {
       console.error('Error marking invoice as paid:', error);
-      toast.error("Error al marcar como pagada", {
-        description: error.message || "No se pudo marcar la factura como pagada.",
-      });
+      
+      if (!error.message?.includes('permission denied')) {
+        toast.error("Error al marcar como pagada", {
+          description: error.message || "No se pudo marcar la factura como pagada.",
+        });
+      }
       throw error;
     }
   };

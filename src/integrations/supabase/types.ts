@@ -961,6 +961,10 @@ export type Database = {
           updated_at: string
         }[]
       }
+      get_current_user_role: {
+        Args: Record<PropertyKey, never>
+        Returns: Database["public"]["Enums"]["app_role"]
+      }
       get_operator_id_by_user: {
         Args: { p_user_id: string }
         Returns: string
