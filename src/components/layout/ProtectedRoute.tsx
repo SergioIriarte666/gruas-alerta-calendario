@@ -37,8 +37,9 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     return <Navigate to="/auth" state={{ from: location }} replace />;
   }
   
-  // Show loading while profile is loading
-  if (profileLoading) {
+  // Show loading while profile is loading - EVITA REDIRECCIONES PREMATURAS
+  if (authUser && profileLoading) {
+    console.log('ProtectedRoute: Profile loading, showing spinner...');
     return (
       <div className="flex items-center justify-center h-screen bg-gray-900 text-white">
         <div className="text-center">
@@ -67,16 +68,38 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     );
   }
 
-  // If authenticated but no profile found, redirect to auth
-  if (authUser && !profileUser) {
-    console.log('ProtectedRoute: User authenticated but no profile found, redirecting to /auth');
-    return <Navigate to="/auth" state={{ from: location }} replace />;
+  // If authenticated but no profile found after loading, show error
+  if (authUser && !profileLoading && !profileUser) {
+    console.error('ProtectedRoute: Perfil no encontrado después de autenticación para usuario:', authUser.id);
+    return (
+      <div className="flex items-center justify-center h-screen bg-gray-900 text-white">
+        <div className="text-center max-w-md">
+          <h2 className="text-xl font-semibold mb-4">Error de Perfil</h2>
+          <p className="text-gray-400 mb-4">No se pudo cargar tu perfil de usuario.</p>
+          <p className="text-gray-500 text-sm mb-4">Usuario ID: {authUser.id}</p>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="px-4 py-2 bg-tms-green text-white rounded hover:bg-tms-green-dark mr-2"
+          >
+            Reintentar
+          </button>
+          <button 
+            onClick={() => window.location.href = '/auth'} 
+            className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
+          >
+            Volver a Login
+          </button>
+        </div>
+      </div>
+    );
   }
 
   // Handle role-based routing
   if (profileUser) {
     const isOperatorPortalRoute = location.pathname === '/operator' || location.pathname.startsWith('/operator/');
     const userRole = profileUser.role;
+
+    console.log('ProtectedRoute: Role-based routing check - userRole:', userRole, 'path:', location.pathname);
 
     // Operator auto-redirect
     if (userRole === 'operator' && !isOperatorPortalRoute) {

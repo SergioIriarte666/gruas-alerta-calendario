@@ -23,7 +23,8 @@ const Auth = () => {
   } = useAuth();
   const {
     user: profileUser,
-    loading: profileLoading
+    loading: profileLoading,
+    retryFetchProfile
   } = useUser();
   const navigate = useNavigate();
   const {
@@ -31,9 +32,21 @@ const Auth = () => {
   } = useToast();
 
   useEffect(() => {
+    console.log('Auth: State check -', {
+      authLoading,
+      profileLoading,
+      hasAuthUser: !!authUser,
+      hasProfileUser: !!profileUser,
+      profileRole: profileUser?.role
+    });
+
     // Solo redirigir cuando tengamos usuario completo (auth + perfil) y no estemos cargando
     if (!authLoading && !profileLoading && authUser && profileUser) {
-      console.log('Usuario completamente cargado, redirigiendo...');
+      console.log('Auth: Usuario completamente cargado, redirigiendo...', {
+        role: profileUser.role,
+        destination: profileUser.role === 'operator' ? '/operator' : '/dashboard'
+      });
+      
       if (profileUser.role === 'operator') {
         navigate('/operator', { replace: true });
       } else {
@@ -47,21 +60,29 @@ const Auth = () => {
     setLoading(true);
     
     try {
+      console.log('Auth: Starting login process...');
       cleanupAuthState();
       await performGlobalSignOut(supabase);
       
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password
       });
       
       if (error) {
+        console.error('Auth: Login error:', error.message);
         toast({
           type: 'error',
           title: 'Error al iniciar sesión',
           description: error.message
         });
-      } else {
+      } else if (data.user) {
+        console.log('Auth: Login successful, user ID:', data.user.id);
+        // Forzar actualización del perfil tras login
+        setTimeout(() => {
+          retryFetchProfile();
+        }, 100);
+        
         toast({
           type: 'success',
           title: 'Inicio de sesión exitoso',
@@ -69,6 +90,7 @@ const Auth = () => {
         });
       }
     } catch (error: any) {
+      console.error('Auth: Unexpected login error:', error.message);
       toast({
         type: 'error',
         title: 'Error al iniciar sesión',

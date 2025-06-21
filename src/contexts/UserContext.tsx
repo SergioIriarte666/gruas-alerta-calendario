@@ -54,17 +54,20 @@ export function UserProvider({ children }: UserProviderProps) {
         .single();
 
       if (fetchError) {
-        console.error('UserContext: Error fetching profile:', fetchError);
+        console.error('UserContext: Error fetching profile:', fetchError.message, 'Code:', fetchError.code);
         if (fetchError.code === 'PGRST116') {
-          setError('Perfil no encontrado. Es posible que necesites completar la configuración.');
+          setError('Perfil no encontrado. Verifica que exista en la base de datos.');
         } else {
-          setError('Error al cargar tu perfil.');
+          setError('Error al cargar tu perfil. Inténtalo de nuevo.');
         }
         setUser(null);
       } else if (data) {
-        // Ensure role is one of the valid types
-        const validRoles: Array<'admin' | 'operator' | 'viewer'> = ['admin', 'operator', 'viewer'];
-        const userRole = validRoles.includes(data.role as any) ? data.role as 'admin' | 'operator' | 'viewer' : 'viewer';
+        // Validación segura del rol para manejar mayúsculas/minúsculas
+        const normalizedRole = data.role?.toLowerCase();
+        const validRoles = ['admin', 'operator', 'viewer'];
+        const userRole = validRoles.includes(normalizedRole) 
+          ? normalizedRole as 'admin' | 'operator' | 'viewer' 
+          : 'viewer';
         
         const userData = {
           id: data.id,
@@ -77,7 +80,7 @@ export function UserProvider({ children }: UserProviderProps) {
         setError(null);
       }
     } catch (e: any) {
-      console.error("UserContext: Unexpected error:", e);
+      console.error("UserContext: Unexpected error:", e.message);
       setError("Error inesperado al cargar el perfil.");
       setUser(null);
     } finally {
@@ -93,6 +96,7 @@ export function UserProvider({ children }: UserProviderProps) {
     }
 
     if (authUser && session) {
+      console.log('UserContext: Authenticated user found, fetching profile...');
       fetchProfile(authUser.id);
     } else {
       console.log('UserContext: No authenticated user, clearing profile');
@@ -137,6 +141,7 @@ export function UserProvider({ children }: UserProviderProps) {
 
   const retryFetchProfile = () => {
     if (authUser) {
+      console.log('UserContext: Retrying profile fetch...');
       setError(null);
       fetchProfile(authUser.id);
     }
@@ -150,7 +155,8 @@ export function UserProvider({ children }: UserProviderProps) {
     isAuthenticated, 
     hasUser: !!user, 
     userRole: user?.role,
-    error 
+    error,
+    authUserId: authUser?.id
   });
 
   return (
