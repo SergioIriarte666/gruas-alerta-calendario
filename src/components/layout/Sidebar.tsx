@@ -1,7 +1,9 @@
+
 import React from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useUser } from '@/contexts/UserContext';
+import { useSettings } from '@/hooks/useSettings';
 import { cn } from '@/lib/utils';
 import { LayoutDashboard, Calendar, Truck, Users, Building2, Wrench, DollarSign, FileText, Receipt, BarChart3, Settings, Menu, X, LogOut, ChevronLeft, ChevronRight, Tags } from 'lucide-react';
 
@@ -22,8 +24,12 @@ export const Sidebar = ({
     user,
     logout
   } = useUser();
+  const { settings } = useSettings();
   const location = useLocation();
   console.log('Sidebar render - User:', user?.name, 'Role:', user?.role);
+  
+  const companyName = settings?.company?.name || 'TMS Grúas';
+  const companyLogo = settings?.company?.logo;
   
   const navigationItems = [
     {
@@ -117,7 +123,7 @@ export const Sidebar = ({
         borderRight: '1px solid #9cfa24'
       }}
     >
-      {/* Header */}
+      {/* Header with Company Branding */}
       <div 
         className="flex items-center justify-between p-4 border-b"
         style={{
@@ -127,8 +133,33 @@ export const Sidebar = ({
       >
         {!isCollapsed && (
           <div className="flex items-center space-x-3">
-            <Building2 className="w-8 h-8" style={{ color: '#9cfa24' }} />
-            <h1 className="text-xl font-bold" style={{ color: '#ffffff' }}>TMS Grúas</h1>
+            {companyLogo ? (
+              <img 
+                src={companyLogo} 
+                alt="Logo empresa" 
+                className="w-8 h-8 object-contain"
+              />
+            ) : (
+              <Building2 className="w-8 h-8" style={{ color: '#9cfa24' }} />
+            )}
+            <div>
+              <h1 className="text-lg font-bold" style={{ color: '#ffffff' }}>{companyName}</h1>
+              <p className="text-xs" style={{ color: '#9cfa24' }}>Sistema de Gestión</p>
+            </div>
+          </div>
+        )}
+
+        {isCollapsed && (
+          <div className="flex items-center justify-center w-full">
+            {companyLogo ? (
+              <img 
+                src={companyLogo} 
+                alt="Logo empresa" 
+                className="w-8 h-8 object-contain"
+              />
+            ) : (
+              <Building2 className="w-8 h-8" style={{ color: '#9cfa24' }} />
+            )}
           </div>
         )}
         
