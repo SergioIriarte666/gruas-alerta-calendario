@@ -3,12 +3,13 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { ServiceTypeConfig } from '@/types/serviceTypes';
+import { ServiceTypeConfig, ServiceTypeFormData } from '@/types/serviceTypes';
 
 interface CreateServiceTypeData {
   name: string;
   description?: string;
   base_price?: number;
+  is_active?: boolean;
   vehicle_info_optional?: boolean;
   purchase_order_required?: boolean;
   origin_required?: boolean;
@@ -19,6 +20,25 @@ interface CreateServiceTypeData {
   vehicle_model_required?: boolean;
   license_plate_required?: boolean;
 }
+
+// Función para transformar datos del frontend al formato de la DB
+const transformToDbFormat = (data: ServiceTypeFormData): CreateServiceTypeData => {
+  return {
+    name: data.name,
+    description: data.description || undefined,
+    base_price: data.basePrice || undefined,
+    is_active: data.isActive,
+    vehicle_info_optional: data.vehicleInfoOptional,
+    purchase_order_required: data.purchaseOrderRequired,
+    origin_required: data.originRequired,
+    destination_required: data.destinationRequired,
+    crane_required: data.craneRequired,
+    operator_required: data.operatorRequired,
+    vehicle_brand_required: data.vehicleBrandRequired,
+    vehicle_model_required: data.vehicleModelRequired,
+    license_plate_required: data.licensePlateRequired
+  };
+};
 
 export const useServiceTypesManagement = () => {
   const queryClient = useQueryClient();
@@ -58,10 +78,13 @@ export const useServiceTypesManagement = () => {
   });
 
   const createMutation = useMutation({
-    mutationFn: async (data: CreateServiceTypeData) => {
+    mutationFn: async (data: ServiceTypeFormData) => {
+      const dbData = transformToDbFormat(data);
+      console.log('Creating service type with data:', dbData);
+      
       const { error } = await supabase
         .from('service_types')
-        .insert([data]);
+        .insert([dbData]);
 
       if (error) {
         console.error('Error creating service type:', error);
@@ -80,10 +103,13 @@ export const useServiceTypesManagement = () => {
   });
 
   const updateMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: Partial<CreateServiceTypeData> }) => {
+    mutationFn: async ({ id, data }: { id: string; data: ServiceTypeFormData }) => {
+      const dbData = transformToDbFormat(data);
+      console.log('Updating service type with data:', dbData);
+      
       const { error } = await supabase
         .from('service_types')
-        .update(data)
+        .update(dbData)
         .eq('id', id);
 
       if (error) {
@@ -130,7 +156,7 @@ export const useServiceTypesManagement = () => {
     loading,
     refetch,
     createServiceType: createMutation.mutate,
-    updateServiceType: (id: string, data: Partial<CreateServiceTypeData>) => 
+    updateServiceType: (id: string, data: ServiceTypeFormData) => 
       updateMutation.mutate({ id, data }),
     deleteServiceType: deleteMutation.mutate,
     isCreating: createMutation.isPending,
