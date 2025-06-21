@@ -126,7 +126,7 @@ export const SystemSettingsTab: React.FC<SystemSettingsTabProps> = ({
         </CardContent>
       </Card>
 
-      {/* Gestión de Respaldos */}
+      {/* ESTA ES LA SECCIÓN QUE FALTA - Gestión de Respaldos */}
       <BackupManagementSection />
     </div>
   );
