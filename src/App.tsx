@@ -87,21 +87,19 @@ function AppContent() {
 // Main App component with proper provider nesting
 function App() {
   return (
-    <React.StrictMode>
-      <QueryClientProvider client={queryClient}>
-        <AuthProvider>
-          <UserProvider>
-            <ThemeWrapper>
-              <NotificationProvider>
-                <ToastProvider>
-                  <AppContent />
-                </ToastProvider>
-              </NotificationProvider>
-            </ThemeWrapper>
-          </UserProvider>
-        </AuthProvider>
-      </QueryClientProvider>
-    </React.StrictMode>
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <UserProvider>
+          <ThemeWrapper>
+            <NotificationProvider>
+              <ToastProvider>
+                <AppContent />
+              </ToastProvider>
+            </NotificationProvider>
+          </ThemeWrapper>
+        </UserProvider>
+      </AuthProvider>
+    </QueryClientProvider>
   );
 }
 
