@@ -60,7 +60,7 @@ export const ClientsHeader = ({
         
         <Button 
           onClick={handleNewClient}
-          className="bg-tms-green hover:bg-tms-green-dark text-white"
+          className="bg-tms-green hover:bg-tms-green/80 text-black font-medium"
         >
           <Plus className="w-4 h-4 mr-2" />
           Nuevo Cliente
@@ -70,16 +70,16 @@ export const ClientsHeader = ({
       {/* Custom Modal Implementation */}
       {isDialogOpen && (
         <div 
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-80"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80"
           onClick={handleCloseModal}
         >
           <div 
-            className="relative bg-tms-dark border border-gray-700 rounded-lg shadow-lg max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto"
+            className="relative bg-black border border-tms-green rounded-lg shadow-lg max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             <button
               onClick={handleCloseModal}
-              className="absolute right-4 top-4 text-gray-400 hover:text-white z-10 p-1 rounded-full hover:bg-gray-700 transition-colors"
+              className="absolute right-4 top-4 text-gray-400 hover:text-white z-10 p-1 rounded-full hover:bg-white/10 transition-colors"
               aria-label="Cerrar modal"
             >
               <X className="h-4 w-4" />

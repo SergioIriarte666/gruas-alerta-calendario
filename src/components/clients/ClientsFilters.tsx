@@ -21,11 +21,14 @@ export const ClientsFilters = ({ searchTerm, setSearchTerm }: ClientsFiltersProp
                                 placeholder="Buscar por nombre, RUT o email..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
-                                className="pl-10 bg-white/5 border-gray-700 text-white placeholder-gray-400 focus:border-tms-green"
+                                className="pl-10 bg-black/80 border-tms-green/30 text-white placeholder-white/70 focus:border-tms-green focus:ring-tms-green"
                             />
                         </div>
                     </div>
-                    <Button variant="outline" className="border-gray-700 text-gray-300 hover:text-white">
+                    <Button 
+                        variant="outline" 
+                        className="border-tms-green/50 text-white hover:bg-tms-green hover:text-black transition-colors"
+                    >
                         <Filter className="w-4 h-4 mr-2" />
                         Filtros
                     </Button>

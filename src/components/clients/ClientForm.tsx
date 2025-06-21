@@ -32,7 +32,7 @@ export const ClientForm = ({ client, onSubmit, onCancel }: ClientFormProps) => {
   };
 
   return (
-    <div className="bg-tms-dark border-gray-700 p-6">
+    <div className="bg-black border-tms-green p-6">
       <div className="mb-6">
         <h2 className="text-xl font-semibold text-white">
           {client ? 'Editar Cliente' : 'Nuevo Cliente'}
@@ -50,7 +50,7 @@ export const ClientForm = ({ client, onSubmit, onCancel }: ClientFormProps) => {
               id="name"
               value={formData.name}
               onChange={(e) => handleChange('name', e.target.value)}
-              className="bg-white/5 border-gray-700 text-white"
+              className="bg-black/80 border-tms-green/30 text-white focus:border-tms-green focus:ring-tms-green"
               required
             />
           </div>
@@ -62,7 +62,7 @@ export const ClientForm = ({ client, onSubmit, onCancel }: ClientFormProps) => {
               value={formData.rut}
               onChange={(e) => handleChange('rut', e.target.value)}
               placeholder="12.345.678-9"
-              className="bg-white/5 border-gray-700 text-white"
+              className="bg-black/80 border-tms-green/30 text-white focus:border-tms-green focus:ring-tms-green"
               required
             />
           </div>
@@ -76,7 +76,7 @@ export const ClientForm = ({ client, onSubmit, onCancel }: ClientFormProps) => {
               value={formData.phone}
               onChange={(e) => handleChange('phone', e.target.value)}
               placeholder="+56 9 1234 5678"
-              className="bg-white/5 border-gray-700 text-white"
+              className="bg-black/80 border-tms-green/30 text-white focus:border-tms-green focus:ring-tms-green"
             />
           </div>
           
@@ -87,7 +87,7 @@ export const ClientForm = ({ client, onSubmit, onCancel }: ClientFormProps) => {
               type="email"
               value={formData.email}
               onChange={(e) => handleChange('email', e.target.value)}
-              className="bg-white/5 border-gray-700 text-white"
+              className="bg-black/80 border-tms-green/30 text-white focus:border-tms-green focus:ring-tms-green"
             />
           </div>
         </div>
@@ -98,7 +98,7 @@ export const ClientForm = ({ client, onSubmit, onCancel }: ClientFormProps) => {
             id="address"
             value={formData.address}
             onChange={(e) => handleChange('address', e.target.value)}
-            className="bg-white/5 border-gray-700 text-white"
+            className="bg-black/80 border-tms-green/30 text-white focus:border-tms-green focus:ring-tms-green"
           />
         </div>
 
@@ -118,13 +118,13 @@ export const ClientForm = ({ client, onSubmit, onCancel }: ClientFormProps) => {
             type="button"
             variant="outline"
             onClick={onCancel}
-            className="border-gray-700 text-gray-300 hover:text-white"
+            className="border-tms-green/50 text-white hover:bg-tms-green hover:text-black"
           >
             Cancelar
           </Button>
           <Button
             type="submit"
-            className="bg-tms-green hover:bg-tms-green-dark text-white"
+            className="bg-tms-green hover:bg-tms-green/80 text-black font-medium"
           >
             {client ? 'Actualizar' : 'Crear'} Cliente
           </Button>
