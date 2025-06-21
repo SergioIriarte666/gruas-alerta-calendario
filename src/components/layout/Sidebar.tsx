@@ -42,6 +42,8 @@ export const Sidebar = ({
   const isOperator = user?.role === 'operator';
   const isAdmin = user?.role === 'admin';
 
+  console.log('Sidebar: User role:', user?.role, 'isAdmin:', isAdmin);
+
   const navigationItems = [
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, adminOnly: false },
     { name: 'Calendario', href: '/calendar', icon: Calendar, adminOnly: false },
@@ -57,9 +59,12 @@ export const Sidebar = ({
     { name: 'Configuración', href: '/settings', icon: Settings, adminOnly: false },
   ];
 
-  const filteredNavigation = navigationItems.filter(item => 
-    !item.adminOnly || isAdmin
-  );
+  const filteredNavigation = navigationItems.filter(item => {
+    console.log(`Filtering item: ${item.name}, adminOnly: ${item.adminOnly}, isAdmin: ${isAdmin}, shouldShow: ${!item.adminOnly || isAdmin}`);
+    return !item.adminOnly || isAdmin;
+  });
+
+  console.log('Filtered navigation items:', filteredNavigation.map(item => item.name));
 
   const isActive = (href: string) => {
     if (href === '/') return location.pathname === '/';
