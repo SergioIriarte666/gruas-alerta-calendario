@@ -43,12 +43,17 @@ export const Header = ({ setIsMobileMenuOpen }: HeaderProps) => {
   };
 
   return (
-    <header className="flex h-16 items-center justify-between backdrop-blur-lg border-b border-gray-700/50 px-4 sm:px-6 transition-colors duration-300 bg-gray-900/80">
+    <header 
+      className="flex h-16 items-center justify-between backdrop-blur-lg border-b border-gray-700/50 px-4 sm:px-6 transition-colors duration-300"
+      style={{
+        background: 'rgba(13, 13, 13, 0.9)'
+      }}
+    >
       <div className="flex items-center gap-4">
         <Button
           variant="ghost"
           size="icon"
-          className="lg:hidden text-gray-300 hover:text-white hover:bg-tms-green/20"
+          className="lg:hidden text-gray-300 hover:text-black hover:bg-tms-green"
           onClick={() => setIsMobileMenuOpen(true)}
         >
           <Menu className="h-6 w-6" />
@@ -69,7 +74,7 @@ export const Header = ({ setIsMobileMenuOpen }: HeaderProps) => {
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="text-gray-300 hover:text-white hover:bg-tms-green/20 rounded-full">
+            <Button variant="ghost" size="icon" className="text-gray-300 hover:text-black hover:bg-tms-green rounded-full">
               <User className="w-5 h-5" />
             </Button>
           </DropdownMenuTrigger>

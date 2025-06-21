@@ -52,17 +52,17 @@ export const CompanySettingsTab = () => {
 
   return (
     <div className="space-y-6">
-      <Card>
+      <Card className="bg-gray-800 border-gray-700">
         <CardHeader>
-          <CardTitle>Información de la Empresa</CardTitle>
-          <CardDescription>
+          <CardTitle className="text-white">Información de la Empresa</CardTitle>
+          <CardDescription className="text-gray-400">
             Configura la información básica de tu empresa
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="company-name">Nombre de la Empresa</Label>
+              <Label htmlFor="company-name" className="text-gray-300">Nombre de la Empresa</Label>
               <Input
                 id="company-name"
                 value={settings.company.name}
@@ -70,10 +70,11 @@ export const CompanySettingsTab = () => {
                   company: { ...settings.company, name: e.target.value }
                 })}
                 placeholder="Nombre de tu empresa"
+                className="bg-gray-700 border-gray-600 text-white focus:border-tms-green"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="company-rut">RUT</Label>
+              <Label htmlFor="company-rut" className="text-gray-300">RUT</Label>
               <Input
                 id="company-rut"
                 value={settings.company.taxId}
@@ -81,12 +82,13 @@ export const CompanySettingsTab = () => {
                   company: { ...settings.company, taxId: e.target.value }
                 })}
                 placeholder="12.345.678-9"
+                className="bg-gray-700 border-gray-600 text-white focus:border-tms-green"
               />
             </div>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="company-address">Dirección</Label>
+            <Label htmlFor="company-address" className="text-gray-300">Dirección</Label>
             <Input
               id="company-address"
               value={settings.company.address}
@@ -94,12 +96,13 @@ export const CompanySettingsTab = () => {
                 company: { ...settings.company, address: e.target.value }
               })}
               placeholder="Dirección de la empresa"
+              className="bg-gray-700 border-gray-600 text-white focus:border-tms-green"
             />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="company-phone">Teléfono</Label>
+              <Label htmlFor="company-phone" className="text-gray-300">Teléfono</Label>
               <Input
                 id="company-phone"
                 value={settings.company.phone}
@@ -107,10 +110,11 @@ export const CompanySettingsTab = () => {
                   company: { ...settings.company, phone: e.target.value }
                 })}
                 placeholder="+56 9 1234 5678"
+                className="bg-gray-700 border-gray-600 text-white focus:border-tms-green"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="company-email">Email</Label>
+              <Label htmlFor="company-email" className="text-gray-300">Email</Label>
               <Input
                 id="company-email"
                 type="email"
@@ -119,23 +123,24 @@ export const CompanySettingsTab = () => {
                   company: { ...settings.company, email: e.target.value }
                 })}
                 placeholder="contacto@empresa.cl"
+                className="bg-gray-700 border-gray-600 text-white focus:border-tms-green"
               />
             </div>
           </div>
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="bg-gray-800 border-gray-700">
         <CardHeader>
-          <CardTitle>Configuración de Folios</CardTitle>
-          <CardDescription>
+          <CardTitle className="text-white">Configuración de Folios</CardTitle>
+          <CardDescription className="text-gray-400">
             Configura el formato y numeración de los folios de servicios
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="folio-format">Formato de Folio</Label>
+              <Label htmlFor="folio-format" className="text-gray-300">Formato de Folio</Label>
               <Input
                 id="folio-format"
                 value={settings.company.folioFormat}
@@ -143,13 +148,14 @@ export const CompanySettingsTab = () => {
                   company: { ...settings.company, folioFormat: e.target.value }
                 })}
                 placeholder="SRV-{number}"
+                className="bg-gray-700 border-gray-600 text-white focus:border-tms-green"
               />
               <p className="text-xs text-gray-500">
                 Usa {'{number}'} donde quieras que aparezca el número correlativo
               </p>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="next-folio-number">Próximo Número de Folio</Label>
+              <Label htmlFor="next-folio-number" className="text-gray-300">Próximo Número de Folio</Label>
               <Input
                 id="next-folio-number"
                 type="number"
@@ -157,6 +163,7 @@ export const CompanySettingsTab = () => {
                 value={localNextFolio}
                 onChange={(e) => handleNextFolioChange(e.target.value)}
                 placeholder="1000"
+                className="bg-gray-700 border-gray-600 text-white focus:border-tms-green"
               />
               <p className="text-xs text-gray-500">
                 El próximo folio automático será: {settings.company.folioFormat.replace('{number}', String(settings.company.nextServiceFolioNumber || 1000).padStart(4, '0'))}
@@ -166,10 +173,10 @@ export const CompanySettingsTab = () => {
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="bg-gray-800 border-gray-700">
         <CardHeader>
-          <CardTitle>Logo de la Empresa</CardTitle>
-          <CardDescription>
+          <CardTitle className="text-white">Logo de la Empresa</CardTitle>
+          <CardDescription className="text-gray-400">
             Sube el logo de tu empresa para usar en reportes y documentos
           </CardDescription>
         </CardHeader>
@@ -182,7 +189,11 @@ export const CompanySettingsTab = () => {
       </Card>
 
       <div className="flex justify-end">
-        <Button onClick={handleSave} disabled={saving}>
+        <Button 
+          onClick={handleSave} 
+          disabled={saving}
+          className="bg-tms-green hover:bg-tms-green/80 text-black font-medium"
+        >
           {saving ? 'Guardando...' : 'Guardar Configuración'}
         </Button>
       </div>
