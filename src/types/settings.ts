@@ -1,3 +1,4 @@
+
 export interface CompanySettings {
   name: string;
   address: string;

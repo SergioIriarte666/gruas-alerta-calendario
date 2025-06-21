@@ -9,6 +9,47 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      backup_logs: {
+        Row: {
+          backup_type: string
+          created_at: string | null
+          created_by: string | null
+          error_message: string | null
+          file_size_bytes: number | null
+          id: string
+          metadata: Json | null
+          status: string
+        }
+        Insert: {
+          backup_type: string
+          created_at?: string | null
+          created_by?: string | null
+          error_message?: string | null
+          file_size_bytes?: number | null
+          id?: string
+          metadata?: Json | null
+          status: string
+        }
+        Update: {
+          backup_type?: string
+          created_at?: string | null
+          created_by?: string | null
+          error_message?: string | null
+          file_size_bytes?: number | null
+          id?: string
+          metadata?: Json | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "backup_logs_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       calendar_events: {
         Row: {
           client_id: string | null
@@ -973,6 +1014,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      generate_database_backup: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      generate_quick_backup: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
       get_all_users: {
         Args: Record<PropertyKey, never>
         Returns: {

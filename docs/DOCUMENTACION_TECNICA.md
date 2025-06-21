@@ -177,6 +177,273 @@ const filteredServices = services.filter(service => {
 </Alert>
 ```
 
+## Sistema de Respaldos
+
+### Arquitectura de Respaldos
+
+El sistema de respaldos está diseñado con múltiples capas para garantizar la integridad y disponibilidad de los datos:
+
+#### 1. Funciones de Base de Datos
+
+```sql
+-- Función para respaldo completo (SQL)
+CREATE OR REPLACE FUNCTION public.generate_database_backup()
+RETURNS TEXT
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = 'public'
+AS $$
+DECLARE
+  backup_content TEXT := '';
+  -- Lógica para generar respaldo SQL completo
+BEGIN
+  -- Verificación de permisos de administrador
+  IF (SELECT role FROM public.profiles WHERE id = auth.uid()) != 'admin' THEN
+    RAISE EXCEPTION 'Solo los administradores pueden generar respaldos';
+  END IF;
+  
+  -- Generación de metadatos y contenido del respaldo
+  -- Procesamiento ordenado de tablas por dependencias
+  -- Generación de INSERT statements
+  RETURN backup_content;
+END;
+$$;
+
+-- Función para respaldo rápido (JSON)
+CREATE OR REPLACE FUNCTION public.generate_quick_backup()
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+BEGIN
+  -- Respaldo solo de configuración crítica
+  -- Conteos de registros principales
+  -- Metadatos del sistema
+  RETURN backup_data;
+END;
+$$;
+```
+
+#### 2. Edge Function para Respaldos
+
+```typescript
+// supabase/functions/generate-backup/index.ts
+import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+
+serve(async (req) => {
+  // Validación de permisos
+  // Generación de respaldo según tipo solicitado
+  // Logging de operaciones
+  // Retorno de archivo para descarga
+});
+```
+
+#### 3. Frontend - Hook de Gestión
+
+```typescript
+// useBackupManager.ts
+export const useBackupManager = () => {
+  const [progress, setProgress] = useState<BackupProgress>({
+    isGenerating: false,
+    progress: 0,
+    stage: 'idle'
+  });
+
+  const generateBackup = useCallback(async (type: 'full' | 'quick') => {
+    // Manejo de progreso en tiempo real
+    // Invocación de edge function
+    // Manejo de errores y estado
+    // Retorno de resultado para descarga
+  }, []);
+
+  const downloadBackup = useCallback((content, fileName, contentType) => {
+    // Creación de blob y descarga automática
+    // Notificaciones de usuario
+  }, []);
+};
+```
+
+### Tipos de Respaldo
+
+#### Respaldo Completo (`full`)
+- **Contenido**: Todas las tablas del sistema con datos completos
+- **Formato**: Archivo SQL con INSERT statements
+- **Uso**: Restauración completa del sistema
+- **Tamaño**: Mayor (depende de cantidad de datos)
+- **Tiempo**: 30 segundos - 5 minutos (según volumen)
+
+#### Respaldo Rápido (`quick`)
+- **Contenido**: Solo configuración y estadísticas
+- **Formato**: JSON estructurado
+- **Uso**: Migración de configuración, verificación rápida
+- **Tamaño**: Menor (< 1MB típicamente)
+- **Tiempo**: 5-15 segundos
+
+### Seguridad y Permisos
+
+#### Validación de Acceso
+```sql
+-- Solo administradores pueden generar respaldos
+IF (SELECT role FROM public.profiles WHERE id = auth.uid()) != 'admin' THEN
+  RAISE EXCEPTION 'Solo los administradores pueden generar respaldos';
+END IF;
+```
+
+#### Logging de Auditoría
+```sql
+-- Tabla para registro de respaldos
+CREATE TABLE backup_logs (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+  created_by UUID REFERENCES profiles(id),
+  backup_type TEXT CHECK (backup_type IN ('full', 'quick', 'auto')),
+  status TEXT CHECK (status IN ('started', 'completed', 'failed')),
+  file_size_bytes BIGINT,
+  error_message TEXT,
+  metadata JSONB
+);
+```
+
+#### RLS Policies
+```sql
+-- Solo administradores ven logs
+CREATE POLICY "Only admins can view backup logs" ON backup_logs
+  FOR ALL USING (
+    (SELECT role FROM profiles WHERE id = auth.uid()) = 'admin'
+  );
+```
+
+### Proceso de Respaldo
+
+#### 1. Iniciación
+```typescript
+// Usuario solicita respaldo desde interfaz
+const result = await generateAndDownloadBackup('full');
+```
+
+#### 2. Validación
+```typescript
+// Edge function valida permisos y crea log
+const { data: logData } = await supabaseClient
+  .from('backup_logs')
+  .insert({ backup_type: type, status: 'started' });
+```
+
+#### 3. Generación
+```typescript
+// Invocación de función SQL según tipo
+const { data: backupData, error } = await supabaseClient
+  .rpc(type === 'quick' ? 'generate_quick_backup' : 'generate_database_backup');
+```
+
+#### 4. Finalización
+```typescript
+// Actualización de log y descarga
+await supabaseClient
+  .from('backup_logs')
+  .update({ 
+    status: 'completed',
+    file_size_bytes: new Blob([content]).size,
+    metadata: { fileName, contentType }
+  });
+```
+
+### Monitoreo y Alertas
+
+#### Dashboard de Estado
+```typescript
+// BackupManagementSection.tsx
+const lastSuccessfulBackup = backupLogs?.find(log => log.status === 'completed');
+
+// Indicadores visuales de estado
+{lastSuccessfulBackup ? (
+  <Alert className="bg-green-500/10">
+    <CheckCircle />
+    <AlertDescription>
+      Último respaldo: {formatDistanceToNow(new Date(lastSuccessfulBackup.created_at))}
+    </AlertDescription>
+  </Alert>
+) : (
+  <Alert className="bg-yellow-500/10">
+    <AlertTriangle />
+    <AlertDescription>
+      No se encontraron respaldos. Se recomienda generar uno.
+    </AlertDescription>
+  </Alert>
+)}
+```
+
+#### Historial de Respaldos
+```typescript
+// Tabla de historial con filtros
+const { data: backupLogs } = useQuery({
+  queryKey: ['backup-logs'],
+  queryFn: async () => {
+    const { data } = await supabase
+      .from('backup_logs')
+      .select(`*, profiles!backup_logs_created_by_fkey(email, full_name)`)
+      .order('created_at', { ascending: false })
+      .limit(10);
+    return data;
+  }
+});
+```
+
+### Restauración
+
+#### Preparación
+1. **Entorno**: Sistema limpio o con respaldo actual
+2. **Herramientas**: Cliente PostgreSQL (psql, pgAdmin, etc.)
+3. **Permisos**: Acceso de administrador a base de datos
+4. **Validación**: Verificar compatibilidad de versiones
+
+#### Proceso de Restauración (Respaldo Completo)
+```bash
+# 1. Conectar a base de datos
+psql -h hostname -U username -d database_name
+
+# 2. Limpiar datos existentes (CUIDADO!)
+TRUNCATE TABLE services, invoices, clients CASCADE;
+
+# 3. Desactivar RLS temporalmente
+SET row_security = off;
+
+# 4. Ejecutar archivo de respaldo
+\i /path/to/backup-file.sql
+
+# 5. Reactivar RLS
+SET row_security = on;
+
+# 6. Verificar integridad
+SELECT count(*) FROM services;
+SELECT count(*) FROM clients;
+```
+
+#### Verificación Post-Restauración
+```sql
+-- Verificar conteos de registros
+SELECT 
+  'services' as table_name, count(*) as records FROM services
+UNION ALL
+SELECT 
+  'clients' as table_name, count(*) as records FROM clients
+UNION ALL
+SELECT 
+  'invoices' as table_name, count(*) as records FROM invoices;
+
+-- Verificar integridad referencial
+SELECT 
+  s.folio, 
+  c.name as client_name,
+  o.name as operator_name
+FROM services s
+LEFT JOIN clients c ON s.client_id = c.id
+LEFT JOIN operators o ON s.operator_id = o.id
+WHERE c.id IS NULL OR o.id IS NULL
+LIMIT 10;
+```
+
 ## Servicios con Campos Opcionales
 
 ### Configuración en Base de Datos
@@ -455,19 +722,19 @@ const ServiceInspection = () => {
 
 ### Console Logs para Debugging
 ```typescript
+// En useBackupManager.ts
+console.log('Starting backup generation:', type);
+console.log('Backup result:', { success, fileName, size });
+
 // En useServicesForClosures.ts
 console.log('Fetching services with filters:', { dateFrom, dateTo });
 console.log('Completed services found:', servicesData?.length);
 console.log('Services already in closures:', usedServiceIds.size);
 console.log('Available services for closures:', availableServicesData.length);
 
-// En ServicesSelector.tsx
-console.log('ServicesSelector render:', { 
-  servicesCount: services.length, 
-  loading, 
-  clientId 
-});
-console.log('Filtered services for client:', filteredServices.length);
+// En BackupManagementSection.tsx
+console.log('Backup progress update:', progress);
+console.log('Backup logs loaded:', backupLogs?.length);
 ```
 
 ### Problemas Comunes y Soluciones
@@ -535,6 +802,65 @@ SET vehicle_info_optional = true
 WHERE name ILIKE '%taxi%';
 ```
 
+#### 4. Errores en generación de respaldos
+**Diagnóstico:**
+```typescript
+// Verificar logs de respaldo
+const { data: errorLogs } = await supabase
+  .from('backup_logs')
+  .select('*')
+  .eq('status', 'failed')
+  .order('created_at', { ascending: false })
+  .limit(5);
+
+console.log('Recent backup errors:', errorLogs);
+```
+
+**Solución:**
+```sql
+-- Verificar permisos de usuario
+SELECT p.role, p.email 
+FROM profiles p 
+WHERE p.id = auth.uid();
+
+-- Limpiar logs antiguos si es necesario
+DELETE FROM backup_logs 
+WHERE created_at < now() - interval '30 days';
+```
+
+#### 5. Problemas de descarga de respaldos
+**Diagnóstico:**
+```typescript
+// Verificar configuración del navegador
+console.log('Browser download support:', {
+  blobSupport: typeof Blob !== 'undefined',
+  urlSupport: typeof URL !== 'undefined',
+  downloadSupport: typeof document.createElement('a').download !== 'undefined'
+});
+```
+
+**Solución:**
+```typescript
+// Fallback para descarga
+const downloadWithFallback = (content: string, fileName: string) => {
+  try {
+    // Método principal
+    const blob = new Blob([content], { type: 'application/octet-stream' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileName;
+    a.click();
+    URL.revokeObjectURL(url);
+  } catch (error) {
+    // Fallback: abrir en nueva ventana
+    const newWindow = window.open();
+    newWindow?.document.write(`<pre>${content}</pre>`);
+    newWindow?.document.title = fileName;
+  }
+};
+```
+
 ## API References
 
 ### Endpoints Principales
@@ -559,6 +885,31 @@ PATCH /rest/v1/services?id=eq.{serviceId}
 {
   "status": "completed"
 }
+
+// Generar respaldo (Edge Function)
+POST /functions/v1/generate-backup
+{
+  "type": "full" | "quick"
+}
+
+// Obtener logs de respaldos
+GET /rest/v1/backup_logs?order=created_at.desc&limit=10
+```
+
+### Edge Functions
+
+#### generate-backup
+```typescript
+// Endpoint: /functions/v1/generate-backup
+// Método: POST
+// Headers: Authorization (required)
+// Body: { type: 'full' | 'quick' }
+// Response: { success: boolean, fileName?: string, content?: string, error?: string }
+
+// Ejemplo de uso
+const { data, error } = await supabase.functions.invoke('generate-backup', {
+  body: { type: 'full' }
+});
 ```
 
 ### Performance Optimizations
@@ -574,6 +925,13 @@ const { data } = await supabase
     service_types(id, name, vehicle_info_optional)
   `)
   .eq('operator_id', operatorId);
+
+// Paginación para historial de respaldos
+const { data: backupLogs } = await supabase
+  .from('backup_logs')
+  .select('*')
+  .order('created_at', { ascending: false })
+  .range(0, 9); // Solo últimos 10 registros
 ```
 
 #### Cache Strategy
@@ -586,18 +944,62 @@ const { data } = useQuery({
   refetchOnWindowFocus: false,
   refetchInterval: 30 * 1000, // 30 segundos para operadores
 });
+
+// Cache específico para respaldos
+const { data: backupLogs } = useQuery({
+  queryKey: ['backup-logs'],
+  queryFn: fetchBackupLogs,
+  staleTime: 30 * 1000, // 30 segundos
+  refetchOnMount: true, // Siempre refrescar al montar
+});
+```
+
+#### Background Processing
+```typescript
+// Edge Function con background tasks
+EdgeRuntime.waitUntil(
+  backgroundCleanupTask() // Limpieza de logs antiguos
+);
+
+// Procesamiento asíncrono de respaldos grandes
+const processLargeBackup = async (data: any[]) => {
+  const chunks = chunkArray(data, 100);
+  for (const chunk of chunks) {
+    await processChunk(chunk);
+    // Yield control to allow other operations
+    await new Promise(resolve => setTimeout(resolve, 0));
+  }
+};
 ```
 
 ### Security Considerations
 
 #### Input Validation
 ```typescript
-// Validación con Zod
-const inspectionSchema = z.object({
-  equipment_checklist: z.array(checklistItemSchema),
-  vehicle_observations: z.string().max(1000),
-  operator_signature: z.string().min(1)
+// Validación con Zod para respaldos
+const backupRequestSchema = z.object({
+  type: z.enum(['full', 'quick']),
+  options: z.object({
+    includeMetadata: z.boolean().optional(),
+    compression: z.boolean().optional()
+  }).optional()
 });
+```
+
+#### Rate Limiting
+```typescript
+// Límite de respaldos por usuario
+const BACKUP_RATE_LIMIT = 5; // por hora
+const userBackupCount = await supabase
+  .from('backup_logs')
+  .select('id')
+  .eq('created_by', userId)
+  .gte('created_at', new Date(Date.now() - 60 * 60 * 1000).toISOString())
+  .single();
+
+if (userBackupCount?.length >= BACKUP_RATE_LIMIT) {
+  throw new Error('Rate limit exceeded');
+}
 ```
 
 #### Sanitización
@@ -606,6 +1008,83 @@ const inspectionSchema = z.object({
 const sanitizeInput = (input: string) => {
   return input.trim().replace(/[<>]/g, '');
 };
+
+// Validar tamaño de respaldo
+const MAX_BACKUP_SIZE = 50 * 1024 * 1024; // 50MB
+if (backupContent.length > MAX_BACKUP_SIZE) {
+  throw new Error('Backup size exceeds limit');
+}
 ```
 
-Esta documentación técnica proporciona toda la información necesaria para entender, mantener y extender el sistema TMS Grúas, con especial enfoque en el correcto funcionamiento del sistema de estados de servicios, cierres y facturación.
+## Configuración de Entorno
+
+### Variables de Entorno Requeridas
+```bash
+# Supabase Configuration
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_ANON_KEY=your-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+
+# Edge Functions
+SUPABASE_FUNCTION_SECRET=your-function-secret
+
+# Database
+DATABASE_URL=postgresql://user:pass@host:port/dbname
+
+# Backup Configuration
+MAX_BACKUP_SIZE_MB=100
+BACKUP_RETENTION_DAYS=30
+BACKUP_RATE_LIMIT_PER_HOUR=5
+```
+
+### Configuración de Supabase
+```toml
+# supabase/config.toml
+project_id = "your-project-id"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "graphql_public"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[auth]
+enabled = true
+port = 54324
+site_url = "http://localhost:3000"
+additional_redirect_urls = ["https://your-domain.com"]
+
+[functions]
+verify_jwt = true
+
+[functions.generate-backup]
+verify_jwt = true
+```
+
+### Migración y Deployment
+
+#### Scripts de Migración
+```sql
+-- Migración para respaldos (versión 1.0)
+-- Agregar tablas y funciones de respaldo
+CREATE TABLE IF NOT EXISTS backup_logs (...);
+CREATE OR REPLACE FUNCTION generate_database_backup() ...;
+CREATE OR REPLACE FUNCTION generate_quick_backup() ...;
+
+-- Migración para configuración extendida (versión 1.1)
+ALTER TABLE system_settings ADD COLUMN IF NOT EXISTS backup_retention_days INTEGER DEFAULT 30;
+ALTER TABLE system_settings ADD COLUMN IF NOT EXISTS max_backup_size_mb INTEGER DEFAULT 100;
+```
+
+#### Deployment Checklist
+- [ ] Migrar funciones SQL de respaldo
+- [ ] Desplegar Edge Function generate-backup
+- [ ] Actualizar configuración de RLS
+- [ ] Verificar permisos de administrador
+- [ ] Probar generación de respaldos en ambiente de prueba
+- [ ] Configurar monitoreo y alertas
+- [ ] Documentar procedimientos de emergencia
+- [ ] Capacitar administradores en nuevas funcionalidades
+
+Esta documentación técnica proporciona toda la información necesaria para entender, mantener y extender el sistema TMS Grúas, con especial enfoque en el correcto funcionamiento del sistema de estados de servicios, cierres, facturación y el nuevo sistema de respaldos y recuperación.
