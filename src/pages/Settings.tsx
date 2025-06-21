@@ -11,6 +11,7 @@ import { SystemSettingsTab } from '@/components/settings/SystemSettingsTab';
 import { NotificationSettingsTab } from '@/components/settings/NotificationSettingsTab';
 import { UserManagementTab } from '@/components/settings/UserManagementTab';
 import { Building2, User, Settings as SettingsIcon, Bell, Users } from 'lucide-react';
+
 const Settings = () => {
   const {
     settings,
@@ -31,6 +32,7 @@ const Settings = () => {
     updateLogo
   } = useLogoUpdater();
   const [activeTab, setActiveTab] = React.useState('company');
+
   const handleSystemSave = async () => {
     const result = await saveSystemSettings();
     if (result.success) {
@@ -43,6 +45,7 @@ const Settings = () => {
       });
     }
   };
+
   const handleLogoChange = async (logoFile: File | null) => {
     if (!settings) return;
     const result = await updateLogo(logoFile, settings);
@@ -57,33 +60,50 @@ const Settings = () => {
       });
     }
   };
+
   if (loading || systemLoading || !settings) {
     return <div className="flex items-center justify-center min-h-96 bg-black text-white">
         <div className="text-white">Cargando configuración...</div>
       </div>;
   }
+
   return <div className="space-y-6 animate-fade-in bg-black min-h-screen p-6">
       <SettingsHeader onReset={resetSettings} />
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TabsList className="grid w-full grid-cols-5 bg-black/20 border border-tms-green/30">
-          <TabsTrigger value="company" className="flex items-center space-x-2 text-zinc-50">
+          <TabsTrigger 
+            value="company" 
+            className="flex items-center space-x-2 text-white data-[state=active]:text-black data-[state=active]:bg-tms-green"
+          >
             <Building2 className="w-4 h-4" />
             <span>Empresa</span>
           </TabsTrigger>
-          <TabsTrigger value="user" className="flex items-center space-x-2 text-zinc-50">
+          <TabsTrigger 
+            value="user" 
+            className="flex items-center space-x-2 text-white data-[state=active]:text-black data-[state=active]:bg-tms-green"
+          >
             <User className="w-4 h-4" />
             <span>Usuario</span>
           </TabsTrigger>
-          <TabsTrigger value="system" className="flex items-center space-x-2">
+          <TabsTrigger 
+            value="system" 
+            className="flex items-center space-x-2 text-white data-[state=active]:text-black data-[state=active]:bg-tms-green"
+          >
             <SettingsIcon className="w-4 h-4" />
             <span>Sistema</span>
           </TabsTrigger>
-          <TabsTrigger value="notifications" className="flex items-center space-x-2">
+          <TabsTrigger 
+            value="notifications" 
+            className="flex items-center space-x-2 text-white data-[state=active]:text-black data-[state=active]:bg-tms-green"
+          >
             <Bell className="w-4 h-4" />
             <span>Notificaciones</span>
           </TabsTrigger>
-          <TabsTrigger value="users" className="flex items-center space-x-2">
+          <TabsTrigger 
+            value="users" 
+            className="flex items-center space-x-2 text-white data-[state=active]:text-black data-[state=active]:bg-tms-green"
+          >
             <Users className="w-4 h-4" />
             <span>Usuarios</span>
           </TabsTrigger>
@@ -113,4 +133,5 @@ const Settings = () => {
       </Tabs>
     </div>;
 };
+
 export default Settings;

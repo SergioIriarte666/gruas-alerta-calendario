@@ -10,16 +10,16 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "font-medium text-black",
+        default: "font-medium text-black bg-tms-green hover:bg-tms-green/80",
         destructive:
           "bg-destructive text-destructive-foreground hover:bg-destructive/90",
         outline:
-          "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
+          "border border-input bg-background text-white hover:bg-accent hover:text-accent-foreground",
         secondary:
           "bg-secondary text-secondary-foreground hover:bg-secondary/80",
-        ghost: "hover:bg-accent hover:text-accent-foreground",
+        ghost: "text-white hover:bg-accent hover:text-accent-foreground",
         link: "text-primary underline-offset-4 hover:underline",
-        tms: "font-medium text-black",
+        tms: "font-medium text-black bg-tms-green hover:bg-tms-green/80",
       },
       size: {
         default: "h-10 px-4 py-2",
@@ -45,16 +45,21 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant, size, asChild = false, style, ...props }, ref) => {
     const Comp = asChild ? Slot : "button"
     
-    // Apply TMS styling for default and tms variants
+    // Apply TMS styling for default and tms variants with explicit text color
     const tmsStyle = (variant === 'default' || variant === 'tms') ? {
       backgroundColor: '#9cfa24',
       color: '#000000',
+      ...style
+    } : (variant === 'outline') ? {
+      color: '#ffffff',
       ...style
     } : style;
 
     const handleMouseEnter = (e: React.MouseEvent<HTMLButtonElement>) => {
       if (variant === 'default' || variant === 'tms') {
         e.currentTarget.style.backgroundColor = 'rgba(156, 250, 36, 0.8)';
+        e.currentTarget.style.color = '#000000';
+      } else if (variant === 'outline') {
         e.currentTarget.style.color = '#000000';
       }
     };
@@ -63,6 +68,8 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       if (variant === 'default' || variant === 'tms') {
         e.currentTarget.style.backgroundColor = '#9cfa24';
         e.currentTarget.style.color = '#000000';
+      } else if (variant === 'outline') {
+        e.currentTarget.style.color = '#ffffff';
       }
     };
 
@@ -73,6 +80,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         style={tmsStyle}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
+        data-variant={variant}
         {...props}
       />
     )

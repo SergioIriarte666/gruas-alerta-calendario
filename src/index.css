@@ -143,22 +143,6 @@
   label:not(button label) {
     color: #ffffff;
   }
-
-  /* FORCE BLACK TEXT IN BUTTONS */
-  button,
-  button *,
-  [role="button"],
-  [role="button"] * {
-    color: #000000 !important;
-  }
-
-  /* Ensure TMS buttons have black text */
-  button[data-variant="default"],
-  button[data-variant="tms"],
-  .bg-tms-green,
-  .bg-tms-green * {
-    color: #000000 !important;
-  }
 }
 
 @layer components {
@@ -298,16 +282,64 @@
     color: rgba(255, 255, 255, 0.7) !important;
   }
 
-  /* BUTTON TEXT OVERRIDE - Most specific rules */
-  button span,
-  button div,
-  button svg,
-  .btn span,
-  .btn div,
-  .btn svg,
-  [class*="button"] span,
-  [class*="button"] div,
-  [class*="button"] svg {
+  /* BUTTON TEXT VISIBILITY - FIXED AND COMPREHENSIVE */
+  /* Ensure all button text is always black and visible */
+  button,
+  button *,
+  [role="button"],
+  [role="button"] *,
+  .btn,
+  .btn *,
+  [class*="button"],
+  [class*="button"] * {
+    color: #000000 !important;
+  }
+
+  /* Specific button variant fixes */
+  button[data-variant="default"],
+  button[data-variant="default"] *,
+  button[data-variant="tms"],
+  button[data-variant="tms"] *,
+  .bg-tms-green,
+  .bg-tms-green *,
+  .bg-green-500,
+  .bg-green-500 * {
+    color: #000000 !important;
+  }
+
+  /* Fix for outline buttons */
+  button[data-variant="outline"],
+  button[data-variant="outline"] * {
+    color: #ffffff !important;
+  }
+
+  button[data-variant="outline"]:hover,
+  button[data-variant="outline"]:hover * {
+    color: #000000 !important;
+  }
+
+  /* Fix for destructive buttons */
+  button[data-variant="destructive"],
+  button[data-variant="destructive"] * {
+    color: #ffffff !important;
+  }
+
+  /* Ensure tab buttons have proper text visibility */
+  [role="tab"],
+  [role="tab"] * {
+    color: #ffffff !important;
+  }
+
+  [role="tab"][data-state="active"],
+  [role="tab"][data-state="active"] * {
+    color: #000000 !important;
+  }
+
+  /* Fix for toggle buttons */
+  [role="button"][data-state="on"],
+  [role="button"][data-state="on"] *,
+  button[data-state="on"],
+  button[data-state="on"] * {
     color: #000000 !important;
   }
 }
