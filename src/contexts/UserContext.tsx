@@ -47,21 +47,28 @@ export function UserProvider({ children }: UserProviderProps) {
     setError(null);
 
     try {
+      console.log('UserContext: Starting profile query...');
       const { data, error: fetchError } = await supabase
         .from('profiles')
         .select('id, full_name, email, role')
         .eq('id', userId)
         .single();
 
+      console.log('UserContext: Profile query result:', { data, error: fetchError });
+
       if (fetchError) {
         console.error('UserContext: Error fetching profile:', fetchError.message, 'Code:', fetchError.code);
         if (fetchError.code === 'PGRST116') {
           setError('Perfil no encontrado. Verifica que exista en la base de datos.');
+        } else if (fetchError.code === 'PGRST301') {
+          setError('Sin permisos para acceder al perfil. Verifica las políticas RLS.');
         } else {
-          setError('Error al cargar tu perfil. Inténtalo de nuevo.');
+          setError(`Error al cargar perfil: ${fetchError.message}`);
         }
         setUser(null);
       } else if (data) {
+        console.log('UserContext: Raw profile data:', data);
+        
         // Validación segura del rol para manejar mayúsculas/minúsculas
         const normalizedRole = data.role?.toLowerCase();
         const validRoles = ['admin', 'operator', 'viewer'];
@@ -78,10 +85,14 @@ export function UserProvider({ children }: UserProviderProps) {
         console.log('UserContext: Profile loaded successfully:', userData);
         setUser(userData);
         setError(null);
+      } else {
+        console.warn('UserContext: No data returned from profile query');
+        setError('No se encontró información del perfil');
+        setUser(null);
       }
     } catch (e: any) {
       console.error("UserContext: Unexpected error:", e.message);
-      setError("Error inesperado al cargar el perfil.");
+      setError(`Error inesperado: ${e.message}`);
       setUser(null);
     } finally {
       setProfileLoading(false);
@@ -92,11 +103,12 @@ export function UserProvider({ children }: UserProviderProps) {
     console.log('UserContext: Auth state effect - authLoading:', authLoading, 'authUser:', !!authUser);
     
     if (authLoading) {
+      console.log('UserContext: Still loading auth, waiting...');
       return;
     }
 
     if (authUser && session) {
-      console.log('UserContext: Authenticated user found, fetching profile...');
+      console.log('UserContext: Authenticated user found, fetching profile...', authUser.id);
       fetchProfile(authUser.id);
     } else {
       console.log('UserContext: No authenticated user, clearing profile');

@@ -6,7 +6,7 @@ import { Navigate, useLocation } from 'react-router-dom';
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user: authUser, loading: authLoading } = useAuth();
-  const { user: profileUser, loading: profileLoading, error } = useUser();
+  const { user: profileUser, loading: profileLoading, error, retryFetchProfile } = useUser();
   const location = useLocation();
 
   console.log('ProtectedRoute:', {
@@ -21,6 +21,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 
   // Show loading while auth is initializing
   if (authLoading) {
+    console.log('ProtectedRoute: Auth loading...');
     return (
       <div className="flex items-center justify-center h-screen bg-gray-900 text-white">
         <div className="text-center">
@@ -50,19 +51,28 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     );
   }
   
-  // If there's an error loading profile, show error message
+  // If there's an error loading profile, show error message with retry
   if (error) {
+    console.error('ProtectedRoute: Profile error:', error);
     return (
       <div className="flex items-center justify-center h-screen bg-gray-900 text-white">
         <div className="text-center max-w-md">
           <h2 className="text-xl font-semibold mb-4">Error al cargar perfil</h2>
           <p className="text-gray-400 mb-4">{error}</p>
-          <button 
-            onClick={() => window.location.reload()} 
-            className="px-4 py-2 bg-tms-green text-white rounded hover:bg-tms-green-dark"
-          >
-            Reintentar
-          </button>
+          <div className="space-x-2">
+            <button 
+              onClick={retryFetchProfile} 
+              className="px-4 py-2 bg-tms-green text-white rounded hover:bg-tms-green-dark"
+            >
+              Reintentar
+            </button>
+            <button 
+              onClick={() => window.location.href = '/auth'} 
+              className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
+            >
+              Volver a Login
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -77,18 +87,20 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
           <h2 className="text-xl font-semibold mb-4">Error de Perfil</h2>
           <p className="text-gray-400 mb-4">No se pudo cargar tu perfil de usuario.</p>
           <p className="text-gray-500 text-sm mb-4">Usuario ID: {authUser.id}</p>
-          <button 
-            onClick={() => window.location.reload()} 
-            className="px-4 py-2 bg-tms-green text-white rounded hover:bg-tms-green-dark mr-2"
-          >
-            Reintentar
-          </button>
-          <button 
-            onClick={() => window.location.href = '/auth'} 
-            className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
-          >
-            Volver a Login
-          </button>
+          <div className="space-x-2">
+            <button 
+              onClick={retryFetchProfile} 
+              className="px-4 py-2 bg-tms-green text-white rounded hover:bg-tms-green-dark"
+            >
+              Reintentar
+            </button>
+            <button 
+              onClick={() => window.location.href = '/auth'} 
+              className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
+            >
+              Volver a Login
+            </button>
+          </div>
         </div>
       </div>
     );

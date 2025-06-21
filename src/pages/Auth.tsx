@@ -24,6 +24,7 @@ const Auth = () => {
   const {
     user: profileUser,
     loading: profileLoading,
+    error: profileError,
     retryFetchProfile
   } = useUser();
   const navigate = useNavigate();
@@ -37,7 +38,8 @@ const Auth = () => {
       profileLoading,
       hasAuthUser: !!authUser,
       hasProfileUser: !!profileUser,
-      profileRole: profileUser?.role
+      profileRole: profileUser?.role,
+      profileError
     });
 
     // Solo redirigir cuando tengamos usuario completo (auth + perfil) y no estemos cargando
@@ -53,7 +55,7 @@ const Auth = () => {
         navigate('/dashboard', { replace: true });
       }
     }
-  }, [authUser, profileUser, authLoading, profileLoading, navigate]);
+  }, [authUser, profileUser, authLoading, profileLoading, navigate, profileError]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -140,6 +142,44 @@ const Auth = () => {
       setLoading(false);
     }
   };
+
+  // Si hay error en el perfil, mostrar opción de debug
+  if (authUser && profileError) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-transparent">
+        <Card className="glass-card border-0 w-[400px]">
+          <CardHeader>
+            <CardTitle className="text-white">Error de Perfil</CardTitle>
+            <CardDescription className="text-red-400">{profileError}</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="text-sm text-gray-300">
+              <p>Usuario autenticado: {authUser.email}</p>
+              <p>ID: {authUser.id}</p>
+            </div>
+            <div className="space-y-2">
+              <Button
+                onClick={retryFetchProfile}
+                className="w-full bg-tms-green hover:bg-tms-green-dark text-white"
+              >
+                Reintentar Cargar Perfil
+              </Button>
+              <Button
+                onClick={() => {
+                  cleanupAuthState();
+                  window.location.reload();
+                }}
+                variant="outline"
+                className="w-full"
+              >
+                Limpiar Sesión y Reiniciar
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-transparent">
