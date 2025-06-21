@@ -1,26 +1,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-
-export interface ServiceType {
-  id: string;
-  name: string;
-  description?: string;
-  basePrice?: number;
-  isActive: boolean;
-  vehicleInfoOptional: boolean;
-  // Nuevos campos de configuración
-  purchaseOrderRequired: boolean;
-  originRequired: boolean;
-  destinationRequired: boolean;
-  craneRequired: boolean;
-  operatorRequired: boolean;
-  vehicleBrandRequired: boolean;
-  vehicleModelRequired: boolean;
-  licensePlateRequired: boolean;
-  createdAt: string;
-  updatedAt: string;
-}
+import { ServiceType } from '@/types';
 
 const fetchServiceTypes = async (): Promise<ServiceType[]> => {
   const { data, error } = await supabase

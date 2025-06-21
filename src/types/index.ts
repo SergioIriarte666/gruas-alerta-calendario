@@ -1,4 +1,3 @@
-
 export interface Service {
   id: string;
   folio: string;
@@ -63,9 +62,19 @@ export interface Operator {
 export interface ServiceType {
   id: string;
   name: string;
-  description: string;
+  description?: string;
+  basePrice?: number;
   isActive: boolean;
-  vehicleInfoOptional?: boolean;
+  vehicleInfoOptional: boolean;
+  // Campos de configuración de requerimientos
+  purchaseOrderRequired: boolean;
+  originRequired: boolean;
+  destinationRequired: boolean;
+  craneRequired: boolean;
+  operatorRequired: boolean;
+  vehicleBrandRequired: boolean;
+  vehicleModelRequired: boolean;
+  licensePlateRequired: boolean;
   createdAt: string;
   updatedAt: string;
 }
