@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { enhancedSupabase } from '@/integrations/supabase/enhancedClient';
 import { toast } from 'sonner';
 
 interface User {
@@ -17,16 +17,19 @@ export const useUserManagement = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState<string | null>(null);
+  const supabase = enhancedSupabase.getClient();
 
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      // Usar una llamada directa a la función RPC con any para evitar errores de tipo
-      const { data, error } = await (supabase as any).rpc('get_all_users');
+      const result = await enhancedSupabase.query(
+        () => (supabase as any).rpc('get_all_users'),
+        'fetch users'
+      );
       
-      if (error) throw error;
+      if (result.error) throw result.error;
       
-      setUsers(data || []);
+      setUsers(result.data || []);
     } catch (error) {
       console.error('Error fetching users:', error);
       toast.error('Error al cargar usuarios');
@@ -38,12 +41,15 @@ export const useUserManagement = () => {
   const updateUserRole = async (userId: string, newRole: 'admin' | 'operator' | 'viewer') => {
     try {
       setUpdating(userId);
-      const { data, error } = await (supabase as any).rpc('update_user_role', {
-        user_id: userId,
-        new_role: newRole
-      });
+      const result = await enhancedSupabase.query(
+        () => (supabase as any).rpc('update_user_role', {
+          user_id: userId,
+          new_role: newRole
+        }),
+        'update user role'
+      );
 
-      if (error) throw error;
+      if (result.error) throw result.error;
 
       toast.success('Rol actualizado correctamente');
       await fetchUsers(); // Recargar la lista
@@ -58,12 +64,15 @@ export const useUserManagement = () => {
   const toggleUserStatus = async (userId: string, newStatus: boolean) => {
     try {
       setUpdating(userId);
-      const { data, error } = await (supabase as any).rpc('toggle_user_status', {
-        user_id: userId,
-        new_status: newStatus
-      });
+      const result = await enhancedSupabase.query(
+        () => (supabase as any).rpc('toggle_user_status', {
+          user_id: userId,
+          new_status: newStatus
+        }),
+        'toggle user status'
+      );
 
-      if (error) throw error;
+      if (result.error) throw result.error;
 
       toast.success(`Usuario ${newStatus ? 'activado' : 'desactivado'} correctamente`);
       await fetchUsers(); // Recargar la lista

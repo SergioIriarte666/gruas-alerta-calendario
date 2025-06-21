@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/sonner";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -7,6 +6,7 @@ import { UserProvider } from "@/contexts/UserContext";
 import { NotificationProvider } from "@/contexts/NotificationContext";
 import { ToastProvider } from "@/components/ui/custom-toast";
 import { Layout } from "@/components/layout/Layout";
+import { useNetworkStatus } from "@/hooks/useNetworkStatus";
 import Index from "./pages/Index";
 import Dashboard from "./pages/Dashboard";
 import Services from "./pages/Services";
@@ -27,16 +27,38 @@ import ServiceInspection from "./pages/operator/ServiceInspection";
 import NotFound from "./pages/NotFound";
 import ProtectedRoute from "@/components/layout/ProtectedRoute";
 import { PWAWrapper } from "@/components/pwa/PWAWrapper";
+import "@/utils/connectionManager";
 import "./App.css";
 
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: 60 * 1000,
-      retry: 1,
+      retry: (failureCount, error: any) => {
+        // Don't retry on authentication errors
+        if (error?.status === 401 || error?.status === 403) {
+          return false;
+        }
+        return failureCount < 2;
+      },
+      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
     },
   },
 });
+
+function NetworkStatusIndicator() {
+  const { isOnline } = useNetworkStatus();
+  
+  if (!isOnline) {
+    return (
+      <div className="fixed top-0 left-0 right-0 bg-red-500 text-white text-center py-2 z-50">
+        Sin conexión a internet. Algunas funciones pueden no estar disponibles.
+      </div>
+    );
+  }
+  
+  return null;
+}
 
 function App() {
   return (
@@ -47,6 +69,7 @@ function App() {
             <NotificationProvider>
               <ToastProvider>
                 <PWAWrapper>
+                  <NetworkStatusIndicator />
                   <Routes>
                     <Route path="/auth" element={<Auth />} />
                     <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
