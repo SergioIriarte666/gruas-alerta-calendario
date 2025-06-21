@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Menu, Search, User, Settings } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -8,9 +9,11 @@ import { useToast } from '@/components/ui/custom-toast';
 import { useUser } from '@/contexts/UserContext';
 import { useSettings } from '@/hooks/useSettings';
 import { NotificationsDropdown } from './NotificationsDropdown';
+
 interface HeaderProps {
   setIsMobileMenuOpen: (open: boolean) => void;
 }
+
 export const Header = ({
   setIsMobileMenuOpen
 }: HeaderProps) => {
@@ -53,7 +56,17 @@ export const Header = ({
   };
   return <header className="flex h-16 items-center justify-between backdrop-blur-lg border-b border-gray-700/50 px-4 sm:px-6 transition-colors duration-300 bg-black">
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={() => setIsMobileMenuOpen(true)} className="lg:hidden text-zinc-600 bg-[tms-green-dark] bg-tms-green">
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          onClick={() => setIsMobileMenuOpen(true)} 
+          className="lg:hidden text-white bg-tms-green/20 border border-tms-green/30 hover:bg-tms-green hover:text-black"
+          style={{
+            color: '#ffffff',
+            backgroundColor: 'rgba(156, 250, 36, 0.2)',
+            borderColor: 'rgba(156, 250, 36, 0.3)'
+          }}
+        >
           <Menu className="h-6 w-6" />
           <span className="sr-only">Abrir menú</span>
         </Button>
@@ -78,25 +91,56 @@ export const Header = ({
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="text-white hover:text-black hover:bg-tms-green rounded-full bg-tms-green/20 border border-tms-green/30">
-              <User className="w-5 h-5 text-tms-green" />
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="text-white hover:text-black hover:bg-tms-green rounded-full bg-tms-green/20 border border-tms-green/30"
+              style={{
+                color: '#ffffff',
+                backgroundColor: 'rgba(156, 250, 36, 0.2)',
+                borderColor: 'rgba(156, 250, 36, 0.3)'
+              }}
+            >
+              <User className="w-5 h-5 text-tms-green" style={{ color: '#9cfa24' }} />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="bg-black border-tms-green/30 min-w-[200px] z-50">
-            <DropdownMenuLabel className="text-white font-semibold">
+          <DropdownMenuContent 
+            align="end" 
+            className="bg-black border-tms-green/30 min-w-[200px] z-50"
+            style={{
+              background: '#000000',
+              borderColor: 'rgba(156, 250, 36, 0.3)'
+            }}
+          >
+            <DropdownMenuLabel 
+              className="text-white font-semibold"
+              style={{ color: '#ffffff' }}
+            >
               {user?.name || 'Mi Cuenta'}
             </DropdownMenuLabel>
-            <DropdownMenuSeparator className="bg-tms-green/30" />
-            <DropdownMenuItem className="text-white hover:text-black hover:bg-tms-green cursor-pointer focus:bg-tms-green focus:text-black" onClick={handleProfileClick}>
+            <DropdownMenuSeparator className="bg-tms-green/30" style={{ backgroundColor: 'rgba(156, 250, 36, 0.3)' }} />
+            <DropdownMenuItem 
+              className="text-white hover:text-black hover:bg-tms-green cursor-pointer focus:bg-tms-green focus:text-black" 
+              onClick={handleProfileClick}
+              style={{ color: '#ffffff' }}
+            >
               <User className="w-4 h-4 mr-2" />
               Perfil
             </DropdownMenuItem>
-            {isAdmin && <DropdownMenuItem className="text-white hover:text-black hover:bg-tms-green cursor-pointer focus:bg-tms-green focus:text-black" onClick={() => navigate('/settings')}>
+            {isAdmin && <DropdownMenuItem 
+              className="text-white hover:text-black hover:bg-tms-green cursor-pointer focus:bg-tms-green focus:text-black" 
+              onClick={() => navigate('/settings')}
+              style={{ color: '#ffffff' }}
+            >
                 <Settings className="w-4 h-4 mr-2" />
                 Configuración
               </DropdownMenuItem>}
-            <DropdownMenuSeparator className="bg-tms-green/30" />
-            <DropdownMenuItem className="text-red-400 hover:text-red-300 hover:bg-red-500/10 cursor-pointer focus:bg-red-500/10 focus:text-red-300" onClick={handleLogout}>
+            <DropdownMenuSeparator className="bg-tms-green/30" style={{ backgroundColor: 'rgba(156, 250, 36, 0.3)' }} />
+            <DropdownMenuItem 
+              className="text-red-400 hover:text-red-300 hover:bg-red-500/10 cursor-pointer focus:bg-red-500/10 focus:text-red-300" 
+              onClick={handleLogout}
+              style={{ color: '#ef4444' }}
+            >
               Cerrar Sesión
             </DropdownMenuItem>
           </DropdownMenuContent>

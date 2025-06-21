@@ -15,7 +15,11 @@ export const OperatorsHeader = ({ onNewOperator }: OperatorsHeaderProps) => {
       </div>
       <Button
         onClick={onNewOperator}
-        className="bg-tms-green hover:bg-tms-green/90 text-white"
+        className="bg-tms-green hover:bg-tms-green/80 text-black font-medium"
+        style={{
+          backgroundColor: '#9cfa24',
+          color: '#000000'
+        }}
       >
         <Plus className="w-4 h-4 mr-2" />
         Nuevo Operador

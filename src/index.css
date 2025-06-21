@@ -327,15 +327,15 @@
     color: #000000 !important;
   }
 
-  /* Fix for outline buttons */
+  /* Fix for outline buttons - should be visible with colored text */
   button[data-variant="outline"],
   button[data-variant="outline"] * {
-    color: #ffffff !important;
+    color: inherit !important;
   }
 
   button[data-variant="outline"]:hover,
   button[data-variant="outline"]:hover * {
-    color: #000000 !important;
+    color: inherit !important;
   }
 
   /* Fix for destructive buttons */
@@ -361,6 +361,32 @@
   button[data-state="on"],
   button[data-state="on"] * {
     color: #000000 !important;
+  }
+
+  /* ACTION BUTTONS VISIBILITY - ENSURE ALL ACTION BUTTONS ARE CLEARLY VISIBLE */
+  .action-button,
+  button[class*="text-tms-green"],
+  button[class*="text-blue"],
+  button[class*="text-green"],
+  button[class*="text-red"],
+  button[class*="text-yellow"],
+  button[class*="text-purple"] {
+    border: 1px solid currentColor !important;
+    background: rgba(255, 255, 255, 0.05) !important;
+    padding: 6px 8px !important;
+    border-radius: 6px !important;
+    transition: all 0.2s ease !important;
+  }
+
+  .action-button:hover,
+  button[class*="text-tms-green"]:hover,
+  button[class*="text-blue"]:hover,
+  button[class*="text-green"]:hover,
+  button[class*="text-red"]:hover,
+  button[class*="text-yellow"]:hover,
+  button[class*="text-purple"]:hover {
+    background: rgba(255, 255, 255, 0.1) !important;
+    transform: scale(1.05) !important;
   }
 
   /* ADDITIONAL FIXES FOR SELECT AND DROPDOWN COMPONENTS */

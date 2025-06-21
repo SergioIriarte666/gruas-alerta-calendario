@@ -99,7 +99,7 @@ export const ServicesTable = ({
                   <TableHead className="text-gray-300">Operador</TableHead>
                   <TableHead className="text-gray-300">Valor</TableHead>
                   <TableHead className="text-gray-300">Estado</TableHead>
-                  <TableHead className="text-gray-300">Acciones</TableHead>
+                  <TableHead className="text-gray-300 min-w-[140px]">Acciones</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -153,22 +153,32 @@ export const ServicesTable = ({
                           {/* Only show close button for pending/in_progress services */}
                           {(service.status === 'pending' || service.status === 'in_progress') && onCloseService && (
                             <Button 
-                              variant="ghost" 
+                              variant="outline" 
                               size="sm" 
-                              className="text-green-400 hover:text-green-300 hover:bg-green-400/10"
+                              className="border-green-500/50 bg-green-500/10 text-green-400 hover:bg-green-500/20 hover:border-green-500"
                               onClick={() => onCloseService(service)}
                               title="Cerrar Servicio"
+                              style={{
+                                borderColor: 'rgba(34, 197, 94, 0.5)',
+                                backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                                color: '#22c55e'
+                              }}
                             >
                               <Check className="w-4 h-4" />
                             </Button>
                           )}
                           
                           <Button 
-                            variant="ghost" 
+                            variant="outline" 
                             size="sm" 
-                            className="text-tms-green hover:text-tms-green-light hover:bg-tms-green/10"
+                            className="border-tms-green/50 bg-tms-green/10 text-tms-green hover:bg-tms-green/20 hover:border-tms-green"
                             onClick={() => onViewDetails(service)}
                             title="Ver detalles del servicio"
+                            style={{
+                              borderColor: 'rgba(156, 250, 36, 0.5)',
+                              backgroundColor: 'rgba(156, 250, 36, 0.1)',
+                              color: '#9cfa24'
+                            }}
                           >
                             <Eye className="w-4 h-4" />
                           </Button>
@@ -176,11 +186,11 @@ export const ServicesTable = ({
                           {/* Administrators can edit invoiced services with warning */}
                           {onEdit && (
                             <Button 
-                              variant="ghost" 
+                              variant="outline" 
                               size="sm" 
                               className={isInvoiced && !isAdmin 
-                                ? "text-gray-500 cursor-not-allowed" 
-                                : "text-blue-400 hover:text-blue-300 hover:bg-blue-400/10"}
+                                ? "border-gray-600 bg-gray-600/10 text-gray-500 cursor-not-allowed" 
+                                : "border-blue-500/50 bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 hover:border-blue-500"}
                               onClick={() => onEdit(service)}
                               title={isInvoiced && !isAdmin 
                                 ? "No se puede editar un servicio facturado" 
@@ -188,6 +198,15 @@ export const ServicesTable = ({
                                   ? "⚠️ Editar servicio facturado (solo admin)" 
                                   : "Editar servicio"}
                               disabled={isInvoiced && !isAdmin}
+                              style={isInvoiced && !isAdmin ? {
+                                borderColor: 'rgba(107, 114, 128, 0.5)',
+                                backgroundColor: 'rgba(107, 114, 128, 0.1)',
+                                color: '#6b7280'
+                              } : {
+                                borderColor: 'rgba(59, 130, 246, 0.5)',
+                                backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                                color: '#3b82f6'
+                              }}
                             >
                               <Edit className="w-4 h-4" />
                             </Button>
@@ -196,16 +215,25 @@ export const ServicesTable = ({
                           {/* Delete button - disabled for invoiced services */}
                           {onDelete && (
                             <Button 
-                              variant="ghost" 
+                              variant="outline" 
                               size="sm" 
                               className={isInvoiced 
-                                ? "text-gray-500 cursor-not-allowed" 
-                                : "text-red-400 hover:text-red-300 hover:bg-red-400/10"}
+                                ? "border-gray-600 bg-gray-600/10 text-gray-500 cursor-not-allowed" 
+                                : "border-red-500/50 bg-red-500/10 text-red-400 hover:bg-red-500/20 hover:border-red-500"}
                               onClick={isInvoiced ? undefined : () => onDelete(service)}
                               title={isInvoiced 
                                 ? "No se puede eliminar un servicio facturado" 
                                 : "Eliminar servicio"}
                               disabled={isInvoiced}
+                              style={isInvoiced ? {
+                                borderColor: 'rgba(107, 114, 128, 0.5)',
+                                backgroundColor: 'rgba(107, 114, 128, 0.1)',
+                                color: '#6b7280'
+                              } : {
+                                borderColor: 'rgba(239, 68, 68, 0.5)',
+                                backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                                color: '#ef4444'
+                              }}
                             >
                               <Trash2 className="w-4 h-4" />
                             </Button>
