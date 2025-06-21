@@ -11,13 +11,13 @@ const Switch = React.forwardRef<
   <SwitchPrimitives.Root
     className={cn(
       "peer inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:bg-primary data-[state=unchecked]:bg-input",
-      "data-[state=unchecked]:bg-white/20 data-[state=checked]:bg-tms-green",
+      "data-[state=unchecked]:bg-gray-200 data-[state=checked]:bg-tms-green",
       className
     )}
     {...props}
     ref={ref}
     style={{
-      backgroundColor: props.checked ? '#9cfa24' : 'rgba(255, 255, 255, 0.2)'
+      backgroundColor: props.checked ? '#9cfa24' : '#e5e7eb'
     }}
   >
     <SwitchPrimitives.Thumb

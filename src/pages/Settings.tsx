@@ -1,3 +1,4 @@
+
 import * as React from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
@@ -62,47 +63,50 @@ const Settings = () => {
   };
 
   if (loading || systemLoading || !settings) {
-    return <div className="flex items-center justify-center min-h-96 bg-black text-white">
-        <div className="text-white">Cargando configuración...</div>
-      </div>;
+    return (
+      <div className="flex items-center justify-center min-h-96 bg-white text-black">
+        <div className="text-black">Cargando configuración...</div>
+      </div>
+    );
   }
 
-  return <div className="space-y-6 animate-fade-in bg-black min-h-screen p-6">
+  return (
+    <div className="space-y-6 animate-fade-in bg-white min-h-screen p-6">
       <SettingsHeader onReset={resetSettings} />
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-5 bg-black/20 border border-tms-green/30">
+        <TabsList className="grid w-full grid-cols-5 bg-gray-100 border border-gray-200">
           <TabsTrigger 
             value="company" 
-            className="flex items-center space-x-2 text-white data-[state=active]:text-black data-[state=active]:bg-tms-green"
+            className="flex items-center space-x-2 text-black data-[state=active]:text-black data-[state=active]:bg-tms-green hover:bg-gray-50"
           >
             <Building2 className="w-4 h-4" />
             <span>Empresa</span>
           </TabsTrigger>
           <TabsTrigger 
             value="user" 
-            className="flex items-center space-x-2 text-white data-[state=active]:text-black data-[state=active]:bg-tms-green"
+            className="flex items-center space-x-2 text-black data-[state=active]:text-black data-[state=active]:bg-tms-green hover:bg-gray-50"
           >
             <User className="w-4 h-4" />
             <span>Usuario</span>
           </TabsTrigger>
           <TabsTrigger 
             value="system" 
-            className="flex items-center space-x-2 text-white data-[state=active]:text-black data-[state=active]:bg-tms-green"
+            className="flex items-center space-x-2 text-black data-[state=active]:text-black data-[state=active]:bg-tms-green hover:bg-gray-50"
           >
             <SettingsIcon className="w-4 h-4" />
             <span>Sistema</span>
           </TabsTrigger>
           <TabsTrigger 
             value="notifications" 
-            className="flex items-center space-x-2 text-white data-[state=active]:text-black data-[state=active]:bg-tms-green"
+            className="flex items-center space-x-2 text-black data-[state=active]:text-black data-[state=active]:bg-tms-green hover:bg-gray-50"
           >
             <Bell className="w-4 h-4" />
             <span>Notificaciones</span>
           </TabsTrigger>
           <TabsTrigger 
             value="users" 
-            className="flex items-center space-x-2 text-white data-[state=active]:text-black data-[state=active]:bg-tms-green"
+            className="flex items-center space-x-2 text-black data-[state=active]:text-black data-[state=active]:bg-tms-green hover:bg-gray-50"
           >
             <Users className="w-4 h-4" />
             <span>Usuarios</span>
@@ -114,24 +118,38 @@ const Settings = () => {
         </TabsContent>
 
         <TabsContent value="user">
-          <UserSettingsTab settings={settings.user} saving={false} onSave={async () => ({
-          success: true
-        })} onUpdateSettings={() => {}} />
+          <UserSettingsTab 
+            settings={settings.user} 
+            saving={false} 
+            onSave={async () => ({ success: true })} 
+            onUpdateSettings={() => {}} 
+          />
         </TabsContent>
 
         <TabsContent value="system">
-          <SystemSettingsTab settings={systemSettings} saving={systemSaving} onSave={handleSystemSave} onUpdateSettings={updateSystemSettings} />
+          <SystemSettingsTab 
+            settings={systemSettings} 
+            saving={systemSaving} 
+            onSave={handleSystemSave} 
+            onUpdateSettings={updateSystemSettings} 
+          />
         </TabsContent>
 
         <TabsContent value="notifications">
-          <NotificationSettingsTab settings={notificationSettings} saving={systemSaving} onSave={handleSystemSave} onUpdateSettings={updateNotificationSettings} />
+          <NotificationSettingsTab 
+            settings={notificationSettings} 
+            saving={systemSaving} 
+            onSave={handleSystemSave} 
+            onUpdateSettings={updateNotificationSettings} 
+          />
         </TabsContent>
 
         <TabsContent value="users">
           <UserManagementTab />
         </TabsContent>
       </Tabs>
-    </div>;
+    </div>
+  );
 };
 
 export default Settings;

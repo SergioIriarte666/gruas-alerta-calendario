@@ -11,8 +11,8 @@ export const SettingsHeader: React.FC<SettingsHeaderProps> = ({ onReset }) => {
   return (
     <div className="flex items-center justify-between">
       <div>
-        <h1 className="text-3xl font-bold text-white">Configuración del Sistema</h1>
-        <p className="text-gray-400 mt-2">
+        <h1 className="text-3xl font-bold text-black">Configuración del Sistema</h1>
+        <p className="text-gray-600 mt-2">
           Gestiona la configuración de la empresa, usuarios y sistema
         </p>
       </div>
@@ -20,7 +20,7 @@ export const SettingsHeader: React.FC<SettingsHeaderProps> = ({ onReset }) => {
         <Button
           variant="outline"
           onClick={onReset}
-          className="border-gray-700 text-gray-300"
+          className="border-gray-300 text-black hover:bg-gray-50"
           title="Restablecer la configuración a los valores por defecto"
         >
           <RotateCcw className="w-4 h-4 mr-2" />

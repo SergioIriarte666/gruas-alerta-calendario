@@ -10,9 +10,9 @@ const toggleVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-transparent text-white border border-gray-600 hover:bg-white/10",
+        default: "bg-transparent text-black border border-gray-300 hover:bg-gray-50",
         outline:
-          "border border-input bg-transparent hover:bg-accent hover:text-accent-foreground text-white",
+          "border border-input bg-transparent hover:bg-accent hover:text-accent-foreground text-black",
       },
       size: {
         default: "h-10 px-3",
@@ -36,9 +36,9 @@ const Toggle = React.forwardRef<
     ref={ref}
     className={cn(toggleVariants({ variant, size, className }))}
     style={{
-      color: '#ffffff',
+      color: '#000000',
       backgroundColor: 'transparent',
-      borderColor: 'rgba(107, 114, 128, 0.6)',
+      borderColor: '#d1d5db',
       ...style
     }}
     {...props}
