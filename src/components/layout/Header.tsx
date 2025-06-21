@@ -53,7 +53,7 @@ export const Header = ({
   };
   return <header className="flex h-16 items-center justify-between backdrop-blur-lg border-b border-gray-700/50 px-4 sm:px-6 transition-colors duration-300 bg-black">
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={() => setIsMobileMenuOpen(true)} className="lg:hidden hover:bg-tms-green text-zinc-950">
+        <Button variant="ghost" size="icon" onClick={() => setIsMobileMenuOpen(true)} className="lg:hidden text-zinc-600 bg-[tms-green-dark] bg-tms-green">
           <Menu className="h-6 w-6" />
           <span className="sr-only">Abrir menú</span>
         </Button>
