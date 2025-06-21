@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -25,7 +24,8 @@ const Auth = () => {
     user: profileUser,
     loading: profileLoading,
     error: profileError,
-    retryFetchProfile
+    retryFetchProfile,
+    forceRefreshProfile
   } = useUser();
   const navigate = useNavigate();
   const {
@@ -80,10 +80,10 @@ const Auth = () => {
         });
       } else if (data.user) {
         console.log('Auth: Login successful, user ID:', data.user.id);
-        // Forzar actualización del perfil tras login
+        // Forzar refresco del perfil tras login exitoso
         setTimeout(() => {
-          retryFetchProfile();
-        }, 100);
+          forceRefreshProfile();
+        }, 500);
         
         toast({
           type: 'success',
@@ -163,6 +163,12 @@ const Auth = () => {
                 className="w-full bg-tms-green hover:bg-tms-green-dark text-white"
               >
                 Reintentar Cargar Perfil
+              </Button>
+              <Button
+                onClick={forceRefreshProfile}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+              >
+                Forzar Refresco de Perfil
               </Button>
               <Button
                 onClick={() => {

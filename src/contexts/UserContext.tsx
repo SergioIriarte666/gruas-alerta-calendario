@@ -19,6 +19,7 @@ interface UserContextType {
   isAuthenticated: boolean;
   error: string | null;
   retryFetchProfile: () => void;
+  forceRefreshProfile: () => void;
 }
 
 const UserContext = React.createContext<UserContextType | undefined>(undefined);
@@ -40,6 +41,7 @@ export function UserProvider({ children }: UserProviderProps) {
   const [user, setUser] = React.useState<User | null>(null);
   const [profileLoading, setProfileLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  const [refreshTrigger, setRefreshTrigger] = React.useState(0);
 
   const fetchProfile = React.useCallback(async (userId: string) => {
     console.log('UserContext: Fetching profile for user:', userId);
@@ -97,7 +99,7 @@ export function UserProvider({ children }: UserProviderProps) {
     } finally {
       setProfileLoading(false);
     }
-  }, []);
+  }, [refreshTrigger]);
 
   React.useEffect(() => {
     console.log('UserContext: Auth state effect - authLoading:', authLoading, 'authUser:', !!authUser);
@@ -159,6 +161,11 @@ export function UserProvider({ children }: UserProviderProps) {
     }
   };
 
+  const forceRefreshProfile = () => {
+    console.log('UserContext: Force refreshing profile...');
+    setRefreshTrigger(prev => prev + 1);
+  };
+
   const isAuthenticated = !!authUser && !!session;
   const isLoading = authLoading || profileLoading;
 
@@ -180,7 +187,8 @@ export function UserProvider({ children }: UserProviderProps) {
       updateUser,
       isAuthenticated,
       error,
-      retryFetchProfile
+      retryFetchProfile,
+      forceRefreshProfile
     }}>
       {children}
     </UserContext.Provider>
