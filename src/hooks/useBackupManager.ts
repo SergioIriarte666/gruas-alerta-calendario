@@ -13,22 +13,32 @@ export const useBackupManager = () => {
   });
 
   // Obtener historial de respaldos
-  const { data: backupLogs, refetch: refetchLogs } = useQuery({
+  const { data: backupLogs, refetch: refetchLogs, error } = useQuery({
     queryKey: ['backup-logs'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('backup_logs')
-        .select(`
-          *,
-          profiles!backup_logs_created_by_fkey(email, full_name)
-        `)
-        .order('created_at', { ascending: false })
-        .limit(10);
+      try {
+        const { data, error } = await supabase
+          .from('backup_logs')
+          .select(`
+            *,
+            profiles!backup_logs_created_by_fkey(email, full_name)
+          `)
+          .order('created_at', { ascending: false })
+          .limit(10);
 
-      if (error) throw error;
-      return data as (BackupLog & { profiles: { email: string; full_name: string } })[];
+        if (error) {
+          console.error('Error fetching backup logs:', error);
+          throw error;
+        }
+
+        return data as (BackupLog & { profiles: { email: string; full_name: string } })[];
+      } catch (error) {
+        console.error('Failed to fetch backup logs:', error);
+        throw error;
+      }
     },
     staleTime: 30 * 1000, // 30 segundos
+    retry: 1,
   });
 
   const generateBackup = useCallback(async (type: 'full' | 'quick' = 'full'): Promise<BackupResult> => {
@@ -45,18 +55,21 @@ export const useBackupManager = () => {
         body: { type }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Edge function error:', error);
+        throw error;
+      }
 
       setProgress(prev => ({ ...prev, progress: 80, stage: 'Preparando descarga...' }));
 
-      if (!data.success) {
-        throw new Error(data.error || 'Error generando respaldo');
+      if (!data || !data.success) {
+        throw new Error(data?.error || 'Error generando respaldo');
       }
 
       setProgress(prev => ({ ...prev, progress: 100, stage: 'Respaldo generado exitosamente' }));
 
       // Refrescar logs
-      refetchLogs();
+      await refetchLogs();
 
       // Reset progress después de un momento
       setTimeout(() => {
@@ -82,10 +95,11 @@ export const useBackupManager = () => {
         isGenerating: false,
         progress: 0,
         stage: 'idle',
-        error: error.message
+        error: error.message || 'Error interno del servidor'
       });
 
-      refetchLogs();
+      // También refrescar logs en caso de error
+      await refetchLogs();
 
       return {
         success: false,
@@ -118,17 +132,24 @@ export const useBackupManager = () => {
   }, []);
 
   const generateAndDownloadBackup = useCallback(async (type: 'full' | 'quick' = 'full') => {
-    const result = await generateBackup(type);
-    
-    if (result.success && result.content && result.fileName && result.type) {
-      downloadBackup(result.content, result.fileName, result.type);
+    try {
+      const result = await generateBackup(type);
       
-      toast.success('Respaldo generado', {
-        description: `Respaldo ${type === 'full' ? 'completo' : 'rápido'} generado y descargado exitosamente.`
-      });
-    } else {
+      if (result.success && result.content && result.fileName && result.type) {
+        downloadBackup(result.content, result.fileName, result.type);
+        
+        toast.success('Respaldo generado', {
+          description: `Respaldo ${type === 'full' ? 'completo' : 'rápido'} generado y descargado exitosamente.`
+        });
+      } else {
+        toast.error('Error en respaldo', {
+          description: result.error || 'No se pudo generar el respaldo.'
+        });
+      }
+    } catch (error) {
+      console.error('Error in generateAndDownloadBackup:', error);
       toast.error('Error en respaldo', {
-        description: result.error || 'No se pudo generar el respaldo.'
+        description: 'Ocurrió un error inesperado al generar el respaldo.'
       });
     }
   }, [generateBackup, downloadBackup]);
@@ -139,6 +160,7 @@ export const useBackupManager = () => {
     generateBackup,
     downloadBackup,
     generateAndDownloadBackup,
-    refetchLogs
+    refetchLogs,
+    error
   };
 };

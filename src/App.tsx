@@ -1,110 +1,75 @@
 
-import React, { Suspense } from 'react';
+import { Toaster } from "@/components/ui/sonner";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { Layout } from "@/components/layout/Layout";
-import { OperatorLayout } from "@/components/layout/OperatorLayout";
+import { AuthProvider } from "@/contexts/AuthContext";
 import { UserProvider } from "@/contexts/UserContext";
 import { NotificationProvider } from "@/contexts/NotificationContext";
-import { AuthProvider } from "@/contexts/AuthContext";
-import { ToastProvider } from "@/components/ui/custom-toast";
-import { useTheme } from "@/hooks/useTheme";
-import ProtectedRoute from "@/components/layout/ProtectedRoute";
+import Index from "./pages/Index";
 import Dashboard from "./pages/Dashboard";
 import Services from "./pages/Services";
-import Calendar from "./pages/Calendar";
+import ServiceTypes from "./pages/ServiceTypes";
 import Clients from "./pages/Clients";
 import Cranes from "./pages/Cranes";
 import Operators from "./pages/Operators";
 import Costs from "./pages/Costs";
-import Closures from "./pages/Closures";
-import Invoices from "./pages/Invoices";
+import Calendar from "./pages/Calendar";
 import Reports from "./pages/Reports";
+import Invoices from "./pages/Invoices";
+import Closures from "./pages/Closures";
 import Settings from "./pages/Settings";
-import Profile from "./pages/Profile";
 import Auth from "./pages/Auth";
-import NotFound from "./pages/NotFound";
+import Profile from "./pages/Profile";
 import OperatorDashboard from "./pages/OperatorDashboard";
 import ServiceInspection from "./pages/operator/ServiceInspection";
-import ServiceTypes from "./pages/ServiceTypes";
+import NotFound from "./pages/NotFound";
+import { ProtectedRoute } from "@/components/layout/ProtectedRoute";
+import { PWAWrapper } from "@/components/pwa/PWAWrapper";
+import "./App.css";
 
-// Create QueryClient outside of component to prevent recreation
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
+      staleTime: 60 * 1000,
       retry: 1,
-      refetchOnWindowFocus: false,
     },
   },
 });
 
-// Separate theme component to isolate theme logic
-function ThemeWrapper({ children }: { children: React.ReactNode }) {
-  useTheme();
-  return <>{children}</>;
-}
-
-// Main app content component
-function AppContent() {
-  return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/auth" element={<Auth />} />
-        
-        <Route path="/operator" element={
-          <ProtectedRoute>
-            <OperatorLayout />
-          </ProtectedRoute>
-        }>
-          <Route index element={<OperatorDashboard />} />
-          <Route path="service/:id/inspect" element={<ServiceInspection />} />
-        </Route>
-
-        <Route path="/" element={
-          <ProtectedRoute>
-            <Layout />
-          </ProtectedRoute>
-        }>
-          <Route index element={<Dashboard />} />
-          <Route path="calendar" element={<Calendar />} />
-          <Route path="services" element={<Services />} />
-          <Route path="service-types" element={
-            <Suspense fallback={<div className="flex items-center justify-center min-h-96"><div className="text-white">Cargando...</div></div>}>
-              <ServiceTypes />
-            </Suspense>
-          } />
-          <Route path="clients" element={<Clients />} />
-          <Route path="cranes" element={<Cranes />} />
-          <Route path="operators" element={<Operators />} />
-          <Route path="costs" element={<Costs />} />
-          <Route path="closures" element={<Closures />} />
-          <Route path="invoices" element={<Invoices />} />
-          <Route path="reports" element={<Reports />} />
-          <Route path="settings" element={<Settings />} />
-          <Route path="profile" element={<Profile />} />
-        </Route>
-        
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-    </BrowserRouter>
-  );
-}
-
-// Main App component with proper provider nesting
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <UserProvider>
-          <ThemeWrapper>
+      <Router>
+        <AuthProvider>
+          <UserProvider>
             <NotificationProvider>
-              <ToastProvider>
-                <AppContent />
-              </ToastProvider>
+              <PWAWrapper>
+                <Routes>
+                  <Route path="/auth" element={<Auth />} />
+                  <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
+                  <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+                  <Route path="/services" element={<ProtectedRoute><Services /></ProtectedRoute>} />
+                  <Route path="/service-types" element={<ProtectedRoute><ServiceTypes /></ProtectedRoute>} />
+                  <Route path="/clients" element={<ProtectedRoute><Clients /></ProtectedRoute>} />
+                  <Route path="/cranes" element={<ProtectedRoute><Cranes /></ProtectedRoute>} />
+                  <Route path="/operators" element={<ProtectedRoute><Operators /></ProtectedRoute>} />
+                  <Route path="/costs" element={<ProtectedRoute><Costs /></ProtectedRoute>} />
+                  <Route path="/calendar" element={<ProtectedRoute><Calendar /></ProtectedRoute>} />
+                  <Route path="/reports" element={<ProtectedRoute><Reports /></ProtectedRoute>} />
+                  <Route path="/invoices" element={<ProtectedRoute><Invoices /></ProtectedRoute>} />
+                  <Route path="/closures" element={<ProtectedRoute><Closures /></ProtectedRoute>} />
+                  <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+                  <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+                  <Route path="/operator" element={<ProtectedRoute><OperatorDashboard /></ProtectedRoute>} />
+                  <Route path="/operator/service/:serviceId/inspection" element={<ProtectedRoute><ServiceInspection /></ProtectedRoute>} />
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+                <Toaster />
+              </PWAWrapper>
             </NotificationProvider>
-          </ThemeWrapper>
-        </UserProvider>
-      </AuthProvider>
+          </UserProvider>
+        </AuthProvider>
+      </Router>
     </QueryClientProvider>
   );
 }

@@ -1,61 +1,81 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Truck, Users, FileText, Receipt, BarChart3, Settings, Menu, X, Calendar, Building2, Wallet } from 'lucide-react';
+import { LayoutDashboard, Truck, Users, FileText, Receipt, BarChart3, Settings, Menu, X, Calendar, Building2, Wallet, Wrench } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useSettings } from '@/hooks/useSettings';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
-const menuItems = [{
-  title: 'Dashboard',
-  href: '/',
-  icon: LayoutDashboard
-}, {
-  title: 'Calendario',
-  href: '/calendar',
-  icon: Calendar
-}, {
-  title: 'Servicios',
-  href: '/services',
-  icon: Truck
-}, {
-  title: 'Clientes',
-  href: '/clients',
-  icon: Users
-}, {
-  title: 'Grúas',
-  href: '/cranes',
-  icon: Building2
-}, {
-  title: 'Operadores',
-  href: '/operators',
-  icon: Users
-}, {
-  title: 'Costos',
-  href: '/costs',
-  icon: Wallet
-}, {
-  title: 'Cierres',
-  href: '/closures',
-  icon: FileText
-}, {
-  title: 'Facturas',
-  href: '/invoices',
-  icon: Receipt
-}, {
-  title: 'Reportes',
-  href: '/reports',
-  icon: BarChart3
-}, {
-  title: 'Configuración',
-  href: '/settings',
-  icon: Settings
-}];
+
+const menuItems = [
+  {
+    title: 'Dashboard',
+    href: '/',
+    icon: LayoutDashboard
+  },
+  {
+    title: 'Calendario',
+    href: '/calendar',
+    icon: Calendar
+  },
+  {
+    title: 'Servicios',
+    href: '/services',
+    icon: Truck
+  },
+  {
+    title: 'Tipos de Servicio',
+    href: '/service-types',
+    icon: Wrench
+  },
+  {
+    title: 'Clientes',
+    href: '/clients',
+    icon: Users
+  },
+  {
+    title: 'Grúas',
+    href: '/cranes',
+    icon: Building2
+  },
+  {
+    title: 'Operadores',
+    href: '/operators',
+    icon: Users
+  },
+  {
+    title: 'Costos',
+    href: '/costs',
+    icon: Wallet
+  },
+  {
+    title: 'Cierres',
+    href: '/closures',
+    icon: FileText
+  },
+  {
+    title: 'Facturas',
+    href: '/invoices',
+    icon: Receipt
+  },
+  {
+    title: 'Reportes',
+    href: '/reports',
+    icon: BarChart3
+  },
+  {
+    title: 'Configuración',
+    href: '/settings',
+    icon: Settings
+  }
+];
+
 interface SidebarProps {
   isCollapsed: boolean;
   setIsCollapsed: (isCollapsed: boolean) => void;
   isMobileMenuOpen: boolean;
   setIsMobileMenuOpen: (isOpen: boolean) => void;
 }
+
 export const Sidebar = ({
   isCollapsed,
   setIsCollapsed,

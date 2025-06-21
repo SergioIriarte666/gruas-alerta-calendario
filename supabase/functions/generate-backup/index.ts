@@ -14,62 +14,103 @@ serve(async (req) => {
   }
 
   try {
+    // Verificar que hay un token de autorización
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      throw new Error('No authorization header provided');
+    }
+
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
       {
         global: {
-          headers: { Authorization: req.headers.get('Authorization')! },
+          headers: { Authorization: authHeader },
         },
       }
     )
 
-    const { type = 'full' } = await req.json()
+    // Verificar que el usuario esté autenticado
+    const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
+    if (authError || !user) {
+      throw new Error('Usuario no autenticado');
+    }
 
-    console.log(`Starting ${type} backup generation...`)
+    // Verificar que el usuario sea administrador
+    const { data: profile, error: profileError } = await supabaseClient
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single();
+
+    if (profileError || !profile || profile.role !== 'admin') {
+      throw new Error('Solo los administradores pueden generar respaldos');
+    }
+
+    const body = await req.json();
+    const { type = 'full' } = body;
+
+    console.log(`Starting ${type} backup generation for user ${user.email}...`);
 
     // Log inicio del respaldo
-    const { data: logData } = await supabaseClient
+    const { data: logData, error: logError } = await supabaseClient
       .from('backup_logs')
       .insert({
         backup_type: type,
-        status: 'started'
+        status: 'started',
+        created_by: user.id
       })
       .select()
-      .single()
+      .single();
 
-    const logId = logData?.id
+    if (logError) {
+      console.error('Error creating backup log:', logError);
+      // Continuar aunque no se pueda crear el log
+    }
+
+    const logId = logData?.id;
 
     try {
-      let backupContent: string
-      let fileName: string
-      let contentType: string
+      let backupContent: string;
+      let fileName: string;
+      let contentType: string;
 
       if (type === 'quick') {
         // Generar respaldo rápido (JSON)
         const { data: quickBackup, error } = await supabaseClient
-          .rpc('generate_quick_backup')
+          .rpc('generate_quick_backup');
 
-        if (error) throw error
+        if (error) {
+          console.error('Error generating quick backup:', error);
+          throw error;
+        }
 
-        backupContent = JSON.stringify(quickBackup, null, 2)
-        fileName = `tms-gruas-quick-backup-${new Date().toISOString().split('T')[0]}.json`
-        contentType = 'application/json'
+        backupContent = JSON.stringify(quickBackup, null, 2);
+        fileName = `tms-gruas-quick-backup-${new Date().toISOString().split('T')[0]}.json`;
+        contentType = 'application/json';
       } else {
         // Generar respaldo completo (SQL)
         const { data: fullBackup, error } = await supabaseClient
-          .rpc('generate_database_backup')
+          .rpc('generate_database_backup');
 
-        if (error) throw error
+        if (error) {
+          console.error('Error generating full backup:', error);
+          throw error;
+        }
 
-        backupContent = fullBackup
-        fileName = `tms-gruas-full-backup-${new Date().toISOString().split('T')[0]}.sql`
-        contentType = 'application/sql'
+        backupContent = fullBackup;
+        fileName = `tms-gruas-full-backup-${new Date().toISOString().split('T')[0]}.sql`;
+        contentType = 'application/sql';
+      }
+
+      // Verificar que se generó contenido
+      if (!backupContent || backupContent.length === 0) {
+        throw new Error('No se pudo generar el contenido del respaldo');
       }
 
       // Actualizar log como completado
       if (logId) {
-        await supabaseClient
+        const { error: updateError } = await supabaseClient
           .from('backup_logs')
           .update({
             status: 'completed',
@@ -80,10 +121,14 @@ serve(async (req) => {
               records_count: type === 'quick' ? 'configuration_only' : 'all_tables'
             }
           })
-          .eq('id', logId)
+          .eq('id', logId);
+
+        if (updateError) {
+          console.error('Error updating backup log:', updateError);
+        }
       }
 
-      console.log(`Backup generated successfully: ${fileName}`)
+      console.log(`Backup generated successfully: ${fileName} (${new Blob([backupContent]).size} bytes)`);
 
       return new Response(
         JSON.stringify({
@@ -99,39 +144,48 @@ serve(async (req) => {
             'Content-Type': 'application/json',
           },
         }
-      )
+      );
 
     } catch (error) {
-      console.error('Error generating backup:', error)
+      console.error('Error generating backup:', error);
       
       // Log error
       if (logId) {
-        await supabaseClient
+        const { error: updateError } = await supabaseClient
           .from('backup_logs')
           .update({
             status: 'failed',
-            error_message: error.message
+            error_message: error.message || 'Error desconocido'
           })
-          .eq('id', logId)
+          .eq('id', logId);
+
+        if (updateError) {
+          console.error('Error updating backup log with error:', updateError);
+        }
       }
 
-      throw error
+      throw error;
     }
 
   } catch (error) {
-    console.error('Backup function error:', error)
+    console.error('Backup function error:', error);
+    
+    const errorMessage = error.message || 'Error interno del servidor';
+    const statusCode = error.message?.includes('administrador') ? 403 : 
+                      error.message?.includes('autenticado') ? 401 : 500;
+
     return new Response(
       JSON.stringify({
         success: false,
-        error: error.message || 'Error interno del servidor'
+        error: errorMessage
       }),
       {
-        status: 500,
+        status: statusCode,
         headers: {
           ...corsHeaders,
           'Content-Type': 'application/json',
         },
       }
-    )
+    );
   }
-})
+});

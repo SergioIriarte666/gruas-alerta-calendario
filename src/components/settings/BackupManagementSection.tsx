@@ -14,7 +14,8 @@ import {
   CheckCircle, 
   XCircle,
   FileText,
-  Zap
+  Zap,
+  RefreshCw
 } from 'lucide-react';
 import { useBackupManager } from '@/hooks/useBackupManager';
 import { formatDistanceToNow } from 'date-fns';
@@ -24,7 +25,9 @@ export const BackupManagementSection = () => {
   const { 
     progress, 
     backupLogs, 
-    generateAndDownloadBackup 
+    generateAndDownloadBackup,
+    error: hookError,
+    refetchLogs
   } = useBackupManager();
 
   const formatFileSize = (bytes?: number) => {
@@ -68,9 +71,27 @@ export const BackupManagementSection = () => {
         <CardTitle className="flex items-center space-x-2 text-white">
           <Database className="w-5 h-5 text-tms-green" />
           <span>Gestión de Respaldos</span>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => refetchLogs()}
+            className="ml-auto"
+          >
+            <RefreshCw className="w-4 h-4" />
+          </Button>
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
+        {/* Mostrar error del hook si existe */}
+        {hookError && (
+          <Alert className="bg-red-500/10 border-red-500/20">
+            <XCircle className="w-4 h-4 text-red-500" />
+            <AlertDescription className="text-red-300">
+              Error al cargar datos de respaldos: {hookError.message}
+            </AlertDescription>
+          </Alert>
+        )}
+
         {/* Estado del último respaldo */}
         <div className="space-y-2">
           <h4 className="text-sm font-medium text-gray-300">Estado del Sistema</h4>
@@ -113,7 +134,11 @@ export const BackupManagementSection = () => {
                 disabled={progress.isGenerating}
                 className="w-full bg-tms-green hover:bg-tms-green-dark text-white"
               >
-                <Database className="w-4 h-4 mr-2" />
+                {progress.isGenerating && progress.stage.includes('Completo') ? (
+                  <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <Database className="w-4 h-4 mr-2" />
+                )}
                 Respaldo Completo
               </Button>
               <p className="text-xs text-gray-400">
@@ -128,7 +153,11 @@ export const BackupManagementSection = () => {
                 variant="outline"
                 className="w-full border-gray-600 text-gray-300 hover:bg-gray-800"
               >
-                <Zap className="w-4 h-4 mr-2" />
+                {progress.isGenerating && progress.stage.includes('Rápido') ? (
+                  <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <Zap className="w-4 h-4 mr-2" />
+                )}
                 Respaldo Rápido
               </Button>
               <p className="text-xs text-gray-400">
@@ -205,9 +234,15 @@ export const BackupManagementSection = () => {
               ))}
             </div>
           ) : (
-            <p className="text-sm text-gray-500 text-center py-4">
-              No hay respaldos registrados
-            </p>
+            <div className="text-center py-8">
+              <Database className="w-12 h-12 text-gray-500 mx-auto mb-2" />
+              <p className="text-sm text-gray-500">
+                No hay respaldos registrados
+              </p>
+              <p className="text-xs text-gray-600 mt-1">
+                Genera tu primer respaldo usando los botones de arriba
+              </p>
+            </div>
           )}
         </div>
 
