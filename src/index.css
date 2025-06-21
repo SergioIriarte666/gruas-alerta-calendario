@@ -10,19 +10,19 @@
     --background: 0 0 0;
     --foreground: 255 255 255;
 
-    --card: 26 26 26;
+    --card: 0 0 0;
     --card-foreground: 255 255 255;
 
-    --popover: 26 26 26;
+    --popover: 0 0 0;
     --popover-foreground: 255 255 255;
 
     --primary: 156 250 36;
     --primary-foreground: 0 0 0;
 
-    --secondary: 45 45 45;
+    --secondary: 0 0 0;
     --secondary-foreground: 255 255 255;
 
-    --muted: 45 45 45;
+    --muted: 0 0 0;
     --muted-foreground: 163 163 163;
 
     --accent: 156 250 36;
@@ -31,30 +31,34 @@
     --destructive: 239 68 68;
     --destructive-foreground: 255 255 255;
 
-    --border: 45 45 45;
-    --input: 45 45 45;
+    --border: 156 250 36;
+    --input: 0 0 0;
     --ring: 156 250 36;
 
     --radius: 0.5rem;
+
+    /* Custom TMS variables for consistency */
+    --tms-green: 156 250 36;
+    --tms-black: 0 0 0;
   }
 
   .dark {
     --background: 0 0 0;
     --foreground: 255 255 255;
 
-    --card: 26 26 26;
+    --card: 0 0 0;
     --card-foreground: 255 255 255;
 
-    --popover: 26 26 26;
+    --popover: 0 0 0;
     --popover-foreground: 255 255 255;
 
     --primary: 156 250 36;
     --primary-foreground: 0 0 0;
 
-    --secondary: 45 45 45;
+    --secondary: 0 0 0;
     --secondary-foreground: 255 255 255;
 
-    --muted: 45 45 45;
+    --muted: 0 0 0;
     --muted-foreground: 163 163 163;
 
     --accent: 156 250 36;
@@ -63,8 +67,8 @@
     --destructive: 239 68 68;
     --destructive-foreground: 255 255 255;
 
-    --border: 45 45 45;
-    --input: 45 45 45;
+    --border: 156 250 36;
+    --input: 0 0 0;
     --ring: 156 250 36;
   }
 }
@@ -76,13 +80,20 @@
 
   html {
     @apply dark;
+    background: #000000 !important;
   }
 
   body {
-    @apply bg-gradient-to-br from-black via-gray-800 to-black text-white;
+    background: #000000 !important;
+    color: #ffffff !important;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     min-height: 100vh;
-    background: linear-gradient(135deg, #000000 0%, #1a1a1a 50%, rgba(156,250,36,0.1) 100%) !important;
+  }
+
+  /* Force black background for all major containers */
+  #root {
+    background: #000000 !important;
+    min-height: 100vh;
   }
 
   /* Custom scrollbar */
@@ -91,33 +102,56 @@
   }
 
   ::-webkit-scrollbar-track {
-    @apply bg-gray-800;
+    background: #000000;
   }
 
   ::-webkit-scrollbar-thumb {
-    @apply bg-tms-green rounded-full;
+    background: rgb(156, 250, 36);
+    border-radius: 3px;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    @apply bg-tms-green-light;
+    background: rgba(156, 250, 36, 0.8);
   }
 }
 
 @layer components {
   .glass-card {
-    @apply bg-gray-800/60 backdrop-blur-lg border border-gray-700/50 rounded-lg transition-all duration-300 shadow-xl;
+    background: #000000 !important;
+    border: 1px solid rgb(156, 250, 36) !important;
+    border-radius: 8px;
+    transition: all 0.3s;
   }
 
   .metric-card {
-    @apply glass-card p-6 hover:bg-gray-800/80 hover:border-tms-green/30 transition-all duration-300;
+    @apply glass-card p-6;
+    background: #000000 !important;
+    border: 1px solid rgba(156, 250, 36, 0.3) !important;
+  }
+
+  .metric-card:hover {
+    border-color: rgb(156, 250, 36) !important;
   }
 
   .nav-link {
-    @apply flex items-center px-4 py-3 rounded-lg text-gray-300 hover:text-black hover:bg-tms-green transition-all duration-200;
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    border-radius: 8px;
+    color: #ffffff;
+    transition: all 0.2s;
+    text-decoration: none;
+  }
+
+  .nav-link:hover {
+    background: rgb(156, 250, 36) !important;
+    color: #000000 !important;
   }
 
   .nav-link.active {
-    @apply text-black bg-tms-green font-medium;
+    background: rgb(156, 250, 36) !important;
+    color: #000000 !important;
+    font-weight: 500;
   }
 
   .status-badge {
@@ -138,5 +172,31 @@
 
   .status-overdue {
     @apply bg-red-500/20 text-red-300 border border-red-500/30;
+  }
+
+  /* Force TMS styling for all cards and containers */
+  .bg-gray-800,
+  .bg-gray-700,
+  .bg-gray-900 {
+    background: #000000 !important;
+  }
+
+  .border-gray-700,
+  .border-gray-600,
+  .border-gray-800 {
+    border-color: rgba(156, 250, 36, 0.3) !important;
+  }
+
+  /* Force green accent colors */
+  .text-tms-green,
+  .text-green-500,
+  .text-green-400 {
+    color: rgb(156, 250, 36) !important;
+  }
+
+  .bg-tms-green,
+  .bg-green-500 {
+    background-color: rgb(156, 250, 36) !important;
+    color: #000000 !important;
   }
 }

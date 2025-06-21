@@ -10,7 +10,7 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-tms-green text-black hover:bg-tms-green/80 font-medium",
+        default: "font-medium",
         destructive:
           "bg-destructive text-destructive-foreground hover:bg-destructive/90",
         outline:
@@ -19,7 +19,7 @@ const buttonVariants = cva(
           "bg-secondary text-secondary-foreground hover:bg-secondary/80",
         ghost: "hover:bg-accent hover:text-accent-foreground",
         link: "text-primary underline-offset-4 hover:underline",
-        tms: "bg-tms-green hover:bg-tms-green/80 text-black font-medium",
+        tms: "font-medium",
       },
       size: {
         default: "h-10 px-4 py-2",
@@ -42,12 +42,35 @@ export interface ButtonProps
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, asChild = false, ...props }, ref) => {
+  ({ className, variant, size, asChild = false, style, ...props }, ref) => {
     const Comp = asChild ? Slot : "button"
+    
+    // Apply TMS styling for default and tms variants
+    const tmsStyle = (variant === 'default' || variant === 'tms') ? {
+      backgroundColor: '#9cfa24',
+      color: '#000000',
+      ...style
+    } : style;
+
+    const handleMouseEnter = (e: React.MouseEvent<HTMLButtonElement>) => {
+      if (variant === 'default' || variant === 'tms') {
+        e.currentTarget.style.backgroundColor = 'rgba(156, 250, 36, 0.8)';
+      }
+    };
+
+    const handleMouseLeave = (e: React.MouseEvent<HTMLButtonElement>) => {
+      if (variant === 'default' || variant === 'tms') {
+        e.currentTarget.style.backgroundColor = '#9cfa24';
+      }
+    };
+
     return (
       <Comp
         className={cn(buttonVariants({ variant, size, className }))}
         ref={ref}
+        style={tmsStyle}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
         {...props}
       />
     )

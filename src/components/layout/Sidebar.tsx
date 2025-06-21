@@ -25,67 +25,69 @@ export const Sidebar = ({
   const location = useLocation();
   console.log('Sidebar render - User:', user?.name, 'Role:', user?.role);
   
-  const navigationItems = [{
-    name: 'Dashboard',
-    href: '/dashboard',
-    icon: LayoutDashboard,
-    adminOnly: false
-  }, {
-    name: 'Calendario',
-    href: '/calendar',
-    icon: Calendar,
-    adminOnly: false
-  }, {
-    name: 'Servicios',
-    href: '/services',
-    icon: Truck,
-    adminOnly: false
-  }, {
-    name: 'Tipos de Servicio',
-    href: '/service-types',
-    icon: Tags,
-    adminOnly: true
-  }, {
-    name: 'Clientes',
-    href: '/clients',
-    icon: Users,
-    adminOnly: false
-  }, {
-    name: 'Grúas',
-    href: '/cranes',
-    icon: Building2,
-    adminOnly: false
-  }, {
-    name: 'Operadores',
-    href: '/operators',
-    icon: Wrench,
-    adminOnly: false
-  }, {
-    name: 'Costos',
-    href: '/costs',
-    icon: DollarSign,
-    adminOnly: false
-  }, {
-    name: 'Cierres',
-    href: '/closures',
-    icon: FileText,
-    adminOnly: false
-  }, {
-    name: 'Facturas',
-    href: '/invoices',
-    icon: Receipt,
-    adminOnly: false
-  }, {
-    name: 'Reportes',
-    href: '/reports',
-    icon: BarChart3,
-    adminOnly: false
-  }, {
-    name: 'Configuración',
-    href: '/settings',
-    icon: Settings,
-    adminOnly: true
-  }];
+  const navigationItems = [
+    {
+      name: 'Dashboard',
+      href: '/dashboard',
+      icon: LayoutDashboard,
+      adminOnly: false
+    }, {
+      name: 'Calendario',
+      href: '/calendar',
+      icon: Calendar,
+      adminOnly: false
+    }, {
+      name: 'Servicios',
+      href: '/services',
+      icon: Truck,
+      adminOnly: false
+    }, {
+      name: 'Tipos de Servicio',
+      href: '/service-types',
+      icon: Tags,
+      adminOnly: true
+    }, {
+      name: 'Clientes',
+      href: '/clients',
+      icon: Users,
+      adminOnly: false
+    }, {
+      name: 'Grúas',
+      href: '/cranes',
+      icon: Building2,
+      adminOnly: false
+    }, {
+      name: 'Operadores',
+      href: '/operators',
+      icon: Wrench,
+      adminOnly: false
+    }, {
+      name: 'Costos',
+      href: '/costs',
+      icon: DollarSign,
+      adminOnly: false
+    }, {
+      name: 'Cierres',
+      href: '/closures',
+      icon: FileText,
+      adminOnly: false
+    }, {
+      name: 'Facturas',
+      href: '/invoices',
+      icon: Receipt,
+      adminOnly: false
+    }, {
+      name: 'Reportes',
+      href: '/reports',
+      icon: BarChart3,
+      adminOnly: false
+    }, {
+      name: 'Configuración',
+      href: '/settings',
+      icon: Settings,
+      adminOnly: true
+    }
+  ];
 
   // Always show menu items - let the backend/ProtectedRoute handle access control
   const filteredNavigation = navigationItems.filter(item => {
@@ -107,62 +109,166 @@ export const Sidebar = ({
     }
   };
   
-  const SidebarContent = () => <>
+  const SidebarContent = () => (
+    <div 
+      className="flex flex-col h-full"
+      style={{
+        background: '#000000',
+        borderRight: '1px solid #9cfa24'
+      }}
+    >
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-gray-700 bg-black">
-        {!isCollapsed && <div className="flex items-center space-x-3">
-            <Building2 className="w-8 h-8 text-tms-green" />
-            <h1 className="text-xl font-bold text-white">TMS Grúas</h1>
-          </div>}
+      <div 
+        className="flex items-center justify-between p-4 border-b"
+        style={{
+          borderBottomColor: '#9cfa24',
+          background: '#000000'
+        }}
+      >
+        {!isCollapsed && (
+          <div className="flex items-center space-x-3">
+            <Building2 className="w-8 h-8" style={{ color: '#9cfa24' }} />
+            <h1 className="text-xl font-bold" style={{ color: '#ffffff' }}>TMS Grúas</h1>
+          </div>
+        )}
         
         {/* Desktop collapse button */}
-        <Button variant="ghost" size="sm" onClick={() => setIsCollapsed(!isCollapsed)} className="hidden lg:flex text-gray-300 hover:text-black hover:bg-tms-green">
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          onClick={() => setIsCollapsed(!isCollapsed)} 
+          className="hidden lg:flex"
+          style={{
+            color: '#ffffff',
+            backgroundColor: 'transparent'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = '#9cfa24';
+            e.currentTarget.style.color = '#000000';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = 'transparent';
+            e.currentTarget.style.color = '#ffffff';
+          }}
+        >
           {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
         </Button>
 
         {/* Mobile close button */}
-        <Button variant="ghost" size="sm" onClick={() => setIsMobileMenuOpen(false)} className="lg:hidden text-gray-300 hover:text-black hover:bg-tms-green">
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          onClick={() => setIsMobileMenuOpen(false)} 
+          className="lg:hidden"
+          style={{
+            color: '#ffffff',
+            backgroundColor: 'transparent'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = '#9cfa24';
+            e.currentTarget.style.color = '#000000';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = 'transparent';
+            e.currentTarget.style.color = '#ffffff';
+          }}
+        >
           <X className="w-5 h-5" />
         </Button>
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 p-4 space-y-2 bg-black">
-        {filteredNavigation.map(item => <NavLink key={item.name} to={item.href} className={({
-        isActive: linkIsActive
-      }) => cn("flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors", "hover:bg-gray-800 hover:text-white", linkIsActive || isActive(item.href) ? "bg-tms-green text-black" : "text-gray-300")} onClick={() => setIsMobileMenuOpen(false)}>
+      <nav 
+        className="flex-1 p-4 space-y-2"
+        style={{ background: '#000000' }}
+      >
+        {filteredNavigation.map(item => (
+          <NavLink 
+            key={item.name} 
+            to={item.href} 
+            className={({ isActive: linkIsActive }) => cn(
+              "flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors nav-link",
+              linkIsActive || isActive(item.href) ? "active" : ""
+            )}
+            onClick={() => setIsMobileMenuOpen(false)}
+            style={({ isActive: linkIsActive }) => ({
+              color: (linkIsActive || isActive(item.href)) ? '#000000' : '#ffffff',
+              backgroundColor: (linkIsActive || isActive(item.href)) ? '#9cfa24' : 'transparent',
+              textDecoration: 'none'
+            })}
+          >
             <item.icon className={cn("w-5 h-5", isCollapsed ? "mx-auto" : "mr-3")} />
             {!isCollapsed && <span>{item.name}</span>}
-          </NavLink>)}
+          </NavLink>
+        ))}
       </nav>
 
       {/* User section */}
-      <div className="p-4 border-t border-gray-700 bg-black">
-        {!isCollapsed && user && <div className="mb-3">
-            <p className="text-sm font-medium text-white">{user.name}</p>
-            <p className="text-xs text-gray-400">{user.email}</p>
-            <p className="text-xs text-tms-green capitalize">{user.role}</p>
-          </div>}
+      <div 
+        className="p-4 border-t"
+        style={{
+          borderTopColor: '#9cfa24',
+          background: '#000000'
+        }}
+      >
+        {!isCollapsed && user && (
+          <div className="mb-3">
+            <p className="text-sm font-medium" style={{ color: '#ffffff' }}>{user.name}</p>
+            <p className="text-xs" style={{ color: '#999999' }}>{user.email}</p>
+            <p className="text-xs capitalize" style={{ color: '#9cfa24' }}>{user.role}</p>
+          </div>
+        )}
         
-        <Button variant="ghost" onClick={handleLogout} className={cn("w-full text-gray-300 hover:text-black hover:bg-tms-green", isCollapsed ? "px-2" : "justify-start")}>
+        <Button 
+          variant="ghost" 
+          onClick={handleLogout} 
+          className={cn("w-full", isCollapsed ? "px-2" : "justify-start")}
+          style={{
+            color: '#ffffff',
+            backgroundColor: 'transparent'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = '#9cfa24';
+            e.currentTarget.style.color = '#000000';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = 'transparent';
+            e.currentTarget.style.color = '#ffffff';
+          }}
+        >
           <LogOut className={cn("w-4 h-4", isCollapsed ? "mx-auto" : "mr-2")} />
           {!isCollapsed && "Cerrar Sesión"}
         </Button>
       </div>
-    </>;
+    </div>
+  );
   
-  return <>
+  return (
+    <>
       {/* Mobile backdrop */}
-      {isMobileMenuOpen && <div className="fixed inset-0 z-40 bg-black bg-opacity-50 lg:hidden" onClick={() => setIsMobileMenuOpen(false)} />}
+      {isMobileMenuOpen && (
+        <div 
+          className="fixed inset-0 z-40 lg:hidden" 
+          style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}
+          onClick={() => setIsMobileMenuOpen(false)} 
+        />
+      )}
 
       {/* Desktop Sidebar */}
-      <div className={cn("hidden lg:flex lg:flex-col lg:fixed lg:inset-y-0 lg:z-50 bg-black border-r border-gray-700 transition-all duration-300", isCollapsed ? "lg:w-16" : "lg:w-64")}>
+      <div className={cn(
+        "hidden lg:flex lg:flex-col lg:fixed lg:inset-y-0 lg:z-50 transition-all duration-300",
+        isCollapsed ? "lg:w-16" : "lg:w-64"
+      )}>
         <SidebarContent />
       </div>
 
       {/* Mobile Sidebar */}
-      <div className={cn("fixed inset-y-0 left-0 z-50 w-64 bg-black border-r border-gray-700 transform transition-transform duration-300 lg:hidden", isMobileMenuOpen ? "translate-x-0" : "-translate-x-full")}>
+      <div className={cn(
+        "fixed inset-y-0 left-0 z-50 w-64 transform transition-transform duration-300 lg:hidden",
+        isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"
+      )}>
         <SidebarContent />
       </div>
-    </>;
+    </>
+  );
 };

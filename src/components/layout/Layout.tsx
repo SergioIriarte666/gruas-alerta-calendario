@@ -14,9 +14,13 @@ export const Layout = ({ children }: LayoutProps) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
 
   return (
-    <div className="min-h-screen" style={{
-      background: 'linear-gradient(135deg, #000000 0%, #1a1a1a 50%, rgba(156,250,36,0.1) 100%)'
-    }}>
+    <div 
+      className="min-h-screen w-full"
+      style={{
+        background: '#000000',
+        color: '#ffffff'
+      }}
+    >
       <Sidebar 
         isCollapsed={isSidebarCollapsed}
         setIsCollapsed={setIsSidebarCollapsed}
@@ -30,7 +34,13 @@ export const Layout = ({ children }: LayoutProps) => {
         isSidebarCollapsed ? "lg:pl-16" : "lg:pl-64"
       )}>
         <Header setIsMobileMenuOpen={setIsMobileMenuOpen} />
-        <main className="p-4 sm:p-6">
+        <main 
+          className="p-4 sm:p-6"
+          style={{
+            background: '#000000',
+            minHeight: 'calc(100vh - 64px)'
+          }}
+        >
           {children}
         </main>
       </div>

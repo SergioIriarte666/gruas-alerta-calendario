@@ -53,19 +53,33 @@ export default {
 					DEFAULT: 'hsl(var(--card))',
 					foreground: 'hsl(var(--card-foreground))'
 				},
-				// Updated TMS colors with new palette
+				// Simplified TMS colors - pure black and vibrant green
 				tms: {
 					dark: '#000000',
 					darker: '#000000',
 					green: '#9cfa24',
-					'green-light': '#b3ff4d',
-					'green-dark': '#7dd91a',
+					'green-light': '#9cfa24',
+					'green-dark': '#9cfa24',
 					status: {
 						pending: '#f59e0b',
 						closed: '#3b82f6',
 						invoiced: '#10b981',
 						overdue: '#ef4444'
 					}
+				},
+				// Override default grays to use pure black
+				gray: {
+					50: '#ffffff',
+					100: '#f3f4f6',
+					200: '#e5e7eb',
+					300: '#d1d5db',
+					400: '#9ca3af',
+					500: '#6b7280',
+					600: '#4b5563',
+					700: '#000000',
+					800: '#000000',
+					900: '#000000',
+					950: '#000000'
 				}
 			},
 			borderRadius: {
@@ -74,8 +88,8 @@ export default {
 				sm: 'calc(var(--radius) - 4px)'
 			},
 			backgroundImage: {
-				'gradient-tms': 'linear-gradient(135deg, #000000 0%, #1a1a1a 50%, rgba(156,250,36,0.1) 100%)',
-				'gradient-tms-card': 'linear-gradient(135deg, rgba(0,0,0,0.9) 0%, rgba(26,26,26,0.8) 50%, rgba(156,250,36,0.1) 100%)',
+				'gradient-tms': 'linear-gradient(135deg, #000000 0%, #000000 100%)',
+				'gradient-tms-card': 'linear-gradient(135deg, #000000 0%, #000000 100%)',
 			},
 			keyframes: {
 				'accordion-down': {

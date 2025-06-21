@@ -13,9 +13,13 @@ const TabsList = React.forwardRef<
   <TabsPrimitive.List
     ref={ref}
     className={cn(
-      "inline-flex h-10 items-center justify-center rounded-md bg-gray-800 border border-gray-700 p-1 text-muted-foreground",
+      "inline-flex h-10 items-center justify-center rounded-md p-1 text-muted-foreground",
       className
     )}
+    style={{
+      backgroundColor: '#000000',
+      border: '1px solid rgba(156, 250, 36, 0.3)'
+    }}
     {...props}
   />
 ))
@@ -28,9 +32,25 @@ const TabsTrigger = React.forwardRef<
   <TabsPrimitive.Trigger
     ref={ref}
     className={cn(
-      "inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 text-gray-300 hover:text-white hover:bg-gray-700 data-[state=active]:bg-tms-green data-[state=active]:text-black data-[state=active]:shadow-sm data-[state=active]:font-semibold",
+      "inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
       className
     )}
+    style={{
+      color: '#ffffff',
+      backgroundColor: 'transparent'
+    }}
+    onMouseEnter={(e) => {
+      if (!e.currentTarget.hasAttribute('data-state') || e.currentTarget.getAttribute('data-state') !== 'active') {
+        e.currentTarget.style.backgroundColor = 'rgba(156, 250, 36, 0.1)';
+        e.currentTarget.style.color = '#ffffff';
+      }
+    }}
+    onMouseLeave={(e) => {
+      if (!e.currentTarget.hasAttribute('data-state') || e.currentTarget.getAttribute('data-state') !== 'active') {
+        e.currentTarget.style.backgroundColor = 'transparent';
+        e.currentTarget.style.color = '#ffffff';
+      }
+    }}
     {...props}
   />
 ))
@@ -50,5 +70,22 @@ const TabsContent = React.forwardRef<
   />
 ))
 TabsContent.displayName = TabsPrimitive.Content.displayName
+
+// Add styles for active tab state
+React.useEffect(() => {
+  const style = document.createElement('style');
+  style.textContent = `
+    [data-state="active"] {
+      background-color: #9cfa24 !important;
+      color: #000000 !important;
+      font-weight: 600 !important;
+    }
+  `;
+  document.head.appendChild(style);
+  
+  return () => {
+    document.head.removeChild(style);
+  };
+}, []);
 
 export { Tabs, TabsList, TabsTrigger, TabsContent }
