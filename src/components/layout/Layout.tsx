@@ -15,7 +15,7 @@ export const Layout = ({ children }: LayoutProps) => {
 
   return (
     <div className="min-h-screen" style={{
-      background: 'linear-gradient(135deg, #0d0d0d 0%, #1a1a1a 50%, rgba(109,168,19,0.1) 100%)'
+      background: 'linear-gradient(135deg, #000000 0%, #1a1a1a 50%, rgba(156,250,36,0.1) 100%)'
     }}>
       <Sidebar 
         isCollapsed={isSidebarCollapsed}

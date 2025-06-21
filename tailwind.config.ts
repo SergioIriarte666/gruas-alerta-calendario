@@ -53,13 +53,13 @@ export default {
 					DEFAULT: 'hsl(var(--card))',
 					foreground: 'hsl(var(--card-foreground))'
 				},
-				// Custom TMS colors restaurados
+				// Updated TMS colors with new palette
 				tms: {
-					dark: '#0a0a0a',
-					darker: '#050505',
-					green: '#6da813',
-					'green-light': '#8bc34a',
-					'green-dark': '#558b0a',
+					dark: '#000000',
+					darker: '#000000',
+					green: '#9cfa24',
+					'green-light': '#b3ff4d',
+					'green-dark': '#7dd91a',
 					status: {
 						pending: '#f59e0b',
 						closed: '#3b82f6',
@@ -74,8 +74,8 @@ export default {
 				sm: 'calc(var(--radius) - 4px)'
 			},
 			backgroundImage: {
-				'gradient-tms': 'linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 50%, rgba(109,168,19,0.1) 100%)',
-				'gradient-tms-card': 'linear-gradient(135deg, rgba(10,10,10,0.9) 0%, rgba(26,26,26,0.8) 50%, rgba(109,168,19,0.1) 100%)',
+				'gradient-tms': 'linear-gradient(135deg, #000000 0%, #1a1a1a 50%, rgba(156,250,36,0.1) 100%)',
+				'gradient-tms-card': 'linear-gradient(135deg, rgba(0,0,0,0.9) 0%, rgba(26,26,26,0.8) 50%, rgba(156,250,36,0.1) 100%)',
 			},
 			keyframes: {
 				'accordion-down': {
@@ -106,10 +106,10 @@ export default {
 				},
 				'pulse-glow': {
 					'0%, 100%': {
-						boxShadow: '0 0 5px rgba(109, 168, 19, 0.5)'
+						boxShadow: '0 0 5px rgba(156, 250, 36, 0.5)'
 					},
 					'50%': {
-						boxShadow: '0 0 20px rgba(109, 168, 19, 0.8)'
+						boxShadow: '0 0 20px rgba(156, 250, 36, 0.8)'
 					}
 				}
 			},
