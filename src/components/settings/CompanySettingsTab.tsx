@@ -1,116 +1,183 @@
 
-import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Separator } from '@/components/ui/separator';
-import { LogoUpload } from '@/components/settings/LogoUpload';
-import { Building2, Save } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { LogoUpload } from './LogoUpload';
+import { useSettings } from '@/hooks/useSettings';
+import { useToast } from '@/components/ui/custom-toast';
+import { useState } from 'react';
 
-interface CompanySettings {
-  name: string;
-  address: string;
-  phone: string;
-  email: string;
-  taxId: string;
-  logo?: string;
-}
+export const CompanySettingsTab = () => {
+  const { settings, updateSettings, saveSettings, saving } = useSettings();
+  const { toast } = useToast();
+  const [localNextFolio, setLocalNextFolio] = useState(
+    settings.company.nextServiceFolioNumber?.toString() || '1000'
+  );
 
-interface CompanySettingsTabProps {
-  settings: CompanySettings;
-  saving: boolean;
-  onSave: () => void;
-  onLogoChange: (logoFile: File | null) => void;
-  onUpdateSettings: (updates: Partial<{ company: CompanySettings }>) => void;
-}
+  const handleSave = async () => {
+    const result = await saveSettings();
+    if (result.success) {
+      toast({
+        type: "success",
+        title: "Configuración guardada",
+        description: "La configuración de la empresa se ha guardado correctamente.",
+      });
+    } else {
+      toast({
+        type: "error", 
+        title: "Error al guardar",
+        description: result.error || "No se pudo guardar la configuración.",
+      });
+    }
+  };
 
-export const CompanySettingsTab: React.FC<CompanySettingsTabProps> = ({
-  settings,
-  saving,
-  onSave,
-  onLogoChange,
-  onUpdateSettings
-}) => {
-  const handleInputChange = (field: keyof CompanySettings, value: string) => {
-    onUpdateSettings({ company: { ...settings, [field]: value } });
+  const handleNextFolioChange = (value: string) => {
+    setLocalNextFolio(value);
+    const numValue = parseInt(value);
+    if (!isNaN(numValue) && numValue >= 1000) {
+      updateSettings({
+        company: {
+          ...settings.company,
+          nextServiceFolioNumber: numValue
+        }
+      });
+    }
   };
 
   return (
-    <Card className="glass-card">
-      <CardHeader>
-        <CardTitle className="flex items-center space-x-2 text-white">
-          <Building2 className="w-5 h-5 text-tms-green" />
-          <span>Información de la Empresa</span>
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        <LogoUpload
-          currentLogo={settings.logo}
-          onLogoChange={onLogoChange}
-          disabled={saving}
-        />
-        
-        <Separator className="bg-gray-700" />
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>Información de la Empresa</CardTitle>
+          <CardDescription>
+            Configura la información básica de tu empresa
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="company-name">Nombre de la Empresa</Label>
+              <Input
+                id="company-name"
+                value={settings.company.name}
+                onChange={(e) => updateSettings({
+                  company: { ...settings.company, name: e.target.value }
+                })}
+                placeholder="Nombre de tu empresa"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="company-rut">RUT</Label>
+              <Input
+                id="company-rut"
+                value={settings.company.taxId}
+                onChange={(e) => updateSettings({
+                  company: { ...settings.company, taxId: e.target.value }
+                })}
+                placeholder="12.345.678-9"
+              />
+            </div>
+          </div>
+
           <div className="space-y-2">
-            <Label htmlFor="company-name" className="text-gray-300">Nombre de la Empresa</Label>
+            <Label htmlFor="company-address">Dirección</Label>
             <Input
-              id="company-name"
-              value={settings.name}
-              onChange={(e) => handleInputChange('name', e.target.value)}
-              className="bg-white/5 border-gray-700 text-white"
+              id="company-address"
+              value={settings.company.address}
+              onChange={(e) => updateSettings({
+                company: { ...settings.company, address: e.target.value }
+              })}
+              placeholder="Dirección de la empresa"
             />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="company-email" className="text-gray-300">Email</Label>
-            <Input
-              id="company-email"
-              type="email"
-              value={settings.email}
-              onChange={(e) => handleInputChange('email', e.target.value)}
-              className="bg-white/5 border-gray-700 text-white"
-            />
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="company-phone">Teléfono</Label>
+              <Input
+                id="company-phone"
+                value={settings.company.phone}
+                onChange={(e) => updateSettings({
+                  company: { ...settings.company, phone: e.target.value }
+                })}
+                placeholder="+56 9 1234 5678"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="company-email">Email</Label>
+              <Input
+                id="company-email"
+                type="email"
+                value={settings.company.email}
+                onChange={(e) => updateSettings({
+                  company: { ...settings.company, email: e.target.value }
+                })}
+                placeholder="contacto@empresa.cl"
+              />
+            </div>
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="company-phone" className="text-gray-300">Teléfono</Label>
-            <Input
-              id="company-phone"
-              value={settings.phone}
-              onChange={(e) => handleInputChange('phone', e.target.value)}
-              className="bg-white/5 border-gray-700 text-white"
-            />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Configuración de Folios</CardTitle>
+          <CardDescription>
+            Configura el formato y numeración de los folios de servicios
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="folio-format">Formato de Folio</Label>
+              <Input
+                id="folio-format"
+                value={settings.company.folioFormat}
+                onChange={(e) => updateSettings({
+                  company: { ...settings.company, folioFormat: e.target.value }
+                })}
+                placeholder="SRV-{number}"
+              />
+              <p className="text-xs text-gray-500">
+                Usa {'{number}'} donde quieras que aparezca el número correlativo
+              </p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="next-folio-number">Próximo Número de Folio</Label>
+              <Input
+                id="next-folio-number"
+                type="number"
+                min="1000"
+                value={localNextFolio}
+                onChange={(e) => handleNextFolioChange(e.target.value)}
+                placeholder="1000"
+              />
+              <p className="text-xs text-gray-500">
+                El próximo folio automático será: {settings.company.folioFormat.replace('{number}', String(settings.company.nextServiceFolioNumber || 1000).padStart(4, '0'))}
+              </p>
+            </div>
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="company-taxid" className="text-gray-300">RUT</Label>
-            <Input
-              id="company-taxid"
-              value={settings.taxId}
-              onChange={(e) => handleInputChange('taxId', e.target.value)}
-              className="bg-white/5 border-gray-700 text-white"
-            />
-          </div>
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="company-address" className="text-gray-300">Dirección</Label>
-          <Input
-            id="company-address"
-            value={settings.address}
-            onChange={(e) => handleInputChange('address', e.target.value)}
-            className="bg-white/5 border-gray-700 text-white"
-          />
-        </div>
-        <Button 
-          onClick={onSave}
-          disabled={saving}
-          className="bg-tms-green hover:bg-tms-green-dark text-white"
-          title="Guardar los cambios en la información de la empresa"
-        >
-          <Save className="w-4 h-4 mr-2" />
-          {saving ? 'Guardando...' : 'Guardar Cambios'}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Logo de la Empresa</CardTitle>
+          <CardDescription>
+            Sube el logo de tu empresa para usar en reportes y documentos
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <LogoUpload />
+        </CardContent>
+      </Card>
+
+      <div className="flex justify-end">
+        <Button onClick={handleSave} disabled={saving}>
+          {saving ? 'Guardando...' : 'Guardar Configuración'}
         </Button>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 };

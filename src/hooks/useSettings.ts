@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -11,6 +12,8 @@ interface CompanyDataPayload {
   email: string;
   rut: string;
   logo_url?: string | null;
+  folio_format?: string;
+  next_service_folio_number?: number;
 }
 
 export const useSettings = () => {
@@ -55,6 +58,7 @@ export const useSettings = () => {
           taxId: companyData.rut || defaultSettings.company.taxId,
           logo: companyData.logo_url ? `${companyData.logo_url}?t=${new Date().getTime()}` : undefined,
           folioFormat: companyData.folio_format || defaultSettings.company.folioFormat,
+          nextServiceFolioNumber: companyData.next_service_folio_number || 1000,
         };
       }
 
@@ -124,6 +128,8 @@ export const useSettings = () => {
           typeof settings.company.logo === 'string'
             ? settings.company.logo
             : null,
+        folio_format: settings.company.folioFormat || 'SRV-{number}',
+        next_service_folio_number: settings.company.nextServiceFolioNumber || 1000,
       };
 
       // 3. VALIDATE required fields before sending (optional, but good dev check):
@@ -138,8 +144,6 @@ export const useSettings = () => {
           '[useSettings] Al menos un campo obligatorio de empresa está vacío.',
           companyPayload
         );
-        // podrías retornar error si así lo deseas:
-        // return { success: false, error: 'Faltan campos obligatorios de empresa.' };
       }
 
       console.log('Intentando guardar datos de empresa (payload enviado):', companyPayload);

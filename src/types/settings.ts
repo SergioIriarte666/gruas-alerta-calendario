@@ -1,4 +1,3 @@
-
 export interface CompanySettings {
   name: string;
   address: string;
@@ -7,6 +6,7 @@ export interface CompanySettings {
   taxId: string;
   logo?: string;
   folioFormat: string;
+  nextServiceFolioNumber?: number; // Nuevo campo para controlar numeración
 }
 
 export interface UserSettings {

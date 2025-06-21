@@ -11,45 +11,59 @@ export const useFolioGenerator = () => {
   const generateNextFolio = useCallback(async (): Promise<string> => {
     setLoading(true);
     try {
-      console.log('🔄 Generating new folio...');
+      console.log('🔄 Generating new folio with correlative numbering...');
       
-      // Obtener el formato de folio de la configuración de la empresa
+      // Obtener el formato de folio y próximo número de la configuración de la empresa
       const folioFormat = settings.company?.folioFormat || 'SRV-{number}';
-      console.log('📋 Using folio format:', folioFormat);
+      let nextNumber = settings.company?.nextServiceFolioNumber || 1000;
       
-      // Obtener el último folio de la base de datos
-      const { data: services, error } = await supabase
-        .from('services')
-        .select('folio')
-        .order('created_at', { ascending: false })
-        .limit(10); // Get more records to ensure we find the highest number
+      console.log('📋 Using folio format:', folioFormat);
+      console.log('🔢 Next number from settings:', nextNumber);
+      
+      // Obtener los datos actuales de la empresa para usar la transacción
+      const { data: companyData, error: fetchError } = await supabase
+        .from('company_data')
+        .select('id, next_service_folio_number')
+        .limit(1)
+        .maybeSingle();
 
-      if (error) {
-        console.error('❌ Error fetching services:', error);
-        throw error;
+      if (fetchError) {
+        console.error('❌ Error fetching company data:', fetchError);
+        throw fetchError;
       }
 
-      console.log('📊 Found services:', services?.length || 0);
-
-      let nextNumber = 1;
-
-      if (services && services.length > 0) {
-        // Extraer todos los números de los folios y encontrar el más alto
-        const numbers = services
-          .map(service => {
-            const match = service.folio.match(/(\d+)$/);
-            return match ? parseInt(match[1]) : 0;
-          })
-          .filter(num => num > 0);
-
-        if (numbers.length > 0) {
-          nextNumber = Math.max(...numbers) + 1;
-        }
+      if (!companyData) {
+        throw new Error('No se encontraron datos de la empresa');
       }
 
-      // Generar el nuevo folio usando el formato configurado
-      const newFolio = folioFormat.replace('{number}', String(nextNumber).padStart(3, '0'));
+      // Usar el número más actualizado de la base de datos
+      const currentNumber = companyData.next_service_folio_number || 1000;
+      console.log('📊 Current number from database:', currentNumber);
+
+      // Generar el nuevo folio
+      const newFolio = folioFormat.replace('{number}', String(currentNumber).padStart(4, '0'));
       console.log('✅ Generated new folio:', newFolio);
+
+      // Actualizar el próximo número en la base de datos
+      const { error: updateError } = await supabase
+        .from('company_data')
+        .update({ 
+          next_service_folio_number: currentNumber + 1,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', companyData.id);
+
+      if (updateError) {
+        console.error('❌ Error updating next folio number:', updateError);
+        throw updateError;
+      }
+
+      console.log('🔄 Updated next folio number to:', currentNumber + 1);
+      
+      // Disparar evento para actualizar la configuración en memoria
+      setTimeout(() => {
+        window.dispatchEvent(new Event('settings-updated'));
+      }, 100);
       
       return newFolio;
     } catch (error: any) {
@@ -57,9 +71,9 @@ export const useFolioGenerator = () => {
       toast.error("Error", {
         description: "No se pudo generar el folio automáticamente.",
       });
-      // Retornar un folio por defecto basado en timestamp
+      // Retornar un folio por defecto basado en timestamp como fallback
       const timestamp = Date.now();
-      const fallbackFolio = `SRV-${String(timestamp).slice(-3)}`;
+      const fallbackFolio = `SRV-${String(timestamp).slice(-4)}`;
       console.log('🔧 Using fallback folio:', fallbackFolio);
       return fallbackFolio;
     } finally {
@@ -95,9 +109,68 @@ export const useFolioGenerator = () => {
     }
   }, []);
 
+  const syncFolioCounter = useCallback(async (manualFolio: string): Promise<void> => {
+    try {
+      console.log('🔄 Syncing folio counter for manual folio:', manualFolio);
+      
+      // Extraer número del folio manual si sigue el formato estándar
+      const match = manualFolio.match(/^[A-Z]+-(\d+)$/);
+      if (!match) {
+        console.log('📝 Manual folio does not follow standard format, skipping sync');
+        return;
+      }
+
+      const manualNumber = parseInt(match[1]);
+      console.log('🔢 Manual folio number:', manualNumber);
+
+      // Obtener datos actuales de la empresa
+      const { data: companyData, error: fetchError } = await supabase
+        .from('company_data')
+        .select('id, next_service_folio_number')
+        .limit(1)
+        .maybeSingle();
+
+      if (fetchError || !companyData) {
+        console.error('❌ Error fetching company data for sync:', fetchError);
+        return;
+      }
+
+      const currentNumber = companyData.next_service_folio_number || 1000;
+      
+      // Si el número manual es mayor o igual al contador actual, actualizar
+      if (manualNumber >= currentNumber) {
+        const newNextNumber = manualNumber + 1;
+        console.log('📈 Updating counter from', currentNumber, 'to', newNextNumber);
+
+        const { error: updateError } = await supabase
+          .from('company_data')
+          .update({ 
+            next_service_folio_number: newNextNumber,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', companyData.id);
+
+        if (updateError) {
+          console.error('❌ Error syncing folio counter:', updateError);
+        } else {
+          console.log('✅ Folio counter synced successfully');
+          // Disparar evento para actualizar la configuración en memoria
+          setTimeout(() => {
+            window.dispatchEvent(new Event('settings-updated'));
+          }, 100);
+        }
+      } else {
+        console.log('📊 Manual folio number is lower than current counter, no sync needed');
+      }
+    } catch (error: any) {
+      console.error('❌ Error syncing folio counter:', error);
+    }
+  }, []);
+
   return {
     generateNextFolio,
     validateFolioUniqueness,
+    syncFolioCounter,
     loading
   };
 };

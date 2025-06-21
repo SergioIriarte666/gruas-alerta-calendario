@@ -191,6 +191,7 @@ export type Database = {
           invoice_due_days: number | null
           legal_texts: string | null
           logo_url: string | null
+          next_service_folio_number: number
           phone: string
           rut: string
           updated_at: string | null
@@ -208,6 +209,7 @@ export type Database = {
           invoice_due_days?: number | null
           legal_texts?: string | null
           logo_url?: string | null
+          next_service_folio_number?: number
           phone: string
           rut: string
           updated_at?: string | null
@@ -225,6 +227,7 @@ export type Database = {
           invoice_due_days?: number | null
           legal_texts?: string | null
           logo_url?: string | null
+          next_service_folio_number?: number
           phone?: string
           rut?: string
           updated_at?: string | null

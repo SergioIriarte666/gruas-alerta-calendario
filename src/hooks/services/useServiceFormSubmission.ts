@@ -21,7 +21,7 @@ export const useServiceFormSubmission = ({
   operators,
   serviceTypes
 }: UseServiceFormSubmissionProps) => {
-  const { validateFolioUniqueness } = useFolioGenerator();
+  const { validateFolioUniqueness, syncFolioCounter } = useFolioGenerator();
   const { validateForm } = useServiceFormValidation();
 
   const handleSubmit = async (
@@ -48,6 +48,11 @@ export const useServiceFormSubmission = ({
           description: "Este folio ya existe. Por favor, usa un folio diferente.",
         });
         return;
+      }
+
+      // Si es un folio manual y es único, sincronizar el contador
+      if (isManualFolio && !service) {
+        await syncFolioCounter(folio);
       }
     }
 
