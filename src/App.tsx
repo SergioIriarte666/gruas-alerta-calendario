@@ -36,12 +36,12 @@ const queryClient = new QueryClient({
   },
 });
 
-const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  useTheme(); // Aplicar tema globalmente
+const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
+  useTheme();
   return <>{children}</>;
 };
 
-const App: React.FC = () => {
+const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
