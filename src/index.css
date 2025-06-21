@@ -3,53 +3,53 @@
 @tailwind components;
 @tailwind utilities;
 
-/* TMS Design System - Grúas Management - SIMPLIFIED VERSION */
+/* TMS Design System - Grúas Management - LIGHT THEME VERSION */
 
 @layer base {
   :root {
-    --background: 0 0 0;
-    --foreground: 255 255 255;
-    --card: 0 0 0;
-    --card-foreground: 255 255 255;
-    --popover: 0 0 0;
-    --popover-foreground: 255 255 255;
+    --background: 255 255 255;
+    --foreground: 0 0 0;
+    --card: 255 255 255;
+    --card-foreground: 0 0 0;
+    --popover: 255 255 255;
+    --popover-foreground: 0 0 0;
     --primary: 156 250 36;
     --primary-foreground: 0 0 0;
-    --secondary: 0 0 0;
-    --secondary-foreground: 255 255 255;
-    --muted: 0 0 0;
-    --muted-foreground: 255 255 255;
+    --secondary: 248 250 252;
+    --secondary-foreground: 0 0 0;
+    --muted: 248 250 252;
+    --muted-foreground: 71 85 105;
     --accent: 156 250 36;
     --accent-foreground: 0 0 0;
     --destructive: 239 68 68;
     --destructive-foreground: 255 255 255;
-    --border: 156 250 36;
-    --input: 0 0 0;
+    --border: 226 232 240;
+    --input: 255 255 255;
     --ring: 156 250 36;
     --radius: 0.5rem;
     --tms-green: 156 250 36;
-    --tms-black: 0 0 0;
+    --tms-white: 255 255 255;
   }
 
-  .dark {
-    --background: 0 0 0;
-    --foreground: 255 255 255;
-    --card: 0 0 0;
-    --card-foreground: 255 255 255;
-    --popover: 0 0 0;
-    --popover-foreground: 255 255 255;
+  .light {
+    --background: 255 255 255;
+    --foreground: 0 0 0;
+    --card: 255 255 255;
+    --card-foreground: 0 0 0;
+    --popover: 255 255 255;
+    --popover-foreground: 0 0 0;
     --primary: 156 250 36;
     --primary-foreground: 0 0 0;
-    --secondary: 0 0 0;
-    --secondary-foreground: 255 255 255;
-    --muted: 0 0 0;
-    --muted-foreground: 255 255 255;
+    --secondary: 248 250 252;
+    --secondary-foreground: 0 0 0;
+    --muted: 248 250 252;
+    --muted-foreground: 71 85 105;
     --accent: 156 250 36;
     --accent-foreground: 0 0 0;
     --destructive: 239 68 68;
     --destructive-foreground: 255 255 255;
-    --border: 156 250 36;
-    --input: 0 0 0;
+    --border: 226 232 240;
+    --input: 255 255 255;
     --ring: 156 250 36;
   }
 }
@@ -60,19 +60,19 @@
   }
 
   html {
-    @apply dark;
-    background: #000000 !important;
+    @apply light;
+    background: #ffffff !important;
   }
 
   body {
-    background: #000000 !important;
-    color: #ffffff !important;
+    background: #ffffff !important;
+    color: #000000 !important;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     min-height: 100vh;
   }
 
   #root {
-    background: #000000 !important;
+    background: #ffffff !important;
     min-height: 100vh;
   }
 
@@ -82,7 +82,7 @@
   }
 
   ::-webkit-scrollbar-track {
-    background: #000000;
+    background: #f1f5f9;
   }
 
   ::-webkit-scrollbar-thumb {
@@ -96,9 +96,9 @@
 }
 
 @layer components {
-  /* UNIVERSAL WHITE TEXT - SIMPLE AND EFFECTIVE */
-  .tms-text-white,
-  .tms-text-white *,
+  /* UNIVERSAL BLACK TEXT FOR LIGHT THEME */
+  .tms-text-black,
+  .tms-text-black *,
   p, span, div, h1, h2, h3, h4, h5, h6, td, th, label,
   input, textarea, select,
   [data-radix-select-trigger],
@@ -108,7 +108,7 @@
   [data-radix-select-item],
   [role="combobox"],
   [role="combobox"] * {
-    color: #ffffff !important;
+    color: #000000 !important;
   }
 
   /* BUTTON TEXT - ALWAYS BLACK ON TMS GREEN BUTTONS */
@@ -123,32 +123,34 @@
     color: #000000 !important;
   }
 
-  /* OUTLINE BUTTONS - WHITE TEXT */
+  /* OUTLINE BUTTONS - BLACK TEXT */
   button[data-variant="outline"],
   button[data-variant="outline"] *,
   .border-tms-green,
   .border-blue-500,
   .border-red-500,
   .border-yellow-500 {
-    color: #ffffff !important;
+    color: #000000 !important;
   }
 
-  /* GLASS CARD STYLING */
+  /* GLASS CARD STYLING - WHITE THEME */
   .glass-card {
-    background: #000000 !important;
-    border: 1px solid rgb(156, 250, 36) !important;
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
     border-radius: 8px;
     transition: all 0.3s;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
   }
 
   .metric-card {
     @apply glass-card p-6;
-    background: #000000 !important;
+    background: #ffffff !important;
     border: 1px solid rgba(156, 250, 36, 0.3) !important;
   }
 
   .metric-card:hover {
     border-color: rgb(156, 250, 36) !important;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
   }
 
   /* NAVIGATION STYLING */
@@ -157,7 +159,7 @@
     align-items: center;
     padding: 12px 16px;
     border-radius: 8px;
-    color: #ffffff !important;
+    color: #000000 !important;
     transition: all 0.2s;
     text-decoration: none;
   }
@@ -179,53 +181,54 @@
   }
 
   .status-pending {
-    @apply bg-amber-500/20 text-amber-300 border border-amber-500/30;
+    @apply bg-amber-100 text-amber-800 border border-amber-200;
   }
 
   .status-closed {
-    @apply bg-blue-500/20 text-blue-300 border border-blue-500/30;
+    @apply bg-blue-100 text-blue-800 border border-blue-200;
   }
 
   .status-invoiced {
-    @apply bg-emerald-500/20 text-emerald-300 border border-emerald-500/30;
+    @apply bg-emerald-100 text-emerald-800 border border-emerald-200;
   }
 
   .status-overdue {
-    @apply bg-red-500/20 text-red-300 border border-red-500/30;
+    @apply bg-red-100 text-red-800 border border-red-200;
   }
 
   /* INPUT PLACEHOLDERS */
   input::placeholder,
   textarea::placeholder {
-    color: rgba(255, 255, 255, 0.7) !important;
+    color: rgba(0, 0, 0, 0.5) !important;
   }
 
   /* SELECT COMPONENTS */
   [data-radix-select-trigger] {
-    background: #000000 !important;
-    border: 1px solid rgba(156, 250, 36, 0.3) !important;
-    color: #ffffff !important;
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    color: #000000 !important;
   }
 
   [data-radix-select-content] {
-    background: #000000 !important;
-    border: 1px solid #9cfa24 !important;
-    color: #ffffff !important;
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    color: #000000 !important;
     z-index: 50 !important;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
   }
 
   [data-radix-select-item] {
-    color: #ffffff !important;
+    color: #000000 !important;
     background: transparent !important;
   }
 
   [data-radix-select-item]:hover,
   [data-radix-select-item][data-highlighted] {
-    background: rgba(156, 250, 36, 0.2) !important;
-    color: #ffffff !important;
+    background: rgba(156, 250, 36, 0.1) !important;
+    color: #000000 !important;
   }
 
-  /* FORCE OVERRIDES FOR COMMON ISSUES */
+  /* FORCE OVERRIDES FOR LIGHT THEME */
   .text-gray-100,
   .text-gray-200, 
   .text-gray-300,
@@ -233,19 +236,19 @@
   .text-gray-500,
   .text-gray-600,
   .text-muted-foreground {
-    color: #ffffff !important;
+    color: #64748b !important;
   }
 
   .bg-gray-800,
   .bg-gray-700,
   .bg-gray-900 {
-    background: #000000 !important;
+    background: #f8fafc !important;
   }
 
   .border-gray-700,
   .border-gray-600,
   .border-gray-800 {
-    border-color: rgba(156, 250, 36, 0.3) !important;
+    border-color: #e2e8f0 !important;
   }
 
   /* TMS GREEN COLORS */
@@ -264,20 +267,20 @@
   /* ACTION BUTTONS VISIBILITY */
   .action-button {
     border: 1px solid currentColor !important;
-    background: rgba(255, 255, 255, 0.05) !important;
+    background: rgba(0, 0, 0, 0.05) !important;
     padding: 6px 8px !important;
     border-radius: 6px !important;
     transition: all 0.2s ease !important;
   }
 
   .action-button:hover {
-    background: rgba(255, 255, 255, 0.1) !important;
+    background: rgba(0, 0, 0, 0.1) !important;
     transform: scale(1.05) !important;
   }
 
   /* SWITCH COMPONENT */
   [data-radix-switch-root] {
-    background: rgba(255, 255, 255, 0.2) !important;
+    background: rgba(0, 0, 0, 0.1) !important;
   }
 
   [data-radix-switch-root][data-state="checked"] {
@@ -290,11 +293,12 @@
 
   /* TAB COMPONENTS */
   [role="tab"] {
-    color: #ffffff !important;
+    color: #000000 !important;
   }
 
   [role="tab"][data-state="active"] {
     color: #000000 !important;
+    background: rgba(156, 250, 36, 0.1) !important;
   }
 
   /* FORCE VISIBILITY FOR SETTINGS AND FORMS */
@@ -304,33 +308,57 @@
   .glass-card *,
   .metric-card,
   .metric-card * {
-    color: #ffffff !important;
+    color: #000000 !important;
   }
 
   /* PLACEHOLDER COLORS */
   .placeholder-gray-400::placeholder {
-    color: rgba(255, 255, 255, 0.7) !important;
+    color: rgba(0, 0, 0, 0.5) !important;
   }
 
   /* TABLE CELLS */
   table td,
   table th,
   .table-cell {
-    color: #ffffff !important;
+    color: #000000 !important;
   }
 
   /* FORCE DROPDOWN MENUS */
   [data-radix-popper-content-wrapper] {
-    background: #000000 !important;
-    border: 1px solid #9cfa24 !important;
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
   }
 
   [data-radix-popper-content-wrapper] * {
-    color: #ffffff !important;
+    color: #000000 !important;
+  }
+
+  /* WHITE BACKGROUNDS FOR MAIN CONTENT */
+  .text-white {
+    color: #000000 !important;
+  }
+
+  .bg-black,
+  .bg-tms-dark,
+  .bg-tms-darker {
+    background: #ffffff !important;
+  }
+
+  /* HEADER AND SIDEBAR OVERRIDES */
+  header {
+    background: #ffffff !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+  }
+
+  /* ENSURE PROPER CONTRAST FOR BUTTONS */
+  .hover\:bg-tms-green:hover {
+    background-color: rgb(156, 250, 36) !important;
+    color: #000000 !important;
   }
 }
 
-/* CACHE BUSTING - VERSION 3.0 */
-.tms-version-3 {
+/* CACHE BUSTING - VERSION 4.0 LIGHT THEME */
+.tms-version-4-light {
   display: none;
 }

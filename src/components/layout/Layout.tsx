@@ -17,8 +17,8 @@ export const Layout = ({ children }: LayoutProps) => {
     <div 
       className="min-h-screen w-full"
       style={{
-        background: '#000000',
-        color: '#ffffff'
+        background: '#ffffff',
+        color: '#000000'
       }}
     >
       <Sidebar 
@@ -37,7 +37,7 @@ export const Layout = ({ children }: LayoutProps) => {
         <main 
           className="p-4 sm:p-6"
           style={{
-            background: '#000000',
+            background: '#ffffff',
             minHeight: 'calc(100vh - 64px)'
           }}
         >

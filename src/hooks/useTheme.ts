@@ -10,45 +10,45 @@ export const useTheme = () => {
       const root = document.documentElement;
       const body = document.body;
       
-      // Siempre aplicar tema oscuro
-      root.classList.remove('light');
-      root.classList.add('dark');
-      body.classList.remove('light');
-      body.classList.add('dark');
+      // Aplicar tema claro
+      root.classList.remove('dark');
+      root.classList.add('light');
+      body.classList.remove('dark');
+      body.classList.add('light');
 
       // Forzar actualización del DOM
-      root.setAttribute('data-theme', 'dark');
-      body.setAttribute('data-theme', 'dark');
+      root.setAttribute('data-theme', 'light');
+      body.setAttribute('data-theme', 'light');
     };
 
     applyTheme();
   }, []);
 
-  // Forzar tema oscuro desde el inicio
+  // Forzar tema claro desde el inicio
   useEffect(() => {
     const root = document.documentElement;
     const body = document.body;
     
-    root.classList.add('dark');
-    body.classList.add('dark');
-    root.setAttribute('data-theme', 'dark');
-    body.setAttribute('data-theme', 'dark');
+    root.classList.add('light');
+    body.classList.add('light');
+    root.setAttribute('data-theme', 'light');
+    body.setAttribute('data-theme', 'light');
   }, []);
 
   const setTheme = (theme: 'light' | 'dark' | 'system') => {
-    // Mantener siempre oscuro independientemente de la configuración
+    // Mantener siempre claro independientemente de la configuración
     if (settings) {
       updateSettings({
         user: {
           ...settings.user,
-          theme: 'dark' // Forzar tema oscuro
+          theme: 'light' // Forzar tema claro
         }
       });
     }
   };
 
   return {
-    theme: 'dark' as const,
+    theme: 'light' as const,
     setTheme
   };
 };

@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -117,19 +116,11 @@ export const Sidebar = ({
   
   const SidebarContent = () => (
     <div 
-      className="flex flex-col h-full"
-      style={{
-        background: '#000000',
-        borderRight: '1px solid #9cfa24'
-      }}
+      className="flex flex-col h-full bg-white border-r border-gray-200"
     >
       {/* Header with Company Branding */}
       <div 
-        className="flex items-center justify-between p-4 border-b"
-        style={{
-          borderBottomColor: '#9cfa24',
-          background: '#000000'
-        }}
+        className="flex items-center justify-between p-4 border-b border-gray-200 bg-white"
       >
         {!isCollapsed && (
           <div className="flex items-center space-x-3">
@@ -140,11 +131,11 @@ export const Sidebar = ({
                 className="w-8 h-8 object-contain"
               />
             ) : (
-              <Building2 className="w-8 h-8" style={{ color: '#9cfa24' }} />
+              <Building2 className="w-8 h-8 text-tms-green" />
             )}
             <div>
-              <h1 className="text-lg font-bold" style={{ color: '#ffffff' }}>{companyName}</h1>
-              <p className="text-xs" style={{ color: '#9cfa24' }}>Sistema de Gestión</p>
+              <h1 className="text-lg font-bold text-black">{companyName}</h1>
+              <p className="text-xs text-tms-green">Sistema de Gestión</p>
             </div>
           </div>
         )}
@@ -158,7 +149,7 @@ export const Sidebar = ({
                 className="w-8 h-8 object-contain"
               />
             ) : (
-              <Building2 className="w-8 h-8" style={{ color: '#9cfa24' }} />
+              <Building2 className="w-8 h-8 text-tms-green" />
             )}
           </div>
         )}
@@ -168,19 +159,7 @@ export const Sidebar = ({
           variant="ghost" 
           size="sm" 
           onClick={() => setIsCollapsed(!isCollapsed)} 
-          className="hidden lg:flex"
-          style={{
-            color: '#ffffff',
-            backgroundColor: 'transparent'
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = '#9cfa24';
-            e.currentTarget.style.color = '#000000';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = 'transparent';
-            e.currentTarget.style.color = '#ffffff';
-          }}
+          className="hidden lg:flex text-black bg-transparent hover:bg-tms-green hover:text-black"
         >
           {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
         </Button>
@@ -190,19 +169,7 @@ export const Sidebar = ({
           variant="ghost" 
           size="sm" 
           onClick={() => setIsMobileMenuOpen(false)} 
-          className="lg:hidden"
-          style={{
-            color: '#ffffff',
-            backgroundColor: 'transparent'
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = '#9cfa24';
-            e.currentTarget.style.color = '#000000';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = 'transparent';
-            e.currentTarget.style.color = '#ffffff';
-          }}
+          className="lg:hidden text-black bg-transparent hover:bg-tms-green hover:text-black"
         >
           <X className="w-5 h-5" />
         </Button>
@@ -210,8 +177,7 @@ export const Sidebar = ({
 
       {/* Navigation */}
       <nav 
-        className="flex-1 p-4 space-y-2"
-        style={{ background: '#000000' }}
+        className="flex-1 p-4 space-y-2 bg-white"
       >
         {filteredNavigation.map(item => (
           <NavLink 
@@ -219,14 +185,9 @@ export const Sidebar = ({
             to={item.href} 
             className={({ isActive: linkIsActive }) => cn(
               "flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors nav-link",
-              linkIsActive || isActive(item.href) ? "active" : ""
+              linkIsActive || isActive(item.href) ? "active bg-tms-green text-black" : "text-black hover:bg-tms-green hover:text-black"
             )}
             onClick={() => setIsMobileMenuOpen(false)}
-            style={({ isActive: linkIsActive }) => ({
-              color: (linkIsActive || isActive(item.href)) ? '#000000' : '#ffffff',
-              backgroundColor: (linkIsActive || isActive(item.href)) ? '#9cfa24' : 'transparent',
-              textDecoration: 'none'
-            })}
           >
             <item.icon className={cn("w-5 h-5", isCollapsed ? "mx-auto" : "mr-3")} />
             {!isCollapsed && <span>{item.name}</span>}
@@ -236,36 +197,20 @@ export const Sidebar = ({
 
       {/* User section */}
       <div 
-        className="p-4 border-t"
-        style={{
-          borderTopColor: '#9cfa24',
-          background: '#000000'
-        }}
+        className="p-4 border-t border-gray-200 bg-white"
       >
         {!isCollapsed && user && (
           <div className="mb-3">
-            <p className="text-sm font-medium" style={{ color: '#ffffff' }}>{user.name}</p>
-            <p className="text-xs" style={{ color: '#999999' }}>{user.email}</p>
-            <p className="text-xs capitalize" style={{ color: '#9cfa24' }}>{user.role}</p>
+            <p className="text-sm font-medium text-black">{user.name}</p>
+            <p className="text-xs text-gray-600">{user.email}</p>
+            <p className="text-xs capitalize text-tms-green">{user.role}</p>
           </div>
         )}
         
         <Button 
           variant="ghost" 
           onClick={handleLogout} 
-          className={cn("w-full", isCollapsed ? "px-2" : "justify-start")}
-          style={{
-            color: '#ffffff',
-            backgroundColor: 'transparent'
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = '#9cfa24';
-            e.currentTarget.style.color = '#000000';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = 'transparent';
-            e.currentTarget.style.color = '#ffffff';
-          }}
+          className={cn("w-full text-black bg-transparent hover:bg-tms-green hover:text-black", isCollapsed ? "px-2" : "justify-start")}
         >
           <LogOut className={cn("w-4 h-4", isCollapsed ? "mx-auto" : "mr-2")} />
           {!isCollapsed && "Cerrar Sesión"}
@@ -279,8 +224,7 @@ export const Sidebar = ({
       {/* Mobile backdrop */}
       {isMobileMenuOpen && (
         <div 
-          className="fixed inset-0 z-40 lg:hidden" 
-          style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}
+          className="fixed inset-0 z-40 lg:hidden bg-black bg-opacity-50"
           onClick={() => setIsMobileMenuOpen(false)} 
         />
       )}
