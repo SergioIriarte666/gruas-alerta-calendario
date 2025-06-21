@@ -1,3 +1,4 @@
+
 import { parse } from 'papaparse';
 import { DataMapper } from './dataMapper';
 import { MappedServiceData } from './dataMapper';
@@ -21,7 +22,7 @@ interface CSVRow {
   observations: string;
 }
 
-interface CSVUploadResult {
+export interface CSVUploadResult {
   success: boolean;
   message: string;
   data?: MappedServiceData[];
@@ -29,12 +30,29 @@ interface CSVUploadResult {
   warnings?: string[];
 }
 
+export interface UploadProgress {
+  currentBatch: number;
+  totalBatches: number;
+  processed: number;
+  total: number;
+  percentage: number;
+  stage: string;
+}
+
+export interface UploadResult {
+  success: boolean;
+  processed: number;
+  errors: number;
+  message: string;
+  errorDetails?: Array<{ row: number; message: string }>;
+}
+
 export const processCSV = async (file: File, dataMapper: DataMapper): Promise<CSVUploadResult> => {
   return new Promise((resolve, reject) => {
     parse<CSVRow>(file, {
       header: true,
       skipEmptyLines: true,
-      transformHeader: (header) => dataMapper.mapHeaders(header.trim()).trim(),
+      transformHeader: (header) => dataMapper.mapHeaders(header.trim()),
       complete: async (results) => {
         if (results.errors.length > 0) {
           console.error('CSV Parsing Errors:', results.errors);
@@ -96,6 +114,116 @@ export const processCSV = async (file: File, dataMapper: DataMapper): Promise<CS
     });
   });
 };
+
+export class CSVServiceUploader {
+  parseCSV(file: File): Promise<any[]> {
+    return new Promise((resolve, reject) => {
+      parse(file, {
+        header: true,
+        skipEmptyLines: true,
+        complete: (results) => {
+          if (results.errors.length > 0) {
+            reject(new Error('Error parsing CSV: ' + results.errors.map(e => e.message).join(', ')));
+          } else {
+            resolve(results.data);
+          }
+        },
+        error: reject
+      });
+    });
+  }
+
+  parseExcel(file: File): Promise<any[]> {
+    // Implementation for Excel parsing would go here
+    return Promise.reject(new Error('Excel parsing not implemented'));
+  }
+
+  convertToService(csvRow: any, clients: any[], cranes: any[], operators: any[]): any {
+    // Implementation for converting CSV row to service
+    return csvRow;
+  }
+
+  async processBatch(
+    services: any[], 
+    createService: (service: any) => Promise<any>, 
+    onProgress: (progress: UploadProgress) => void
+  ): Promise<UploadResult> {
+    const batchSize = 10;
+    const totalBatches = Math.ceil(services.length / batchSize);
+    let processed = 0;
+    let errors = 0;
+    const errorDetails: Array<{ row: number; message: string }> = [];
+
+    for (let i = 0; i < totalBatches; i++) {
+      const batch = services.slice(i * batchSize, (i + 1) * batchSize);
+      
+      onProgress({
+        currentBatch: i + 1,
+        totalBatches,
+        processed,
+        total: services.length,
+        percentage: (processed / services.length) * 100,
+        stage: 'uploading'
+      });
+
+      for (const service of batch) {
+        try {
+          await createService(service);
+          processed++;
+        } catch (error) {
+          errors++;
+          errorDetails.push({
+            row: processed + errors,
+            message: error instanceof Error ? error.message : 'Unknown error'
+          });
+        }
+      }
+    }
+
+    return {
+      success: errors === 0,
+      processed,
+      errors,
+      message: errors === 0 ? 'All services uploaded successfully' : `${processed} services uploaded, ${errors} failed`,
+      errorDetails: errorDetails.length > 0 ? errorDetails : undefined
+    };
+  }
+
+  downloadTemplate(): void {
+    const headers = [
+      'Folio',
+      'Fecha Solicitud',
+      'Fecha Servicio',
+      'Cliente RUT',
+      'Cliente Nombre',
+      'Vehículo Marca',
+      'Vehículo Modelo',
+      'Patente',
+      'Origen',
+      'Destino',
+      'Tipo Servicio',
+      'Valor',
+      'Grúa Patente',
+      'Operador RUT',
+      'Comisión Operador',
+      'Observaciones'
+    ];
+
+    const csvContent = headers.join(',') + '\n';
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'plantilla_servicios.csv';
+    a.click();
+    window.URL.revokeObjectURL(url);
+  }
+
+  downloadExcelTemplate(): void {
+    // Implementation for Excel template download would go here
+    console.log('Excel template download not implemented');
+  }
+}
 
 export const createServiceFromCsvRow = async (row: any, dataMapper: DataMapper) => {
   try {
