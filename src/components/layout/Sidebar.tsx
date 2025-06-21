@@ -67,7 +67,7 @@ export const Sidebar = ({
     settings
   } = useSettings();
   const MobileNavContent = () => <div className='flex flex-col h-full bg-card'>
-      <div className="flex items-center p-4 border-b border-border h-16">
+      <div className="flex items-center p-4 border-b border-border h-16 bg-black">
         <div className="flex items-center space-x-3">
           {settings?.company.logo ? <img src={settings.company.logo} alt="Company Logo" className="w-8 h-8 rounded-lg object-contain" /> : <div className="w-8 h-8 bg-tms-green rounded-lg flex items-center justify-center">
               <Truck className="w-5 h-5 text-white" />
@@ -78,7 +78,7 @@ export const Sidebar = ({
           </div>
         </div>
       </div>
-      <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
+      <nav className="flex-1 p-4 space-y-2 overflow-y-auto bg-black">
         {menuItems.map(item => {
         const Icon = item.icon;
         const isActive = location.pathname === item.href || item.href !== '/' && location.pathname.startsWith(item.href);
@@ -88,7 +88,7 @@ export const Sidebar = ({
             </Link>;
       })}
       </nav>
-      <div className="p-4 border-t border-border">
+      <div className="p-4 border-t border-border bg-tms-dark">
         <div className="text-xs text-muted-foreground text-center">
           <p>TMS Grúas v1.0</p>
           <p className="mt-1">© 2024 Sistema Profesional</p>
