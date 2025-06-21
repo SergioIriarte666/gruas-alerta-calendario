@@ -141,10 +141,24 @@ export function UserProvider({ children }: UserProviderProps) {
   const login = () => { /* Handled by Auth page */ };
 
   const logout = async () => {
-    console.log('UserContext: Logging out...');
-    await signOut();
-    setUser(null);
-    setError(null);
+    console.log('UserContext: Starting logout process...');
+    
+    try {
+      // Limpiar estado local inmediatamente
+      setUser(null);
+      setError(null);
+      setProfileLoading(false);
+      
+      // Usar el signOut del AuthContext que ya maneja la limpieza
+      await signOut();
+      
+      console.log('UserContext: Logout completed successfully');
+    } catch (error) {
+      console.error('UserContext: Error during logout:', error);
+      // Incluso si hay error, limpiar el estado local
+      setUser(null);
+      setError(null);
+    }
   };
 
   const updateUser = async (userData: Partial<User>) => {

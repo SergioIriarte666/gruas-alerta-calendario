@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -15,11 +16,7 @@ const Auth = () => {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'login' | 'register'>('login');
-  const {
-    user: authUser,
-    session,
-    loading: authLoading
-  } = useAuth();
+  const { user: authUser, session, loading: authLoading } = useAuth();
   const {
     user: profileUser,
     loading: profileLoading,
@@ -28,9 +25,7 @@ const Auth = () => {
     forceRefreshProfile
   } = useUser();
   const navigate = useNavigate();
-  const {
-    toast
-  } = useToast();
+  const { toast } = useToast();
 
   useEffect(() => {
     console.log('Auth: State check -', {
@@ -63,8 +58,6 @@ const Auth = () => {
     
     try {
       console.log('Auth: Starting login process...');
-      cleanupAuthState();
-      await performGlobalSignOut(supabase);
       
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
@@ -108,9 +101,6 @@ const Auth = () => {
     setLoading(true);
     
     try {
-      cleanupAuthState();
-      await performGlobalSignOut(supabase);
-      
       const { error } = await supabase.auth.signUp({
         email,
         password,
