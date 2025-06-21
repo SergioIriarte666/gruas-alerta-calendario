@@ -76,7 +76,7 @@ serve(async (req) => {
       let contentType: string;
 
       if (type === 'quick') {
-        // Generar respaldo rápido (JSON)
+        // Generar respaldo rápido usando RPC
         const { data: quickBackup, error } = await supabaseClient
           .rpc('generate_quick_backup');
 
@@ -89,18 +89,44 @@ serve(async (req) => {
         fileName = `tms-gruas-quick-backup-${new Date().toISOString().split('T')[0]}.json`;
         contentType = 'application/json';
       } else {
-        // Generar respaldo completo (SQL)
-        const { data: fullBackup, error } = await supabaseClient
-          .rpc('generate_database_backup');
+        // Para respaldo completo, generar JSON con datos de todas las tablas
+        const tables = [
+          'profiles', 'clients', 'service_types', 'cranes', 'operators',
+          'services', 'costs', 'cost_categories', 'company_data', 'system_settings'
+        ];
+        
+        const backupData: any = {
+          metadata: {
+            generated_at: new Date().toISOString(),
+            generated_by: user.email,
+            backup_type: type,
+            version: '1.0'
+          },
+          data: {}
+        };
 
-        if (error) {
-          console.error('Error generating full backup:', error);
-          throw error;
+        // Exportar datos de cada tabla
+        for (const table of tables) {
+          try {
+            const { data, error } = await supabaseClient
+              .from(table)
+              .select('*');
+            
+            if (error) {
+              console.error(`Error fetching ${table}:`, error);
+              backupData.data[table] = { error: error.message, count: 0 };
+            } else {
+              backupData.data[table] = { records: data || [], count: data?.length || 0 };
+            }
+          } catch (e) {
+            console.error(`Exception fetching ${table}:`, e);
+            backupData.data[table] = { error: e.message, count: 0 };
+          }
         }
 
-        backupContent = fullBackup;
-        fileName = `tms-gruas-full-backup-${new Date().toISOString().split('T')[0]}.sql`;
-        contentType = 'application/sql';
+        backupContent = JSON.stringify(backupData, null, 2);
+        fileName = `tms-gruas-full-backup-${new Date().toISOString().split('T')[0]}.json`;
+        contentType = 'application/json';
       }
 
       // Verificar que se generó contenido

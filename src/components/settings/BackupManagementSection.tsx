@@ -53,35 +53,37 @@ export const BackupManagementSection = () => {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'completed':
-        return <Badge variant="default" className="bg-green-500">Completado</Badge>;
+        return <Badge variant="default" className="bg-green-500/20 text-green-400 border-green-500/30">Completado</Badge>;
       case 'failed':
-        return <Badge variant="destructive">Fallido</Badge>;
+        return <Badge variant="destructive" className="bg-red-500/20 text-red-400 border-red-500/30">Fallido</Badge>;
       case 'started':
-        return <Badge variant="secondary">En Progreso</Badge>;
+        return <Badge variant="secondary" className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30">En Progreso</Badge>;
       default:
-        return <Badge variant="outline">Desconocido</Badge>;
+        return <Badge variant="outline" className="border-gray-600 text-gray-400">Desconocido</Badge>;
     }
   };
 
   const lastSuccessfulBackup = backupLogs?.find(log => log.status === 'completed');
 
   return (
-    <Card className="glass-card">
-      <CardHeader>
-        <CardTitle className="flex items-center space-x-2 text-white">
-          <Database className="w-5 h-5 text-tms-green" />
-          <span>Gestión de Respaldos</span>
+    <Card className="bg-black/40 border-gray-700 backdrop-blur-sm">
+      <CardHeader className="border-b border-gray-700">
+        <CardTitle className="flex items-center justify-between text-white">
+          <div className="flex items-center space-x-2">
+            <Database className="w-5 h-5 text-tms-green" />
+            <span>Gestión de Respaldos</span>
+          </div>
           <Button
             variant="ghost"
             size="sm"
             onClick={() => refetchLogs()}
-            className="ml-auto"
+            className="text-gray-400 hover:text-white hover:bg-gray-800"
           >
             <RefreshCw className="w-4 h-4" />
           </Button>
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-6">
+      <CardContent className="space-y-6 p-6">
         {/* Mostrar error del hook si existe */}
         {hookError && (
           <Alert className="bg-red-500/10 border-red-500/20">
@@ -93,7 +95,7 @@ export const BackupManagementSection = () => {
         )}
 
         {/* Estado del último respaldo */}
-        <div className="space-y-2">
+        <div className="space-y-3">
           <h4 className="text-sm font-medium text-gray-300">Estado del Sistema</h4>
           {lastSuccessfulBackup ? (
             <Alert className="bg-green-500/10 border-green-500/20">
@@ -105,7 +107,7 @@ export const BackupManagementSection = () => {
                   locale: es 
                 })}
                 {lastSuccessfulBackup.metadata?.fileName && (
-                  <span className="block text-xs mt-1">
+                  <span className="block text-xs mt-1 text-green-400">
                     Archivo: {lastSuccessfulBackup.metadata.fileName}
                   </span>
                 )}
@@ -132,7 +134,7 @@ export const BackupManagementSection = () => {
               <Button
                 onClick={() => generateAndDownloadBackup('full')}
                 disabled={progress.isGenerating}
-                className="w-full bg-tms-green hover:bg-tms-green-dark text-white"
+                className="w-full bg-tms-green hover:bg-tms-green/80 text-black font-medium"
               >
                 {progress.isGenerating && progress.stage.includes('Completo') ? (
                   <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
@@ -151,7 +153,7 @@ export const BackupManagementSection = () => {
                 onClick={() => generateAndDownloadBackup('quick')}
                 disabled={progress.isGenerating}
                 variant="outline"
-                className="w-full border-gray-600 text-gray-300 hover:bg-gray-800"
+                className="w-full border-gray-600 text-gray-300 hover:bg-gray-800 hover:text-white"
               >
                 {progress.isGenerating && progress.stage.includes('Rápido') ? (
                   <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
@@ -168,12 +170,12 @@ export const BackupManagementSection = () => {
 
           {/* Progreso del respaldo */}
           {progress.isGenerating && (
-            <div className="space-y-2">
+            <div className="space-y-2 p-4 bg-gray-800/50 rounded-lg border border-gray-700">
               <div className="flex items-center justify-between text-sm">
                 <span className="text-gray-300">{progress.stage}</span>
                 <span className="text-gray-400">{progress.progress}%</span>
               </div>
-              <Progress value={progress.progress} className="w-full" />
+              <Progress value={progress.progress} className="w-full h-2" />
             </div>
           )}
 
@@ -198,18 +200,18 @@ export const BackupManagementSection = () => {
               {backupLogs.map((log) => (
                 <div
                   key={log.id}
-                  className="flex items-center justify-between p-3 bg-black/20 rounded-lg border border-gray-700"
+                  className="flex items-center justify-between p-4 bg-gray-800/50 rounded-lg border border-gray-700 hover:bg-gray-800/70 transition-colors"
                 >
                   <div className="flex items-center space-x-3">
                     {getStatusIcon(log.status)}
                     <div>
-                      <div className="flex items-center space-x-2">
+                      <div className="flex items-center space-x-2 mb-1">
                         {log.backup_type === 'full' ? (
                           <FileText className="w-4 h-4 text-gray-400" />
                         ) : (
                           <Zap className="w-4 h-4 text-gray-400" />
                         )}
-                        <span className="text-sm text-gray-300">
+                        <span className="text-sm text-gray-300 font-medium">
                           {log.backup_type === 'full' ? 'Completo' : 'Rápido'}
                         </span>
                         {getStatusBadge(log.status)}
@@ -224,7 +226,7 @@ export const BackupManagementSection = () => {
                         )}
                       </p>
                       {log.error_message && (
-                        <p className="text-xs text-red-400 mt-1">
+                        <p className="text-xs text-red-400 mt-1 bg-red-500/10 px-2 py-1 rounded">
                           {log.error_message}
                         </p>
                       )}
@@ -234,7 +236,7 @@ export const BackupManagementSection = () => {
               ))}
             </div>
           ) : (
-            <div className="text-center py-8">
+            <div className="text-center py-8 bg-gray-800/30 rounded-lg border border-gray-700">
               <Database className="w-12 h-12 text-gray-500 mx-auto mb-2" />
               <p className="text-sm text-gray-500">
                 No hay respaldos registrados
