@@ -18,15 +18,41 @@ const ClientSelector = ({ clientId, onClientChange }: ClientSelectorProps) => {
 
   return (
     <div className="space-y-2">
-      <Label className="text-gray-300">Cliente (Opcional)</Label>
+      <Label className="text-white">Cliente (Opcional)</Label>
       <Select value={clientId || "all"} onValueChange={handleValueChange}>
-        <SelectTrigger className="bg-white/5 border-gray-700 text-white">
+        <SelectTrigger 
+          className="bg-black border-tms-green/30 text-white"
+          style={{
+            backgroundColor: '#000000',
+            borderColor: 'rgba(156, 250, 36, 0.3)',
+            color: '#ffffff'
+          }}
+        >
           <SelectValue placeholder="Todos los clientes" />
         </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="all">Todos los clientes</SelectItem>
+        <SelectContent 
+          className="bg-black border-tms-green text-white z-50"
+          style={{
+            backgroundColor: '#000000',
+            borderColor: '#9cfa24',
+            color: '#ffffff',
+            zIndex: 50
+          }}
+        >
+          <SelectItem 
+            value="all"
+            className="text-white hover:bg-tms-green/20 focus:bg-tms-green/20"
+            style={{ color: '#ffffff' }}
+          >
+            Todos los clientes
+          </SelectItem>
           {clients.map((client) => (
-            <SelectItem key={client.id} value={client.id}>
+            <SelectItem 
+              key={client.id} 
+              value={client.id}
+              className="text-white hover:bg-tms-green/20 focus:bg-tms-green/20"
+              style={{ color: '#ffffff' }}
+            >
               {client.name}
             </SelectItem>
           ))}
