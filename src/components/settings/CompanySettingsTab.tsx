@@ -6,14 +6,19 @@ import { Button } from '@/components/ui/button';
 import { LogoUpload } from './LogoUpload';
 import { useSettings } from '@/hooks/useSettings';
 import { useToast } from '@/components/ui/custom-toast';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export const CompanySettingsTab = () => {
-  const { settings, updateSettings, saveSettings, saving } = useSettings();
+  const { settings, updateSettings, saveSettings, saving, loading } = useSettings();
   const { toast } = useToast();
-  const [localNextFolio, setLocalNextFolio] = useState(
-    settings.company.nextServiceFolioNumber?.toString() || '1000'
-  );
+  const [localNextFolio, setLocalNextFolio] = useState('1000');
+
+  // Update local folio when settings change
+  useEffect(() => {
+    if (settings?.company?.nextServiceFolioNumber) {
+      setLocalNextFolio(settings.company.nextServiceFolioNumber.toString());
+    }
+  }, [settings?.company?.nextServiceFolioNumber]);
 
   const handleSave = async () => {
     const result = await saveSettings();
@@ -50,6 +55,24 @@ export const CompanySettingsTab = () => {
     console.log('Logo change requested:', file);
   };
 
+  // Show loading state while data is being fetched
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-96">
+        <div className="text-white">Cargando configuración de la empresa...</div>
+      </div>
+    );
+  }
+
+  // Ensure we have settings before rendering
+  if (!settings || !settings.company) {
+    return (
+      <div className="flex items-center justify-center min-h-96">
+        <div className="text-white">No se pudo cargar la configuración de la empresa.</div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <Card className="bg-gray-800 border-gray-700">
@@ -65,7 +88,7 @@ export const CompanySettingsTab = () => {
               <Label htmlFor="company-name" className="text-gray-300">Nombre de la Empresa</Label>
               <Input
                 id="company-name"
-                value={settings.company.name}
+                value={settings.company.name || ''}
                 onChange={(e) => updateSettings({
                   company: { ...settings.company, name: e.target.value }
                 })}
@@ -77,7 +100,7 @@ export const CompanySettingsTab = () => {
               <Label htmlFor="company-rut" className="text-gray-300">RUT</Label>
               <Input
                 id="company-rut"
-                value={settings.company.taxId}
+                value={settings.company.taxId || ''}
                 onChange={(e) => updateSettings({
                   company: { ...settings.company, taxId: e.target.value }
                 })}
@@ -91,7 +114,7 @@ export const CompanySettingsTab = () => {
             <Label htmlFor="company-address" className="text-gray-300">Dirección</Label>
             <Input
               id="company-address"
-              value={settings.company.address}
+              value={settings.company.address || ''}
               onChange={(e) => updateSettings({
                 company: { ...settings.company, address: e.target.value }
               })}
@@ -105,7 +128,7 @@ export const CompanySettingsTab = () => {
               <Label htmlFor="company-phone" className="text-gray-300">Teléfono</Label>
               <Input
                 id="company-phone"
-                value={settings.company.phone}
+                value={settings.company.phone || ''}
                 onChange={(e) => updateSettings({
                   company: { ...settings.company, phone: e.target.value }
                 })}
@@ -118,7 +141,7 @@ export const CompanySettingsTab = () => {
               <Input
                 id="company-email"
                 type="email"
-                value={settings.company.email}
+                value={settings.company.email || ''}
                 onChange={(e) => updateSettings({
                   company: { ...settings.company, email: e.target.value }
                 })}
@@ -143,7 +166,7 @@ export const CompanySettingsTab = () => {
               <Label htmlFor="folio-format" className="text-gray-300">Formato de Folio</Label>
               <Input
                 id="folio-format"
-                value={settings.company.folioFormat}
+                value={settings.company.folioFormat || 'SRV-{number}'}
                 onChange={(e) => updateSettings({
                   company: { ...settings.company, folioFormat: e.target.value }
                 })}
@@ -166,7 +189,7 @@ export const CompanySettingsTab = () => {
                 className="bg-gray-700 border-gray-600 text-white focus:border-tms-green"
               />
               <p className="text-xs text-gray-500">
-                El próximo folio automático será: {settings.company.folioFormat.replace('{number}', String(settings.company.nextServiceFolioNumber || 1000).padStart(4, '0'))}
+                El próximo folio automático será: {(settings.company.folioFormat || 'SRV-{number}').replace('{number}', String(settings.company.nextServiceFolioNumber || 1000).padStart(4, '0'))}
               </p>
             </div>
           </div>
