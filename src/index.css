@@ -3,41 +3,30 @@
 @tailwind components;
 @tailwind utilities;
 
-/* TMS Design System - Grúas Management */
+/* TMS Design System - Grúas Management - SIMPLIFIED VERSION */
 
 @layer base {
   :root {
     --background: 0 0 0;
     --foreground: 255 255 255;
-
     --card: 0 0 0;
     --card-foreground: 255 255 255;
-
     --popover: 0 0 0;
     --popover-foreground: 255 255 255;
-
     --primary: 156 250 36;
     --primary-foreground: 0 0 0;
-
     --secondary: 0 0 0;
     --secondary-foreground: 255 255 255;
-
     --muted: 0 0 0;
     --muted-foreground: 255 255 255;
-
     --accent: 156 250 36;
     --accent-foreground: 0 0 0;
-
     --destructive: 239 68 68;
     --destructive-foreground: 255 255 255;
-
     --border: 156 250 36;
     --input: 0 0 0;
     --ring: 156 250 36;
-
     --radius: 0.5rem;
-
-    /* Custom TMS variables for consistency */
     --tms-green: 156 250 36;
     --tms-black: 0 0 0;
   }
@@ -45,28 +34,20 @@
   .dark {
     --background: 0 0 0;
     --foreground: 255 255 255;
-
     --card: 0 0 0;
     --card-foreground: 255 255 255;
-
     --popover: 0 0 0;
     --popover-foreground: 255 255 255;
-
     --primary: 156 250 36;
     --primary-foreground: 0 0 0;
-
     --secondary: 0 0 0;
     --secondary-foreground: 255 255 255;
-
     --muted: 0 0 0;
     --muted-foreground: 255 255 255;
-
     --accent: 156 250 36;
     --accent-foreground: 0 0 0;
-
     --destructive: 239 68 68;
     --destructive-foreground: 255 255 255;
-
     --border: 156 250 36;
     --input: 0 0 0;
     --ring: 156 250 36;
@@ -90,7 +71,6 @@
     min-height: 100vh;
   }
 
-  /* Force black background for all major containers */
   #root {
     background: #000000 !important;
     min-height: 100vh;
@@ -113,78 +93,47 @@
   ::-webkit-scrollbar-thumb:hover {
     background: rgba(156, 250, 36, 0.8);
   }
-
-  /* FORCE WHITE TEXT GLOBALLY */
-  .text-gray-100,
-  .text-gray-200, 
-  .text-gray-300,
-  .text-gray-400,
-  .text-gray-500,
-  .text-gray-600,
-  .text-muted-foreground {
-    color: #ffffff !important;
-  }
-
-  /* Force all text elements to be white EXCEPT buttons */
-  p:not(button p), 
-  span:not(button span), 
-  div:not(button div):not(button), 
-  h1:not(button h1), 
-  h2:not(button h2), 
-  h3:not(button h3), 
-  h4:not(button h4), 
-  h5:not(button h5), 
-  h6:not(button h6), 
-  td:not(button td), 
-  th:not(button th), 
-  label:not(button label) {
-    color: #ffffff !important;
-  }
-
-  /* FORCE WHITE TEXT IN FORM ELEMENTS */
-  input:not(button input),
-  textarea:not(button textarea),
-  select:not(button select) {
-    color: #ffffff !important;
-    background: #000000 !important;
-  }
-
-  input::placeholder,
-  textarea::placeholder {
-    color: rgba(255, 255, 255, 0.7) !important;
-  }
-
-  /* FORCE WHITE TEXT IN SELECT COMPONENTS */
-  [role="combobox"]:not(button),
-  [role="combobox"] span:not(button span),
-  [data-radix-select-trigger]:not(button),
-  [data-radix-select-trigger] span:not(button span),
-  [data-radix-select-value]:not(button),
-  [data-radix-select-content]:not(button),
-  [data-radix-select-item]:not(button),
-  [data-radix-select-item] span:not(button span) {
-    color: #ffffff !important;
-  }
-
-  /* Force white text in dropdown menus */
-  [data-radix-popper-content-wrapper] {
-    background: #000000 !important;
-    border: 1px solid #9cfa24 !important;
-  }
-
-  [data-radix-popper-content-wrapper] * {
-    color: #ffffff !important;
-  }
-
-  /* Force visibility for all text in settings and forms */
-  .settings-container *:not(button):not(button *),
-  .glass-card *:not(button):not(button *),
-  .metric-card *:not(button):not(button *) {
-    color: #ffffff !important;
-  }
 }
 
 @layer components {
+  /* UNIVERSAL WHITE TEXT - SIMPLE AND EFFECTIVE */
+  .tms-text-white,
+  .tms-text-white *,
+  p, span, div, h1, h2, h3, h4, h5, h6, td, th, label,
+  input, textarea, select,
+  [data-radix-select-trigger],
+  [data-radix-select-trigger] *,
+  [data-radix-select-value],
+  [data-radix-select-content],
+  [data-radix-select-item],
+  [role="combobox"],
+  [role="combobox"] * {
+    color: #ffffff !important;
+  }
+
+  /* BUTTON TEXT - ALWAYS BLACK ON TMS GREEN BUTTONS */
+  button,
+  button *,
+  [role="button"],
+  [role="button"] *,
+  .bg-tms-green,
+  .bg-tms-green *,
+  .bg-green-500,
+  .bg-green-500 * {
+    color: #000000 !important;
+  }
+
+  /* OUTLINE BUTTONS - WHITE TEXT */
+  button[data-variant="outline"],
+  button[data-variant="outline"] *,
+  .border-tms-green,
+  .border-blue-500,
+  .border-red-500,
+  .border-yellow-500 {
+    color: #ffffff !important;
+  }
+
+  /* GLASS CARD STYLING */
   .glass-card {
     background: #000000 !important;
     border: 1px solid rgb(156, 250, 36) !important;
@@ -202,12 +151,13 @@
     border-color: rgb(156, 250, 36) !important;
   }
 
+  /* NAVIGATION STYLING */
   .nav-link {
     display: flex;
     align-items: center;
     padding: 12px 16px;
     border-radius: 8px;
-    color: #ffffff;
+    color: #ffffff !important;
     transition: all 0.2s;
     text-decoration: none;
   }
@@ -223,6 +173,7 @@
     font-weight: 500;
   }
 
+  /* STATUS BADGES */
   .status-badge {
     @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
   }
@@ -243,154 +194,13 @@
     @apply bg-red-500/20 text-red-300 border border-red-500/30;
   }
 
-  /* Force TMS styling for all cards and containers */
-  .bg-gray-800,
-  .bg-gray-700,
-  .bg-gray-900 {
-    background: #000000 !important;
-  }
-
-  .border-gray-700,
-  .border-gray-600,
-  .border-gray-800 {
-    border-color: rgba(156, 250, 36, 0.3) !important;
-  }
-
-  /* Force green accent colors */
-  .text-tms-green,
-  .text-green-500,
-  .text-green-400 {
-    color: rgb(156, 250, 36) !important;
-  }
-
-  .bg-tms-green,
-  .bg-green-500 {
-    background-color: rgb(156, 250, 36) !important;
-    color: #000000 !important;
-  }
-
-  /* FORZAR RENDERIZADO DE COMPONENTES DE BACKUP */
-  [data-component="backup-management"] {
-    display: block !important;
-    visibility: visible !important;
-    opacity: 1 !important;
-    background: #000000 !important;
-    border: 1px solid #9cfa24 !important;
-  }
-
-  /* Forzar actualización de componentes de configuración */
-  .settings-container {
-    background: #000000 !important;
-    min-height: 100vh !important;
-  }
-
-  .settings-card {
-    background: #000000 !important;
-    border: 1px solid #9cfa24 !important;
-    border-radius: 8px !important;
-  }
-
-  /* Override placeholder colors */
-  .placeholder-gray-400::placeholder {
+  /* INPUT PLACEHOLDERS */
+  input::placeholder,
+  textarea::placeholder {
     color: rgba(255, 255, 255, 0.7) !important;
   }
 
-  /* Force white text in tables and lists but not button content */
-  table td:not(button td),
-  table th:not(button th),
-  .table-cell:not(button .table-cell) {
-    color: #ffffff !important;
-  }
-
-  /* BUTTON TEXT VISIBILITY - FIXED AND COMPREHENSIVE */
-  /* Ensure all button text is always black and visible */
-  button,
-  button *,
-  [role="button"],
-  [role="button"] *,
-  .btn,
-  .btn *,
-  [class*="button"],
-  [class*="button"] * {
-    color: #000000 !important;
-  }
-
-  /* Specific button variant fixes */
-  button[data-variant="default"],
-  button[data-variant="default"] *,
-  button[data-variant="tms"],
-  button[data-variant="tms"] *,
-  .bg-tms-green,
-  .bg-tms-green *,
-  .bg-green-500,
-  .bg-green-500 * {
-    color: #000000 !important;
-  }
-
-  /* Fix for outline buttons - should be visible with colored text */
-  button[data-variant="outline"],
-  button[data-variant="outline"] * {
-    color: inherit !important;
-  }
-
-  button[data-variant="outline"]:hover,
-  button[data-variant="outline"]:hover * {
-    color: inherit !important;
-  }
-
-  /* Fix for destructive buttons */
-  button[data-variant="destructive"],
-  button[data-variant="destructive"] * {
-    color: #ffffff !important;
-  }
-
-  /* Ensure tab buttons have proper text visibility */
-  [role="tab"],
-  [role="tab"] * {
-    color: #ffffff !important;
-  }
-
-  [role="tab"][data-state="active"],
-  [role="tab"][data-state="active"] * {
-    color: #000000 !important;
-  }
-
-  /* Fix for toggle buttons */
-  [role="button"][data-state="on"],
-  [role="button"][data-state="on"] *,
-  button[data-state="on"],
-  button[data-state="on"] * {
-    color: #000000 !important;
-  }
-
-  /* ACTION BUTTONS VISIBILITY - ENSURE ALL ACTION BUTTONS ARE CLEARLY VISIBLE */
-  .action-button,
-  button[class*="text-tms-green"],
-  button[class*="text-blue"],
-  button[class*="text-green"],
-  button[class*="text-red"],
-  button[class*="text-yellow"],
-  button[class*="text-purple"] {
-    border: 1px solid currentColor !important;
-    background: rgba(255, 255, 255, 0.05) !important;
-    padding: 6px 8px !important;
-    border-radius: 6px !important;
-    transition: all 0.2s ease !important;
-  }
-
-  .action-button:hover,
-  button[class*="text-tms-green"]:hover,
-  button[class*="text-blue"]:hover,
-  button[class*="text-green"]:hover,
-  button[class*="text-red"]:hover,
-  button[class*="text-yellow"]:hover,
-  button[class*="text-purple"]:hover {
-    background: rgba(255, 255, 255, 0.1) !important;
-    transform: scale(1.05) !important;
-  }
-
-  /* ADDITIONAL FIXES FOR SELECT AND DROPDOWN COMPONENTS */
-  /* Ensure Select components have white text */
+  /* SELECT COMPONENTS */
   [data-radix-select-trigger] {
     background: #000000 !important;
     border: 1px solid rgba(156, 250, 36, 0.3) !important;
@@ -415,12 +225,57 @@
     color: #ffffff !important;
   }
 
-  [data-radix-select-item][data-state="checked"] {
-    background: rgba(156, 250, 36, 0.3) !important;
+  /* FORCE OVERRIDES FOR COMMON ISSUES */
+  .text-gray-100,
+  .text-gray-200, 
+  .text-gray-300,
+  .text-gray-400,
+  .text-gray-500,
+  .text-gray-600,
+  .text-muted-foreground {
     color: #ffffff !important;
   }
 
-  /* Fix for Switch component */
+  .bg-gray-800,
+  .bg-gray-700,
+  .bg-gray-900 {
+    background: #000000 !important;
+  }
+
+  .border-gray-700,
+  .border-gray-600,
+  .border-gray-800 {
+    border-color: rgba(156, 250, 36, 0.3) !important;
+  }
+
+  /* TMS GREEN COLORS */
+  .text-tms-green,
+  .text-green-500,
+  .text-green-400 {
+    color: rgb(156, 250, 36) !important;
+  }
+
+  .bg-tms-green,
+  .bg-green-500 {
+    background-color: rgb(156, 250, 36) !important;
+    color: #000000 !important;
+  }
+
+  /* ACTION BUTTONS VISIBILITY */
+  .action-button {
+    border: 1px solid currentColor !important;
+    background: rgba(255, 255, 255, 0.05) !important;
+    padding: 6px 8px !important;
+    border-radius: 6px !important;
+    transition: all 0.2s ease !important;
+  }
+
+  .action-button:hover {
+    background: rgba(255, 255, 255, 0.1) !important;
+    transform: scale(1.05) !important;
+  }
+
+  /* SWITCH COMPONENT */
   [data-radix-switch-root] {
     background: rgba(255, 255, 255, 0.2) !important;
   }
@@ -433,22 +288,49 @@
     background: #ffffff !important;
   }
 
-  /* Force visibility in all form controls */
-  .form-control,
-  .form-control * {
+  /* TAB COMPONENTS */
+  [role="tab"] {
     color: #ffffff !important;
   }
 
-  /* Additional overrides for common UI patterns */
-  .text-foreground {
+  [role="tab"][data-state="active"] {
+    color: #000000 !important;
+  }
+
+  /* FORCE VISIBILITY FOR SETTINGS AND FORMS */
+  .settings-container,
+  .settings-container *,
+  .glass-card,
+  .glass-card *,
+  .metric-card,
+  .metric-card * {
     color: #ffffff !important;
   }
 
-  .text-popover-foreground {
+  /* PLACEHOLDER COLORS */
+  .placeholder-gray-400::placeholder {
+    color: rgba(255, 255, 255, 0.7) !important;
+  }
+
+  /* TABLE CELLS */
+  table td,
+  table th,
+  .table-cell {
     color: #ffffff !important;
   }
 
-  .text-card-foreground {
+  /* FORCE DROPDOWN MENUS */
+  [data-radix-popper-content-wrapper] {
+    background: #000000 !important;
+    border: 1px solid #9cfa24 !important;
+  }
+
+  [data-radix-popper-content-wrapper] * {
     color: #ffffff !important;
   }
+}
+
+/* CACHE BUSTING - VERSION 3.0 */
+.tms-version-3 {
+  display: none;
 }

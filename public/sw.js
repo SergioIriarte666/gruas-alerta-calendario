@@ -1,7 +1,6 @@
-
-const CACHE_NAME = 'tms-operador-v2';
-const DYNAMIC_CACHE = 'dynamic-tms-operador-v2';
-const OFFLINE_CACHE = 'offline-tms-v2';
+const CACHE_NAME = 'tms-operador-v3';
+const DYNAMIC_CACHE = 'dynamic-tms-operador-v3';
+const OFFLINE_CACHE = 'offline-tms-v3';
 
 // Estrategias de cache específicas para TMS Grúas
 const CACHE_STRATEGIES = {
@@ -18,9 +17,9 @@ const CACHE_STRATEGIES = {
   '/clients': 'network-first',
   '/invoices': 'network-first',
   
-  // Assets estáticos
+  // Assets estáticos - FORCE NETWORK FIRST para CSS
+  '*.css': 'network-first',
   '*.js': 'cache-first',
-  '*.css': 'cache-first',
   '*.woff2': 'cache-first',
   '*.png': 'cache-first',
   '*.jpg': 'cache-first',
@@ -45,17 +44,28 @@ const SYNC_TAGS = {
 };
 
 self.addEventListener('install', (event) => {
-  console.log('[Service Worker] Install v2');
+  console.log('[Service Worker] Install v3 - Force CSS refresh');
   event.waitUntil(
     Promise.all([
       caches.open(CACHE_NAME).then(cache => cache.addAll(CRITICAL_URLS)),
+      // Force delete old caches
+      caches.keys().then((cacheNames) => {
+        return Promise.all(
+          cacheNames.map((cacheName) => {
+            if (cacheName.includes('tms-operador-v1') || cacheName.includes('tms-operador-v2')) {
+              console.log('[Service Worker] Deleting old cache:', cacheName);
+              return caches.delete(cacheName);
+            }
+          })
+        );
+      }),
       self.skipWaiting()
     ])
   );
 });
 
 self.addEventListener('activate', (event) => {
-  console.log('[Service Worker] Activate v2');
+  console.log('[Service Worker] Activate v3 - Clear all old caches');
   const cacheWhitelist = [CACHE_NAME, DYNAMIC_CACHE, OFFLINE_CACHE];
   
   event.waitUntil(
@@ -64,6 +74,7 @@ self.addEventListener('activate', (event) => {
         return Promise.all(
           cacheNames.map((cacheName) => {
             if (!cacheWhitelist.includes(cacheName)) {
+              console.log('[Service Worker] Deleting cache:', cacheName);
               return caches.delete(cacheName);
             }
           })
@@ -86,6 +97,23 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
   const strategy = getStrategyForUrl(url.pathname);
 
+  // Force CSS files to always fetch from network
+  if (event.request.url.includes('.css') || event.request.url.includes('index.css')) {
+    console.log('[Service Worker] Force network fetch for CSS:', event.request.url);
+    event.respondWith(
+      fetch(event.request).then(response => {
+        if (response.status === 200) {
+          const cache = caches.open(DYNAMIC_CACHE);
+          cache.then(c => c.put(event.request, response.clone()));
+        }
+        return response;
+      }).catch(() => {
+        return caches.match(event.request);
+      })
+    );
+    return;
+  }
+
   event.respondWith(handleRequest(event.request, strategy));
 });
 
@@ -100,8 +128,13 @@ function getStrategyForUrl(pathname) {
     return 'network-first-with-cache';
   }
   
+  // CSS files - always network first
+  if (pathname.match(/\.css$/)) {
+    return 'network-first';
+  }
+  
   // Assets estáticos - cache first
-  if (pathname.match(/\.(js|css|woff2|png|jpg|svg)$/)) {
+  if (pathname.match(/\.(js|woff2|png|jpg|svg)$/)) {
     return 'cache-first';
   }
   
@@ -219,7 +252,6 @@ self.addEventListener('sync', (event) => {
 
 async function syncServiceUpdates() {
   try {
-    // Recuperar datos pendientes de IndexedDB
     const pendingUpdates = await getFromIndexedDB('pendingServiceUpdates');
     
     for (const update of pendingUpdates || []) {
@@ -230,7 +262,6 @@ async function syncServiceUpdates() {
           headers: { 'Content-Type': 'application/json' }
         });
         
-        // Remover de IndexedDB tras éxito
         await removeFromIndexedDB('pendingServiceUpdates', update.id);
       } catch (error) {
         console.error('[Service Worker] Failed to sync service update:', error);
@@ -255,7 +286,6 @@ async function syncInspectionData() {
         
         await removeFromIndexedDB('pendingInspections', inspection.id);
         
-        // Notificar al cliente sobre el éxito
         self.clients.matchAll().then(clients => {
           clients.forEach(client => {
             client.postMessage({
@@ -331,7 +361,6 @@ self.addEventListener('notificationclick', (event) => {
   
   event.waitUntil(
     self.clients.matchAll({ type: 'window' }).then(clients => {
-      // Si hay una ventana abierta, enfocarla
       for (const client of clients) {
         if (client.url === self.registration.scope && 'focus' in client) {
           client.focus();
@@ -344,7 +373,6 @@ self.addEventListener('notificationclick', (event) => {
         }
       }
       
-      // Si no hay ventana abierta, abrir una nueva
       const targetUrl = data.url || '/';
       return self.clients.openWindow(targetUrl);
     })

@@ -52,23 +52,23 @@ export const ServicesTable = ({
   const isAdmin = user?.role === 'admin';
 
   return (
-    <Card className="glass-card">
+    <Card className="glass-card tms-text-white">
       <CardHeader>
         <CardTitle className="flex items-center space-x-2 text-white">
           <Truck className="w-5 h-5 text-tms-green" />
-          <span>Servicios Registrados ({services.length})</span>
+          <span className="text-white">Servicios Registrados ({services.length})</span>
         </CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="tms-text-white">
         {services.length === 0 ? (
-          <div className="text-center py-12 text-gray-400">
+          <div className="text-center py-12">
             <div className="w-16 h-16 bg-tms-green/20 rounded-full flex items-center justify-center mx-auto mb-4">
               <Truck className="w-8 h-8 text-tms-green" />
             </div>
             <h3 className="text-lg font-medium text-white mb-2">
               {!hasInitialServices ? 'No hay servicios registrados' : 'No hay servicios que coincidan con los filtros'}
             </h3>
-            <p className="text-gray-400 mb-6">
+            <p className="text-white mb-6">
               {!hasInitialServices
                 ? 'Comienza agregando tu primer servicio de grúa'
                 : 'Intenta ajustar los filtros de búsqueda'
@@ -76,7 +76,7 @@ export const ServicesTable = ({
             </p>
             {!hasInitialServices && onAddNewService && (
               <Button 
-                className="bg-tms-green hover:bg-tms-green-dark text-white"
+                className="bg-tms-green hover:bg-tms-green-dark text-black"
                 onClick={onAddNewService}
                 title="Crear el primer servicio"
               >
@@ -90,21 +90,20 @@ export const ServicesTable = ({
             <Table>
               <TableHeader>
                 <TableRow className="border-gray-700">
-                  <TableHead className="text-gray-300">Folio</TableHead>
-                  <TableHead className="text-gray-300">Fecha Servicio</TableHead>
-                  <TableHead className="text-gray-300">Cliente</TableHead>
-                  <TableHead className="text-gray-300">Vehículo</TableHead>
-                  <TableHead className="text-gray-300">Origen/Destino</TableHead>
-                  <TableHead className="text-gray-300">Grúa</TableHead>
-                  <TableHead className="text-gray-300">Operador</TableHead>
-                  <TableHead className="text-gray-300">Valor</TableHead>
-                  <TableHead className="text-gray-300">Estado</TableHead>
-                  <TableHead className="text-gray-300 min-w-[140px]">Acciones</TableHead>
+                  <TableHead className="text-white">Folio</TableHead>
+                  <TableHead className="text-white">Fecha Servicio</TableHead>
+                  <TableHead className="text-white">Cliente</TableHead>
+                  <TableHead className="text-white">Vehículo</TableHead>
+                  <TableHead className="text-white">Origen/Destino</TableHead>
+                  <TableHead className="text-white">Grúa</TableHead>
+                  <TableHead className="text-white">Operador</TableHead>
+                  <TableHead className="text-white">Valor</TableHead>
+                  <TableHead className="text-white">Estado</TableHead>
+                  <TableHead className="text-white min-w-[140px]">Acciones</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {services.map((service) => {
-                  // Check if vehicle info is available
                   const hasVehicleInfo = service.vehicleBrand && service.vehicleModel && service.licensePlate;
                   const isInvoiced = service.status === 'invoiced';
                   
@@ -113,36 +112,36 @@ export const ServicesTable = ({
                       <TableCell className="font-medium text-tms-green">
                         {service.folio}
                       </TableCell>
-                      <TableCell className="text-gray-300">
+                      <TableCell className="text-white">
                         {format(new Date(service.serviceDate), 'dd/MM/yyyy', { locale: es })}
                       </TableCell>
-                      <TableCell className="text-gray-300">
-                        <div className="font-medium">{service.client.name}</div>
-                        <div className="text-sm text-gray-500">{service.client.rut}</div>
+                      <TableCell className="text-white">
+                        <div className="font-medium text-white">{service.client.name}</div>
+                        <div className="text-sm text-white opacity-70">{service.client.rut}</div>
                       </TableCell>
-                      <TableCell className="text-gray-300">
+                      <TableCell className="text-white">
                         {hasVehicleInfo ? (
                           <div>
-                            <div className="font-medium">{service.vehicleBrand} {service.vehicleModel}</div>
-                            <div className="text-sm text-gray-500">{service.licensePlate}</div>
+                            <div className="font-medium text-white">{service.vehicleBrand} {service.vehicleModel}</div>
+                            <div className="text-sm text-white opacity-70">{service.licensePlate}</div>
                           </div>
                         ) : (
-                          <div className="text-sm text-gray-500 italic">
+                          <div className="text-sm text-white opacity-70 italic">
                             Sin vehículo específico
                           </div>
                         )}
                       </TableCell>
-                      <TableCell className="text-gray-300 max-w-48">
-                        <div className="truncate">{service.origin}</div>
-                        <div className="text-sm text-gray-500 truncate">→ {service.destination}</div>
+                      <TableCell className="text-white max-w-48">
+                        <div className="truncate text-white">{service.origin}</div>
+                        <div className="text-sm text-white opacity-70 truncate">→ {service.destination}</div>
                       </TableCell>
-                      <TableCell className="text-gray-300">
+                      <TableCell className="text-white">
                         {service.crane.licensePlate}
                       </TableCell>
-                      <TableCell className="text-gray-300">
+                      <TableCell className="text-white">
                         {service.operator.name}
                       </TableCell>
-                      <TableCell className="text-gray-300 font-medium">
+                      <TableCell className="text-white font-medium">
                         {formatCurrency(service.value)}
                       </TableCell>
                       <TableCell>
@@ -150,19 +149,13 @@ export const ServicesTable = ({
                       </TableCell>
                       <TableCell>
                         <div className="flex space-x-1">
-                          {/* Only show close button for pending/in_progress services */}
                           {(service.status === 'pending' || service.status === 'in_progress') && onCloseService && (
                             <Button 
                               variant="outline" 
                               size="sm" 
-                              className="border-green-500/50 bg-green-500/10 text-green-400 hover:bg-green-500/20 hover:border-green-500"
+                              className="action-button border-green-500/50 bg-green-500/10 text-green-400 hover:bg-green-500/20 hover:border-green-500"
                               onClick={() => onCloseService(service)}
                               title="Cerrar Servicio"
-                              style={{
-                                borderColor: 'rgba(34, 197, 94, 0.5)',
-                                backgroundColor: 'rgba(34, 197, 94, 0.1)',
-                                color: '#22c55e'
-                              }}
                             >
                               <Check className="w-4 h-4" />
                             </Button>
@@ -171,26 +164,20 @@ export const ServicesTable = ({
                           <Button 
                             variant="outline" 
                             size="sm" 
-                            className="border-tms-green/50 bg-tms-green/10 text-tms-green hover:bg-tms-green/20 hover:border-tms-green"
+                            className="action-button border-tms-green/50 bg-tms-green/10 text-tms-green hover:bg-tms-green/20 hover:border-tms-green"
                             onClick={() => onViewDetails(service)}
                             title="Ver detalles del servicio"
-                            style={{
-                              borderColor: 'rgba(156, 250, 36, 0.5)',
-                              backgroundColor: 'rgba(156, 250, 36, 0.1)',
-                              color: '#9cfa24'
-                            }}
                           >
                             <Eye className="w-4 h-4" />
                           </Button>
                           
-                          {/* Administrators can edit invoiced services with warning */}
                           {onEdit && (
                             <Button 
                               variant="outline" 
                               size="sm" 
                               className={isInvoiced && !isAdmin 
-                                ? "border-gray-600 bg-gray-600/10 text-gray-500 cursor-not-allowed" 
-                                : "border-blue-500/50 bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 hover:border-blue-500"}
+                                ? "action-button border-gray-600 bg-gray-600/10 text-gray-500 cursor-not-allowed" 
+                                : "action-button border-blue-500/50 bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 hover:border-blue-500"}
                               onClick={() => onEdit(service)}
                               title={isInvoiced && !isAdmin 
                                 ? "No se puede editar un servicio facturado" 
@@ -198,42 +185,23 @@ export const ServicesTable = ({
                                   ? "⚠️ Editar servicio facturado (solo admin)" 
                                   : "Editar servicio"}
                               disabled={isInvoiced && !isAdmin}
-                              style={isInvoiced && !isAdmin ? {
-                                borderColor: 'rgba(107, 114, 128, 0.5)',
-                                backgroundColor: 'rgba(107, 114, 128, 0.1)',
-                                color: '#6b7280'
-                              } : {
-                                borderColor: 'rgba(59, 130, 246, 0.5)',
-                                backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                                color: '#3b82f6'
-                              }}
                             >
                               <Edit className="w-4 h-4" />
                             </Button>
                           )}
                           
-                          {/* Delete button - disabled for invoiced services */}
                           {onDelete && (
                             <Button 
                               variant="outline" 
                               size="sm" 
                               className={isInvoiced 
-                                ? "border-gray-600 bg-gray-600/10 text-gray-500 cursor-not-allowed" 
-                                : "border-red-500/50 bg-red-500/10 text-red-400 hover:bg-red-500/20 hover:border-red-500"}
+                                ? "action-button border-gray-600 bg-gray-600/10 text-gray-500 cursor-not-allowed" 
+                                : "action-button border-red-500/50 bg-red-500/10 text-red-400 hover:bg-red-500/20 hover:border-red-500"}
                               onClick={isInvoiced ? undefined : () => onDelete(service)}
                               title={isInvoiced 
                                 ? "No se puede eliminar un servicio facturado" 
                                 : "Eliminar servicio"}
                               disabled={isInvoiced}
-                              style={isInvoiced ? {
-                                borderColor: 'rgba(107, 114, 128, 0.5)',
-                                backgroundColor: 'rgba(107, 114, 128, 0.1)',
-                                color: '#6b7280'
-                              } : {
-                                borderColor: 'rgba(239, 68, 68, 0.5)',
-                                backgroundColor: 'rgba(239, 68, 68, 0.1)',
-                                color: '#ef4444'
-                              }}
                             >
                               <Trash2 className="w-4 h-4" />
                             </Button>
