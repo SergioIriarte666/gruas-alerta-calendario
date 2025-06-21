@@ -27,6 +27,7 @@ import NotFound from "./pages/NotFound";
 import OperatorDashboard from "./pages/OperatorDashboard";
 import ServiceInspection from "./pages/operator/ServiceInspection";
 
+// Create QueryClient outside of component to prevent recreation
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -36,61 +37,72 @@ const queryClient = new QueryClient({
   },
 });
 
-const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
+// Separate theme component to isolate theme logic
+function ThemeWrapper({ children }: { children: React.ReactNode }) {
   useTheme();
   return <>{children}</>;
-};
+}
 
-const App = () => {
+// Main app content component
+function AppContent() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <UserProvider>
-          <ThemeProvider>
-            <NotificationProvider>
-              <ToastProvider>
-                <BrowserRouter>
-                  <Routes>
-                    <Route path="/auth" element={<Auth />} />
-                    
-                    <Route path="/operator" element={
-                      <ProtectedRoute>
-                        <OperatorLayout />
-                      </ProtectedRoute>
-                    }>
-                      <Route index element={<OperatorDashboard />} />
-                      <Route path="service/:id/inspect" element={<ServiceInspection />} />
-                    </Route>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/auth" element={<Auth />} />
+        
+        <Route path="/operator" element={
+          <ProtectedRoute>
+            <OperatorLayout />
+          </ProtectedRoute>
+        }>
+          <Route index element={<OperatorDashboard />} />
+          <Route path="service/:id/inspect" element={<ServiceInspection />} />
+        </Route>
 
-                    <Route path="/" element={
-                      <ProtectedRoute>
-                        <Layout />
-                      </ProtectedRoute>
-                    }>
-                      <Route index element={<Dashboard />} />
-                      <Route path="calendar" element={<Calendar />} />
-                      <Route path="services" element={<Services />} />
-                      <Route path="clients" element={<Clients />} />
-                      <Route path="cranes" element={<Cranes />} />
-                      <Route path="operators" element={<Operators />} />
-                      <Route path="costs" element={<Costs />} />
-                      <Route path="closures" element={<Closures />} />
-                      <Route path="invoices" element={<Invoices />} />
-                      <Route path="reports" element={<Reports />} />
-                      <Route path="settings" element={<Settings />} />
-                      <Route path="profile" element={<Profile />} />
-                    </Route>
-                    
-                    <Route path="*" element={<NotFound />} />
-                  </Routes>
-                </BrowserRouter>
-              </ToastProvider>
-            </NotificationProvider>
-          </ThemeProvider>
-        </UserProvider>
-      </AuthProvider>
-    </QueryClientProvider>
+        <Route path="/" element={
+          <ProtectedRoute>
+            <Layout />
+          </ProtectedRoute>
+        }>
+          <Route index element={<Dashboard />} />
+          <Route path="calendar" element={<Calendar />} />
+          <Route path="services" element={<Services />} />
+          <Route path="clients" element={<Clients />} />
+          <Route path="cranes" element={<Cranes />} />
+          <Route path="operators" element={<Operators />} />
+          <Route path="costs" element={<Costs />} />
+          <Route path="closures" element={<Closures />} />
+          <Route path="invoices" element={<Invoices />} />
+          <Route path="reports" element={<Reports />} />
+          <Route path="settings" element={<Settings />} />
+          <Route path="profile" element={<Profile />} />
+        </Route>
+        
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </BrowserRouter>
   );
-};
+}
+
+// Main App component with proper provider nesting
+function App() {
+  return (
+    <React.StrictMode>
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <UserProvider>
+            <ThemeWrapper>
+              <NotificationProvider>
+                <ToastProvider>
+                  <AppContent />
+                </ToastProvider>
+              </NotificationProvider>
+            </ThemeWrapper>
+          </UserProvider>
+        </AuthProvider>
+      </QueryClientProvider>
+    </React.StrictMode>
+  );
+}
 
 export default App;
