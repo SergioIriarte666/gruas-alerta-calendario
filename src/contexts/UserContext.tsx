@@ -1,4 +1,3 @@
-
 import * as React from 'react';
 import { useAuth } from './AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -7,7 +6,7 @@ interface User {
   id: string;
   name: string;
   email: string;
-  role: string;
+  role: 'admin' | 'operator' | 'viewer';
 }
 
 interface UserContextType {
@@ -62,11 +61,15 @@ export function UserProvider({ children }: UserProviderProps) {
         }
         setUser(null);
       } else if (data) {
+        // Ensure role is one of the valid types
+        const validRoles: Array<'admin' | 'operator' | 'viewer'> = ['admin', 'operator', 'viewer'];
+        const userRole = validRoles.includes(data.role as any) ? data.role as 'admin' | 'operator' | 'viewer' : 'viewer';
+        
         const userData = {
           id: data.id,
           name: data.full_name || 'Usuario',
           email: data.email,
-          role: data.role || 'viewer',
+          role: userRole,
         };
         console.log('UserContext: Profile loaded successfully:', userData);
         setUser(userData);
