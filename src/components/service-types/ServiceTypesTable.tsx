@@ -44,9 +44,9 @@ export const ServiceTypesTable = ({ serviceTypes, onEdit, onDelete, onView }: Se
 
   if (serviceTypes.length === 0) {
     return (
-      <div className="bg-gray-800 rounded-lg border border-gray-700 p-8 text-center">
-        <p className="text-gray-400 mb-4">No hay tipos de servicio configurados</p>
-        <p className="text-sm text-gray-500">
+      <div className="bg-white rounded-lg border border-gray-200 p-8 text-center">
+        <p className="text-black mb-4">No hay tipos de servicio configurados</p>
+        <p className="text-sm text-gray-600">
           Crea un nuevo tipo de servicio para comenzar
         </p>
       </div>
@@ -54,44 +54,43 @@ export const ServiceTypesTable = ({ serviceTypes, onEdit, onDelete, onView }: Se
   }
 
   return (
-    <div className="bg-gray-800 rounded-lg border border-gray-700 overflow-hidden">
+    <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
       <Table>
         <TableHeader>
-          <TableRow className="border-gray-700 hover:bg-gray-750">
-            <TableHead className="text-gray-300">Nombre</TableHead>
-            <TableHead className="text-gray-300">Descripción</TableHead>
-            <TableHead className="text-gray-300">Precio Base</TableHead>
-            <TableHead className="text-gray-300">Estado</TableHead>
-            <TableHead className="text-gray-300">Campos Requeridos</TableHead>
-            <TableHead className="text-gray-300">Vehículo Opcional</TableHead>
-            <TableHead className="text-gray-300 text-right">Acciones</TableHead>
+          <TableRow className="border-gray-200 hover:bg-gray-50">
+            <TableHead className="text-black">Nombre</TableHead>
+            <TableHead className="text-black">Descripción</TableHead>
+            <TableHead className="text-black">Precio Base</TableHead>
+            <TableHead className="text-black">Estado</TableHead>
+            <TableHead className="text-black">Campos Requeridos</TableHead>
+            <TableHead className="text-black">Vehículo Opcional</TableHead>
+            <TableHead className="text-black text-right">Acciones</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {serviceTypes.map((serviceType) => (
-            <TableRow key={serviceType.id} className="border-gray-700 hover:bg-gray-750">
-              <TableCell className="text-white font-medium">
+            <TableRow key={serviceType.id} className="border-gray-200 hover:bg-gray-50">
+              <TableCell className="text-black font-medium">
                 {serviceType.name}
               </TableCell>
-              <TableCell className="text-gray-300">
+              <TableCell className="text-black">
                 {serviceType.description || '-'}
               </TableCell>
-              <TableCell className="text-gray-300">
+              <TableCell className="text-black">
                 {formatPrice(serviceType.basePrice)}
               </TableCell>
               <TableCell>
                 <Badge 
                   variant="outline"
                   className={serviceType.isActive 
-                    ? "bg-tms-green/20 text-tms-green border-tms-green/30" 
-                    : "bg-gray-600/20 text-gray-400 border-gray-600/30"
-                  }
+                    ? "bg-tms-green/20 text-black border-tms-green/30" 
+                    : "bg-gray-100 text-black border-gray-300"}
                 >
                   {serviceType.isActive ? 'Activo' : 'Inactivo'}
                 </Badge>
               </TableCell>
-              <TableCell className="text-gray-300">
-                <Badge variant="outline" className="border-blue-500 text-blue-400">
+              <TableCell className="text-black">
+                <Badge variant="outline" className="border-blue-500 text-blue-600 bg-blue-50">
                   {getRequiredFieldsCount(serviceType)} de 8
                 </Badge>
               </TableCell>
@@ -99,9 +98,8 @@ export const ServiceTypesTable = ({ serviceTypes, onEdit, onDelete, onView }: Se
                 <Badge 
                   variant="outline"
                   className={serviceType.vehicleInfoOptional 
-                    ? "bg-tms-green/20 text-tms-green border-tms-green/30" 
-                    : "bg-gray-600/20 text-gray-400 border-gray-600/30"
-                  }
+                    ? "bg-tms-green/20 text-black border-tms-green/30" 
+                    : "bg-gray-100 text-black border-gray-300"}
                 >
                   {serviceType.vehicleInfoOptional ? 'Sí' : 'No'}
                 </Badge>
@@ -112,7 +110,7 @@ export const ServiceTypesTable = ({ serviceTypes, onEdit, onDelete, onView }: Se
                     variant="ghost"
                     size="sm"
                     onClick={() => onView(serviceType)}
-                    className="text-blue-400 hover:text-blue-300 hover:bg-gray-700"
+                    className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
                   >
                     <Eye className="h-4 w-4" />
                   </Button>
@@ -120,7 +118,7 @@ export const ServiceTypesTable = ({ serviceTypes, onEdit, onDelete, onView }: Se
                     variant="ghost"
                     size="sm"
                     onClick={() => onEdit(serviceType)}
-                    className="text-yellow-400 hover:text-yellow-300 hover:bg-gray-700"
+                    className="text-yellow-600 hover:text-yellow-700 hover:bg-yellow-50"
                   >
                     <Edit className="h-4 w-4" />
                   </Button>
@@ -128,7 +126,7 @@ export const ServiceTypesTable = ({ serviceTypes, onEdit, onDelete, onView }: Se
                     variant="ghost"
                     size="sm"
                     onClick={() => onDelete(serviceType)}
-                    className="text-red-400 hover:text-red-300 hover:bg-gray-700"
+                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
