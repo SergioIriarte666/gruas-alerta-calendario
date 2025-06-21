@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useToast } from '@/components/ui/custom-toast';
 import { useUser } from '@/contexts/UserContext';
+import { useSettings } from '@/hooks/useSettings';
 import { NotificationsDropdown } from './NotificationsDropdown';
 
 interface HeaderProps {
@@ -16,8 +17,12 @@ interface HeaderProps {
 export const Header = ({ setIsMobileMenuOpen }: HeaderProps) => {
   const navigate = useNavigate();
   const { user, logout } = useUser();
+  const { settings } = useSettings();
   const { toast } = useToast();
   const isAdmin = user?.role === 'admin';
+
+  const companyName = settings?.company?.name || 'Gruas 5 Norte';
+  const companyLogo = settings?.company?.logo;
 
   const handleLogout = async () => {
     try {
@@ -44,10 +49,7 @@ export const Header = ({ setIsMobileMenuOpen }: HeaderProps) => {
 
   return (
     <header 
-      className="flex h-16 items-center justify-between backdrop-blur-lg border-b border-gray-700/50 px-4 sm:px-6 transition-colors duration-300"
-      style={{
-        background: 'rgba(13, 13, 13, 0.9)'
-      }}
+      className="flex h-16 items-center justify-between backdrop-blur-lg border-b border-gray-700/50 px-4 sm:px-6 transition-colors duration-300 bg-black"
     >
       <div className="flex items-center gap-4">
         <Button
@@ -59,6 +61,21 @@ export const Header = ({ setIsMobileMenuOpen }: HeaderProps) => {
           <Menu className="h-6 w-6" />
           <span className="sr-only">Abrir menú</span>
         </Button>
+
+        {/* Company branding */}
+        <div className="flex items-center space-x-3">
+          {companyLogo && (
+            <img 
+              src={companyLogo} 
+              alt="Logo empresa" 
+              className="h-8 w-8 object-contain"
+            />
+          )}
+          <div className="hidden sm:block">
+            <h1 className="text-lg font-semibold text-white">{companyName}</h1>
+            <p className="text-xs text-gray-400">Sistema de Gestión</p>
+          </div>
+        </div>
         
         <div className="hidden lg:block relative max-w-md flex-1">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
