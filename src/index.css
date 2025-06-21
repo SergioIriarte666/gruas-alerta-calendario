@@ -23,7 +23,7 @@
     --secondary-foreground: 255 255 255;
 
     --muted: 0 0 0;
-    --muted-foreground: 163 163 163;
+    --muted-foreground: 255 255 255;
 
     --accent: 156 250 36;
     --accent-foreground: 0 0 0;
@@ -59,7 +59,7 @@
     --secondary-foreground: 255 255 255;
 
     --muted: 0 0 0;
-    --muted-foreground: 163 163 163;
+    --muted-foreground: 255 255 255;
 
     --accent: 156 250 36;
     --accent-foreground: 0 0 0;
@@ -112,6 +112,25 @@
 
   ::-webkit-scrollbar-thumb:hover {
     background: rgba(156, 250, 36, 0.8);
+  }
+
+  /* FORCE WHITE TEXT GLOBALLY */
+  .text-gray-100,
+  .text-gray-200, 
+  .text-gray-300,
+  .text-gray-400,
+  .text-gray-500,
+  .text-gray-600 {
+    color: #ffffff !important;
+  }
+
+  .text-muted-foreground {
+    color: #ffffff !important;
+  }
+
+  /* Force all text elements to be white */
+  p, span, div, h1, h2, h3, h4, h5, h6, td, th, label {
+    color: #ffffff;
   }
 }
 
@@ -219,5 +238,36 @@
     background: #000000 !important;
     border: 1px solid #9cfa24 !important;
     border-radius: 8px !important;
+  }
+
+  /* FORCE WHITE TEXT IN COMPONENTS */
+  .text-gray-300,
+  .text-gray-400,
+  .text-gray-500 {
+    color: #ffffff !important;
+  }
+
+  /* Override placeholder colors */
+  .placeholder-gray-400::placeholder {
+    color: rgba(255, 255, 255, 0.7) !important;
+  }
+
+  /* Force white text in tables and lists */
+  table td,
+  table th,
+  .table-cell {
+    color: #ffffff !important;
+  }
+
+  /* Force white text in form elements */
+  input,
+  textarea,
+  select {
+    color: #ffffff !important;
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    color: rgba(255, 255, 255, 0.7) !important;
   }
 }

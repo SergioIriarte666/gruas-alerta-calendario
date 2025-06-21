@@ -55,7 +55,7 @@ export const Header = ({ setIsMobileMenuOpen }: HeaderProps) => {
         <Button
           variant="ghost"
           size="icon"
-          className="lg:hidden text-gray-300 hover:text-black hover:bg-tms-green"
+          className="lg:hidden text-white hover:text-black hover:bg-tms-green"
           onClick={() => setIsMobileMenuOpen(true)}
         >
           <Menu className="h-6 w-6" />
@@ -73,15 +73,15 @@ export const Header = ({ setIsMobileMenuOpen }: HeaderProps) => {
           )}
           <div className="hidden sm:block">
             <h1 className="text-lg font-semibold text-white">{companyName}</h1>
-            <p className="text-xs text-gray-400">Sistema de Gestión</p>
+            <p className="text-xs text-white">Sistema de Gestión</p>
           </div>
         </div>
         
         <div className="hidden lg:block relative max-w-md flex-1">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white w-4 h-4" />
           <Input
             placeholder="Buscar servicios, clientes, facturas..."
-            className="pl-10 bg-gray-800/50 border-gray-600 text-white placeholder-gray-400 focus:border-tms-green focus:ring-tms-green"
+            className="pl-10 bg-gray-800/50 border-gray-600 text-white placeholder-white/70 focus:border-tms-green focus:ring-tms-green"
           />
         </div>
       </div>
@@ -91,7 +91,7 @@ export const Header = ({ setIsMobileMenuOpen }: HeaderProps) => {
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="text-gray-300 hover:text-black hover:bg-tms-green rounded-full">
+            <Button variant="ghost" size="icon" className="text-white hover:text-black hover:bg-tms-green rounded-full">
               <User className="w-5 h-5" />
             </Button>
           </DropdownMenuTrigger>
@@ -101,7 +101,7 @@ export const Header = ({ setIsMobileMenuOpen }: HeaderProps) => {
             </DropdownMenuLabel>
             <DropdownMenuSeparator className="bg-gray-700" />
             <DropdownMenuItem
-              className="text-gray-300 hover:text-white hover:bg-tms-green/20 cursor-pointer focus:bg-tms-green/20 focus:text-white"
+              className="text-white hover:text-white hover:bg-tms-green/20 cursor-pointer focus:bg-tms-green/20 focus:text-white"
               onClick={handleProfileClick}
             >
               <User className="w-4 h-4 mr-2" />
@@ -109,7 +109,7 @@ export const Header = ({ setIsMobileMenuOpen }: HeaderProps) => {
             </DropdownMenuItem>
             {isAdmin && (
               <DropdownMenuItem
-                className="text-gray-300 hover:text-white hover:bg-tms-green/20 cursor-pointer focus:bg-tms-green/20 focus:text-white"
+                className="text-white hover:text-white hover:bg-tms-green/20 cursor-pointer focus:bg-tms-green/20 focus:text-white"
                 onClick={() => navigate('/settings')}
               >
                 <Settings className="w-4 h-4 mr-2" />
