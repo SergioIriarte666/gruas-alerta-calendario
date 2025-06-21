@@ -33,7 +33,7 @@ const Settings = () => {
   const { isUpdating: isLogoUpdating, updateLogo } = useLogoUpdater();
   const [activeTab, setActiveTab] = React.useState('company');
 
-  // Force component refresh and debug logging
+  // Debug logging moved to component logic
   console.log('Settings page rendering - activeTab:', activeTab);
   console.log('Settings - systemSettings:', systemSettings);
   console.log('Settings - BackupManagementSection should be visible in System tab');
@@ -73,7 +73,7 @@ const Settings = () => {
   if (loading || systemLoading || !settings) {
     return (
       <div 
-        className="flex items-center justify-center min-h-96"
+        className="flex items-center justify-center min-h-96 settings-container"
         style={{ backgroundColor: '#000000', color: '#ffffff' }}
       >
         <div style={{ color: '#ffffff' }}>Cargando configuración...</div>
@@ -83,7 +83,7 @@ const Settings = () => {
 
   return (
     <div 
-      className="space-y-6 animate-fade-in"
+      className="space-y-6 animate-fade-in settings-container"
       style={{ backgroundColor: '#000000', minHeight: '100vh', padding: '24px' }}
     >
       <SettingsHeader onReset={resetSettings} />
@@ -132,7 +132,6 @@ const Settings = () => {
         </TabsContent>
 
         <TabsContent value="system">
-          {console.log('Rendering SystemSettingsTab with BackupManagementSection')}
           <SystemSettingsTab
             settings={systemSettings}
             saving={systemSaving}

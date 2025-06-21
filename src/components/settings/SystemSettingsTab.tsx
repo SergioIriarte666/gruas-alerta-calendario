@@ -25,7 +25,7 @@ export const SystemSettingsTab: React.FC<SystemSettingsTabProps> = ({
   onSave,
   onUpdateSettings
 }) => {
-  // Debug logging to verify component rendering
+  // Debug logging moved to component logic
   console.log('SystemSettingsTab rendering with settings:', settings);
   console.log('SystemSettingsTab - BackupManagementSection should render after main card');
 
@@ -33,11 +33,12 @@ export const SystemSettingsTab: React.FC<SystemSettingsTabProps> = ({
     <div className="space-y-6" style={{ background: '#000000', minHeight: '100vh' }}>
       {/* Configuración del Sistema */}
       <Card 
-        className="glass-card"
+        className="glass-card settings-card"
         style={{
-          backgroundColor: '#000000',
-          border: '1px solid #9cfa24',
-          borderRadius: '8px'
+          backgroundColor: '#000000 !important',
+          border: '1px solid #9cfa24 !important',
+          borderRadius: '8px',
+          backdropFilter: 'blur(8px)'
         }}
       >
         <CardHeader style={{ backgroundColor: '#000000', borderBottom: '1px solid rgba(156, 250, 36, 0.3)' }}>
@@ -139,16 +140,11 @@ export const SystemSettingsTab: React.FC<SystemSettingsTabProps> = ({
           <Button 
             onClick={onSave}
             disabled={saving}
+            className="bg-tms-green text-black font-medium hover:bg-tms-green/80"
             style={{
               backgroundColor: '#9cfa24',
               color: '#000000',
               fontWeight: '500'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = 'rgba(156, 250, 36, 0.8)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = '#9cfa24';
             }}
           >
             <Save className="w-4 h-4 mr-2" />
@@ -157,11 +153,19 @@ export const SystemSettingsTab: React.FC<SystemSettingsTabProps> = ({
         </CardContent>
       </Card>
 
-      {/* SECCIÓN DE GESTIÓN DE RESPALDOS - FORZANDO RENDERIZADO */}
-      <div style={{ backgroundColor: '#000000', padding: '8px' }}>
-        {console.log('About to render BackupManagementSection')}
+      {/* SECCIÓN DE GESTIÓN DE RESPALDOS */}
+      <div 
+        className="backup-section-container"
+        style={{ 
+          backgroundColor: '#000000', 
+          padding: '8px',
+          display: 'block !important',
+          visibility: 'visible !important',
+          opacity: '1 !important'
+        }}
+        data-component="backup-management"
+      >
         <BackupManagementSection />
-        {console.log('BackupManagementSection rendered')}
       </div>
     </div>
   );

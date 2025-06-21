@@ -22,8 +22,6 @@ import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 
 export const BackupManagementSection = () => {
-  console.log('BackupManagementSection component is rendering');
-  
   const { 
     progress, 
     backupLogs, 
@@ -32,6 +30,8 @@ export const BackupManagementSection = () => {
     refetchLogs
   } = useBackupManager();
 
+  // Debug logging moved to component logic
+  console.log('BackupManagementSection component is rendering');
   console.log('BackupManagementSection - Hook data loaded:', { progress, backupLogs, hookError });
 
   const formatFileSize = (bytes?: number) => {
@@ -71,13 +71,15 @@ export const BackupManagementSection = () => {
 
   return (
     <Card 
+      className="settings-card"
       style={{
-        backgroundColor: '#000000',
-        border: '1px solid #9cfa24',
+        backgroundColor: '#000000 !important',
+        border: '1px solid #9cfa24 !important',
         borderRadius: '8px',
         backdropFilter: 'blur(8px)',
         marginTop: '24px'
       }}
+      data-component="backup-management"
     >
       <CardHeader 
         style={{
@@ -181,22 +183,12 @@ export const BackupManagementSection = () => {
               <Button
                 onClick={() => generateAndDownloadBackup('full')}
                 disabled={progress.isGenerating}
-                className="w-full"
+                className="w-full bg-tms-green text-black font-medium hover:bg-tms-green/80"
                 style={{
                   backgroundColor: '#9cfa24',
                   color: '#000000',
                   fontWeight: '500',
                   border: 'none'
-                }}
-                onMouseEnter={(e) => {
-                  if (!progress.isGenerating) {
-                    e.currentTarget.style.backgroundColor = 'rgba(156, 250, 36, 0.8)';
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (!progress.isGenerating) {
-                    e.currentTarget.style.backgroundColor = '#9cfa24';
-                  }
                 }}
               >
                 {progress.isGenerating && progress.stage.includes('Completo') ? (
@@ -221,16 +213,6 @@ export const BackupManagementSection = () => {
                   border: '1px solid rgba(156, 250, 36, 0.3)',
                   color: '#ffffff',
                   backgroundColor: 'transparent'
-                }}
-                onMouseEnter={(e) => {
-                  if (!progress.isGenerating) {
-                    e.currentTarget.style.backgroundColor = 'rgba(156, 250, 36, 0.1)';
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (!progress.isGenerating) {
-                    e.currentTarget.style.backgroundColor = 'transparent';
-                  }
                 }}
               >
                 {progress.isGenerating && progress.stage.includes('Rápido') ? (
@@ -294,12 +276,6 @@ export const BackupManagementSection = () => {
                   style={{
                     backgroundColor: 'rgba(255, 255, 255, 0.05)',
                     border: '1px solid rgba(156, 250, 36, 0.3)'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.08)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.05)';
                   }}
                 >
                   <div className="flex items-center space-x-3">
