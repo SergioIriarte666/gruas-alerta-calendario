@@ -32,7 +32,7 @@ const TabsTrigger = React.forwardRef<
   <TabsPrimitive.Trigger
     ref={ref}
     className={cn(
-      "inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
+      "inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-[#9cfa24] data-[state=active]:text-black data-[state=active]:font-semibold hover:data-[state=inactive]:bg-[rgba(156,250,36,0.1)]",
       className
     )}
     style={{
@@ -70,22 +70,5 @@ const TabsContent = React.forwardRef<
   />
 ))
 TabsContent.displayName = TabsPrimitive.Content.displayName
-
-// Add styles for active tab state
-React.useEffect(() => {
-  const style = document.createElement('style');
-  style.textContent = `
-    [data-state="active"] {
-      background-color: #9cfa24 !important;
-      color: #000000 !important;
-      font-weight: 600 !important;
-    }
-  `;
-  document.head.appendChild(style);
-  
-  return () => {
-    document.head.removeChild(style);
-  };
-}, []);
 
 export { Tabs, TabsList, TabsTrigger, TabsContent }
