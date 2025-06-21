@@ -28,16 +28,18 @@ export const useServiceFetcher = () => {
       console.log('Usuario autenticado:', user.id);
 
       const result = await enhancedSupabase.query(
-        () => supabase
-          .from('services')
-          .select(`
-            *,
-            clients!inner(id, name, rut, phone, email, address, is_active),
-            cranes!inner(id, license_plate, brand, model, type, is_active),
-            operators!inner(id, name, rut, phone, license_number, is_active),
-            service_types!inner(id, name, description, is_active)
-          `)
-          .order('created_at', { ascending: false }),
+        async () => {
+          return await supabase
+            .from('services')
+            .select(`
+              *,
+              clients!inner(id, name, rut, phone, email, address, is_active),
+              cranes!inner(id, license_plate, brand, model, type, is_active),
+              operators!inner(id, name, rut, phone, license_number, is_active),
+              service_types!inner(id, name, description, is_active)
+            `)
+            .order('created_at', { ascending: false });
+        },
         'fetch services with relations'
       );
 
@@ -47,10 +49,12 @@ export const useServiceFetcher = () => {
         // Intentar con una consulta más simple si falla la compleja
         console.log('Intentando consulta simplificada...');
         const simpleResult = await enhancedSupabase.query(
-          () => supabase
-            .from('services')
-            .select('*')
-            .order('created_at', { ascending: false }),
+          async () => {
+            return await supabase
+              .from('services')
+              .select('*')
+              .order('created_at', { ascending: false });
+          },
           'fetch services simple'
         );
           
@@ -63,7 +67,7 @@ export const useServiceFetcher = () => {
         }
 
         console.log('Consulta simplificada exitosa, obteniendo datos relacionados...');
-        if (simpleResult.data && simpleResult.data.length > 0) {
+        if (simpleResult.data && Array.isArray(simpleResult.data) && simpleResult.data.length > 0) {
           const enrichedData = await enrichServicesData(simpleResult.data);
           return transformRawServiceData(enrichedData);
         }
@@ -73,7 +77,7 @@ export const useServiceFetcher = () => {
 
       console.log('Raw services data:', result.data);
 
-      if (!result.data || result.data.length === 0) {
+      if (!result.data || !Array.isArray(result.data) || result.data.length === 0) {
         console.log('No services found');
         return [];
       }
@@ -113,18 +117,18 @@ export const useServiceFetcher = () => {
       const serviceTypeIds = [...new Set(services.map(s => s.service_type_id))];
 
       const [clients, cranes, operators, serviceTypes] = await Promise.all([
-        enhancedSupabase.query(() => supabase.from('clients').select('*').in('id', clientIds), 'fetch clients for services'),
-        enhancedSupabase.query(() => supabase.from('cranes').select('*').in('id', craneIds), 'fetch cranes for services'),
-        enhancedSupabase.query(() => supabase.from('operators').select('*').in('id', operatorIds), 'fetch operators for services'),
-        enhancedSupabase.query(() => supabase.from('service_types').select('*').in('id', serviceTypeIds), 'fetch service types for services')
+        enhancedSupabase.query(async () => await supabase.from('clients').select('*').in('id', clientIds), 'fetch clients for services'),
+        enhancedSupabase.query(async () => await supabase.from('cranes').select('*').in('id', craneIds), 'fetch cranes for services'),
+        enhancedSupabase.query(async () => await supabase.from('operators').select('*').in('id', operatorIds), 'fetch operators for services'),
+        enhancedSupabase.query(async () => await supabase.from('service_types').select('*').in('id', serviceTypeIds), 'fetch service types for services')
       ]);
 
       return services.map(service => ({
         ...service,
-        clients: clients.data?.find(c => c.id === service.client_id) || null,
-        cranes: cranes.data?.find(c => c.id === service.crane_id) || null,
-        operators: operators.data?.find(o => o.id === service.operator_id) || null,
-        service_types: serviceTypes.data?.find(st => st.id === service.service_type_id) || null
+        clients: Array.isArray(clients.data) ? clients.data.find((c: any) => c.id === service.client_id) || null : null,
+        cranes: Array.isArray(cranes.data) ? cranes.data.find((c: any) => c.id === service.crane_id) || null : null,
+        operators: Array.isArray(operators.data) ? operators.data.find((o: any) => o.id === service.operator_id) || null : null,
+        service_types: Array.isArray(serviceTypes.data) ? serviceTypes.data.find((st: any) => st.id === service.service_type_id) || null : null
       }));
     } catch (error) {
       console.error('Error enriching services data:', error);

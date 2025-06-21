@@ -7,16 +7,18 @@ export class DataLoaders {
 
   async loadClients(): Promise<Client[]> {
     const result = await enhancedSupabase.query(
-      () => this.supabase
-        .from('clients')
-        .select('*')
-        .eq('is_active', true),
+      async () => {
+        return await this.supabase
+          .from('clients')
+          .select('*')
+          .eq('is_active', true);
+      },
       'load clients for data mapping'
     );
     
     if (result.error) throw result.error;
     
-    return (result.data || []).map(client => ({
+    return (Array.isArray(result.data) ? result.data : []).map((client: any) => ({
       id: client.id,
       name: client.name,
       rut: client.rut,
@@ -31,16 +33,18 @@ export class DataLoaders {
 
   async loadCranes(): Promise<Crane[]> {
     const result = await enhancedSupabase.query(
-      () => this.supabase
-        .from('cranes')
-        .select('*')
-        .eq('is_active', true),
+      async () => {
+        return await this.supabase
+          .from('cranes')
+          .select('*')
+          .eq('is_active', true);
+      },
       'load cranes for data mapping'
     );
     
     if (result.error) throw result.error;
     
-    return (result.data || []).map(crane => ({
+    return (Array.isArray(result.data) ? result.data : []).map((crane: any) => ({
       id: crane.id,
       licensePlate: crane.license_plate,
       brand: crane.brand,
@@ -57,16 +61,18 @@ export class DataLoaders {
 
   async loadOperators(): Promise<Operator[]> {
     const result = await enhancedSupabase.query(
-      () => this.supabase
-        .from('operators')
-        .select('*')
-        .eq('is_active', true),
+      async () => {
+        return await this.supabase
+          .from('operators')
+          .select('*')
+          .eq('is_active', true);
+      },
       'load operators for data mapping'
     );
     
     if (result.error) throw result.error;
     
-    return (result.data || []).map(operator => ({
+    return (Array.isArray(result.data) ? result.data : []).map((operator: any) => ({
       id: operator.id,
       name: operator.name,
       rut: operator.rut,
@@ -81,16 +87,18 @@ export class DataLoaders {
 
   async loadServiceTypes(): Promise<ServiceType[]> {
     const result = await enhancedSupabase.query(
-      () => this.supabase
-        .from('service_types')
-        .select('*')
-        .eq('is_active', true),
+      async () => {
+        return await this.supabase
+          .from('service_types')
+          .select('*')
+          .eq('is_active', true);
+      },
       'load service types for data mapping'
     );
     
     if (result.error) throw result.error;
     
-    return (result.data || []).map(serviceType => ({
+    return (Array.isArray(result.data) ? result.data : []).map((serviceType: any) => ({
       id: serviceType.id,
       name: serviceType.name,
       description: serviceType.description || '',

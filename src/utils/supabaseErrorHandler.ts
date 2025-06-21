@@ -16,21 +16,24 @@ export class SupabaseErrorHandler {
   private setupRealtimeErrorHandling(): void {
     // Handle WebSocket connection errors gracefully
     if (this.client.realtime) {
-      this.client.realtime.onError = (error: any) => {
+      // Use the correct realtime event handlers
+      this.client.realtime.on('error', (error: any) => {
         // Only log critical WebSocket errors
         if (!this.isConnectionError(error)) {
           console.warn('Realtime connection issue:', error.message || error);
         }
-      };
+      });
 
-      this.client.realtime.onClose = () => {
+      this.client.realtime.on('close', () => {
         // Attempt graceful reconnection
         setTimeout(() => {
-          if (this.client.realtime.socket?.readyState === WebSocket.CLOSED) {
+          try {
             this.client.realtime.connect();
+          } catch (error) {
+            console.warn('Failed to reconnect realtime:', error);
           }
         }, 2000);
-      };
+      });
     }
   }
 

@@ -1,3 +1,4 @@
+
 import * as React from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Client } from '@/types';
@@ -6,16 +7,18 @@ import { toast } from 'sonner';
 
 const fetchClients = async (): Promise<Client[]> => {
   const result = await enhancedSupabase.query(
-    () => enhancedSupabase.getClient()
-      .from('clients')
-      .select('*')
-      .order('name', { ascending: true }),
+    async () => {
+      return await enhancedSupabase.getClient()
+        .from('clients')
+        .select('*')
+        .order('name', { ascending: true });
+    },
     'fetch clients'
   );
 
   if (result.error) throw result.error;
 
-  const formattedClients: Client[] = result.data.map(client => ({
+  const formattedClients: Client[] = (result.data || []).map((client: any) => ({
     id: client.id,
     name: client.name,
     rut: client.rut,
@@ -44,18 +47,20 @@ export const useClients = () => {
   const createClientMutation = useMutation({
     mutationFn: async (clientData: Omit<Client, 'id' | 'createdAt' | 'updatedAt'>) => {
       const result = await enhancedSupabase.query(
-        () => supabase
-          .from('clients')
-          .insert({
-            name: clientData.name,
-            rut: clientData.rut,
-            phone: clientData.phone,
-            email: clientData.email,
-            address: clientData.address,
-            is_active: clientData.isActive
-          })
-          .select()
-          .single(),
+        async () => {
+          return await supabase
+            .from('clients')
+            .insert({
+              name: clientData.name,
+              rut: clientData.rut,
+              phone: clientData.phone,
+              email: clientData.email,
+              address: clientData.address,
+              is_active: clientData.isActive
+            })
+            .select()
+            .single();
+        },
         'create client'
       );
 
@@ -100,10 +105,12 @@ export const useClients = () => {
       if (clientData.isActive !== undefined) updateData.is_active = clientData.isActive;
 
       const result = await enhancedSupabase.query(
-        () => supabase
-          .from('clients')
-          .update(updateData)
-          .eq('id', id),
+        async () => {
+          return await supabase
+            .from('clients')
+            .update(updateData)
+            .eq('id', id);
+        },
         'update client'
       );
 
@@ -127,10 +134,12 @@ export const useClients = () => {
   const deleteClientMutation = useMutation({
     mutationFn: async (id: string) => {
       const result = await enhancedSupabase.query(
-        () => supabase
-          .from('clients')
-          .delete()
-          .eq('id', id),
+        async () => {
+          return await supabase
+            .from('clients')
+            .delete()
+            .eq('id', id);
+        },
         'delete client'
       );
 
@@ -156,10 +165,12 @@ export const useClients = () => {
       if (!client) throw new Error('Client not found');
       
       const result = await enhancedSupabase.query(
-        () => supabase
-          .from('clients')
-          .update({ is_active: !client.isActive })
-          .eq('id', id),
+        async () => {
+          return await supabase
+            .from('clients')
+            .update({ is_active: !client.isActive })
+            .eq('id', id);
+        },
         'toggle client status'
       );
 

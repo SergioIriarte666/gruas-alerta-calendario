@@ -23,13 +23,15 @@ export const useUserManagement = () => {
     try {
       setLoading(true);
       const result = await enhancedSupabase.query(
-        () => (supabase as any).rpc('get_all_users'),
+        async () => {
+          return await (supabase as any).rpc('get_all_users');
+        },
         'fetch users'
       );
       
       if (result.error) throw result.error;
       
-      setUsers(result.data || []);
+      setUsers(Array.isArray(result.data) ? result.data : []);
     } catch (error) {
       console.error('Error fetching users:', error);
       toast.error('Error al cargar usuarios');
@@ -42,10 +44,12 @@ export const useUserManagement = () => {
     try {
       setUpdating(userId);
       const result = await enhancedSupabase.query(
-        () => (supabase as any).rpc('update_user_role', {
-          user_id: userId,
-          new_role: newRole
-        }),
+        async () => {
+          return await (supabase as any).rpc('update_user_role', {
+            user_id: userId,
+            new_role: newRole
+          });
+        },
         'update user role'
       );
 
@@ -65,10 +69,12 @@ export const useUserManagement = () => {
     try {
       setUpdating(userId);
       const result = await enhancedSupabase.query(
-        () => (supabase as any).rpc('toggle_user_status', {
-          user_id: userId,
-          new_status: newStatus
-        }),
+        async () => {
+          return await (supabase as any).rpc('toggle_user_status', {
+            user_id: userId,
+            new_status: newStatus
+          });
+        },
         'toggle user status'
       );
 
