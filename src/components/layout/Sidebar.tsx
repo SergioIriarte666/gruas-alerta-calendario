@@ -104,7 +104,7 @@ export const Sidebar = ({
   };
   const SidebarContent = () => <>
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-gray-700">
+      <div className="flex items-center justify-between p-4 border-b border-gray-700 bg-tms-dark">
         {!isCollapsed && <div className="flex items-center space-x-3">
             <Building2 className="w-8 h-8 text-tms-green" />
             <h1 className="text-xl font-bold text-white">TMS Grúas</h1>
