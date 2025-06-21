@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -115,7 +116,7 @@ const Services = () => {
   };
 
   const handleEdit = (service: Service) => {
-    // Administrators can edit invoiced services, but show a warning
+    // Prevent editing of invoiced services unless admin
     if (service.status === 'invoiced' && user?.role !== 'admin') {
       toast({
         type: "error",
@@ -227,7 +228,7 @@ const Services = () => {
             <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>
-                  {editingService ? 'Editar Servicio' : 'Nuevo Servicio'}
+                  {editingService ? `Editar Servicio ${editingService.status === 'invoiced' ? '(⚠️ FACTURADO)' : ''}` : 'Nuevo Servicio'}
                 </DialogTitle>
               </DialogHeader>
               <ServiceForm

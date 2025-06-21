@@ -16,6 +16,20 @@ export const useServices = () => {
 
   useEffect(() => {
     loadServices();
+
+    // Listen for invoice events to refresh services
+    const handleInvoiceEvent = () => {
+      console.log('Invoice event detected, refreshing services...');
+      loadServices();
+    };
+
+    window.addEventListener('invoice-created', handleInvoiceEvent);
+    window.addEventListener('invoice-deleted', handleInvoiceEvent);
+
+    return () => {
+      window.removeEventListener('invoice-created', handleInvoiceEvent);
+      window.removeEventListener('invoice-deleted', handleInvoiceEvent);
+    };
   }, []);
 
   const createService = async (serviceData: Omit<Service, 'id' | 'createdAt' | 'updatedAt'> & { folio: string }) => {

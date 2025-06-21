@@ -173,7 +173,7 @@ export const ServicesTable = ({
                             <Eye className="w-4 h-4" />
                           </Button>
                           
-                          {/* Administrators can edit invoiced services */}
+                          {/* Administrators can edit invoiced services with warning */}
                           {onEdit && (
                             <Button 
                               variant="ghost" 
