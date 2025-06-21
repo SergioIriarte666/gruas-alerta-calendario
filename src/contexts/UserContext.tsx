@@ -50,6 +50,16 @@ export function UserProvider({ children }: UserProviderProps) {
 
     try {
       console.log('UserContext: Starting profile query...');
+      
+      // Primero verificar que tenemos una sesión válida
+      const { data: { session: currentSession } } = await supabase.auth.getSession();
+      if (!currentSession) {
+        console.error('UserContext: No valid session found');
+        setError('Sesión no válida. Por favor, inicia sesión nuevamente.');
+        setUser(null);
+        return;
+      }
+
       const { data, error: fetchError } = await supabase
         .from('profiles')
         .select('id, full_name, email, role')
@@ -61,9 +71,14 @@ export function UserProvider({ children }: UserProviderProps) {
       if (fetchError) {
         console.error('UserContext: Error fetching profile:', fetchError.message, 'Code:', fetchError.code);
         if (fetchError.code === 'PGRST116') {
-          setError('Perfil no encontrado. Verifica que exista en la base de datos.');
+          setError('Perfil no encontrado. El perfil puede no existir en la base de datos.');
         } else if (fetchError.code === 'PGRST301') {
-          setError('Sin permisos para acceder al perfil. Verifica las políticas RLS.');
+          setError('Sin permisos para acceder al perfil. Reintentando...');
+          // Intentar nuevamente después de un breve delay
+          setTimeout(() => {
+            fetchProfile(userId);
+          }, 1000);
+          return;
         } else {
           setError(`Error al cargar perfil: ${fetchError.message}`);
         }
@@ -111,7 +126,10 @@ export function UserProvider({ children }: UserProviderProps) {
 
     if (authUser && session) {
       console.log('UserContext: Authenticated user found, fetching profile...', authUser.id);
-      fetchProfile(authUser.id);
+      // Pequeño delay para asegurar que las políticas RLS estén aplicadas
+      setTimeout(() => {
+        fetchProfile(authUser.id);
+      }, 100);
     } else {
       console.log('UserContext: No authenticated user, clearing profile');
       setUser(null);
