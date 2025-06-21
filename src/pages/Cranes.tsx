@@ -63,6 +63,11 @@ const Cranes = () => {
     }
   };
 
+  const handleViewDetails = (crane: Crane) => {
+    // For now, just edit the crane - can be extended later
+    handleEdit(crane);
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -83,6 +88,7 @@ const Cranes = () => {
         onEdit={handleEdit}
         onDelete={handleDelete}
         onToggleStatus={handleToggleStatus}
+        onViewDetails={handleViewDetails}
         onNewCrane={handleCreate}
         searchTerm={searchTerm}
       />

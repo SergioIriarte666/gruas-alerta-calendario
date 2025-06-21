@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -13,6 +14,7 @@ interface CranesTableProps {
   totalCranes: number;
   onEdit: (crane: Crane) => void;
   onDelete: (crane: Crane) => void;
+  onToggleStatus: (crane: Crane) => void;
   onViewDetails: (crane: Crane) => void;
   onNewCrane: () => void;
   searchTerm: string;
@@ -23,6 +25,7 @@ export const CranesTable = ({
   totalCranes,
   onEdit,
   onDelete,
+  onToggleStatus,
   onViewDetails,
   onNewCrane,
   searchTerm,
@@ -95,10 +98,10 @@ export const CranesTable = ({
               <tr className="border-b border-gray-700">
                 <th className="text-left py-3 px-4 font-medium text-white">Patente</th>
                 <th className="text-left py-3 px-4 font-medium text-white">Marca/Modelo</th>
-                <th className="text-left py-3 px-4 font-medium text-white">Año</th>
-                <th className="text-left py-3 px-4 font-medium text-white">Capacidad</th>
-                <th className="text-left py-3 px-4 font-medium text-white">Último Mantto.</th>
-                <th className="text-left py-3 px-4 font-medium text-white">Venc. Seguro</th>
+                <th className="text-left py-3 px-4 font-medium text-white">Tipo</th>
+                <th className="text-left py-3 px-4 font-medium text-white">Rev. Técnica</th>
+                <th className="text-left py-3 px-4 font-medium text-white">Seguro</th>
+                <th className="text-left py-3 px-4 font-medium text-white">Permiso Circ.</th>
                 <th className="text-left py-3 px-4 font-medium text-white">Estado</th>
                 <th className="text-center py-3 px-4 font-medium text-white">Acciones</th>
               </tr>
@@ -108,13 +111,15 @@ export const CranesTable = ({
                 <tr key={crane.id} className="border-b border-gray-800 hover:bg-white/5">
                   <td className="py-3 px-4 text-white font-medium">{crane.licensePlate}</td>
                   <td className="py-3 px-4 text-white">{crane.brand} {crane.model}</td>
-                  <td className="py-3 px-4 text-white">{crane.year}</td>
-                  <td className="py-3 px-4 text-white">{crane.capacity}kg</td>
+                  <td className="py-3 px-4 text-white">{crane.type}</td>
                   <td className="py-3 px-4 text-white">
-                    {crane.lastMaintenance ? format(new Date(crane.lastMaintenance), 'dd/MM/yyyy', { locale: es }) : '-'}
+                    {format(new Date(crane.technicalReviewExpiry), 'dd/MM/yyyy', { locale: es })}
                   </td>
                   <td className="py-3 px-4 text-white">
-                    {crane.insuranceExpiry ? format(new Date(crane.insuranceExpiry), 'dd/MM/yyyy', { locale: es }) : '-'}
+                    {format(new Date(crane.insuranceExpiry), 'dd/MM/yyyy', { locale: es })}
+                  </td>
+                  <td className="py-3 px-4 text-white">
+                    {format(new Date(crane.circulationPermitExpiry), 'dd/MM/yyyy', { locale: es })}
                   </td>
                   <td className="py-3 px-4">
                     <Badge 

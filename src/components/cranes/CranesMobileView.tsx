@@ -75,7 +75,7 @@ export const CranesMobileView = ({
               <div className="flex-1">
                 <h4 className="font-semibold text-white text-lg">{crane.licensePlate}</h4>
                 <p className="text-tms-green text-sm font-medium">{crane.brand} {crane.model}</p>
-                <p className="text-white/70 text-sm">Año {crane.year}</p>
+                <p className="text-white/70 text-sm">Tipo: {crane.type}</p>
               </div>
               <Badge 
                 variant={crane.isActive ? "default" : "secondary"}
@@ -90,23 +90,19 @@ export const CranesMobileView = ({
 
             <div className="space-y-2 mb-4">
               <div className="flex items-center text-white text-sm">
-                <Wrench className="w-4 h-4 mr-2 text-gray-400 flex-shrink-0" />
-                <span>Capacidad: {crane.capacity}kg</span>
+                <Calendar className="w-4 h-4 mr-2 text-gray-400 flex-shrink-0" />
+                <span>Rev. Técnica: {format(new Date(crane.technicalReviewExpiry), 'dd/MM/yyyy', { locale: es })}</span>
               </div>
-              
-              {crane.lastMaintenance && (
-                <div className="flex items-center text-white text-sm">
-                  <Calendar className="w-4 h-4 mr-2 text-gray-400 flex-shrink-0" />
-                  <span>Último mantenimiento: {format(new Date(crane.lastMaintenance), 'dd/MM/yyyy', { locale: es })}</span>
-                </div>
-              )}
 
-              {crane.insuranceExpiry && (
-                <div className="flex items-center text-white text-sm">
-                  <Shield className="w-4 h-4 mr-2 text-gray-400 flex-shrink-0" />
-                  <span>Seguro vence: {format(new Date(crane.insuranceExpiry), 'dd/MM/yyyy', { locale: es })}</span>
-                </div>
-              )}
+              <div className="flex items-center text-white text-sm">
+                <Shield className="w-4 h-4 mr-2 text-gray-400 flex-shrink-0" />
+                <span>Seguro: {format(new Date(crane.insuranceExpiry), 'dd/MM/yyyy', { locale: es })}</span>
+              </div>
+
+              <div className="flex items-center text-white text-sm">
+                <Wrench className="w-4 h-4 mr-2 text-gray-400 flex-shrink-0" />
+                <span>Permiso Circulación: {format(new Date(crane.circulationPermitExpiry), 'dd/MM/yyyy', { locale: es })}</span>
+              </div>
             </div>
 
             <div className="flex flex-wrap gap-2">
