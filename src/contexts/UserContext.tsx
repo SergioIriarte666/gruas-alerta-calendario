@@ -2,7 +2,6 @@
 import * as React from 'react';
 import { useAuth } from './AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { cleanupAuthState } from '@/utils/authCleanup';
 
 interface User {
   id: string;
@@ -55,43 +54,44 @@ export function UserProvider({ children }: UserProviderProps) {
         .single();
 
       if (fetchError) {
+        console.error('UserContext: Error fetching profile:', fetchError);
         if (fetchError.code === 'PGRST116') {
-          console.log('UserContext: Profile not found');
           setError('Perfil no encontrado. Es posible que necesites completar la configuración.');
         } else {
-          throw fetchError;
+          setError('Error al cargar tu perfil.');
         }
+        setUser(null);
       } else if (data) {
-        console.log('UserContext: Profile loaded successfully');
-        setUser({
+        const userData = {
           id: data.id,
           name: data.full_name || 'Usuario',
           email: data.email,
           role: data.role || 'viewer',
-        });
+        };
+        console.log('UserContext: Profile loaded successfully:', userData);
+        setUser(userData);
         setError(null);
       }
     } catch (e: any) {
-      console.error("UserContext: Error fetching profile:", e);
-      setError("Error al cargar tu perfil.");
+      console.error("UserContext: Unexpected error:", e);
+      setError("Error inesperado al cargar el perfil.");
+      setUser(null);
     } finally {
       setProfileLoading(false);
     }
   }, []);
 
   React.useEffect(() => {
-    console.log('UserContext: Auth state changed - authLoading:', authLoading, 'authUser:', !!authUser);
+    console.log('UserContext: Auth state effect - authLoading:', authLoading, 'authUser:', !!authUser);
     
     if (authLoading) {
-      console.log('UserContext: Auth still loading, waiting...');
       return;
     }
 
     if (authUser && session) {
-      console.log('UserContext: User authenticated, fetching profile...');
       fetchProfile(authUser.id);
     } else {
-      console.log('UserContext: No authenticated user, clearing state');
+      console.log('UserContext: No authenticated user, clearing profile');
       setUser(null);
       setError(null);
       setProfileLoading(false);
@@ -101,7 +101,7 @@ export function UserProvider({ children }: UserProviderProps) {
   const login = () => { /* Handled by Auth page */ };
 
   const logout = async () => {
-    cleanupAuthState();
+    console.log('UserContext: Logging out...');
     await signOut();
     setUser(null);
     setError(null);
@@ -111,13 +111,22 @@ export function UserProvider({ children }: UserProviderProps) {
     if (user) {
       const updatedUser = { ...user, ...userData };
       setUser(updatedUser);
-      const { error } = await supabase
-        .from('profiles')
-        .update({ full_name: updatedUser.name, email: updatedUser.email, role: updatedUser.role as any })
-        .eq('id', user.id);
       
-      if(error) {
-        console.error("Error updating user profile", error);
+      try {
+        const { error } = await supabase
+          .from('profiles')
+          .update({ 
+            full_name: updatedUser.name, 
+            email: updatedUser.email, 
+            role: updatedUser.role 
+          })
+          .eq('id', user.id);
+        
+        if (error) {
+          console.error("Error updating user profile:", error);
+        }
+      } catch (e) {
+        console.error("Unexpected error updating profile:", e);
       }
     }
   };
@@ -132,7 +141,12 @@ export function UserProvider({ children }: UserProviderProps) {
   const isAuthenticated = !!authUser && !!session;
   const isLoading = authLoading || profileLoading;
 
-  console.log('UserContext: Current state - isLoading:', isLoading, 'isAuthenticated:', isAuthenticated, 'user:', !!user);
+  console.log('UserContext render:', { 
+    isLoading, 
+    isAuthenticated, 
+    hasUser: !!user, 
+    userRole: user?.role 
+  });
 
   return (
     <UserContext.Provider value={{

@@ -6,79 +6,106 @@ import { Navigate, useLocation } from 'react-router-dom';
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user: authUser, loading: authLoading } = useAuth();
-  const { user: profileUser, loading: profileLoading } = useUser();
+  const { user: profileUser, loading: profileLoading, error } = useUser();
   const location = useLocation();
 
-  console.log('ProtectedRoute: authLoading:', authLoading, 'profileLoading:', profileLoading, 'authUser:', !!authUser, 'profileUser:', !!profileUser);
+  console.log('ProtectedRoute:', {
+    authLoading,
+    profileLoading,
+    hasAuthUser: !!authUser,
+    hasProfileUser: !!profileUser,
+    userRole: profileUser?.role,
+    currentPath: location.pathname,
+    error
+  });
 
-  // Mostrar loading mientras se inicializa la autenticación
+  // Show loading while auth is initializing
   if (authLoading) {
-    console.log('ProtectedRoute: Showing auth loading...');
     return (
       <div className="flex items-center justify-center h-screen bg-gray-900 text-white">
         <div className="text-center">
-          <div className="mb-4">Cargando autenticación...</div>
+          <div className="mb-4">Inicializando autenticación...</div>
           <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin mx-auto"></div>
         </div>
       </div>
     );
   }
 
-  // Si no hay usuario autenticado, redirigir a auth
+  // If no authenticated user, redirect to auth
   if (!authUser) {
     console.log('ProtectedRoute: No authenticated user, redirecting to /auth');
     return <Navigate to="/auth" state={{ from: location }} replace />;
   }
   
-  // Si hay usuario autenticado pero aún se está cargando el perfil, mostrar loading
+  // Show loading while profile is loading
   if (profileLoading) {
-    console.log('ProtectedRoute: Profile loading...');
     return (
       <div className="flex items-center justify-center h-screen bg-gray-900 text-white">
         <div className="text-center">
-          <div className="mb-4">Cargando perfil...</div>
+          <div className="mb-4">Cargando perfil de usuario...</div>
           <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin mx-auto"></div>
         </div>
       </div>
     );
   }
   
-  // Si hay usuario autenticado pero no hay perfil después de cargar, redirigir a auth
+  // If there's an error loading profile, show error message
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-gray-900 text-white">
+        <div className="text-center max-w-md">
+          <h2 className="text-xl font-semibold mb-4">Error al cargar perfil</h2>
+          <p className="text-gray-400 mb-4">{error}</p>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="px-4 py-2 bg-tms-green text-white rounded hover:bg-tms-green-dark"
+          >
+            Reintentar
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // If authenticated but no profile found, redirect to auth
   if (authUser && !profileUser) {
     console.log('ProtectedRoute: User authenticated but no profile found, redirecting to /auth');
     return <Navigate to="/auth" state={{ from: location }} replace />;
   }
 
-  // Usuario completamente cargado, verificar permisos de rutas
+  // Handle role-based routing
   if (profileUser) {
-    console.log('ProtectedRoute: User fully loaded, checking permissions...');
     const isOperatorPortalRoute = location.pathname === '/operator' || location.pathname.startsWith('/operator/');
     const userRole = profileUser.role;
 
-    // Redirección automática según el rol del usuario
+    // Operator auto-redirect
     if (userRole === 'operator' && !isOperatorPortalRoute) {
       console.log('ProtectedRoute: Operator user, redirecting to /operator');
       return <Navigate to="/operator" replace />;
     }
 
+    // Non-operator trying to access operator portal
     if (userRole !== 'operator' && isOperatorPortalRoute) {
-      console.log('ProtectedRoute: Non-operator trying to access operator portal, redirecting to /');
-      return <Navigate to="/" replace />;
+      console.log('ProtectedRoute: Non-operator trying to access operator portal, redirecting to /dashboard');
+      return <Navigate to="/dashboard" replace />;
     }
 
-    // Rutas específicas para administradores
-    const adminOnlyRoutes = ['/settings'];
+    // Admin-only routes
+    const adminOnlyRoutes = ['/settings', '/service-types'];
     const isAdminOnlyRoute = adminOnlyRoutes.some(route => location.pathname.startsWith(route));
 
     if (isAdminOnlyRoute && userRole !== 'admin') {
-      console.log('ProtectedRoute: Non-admin trying to access admin route, redirecting to /');
-      return <Navigate to="/" replace />;
+      console.log('ProtectedRoute: Non-admin trying to access admin route, redirecting to /dashboard');
+      return <Navigate to="/dashboard" replace />;
     }
 
-    // Redireccionamiento automático desde la raíz según el rol
-    if (location.pathname === '/' && userRole === 'operator') {
-      console.log('ProtectedRoute: Operator at root, redirecting to /operator');
-      return <Navigate to="/operator" replace />;
+    // Root path redirections
+    if (location.pathname === '/') {
+      if (userRole === 'operator') {
+        return <Navigate to="/operator" replace />;
+      } else {
+        return <Navigate to="/dashboard" replace />;
+      }
     }
   }
 

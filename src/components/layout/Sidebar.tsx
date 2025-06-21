@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -39,10 +40,7 @@ export const Sidebar = ({
   const { user, logout } = useUser();
   const location = useLocation();
 
-  const isOperator = user?.role === 'operator';
-  const isAdmin = user?.role === 'admin';
-
-  console.log('Sidebar: User role:', user?.role, 'isAdmin:', isAdmin);
+  console.log('Sidebar render - User:', user?.name, 'Role:', user?.role);
 
   const navigationItems = [
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, adminOnly: false },
@@ -56,15 +54,17 @@ export const Sidebar = ({
     { name: 'Cierres', href: '/closures', icon: FileText, adminOnly: false },
     { name: 'Facturas', href: '/invoices', icon: Receipt, adminOnly: false },
     { name: 'Reportes', href: '/reports', icon: BarChart3, adminOnly: false },
-    { name: 'Configuración', href: '/settings', icon: Settings, adminOnly: false },
+    { name: 'Configuración', href: '/settings', icon: Settings, adminOnly: true },
   ];
 
   const filteredNavigation = navigationItems.filter(item => {
-    console.log(`Filtering item: ${item.name}, adminOnly: ${item.adminOnly}, isAdmin: ${isAdmin}, shouldShow: ${!item.adminOnly || isAdmin}`);
-    return !item.adminOnly || isAdmin;
+    const isAdmin = user?.role === 'admin';
+    const shouldShow = !item.adminOnly || isAdmin;
+    console.log(`Menu item "${item.name}": adminOnly=${item.adminOnly}, isAdmin=${isAdmin}, showing=${shouldShow}`);
+    return shouldShow;
   });
 
-  console.log('Filtered navigation items:', filteredNavigation.map(item => item.name));
+  console.log('Visible menu items:', filteredNavigation.map(item => item.name));
 
   const isActive = (href: string) => {
     if (href === '/') return location.pathname === '/';

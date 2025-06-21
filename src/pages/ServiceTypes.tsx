@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useServiceTypesManagement } from '@/hooks/useServiceTypesManagement';
 import { ServiceTypeConfig } from '@/types/serviceTypes';
@@ -18,12 +19,12 @@ const ServiceTypes = () => {
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
-  console.log('ServiceTypes page: user role:', user?.role);
+  console.log('ServiceTypes: Current user role:', user?.role);
+
   const isAdmin = user?.role === 'admin';
-  console.log('ServiceTypes page: isAdmin:', isAdmin);
 
   if (!isAdmin) {
-    console.log('ServiceTypes: User is not admin, showing access denied');
+    console.log('ServiceTypes: Access denied - user is not admin');
     return (
       <div className="flex items-center justify-center min-h-96">
         <div className="text-center">
@@ -35,7 +36,7 @@ const ServiceTypes = () => {
     );
   }
 
-  console.log('ServiceTypes: User is admin, showing main content');
+  console.log('ServiceTypes: Admin access granted, showing page');
 
   const handleRefresh = async () => {
     setRefreshing(true);
