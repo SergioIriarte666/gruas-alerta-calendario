@@ -1,30 +1,29 @@
 
-import { Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent } from '@/components/ui/card';
+import { Search } from 'lucide-react';
 
 interface InvoicesSearchProps {
   searchTerm: string;
-  onSearchChange: (term: string) => void;
+  onSearchChange: (value: string) => void;
 }
 
 const InvoicesSearch = ({ searchTerm, onSearchChange }: InvoicesSearchProps) => {
   return (
-    <Card className="glass-card">
-      <CardContent className="p-6">
-        <div className="flex flex-col sm:flex-row gap-4">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-            <Input
-              placeholder="Buscar por folio o cliente..."
-              value={searchTerm}
-              onChange={(e) => onSearchChange(e.target.value)}
-              className="pl-10 bg-white/5 border-gray-700 text-white placeholder-gray-400"
-            />
-          </div>
-        </div>
-      </CardContent>
-    </Card>
+    <div className="relative">
+      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+      <Input
+        type="text"
+        placeholder="Buscar por folio o cliente..."
+        value={searchTerm}
+        onChange={(e) => onSearchChange(e.target.value)}
+        className="pl-10 bg-black border-tms-green/30 text-white placeholder-gray-400 focus:border-tms-green focus:outline-none"
+        style={{
+          backgroundColor: '#000000',
+          borderColor: 'rgba(156, 250, 36, 0.3)',
+          color: '#ffffff'
+        }}
+      />
+    </div>
   );
 };
 
