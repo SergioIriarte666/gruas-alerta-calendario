@@ -38,7 +38,7 @@ export const BackupManagementSection = () => {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'completed':
-        return <Badge variant="default" className="text-green-400 border-green-500/30 bg-zinc-950">Completado</Badge>;
+        return <Badge variant="default" className="text-green-400 border-green-500/30 bg-zinc-500">Completado</Badge>;
       case 'failed':
         return <Badge variant="destructive" className="bg-red-500/20 text-red-400 border-red-500/30">Fallido</Badge>;
       case 'started':
