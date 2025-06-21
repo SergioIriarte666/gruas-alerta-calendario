@@ -80,7 +80,13 @@ export const ServiceTypesTable = ({ serviceTypes, onEdit, onDelete, onView }: Se
                 {formatPrice(serviceType.basePrice)}
               </TableCell>
               <TableCell>
-                <Badge variant={serviceType.isActive ? "default" : "secondary"}>
+                <Badge 
+                  variant="outline"
+                  className={serviceType.isActive 
+                    ? "bg-tms-green/20 text-tms-green border-tms-green/30" 
+                    : "bg-gray-600/20 text-gray-400 border-gray-600/30"
+                  }
+                >
                   {serviceType.isActive ? 'Activo' : 'Inactivo'}
                 </Badge>
               </TableCell>
@@ -90,7 +96,13 @@ export const ServiceTypesTable = ({ serviceTypes, onEdit, onDelete, onView }: Se
                 </Badge>
               </TableCell>
               <TableCell>
-                <Badge variant={serviceType.vehicleInfoOptional ? "secondary" : "outline"}>
+                <Badge 
+                  variant="outline"
+                  className={serviceType.vehicleInfoOptional 
+                    ? "bg-tms-green/20 text-tms-green border-tms-green/30" 
+                    : "bg-gray-600/20 text-gray-400 border-gray-600/30"
+                  }
+                >
                   {serviceType.vehicleInfoOptional ? 'Sí' : 'No'}
                 </Badge>
               </TableCell>

@@ -26,7 +26,11 @@ export const ServiceTypesHeader = ({ onNewServiceType, onRefresh, refreshing }: 
           <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
           Actualizar
         </Button>
-        <Button onClick={onNewServiceType} size="sm">
+        <Button 
+          onClick={onNewServiceType} 
+          size="sm"
+          className="bg-tms-green hover:bg-tms-green/80 text-black font-medium"
+        >
           <Plus className="h-4 w-4 mr-2" />
           Nuevo Tipo
         </Button>

@@ -20,7 +20,7 @@ export const FormActions = ({ onCancel, isEditing, disabled = false }: FormActio
       </Button>
       <Button 
         type="submit" 
-        className="bg-tms-green hover:bg-tms-green-dark text-white"
+        variant="tms"
         title={isEditing ? 'Actualizar los datos del servicio' : 'Crear el nuevo servicio'}
         disabled={disabled}
       >
