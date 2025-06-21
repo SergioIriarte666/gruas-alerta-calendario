@@ -30,10 +30,6 @@ export const BackupManagementSection = () => {
     refetchLogs
   } = useBackupManager();
 
-  // Debug logging moved to component logic
-  console.log('BackupManagementSection component is rendering');
-  console.log('BackupManagementSection - Hook data loaded:', { progress, backupLogs, hookError });
-
   const formatFileSize = (bytes?: number) => {
     if (!bytes) return 'N/A';
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
@@ -70,62 +66,29 @@ export const BackupManagementSection = () => {
   const lastSuccessfulBackup = backupLogs?.find(log => log.status === 'completed');
 
   return (
-    <Card 
-      className="settings-card"
-      style={{
-        backgroundColor: '#000000 !important',
-        border: '1px solid #9cfa24 !important',
-        borderRadius: '8px',
-        backdropFilter: 'blur(8px)',
-        marginTop: '24px'
-      }}
-      data-component="backup-management"
-    >
-      <CardHeader 
-        style={{
-          backgroundColor: '#000000',
-          borderBottom: '1px solid rgba(156, 250, 36, 0.3)',
-          padding: '24px'
-        }}
-      >
-        <CardTitle className="flex items-center justify-between" style={{ color: '#ffffff' }}>
+    <Card className="bg-black border-tms-green mt-6">
+      <CardHeader className="bg-black border-b border-tms-green/30 p-6">
+        <CardTitle className="flex items-center justify-between text-white">
           <div className="flex items-center space-x-2">
-            <Database className="w-5 h-5" style={{ color: '#9cfa24' }} />
+            <Database className="w-5 h-5 text-tms-green" />
             <span>Gestión de Respaldos</span>
           </div>
           <Button
             variant="ghost"
             size="sm"
             onClick={() => refetchLogs()}
-            style={{
-              color: '#999999',
-              backgroundColor: 'transparent'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = 'rgba(156, 250, 36, 0.1)';
-              e.currentTarget.style.color = '#ffffff';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = 'transparent';
-              e.currentTarget.style.color = '#999999';
-            }}
+            className="text-gray-400 hover:text-white hover:bg-tms-green/10"
           >
             <RefreshCw className="w-4 h-4" />
           </Button>
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-6" style={{ backgroundColor: '#000000', padding: '24px' }}>
-        {/* Mostrar error del hook si existe */}
+      <CardContent className="space-y-6 bg-black p-6">
+        {/* Error del hook */}
         {hookError && (
-          <Alert 
-            style={{
-              backgroundColor: 'rgba(239, 68, 68, 0.1)',
-              border: '1px solid rgba(239, 68, 68, 0.2)',
-              borderRadius: '8px'
-            }}
-          >
+          <Alert className="bg-red-500/10 border-red-500/20">
             <XCircle className="w-4 h-4 text-red-500" />
-            <AlertDescription style={{ color: 'rgb(252, 165, 165)' }}>
+            <AlertDescription className="text-red-300">
               Error al cargar datos de respaldos: {hookError.message}
             </AlertDescription>
           </Alert>
@@ -133,50 +96,38 @@ export const BackupManagementSection = () => {
 
         {/* Estado del último respaldo */}
         <div className="space-y-3">
-          <h4 className="text-sm font-medium" style={{ color: '#ffffff' }}>Estado del Sistema</h4>
+          <h4 className="text-sm font-medium text-white">Estado del Sistema</h4>
           {lastSuccessfulBackup ? (
-            <Alert 
-              style={{
-                backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                border: '1px solid rgba(16, 185, 129, 0.2)',
-                borderRadius: '8px'
-              }}
-            >
+            <Alert className="bg-green-500/10 border-green-500/20">
               <CheckCircle className="w-4 h-4 text-green-500" />
-              <AlertDescription style={{ color: 'rgb(134, 239, 172)' }}>
+              <AlertDescription className="text-green-300">
                 Último respaldo exitoso: {' '}
                 {formatDistanceToNow(new Date(lastSuccessfulBackup.created_at), { 
                   addSuffix: true, 
                   locale: es 
                 })}
                 {lastSuccessfulBackup.metadata?.fileName && (
-                  <span className="block text-xs mt-1" style={{ color: 'rgb(74, 222, 128)' }}>
+                  <span className="block text-xs mt-1 text-green-400">
                     Archivo: {lastSuccessfulBackup.metadata.fileName}
                   </span>
                 )}
               </AlertDescription>
             </Alert>
           ) : (
-            <Alert 
-              style={{
-                backgroundColor: 'rgba(245, 158, 11, 0.1)',
-                border: '1px solid rgba(245, 158, 11, 0.2)',
-                borderRadius: '8px'
-              }}
-            >
+            <Alert className="bg-yellow-500/10 border-yellow-500/20">
               <AlertTriangle className="w-4 h-4 text-yellow-500" />
-              <AlertDescription style={{ color: 'rgb(253, 224, 71)' }}>
+              <AlertDescription className="text-yellow-300">
                 No se encontraron respaldos anteriores. Se recomienda generar un respaldo.
               </AlertDescription>
             </Alert>
           )}
         </div>
 
-        <Separator style={{ backgroundColor: 'rgba(156, 250, 36, 0.3)' }} />
+        <Separator className="bg-tms-green/30" />
 
         {/* Controles de respaldo */}
         <div className="space-y-4">
-          <h4 className="text-sm font-medium" style={{ color: '#ffffff' }}>Generar Respaldo Manual</h4>
+          <h4 className="text-sm font-medium text-white">Generar Respaldo Manual</h4>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
@@ -184,12 +135,6 @@ export const BackupManagementSection = () => {
                 onClick={() => generateAndDownloadBackup('full')}
                 disabled={progress.isGenerating}
                 className="w-full bg-tms-green text-black font-medium hover:bg-tms-green/80"
-                style={{
-                  backgroundColor: '#9cfa24',
-                  color: '#000000',
-                  fontWeight: '500',
-                  border: 'none'
-                }}
               >
                 {progress.isGenerating && progress.stage.includes('Completo') ? (
                   <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
@@ -198,7 +143,7 @@ export const BackupManagementSection = () => {
                 )}
                 Respaldo Completo
               </Button>
-              <p className="text-xs" style={{ color: '#999999' }}>
+              <p className="text-xs text-gray-400">
                 Incluye todos los datos del sistema (recomendado)
               </p>
             </div>
@@ -208,12 +153,7 @@ export const BackupManagementSection = () => {
                 onClick={() => generateAndDownloadBackup('quick')}
                 disabled={progress.isGenerating}
                 variant="outline"
-                className="w-full"
-                style={{
-                  border: '1px solid rgba(156, 250, 36, 0.3)',
-                  color: '#ffffff',
-                  backgroundColor: 'transparent'
-                }}
+                className="w-full border-tms-green/30 text-white bg-transparent hover:bg-tms-green/10"
               >
                 {progress.isGenerating && progress.stage.includes('Rápido') ? (
                   <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
@@ -222,7 +162,7 @@ export const BackupManagementSection = () => {
                 )}
                 Respaldo Rápido
               </Button>
-              <p className="text-xs" style={{ color: '#999999' }}>
+              <p className="text-xs text-gray-400">
                 Solo configuración y estadísticas básicas
               </p>
             </div>
@@ -230,69 +170,53 @@ export const BackupManagementSection = () => {
 
           {/* Progreso del respaldo */}
           {progress.isGenerating && (
-            <div 
-              className="space-y-2 p-4 rounded-lg border"
-              style={{
-                backgroundColor: 'rgba(255, 255, 255, 0.05)',
-                border: '1px solid rgba(156, 250, 36, 0.3)'
-              }}
-            >
+            <div className="space-y-2 p-4 rounded-lg border bg-white/5 border-tms-green/30">
               <div className="flex items-center justify-between text-sm">
-                <span style={{ color: '#ffffff' }}>{progress.stage}</span>
-                <span style={{ color: '#999999' }}>{progress.progress}%</span>
+                <span className="text-white">{progress.stage}</span>
+                <span className="text-gray-400">{progress.progress}%</span>
               </div>
               <Progress value={progress.progress} className="w-full h-2" />
             </div>
           )}
 
           {progress.error && (
-            <Alert 
-              style={{
-                backgroundColor: 'rgba(239, 68, 68, 0.1)',
-                border: '1px solid rgba(239, 68, 68, 0.2)',
-                borderRadius: '8px'
-              }}
-            >
+            <Alert className="bg-red-500/10 border-red-500/20">
               <XCircle className="w-4 h-4 text-red-500" />
-              <AlertDescription style={{ color: 'rgb(252, 165, 165)' }}>
+              <AlertDescription className="text-red-300">
                 Error: {progress.error}
               </AlertDescription>
             </Alert>
           )}
         </div>
 
-        <Separator style={{ backgroundColor: 'rgba(156, 250, 36, 0.3)' }} />
+        <Separator className="bg-tms-green/30" />
 
         {/* Historial de respaldos */}
         <div className="space-y-4">
-          <h4 className="text-sm font-medium" style={{ color: '#ffffff' }}>Historial de Respaldos</h4>
+          <h4 className="text-sm font-medium text-white">Historial de Respaldos</h4>
           
           {backupLogs && backupLogs.length > 0 ? (
             <div className="space-y-3 max-h-64 overflow-y-auto">
               {backupLogs.map((log) => (
                 <div
                   key={log.id}
-                  className="flex items-center justify-between p-4 rounded-lg border transition-colors"
-                  style={{
-                    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-                    border: '1px solid rgba(156, 250, 36, 0.3)'
-                  }}
+                  className="flex items-center justify-between p-4 rounded-lg border bg-white/5 border-tms-green/30"
                 >
                   <div className="flex items-center space-x-3">
                     {getStatusIcon(log.status)}
                     <div>
                       <div className="flex items-center space-x-2 mb-1">
                         {log.backup_type === 'full' ? (
-                          <FileText className="w-4 h-4" style={{ color: '#999999' }} />
+                          <FileText className="w-4 h-4 text-gray-400" />
                         ) : (
-                          <Zap className="w-4 h-4" style={{ color: '#999999' }} />
+                          <Zap className="w-4 h-4 text-gray-400" />
                         )}
-                        <span className="text-sm font-medium" style={{ color: '#ffffff' }}>
+                        <span className="text-sm font-medium text-white">
                           {log.backup_type === 'full' ? 'Completo' : 'Rápido'}
                         </span>
                         {getStatusBadge(log.status)}
                       </div>
-                      <p className="text-xs" style={{ color: '#999999' }}>
+                      <p className="text-xs text-gray-400">
                         {formatDistanceToNow(new Date(log.created_at), { 
                           addSuffix: true, 
                           locale: es 
@@ -302,13 +226,7 @@ export const BackupManagementSection = () => {
                         )}
                       </p>
                       {log.error_message && (
-                        <p 
-                          className="text-xs mt-1 px-2 py-1 rounded"
-                          style={{
-                            color: 'rgb(252, 165, 165)',
-                            backgroundColor: 'rgba(239, 68, 68, 0.1)'
-                          }}
-                        >
+                        <p className="text-xs mt-1 px-2 py-1 rounded text-red-300 bg-red-500/10">
                           {log.error_message}
                         </p>
                       )}
@@ -318,18 +236,12 @@ export const BackupManagementSection = () => {
               ))}
             </div>
           ) : (
-            <div 
-              className="text-center py-8 rounded-lg border"
-              style={{
-                backgroundColor: 'rgba(255, 255, 255, 0.03)',
-                border: '1px solid rgba(156, 250, 36, 0.3)'
-              }}
-            >
-              <Database className="w-12 h-12 mx-auto mb-2" style={{ color: '#999999' }} />
-              <p className="text-sm" style={{ color: '#999999' }}>
+            <div className="text-center py-8 rounded-lg border bg-white/5 border-tms-green/30">
+              <Database className="w-12 h-12 mx-auto mb-2 text-gray-400" />
+              <p className="text-sm text-gray-400">
                 No hay respaldos registrados
               </p>
-              <p className="text-xs mt-1" style={{ color: '#666666' }}>
+              <p className="text-xs mt-1 text-gray-500">
                 Genera tu primer respaldo usando los botones de arriba
               </p>
             </div>
@@ -337,15 +249,9 @@ export const BackupManagementSection = () => {
         </div>
 
         {/* Información adicional */}
-        <Alert 
-          style={{
-            backgroundColor: 'rgba(59, 130, 246, 0.1)',
-            border: '1px solid rgba(59, 130, 246, 0.2)',
-            borderRadius: '8px'
-          }}
-        >
-          <AlertTriangle className="w-4 h-4" style={{ color: 'rgb(96, 165, 250)' }} />
-          <AlertDescription className="text-sm" style={{ color: 'rgb(147, 197, 253)' }}>
+        <Alert className="bg-blue-500/10 border-blue-500/20">
+          <AlertTriangle className="w-4 h-4 text-blue-400" />
+          <AlertDescription className="text-sm text-blue-300">
             <strong>Importante:</strong> Almacene los respaldos en ubicaciones seguras y externas al sistema. 
             Los respaldos completos permiten restauración total en caso de emergencia.
           </AlertDescription>

@@ -25,34 +25,22 @@ export const SystemSettingsTab: React.FC<SystemSettingsTabProps> = ({
   onSave,
   onUpdateSettings
 }) => {
-  // Debug logging moved to component logic
-  console.log('SystemSettingsTab rendering with settings:', settings);
-  console.log('SystemSettingsTab - BackupManagementSection should render after main card');
-
   return (
-    <div className="space-y-6" style={{ background: '#000000', minHeight: '100vh' }}>
+    <div className="space-y-6 bg-black min-h-screen">
       {/* Configuración del Sistema */}
-      <Card 
-        className="glass-card settings-card"
-        style={{
-          backgroundColor: '#000000',
-          border: '1px solid #9cfa24',
-          borderRadius: '8px',
-          backdropFilter: 'blur(8px)'
-        }}
-      >
-        <CardHeader style={{ backgroundColor: '#000000', borderBottom: '1px solid rgba(156, 250, 36, 0.3)' }}>
-          <CardTitle className="flex items-center space-x-2" style={{ color: '#ffffff' }}>
-            <Database className="w-5 h-5" style={{ color: '#9cfa24' }} />
+      <Card className="bg-black border-tms-green">
+        <CardHeader className="bg-black border-b border-tms-green/30">
+          <CardTitle className="flex items-center space-x-2 text-white">
+            <Database className="w-5 h-5 text-tms-green" />
             <span>Configuración del Sistema</span>
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-6" style={{ backgroundColor: '#000000', padding: '24px' }}>
+        <CardContent className="space-y-6 bg-black p-6">
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <Label style={{ color: '#ffffff' }}>Respaldo Automático</Label>
-                <p className="text-sm" style={{ color: '#999999' }}>Crear respaldos automáticos de los datos</p>
+                <Label className="text-white">Respaldo Automático</Label>
+                <p className="text-sm text-gray-400">Crear respaldos automáticos de los datos</p>
               </div>
               <Switch 
                 checked={settings.autoBackup}
@@ -60,10 +48,10 @@ export const SystemSettingsTab: React.FC<SystemSettingsTabProps> = ({
               />
             </div>
             
-            <Separator style={{ backgroundColor: 'rgba(156, 250, 36, 0.3)' }} />
+            <Separator className="bg-tms-green/30" />
             
             <div className="space-y-2">
-              <Label style={{ color: '#ffffff' }}>Frecuencia de Respaldo</Label>
+              <Label className="text-white">Frecuencia de Respaldo</Label>
               <Select 
                 value={settings.backupFrequency} 
                 onValueChange={(value: 'daily' | 'weekly' | 'monthly') => 
@@ -71,13 +59,7 @@ export const SystemSettingsTab: React.FC<SystemSettingsTabProps> = ({
                 }
                 disabled={!settings.autoBackup}
               >
-                <SelectTrigger 
-                  style={{
-                    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-                    border: '1px solid rgba(156, 250, 36, 0.3)',
-                    color: '#ffffff'
-                  }}
-                >
+                <SelectTrigger className="bg-white/5 border-tms-green/30 text-white">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -88,11 +70,11 @@ export const SystemSettingsTab: React.FC<SystemSettingsTabProps> = ({
               </Select>
             </div>
 
-            <Separator style={{ backgroundColor: 'rgba(156, 250, 36, 0.3)' }} />
+            <Separator className="bg-tms-green/30" />
 
             <div className="space-y-2">
-              <Label style={{ color: '#ffffff' }}>Retención de Datos (meses)</Label>
-              <p className="text-sm" style={{ color: '#999999' }}>
+              <Label className="text-white">Retención de Datos (meses)</Label>
+              <p className="text-sm text-gray-400">
                 Tiempo que se mantendrán los datos en el sistema
               </p>
               <Input
@@ -103,25 +85,21 @@ export const SystemSettingsTab: React.FC<SystemSettingsTabProps> = ({
                 onChange={(e) => onUpdateSettings({ 
                   dataRetention: parseInt(e.target.value) || 12 
                 })}
-                style={{
-                  backgroundColor: 'rgba(255, 255, 255, 0.05)',
-                  border: '1px solid rgba(156, 250, 36, 0.3)',
-                  color: '#ffffff'
-                }}
+                className="bg-white/5 border-tms-green/30 text-white"
               />
             </div>
 
-            <Separator style={{ backgroundColor: 'rgba(156, 250, 36, 0.3)' }} />
+            <Separator className="bg-tms-green/30" />
             
             <div className="flex items-center justify-between">
               <div>
-                <Label className="flex items-center space-x-2" style={{ color: '#ffffff' }}>
+                <Label className="flex items-center space-x-2 text-white">
                   <span>Modo Mantenimiento</span>
                   {settings.maintenanceMode && (
                     <AlertTriangle className="w-4 h-4 text-yellow-500" />
                   )}
                 </Label>
-                <p className="text-sm" style={{ color: '#999999' }}>
+                <p className="text-sm text-gray-400">
                   Activar para realizar mantenimiento del sistema
                 </p>
               </div>
@@ -141,11 +119,6 @@ export const SystemSettingsTab: React.FC<SystemSettingsTabProps> = ({
             onClick={onSave}
             disabled={saving}
             className="bg-tms-green text-black font-medium hover:bg-tms-green/80"
-            style={{
-              backgroundColor: '#9cfa24',
-              color: '#000000',
-              fontWeight: '500'
-            }}
           >
             <Save className="w-4 h-4 mr-2" />
             {saving ? 'Guardando...' : 'Guardar Configuración'}
@@ -153,20 +126,8 @@ export const SystemSettingsTab: React.FC<SystemSettingsTabProps> = ({
         </CardContent>
       </Card>
 
-      {/* SECCIÓN DE GESTIÓN DE RESPALDOS - Forzada a renderizar */}
-      <div 
-        className="backup-section-container"
-        style={{ 
-          backgroundColor: '#000000', 
-          padding: '8px',
-          display: 'block',
-          visibility: 'visible',
-          opacity: 1
-        }}
-        data-component="backup-management"
-      >
-        <BackupManagementSection />
-      </div>
+      {/* Gestión de Respaldos */}
+      <BackupManagementSection />
     </div>
   );
 };
