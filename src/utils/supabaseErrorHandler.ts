@@ -10,42 +10,6 @@ export class SupabaseErrorHandler {
 
   constructor(client: SupabaseClient) {
     this.client = client;
-    this.setupRealtimeErrorHandling();
-  }
-
-  private setupRealtimeErrorHandling(): void {
-    // Handle WebSocket connection errors gracefully
-    if (this.client.realtime) {
-      // Use the correct realtime event handlers for Supabase v2
-      this.client.realtime.onOpen(() => {
-        console.log('Realtime connection opened');
-      });
-
-      this.client.realtime.onClose((event) => {
-        // Only log if it's not a normal closure
-        if (event && event.code !== 1000) {
-          console.warn('Realtime connection closed:', event.code, event.reason);
-        }
-        
-        // Attempt graceful reconnection after a delay
-        setTimeout(() => {
-          try {
-            if (this.client.realtime.isConnected() === false) {
-              this.client.realtime.connect();
-            }
-          } catch (error) {
-            // Silently handle reconnection errors - they're not critical
-          }
-        }, 2000);
-      });
-
-      this.client.realtime.onError((error) => {
-        // Only log critical WebSocket errors, filter out connection issues
-        if (!this.isConnectionError(error)) {
-          console.warn('Realtime error:', error);
-        }
-      });
-    }
   }
 
   private isConnectionError(error: any): boolean {
