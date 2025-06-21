@@ -84,6 +84,14 @@ export class DataLoaders {
       basePrice: serviceType.base_price,
       isActive: serviceType.is_active,
       vehicleInfoOptional: serviceType.vehicle_info_optional || false,
+      purchaseOrderRequired: serviceType.purchase_order_required || false,
+      originRequired: serviceType.origin_required !== false,
+      destinationRequired: serviceType.destination_required !== false,
+      craneRequired: serviceType.crane_required !== false,
+      operatorRequired: serviceType.operator_required !== false,
+      vehicleBrandRequired: serviceType.vehicle_brand_required !== false,
+      vehicleModelRequired: serviceType.vehicle_model_required !== false,
+      licensePlateRequired: serviceType.license_plate_required !== false,
       createdAt: serviceType.created_at,
       updatedAt: serviceType.updated_at
     }));

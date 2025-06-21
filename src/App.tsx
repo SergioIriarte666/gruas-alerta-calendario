@@ -1,4 +1,5 @@
-import React from 'react';
+
+import React, { Suspense } from 'react';
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
@@ -25,6 +26,7 @@ import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 import OperatorDashboard from "./pages/OperatorDashboard";
 import ServiceInspection from "./pages/operator/ServiceInspection";
+import ServiceTypes from "./pages/ServiceTypes";
 
 // Create QueryClient outside of component to prevent recreation
 const queryClient = new QueryClient({
@@ -67,9 +69,9 @@ function AppContent() {
           <Route path="calendar" element={<Calendar />} />
           <Route path="services" element={<Services />} />
           <Route path="service-types" element={
-            <div>
-              {React.lazy(() => import('./pages/ServiceTypes'))}
-            </div>
+            <Suspense fallback={<div className="flex items-center justify-center min-h-96"><div className="text-white">Cargando...</div></div>}>
+              <ServiceTypes />
+            </Suspense>
           } />
           <Route path="clients" element={<Clients />} />
           <Route path="cranes" element={<Cranes />} />
