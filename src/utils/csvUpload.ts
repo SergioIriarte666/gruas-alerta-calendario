@@ -1,4 +1,3 @@
-
 import { parse } from 'papaparse';
 import { DataMapper } from './dataMapper';
 import { MappedServiceData } from './dataMapper';
@@ -52,7 +51,7 @@ export const processCSV = async (file: File, dataMapper: DataMapper): Promise<CS
     parse<CSVRow>(file, {
       header: true,
       skipEmptyLines: true,
-      transformHeader: (header) => dataMapper.mapHeaders(header.trim()),
+      transformHeader: (header) => dataMapper.mapHeaders([header.trim()])[0] || header.trim(),
       complete: async (results) => {
         if (results.errors.length > 0) {
           console.error('CSV Parsing Errors:', results.errors);
