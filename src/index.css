@@ -199,4 +199,25 @@
     background-color: rgb(156, 250, 36) !important;
     color: #000000 !important;
   }
+
+  /* FORZAR RENDERIZADO DE COMPONENTES DE BACKUP */
+  [data-component="backup-management"] {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    background: #000000 !important;
+    border: 1px solid #9cfa24 !important;
+  }
+
+  /* Forzar actualización de componentes de configuración */
+  .settings-container {
+    background: #000000 !important;
+    min-height: 100vh !important;
+  }
+
+  .settings-card {
+    background: #000000 !important;
+    border: 1px solid #9cfa24 !important;
+    border-radius: 8px !important;
+  }
 }

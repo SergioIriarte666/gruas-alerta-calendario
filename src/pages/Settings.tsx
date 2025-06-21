@@ -33,6 +33,11 @@ const Settings = () => {
   const { isUpdating: isLogoUpdating, updateLogo } = useLogoUpdater();
   const [activeTab, setActiveTab] = React.useState('company');
 
+  // Force component refresh and debug logging
+  console.log('Settings page rendering - activeTab:', activeTab);
+  console.log('Settings - systemSettings:', systemSettings);
+  console.log('Settings - BackupManagementSection should be visible in System tab');
+
   const handleSystemSave = async () => {
     const result = await saveSystemSettings();
     if (result.success) {
@@ -67,18 +72,30 @@ const Settings = () => {
 
   if (loading || systemLoading || !settings) {
     return (
-      <div className="flex items-center justify-center min-h-96">
-        <div className="text-white">Cargando configuración...</div>
+      <div 
+        className="flex items-center justify-center min-h-96"
+        style={{ backgroundColor: '#000000', color: '#ffffff' }}
+      >
+        <div style={{ color: '#ffffff' }}>Cargando configuración...</div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div 
+      className="space-y-6 animate-fade-in"
+      style={{ backgroundColor: '#000000', minHeight: '100vh', padding: '24px' }}
+    >
       <SettingsHeader onReset={resetSettings} />
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-5 bg-black/20">
+        <TabsList 
+          className="grid w-full grid-cols-5"
+          style={{
+            backgroundColor: 'rgba(0, 0, 0, 0.2)',
+            border: '1px solid rgba(156, 250, 36, 0.3)'
+          }}
+        >
           <TabsTrigger value="company" className="flex items-center space-x-2">
             <Building2 className="w-4 h-4" />
             <span>Empresa</span>
@@ -115,6 +132,7 @@ const Settings = () => {
         </TabsContent>
 
         <TabsContent value="system">
+          {console.log('Rendering SystemSettingsTab with BackupManagementSection')}
           <SystemSettingsTab
             settings={systemSettings}
             saving={systemSaving}
