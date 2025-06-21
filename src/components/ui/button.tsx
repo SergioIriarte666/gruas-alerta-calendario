@@ -10,7 +10,7 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "font-medium",
+        default: "font-medium text-black",
         destructive:
           "bg-destructive text-destructive-foreground hover:bg-destructive/90",
         outline:
@@ -19,7 +19,7 @@ const buttonVariants = cva(
           "bg-secondary text-secondary-foreground hover:bg-secondary/80",
         ghost: "hover:bg-accent hover:text-accent-foreground",
         link: "text-primary underline-offset-4 hover:underline",
-        tms: "font-medium",
+        tms: "font-medium text-black",
       },
       size: {
         default: "h-10 px-4 py-2",
@@ -55,12 +55,14 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     const handleMouseEnter = (e: React.MouseEvent<HTMLButtonElement>) => {
       if (variant === 'default' || variant === 'tms') {
         e.currentTarget.style.backgroundColor = 'rgba(156, 250, 36, 0.8)';
+        e.currentTarget.style.color = '#000000';
       }
     };
 
     const handleMouseLeave = (e: React.MouseEvent<HTMLButtonElement>) => {
       if (variant === 'default' || variant === 'tms') {
         e.currentTarget.style.backgroundColor = '#9cfa24';
+        e.currentTarget.style.color = '#000000';
       }
     };
 
