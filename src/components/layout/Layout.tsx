@@ -14,7 +14,7 @@ export const Layout = ({ children }: LayoutProps) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
 
   return (
-    <div className="min-h-screen bg-gradient-tms">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black">
       <Sidebar 
         isCollapsed={isSidebarCollapsed}
         setIsCollapsed={setIsSidebarCollapsed}

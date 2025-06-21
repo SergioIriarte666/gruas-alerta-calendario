@@ -53,7 +53,7 @@ export default {
 					DEFAULT: 'hsl(var(--card))',
 					foreground: 'hsl(var(--card-foreground))'
 				},
-				// Custom TMS colors
+				// Custom TMS colors restaurados
 				tms: {
 					dark: '#0a0a0a',
 					darker: '#050505',
