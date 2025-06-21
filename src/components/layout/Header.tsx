@@ -21,16 +21,12 @@ export const Header = ({ setIsMobileMenuOpen }: HeaderProps) => {
 
   const handleLogout = async () => {
     try {
-      console.log('Header: Starting logout...');
       await logout();
-      
       toast({
         type: 'success',
         title: 'Sesión cerrada',
         description: 'Has cerrado sesión correctamente'
       });
-      
-      // Redirección simple sin reload completo
       navigate('/auth', { replace: true });
     } catch (error) {
       console.error("Header: Logout failed:", error);
@@ -59,7 +55,6 @@ export const Header = ({ setIsMobileMenuOpen }: HeaderProps) => {
           <span className="sr-only">Abrir menú</span>
         </Button>
         
-        {/* Search */}
         <div className="hidden lg:block relative max-w-md flex-1">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
           <Input
@@ -69,12 +64,9 @@ export const Header = ({ setIsMobileMenuOpen }: HeaderProps) => {
         </div>
       </div>
 
-      {/* Right Section */}
       <div className="flex items-center space-x-2 sm:space-x-4">
-        {/* Notifications */}
         <NotificationsDropdown />
 
-        {/* User Menu */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground rounded-full">

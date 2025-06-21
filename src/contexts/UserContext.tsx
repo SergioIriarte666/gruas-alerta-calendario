@@ -49,9 +49,6 @@ export function UserProvider({ children }: UserProviderProps) {
     setError(null);
 
     try {
-      console.log('UserContext: Starting profile query...');
-      
-      // Primero verificar que tenemos una sesión válida
       const { data: { session: currentSession } } = await supabase.auth.getSession();
       if (!currentSession) {
         console.error('UserContext: No valid session found');
@@ -69,24 +66,10 @@ export function UserProvider({ children }: UserProviderProps) {
       console.log('UserContext: Profile query result:', { data, error: fetchError });
 
       if (fetchError) {
-        console.error('UserContext: Error fetching profile:', fetchError.message, 'Code:', fetchError.code);
-        if (fetchError.code === 'PGRST116') {
-          setError('Perfil no encontrado. El perfil puede no existir en la base de datos.');
-        } else if (fetchError.code === 'PGRST301') {
-          setError('Sin permisos para acceder al perfil. Reintentando...');
-          // Intentar nuevamente después de un breve delay
-          setTimeout(() => {
-            fetchProfile(userId);
-          }, 1000);
-          return;
-        } else {
-          setError(`Error al cargar perfil: ${fetchError.message}`);
-        }
+        console.error('UserContext: Error fetching profile:', fetchError.message);
+        setError(`Error al cargar perfil: ${fetchError.message}`);
         setUser(null);
       } else if (data) {
-        console.log('UserContext: Raw profile data:', data);
-        
-        // Validación segura del rol para manejar mayúsculas/minúsculas
         const normalizedRole = data.role?.toLowerCase();
         const validRoles = ['admin', 'operator', 'viewer'];
         const userRole = validRoles.includes(normalizedRole) 
@@ -102,10 +85,6 @@ export function UserProvider({ children }: UserProviderProps) {
         console.log('UserContext: Profile loaded successfully:', userData);
         setUser(userData);
         setError(null);
-      } else {
-        console.warn('UserContext: No data returned from profile query');
-        setError('No se encontró información del perfil');
-        setUser(null);
       }
     } catch (e: any) {
       console.error("UserContext: Unexpected error:", e.message);
@@ -117,21 +96,11 @@ export function UserProvider({ children }: UserProviderProps) {
   }, [refreshTrigger]);
 
   React.useEffect(() => {
-    console.log('UserContext: Auth state effect - authLoading:', authLoading, 'authUser:', !!authUser);
-    
-    if (authLoading) {
-      console.log('UserContext: Still loading auth, waiting...');
-      return;
-    }
+    if (authLoading) return;
 
     if (authUser && session) {
-      console.log('UserContext: Authenticated user found, fetching profile...', authUser.id);
-      // Pequeño delay para asegurar que las políticas RLS estén aplicadas
-      setTimeout(() => {
-        fetchProfile(authUser.id);
-      }, 100);
+      fetchProfile(authUser.id);
     } else {
-      console.log('UserContext: No authenticated user, clearing profile');
       setUser(null);
       setError(null);
       setProfileLoading(false);
@@ -141,24 +110,11 @@ export function UserProvider({ children }: UserProviderProps) {
   const login = () => { /* Handled by Auth page */ };
 
   const logout = async () => {
-    console.log('UserContext: Starting logout process...');
-    
-    try {
-      // Limpiar estado local inmediatamente
-      setUser(null);
-      setError(null);
-      setProfileLoading(false);
-      
-      // Usar el signOut del AuthContext que ya maneja la limpieza
-      await signOut();
-      
-      console.log('UserContext: Logout completed successfully');
-    } catch (error) {
-      console.error('UserContext: Error during logout:', error);
-      // Incluso si hay error, limpiar el estado local
-      setUser(null);
-      setError(null);
-    }
+    console.log('UserContext: Starting logout...');
+    setUser(null);
+    setError(null);
+    setProfileLoading(false);
+    await signOut();
   };
 
   const updateUser = async (userData: Partial<User>) => {
@@ -200,15 +156,6 @@ export function UserProvider({ children }: UserProviderProps) {
 
   const isAuthenticated = !!authUser && !!session;
   const isLoading = authLoading || profileLoading;
-
-  console.log('UserContext render:', { 
-    isLoading, 
-    isAuthenticated, 
-    hasUser: !!user, 
-    userRole: user?.role,
-    error,
-    authUserId: authUser?.id
-  });
 
   return (
     <UserContext.Provider value={{
