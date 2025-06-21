@@ -1,18 +1,19 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Edit, Trash2, Truck, Plus, Power, PowerOff } from 'lucide-react';
+import { Edit, Trash2, Eye, Plus, Truck } from 'lucide-react';
 import { Crane } from '@/types';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { CranesMobileView } from './CranesMobileView';
 
 interface CranesTableProps {
   cranes: Crane[];
   totalCranes: number;
   onEdit: (crane: Crane) => void;
   onDelete: (crane: Crane) => void;
-  onToggleStatus: (crane: Crane) => void;
+  onViewDetails: (crane: Crane) => void;
   onNewCrane: () => void;
   searchTerm: string;
 }
@@ -22,10 +23,28 @@ export const CranesTable = ({
   totalCranes,
   onEdit,
   onDelete,
-  onToggleStatus,
+  onViewDetails,
   onNewCrane,
   searchTerm,
 }: CranesTableProps) => {
+  const isMobile = useIsMobile();
+
+  // Render mobile view if on mobile device
+  if (isMobile) {
+    return (
+      <CranesMobileView
+        cranes={cranes}
+        totalCranes={totalCranes}
+        onEdit={onEdit}
+        onDelete={onDelete}
+        onViewDetails={onViewDetails}
+        onNewCrane={onNewCrane}
+        searchTerm={searchTerm}
+      />
+    );
+  }
+
+  // Desktop view (unchanged functionality)
   if (cranes.length === 0 && searchTerm) {
     return (
       <Card className="glass-card">
@@ -66,7 +85,7 @@ export const CranesTable = ({
     <Card className="glass-card">
       <CardHeader>
         <CardTitle className="text-white flex items-center justify-between">
-          <span>Grúas ({totalCranes})</span>
+          <span>Grúas Registradas ({totalCranes})</span>
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -75,10 +94,11 @@ export const CranesTable = ({
             <thead>
               <tr className="border-b border-gray-700">
                 <th className="text-left py-3 px-4 font-medium text-white">Patente</th>
-                <th className="text-left py-3 px-4 font-medium text-white">Marca</th>
-                <th className="text-left py-3 px-4 font-medium text-white">Modelo</th>
-                <th className="text-left py-3 px-4 font-medium text-white">Tipo</th>
-                <th className="text-left py-3 px-4 font-medium text-white">Rev. Técnica</th>
+                <th className="text-left py-3 px-4 font-medium text-white">Marca/Modelo</th>
+                <th className="text-left py-3 px-4 font-medium text-white">Año</th>
+                <th className="text-left py-3 px-4 font-medium text-white">Capacidad</th>
+                <th className="text-left py-3 px-4 font-medium text-white">Último Mantto.</th>
+                <th className="text-left py-3 px-4 font-medium text-white">Venc. Seguro</th>
                 <th className="text-left py-3 px-4 font-medium text-white">Estado</th>
                 <th className="text-center py-3 px-4 font-medium text-white">Acciones</th>
               </tr>
@@ -87,11 +107,14 @@ export const CranesTable = ({
               {cranes.map((crane) => (
                 <tr key={crane.id} className="border-b border-gray-800 hover:bg-white/5">
                   <td className="py-3 px-4 text-white font-medium">{crane.licensePlate}</td>
-                  <td className="py-3 px-4 text-white">{crane.brand}</td>
-                  <td className="py-3 px-4 text-white">{crane.model}</td>
-                  <td className="py-3 px-4 text-white capitalize">{crane.type}</td>
+                  <td className="py-3 px-4 text-white">{crane.brand} {crane.model}</td>
+                  <td className="py-3 px-4 text-white">{crane.year}</td>
+                  <td className="py-3 px-4 text-white">{crane.capacity}kg</td>
                   <td className="py-3 px-4 text-white">
-                    {format(new Date(crane.technicalReviewExpiry), 'dd/MM/yyyy', { locale: es })}
+                    {crane.lastMaintenance ? format(new Date(crane.lastMaintenance), 'dd/MM/yyyy', { locale: es }) : '-'}
+                  </td>
+                  <td className="py-3 px-4 text-white">
+                    {crane.insuranceExpiry ? format(new Date(crane.insuranceExpiry), 'dd/MM/yyyy', { locale: es }) : '-'}
                   </td>
                   <td className="py-3 px-4">
                     <Badge 
@@ -109,24 +132,20 @@ export const CranesTable = ({
                       <Button
                         variant="ghost"
                         size="sm"
+                        onClick={() => onViewDetails(crane)}
+                        className="text-blue-400 hover:text-blue-300 hover:bg-blue-400/10 border border-blue-400/50"
+                        title="Ver detalles"
+                      >
+                        <Eye className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
                         onClick={() => onEdit(crane)}
                         className="text-tms-green hover:text-tms-green/80 hover:bg-tms-green/10 border border-tms-green/50"
                         title="Editar grúa"
                       >
                         <Edit className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => onToggleStatus(crane)}
-                        className={`border ${
-                          crane.isActive 
-                            ? 'text-orange-400 hover:text-orange-300 hover:bg-orange-400/10 border-orange-400/50' 
-                            : 'text-green-400 hover:text-green-300 hover:bg-green-400/10 border-green-400/50'
-                        }`}
-                        title={crane.isActive ? 'Desactivar grúa' : 'Activar grúa'}
-                      >
-                        {crane.isActive ? <PowerOff className="w-4 h-4" /> : <Power className="w-4 h-4" />}
                       </Button>
                       <Button
                         variant="ghost"

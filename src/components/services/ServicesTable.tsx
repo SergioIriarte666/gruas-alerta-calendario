@@ -1,4 +1,3 @@
-
 import { Service } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,6 +7,8 @@ import { Plus, Eye, Edit, Trash2, Truck, Check } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useUser } from '@/contexts/UserContext';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { ServicesMobileView } from './ServicesMobileView';
 
 interface ServicesTableProps {
   services: Service[];
@@ -50,7 +51,28 @@ export const ServicesTable = ({
 }: ServicesTableProps) => {
   const { user } = useUser();
   const isAdmin = user?.role === 'admin';
+  const isMobile = useIsMobile();
 
+  // Render mobile view if on mobile device
+  if (isMobile) {
+    return (
+      <Card className="glass-card tms-text-white">
+        <CardContent className="p-4">
+          <ServicesMobileView
+            services={services}
+            hasInitialServices={hasInitialServices}
+            onViewDetails={onViewDetails}
+            onEdit={onEdit}
+            onDelete={onDelete}
+            onCloseService={onCloseService}
+            onAddNewService={onAddNewService}
+          />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Desktop view (unchanged functionality)
   return (
     <Card className="glass-card tms-text-white">
       <CardHeader>

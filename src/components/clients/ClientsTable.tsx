@@ -1,9 +1,10 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Edit, Trash2, Eye, UserCheck, UserX, Plus, Users } from 'lucide-react';
 import { Client } from '@/types';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { ClientsMobileView } from './ClientsMobileView';
 
 interface ClientsTableProps {
   clients: Client[];
@@ -26,6 +27,25 @@ export const ClientsTable = ({
   onNewClient,
   searchTerm,
 }: ClientsTableProps) => {
+  const isMobile = useIsMobile();
+
+  // Render mobile view if on mobile device
+  if (isMobile) {
+    return (
+      <ClientsMobileView
+        clients={clients}
+        totalClients={totalClients}
+        onEdit={onEdit}
+        onDelete={onDelete}
+        onToggleStatus={onToggleStatus}
+        onViewDetails={onViewDetails}
+        onNewClient={onNewClient}
+        searchTerm={searchTerm}
+      />
+    );
+  }
+
+  // Desktop view (unchanged functionality)
   if (clients.length === 0 && searchTerm) {
     return (
       <Card className="glass-card">
