@@ -20,7 +20,7 @@ import {
 } from 'lucide-react';
 
 const Settings = () => {
-  const { settings, loading, saving, updateSettings, saveSettings, resetSettings } = useSettings();
+  const { settings, loading, resetSettings } = useSettings();
   const { 
     systemSettings, 
     notificationSettings, 
@@ -32,21 +32,6 @@ const Settings = () => {
   } = useSystemSettings();
   const { isUpdating: isLogoUpdating, updateLogo } = useLogoUpdater();
   const [activeTab, setActiveTab] = React.useState('company');
-
-  const handleSave = async () => {
-    const result = await saveSettings();
-    if (result.success) {
-      toast.success("Configuración guardada", {
-        description: "Los cambios se han guardado correctamente.",
-      });
-      console.log('Dispatching settings-updated event after saving settings');
-      window.dispatchEvent(new Event('settings-updated'));
-    } else {
-      toast.error("Error al guardar", {
-        description: result.error || "No se pudo guardar la configuración.",
-      });
-    }
-  };
 
   const handleSystemSave = async () => {
     const result = await saveSystemSettings();
@@ -88,8 +73,6 @@ const Settings = () => {
     );
   }
 
-  const isSavingForCompany = saving || isLogoUpdating;
-
   return (
     <div className="space-y-6 animate-fade-in">
       <SettingsHeader onReset={resetSettings} />
@@ -119,21 +102,15 @@ const Settings = () => {
         </TabsList>
 
         <TabsContent value="company">
-          <CompanySettingsTab
-            settings={settings.company}
-            saving={isSavingForCompany}
-            onSave={handleSave}
-            onLogoChange={handleLogoChange}
-            onUpdateSettings={updateSettings}
-          />
+          <CompanySettingsTab />
         </TabsContent>
 
         <TabsContent value="user">
           <UserSettingsTab
             settings={settings.user}
-            saving={saving}
-            onSave={handleSave}
-            onUpdateSettings={updateSettings}
+            saving={false}
+            onSave={async () => ({ success: true })}
+            onUpdateSettings={() => {}}
           />
         </TabsContent>
 

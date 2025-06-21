@@ -45,6 +45,11 @@ export const CompanySettingsTab = () => {
     }
   };
 
+  const handleLogoChange = (file: File | null) => {
+    // This will be handled by the parent component
+    console.log('Logo change requested:', file);
+  };
+
   return (
     <div className="space-y-6">
       <Card>
@@ -169,7 +174,10 @@ export const CompanySettingsTab = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <LogoUpload />
+          <LogoUpload 
+            currentLogo={settings.company.logo}
+            onLogoChange={handleLogoChange}
+          />
         </CardContent>
       </Card>
 

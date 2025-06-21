@@ -1,16 +1,12 @@
 
 import { useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Plus, Upload, RefreshCw } from 'lucide-react';
 import { useServices } from '@/hooks/useServices';
 import { Service } from '@/types';
-import { ServiceForm } from '@/components/services/ServiceForm';
-import { ServiceDetailsModal } from '@/components/services/ServiceDetailsModal';
 import { ServiceFilters } from '@/components/services/ServiceFilters';
-import { CSVUploadServices } from '@/components/services/CSVUploadServices';
 import { ServicesTable } from '@/components/services/ServicesTable';
+import { ServicesHeader } from '@/components/services/ServicesHeader';
+import { ServicesDialogs } from '@/components/services/ServicesDialogs';
 import { AppPagination } from '@/components/shared/AppPagination';
 import { useUser } from '@/contexts/UserContext';
 import { useToast } from '@/components/ui/custom-toast';
@@ -159,7 +155,6 @@ const Services = () => {
   };
 
   const handleEdit = (service: Service) => {
-    // Prevent editing of invoiced services unless admin
     if (service.status === 'invoiced' && user?.role !== 'admin') {
       toast({
         type: "error",
@@ -169,7 +164,6 @@ const Services = () => {
       return;
     }
     
-    // Show warning for admins editing invoiced services
     if (service.status === 'invoiced' && user?.role === 'admin') {
       if (!window.confirm(`⚠️ ADVERTENCIA: Este servicio está facturado.\n\nComo administrador puedes editarlo, pero ten cuidado con los cambios ya que puede afectar la facturación.\n\n¿Deseas continuar?`)) {
         return;
@@ -228,79 +222,34 @@ const Services = () => {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-white">Gestión de Servicios</h1>
-          <p className="text-gray-400 mt-2">
-            Administra todos los servicios de grúa del sistema
-          </p>
-        </div>
-        <div className="flex space-x-2">
-          <Button 
-            onClick={handleRefresh}
-            disabled={refreshing}
-            variant="outline"
-            className="border-gray-600 text-gray-300 hover:bg-gray-700"
-            title="Actualizar datos"
-          >
-            <RefreshCw className={`w-4 h-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
-            Actualizar
-          </Button>
-          {isAdmin && (
-            <>
-              <Button 
-                onClick={() => setIsCSVUploadOpen(true)}
-                className="bg-blue-600 hover:bg-blue-700 text-white"
-                title="Cargar servicios desde un archivo CSV"
-              >
-                <Upload className="w-4 h-4 mr-2" />
-                Carga Masiva
-              </Button>
-              <Button 
-                className="bg-tms-green hover:bg-tms-green-dark text-white"
-                title="Crear un nuevo servicio"
-                onClick={() => {
-                  setEditingService(null);
-                  setIsFormOpen(true);
-                }}
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Nuevo Servicio
-              </Button>
-            </>
-          )}
-        </div>
-      </div>
+      <ServicesHeader
+        isAdmin={isAdmin}
+        refreshing={refreshing}
+        onRefresh={handleRefresh}
+        onCSVUpload={() => setIsCSVUploadOpen(true)}
+        onNewService={() => {
+          setEditingService(null);
+          setIsFormOpen(true);
+        }}
+      />
 
-      <Dialog open={isCSVUploadOpen} onOpenChange={setIsCSVUploadOpen}>
-        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Carga Masiva de Servicios</DialogTitle>
-          </DialogHeader>
-          <CSVUploadServices
-            onClose={() => setIsCSVUploadOpen(false)}
-            onSuccess={handleCSVSuccess}
-          />
-        </DialogContent>
-      </Dialog>
+      <ServicesDialogs
+        isCSVUploadOpen={isCSVUploadOpen}
+        onCSVUploadClose={() => setIsCSVUploadOpen(false)}
+        onCSVSuccess={handleCSVSuccess}
+        isFormOpen={isFormOpen}
+        onFormOpenChange={handleFormOpenChange}
+        editingService={editingService}
+        onCreateService={handleCreateService}
+        onUpdateService={handleUpdateService}
+        selectedService={selectedService}
+        isDetailsOpen={isDetailsOpen}
+        onDetailsClose={() => {
+          setIsDetailsOpen(false);
+          setSelectedService(null);
+        }}
+      />
       
-      {isAdmin && (
-         <Dialog open={isFormOpen} onOpenChange={handleFormOpenChange}>
-            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle>
-                  {editingService ? `Editar Servicio ${editingService.status === 'invoiced' ? '(⚠️ FACTURADO)' : ''}` : 'Nuevo Servicio'}
-                </DialogTitle>
-              </DialogHeader>
-              <ServiceForm
-                service={editingService}
-                onSubmit={editingService ? handleUpdateService : handleCreateService}
-                onCancel={() => handleFormOpenChange(false)}
-              />
-            </DialogContent>
-          </Dialog>
-      )}
-
       <ServiceFilters
         searchTerm={searchTerm}
         onSearchChange={setSearchTerm}
@@ -323,17 +272,6 @@ const Services = () => {
         totalPages={totalPages}
         onPageChange={setCurrentPage}
       />
-
-      {selectedService && (
-        <ServiceDetailsModal
-          service={selectedService}
-          isOpen={isDetailsOpen}
-          onClose={() => {
-            setIsDetailsOpen(false);
-            setSelectedService(null);
-          }}
-        />
-      )}
     </div>
   );
 };
