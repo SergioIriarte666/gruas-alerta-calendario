@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
@@ -67,6 +66,11 @@ function AppContent() {
           <Route index element={<Dashboard />} />
           <Route path="calendar" element={<Calendar />} />
           <Route path="services" element={<Services />} />
+          <Route path="service-types" element={
+            <div>
+              {React.lazy(() => import('./pages/ServiceTypes'))}
+            </div>
+          } />
           <Route path="clients" element={<Clients />} />
           <Route path="cranes" element={<Cranes />} />
           <Route path="operators" element={<Operators />} />

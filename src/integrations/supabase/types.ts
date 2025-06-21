@@ -750,36 +750,60 @@ export type Database = {
       service_types: {
         Row: {
           base_price: number | null
+          crane_required: boolean
           created_at: string | null
           created_by: string | null
           description: string | null
+          destination_required: boolean
           id: string
           is_active: boolean | null
+          license_plate_required: boolean
           name: string
+          operator_required: boolean
+          origin_required: boolean
+          purchase_order_required: boolean
           updated_at: string | null
+          vehicle_brand_required: boolean
           vehicle_info_optional: boolean
+          vehicle_model_required: boolean
         }
         Insert: {
           base_price?: number | null
+          crane_required?: boolean
           created_at?: string | null
           created_by?: string | null
           description?: string | null
+          destination_required?: boolean
           id?: string
           is_active?: boolean | null
+          license_plate_required?: boolean
           name: string
+          operator_required?: boolean
+          origin_required?: boolean
+          purchase_order_required?: boolean
           updated_at?: string | null
+          vehicle_brand_required?: boolean
           vehicle_info_optional?: boolean
+          vehicle_model_required?: boolean
         }
         Update: {
           base_price?: number | null
+          crane_required?: boolean
           created_at?: string | null
           created_by?: string | null
           description?: string | null
+          destination_required?: boolean
           id?: string
           is_active?: boolean | null
+          license_plate_required?: boolean
           name?: string
+          operator_required?: boolean
+          origin_required?: boolean
+          purchase_order_required?: boolean
           updated_at?: string | null
+          vehicle_brand_required?: boolean
           vehicle_info_optional?: boolean
+          vehicle_model_required?: boolean
         }
         Relationships: [
           {

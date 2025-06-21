@@ -32,7 +32,7 @@ export const useServiceFormSubmission = ({
   ) => {
     e.preventDefault();
     
-    const validation = validateForm(folio, formData, clients, cranes, operators, serviceTypes);
+    const validation = validateForm(folio, formData, clients, cranes, operators, serviceTypes, service);
     
     if (!validation.isValid) {
       return;
@@ -56,17 +56,18 @@ export const useServiceFormSubmission = ({
       }
     }
 
-    onSubmit({
+    // Preparar datos según los requerimientos del tipo de servicio
+    const submissionData = {
       folio,
       requestDate: formData.requestDate,
       serviceDate: formData.serviceDate,
       client: selectedClient,
-      purchaseOrder: formData.purchaseOrder,
-      vehicleBrand: formData.vehicleBrand || '',
-      vehicleModel: formData.vehicleModel || '',
-      licensePlate: formData.licensePlate || '',
-      origin: formData.origin,
-      destination: formData.destination,
+      purchaseOrder: selectedServiceType.purchaseOrderRequired ? formData.purchaseOrder : (formData.purchaseOrder || null),
+      vehicleBrand: selectedServiceType.vehicleBrandRequired ? formData.vehicleBrand : (formData.vehicleBrand || null),
+      vehicleModel: selectedServiceType.vehicleModelRequired ? formData.vehicleModel : (formData.vehicleModel || null),
+      licensePlate: selectedServiceType.licensePlateRequired ? formData.licensePlate : (formData.licensePlate || null),
+      origin: selectedServiceType.originRequired ? formData.origin : (formData.origin || null),
+      destination: selectedServiceType.destinationRequired ? formData.destination : (formData.destination || null),
       serviceType: {
         id: selectedServiceType.id,
         name: selectedServiceType.name,
@@ -76,12 +77,15 @@ export const useServiceFormSubmission = ({
         updatedAt: selectedServiceType.updatedAt
       },
       value: formData.value,
-      crane: selectedCrane,
-      operator: selectedOperator,
-      operatorCommission: formData.operatorCommission,
+      crane: selectedCrane || null,
+      operator: selectedOperator || null,
+      operatorCommission: formData.operatorCommission || 0,
       status: formData.status,
-      observations: formData.observations
-    });
+      observations: formData.observations || null
+    };
+
+    console.log('Submitting service data:', submissionData);
+    onSubmit(submissionData);
   };
 
   return { handleSubmit };

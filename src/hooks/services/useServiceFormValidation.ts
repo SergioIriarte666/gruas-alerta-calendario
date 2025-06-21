@@ -17,11 +17,9 @@ export const useServiceFormValidation = () => {
     service?: any
   ) => {
     const selectedClient = clients.find(c => c.id === formData.clientId);
-    const selectedCrane = cranes.find(c => c.id === formData.craneId);
-    const selectedOperator = operators.find(o => o.id === formData.operatorId);
     const selectedServiceType = serviceTypes.find(st => st.id === formData.serviceTypeId);
 
-    // Check if service is invoiced and user is not admin - REMOVE THIS RESTRICTION FOR ADMINS
+    // Check if service is invoiced and user is not admin
     if (service?.status === 'invoiced' && user?.role !== 'admin') {
       toast({
         type: "error",
@@ -31,11 +29,11 @@ export const useServiceFormValidation = () => {
       return { isValid: false };
     }
 
-    if (!selectedClient || !selectedCrane || !selectedOperator || !selectedServiceType) {
+    if (!selectedClient || !selectedServiceType) {
       toast({
         type: "error",
         title: "Error",
-        description: "Por favor, selecciona todos los campos requeridos",
+        description: "Por favor, selecciona cliente y tipo de servicio",
       });
       return { isValid: false };
     }
@@ -49,26 +47,91 @@ export const useServiceFormValidation = () => {
       return { isValid: false };
     }
 
-    // Check if vehicle info is required based on database field
-    const isVehicleInfoOptional = selectedServiceType.vehicleInfoOptional;
-
-    // Validate vehicle information only if required (not optional)
-    if (!isVehicleInfoOptional) {
-      if (!formData.vehicleBrand?.trim() || !formData.vehicleModel?.trim() || !formData.licensePlate?.trim()) {
+    // Validación condicional basada en el tipo de servicio
+    if (selectedServiceType.craneRequired) {
+      const selectedCrane = cranes.find(c => c.id === formData.craneId);
+      if (!selectedCrane) {
         toast({
           type: "error",
           title: "Error",
-          description: "La información del vehículo es requerida para este tipo de servicio",
+          description: "La grúa es requerida para este tipo de servicio",
         });
         return { isValid: false };
       }
     }
 
+    if (selectedServiceType.operatorRequired) {
+      const selectedOperator = operators.find(o => o.id === formData.operatorId);
+      if (!selectedOperator) {
+        toast({
+          type: "error",
+          title: "Error",
+          description: "El operador es requerido para este tipo de servicio",
+        });
+        return { isValid: false };
+      }
+    }
+
+    if (selectedServiceType.originRequired && !formData.origin?.trim()) {
+      toast({
+        type: "error",
+        title: "Error",
+        description: "El origen es requerido para este tipo de servicio",
+      });
+      return { isValid: false };
+    }
+
+    if (selectedServiceType.destinationRequired && !formData.destination?.trim()) {
+      toast({
+        type: "error",
+        title: "Error",
+        description: "El destino es requerido para este tipo de servicio",
+      });
+      return { isValid: false };
+    }
+
+    if (selectedServiceType.purchaseOrderRequired && !formData.purchaseOrder?.trim()) {
+      toast({
+        type: "error",
+        title: "Error",
+        description: "La orden de compra es requerida para este tipo de servicio",
+      });
+      return { isValid: false };
+    }
+
+    // Validación de información del vehículo
+    if (selectedServiceType.vehicleBrandRequired && !formData.vehicleBrand?.trim()) {
+      toast({
+        type: "error",
+        title: "Error",
+        description: "La marca del vehículo es requerida para este tipo de servicio",
+      });
+      return { isValid: false };
+    }
+
+    if (selectedServiceType.vehicleModelRequired && !formData.vehicleModel?.trim()) {
+      toast({
+        type: "error",
+        title: "Error",
+        description: "El modelo del vehículo es requerido para este tipo de servicio",
+      });
+      return { isValid: false };
+    }
+
+    if (selectedServiceType.licensePlateRequired && !formData.licensePlate?.trim()) {
+      toast({
+        type: "error",
+        title: "Error",
+        description: "La patente es requerida para este tipo de servicio",
+      });
+      return { isValid: false };
+    }
+
     return {
       isValid: true,
       selectedClient,
-      selectedCrane,
-      selectedOperator,
+      selectedCrane: cranes.find(c => c.id === formData.craneId),
+      selectedOperator: operators.find(o => o.id === formData.operatorId),
       selectedServiceType
     };
   };

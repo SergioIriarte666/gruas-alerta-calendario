@@ -9,6 +9,15 @@ export interface ServiceType {
   basePrice?: number;
   isActive: boolean;
   vehicleInfoOptional: boolean;
+  // Nuevos campos de configuración
+  purchaseOrderRequired: boolean;
+  originRequired: boolean;
+  destinationRequired: boolean;
+  craneRequired: boolean;
+  operatorRequired: boolean;
+  vehicleBrandRequired: boolean;
+  vehicleModelRequired: boolean;
+  licensePlateRequired: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -32,6 +41,14 @@ const fetchServiceTypes = async (): Promise<ServiceType[]> => {
     basePrice: serviceType.base_price,
     isActive: serviceType.is_active,
     vehicleInfoOptional: serviceType.vehicle_info_optional || false,
+    purchaseOrderRequired: serviceType.purchase_order_required || false,
+    originRequired: serviceType.origin_required !== false, // Default true
+    destinationRequired: serviceType.destination_required !== false, // Default true
+    craneRequired: serviceType.crane_required !== false, // Default true
+    operatorRequired: serviceType.operator_required !== false, // Default true
+    vehicleBrandRequired: serviceType.vehicle_brand_required !== false, // Default true
+    vehicleModelRequired: serviceType.vehicle_model_required !== false, // Default true
+    licensePlateRequired: serviceType.license_plate_required !== false, // Default true
     createdAt: serviceType.created_at,
     updatedAt: serviceType.updated_at
   }));
