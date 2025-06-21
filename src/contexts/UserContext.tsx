@@ -2,7 +2,6 @@
 import * as React from 'react';
 import { useAuth } from './AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { Button } from '@/components/ui/button';
 import { cleanupAuthState } from '@/utils/authCleanup';
 
 interface User {
@@ -123,36 +122,6 @@ export function UserProvider({ children }: UserProviderProps) {
 
   const isAuthenticated = !!authUser && !!session;
   const isLoading = authLoading || profileLoading;
-
-  // Show loading only for initial auth check
-  if (authLoading) {
-    return (
-      <div className="flex items-center justify-center h-screen bg-gray-900 text-white">
-        <div className="text-center">
-          <div className="mb-4">Cargando sesión...</div>
-          <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin mx-auto"></div>
-        </div>
-      </div>
-    );
-  }
-
-  // Show error screen only for profile errors when authenticated
-  if (error && !user && isAuthenticated) {
-    return (
-      <div className="flex flex-col items-center justify-center h-screen bg-gray-900 text-white text-center p-4">
-        <h2 className="text-xl font-bold mb-2 text-red-400">Error de Perfil</h2>
-        <p className="mb-4 max-w-md">{error}</p>
-        <div className="space-y-2">
-          <Button onClick={retryFetchProfile} className="bg-tms-green hover:bg-tms-green-dark">
-            Reintentar
-          </Button>
-          <Button variant="link" onClick={logout} className="mt-2 text-gray-400">
-            Cerrar sesión
-          </Button>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <UserContext.Provider value={{
