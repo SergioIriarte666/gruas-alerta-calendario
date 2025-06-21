@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -21,7 +20,7 @@ import {
   LogOut,
   ChevronLeft,
   ChevronRight,
-  Cog
+  Tags
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -47,7 +46,7 @@ export const Sidebar = ({
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, adminOnly: false },
     { name: 'Calendario', href: '/calendar', icon: Calendar, adminOnly: false },
     { name: 'Servicios', href: '/services', icon: Truck, adminOnly: false },
-    { name: 'Tipos de Servicio', href: '/service-types', icon: Cog, adminOnly: true },
+    { name: 'Tipos de Servicio', href: '/service-types', icon: Tags, adminOnly: true },
     { name: 'Clientes', href: '/clients', icon: Users, adminOnly: false },
     { name: 'Grúas', href: '/cranes', icon: Building2, adminOnly: false },
     { name: 'Operadores', href: '/operators', icon: Wrench, adminOnly: false },
