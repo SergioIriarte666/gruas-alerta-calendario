@@ -120,17 +120,19 @@ const ServiceTypes = () => {
       />
 
       <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-        <DialogContent className="max-w-4xl bg-gray-800 border-gray-700">
-          <DialogHeader>
-            <DialogTitle className="text-white">
+        <DialogContent className="max-w-4xl max-h-[90vh] bg-gray-800 border-gray-700 p-0 gap-0">
+          <DialogHeader className="p-6 pb-0">
+            <DialogTitle className="text-white text-xl">
               {editingServiceType ? 'Editar' : 'Crear'} Tipo de Servicio
             </DialogTitle>
           </DialogHeader>
-          <ServiceTypeForm
-            serviceType={editingServiceType}
-            onSubmit={handleFormSubmit}
-            onCancel={handleFormClose}
-          />
+          <div className="p-6 pt-4">
+            <ServiceTypeForm
+              serviceType={editingServiceType}
+              onSubmit={handleFormSubmit}
+              onCancel={handleFormClose}
+            />
+          </div>
         </DialogContent>
       </Dialog>
 
