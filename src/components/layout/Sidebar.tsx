@@ -132,7 +132,7 @@ export const Sidebar = ({
       </nav>
 
       {/* User section */}
-      <div className="p-4 border-t border-gray-700">
+      <div className="p-4 border-t border-gray-700 bg-tms-dark">
         {!isCollapsed && user && <div className="mb-3">
             <p className="text-sm font-medium text-white">{user.name}</p>
             <p className="text-xs text-gray-400">{user.email}</p>
