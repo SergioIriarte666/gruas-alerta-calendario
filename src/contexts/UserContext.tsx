@@ -40,108 +40,97 @@ interface UserProviderProps {
 export function UserProvider({ children }: UserProviderProps) {
   const { user: authUser, session, signOut, loading: authLoading } = useAuth();
   const [user, setUser] = React.useState<User | null>(null);
-  const [profileLoading, setProfileLoading] = React.useState(true);
+  const [profileLoading, setProfileLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [retryCount, setRetryCount] = React.useState(0);
-  const maxRetries = 3;
-  const retryDelay = 2000;
+  const maxRetries = 2; // Reduced max retries
+  const retryDelay = 1000; // Reduced delay
 
   const fetchProfile = React.useCallback(async (attempt = 0) => {
     console.log('fetchProfile called. authUser:', !!authUser, 'session:', !!session, 'authLoading:', authLoading, 'attempt:', attempt);
-    if (authLoading) return;
+    
+    if (authLoading || !authUser || !session) {
+      console.log('Skipping profile fetch - conditions not met');
+      return;
+    }
 
-    if (authUser && session) {
-      setProfileLoading(true);
-      try {
-        const { data, error: fetchError } = await supabase
-          .from('profiles')
-          .select('id, full_name, email, role')
-          .eq('id', authUser.id)
-          .single();
+    setProfileLoading(true);
+    setError(null);
 
-        if (fetchError && fetchError.code !== 'PGRST116') {
+    try {
+      const { data, error: fetchError } = await supabase
+        .from('profiles')
+        .select('id, full_name, email, role')
+        .eq('id', authUser.id)
+        .single();
+
+      if (fetchError) {
+        console.error('Profile fetch error:', fetchError);
+        
+        if (fetchError.code === 'PGRST116') {
+          // No profile found - this is expected for new users
+          console.log('No profile found for user, they may need to complete setup');
+          setError('Perfil no encontrado. Es posible que necesites completar la configuración.');
+        } else {
           throw fetchError;
-        } else if (data) {
-          console.log("Profile data received:", data);
-          setUser({
-            id: data.id,
-            name: data.full_name || 'Usuario',
-            email: data.email,
-            role: data.role || 'viewer',
-          });
-          setError(null);
-          setRetryCount(0);
-        } else {
-          console.warn("Profile not found for authenticated user.");
-          // Only logout if we've exceeded retry attempts
-          if (attempt >= maxRetries) {
-            setError("No se encontró tu perfil. Se cerrará la sesión para proteger tu cuenta.");
-            await signOut();
-          } else {
-            throw new Error("Profile not found");
-          }
         }
-      } catch (e) {
-        console.error("Error fetching profile:", e);
-        
-        // Check if it's a network error or temporary issue
-        const isNetworkError = e?.message?.includes('fetch') || 
-                              e?.message?.includes('network') ||
-                              e?.code === 'PGRST301' ||
-                              !navigator.onLine;
-        
-        if (isNetworkError && attempt < maxRetries) {
-          console.log(`Network error detected, retrying in ${retryDelay}ms (attempt ${attempt + 1}/${maxRetries})`);
-          setError(`Problema de conectividad. Reintentando... (${attempt + 1}/${maxRetries})`);
-          setRetryCount(attempt + 1);
-          
-          setTimeout(() => {
-            fetchProfile(attempt + 1);
-          }, retryDelay * (attempt + 1)); // Exponential backoff
-          return;
-        }
-        
-        // If it's a critical error or we've exceeded retries
-        if (attempt >= maxRetries) {
-          setError("Error persistente al cargar tu perfil. Se cerrará la sesión por seguridad.");
-          await signOut();
-        } else {
-          setError("Error temporal al cargar tu perfil. Reintentando...");
-          setTimeout(() => {
-            fetchProfile(attempt + 1);
-          }, retryDelay);
-        }
-      } finally {
-        setProfileLoading(false);
+      } else if (data) {
+        console.log("Profile data received:", data);
+        setUser({
+          id: data.id,
+          name: data.full_name || 'Usuario',
+          email: data.email,
+          role: data.role || 'viewer',
+        });
+        setError(null);
+        setRetryCount(0);
       }
-    } else {
-      console.log("No authenticated user or session, clearing user data.");
-      setUser(null);
+    } catch (e: any) {
+      console.error("Error fetching profile:", e);
+      
+      const isNetworkError = e?.message?.includes('fetch') || 
+                            e?.message?.includes('network') ||
+                            !navigator.onLine;
+      
+      if (isNetworkError && attempt < maxRetries) {
+        console.log(`Network error detected, retrying in ${retryDelay}ms (attempt ${attempt + 1}/${maxRetries})`);
+        setError(`Problema de conectividad. Reintentando... (${attempt + 1}/${maxRetries})`);
+        setRetryCount(attempt + 1);
+        
+        setTimeout(() => {
+          fetchProfile(attempt + 1);
+        }, retryDelay);
+        return;
+      }
+      
+      if (attempt >= maxRetries) {
+        setError("No se pudo cargar tu perfil. Verifica tu conexión e intenta de nuevo.");
+      } else {
+        setError("Error temporal al cargar tu perfil.");
+      }
+    } finally {
       setProfileLoading(false);
-      setError(null);
-      setRetryCount(0);
     }
   }, [authLoading, authUser, session, signOut]);
 
   React.useEffect(() => {
     let isMounted = true;
     
-    // Timeout más largo para dar más tiempo
-    const timeoutId = setTimeout(() => {
-        if(isMounted && profileLoading && authUser) {
-            console.error('Profile loading timeout.');
-            setProfileLoading(false);
-            setError('La carga de la sesión está tardando demasiado. Verifica tu conexión.');
-        }
-    }, 30000); // 30 second timeout instead of 15
-
-    fetchProfile();
+    if (!authLoading) {
+      if (authUser && session) {
+        fetchProfile();
+      } else {
+        console.log("No authenticated user or session, clearing user data.");
+        setUser(null);
+        setError(null);
+        setRetryCount(0);
+      }
+    }
 
     return () => {
-        isMounted = false;
-        clearTimeout(timeoutId);
+      isMounted = false;
     };
-  }, [fetchProfile]);
+  }, [authUser, session, authLoading, fetchProfile]);
 
   // Listen for network status changes
   React.useEffect(() => {
@@ -200,22 +189,19 @@ export function UserProvider({ children }: UserProviderProps) {
   const isAuthenticated = !!authUser && !!session;
   const isLoading = authLoading || profileLoading;
 
-  if (isLoading) {
+  // Simplified loading screen
+  if (authLoading) {
     return (
       <div className="flex items-center justify-center h-screen bg-gray-900 text-white">
         <div className="text-center">
           <div className="mb-4">Cargando sesión...</div>
-          {retryCount > 0 && (
-            <div className="text-sm text-gray-400">
-              Reintento {retryCount}/{maxRetries}
-            </div>
-          )}
+          <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin mx-auto"></div>
         </div>
       </div>
     );
   }
 
-  if (error && !user) {
+  if (error && !user && isAuthenticated) {
     const isNetworkError = error.includes('conectividad') || error.includes('conexión');
     
     return (

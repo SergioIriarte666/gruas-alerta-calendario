@@ -1,9 +1,13 @@
 
 import React from 'react';
-import Dashboard from './Dashboard';
+import { Layout } from '@/components/layout/Layout';
 
 const Index: React.FC = () => {
-  return <Dashboard />;
+  return (
+    <Layout>
+      {/* The content will be rendered by the Outlet in Layout */}
+    </Layout>
+  );
 };
 
 export default Index;
