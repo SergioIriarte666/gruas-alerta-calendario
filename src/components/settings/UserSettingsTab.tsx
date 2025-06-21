@@ -25,23 +25,23 @@ export const UserSettingsTab: React.FC<UserSettingsTabProps> = ({
   return (
     <Card className="glass-card">
       <CardHeader>
-        <CardTitle className="flex items-center space-x-2 text-foreground">
+        <CardTitle className="flex items-center space-x-2 text-white">
           <Palette className="w-5 h-5 text-tms-green" />
-          <span>Preferencias de Usuario</span>
+          <span className="text-white">Preferencias de Usuario</span>
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-2">
-            <Label className="text-muted-foreground">Tema</Label>
+            <Label className="text-white">Tema</Label>
             <Select 
               value={settings.theme} 
               onValueChange={(value) => onUpdateSettings({
                 user: { ...settings, theme: value as 'light' | 'dark' | 'system' }
               })}
             >
-              <SelectTrigger className="bg-background border-border text-foreground">
-                <SelectValue />
+              <SelectTrigger className="bg-black border-tms-green/30 text-white">
+                <SelectValue className="text-white" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="light">Claro</SelectItem>
@@ -52,15 +52,15 @@ export const UserSettingsTab: React.FC<UserSettingsTabProps> = ({
           </div>
           
           <div className="space-y-2">
-            <Label className="text-muted-foreground">Idioma</Label>
+            <Label className="text-white">Idioma</Label>
             <Select 
               value={settings.language} 
               onValueChange={(value) => onUpdateSettings({
                 user: { ...settings, language: value as 'es' | 'en' }
               })}
             >
-              <SelectTrigger className="bg-background border-border text-foreground">
-                <SelectValue />
+              <SelectTrigger className="bg-black border-tms-green/30 text-white">
+                <SelectValue className="text-white" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="es">Español</SelectItem>
@@ -70,15 +70,15 @@ export const UserSettingsTab: React.FC<UserSettingsTabProps> = ({
           </div>
           
           <div className="space-y-2">
-            <Label className="text-muted-foreground">Formato de Fecha</Label>
+            <Label className="text-white">Formato de Fecha</Label>
             <Select 
               value={settings.dateFormat} 
               onValueChange={(value) => onUpdateSettings({
                 user: { ...settings, dateFormat: value as 'DD/MM/YYYY' | 'MM/DD/YYYY' | 'YYYY-MM-DD' }
               })}
             >
-              <SelectTrigger className="bg-background border-border text-foreground">
-                <SelectValue />
+              <SelectTrigger className="bg-black border-tms-green/30 text-white">
+                <SelectValue className="text-white" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="DD/MM/YYYY">DD/MM/YYYY</SelectItem>
@@ -89,15 +89,15 @@ export const UserSettingsTab: React.FC<UserSettingsTabProps> = ({
           </div>
           
           <div className="space-y-2">
-            <Label className="text-muted-foreground">Moneda</Label>
+            <Label className="text-white">Moneda</Label>
             <Select 
               value={settings.currency} 
               onValueChange={(value) => onUpdateSettings({
                 user: { ...settings, currency: value as 'CLP' | 'USD' | 'EUR' }
               })}
             >
-              <SelectTrigger className="bg-background border-border text-foreground">
-                <SelectValue />
+              <SelectTrigger className="bg-black border-tms-green/30 text-white">
+                <SelectValue className="text-white" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="CLP">Peso Chileno (CLP)</SelectItem>
@@ -108,12 +108,12 @@ export const UserSettingsTab: React.FC<UserSettingsTabProps> = ({
           </div>
         </div>
 
-        <Separator className="bg-border" />
+        <Separator className="bg-tms-green/30" />
 
         <div className="flex items-center justify-between">
           <div>
-            <Label className="text-muted-foreground">Notificaciones</Label>
-            <p className="text-sm text-muted-foreground">Recibir notificaciones en el sistema</p>
+            <Label className="text-white">Notificaciones</Label>
+            <p className="text-sm text-white/70">Recibir notificaciones en el sistema</p>
           </div>
           <Switch 
             checked={settings.notifications}
@@ -126,7 +126,7 @@ export const UserSettingsTab: React.FC<UserSettingsTabProps> = ({
         <Button 
           onClick={onSave}
           disabled={saving}
-          className="bg-tms-green hover:bg-tms-green-dark text-white"
+          className="bg-tms-green hover:bg-tms-green/80 text-black"
         >
           <Save className="w-4 h-4 mr-2" />
           {saving ? 'Guardando...' : 'Guardar Preferencias'}

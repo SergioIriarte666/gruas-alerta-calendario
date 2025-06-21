@@ -114,16 +114,13 @@
     background: rgba(156, 250, 36, 0.8);
   }
 
-  /* FORCE WHITE TEXT GLOBALLY BUT EXCLUDE BUTTONS */
+  /* FORCE WHITE TEXT GLOBALLY */
   .text-gray-100,
   .text-gray-200, 
   .text-gray-300,
   .text-gray-400,
   .text-gray-500,
-  .text-gray-600 {
-    color: #ffffff !important;
-  }
-
+  .text-gray-600,
   .text-muted-foreground {
     color: #ffffff !important;
   }
@@ -141,7 +138,49 @@
   td:not(button td), 
   th:not(button th), 
   label:not(button label) {
-    color: #ffffff;
+    color: #ffffff !important;
+  }
+
+  /* FORCE WHITE TEXT IN FORM ELEMENTS */
+  input:not(button input),
+  textarea:not(button textarea),
+  select:not(button select) {
+    color: #ffffff !important;
+    background: #000000 !important;
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    color: rgba(255, 255, 255, 0.7) !important;
+  }
+
+  /* FORCE WHITE TEXT IN SELECT COMPONENTS */
+  [role="combobox"]:not(button),
+  [role="combobox"] span:not(button span),
+  [data-radix-select-trigger]:not(button),
+  [data-radix-select-trigger] span:not(button span),
+  [data-radix-select-value]:not(button),
+  [data-radix-select-content]:not(button),
+  [data-radix-select-item]:not(button),
+  [data-radix-select-item] span:not(button span) {
+    color: #ffffff !important;
+  }
+
+  /* Force white text in dropdown menus */
+  [data-radix-popper-content-wrapper] {
+    background: #000000 !important;
+    border: 1px solid #9cfa24 !important;
+  }
+
+  [data-radix-popper-content-wrapper] * {
+    color: #ffffff !important;
+  }
+
+  /* Force visibility for all text in settings and forms */
+  .settings-container *:not(button):not(button *),
+  .glass-card *:not(button):not(button *),
+  .metric-card *:not(button):not(button *) {
+    color: #ffffff !important;
   }
 }
 
@@ -251,13 +290,6 @@
     border-radius: 8px !important;
   }
 
-  /* FORCE WHITE TEXT IN COMPONENTS BUT NOT BUTTONS */
-  .text-gray-300:not(button .text-gray-300),
-  .text-gray-400:not(button .text-gray-400),
-  .text-gray-500:not(button .text-gray-500) {
-    color: #ffffff !important;
-  }
-
   /* Override placeholder colors */
   .placeholder-gray-400::placeholder {
     color: rgba(255, 255, 255, 0.7) !important;
@@ -268,18 +300,6 @@
   table th:not(button th),
   .table-cell:not(button .table-cell) {
     color: #ffffff !important;
-  }
-
-  /* Force white text in form elements but maintain button contrast */
-  input:not(button input),
-  textarea:not(button textarea),
-  select:not(button select) {
-    color: #ffffff !important;
-  }
-
-  input::placeholder,
-  textarea::placeholder {
-    color: rgba(255, 255, 255, 0.7) !important;
   }
 
   /* BUTTON TEXT VISIBILITY - FIXED AND COMPREHENSIVE */
@@ -341,5 +361,68 @@
   button[data-state="on"],
   button[data-state="on"] * {
     color: #000000 !important;
+  }
+
+  /* ADDITIONAL FIXES FOR SELECT AND DROPDOWN COMPONENTS */
+  /* Ensure Select components have white text */
+  [data-radix-select-trigger] {
+    background: #000000 !important;
+    border: 1px solid rgba(156, 250, 36, 0.3) !important;
+    color: #ffffff !important;
+  }
+
+  [data-radix-select-content] {
+    background: #000000 !important;
+    border: 1px solid #9cfa24 !important;
+    color: #ffffff !important;
+    z-index: 50 !important;
+  }
+
+  [data-radix-select-item] {
+    color: #ffffff !important;
+    background: transparent !important;
+  }
+
+  [data-radix-select-item]:hover,
+  [data-radix-select-item][data-highlighted] {
+    background: rgba(156, 250, 36, 0.2) !important;
+    color: #ffffff !important;
+  }
+
+  [data-radix-select-item][data-state="checked"] {
+    background: rgba(156, 250, 36, 0.3) !important;
+    color: #ffffff !important;
+  }
+
+  /* Fix for Switch component */
+  [data-radix-switch-root] {
+    background: rgba(255, 255, 255, 0.2) !important;
+  }
+
+  [data-radix-switch-root][data-state="checked"] {
+    background: #9cfa24 !important;
+  }
+
+  [data-radix-switch-thumb] {
+    background: #ffffff !important;
+  }
+
+  /* Force visibility in all form controls */
+  .form-control,
+  .form-control * {
+    color: #ffffff !important;
+  }
+
+  /* Additional overrides for common UI patterns */
+  .text-foreground {
+    color: #ffffff !important;
+  }
+
+  .text-popover-foreground {
+    color: #ffffff !important;
+  }
+
+  .text-card-foreground {
+    color: #ffffff !important;
   }
 }
