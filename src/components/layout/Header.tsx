@@ -91,17 +91,21 @@ export const Header = ({ setIsMobileMenuOpen }: HeaderProps) => {
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="text-white hover:text-black hover:bg-tms-green rounded-full">
-              <User className="w-5 h-5" />
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="text-white hover:text-black hover:bg-tms-green rounded-full bg-tms-green/20 border border-tms-green/30"
+            >
+              <User className="w-5 h-5 text-tms-green" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="bg-gray-800 border-gray-700 min-w-[200px] z-50">
+          <DropdownMenuContent align="end" className="bg-black border-tms-green/30 min-w-[200px] z-50">
             <DropdownMenuLabel className="text-white font-semibold">
               {user?.name || 'Mi Cuenta'}
             </DropdownMenuLabel>
-            <DropdownMenuSeparator className="bg-gray-700" />
+            <DropdownMenuSeparator className="bg-tms-green/30" />
             <DropdownMenuItem
-              className="text-white hover:text-white hover:bg-tms-green/20 cursor-pointer focus:bg-tms-green/20 focus:text-white"
+              className="text-white hover:text-black hover:bg-tms-green cursor-pointer focus:bg-tms-green focus:text-black"
               onClick={handleProfileClick}
             >
               <User className="w-4 h-4 mr-2" />
@@ -109,14 +113,14 @@ export const Header = ({ setIsMobileMenuOpen }: HeaderProps) => {
             </DropdownMenuItem>
             {isAdmin && (
               <DropdownMenuItem
-                className="text-white hover:text-white hover:bg-tms-green/20 cursor-pointer focus:bg-tms-green/20 focus:text-white"
+                className="text-white hover:text-black hover:bg-tms-green cursor-pointer focus:bg-tms-green focus:text-black"
                 onClick={() => navigate('/settings')}
               >
                 <Settings className="w-4 h-4 mr-2" />
                 Configuración
               </DropdownMenuItem>
             )}
-            <DropdownMenuSeparator className="bg-gray-700" />
+            <DropdownMenuSeparator className="bg-tms-green/30" />
             <DropdownMenuItem
               className="text-red-400 hover:text-red-300 hover:bg-red-500/10 cursor-pointer focus:bg-red-500/10 focus:text-red-300"
               onClick={handleLogout}
