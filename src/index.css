@@ -114,7 +114,7 @@
     background: rgba(156, 250, 36, 0.8);
   }
 
-  /* FORCE WHITE TEXT GLOBALLY */
+  /* FORCE WHITE TEXT GLOBALLY BUT EXCLUDE BUTTONS */
   .text-gray-100,
   .text-gray-200, 
   .text-gray-300,
@@ -128,9 +128,36 @@
     color: #ffffff !important;
   }
 
-  /* Force all text elements to be white */
-  p, span, div, h1, h2, h3, h4, h5, h6, td, th, label {
+  /* Force all text elements to be white EXCEPT buttons */
+  p:not(button p), 
+  span:not(button span), 
+  div:not(button div):not(button), 
+  h1:not(button h1), 
+  h2:not(button h2), 
+  h3:not(button h3), 
+  h4:not(button h4), 
+  h5:not(button h5), 
+  h6:not(button h6), 
+  td:not(button td), 
+  th:not(button th), 
+  label:not(button label) {
     color: #ffffff;
+  }
+
+  /* FORCE BLACK TEXT IN BUTTONS */
+  button,
+  button *,
+  [role="button"],
+  [role="button"] * {
+    color: #000000 !important;
+  }
+
+  /* Ensure TMS buttons have black text */
+  button[data-variant="default"],
+  button[data-variant="tms"],
+  .bg-tms-green,
+  .bg-tms-green * {
+    color: #000000 !important;
   }
 }
 
@@ -240,10 +267,10 @@
     border-radius: 8px !important;
   }
 
-  /* FORCE WHITE TEXT IN COMPONENTS */
-  .text-gray-300,
-  .text-gray-400,
-  .text-gray-500 {
+  /* FORCE WHITE TEXT IN COMPONENTS BUT NOT BUTTONS */
+  .text-gray-300:not(button .text-gray-300),
+  .text-gray-400:not(button .text-gray-400),
+  .text-gray-500:not(button .text-gray-500) {
     color: #ffffff !important;
   }
 
@@ -252,22 +279,35 @@
     color: rgba(255, 255, 255, 0.7) !important;
   }
 
-  /* Force white text in tables and lists */
-  table td,
-  table th,
-  .table-cell {
+  /* Force white text in tables and lists but not button content */
+  table td:not(button td),
+  table th:not(button th),
+  .table-cell:not(button .table-cell) {
     color: #ffffff !important;
   }
 
-  /* Force white text in form elements */
-  input,
-  textarea,
-  select {
+  /* Force white text in form elements but maintain button contrast */
+  input:not(button input),
+  textarea:not(button textarea),
+  select:not(button select) {
     color: #ffffff !important;
   }
 
   input::placeholder,
   textarea::placeholder {
     color: rgba(255, 255, 255, 0.7) !important;
+  }
+
+  /* BUTTON TEXT OVERRIDE - Most specific rules */
+  button span,
+  button div,
+  button svg,
+  .btn span,
+  .btn div,
+  .btn svg,
+  [class*="button"] span,
+  [class*="button"] div,
+  [class*="button"] svg {
+    color: #000000 !important;
   }
 }
