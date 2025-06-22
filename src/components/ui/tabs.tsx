@@ -13,12 +13,12 @@ const TabsList = React.forwardRef<
   <TabsPrimitive.List
     ref={ref}
     className={cn(
-      "inline-flex h-10 items-center justify-center rounded-md p-1 text-muted-foreground",
+      "inline-flex h-10 items-center justify-center rounded-md p-1 text-muted-foreground bg-white border border-gray-200",
       className
     )}
     style={{
-      backgroundColor: '#000000',
-      border: '1px solid rgba(156, 250, 36, 0.3)'
+      backgroundColor: '#ffffff',
+      border: '1px solid #e5e7eb'
     }}
     {...props}
   />
@@ -32,23 +32,23 @@ const TabsTrigger = React.forwardRef<
   <TabsPrimitive.Trigger
     ref={ref}
     className={cn(
-      "inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-[#9cfa24] data-[state=active]:text-black data-[state=active]:font-semibold hover:data-[state=inactive]:bg-[rgba(156,250,36,0.1)]",
+      "inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-tms-green data-[state=active]:text-black data-[state=active]:font-semibold text-black hover:bg-gray-50",
       className
     )}
     style={{
-      color: '#ffffff',
+      color: '#000000',
       backgroundColor: 'transparent'
     }}
     onMouseEnter={(e) => {
       if (!e.currentTarget.hasAttribute('data-state') || e.currentTarget.getAttribute('data-state') !== 'active') {
-        e.currentTarget.style.backgroundColor = 'rgba(156, 250, 36, 0.1)';
-        e.currentTarget.style.color = '#ffffff';
+        e.currentTarget.style.backgroundColor = '#f9fafb';
+        e.currentTarget.style.color = '#000000';
       }
     }}
     onMouseLeave={(e) => {
       if (!e.currentTarget.hasAttribute('data-state') || e.currentTarget.getAttribute('data-state') !== 'active') {
         e.currentTarget.style.backgroundColor = 'transparent';
-        e.currentTarget.style.color = '#ffffff';
+        e.currentTarget.style.color = '#000000';
       }
     }}
     {...props}
