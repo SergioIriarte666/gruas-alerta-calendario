@@ -1,10 +1,14 @@
-
 import * as React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUser } from '@/contexts/UserContext';
 import { Navigate, useLocation } from 'react-router-dom';
 
-const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
+interface ProtectedRouteProps {
+  children: React.ReactNode;
+  allowedRoles?: string[];
+}
+
+const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
   const { user: authUser, loading: authLoading } = useAuth();
   const { user: profileUser, loading: profileLoading, error, retryFetchProfile } = useUser();
   const location = useLocation();
@@ -16,6 +20,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     hasProfileUser: !!profileUser,
     userRole: profileUser?.role,
     currentPath: location.pathname,
+    allowedRoles,
     error
   });
 
@@ -108,8 +113,17 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 
   // Handle role-based routing
   if (profileUser) {
-    const isOperatorPortalRoute = location.pathname === '/operator' || location.pathname.startsWith('/operator/');
     const userRole = profileUser.role;
+
+    // New role check
+    if (allowedRoles && allowedRoles.length > 0 && !allowedRoles.includes(userRole)) {
+      console.log(`ProtectedRoute: Role '${userRole}' not in allowed roles [${allowedRoles.join(', ')}]. Redirecting.`);
+      // Redirect operators to their dashboard, others to the main dashboard
+      const redirectTo = userRole === 'operator' ? '/operator' : '/dashboard';
+      return <Navigate to={redirectTo} replace />;
+    }
+    
+    const isOperatorPortalRoute = location.pathname === '/operator' || location.pathname.startsWith('/operator/');
 
     console.log('ProtectedRoute: Role-based routing check - userRole:', userRole, 'path:', location.pathname);
 

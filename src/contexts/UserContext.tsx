@@ -1,4 +1,3 @@
-
 import * as React from 'react';
 import { useAuth } from './AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -7,7 +6,7 @@ interface User {
   id: string;
   name: string;
   email: string;
-  role: 'admin' | 'operator' | 'viewer';
+  role: 'admin' | 'operator' | 'viewer' | 'client';
 }
 
 interface UserContextType {
@@ -71,9 +70,9 @@ export function UserProvider({ children }: UserProviderProps) {
         setUser(null);
       } else if (data) {
         const normalizedRole = data.role?.toLowerCase();
-        const validRoles = ['admin', 'operator', 'viewer'];
+        const validRoles = ['admin', 'operator', 'viewer', 'client'];
         const userRole = validRoles.includes(normalizedRole) 
-          ? normalizedRole as 'admin' | 'operator' | 'viewer' 
+          ? normalizedRole as 'admin' | 'operator' | 'viewer' | 'client'
           : 'viewer';
         
         const userData = {
@@ -123,13 +122,19 @@ export function UserProvider({ children }: UserProviderProps) {
       setUser(updatedUser);
       
       try {
+        const updateData: {
+          full_name: string;
+          email: string;
+          role: 'admin' | 'operator' | 'viewer' | 'client';
+        } = {
+          full_name: updatedUser.name,
+          email: updatedUser.email,
+          role: updatedUser.role,
+        };
+
         const { error } = await supabase
           .from('profiles')
-          .update({ 
-            full_name: updatedUser.name, 
-            email: updatedUser.email, 
-            role: updatedUser.role 
-          })
+          .update(updateData)
           .eq('id', user.id);
         
         if (error) {

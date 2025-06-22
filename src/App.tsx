@@ -30,6 +30,11 @@ import { PWAWrapper } from "@/components/pwa/PWAWrapper";
 import "@/utils/connectionManager";
 import "./App.css";
 
+// Portal Imports
+import PortalLogin from "./pages/portal/PortalLogin";
+import PortalDashboard from "./pages/portal/PortalDashboard";
+import { PortalLayout } from "./components/portal/layout/PortalLayout";
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -88,6 +93,20 @@ function App() {
                     <Route path="/profile" element={<ProtectedRoute><Layout><Profile /></Layout></ProtectedRoute>} />
                     <Route path="/operator" element={<ProtectedRoute><OperatorDashboard /></ProtectedRoute>} />
                     <Route path="/operator/service/:serviceId/inspection" element={<ProtectedRoute><ServiceInspection /></ProtectedRoute>} />
+                    
+                    {/* Client Portal Routes */}
+                    <Route path="/portal/login" element={<PortalLogin />} />
+                    <Route 
+                      path="/portal/dashboard" 
+                      element={
+                        <ProtectedRoute allowedRoles={['client']}>
+                          <PortalLayout>
+                            <PortalDashboard />
+                          </PortalLayout>
+                        </ProtectedRoute>
+                      } 
+                    />
+
                     <Route path="*" element={<NotFound />} />
                   </Routes>
                   <Toaster />
