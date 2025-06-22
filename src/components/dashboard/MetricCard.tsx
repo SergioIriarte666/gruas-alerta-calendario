@@ -42,7 +42,7 @@ export const MetricCard = ({
     }
   };
 
-  const cardClasses = `metric-card group p-3 sm:p-4 h-full bg-white border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 ${linkTo ? 'cursor-pointer hover:border-tms-green hover:shadow-lg' : ''}`;
+  const cardClasses = `metric-card group h-full bg-white border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 ${linkTo ? 'cursor-pointer hover:border-tms-green hover:shadow-lg' : ''}`;
 
   return (
     <Card 
@@ -50,28 +50,34 @@ export const MetricCard = ({
       onClick={handleCardClick}
       style={{ background: '#ffffff', color: '#000000' }}
     >
-      <div className="flex items-start justify-between h-full min-h-0">
-        <div className="flex-1 space-y-1 sm:space-y-2 min-w-0 pr-2 sm:pr-3">
-          <p className="text-xs font-medium text-gray-600 uppercase tracking-wide truncate">{title}</p>
-          <div className="space-y-1">
-            <div className="flex flex-col sm:flex-row sm:items-baseline space-y-1 sm:space-y-0 sm:space-x-2 min-w-0">
-              <h3 className="text-lg sm:text-xl xl:text-2xl font-bold text-black leading-tight break-words min-w-0 flex-1">
-                {value}
-              </h3>
-              {change && (
-                <span className={`text-xs font-semibold ${getChangeColor()} flex items-center whitespace-nowrap`}>
-                  {change}
-                </span>
-              )}
+      <div className="p-3 sm:p-4 md:p-5 lg:p-6">
+        <div className="flex items-start justify-between mb-2 sm:mb-3">
+          <div className="flex-1 min-w-0 pr-2 sm:pr-3">
+            <p className="text-xs sm:text-sm font-medium text-gray-600 uppercase tracking-wide truncate mb-1 sm:mb-2">
+              {title}
+            </p>
+            <div className="space-y-1 sm:space-y-2">
+              <div className="flex flex-col space-y-1">
+                <h3 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-black leading-tight break-all">
+                  {value}
+                </h3>
+                {change && (
+                  <span className={`text-xs sm:text-sm font-semibold ${getChangeColor()} inline-block`}>
+                    {change}
+                  </span>
+                )}
+              </div>
             </div>
-            {description && (
-              <p className="text-xs text-gray-500 leading-relaxed line-clamp-2">{description}</p>
-            )}
+          </div>
+          <div className="p-2 sm:p-2.5 md:p-3 bg-tms-green/10 rounded-lg group-hover:bg-tms-green/20 transition-all duration-300 flex-shrink-0">
+            <Icon className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 text-tms-green" />
           </div>
         </div>
-        <div className="p-2 sm:p-2.5 bg-tms-green/10 rounded-lg group-hover:bg-tms-green/20 transition-all duration-300 flex-shrink-0">
-          <Icon className="w-4 h-4 sm:w-5 sm:h-5 text-tms-green" />
-        </div>
+        {description && (
+          <p className="text-xs sm:text-sm text-gray-500 leading-relaxed line-clamp-2 break-words">
+            {description}
+          </p>
+        )}
       </div>
     </Card>
   );
