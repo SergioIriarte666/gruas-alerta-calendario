@@ -42,7 +42,7 @@ export const MetricCard = ({
     }
   };
 
-  const cardClasses = `metric-card group p-8 h-full bg-white border border-gray-200 shadow-sm hover:shadow-lg transition-all duration-300 ${linkTo ? 'cursor-pointer hover:border-tms-green hover:shadow-xl' : ''}`;
+  const cardClasses = `metric-card group p-6 h-full bg-white border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 ${linkTo ? 'cursor-pointer hover:border-tms-green hover:shadow-lg' : ''}`;
 
   return (
     <Card 
@@ -51,24 +51,24 @@ export const MetricCard = ({
       style={{ background: '#ffffff', color: '#000000' }}
     >
       <div className="flex items-start justify-between h-full">
-        <div className="flex-1 space-y-3">
-          <p className="text-sm font-medium text-gray-600 uppercase tracking-wide">{title}</p>
-          <div className="space-y-2">
-            <div className="flex items-baseline space-x-3">
-              <h3 className="text-3xl xl:text-4xl font-bold text-black leading-none">{value}</h3>
+        <div className="flex-1 space-y-2">
+          <p className="text-xs font-medium text-gray-600 uppercase tracking-wide">{title}</p>
+          <div className="space-y-1">
+            <div className="flex items-baseline space-x-2">
+              <h3 className="text-2xl xl:text-3xl font-bold text-black leading-none">{value}</h3>
               {change && (
-                <span className={`text-sm font-semibold ${getChangeColor()} flex items-center`}>
+                <span className={`text-xs font-semibold ${getChangeColor()} flex items-center`}>
                   {change}
                 </span>
               )}
             </div>
             {description && (
-              <p className="text-sm text-gray-500 leading-relaxed">{description}</p>
+              <p className="text-xs text-gray-500 leading-relaxed">{description}</p>
             )}
           </div>
         </div>
-        <div className="p-4 bg-tms-green/10 rounded-xl group-hover:bg-tms-green/20 transition-all duration-300 ml-4">
-          <Icon className="w-8 h-8 text-tms-green" />
+        <div className="p-3 bg-tms-green/10 rounded-lg group-hover:bg-tms-green/20 transition-all duration-300 ml-3">
+          <Icon className="w-6 h-6 text-tms-green" />
         </div>
       </div>
     </Card>
