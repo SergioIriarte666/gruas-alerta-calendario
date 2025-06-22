@@ -41,33 +41,33 @@ const Dashboard: React.FC = () => {
 
   if (dashboardLoading) {
     return (
-      <div className="space-y-4 sm:space-y-6 lg:space-y-8 bg-white min-h-screen p-3 sm:p-4 md:p-6 lg:p-8">
+      <div className="space-y-6 bg-white min-h-screen p-4 sm:p-6 lg:p-8">
         {/* Header Skeleton */}
-        <div className="space-y-2 sm:space-y-4">
-          <Skeleton className="h-6 sm:h-8 md:h-10 w-48 sm:w-60 md:w-80 bg-gray-200" />
-          <Skeleton className="h-4 sm:h-5 md:h-6 w-64 sm:w-80 md:w-96 bg-gray-200" />
+        <div className="space-y-3">
+          <Skeleton className="h-8 w-80 bg-gray-200" />
+          <Skeleton className="h-5 w-96 bg-gray-200" />
         </div>
         
         {/* Primary Metrics Skeleton */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-6">
           {[...Array(4)].map((_, i) => (
-            <Skeleton key={i} className="h-24 sm:h-28 md:h-32 lg:h-36 bg-gray-200" />
+            <Skeleton key={i} className="h-36 bg-gray-200" />
           ))}
         </div>
         
         {/* Secondary Metrics Skeleton */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
           {[...Array(3)].map((_, i) => (
-            <Skeleton key={i} className="h-20 sm:h-24 md:h-28 bg-gray-200" />
+            <Skeleton key={i} className="h-32 bg-gray-200" />
           ))}
         </div>
         
         {/* Content Skeleton */}
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 sm:gap-6 md:gap-8">
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
           <div className="xl:col-span-2">
-            <Skeleton className="h-64 sm:h-80 md:h-96 bg-gray-200" />
+            <Skeleton className="h-96 bg-gray-200" />
           </div>
-          <Skeleton className="h-64 sm:h-80 md:h-96 bg-gray-200" />
+          <Skeleton className="h-96 bg-gray-200" />
         </div>
       </div>
     );
@@ -76,25 +76,25 @@ const Dashboard: React.FC = () => {
   if (!metrics) return null;
 
   return (
-    <div className="space-y-4 sm:space-y-6 lg:space-y-8 animate-fade-in bg-white min-h-screen p-3 sm:p-4 md:p-6 lg:p-8" style={{ background: '#ffffff', color: '#000000' }}>
+    <div className="space-y-6 animate-fade-in bg-white min-h-screen p-4 sm:p-6 lg:p-8" style={{ background: '#ffffff', color: '#000000' }}>
       {/* Header Section */}
-      <div className="mb-4 sm:mb-6 lg:mb-8">
-        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 md:gap-4 mb-2 sm:mb-3">
-          <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-black">
+      <div className="mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-3">
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-black">
             Dashboard Principal
           </h1>
-          <Badge className="bg-emerald-500/20 text-emerald-600 border border-emerald-500/30 flex items-center px-2 sm:px-3 py-1 w-fit text-xs sm:text-sm">
-            <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-emerald-600 mr-1.5 sm:mr-2 animate-pulse"></span>
+          <Badge className="bg-emerald-500/20 text-emerald-600 border border-emerald-500/30 flex items-center px-3 py-1 w-fit text-sm">
+            <span className="w-2 h-2 rounded-full bg-emerald-600 mr-2 animate-pulse"></span>
             En vivo
           </Badge>
         </div>
-        <p className="text-sm sm:text-base md:text-lg text-gray-600">
+        <p className="text-base text-gray-600">
           Vista general del sistema de gestión de grúas
         </p>
       </div>
 
       {/* Primary Metrics - Main Row */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-6">
         <MetricCard
           title="Ingresos del Mes"
           value={formatCurrency(metrics.monthlyRevenue)}
@@ -134,7 +134,7 @@ const Dashboard: React.FC = () => {
       </div>
 
       {/* Secondary Metrics - Service Status Overview */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
         <MetricCard
           title="En Curso"
           value={metrics.servicesByStatus.pending}
@@ -161,7 +161,7 @@ const Dashboard: React.FC = () => {
       </div>
 
       {/* Main Content Grid */}
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 sm:gap-6 md:gap-8">
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
         {/* Recent Services */}
         <div className="xl:col-span-2">
           <RecentServicesTable services={recentServices} onViewDetails={handleViewDetails} />
