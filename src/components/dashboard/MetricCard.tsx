@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card } from '@/components/ui/card';
 import { LucideIcon } from 'lucide-react';
@@ -42,7 +41,7 @@ export const MetricCard = ({
     }
   };
 
-  const cardClasses = `metric-card group p-3 sm:p-4 h-full bg-white border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 ${linkTo ? 'cursor-pointer hover:border-tms-green hover:shadow-lg' : ''}`;
+  const cardClasses = `metric-card group p-6 h-full bg-white border border-gray-200 ${linkTo ? 'cursor-pointer hover:border-tms-green transition-colors' : ''}`;
 
   return (
     <Card 
@@ -50,27 +49,23 @@ export const MetricCard = ({
       onClick={handleCardClick}
       style={{ background: '#ffffff', color: '#000000' }}
     >
-      <div className="flex items-start justify-between h-full min-h-0">
-        <div className="flex-1 space-y-1 sm:space-y-2 min-w-0 pr-2 sm:pr-3">
-          <p className="text-xs font-medium text-gray-600 uppercase tracking-wide truncate">{title}</p>
-          <div className="space-y-1">
-            <div className="flex flex-col sm:flex-row sm:items-baseline space-y-1 sm:space-y-0 sm:space-x-2 min-w-0">
-              <h3 className="text-lg sm:text-xl xl:text-2xl font-bold text-black leading-tight break-words min-w-0 flex-1">
-                {value}
-              </h3>
-              {change && (
-                <span className={`text-xs font-semibold ${getChangeColor()} flex items-center whitespace-nowrap`}>
-                  {change}
-                </span>
-              )}
-            </div>
-            {description && (
-              <p className="text-xs text-gray-500 leading-relaxed line-clamp-2">{description}</p>
+      <div className="flex items-start justify-between space-x-4">
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-medium text-gray-600 truncate">{title}</p>
+          <div className="flex flex-wrap items-baseline gap-x-2 mt-1">
+            <h3 className="text-lg md:text-xl font-bold text-black">{value}</h3>
+            {change && (
+              <span className={`text-xs font-semibold ${getChangeColor()}`}>
+                {change}
+              </span>
             )}
           </div>
+          {description && (
+            <p className="text-xs text-gray-500 mt-2">{description}</p>
+          )}
         </div>
-        <div className="p-2 sm:p-2.5 bg-tms-green/10 rounded-lg group-hover:bg-tms-green/20 transition-all duration-300 flex-shrink-0">
-          <Icon className="w-4 h-4 sm:w-5 sm:h-5 text-tms-green" />
+        <div className="flex-shrink-0 p-3 bg-green-100 rounded-lg">
+          <Icon className="w-6 h-6 text-green-600" />
         </div>
       </div>
     </Card>
