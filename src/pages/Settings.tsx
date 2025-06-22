@@ -1,4 +1,3 @@
-
 import * as React from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
@@ -75,7 +74,7 @@ const Settings = () => {
       <SettingsHeader onReset={resetSettings} />
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-5 bg-gray-100 border border-gray-200">
+        <TabsList className="grid w-full grid-cols-5 bg-white border border-gray-200">
           <TabsTrigger 
             value="company" 
             className="flex items-center space-x-2 text-black data-[state=active]:text-black data-[state=active]:bg-tms-green hover:bg-gray-50"
