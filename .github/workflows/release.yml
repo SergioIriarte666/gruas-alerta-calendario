@@ -4,14 +4,11 @@ on:
   push:
     branches:
       - main
-      - release
-  pull_request:
-    branches:
-      - main
-      - release
 
 jobs:
   release:
+    permissions:
+      contents: write
     strategy:
       fail-fast: false
       matrix:
@@ -28,12 +25,7 @@ jobs:
         uses: swatinem/rust-cache@v2
         with:
           workspaces: './src-tauri -> target'
-
-      - name: Node.js setup
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
+      
       - name: Install bun
         uses: oven-sh/setup-bun@v1
 
@@ -45,9 +37,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tagName: 'v__VERSION__'
+          tagName: app-v__VERSION__
           releaseName: 'App v__VERSION__'
           releaseBody: 'See the assets to download this version.'
           releaseDraft: true
           prerelease: false
-          buildOptions: --verbose 
