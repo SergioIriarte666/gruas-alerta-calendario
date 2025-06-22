@@ -9,7 +9,6 @@ import { useToast } from '@/components/ui/custom-toast';
 import { useUser } from '@/contexts/UserContext';
 import { useSettings } from '@/hooks/useSettings';
 import { NotificationsDropdown } from './NotificationsDropdown';
-import { ThemeToggle } from '@/components/ui/theme-toggle';
 
 interface HeaderProps {
   setIsMobileMenuOpen: (open: boolean) => void;
@@ -58,9 +57,9 @@ export const Header = ({
     navigate('/profile');
   };
 
-  return <header className="flex h-16 items-center justify-between bg-background border-b border-border px-4 sm:px-6 transition-colors duration-300">
+  return <header className="flex h-16 items-center justify-between bg-white border-b border-gray-200 px-4 sm:px-6 transition-colors duration-300" style={{ background: '#ffffff' }}>
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={() => setIsMobileMenuOpen(true)} className="lg:hidden border border-border/40 hover:bg-accent hover:text-accent-foreground">
+        <Button variant="ghost" size="icon" onClick={() => setIsMobileMenuOpen(true)} className="lg:hidden text-black bg-tms-green/20 border border-tms-green/30 hover:bg-tms-green hover:text-black">
           <Menu className="h-6 w-6" />
           <span className="sr-only">Abrir menú</span>
         </Button>
@@ -69,42 +68,41 @@ export const Header = ({
         <div className="flex items-center space-x-3">
           {companyLogo && <img src={companyLogo} alt="Logo empresa" className="h-8 w-8 object-contain" />}
           <div className="hidden sm:block">
-            <h1 className="text-lg font-semibold text-foreground">{companyName}</h1>
-            <p className="text-xs text-muted-foreground">Sistema de Gestión</p>
+            <h1 className="text-lg font-semibold text-black">{companyName}</h1>
+            <p className="text-xs text-gray-600">Sistema de Gestión</p>
           </div>
         </div>
         
         <div className="hidden lg:block relative max-w-md flex-1">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-          <Input placeholder="Buscar servicios, clientes, facturas..." className="pl-10 bg-background border-border text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-primary" />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+          <Input placeholder="Buscar servicios, clientes, facturas..." className="pl-10 bg-white border-gray-300 text-black placeholder-gray-500 focus:border-tms-green focus:ring-tms-green" />
         </div>
       </div>
 
       <div className="flex items-center space-x-2 sm:space-x-4">
-        <ThemeToggle />
         <NotificationsDropdown />
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="rounded-full border border-border/40 hover:bg-accent hover:text-accent-foreground">
-              <User className="w-5 h-5" />
+            <Button variant="ghost" size="icon" className="text-black hover:text-black hover:bg-tms-green rounded-full bg-tms-green/20 border border-tms-green/30">
+              <User className="w-5 h-5 text-tms-green" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="bg-popover border-border min-w-[200px] z-50">
-            <DropdownMenuLabel className="text-popover-foreground font-semibold">
+          <DropdownMenuContent align="end" className="bg-white border-gray-200 min-w-[200px] z-50" style={{ background: '#ffffff', color: '#000000', borderColor: '#d1d5db' }}>
+            <DropdownMenuLabel className="text-black font-semibold" style={{ color: '#000000' }}>
               {user?.name || 'Mi Cuenta'}
             </DropdownMenuLabel>
-            <DropdownMenuSeparator className="bg-border" />
-            <DropdownMenuItem className="text-popover-foreground hover:bg-accent hover:text-accent-foreground cursor-pointer focus:bg-accent focus:text-accent-foreground" onClick={handleProfileClick}>
+            <DropdownMenuSeparator className="bg-gray-200" style={{ backgroundColor: '#e5e7eb' }} />
+            <DropdownMenuItem className="text-black hover:text-black hover:bg-tms-green cursor-pointer focus:bg-tms-green focus:text-black" style={{ color: '#000000' }} onClick={handleProfileClick}>
               <User className="w-4 h-4 mr-2" />
               Perfil
             </DropdownMenuItem>
-            {isAdmin && <DropdownMenuItem className="text-popover-foreground hover:bg-accent hover:text-accent-foreground cursor-pointer focus:bg-accent focus:text-accent-foreground" onClick={() => navigate('/settings')}>
+            {isAdmin && <DropdownMenuItem className="text-black hover:text-black hover:bg-tms-green cursor-pointer focus:bg-tms-green focus:text-black" style={{ color: '#000000' }} onClick={() => navigate('/settings')}>
                 <Settings className="w-4 h-4 mr-2" />
                 Configuración
               </DropdownMenuItem>}
-            <DropdownMenuSeparator className="bg-border" />
-            <DropdownMenuItem className="text-destructive hover:text-destructive-foreground hover:bg-destructive cursor-pointer focus:bg-destructive focus:text-destructive-foreground" onClick={handleLogout}>
+            <DropdownMenuSeparator className="bg-gray-200" style={{ backgroundColor: '#e5e7eb' }} />
+            <DropdownMenuItem className="text-red-600 hover:text-red-700 hover:bg-red-50 cursor-pointer focus:bg-red-50 focus:text-red-700" style={{ color: '#dc2626' }} onClick={handleLogout}>
               Cerrar Sesión
             </DropdownMenuItem>
           </DropdownMenuContent>

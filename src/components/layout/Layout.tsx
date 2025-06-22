@@ -13,8 +13,21 @@ export const Layout = ({ children }: LayoutProps) => {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = React.useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
 
+  // Asegurar tema blanco al cargar el componente
+  React.useEffect(() => {
+    document.body.style.backgroundColor = '#ffffff';
+    document.body.style.color = '#000000';
+    document.documentElement.style.colorScheme = 'light';
+  }, []);
+
   return (
-    <div className="min-h-screen w-full bg-background text-foreground">
+    <div 
+      className="min-h-screen w-full bg-white text-black"
+      style={{
+        background: '#ffffff',
+        color: '#000000'
+      }}
+    >
       <Sidebar 
         isCollapsed={isSidebarCollapsed}
         setIsCollapsed={setIsSidebarCollapsed}
@@ -29,8 +42,10 @@ export const Layout = ({ children }: LayoutProps) => {
       )}>
         <Header setIsMobileMenuOpen={setIsMobileMenuOpen} />
         <main 
-          className="p-4 sm:p-6 bg-background text-foreground"
+          className="p-4 sm:p-6 bg-white text-black"
           style={{
+            background: '#ffffff',
+            color: '#000000',
             minHeight: 'calc(100vh - 64px)'
           }}
         >
