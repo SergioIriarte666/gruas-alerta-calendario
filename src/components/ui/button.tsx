@@ -14,10 +14,10 @@ const buttonVariants = cva(
         destructive:
           "bg-destructive text-destructive-foreground hover:bg-destructive/90",
         outline:
-          "border border-input bg-background text-white hover:bg-accent hover:text-accent-foreground",
+          "border border-input bg-white text-black hover:bg-gray-50 hover:text-black",
         secondary:
           "bg-secondary text-secondary-foreground hover:bg-secondary/80",
-        ghost: "text-white hover:bg-accent hover:text-accent-foreground",
+        ghost: "text-black hover:bg-gray-100 hover:text-black",
         link: "text-primary underline-offset-4 hover:underline",
         tms: "font-medium text-black bg-tms-green hover:bg-tms-green/80",
       },
@@ -51,7 +51,12 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       color: '#000000',
       ...style
     } : (variant === 'outline') ? {
-      color: '#ffffff',
+      backgroundColor: '#ffffff',
+      color: '#000000',
+      ...style
+    } : (variant === 'ghost') ? {
+      backgroundColor: 'transparent',
+      color: '#000000',
       ...style
     } : style;
 
@@ -60,6 +65,10 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         e.currentTarget.style.backgroundColor = 'rgba(156, 250, 36, 0.8)';
         e.currentTarget.style.color = '#000000';
       } else if (variant === 'outline') {
+        e.currentTarget.style.backgroundColor = '#f9fafb';
+        e.currentTarget.style.color = '#000000';
+      } else if (variant === 'ghost') {
+        e.currentTarget.style.backgroundColor = '#f3f4f6';
         e.currentTarget.style.color = '#000000';
       }
     };
@@ -69,7 +78,11 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         e.currentTarget.style.backgroundColor = '#9cfa24';
         e.currentTarget.style.color = '#000000';
       } else if (variant === 'outline') {
-        e.currentTarget.style.color = '#ffffff';
+        e.currentTarget.style.backgroundColor = '#ffffff';
+        e.currentTarget.style.color = '#000000';
+      } else if (variant === 'ghost') {
+        e.currentTarget.style.backgroundColor = 'transparent';
+        e.currentTarget.style.color = '#000000';
       }
     };
 
