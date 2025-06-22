@@ -50,16 +50,16 @@ export const AlertsPanel = ({ events }: AlertsPanelProps) => {
   };
 
   return (
-    <Card className="glass-card">
+    <Card className="bg-white border border-gray-200" style={{ background: '#ffffff', color: '#000000' }}>
       <CardHeader>
-        <CardTitle className="flex items-center space-x-2 text-white">
+        <CardTitle className="flex items-center space-x-2 text-black">
           <AlertTriangle className="w-5 h-5 text-tms-green" />
           <span>Alertas y Recordatorios</span>
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
         {events.length === 0 ? (
-          <div className="text-center py-8 text-gray-400">
+          <div className="text-center py-8 text-gray-600">
             <Clock className="w-12 h-12 mx-auto mb-4 opacity-50" />
             <p>No hay alertas pendientes</p>
             <p className="text-sm mt-2">Las alertas aparecerán aquí cuando se programen eventos importantes</p>
@@ -71,16 +71,16 @@ export const AlertsPanel = ({ events }: AlertsPanelProps) => {
               <Alert 
                 key={event.id} 
                 variant={getAlertVariant(event.status)}
-                className="bg-black/20 border-tms-green/30"
+                className="bg-gray-50 border-gray-200"
               >
-                <Icon className="h-4 w-4" />
-                <AlertDescription className="text-white">
+                <Icon className="h-4 w-4 text-gray-600" />
+                <AlertDescription className="text-black">
                   <div className="flex justify-between items-start">
                     <div>
                       <p className="font-medium">{getAlertTitle(event)}</p>
-                      <p className="text-sm text-gray-300 mt-1">{event.title}</p>
+                      <p className="text-sm text-gray-600 mt-1">{event.title}</p>
                     </div>
-                    <span className="text-xs text-gray-400 whitespace-nowrap ml-4">
+                    <span className="text-xs text-gray-500 whitespace-nowrap ml-4">
                       {format(new Date(event.date), 'dd MMM', { locale: es })}
                     </span>
                   </div>

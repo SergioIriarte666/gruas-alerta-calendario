@@ -28,11 +28,11 @@ export const MetricCard = ({
   const getChangeColor = () => {
     switch (changeType) {
       case 'positive':
-        return 'text-emerald-400';
+        return 'text-emerald-600';
       case 'negative':
-        return 'text-red-400';
+        return 'text-red-600';
       default:
-        return 'text-gray-400';
+        return 'text-gray-600';
     }
   };
 
@@ -42,18 +42,19 @@ export const MetricCard = ({
     }
   };
 
-  const cardClasses = `metric-card group p-6 h-full ${linkTo ? 'cursor-pointer hover:bg-white/10 transition-colors' : ''}`;
+  const cardClasses = `metric-card group p-6 h-full bg-white border border-gray-200 ${linkTo ? 'cursor-pointer hover:border-tms-green transition-colors' : ''}`;
 
   return (
     <Card 
       className={cardClasses}
       onClick={handleCardClick}
+      style={{ background: '#ffffff', color: '#000000' }}
     >
       <div className="flex items-start justify-between">
         <div className="flex-1">
-          <p className="text-sm font-medium text-gray-400 mb-1">{title}</p>
+          <p className="text-sm font-medium text-gray-600 mb-1">{title}</p>
           <div className="flex items-baseline space-x-2">
-            <h3 className="text-2xl font-bold text-white">{value}</h3>
+            <h3 className="text-2xl font-bold text-black">{value}</h3>
             {change && (
               <span className={`text-sm font-medium ${getChangeColor()}`}>
                 {change}
