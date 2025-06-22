@@ -40,7 +40,7 @@ const formatCurrency = (amount: number) => {
 };
 
 export const VehicleHistory = ({ licensePlate, currentServiceId }: VehicleHistoryProps) => {
-  const { history, isLoading, error } = useVehicleHistory(licensePlate, currentServiceId);
+  const { history, isLoading, error } = useVehicleHistory(licensePlate);
 
   if (isLoading) {
     return (
@@ -115,8 +115,14 @@ export const VehicleHistory = ({ licensePlate, currentServiceId }: VehicleHistor
           </TableHeader>
           <TableBody>
             {history.map((service: VehicleHistoryEntry) => (
-              <TableRow key={service.id} className="border-gray-700">
-                <TableCell className="font-medium text-tms-green">{service.folio}</TableCell>
+              <TableRow 
+                key={service.id} 
+                className={`border-gray-700 ${service.id === currentServiceId ? 'bg-tms-green/10 border-tms-green/30' : ''}`}
+              >
+                <TableCell className={`font-medium ${service.id === currentServiceId ? 'text-tms-green font-bold' : 'text-tms-green'}`}>
+                  {service.folio}
+                  {service.id === currentServiceId && <span className="ml-2 text-xs">(Actual)</span>}
+                </TableCell>
                 <TableCell className="text-gray-300">
                   {format(new Date(service.serviceDate), 'dd/MM/yyyy', { locale: es })}
                 </TableCell>

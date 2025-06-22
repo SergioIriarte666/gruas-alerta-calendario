@@ -1,3 +1,4 @@
+
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { ServiceStatus } from '@/types';
@@ -18,12 +19,12 @@ export interface VehicleHistoryEntry {
   destination: string;
 }
 
-const fetchVehicleHistory = async (licensePlate: string, currentServiceId?: string): Promise<VehicleHistoryEntry[]> => {
+const fetchVehicleHistory = async (licensePlate: string): Promise<VehicleHistoryEntry[]> => {
   if (!licensePlate) return [];
 
   console.log('Fetching vehicle history for license plate:', licensePlate);
 
-  let query = supabase
+  const { data, error } = await supabase
     .from('services')
     .select(`
       id,
@@ -36,15 +37,8 @@ const fetchVehicleHistory = async (licensePlate: string, currentServiceId?: stri
       service_types(name),
       clients(name)
     `)
-    .eq('license_plate', licensePlate);
-
-  if (currentServiceId) {
-    query = query.neq('id', currentServiceId);
-  }
-  
-  query = query.order('service_date', { ascending: false });
-
-  const { data, error } = await query;
+    .eq('license_plate', licensePlate)
+    .order('service_date', { ascending: false });
 
   if (error) {
     console.error('Error fetching vehicle history:', error);
@@ -66,10 +60,10 @@ const fetchVehicleHistory = async (licensePlate: string, currentServiceId?: stri
   }));
 };
 
-export const useVehicleHistory = (licensePlate: string, currentServiceId?: string) => {
+export const useVehicleHistory = (licensePlate: string) => {
   const { data, isLoading, error } = useQuery({
-    queryKey: ['vehicleHistory', licensePlate, currentServiceId],
-    queryFn: () => fetchVehicleHistory(licensePlate, currentServiceId),
+    queryKey: ['vehicleHistory', licensePlate],
+    queryFn: () => fetchVehicleHistory(licensePlate),
     enabled: !!licensePlate,
   });
 
