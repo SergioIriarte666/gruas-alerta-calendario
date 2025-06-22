@@ -1,3 +1,4 @@
+
 import * as React from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
@@ -74,41 +75,41 @@ const Settings = () => {
       <SettingsHeader onReset={resetSettings} />
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-5 bg-white border border-gray-200">
+        <TabsList className="grid w-full grid-cols-2 md:grid-cols-3 lg:grid-cols-5 bg-white border border-gray-200 h-auto p-1 gap-1">
           <TabsTrigger 
             value="company" 
-            className="flex items-center space-x-2 text-black data-[state=active]:text-black data-[state=active]:bg-tms-green hover:bg-gray-50"
+            className="flex flex-col md:flex-row items-center justify-center space-y-1 md:space-y-0 md:space-x-2 text-black data-[state=active]:text-black data-[state=active]:bg-tms-green hover:bg-gray-50 p-2 md:p-3 h-auto min-h-[60px] text-xs md:text-sm"
           >
-            <Building2 className="w-4 h-4" />
-            <span>Empresa</span>
+            <Building2 className="w-4 h-4 flex-shrink-0" />
+            <span className="text-center">Empresa</span>
           </TabsTrigger>
           <TabsTrigger 
             value="user" 
-            className="flex items-center space-x-2 text-black data-[state=active]:text-black data-[state=active]:bg-tms-green hover:bg-gray-50"
+            className="flex flex-col md:flex-row items-center justify-center space-y-1 md:space-y-0 md:space-x-2 text-black data-[state=active]:text-black data-[state=active]:bg-tms-green hover:bg-gray-50 p-2 md:p-3 h-auto min-h-[60px] text-xs md:text-sm"
           >
-            <User className="w-4 h-4" />
-            <span>Usuario</span>
+            <User className="w-4 h-4 flex-shrink-0" />
+            <span className="text-center">Usuario</span>
           </TabsTrigger>
           <TabsTrigger 
             value="system" 
-            className="flex items-center space-x-2 text-black data-[state=active]:text-black data-[state=active]:bg-tms-green hover:bg-gray-50"
+            className="flex flex-col md:flex-row items-center justify-center space-y-1 md:space-y-0 md:space-x-2 text-black data-[state=active]:text-black data-[state=active]:bg-tms-green hover:bg-gray-50 p-2 md:p-3 h-auto min-h-[60px] text-xs md:text-sm"
           >
-            <SettingsIcon className="w-4 h-4" />
-            <span>Sistema</span>
+            <SettingsIcon className="w-4 h-4 flex-shrink-0" />
+            <span className="text-center">Sistema</span>
           </TabsTrigger>
           <TabsTrigger 
             value="notifications" 
-            className="flex items-center space-x-2 text-black data-[state=active]:text-black data-[state=active]:bg-tms-green hover:bg-gray-50"
+            className="flex flex-col md:flex-row items-center justify-center space-y-1 md:space-y-0 md:space-x-2 text-black data-[state=active]:text-black data-[state=active]:bg-tms-green hover:bg-gray-50 p-2 md:p-3 h-auto min-h-[60px] text-xs md:text-sm"
           >
-            <Bell className="w-4 h-4" />
-            <span>Notificaciones</span>
+            <Bell className="w-4 h-4 flex-shrink-0" />
+            <span className="text-center">Notificaciones</span>
           </TabsTrigger>
           <TabsTrigger 
             value="users" 
-            className="flex items-center space-x-2 text-black data-[state=active]:text-black data-[state=active]:bg-tms-green hover:bg-gray-50"
+            className="flex flex-col md:flex-row items-center justify-center space-y-1 md:space-y-0 md:space-x-2 text-black data-[state=active]:text-black data-[state=active]:bg-tms-green hover:bg-gray-50 p-2 md:p-3 h-auto min-h-[60px] text-xs md:text-sm col-span-2 md:col-span-1"
           >
-            <Users className="w-4 h-4" />
-            <span>Usuarios</span>
+            <Users className="w-4 h-4 flex-shrink-0" />
+            <span className="text-center">Usuarios</span>
           </TabsTrigger>
         </TabsList>
 

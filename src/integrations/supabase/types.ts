@@ -152,6 +152,7 @@ export type Database = {
           phone: string | null
           rut: string
           updated_at: string | null
+          user_id: string | null
         }
         Insert: {
           address?: string | null
@@ -164,6 +165,7 @@ export type Database = {
           phone?: string | null
           rut: string
           updated_at?: string | null
+          user_id?: string | null
         }
         Update: {
           address?: string | null
@@ -176,6 +178,7 @@ export type Database = {
           phone?: string | null
           rut?: string
           updated_at?: string | null
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -704,6 +707,7 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
+          client_id: string | null
           created_at: string | null
           email: string
           full_name: string | null
@@ -714,6 +718,7 @@ export type Database = {
         }
         Insert: {
           avatar_url?: string | null
+          client_id?: string | null
           created_at?: string | null
           email: string
           full_name?: string | null
@@ -724,6 +729,7 @@ export type Database = {
         }
         Update: {
           avatar_url?: string | null
+          client_id?: string | null
           created_at?: string | null
           email?: string
           full_name?: string | null
@@ -1033,6 +1039,10 @@ export type Database = {
           created_at: string
           updated_at: string
         }[]
+      }
+      get_client_id_for_user: {
+        Args: { user_id: string }
+        Returns: string
       }
       get_current_user_role: {
         Args: Record<PropertyKey, never>
