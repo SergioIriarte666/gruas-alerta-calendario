@@ -57,7 +57,7 @@ export const Header = ({
     navigate('/profile');
   };
 
-  return <header className="flex h-16 items-center justify-between bg-white border-b border-gray-200 px-4 sm:px-6 transition-colors duration-300">
+  return <header className="flex h-16 items-center justify-between bg-white border-b border-gray-200 px-4 sm:px-6 transition-colors duration-300" style={{ background: '#ffffff' }}>
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="icon" onClick={() => setIsMobileMenuOpen(true)} className="lg:hidden text-black bg-tms-green/20 border border-tms-green/30 hover:bg-tms-green hover:text-black">
           <Menu className="h-6 w-6" />
@@ -88,21 +88,21 @@ export const Header = ({
               <User className="w-5 h-5 text-tms-green" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="bg-white border-gray-200 min-w-[200px] z-50">
-            <DropdownMenuLabel className="text-black font-semibold">
+          <DropdownMenuContent align="end" className="bg-white border-gray-200 min-w-[200px] z-50" style={{ background: '#ffffff', color: '#000000', borderColor: '#d1d5db' }}>
+            <DropdownMenuLabel className="text-black font-semibold" style={{ color: '#000000' }}>
               {user?.name || 'Mi Cuenta'}
             </DropdownMenuLabel>
-            <DropdownMenuSeparator className="bg-gray-200" />
-            <DropdownMenuItem className="text-black hover:text-black hover:bg-tms-green cursor-pointer focus:bg-tms-green focus:text-black" onClick={handleProfileClick}>
+            <DropdownMenuSeparator className="bg-gray-200" style={{ backgroundColor: '#e5e7eb' }} />
+            <DropdownMenuItem className="text-black hover:text-black hover:bg-tms-green cursor-pointer focus:bg-tms-green focus:text-black" style={{ color: '#000000' }} onClick={handleProfileClick}>
               <User className="w-4 h-4 mr-2" />
               Perfil
             </DropdownMenuItem>
-            {isAdmin && <DropdownMenuItem className="text-black hover:text-black hover:bg-tms-green cursor-pointer focus:bg-tms-green focus:text-black" onClick={() => navigate('/settings')}>
+            {isAdmin && <DropdownMenuItem className="text-black hover:text-black hover:bg-tms-green cursor-pointer focus:bg-tms-green focus:text-black" style={{ color: '#000000' }} onClick={() => navigate('/settings')}>
                 <Settings className="w-4 h-4 mr-2" />
                 Configuración
               </DropdownMenuItem>}
-            <DropdownMenuSeparator className="bg-gray-200" />
-            <DropdownMenuItem className="text-red-600 hover:text-red-700 hover:bg-red-50 cursor-pointer focus:bg-red-50 focus:text-red-700" onClick={handleLogout}>
+            <DropdownMenuSeparator className="bg-gray-200" style={{ backgroundColor: '#e5e7eb' }} />
+            <DropdownMenuItem className="text-red-600 hover:text-red-700 hover:bg-red-50 cursor-pointer focus:bg-red-50 focus:text-red-700" style={{ color: '#dc2626' }} onClick={handleLogout}>
               Cerrar Sesión
             </DropdownMenuItem>
           </DropdownMenuContent>

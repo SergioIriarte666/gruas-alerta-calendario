@@ -136,21 +136,21 @@ const Auth = () => {
   // Si hay error en el perfil, mostrar opción de debug
   if (authUser && profileError) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-transparent">
-        <Card className="glass-card border-0 w-[400px]">
+      <div className="flex items-center justify-center min-h-screen bg-white" style={{ background: '#ffffff' }}>
+        <Card className="border border-gray-200 w-[400px] bg-white" style={{ background: '#ffffff', borderColor: '#d1d5db' }}>
           <CardHeader>
-            <CardTitle className="text-white">Error de Perfil</CardTitle>
-            <CardDescription className="text-red-400">{profileError}</CardDescription>
+            <CardTitle className="text-black">Error de Perfil</CardTitle>
+            <CardDescription className="text-red-600">{profileError}</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="text-sm text-gray-300">
+          <CardContent className="space-y-4 bg-white" style={{ background: '#ffffff' }}>
+            <div className="text-sm text-gray-600">
               <p>Usuario autenticado: {authUser.email}</p>
               <p>ID: {authUser.id}</p>
             </div>
             <div className="space-y-2">
               <Button
                 onClick={retryFetchProfile}
-                className="w-full bg-tms-green hover:bg-tms-green-dark text-white"
+                className="w-full bg-tms-green hover:bg-tms-green-dark text-black"
               >
                 Reintentar Cargar Perfil
               </Button>
@@ -166,7 +166,7 @@ const Auth = () => {
                   window.location.reload();
                 }}
                 variant="outline"
-                className="w-full"
+                className="w-full bg-white text-black border-gray-300"
               >
                 Limpiar Sesión y Reiniciar
               </Button>
@@ -178,17 +178,18 @@ const Auth = () => {
   }
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-transparent">
+    <div className="flex items-center justify-center min-h-screen bg-white" style={{ background: '#ffffff' }}>
       <div className="w-[400px]">
         {/* Custom Tab Implementation */}
-        <div className="flex w-full bg-black/20 rounded-lg p-1 mb-4">
+        <div className="flex w-full bg-gray-100 rounded-lg p-1 mb-4" style={{ background: '#f3f4f6' }}>
           <button
             onClick={() => setActiveTab('login')}
             className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
               activeTab === 'login'
-                ? 'bg-white text-gray-900'
-                : 'text-white hover:text-gray-300'
+                ? 'bg-white text-black shadow-sm'
+                : 'text-gray-700 hover:text-black'
             }`}
+            style={activeTab === 'login' ? { background: '#ffffff', color: '#000000' } : { color: '#374151' }}
           >
             Iniciar Sesión
           </button>
@@ -196,9 +197,10 @@ const Auth = () => {
             onClick={() => setActiveTab('register')}
             className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
               activeTab === 'register'
-                ? 'bg-white text-gray-900'
-                : 'text-white hover:text-gray-300'
+                ? 'bg-white text-black shadow-sm'
+                : 'text-gray-700 hover:text-black'
             }`}
+            style={activeTab === 'register' ? { background: '#ffffff', color: '#000000' } : { color: '#374151' }}
           >
             Registrarse
           </button>
@@ -206,15 +208,15 @@ const Auth = () => {
 
         {/* Login Tab Content */}
         {activeTab === 'login' && (
-          <Card className="glass-card border-0">
+          <Card className="bg-white border border-gray-200" style={{ background: '#ffffff', borderColor: '#d1d5db' }}>
             <CardHeader>
-              <CardTitle className="text-white">Iniciar Sesión</CardTitle>
-              <CardDescription>Ingresa tus credenciales para acceder a tu cuenta.</CardDescription>
+              <CardTitle className="text-black">Iniciar Sesión</CardTitle>
+              <CardDescription className="text-gray-600">Ingresa tus credenciales para acceder a tu cuenta.</CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="bg-white" style={{ background: '#ffffff' }}>
               <form onSubmit={handleLogin} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="email-login" className="text-gray-300">Email</Label>
+                  <Label htmlFor="email-login" className="text-black">Email</Label>
                   <Input
                     id="email-login"
                     type="email"
@@ -222,23 +224,23 @@ const Auth = () => {
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="bg-white/5 border-gray-700 text-white"
+                    className="bg-white border-gray-300 text-black placeholder-gray-500"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="password-login" className="text-gray-300">Contraseña</Label>
+                  <Label htmlFor="password-login" className="text-black">Contraseña</Label>
                   <Input
                     id="password-login"
                     type="password"
                     required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="bg-white/5 border-gray-700 text-white"
+                    className="bg-white border-gray-300 text-black"
                   />
                 </div>
                 <Button
                   type="submit"
-                  className="w-full bg-tms-green hover:bg-tms-green-dark text-white"
+                  className="w-full bg-tms-green hover:bg-tms-green-dark text-black"
                   disabled={loading}
                 >
                   {loading ? 'Ingresando...' : 'Ingresar'}
@@ -250,15 +252,15 @@ const Auth = () => {
 
         {/* Register Tab Content */}
         {activeTab === 'register' && (
-          <Card className="glass-card border-0">
+          <Card className="bg-white border border-gray-200" style={{ background: '#ffffff', borderColor: '#d1d5db' }}>
             <CardHeader>
-              <CardTitle className="text-white">Registrarse</CardTitle>
-              <CardDescription>Crea una nueva cuenta para empezar.</CardDescription>
+              <CardTitle className="text-black">Registrarse</CardTitle>
+              <CardDescription className="text-gray-600">Crea una nueva cuenta para empezar.</CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="bg-white" style={{ background: '#ffffff' }}>
               <form onSubmit={handleSignUp} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="email-register" className="text-gray-300">Email</Label>
+                  <Label htmlFor="email-register" className="text-black">Email</Label>
                   <Input
                     id="email-register"
                     type="email"
@@ -266,23 +268,23 @@ const Auth = () => {
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="bg-white/5 border-gray-700 text-white"
+                    className="bg-white border-gray-300 text-black placeholder-gray-500"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="password-register" className="text-gray-300">Contraseña</Label>
+                  <Label htmlFor="password-register" className="text-black">Contraseña</Label>
                   <Input
                     id="password-register"
                     type="password"
                     required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="bg-white/5 border-gray-700 text-white"
+                    className="bg-white border-gray-300 text-black"
                   />
                 </div>
                 <Button
                   type="submit"
-                  className="w-full bg-tms-green hover:bg-tms-green-dark text-white"
+                  className="w-full bg-tms-green hover:bg-tms-green-dark text-black"
                   disabled={loading}
                 >
                   {loading ? 'Registrando...' : 'Registrar'}

@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -5,12 +6,14 @@ import { useUser } from '@/contexts/UserContext';
 import { useSettings } from '@/hooks/useSettings';
 import { cn } from '@/lib/utils';
 import { LayoutDashboard, Calendar, Truck, Users, Building2, Wrench, DollarSign, FileText, Receipt, BarChart3, Settings, Menu, X, LogOut, ChevronLeft, ChevronRight, Tags } from 'lucide-react';
+
 interface SidebarProps {
   isCollapsed: boolean;
   setIsCollapsed: (collapsed: boolean) => void;
   isMobileMenuOpen: boolean;
   setIsMobileMenuOpen: (open: boolean) => void;
 }
+
 export const Sidebar = ({
   isCollapsed,
   setIsCollapsed,
@@ -108,9 +111,9 @@ export const Sidebar = ({
       console.error('Error during logout:', error);
     }
   };
-  const SidebarContent = () => <div className="flex flex-col h-full bg-white border-r border-gray-200">
+  const SidebarContent = () => <div className="flex flex-col h-full bg-white border-r border-gray-200" style={{ background: '#ffffff', borderColor: '#e5e7eb' }}>
       {/* Header with Company Branding */}
-      <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-white">
+      <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-white" style={{ background: '#ffffff', borderColor: '#e5e7eb' }}>
         {!isCollapsed && <div className="flex items-center space-x-3">
             {companyLogo ? <img src={companyLogo} alt="Logo empresa" className="w-8 h-8 object-contain" /> : <Building2 className="w-8 h-8 text-tms-green" />}
             <div>
@@ -135,7 +138,7 @@ export const Sidebar = ({
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 p-4 space-y-2 bg-white">
+      <nav className="flex-1 p-4 space-y-2 bg-white" style={{ background: '#ffffff' }}>
         {filteredNavigation.map(item => <NavLink key={item.name} to={item.href} className={({
         isActive: linkIsActive
       }) => cn("flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors nav-link", linkIsActive || isActive(item.href) ? "active bg-tms-green text-black" : "text-black hover:bg-tms-green hover:text-black")} onClick={() => setIsMobileMenuOpen(false)}>
@@ -145,7 +148,7 @@ export const Sidebar = ({
       </nav>
 
       {/* User section */}
-      <div className="p-4 border-t border-gray-200 bg-white">
+      <div className="p-4 border-t border-gray-200 bg-white" style={{ background: '#ffffff', borderColor: '#e5e7eb' }}>
         {!isCollapsed && user && <div className="mb-3">
             <p className="text-sm font-medium text-black">{user.name}</p>
             <p className="text-xs text-gray-600">{user.email}</p>

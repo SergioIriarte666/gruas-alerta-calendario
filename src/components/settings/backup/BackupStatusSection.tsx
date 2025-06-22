@@ -22,7 +22,7 @@ export const BackupStatusSection: React.FC<BackupStatusSectionProps> = ({
       {/* Error del hook */}
       {hookError && (
         <Alert 
-          className="border-red-200" 
+          className="border-red-200 bg-white" 
           style={{ background: '#ffffff', color: '#000000', borderColor: '#fecaca' }}
         >
           <XCircle className="w-4 h-4 text-red-500" />
@@ -34,7 +34,7 @@ export const BackupStatusSection: React.FC<BackupStatusSectionProps> = ({
 
       {lastSuccessfulBackup ? (
         <Alert 
-          className="border-green-200" 
+          className="border-green-200 bg-white" 
           style={{ background: '#ffffff', color: '#000000', borderColor: '#bbf7d0' }}
         >
           <CheckCircle className="w-4 h-4 text-green-500" />
@@ -53,7 +53,7 @@ export const BackupStatusSection: React.FC<BackupStatusSectionProps> = ({
         </Alert>
       ) : (
         <Alert 
-          className="border-yellow-200" 
+          className="border-yellow-200 bg-white" 
           style={{ background: '#ffffff', color: '#000000', borderColor: '#fde047' }}
         >
           <AlertTriangle className="w-4 h-4 text-yellow-500" />
