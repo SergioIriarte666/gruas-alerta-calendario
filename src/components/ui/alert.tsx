@@ -9,9 +9,8 @@ const alertVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-black border-tms-green/30 text-white [&>svg]:text-tms-green",
-        destructive:
-          "bg-black border-red-500/50 text-white [&>svg]:text-red-400",
+        default: "bg-white border-gray-200 text-black [&>svg]:text-tms-green",
+        destructive: "bg-white border-red-200 text-black [&>svg]:text-red-500",
       },
     },
     defaultVariants: {
@@ -23,15 +22,16 @@ const alertVariants = cva(
 const Alert = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement> & VariantProps<typeof alertVariants>
->(({ className, variant, ...props }, ref) => (
+>(({ className, variant, style, ...props }, ref) => (
   <div
     ref={ref}
     role="alert"
     className={cn(alertVariants({ variant }), className)}
     style={{
-      background: '#000000',
-      color: '#ffffff',
-      borderColor: variant === 'destructive' ? 'rgba(239, 68, 68, 0.5)' : 'rgba(156, 250, 36, 0.3)'
+      background: '#ffffff !important',
+      color: '#000000 !important',
+      borderColor: variant === 'destructive' ? '#fecaca' : '#e5e7eb',
+      ...style
     }}
     {...props}
   />
@@ -41,11 +41,14 @@ Alert.displayName = "Alert"
 const AlertTitle = React.forwardRef<
   HTMLParagraphElement,
   React.HTMLAttributes<HTMLHeadingElement>
->(({ className, ...props }, ref) => (
+>(({ className, style, ...props }, ref) => (
   <h5
     ref={ref}
-    className={cn("mb-1 font-medium leading-none tracking-tight text-white", className)}
-    style={{ color: '#ffffff' }}
+    className={cn("mb-1 font-medium leading-none tracking-tight", className)}
+    style={{ 
+      color: '#000000 !important',
+      ...style 
+    }}
     {...props}
   />
 ))
@@ -54,11 +57,14 @@ AlertTitle.displayName = "AlertTitle"
 const AlertDescription = React.forwardRef<
   HTMLParagraphElement,
   React.HTMLAttributes<HTMLParagraphElement>
->(({ className, ...props }, ref) => (
+>(({ className, style, ...props }, ref) => (
   <div
     ref={ref}
-    className={cn("text-sm [&_p]:leading-relaxed text-white", className)}
-    style={{ color: '#ffffff' }}
+    className={cn("text-sm [&_p]:leading-relaxed", className)}
+    style={{ 
+      color: '#000000 !important',
+      ...style 
+    }}
     {...props}
   />
 ))

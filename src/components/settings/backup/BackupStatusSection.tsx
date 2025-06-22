@@ -21,43 +21,34 @@ export const BackupStatusSection: React.FC<BackupStatusSectionProps> = ({
       
       {/* Error del hook */}
       {hookError && (
-        <Alert 
-          className="border-red-200 bg-white" 
-          style={{ background: '#ffffff', color: '#000000', borderColor: '#fecaca' }}
-        >
+        <Alert variant="destructive" className="bg-white border-red-200">
           <XCircle className="w-4 h-4 text-red-500" />
-          <AlertDescription className="text-red-700" style={{ color: '#b91c1c' }}>
+          <AlertDescription className="text-red-700">
             Error al cargar datos de respaldos: {hookError.message}
           </AlertDescription>
         </Alert>
       )}
 
       {lastSuccessfulBackup ? (
-        <Alert 
-          className="border-green-200 bg-white" 
-          style={{ background: '#ffffff', color: '#000000', borderColor: '#bbf7d0' }}
-        >
+        <Alert className="bg-white border-green-200">
           <CheckCircle className="w-4 h-4 text-green-500" />
-          <AlertDescription className="text-green-700" style={{ color: '#15803d' }}>
+          <AlertDescription className="text-green-700">
             Último respaldo exitoso: {' '}
             {formatDistanceToNow(new Date(lastSuccessfulBackup.created_at), {
               addSuffix: true,
               locale: es
             })}
             {lastSuccessfulBackup.metadata?.fileName && (
-              <span className="block text-xs mt-1 text-green-600" style={{ color: '#16a34a' }}>
+              <span className="block text-xs mt-1 text-green-600">
                 Archivo: {lastSuccessfulBackup.metadata.fileName}
               </span>
             )}
           </AlertDescription>
         </Alert>
       ) : (
-        <Alert 
-          className="border-yellow-200 bg-white" 
-          style={{ background: '#ffffff', color: '#000000', borderColor: '#fde047' }}
-        >
+        <Alert className="bg-white border-yellow-200">
           <AlertTriangle className="w-4 h-4 text-yellow-500" />
-          <AlertDescription className="text-yellow-700" style={{ color: '#a16207' }}>
+          <AlertDescription className="text-yellow-700">
             No se encontraron respaldos anteriores. Se recomienda generar un respaldo.
           </AlertDescription>
         </Alert>

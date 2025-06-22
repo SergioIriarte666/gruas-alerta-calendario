@@ -3,7 +3,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* TMS Design System - Grúas Management - LIGHT THEME VERSION */
+/* TMS Design System - Grúas Management - FORCED WHITE THEME */
 
 @layer base {
   :root {
@@ -30,28 +30,6 @@
     --tms-green: 156 250 36;
     --tms-white: 255 255 255;
   }
-
-  .light {
-    --background: 255 255 255;
-    --foreground: 0 0 0;
-    --card: 255 255 255;
-    --card-foreground: 0 0 0;
-    --popover: 255 255 255;
-    --popover-foreground: 0 0 0;
-    --primary: 156 250 36;
-    --primary-foreground: 0 0 0;
-    --secondary: 248 250 252;
-    --secondary-foreground: 0 0 0;
-    --muted: 248 250 252;
-    --muted-foreground: 71 85 105;
-    --accent: 156 250 36;
-    --accent-foreground: 0 0 0;
-    --destructive: 239 68 68;
-    --destructive-foreground: 255 255 255;
-    --border: 226 232 240;
-    --input: 255 255 255;
-    --ring: 156 250 36;
-  }
 }
 
 @layer base {
@@ -59,8 +37,12 @@
     @apply border-border;
   }
 
+  html, body, #root {
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+
   html {
-    @apply light;
     background: #ffffff !important;
   }
 
@@ -74,6 +56,19 @@
   #root {
     background: #ffffff !important;
     min-height: 100vh;
+  }
+
+  /* FORCE WHITE BACKGROUNDS EVERYWHERE */
+  div, section, main, header, aside, nav, article, 
+  .bg-black, .bg-gray-900, .bg-gray-800, .bg-gray-700,
+  [role="alert"], [data-radix-alert-root] {
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+  }
+
+  /* FORCE BLACK TEXT EVERYWHERE */
+  *, *::before, *::after {
+    color: #000000 !important;
   }
 
   /* Custom scrollbar */
@@ -96,41 +91,12 @@
 }
 
 @layer components {
-  /* UNIVERSAL BLACK TEXT FOR LIGHT THEME */
-  .tms-text-black,
-  .tms-text-black *,
-  p, span, div, h1, h2, h3, h4, h5, h6, td, th, label,
-  input, textarea, select,
-  [data-radix-select-trigger],
-  [data-radix-select-trigger] *,
-  [data-radix-select-value],
-  [data-radix-select-content],
-  [data-radix-select-item],
-  [role="combobox"],
-  [role="combobox"] * {
+  /* ALERT COMPONENTS - FORCE WHITE */
+  .alert, [role="alert"], [data-radix-alert-root] {
+    background: #ffffff !important;
+    background-color: #ffffff !important;
     color: #000000 !important;
-  }
-
-  /* BUTTON TEXT - ALWAYS BLACK ON TMS GREEN BUTTONS */
-  button,
-  button *,
-  [role="button"],
-  [role="button"] *,
-  .bg-tms-green,
-  .bg-tms-green *,
-  .bg-green-500,
-  .bg-green-500 * {
-    color: #000000 !important;
-  }
-
-  /* OUTLINE BUTTONS - BLACK TEXT */
-  button[data-variant="outline"],
-  button[data-variant="outline"] *,
-  .border-tms-green,
-  .border-blue-500,
-  .border-red-500,
-  .border-yellow-500 {
-    color: #000000 !important;
+    border-color: #e5e7eb !important;
   }
 
   /* GLASS CARD STYLING - WHITE THEME */
@@ -196,61 +162,6 @@
     @apply bg-red-100 text-red-800 border border-red-200;
   }
 
-  /* INPUT PLACEHOLDERS */
-  input::placeholder,
-  textarea::placeholder {
-    color: rgba(0, 0, 0, 0.5) !important;
-  }
-
-  /* SELECT COMPONENTS */
-  [data-radix-select-trigger] {
-    background: #ffffff !important;
-    border: 1px solid #e2e8f0 !important;
-    color: #000000 !important;
-  }
-
-  [data-radix-select-content] {
-    background: #ffffff !important;
-    border: 1px solid #e2e8f0 !important;
-    color: #000000 !important;
-    z-index: 50 !important;
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-  }
-
-  [data-radix-select-item] {
-    color: #000000 !important;
-    background: transparent !important;
-  }
-
-  [data-radix-select-item]:hover,
-  [data-radix-select-item][data-highlighted] {
-    background: rgba(156, 250, 36, 0.1) !important;
-    color: #000000 !important;
-  }
-
-  /* FORCE OVERRIDES FOR LIGHT THEME */
-  .text-gray-100,
-  .text-gray-200, 
-  .text-gray-300,
-  .text-gray-400,
-  .text-gray-500,
-  .text-gray-600,
-  .text-muted-foreground {
-    color: #64748b !important;
-  }
-
-  .bg-gray-800,
-  .bg-gray-700,
-  .bg-gray-900 {
-    background: #f8fafc !important;
-  }
-
-  .border-gray-700,
-  .border-gray-600,
-  .border-gray-800 {
-    border-color: #e2e8f0 !important;
-  }
-
   /* TMS GREEN COLORS */
   .text-tms-green,
   .text-green-500,
@@ -264,62 +175,16 @@
     color: #000000 !important;
   }
 
-  /* ACTION BUTTONS VISIBILITY */
-  .action-button {
-    border: 1px solid currentColor !important;
-    background: rgba(0, 0, 0, 0.05) !important;
-    padding: 6px 8px !important;
-    border-radius: 6px !important;
-    transition: all 0.2s ease !important;
+  /* ENSURE PROPER CONTRAST FOR BUTTONS */
+  .hover\:bg-tms-green:hover {
+    background-color: rgb(156, 250, 36) !important;
+    color: #000000 !important;
   }
 
-  .action-button:hover {
-    background: rgba(0, 0, 0, 0.1) !important;
-    transform: scale(1.05) !important;
-  }
-
-  /* SWITCH COMPONENT */
-  [data-radix-switch-root] {
-    background: rgba(0, 0, 0, 0.1) !important;
-  }
-
-  [data-radix-switch-root][data-state="checked"] {
-    background: #9cfa24 !important;
-  }
-
-  [data-radix-switch-thumb] {
+  /* FORCE ALL CARDS AND CONTAINERS TO WHITE */
+  .card, .Card, [data-radix-card], .bg-card {
     background: #ffffff !important;
-  }
-
-  /* TAB COMPONENTS */
-  [role="tab"] {
-    color: #000000 !important;
-  }
-
-  [role="tab"][data-state="active"] {
-    color: #000000 !important;
-    background: rgba(156, 250, 36, 0.1) !important;
-  }
-
-  /* FORCE VISIBILITY FOR SETTINGS AND FORMS */
-  .settings-container,
-  .settings-container *,
-  .glass-card,
-  .glass-card *,
-  .metric-card,
-  .metric-card * {
-    color: #000000 !important;
-  }
-
-  /* PLACEHOLDER COLORS */
-  .placeholder-gray-400::placeholder {
-    color: rgba(0, 0, 0, 0.5) !important;
-  }
-
-  /* TABLE CELLS */
-  table td,
-  table th,
-  .table-cell {
+    background-color: #ffffff !important;
     color: #000000 !important;
   }
 
@@ -333,32 +198,9 @@
   [data-radix-popper-content-wrapper] * {
     color: #000000 !important;
   }
-
-  /* WHITE BACKGROUNDS FOR MAIN CONTENT */
-  .text-white {
-    color: #000000 !important;
-  }
-
-  .bg-black,
-  .bg-tms-dark,
-  .bg-tms-darker {
-    background: #ffffff !important;
-  }
-
-  /* HEADER AND SIDEBAR OVERRIDES */
-  header {
-    background: #ffffff !important;
-    border-bottom: 1px solid #e2e8f0 !important;
-  }
-
-  /* ENSURE PROPER CONTRAST FOR BUTTONS */
-  .hover\:bg-tms-green:hover {
-    background-color: rgb(156, 250, 36) !important;
-    color: #000000 !important;
-  }
 }
 
-/* CACHE BUSTING - VERSION 4.0 LIGHT THEME */
-.tms-version-4-light {
+/* CACHE BUSTING - VERSION 5.0 FORCED WHITE THEME */
+.tms-version-5-forced-white {
   display: none;
 }
