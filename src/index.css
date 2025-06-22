@@ -3,7 +3,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* TMS Design System - Grúas Management - DUAL THEME SUPPORT */
+/* TMS Design System - Grúas Management - FORCED WHITE THEME */
 
 @layer base {
   :root {
@@ -30,28 +30,6 @@
     --tms-green: 156 250 36;
     --tms-white: 255 255 255;
   }
-
-  .dark {
-    --background: 15 23 42;
-    --foreground: 248 250 252;
-    --card: 30 41 59;
-    --card-foreground: 248 250 252;
-    --popover: 30 41 59;
-    --popover-foreground: 248 250 252;
-    --primary: 156 250 36;
-    --primary-foreground: 15 23 42;
-    --secondary: 51 65 85;
-    --secondary-foreground: 248 250 252;
-    --muted: 51 65 85;
-    --muted-foreground: 148 163 184;
-    --accent: 51 65 85;
-    --accent-foreground: 248 250 252;
-    --destructive: 239 68 68;
-    --destructive-foreground: 248 250 252;
-    --border: 51 65 85;
-    --input: 30 41 59;
-    --ring: 156 250 36;
-  }
 }
 
 @layer base {
@@ -60,24 +38,37 @@
   }
 
   html, body, #root {
-    background: hsl(var(--background));
-    color: hsl(var(--foreground));
+    background: #ffffff !important;
+    color: #000000 !important;
   }
 
   html {
-    background: hsl(var(--background));
+    background: #ffffff !important;
   }
 
   body {
-    background: hsl(var(--background));
-    color: hsl(var(--foreground));
+    background: #ffffff !important;
+    color: #000000 !important;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     min-height: 100vh;
   }
 
   #root {
-    background: hsl(var(--background));
+    background: #ffffff !important;
     min-height: 100vh;
+  }
+
+  /* FORCE WHITE BACKGROUNDS EVERYWHERE */
+  div, section, main, header, aside, nav, article, 
+  .bg-black, .bg-gray-900, .bg-gray-800, .bg-gray-700,
+  [role="alert"], [data-radix-alert-root] {
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+  }
+
+  /* FORCE BLACK TEXT EVERYWHERE */
+  *, *::before, *::after {
+    color: #000000 !important;
   }
 
   /* Custom scrollbar */
@@ -86,24 +77,32 @@
   }
 
   ::-webkit-scrollbar-track {
-    background: hsl(var(--muted));
+    background: #f1f5f9;
   }
 
   ::-webkit-scrollbar-thumb {
-    background: hsl(var(--primary));
+    background: rgb(156, 250, 36);
     border-radius: 3px;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: hsl(var(--primary) / 0.8);
+    background: rgba(156, 250, 36, 0.8);
   }
 }
 
 @layer components {
-  /* GLASS CARD STYLING - THEME AWARE */
+  /* ALERT COMPONENTS - FORCE WHITE */
+  .alert, [role="alert"], [data-radix-alert-root] {
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+    color: #000000 !important;
+    border-color: #e5e7eb !important;
+  }
+
+  /* GLASS CARD STYLING - WHITE THEME */
   .glass-card {
-    background: hsl(var(--card));
-    border: 1px solid hsl(var(--border));
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
     border-radius: 8px;
     transition: all 0.3s;
     box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
@@ -111,12 +110,12 @@
 
   .metric-card {
     @apply glass-card p-6;
-    background: hsl(var(--card));
-    border: 1px solid hsl(var(--primary) / 0.3);
+    background: #ffffff !important;
+    border: 1px solid rgba(156, 250, 36, 0.3) !important;
   }
 
   .metric-card:hover {
-    border-color: hsl(var(--primary));
+    border-color: rgb(156, 250, 36) !important;
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
   }
 
@@ -126,19 +125,19 @@
     align-items: center;
     padding: 12px 16px;
     border-radius: 8px;
-    color: hsl(var(--foreground));
+    color: #000000 !important;
     transition: all 0.2s;
     text-decoration: none;
   }
 
   .nav-link:hover {
-    background: hsl(var(--primary));
-    color: hsl(var(--primary-foreground));
+    background: rgb(156, 250, 36) !important;
+    color: #000000 !important;
   }
 
   .nav-link.active {
-    background: hsl(var(--primary));
-    color: hsl(var(--primary-foreground));
+    background: rgb(156, 250, 36) !important;
+    color: #000000 !important;
     font-weight: 500;
   }
 
@@ -163,45 +162,45 @@
     @apply bg-red-100 text-red-800 border border-red-200;
   }
 
-  /* Dark mode status badges */
-  .dark .status-pending {
-    @apply bg-amber-900/50 text-amber-200 border border-amber-700;
-  }
-
-  .dark .status-closed {
-    @apply bg-blue-900/50 text-blue-200 border border-blue-700;
-  }
-
-  .dark .status-invoiced {
-    @apply bg-emerald-900/50 text-emerald-200 border border-emerald-700;
-  }
-
-  .dark .status-overdue {
-    @apply bg-red-900/50 text-red-200 border border-red-700;
-  }
-
   /* TMS GREEN COLORS */
-  .text-tms-green {
-    color: hsl(var(--primary));
+  .text-tms-green,
+  .text-green-500,
+  .text-green-400 {
+    color: rgb(156, 250, 36) !important;
   }
 
-  .bg-tms-green {
-    background-color: hsl(var(--primary));
-    color: hsl(var(--primary-foreground));
+  .bg-tms-green,
+  .bg-green-500 {
+    background-color: rgb(156, 250, 36) !important;
+    color: #000000 !important;
   }
 
+  /* ENSURE PROPER CONTRAST FOR BUTTONS */
   .hover\:bg-tms-green:hover {
-    background-color: hsl(var(--primary));
-    color: hsl(var(--primary-foreground));
+    background-color: rgb(156, 250, 36) !important;
+    color: #000000 !important;
+  }
+
+  /* FORCE ALL CARDS AND CONTAINERS TO WHITE */
+  .card, .Card, [data-radix-card], .bg-card {
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+    color: #000000 !important;
+  }
+
+  /* FORCE DROPDOWN MENUS */
+  [data-radix-popper-content-wrapper] {
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  }
+
+  [data-radix-popper-content-wrapper] * {
+    color: #000000 !important;
   }
 }
 
-/* THEME TRANSITIONS */
-* {
-  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
-}
-
-/* CACHE BUSTING - VERSION 6.0 DUAL THEME */
-.tms-version-6-dual-theme {
+/* CACHE BUSTING - VERSION 5.0 FORCED WHITE THEME */
+.tms-version-5-forced-white {
   display: none;
 }

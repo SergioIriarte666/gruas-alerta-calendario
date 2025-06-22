@@ -114,17 +114,31 @@ const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
   // Handle role-based routing
   if (profileUser) {
     const userRole = profileUser.role;
+    const isClientPortalRoute = location.pathname.startsWith('/portal');
+    const isOperatorPortalRoute = location.pathname.startsWith('/operator');
 
-    // New role check
+    // --- NEW: Stricter Portal Segregation ---
+    // 1. If user is a client, they MUST be in the client portal.
+    if (userRole === 'client') {
+      if (!isClientPortalRoute) {
+        console.log(`CLIENT '${userRole}' on non-portal route '${location.pathname}'. Redirecting to /portal/dashboard.`);
+        return <Navigate to="/portal/dashboard" replace />;
+      }
+    }
+    // 2. If user is NOT a client, they MUST NOT be in the client portal.
+    else if (isClientPortalRoute) {
+        console.log(`NON-CLIENT '${userRole}' on client portal route '${location.pathname}'. Redirecting to /dashboard.`);
+        return <Navigate to="/dashboard" replace />;
+    }
+    // --- End of new logic ---
+
+    // Role check for specific routes within a portal (e.g. admin-only pages)
     if (allowedRoles && allowedRoles.length > 0 && !allowedRoles.includes(userRole)) {
       console.log(`ProtectedRoute: Role '${userRole}' not in allowed roles [${allowedRoles.join(', ')}]. Redirecting.`);
-      // Redirect operators to their dashboard, others to the main dashboard
       const redirectTo = userRole === 'operator' ? '/operator' : '/dashboard';
       return <Navigate to={redirectTo} replace />;
     }
     
-    const isOperatorPortalRoute = location.pathname === '/operator' || location.pathname.startsWith('/operator/');
-
     console.log('ProtectedRoute: Role-based routing check - userRole:', userRole, 'path:', location.pathname);
 
     // Operator auto-redirect
