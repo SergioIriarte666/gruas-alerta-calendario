@@ -53,7 +53,7 @@ export const MetricCard = ({
         <div className="flex-1 min-w-0">
           <p className="text-sm font-medium text-gray-600 truncate">{title}</p>
           <div className="flex flex-wrap items-baseline gap-x-mt-1">
-            <h3 className="text-base md:text-lg font-bold text-black">{value}</h3>
+            <h3 className="text-xs md:text-sm font-bold text-xs">{value}</h3>
             {change && (
               <span className={`text-xs font-semibold ${getChangeColor()}`}>
                 {change}
