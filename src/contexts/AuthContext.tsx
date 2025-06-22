@@ -8,6 +8,7 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   signOut: () => void;
+  forceRefresh: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -16,6 +17,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+
+  const getInitialSession = async () => {
+    try {
+      const { data: { session }, error } = await supabase.auth.getSession();
+      if (error) {
+        console.error('Error getting initial session:', error);
+      }
+      console.log('Initial session check:', session ? 'has session' : 'no session');
+      setSession(session);
+      setUser(session?.user ?? null);
+    } catch (error) {
+      console.error('Unexpected error getting session:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     console.log('AuthProvider: Initializing authentication...');
@@ -31,15 +48,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     );
 
     // Get initial session
-    supabase.auth.getSession().then(({ data: { session }, error }) => {
-      if (error) {
-        console.error('Error getting initial session:', error);
-      }
-      console.log('Initial session check:', session ? 'has session' : 'no session');
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
+    getInitialSession();
 
     return () => {
       subscription.unsubscribe();
@@ -55,11 +64,27 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const forceRefresh = async () => {
+    try {
+      console.log('AuthProvider: Force refreshing session...');
+      const { data: { session }, error } = await supabase.auth.refreshSession();
+      if (error) {
+        console.error('Error refreshing session:', error);
+      } else {
+        setSession(session);
+        setUser(session?.user ?? null);
+      }
+    } catch (error) {
+      console.error('Error force refreshing session:', error);
+    }
+  };
+
   const value = {
     session,
     user,
     loading,
     signOut,
+    forceRefresh,
   };
 
   console.log('AuthProvider render:', { 
