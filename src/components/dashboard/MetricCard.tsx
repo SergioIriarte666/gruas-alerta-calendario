@@ -42,7 +42,7 @@ export const MetricCard = ({
     }
   };
 
-  const cardClasses = `metric-card group p-4 h-full bg-white border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 ${linkTo ? 'cursor-pointer hover:border-tms-green hover:shadow-lg' : ''}`;
+  const cardClasses = `metric-card group p-3 sm:p-4 h-full bg-white border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 ${linkTo ? 'cursor-pointer hover:border-tms-green hover:shadow-lg' : ''}`;
 
   return (
     <Card 
@@ -51,11 +51,11 @@ export const MetricCard = ({
       style={{ background: '#ffffff', color: '#000000' }}
     >
       <div className="flex items-start justify-between h-full min-h-0">
-        <div className="flex-1 space-y-2 min-w-0 pr-3">
+        <div className="flex-1 space-y-1 sm:space-y-2 min-w-0 pr-2 sm:pr-3">
           <p className="text-xs font-medium text-gray-600 uppercase tracking-wide truncate">{title}</p>
           <div className="space-y-1">
-            <div className="flex items-baseline space-x-2 min-w-0">
-              <h3 className="text-xl xl:text-2xl font-bold text-black leading-tight break-words min-w-0 flex-1">
+            <div className="flex flex-col sm:flex-row sm:items-baseline space-y-1 sm:space-y-0 sm:space-x-2 min-w-0">
+              <h3 className="text-lg sm:text-xl xl:text-2xl font-bold text-black leading-tight break-words min-w-0 flex-1">
                 {value}
               </h3>
               {change && (
@@ -69,8 +69,8 @@ export const MetricCard = ({
             )}
           </div>
         </div>
-        <div className="p-2.5 bg-tms-green/10 rounded-lg group-hover:bg-tms-green/20 transition-all duration-300 flex-shrink-0">
-          <Icon className="w-5 h-5 text-tms-green" />
+        <div className="p-2 sm:p-2.5 bg-tms-green/10 rounded-lg group-hover:bg-tms-green/20 transition-all duration-300 flex-shrink-0">
+          <Icon className="w-4 h-4 sm:w-5 sm:h-5 text-tms-green" />
         </div>
       </div>
     </Card>
