@@ -115,7 +115,7 @@ export const Sidebar = ({
             {companyLogo ? <img src={companyLogo} alt="Logo empresa" className="w-8 h-8 object-contain" /> : <Building2 className="w-8 h-8 text-tms-green" />}
             <div>
               <h1 className="text-lg font-bold text-black">{companyName}</h1>
-              <p className="text-xs text-tms-green font-bold">Sistema de Gestión</p>
+              <p className="text-xs font-bold text-rose-500">Sistema de Gestión</p>
             </div>
           </div>}
 
