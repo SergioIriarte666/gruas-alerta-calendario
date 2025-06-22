@@ -42,7 +42,7 @@ export const MetricCard = ({
     }
   };
 
-  const cardClasses = `metric-card group h-full bg-white border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 ${linkTo ? 'cursor-pointer hover:border-tms-green hover:shadow-lg' : ''}`;
+  const cardClasses = `metric-card group p-6 h-full bg-white border border-gray-200 ${linkTo ? 'cursor-pointer hover:border-tms-green transition-colors' : ''}`;
 
   return (
     <Card 
@@ -50,32 +50,24 @@ export const MetricCard = ({
       onClick={handleCardClick}
       style={{ background: '#ffffff', color: '#000000' }}
     >
-      <div className="p-4 sm:p-5 md:p-6">
-        <div className="flex items-start justify-between gap-3 mb-3">
-          <div className="flex-1 min-w-0">
-            <p className="text-xs sm:text-sm font-medium text-gray-600 uppercase tracking-wide mb-3 leading-tight">
-              {title}
-            </p>
-            <div className="space-y-2">
-              <h3 className="text-xl sm:text-2xl md:text-3xl font-bold text-black leading-tight break-words">
-                {value}
-              </h3>
-              {change && (
-                <span className={`text-xs sm:text-sm font-semibold ${getChangeColor()} block`}>
-                  {change}
-                </span>
-              )}
-            </div>
+      <div className="flex items-start justify-between">
+        <div className="flex-1">
+          <p className="text-sm font-medium text-gray-600 mb-1">{title}</p>
+          <div className="flex items-baseline space-x-2">
+            <h3 className="text-2xl font-bold text-black">{value}</h3>
+            {change && (
+              <span className={`text-sm font-medium ${getChangeColor()}`}>
+                {change}
+              </span>
+            )}
           </div>
-          <div className="p-2 sm:p-2.5 bg-tms-green/10 rounded-lg group-hover:bg-tms-green/20 transition-all duration-300 flex-shrink-0">
-            <Icon className="w-5 h-5 sm:w-6 sm:h-6 text-tms-green" />
-          </div>
+          {description && (
+            <p className="text-xs text-gray-500 mt-1">{description}</p>
+          )}
         </div>
-        {description && (
-          <p className="text-xs sm:text-sm text-gray-500 leading-relaxed line-clamp-2 break-words mt-2">
-            {description}
-          </p>
-        )}
+        <div className="p-3 bg-tms-green/20 rounded-lg group-hover:bg-tms-green/30 transition-colors">
+          <Icon className="w-6 h-6 text-tms-green" />
+        </div>
       </div>
     </Card>
   );

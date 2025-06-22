@@ -7,7 +7,6 @@ interface User {
   name: string;
   email: string;
   role: 'admin' | 'operator' | 'viewer' | 'client';
-  client_id?: string | null;
 }
 
 interface UserContextType {
@@ -59,7 +58,7 @@ export function UserProvider({ children }: UserProviderProps) {
 
       const { data, error: fetchError } = await supabase
         .from('profiles')
-        .select('id, full_name, email, role, client_id')
+        .select('id, full_name, email, role')
         .eq('id', userId)
         .single();
 
@@ -81,7 +80,6 @@ export function UserProvider({ children }: UserProviderProps) {
           name: data.full_name || 'Usuario',
           email: data.email,
           role: userRole,
-          client_id: data.client_id,
         };
         console.log('UserContext: Profile loaded successfully:', userData);
         setUser(userData);
@@ -128,12 +126,10 @@ export function UserProvider({ children }: UserProviderProps) {
           full_name: string;
           email: string;
           role: 'admin' | 'operator' | 'viewer' | 'client';
-          client_id?: string | null;
         } = {
           full_name: updatedUser.name,
           email: updatedUser.email,
           role: updatedUser.role,
-          client_id: updatedUser.client_id,
         };
 
         const { error } = await supabase

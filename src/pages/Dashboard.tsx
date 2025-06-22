@@ -41,30 +41,17 @@ const Dashboard: React.FC = () => {
 
   if (dashboardLoading) {
     return (
-      <div className="space-y-6 bg-white min-h-screen p-4 sm:p-6 lg:p-8">
-        {/* Header Skeleton */}
-        <div className="space-y-3">
-          <Skeleton className="h-8 w-80 bg-gray-200" />
-          <Skeleton className="h-5 w-96 bg-gray-200" />
-        </div>
-        
-        {/* Primary Metrics Skeleton */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-6">
+      <div className="space-y-6 bg-white min-h-screen">
+        {/* Metrics Skeleton */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {[...Array(4)].map((_, i) => (
-            <Skeleton key={i} className="h-36 bg-gray-200" />
-          ))}
-        </div>
-        
-        {/* Secondary Metrics Skeleton */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-          {[...Array(3)].map((_, i) => (
             <Skeleton key={i} className="h-32 bg-gray-200" />
           ))}
         </div>
         
         {/* Content Skeleton */}
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-          <div className="xl:col-span-2">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2">
             <Skeleton className="h-96 bg-gray-200" />
           </div>
           <Skeleton className="h-96 bg-gray-200" />
@@ -76,35 +63,25 @@ const Dashboard: React.FC = () => {
   if (!metrics) return null;
 
   return (
-    <div className="space-y-6 animate-fade-in bg-white min-h-screen p-4 sm:p-6 lg:p-8" style={{ background: '#ffffff', color: '#000000' }}>
-      {/* Header Section */}
-      <div className="mb-6">
-        <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-3">
-          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-black">
+    <div className="space-y-6 animate-fade-in bg-white min-h-screen" style={{ background: '#ffffff', color: '#000000' }}>
+      {/* Header */}
+      <div className="mb-8">
+        <div className="flex items-center gap-x-3 mb-2">
+          <h1 className="text-3xl font-bold text-black">
             Dashboard Principal
           </h1>
-          <Badge className="bg-emerald-500/20 text-emerald-600 border border-emerald-500/30 flex items-center px-3 py-1 w-fit text-sm">
+          <Badge className="bg-emerald-500/20 text-emerald-600 border border-emerald-500/30 flex items-center">
             <span className="w-2 h-2 rounded-full bg-emerald-600 mr-2 animate-pulse"></span>
             En vivo
           </Badge>
         </div>
-        <p className="text-base text-gray-600">
+        <p className="text-gray-600">
           Vista general del sistema de gestión de grúas
         </p>
       </div>
 
-      {/* Primary Metrics - Main Row */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-6">
-        <MetricCard
-          title="Ingresos del Mes"
-          value={formatCurrency(metrics.monthlyRevenue)}
-          change="+8%"
-          changeType="positive"
-          icon={DollarSign}
-          description="Facturación del mes actual"
-          linkTo="/invoices"
-        />
-        
+      {/* Metrics Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <MetricCard
           title="Servicios del Mes"
           value={metrics.monthlyServices}
@@ -124,6 +101,16 @@ const Dashboard: React.FC = () => {
         />
         
         <MetricCard
+          title="Ingresos del Mes"
+          value={formatCurrency(metrics.monthlyRevenue)}
+          change="+8%"
+          changeType="positive"
+          icon={DollarSign}
+          description="Facturación del mes actual"
+          linkTo="/invoices"
+        />
+        
+        <MetricCard
           title="Facturas Vencidas"
           value={metrics.overdueInvoices}
           changeType={metrics.overdueInvoices > 0 ? "negative" : "neutral"}
@@ -133,13 +120,13 @@ const Dashboard: React.FC = () => {
         />
       </div>
 
-      {/* Secondary Metrics - Service Status Overview */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+      {/* Service Status Overview */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <MetricCard
           title="En Curso"
           value={metrics.servicesByStatus.pending}
           icon={TrendingUp}
-          description="Servicios pendientes y en progreso"
+          description="Servicios pendientes"
           linkTo="/services?status=pending,in_progress"
         />
         
@@ -154,21 +141,21 @@ const Dashboard: React.FC = () => {
         <MetricCard
           title="Cancelados"
           value={metrics.servicesByStatus.cancelled}
-          icon={AlertTriangle}
+          icon={DollarSign}
           description="Servicios cancelados"
           linkTo="/services?status=cancelled"
         />
       </div>
 
       {/* Main Content Grid */}
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Recent Services */}
-        <div className="xl:col-span-2">
+        <div className="lg:col-span-2">
           <RecentServicesTable services={recentServices} onViewDetails={handleViewDetails} />
         </div>
 
         {/* Alerts Panel */}
-        <div className="xl:col-span-1">
+        <div>
           <AlertsPanel events={upcomingEvents} />
         </div>
       </div>

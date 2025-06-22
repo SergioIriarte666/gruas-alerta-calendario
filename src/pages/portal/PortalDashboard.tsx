@@ -1,6 +1,4 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
-import { PlusCircle } from 'lucide-react';
 
 const PortalDashboard: React.FC = () => {
   return (
@@ -15,14 +13,10 @@ const PortalDashboard: React.FC = () => {
           <h2 className="text-xl font-semibold text-white">Facturas Pendientes</h2>
           <p className="text-gray-400 mt-2">Aquí verá las facturas que tiene pendientes de pago.</p>
         </div>
-        <Link 
-          to="/portal/request-service"
-          className="bg-tms-green/20 border border-tms-green text-white p-6 rounded-lg shadow-lg flex flex-col items-center justify-center hover:bg-tms-green/30 transition-colors"
-        >
-          <PlusCircle className="w-12 h-12 text-tms-green mb-4" />
+        <div className="bg-gray-800 p-6 rounded-lg shadow-lg">
           <h2 className="text-xl font-semibold text-white">Solicitar Nuevo Servicio</h2>
-          <p className="text-gray-300 mt-2 text-center">Acceso rápido para crear una nueva solicitud de grúa.</p>
-        </Link>
+          <p className="text-gray-400 mt-2">Acceso rápido para crear una nueva solicitud de grúa.</p>
+        </div>
       </div>
     </div>
   );

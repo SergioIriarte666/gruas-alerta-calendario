@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { portalLoginSchema, PortalLoginSchema } from '@/schemas/portalAuthSchema';
+import { useAuth } from '@/contexts/AuthContext';
 import { useUser } from '@/contexts/UserContext';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -14,16 +15,17 @@ const PortalLogin = () => {
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<PortalLoginSchema>({
     resolver: zodResolver(portalLoginSchema),
   });
-  const { user: profileUser, loading: profileLoading, forceRefreshProfile } = useUser();
+  const { session, forceRefresh } = useAuth();
+  const { user: profileUser, loading: profileLoading } = useUser();
   const navigate = useNavigate();
   const { toast } = useToast();
 
   useEffect(() => {
     // Si el usuario está logueado y es un cliente, redirigir al dashboard del portal.
-    if (profileUser && profileUser.role === 'client') {
+    if (session && profileUser && profileUser.role === 'client') {
       navigate('/portal/dashboard', { replace: true });
     }
-  }, [profileUser, navigate]);
+  }, [session, profileUser, navigate]);
 
   const onSubmit = async (data: PortalLoginSchema) => {
     try {
@@ -37,7 +39,8 @@ const PortalLogin = () => {
       }
 
       if (authData.user) {
-        await forceRefreshProfile();
+        // Forzar la recarga del contexto para obtener el nuevo perfil
+        await forceRefresh();
         
         toast({
           type: 'success',
@@ -45,7 +48,7 @@ const PortalLogin = () => {
           description: '¡Bienvenido al portal de clientes!',
         });
 
-        navigate('/portal/dashboard');
+        // La redirección se manejará con el useEffect de arriba
       }
     } catch (error: any) {
       toast({
@@ -57,7 +60,7 @@ const PortalLogin = () => {
   };
 
   // Prevenir que un usuario no-cliente logueado vea esta página
-  if (profileUser && profileUser.role !== 'client' && !profileLoading) {
+  if (session && profileUser && profileUser.role !== 'client' && !profileLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-900 text-white">
         <div className="text-center">

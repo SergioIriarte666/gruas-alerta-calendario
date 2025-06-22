@@ -38,67 +38,60 @@ export const RecentServicesTable = ({ services, onViewDetails }: RecentServicesT
   };
 
   return (
-    <Card className="bg-white border border-gray-200 shadow-sm">
-      <CardHeader className="pb-4">
-        <CardTitle className="flex items-center space-x-3 text-black text-xl">
-          <div className="p-2 bg-tms-green/10 rounded-lg">
-            <Truck className="w-6 h-6 text-tms-green" />
-          </div>
+    <Card className="glass-card">
+      <CardHeader>
+        <CardTitle className="flex items-center space-x-2 text-white">
+          <Truck className="w-5 h-5 text-tms-green" />
           <span>Servicios Recientes</span>
         </CardTitle>
       </CardHeader>
-      <CardContent className="p-0">
+      <CardContent>
         {services.length === 0 ? (
-          <div className="text-center py-12 px-6">
-            <div className="p-4 bg-gray-50 rounded-xl inline-block mb-4">
-              <Truck className="w-12 h-12 mx-auto text-gray-400" />
-            </div>
-            <p className="text-gray-600 text-lg">No hay servicios registrados</p>
-            <p className="text-gray-500 text-sm mt-2">Los servicios aparecerán aquí una vez que se registren</p>
+          <div className="text-center py-8 text-gray-400">
+            <Truck className="w-12 h-12 mx-auto mb-4 opacity-50" />
+            <p>No hay servicios registrados</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
-                <TableRow className="border-gray-200 bg-gray-50/50">
-                  <TableHead className="text-gray-700 font-semibold py-4 px-6">Folio</TableHead>
-                  <TableHead className="text-gray-700 font-semibold py-4">Fecha</TableHead>
-                  <TableHead className="text-gray-700 font-semibold py-4">Cliente</TableHead>
-                  <TableHead className="text-gray-700 font-semibold py-4">Vehículo</TableHead>
-                  <TableHead className="text-gray-700 font-semibold py-4">Valor</TableHead>
-                  <TableHead className="text-gray-700 font-semibold py-4">Estado</TableHead>
-                  <TableHead className="text-gray-700 font-semibold py-4 px-6">Acciones</TableHead>
+                <TableRow className="border-gray-700">
+                  <TableHead className="text-gray-300">Folio</TableHead>
+                  <TableHead className="text-gray-300">Fecha</TableHead>
+                  <TableHead className="text-gray-300">Cliente</TableHead>
+                  <TableHead className="text-gray-300">Vehículo</TableHead>
+                  <TableHead className="text-gray-300">Valor</TableHead>
+                  <TableHead className="text-gray-300">Estado</TableHead>
+                  <TableHead className="text-gray-300">Acciones</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {services.map((service) => (
-                  <TableRow key={service.id} className="border-gray-200 hover:bg-gray-50/50 transition-colors">
-                    <TableCell className="font-medium text-tms-green py-4 px-6">
+                  <TableRow key={service.id} className="border-gray-700 hover:bg-white/5">
+                    <TableCell className="font-medium text-tms-green">
                       {service.folio}
                     </TableCell>
-                    <TableCell className="text-gray-700 py-4">
+                    <TableCell className="text-gray-300">
                       {service.serviceDate ? format(new Date(service.serviceDate), 'dd/MM/yyyy', { locale: es }) : 'N/A'}
                     </TableCell>
-                    <TableCell className="text-gray-700 py-4">
-                      <div className="font-medium">{service.client?.name ?? 'N/A'}</div>
+                    <TableCell className="text-gray-300">
+                      {service.client?.name ?? 'N/A'}
                     </TableCell>
-                    <TableCell className="text-gray-700 py-4">
-                      <div className="space-y-1">
-                        <div className="font-medium">{service.vehicleBrand} {service.vehicleModel}</div>
-                        <div className="text-sm text-gray-500 font-mono">{service.licensePlate}</div>
-                      </div>
+                    <TableCell className="text-gray-300">
+                      {service.vehicleBrand} {service.vehicleModel}
+                      <div className="text-sm text-gray-500">{service.licensePlate}</div>
                     </TableCell>
-                    <TableCell className="text-gray-700 py-4">
-                      <span className="font-semibold">{formatCurrency(service.value)}</span>
+                    <TableCell className="text-gray-300">
+                      {formatCurrency(service.value)}
                     </TableCell>
-                    <TableCell className="py-4">
+                    <TableCell>
                       {getStatusBadge(service.status)}
                     </TableCell>
-                    <TableCell className="py-4 px-6">
+                    <TableCell>
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="text-tms-green hover:text-tms-green hover:bg-tms-green/10 transition-colors"
+                        className="text-tms-green hover:text-tms-green-light"
                         onClick={() => onViewDetails(service.id)}
                         title="Ver detalles del servicio"
                       >
