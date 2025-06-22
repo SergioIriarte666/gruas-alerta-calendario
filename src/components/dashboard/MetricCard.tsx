@@ -42,7 +42,7 @@ export const MetricCard = ({
     }
   };
 
-  const cardClasses = `metric-card group p-6 h-full bg-white border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 ${linkTo ? 'cursor-pointer hover:border-tms-green hover:shadow-lg' : ''}`;
+  const cardClasses = `metric-card group p-4 h-full bg-white border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 ${linkTo ? 'cursor-pointer hover:border-tms-green hover:shadow-lg' : ''}`;
 
   return (
     <Card 
@@ -50,25 +50,27 @@ export const MetricCard = ({
       onClick={handleCardClick}
       style={{ background: '#ffffff', color: '#000000' }}
     >
-      <div className="flex items-start justify-between h-full">
-        <div className="flex-1 space-y-2">
-          <p className="text-xs font-medium text-gray-600 uppercase tracking-wide">{title}</p>
+      <div className="flex items-start justify-between h-full min-h-0">
+        <div className="flex-1 space-y-2 min-w-0 pr-3">
+          <p className="text-xs font-medium text-gray-600 uppercase tracking-wide truncate">{title}</p>
           <div className="space-y-1">
-            <div className="flex items-baseline space-x-2">
-              <h3 className="text-2xl xl:text-3xl font-bold text-black leading-none">{value}</h3>
+            <div className="flex items-baseline space-x-2 min-w-0">
+              <h3 className="text-xl xl:text-2xl font-bold text-black leading-tight break-words min-w-0 flex-1">
+                {value}
+              </h3>
               {change && (
-                <span className={`text-xs font-semibold ${getChangeColor()} flex items-center`}>
+                <span className={`text-xs font-semibold ${getChangeColor()} flex items-center whitespace-nowrap`}>
                   {change}
                 </span>
               )}
             </div>
             {description && (
-              <p className="text-xs text-gray-500 leading-relaxed">{description}</p>
+              <p className="text-xs text-gray-500 leading-relaxed line-clamp-2">{description}</p>
             )}
           </div>
         </div>
-        <div className="p-3 bg-tms-green/10 rounded-lg group-hover:bg-tms-green/20 transition-all duration-300 ml-3">
-          <Icon className="w-6 h-6 text-tms-green" />
+        <div className="p-2.5 bg-tms-green/10 rounded-lg group-hover:bg-tms-green/20 transition-all duration-300 flex-shrink-0">
+          <Icon className="w-5 h-5 text-tms-green" />
         </div>
       </div>
     </Card>
