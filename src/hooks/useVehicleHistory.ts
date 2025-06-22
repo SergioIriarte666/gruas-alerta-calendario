@@ -1,4 +1,3 @@
-
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { ServiceStatus } from '@/types';
@@ -34,8 +33,8 @@ const fetchVehicleHistory = async (licensePlate: string, currentServiceId?: stri
       value,
       origin,
       destination,
-      service_types!inner(name),
-      clients!inner(name)
+      service_types(name),
+      clients(name)
     `)
     .eq('license_plate', licensePlate);
 
