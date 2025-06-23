@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -9,26 +8,32 @@ import { InspectionFormValues } from '@/schemas/inspectionSchema';
 import { createPDFGenerator } from '@/utils/enhancedPdfGenerator';
 
 export const useServiceInspection = () => {
-  const { id: serviceId } = useParams<{ id: string }>();
+  const params = useParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   
-  console.log('🎯 Service Inspection Hook - Service ID from URL:', serviceId);
+  // Extraer el serviceId de los parámetros - puede estar como 'id' o 'serviceId'
+  const serviceId = params.id || params.serviceId;
+  
+  console.log('🎯 Service Inspection Hook - Params:', params);
+  console.log('🎯 Service Inspection Hook - Extracted Service ID:', serviceId);
+  console.log('🎯 Service Inspection Hook - Current URL:', window.location.pathname);
   
   const { data: service, isLoading, error, refetch } = useOperatorService(serviceId || '');
   
-  const [pdfProgress, setPdfProgress] = useState(0);
-  const [pdfStep, setPdfStep] = useState('');
-  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
-  const [pdfDownloadUrl, setPdfDownloadUrl] = useState<string>();
-
   console.log('📊 Service Inspection State:', {
     serviceId,
     hasService: !!service,
     serviceFolio: service?.folio,
     isLoading,
-    error: error?.message
+    error: error?.message,
+    paramsReceived: params
   });
+
+  const [pdfProgress, setPdfProgress] = useState(0);
+  const [pdfStep, setPdfStep] = useState('');
+  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+  const [pdfDownloadUrl, setPdfDownloadUrl] = useState<string>();
 
   const updateServiceStatusMutation = useMutation({
     mutationFn: async (id: string) => {

@@ -1,4 +1,3 @@
-
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useEffect } from 'react';
@@ -33,12 +32,15 @@ const ServiceInspection = () => {
 
   const { toast } = useToast();
 
+  // Agregar logging detallado para debug
   console.log('🎬 ServiceInspection Component Render:', {
     id,
     hasService: !!service,
     serviceFolio: service?.folio,
     isLoading,
-    errorMessage: error?.message
+    errorMessage: error?.message,
+    currentURL: window.location.href,
+    pathname: window.location.pathname
   });
 
   const form = useForm<InspectionFormValues>({
@@ -76,8 +78,12 @@ const ServiceInspection = () => {
     processInspectionMutation.mutate(values);
   };
 
-  // Mostrar error si no hay ID del servicio
+  // Mostrar error si no hay ID del servicio - PERO PRIMERO VERIFICAR SI REALMENTE NO HAY ID
   if (!id) {
+    console.error('❌ No service ID found. URL params issue.');
+    console.error('❌ Current pathname:', window.location.pathname);
+    console.error('❌ Expected pattern: /operator/service/:id/inspection');
+    
     return (
       <div className="space-y-6">
         <div className="flex items-center gap-4">
@@ -93,6 +99,14 @@ const ServiceInspection = () => {
           <p className="text-red-600 mb-4">
             No se pudo obtener el ID del servicio desde la URL.
           </p>
+          <div className="bg-red-100 p-3 rounded mb-6">
+            <p className="text-sm text-red-700 font-mono">
+              URL actual: {window.location.pathname}
+            </p>
+            <p className="text-sm text-red-700 font-mono">
+              Formato esperado: /operator/service/[ID]/inspection
+            </p>
+          </div>
           <Button onClick={() => navigate('/operator')} variant="outline">
             <ArrowLeft className="w-4 h-4 mr-2" />
             Volver al Dashboard
@@ -139,6 +153,9 @@ const ServiceInspection = () => {
           <div className="bg-red-100 p-3 rounded mb-6">
             <p className="text-sm text-red-700 font-mono">
               ID del servicio: {id}
+            </p>
+            <p className="text-sm text-red-700 font-mono">
+              URL: {window.location.pathname}
             </p>
           </div>
           <div className="space-x-4">
