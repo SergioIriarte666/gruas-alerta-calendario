@@ -14,16 +14,17 @@ export interface ClientService {
   value: number;
   crane_license_plate: string;
   operator_name: string;
+  service_type_name: string;
 }
 
-const fetchClientServices = async (userId: string | undefined): Promise<ClientService[]> => {
-  if (!userId) {
-    console.log('No user ID provided for client services fetch');
+const fetchClientServices = async (clientId: string | undefined): Promise<ClientService[]> => {
+  if (!clientId) {
+    console.log('No client ID provided for client services fetch');
     return [];
   }
 
   try {
-    console.log('Fetching client services for user:', userId);
+    console.log('Fetching client services for client ID:', clientId);
     
     const { data, error } = await supabase
       .from('services')
@@ -36,8 +37,10 @@ const fetchClientServices = async (userId: string | undefined): Promise<ClientSe
         destination,
         value,
         cranes ( license_plate ),
-        operators ( name )
+        operators ( name ),
+        service_types ( name )
       `)
+      .eq('client_id', clientId)
       .order('service_date', { ascending: false });
 
     if (error) {
@@ -57,6 +60,7 @@ const fetchClientServices = async (userId: string | undefined): Promise<ClientSe
       value: service.value,
       crane_license_plate: service.cranes?.license_plate || 'N/A',
       operator_name: service.operators?.name || 'N/A',
+      service_type_name: service.service_types?.name || 'N/A',
     }));
   } catch (error: any) {
     console.error('Unexpected error in fetchClientServices:', error);
@@ -68,9 +72,9 @@ export const useClientServices = () => {
   const { user } = useUser();
 
   return useQuery<ClientService[], Error>({
-    queryKey: ['clientServices', user?.id],
-    queryFn: () => fetchClientServices(user?.id),
-    enabled: !!user,
+    queryKey: ['clientServices', user?.client_id],
+    queryFn: () => fetchClientServices(user?.client_id),
+    enabled: !!user?.client_id,
     retry: (failureCount, error) => {
       console.log(`Client services query retry attempt ${failureCount}:`, error.message);
       if (error.message.includes('permission')) {

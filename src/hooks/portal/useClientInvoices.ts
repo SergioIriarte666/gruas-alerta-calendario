@@ -10,18 +10,19 @@ export type ClientInvoice = Pick<
   'id' | 'folio' | 'issue_date' | 'due_date' | 'total' | 'status'
 >;
 
-const fetchClientInvoices = async (userId: string | undefined): Promise<ClientInvoice[]> => {
-  if (!userId) {
-    console.log('No user ID provided for client invoices fetch');
+const fetchClientInvoices = async (clientId: string | undefined): Promise<ClientInvoice[]> => {
+  if (!clientId) {
+    console.log('No client ID provided for client invoices fetch');
     return [];
   }
 
   try {
-    console.log('Fetching client invoices for user:', userId);
+    console.log('Fetching client invoices for client ID:', clientId);
 
     const { data, error } = await supabase
       .from('invoices')
       .select('id, folio, issue_date, due_date, total, status')
+      .eq('client_id', clientId)
       .order('issue_date', { ascending: false });
 
     if (error) {
@@ -41,9 +42,9 @@ export const useClientInvoices = () => {
   const { user } = useUser();
 
   return useQuery<ClientInvoice[], Error>({
-    queryKey: ['clientInvoices', user?.id],
-    queryFn: () => fetchClientInvoices(user?.id),
-    enabled: !!user,
+    queryKey: ['clientInvoices', user?.client_id],
+    queryFn: () => fetchClientInvoices(user?.client_id),
+    enabled: !!user?.client_id,
     retry: (failureCount, error) => {
       console.log(`Client invoices query retry attempt ${failureCount}:`, error.message);
       if (error.message.includes('permission')) {

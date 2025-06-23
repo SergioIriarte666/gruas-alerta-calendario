@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useClientServices } from '@/hooks/portal/useClientServices';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -69,6 +70,7 @@ const PortalServices = () => {
             <TableRow className="border-gray-700 hover:bg-gray-800/50">
               <TableHead className="text-gray-300">Folio</TableHead>
               <TableHead className="text-gray-300">Fecha</TableHead>
+              <TableHead className="text-gray-300">Tipo</TableHead>
               <TableHead className="text-gray-300">Ruta</TableHead>
               <TableHead className="text-gray-300">Patente Grúa</TableHead>
               <TableHead className="text-gray-300">Operador</TableHead>
@@ -83,6 +85,7 @@ const PortalServices = () => {
                 <TableCell className="text-gray-300">
                   {format(new Date(service.service_date), 'dd/MM/yyyy', { locale: es })}
                 </TableCell>
+                <TableCell className="text-gray-300">{service.service_type_name}</TableCell>
                 <TableCell className="text-gray-300 max-w-xs truncate" title={`${service.origin} → ${service.destination}`}>
                   {service.origin} → {service.destination}
                 </TableCell>
@@ -114,4 +117,3 @@ const PortalServices = () => {
 };
 
 export default PortalServices;
-

@@ -6,12 +6,6 @@ import { PortalRequestServiceSchema } from '@/schemas/portalRequestServiceSchema
 import { useToast } from '@/components/ui/custom-toast';
 import { useNavigate } from 'react-router-dom';
 
-// Supabase no nos permite insertar un servicio sin estos campos,
-// así que debemos proveer valores por defecto. Estos serán
-// actualizados por un administrador posteriormente.
-const PLACEHOLDER_OPERATOR_ID = '00000000-0000-0000-0000-000000000000';
-const PLACEHOLDER_CRANE_ID = '00000000-0000-0000-0000-000000000000';
-
 const createServiceRequest = async ({
   formData,
   clientId,
@@ -22,45 +16,58 @@ const createServiceRequest = async ({
   userId: string;
 }) => {
   // Generar un folio único para la solicitud
-  const folio = `PORTAL-${Date.now()}`;
+  const timestamp = Date.now();
+  const folio = `REQ-${timestamp}`;
+
+  // Obtener operador y grúa de placeholder (primer disponible)
+  const { data: operators } = await supabase
+    .from('operators')
+    .select('id')
+    .eq('is_active', true)
+    .limit(1);
+
+  const { data: cranes } = await supabase
+    .from('cranes')
+    .select('id')
+    .eq('is_active', true)
+    .limit(1);
+
+  if (!operators || operators.length === 0) {
+    throw new Error('No hay operadores disponibles en el sistema');
+  }
+
+  if (!cranes || cranes.length === 0) {
+    throw new Error('No hay grúas disponibles en el sistema');
+  }
 
   const serviceData = {
-    // Datos del formulario
+    folio: folio,
+    client_id: clientId,
+    request_date: new Date().toISOString(),
+    service_date: formData.service_date,
+    service_type_id: formData.service_type_id,
     origin: formData.origin,
     destination: formData.destination,
-    // Para campos de vehículo, usar cadena vacía en lugar de null para evitar constraint violations
     license_plate: formData.license_plate || '',
     vehicle_brand: formData.vehicle_brand || '',
     vehicle_model: formData.vehicle_model || '',
-    observations: formData.observations,
-    
-    // Datos del sistema
-    folio: folio,
-    client_id: clientId,
-    created_by: userId,
+    observations: formData.observations || '',
     status: 'pending' as const,
-    request_date: new Date().toISOString(),
-    service_date: formData.service_date,
-
-    // Usar el tipo de servicio seleccionado
-    service_type_id: formData.service_type_id,
-
-    // Datos de marcador de posición
-    operator_id: PLACEHOLDER_OPERATOR_ID,
-    crane_id: PLACEHOLDER_CRANE_ID,
     value: 0,
+    operator_id: operators[0].id,
+    crane_id: cranes[0].id,
+    operator_commission: 0,
   };
 
-  const { data, error } = await supabase.from('services').insert(serviceData).select();
+  const { data, error } = await supabase
+    .from('services')
+    .insert(serviceData)
+    .select()
+    .single();
 
   if (error) {
-    // Podríamos tener un problema si los IDs de placeholder no existen como
-    // registros válidos en las tablas referenciadas.
-    if (error.code === '23503') { // Foreign key violation
-        console.error("Foreign key violation. Check placeholder IDs.", error);
-        throw new Error("Error de configuración del sistema. No se pudo crear la solicitud. Contacte a soporte.");
-    }
-    throw error;
+    console.error('Error creating service request:', error);
+    throw new Error(`Error al crear la solicitud: ${error.message}`);
   }
 
   return data;
@@ -76,7 +83,11 @@ export const useServiceRequest = () => {
       if (!profileUser?.id || !profileUser.client_id) {
         throw new Error('No se pudo identificar al cliente. Por favor, inicie sesión de nuevo.');
       }
-      return createServiceRequest({ formData, clientId: profileUser.client_id, userId: profileUser.id });
+      return createServiceRequest({ 
+        formData, 
+        clientId: profileUser.client_id, 
+        userId: profileUser.id 
+      });
     },
     onSuccess: async (data, formData) => {
       try {
@@ -93,16 +104,13 @@ export const useServiceRequest = () => {
           .eq('id', formData.service_type_id)
           .single();
 
-        // Generar folio único
-        const folio = `PORTAL-${Date.now()}`;
-
         // Enviar email de confirmación si el cliente tiene email
-        if (clientData?.email && data && data.length > 0) {
+        if (clientData?.email && data) {
           await supabase.functions.invoke('send-service-confirmation', {
             body: {
-              serviceId: data[0].id,
+              serviceId: data.id,
               clientEmail: clientData.email,
-              folio: folio,
+              folio: data.folio,
               origin: formData.origin,
               destination: formData.destination,
               serviceDate: formData.service_date,
@@ -115,7 +123,7 @@ export const useServiceRequest = () => {
         toast({
           type: 'success',
           title: 'Solicitud Enviada',
-          description: 'Hemos recibido tu solicitud de servicio. Pronto será revisada y recibirás una confirmación por email.',
+          description: `Tu solicitud ${data.folio} ha sido recibida exitosamente. Pronto será revisada y recibirás una confirmación por email.`,
         });
       } catch (emailError) {
         console.error('Error enviando email de confirmación:', emailError);
@@ -123,13 +131,14 @@ export const useServiceRequest = () => {
         toast({
           type: 'success',
           title: 'Solicitud Enviada',
-          description: 'Hemos recibido tu solicitud de servicio. Pronto será revisada.',
+          description: `Tu solicitud ${data.folio} ha sido recibida exitosamente. Pronto será revisada.`,
         });
       }
       
       navigate('/portal/services');
     },
     onError: (error: Error) => {
+      console.error('Error in service request:', error);
       toast({
         type: 'error',
         title: 'Error al enviar la solicitud',
