@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { ServiceDetailsCard } from '@/components/operator/ServiceDetailsCard';
 import { InspectionFormSections } from '@/components/operator/InspectionFormSections';
 import { PDFProgress } from '@/components/operator/PDFProgress';
-import { ArrowLeft, Download, AlertTriangle, RefreshCW } from 'lucide-react';
+import { ArrowLeft, Download, AlertTriangle, RefreshCw } from 'lucide-react';
 import { useToast } from '@/components/ui/custom-toast';
 
 const ServiceInspection = () => {
