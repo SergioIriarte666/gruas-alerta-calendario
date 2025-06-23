@@ -10,15 +10,17 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-interface ServiceConfirmationRequest {
+interface OperatorNotificationRequest {
+  operatorEmail: string;
+  operatorName: string;
   serviceId: string;
-  clientEmail: string;
   folio: string;
+  clientName: string;
+  serviceDate: string;
   origin: string;
   destination: string;
-  serviceDate: string;
   serviceTypeName: string;
-  clientName: string;
+  craneLicensePlate: string;
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -27,7 +29,7 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    console.log('Iniciando proceso de envío de confirmación de servicio...');
+    console.log('Enviando notificación a operador...');
     
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
@@ -35,28 +37,27 @@ const handler = async (req: Request): Promise<Response> => {
     );
 
     const { 
-      serviceId, 
-      clientEmail, 
+      operatorEmail,
+      operatorName,
+      serviceId,
       folio, 
+      clientName,
+      serviceDate,
       origin, 
       destination, 
-      serviceDate, 
       serviceTypeName,
-      clientName 
-    }: ServiceConfirmationRequest = await req.json();
-
-    console.log(`Procesando confirmación para: ${clientEmail}, Folio: ${folio}`);
+      craneLicensePlate
+    }: OperatorNotificationRequest = await req.json();
 
     // Obtener datos de la empresa
     const { data: companyData } = await supabase
       .from('company_data')
-      .select('business_name, phone, email, address')
+      .select('business_name, phone, email')
       .single();
 
     const companyName = companyData?.business_name || 'Grúas 5 Norte';
     const companyPhone = companyData?.phone || '';
     const companyEmail = companyData?.email || 'contacto@gruas5norte.cl';
-    const companyAddress = companyData?.address || '';
 
     // Formatear fecha
     const formattedDate = new Date(serviceDate).toLocaleDateString('es-CL', {
@@ -72,7 +73,7 @@ const handler = async (req: Request): Promise<Response> => {
         <head>
           <meta charset="utf-8">
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>Confirmación de Solicitud de Servicio</title>
+          <title>Nuevo Servicio Asignado</title>
           <style>
             body { font-family: Arial, sans-serif; line-height: 1.6; margin: 0; padding: 20px; background-color: #f4f4f4; }
             .container { max-width: 600px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
@@ -83,7 +84,7 @@ const handler = async (req: Request): Promise<Response> => {
             .label { font-weight: bold; color: #333; }
             .value { color: #666; }
             .folio { font-size: 24px; font-weight: bold; color: #22c55e; text-align: center; margin: 20px 0; }
-            .contact-info { background: #22c55e; color: white; padding: 20px; border-radius: 8px; margin-top: 30px; }
+            .alert-box { background: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; border-radius: 8px; margin: 20px 0; }
             .footer { text-align: center; margin-top: 30px; color: #666; font-size: 14px; }
           </style>
         </head>
@@ -91,25 +92,29 @@ const handler = async (req: Request): Promise<Response> => {
           <div class="container">
             <div class="header">
               <div class="logo">${companyName}</div>
-              <p style="color: #666; margin: 0;">Servicios de Grúa Profesional</p>
+              <p style="color: #666; margin: 0;">Sistema de Gestión de Servicios</p>
             </div>
 
-            <h2 style="color: #333; text-align: center;">¡Solicitud Recibida Exitosamente!</h2>
+            <h2 style="color: #333; text-align: center;">🚛 Nuevo Servicio Asignado</h2>
             
-            <p>Estimado/a <strong>${clientName}</strong>,</p>
+            <p>Hola <strong>${operatorName}</strong>,</p>
             
-            <p>Hemos recibido su solicitud de servicio de grúa. A continuación, encontrará los detalles de su solicitud:</p>
+            <p>Se te ha asignado un nuevo servicio de grúa. Por favor revisa los detalles y prepárate para el servicio programado:</p>
 
             <div class="folio">Folio: ${folio}</div>
 
             <div class="service-info">
               <h3 style="margin-top: 0; color: #333;">Detalles del Servicio</h3>
               <div class="info-row">
+                <span class="label">Cliente:</span>
+                <span class="value">${clientName}</span>
+              </div>
+              <div class="info-row">
                 <span class="label">Tipo de Servicio:</span>
                 <span class="value">${serviceTypeName}</span>
               </div>
               <div class="info-row">
-                <span class="label">Fecha Solicitada:</span>
+                <span class="label">Fecha del Servicio:</span>
                 <span class="value">${formattedDate}</span>
               </div>
               <div class="info-row">
@@ -120,26 +125,29 @@ const handler = async (req: Request): Promise<Response> => {
                 <span class="label">Destino:</span>
                 <span class="value">${destination}</span>
               </div>
+              <div class="info-row">
+                <span class="label">Grúa Asignada:</span>
+                <span class="value">${craneLicensePlate}</span>
+              </div>
             </div>
 
-            <p><strong>¿Qué sigue ahora?</strong></p>
-            <ul>
-              <li>Nuestro equipo revisará su solicitud en las próximas horas</li>
-              <li>Nos pondremos en contacto con usted para confirmar los detalles</li>
-              <li>Le proporcionaremos una cotización y programaremos el servicio</li>
-            </ul>
+            <div class="alert-box">
+              <p><strong>⚠️ Recordatorios Importantes:</strong></p>
+              <ul>
+                <li>Revisa el estado de la grúa antes del servicio</li>
+                <li>Confirma la ubicación del cliente antes de salir</li>
+                <li>Lleva todos los documentos necesarios</li>
+                <li>Contacta al cliente si hay algún retraso</li>
+              </ul>
+            </div>
 
-            <div class="contact-info">
-              <h3 style="margin-top: 0;">Información de Contacto</h3>
-              <p><strong>Teléfono:</strong> ${companyPhone}</p>
-              <p><strong>Email:</strong> ${companyEmail}</p>
-              ${companyAddress ? `<p><strong>Dirección:</strong> ${companyAddress}</p>` : ''}
-              <p style="margin-bottom: 0;"><strong>Horario de Atención:</strong> Lunes a Viernes 8:00 - 18:00, Sábados 8:00 - 14:00</p>
+            <div style="text-align: center; margin: 30px 0;">
+              <p><strong>¿Preguntas o problemas?</strong></p>
+              <p>Contacta a coordinación: ${companyPhone} | ${companyEmail}</p>
             </div>
 
             <div class="footer">
-              <p>Este email fue enviado automáticamente. Por favor, no responda a este mensaje.</p>
-              <p>Para consultas, contacte directamente a ${companyPhone} o ${companyEmail}</p>
+              <p>Este email fue enviado automáticamente desde el sistema TMS.</p>
               <p style="margin-top: 20px; font-size: 12px;">© 2025 ${companyName}. Todos los derechos reservados.</p>
             </div>
           </div>
@@ -147,22 +155,19 @@ const handler = async (req: Request): Promise<Response> => {
       </html>
     `;
 
-    // Enviar email al cliente real
     const emailResponse = await resend.emails.send({
-      from: `${companyName} <servicios@gruas5norte.cl>`,
-      to: [clientEmail],
-      subject: `Confirmación de Solicitud - Folio ${folio}`,
+      from: `${companyName} <operaciones@gruas5norte.cl>`,
+      to: [operatorEmail],
+      subject: `🚛 Nuevo Servicio Asignado - Folio ${folio}`,
       html: emailHtml,
     });
 
-    console.log("Email de confirmación enviado exitosamente:", emailResponse);
+    console.log("Email al operador enviado:", emailResponse);
 
     return new Response(JSON.stringify({ 
       success: true, 
       emailResponse,
-      message: "Email de confirmación enviado exitosamente",
-      recipient: clientEmail,
-      folio: folio
+      message: "Notificación enviada al operador exitosamente"
     }), {
       status: 200,
       headers: {
@@ -171,11 +176,11 @@ const handler = async (req: Request): Promise<Response> => {
       },
     });
   } catch (error: any) {
-    console.error("Error enviando email de confirmación:", error);
+    console.error("Error enviando notificación al operador:", error);
     return new Response(
       JSON.stringify({ 
         error: error.message,
-        details: "Error en el servicio de envío de emails"
+        details: "Error en el servicio de notificación de operador"
       }),
       {
         status: 500,

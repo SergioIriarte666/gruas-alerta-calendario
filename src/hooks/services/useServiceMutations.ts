@@ -39,11 +39,12 @@ export const useServiceMutations = () => {
         updatedAt: newService.updated_at
       };
 
-      // Enviar email de confirmación (no bloqueante)
+      // Enviar emails de confirmación (no bloqueantes)
       try {
-        console.log('📧 Intentando enviar email de confirmación para servicio:', formattedService.folio);
+        console.log('📧 Iniciando envío de emails para servicio:', formattedService.folio);
         
-        const emailResult = await supabase.functions.invoke('send-service-confirmation', {
+        // 1. Email de confirmación al cliente
+        const clientEmailResult = await supabase.functions.invoke('send-service-confirmation', {
           body: {
             serviceId: formattedService.id,
             clientEmail: serviceData.client.email,
@@ -56,21 +57,45 @@ export const useServiceMutations = () => {
           }
         });
 
-        if (emailResult.error) {
-          console.error('❌ Error enviando email de confirmación:', emailResult.error);
+        // 2. Email de notificación al operador (si tiene email)
+        if (serviceData.operator.email) {
+          const operatorEmailResult = await supabase.functions.invoke('send-operator-notification', {
+            body: {
+              operatorEmail: serviceData.operator.email,
+              operatorName: serviceData.operator.name,
+              serviceId: formattedService.id,
+              folio: serviceData.folio,
+              clientName: serviceData.client.name,
+              serviceDate: serviceData.serviceDate,
+              origin: serviceData.origin,
+              destination: serviceData.destination,
+              serviceTypeName: serviceData.serviceType.name,
+              craneLicensePlate: serviceData.crane.licensePlate
+            }
+          });
+
+          if (operatorEmailResult.error) {
+            console.error('❌ Error enviando notificación al operador:', operatorEmailResult.error);
+          } else {
+            console.log('✅ Notificación al operador enviada exitosamente');
+          }
+        }
+
+        if (clientEmailResult.error) {
+          console.error('❌ Error enviando email de confirmación:', clientEmailResult.error);
           toast.error("Advertencia", {
             description: "El servicio fue creado exitosamente, pero no se pudo enviar el email de confirmación.",
           });
         } else {
-          console.log('✅ Email de confirmación enviado exitosamente:', emailResult.data);
-          toast.success("Email enviado", {
-            description: "Se ha enviado un email de confirmación al cliente.",
+          console.log('✅ Email de confirmación enviado exitosamente');
+          toast.success("Servicio creado y emails enviados", {
+            description: `Servicio ${serviceData.folio} creado exitosamente. Se han enviado las notificaciones correspondientes.`,
           });
         }
       } catch (emailError) {
-        console.error('❌ Error crítico enviando email:', emailError);
+        console.error('❌ Error crítico enviando emails:', emailError);
         toast.error("Advertencia", {
-          description: "El servicio fue creado exitosamente, pero no se pudo enviar el email de confirmación.",
+          description: "El servicio fue creado exitosamente, pero no se pudieron enviar las notificaciones por email.",
         });
       }
 
