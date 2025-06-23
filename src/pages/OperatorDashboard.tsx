@@ -45,7 +45,7 @@ const OperatorDashboard = () => {
       console.log('❌ Rendering error state:', error.message);
       
       // Mensaje específico para usuarios sin operador asignado
-      const isNoOperatorError = error.message.includes('No operator found') || error.message.includes('operator');
+      const isNoOperatorError = error.message.includes('No se encontró operador') || error.message.includes('operador');
       
       return (
         <div className="text-center bg-red-900/20 border border-red-500/30 p-8 rounded-lg">
@@ -55,7 +55,7 @@ const OperatorDashboard = () => {
           </h2>
           <p className="text-gray-400 max-w-md mx-auto mb-4">
             {isNoOperatorError 
-              ? 'Tu usuario no está configurado como operador. Contacta al administrador para que te asigne servicios.'
+              ? 'Tu usuario no está configurado como operador. Contacta al administrador para que te asigne como operador en el sistema.'
               : (error.message || 'Hubo un problema al cargar tus servicios asignados.')
             }
           </p>
@@ -168,7 +168,7 @@ const OperatorDashboard = () => {
       <footer className="text-center text-gray-500 text-sm pt-4">
         <p>TMS Grúas &copy; {new Date().getFullYear()}</p>
         <p className="text-xs mt-1">
-          ✅ Sistema configurado correctamente - Operador asignado
+          {user?.id ? '✅ Usuario identificado correctamente' : '❌ Error de identificación de usuario'}
         </p>
       </footer>
     </div>

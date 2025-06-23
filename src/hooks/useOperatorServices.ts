@@ -5,10 +5,30 @@ import { Service } from '@/types';
 import { useServiceTransformer } from './services/useServiceTransformer';
 import { toast } from 'sonner';
 
-const fetchOperatorServices = async (operatorId: string): Promise<any[]> => {
+const fetchOperatorServices = async (userId: string): Promise<any[]> => {
   try {
-    console.log('Fetching services for operator:', operatorId);
+    console.log('Fetching operator services for user:', userId);
     
+    // Primero, obtener el operator_id basado en el user_id
+    const { data: operatorData, error: operatorError } = await supabase
+      .from('operators')
+      .select('id')
+      .eq('user_id', userId)
+      .single();
+
+    if (operatorError) {
+      console.error('Error fetching operator by user_id:', operatorError);
+      throw new Error(`No se encontró operador para el usuario: ${operatorError.message}`);
+    }
+
+    if (!operatorData) {
+      console.log('No operator found for user:', userId);
+      throw new Error('No se encontró un operador asociado a este usuario');
+    }
+
+    console.log('Found operator:', operatorData.id);
+
+    // Ahora obtener los servicios para este operador
     const { data: services, error } = await supabase
       .from('services')
       .select(`
@@ -18,7 +38,7 @@ const fetchOperatorServices = async (operatorId: string): Promise<any[]> => {
         cranes (*),
         operators (*)
       `)
-      .eq('operator_id', operatorId)
+      .eq('operator_id', operatorData.id)
       .in('status', ['pending', 'in_progress'])
       .order('service_date', { ascending: true });
 
@@ -35,13 +55,13 @@ const fetchOperatorServices = async (operatorId: string): Promise<any[]> => {
   }
 };
 
-export const useOperatorServices = (operatorId?: string) => {
+export const useOperatorServices = (userId?: string) => {
   const { transformRawServiceData } = useServiceTransformer();
 
   return useQuery<Service[], Error>({
-    queryKey: ['operator-services', operatorId],
-    queryFn: () => fetchOperatorServices(operatorId!),
-    enabled: !!operatorId,
+    queryKey: ['operator-services', userId],
+    queryFn: () => fetchOperatorServices(userId!),
+    enabled: !!userId,
     select: (data) => {
       try {
         return transformRawServiceData(data).filter(Boolean) as Service[];
@@ -52,9 +72,9 @@ export const useOperatorServices = (operatorId?: string) => {
     },
     retry: (failureCount, error) => {
       console.log(`Operator services query retry attempt ${failureCount}:`, error.message);
-      if (error.message.includes('permission')) {
-        toast.error('Error de permisos', {
-          description: 'No tienes acceso a estos servicios. Contacta al administrador.',
+      if (error.message.includes('permission') || error.message.includes('No se encontró operador')) {
+        toast.error('Error de acceso', {
+          description: 'No tienes acceso a servicios como operador. Contacta al administrador.',
         });
         return false;
       }
