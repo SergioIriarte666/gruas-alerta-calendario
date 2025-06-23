@@ -118,9 +118,10 @@ function App() {
                       <Route path="profile" element={<Profile />} />
                     </Route>
                     
-                    {/* Operator routes */}
+                    {/* Operator routes - Added both inspect and inspection paths for compatibility */}
                     <Route path="/operator" element={<ProtectedRoute><OperatorDashboard /></ProtectedRoute>} />
                     <Route path="/operator/service/:serviceId/inspection" element={<ProtectedRoute><ServiceInspection /></ProtectedRoute>} />
+                    <Route path="/operator/service/:serviceId/inspect" element={<ProtectedRoute><ServiceInspection /></ProtectedRoute>} />
 
                     <Route path="*" element={<NotFound />} />
                   </Routes>
