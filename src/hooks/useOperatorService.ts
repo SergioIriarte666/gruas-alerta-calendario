@@ -5,7 +5,10 @@ import { Service } from '@/types';
 import { useServiceTransformer } from './services/useServiceTransformer';
 
 const fetchOperatorService = async (serviceId: string): Promise<Service | null> => {
-  if (!serviceId) return null;
+  if (!serviceId || serviceId === 'undefined') {
+    console.log('⚠️ Invalid service ID provided:', serviceId);
+    return null;
+  }
 
   console.log('🔍 Fetching service:', serviceId);
 
@@ -47,6 +50,12 @@ export const useOperatorService = (serviceId: string) => {
     queryKey: ['operatorService', serviceId],
     queryFn: async () => {
       console.log('🚀 Starting service fetch for:', serviceId);
+      
+      if (!serviceId || serviceId === 'undefined') {
+        console.log('❌ No valid service ID provided');
+        return null;
+      }
+      
       const rawData = await fetchOperatorService(serviceId);
       
       if (!rawData) {
@@ -61,8 +70,14 @@ export const useOperatorService = (serviceId: string) => {
       console.log('✨ Transformation complete:', result?.folio || 'NO FOLIO');
       return result;
     },
-    enabled: !!serviceId,
-    retry: 1,
+    enabled: !!serviceId && serviceId !== 'undefined',
+    retry: (failureCount, error) => {
+      console.log(`Service fetch retry attempt ${failureCount}:`, error.message);
+      if (error.message.includes('permission')) {
+        return false;
+      }
+      return failureCount < 2;
+    },
     staleTime: 30000,
     refetchOnWindowFocus: false,
   });

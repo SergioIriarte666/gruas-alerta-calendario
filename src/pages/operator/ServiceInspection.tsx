@@ -75,6 +75,32 @@ const ServiceInspection = () => {
     
     processInspectionMutation.mutate(values);
   };
+
+  // Mostrar error si no hay ID del servicio
+  if (!id) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" size="icon" onClick={() => navigate('/operator')}>
+            <ArrowLeft />
+          </Button>
+          <h1 className="text-2xl font-bold">Inspección Pre-Servicio</h1>
+        </div>
+        
+        <div className="text-center p-8 bg-red-50 rounded-lg border border-red-200">
+          <AlertTriangle className="w-16 h-16 mx-auto mb-4 text-red-500" />
+          <h2 className="text-xl font-semibold mb-2 text-red-800">URL inválida</h2>
+          <p className="text-red-600 mb-4">
+            No se pudo obtener el ID del servicio desde la URL.
+          </p>
+          <Button onClick={() => navigate('/operator')} variant="outline">
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Volver al Dashboard
+          </Button>
+        </div>
+      </div>
+    );
+  }
   
   if (isLoading) {
     return (

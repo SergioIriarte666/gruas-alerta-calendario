@@ -9,13 +9,13 @@ import { InspectionFormValues } from '@/schemas/inspectionSchema';
 import { createPDFGenerator } from '@/utils/enhancedPdfGenerator';
 
 export const useServiceInspection = () => {
-  const { id } = useParams<{ id: string }>();
+  const { id: serviceId } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   
-  console.log('🎯 Service Inspection Hook - Service ID:', id);
+  console.log('🎯 Service Inspection Hook - Service ID from URL:', serviceId);
   
-  const { data: service, isLoading, error, refetch } = useOperatorService(id!);
+  const { data: service, isLoading, error, refetch } = useOperatorService(serviceId || '');
   
   const [pdfProgress, setPdfProgress] = useState(0);
   const [pdfStep, setPdfStep] = useState('');
@@ -23,7 +23,7 @@ export const useServiceInspection = () => {
   const [pdfDownloadUrl, setPdfDownloadUrl] = useState<string>();
 
   console.log('📊 Service Inspection State:', {
-    serviceId: id,
+    serviceId,
     hasService: !!service,
     serviceFolio: service?.folio,
     isLoading,
@@ -31,13 +31,17 @@ export const useServiceInspection = () => {
   });
 
   const updateServiceStatusMutation = useMutation({
-    mutationFn: async (serviceId: string) => {
-      console.log('🔄 Updating service status to in_progress:', serviceId);
+    mutationFn: async (id: string) => {
+      if (!id) {
+        throw new Error('ID del servicio requerido');
+      }
+      
+      console.log('🔄 Updating service status to in_progress:', id);
       
       const { error } = await supabase
         .from('services')
         .update({ status: 'in_progress' })
-        .eq('id', serviceId);
+        .eq('id', id);
 
       if (error) {
         console.error('❌ Error updating service status:', error);
@@ -48,7 +52,7 @@ export const useServiceInspection = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['operatorServices'] });
-      queryClient.invalidateQueries({ queryKey: ['operatorService', id] });
+      queryClient.invalidateQueries({ queryKey: ['operatorService', serviceId] });
       
       toast.success('Servicio iniciado con éxito');
       navigate('/operator');
@@ -63,6 +67,10 @@ export const useServiceInspection = () => {
     mutationFn: async (values: InspectionFormValues) => {
       if (!service) {
         throw new Error('No hay datos del servicio disponibles.');
+      }
+      
+      if (!serviceId) {
+        throw new Error('ID del servicio no disponible.');
       }
       
       console.log('📋 Processing inspection for service:', service.folio);
@@ -97,8 +105,8 @@ export const useServiceInspection = () => {
       toast.success('PDF de inspección generado exitosamente');
       
       setTimeout(() => {
-        if (id) {
-          updateServiceStatusMutation.mutate(id);
+        if (serviceId) {
+          updateServiceStatusMutation.mutate(serviceId);
         }
       }, 2000);
     },
@@ -137,7 +145,7 @@ export const useServiceInspection = () => {
   };
 
   return {
-    id,
+    id: serviceId,
     service,
     isLoading,
     error,
