@@ -51,7 +51,7 @@ const createServiceRequest = async ({
     value: 0,
   };
 
-  const { data, error } = await supabase.from('services').insert(serviceData);
+  const { data, error } = await supabase.from('services').insert(serviceData).select();
 
   if (error) {
     // Podríamos tener un problema si los IDs de placeholder no existen como
@@ -97,10 +97,10 @@ export const useServiceRequest = () => {
         const folio = `PORTAL-${Date.now()}`;
 
         // Enviar email de confirmación si el cliente tiene email
-        if (clientData?.email) {
+        if (clientData?.email && data && data.length > 0) {
           await supabase.functions.invoke('send-service-confirmation', {
             body: {
-              serviceId: data?.[0]?.id || 'temp-id',
+              serviceId: data[0].id,
               clientEmail: clientData.email,
               folio: folio,
               origin: formData.origin,
