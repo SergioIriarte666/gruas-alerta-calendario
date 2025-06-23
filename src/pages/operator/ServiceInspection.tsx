@@ -106,7 +106,7 @@ const ServiceInspection = () => {
           </p>
           <div className="space-x-4">
             <Button onClick={handleRetry}>
-              <RefreshCW className="w-4 h-4 mr-2" />
+              <RefreshCw className="w-4 h-4 mr-2" />
               Reintentar
             </Button>
             <Button onClick={() => navigate('/operator')} variant="outline">
