@@ -5,7 +5,7 @@ import { Service } from '@/types';
 import { useServiceTransformer } from './services/useServiceTransformer';
 import { toast } from 'sonner';
 
-const fetchOperatorServices = async (operatorId: string): Promise<Service[]> => {
+const fetchOperatorServices = async (operatorId: string): Promise<any[]> => {
   try {
     console.log('Fetching services for operator:', operatorId);
     
@@ -36,7 +36,7 @@ const fetchOperatorServices = async (operatorId: string): Promise<Service[]> => 
 };
 
 export const useOperatorServices = (operatorId?: string) => {
-  const { transformSupabaseService } = useServiceTransformer();
+  const { transformRawServiceData } = useServiceTransformer();
 
   return useQuery<Service[], Error>({
     queryKey: ['operator-services', operatorId],
@@ -44,7 +44,7 @@ export const useOperatorServices = (operatorId?: string) => {
     enabled: !!operatorId,
     select: (data) => {
       try {
-        return data.map(transformSupabaseService).filter(Boolean) as Service[];
+        return transformRawServiceData(data).filter(Boolean) as Service[];
       } catch (error) {
         console.error('Error transforming operator services:', error);
         return [];
@@ -61,11 +61,13 @@ export const useOperatorServices = (operatorId?: string) => {
       return failureCount < 2;
     },
     retryDelay: 1000,
-    onError: (error) => {
-      console.error('Operator services query error:', error);
-      toast.error('Error al cargar servicios', {
-        description: 'No se pudieron cargar los servicios asignados. Por favor, intenta recargar la página.',
-      });
+    meta: {
+      onError: (error: Error) => {
+        console.error('Operator services query error:', error);
+        toast.error('Error al cargar servicios', {
+          description: 'No se pudieron cargar los servicios asignados. Por favor, intenta recargar la página.',
+        });
+      },
     },
   });
 };

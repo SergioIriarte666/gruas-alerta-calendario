@@ -55,11 +55,13 @@ export const useClientInvoices = () => {
       return failureCount < 2;
     },
     retryDelay: 1000,
-    onError: (error) => {
-      console.error('Client invoices query error:', error);
-      toast.error('Error al cargar facturas', {
-        description: 'No se pudieron cargar tus facturas. Por favor, intenta recargar la página.',
-      });
+    meta: {
+      onError: (error: Error) => {
+        console.error('Client invoices query error:', error);
+        toast.error('Error al cargar facturas', {
+          description: 'No se pudieron cargar tus facturas. Por favor, intenta recargar la página.',
+        });
+      },
     },
   });
 };

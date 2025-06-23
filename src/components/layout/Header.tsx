@@ -9,6 +9,8 @@ import { useToast } from '@/components/ui/custom-toast';
 import { useUser } from '@/contexts/UserContext';
 import { useSettings } from '@/hooks/useSettings';
 import { NotificationsDropdown } from './NotificationsDropdown';
+import { cleanupAuthState, performGlobalSignOut } from '@/utils/authCleanup';
+import { supabase } from '@/integrations/supabase/client';
 
 interface HeaderProps {
   setIsMobileMenuOpen: (open: boolean) => void;
@@ -34,22 +36,38 @@ export const Header = ({
 
   const handleLogout = async () => {
     try {
+      console.log('Header logout initiated...');
+      
+      // Limpiar estado de autenticación primero
+      cleanupAuthState();
+      
+      // Intentar cerrar sesión global
+      await performGlobalSignOut(supabase);
+      
+      // Usar el logout del contexto
       await logout();
+      
       toast({
         type: 'success',
         title: 'Sesión cerrada',
         description: 'Has cerrado sesión correctamente'
       });
-      navigate('/auth', {
-        replace: true
-      });
+      
+      // Forzar recarga completa
+      window.location.href = '/auth';
     } catch (error) {
       console.error("Header: Logout failed:", error);
+      
+      // Forzar limpieza y redirección incluso si hay error
+      cleanupAuthState();
+      
       toast({
         type: 'error',
         title: 'Error al cerrar sesión',
-        description: 'Por favor, intenta de nuevo.'
+        description: 'Sesión cerrada forzosamente'
       });
+      
+      window.location.href = '/auth';
     }
   };
 

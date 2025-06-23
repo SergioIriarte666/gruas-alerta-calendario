@@ -82,11 +82,13 @@ export const useClientServices = () => {
       return failureCount < 2;
     },
     retryDelay: 1000,
-    onError: (error) => {
-      console.error('Client services query error:', error);
-      toast.error('Error al cargar servicios', {
-        description: 'No se pudieron cargar tus servicios. Por favor, intenta recargar la página.',
-      });
+    meta: {
+      onError: (error: Error) => {
+        console.error('Client services query error:', error);
+        toast.error('Error al cargar servicios', {
+          description: 'No se pudieron cargar tus servicios. Por favor, intenta recargar la página.',
+        });
+      },
     },
   });
 };

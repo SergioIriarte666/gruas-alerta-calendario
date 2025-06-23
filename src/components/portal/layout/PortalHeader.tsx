@@ -5,6 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { useSettings } from '@/hooks/useSettings';
 import { useUser } from '@/contexts/UserContext';
+import { cleanupAuthState, performGlobalSignOut } from '@/utils/authCleanup';
 
 const PortalHeader: React.FC = () => {
   const navigate = useNavigate();
@@ -12,8 +13,23 @@ const PortalHeader: React.FC = () => {
   const { user } = useUser();
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
-    navigate('/portal/login');
+    try {
+      console.log('Portal logout initiated...');
+      
+      // Limpiar estado de autenticación primero
+      cleanupAuthState();
+      
+      // Intentar cerrar sesión global
+      await performGlobalSignOut(supabase);
+      
+      // Forzar recarga completa para limpiar estado
+      window.location.href = '/portal/login';
+    } catch (error) {
+      console.error('Error during logout:', error);
+      // Forzar limpieza y redirección incluso si hay error
+      cleanupAuthState();
+      window.location.href = '/portal/login';
+    }
   };
 
   const companyName = settings?.company?.name || 'Grúas Alerta';
@@ -41,7 +57,7 @@ const PortalHeader: React.FC = () => {
         </div>
         <button 
           onClick={handleLogout}
-          className="flex items-center space-x-2 text-red-400 hover:text-red-300"
+          className="flex items-center space-x-2 text-red-400 hover:text-red-300 transition-colors"
         >
           <LogOut className="w-5 h-5" />
           <span>Cerrar Sesión</span>
