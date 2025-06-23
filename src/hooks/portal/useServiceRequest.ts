@@ -78,12 +78,55 @@ export const useServiceRequest = () => {
       }
       return createServiceRequest({ formData, clientId: profileUser.client_id, userId: profileUser.id });
     },
-    onSuccess: () => {
-      toast({
-        type: 'success',
-        title: 'Solicitud Enviada',
-        description: 'Hemos recibido tu solicitud de servicio. Pronto será revisada.',
-      });
+    onSuccess: async (data, formData) => {
+      try {
+        // Obtener datos del cliente y tipo de servicio para el email
+        const { data: clientData } = await supabase
+          .from('clients')
+          .select('name, email')
+          .eq('id', profileUser?.client_id)
+          .single();
+
+        const { data: serviceTypeData } = await supabase
+          .from('service_types')
+          .select('name')
+          .eq('id', formData.service_type_id)
+          .single();
+
+        // Generar folio único
+        const folio = `PORTAL-${Date.now()}`;
+
+        // Enviar email de confirmación si el cliente tiene email
+        if (clientData?.email) {
+          await supabase.functions.invoke('send-service-confirmation', {
+            body: {
+              serviceId: data?.[0]?.id || 'temp-id',
+              clientEmail: clientData.email,
+              folio: folio,
+              origin: formData.origin,
+              destination: formData.destination,
+              serviceDate: formData.service_date,
+              serviceTypeName: serviceTypeData?.name || 'Servicio de Grúa',
+              clientName: clientData.name
+            }
+          });
+        }
+
+        toast({
+          type: 'success',
+          title: 'Solicitud Enviada',
+          description: 'Hemos recibido tu solicitud de servicio. Pronto será revisada y recibirás una confirmación por email.',
+        });
+      } catch (emailError) {
+        console.error('Error enviando email de confirmación:', emailError);
+        // No fallar la operación si el email falla
+        toast({
+          type: 'success',
+          title: 'Solicitud Enviada',
+          description: 'Hemos recibido tu solicitud de servicio. Pronto será revisada.',
+        });
+      }
+      
       navigate('/portal/services');
     },
     onError: (error: Error) => {
