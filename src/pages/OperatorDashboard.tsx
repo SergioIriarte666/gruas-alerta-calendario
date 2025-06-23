@@ -11,7 +11,7 @@ import { Badge } from '@/components/ui/badge';
 const OperatorDashboard = () => {
   const { signOut } = useAuth();
   const { user } = useUser();
-  const { services, isLoading, error, refetch } = useOperatorServices();
+  const { data: services, isLoading, error, refetch } = useOperatorServices(user?.id);
 
   console.log('🏠 OperatorDashboard - Render state:', { 
     user: user ? { id: user.id, name: user.name, role: user.role, email: user.email } : 'no user',
