@@ -7,6 +7,8 @@ export const portalRequestServiceSchema = z.object({
   
   service_type_id: z.string().min(1, { message: 'El tipo de servicio es requerido.' }),
   
+  service_date: z.string().min(1, { message: 'La fecha de servicio es requerida.' }),
+  
   license_plate: z.string().optional(),
   vehicle_brand: z.string().optional(),
   vehicle_model: z.string().optional(),
@@ -14,4 +16,4 @@ export const portalRequestServiceSchema = z.object({
   observations: z.string().optional(),
 });
 
-export type PortalRequestServiceSchema = z.infer<typeof portalRequestServiceSchema>; 
+export type PortalRequestServiceSchema = z.infer<typeof portalRequestServiceSchema>;

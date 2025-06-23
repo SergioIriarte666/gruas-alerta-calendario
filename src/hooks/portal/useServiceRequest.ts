@@ -28,9 +28,10 @@ const createServiceRequest = async ({
     // Datos del formulario
     origin: formData.origin,
     destination: formData.destination,
-    license_plate: formData.license_plate || null,
-    vehicle_brand: formData.vehicle_brand || null,
-    vehicle_model: formData.vehicle_model || null,
+    // Para campos de vehículo, usar cadena vacía en lugar de null para evitar constraint violations
+    license_plate: formData.license_plate || '',
+    vehicle_brand: formData.vehicle_brand || '',
+    vehicle_model: formData.vehicle_model || '',
     observations: formData.observations,
     
     // Datos del sistema
@@ -39,7 +40,7 @@ const createServiceRequest = async ({
     created_by: userId,
     status: 'pending' as const,
     request_date: new Date().toISOString(),
-    service_date: new Date().toISOString(),
+    service_date: formData.service_date,
 
     // Usar el tipo de servicio seleccionado
     service_type_id: formData.service_type_id,

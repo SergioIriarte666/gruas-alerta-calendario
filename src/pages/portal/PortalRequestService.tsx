@@ -85,6 +85,16 @@ const PortalRequestService = () => {
                   {errors.destination && <p className="text-red-500 text-sm mt-1">{errors.destination.message}</p>}
                 </div>
                 <div>
+                  <Label htmlFor="service_date" className="text-gray-300">Fecha de Servicio *</Label>
+                  <Input 
+                    id="service_date" 
+                    type="date" 
+                    {...register('service_date')} 
+                    className="bg-gray-700 border-gray-600 text-white" 
+                  />
+                  {errors.service_date && <p className="text-red-500 text-sm mt-1">{errors.service_date.message}</p>}
+                </div>
+                <div>
                   <Label htmlFor="observations" className="text-gray-300">Observaciones</Label>
                   <Textarea id="observations" {...register('observations')} className="bg-gray-700 border-gray-600 text-white" />
                 </div>
