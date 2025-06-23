@@ -13,6 +13,8 @@ export const useServiceInspection = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   
+  console.log('🎯 Service Inspection Hook - Service ID:', id);
+  
   const { data: service, isLoading, error, refetch } = useOperatorService(id!);
   
   const [pdfProgress, setPdfProgress] = useState(0);
@@ -20,16 +22,29 @@ export const useServiceInspection = () => {
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   const [pdfDownloadUrl, setPdfDownloadUrl] = useState<string>();
 
+  console.log('📊 Service Inspection State:', {
+    serviceId: id,
+    hasService: !!service,
+    serviceFolio: service?.folio,
+    isLoading,
+    error: error?.message
+  });
+
   const updateServiceStatusMutation = useMutation({
     mutationFn: async (serviceId: string) => {
+      console.log('🔄 Updating service status to in_progress:', serviceId);
+      
       const { error } = await supabase
         .from('services')
         .update({ status: 'in_progress' })
         .eq('id', serviceId);
 
       if (error) {
+        console.error('❌ Error updating service status:', error);
         throw new Error(`Error al actualizar el estado del servicio: ${error.message}`);
       }
+      
+      console.log('✅ Service status updated successfully');
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['operatorServices'] });
@@ -39,6 +54,7 @@ export const useServiceInspection = () => {
       navigate('/operator');
     },
     onError: (error) => {
+      console.error('💥 Service status update failed:', error);
       toast.error(error.message);
     },
   });
@@ -48,6 +64,8 @@ export const useServiceInspection = () => {
       if (!service) {
         throw new Error('No hay datos del servicio disponibles.');
       }
+      
+      console.log('📋 Processing inspection for service:', service.folio);
       
       setIsGeneratingPDF(true);
       setPdfProgress(0);
@@ -85,6 +103,7 @@ export const useServiceInspection = () => {
       }, 2000);
     },
     onError: (error: Error) => {
+      console.error('💥 PDF generation failed:', error);
       toast.error(`Error al generar el PDF: ${error.message}`);
       setIsGeneratingPDF(false);
       setPdfProgress(0);
@@ -113,6 +132,7 @@ export const useServiceInspection = () => {
   };
 
   const handleRetry = () => {
+    console.log('🔄 Retrying service fetch...');
     refetch();
   };
 

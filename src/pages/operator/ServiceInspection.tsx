@@ -33,6 +33,14 @@ const ServiceInspection = () => {
 
   const { toast } = useToast();
 
+  console.log('🎬 ServiceInspection Component Render:', {
+    id,
+    hasService: !!service,
+    serviceFolio: service?.folio,
+    isLoading,
+    errorMessage: error?.message
+  });
+
   const form = useForm<InspectionFormValues>({
     resolver: zodResolver(inspectionFormSchema),
     defaultValues: {
@@ -80,6 +88,7 @@ const ServiceInspection = () => {
         <div className="text-center p-8">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-tms-green mx-auto"></div>
           <p className="mt-4">Cargando servicio...</p>
+          <p className="text-sm text-gray-500 mt-2">ID: {id}</p>
         </div>
       </div>
     );
@@ -95,17 +104,19 @@ const ServiceInspection = () => {
           <h1 className="text-2xl font-bold">Inspección Pre-Servicio</h1>
         </div>
         
-        <div className="text-center p-8">
+        <div className="text-center p-8 bg-red-50 rounded-lg border border-red-200">
           <AlertTriangle className="w-16 h-16 mx-auto mb-4 text-red-500" />
-          <h2 className="text-xl font-semibold mb-2">Error al cargar el servicio</h2>
-          <p className="text-gray-600 mb-6">
+          <h2 className="text-xl font-semibold mb-2 text-red-800">Error al cargar el servicio</h2>
+          <p className="text-red-600 mb-4">
             {error?.message || 'No se pudo cargar la información del servicio.'}
           </p>
-          <p className="text-sm text-gray-500 mb-6">
-            ID del servicio: {id}
-          </p>
+          <div className="bg-red-100 p-3 rounded mb-6">
+            <p className="text-sm text-red-700 font-mono">
+              ID del servicio: {id}
+            </p>
+          </div>
           <div className="space-x-4">
-            <Button onClick={handleRetry}>
+            <Button onClick={handleRetry} className="bg-red-600 hover:bg-red-700">
               <RefreshCw className="w-4 h-4 mr-2" />
               Reintentar
             </Button>

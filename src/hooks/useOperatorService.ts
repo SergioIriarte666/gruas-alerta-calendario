@@ -7,32 +7,37 @@ import { useServiceTransformer } from './services/useServiceTransformer';
 const fetchOperatorService = async (serviceId: string): Promise<Service | null> => {
   if (!serviceId) return null;
 
-  console.log('Fetching service:', serviceId);
+  console.log('🔍 Fetching service:', serviceId);
 
-  const { data, error } = await supabase
-    .from('services')
-    .select(`
-      *,
-      clients (*),
-      cranes (*),
-      operators (*),
-      service_types (*)
-    `)
-    .eq('id', serviceId)
-    .maybeSingle();
+  try {
+    const { data, error } = await supabase
+      .from('services')
+      .select(`
+        *,
+        clients (*),
+        cranes (*),
+        operators (*),
+        service_types (*)
+      `)
+      .eq('id', serviceId)
+      .maybeSingle();
 
-  if (error) {
-    console.error('Error fetching service:', error);
-    throw new Error(`Error al cargar el servicio: ${error.message}`);
+    if (error) {
+      console.error('❌ Error fetching service:', error);
+      throw new Error(`Error al cargar el servicio: ${error.message}`);
+    }
+
+    if (!data) {
+      console.log('⚠️ No service found with ID:', serviceId);
+      return null;
+    }
+
+    console.log('✅ Service data received:', data);
+    return data as any;
+  } catch (error) {
+    console.error('💥 Unexpected error:', error);
+    throw error;
   }
-
-  if (!data) {
-    console.log('No service found with ID:', serviceId);
-    return null;
-  }
-
-  console.log('Service data received:', data);
-  return data as any;
 };
 
 export const useOperatorService = (serviceId: string) => {
@@ -41,13 +46,24 @@ export const useOperatorService = (serviceId: string) => {
   return useQuery({
     queryKey: ['operatorService', serviceId],
     queryFn: async () => {
+      console.log('🚀 Starting service fetch for:', serviceId);
       const rawData = await fetchOperatorService(serviceId);
-      if (!rawData) return null;
       
+      if (!rawData) {
+        console.log('📭 No raw data found');
+        return null;
+      }
+      
+      console.log('🔄 Transforming service data...');
       const transformed = transformRawServiceData([rawData]);
-      return transformed[0] || null;
+      const result = transformed[0] || null;
+      
+      console.log('✨ Transformation complete:', result?.folio || 'NO FOLIO');
+      return result;
     },
     enabled: !!serviceId,
-    retry: 2,
+    retry: 1,
+    staleTime: 30000,
+    refetchOnWindowFocus: false,
   });
 };
