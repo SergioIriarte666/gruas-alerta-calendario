@@ -1,3 +1,4 @@
+
 import { useMutation } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useUser } from '@/contexts/UserContext';
@@ -10,8 +11,6 @@ import { useNavigate } from 'react-router-dom';
 // actualizados por un administrador posteriormente.
 const PLACEHOLDER_OPERATOR_ID = '00000000-0000-0000-0000-000000000000';
 const PLACEHOLDER_CRANE_ID = '00000000-0000-0000-0000-000000000000';
-const PLACEHOLDER_SERVICE_TYPE_ID = '00000000-0000-0000-0000-000000000000';
-
 
 const createServiceRequest = async ({
   formData,
@@ -29,9 +28,9 @@ const createServiceRequest = async ({
     // Datos del formulario
     origin: formData.origin,
     destination: formData.destination,
-    license_plate: formData.license_plate,
-    vehicle_brand: formData.vehicle_brand,
-    vehicle_model: formData.vehicle_model,
+    license_plate: formData.license_plate || null,
+    vehicle_brand: formData.vehicle_brand || null,
+    vehicle_model: formData.vehicle_model || null,
     observations: formData.observations,
     
     // Datos del sistema
@@ -42,10 +41,12 @@ const createServiceRequest = async ({
     request_date: new Date().toISOString(),
     service_date: new Date().toISOString(),
 
+    // Usar el tipo de servicio seleccionado
+    service_type_id: formData.service_type_id,
+
     // Datos de marcador de posición
     operator_id: PLACEHOLDER_OPERATOR_ID,
     crane_id: PLACEHOLDER_CRANE_ID,
-    service_type_id: PLACEHOLDER_SERVICE_TYPE_ID,
     value: 0,
   };
 
