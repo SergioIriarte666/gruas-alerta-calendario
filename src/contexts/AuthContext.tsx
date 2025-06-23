@@ -2,12 +2,13 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
+import { cleanupAuthState, performGlobalSignOut } from '@/utils/authCleanup';
 
 interface AuthContextType {
   session: Session | null;
   user: User | null;
   loading: boolean;
-  signOut: () => void;
+  signOut: () => Promise<void>;
   forceRefresh: () => Promise<void>;
 }
 
@@ -58,9 +59,28 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const signOut = async () => {
     try {
       console.log('AuthProvider: Signing out...');
-      await supabase.auth.signOut();
+      
+      // Limpiar estado local inmediatamente
+      setSession(null);
+      setUser(null);
+      
+      // Limpiar estado de autenticación
+      cleanupAuthState();
+      
+      // Intentar cerrar sesión global
+      await performGlobalSignOut(supabase);
+      
+      // Forzar recarga completa para limpiar cualquier estado residual
+      setTimeout(() => {
+        window.location.href = '/auth';
+      }, 100);
     } catch (error) {
       console.error('Error signing out:', error);
+      // Forzar limpieza y redirección incluso si hay error
+      cleanupAuthState();
+      setSession(null);
+      setUser(null);
+      window.location.href = '/auth';
     }
   };
 

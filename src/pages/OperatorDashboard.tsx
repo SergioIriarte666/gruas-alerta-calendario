@@ -7,10 +7,12 @@ import { useOperatorServices } from '@/hooks/useOperatorServices';
 import { AssignedServiceCard } from '@/components/operator/AssignedServiceCard';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
+import { useToast } from '@/components/ui/custom-toast';
 
 const OperatorDashboard = () => {
   const { signOut } = useAuth();
   const { user } = useUser();
+  const { toast } = useToast();
   const { data: services, isLoading, error, refetch } = useOperatorServices(user?.id);
 
   console.log('🏠 OperatorDashboard - Render state:', { 
@@ -27,6 +29,31 @@ const OperatorDashboard = () => {
       console.log('✅ Refresh completed');
     } catch (err) {
       console.error('❌ Refresh failed:', err);
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      console.log('OperatorDashboard logout initiated...');
+      
+      toast({
+        type: 'info',
+        title: 'Cerrando sesión...',
+        description: 'Limpiando datos de usuario'
+      });
+      
+      await signOut();
+    } catch (error) {
+      console.error("Operator logout failed:", error);
+      
+      toast({
+        type: 'error',
+        title: 'Error al cerrar sesión',
+        description: 'Sesión cerrada forzosamente'
+      });
+      
+      // Forzar redirección como último recurso
+      window.location.href = '/auth';
     }
   };
 
@@ -157,7 +184,7 @@ const OperatorDashboard = () => {
             )}
           </p>
         </div>
-        <Button onClick={signOut} variant="ghost" className="text-gray-300 hover:bg-slate-700 hover:text-white">
+        <Button onClick={handleLogout} variant="ghost" className="text-gray-300 hover:bg-slate-700 hover:text-white">
           <LogOut className="w-4 h-4 mr-2" />
           Cerrar Sesión
         </Button>

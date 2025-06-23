@@ -1,33 +1,38 @@
 
 import React from 'react';
 import { LogOut, User } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
-import { useNavigate } from 'react-router-dom';
 import { useSettings } from '@/hooks/useSettings';
 import { useUser } from '@/contexts/UserContext';
-import { cleanupAuthState, performGlobalSignOut } from '@/utils/authCleanup';
+import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/components/ui/custom-toast';
 
 const PortalHeader: React.FC = () => {
-  const navigate = useNavigate();
   const { settings } = useSettings();
   const { user } = useUser();
+  const { signOut } = useAuth();
+  const { toast } = useToast();
 
   const handleLogout = async () => {
     try {
       console.log('Portal logout initiated...');
       
-      // Limpiar estado de autenticación primero
-      cleanupAuthState();
+      toast({
+        type: 'info',
+        title: 'Cerrando sesión...',
+        description: 'Limpiando datos de usuario'
+      });
       
-      // Intentar cerrar sesión global
-      await performGlobalSignOut(supabase);
-      
-      // Forzar recarga completa para limpiar estado
-      window.location.href = '/portal/login';
+      await signOut();
     } catch (error) {
-      console.error('Error during logout:', error);
-      // Forzar limpieza y redirección incluso si hay error
-      cleanupAuthState();
+      console.error('Error during portal logout:', error);
+      
+      toast({
+        type: 'error',
+        title: 'Error al cerrar sesión',
+        description: 'Sesión cerrada forzosamente'
+      });
+      
+      // Forzar redirección como último recurso
       window.location.href = '/portal/login';
     }
   };

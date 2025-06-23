@@ -8,9 +8,8 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { useToast } from '@/components/ui/custom-toast';
 import { useUser } from '@/contexts/UserContext';
 import { useSettings } from '@/hooks/useSettings';
+import { useAuth } from '@/contexts/AuthContext';
 import { NotificationsDropdown } from './NotificationsDropdown';
-import { cleanupAuthState, performGlobalSignOut } from '@/utils/authCleanup';
-import { supabase } from '@/integrations/supabase/client';
 
 interface HeaderProps {
   setIsMobileMenuOpen: (open: boolean) => void;
@@ -20,16 +19,11 @@ export const Header = ({
   setIsMobileMenuOpen
 }: HeaderProps) => {
   const navigate = useNavigate();
-  const {
-    user,
-    logout
-  } = useUser();
-  const {
-    settings
-  } = useSettings();
-  const {
-    toast
-  } = useToast();
+  const { user } = useUser();
+  const { settings } = useSettings();
+  const { signOut } = useAuth();
+  const { toast } = useToast();
+  
   const isAdmin = user?.role === 'admin';
   const companyName = settings?.company?.name || 'Gruas 5 Norte';
   const companyLogo = settings?.company?.logo;
@@ -38,28 +32,15 @@ export const Header = ({
     try {
       console.log('Header logout initiated...');
       
-      // Limpiar estado de autenticación primero
-      cleanupAuthState();
-      
-      // Intentar cerrar sesión global
-      await performGlobalSignOut(supabase);
-      
-      // Usar el logout del contexto
-      await logout();
-      
       toast({
-        type: 'success',
-        title: 'Sesión cerrada',
-        description: 'Has cerrado sesión correctamente'
+        type: 'info',
+        title: 'Cerrando sesión...',
+        description: 'Limpiando datos de usuario'
       });
       
-      // Forzar recarga completa
-      window.location.href = '/auth';
+      await signOut();
     } catch (error) {
       console.error("Header: Logout failed:", error);
-      
-      // Forzar limpieza y redirección incluso si hay error
-      cleanupAuthState();
       
       toast({
         type: 'error',
@@ -67,6 +48,7 @@ export const Header = ({
         description: 'Sesión cerrada forzosamente'
       });
       
+      // Forzar limpieza y redirección como último recurso
       window.location.href = '/auth';
     }
   };
@@ -75,7 +57,8 @@ export const Header = ({
     navigate('/profile');
   };
 
-  return <header className="flex h-16 items-center justify-between bg-white border-b border-gray-200 px-4 sm:px-6 transition-colors duration-300" style={{ background: '#ffffff' }}>
+  return (
+    <header className="flex h-16 items-center justify-between bg-white border-b border-gray-200 px-4 sm:px-6 transition-colors duration-300" style={{ background: '#ffffff' }}>
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="icon" onClick={() => setIsMobileMenuOpen(true)} className="lg:hidden text-black bg-tms-green/20 border border-tms-green/30 hover:bg-tms-green hover:text-black">
           <Menu className="h-6 w-6" />
@@ -126,5 +109,6 @@ export const Header = ({
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
-    </header>;
+    </header>
+  );
 };
