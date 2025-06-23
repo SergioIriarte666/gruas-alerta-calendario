@@ -46,7 +46,7 @@ export const useServiceInspection = () => {
   const processInspectionMutation = useMutation({
     mutationFn: async (values: InspectionFormValues) => {
       if (!service) {
-        throw new Error('Faltan datos del servicio para generar la inspección.');
+        throw new Error('No hay datos del servicio disponibles.');
       }
       
       setIsGeneratingPDF(true);

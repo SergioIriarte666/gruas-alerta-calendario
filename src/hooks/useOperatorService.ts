@@ -4,8 +4,10 @@ import { supabase } from '@/integrations/supabase/client';
 import { Service } from '@/types';
 import { useServiceTransformer } from './services/useServiceTransformer';
 
-const fetchOperatorService = async (serviceId: string, transformRawServiceData: (data: any[]) => Service[]): Promise<Service | null> => {
+const fetchOperatorService = async (serviceId: string): Promise<Service | null> => {
   if (!serviceId) return null;
+
+  console.log('Fetching service:', serviceId);
 
   const { data, error } = await supabase
     .from('services')
@@ -17,7 +19,7 @@ const fetchOperatorService = async (serviceId: string, transformRawServiceData: 
       service_types (*)
     `)
     .eq('id', serviceId)
-    .single();
+    .maybeSingle();
 
   if (error) {
     console.error('Error fetching service:', error);
@@ -25,11 +27,12 @@ const fetchOperatorService = async (serviceId: string, transformRawServiceData: 
   }
 
   if (!data) {
-    throw new Error('Servicio no encontrado');
+    console.log('No service found with ID:', serviceId);
+    return null;
   }
 
-  const transformed = transformRawServiceData([data]);
-  return transformed[0] || null;
+  console.log('Service data received:', data);
+  return data as any;
 };
 
 export const useOperatorService = (serviceId: string) => {
@@ -37,8 +40,14 @@ export const useOperatorService = (serviceId: string) => {
 
   return useQuery({
     queryKey: ['operatorService', serviceId],
-    queryFn: () => fetchOperatorService(serviceId, transformRawServiceData),
+    queryFn: async () => {
+      const rawData = await fetchOperatorService(serviceId);
+      if (!rawData) return null;
+      
+      const transformed = transformRawServiceData([rawData]);
+      return transformed[0] || null;
+    },
     enabled: !!serviceId,
-    retry: 1,
+    retry: 2,
   });
 };
