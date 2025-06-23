@@ -5,13 +5,16 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { LogoUpload } from './LogoUpload';
 import { useSettings } from '@/hooks/useSettings';
+import { useLogoUpdater } from '@/hooks/useLogoUpdater';
 import { useToast } from '@/components/ui/custom-toast';
 import { useState, useEffect } from 'react';
 
 export const CompanySettingsTab = () => {
   const { settings, updateSettings, saveSettings, saving, loading } = useSettings();
+  const { uploadDefaultLogo, isUpdating: isLogoUpdating } = useLogoUpdater();
   const { toast } = useToast();
   const [localNextFolio, setLocalNextFolio] = useState('1000');
+  const [hasInitialized, setHasInitialized] = useState(false);
 
   // Update local folio when settings change
   useEffect(() => {
@@ -19,6 +22,27 @@ export const CompanySettingsTab = () => {
       setLocalNextFolio(settings.company.nextServiceFolioNumber.toString());
     }
   }, [settings?.company?.nextServiceFolioNumber]);
+
+  // Initialize company data if empty
+  useEffect(() => {
+    if (settings && !hasInitialized && !settings.company.name) {
+      console.log("🏢 Inicializando datos de empresa por defecto...");
+      
+      updateSettings({
+        company: {
+          name: 'TMS - Transport Management System',
+          taxId: '12.345.678-9',
+          address: 'Av. Principal 123, Santiago',
+          phone: '+56 9 1234 5678',
+          email: 'contacto@tms.cl',
+          folioFormat: 'SRV-{number}',
+          nextServiceFolioNumber: 1000
+        }
+      });
+      
+      setHasInitialized(true);
+    }
+  }, [settings, updateSettings, hasInitialized]);
 
   const handleSave = async () => {
     const result = await saveSettings();
@@ -50,9 +74,28 @@ export const CompanySettingsTab = () => {
     }
   };
 
-  const handleLogoChange = (file: File | null) => {
-    // This will be handled by the parent component
+  const handleLogoChange = async (file: File | null) => {
     console.log('Logo change requested:', file);
+    // The logo will be handled by the parent Settings component
+  };
+
+  const handleUploadDefaultLogo = async () => {
+    const result = await uploadDefaultLogo();
+    if (result.success) {
+      toast({
+        type: "success",
+        title: "Logo corporativo subido",
+        description: "El logo predeterminado de TMS se ha configurado exitosamente.",
+      });
+      // Trigger settings refresh
+      window.dispatchEvent(new CustomEvent('settings-updated'));
+    } else {
+      toast({
+        type: "error",
+        title: "Error al subir logo",
+        description: result.error || "No se pudo subir el logo predeterminado.",
+      });
+    }
   };
 
   // Show loading state while data is being fetched
@@ -203,18 +246,35 @@ export const CompanySettingsTab = () => {
             Sube el logo de tu empresa para usar en reportes y documentos
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
           <LogoUpload 
             currentLogo={settings.company.logo}
             onLogoChange={handleLogoChange}
+            disabled={isLogoUpdating}
           />
+          
+          {!settings.company.logo && (
+            <div className="text-center">
+              <Button 
+                onClick={handleUploadDefaultLogo}
+                disabled={isLogoUpdating}
+                variant="outline"
+                className="border-tms-green text-tms-green hover:bg-tms-green hover:text-black"
+              >
+                {isLogoUpdating ? 'Subiendo...' : 'Usar Logo Corporativo TMS'}
+              </Button>
+              <p className="text-xs text-gray-500 mt-2">
+                Configura automáticamente el logo corporativo de TMS
+              </p>
+            </div>
+          )}
         </CardContent>
       </Card>
 
       <div className="flex justify-end">
         <Button 
           onClick={handleSave} 
-          disabled={saving}
+          disabled={saving || isLogoUpdating}
           className="bg-tms-green hover:bg-tms-green/80 text-black font-medium"
         >
           {saving ? 'Guardando...' : 'Guardar Configuración'}

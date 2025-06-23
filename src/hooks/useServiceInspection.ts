@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -68,6 +69,52 @@ export const useServiceInspection = () => {
     },
   });
 
+  const sendInspectionEmailMutation = useMutation({
+    mutationFn: async ({ pdfBlob, service, inspection }: {
+      pdfBlob: Blob;
+      service: any;
+      inspection: InspectionFormValues;
+    }) => {
+      console.log('📧 Enviando inspección por email...');
+      
+      // Convert blob to base64
+      const arrayBuffer = await pdfBlob.arrayBuffer();
+      const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
+      
+      const emailData = {
+        inspectionData: {
+          serviceId: service.id,
+          folio: service.folio,
+          clientName: service.client?.name || 'Cliente',
+          clientEmail: service.client?.email || 'cliente@example.com',
+          operatorName: service.operator?.name || 'Operador',
+          serviceDate: service.serviceDate || new Date().toLocaleDateString('es-CL'),
+          equipmentCount: inspection.equipment?.length || 0,
+        },
+        pdfBlob: base64,
+      };
+
+      const { data, error } = await supabase.functions.invoke('send-inspection-email', {
+        body: emailData
+      });
+
+      if (error) {
+        console.error('❌ Error enviando email:', error);
+        throw new Error(`Error al enviar email: ${error.message}`);
+      }
+
+      console.log('✅ Email enviado exitosamente:', data);
+      return data;
+    },
+    onSuccess: () => {
+      toast.success('Inspección enviada por email exitosamente');
+    },
+    onError: (error) => {
+      console.error('💥 Error enviando email:', error);
+      toast.error(`Error al enviar email: ${error.message}`);
+    }
+  });
+
   const processInspectionMutation = useMutation({
     mutationFn: async (values: InspectionFormValues) => {
       if (!service) {
@@ -99,6 +146,16 @@ export const useServiceInspection = () => {
       const filename = `Inspeccion-${service.folio}-${new Date().toISOString().split('T')[0]}.pdf`;
       await pdfGenerator.downloadPDF(blob, filename, downloadUrl);
       
+      // Enviar por email si el cliente tiene email
+      if (service.client?.email) {
+        setPdfStep('Enviando por email...');
+        await sendInspectionEmailMutation.mutateAsync({
+          pdfBlob: blob,
+          service,
+          inspection: values
+        });
+      }
+      
       [...values.photosBeforeService, ...values.photosClientVehicle, ...values.photosEquipmentUsed]
         .forEach(photoName => {
           localStorage.removeItem(`photo-${photoName}`);
@@ -107,7 +164,7 @@ export const useServiceInspection = () => {
       return values;
     },
     onSuccess: () => {
-      toast.success('PDF de inspección generado exitosamente');
+      toast.success('PDF de inspección generado y enviado exitosamente');
       
       setTimeout(() => {
         if (serviceId) {
@@ -160,6 +217,7 @@ export const useServiceInspection = () => {
     pdfDownloadUrl,
     processInspectionMutation,
     updateServiceStatusMutation,
+    sendInspectionEmailMutation,
     handleManualDownload,
     handleRetry,
     navigate

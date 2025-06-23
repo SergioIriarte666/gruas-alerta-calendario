@@ -38,11 +38,11 @@ export const useLogoUpdater = () => {
       } else {
         console.log("useLogoUpdater: No existen datos de la empresa, creando nuevo registro...");
         const { data: newCompanyData, error: companyInsertError } = await supabase.from('company_data').insert({
-          business_name: settings.company.name || 'Nombre no definido',
-          rut: settings.company.taxId || 'RUT no definido',
-          address: settings.company.address || 'Dirección no definida',
-          phone: settings.company.phone || 'Teléfono no definido',
-          email: settings.company.email || 'email@indefinido.com',
+          business_name: 'TMS - Transport Management System',
+          rut: '12.345.678-9',
+          address: 'Av. Principal 123, Santiago',
+          phone: '+56 9 1234 5678',
+          email: 'contacto@tms.cl',
         }).select('id, logo_url').single();
 
         if (companyInsertError) {
@@ -135,5 +135,44 @@ export const useLogoUpdater = () => {
     }
   };
 
-  return { isUpdating, updateLogo };
+  // Función para subir el logo predeterminado
+  const uploadDefaultLogo = async (): Promise<{ success: boolean; error?: string }> => {
+    try {
+      console.log("🏢 Subiendo logo predeterminado de la empresa...");
+      
+      // Fetch the default logo image
+      const response = await fetch('/images/company-logo.jpg');
+      if (!response.ok) {
+        throw new Error('No se pudo cargar el logo predeterminado');
+      }
+      
+      const blob = await response.blob();
+      const file = new File([blob], 'company-logo.jpg', { type: 'image/jpeg' });
+      
+      // Use the existing updateLogo function
+      const result = await updateLogo(file, {
+        company: {
+          name: 'TMS - Transport Management System',
+          taxId: '12.345.678-9',
+          address: 'Av. Principal 123, Santiago',
+          phone: '+56 9 1234 5678',
+          email: 'contacto@tms.cl',
+          folioFormat: 'SRV-{number}',
+          nextServiceFolioNumber: 1000
+        },
+        user: { language: 'es', theme: 'dark', timezone: 'America/Santiago', notifications: true, dateFormat: 'DD/MM/YYYY', currency: 'CLP' },
+        system: { autoBackup: true, backupFrequency: 'daily', dataRetention: 12, maintenanceMode: false },
+        notifications: { emailNotifications: true, serviceReminders: true, invoiceAlerts: true, overdueNotifications: true, systemUpdates: false }
+      });
+      
+      console.log("✅ Logo predeterminado subido exitosamente");
+      return result;
+      
+    } catch (error) {
+      console.error('❌ Error subiendo logo predeterminado:', error);
+      return { success: false, error: error instanceof Error ? error.message : 'Error desconocido' };
+    }
+  };
+
+  return { isUpdating, updateLogo, uploadDefaultLogo };
 };
