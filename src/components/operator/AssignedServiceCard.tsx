@@ -24,7 +24,7 @@ export const AssignedServiceCard = ({ service }: AssignedServiceCardProps) => {
   }
 
   return (
-    <Link to={`/operator/service/${service.id}/inspect`} className="block">
+    <Link to={`/operator/service/${service.id}/inspection`} className="block">
       <Card className="bg-slate-800 border-slate-700 text-white hover:bg-slate-700/50 transition-colors cursor-pointer">
         <CardHeader className="flex flex-row items-center justify-between pb-2">
           <CardTitle className="text-lg font-bold text-tms-green">Folio: {service.folio}</CardTitle>
