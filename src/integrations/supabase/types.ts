@@ -1038,6 +1038,8 @@ export type Database = {
           is_active: boolean
           created_at: string
           updated_at: string
+          client_id: string
+          client_name: string
         }[]
       }
       get_client_id_for_user: {

@@ -1,18 +1,21 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Loader2, UserPlus, RefreshCw } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Loader2, UserPlus, RefreshCw, Settings } from 'lucide-react';
 import { useUserManagement } from '@/hooks/useUserManagement';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
 export const UserManagementTab = () => {
-  const { users, loading, updating, updateUserRole, toggleUserStatus, refetchUsers } = useUserManagement();
+  const { users, clients, loading, updating, updateUserRole, assignClientToUser, toggleUserStatus, refetchUsers } = useUserManagement();
+  const [selectedUser, setSelectedUser] = useState<any>(null);
+  const [isClientAssignOpen, setIsClientAssignOpen] = useState(false);
 
   const getRoleBadgeColor = (role: string) => {
     switch (role) {
@@ -22,6 +25,8 @@ export const UserManagementTab = () => {
         return 'bg-blue-500 hover:bg-blue-600 text-white';
       case 'viewer':
         return 'bg-green-500 hover:bg-green-600 text-white';
+      case 'client':
+        return 'bg-purple-500 hover:bg-purple-600 text-white';
       default:
         return 'bg-gray-500 hover:bg-gray-600 text-white';
     }
@@ -35,8 +40,18 @@ export const UserManagementTab = () => {
         return 'Operador';
       case 'viewer':
         return 'Visualizador';
+      case 'client':
+        return 'Cliente';
       default:
         return role;
+    }
+  };
+
+  const handleAssignClient = async (clientId: string | null) => {
+    if (selectedUser) {
+      await assignClientToUser(selectedUser.id, clientId);
+      setIsClientAssignOpen(false);
+      setSelectedUser(null);
     }
   };
 
@@ -80,6 +95,7 @@ export const UserManagementTab = () => {
                 <TableRow className="border-gray-300 hover:bg-gray-50">
                   <TableHead className="text-black font-medium">Usuario</TableHead>
                   <TableHead className="text-black font-medium">Rol</TableHead>
+                  <TableHead className="text-black font-medium">Cliente Asociado</TableHead>
                   <TableHead className="text-black font-medium">Estado</TableHead>
                   <TableHead className="text-black font-medium">Fecha Registro</TableHead>
                   <TableHead className="text-black font-medium">Acciones</TableHead>
@@ -100,6 +116,62 @@ export const UserManagementTab = () => {
                       <Badge className={getRoleBadgeColor(user.role)}>
                         {getRoleLabel(user.role)}
                       </Badge>
+                    </TableCell>
+                    <TableCell>
+                      {user.role === 'client' ? (
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm text-black">
+                            {user.client_name || 'Sin asignar'}
+                          </span>
+                          <Dialog open={isClientAssignOpen && selectedUser?.id === user.id} onOpenChange={(open) => {
+                            setIsClientAssignOpen(open);
+                            if (!open) setSelectedUser(null);
+                          }}>
+                            <DialogTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-6 w-6 p-0"
+                                onClick={() => setSelectedUser(user)}
+                                disabled={updating === user.id}
+                              >
+                                <Settings className="w-3 h-3" />
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent className="bg-white">
+                              <DialogHeader>
+                                <DialogTitle className="text-black">Asignar Cliente</DialogTitle>
+                              </DialogHeader>
+                              <div className="space-y-4">
+                                <p className="text-sm text-gray-600">
+                                  Selecciona el cliente que será asociado a este usuario:
+                                </p>
+                                <div className="space-y-2">
+                                  <Button
+                                    variant="outline"
+                                    className="w-full justify-start"
+                                    onClick={() => handleAssignClient(null)}
+                                  >
+                                    Sin cliente asignado
+                                  </Button>
+                                  {clients.map((client) => (
+                                    <Button
+                                      key={client.id}
+                                      variant="outline"
+                                      className="w-full justify-start"
+                                      onClick={() => handleAssignClient(client.id)}
+                                    >
+                                      {client.name} ({client.rut})
+                                    </Button>
+                                  ))}
+                                </div>
+                              </div>
+                            </DialogContent>
+                          </Dialog>
+                        </div>
+                      ) : (
+                        <span className="text-sm text-gray-400">No aplica</span>
+                      )}
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center space-x-2">
@@ -135,6 +207,9 @@ export const UserManagementTab = () => {
                           <SelectItem value="viewer">
                             Visualizador
                           </SelectItem>
+                          <SelectItem value="client">
+                            Cliente
+                          </SelectItem>
                         </SelectContent>
                       </Select>
                     </TableCell>
@@ -151,16 +226,15 @@ export const UserManagementTab = () => {
           )}
 
           <div className="mt-6 p-4 bg-gray-50 rounded-lg border border-gray-300">
-            <h4 className="text-black font-medium mb-2">Información sobre Usuarios de Prueba</h4>
+            <h4 className="text-black font-medium mb-2">Información sobre Gestión de Usuarios</h4>
             <p className="text-gray-600 text-sm mb-3">
-              Para probar los diferentes roles, los usuarios deben registrarse normalmente en la aplicación. 
-              Luego podrás cambiar sus roles desde esta interfaz.
+              Los usuarios deben registrarse normalmente en la aplicación. Luego podrás cambiar sus roles desde esta interfaz.
             </p>
             <div className="space-y-2 text-sm">
               <div className="text-black">
                 <strong>Roles disponibles:</strong>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
                 <div className="p-2 bg-red-50 rounded border border-red-200">
                   <strong className="text-red-700">Administrador:</strong>
                   <p className="text-gray-600 text-xs">Acceso completo al sistema</p>
@@ -173,7 +247,17 @@ export const UserManagementTab = () => {
                   <strong className="text-green-700">Visualizador:</strong>
                   <p className="text-gray-600 text-xs">Solo lectura del sistema</p>
                 </div>
+                <div className="p-2 bg-purple-50 rounded border border-purple-200">
+                  <strong className="text-purple-700">Cliente:</strong>
+                  <p className="text-gray-600 text-xs">Acceso al portal de cliente</p>
+                </div>
               </div>
+            </div>
+            <div className="mt-4 p-3 bg-blue-50 rounded border border-blue-200">
+              <h5 className="text-blue-800 font-medium mb-1">Perfiles de Cliente</h5>
+              <p className="text-blue-700 text-xs">
+                Cuando asignes el rol "Cliente" a un usuario, debes asociarlo con un cliente específico para que pueda acceder al portal de clientes y ver únicamente su información.
+              </p>
             </div>
           </div>
         </CardContent>
