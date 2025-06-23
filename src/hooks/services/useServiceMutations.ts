@@ -39,6 +39,41 @@ export const useServiceMutations = () => {
         updatedAt: newService.updated_at
       };
 
+      // Enviar email de confirmación (no bloqueante)
+      try {
+        console.log('📧 Intentando enviar email de confirmación para servicio:', formattedService.folio);
+        
+        const emailResult = await supabase.functions.invoke('send-service-confirmation', {
+          body: {
+            serviceId: formattedService.id,
+            clientEmail: serviceData.client.email,
+            folio: serviceData.folio,
+            origin: serviceData.origin,
+            destination: serviceData.destination,
+            serviceDate: serviceData.serviceDate,
+            serviceTypeName: serviceData.serviceType.name,
+            clientName: serviceData.client.name
+          }
+        });
+
+        if (emailResult.error) {
+          console.error('❌ Error enviando email de confirmación:', emailResult.error);
+          toast.error("Advertencia", {
+            description: "El servicio fue creado exitosamente, pero no se pudo enviar el email de confirmación.",
+          });
+        } else {
+          console.log('✅ Email de confirmación enviado exitosamente:', emailResult.data);
+          toast.success("Email enviado", {
+            description: "Se ha enviado un email de confirmación al cliente.",
+          });
+        }
+      } catch (emailError) {
+        console.error('❌ Error crítico enviando email:', emailError);
+        toast.error("Advertencia", {
+          description: "El servicio fue creado exitosamente, pero no se pudo enviar el email de confirmación.",
+        });
+      }
+
       toast.success("Servicio creado", {
         description: `Servicio ${serviceData.folio} creado exitosamente.`,
       });
