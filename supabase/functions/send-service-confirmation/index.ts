@@ -27,6 +27,8 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
+    console.log('Iniciando proceso de envío de confirmación de servicio...');
+    
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
@@ -42,6 +44,8 @@ const handler = async (req: Request): Promise<Response> => {
       serviceTypeName,
       clientName 
     }: ServiceConfirmationRequest = await req.json();
+
+    console.log(`Procesando confirmación para: ${clientEmail}, Folio: ${folio}`);
 
     // Obtener datos de la empresa
     const { data: companyData } = await supabase
@@ -143,7 +147,7 @@ const handler = async (req: Request): Promise<Response> => {
       </html>
     `;
 
-    // Usar el dominio por defecto de Resend
+    // Usar el dominio por defecto de Resend - Actualizado para asegurar el redespliegue
     const emailResponse = await resend.emails.send({
       from: `${companyName} <onboarding@resend.dev>`,
       to: [clientEmail],
@@ -151,9 +155,13 @@ const handler = async (req: Request): Promise<Response> => {
       html: emailHtml,
     });
 
-    console.log("Email de confirmación enviado:", emailResponse);
+    console.log("Email de confirmación enviado exitosamente:", emailResponse);
 
-    return new Response(JSON.stringify({ success: true, emailResponse }), {
+    return new Response(JSON.stringify({ 
+      success: true, 
+      emailResponse,
+      message: "Email de confirmación enviado correctamente"
+    }), {
       status: 200,
       headers: {
         "Content-Type": "application/json",
@@ -163,7 +171,10 @@ const handler = async (req: Request): Promise<Response> => {
   } catch (error: any) {
     console.error("Error enviando email de confirmación:", error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: error.message,
+        details: "Error en el servicio de envío de emails"
+      }),
       {
         status: 500,
         headers: { "Content-Type": "application/json", ...corsHeaders },
