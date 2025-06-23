@@ -19,7 +19,8 @@ const formatCurrency = (amount: number) => {
 const getStatusBadge = (status: string) => {
   const statusConfig: { [key: string]: { label: string; className: string } } = {
     paid: { label: 'Pagada', className: 'bg-green-500' },
-    pending: { label: 'Pendiente', className: 'bg-yellow-500' },
+    sent: { label: 'Enviada', className: 'bg-blue-500' },
+    draft: { label: 'Borrador', className: 'bg-gray-500' },
     overdue: { label: 'Vencida', className: 'bg-red-500' },
     cancelled: { label: 'Cancelada', className: 'bg-gray-500' },
   };
@@ -107,7 +108,7 @@ const PortalInvoices = () => {
     );
   };
 
-  const totalPendiente = invoices?.filter(inv => inv.status === 'pending').reduce((sum, inv) => sum + inv.total, 0) || 0;
+  const totalPorPagar = invoices?.filter(inv => inv.status === 'sent').reduce((sum, inv) => sum + inv.total, 0) || 0;
   const totalVencido = invoices?.filter(inv => inv.status === 'overdue').reduce((sum, inv) => sum + inv.total, 0) || 0;
 
   return (
@@ -125,8 +126,8 @@ const PortalInvoices = () => {
       {invoices && invoices.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
           <div className="bg-gray-800 p-4 rounded-lg">
-            <h3 className="text-sm font-medium text-gray-400">Total Pendiente</h3>
-            <p className="text-xl font-bold text-yellow-500">{formatCurrency(totalPendiente)}</p>
+            <h3 className="text-sm font-medium text-gray-400">Total por Pagar</h3>
+            <p className="text-xl font-bold text-yellow-500">{formatCurrency(totalPorPagar)}</p>
           </div>
           <div className="bg-gray-800 p-4 rounded-lg">
             <h3 className="text-sm font-medium text-gray-400">Total Vencido</h3>

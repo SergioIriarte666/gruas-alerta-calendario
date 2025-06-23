@@ -24,7 +24,7 @@ const PortalDashboard: React.FC = () => {
   const totalServicios = services?.length || 0;
   const serviciosRecientes = services?.slice(0, 5) || [];
   const totalFacturas = invoices?.length || 0;
-  const facturasPendientes = invoices?.filter(inv => inv.status === 'pending') || [];
+  const facturasPendientes = invoices?.filter(inv => inv.status === 'sent') || [];
   const facturasVencidas = invoices?.filter(inv => inv.status === 'overdue') || [];
   const totalPendiente = facturasPendientes.reduce((sum, inv) => sum + inv.total, 0);
 
@@ -150,7 +150,7 @@ const PortalDashboard: React.FC = () => {
           <Card className="bg-gray-800 border-gray-700">
             <CardHeader>
               <CardTitle className="text-white flex items-center justify-between">
-                Facturas Pendientes
+                Facturas por Pagar
                 <Link to="/portal/invoices" className="text-tms-green hover:text-tms-green-dark">
                   <span className="text-sm">Ver todas</span>
                 </Link>
@@ -183,7 +183,7 @@ const PortalDashboard: React.FC = () => {
               ) : (
                 <div className="text-center py-4 text-gray-400">
                   <FileText className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                  <p className="text-sm">No hay facturas pendientes</p>
+                  <p className="text-sm">No hay facturas por pagar</p>
                 </div>
               )}
             </CardContent>
