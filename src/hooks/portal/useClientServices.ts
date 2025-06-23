@@ -1,6 +1,8 @@
+
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useUser } from '@/contexts/UserContext';
+import { toast } from 'sonner';
 
 export interface ClientService {
   id: string;
@@ -16,44 +18,50 @@ export interface ClientService {
 
 const fetchClientServices = async (userId: string | undefined): Promise<ClientService[]> => {
   if (!userId) {
-    // Si no hay usuario, no se puede hacer la consulta.
-    // RLS se encargará de la seguridad, pero esto evita una llamada innecesaria.
+    console.log('No user ID provided for client services fetch');
     return [];
   }
 
-  const { data, error } = await supabase
-    .from('services')
-    .select(`
-      id,
-      folio,
-      service_date,
-      status,
-      origin,
-      destination,
-      value,
-      cranes ( license_plate ),
-      operators ( name )
-    `)
-    // El filtrado por cliente se hace automáticamente gracias a la Política RLS
-    // No necesitamos añadir un .eq('client_id', ...) aquí.
-    .order('service_date', { ascending: false });
+  try {
+    console.log('Fetching client services for user:', userId);
+    
+    const { data, error } = await supabase
+      .from('services')
+      .select(`
+        id,
+        folio,
+        service_date,
+        status,
+        origin,
+        destination,
+        value,
+        cranes ( license_plate ),
+        operators ( name )
+      `)
+      .order('service_date', { ascending: false });
 
-  if (error) {
-    console.error('Error fetching client services:', error);
-    throw new Error('No se pudieron obtener los servicios.');
+    if (error) {
+      console.error('Error fetching client services:', error);
+      throw new Error(`Error al obtener servicios: ${error.message}`);
+    }
+
+    console.log('Client services fetched successfully:', data?.length || 0, 'services');
+
+    return (data || []).map((service: any) => ({
+      id: service.id,
+      folio: service.folio,
+      service_date: service.service_date,
+      status: service.status,
+      origin: service.origin,
+      destination: service.destination,
+      value: service.value,
+      crane_license_plate: service.cranes?.license_plate || 'N/A',
+      operator_name: service.operators?.name || 'N/A',
+    }));
+  } catch (error: any) {
+    console.error('Unexpected error in fetchClientServices:', error);
+    throw error;
   }
-
-  return (data || []).map((service: any) => ({
-    id: service.id,
-    folio: service.folio,
-    service_date: service.service_date,
-    status: service.status,
-    origin: service.origin,
-    destination: service.destination,
-    value: service.value,
-    crane_license_plate: service.cranes?.license_plate || 'N/A',
-    operator_name: service.operators?.name || 'N/A',
-  }));
 };
 
 export const useClientServices = () => {
@@ -62,7 +70,23 @@ export const useClientServices = () => {
   return useQuery<ClientService[], Error>({
     queryKey: ['clientServices', user?.id],
     queryFn: () => fetchClientServices(user?.id),
-    enabled: !!user, // La consulta solo se ejecutará si hay un usuario logueado.
+    enabled: !!user,
+    retry: (failureCount, error) => {
+      console.log(`Client services query retry attempt ${failureCount}:`, error.message);
+      if (error.message.includes('permission')) {
+        toast.error('Error de permisos', {
+          description: 'No tienes acceso a esta información. Contacta al administrador.',
+        });
+        return false;
+      }
+      return failureCount < 2;
+    },
+    retryDelay: 1000,
+    onError: (error) => {
+      console.error('Client services query error:', error);
+      toast.error('Error al cargar servicios', {
+        description: 'No se pudieron cargar tus servicios. Por favor, intenta recargar la página.',
+      });
+    },
   });
 };
-

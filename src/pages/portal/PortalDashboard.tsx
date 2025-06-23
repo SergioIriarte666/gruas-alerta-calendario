@@ -1,11 +1,12 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { PlusCircle, FileText, History, TrendingUp, Clock, AlertTriangle } from 'lucide-react';
+import { PlusCircle, FileText, History, TrendingUp, Clock, AlertTriangle, RefreshCw } from 'lucide-react';
 import { useClientServices } from '@/hooks/portal/useClientServices';
 import { useClientInvoices } from '@/hooks/portal/useClientInvoices';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
@@ -17,8 +18,8 @@ const formatCurrency = (amount: number) => {
 };
 
 const PortalDashboard: React.FC = () => {
-  const { data: services, isLoading: servicesLoading } = useClientServices();
-  const { data: invoices, isLoading: invoicesLoading } = useClientInvoices();
+  const { data: services, isLoading: servicesLoading, error: servicesError, refetch: refetchServices } = useClientServices();
+  const { data: invoices, isLoading: invoicesLoading, error: invoicesError, refetch: refetchInvoices } = useClientInvoices();
 
   // Calcular métricas
   const totalServicios = services?.length || 0;
@@ -27,6 +28,16 @@ const PortalDashboard: React.FC = () => {
   const facturasPendientes = invoices?.filter(inv => inv.status === 'sent') || [];
   const facturasVencidas = invoices?.filter(inv => inv.status === 'overdue') || [];
   const totalPendiente = facturasPendientes.reduce((sum, inv) => sum + inv.total, 0);
+
+  const handleRetryServices = () => {
+    console.log('Retrying services fetch...');
+    refetchServices();
+  };
+
+  const handleRetryInvoices = () => {
+    console.log('Retrying invoices fetch...');
+    refetchInvoices();
+  };
 
   return (
     <div>
@@ -93,14 +104,39 @@ const PortalDashboard: React.FC = () => {
           <CardHeader>
             <CardTitle className="text-white flex items-center justify-between">
               Servicios Recientes
-              <Link to="/portal/services" className="text-tms-green hover:text-tms-green-dark">
-                <span className="text-sm">Ver todos</span>
-              </Link>
+              <div className="flex items-center gap-2">
+                {servicesError && (
+                  <Button
+                    onClick={handleRetryServices}
+                    size="sm"
+                    variant="outline"
+                    className="text-xs"
+                  >
+                    <RefreshCw className="w-3 h-3 mr-1" />
+                    Reintentar
+                  </Button>
+                )}
+                <Link to="/portal/services" className="text-tms-green hover:text-tms-green-dark">
+                  <span className="text-sm">Ver todos</span>
+                </Link>
+              </div>
             </CardTitle>
           </CardHeader>
           <CardContent>
             {servicesLoading ? (
               <div className="text-gray-400">Cargando servicios...</div>
+            ) : servicesError ? (
+              <div className="text-center py-8">
+                <AlertTriangle className="w-12 h-12 mx-auto mb-4 text-red-500" />
+                <p className="text-red-400 mb-2">Error al cargar servicios</p>
+                <p className="text-gray-400 text-sm mb-4">
+                  No se pudieron cargar tus servicios
+                </p>
+                <Button onClick={handleRetryServices} variant="outline" size="sm">
+                  <RefreshCw className="w-4 h-4 mr-2" />
+                  Reintentar
+                </Button>
+              </div>
             ) : serviciosRecientes.length > 0 ? (
               <div className="space-y-3">
                 {serviciosRecientes.map((service) => (
@@ -151,14 +187,36 @@ const PortalDashboard: React.FC = () => {
             <CardHeader>
               <CardTitle className="text-white flex items-center justify-between">
                 Facturas por Pagar
-                <Link to="/portal/invoices" className="text-tms-green hover:text-tms-green-dark">
-                  <span className="text-sm">Ver todas</span>
-                </Link>
+                <div className="flex items-center gap-2">
+                  {invoicesError && (
+                    <Button
+                      onClick={handleRetryInvoices}
+                      size="sm"
+                      variant="outline"
+                      className="text-xs"
+                    >
+                      <RefreshCw className="w-3 h-3 mr-1" />
+                      Reintentar
+                    </Button>
+                  )}
+                  <Link to="/portal/invoices" className="text-tms-green hover:text-tms-green-dark">
+                    <span className="text-sm">Ver todas</span>
+                  </Link>
+                </div>
               </CardTitle>
             </CardHeader>
             <CardContent>
               {invoicesLoading ? (
                 <div className="text-gray-400">Cargando facturas...</div>
+              ) : invoicesError ? (
+                <div className="text-center py-4">
+                  <AlertTriangle className="w-8 h-8 mx-auto mb-2 text-red-500" />
+                  <p className="text-red-400 text-sm mb-2">Error al cargar facturas</p>
+                  <Button onClick={handleRetryInvoices} variant="outline" size="sm">
+                    <RefreshCw className="w-3 h-3 mr-1" />
+                    Reintentar
+                  </Button>
+                </div>
               ) : facturasPendientes.length > 0 ? (
                 <div className="space-y-3">
                   {facturasPendientes.slice(0, 3).map((invoice) => (
