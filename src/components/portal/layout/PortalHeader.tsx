@@ -4,10 +4,12 @@ import { LogOut, User } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { useSettings } from '@/hooks/useSettings';
+import { useUser } from '@/contexts/UserContext';
 
 const PortalHeader: React.FC = () => {
   const navigate = useNavigate();
   const { settings } = useSettings();
+  const { user } = useUser();
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -15,6 +17,7 @@ const PortalHeader: React.FC = () => {
   };
 
   const companyName = settings?.company?.name || 'Grúas Alerta';
+  const userName = user?.name || 'Usuario';
 
   return (
     <header className="bg-gray-800/50 backdrop-blur-sm p-4 flex justify-between items-center border-b border-gray-700">
@@ -32,10 +35,10 @@ const PortalHeader: React.FC = () => {
         </div>
       </div>
       <div className="flex items-center space-x-4">
-        <button className="flex items-center space-x-2 text-gray-300 hover:text-white">
+        <div className="flex items-center space-x-2 text-gray-300">
           <User className="w-5 h-5" />
-          <span>Mi Perfil</span>
-        </button>
+          <span>Bienvenido, {userName}</span>
+        </div>
         <button 
           onClick={handleLogout}
           className="flex items-center space-x-2 text-red-400 hover:text-red-300"
