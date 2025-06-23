@@ -85,10 +85,15 @@ const handler = async (req: Request): Promise<Response> => {
             .folio { font-size: 24px; font-weight: bold; color: #22c55e; text-align: center; margin: 20px 0; }
             .contact-info { background: #22c55e; color: white; padding: 20px; border-radius: 8px; margin-top: 30px; }
             .footer { text-align: center; margin-top: 30px; color: #666; font-size: 14px; }
+            .test-notice { background: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; margin: 20px 0; border-radius: 8px; }
           </style>
         </head>
         <body>
           <div class="container">
+            <div class="test-notice">
+              <p><strong>🧪 EMAIL DE PRUEBA:</strong> Este correo es para testing del sistema. El cliente original es: <strong>${clientEmail}</strong></p>
+            </div>
+
             <div class="header">
               <div class="logo">${companyName}</div>
               <p style="color: #666; margin: 0;">Servicios de Grúa Profesional</p>
@@ -147,11 +152,11 @@ const handler = async (req: Request): Promise<Response> => {
       </html>
     `;
 
-    // Enviar email usando el dominio por defecto de Resend
+    // Enviar email usando mi dirección verificada para pruebas
     const emailResponse = await resend.emails.send({
       from: `${companyName} <onboarding@resend.dev>`,
-      to: [clientEmail],
-      subject: `Confirmación de Solicitud de Servicio - Folio ${folio}`,
+      to: ["siriartev@gmail.com"], // Dirección verificada para pruebas
+      subject: `[TESTING] Confirmación de Solicitud - Folio ${folio} (Cliente: ${clientName})`,
       html: emailHtml,
     });
 
@@ -160,7 +165,9 @@ const handler = async (req: Request): Promise<Response> => {
     return new Response(JSON.stringify({ 
       success: true, 
       emailResponse,
-      message: "Email de confirmación enviado correctamente"
+      message: "Email de confirmación enviado en modo prueba",
+      testRecipient: "siriartev@gmail.com",
+      originalClientEmail: clientEmail
     }), {
       status: 200,
       headers: {
