@@ -83,6 +83,24 @@ function App() {
                     <Route path="/auth" element={<Auth />} />
                     <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
                     
+                    {/* Client Portal Routes - Sin verificación de roles específicos ya que ProtectedRoute maneja la auth */}
+                    <Route path="/portal/login" element={<PortalLogin />} />
+                    <Route 
+                      path="/portal/*" 
+                      element={
+                        <ProtectedRoute>
+                          <PortalLayout>
+                            <Routes>
+                              <Route path="dashboard" element={<PortalDashboard />} />
+                              <Route path="services" element={<PortalServices />} />
+                              <Route path="invoices" element={<PortalInvoices />} />
+                              <Route path="request-service" element={<PortalRequestService />} />
+                            </Routes>
+                          </PortalLayout>
+                        </ProtectedRoute>
+                      } 
+                    />
+                    
                     {/* Admin routes with Layout */}
                     <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
                       <Route path="dashboard" element={<Dashboard />} />
@@ -103,49 +121,6 @@ function App() {
                     {/* Operator routes */}
                     <Route path="/operator" element={<ProtectedRoute><OperatorDashboard /></ProtectedRoute>} />
                     <Route path="/operator/service/:serviceId/inspection" element={<ProtectedRoute><ServiceInspection /></ProtectedRoute>} />
-                    
-                    {/* Client Portal Routes */}
-                    <Route path="/portal/login" element={<PortalLogin />} />
-                    <Route 
-                      path="/portal/dashboard" 
-                      element={
-                        <ProtectedRoute allowedRoles={['client']}>
-                          <PortalLayout>
-                            <PortalDashboard />
-                          </PortalLayout>
-                        </ProtectedRoute>
-                      } 
-                    />
-                    <Route 
-                      path="/portal/services" 
-                      element={
-                        <ProtectedRoute allowedRoles={['client']}>
-                          <PortalLayout>
-                            <PortalServices />
-                          </PortalLayout>
-                        </ProtectedRoute>
-                      } 
-                    />
-                    <Route 
-                      path="/portal/invoices" 
-                      element={
-                        <ProtectedRoute allowedRoles={['client']}>
-                          <PortalLayout>
-                            <PortalInvoices />
-                          </PortalLayout>
-                        </ProtectedRoute>
-                      } 
-                    />
-                    <Route 
-                      path="/portal/request-service" 
-                      element={
-                        <ProtectedRoute allowedRoles={['client']}>
-                          <PortalLayout>
-                            <PortalRequestService />
-                          </PortalLayout>
-                        </ProtectedRoute>
-                      } 
-                    />
 
                     <Route path="*" element={<NotFound />} />
                   </Routes>
