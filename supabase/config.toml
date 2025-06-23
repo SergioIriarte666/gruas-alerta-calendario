@@ -62,8 +62,15 @@ policy_id = 1
 entrypoint = "send-service-confirmation"
 policy_id = 2
 
+[[edge_runtime.policy]]
+entrypoint = "send-inspection-email"
+policy_id = 3
+
 [functions.generate-backup]
 verify_jwt = true
 
 [functions.send-service-confirmation]
+verify_jwt = false
+
+[functions.send-inspection-email]
 verify_jwt = false

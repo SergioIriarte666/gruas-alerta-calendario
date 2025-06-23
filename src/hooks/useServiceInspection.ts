@@ -94,19 +94,22 @@ export const useServiceInspection = () => {
         pdfBlob: base64,
       };
 
+      console.log('📧 Datos del email:', emailData.inspectionData);
+
       const { data, error } = await supabase.functions.invoke('send-inspection-email', {
         body: emailData
       });
 
       if (error) {
-        console.error('❌ Error enviando email:', error);
-        throw new Error(`Error al enviar email: ${error.message}`);
+        console.error('❌ Error invocando función de email:', error);
+        throw new Error(`Error al invocar función de email: ${error.message}`);
       }
 
-      console.log('✅ Email enviado exitosamente:', data);
+      console.log('✅ Función de email invocada exitosamente:', data);
       return data;
     },
     onSuccess: () => {
+      console.log('✅ Email enviado exitosamente');
       toast.success('Inspección enviada por email exitosamente');
     },
     onError: (error) => {
@@ -146,28 +149,47 @@ export const useServiceInspection = () => {
       const filename = `Inspeccion-${service.folio}-${new Date().toISOString().split('T')[0]}.pdf`;
       await pdfGenerator.downloadPDF(blob, filename, downloadUrl);
       
-      // Enviar por email si el cliente tiene email
-      if (service.client?.email) {
-        setPdfStep('Enviando por email...');
-        await sendInspectionEmailMutation.mutateAsync({
-          pdfBlob: blob,
-          service,
-          inspection: values
-        });
+      // Intentar enviar por email SOLO si el cliente tiene email válido
+      let emailSent = false;
+      if (service.client?.email && service.client.email.includes('@')) {
+        try {
+          setPdfStep('Enviando por email...');
+          await sendInspectionEmailMutation.mutateAsync({
+            pdfBlob: blob,
+            service,
+            inspection: values
+          });
+          emailSent = true;
+        } catch (emailError) {
+          console.error('⚠️ Error enviando email (continuando con el proceso):', emailError);
+          toast.error('PDF generado correctamente, pero no se pudo enviar por email');
+        }
+      } else {
+        console.log('⚠️ Cliente sin email válido, saltando envío por email');
+        toast.info('PDF generado correctamente. Cliente sin email válido para envío.');
       }
       
+      // Limpiar fotos del localStorage
       [...values.photosBeforeService, ...values.photosClientVehicle, ...values.photosEquipmentUsed]
         .forEach(photoName => {
           localStorage.removeItem(`photo-${photoName}`);
         });
       
-      return values;
+      return { values, emailSent };
     },
-    onSuccess: () => {
-      toast.success('PDF de inspección generado y enviado exitosamente');
+    onSuccess: (result) => {
+      const { emailSent } = result;
       
+      if (emailSent) {
+        toast.success('PDF de inspección generado y enviado exitosamente');
+      } else {
+        toast.success('PDF de inspección generado exitosamente');
+      }
+      
+      // SIEMPRE actualizar el estado del servicio, independientemente del email
       setTimeout(() => {
         if (serviceId) {
+          console.log('🔄 Iniciando actualización de estado del servicio...');
           updateServiceStatusMutation.mutate(serviceId);
         }
       }, 2000);

@@ -39,11 +39,18 @@ const handler = async (req: Request): Promise<Response> => {
       serviceDate: inspectionData.serviceDate
     });
 
+    // Validate email address
+    if (!inspectionData.clientEmail || !inspectionData.clientEmail.includes('@')) {
+      console.error("❌ Email inválido:", inspectionData.clientEmail);
+      throw new Error("Email del cliente inválido");
+    }
+
     // Convert base64 to buffer for attachment
     const pdfBuffer = Uint8Array.from(atob(pdfBlob), c => c.charCodeAt(0));
+    console.log("📎 PDF buffer creado, tamaño:", pdfBuffer.length, "bytes");
 
     const emailResponse = await resend.emails.send({
-      from: "TMS Inspecciones <onboarding@resend.dev>",
+      from: "Grúas 5 Norte <noreply@gruas5norte.cl>",
       to: [inspectionData.clientEmail],
       subject: `Reporte de Inspección Pre-Servicio - ${inspectionData.folio}`,
       html: `
@@ -67,10 +74,10 @@ const handler = async (req: Request): Promise<Response> => {
             <hr style="border: none; border-top: 1px solid #dee2e6; margin: 20px 0;">
             
             <div style="text-align: center; color: #6c757d; font-size: 14px;">
-              <p><strong>TMS - Transport Management System</strong></p>
-              <p>RUT: 12.345.678-9</p>
-              <p>Av. Principal 123, Santiago</p>
-              <p>Tel: +56 9 1234 5678 | Email: contacto@tms.cl</p>
+              <p><strong>Grúas 5 Norte</strong></p>
+              <p>Teléfono: +56 52 2353533</p>
+              <p>Email: asistencia@gruas5norte.cl</p>
+              <p>Copiapo, Chile</p>
             </div>
           </div>
         </div>
@@ -85,7 +92,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     if (emailResponse.error) {
       console.error("❌ Error enviando email:", emailResponse.error);
-      throw emailResponse.error;
+      throw new Error(`Error de Resend: ${emailResponse.error.message}`);
     }
 
     console.log("✅ Email enviado exitosamente:", emailResponse.data?.id);
