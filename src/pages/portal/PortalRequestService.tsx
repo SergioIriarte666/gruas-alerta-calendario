@@ -62,12 +62,7 @@ const PortalRequestService = () => {
                 <SelectContent>
                   {serviceTypes.map((serviceType) => (
                     <SelectItem key={serviceType.id} value={serviceType.id}>
-                      <div>
-                        <div className="font-medium">{serviceType.name}</div>
-                        {serviceType.description && (
-                          <div className="text-sm text-gray-500">{serviceType.description}</div>
-                        )}
-                      </div>
+                      {serviceType.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
