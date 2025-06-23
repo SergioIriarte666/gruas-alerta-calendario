@@ -12,7 +12,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { ServiceDetailsCard } from '@/components/operator/ServiceDetailsCard';
 import { InspectionFormSections } from '@/components/operator/InspectionFormSections';
 import { PDFProgress } from '@/components/operator/PDFProgress';
-import { ArrowLeft, Download } from 'lucide-react';
+import { ArrowLeft, Download, AlertTriangle } from 'lucide-react';
 import { useToast } from '@/components/ui/custom-toast';
 
 const ServiceInspection = () => {
@@ -82,10 +82,57 @@ const ServiceInspection = () => {
     );
   }
 
-  if (error || !service) {
+  if (error) {
     return (
-      <div className="text-center text-red-400">
-        Error al cargar el servicio. Por favor, intenta de nuevo.
+      <div className="space-y-6 animate-fade-in">
+        <header className="flex items-center gap-4">
+          <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="text-white">
+            <ArrowLeft />
+          </Button>
+          <h1 className="text-2xl font-bold text-tms-green">Inspección Pre-Servicio</h1>
+        </header>
+        
+        <div className="text-center bg-red-900/20 border border-red-500/30 p-8 rounded-lg">
+          <AlertTriangle className="w-16 h-16 mx-auto mb-4 text-red-400" />
+          <h2 className="text-xl font-semibold mb-2 text-red-400">Error al cargar el servicio</h2>
+          <p className="text-gray-400 max-w-md mx-auto mb-4">
+            {error?.message || 'No se pudo cargar la información del servicio. Por favor, intenta de nuevo.'}
+          </p>
+          <div className="space-y-3">
+            <Button onClick={() => window.location.reload()} variant="outline" className="border-red-500 text-red-400 hover:bg-red-500/10">
+              Recargar página
+            </Button>
+            <Button onClick={() => navigate(-1)} variant="ghost" className="text-gray-400 hover:text-white">
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Volver
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!service) {
+    return (
+      <div className="space-y-6 animate-fade-in">
+        <header className="flex items-center gap-4">
+          <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="text-white">
+            <ArrowLeft />
+          </Button>
+          <h1 className="text-2xl font-bold text-tms-green">Inspección Pre-Servicio</h1>
+        </header>
+        
+        <div className="text-center bg-yellow-900/20 border border-yellow-500/30 p-8 rounded-lg">
+          <AlertTriangle className="w-16 h-16 mx-auto mb-4 text-yellow-400" />
+          <h2 className="text-xl font-semibold mb-2 text-yellow-400">Servicio no encontrado</h2>
+          <p className="text-gray-400 max-w-md mx-auto mb-4">
+            No se encontró información para este servicio. Puede que haya sido eliminado o no tengas acceso a él.
+          </p>
+          <Button onClick={() => navigate(-1)} variant="outline" className="border-yellow-500 text-yellow-400 hover:bg-yellow-500/10">
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Volver al Dashboard
+          </Button>
+        </div>
       </div>
     );
   }
