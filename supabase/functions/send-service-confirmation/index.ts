@@ -85,7 +85,6 @@ const handler = async (req: Request): Promise<Response> => {
             .folio { font-size: 24px; font-weight: bold; color: #22c55e; text-align: center; margin: 20px 0; }
             .contact-info { background: #22c55e; color: white; padding: 20px; border-radius: 8px; margin-top: 30px; }
             .footer { text-align: center; margin-top: 30px; color: #666; font-size: 14px; }
-            .client-note { background: #e3f2fd; border-left: 4px solid #2196f3; padding: 15px; margin: 20px 0; }
           </style>
         </head>
         <body>
@@ -93,10 +92,6 @@ const handler = async (req: Request): Promise<Response> => {
             <div class="header">
               <div class="logo">${companyName}</div>
               <p style="color: #666; margin: 0;">Servicios de Grúa Profesional</p>
-            </div>
-
-            <div class="client-note">
-              <p><strong>Nota:</strong> Este email se envía desde nuestra dirección de pruebas. El cliente real debería recibir este mensaje en: <strong>${clientEmail}</strong></p>
             </div>
 
             <h2 style="color: #333; text-align: center;">¡Solicitud Recibida Exitosamente!</h2>
@@ -152,11 +147,11 @@ const handler = async (req: Request): Promise<Response> => {
       </html>
     `;
 
-    // Usar tu email verificado para pruebas
+    // Enviar email usando el dominio por defecto de Resend
     const emailResponse = await resend.emails.send({
       from: `${companyName} <onboarding@resend.dev>`,
-      to: ["siriartev@gmail.com"], // Usando tu email verificado para las pruebas
-      subject: `[PRUEBA] Confirmación de Solicitud de Servicio - Folio ${folio}`,
+      to: [clientEmail],
+      subject: `Confirmación de Solicitud de Servicio - Folio ${folio}`,
       html: emailHtml,
     });
 
@@ -165,8 +160,7 @@ const handler = async (req: Request): Promise<Response> => {
     return new Response(JSON.stringify({ 
       success: true, 
       emailResponse,
-      message: "Email de confirmación enviado correctamente (modo prueba)",
-      originalRecipient: clientEmail
+      message: "Email de confirmación enviado correctamente"
     }), {
       status: 200,
       headers: {
