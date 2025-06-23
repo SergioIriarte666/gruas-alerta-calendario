@@ -42,30 +42,99 @@ export const useServiceInspection = () => {
         throw new Error('ID del servicio requerido');
       }
       
-      console.log('🔄 Updating service status to in_progress:', id);
+      console.log('🔄 [STATUS UPDATE] Iniciando actualización de estado para servicio:', id);
+      console.log('🔄 [STATUS UPDATE] Estado actual del servicio:', service?.status);
       
-      const { error } = await supabase
+      // Verificar que el servicio existe antes de actualizarlo
+      const { data: currentService, error: fetchError } = await supabase
+        .from('services')
+        .select('id, status, folio')
+        .eq('id', id)
+        .single();
+
+      if (fetchError) {
+        console.error('❌ [STATUS UPDATE] Error al obtener servicio actual:', fetchError);
+        throw new Error(`Error al obtener servicio: ${fetchError.message}`);
+      }
+
+      if (!currentService) {
+        console.error('❌ [STATUS UPDATE] Servicio no encontrado:', id);
+        throw new Error('Servicio no encontrado');
+      }
+
+      console.log('🔍 [STATUS UPDATE] Servicio encontrado:', {
+        id: currentService.id,
+        folio: currentService.folio,
+        statusActual: currentService.status
+      });
+
+      if (currentService.status === 'in_progress') {
+        console.log('⚠️ [STATUS UPDATE] El servicio ya está en progreso, saltando actualización');
+        return currentService;
+      }
+
+      // Realizar la actualización
+      console.log('🔄 [STATUS UPDATE] Ejecutando UPDATE a in_progress...');
+      const { data: updatedService, error: updateError } = await supabase
         .from('services')
         .update({ status: 'in_progress' })
-        .eq('id', id);
+        .eq('id', id)
+        .select('id, status, folio')
+        .single();
 
-      if (error) {
-        console.error('❌ Error updating service status:', error);
-        throw new Error(`Error al actualizar el estado del servicio: ${error.message}`);
+      if (updateError) {
+        console.error('❌ [STATUS UPDATE] Error en UPDATE:', updateError);
+        throw new Error(`Error al actualizar el estado del servicio: ${updateError.message}`);
+      }
+
+      if (!updatedService) {
+        console.error('❌ [STATUS UPDATE] No se recibió respuesta del UPDATE');
+        throw new Error('No se pudo confirmar la actualización del servicio');
       }
       
-      console.log('✅ Service status updated successfully');
+      console.log('✅ [STATUS UPDATE] Actualización exitosa:', {
+        id: updatedService.id,
+        folio: updatedService.folio,
+        nuevoStatus: updatedService.status
+      });
+
+      // Verificación adicional
+      const { data: verificationService, error: verifyError } = await supabase
+        .from('services')
+        .select('id, status, folio')
+        .eq('id', id)
+        .single();
+
+      if (verifyError) {
+        console.error('⚠️ [STATUS UPDATE] Error en verificación:', verifyError);
+      } else {
+        console.log('🔍 [STATUS UPDATE] Verificación final:', {
+          id: verificationService.id,
+          folio: verificationService.folio,
+          statusVerificado: verificationService.status
+        });
+      }
+
+      return updatedService;
     },
-    onSuccess: () => {
+    onSuccess: (updatedService) => {
+      console.log('✅ [STATUS UPDATE] Mutation onSuccess ejecutado:', updatedService);
+      
+      // Invalidar queries relacionadas
       queryClient.invalidateQueries({ queryKey: ['operatorServices'] });
       queryClient.invalidateQueries({ queryKey: ['operatorService', serviceId] });
       
-      toast.success('Servicio iniciado con éxito');
-      navigate('/operator');
+      toast.success(`Servicio ${updatedService.folio} iniciado con éxito`);
+      
+      // Navegar después de un breve delay para permitir que las queries se actualicen
+      setTimeout(() => {
+        console.log('🔄 [STATUS UPDATE] Navegando al dashboard...');
+        navigate('/operator');
+      }, 1000);
     },
     onError: (error) => {
-      console.error('💥 Service status update failed:', error);
-      toast.error(error.message);
+      console.error('💥 [STATUS UPDATE] Mutation onError ejecutado:', error);
+      toast.error(`Error al iniciar servicio: ${error.message}`);
     },
   });
 
@@ -128,7 +197,7 @@ export const useServiceInspection = () => {
         throw new Error('ID del servicio no disponible.');
       }
       
-      console.log('📋 Processing inspection for service:', service.folio);
+      console.log('📋 [PROCESS] Iniciando procesamiento de inspección para servicio:', service.folio);
       
       setIsGeneratingPDF(true);
       setPdfProgress(0);
@@ -139,6 +208,7 @@ export const useServiceInspection = () => {
         setPdfStep(step);
       });
       
+      console.log('📄 [PROCESS] Generando PDF...');
       const { blob, downloadUrl } = await pdfGenerator.generateWithProgress({
         service: service,
         inspection: values,
@@ -149,23 +219,27 @@ export const useServiceInspection = () => {
       const filename = `Inspeccion-${service.folio}-${new Date().toISOString().split('T')[0]}.pdf`;
       await pdfGenerator.downloadPDF(blob, filename, downloadUrl);
       
+      console.log('✅ [PROCESS] PDF generado exitosamente');
+
       // Intentar enviar por email SOLO si el cliente tiene email válido
       let emailSent = false;
       if (service.client?.email && service.client.email.includes('@')) {
         try {
           setPdfStep('Enviando por email...');
+          console.log('📧 [PROCESS] Enviando email...');
           await sendInspectionEmailMutation.mutateAsync({
             pdfBlob: blob,
             service,
             inspection: values
           });
           emailSent = true;
+          console.log('✅ [PROCESS] Email enviado exitosamente');
         } catch (emailError) {
-          console.error('⚠️ Error enviando email (continuando con el proceso):', emailError);
+          console.error('⚠️ [PROCESS] Error enviando email (continuando con el proceso):', emailError);
           toast.error('PDF generado correctamente, pero no se pudo enviar por email');
         }
       } else {
-        console.log('⚠️ Cliente sin email válido, saltando envío por email');
+        console.log('⚠️ [PROCESS] Cliente sin email válido, saltando envío por email');
         toast.info('PDF generado correctamente. Cliente sin email válido para envío.');
       }
       
@@ -175,10 +249,14 @@ export const useServiceInspection = () => {
           localStorage.removeItem(`photo-${photoName}`);
         });
       
+      console.log('🧹 [PROCESS] Fotos limpiadas del localStorage');
+      
       return { values, emailSent };
     },
-    onSuccess: (result) => {
+    onSuccess: async (result) => {
       const { emailSent } = result;
+      
+      console.log('✅ [PROCESS] Procesamiento completado exitosamente');
       
       if (emailSent) {
         toast.success('PDF de inspección generado y enviado exitosamente');
@@ -186,17 +264,24 @@ export const useServiceInspection = () => {
         toast.success('PDF de inspección generado exitosamente');
       }
       
-      // SIEMPRE actualizar el estado del servicio, independientemente del email
-      setTimeout(() => {
-        if (serviceId) {
-          console.log('🔄 Iniciando actualización de estado del servicio...');
-          updateServiceStatusMutation.mutate(serviceId);
+      // INMEDIATAMENTE actualizar el estado del servicio
+      if (serviceId) {
+        console.log('🔄 [PROCESS] Iniciando actualización inmediata de estado del servicio...');
+        try {
+          await updateServiceStatusMutation.mutateAsync(serviceId);
+          console.log('✅ [PROCESS] Estado del servicio actualizado exitosamente');
+        } catch (statusError) {
+          console.error('💥 [PROCESS] Error crítico al actualizar estado:', statusError);
+          toast.error(`Error crítico: ${statusError.message}`);
         }
-      }, 2000);
+      } else {
+        console.error('💥 [PROCESS] No hay serviceId para actualizar el estado');
+        toast.error('Error: No se pudo identificar el servicio para actualizar su estado');
+      }
     },
     onError: (error: Error) => {
-      console.error('💥 PDF generation failed:', error);
-      toast.error(`Error al generar el PDF: ${error.message}`);
+      console.error('💥 [PROCESS] Error en procesamiento:', error);
+      toast.error(`Error al procesar la inspección: ${error.message}`);
       setIsGeneratingPDF(false);
       setPdfProgress(0);
     },
