@@ -1,3 +1,4 @@
+
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Operator } from '@/types';
@@ -31,6 +32,7 @@ export const useOperatorMutations = () => {
           name: operatorData.name,
           rut: operatorData.rut,
           phone: operatorData.phone,
+          email: operatorData.email || null,
           license_number: operatorData.licenseNumber,
           exam_expiry: operatorData.examExpiry,
           is_active: operatorData.isActive
@@ -50,6 +52,7 @@ export const useOperatorMutations = () => {
         if (operatorData.name !== undefined) updateData.name = operatorData.name;
         if (operatorData.rut !== undefined) updateData.rut = operatorData.rut;
         if (operatorData.phone !== undefined) updateData.phone = operatorData.phone;
+        if (operatorData.email !== undefined) updateData.email = operatorData.email || null;
         if (operatorData.licenseNumber !== undefined) updateData.license_number = operatorData.licenseNumber;
         if (operatorData.examExpiry !== undefined) updateData.exam_expiry = operatorData.examExpiry;
         if (operatorData.isActive !== undefined) updateData.is_active = operatorData.isActive;

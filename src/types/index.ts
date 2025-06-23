@@ -1,3 +1,4 @@
+
 export interface Service {
   id: string;
   folio: string;
@@ -52,6 +53,7 @@ export interface Operator {
   name: string;
   rut: string;
   phone: string;
+  email?: string;
   licenseNumber: string;
   examExpiry: string;
   isActive: boolean;

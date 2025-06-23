@@ -57,28 +57,26 @@ export const useServiceMutations = () => {
           }
         });
 
-        // 2. Email de notificación al operador (si tiene email)
-        if (serviceData.operator.email) {
-          const operatorEmailResult = await supabase.functions.invoke('send-operator-notification', {
-            body: {
-              operatorEmail: serviceData.operator.email,
-              operatorName: serviceData.operator.name,
-              serviceId: formattedService.id,
-              folio: serviceData.folio,
-              clientName: serviceData.client.name,
-              serviceDate: serviceData.serviceDate,
-              origin: serviceData.origin,
-              destination: serviceData.destination,
-              serviceTypeName: serviceData.serviceType.name,
-              craneLicensePlate: serviceData.crane.licensePlate
-            }
-          });
-
-          if (operatorEmailResult.error) {
-            console.error('❌ Error enviando notificación al operador:', operatorEmailResult.error);
-          } else {
-            console.log('✅ Notificación al operador enviada exitosamente');
+        // 2. Email de notificación al operador (usar el email de notificación del sistema)
+        const operatorEmailResult = await supabase.functions.invoke('send-operator-notification', {
+          body: {
+            operatorEmail: 'notifica@gruas5norte.cl',
+            operatorName: serviceData.operator.name,
+            serviceId: formattedService.id,
+            folio: serviceData.folio,
+            clientName: serviceData.client.name,
+            serviceDate: serviceData.serviceDate,
+            origin: serviceData.origin,
+            destination: serviceData.destination,
+            serviceTypeName: serviceData.serviceType.name,
+            craneLicensePlate: serviceData.crane.licensePlate
           }
+        });
+
+        if (operatorEmailResult.error) {
+          console.error('❌ Error enviando notificación al operador:', operatorEmailResult.error);
+        } else {
+          console.log('✅ Notificación al operador enviada exitosamente');
         }
 
         if (clientEmailResult.error) {
