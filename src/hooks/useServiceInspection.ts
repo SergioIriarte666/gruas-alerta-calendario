@@ -15,11 +15,13 @@ export const useServiceInspection = () => {
   
   console.log('🔧 useServiceInspection - Service ID:', id);
   
-  const { data: service, isLoading, error } = useOperatorService(id!);
+  const { data: service, isLoading, error, refetch } = useOperatorService(id!);
   
   console.log('🔧 useServiceInspection - Query state:', {
     serviceId: id,
     hasService: !!service,
+    serviceStatus: service?.status,
+    serviceFolio: service?.folio,
     isLoading,
     error: error?.message || 'none'
   });
@@ -31,21 +33,31 @@ export const useServiceInspection = () => {
 
   const updateServiceStatusMutation = useMutation({
     mutationFn: async (serviceId: string) => {
+      console.log('🔄 Updating service status to in_progress:', serviceId);
+      
       const { error } = await supabase
         .from('services')
         .update({ status: 'in_progress' })
         .eq('id', serviceId);
 
-      if (error) throw new Error('Error al actualizar el estado del servicio');
+      if (error) {
+        console.error('❌ Error updating service status:', error);
+        throw new Error(`Error al actualizar el estado del servicio: ${error.message}`);
+      }
+      
+      console.log('✅ Service status updated successfully');
     },
     onSuccess: () => {
+      // Invalidate all related queries
       queryClient.invalidateQueries({ queryKey: ['operatorServices'] });
       queryClient.invalidateQueries({ queryKey: ['operatorService', id] });
+      queryClient.invalidateQueries({ queryKey: ['serviceDetails', id] });
       
       toast.success('Servicio iniciado con éxito');
       navigate('/operator');
     },
     onError: (error) => {
+      console.error('❌ Service status update failed:', error);
       toast.error(error.message);
     },
   });
@@ -53,8 +65,10 @@ export const useServiceInspection = () => {
   const processInspectionMutation = useMutation({
     mutationFn: async (values: InspectionFormValues) => {
       if (!service) {
-        throw new Error('Faltan datos del servicio.');
+        throw new Error('Faltan datos del servicio para generar la inspección.');
       }
+      
+      console.log('🔄 Processing inspection for service:', service.folio);
       
       setIsGeneratingPDF(true);
       setPdfProgress(0);
@@ -86,6 +100,7 @@ export const useServiceInspection = () => {
           localStorage.removeItem(`photo-${photoName}`);
         });
       
+      console.log('✅ Inspection processed successfully');
       return values;
     },
     onSuccess: () => {
@@ -99,7 +114,7 @@ export const useServiceInspection = () => {
       }, 2000);
     },
     onError: (error: Error) => {
-      console.error('Error generando PDF:', error);
+      console.error('❌ Error generando PDF:', error);
       toast.error(`Error al generar el PDF: ${error.message}`);
       setIsGeneratingPDF(false);
       setPdfProgress(0);
@@ -119,13 +134,18 @@ export const useServiceInspection = () => {
   });
 
   const handleManualDownload = () => {
-    if (pdfDownloadUrl) {
+    if (pdfDownloadUrl && service) {
       const link = document.createElement('a');
       link.href = pdfDownloadUrl;
-      link.download = `Inspeccion-${service?.folio}-${new Date().toISOString().split('T')[0]}.pdf`;
+      link.download = `Inspeccion-${service.folio}-${new Date().toISOString().split('T')[0]}.pdf`;
       link.click();
       toast.success('Descarga iniciada');
     }
+  };
+
+  const handleRetry = () => {
+    console.log('🔄 Retrying service fetch...');
+    refetch();
   };
 
   return {
@@ -140,6 +160,7 @@ export const useServiceInspection = () => {
     processInspectionMutation,
     updateServiceStatusMutation,
     handleManualDownload,
+    handleRetry,
     navigate
   };
 };
