@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/sonner";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -33,6 +34,9 @@ import "./App.css";
 // Portal Imports
 import PortalLogin from "./pages/portal/PortalLogin";
 import PortalDashboard from "./pages/portal/PortalDashboard";
+import PortalServices from "./pages/portal/PortalServices";
+import PortalInvoices from "./pages/portal/PortalInvoices";
+import PortalRequestService from "./pages/portal/PortalRequestService";
 import { PortalLayout } from "./components/portal/layout/PortalLayout";
 
 const queryClient = new QueryClient({
@@ -102,6 +106,36 @@ function App() {
                         <ProtectedRoute allowedRoles={['client']}>
                           <PortalLayout>
                             <PortalDashboard />
+                          </PortalLayout>
+                        </ProtectedRoute>
+                      } 
+                    />
+                    <Route 
+                      path="/portal/services" 
+                      element={
+                        <ProtectedRoute allowedRoles={['client']}>
+                          <PortalLayout>
+                            <PortalServices />
+                          </PortalLayout>
+                        </ProtectedRoute>
+                      } 
+                    />
+                    <Route 
+                      path="/portal/invoices" 
+                      element={
+                        <ProtectedRoute allowedRoles={['client']}>
+                          <PortalLayout>
+                            <PortalInvoices />
+                          </PortalLayout>
+                        </ProtectedRoute>
+                      } 
+                    />
+                    <Route 
+                      path="/portal/request-service" 
+                      element={
+                        <ProtectedRoute allowedRoles={['client']}>
+                          <PortalLayout>
+                            <PortalRequestService />
                           </PortalLayout>
                         </ProtectedRoute>
                       } 
