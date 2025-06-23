@@ -12,7 +12,17 @@ export const useServiceInspection = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  
+  console.log('🔧 useServiceInspection - Service ID:', id);
+  
   const { data: service, isLoading, error } = useOperatorService(id!);
+  
+  console.log('🔧 useServiceInspection - Query state:', {
+    serviceId: id,
+    hasService: !!service,
+    isLoading,
+    error: error?.message || 'none'
+  });
   
   const [pdfProgress, setPdfProgress] = useState(0);
   const [pdfStep, setPdfStep] = useState('');
