@@ -143,8 +143,9 @@ const handler = async (req: Request): Promise<Response> => {
       </html>
     `;
 
+    // Usar el dominio por defecto de Resend
     const emailResponse = await resend.emails.send({
-      from: `${companyName} <notifica@gruas5norte.cl>`,
+      from: `${companyName} <onboarding@resend.dev>`,
       to: [clientEmail],
       subject: `Confirmación de Solicitud de Servicio - Folio ${folio}`,
       html: emailHtml,
