@@ -82,19 +82,25 @@ function App() {
                   <Routes>
                     <Route path="/auth" element={<Auth />} />
                     <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
-                    <Route path="/dashboard" element={<ProtectedRoute><Layout><Dashboard /></Layout></ProtectedRoute>} />
-                    <Route path="/services" element={<ProtectedRoute><Layout><Services /></Layout></ProtectedRoute>} />
-                    <Route path="/service-types" element={<ProtectedRoute><Layout><ServiceTypes /></Layout></ProtectedRoute>} />
-                    <Route path="/clients" element={<ProtectedRoute><Layout><Clients /></Layout></ProtectedRoute>} />
-                    <Route path="/cranes" element={<ProtectedRoute><Layout><Cranes /></Layout></ProtectedRoute>} />
-                    <Route path="/operators" element={<ProtectedRoute><Layout><Operators /></Layout></ProtectedRoute>} />
-                    <Route path="/costs" element={<ProtectedRoute><Layout><Costs /></Layout></ProtectedRoute>} />
-                    <Route path="/calendar" element={<ProtectedRoute><Layout><Calendar /></Layout></ProtectedRoute>} />
-                    <Route path="/reports" element={<ProtectedRoute><Layout><Reports /></Layout></ProtectedRoute>} />
-                    <Route path="/invoices" element={<ProtectedRoute><Layout><Invoices /></Layout></ProtectedRoute>} />
-                    <Route path="/closures" element={<ProtectedRoute><Layout><Closures /></Layout></ProtectedRoute>} />
-                    <Route path="/settings" element={<ProtectedRoute><Layout><Settings /></Layout></ProtectedRoute>} />
-                    <Route path="/profile" element={<ProtectedRoute><Layout><Profile /></Layout></ProtectedRoute>} />
+                    
+                    {/* Admin routes with Layout */}
+                    <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
+                      <Route path="dashboard" element={<Dashboard />} />
+                      <Route path="services" element={<Services />} />
+                      <Route path="service-types" element={<ServiceTypes />} />
+                      <Route path="clients" element={<Clients />} />
+                      <Route path="cranes" element={<Cranes />} />
+                      <Route path="operators" element={<Operators />} />
+                      <Route path="costs" element={<Costs />} />
+                      <Route path="calendar" element={<Calendar />} />
+                      <Route path="reports" element={<Reports />} />
+                      <Route path="invoices" element={<Invoices />} />
+                      <Route path="closures" element={<Closures />} />
+                      <Route path="settings" element={<Settings />} />
+                      <Route path="profile" element={<Profile />} />
+                    </Route>
+                    
+                    {/* Operator routes */}
                     <Route path="/operator" element={<ProtectedRoute><OperatorDashboard /></ProtectedRoute>} />
                     <Route path="/operator/service/:serviceId/inspection" element={<ProtectedRoute><ServiceInspection /></ProtectedRoute>} />
                     
