@@ -1,33 +1,11 @@
 
 import React from 'react';
 import { Outlet } from 'react-router-dom';
-import { User, LogOut, Truck } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { User, Truck } from 'lucide-react';
 import { useUser } from '@/contexts/UserContext';
-import { useToast } from '@/components/ui/custom-toast';
 
 export const OperatorLayout = () => {
-  const { user, logout } = useUser();
-  const { toast } = useToast();
-
-  const handleLogout = async () => {
-    try {
-      await logout();
-      toast({
-        type: 'success',
-        title: 'Sesión cerrada',
-        description: 'Has cerrado sesión correctamente'
-      });
-      window.location.href = '/auth';
-    } catch (error) {
-      console.error("Logout failed:", error);
-      toast({
-        type: 'error',
-        title: 'Error al cerrar sesión',
-        description: 'Por favor, intenta de nuevo.'
-      });
-    }
-  };
+  const { user } = useUser();
 
   return (
     <div className="min-h-screen bg-gradient-tms">
@@ -49,15 +27,6 @@ export const OperatorLayout = () => {
               <User className="w-4 h-4" />
               <span className="text-sm">{user?.name}</span>
             </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleLogout}
-              className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
-            >
-              <LogOut className="w-4 h-4 mr-2" />
-              Salir
-            </Button>
           </div>
         </div>
       </header>

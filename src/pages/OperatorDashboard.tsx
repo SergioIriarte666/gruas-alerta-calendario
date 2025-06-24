@@ -67,13 +67,6 @@ const OperatorDashboard = () => {
     console.log('📭 Rendering no services state');
     return (
       <div className="text-center bg-slate-800 p-8 rounded-lg border border-slate-700">
-        <div className="w-16 h-16 mx-auto mb-4 rounded-lg overflow-hidden bg-tms-green/20 flex items-center justify-center">
-          <img 
-            src="/images/crane-photo.png" 
-            alt="Grúa TMS" 
-            className="w-full h-full object-cover opacity-50"
-          />
-        </div>
         <h2 className="text-xl font-semibold mb-2 text-white">No hay servicios asignados</h2>
         <p className="text-gray-400 max-w-md mx-auto mb-4">
           En este momento, no tienes ningún servicio de grúa pendiente o en progreso. Los nuevos servicios asignados aparecerán aquí.
