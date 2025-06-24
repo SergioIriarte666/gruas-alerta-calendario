@@ -7,6 +7,7 @@ import { UserProvider } from "@/contexts/UserContext";
 import { NotificationProvider } from "@/contexts/NotificationContext";
 import { ToastProvider } from "@/components/ui/custom-toast";
 import { Layout } from "@/components/layout/Layout";
+import { OperatorLayout } from "@/components/layout/OperatorLayout";
 import { useNetworkStatus } from "@/hooks/useNetworkStatus";
 import Index from "./pages/Index";
 import Dashboard from "./pages/Dashboard";
@@ -118,8 +119,10 @@ function App() {
                       <Route path="profile" element={<Profile />} />
                     </Route>
                     
-                    {/* Operator routes - Added both inspect and inspection paths for compatibility */}
-                    <Route path="/operator" element={<ProtectedRoute><OperatorDashboard /></ProtectedRoute>} />
+                    {/* Operator routes with OperatorLayout */}
+                    <Route path="/operator" element={<ProtectedRoute><OperatorLayout /></ProtectedRoute>}>
+                      <Route index element={<OperatorDashboard />} />
+                    </Route>
                     <Route path="/operator/service/:serviceId/inspection" element={<ProtectedRoute><ServiceInspection /></ProtectedRoute>} />
                     <Route path="/operator/service/:serviceId/inspect" element={<ProtectedRoute><ServiceInspection /></ProtectedRoute>} />
 
