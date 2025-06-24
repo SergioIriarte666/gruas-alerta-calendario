@@ -4,6 +4,7 @@ import { Outlet } from 'react-router-dom';
 import { Header } from './Header';
 import { Sidebar } from './Sidebar';
 import { useServiceRequestAlerts } from '@/hooks/useServiceRequestAlerts';
+import { cn } from '@/lib/utils';
 
 export const Layout = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -20,9 +21,13 @@ export const Layout = () => {
         isMobileMenuOpen={isMobileMenuOpen}
         setIsMobileMenuOpen={setIsMobileMenuOpen}
       />
-      <div className="flex-1 flex flex-col">
+      <div className={cn(
+        "flex-1 flex flex-col transition-all duration-300",
+        "lg:ml-64", // Default margin for expanded sidebar
+        isCollapsed && "lg:ml-16" // Reduced margin for collapsed sidebar
+      )}>
         <Header setIsMobileMenuOpen={setIsMobileMenuOpen} />
-        <main className="flex-1 p-6 overflow-auto">
+        <main className="flex-1 p-4 sm:p-6 overflow-auto">
           <Outlet />
         </main>
       </div>

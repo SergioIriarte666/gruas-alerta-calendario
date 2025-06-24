@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card } from '@/components/ui/card';
 import { LucideIcon } from 'lucide-react';
@@ -41,7 +42,7 @@ export const MetricCard = ({
     }
   };
 
-  const cardClasses = `metric-card group p-6 h-full bg-white border border-gray-200 ${linkTo ? 'cursor-pointer hover:border-tms-green transition-colors' : ''}`;
+  const cardClasses = `metric-card group p-4 sm:p-6 h-full bg-white border border-gray-200 ${linkTo ? 'cursor-pointer hover:border-tms-green transition-colors' : ''}`;
 
   return (
     <Card 
@@ -49,11 +50,11 @@ export const MetricCard = ({
       onClick={handleCardClick}
       style={{ background: '#ffffff', color: '#000000' }}
     >
-      <div className="flex items-start justify-between space-x-4">
+      <div className="flex items-start justify-between space-x-3">
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium text-gray-600 truncate">{title}</p>
-          <div className="flex flex-wrap items-baseline gap-x-mt-1">
-            <h3 className="text-xs md:text-base font-bold text-xs">{value}</h3>
+          <p className="text-sm font-medium text-gray-600 truncate mb-1">{title}</p>
+          <div className="flex flex-wrap items-baseline gap-x-2">
+            <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-black">{value}</h3>
             {change && (
               <span className={`text-xs font-semibold ${getChangeColor()}`}>
                 {change}
@@ -61,11 +62,11 @@ export const MetricCard = ({
             )}
           </div>
           {description && (
-            <p className="text-xs text-gray-500 mt-2">{description}</p>
+            <p className="text-xs text-gray-500 mt-2 line-clamp-2">{description}</p>
           )}
         </div>
-        <div className="flex-shrink-0 p-3 bg-green-100 rounded-lg">
-          <Icon className="w-6 h-6 text-green-600" />
+        <div className="flex-shrink-0 p-2 sm:p-3 bg-green-100 rounded-lg">
+          <Icon className="w-5 h-5 sm:w-6 sm:h-6 text-green-600" />
         </div>
       </div>
     </Card>
