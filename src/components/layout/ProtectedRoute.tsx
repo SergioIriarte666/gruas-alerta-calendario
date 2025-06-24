@@ -141,10 +141,10 @@ const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
     
     console.log('ProtectedRoute: Role-based routing check - userRole:', userRole, 'path:', location.pathname);
 
-    // ONLY redirect operators if they're specifically accessing the operator portal
-    if (userRole === 'operator' && location.pathname === '/operator') {
-      // Allow operators to access their dashboard
-      console.log('ProtectedRoute: Operator accessing operator dashboard - allowed');
+    // ALLOW operators to access their portal - FIXED
+    if (userRole === 'operator' && isOperatorPortalRoute) {
+      console.log('ProtectedRoute: Operator accessing operator portal - allowed');
+      // Don't redirect, allow access
     }
     
     // Non-operator trying to access operator portal
