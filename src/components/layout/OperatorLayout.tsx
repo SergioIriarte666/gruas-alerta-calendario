@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Outlet } from 'react-router-dom';
-import { Construction, User, LogOut } from 'lucide-react';
+import { User, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useUser } from '@/contexts/UserContext';
 import { useToast } from '@/components/ui/custom-toast';
@@ -35,8 +35,12 @@ export const OperatorLayout = () => {
       <header className="bg-black/20 backdrop-blur-lg border-b border-gray-800 px-4 py-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 bg-tms-green rounded-lg flex items-center justify-center">
-              <Construction className="w-5 h-5 text-white" />
+            <div className="w-8 h-8 bg-tms-green rounded-lg flex items-center justify-center overflow-hidden">
+              <img 
+                src="/images/crane-photo.png" 
+                alt="Grúa TMS" 
+                className="w-full h-full object-cover"
+              />
             </div>
             <div>
               <h1 className="text-lg font-bold text-white">TMS Grúas</h1>
