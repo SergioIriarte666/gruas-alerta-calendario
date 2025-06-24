@@ -1020,6 +1020,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_create_user: {
+        Args: {
+          p_email: string
+          p_full_name: string
+          p_role: Database["public"]["Enums"]["app_role"]
+          p_client_id?: string
+        }
+        Returns: string
+      }
       generate_database_backup: {
         Args: Record<PropertyKey, never>
         Returns: string
@@ -1068,6 +1077,10 @@ export type Database = {
           new_role: Database["public"]["Enums"]["app_role"]
         }
         Returns: undefined
+      }
+      validate_email: {
+        Args: { email: string }
+        Returns: boolean
       }
     }
     Enums: {

@@ -22,11 +22,19 @@ interface Client {
   email: string | null;
 }
 
+interface CreateUserData {
+  email: string;
+  full_name: string;
+  role: 'admin' | 'operator' | 'viewer' | 'client';
+  client_id?: string | null;
+}
+
 export const useUserManagement = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState<string | null>(null);
+  const [creating, setCreating] = useState(false);
   const supabase = enhancedSupabase.getClient();
 
   const fetchUsers = async () => {
@@ -68,6 +76,35 @@ export const useUserManagement = () => {
       setClients(Array.isArray(result.data) ? result.data : []);
     } catch (error) {
       console.error('Error fetching clients:', error);
+    }
+  };
+
+  const createUser = async (userData: CreateUserData) => {
+    try {
+      setCreating(true);
+      const result = await enhancedSupabase.query(
+        async () => {
+          return await (supabase as any).rpc('admin_create_user', {
+            p_email: userData.email,
+            p_full_name: userData.full_name,
+            p_role: userData.role,
+            p_client_id: userData.client_id || null
+          });
+        },
+        'create user'
+      );
+
+      if (result.error) throw result.error;
+
+      toast.success('Usuario creado correctamente');
+      await fetchUsers();
+      return { success: true };
+    } catch (error: any) {
+      console.error('Error creating user:', error);
+      toast.error(error.message || 'Error al crear el usuario');
+      return { success: false, error: error.message };
+    } finally {
+      setCreating(false);
     }
   };
 
@@ -156,6 +193,8 @@ export const useUserManagement = () => {
     clients,
     loading,
     updating,
+    creating,
+    createUser,
     updateUserRole,
     assignClientToUser,
     toggleUserStatus,

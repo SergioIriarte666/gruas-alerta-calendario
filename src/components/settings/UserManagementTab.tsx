@@ -9,13 +9,15 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Loader2, UserPlus, RefreshCw, Settings } from 'lucide-react';
 import { useUserManagement } from '@/hooks/useUserManagement';
+import { CreateUserDialog } from './CreateUserDialog';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
 export const UserManagementTab = () => {
-  const { users, clients, loading, updating, updateUserRole, assignClientToUser, toggleUserStatus, refetchUsers } = useUserManagement();
+  const { users, clients, loading, updating, creating, createUser, updateUserRole, assignClientToUser, toggleUserStatus, refetchUsers } = useUserManagement();
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [isClientAssignOpen, setIsClientAssignOpen] = useState(false);
+  const [isCreateUserOpen, setIsCreateUserOpen] = useState(false);
 
   const getRoleBadgeColor = (role: string) => {
     switch (role) {
@@ -55,6 +57,10 @@ export const UserManagementTab = () => {
     }
   };
 
+  const handleUserCreated = () => {
+    refetchUsers();
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-8">
@@ -76,6 +82,23 @@ export const UserManagementTab = () => {
               </CardDescription>
             </div>
             <div className="flex gap-2">
+              <Button
+                onClick={() => setIsCreateUserOpen(true)}
+                className="bg-tms-green hover:bg-tms-green/90 text-black"
+                disabled={creating}
+              >
+                {creating ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Creando...
+                  </>
+                ) : (
+                  <>
+                    <UserPlus className="w-4 h-4 mr-2" />
+                    Nuevo Usuario
+                  </>
+                )}
+              </Button>
               <Button
                 onClick={refetchUsers}
                 variant="outline"
@@ -228,7 +251,7 @@ export const UserManagementTab = () => {
           <div className="mt-6 p-4 bg-gray-50 rounded-lg border border-gray-300">
             <h4 className="text-black font-medium mb-2">Información sobre Gestión de Usuarios</h4>
             <p className="text-gray-600 text-sm mb-3">
-              Los usuarios deben registrarse normalmente en la aplicación. Luego podrás cambiar sus roles desde esta interfaz.
+              Puedes crear nuevos usuarios desde el botón "Nuevo Usuario". Los usuarios creados deberán registrarse normalmente en la aplicación para poder acceder.
             </p>
             <div className="space-y-2 text-sm">
               <div className="text-black">
@@ -254,14 +277,21 @@ export const UserManagementTab = () => {
               </div>
             </div>
             <div className="mt-4 p-3 bg-blue-50 rounded border border-blue-200">
-              <h5 className="text-blue-800 font-medium mb-1">Perfiles de Cliente</h5>
+              <h5 className="text-blue-800 font-medium mb-1">Creación de Usuarios</h5>
               <p className="text-blue-700 text-xs">
-                Cuando asignes el rol "Cliente" a un usuario, debes asociarlo con un cliente específico para que pueda acceder al portal de clientes y ver únicamente su información.
+                Los usuarios creados desde este panel tendrán sus roles preconfigurados. Deberán registrarse en la aplicación usando el email especificado para activar su cuenta y establecer su contraseña.
               </p>
             </div>
           </div>
         </CardContent>
       </Card>
+
+      <CreateUserDialog
+        open={isCreateUserOpen}
+        onOpenChange={setIsCreateUserOpen}
+        clients={clients}
+        onUserCreated={handleUserCreated}
+      />
     </div>
   );
 };
