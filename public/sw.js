@@ -1,44 +1,19 @@
 
-const CACHE_NAME = 'tms-operador-v4';
-const DYNAMIC_CACHE = 'dynamic-tms-operador-v4';
-
-// URLs críticas para cachear
-const CRITICAL_URLS = [
-  '/',
-  '/operator',
-  '/auth',
-  '/manifest.json',
-  '/icons/icon-192x192.png',
-  '/icons/icon-512x512.png',
-  '/images/crane-photo.png'
-];
+const CACHE_NAME = 'tms-operador-v5';
 
 self.addEventListener('install', (event) => {
-  console.log('[Service Worker] Install v4 - Simplified');
-  event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => {
-      return cache.addAll(CRITICAL_URLS).catch(err => {
-        console.warn('[Service Worker] Failed to cache some resources:', err);
-        return Promise.resolve();
-      });
-    }).then(() => {
-      return self.skipWaiting();
-    })
-  );
+  console.log('[Service Worker] Install v5 - Ultra simplified');
+  self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
-  console.log('[Service Worker] Activate v4 - Clean old caches');
-  const cacheWhitelist = [CACHE_NAME, DYNAMIC_CACHE];
-  
+  console.log('[Service Worker] Activate v5 - Clean all caches');
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames.map((cacheName) => {
-          if (!cacheWhitelist.includes(cacheName)) {
-            console.log('[Service Worker] Deleting cache:', cacheName);
-            return caches.delete(cacheName);
-          }
+          console.log('[Service Worker] Deleting cache:', cacheName);
+          return caches.delete(cacheName);
         })
       );
     }).then(() => {
@@ -48,35 +23,21 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-  // Skip non-GET requests and Supabase auth
+  // Only handle GET requests and skip auth/realtime
   if (event.request.method !== 'GET' || 
       event.request.url.includes('supabase.co/auth/') ||
       event.request.url.includes('supabase.co/realtime/')) {
     return;
   }
 
-  // Simple network-first strategy for all requests
+  // Simple network-only strategy to avoid cache issues
   event.respondWith(
-    fetch(event.request)
-      .then(response => {
-        if (response.status === 200) {
-          const responseClone = response.clone();
-          caches.open(DYNAMIC_CACHE).then(cache => {
-            cache.put(event.request, responseClone).catch(err => {
-              console.warn('[Service Worker] Failed to cache:', err);
-            });
-          });
-        }
-        return response;
-      })
-      .catch(() => {
-        return caches.match(event.request).then(cachedResponse => {
-          if (cachedResponse) {
-            return cachedResponse;
-          }
-          return new Response('Offline - Service unavailable', { status: 503 });
-        });
-      })
+    fetch(event.request).catch(() => {
+      return new Response('Offline - Service unavailable', { 
+        status: 503,
+        statusText: 'Service Unavailable'
+      });
+    })
   );
 });
 
