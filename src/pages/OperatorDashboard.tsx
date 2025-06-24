@@ -1,18 +1,14 @@
 
-import { useAuth } from '@/contexts/AuthContext';
 import { useUser } from '@/contexts/UserContext';
 import { Button } from '@/components/ui/button';
-import { LogOut, User, RefreshCw, AlertCircle } from 'lucide-react';
+import { RefreshCw, AlertCircle } from 'lucide-react';
 import { useOperatorServices } from '@/hooks/useOperatorServices';
 import { AssignedServiceCard } from '@/components/operator/AssignedServiceCard';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
-import { useToast } from '@/components/ui/custom-toast';
 
 const OperatorDashboard = () => {
-  const { signOut } = useAuth();
   const { user } = useUser();
-  const { toast } = useToast();
   const { data: services, isLoading, error, refetch } = useOperatorServices(user?.id);
 
   console.log('🏠 OperatorDashboard - Render state:', { 
@@ -29,30 +25,6 @@ const OperatorDashboard = () => {
       console.log('✅ Refresh completed');
     } catch (err) {
       console.error('❌ Refresh failed:', err);
-    }
-  };
-
-  const handleLogout = async () => {
-    try {
-      console.log('OperatorDashboard logout initiated...');
-      
-      toast({
-        type: 'info',
-        title: 'Cerrando sesión...',
-        description: 'Limpiando datos de usuario'
-      });
-      
-      await signOut();
-    } catch (error) {
-      console.error("Operator logout failed:", error);
-      
-      toast({
-        type: 'error',
-        title: 'Error al cerrar sesión',
-        description: 'Sesión cerrada forzosamente'
-      });
-      
-      window.location.href = '/auth';
     }
   };
 
@@ -83,29 +55,10 @@ const OperatorDashboard = () => {
             : (error.message || 'Hubo un problema al cargar tus servicios asignados.')
           }
         </p>
-        <div className="space-y-3">
-          <Button onClick={handleRefresh} variant="outline" className="border-red-500 text-red-400 hover:bg-red-500/10">
-            <RefreshCw className="w-4 h-4 mr-2" />
-            Recargar
-          </Button>
-          {user && (
-            <div className="mt-4 p-4 bg-slate-700/50 rounded-lg text-left">
-              <p className="text-sm text-gray-400">
-                <User className="w-4 h-4 inline mr-1" />
-                Usuario: <span className="text-white">{user.name || user.email}</span>
-              </p>
-              <p className="text-sm text-gray-400">
-                <span className="text-tms-green">Email:</span> {user.email}
-              </p>
-              <p className="text-sm text-gray-400">
-                <span className="text-tms-green">ID:</span> {user.id}
-              </p>
-              <p className="text-sm text-gray-400">
-                <span className="text-tms-green">Rol:</span> {user.role}
-              </p>
-            </div>
-          )}
-        </div>
+        <Button onClick={handleRefresh} variant="outline" className="border-red-500 text-red-400 hover:bg-red-500/10">
+          <RefreshCw className="w-4 h-4 mr-2" />
+          Recargar
+        </Button>
       </div>
     );
   }
@@ -125,20 +78,17 @@ const OperatorDashboard = () => {
         <p className="text-gray-400 max-w-md mx-auto mb-4">
           En este momento, no tienes ningún servicio de grúa pendiente o en progreso. Los nuevos servicios asignados aparecerán aquí.
         </p>
-        {user && (
-          <div className="mt-4 p-4 bg-slate-700/50 rounded-lg">
-            <p className="text-sm text-gray-400">
-              <User className="w-4 h-4 inline mr-1" />
-              Operador: <span className="text-white">{user.name || user.email}</span>
-            </p>
-            <p className="text-sm text-gray-400">
-              <span className="text-tms-green">Email:</span> {user.email}
-            </p>
-            <p className="text-sm text-gray-400">
-              <span className="text-tms-green">Estado:</span> <span className="text-tms-green">Activo y listo para servicios</span>
-            </p>
-          </div>
-        )}
+        <div className="mt-4 p-4 bg-slate-700/50 rounded-lg">
+          <p className="text-sm text-gray-400">
+            Operador: <span className="text-white">{user?.name || user?.email}</span>
+          </p>
+          <p className="text-sm text-gray-400">
+            <span className="text-tms-green">Email:</span> {user?.email}
+          </p>
+          <p className="text-sm text-gray-400">
+            <span className="text-tms-green">Estado:</span> <span className="text-tms-green">Activo y listo para servicios</span>
+          </p>
+        </div>
         <Button onClick={handleRefresh} variant="outline" className="mt-4">
           <RefreshCw className="w-4 h-4 mr-2" />
           Actualizar
@@ -165,10 +115,6 @@ const OperatorDashboard = () => {
             )}
           </div>
         </div>
-        <Button onClick={handleLogout} variant="ghost" className="text-gray-300 hover:bg-slate-700 hover:text-white">
-          <LogOut className="w-4 h-4 mr-2" />
-          Cerrar Sesión
-        </Button>
       </header>
       
       <div className="space-y-4">
