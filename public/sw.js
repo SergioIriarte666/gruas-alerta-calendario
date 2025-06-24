@@ -1,87 +1,49 @@
-const CACHE_NAME = 'tms-operador-v3';
-const DYNAMIC_CACHE = 'dynamic-tms-operador-v3';
-const OFFLINE_CACHE = 'offline-tms-v3';
 
-// Estrategias de cache específicas para TMS Grúas
-const CACHE_STRATEGIES = {
-  // Datos críticos para operadores (alta prioridad offline)
-  '/operator': 'cache-first',
-  '/operator/': 'cache-first',
-  
-  // Dashboard y datos administrativos
-  '/dashboard': 'stale-while-revalidate',
-  '/': 'stale-while-revalidate',
-  
-  // Gestión de datos (requieren datos frescos)
-  '/services': 'network-first',
-  '/clients': 'network-first',
-  '/invoices': 'network-first',
-  
-  // Assets estáticos - FORCE NETWORK FIRST para CSS
-  '*.css': 'network-first',
-  '*.js': 'cache-first',
-  '*.woff2': 'cache-first',
-  '*.png': 'cache-first',
-  '*.jpg': 'cache-first',
-  '*.svg': 'cache-first',
-};
+const CACHE_NAME = 'tms-operador-v4';
+const DYNAMIC_CACHE = 'dynamic-tms-operador-v4';
 
-// URLs críticas para cachear inmediatamente
+// URLs críticas para cachear
 const CRITICAL_URLS = [
   '/',
   '/operator',
   '/auth',
   '/manifest.json',
   '/icons/icon-192x192.png',
-  '/icons/icon-512x512.png'
+  '/icons/icon-512x512.png',
+  '/images/crane-photo.png'
 ];
 
-// Background sync tags
-const SYNC_TAGS = {
-  SERVICE_UPDATE: 'service-update',
-  INSPECTION_COMPLETE: 'inspection-complete',
-  OFFLINE_ACTION: 'offline-action'
-};
-
 self.addEventListener('install', (event) => {
-  console.log('[Service Worker] Install v3 - Force CSS refresh');
+  console.log('[Service Worker] Install v4 - Simplified');
   event.waitUntil(
-    Promise.all([
-      caches.open(CACHE_NAME).then(cache => cache.addAll(CRITICAL_URLS)),
-      // Force delete old caches
-      caches.keys().then((cacheNames) => {
-        return Promise.all(
-          cacheNames.map((cacheName) => {
-            if (cacheName.includes('tms-operador-v1') || cacheName.includes('tms-operador-v2')) {
-              console.log('[Service Worker] Deleting old cache:', cacheName);
-              return caches.delete(cacheName);
-            }
-          })
-        );
-      }),
-      self.skipWaiting()
-    ])
+    caches.open(CACHE_NAME).then(cache => {
+      return cache.addAll(CRITICAL_URLS).catch(err => {
+        console.warn('[Service Worker] Failed to cache some resources:', err);
+        return Promise.resolve();
+      });
+    }).then(() => {
+      return self.skipWaiting();
+    })
   );
 });
 
 self.addEventListener('activate', (event) => {
-  console.log('[Service Worker] Activate v3 - Clear all old caches');
-  const cacheWhitelist = [CACHE_NAME, DYNAMIC_CACHE, OFFLINE_CACHE];
+  console.log('[Service Worker] Activate v4 - Clean old caches');
+  const cacheWhitelist = [CACHE_NAME, DYNAMIC_CACHE];
   
   event.waitUntil(
-    Promise.all([
-      caches.keys().then((cacheNames) => {
-        return Promise.all(
-          cacheNames.map((cacheName) => {
-            if (!cacheWhitelist.includes(cacheName)) {
-              console.log('[Service Worker] Deleting cache:', cacheName);
-              return caches.delete(cacheName);
-            }
-          })
-        );
-      }),
-      self.clients.claim()
-    ])
+    caches.keys().then((cacheNames) => {
+      return Promise.all(
+        cacheNames.map((cacheName) => {
+          if (!cacheWhitelist.includes(cacheName)) {
+            console.log('[Service Worker] Deleting cache:', cacheName);
+            return caches.delete(cacheName);
+          }
+        })
+      );
+    }).then(() => {
+      return self.clients.claim();
+    })
   );
 });
 
@@ -90,242 +52,33 @@ self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET' || 
       event.request.url.includes('supabase.co/auth/') ||
       event.request.url.includes('supabase.co/realtime/')) {
-    event.respondWith(fetch(event.request));
     return;
   }
 
-  const url = new URL(event.request.url);
-  const strategy = getStrategyForUrl(url.pathname);
-
-  // Force CSS files to always fetch from network
-  if (event.request.url.includes('.css') || event.request.url.includes('index.css')) {
-    console.log('[Service Worker] Force network fetch for CSS:', event.request.url);
-    event.respondWith(
-      fetch(event.request).then(response => {
+  // Simple network-first strategy for all requests
+  event.respondWith(
+    fetch(event.request)
+      .then(response => {
         if (response.status === 200) {
-          const cache = caches.open(DYNAMIC_CACHE);
-          cache.then(c => c.put(event.request, response.clone()));
-        }
-        return response;
-      }).catch(() => {
-        return caches.match(event.request);
-      })
-    );
-    return;
-  }
-
-  event.respondWith(handleRequest(event.request, strategy));
-});
-
-function getStrategyForUrl(pathname) {
-  // Operador portal - cache first para trabajo offline
-  if (pathname.startsWith('/operator')) {
-    return 'cache-first';
-  }
-  
-  // Supabase REST API - network first con fallback
-  if (pathname.includes('/rest/v1/')) {
-    return 'network-first-with-cache';
-  }
-  
-  // CSS files - always network first
-  if (pathname.match(/\.css$/)) {
-    return 'network-first';
-  }
-  
-  // Assets estáticos - cache first
-  if (pathname.match(/\.(js|woff2|png|jpg|svg)$/)) {
-    return 'cache-first';
-  }
-  
-  // Default - stale while revalidate
-  return 'stale-while-revalidate';
-}
-
-async function handleRequest(request, strategy) {
-  const cache = await caches.open(DYNAMIC_CACHE);
-  
-  switch (strategy) {
-    case 'cache-first':
-      return cacheFirst(request, cache);
-    
-    case 'network-first':
-      return networkFirst(request, cache);
-    
-    case 'network-first-with-cache':
-      return networkFirstWithCache(request, cache);
-    
-    case 'stale-while-revalidate':
-      return staleWhileRevalidate(request, cache);
-    
-    default:
-      return networkFirst(request, cache);
-  }
-}
-
-async function cacheFirst(request, cache) {
-  const cached = await cache.match(request);
-  if (cached) {
-    return cached;
-  }
-  
-  try {
-    const response = await fetch(request);
-    if (response.status === 200) {
-      cache.put(request, response.clone());
-    }
-    return response;
-  } catch (error) {
-    console.error('[Service Worker] Cache first failed:', error);
-    return new Response('Offline - No cached version available', { status: 503 });
-  }
-}
-
-async function networkFirst(request, cache) {
-  try {
-    const response = await fetch(request);
-    if (response.status === 200) {
-      cache.put(request, response.clone());
-    }
-    return response;
-  } catch (error) {
-    const cached = await cache.match(request);
-    if (cached) {
-      return cached;
-    }
-    console.error('[Service Worker] Network first failed:', error);
-    return new Response('Offline - Service unavailable', { status: 503 });
-  }
-}
-
-async function networkFirstWithCache(request, cache) {
-  try {
-    const response = await fetch(request);
-    if (response.status === 200) {
-      cache.put(request, response.clone());
-    }
-    return response;
-  } catch (error) {
-    const cached = await cache.match(request);
-    if (cached) {
-      console.log('[Service Worker] Serving from cache:', request.url);
-      return cached;
-    }
-    throw error;
-  }
-}
-
-async function staleWhileRevalidate(request, cache) {
-  const cached = await cache.match(request);
-  
-  const fetchPromise = fetch(request).then(response => {
-    if (response.status === 200) {
-      cache.put(request, response.clone());
-    }
-    return response;
-  }).catch(err => {
-    console.error('[Service Worker] Revalidation failed:', err);
-    return cached;
-  });
-  
-  return cached || fetchPromise;
-}
-
-// Background sync para operaciones críticas
-self.addEventListener('sync', (event) => {
-  console.log('[Service Worker] Background sync triggered:', event.tag);
-  
-  switch (event.tag) {
-    case SYNC_TAGS.SERVICE_UPDATE:
-      event.waitUntil(syncServiceUpdates());
-      break;
-    
-    case SYNC_TAGS.INSPECTION_COMPLETE:
-      event.waitUntil(syncInspectionData());
-      break;
-    
-    case SYNC_TAGS.OFFLINE_ACTION:
-      event.waitUntil(syncOfflineActions());
-      break;
-  }
-});
-
-async function syncServiceUpdates() {
-  try {
-    const pendingUpdates = await getFromIndexedDB('pendingServiceUpdates');
-    
-    for (const update of pendingUpdates || []) {
-      try {
-        await fetch('/api/services/update', {
-          method: 'POST',
-          body: JSON.stringify(update),
-          headers: { 'Content-Type': 'application/json' }
-        });
-        
-        await removeFromIndexedDB('pendingServiceUpdates', update.id);
-      } catch (error) {
-        console.error('[Service Worker] Failed to sync service update:', error);
-      }
-    }
-  } catch (error) {
-    console.error('[Service Worker] Sync service updates failed:', error);
-  }
-}
-
-async function syncInspectionData() {
-  try {
-    const pendingInspections = await getFromIndexedDB('pendingInspections');
-    
-    for (const inspection of pendingInspections || []) {
-      try {
-        await fetch('/api/inspections/submit', {
-          method: 'POST',
-          body: JSON.stringify(inspection),
-          headers: { 'Content-Type': 'application/json' }
-        });
-        
-        await removeFromIndexedDB('pendingInspections', inspection.id);
-        
-        self.clients.matchAll().then(clients => {
-          clients.forEach(client => {
-            client.postMessage({
-              type: 'INSPECTION_SYNCED',
-              data: { id: inspection.id }
+          const responseClone = response.clone();
+          caches.open(DYNAMIC_CACHE).then(cache => {
+            cache.put(event.request, responseClone).catch(err => {
+              console.warn('[Service Worker] Failed to cache:', err);
             });
           });
-        });
-      } catch (error) {
-        console.error('[Service Worker] Failed to sync inspection:', error);
-      }
-    }
-  } catch (error) {
-    console.error('[Service Worker] Sync inspections failed:', error);
-  }
-}
-
-async function syncOfflineActions() {
-  try {
-    const offlineActions = await getFromIndexedDB('offlineActions');
-    
-    for (const action of offlineActions || []) {
-      try {
-        const response = await fetch(action.url, {
-          method: action.method,
-          body: action.body,
-          headers: action.headers
-        });
-        
-        if (response.ok) {
-          await removeFromIndexedDB('offlineActions', action.id);
         }
-      } catch (error) {
-        console.error('[Service Worker] Failed to sync offline action:', error);
-      }
-    }
-  } catch (error) {
-    console.error('[Service Worker] Sync offline actions failed:', error);
-  }
-}
+        return response;
+      })
+      .catch(() => {
+        return caches.match(event.request).then(cachedResponse => {
+          if (cachedResponse) {
+            return cachedResponse;
+          }
+          return new Response('Offline - Service unavailable', { status: 503 });
+        });
+      })
+  );
+});
 
 // Push notifications handler
 self.addEventListener('push', (event) => {
@@ -378,45 +131,3 @@ self.addEventListener('notificationclick', (event) => {
     })
   );
 });
-
-// Helper functions para IndexedDB
-async function getFromIndexedDB(storeName) {
-  return new Promise((resolve, reject) => {
-    const request = indexedDB.open('TMSOfflineDB', 1);
-    
-    request.onerror = () => reject(request.error);
-    
-    request.onsuccess = () => {
-      const db = request.result;
-      const transaction = db.transaction([storeName], 'readonly');
-      const store = transaction.objectStore(storeName);
-      const getAllRequest = store.getAll();
-      
-      getAllRequest.onsuccess = () => resolve(getAllRequest.result);
-      getAllRequest.onerror = () => reject(getAllRequest.error);
-    };
-    
-    request.onupgradeneeded = (event) => {
-      const db = event.target.result;
-      if (!db.objectStoreNames.contains(storeName)) {
-        db.createObjectStore(storeName, { keyPath: 'id' });
-      }
-    };
-  });
-}
-
-async function removeFromIndexedDB(storeName, id) {
-  return new Promise((resolve, reject) => {
-    const request = indexedDB.open('TMSOfflineDB', 1);
-    
-    request.onsuccess = () => {
-      const db = request.result;
-      const transaction = db.transaction([storeName], 'readwrite');
-      const store = transaction.objectStore(storeName);
-      const deleteRequest = store.delete(id);
-      
-      deleteRequest.onsuccess = () => resolve();
-      deleteRequest.onerror = () => reject(deleteRequest.error);
-    };
-  });
-}
