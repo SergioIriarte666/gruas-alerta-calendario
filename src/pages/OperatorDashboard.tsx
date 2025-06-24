@@ -1,8 +1,7 @@
-
 import { useAuth } from '@/contexts/AuthContext';
 import { useUser } from '@/contexts/UserContext';
 import { Button } from '@/components/ui/button';
-import { LogOut, Crane, User, RefreshCw, AlertCircle } from 'lucide-react';
+import { LogOut, Construction, User, RefreshCw, AlertCircle } from 'lucide-react';
 import { useOperatorServices } from '@/hooks/useOperatorServices';
 import { AssignedServiceCard } from '@/components/operator/AssignedServiceCard';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -114,7 +113,7 @@ const OperatorDashboard = () => {
     console.log('📭 Rendering no services state');
     return (
       <div className="text-center bg-slate-800 p-8 rounded-lg border border-slate-700">
-        <Crane className="w-16 h-16 mx-auto mb-4 text-tms-green opacity-50" />
+        <Construction className="w-16 h-16 mx-auto mb-4 text-tms-green opacity-50" />
         <h2 className="text-xl font-semibold mb-2 text-white">No hay servicios asignados</h2>
         <p className="text-gray-400 max-w-md mx-auto mb-4">
           En este momento, no tienes ningún servicio de grúa pendiente o en progreso. Los nuevos servicios asignados aparecerán aquí.
