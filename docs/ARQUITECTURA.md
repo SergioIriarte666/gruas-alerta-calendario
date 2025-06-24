@@ -1,368 +1,384 @@
 
-# Arquitectura del Sistema TMS Grúas
+# Arquitectura del Sistema - TMS Grúas
 
-## Descripción General
+## Visión General
 
-TMS Grúas es un sistema de gestión integral para empresas de grúas que incluye funcionalidades completas de CRM, gestión de servicios, facturación y portal especializado para operadores. El sistema está construido como una Progressive Web App (PWA) con React, TypeScript y Supabase.
+TMS Grúas está construido siguiendo una arquitectura moderna de **JAMstack** (JavaScript, APIs, Markup) con un enfoque **serverless** que garantiza escalabilidad, performance y mantenibilidad.
 
-## Stack Tecnológico
+## Diagrama de Arquitectura
 
-### Frontend
-- **React 18** - Framework principal de UI
-- **TypeScript** - Tipado estático
-- **Vite** - Build tool y dev server
-- **Tailwind CSS** - Framework de estilos
-- **Shadcn/ui** - Componentes de UI
-- **React Router DOM** - Enrutamiento
-- **TanStack Query** - Gestión de estado del servidor
-- **React Hook Form** - Manejo de formularios
-- **Zod** - Validación de esquemas
-
-### Backend
-- **Supabase** - Backend como servicio
-- **PostgreSQL** - Base de datos principal
-- **Row Level Security (RLS)** - Seguridad a nivel de fila
-- **Edge Functions** - Funciones serverless
-
-### PWA Features
-- **Service Worker** - Cache y funcionalidad offline
-- **Web App Manifest** - Instalación como app nativa
-- **Responsive Design** - Adaptable a dispositivos móviles
-
-## Arquitectura de Roles y Autenticación
-
-### Sistema de Roles
-El sistema implementa tres roles principales:
-
-#### 1. Administrador (`admin`)
-- Acceso completo al sistema
-- Gestión de usuarios y roles
-- Configuración del sistema
-- Todas las funcionalidades de gestión
-
-#### 2. Operador (`operator`)
-- Portal especializado para operadores de grúa
-- Visualización de servicios asignados
-- Inspección de equipos y vehículos
-- Actualización de estado de servicios
-- Acceso limitado solo a sus servicios asignados
-
-#### 3. Visualizador (`viewer`)
-- Solo lectura del sistema
-- Visualización de dashboards
-- Reportes básicos
-- Sin capacidad de edición
-
-### Flujo de Autenticación
-
-```mermaid
-graph TD
-    A[Usuario ingresa] --> B[AuthContext valida credenciales]
-    B --> C[UserContext obtiene perfil]
-    C --> D{Rol del usuario}
-    D -->|admin/viewer| E[Dashboard Principal]
-    D -->|operator| F[Portal del Operador]
-    E --> G[Layout Principal]
-    F --> H[Layout del Operador]
+```
+┌─────────────────────────────────────────────────────────────┐
+│                        FRONTEND                              │
+│  ┌─────────────────┐  ┌─────────────────┐  ┌──────────────┐ │
+│  │   React App     │  │   Portal Web    │  │  Mobile PWA  │ │
+│  │  (Dashboard)    │  │   (Clientes)    │  │ (Operadores) │ │
+│  └─────────────────┘  └─────────────────┘  └──────────────┘ │
+└─────────────────────────────────────────────────────────────┘
+                                │
+                                ▼
+┌─────────────────────────────────────────────────────────────┐
+│                        CDN / EDGE                           │
+│  ┌─────────────────┐  ┌─────────────────┐  ┌──────────────┐ │
+│  │   Static Assets │  │   Caching       │  │   SSL/TLS    │ │
+│  │   Compression   │  │   Rate Limiting │  │   Security   │ │
+│  └─────────────────┘  └─────────────────┘  └──────────────┘ │
+└─────────────────────────────────────────────────────────────┘
+                                │
+                                ▼
+┌─────────────────────────────────────────────────────────────┐
+│                       BACKEND                               │
+│  ┌─────────────────┐  ┌─────────────────┐  ┌──────────────┐ │
+│  │   Supabase      │  │  Edge Functions │  │   File       │ │
+│  │   PostgreSQL    │  │   (Serverless)  │  │   Storage    │ │
+│  │   Auth & RLS    │  │   Email/PDF     │  │   Images     │ │
+│  └─────────────────┘  └─────────────────┘  └──────────────┘ │
+└─────────────────────────────────────────────────────────────┘
+                                │
+                                ▼
+┌─────────────────────────────────────────────────────────────┐
+│                   INTEGRACIONES                             │
+│  ┌─────────────────┐  ┌─────────────────┐  ┌──────────────┐ │
+│  │    Resend       │  │   Webhooks      │  │   APIs       │ │
+│  │   (Email)       │  │   (Eventos)     │  │  Externas    │ │
+│  └─────────────────┘  └─────────────────┘  └──────────────┘ │
+└─────────────────────────────────────────────────────────────┘
 ```
 
-### Vinculación Usuario-Operador
-Para que un usuario pueda acceder al portal del operador:
+## Capas de la Arquitectura
 
-1. El usuario debe tener rol `operator` en la tabla `profiles`
-2. Debe existir un registro en la tabla `operators` con el `user_id` correspondiente
-3. Los servicios deben estar asignados al `operator_id` correspondiente
+### 1. Capa de Presentación (Frontend)
 
+#### React Application
+- **Framework**: React 18 con TypeScript
+- **Build Tool**: Vite para desarrollo y build optimizado
+- **Routing**: React Router DOM v6
+- **Estado Global**: React Query + Context API
+- **UI Components**: shadcn/ui + Tailwind CSS
+
+#### Características Clave
+- **Single Page Application (SPA)**
+- **Progressive Web App (PWA)** para operadores móviles
+- **Server-Side Rendering (SSR)** ready
+- **Responsive Design** para todos los dispositivos
+
+#### Estructura de Componentes
+```
+components/
+├── ui/              # Componentes base reutilizables
+├── layout/          # Layouts y estructuras de página
+├── forms/           # Componentes de formularios
+├── charts/          # Visualizaciones de datos
+└── domain/          # Componentes específicos del negocio
+```
+
+### 2. Capa de Datos (Backend)
+
+#### Supabase como Backend-as-a-Service
+- **Base de Datos**: PostgreSQL con extensiones
+- **Autenticación**: JWT + Row Level Security
+- **APIs**: RESTful + GraphQL
+- **Edge Functions**: JavaScript/TypeScript serverless
+- **Storage**: Archivos e imágenes
+
+#### Modelo de Datos
 ```sql
--- Ejemplo de vinculación
-UPDATE operators 
-SET user_id = (SELECT id FROM profiles WHERE email = 'operador@empresa.com')
-WHERE name = 'Juan Pérez';
+-- Estructura principal de tablas
+profiles (usuarios)
+  ├── clients (clientes)
+  ├── operators (operadores)
+  └── permissions (permisos)
+
+services (servicios)
+  ├── clients (relación 1:N)
+  ├── service_types (tipos de servicio)
+  ├── cranes (grúas asignadas)
+  └── operators (operadores asignados)
+
+financial (módulo financiero)
+  ├── invoices (facturas)
+  ├── service_closures (cierres)
+  └── costs (costos)
 ```
 
-## Arquitectura de Datos
+### 3. Capa de Lógica de Negocio
 
-### Entidades Principales
-
-#### Servicios (`services`)
-- Núcleo del sistema
-- Relacionado con clientes, operadores, grúas y tipos de servicio
-- Estados: `pending`, `in_progress`, `completed`, `cancelled`, `invoiced`
-
-#### Estados de Servicios y Transiciones
-```mermaid
-graph LR
-    A[pending] --> B[in_progress]
-    B --> C[completed]
-    C --> D[invoiced]
-    A --> E[cancelled]
-    B --> E
-```
-
-#### Clientes (`clients`)
-- Información de contacto y facturación
-- Historial de servicios
-
-#### Operadores (`operators`)
-- Información personal y profesional
-- Vinculación con usuarios del sistema (`user_id`)
-- Licencias y certificaciones
-
-#### Grúas (`cranes`)
-- Información técnica y documentación
-- Mantenimiento y revisiones
-
-#### Tipos de Servicio (`service_types`)
-- Configuración de servicios especiales
-- Campo `vehicle_info_optional` para servicios como taxi o transporte de materiales
-
-### Sistema de Cierres y Facturación
-
-#### Flujo de Cierres
-1. **Servicios Completados**: Solo servicios con status `completed`
-2. **Filtrado**: Excluye servicios ya en cierres anteriores o facturados
-3. **Agrupación**: Por período de fechas y/o cliente específico
-4. **Cierre**: Cambio de status `open` → `closed`
-5. **Facturación**: Generación de factura desde cierre cerrado
-
-#### Prevención de Doble Facturación
-- Trigger automático: Al crear factura → servicios cambian a `invoiced`
-- Filtros en cierres: Excluyen servicios `invoiced` automáticamente
-- Validaciones en UI: Solo muestran servicios disponibles
-
-### Row Level Security (RLS)
-
-#### Operadores
-Los operadores solo pueden ver:
-- Sus propios datos en la tabla `operators`
-- Servicios asignados a ellos en la tabla `services`
-
-```sql
--- Política para servicios de operadores
-CREATE POLICY "Users can view services based on role" ON services
-  FOR SELECT
-  USING (
-    (get_user_role(auth.uid()) IN ('admin', 'viewer'))
-    OR
-    (get_user_role(auth.uid()) = 'operator' AND operator_id = get_operator_id_by_user(auth.uid()))
-  );
-```
-
-#### Administradores y Visualizadores
-- Acceso completo a todos los datos según sus permisos de rol
-
-## Arquitectura de Componentes
-
-### Estructura de Directorios
-
-```
-src/
-├── components/
-│   ├── layout/           # Componentes de layout
-│   │   ├── Layout.tsx           # Layout principal
-│   │   ├── OperatorLayout.tsx   # Layout del operador
-│   │   └── ProtectedRoute.tsx   # Rutas protegidas
-│   ├── operator/         # Componentes específicos del operador
-│   ├── services/         # Gestión de servicios
-│   │   └── form/         # Componentes del formulario de servicios
-│   ├── closures/         # Sistema de cierres
-│   ├── clients/          # Gestión de clientes
-│   └── ui/              # Componentes de UI reutilizables
-├── hooks/               # Custom hooks
-│   ├── services/        # Hooks específicos de servicios
-│   └── closures/        # Hooks de cierres
-├── contexts/            # Contextos de React
-├── types/               # Definiciones de tipos
-└── utils/               # Utilidades
-```
-
-### Componentes Clave
-
-#### ProtectedRoute
-Maneja la autorización y redirección basada en roles:
-- Verifica autenticación
-- Redirecciona operadores al portal especializado
-- Protege rutas administrativas
-
-#### Layout vs OperatorLayout
-- **Layout**: Interface completa para admin/viewer
-- **OperatorLayout**: Interface simplificada para operadores
-
-#### ServicesSelector (Cierres)
-- Filtra servicios disponibles para cierres
-- Excluye servicios ya facturados o en cierres
-- Muestra información clara sobre exclusiones
-
-## Portal del Operador
-
-### Características Específicas
-
-#### Dashboard Operador
-- Vista simplificada de servicios asignados
-- Estados de servicio en tiempo real
-- Información de contacto del cliente
-
-#### Inspección de Servicios
-- Checklist de equipos y vehículos
-- Captura de firmas digitales
-- Observaciones y notas
-- Fotos del servicio y equipos
-
-#### Navegación Restringida
-- Solo acceso a funcionalidades relacionadas con sus servicios
-- Sin acceso a gestión de usuarios o configuración
-
-### Flujo de Trabajo del Operador
-
-```mermaid
-graph TD
-    A[Login como Operador] --> B[Portal del Operador]
-    B --> C[Ver Servicios Asignados]
-    C --> D[Seleccionar Servicio]
-    D --> E[Inspección de Equipo]
-    E --> F[Completar Checklist]
-    F --> G[Capturar Firma]
-    G --> H[Actualizar Estado]
-```
-
-## Servicios con Campos Opcionales
-
-### Tipos de Servicio Especiales
-- **Taxi**: Transporte de pasajeros (vehículo del cliente)
-- **Transporte de Materiales**: Sin vehículo específico
-- **Transporte de Suministros**: Diversos materiales
-
-### Implementación Técnica
+#### Custom Hooks Pattern
 ```typescript
-// Detección automática de campos opcionales
-const isVehicleInfoOptional = serviceType?.vehicle_info_optional || false;
+// Hooks especializados por dominio
+hooks/
+├── services/        # Lógica de servicios
+├── auth/           # Autenticación
+├── forms/          # Manejo de formularios
+├── notifications/  # Sistema de notificaciones
+└── reports/        # Generación de reportes
+```
 
-// Validación condicional
-if (!isVehicleInfoOptional && (!vehicleBrand || !vehicleModel)) {
-  throw new Error('Vehicle info required');
+#### Estado de la Aplicación
+- **Server State**: React Query para cache y sincronización
+- **Client State**: useState + useReducer
+- **Global State**: Context API para estado compartido
+- **Form State**: React Hook Form + Zod validation
+
+### 4. Capa de Servicios
+
+#### Edge Functions (Serverless)
+```typescript
+// Funciones especializadas
+functions/
+├── send-email/           # Envío de emails
+├── generate-pdf/         # Generación de PDFs
+├── process-webhooks/     # Procesamiento de eventos
+├── backup-data/          # Respaldos automáticos
+└── sync-external/        # Sincronización externa
+```
+
+#### APIs Externas
+- **Resend**: Servicio de email transaccional
+- **Webhooks**: Notificaciones en tiempo real
+- **File Processing**: Compresión y optimización de imágenes
+
+## Patrones de Diseño Implementados
+
+### 1. Repository Pattern
+```typescript
+// Abstracción de acceso a datos
+interface ServiceRepository {
+  getAll(): Promise<Service[]>
+  getById(id: string): Promise<Service>
+  create(data: CreateServiceData): Promise<Service>
+  update(id: string, data: UpdateServiceData): Promise<Service>
+  delete(id: string): Promise<void>
 }
 ```
 
-### UI Adaptativa
-- Campos marcados claramente como opcionales
-- Texto explicativo sobre tipos de servicio
-- Validación visual diferenciada
-
-## PWA (Progressive Web App)
-
-### Características Implementadas
-
-#### Service Worker
-- Cache de recursos estáticos
-- Estrategias de cache para API calls
-- Funcionalidad offline básica
-
-#### Manifest
-- Instalación como app nativa
-- Íconos y splash screens
-- Configuración de pantalla completa
-
-#### Responsive Design
-- Adaptado para móviles y tablets
-- Touch-friendly interfaces
-- Optimización para pantallas pequeñas
-
-### Configuración PWA
-
-```javascript
-// manifest.json
-{
-  "name": "TMS Grúas",
-  "short_name": "TMS",
-  "description": "Sistema de Gestión para Empresas de Grúas",
-  "start_url": "/",
-  "display": "standalone",
-  "theme_color": "#10b981",
-  "background_color": "#0f172a"
+### 2. Factory Pattern
+```typescript
+// Creación de objetos complejos
+class ReportFactory {
+  static createPDFReport(type: ReportType): PDFReport
+  static createExcelReport(type: ReportType): ExcelReport
 }
 ```
 
-## Triggers y Automatización
-
-### Trigger de Facturación
-```sql
--- Automático: servicios → invoiced al crear factura
-CREATE TRIGGER trigger_update_service_status_on_invoice
-  AFTER INSERT ON invoice_services
-  FOR EACH ROW
-  EXECUTE FUNCTION update_service_status_on_invoice();
+### 3. Observer Pattern
+```typescript
+// Sistema de eventos y notificaciones
+class EventBus {
+  subscribe(event: string, callback: Function): void
+  unsubscribe(event: string, callback: Function): void
+  emit(event: string, data: any): void
+}
 ```
 
-### Funciones de Base de Datos
-- `get_user_role()`: Obtiene rol del usuario
-- `get_operator_id_by_user()`: Vincula usuario con operador
-- `update_service_status_on_invoice()`: Actualiza status automáticamente
+### 4. Strategy Pattern
+```typescript
+// Diferentes estrategias de validación
+interface ValidationStrategy {
+  validate(data: any): ValidationResult
+}
+
+class ServiceValidationStrategy implements ValidationStrategy
+class InvoiceValidationStrategy implements ValidationStrategy
+```
 
 ## Seguridad
 
-### Autenticación
-- JWT tokens manejados por Supabase Auth
-- Renovación automática de tokens
-- Logout seguro
+### Row Level Security (RLS)
+```sql
+-- Políticas de seguridad a nivel de fila
+CREATE POLICY "Users can only see their own data" ON services
+  FOR ALL USING (auth.uid() = created_by);
 
-### Autorización
-- Row Level Security en base de datos
-- Validación de roles en frontend y backend
-- Políticas granulares por tabla
+CREATE POLICY "Operators can see assigned services" ON services
+  FOR SELECT USING (
+    operator_id IN (
+      SELECT id FROM operators WHERE user_id = auth.uid()
+    )
+  );
+```
 
-### Protección de Datos
-- Encriptación en tránsito (HTTPS)
-- Encriptación en reposo (Supabase)
-- Auditoría de accesos
+### Autenticación y Autorización
+- **JWT Tokens** con refresh automático
+- **Role-Based Access Control (RBAC)**
+- **Multi-factor Authentication (MFA)** ready
+- **Session Management** seguro
 
-## Performance
+### Validación de Datos
+```typescript
+// Validación con Zod schemas
+const ServiceSchema = z.object({
+  folio: z.string().min(1),
+  clientId: z.string().uuid(),
+  value: z.number().positive(),
+  // ... más validaciones
+})
+```
 
-### Optimizaciones Frontend
-- Code splitting por rutas
-- Lazy loading de componentes
-- Optimización de imágenes
-- Cache de consultas con TanStack Query
+## Performance y Optimización
 
-### Optimizaciones Backend
-- Índices en columnas frecuentemente consultadas
-- Consultas optimizadas con JOIN selectivos
-- Paginación en listados grandes
+### Frontend Optimizations
+- **Code Splitting** por rutas y componentes
+- **Lazy Loading** de componentes pesados
+- **Memoization** con React.memo y useMemo
+- **Virtual Scrolling** para listas grandes
+- **Image Optimization** automática
 
-## Monitoring y Debugging
+### Backend Optimizations
+- **Database Indexing** estratégico
+- **Query Optimization** con EXPLAIN ANALYZE
+- **Connection Pooling** automático
+- **Caching** a múltiples niveles
 
-### Logging
-- Console logs extensivos para desarrollo
-- Error boundaries para captura de errores
-- Métricas de performance
-
-### Tools de Desarrollo
-- React DevTools
-- TanStack Query DevTools
-- Supabase Dashboard para monitoring de DB
+### Network Optimizations
+- **HTTP/2** y **HTTP/3** support
+- **Gzip/Brotli** compression
+- **CDN** para assets estáticos
+- **Service Workers** para cache offline
 
 ## Escalabilidad
 
-### Horizontal
-- Supabase maneja escalado automático
-- CDN para recursos estáticos
-- Edge functions para lógica distribuida
+### Horizontal Scaling
+```yaml
+# Configuración de auto-scaling
+scaling:
+  min_instances: 2
+  max_instances: 10
+  cpu_threshold: 70%
+  memory_threshold: 80%
+```
 
-### Vertical
-- Optimización de consultas
-- Índices estratégicos
-- Cache layers múltiples
+### Database Scaling
+- **Read Replicas** para consultas
+- **Sharding** por cliente/región
+- **Archive Strategies** para datos históricos
+- **Backup Strategies** automatizadas
 
-## Deployment
+### Monitoring y Observabilidad
+```typescript
+// Métricas y logging estructurado
+interface MetricEvent {
+  timestamp: Date
+  event: string
+  userId?: string
+  metadata: Record<string, any>
+}
+```
 
-### Producción
-- Build optimizado con Vite
-- Assets minificados
-- Service Worker registrado
-- Variables de entorno configuradas
+## DevOps y CI/CD
 
-### CI/CD
-- Deploy automático desde git
-- Testing automatizado
-- Rollback capabilities
+### Continuous Integration
+```yaml
+# GitHub Actions pipeline
+name: CI/CD Pipeline
+on: [push, pull_request]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+      - name: Install dependencies
+        run: npm ci
+      - name: Run tests
+        run: npm test
+      - name: Build
+        run: npm run build
+```
 
-Esta arquitectura proporciona una base sólida, escalable y segura para la gestión integral de empresas de grúas, con especial énfasis en la experiencia del operador en campo y la consistencia de datos en el sistema de facturación.
+### Deployment Strategies
+- **Blue-Green Deployment** para zero downtime
+- **Feature Flags** para releases graduales
+- **Rollback Strategies** automáticas
+- **Health Checks** continuas
+
+## Disaster Recovery
+
+### Backup Strategies
+```typescript
+// Estrategias de respaldo automático
+interface BackupConfig {
+  frequency: 'daily' | 'weekly' | 'monthly'
+  retention: number // días
+  compression: boolean
+  encryption: boolean
+}
+```
+
+### Recovery Procedures
+1. **Database Recovery** desde snapshots
+2. **Application Recovery** desde containers
+3. **File Recovery** desde object storage
+4. **Configuration Recovery** desde infrastructure as code
+
+## Futuras Mejoras Arquitectónicas
+
+### Microservicios
+- Migración gradual a microservicios
+- Event-driven architecture
+- API Gateway implementation
+- Service mesh para comunicación
+
+### Edge Computing
+- Edge functions para mejor latencia
+- Geo-distributed cache
+- Regional deployments
+- Offline-first capabilities
+
+### AI/ML Integration
+```typescript
+// Preparación para funcionalidades de IA
+interface MLService {
+  predictMaintenance(craneData: CraneData): MaintenancePrediction
+  optimizeRoutes(services: Service[]): OptimizedRoute[]
+  detectAnomalies(metrics: Metric[]): Anomaly[]
+}
+```
+
+### Real-time Features
+- WebSocket connections para updates en tiempo real
+- Push notifications
+- Live chat support
+- Real-time dashboard updates
+
+## Consideraciones de Compliance
+
+### Protección de Datos
+- **GDPR** compliance ready
+- **Data anonymization** capabilities
+- **Audit trails** completos
+- **Data retention** policies
+
+### Estándares de Seguridad
+- **ISO 27001** guidelines
+- **OWASP Top 10** protections
+- **SOC 2** compliance
+- **Penetration testing** regular
+
+## Documentación de APIs
+
+### RESTful APIs
+```typescript
+// Estructura estándar de respuestas
+interface APIResponse<T> {
+  data: T
+  message: string
+  status: 'success' | 'error'
+  timestamp: string
+}
+```
+
+### GraphQL Schema
+```graphql
+type Service {
+  id: ID!
+  folio: String!
+  client: Client!
+  operator: Operator
+  crane: Crane
+  status: ServiceStatus!
+}
+```
+
+Esta arquitectura proporciona una base sólida y escalable para el crecimiento futuro del sistema TMS Grúas, manteniendo la flexibilidad para adaptarse a nuevos requerimientos y tecnologías.

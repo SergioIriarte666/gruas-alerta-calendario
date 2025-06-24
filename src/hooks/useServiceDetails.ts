@@ -13,10 +13,10 @@ const fetchServiceById = async (serviceId: string, transformRawServiceData: (dat
     .from('services')
     .select(`
       *,
-      clients!inner(id, name, rut, phone, email, address, is_active),
-      cranes!inner(id, license_plate, brand, model, type, is_active),
-      operators!inner(id, name, rut, phone, license_number, is_active),
-      service_types!inner(id, name, description, is_active)
+      clients!inner(id, name, rut, phone, email, address, is_active, created_at, updated_at),
+      cranes!inner(id, license_plate, brand, model, type, is_active, circulation_permit_expiry, insurance_expiry, technical_review_expiry, created_at, updated_at),
+      operators!inner(id, name, rut, phone, license_number, is_active, exam_expiry, created_at, updated_at),
+      service_types!inner(id, name, description, is_active, base_price, vehicle_info_optional, purchase_order_required, origin_required, destination_required, crane_required, operator_required, vehicle_brand_required, vehicle_model_required, license_plate_required, created_at, updated_at)
     `)
     .eq('id', serviceId)
     .single();

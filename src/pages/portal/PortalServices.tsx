@@ -6,7 +6,10 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { AlertTriangle, History } from 'lucide-react';
+import { AlertTriangle, History, Grid, List } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { useState } from 'react';
+import { PortalServiceCard } from '@/components/portal/PortalServiceCard';
 
 const formatCurrency = (amount: number) => {
   return new Intl.NumberFormat('es-CL', {
@@ -31,6 +34,7 @@ const getStatusBadge = (status: string) => {
 
 const PortalServices = () => {
   const { data: services, isLoading, isError, error } = useClientServices();
+  const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
 
   const renderContent = () => {
     if (isLoading) {
@@ -59,6 +63,16 @@ const PortalServices = () => {
           <History className="w-12 h-12 text-gray-400 mb-4" />
           <h3 className="text-lg font-semibold text-white">Sin historial de servicios</h3>
           <p className="text-gray-400">No hemos encontrado servicios asociados a su cuenta.</p>
+        </div>
+      );
+    }
+
+    if (viewMode === 'grid') {
+      return (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {services.map((service) => (
+            <PortalServiceCard key={service.id} service={service} />
+          ))}
         </div>
       );
     }
@@ -105,11 +119,29 @@ const PortalServices = () => {
     <div>
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold text-white">Mis Servicios</h1>
-        {services && (
+        <div className="flex items-center gap-4">
+          {services && (
             <Badge variant="outline" className="text-tms-green border-tms-green">
-                {services.length} servicio{services.length !== 1 ? 's' : ''}
+              {services.length} servicio{services.length !== 1 ? 's' : ''}
             </Badge>
-        )}
+          )}
+          <div className="flex gap-2">
+            <Button
+              variant={viewMode === 'table' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setViewMode('table')}
+            >
+              <List className="w-4 h-4" />
+            </Button>
+            <Button
+              variant={viewMode === 'grid' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setViewMode('grid')}
+            >
+              <Grid className="w-4 h-4" />
+            </Button>
+          </div>
+        </div>
       </div>
       {renderContent()}
     </div>
