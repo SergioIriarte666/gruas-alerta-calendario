@@ -1,4 +1,3 @@
-
 import { useUser } from '@/contexts/UserContext';
 import { Button } from '@/components/ui/button';
 import { RefreshCw, AlertCircle } from 'lucide-react';
@@ -133,7 +132,7 @@ const OperatorDashboard = () => {
       </div>
 
       <footer className="text-center text-gray-500 text-sm pt-4">
-        <p>TMS Grúas &copy; {new Date().getFullYear()}</p>
+        <p>Gruas 5 Norte &copy; {new Date().getFullYear()}</p>
         <p className="text-xs mt-1">
           {user?.id ? '✅ Usuario identificado correctamente' : '❌ Error de identificación de usuario'}
         </p>
