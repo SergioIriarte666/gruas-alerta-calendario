@@ -1,3 +1,4 @@
+
 import * as React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUser } from '@/contexts/UserContext';
@@ -141,9 +142,10 @@ const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
     
     console.log('ProtectedRoute: Role-based routing check - userRole:', userRole, 'path:', location.pathname);
 
-    // Operator auto-redirect
-    if (userRole === 'operator' && !isOperatorPortalRoute) {
-      console.log('ProtectedRoute: Operator user, redirecting to /operator');
+    // ONLY redirect operators if they're specifically accessing a non-operator route
+    // and NOT if they're admins trying to access the main dashboard
+    if (userRole === 'operator' && !isOperatorPortalRoute && !location.pathname.startsWith('/dashboard')) {
+      console.log('ProtectedRoute: Pure operator user accessing non-operator route, redirecting to /operator');
       return <Navigate to="/operator" replace />;
     }
 
@@ -164,7 +166,9 @@ const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
 
     // Root path redirections
     if (location.pathname === '/') {
-      if (userRole === 'operator') {
+      if (userRole === 'client') {
+        return <Navigate to="/portal/dashboard" replace />;
+      } else if (userRole === 'operator') {
         return <Navigate to="/operator" replace />;
       } else {
         return <Navigate to="/dashboard" replace />;
