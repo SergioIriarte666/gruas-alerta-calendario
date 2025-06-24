@@ -5,11 +5,12 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useUser } from '@/contexts/UserContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/custom-toast';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { cleanupAuthState, performGlobalSignOut } from '@/utils/authCleanup';
+import { cleanupAuthState } from '@/utils/authCleanup';
+import { AuthBackground } from '@/components/auth/AuthBackground';
+import { AuthTabs } from '@/components/auth/AuthTabs';
+import { LoginForm } from '@/components/auth/LoginForm';
+import { RegisterForm } from '@/components/auth/RegisterForm';
+import { ErrorDisplay } from '@/components/auth/ErrorDisplay';
 
 const Auth = () => {
   const [email, setEmail] = useState('');
@@ -133,192 +134,54 @@ const Auth = () => {
     }
   };
 
+  const handleCleanupAndRestart = () => {
+    cleanupAuthState();
+    window.location.reload();
+  };
+
   // Si hay error en el perfil, mostrar opción de debug
   if (authUser && profileError) {
     return (
-      <div className="min-h-screen bg-white relative overflow-hidden">
-        {/* Background Image */}
-        <div 
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-          style={{
-            backgroundImage: 'url(/images/crane-background.jpg)',
-          }}
+      <AuthBackground>
+        <ErrorDisplay
+          authUser={authUser}
+          profileError={profileError}
+          onRetryProfile={retryFetchProfile}
+          onForceRefresh={forceRefreshProfile}
+          onCleanupAndRestart={handleCleanupAndRestart}
         />
-        {/* Overlay */}
-        <div className="absolute inset-0 bg-black/40" />
-        
-        {/* Content */}
-        <div className="relative z-10 flex items-center justify-center min-h-screen p-4">
-          <Card className="border border-gray-200 w-[400px] bg-white/95 backdrop-blur-sm shadow-xl">
-            <CardHeader>
-              <CardTitle className="text-black">Error de Perfil</CardTitle>
-              <CardDescription className="text-red-600">{profileError}</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4 bg-transparent">
-              <div className="text-sm text-gray-600">
-                <p>Usuario autenticado: {authUser.email}</p>
-                <p>ID: {authUser.id}</p>
-              </div>
-              <div className="space-y-2">
-                <Button
-                  onClick={retryFetchProfile}
-                  className="w-full bg-tms-green hover:bg-tms-green-dark text-black"
-                >
-                  Reintentar Cargar Perfil
-                </Button>
-                <Button
-                  onClick={forceRefreshProfile}
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white"
-                >
-                  Forzar Refresco de Perfil
-                </Button>
-                <Button
-                  onClick={() => {
-                    cleanupAuthState();
-                    window.location.reload();
-                  }}
-                  variant="outline"
-                  className="w-full bg-white/90 text-black border-gray-300"
-                >
-                  Limpiar Sesión y Reiniciar
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
+      </AuthBackground>
     );
   }
 
   return (
-    <div className="min-h-screen bg-white relative overflow-hidden">
-      {/* Background Image */}
-      <div 
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-        style={{
-          backgroundImage: 'url(/images/crane-background.jpg)',
-        }}
-      />
-      {/* Overlay */}
-      <div className="absolute inset-0 bg-black/40" />
-      
-      {/* Content */}
-      <div className="relative z-10 flex items-center justify-center min-h-screen p-4">
-        <div className="w-[400px]">
-          {/* Custom Tab Implementation */}
-          <div className="flex w-full bg-white/20 backdrop-blur-sm rounded-lg p-1 mb-4 border border-white/30">
-            <button
-              onClick={() => setActiveTab('login')}
-              className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
-                activeTab === 'login'
-                  ? 'bg-white text-black shadow-sm'
-                  : 'text-white hover:text-gray-200 hover:bg-white/10'
-              }`}
-            >
-              Iniciar Sesión
-            </button>
-            <button
-              onClick={() => setActiveTab('register')}
-              className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
-                activeTab === 'register'
-                  ? 'bg-white text-black shadow-sm'
-                  : 'text-white hover:text-gray-200 hover:bg-white/10'
-              }`}
-            >
-              Registrarse
-            </button>
-          </div>
+    <AuthBackground>
+      <div className="w-[400px]">
+        <AuthTabs activeTab={activeTab} setActiveTab={setActiveTab} />
 
-          {/* Login Tab Content */}
-          {activeTab === 'login' && (
-            <Card className="bg-white/95 backdrop-blur-sm border border-white/30 shadow-xl">
-              <CardHeader>
-                <CardTitle className="text-black">Iniciar Sesión</CardTitle>
-                <CardDescription className="text-gray-600">Ingresa tus credenciales para acceder a tu cuenta.</CardDescription>
-              </CardHeader>
-              <CardContent className="bg-transparent">
-                <form onSubmit={handleLogin} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="email-login" className="text-black">Email</Label>
-                    <Input
-                      id="email-login"
-                      type="email"
-                      placeholder="m@example.com"
-                      required
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      className="bg-white/90 border-gray-300 text-black placeholder-gray-500 focus:bg-white"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="password-login" className="text-black">Contraseña</Label>
-                    <Input
-                      id="password-login"
-                      type="password"
-                      required
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      className="bg-white/90 border-gray-300 text-black focus:bg-white"
-                    />
-                  </div>
-                  <Button
-                    type="submit"
-                    className="w-full bg-tms-green hover:bg-tms-green-dark text-black font-semibold shadow-lg"
-                    disabled={loading}
-                  >
-                    {loading ? 'Ingresando...' : 'Ingresar'}
-                  </Button>
-                </form>
-              </CardContent>
-            </Card>
-          )}
+        {activeTab === 'login' && (
+          <LoginForm
+            email={email}
+            password={password}
+            loading={loading}
+            setEmail={setEmail}
+            setPassword={setPassword}
+            onSubmit={handleLogin}
+          />
+        )}
 
-          {/* Register Tab Content */}
-          {activeTab === 'register' && (
-            <Card className="bg-white/95 backdrop-blur-sm border border-white/30 shadow-xl">
-              <CardHeader>
-                <CardTitle className="text-black">Registrarse</CardTitle>
-                <CardDescription className="text-gray-600">Crea una nueva cuenta para empezar.</CardDescription>
-              </CardHeader>
-              <CardContent className="bg-transparent">
-                <form onSubmit={handleSignUp} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="email-register" className="text-black">Email</Label>
-                    <Input
-                      id="email-register"
-                      type="email"
-                      placeholder="m@example.com"
-                      required
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      className="bg-white/90 border-gray-300 text-black placeholder-gray-500 focus:bg-white"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="password-register" className="text-black">Contraseña</Label>
-                    <Input
-                      id="password-register"
-                      type="password"
-                      required
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      className="bg-white/90 border-gray-300 text-black focus:bg-white"
-                    />
-                  </div>
-                  <Button
-                    type="submit"
-                    className="w-full bg-tms-green hover:bg-tms-green-dark text-black font-semibold shadow-lg"
-                    disabled={loading}
-                  >
-                    {loading ? 'Registrando...' : 'Registrar'}
-                  </Button>
-                </form>
-              </CardContent>
-            </Card>
-          )}
-        </div>
+        {activeTab === 'register' && (
+          <RegisterForm
+            email={email}
+            password={password}
+            loading={loading}
+            setEmail={setEmail}
+            setPassword={setPassword}
+            onSubmit={handleSignUp}
+          />
+        )}
       </div>
-    </div>
+    </AuthBackground>
   );
 };
 
