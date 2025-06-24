@@ -141,19 +141,19 @@ const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
     
     console.log('ProtectedRoute: Role-based routing check - userRole:', userRole, 'path:', location.pathname);
 
-    // ALLOW operators to access their portal - FIXED
+    // ALLOW operators to access their portal BUT NOT redirect them from admin pages
     if (userRole === 'operator' && isOperatorPortalRoute) {
       console.log('ProtectedRoute: Operator accessing operator portal - allowed');
       // Don't redirect, allow access
     }
     
-    // Non-operator trying to access operator portal
+    // Non-operator trying to access operator portal - redirect them
     if (userRole !== 'operator' && isOperatorPortalRoute) {
       console.log('ProtectedRoute: Non-operator trying to access operator portal, redirecting to /dashboard');
       return <Navigate to="/dashboard" replace />;
     }
 
-    // Admin-only routes
+    // Admin-only routes - FIXED: Only restrict non-admins
     const adminOnlyRoutes = ['/settings', '/service-types'];
     const isAdminOnlyRoute = adminOnlyRoutes.some(route => location.pathname.startsWith(route));
 
