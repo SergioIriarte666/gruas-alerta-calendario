@@ -118,7 +118,7 @@ const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
     const isClientPortalRoute = location.pathname.startsWith('/portal');
     const isOperatorPortalRoute = location.pathname.startsWith('/operator');
 
-    // --- NEW: Stricter Portal Segregation ---
+    // --- Portal Segregation ---
     // 1. If user is a client, they MUST be in the client portal.
     if (userRole === 'client') {
       if (!isClientPortalRoute) {
@@ -131,24 +131,22 @@ const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
         console.log(`NON-CLIENT '${userRole}' on client portal route '${location.pathname}'. Redirecting to /dashboard.`);
         return <Navigate to="/dashboard" replace />;
     }
-    // --- End of new logic ---
 
     // Role check for specific routes within a portal (e.g. admin-only pages)
     if (allowedRoles && allowedRoles.length > 0 && !allowedRoles.includes(userRole)) {
       console.log(`ProtectedRoute: Role '${userRole}' not in allowed roles [${allowedRoles.join(', ')}]. Redirecting.`);
-      const redirectTo = userRole === 'operator' ? '/operator' : '/dashboard';
+      const redirectTo = userRole === 'client' ? '/portal/dashboard' : '/dashboard';
       return <Navigate to={redirectTo} replace />;
     }
     
     console.log('ProtectedRoute: Role-based routing check - userRole:', userRole, 'path:', location.pathname);
 
-    // ONLY redirect operators if they're specifically accessing a non-operator route
-    // and NOT if they're admins trying to access the main dashboard
-    if (userRole === 'operator' && !isOperatorPortalRoute && !location.pathname.startsWith('/dashboard')) {
-      console.log('ProtectedRoute: Pure operator user accessing non-operator route, redirecting to /operator');
-      return <Navigate to="/operator" replace />;
+    // ONLY redirect operators if they're specifically accessing the operator portal
+    if (userRole === 'operator' && location.pathname === '/operator') {
+      // Allow operators to access their dashboard
+      console.log('ProtectedRoute: Operator accessing operator dashboard - allowed');
     }
-
+    
     // Non-operator trying to access operator portal
     if (userRole !== 'operator' && isOperatorPortalRoute) {
       console.log('ProtectedRoute: Non-operator trying to access operator portal, redirecting to /dashboard');
