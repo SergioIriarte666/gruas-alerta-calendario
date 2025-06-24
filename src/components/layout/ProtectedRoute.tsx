@@ -153,8 +153,8 @@ const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
       return <Navigate to="/dashboard" replace />;
     }
 
-    // Admin-only routes - FIXED: Only restrict non-admins
-    const adminOnlyRoutes = ['/settings', '/service-types'];
+    // Admin-only routes - FIXED: Include all admin routes
+    const adminOnlyRoutes = ['/settings', '/service-types', '/operators'];
     const isAdminOnlyRoute = adminOnlyRoutes.some(route => location.pathname.startsWith(route));
 
     if (isAdminOnlyRoute && userRole !== 'admin') {
