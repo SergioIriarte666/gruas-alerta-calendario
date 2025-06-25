@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { enhancedSupabase } from '@/integrations/supabase/enhancedClient';
 import { toast } from 'sonner';
@@ -113,6 +114,7 @@ export const useUserManagement = () => {
   const createUser = async (userData: CreateUserData) => {
     try {
       setCreating(true);
+      console.log('Creating user with data:', userData);
       
       // Crear el usuario
       const result = await enhancedSupabase.query(
@@ -130,11 +132,20 @@ export const useUserManagement = () => {
       if (result.error) throw result.error;
 
       const newUserId = result.data;
+      console.log('User created successfully with ID:', newUserId);
 
       // Enviar invitación por email
       try {
         const clientName = userData.client_id ? 
           clients.find(c => c.id === userData.client_id)?.name : undefined;
+
+        console.log('Sending invitation email for user:', {
+          userId: newUserId,
+          email: userData.email,
+          fullName: userData.full_name,
+          role: userData.role,
+          clientName
+        });
 
         const invitationResult = await enhancedSupabase.query(
           async () => {
@@ -151,10 +162,16 @@ export const useUserManagement = () => {
           'send invitation'
         );
 
+        console.log('Invitation result:', invitationResult);
+
         if (invitationResult.error) {
           console.error('Error sending invitation:', invitationResult.error);
           toast.warning('Usuario creado, pero hubo un problema enviando la invitación por email');
+        } else if (invitationResult.data?.error) {
+          console.error('Error in invitation function:', invitationResult.data.error);
+          toast.warning('Usuario creado, pero hubo un problema enviando la invitación por email');
         } else {
+          console.log('Invitation sent successfully:', invitationResult.data);
           toast.success('Usuario creado e invitación enviada correctamente');
         }
       } catch (inviteError) {
@@ -177,6 +194,7 @@ export const useUserManagement = () => {
   const resendInvitation = async (userId: string) => {
     try {
       setSendingInvitation(userId);
+      console.log('Resending invitation for user:', userId);
       
       const user = users.find(u => u.id === userId);
       if (!user) {
@@ -186,6 +204,14 @@ export const useUserManagement = () => {
 
       const clientName = user.client_id ? 
         clients.find(c => c.id === user.client_id)?.name : undefined;
+
+      console.log('Resending invitation with data:', {
+        userId: user.id,
+        email: user.email,
+        fullName: user.full_name,
+        role: user.role,
+        clientName
+      });
 
       const result = await enhancedSupabase.query(
         async () => {
@@ -202,7 +228,13 @@ export const useUserManagement = () => {
         'resend invitation'
       );
 
-      if (result.error) throw result.error;
+      console.log('Resend invitation result:', result);
+
+      if (result.error) {
+        throw result.error;
+      } else if (result.data?.error) {
+        throw new Error(result.data.error);
+      }
 
       toast.success('Invitación reenviada correctamente');
       await fetchInvitations();
