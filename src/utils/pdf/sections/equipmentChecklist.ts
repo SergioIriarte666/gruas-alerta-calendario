@@ -43,13 +43,13 @@ export const addEquipmentChecklist = (doc: jsPDF, data: InspectionPDFData, yPosi
     console.log('Equipos seleccionados:', selectedEquipment);
     console.log('Total de elementos en inventario:', allItems.length);
 
-    // Crear tabla con todos los elementos y su estado usando símbolos más visibles
+    // Crear tabla con todos los elementos y su estado usando texto simple
     const equipmentTableData = allItems.map(item => {
       const itemId = String(item.id);
       const isSelected = selectedEquipment.some(selectedId => String(selectedId) === itemId);
-      // Usar símbolos más grandes y visibles
-      const checkSymbol = isSelected ? '✓' : '✗';
-      return [item.name, checkSymbol];
+      // Usar texto simple compatible con PDF
+      const statusText = isSelected ? 'SI' : 'NO';
+      return [item.name, statusText];
     });
 
     // Dividir en 3 columnas para mejor presentación
@@ -66,7 +66,7 @@ export const addEquipmentChecklist = (doc: jsPDF, data: InspectionPDFData, yPosi
 
     autoTable(doc, {
       startY: yPosition,
-      head: [['Elemento', '✓', 'Elemento', '✓', 'Elemento', '✓']],
+      head: [['Elemento', 'Estado', 'Elemento', 'Estado', 'Elemento', 'Estado']],
       body: tableRows,
       theme: 'striped',
       columnStyles: {
@@ -74,27 +74,27 @@ export const addEquipmentChecklist = (doc: jsPDF, data: InspectionPDFData, yPosi
         1: { 
           cellWidth: 10, 
           halign: 'center', 
-          fontSize: 12, // Aumentar tamaño de fuente para los símbolos
-          fontStyle: 'bold' // Hacer los símbolos más visibles
+          fontSize: 10,
+          fontStyle: 'bold'
         },
         2: { cellWidth: 50, fontSize: 8 },
         3: { 
           cellWidth: 10, 
           halign: 'center', 
-          fontSize: 12,
+          fontSize: 10,
           fontStyle: 'bold'
         },
         4: { cellWidth: 50, fontSize: 8 },
         5: { 
           cellWidth: 10, 
           halign: 'center', 
-          fontSize: 12,
+          fontSize: 10,
           fontStyle: 'bold'
         }
       },
       styles: {
         fontSize: 8,
-        cellPadding: 3, // Aumentar padding para mejor legibilidad
+        cellPadding: 3,
         textColor: [0, 0, 0],
       },
       headStyles: {
@@ -106,16 +106,17 @@ export const addEquipmentChecklist = (doc: jsPDF, data: InspectionPDFData, yPosi
       alternateRowStyles: {
         fillColor: [245, 245, 245]
       },
-      // Personalizar colores para los símbolos de check
+      // Personalizar colores para los estados
       didParseCell: function(data) {
-        // Solo aplicar colores especiales a las columnas de símbolos (1, 3, 5)
+        // Solo aplicar colores especiales a las columnas de estado (1, 3, 5)
         if ([1, 3, 5].includes(data.column.index) && data.cell.text.length > 0) {
-          const symbol = data.cell.text[0];
-          if (symbol === '✓') {
-            data.cell.styles.textColor = [0, 128, 0]; // Verde para checks
+          const statusText = data.cell.text[0];
+          if (statusText === 'SI') {
+            data.cell.styles.textColor = [0, 128, 0]; // Verde para SI
             data.cell.styles.fontStyle = 'bold';
-          } else if (symbol === '✗') {
-            data.cell.styles.textColor = [128, 128, 128]; // Gris para elementos no verificados
+          } else if (statusText === 'NO') {
+            data.cell.styles.textColor = [200, 50, 50]; // Rojo para NO
+            data.cell.styles.fontStyle = 'bold';
           }
         }
       },
