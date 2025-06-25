@@ -12,10 +12,10 @@
 - **Validación**: Zod + React Hook Form
 - **PDF Generation**: jsPDF + jsPDF AutoTable
 - **Excel Export**: XLSX + PapaParse
-- **Notificaciones**: Sonner
+- **Notificaciones**: Sonner + **Web Push API**
 - **Iconos**: Lucide React
 - **Email**: Resend API
-- **PWA**: Service Workers + Manifest
+- **PWA**: Service Workers + Manifest + **Push Notifications**
 
 ## Estructura del Proyecto Actualizada
 
@@ -24,6 +24,8 @@ src/
 ├── components/           # Componentes organizados por módulo
 │   ├── ui/              # Componentes base de shadcn/ui
 │   ├── layout/          # Layouts y navegación
+│   ├── notifications/   # Sistema de notificaciones push
+│   │   └── PushNotificationManager.tsx
 │   ├── operator/        # Módulo de operadores
 │   │   ├── PhotographicSet.tsx    # Set fotográfico unificado
 │   │   ├── InspectionFormSections.tsx
@@ -33,27 +35,260 @@ src/
 │   ├── settings/        # Configuraciones del sistema
 │   └── ...              # Otros módulos
 ├── hooks/               # Hooks especializados
+│   ├── usePushNotifications.ts      # Hook principal de notificaciones push
+│   ├── useNotificationTriggers.ts   # Triggers automáticos de notificaciones
 │   ├── inspection/      # Hooks de inspecciones
-│   │   ├── useInspectionPDF.ts
-│   │   ├── useInspectionEmail.ts
-│   │   └── useServiceStatusUpdate.ts
 │   ├── services/        # Hooks de servicios
 │   ├── settings/        # Hooks de configuración
 │   └── ...              # Otros hooks
 ├── utils/               # Utilidades especializadas
 │   ├── pdf/            # Generación de PDFs
-│   │   ├── pdfPhotos.ts          # Procesamiento de fotos
-│   │   ├── photos/               # Utilidades de fotos
-│   │   └── sections/             # Secciones del PDF
 │   ├── photoProcessor.ts         # Procesamiento de imágenes
 │   ├── photoStorage.ts           # Almacenamiento local
 │   └── ...              # Otras utilidades
 ├── schemas/             # Esquemas de validación
-│   ├── inspectionSchema.ts       # Schema de inspecciones
-│   └── ...              # Otros schemas
-└── types/               # Definiciones de tipos
-    ├── photo.ts         # Tipos de fotografías
-    └── ...              # Otros tipos
+├── types/               # Definiciones de tipos
+│   ├── notifications.ts # Tipos de notificaciones
+│   └── ...              # Otros tipos
+└── ...
+```
+
+## Sistema de Notificaciones Push (NUEVO)
+
+### Arquitectura de Notificaciones
+
+#### Componentes Principales
+```typescript
+// Hook principal para gestión de suscripciones
+usePushNotifications(): {
+  isSupported: boolean,
+  isSubscribed: boolean,
+  isLoading: boolean,
+  permission: NotificationPermission,
+  subscribe: () => Promise<boolean>,
+  unsubscribe: () => Promise<boolean>,
+  requestPermission: () => Promise<NotificationPermission>
+}
+
+// Hook para triggers automáticos por rol
+useNotificationTriggers(): {
+  sendPushNotification: (notification: NotificationTrigger) => Promise<void>
+}
+
+// Componente de gestión UI
+PushNotificationManager: React.FC
+```
+
+#### Base de Datos - Tablas de Notificaciones
+```sql
+-- Suscripciones push por usuario
+CREATE TABLE push_subscriptions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+  endpoint TEXT NOT NULL,
+  p256dh_key TEXT NOT NULL,
+  auth_key TEXT NOT NULL,
+  user_agent TEXT,
+  is_active BOOLEAN DEFAULT true,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now(),
+  UNIQUE(user_id)
+);
+
+-- Logs de notificaciones enviadas
+CREATE TABLE notification_logs (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+  type TEXT CHECK (type IN ('push', 'email', 'in_app')),
+  title TEXT NOT NULL,
+  body TEXT NOT NULL,
+  data JSONB,
+  status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'sent', 'failed')),
+  sent_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+```
+
+#### Edge Functions para Notificaciones
+
+##### save-push-subscription
+```typescript
+// Guarda suscripción de usuario en la base de datos
+POST /functions/v1/save-push-subscription
+Body: {
+  userId: string,
+  subscription: PushSubscription,
+  userAgent: string
+}
+```
+
+##### send-push-notification
+```typescript
+// Envía notificación push a usuario específico
+POST /functions/v1/send-push-notification
+Body: {
+  userId: string,
+  notification: {
+    title: string,
+    body: string,
+    data?: any,
+    type: string
+  }
+}
+```
+
+##### remove-push-subscription
+```typescript
+// Desactiva suscripción de usuario
+POST /functions/v1/remove-push-subscription
+Body: {
+  userId: string
+}
+```
+
+### Flujo de Notificaciones por Rol
+
+#### Para Administradores
+```typescript
+// Canal de notificaciones administrativas
+supabase.channel('admin-notifications')
+  .on('postgres_changes', {
+    event: 'UPDATE',
+    schema: 'public',
+    table: 'services',
+    filter: 'status=eq.completed'
+  }, (payload) => {
+    sendPushNotification({
+      type: 'service_completed',
+      title: '✅ Servicio Completado',
+      body: `El servicio ${payload.new.folio} ha sido completado`
+    });
+  })
+```
+
+#### Para Operadores
+```typescript
+// Canal específico por operador
+supabase.channel('operator-services')
+  .on('postgres_changes', {
+    event: 'INSERT',
+    schema: 'public',
+    table: 'services',
+    filter: `operator_id=eq.${user.id}`
+  }, (payload) => {
+    sendPushNotification({
+      type: 'service_assigned',
+      title: '🚛 Nuevo Servicio Asignado',
+      body: `Se te ha asignado el servicio ${payload.new.folio}`
+    });
+  })
+```
+
+#### Para Clientes
+```typescript
+// Canal de servicios del cliente
+supabase.channel('client-services')
+  .on('postgres_changes', {
+    event: 'UPDATE',
+    schema: 'public',
+    table: 'services',
+    filter: `client_id=eq.${user.client_id}`
+  }, (payload) => {
+    sendPushNotification({
+      type: 'service_completed',
+      title: '🎉 Servicio Completado',
+      body: `Tu servicio ${payload.new.folio} ha sido completado`
+    });
+  })
+```
+
+### Tipos de Notificaciones
+
+#### Interfaces TypeScript
+```typescript
+interface NotificationTrigger {
+  type: 'service_assigned' | 'service_completed' | 'inspection_ready' | 'invoice_generated';
+  title: string;
+  body: string;
+  data?: any;
+}
+
+interface Notification {
+  id: string;
+  title: string;
+  message: string;
+  type: 'info' | 'success' | 'warning' | 'error';
+  timestamp: Date;
+  read: boolean;
+  actionType?: 'navigate' | 'filter' | 'highlight';
+  actionUrl?: string;
+  actionData?: {
+    entityId?: string;
+    filter?: string;
+    highlight?: string;
+  };
+}
+```
+
+### Service Worker Integration
+
+#### Funcionalidades del Service Worker
+```javascript
+// public/sw.js - Manejo de push notifications
+self.addEventListener('push', function(event) {
+  const data = event.data.json();
+  
+  const options = {
+    body: data.body,
+    icon: '/icons/icon-192x192.png',
+    badge: '/icons/icon-96x96.png',
+    tag: `${data.type}-${Date.now()}`,
+    data: data.data,
+    requireInteraction: data.type === 'service_assigned'
+  };
+
+  event.waitUntil(
+    self.registration.showNotification(data.title, options)
+  );
+});
+```
+
+### Configuración de Preferencias
+
+#### Preferencias por Usuario
+```typescript
+interface NotificationPreferences {
+  newServices: boolean;          // Nuevos servicios asignados
+  serviceUpdates: boolean;       // Actualizaciones de servicios
+  inspectionCompleted: boolean;  // Inspecciones completadas
+  invoiceGenerated: boolean;     // Facturas generadas
+  systemAlerts: boolean;         // Alertas del sistema
+}
+```
+
+### Integración con Contextos Existentes
+
+#### NotificationContext Actualizado
+```typescript
+// Integración con sistema push existente
+const NotificationProvider = ({ children }) => {
+  // Mantiene compatibilidad con notificaciones in-app
+  // Añade integración con push notifications
+  
+  return (
+    <NotificationContext.Provider value={{
+      notifications,
+      addNotification,
+      removeNotification,
+      // Nuevas funciones push
+      enablePushNotifications,
+      disablePushNotifications,
+      updatePreferences
+    }}>
+      {children}
+    </NotificationContext.Provider>
+  );
+};
 ```
 
 ## Gestión de Estado
@@ -64,394 +299,162 @@ src/
 - Background refetching
 - Error handling centralizado
 - Loading states automáticos
+- **Invalidación automática por notificaciones push**
 
 ### Context API
 - `AuthContext`: Autenticación y sesión
 - `UserContext`: Información del usuario actual
-- `NotificationContext`: Sistema de notificaciones
+- `NotificationContext`: Sistema de notificaciones + **Push integration**
 
-## Base de Datos
+### Nuevos Hooks de Notificaciones
 
-### Tablas Principales
-- `profiles`: Usuarios con roles y estado
-- `clients`: Clientes con información completa
-- `operators`: Operadores con licencias
-- `cranes`: Flota de grúas
-- `service_types`: Tipos de servicios configurables
-- `services`: Servicios con estados
-- `invoices`: Facturas con tracking
-- `service_closures`: Cierres de servicios
-- `user_invitations`: Sistema de invitaciones
-- `company_data`: Configuración de empresa
-- `system_settings`: Configuraciones del sistema
-- `calendar_events`: Eventos del calendario
-
-### Row Level Security (RLS)
-- Implementado en todas las tablas críticas
-- Políticas por rol (admin, operator, client, viewer)
-- Funciones de seguridad para operaciones críticas
-- Validación de permisos a nivel de base de datos
-
-## Sistema de Inspecciones Rediseñado
-
-### Set Fotográfico Unificado
-El sistema de fotos fue completamente rediseñado para unificar todas las fotografías bajo un solo componente:
-
-#### Categorías de Fotos
+#### usePushNotifications.ts
 ```typescript
-type PhotoCategory = 
-  | 'izquierdo'   // Vista izquierda
-  | 'derecho'     // Vista derecha  
-  | 'frontal'     // Vista frontal
-  | 'trasero'     // Vista trasera
-  | 'interior'    // Vista interior
-  | 'motor'       // Vista motor
+export const usePushNotifications = (): PushNotificationHook => {
+  // Verificación de soporte del navegador
+  // Gestión de permisos
+  // Suscripción/Desuscripción
+  // Estado de conexión
+  // Manejo de errores
+}
 ```
 
-#### Componente PhotographicSet
-- **Interfaz por pestañas**: Una pestaña por categoría
-- **Indicadores visuales**: Pestañas verdes cuando contienen foto
-- **Validación**: Mínimo 1 foto requerida
-- **Almacenamiento local**: Fotos guardadas en localStorage
-- **Compresión automática**: Optimización para PDFs
-
-#### Schema de Validación
+#### useNotificationTriggers.ts
 ```typescript
-photographicSet: z.array(z.object({
-  fileName: z.string().min(1, 'El nombre del archivo es requerido'),
-  category: z.enum(['izquierdo', 'derecho', 'frontal', 'trasero', 'interior', 'motor'])
-})).refine((value) => value.length > 0, {
-  message: "Debes tomar al menos 1 fotografía para el set fotográfico.",
-})
+export const useNotificationTriggers = () => {
+  // Configuración de canales por rol
+  // Triggers automáticos de eventos
+  // Invalidación de queries
+  // Envío de notificaciones locales e push
+}
 ```
 
-### Hooks de Inspección
+## Seguridad y Performance
 
-#### useServiceInspection
-Hook principal que coordina todo el flujo de inspección:
-- Obtención de datos del servicio
-- Generación de PDF con progreso
-- Envío de email automático
-- Actualización de estado del servicio
-- Limpieza de fotos del localStorage
+### Medidas de Seguridad para Notificaciones
+- **Validación de suscripciones**: Una suscripción única por usuario
+- **RLS en tablas**: Políticas estrictas de acceso a datos
+- **Sanitización de contenido**: Validación de títulos y mensajes
+- **Rate limiting**: Control de frecuencia de envío
+- **Logs auditables**: Registro completo de actividad
 
-#### useInspectionPDF
-Manejo de generación de PDFs con progreso:
-- Validación de datos
-- Procesamiento de fotos
-- Generación progresiva
-- URLs de descarga
-- Limpieza de recursos
+### Optimizaciones de Performance
+- **Lazy loading** de componente de notificaciones
+- **Debounce** en configuración de preferencias
+- **Cache** de estado de suscripción
+- **Batch processing** de notificaciones múltiples
+- **Service Worker** eficiente para push handling
 
-#### useInspectionEmail
-Envío automático de inspecciones:
-- Validación de email del cliente
-- Envío con PDF adjunto
-- Manejo de errores
-- Confirmaciones de entrega
+## Edge Functions para Notificaciones
 
-## Generación de PDFs Mejorada
-
-### Procesamiento de Fotos
+### send-push-notification/index.ts
 ```typescript
-// Función principal para set fotográfico
-export const addPhotographicSetSection = async (
-  doc: jsPDF, 
-  photographicSet: Array<{
-    fileName: string;
-    category: PhotoCategory;
-  }>, 
-  yPosition: number
-): Promise<number>
+// Función principal para envío de notificaciones push
+// Integración con VAPID keys
+// Manejo de errores y reintentos
+// Logging completo de actividad
 ```
 
-#### Características:
-- **Organización por categorías**: Fotos ordenadas según categorías definidas
-- **Compresión inteligente**: Reducción de tamaño para PDFs
-- **Layout responsive**: Adaptación automática de espacio
-- **Metadata**: Timestamps y información adicional
-- **Fallbacks**: Placeholders para fotos faltantes
-
-### Utilidades de Fotos
-
-#### PhotoProcessor
-- Validación de formatos de imagen
-- Compresión con calidad ajustable
-- Redimensionamiento automático
-- Conversión a formato base64
-
-#### PhotoStorage
-- Almacenamiento en localStorage
-- Gestión de memoria
-- Limpieza automática
-- Recuperación de fotos
-
-## Portal de Clientes
-
-### Arquitectura Independiente
-- Autenticación separada del sistema principal
-- Rutas específicas (`/portal/*`)
-- Contexto de usuario independiente
-- API calls específicas para clientes
-
-### Componentes Principales
-- `PortalLayout`: Layout específico del portal
-- `PortalDashboard`: Dashboard personalizado
-- `PortalRequestService`: Solicitud de servicios
-- `PortalServices`: Historial de servicios
-- `PortalInvoices`: Facturas del cliente
-
-## Sistema de Usuarios con Invitaciones
-
-### Flujo de Invitaciones
-1. **Creación**: Admin crea usuario con email
-2. **Pre-registro**: Perfil creado en estado 'pending'
-3. **Invitación**: Edge function envía email automático
-4. **Seguimiento**: Estado actualizado a 'sent'
-5. **Registro**: Usuario completa información
-6. **Activación**: Estado cambia a 'accepted'
-
-### Edge Function: send-user-invitation
-```typescript
-// Envío de invitaciones por email
-const { data, error } = await supabase.functions.invoke('send-user-invitation', {
-  body: {
-    userId: 'uuid',
-    email: 'user@example.com',
-    fullName: 'Usuario Ejemplo',
-    role: 'operator',
-    clientName: 'Cliente Asociado'
-  }
-});
-```
-
-### Estados de Invitación
-- `pending`: Invitación creada, no enviada
-- `sent`: Email enviado exitosamente
-- `accepted`: Usuario completó registro
-- `expired`: Invitación venció sin usar
-
-## Hooks Especializados por Módulo
-
-### Servicios
-- `useServices`: CRUD completo con cache
-- `useServiceMutations`: Operaciones de modificación
-- `useServiceTransformer`: Transformación de datos
-- `useServiceFormData`: Manejo de formularios
-- `useServiceFormValidation`: Validaciones específicas
-
-### Operadores
-- `useOperatorService`: Servicio específico del operador
-- `useOperatorServices`: Lista de servicios asignados
-- `useOperatorServicesTabs`: Gestión de pestañas
-
-### Portal
-- `useClientServices`: Servicios del cliente autenticado
-- `useClientInvoices`: Facturas del cliente
-- `useServiceRequest`: Solicitud de nuevos servicios
-
-### Configuraciones
-- `useUserManagement`: Gestión completa de usuarios
-- `useSettings`: Configuración general
-- `useSystemSettings`: Configuraciones del sistema
-
-## Validaciones con Zod
-
-### Esquemas Principales
-```typescript
-// Inspección con set fotográfico unificado
-export const inspectionFormSchema = z.object({
-  equipment: z.array(z.string()).min(1),
-  vehicleObservations: z.string().optional(),
-  operatorSignature: z.string().min(1),
-  clientSignature: z.string().optional(),
-  clientName: z.string().optional(),
-  photographicSet: z.array(z.object({
-    fileName: z.string().min(1),
-    category: z.enum(['izquierdo', 'derecho', 'frontal', 'trasero', 'interior', 'motor'])
-  })).min(1, "Debes tomar al menos 1 fotografía")
-});
-```
-
-## Edge Functions
-
-### Funciones Implementadas
-- `send-inspection-email`: Envío de inspecciones con PDF
-- `send-user-invitation`: Sistema de invitaciones
-- `send-invoice-email`: Envío de facturas
-- `send-operator-notification`: Notificaciones a operadores
-- `generate-backup`: Respaldos automáticos
-
-### Configuración de Email
-- **Proveedor**: Resend API
-- **Dominio**: `gruas5norte.cl`
-- **Remitente**: `noreply@gruas5norte.cl`
-- **Templates**: HTML responsive
-
-## Performance y Optimización
-
-### Optimizaciones Implementadas
-- Lazy loading de componentes pesados
-- Memoización con React.memo
-- Debounce en búsquedas
-- Paginación en listados
-- Cache inteligente con React Query
-- Compresión de imágenes
-- Bundle splitting
-
-### Métricas de Performance
-- Time to Interactive < 3s
-- First Contentful Paint < 1.5s
-- Cumulative Layout Shift < 0.1
-- Bundle size optimizado
-
-## Seguridad
-
-### Medidas de Seguridad
-- Row Level Security completo
-- Validación en cliente y servidor
-- Sanitización de datos
-- Tokens JWT seguros
-- HTTPS obligatorio
-- Funciones de seguridad 'SECURITY DEFINER'
-
-### Sistema de Invitaciones Seguro
-- Validación de email y unicidad
-- Tokens seguros en enlaces
-- Expiración controlada
-- Dominio verificado
-
-## PWA (Progressive Web App)
-
-### Funcionalidades PWA
-- Service Worker con cache inteligente
-- Manifest para instalación
-- Soporte offline básico
-- Notificaciones push (futuro)
-
-### Componentes PWA
-- `PWAWrapper`: Contenedor principal
-- `InstallPrompt`: Prompt de instalación
-- `UpdateNotification`: Notificaciones de actualización
-- `ConnectionStatus`: Estado de conexión
-
-## Testing
-
-### Estrategia de Testing
-- Unit tests para utilidades críticas
-- Integration tests para flujos principales
-- E2E tests para casos de uso críticos
-- Testing de Edge Functions
-
-## Deployment
-
-### Variables de Entorno
+### Configuración VAPID (Requerida)
 ```bash
-# Supabase
+# Variables de entorno para Edge Functions
+VAPID_PUBLIC_KEY=BEL_YOUR_VAPID_PUBLIC_KEY_HERE
+VAPID_PRIVATE_KEY=your_vapid_private_key_here
+VAPID_SUBJECT=mailto:your-email@domain.com
+```
+
+## Testing del Sistema de Notificaciones
+
+### Casos de Prueba
+1. **Permisos del navegador**: Solicitud y manejo de permisos
+2. **Suscripción/Desuscripción**: Proceso completo
+3. **Envío de notificaciones**: Por cada tipo de evento
+4. **Preferencias de usuario**: Configuración granular
+5. **Fallbacks**: Funcionamiento sin soporte push
+6. **Roles y permisos**: Notificaciones específicas por rol
+
+### Herramientas de Debug
+- Console logs estructurados en hooks
+- Supabase Dashboard para monitoreo de Edge Functions
+- Network tab para verificar suscripciones
+- Application tab para Service Worker status
+
+## Deployment y Configuración
+
+### Variables de Entorno Adicionales
+```bash
+# Notificaciones Push
+VAPID_PUBLIC_KEY=your_vapid_public_key
+VAPID_PRIVATE_KEY=your_vapid_private_key
+VAPID_SUBJECT=mailto:your-email@domain.com
+
+# Supabase (existentes)
 SUPABASE_URL=https://tu-proyecto.supabase.co
 SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiI...
 SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiI...
-
-# Email
-RESEND_API_KEY=re_...
-
-# Aplicación
-SITE_URL=https://tu-dominio.com
 ```
 
 ### Configuración de Producción
-- Build optimizado con Vite
-- Compresión gzip
-- CDN para assets
-- Health checks
-- Variables seguras
+- **HTTPS obligatorio** para push notifications
+- **Service Worker** registrado correctamente
+- **VAPID keys** configuradas en Supabase
+- **Manifest** con permisos de notificación
+- **Políticas CSP** actualizadas para push
 
-## Monitoreo
+## Monitoreo y Analytics
 
-### Métricas Trackeadas
-- Errores de aplicación con contexto
-- Performance de queries
-- Tiempo de respuesta de funciones
-- Uso de recursos
-- Estados de invitaciones
+### Métricas de Notificaciones
+- Tasa de suscripción por rol
+- Efectividad de notificaciones (clicks)
+- Errores de envío y reintentos
+- Preferencias más utilizadas
+- Performance de Edge Functions
 
 ### Logs Estructurados
-- Errores categorizados por módulo
-- Eventos de auditoría
-- Performance metrics
-- Logs de Edge Functions con contexto
+```typescript
+// Ejemplo de log estructurado
+console.log('Push notification sent:', {
+  userId,
+  type: notification.type,
+  title: notification.title,
+  timestamp: new Date().toISOString(),
+  success: true
+});
+```
 
-## Funcionalidades Recientes
-
-### Set Fotográfico Unificado (v2.0)
-- Migración de 3 sets independientes a 1 unificado
-- 6 categorías específicas de fotos
-- Interfaz por pestañas mejorada
-- Validación simplificada (mínimo 1 foto)
-- Integración completa con PDFs
-
-### Sistema de Invitaciones
-- Pre-registro de usuarios
-- Emails automáticos con plantillas HTML
-- Control de estados en tiempo real
-- Reenvío de invitaciones
-- Integración con Resend API
-
-### Portal de Clientes Avanzado
-- Autenticación independiente
-- Dashboard personalizado
-- Solicitud de servicios integrada
-- Acceso a inspecciones completas
-
-## Roadmap Técnico
+## Roadmap de Notificaciones
 
 ### Próximas Implementaciones
-1. **WebSockets**: Updates en tiempo real
-2. **Push Notifications**: Notificaciones nativas
-3. **Offline-first**: Funcionalidad completa sin conexión
-4. **Multi-tenancy**: Soporte múltiples empresas
-5. **Advanced Analytics**: Dashboard analítico
-6. **Mobile App**: Aplicación nativa
-7. **API REST**: API pública para integraciones
+1. **Rich Notifications**: Imágenes y botones de acción
+2. **Scheduled Notifications**: Programación de envíos
+3. **Bulk Notifications**: Envío masivo eficiente
+4. **Analytics Dashboard**: Métricas detalladas
+5. **Push Templates**: Plantillas personalizables
+6. **Silent Push**: Actualizaciones en background
 
-### Deuda Técnica
-- Refactorización de componentes > 300 líneas
-- Mejora de tipos TypeScript
-- Aumento de cobertura de tests
-- Implementación de Error Boundaries
-- Bundle splitting más granular
+### Integraciones Futuras
+- **FCM (Firebase)**: Para aplicaciones móviles nativas
+- **APNs (Apple)**: Integración con dispositivos iOS
+- **Web Push Protocol**: Estándares avanzados
+- **Third-party services**: SendGrid, Pusher, etc.
 
-## Convenciones de Código
+## Troubleshooting - Notificaciones Push
 
-### Naming Conventions
-- **Componentes**: PascalCase (`PhotographicSet`)
-- **Hooks**: camelCase con 'use' (`useServiceInspection`)
-- **Variables**: camelCase (`isPhotoValid`)
-- **Constantes**: UPPER_SNAKE_CASE (`PHOTO_CATEGORIES`)
-- **Archivos**: kebab-case (`photographic-set.tsx`)
-- **Tipos**: PascalCase (`PhotoCategory`)
+### Problemas Comunes
 
-### Patrones Arquitectónicos
-- Hooks personalizados para lógica reutilizable
-- Componentes funcionales únicamente
-- Error handling con try-catch en operaciones críticas
-- Loading states consistentes
-- Separación clara de responsabilidades
+#### "Push notifications not supported"
+- Verificar navegador compatible (Chrome 50+, Firefox 44+, Safari 16+)
+- Confirmar conexión HTTPS
+- Revisar Service Worker registration
 
-## Debugging y Troubleshooting
+#### "Permission denied"
+- Usuario debe otorgar permisos explícitamente
+- Limpiar configuración del sitio en navegador
+- Verificar que el dominio no esté bloqueado
 
-### Tools de Debug
-- React Developer Tools
-- React Query DevTools
-- Supabase Dashboard
-- Network Analysis
-- Console logs estructurados
-
-### Problemas Comunes y Soluciones
-1. **Tipos TypeScript**: Verificar compatibilidad de tipos
-2. **RLS Policies**: Revisar políticas de seguridad
-3. **Email Delivery**: Validar configuración Resend
-4. **Photo Processing**: Verificar formatos y tamaños
-5. **Cache Issues**: Invalidar queries de React Query
+#### "Subscription failed"
+- Verificar VAPID keys en configuración
+- Revisar logs de Edge Functions
+- Confirmar que el endpoint esté activo
 
 Esta documentación se mantiene actualizada con cada release del sistema.

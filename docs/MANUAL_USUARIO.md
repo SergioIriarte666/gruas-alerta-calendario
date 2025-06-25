@@ -1,9 +1,8 @@
-
 # Manual de Usuario - TMS Grúas
 
 ## Introducción
 
-TMS Grúas es un sistema integral de gestión para empresas de servicios de grúas que permite administrar servicios, clientes, operadores, equipos y facturación de manera eficiente con funcionalidades avanzadas como inspecciones digitales, generación automática de PDFs y portal de clientes.
+TMS Grúas es un sistema integral de gestión para empresas de servicios de grúas que permite administrar servicios, clientes, operadores, equipos y facturación de manera eficiente con funcionalidades avanzadas como inspecciones digitales, generación automática de PDFs, portal de clientes y **sistema de notificaciones push en tiempo real**.
 
 ## Roles de Usuario
 
@@ -13,6 +12,7 @@ TMS Grúas es un sistema integral de gestión para empresas de servicios de grú
 - Acceso a todos los módulos
 - Gestión de invitaciones de usuarios
 - Configuración de empresa y sistema
+- **Configuración de notificaciones push**
 
 ### Operador
 - Acceso al portal del operador
@@ -20,12 +20,14 @@ TMS Grúas es un sistema integral de gestión para empresas de servicios de grú
 - Visualización de servicios asignados
 - Generación de PDFs de inspección
 - Firmas digitales
+- **Notificaciones push de nuevos servicios asignados**
 
 ### Cliente
 - Acceso al portal de clientes
 - Visualización de servicios contratados
 - Solicitud de nuevos servicios
 - Descarga de facturas e inspecciones
+- **Notificaciones push de servicios completados**
 
 ### Visualizador
 - Solo lectura en módulos permitidos
@@ -264,33 +266,72 @@ TMS Grúas es un sistema integral de gestión para empresas de servicios de grú
 - Información detallada del vehículo
 - Confirmación automática por email
 
-### 13. Configuración
-**Ubicación**: Menú principal > Configuración
-**Función**: Configuración completa del sistema
+### 13. **Sistema de Notificaciones Push (NUEVO)**
+**Ubicación**: Configuración > Notificaciones
+**Función**: Sistema completo de notificaciones push en tiempo real
 
-#### Configuración de Empresa
-- Datos básicos de la empresa
-- Logo corporativo con upload
-- Formato de folios personalizables
-- Textos legales para documentos
-- Información de contacto
+#### Configuración de Notificaciones Push
+**Acceso**: Menú Configuración > Pestaña "Notificaciones"
 
-#### Gestión Avanzada de Usuarios
-- **Sistema de invitaciones por email**
-- Creación de usuarios con pre-registro
-- Asignación de roles dinámicos
-- Activar/desactivar usuarios
-- Asociar clientes a usuarios
-- Control de estados de invitación
+##### Pasos para Habilitar Notificaciones Push:
+1. **Acceder a Configuración**:
+   - Ir a Configuración desde el menú principal
+   - Seleccionar pestaña "Notificaciones"
 
-#### Configuración del Sistema
-- Respaldos automáticos programables
-- Configuración de notificaciones
-- Alertas de vencimientos personalizables
-- Configuración de emails corporativos
-- Parámetros de seguridad
+2. **Solicitar Permisos**:
+   - Click en "Solicitar Permisos de Notificación"
+   - Autorizar notificaciones en el navegador
+   - El estado cambiará a "Permitido"
 
-### 14. Calendario (Nuevo)
+3. **Habilitar Notificaciones Push**:
+   - Una vez con permisos, click en "Habilitar"
+   - El sistema se suscribirá automáticamente
+   - Aparecerán las "Preferencias de Notificación"
+
+4. **Configurar Preferencias**:
+   - **Nuevos Servicios Asignados**: Para operadores
+   - **Actualizaciones de Servicios**: Cambios de estado
+   - **Inspecciones Completadas**: Cuando se completa una inspección
+   - **Facturas Generadas**: Nuevas facturas (opcional)
+   - **Alertas del Sistema**: Vencimientos importantes
+
+#### Tipos de Notificaciones Push
+
+##### Para Administradores:
+- 📋 Nuevas solicitudes de servicio desde el portal
+- ✅ Servicios completados por operadores
+- 💰 Nuevas facturas generadas
+- ⚠️ Alertas de vencimientos críticos
+
+##### Para Operadores:
+- 🚛 Nuevos servicios asignados
+- 📝 Actualizaciones de estado en servicios
+- 🔄 Cambios en programación
+
+##### Para Clientes:
+- 🎉 Servicios completados
+- 📄 Facturas disponibles
+- 📧 Inspecciones listas para descarga
+
+#### Gestión de Notificaciones
+
+##### Estados de Permisos:
+- **Permitido** ✅: Notificaciones habilitadas
+- **Denegado** ❌: Permisos bloqueados por el navegador
+- **Pendiente** ⏳: Esperando autorización del usuario
+
+##### Acciones Disponibles:
+- **Habilitar/Deshabilitar**: Control total de suscripción
+- **Configurar Preferencias**: Personalizar tipos de notificación
+- **Reactivar**: En caso de pérdida de conexión
+
+#### Compatibilidad y Requisitos
+- **Navegadores Compatible**: Chrome, Firefox, Safari, Edge
+- **Dispositivos**: Desktop, móvil, tablet
+- **Conexión**: Requiere HTTPS (automático en producción)
+- **Permisos**: Autorización del navegador necesaria
+
+### 14. Calendario
 **Ubicación**: Menú principal > Calendario
 **Función**: Vista de calendario integrada con servicios
 
@@ -302,6 +343,39 @@ TMS Grúas es un sistema integral de gestión para empresas de servicios de grú
 - Integración con alertas de vencimientos
 
 ## Flujos de Trabajo Principales
+
+### Flujo Completo de Servicio con Notificaciones
+1. **Creación**: Cliente solicita servicio (portal o admin)
+   - 🔔 **Notificación push** a administradores sobre nueva solicitud
+2. **Planificación**: Asignación automática de recursos
+3. **Notificación al Operador**: 
+   - 🚛 **Notificación push** "Nuevo Servicio Asignado"
+4. **Ejecución**: Operador realiza servicio e inspección completa
+5. **Inspección Digital**: Set fotográfico + firmas + observaciones
+6. **Documentación**: Generación automática de PDF
+7. **Comunicación**: Envío automático por email
+8. **Notificación de Completado**:
+   - 🎉 **Notificación push** al cliente "Servicio Completado"
+   - ✅ **Notificación push** al administrador
+9. **Facturación**: Inclusión en cierre y factura
+   - 💰 **Notificación push** "Nueva Factura Generada"
+10. **Cobro**: Gestión de pagos y recordatorios
+
+### Flujo de Notificaciones Push
+1. **Configuración Inicial**:
+   - Usuario habilita permisos en navegador
+   - Sistema registra suscripción
+   - Configuración de preferencias
+
+2. **Activación Automática**:
+   - Eventos del sistema disparan notificaciones
+   - Filtrado según preferencias del usuario
+   - Envío inmediato y registro en logs
+
+3. **Interacción del Usuario**:
+   - Click en notificación navega a sección relevante
+   - Notificaciones desaparecen automáticamente
+   - Historial disponible en logs del sistema
 
 ### Flujo Completo de Servicio Mejorado
 1. **Creación**: Cliente solicita servicio (portal o admin)
@@ -333,6 +407,19 @@ TMS Grúas es un sistema integral de gestión para empresas de servicios de grú
 
 ## Características Técnicas Avanzadas
 
+### Sistema de Notificaciones Push
+- **Tecnología WebPush**: Estándar web para notificaciones
+- **Service Workers**: Funcionamiento en segundo plano
+- **Persistencia**: Notificaciones funcionan aunque la app esté cerrada
+- **Tiempo Real**: Activación inmediata mediante Supabase Realtime
+- **Filtrado Inteligente**: Según rol y preferencias del usuario
+
+### Seguridad de Notificaciones
+- **Suscripciones Únicas**: Una por usuario
+- **Validación de Permisos**: Control a nivel de navegador
+- **Logs Auditables**: Registro completo de envíos
+- **Desactivación Segura**: Proceso controlado de desuscripción
+
 ### Sistema de Fotos Mejorado
 - **Compresión automática** para PDFs
 - **Almacenamiento local** con gestión de memoria
@@ -354,28 +441,6 @@ TMS Grúas es un sistema integral de gestión para empresas de servicios de grú
 - **Dashboard personalizado** por cliente
 - **Integración completa** con servicios
 
-## Mejores Prácticas de Uso
-
-### Para Administradores
-- Revisar alertas de vencimientos semanalmente
-- Configurar respaldos automáticos
-- Gestionar usuarios con sistema de invitaciones
-- Monitorear métricas del dashboard
-- Mantener información de empresa actualizada
-
-### Para Operadores
-- Completar inspecciones inmediatamente
-- Tomar todas las fotos requeridas por categoría
-- Verificar envío de emails automáticos
-- Actualizar estados de servicios en tiempo real
-- Mantener dispositivo con conectividad
-
-### Para Clientes
-- Utilizar portal para solicitudes de servicio
-- Verificar emails de confirmación
-- Descargar documentos importantes
-- Mantener información de contacto actualizada
-
 ## Funcionalidades PWA
 
 ### Capacidades Offline
@@ -384,11 +449,60 @@ TMS Grúas es un sistema integral de gestión para empresas de servicios de grú
 - Sincronización al recuperar conexión
 - Instalación como aplicación nativa
 
-### Notificaciones
-- Alertas de nuevos servicios
-- Recordatorios de vencimientos
-- Confirmaciones de operaciones
-- Estados de sincronización
+### **Notificaciones Push Nativas**
+- **Funcionamiento sin conexión**: Notificaciones llegan aunque la app esté cerrada
+- **Integración con SO**: Aparecen en centro de notificaciones del dispositivo
+- **Acciones rápidas**: Click para navegar directamente a la funcionalidad
+- **Persistencia**: Se mantienen hasta ser leídas o descartadas
+
+## Mejores Prácticas de Uso
+
+### Para Administradores
+- **Habilitar notificaciones push** para seguimiento en tiempo real
+- Configurar todas las alertas críticas
+- Revisar logs de notificaciones semanalmente
+- Mantener actualizada la configuración de preferencias
+
+### Para Operadores
+- **Obligatorio habilitar notificaciones** para servicios asignados
+- Mantener dispositivo con notificaciones activas
+- Responder rápidamente a notificaciones de nuevos servicios
+- Verificar completado de servicios para activar notificaciones a clientes
+
+### Para Clientes
+- Habilitar notificaciones para seguimiento de servicios
+- Configurar preferencias según necesidades
+- Utilizar notificaciones como recordatorio de facturas
+
+## Solución de Problemas - Notificaciones Push
+
+### Problemas Comunes
+
+#### "No puedo habilitar notificaciones"
+**Solución**:
+1. Verificar que el navegador sea compatible
+2. Asegurar conexión HTTPS
+3. Limpiar cache del navegador
+4. Revisar configuración de privacidad del navegador
+
+#### "No recibo notificaciones"
+**Solución**:
+1. Verificar permisos en configuración del navegador
+2. Revisar que las preferencias estén habilitadas
+3. Comprobar que la suscripción esté activa
+4. Reiniciar navegador y volver a suscribirse
+
+#### "Notificaciones duplicadas"
+**Solución**:
+1. Deshabilitar y volver a habilitar notificaciones
+2. Limpiar datos del sitio en el navegador
+3. Contactar soporte técnico
+
+### Limitaciones del Sistema
+- Requiere navegador moderno con soporte WebPush
+- Necesita permisos explícitos del usuario
+- Funciona mejor en dispositivos con conexión estable
+- Algunas funciones limitadas en modo incógnito
 
 ## Soporte y Contacto
 
@@ -411,11 +525,19 @@ TMS Grúas es un sistema integral de gestión para empresas de servicios de grú
 
 ## Actualizaciones Recientes
 
-### Set Fotográfico Unificado
-- Nueva interfaz por pestañas
+### Sistema de Notificaciones Push (v3.0)
+- **Implementación completa** de notificaciones push nativas
+- **Configuración granular** por tipo de evento
+- **Integración con roles** para notificaciones específicas
+- **Dashboard de preferencias** en configuración
+- **Logs auditables** de todas las notificaciones
+- **Compatibilidad PWA** para funcionamiento offline
+
+### Set Fotográfico Unificado (v2.0)
+- Migración de 3 sets independientes a 1 unificado
 - 6 categorías específicas de fotos
-- Validación mejorada (mínimo 1 foto)
-- Indicadores visuales de progreso
+- Interfaz por pestañas mejorada
+- Validación simplificada (mínimo 1 foto)
 - Integración completa con PDFs
 
 ### Sistema de Invitaciones
@@ -432,3 +554,90 @@ TMS Grúas es un sistema integral de gestión para empresas de servicios de grú
 - Interface móvil optimizada
 
 Este manual se actualiza constantemente con nuevas funcionalidades del sistema.
+
+## Cómo Usar el Sistema de Notificaciones Push
+
+### 1. **Configuración Inicial (Administrador)**
+
+**Ubicación**: Configuración > Pestaña "Notificaciones"
+
+1. **Acceder a la configuración**:
+   - Ve al menú principal > Configuración
+   - Selecciona la pestaña "Notificaciones"
+
+2. **Habilitar notificaciones**:
+   - Click en "Solicitar Permisos de Notificación"
+   - Autoriza en el popup del navegador
+   - El estado cambiará a "Permitido" ✅
+
+3. **Suscribirse**:
+   - Click en "Habilitar" notificaciones push
+   - El sistema te suscribirá automáticamente
+   - Aparecerán las preferencias de notificación
+
+### 2. **Configurar Preferencias**
+
+Una vez suscrito, puedes personalizar qué notificaciones recibir:
+
+- **Nuevos Servicios Asignados**: Para operadores cuando se les asigna trabajo
+- **Actualizaciones de Servicios**: Cambios de estado en servicios
+- **Inspecciones Completadas**: Cuando se completa una inspección
+- **Facturas Generadas**: Nuevas facturas (opcional)
+- **Alertas del Sistema**: Vencimientos y eventos críticos
+
+### 3. **Funcionamiento Automático por Rol**
+
+#### **Administradores reciben**:
+- 📋 Nuevas solicitudes de servicio desde el portal
+- ✅ Servicios completados por operadores  
+- 💰 Facturas generadas automáticamente
+- ⚠️ Alertas de vencimientos críticos
+
+#### **Operadores reciben**:
+- 🚛 **Nuevos servicios asignados** (crítico - aparece inmediatamente)
+- 📝 Actualizaciones de estado en sus servicios
+- 🔄 Cambios en la programación
+
+#### **Clientes reciben**:
+- 🎉 **Servicios completados** 
+- 📄 Facturas disponibles para descarga
+- 📧 Inspecciones listas
+
+### 4. **Interacción con Notificaciones**
+
+- **Click en la notificación**: Te lleva directamente a la sección relevante
+- **Ignorar**: La notificación desaparece automáticamente
+- **Navegación inteligente**: 
+  - Operadores van a su dashboard
+  - Administradores van a la sección correspondiente
+  - Clientes van a su portal
+
+### 5. **Requisitos Técnicos**
+
+- **Navegador compatible**: Chrome, Firefox, Safari moderno, Edge
+- **Conexión HTTPS**: Automática en producción
+- **Permisos del navegador**: Debes autorizar explícitamente
+- **Service Worker**: Se instala automáticamente
+
+### 6. **Resolución de Problemas**
+
+**Si no recibes notificaciones**:
+1. Verifica permisos en configuración del navegador
+2. Comprueba que la suscripción esté activa (pestaña Notificaciones)
+3. Reinicia el navegador
+4. Deshabilita y vuelve a habilitar notificaciones
+
+**Si aparece "No compatible"**:
+- Actualiza tu navegador
+- Verifica que estés en HTTPS
+- Prueba con otro navegador compatible
+
+### 7. **Beneficios del Sistema**
+
+- **Tiempo real**: Las notificaciones llegan instantáneamente
+- **Funciona sin la app abierta**: Recibes notificaciones aunque no tengas el sistema abierto
+- **Específico por rol**: Solo recibes lo que es relevante para ti
+- **Integración nativa**: Se ve como cualquier otra notificación de tu dispositivo
+- **Navegación directa**: Click para ir directo a la funcionalidad
+
+El sistema está completamente integrado y **no afecta ninguna funcionalidad existente** - simplemente añade esta nueva capacidad de notificaciones push en tiempo real para mejorar la comunicación y eficiencia del equipo.
