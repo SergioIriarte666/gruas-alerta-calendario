@@ -2,7 +2,7 @@
 import React from 'react';
 import { Service } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Truck, Calendar, MapPin, User, ChevronRight, CheckCircle } from 'lucide-react';
+import { Truck, Calendar, MapPin, User, ChevronRight, CheckCircle, Play } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Link } from 'react-router-dom';
@@ -26,6 +26,8 @@ export const AssignedServiceCard = ({ service }: AssignedServiceCardProps) => {
   }
 
   const isCompleted = service.status === 'completed';
+  const isActive = service.status === 'in_progress';
+  const isPending = service.status === 'pending';
 
   // Si el servicio está completado, renderizar sin enlace
   if (isCompleted) {
@@ -67,15 +69,15 @@ export const AssignedServiceCard = ({ service }: AssignedServiceCardProps) => {
     );
   }
 
-  // Para servicios asignados y activos, mantener el enlace a inspección
-  return (
-    <Link to={`/operator/service/${service.id}/inspection`} className="block">
-      <Card className="bg-slate-800 border-slate-700 text-white hover:bg-slate-700/50 transition-colors cursor-pointer">
+  // Si el servicio está activo (en progreso), renderizar sin enlace
+  if (isActive) {
+    return (
+      <Card className="bg-slate-800/80 border-slate-700 text-white">
         <CardHeader className="flex flex-row items-center justify-between pb-2">
           <CardTitle className="text-lg font-bold text-tms-green">Folio: {service.folio}</CardTitle>
           <div className="flex items-center gap-2">
             {getStatusChip(service.status)}
-            <ChevronRight className="w-5 h-5 text-gray-400" />
+            <Play className="w-5 h-5 text-blue-400" />
           </div>
         </CardHeader>
         <CardContent className="space-y-3 pt-2">
@@ -98,8 +100,83 @@ export const AssignedServiceCard = ({ service }: AssignedServiceCardProps) => {
               <p><span className="font-semibold">Destino:</span> {service.destination}</p>
             </div>
           </div>
+          <div className="text-center text-sm text-blue-400 font-medium mt-4">
+            <Play className="w-4 h-4 inline mr-2" />
+            Servicio en progreso
+          </div>
         </CardContent>
       </Card>
-    </Link>
+    );
+  }
+
+  // Solo para servicios pendientes, mostrar el enlace a inspección
+  if (isPending) {
+    return (
+      <Link to={`/operator/service/${service.id}/inspection`} className="block">
+        <Card className="bg-slate-800 border-slate-700 text-white hover:bg-slate-700/50 transition-colors cursor-pointer">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-lg font-bold text-tms-green">Folio: {service.folio}</CardTitle>
+            <div className="flex items-center gap-2">
+              {getStatusChip(service.status)}
+              <ChevronRight className="w-5 h-5 text-gray-400" />
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-3 pt-2">
+            <div className="flex items-center gap-3">
+              <Truck className="w-4 h-4 text-gray-400" />
+              <span>{service.serviceType?.name ?? 'Tipo de servicio no especificado'}</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <User className="w-4 h-4 text-gray-400" />
+              <span>{service.client?.name ?? 'Cliente no especificado'}</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <Calendar className="w-4 h-4 text-gray-400" />
+              <span>{format(new Date(service.serviceDate), "eeee, dd 'de' MMMM", { locale: es })}</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <MapPin className="w-4 h-4 text-gray-400" />
+              <div className="text-sm">
+                <p><span className="font-semibold">Origen:</span> {service.origin}</p>
+                <p><span className="font-semibold">Destino:</span> {service.destination}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </Link>
+    );
+  }
+
+  // Fallback para cualquier otro estado (no debería ocurrir)
+  return (
+    <Card className="bg-slate-800 border-slate-700 text-white">
+      <CardHeader className="flex flex-row items-center justify-between pb-2">
+        <CardTitle className="text-lg font-bold text-tms-green">Folio: {service.folio}</CardTitle>
+        <div className="flex items-center gap-2">
+          {getStatusChip(service.status)}
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-3 pt-2">
+        <div className="flex items-center gap-3">
+          <Truck className="w-4 h-4 text-gray-400" />
+          <span>{service.serviceType?.name ?? 'Tipo de servicio no especificado'}</span>
+        </div>
+        <div className="flex items-center gap-3">
+          <User className="w-4 h-4 text-gray-400" />
+          <span>{service.client?.name ?? 'Cliente no especificado'}</span>
+        </div>
+        <div className="flex items-center gap-3">
+          <Calendar className="w-4 h-4 text-gray-400" />
+          <span>{format(new Date(service.serviceDate), "eeee, dd 'de' MMMM", { locale: es })}</span>
+        </div>
+        <div className="flex items-center gap-3">
+          <MapPin className="w-4 h-4 text-gray-400" />
+          <div className="text-sm">
+            <p><span className="font-semibold">Origen:</span> {service.origin}</p>
+            <p><span className="font-semibold">Destino:</span> {service.destination}</p>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 };
