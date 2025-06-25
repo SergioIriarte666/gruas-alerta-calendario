@@ -20,7 +20,7 @@ const Auth = () => {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'login' | 'register'>(
-    (tabParam as 'login' | 'register') || 'login'
+    (tabParam as 'login' | 'register') || (isInvited ? 'register' : 'login')
   );
   
   const { user: authUser, loading: authLoading } = useAuth();
@@ -42,15 +42,13 @@ const Auth = () => {
     if (!authLoading && !profileLoading && authUser && profileUser) {
       console.log('Redirecting authenticated user:', profileUser.role);
       
-      if (profileUser.role === 'client') {
-        navigate('/portal', { replace: true });
-      } else if (profileUser.role === 'operator') {
-        navigate('/operator', { replace: true });
-      } else {
-        navigate('/dashboard', { replace: true });
-      }
+      // Forzar una redirección completa para evitar problemas de estado
+      const targetPath = profileUser.role === 'client' ? '/portal' : 
+                        profileUser.role === 'operator' ? '/operator' : '/dashboard';
+      
+      window.location.href = targetPath;
     }
-  }, [authUser, profileUser, authLoading, profileLoading, navigate]);
+  }, [authUser, profileUser, authLoading, profileLoading]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -74,6 +72,7 @@ const Auth = () => {
       } else {
         console.log('Login successful');
         toast.success('Inicio de sesión exitoso');
+        // La redirección se maneja en el useEffect
       }
     } catch (error: any) {
       console.error('Login exception:', error);
@@ -132,12 +131,13 @@ const Auth = () => {
         
         if (data.user && !data.user.email_confirmed_at) {
           toast.success('Registro exitoso', {
-            description: 'Por favor, revisa tu correo para confirmarla cuenta.'
+            description: 'Por favor, revisa tu correo para confirmar tu cuenta.'
           });
         } else if (data.user) {
           toast.success('¡Registro completado exitosamente!', {
-            description: 'Ya puedes acceder al sistema.'
+            description: 'Redirigiendo al sistema...'
           });
+          // La redirección automática se maneja en el useEffect
         }
       }
     } catch (error: any) {

@@ -54,9 +54,10 @@ const handler = async (req: Request): Promise<Response> => {
 
     const roleLabel = roleLabels[role] || role;
 
-    // Crear el enlace de registro - usar la URL de Lovable directamente
-    const baseUrl = 'https://gruas-5-norte-lovable.lovable.app';
-    const registerUrl = `${baseUrl}/auth?tab=register&email=${encodeURIComponent(email)}&invited=true`;
+    // Crear el enlace de registro - usar la URL actual del request
+    const url = new URL(req.url);
+    const origin = req.headers.get('origin') || 'https://gruas-5-norte-lovable.lovable.app';
+    const registerUrl = `${origin}/auth?tab=register&email=${encodeURIComponent(email)}&invited=true`;
 
     console.log('Generated registration URL:', registerUrl);
 
