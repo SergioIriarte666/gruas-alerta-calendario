@@ -46,12 +46,12 @@ export const exportServiceReport = async ({ format, services, settings, appliedF
       body: services.map(s => [
         formatDate(new Date(s.serviceDate + 'T00:00:00'), 'dd/MM/yy'),
         s.folio,
-        s.client.name.length > 18 ? s.client.name.substring(0, 18) + '...' : s.client.name,
-        s.serviceType.name.length > 15 ? s.serviceType.name.substring(0, 15) + '...' : s.serviceType.name,
+        s.client.name.length > 12 ? s.client.name.substring(0, 12) + '...' : s.client.name,
+        s.serviceType.name.length > 10 ? s.serviceType.name.substring(0, 10) + '...' : s.serviceType.name,
         s.vehicleBrand || 'N/A',
         s.vehicleModel || 'N/A',
         s.licensePlate || 'N/A',
-        `${s.origin} / ${s.destination}`.length > 25 ? `${s.origin} / ${s.destination}`.substring(0, 25) + '...' : `${s.origin} / ${s.destination}`,
+        `${s.origin} / ${s.destination}`.length > 20 ? `${s.origin} / ${s.destination}`.substring(0, 20) + '...' : `${s.origin} / ${s.destination}`,
         s.status,
         `$${(s.value || 0).toLocaleString('es-CL')}`
       ]),
@@ -60,15 +60,15 @@ export const exportServiceReport = async ({ format, services, settings, appliedF
       styles: { fontSize: 7, cellPadding: 1.5 },
       tableWidth: availableWidth,
       columnStyles: {
-        0: { cellWidth: availableWidth * 0.10 }, // Fecha - 10%
-        1: { cellWidth: availableWidth * 0.10 }, // Folio - 10%
-        2: { cellWidth: availableWidth * 0.18 }, // Cliente - 18%
-        3: { cellWidth: availableWidth * 0.15 }, // Tipo Servicio - 15%
-        4: { cellWidth: availableWidth * 0.10 }, // Marca Veh. - 10%
-        5: { cellWidth: availableWidth * 0.10 }, // Modelo Veh. - 10%
-        6: { cellWidth: availableWidth * 0.10 }, // Patente Veh. - 10%
-        7: { cellWidth: availableWidth * 0.25 }, // Origen-Destino - 25%
-        8: { cellWidth: availableWidth * 0.07 }, // Estado - 7%
+        0: { cellWidth: availableWidth * 0.08 }, // Fecha - 8%
+        1: { cellWidth: availableWidth * 0.08 }, // Folio - 8%
+        2: { cellWidth: availableWidth * 0.12 }, // Cliente - 12%
+        3: { cellWidth: availableWidth * 0.10 }, // Tipo Servicio - 10%
+        4: { cellWidth: availableWidth * 0.08 }, // Marca Veh. - 8%
+        5: { cellWidth: availableWidth * 0.08 }, // Modelo Veh. - 8%
+        6: { cellWidth: availableWidth * 0.08 }, // Patente Veh. - 8%
+        7: { cellWidth: availableWidth * 0.20 }, // Origen-Destino - 20%
+        8: { cellWidth: availableWidth * 0.08 }, // Estado - 8%
         9: { cellWidth: availableWidth * 0.10 }  // Valor - 10%
       }
     });
@@ -90,7 +90,7 @@ export const exportServiceReport = async ({ format, services, settings, appliedF
       'Patente Vehículo': s.licensePlate || 'N/A',
       'Origen': s.origin,
       'Destino': s.destination,
-      'Patente Grúa': s.crane.licensePlate,
+      'Patente Grúa': s.crane?.licensePlate || 'N/A',
       'Operador': s.operator.name,
       'Estado': s.status,
       'Valor': s.value,
