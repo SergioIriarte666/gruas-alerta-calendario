@@ -27,20 +27,35 @@ const Services = () => {
   const [statusFilter, setStatusFilter] = useState<string>(statusParam || 'all');
   const [currentPage, setCurrentPage] = useState(1);
   const [refreshing, setRefreshing] = useState(false);
+  const [advancedFilterFunction, setAdvancedFilterFunction] = useState<((services: Service[]) => Service[]) | null>(null);
+  const [hasAdvancedFilters, setHasAdvancedFilters] = useState(false);
   const ITEMS_PER_PAGE = 10;
 
-  const filteredServices = services.filter(service => {
-    const matchesSearch = 
-      service.folio.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (service.client?.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-      service.licensePlate.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      service.vehicleBrand.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const statusesToFilter = statusFilter === 'all' ? [] : statusFilter.split(',');
-    const matchesStatus = statusFilter === 'all' || statusesToFilter.includes(service.status);
-    
-    return matchesSearch && matchesStatus;
-  });
+  const handleAdvancedFiltersChange = (hasFilters: boolean, filterFunction: (services: Service[]) => Service[]) => {
+    setHasAdvancedFilters(hasFilters);
+    setAdvancedFilterFunction(() => filterFunction);
+    setCurrentPage(1); // Reset to first page when filters change
+  };
+
+  const filteredServices = (() => {
+    if (hasAdvancedFilters && advancedFilterFunction) {
+      return advancedFilterFunction(services);
+    }
+
+    // Apply basic filters only if no advanced filters are active
+    return services.filter(service => {
+      const matchesSearch = 
+        service.folio.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (service.client?.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+        service.licensePlate.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        service.vehicleBrand.toLowerCase().includes(searchTerm.toLowerCase());
+      
+      const statusesToFilter = statusFilter === 'all' ? [] : statusFilter.split(',');
+      const matchesStatus = statusFilter === 'all' || statusesToFilter.includes(service.status);
+      
+      return matchesSearch && matchesStatus;
+    });
+  })();
 
   const totalPages = Math.ceil(filteredServices.length / ITEMS_PER_PAGE);
   const paginatedServices = filteredServices.slice(
@@ -197,6 +212,7 @@ const Services = () => {
         onSearchChange={setSearchTerm}
         statusFilter={statusFilter}
         onStatusChange={setStatusFilter}
+        onAdvancedFiltersChange={handleAdvancedFiltersChange}
       />
 
       <ServicesTable
