@@ -4,21 +4,18 @@ import { LogOut, User } from 'lucide-react';
 import { useSettings } from '@/hooks/useSettings';
 import { useUser } from '@/contexts/UserContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { useToast } from '@/components/ui/custom-toast';
+import { toast } from 'sonner';
 
 const PortalHeader: React.FC = () => {
   const { settings } = useSettings();
   const { user } = useUser();
   const { signOut } = useAuth();
-  const { toast } = useToast();
 
   const handleLogout = async () => {
     try {
       console.log('Portal logout initiated...');
       
-      toast({
-        type: 'info',
-        title: 'Cerrando sesión...',
+      toast.info('Cerrando sesión...', {
         description: 'Limpiando datos de usuario'
       });
       
@@ -26,9 +23,7 @@ const PortalHeader: React.FC = () => {
     } catch (error) {
       console.error('Error during portal logout:', error);
       
-      toast({
-        type: 'error',
-        title: 'Error al cerrar sesión',
+      toast.error('Error al cerrar sesión', {
         description: 'Sesión cerrada forzosamente'
       });
       

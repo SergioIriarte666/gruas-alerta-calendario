@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { useToast } from '@/components/ui/custom-toast';
+import { toast } from 'sonner';
 import { useUser } from '@/contexts/UserContext';
 import { useSettings } from '@/hooks/useSettings';
 import { useAuth } from '@/contexts/AuthContext';
@@ -22,7 +22,6 @@ export const Header = ({
   const { user } = useUser();
   const { settings } = useSettings();
   const { signOut } = useAuth();
-  const { toast } = useToast();
   
   const isAdmin = user?.role === 'admin';
   const companyName = settings?.company?.name || 'Gruas 5 Norte';
@@ -32,9 +31,7 @@ export const Header = ({
     try {
       console.log('Header logout initiated...');
       
-      toast({
-        type: 'info',
-        title: 'Cerrando sesión...',
+      toast.info('Cerrando sesión...', {
         description: 'Limpiando datos de usuario'
       });
       
@@ -42,9 +39,7 @@ export const Header = ({
     } catch (error) {
       console.error("Header: Logout failed:", error);
       
-      toast({
-        type: 'error',
-        title: 'Error al cerrar sesión',
+      toast.error('Error al cerrar sesión', {
         description: 'Sesión cerrada forzosamente'
       });
       
