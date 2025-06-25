@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useServices } from '@/hooks/useServices';
@@ -9,12 +8,11 @@ import { ServicesHeader } from '@/components/services/ServicesHeader';
 import { ServicesDialogs } from '@/components/services/ServicesDialogs';
 import { AppPagination } from '@/components/shared/AppPagination';
 import { useUser } from '@/contexts/UserContext';
-import { useToast } from '@/components/ui/custom-toast';
+import { toast } from 'sonner';
 
 const Services = () => {
   const { services, loading, createService, updateService, deleteService, refetch } = useServices();
   const { user } = useUser();
-  const { toast } = useToast();
   const isAdmin = user?.role === 'admin';
   const location = useLocation();
   const params = new URLSearchParams(location.search);
@@ -54,18 +52,10 @@ const Services = () => {
     setRefreshing(true);
     try {
       await refetch();
-      toast({
-        type: "success",
-        title: "Datos actualizados",
-        description: "La lista de servicios se ha actualizado correctamente.",
-      });
+      toast.success('Datos actualizados correctamente');
     } catch (error) {
       console.error('Error refreshing services:', error);
-      toast({
-        type: "error",
-        title: "Error",
-        description: "No se pudieron actualizar los datos.",
-      });
+      toast.error('No se pudieron actualizar los datos');
     } finally {
       setRefreshing(false);
     }
@@ -76,18 +66,10 @@ const Services = () => {
       await createService(serviceData);
       setIsFormOpen(false);
       setEditingService(null);
-      toast({
-        type: "success",
-        title: "Servicio creado",
-        description: "El servicio se ha creado exitosamente.",
-      });
+      toast.success('El servicio se ha creado exitosamente');
     } catch (error) {
       console.error('Error creating service:', error);
-      toast({
-        type: "error",
-        title: "Error",
-        description: "No se pudo crear el servicio.",
-      });
+      toast.error('No se pudo crear el servicio');
     }
   };
 
@@ -97,18 +79,10 @@ const Services = () => {
         await updateService(editingService.id, serviceData);
         setEditingService(null);
         setIsFormOpen(false);
-        toast({
-          type: "success",
-          title: "Servicio actualizado",
-          description: "El servicio se ha actualizado exitosamente.",
-        });
+        toast.success('El servicio se ha actualizado exitosamente');
       } catch (error) {
         console.error('Error updating service:', error);
-        toast({
-          type: "error",
-          title: "Error",
-          description: "No se pudo actualizar el servicio.",
-        });
+        toast.error('No se pudo actualizar el servicio');
       }
     }
   };
@@ -122,29 +96,17 @@ const Services = () => {
 
   const handleCloseService = async (service: Service) => {
     if (service.status === 'invoiced') {
-      toast({
-        type: "error",
-        title: "Error",
-        description: "No se puede cerrar un servicio que ya está facturado.",
-      });
+      toast.error('No se puede cerrar un servicio que ya está facturado');
       return;
     }
 
     if (window.confirm(`¿Estás seguro de que deseas cerrar el servicio ${service.folio}? El estado cambiará a "Completado".`)) {
       try {
         await updateService(service.id, { status: 'completed' });
-        toast({
-          type: "success",
-          title: "Servicio cerrado",
-          description: "El servicio se ha cerrado exitosamente.",
-        });
+        toast.success('El servicio se ha cerrado exitosamente');
       } catch (error) {
         console.error('Error closing service:', error);
-        toast({
-          type: "error",
-          title: "Error",
-          description: "No se pudo cerrar el servicio.",
-        });
+        toast.error('No se pudo cerrar el servicio');
       }
     }
   };
@@ -156,11 +118,7 @@ const Services = () => {
 
   const handleEdit = (service: Service) => {
     if (service.status === 'invoiced' && user?.role !== 'admin') {
-      toast({
-        type: "error",
-        title: "Error",
-        description: "No se puede editar un servicio facturado. Solo los administradores pueden hacerlo.",
-      });
+      toast.error('No se puede editar un servicio facturado. Solo los administradores pueden hacerlo');
       return;
     }
     
@@ -176,40 +134,24 @@ const Services = () => {
 
   const handleDelete = async (service: Service) => {
     if (service.status === 'invoiced') {
-      toast({
-        type: "error",
-        title: "Error",
-        description: "No se puede eliminar un servicio facturado.",
-      });
+      toast.error('No se puede eliminar un servicio facturado');
       return;
     }
 
     if (confirm(`¿Estás seguro de que deseas eliminar el servicio ${service.folio}?`)) {
       try {
         await deleteService(service.id);
-        toast({
-          type: "success",
-          title: "Servicio eliminado",
-          description: "El servicio se ha eliminado exitosamente.",
-        });
+        toast.success('El servicio se ha eliminado exitosamente');
       } catch (error) {
         console.error('Error deleting service:', error);
-        toast({
-          type: "error",
-          title: "Error",
-          description: "No se pudo eliminar el servicio.",
-        });
+        toast.error('No se pudo eliminar el servicio');
       }
     }
   };
 
   const handleCSVSuccess = (count: number) => {
     setIsCSVUploadOpen(false);
-    toast({
-      type: "success",
-      title: "Carga masiva exitosa",
-      description: `${count} servicios cargados exitosamente.`,
-    });
+    toast.success(`${count} servicios cargados exitosamente`);
   };
 
   if (loading) {
