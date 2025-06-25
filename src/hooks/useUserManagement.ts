@@ -73,7 +73,18 @@ export const useUserManagement = () => {
       
       if (error) throw error;
       
-      setInvitations(Array.isArray(data) ? data : []);
+      // Transform the data to ensure proper typing
+      const typedInvitations: UserInvitation[] = (Array.isArray(data) ? data : []).map((invitation: any) => ({
+        id: invitation.id,
+        user_id: invitation.user_id,
+        email: invitation.email,
+        status: invitation.status as 'pending' | 'sent' | 'accepted' | 'expired',
+        sent_at: invitation.sent_at,
+        accepted_at: invitation.accepted_at,
+        created_at: invitation.created_at,
+      }));
+      
+      setInvitations(typedInvitations);
     } catch (error) {
       console.error('Error fetching invitations:', error);
     }
