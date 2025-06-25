@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { enhancedSupabase } from '@/integrations/supabase/enhancedClient';
+import { supabase } from '@/integrations/supabase/client';
 import { Service } from '@/types';
 import { toast } from 'sonner';
 import { useServiceTransformer } from './useServiceTransformer';
@@ -8,11 +8,10 @@ import { useServiceTransformer } from './useServiceTransformer';
 export const useServiceFetcher = () => {
   const [loading, setLoading] = useState(true);
   const { transformRawServiceData } = useServiceTransformer();
-  const supabase = enhancedSupabase.getClient();
 
   const fetchServices = async (): Promise<Service[]> => {
     try {
-      console.log('Fetching services with enhanced error handling...');
+      console.log('Fetching services...');
       setLoading(true);
       
       // Verificar autenticación primero
@@ -27,39 +26,29 @@ export const useServiceFetcher = () => {
 
       console.log('Usuario autenticado:', user.id);
 
-      const result = await enhancedSupabase.query(
-        async () => {
-          return await supabase
-            .from('services')
-            .select(`
-              *,
-              clients!inner(id, name, rut, phone, email, address, is_active, created_at, updated_at),
-              cranes!inner(id, license_plate, brand, model, type, is_active, circulation_permit_expiry, insurance_expiry, technical_review_expiry, created_at, updated_at),
-              operators!inner(id, name, rut, phone, license_number, is_active, exam_expiry, created_at, updated_at),
-              service_types!inner(id, name, description, is_active, base_price, vehicle_info_optional, purchase_order_required, origin_required, destination_required, crane_required, operator_required, vehicle_brand_required, vehicle_model_required, license_plate_required, created_at, updated_at)
-            `)
-            .order('created_at', { ascending: false });
-        },
-        'fetch services with relations'
-      );
+      const { data, error } = await supabase
+        .from('services')
+        .select(`
+          *,
+          clients!inner(id, name, rut, phone, email, address, is_active, created_at, updated_at),
+          cranes!inner(id, license_plate, brand, model, type, is_active, circulation_permit_expiry, insurance_expiry, technical_review_expiry, created_at, updated_at),
+          operators!inner(id, name, rut, phone, license_number, is_active, exam_expiry, created_at, updated_at),
+          service_types!inner(id, name, description, is_active, base_price, vehicle_info_optional, purchase_order_required, origin_required, destination_required, crane_required, operator_required, vehicle_brand_required, vehicle_model_required, license_plate_required, created_at, updated_at)
+        `)
+        .order('created_at', { ascending: false });
 
-      if (result.error) {
-        console.error('Error fetching services:', result.error);
+      if (error) {
+        console.error('Error fetching services:', error);
         
         // Intentar con una consulta más simple si falla la compleja
         console.log('Intentando consulta simplificada...');
-        const simpleResult = await enhancedSupabase.query(
-          async () => {
-            return await supabase
-              .from('services')
-              .select('*')
-              .order('created_at', { ascending: false });
-          },
-          'fetch services simple'
-        );
+        const { data: simpleData, error: simpleError } = await supabase
+          .from('services')
+          .select('*')
+          .order('created_at', { ascending: false });
           
-        if (simpleResult.error) {
-          console.error('Error en consulta simplificada:', simpleResult.error);
+        if (simpleError) {
+          console.error('Error en consulta simplificada:', simpleError);
           toast.error("Error de acceso", {
             description: "No se pudieron cargar los servicios. Verifica los permisos.",
           });
@@ -67,22 +56,22 @@ export const useServiceFetcher = () => {
         }
 
         console.log('Consulta simplificada exitosa, obteniendo datos relacionados...');
-        if (simpleResult.data && Array.isArray(simpleResult.data) && simpleResult.data.length > 0) {
-          const enrichedData = await enrichServicesData(simpleResult.data);
+        if (simpleData && Array.isArray(simpleData) && simpleData.length > 0) {
+          const enrichedData = await enrichServicesData(simpleData);
           return transformRawServiceData(enrichedData);
         }
         
-        throw result.error;
+        throw error;
       }
 
-      console.log('Raw services data:', result.data);
+      console.log('Raw services data:', data);
 
-      if (!result.data || !Array.isArray(result.data) || result.data.length === 0) {
+      if (!data || !Array.isArray(data) || data.length === 0) {
         console.log('No services found');
         return [];
       }
 
-      const formattedServices = transformRawServiceData(result.data);
+      const formattedServices = transformRawServiceData(data);
       console.log('Formatted services:', formattedServices);
       return formattedServices;
 
@@ -116,19 +105,19 @@ export const useServiceFetcher = () => {
       const operatorIds = [...new Set(services.map(s => s.operator_id))];
       const serviceTypeIds = [...new Set(services.map(s => s.service_type_id))];
 
-      const [clients, cranes, operators, serviceTypes] = await Promise.all([
-        enhancedSupabase.query(async () => await supabase.from('clients').select('*').in('id', clientIds), 'fetch clients for services'),
-        enhancedSupabase.query(async () => await supabase.from('cranes').select('*').in('id', craneIds), 'fetch cranes for services'),
-        enhancedSupabase.query(async () => await supabase.from('operators').select('*').in('id', operatorIds), 'fetch operators for services'),
-        enhancedSupabase.query(async () => await supabase.from('service_types').select('*').in('id', serviceTypeIds), 'fetch service types for services')
+      const [clientsResult, cranesResult, operatorsResult, serviceTypesResult] = await Promise.all([
+        supabase.from('clients').select('*').in('id', clientIds),
+        supabase.from('cranes').select('*').in('id', craneIds),
+        supabase.from('operators').select('*').in('id', operatorIds),
+        supabase.from('service_types').select('*').in('id', serviceTypeIds)
       ]);
 
       return services.map(service => ({
         ...service,
-        clients: Array.isArray(clients.data) ? clients.data.find((c: any) => c.id === service.client_id) || null : null,
-        cranes: Array.isArray(cranes.data) ? cranes.data.find((c: any) => c.id === service.crane_id) || null : null,
-        operators: Array.isArray(operators.data) ? operators.data.find((o: any) => o.id === service.operator_id) || null : null,
-        service_types: Array.isArray(serviceTypes.data) ? serviceTypes.data.find((st: any) => st.id === service.service_type_id) || null : null
+        clients: Array.isArray(clientsResult.data) ? clientsResult.data.find((c: any) => c.id === service.client_id) || null : null,
+        cranes: Array.isArray(cranesResult.data) ? cranesResult.data.find((c: any) => c.id === service.crane_id) || null : null,
+        operators: Array.isArray(operatorsResult.data) ? operatorsResult.data.find((o: any) => o.id === service.operator_id) || null : null,
+        service_types: Array.isArray(serviceTypesResult.data) ? serviceTypesResult.data.find((st: any) => st.id === service.service_type_id) || null : null
       }));
     } catch (error) {
       console.error('Error enriching services data:', error);

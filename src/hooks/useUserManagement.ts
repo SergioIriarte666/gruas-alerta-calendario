@@ -1,5 +1,6 @@
+
 import { useState, useEffect } from 'react';
-import { enhancedSupabase } from '@/integrations/supabase/enhancedClient';
+import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 interface User {
@@ -46,21 +47,15 @@ export const useUserManagement = () => {
   const [updating, setUpdating] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
   const [sendingInvitation, setSendingInvitation] = useState<string | null>(null);
-  const supabase = enhancedSupabase.getClient();
 
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      const result = await enhancedSupabase.query(
-        async () => {
-          return await (supabase as any).rpc('get_all_users');
-        },
-        'fetch users'
-      );
+      const { data, error } = await (supabase as any).rpc('get_all_users');
       
-      if (result.error) throw result.error;
+      if (error) throw error;
       
-      setUsers(Array.isArray(result.data) ? result.data : []);
+      setUsers(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('Error fetching users:', error);
       toast.error('Error al cargar usuarios');
@@ -71,19 +66,14 @@ export const useUserManagement = () => {
 
   const fetchInvitations = async () => {
     try {
-      const result = await enhancedSupabase.query(
-        async () => {
-          return await supabase
-            .from('user_invitations')
-            .select('*')
-            .order('created_at', { ascending: false });
-        },
-        'fetch invitations'
-      );
+      const { data, error } = await supabase
+        .from('user_invitations')
+        .select('*')
+        .order('created_at', { ascending: false });
       
-      if (result.error) throw result.error;
+      if (error) throw error;
       
-      setInvitations(Array.isArray(result.data) ? result.data : []);
+      setInvitations(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('Error fetching invitations:', error);
     }
@@ -91,20 +81,15 @@ export const useUserManagement = () => {
 
   const fetchClients = async () => {
     try {
-      const result = await enhancedSupabase.query(
-        async () => {
-          return await supabase
-            .from('clients')
-            .select('id, name, rut, email')
-            .eq('is_active', true)
-            .order('name');
-        },
-        'fetch clients'
-      );
+      const { data, error } = await supabase
+        .from('clients')
+        .select('id, name, rut, email')
+        .eq('is_active', true)
+        .order('name');
       
-      if (result.error) throw result.error;
+      if (error) throw error;
       
-      setClients(Array.isArray(result.data) ? result.data : []);
+      setClients(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('Error fetching clients:', error);
     }
@@ -116,21 +101,16 @@ export const useUserManagement = () => {
       console.log('Creating user with data:', userData);
       
       // Crear el usuario
-      const result = await enhancedSupabase.query(
-        async () => {
-          return await (supabase as any).rpc('admin_create_user', {
-            p_email: userData.email,
-            p_full_name: userData.full_name,
-            p_role: userData.role,
-            p_client_id: userData.client_id || null
-          });
-        },
-        'create user'
-      );
+      const { data, error } = await (supabase as any).rpc('admin_create_user', {
+        p_email: userData.email,
+        p_full_name: userData.full_name,
+        p_role: userData.role,
+        p_client_id: userData.client_id || null
+      });
 
-      if (result.error) throw result.error;
+      if (error) throw error;
 
-      const newUserId = result.data;
+      const newUserId = data;
       console.log('User created successfully with ID:', newUserId);
 
       // Enviar invitación por email
@@ -146,31 +126,26 @@ export const useUserManagement = () => {
           clientName
         });
 
-        const invitationResult = await enhancedSupabase.query(
-          async () => {
-            return await supabase.functions.invoke('send-user-invitation', {
-              body: {
-                userId: newUserId,
-                email: userData.email,
-                fullName: userData.full_name,
-                role: userData.role,
-                clientName
-              }
-            });
-          },
-          'send invitation'
-        );
+        const { data: invitationData, error: invitationError } = await supabase.functions.invoke('send-user-invitation', {
+          body: {
+            userId: newUserId,
+            email: userData.email,
+            fullName: userData.full_name,
+            role: userData.role,
+            clientName
+          }
+        });
 
-        console.log('Invitation result:', invitationResult);
+        console.log('Invitation result:', { data: invitationData, error: invitationError });
 
-        if (invitationResult.error) {
-          console.error('Error sending invitation:', invitationResult.error);
+        if (invitationError) {
+          console.error('Error sending invitation:', invitationError);
           toast.warning('Usuario creado, pero hubo un problema enviando la invitación por email');
-        } else if (invitationResult.data?.error) {
-          console.error('Error in invitation function:', invitationResult.data.error);
+        } else if (invitationData?.error) {
+          console.error('Error in invitation function:', invitationData.error);
           toast.warning('Usuario creado, pero hubo un problema enviando la invitación por email');
         } else {
-          console.log('Invitation sent successfully:', invitationResult.data);
+          console.log('Invitation sent successfully:', invitationData);
           toast.success('Usuario creado e invitación enviada correctamente');
         }
       } catch (inviteError) {
@@ -212,27 +187,22 @@ export const useUserManagement = () => {
         clientName
       });
 
-      const result = await enhancedSupabase.query(
-        async () => {
-          return await supabase.functions.invoke('send-user-invitation', {
-            body: {
-              userId: user.id,
-              email: user.email,
-              fullName: user.full_name,
-              role: user.role,
-              clientName
-            }
-          });
-        },
-        'resend invitation'
-      );
+      const { data, error } = await supabase.functions.invoke('send-user-invitation', {
+        body: {
+          userId: user.id,
+          email: user.email,
+          fullName: user.full_name,
+          role: user.role,
+          clientName
+        }
+      });
 
-      console.log('Resend invitation result:', result);
+      console.log('Resend invitation result:', { data, error });
 
-      if (result.error) {
-        throw result.error;
-      } else if (result.data?.error) {
-        throw new Error(result.data.error);
+      if (error) {
+        throw error;
+      } else if (data?.error) {
+        throw new Error(data.error);
       } else {
         toast.success('Invitación reenviada correctamente');
       }
@@ -253,17 +223,12 @@ export const useUserManagement = () => {
   const updateUserRole = async (userId: string, newRole: 'admin' | 'operator' | 'viewer' | 'client') => {
     try {
       setUpdating(userId);
-      const result = await enhancedSupabase.query(
-        async () => {
-          return await (supabase as any).rpc('update_user_role', {
-            user_id: userId,
-            new_role: newRole
-          });
-        },
-        'update user role'
-      );
+      const { error } = await (supabase as any).rpc('update_user_role', {
+        user_id: userId,
+        new_role: newRole
+      });
 
-      if (result.error) throw result.error;
+      if (error) throw error;
 
       toast.success('Rol actualizado correctamente');
       await fetchUsers();
@@ -278,17 +243,12 @@ export const useUserManagement = () => {
   const assignClientToUser = async (userId: string, clientId: string | null) => {
     try {
       setUpdating(userId);
-      const result = await enhancedSupabase.query(
-        async () => {
-          return await supabase
-            .from('profiles')
-            .update({ client_id: clientId, updated_at: new Date().toISOString() })
-            .eq('id', userId);
-        },
-        'assign client to user'
-      );
+      const { error } = await supabase
+        .from('profiles')
+        .update({ client_id: clientId, updated_at: new Date().toISOString() })
+        .eq('id', userId);
 
-      if (result.error) throw result.error;
+      if (error) throw error;
 
       toast.success('Cliente asignado correctamente');
       await fetchUsers();
@@ -303,17 +263,12 @@ export const useUserManagement = () => {
   const toggleUserStatus = async (userId: string, newStatus: boolean) => {
     try {
       setUpdating(userId);
-      const result = await enhancedSupabase.query(
-        async () => {
-          return await (supabase as any).rpc('toggle_user_status', {
-            user_id: userId,
-            new_status: newStatus
-          });
-        },
-        'toggle user status'
-      );
+      const { error } = await (supabase as any).rpc('toggle_user_status', {
+        user_id: userId,
+        new_status: newStatus
+      });
 
-      if (result.error) throw result.error;
+      if (error) throw error;
 
       toast.success(`Usuario ${newStatus ? 'activado' : 'desactivado'} correctamente`);
       await fetchUsers();
