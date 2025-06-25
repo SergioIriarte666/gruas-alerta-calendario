@@ -291,6 +291,8 @@ export const UserManagementTab = () => {
         onOpenChange={setIsCreateUserOpen}
         clients={clients}
         onUserCreated={handleUserCreated}
+        creating={creating}
+        createUser={createUser}
       />
     </div>
   );

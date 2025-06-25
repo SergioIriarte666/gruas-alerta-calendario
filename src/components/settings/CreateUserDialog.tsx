@@ -19,16 +19,26 @@ interface CreateUserDialogProps {
   onOpenChange: (open: boolean) => void;
   clients: Client[];
   onUserCreated: () => void;
+  creating: boolean;
+  createUser: (userData: any) => Promise<{ success: boolean; error?: string }>;
 }
 
-export const CreateUserDialog = ({ open, onOpenChange, clients, onUserCreated }: CreateUserDialogProps) => {
+type AppRole = 'admin' | 'operator' | 'viewer' | 'client';
+
+export const CreateUserDialog = ({ 
+  open, 
+  onOpenChange, 
+  clients, 
+  onUserCreated, 
+  creating, 
+  createUser 
+}: CreateUserDialogProps) => {
   const [formData, setFormData] = useState({
     email: '',
     full_name: '',
-    role: '',
+    role: '' as AppRole | '',
     client_id: ''
   });
-  const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -51,24 +61,14 @@ export const CreateUserDialog = ({ open, onOpenChange, clients, onUserCreated }:
       return;
     }
 
-    setIsLoading(true);
+    const result = await createUser({
+      email: formData.email,
+      full_name: formData.full_name,
+      role: formData.role,
+      client_id: formData.role === 'client' ? formData.client_id : null
+    });
 
-    try {
-      const { supabase } = await import('@/integrations/supabase/client');
-      
-      const { data, error } = await supabase.rpc('admin_create_user', {
-        p_email: formData.email,
-        p_full_name: formData.full_name,
-        p_role: formData.role,
-        p_client_id: formData.role === 'client' ? formData.client_id : null
-      });
-
-      if (error) {
-        console.error('Error creating user:', error);
-        toast.error(error.message || 'Error al crear el usuario');
-        return;
-      }
-
+    if (result.success) {
       toast.success('Usuario creado exitosamente', {
         description: `Se ha creado el usuario ${formData.full_name} con el email ${formData.email}`
       });
@@ -84,12 +84,8 @@ export const CreateUserDialog = ({ open, onOpenChange, clients, onUserCreated }:
       // Cerrar dialog y refrescar lista
       onOpenChange(false);
       onUserCreated();
-
-    } catch (error: any) {
-      console.error('Unexpected error:', error);
-      toast.error('Error inesperado al crear el usuario');
-    } finally {
-      setIsLoading(false);
+    } else {
+      toast.error(result.error || 'Error al crear el usuario');
     }
   };
 
@@ -153,12 +149,11 @@ export const CreateUserDialog = ({ open, onOpenChange, clients, onUserCreated }:
             </Label>
             <Select 
               value={formData.role} 
-              onValueChange={(value) => setFormData(prev => ({ 
+              onValueChange={(value: AppRole) => setFormData(prev => ({ 
                 ...prev, 
                 role: value,
                 client_id: value !== 'client' ? '' : prev.client_id
               }))}
-              required
             >
               <SelectTrigger className="border-gray-300">
                 <SelectValue placeholder="Seleccionar rol" />
@@ -181,7 +176,6 @@ export const CreateUserDialog = ({ open, onOpenChange, clients, onUserCreated }:
               <Select 
                 value={formData.client_id} 
                 onValueChange={(value) => setFormData(prev => ({ ...prev, client_id: value }))}
-                required
               >
                 <SelectTrigger className="border-gray-300">
                   <SelectValue placeholder="Seleccionar cliente" />
@@ -202,17 +196,17 @@ export const CreateUserDialog = ({ open, onOpenChange, clients, onUserCreated }:
               type="button"
               variant="outline"
               onClick={handleCancel}
-              disabled={isLoading}
+              disabled={creating}
               className="flex-1"
             >
               Cancelar
             </Button>
             <Button
               type="submit"
-              disabled={isLoading}
+              disabled={creating}
               className="flex-1 bg-tms-green hover:bg-tms-green/90 text-black"
             >
-              {isLoading ? (
+              {creating ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                   Creando...
