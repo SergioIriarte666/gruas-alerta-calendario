@@ -39,21 +39,19 @@ export const exportServiceReport = async ({ format, services, settings, appliedF
     autoTable(doc, { head: [['Resumen', '']], body: summaryData, startY: lastY + 5, theme: 'grid' });
     lastY = (doc as any).lastAutoTable.finalY;
 
-    // Tabla optimizada para usar todo el ancho disponible
+    // Tabla optimizada para usar todo el ancho disponible - SIN grúa y operador
     const availableWidth = pageWidth - 28; // Márgenes izquierdo y derecho
     autoTable(doc, {
-      head: [['Folio', 'Fecha', 'Cliente', 'Tipo Servicio', 'Marca Veh.', 'Modelo Veh.', 'Patente Veh.', 'Grúa', 'Operador', 'Origen-Destino', 'Estado', 'Valor']],
+      head: [['Fecha', 'Folio', 'Cliente', 'Tipo Servicio', 'Marca Veh.', 'Modelo Veh.', 'Patente Veh.', 'Origen-Destino', 'Estado', 'Valor']],
       body: services.map(s => [
-        s.folio,
         formatDate(new Date(s.serviceDate + 'T00:00:00'), 'dd/MM/yy'),
-        s.client.name.length > 15 ? s.client.name.substring(0, 15) + '...' : s.client.name,
-        s.serviceType.name.length > 12 ? s.serviceType.name.substring(0, 12) + '...' : s.serviceType.name,
+        s.folio,
+        s.client.name.length > 18 ? s.client.name.substring(0, 18) + '...' : s.client.name,
+        s.serviceType.name.length > 15 ? s.serviceType.name.substring(0, 15) + '...' : s.serviceType.name,
         s.vehicleBrand || 'N/A',
         s.vehicleModel || 'N/A',
         s.licensePlate || 'N/A',
-        `${s.crane.brand} ${s.crane.model}`.length > 15 ? `${s.crane.brand} ${s.crane.model}`.substring(0, 15) + '...' : `${s.crane.brand} ${s.crane.model}`,
-        s.operator.name.length > 12 ? s.operator.name.substring(0, 12) + '...' : s.operator.name,
-        `${s.origin} / ${s.destination}`.length > 20 ? `${s.origin} / ${s.destination}`.substring(0, 20) + '...' : `${s.origin} / ${s.destination}`,
+        `${s.origin} / ${s.destination}`.length > 25 ? `${s.origin} / ${s.destination}`.substring(0, 25) + '...' : `${s.origin} / ${s.destination}`,
         s.status,
         `$${(s.value || 0).toLocaleString('es-CL')}`
       ]),
@@ -62,18 +60,16 @@ export const exportServiceReport = async ({ format, services, settings, appliedF
       styles: { fontSize: 7, cellPadding: 1.5 },
       tableWidth: availableWidth,
       columnStyles: {
-        0: { cellWidth: availableWidth * 0.08 }, // Folio - 8%
-        1: { cellWidth: availableWidth * 0.08 }, // Fecha - 8%
-        2: { cellWidth: availableWidth * 0.12 }, // Cliente - 12%
-        3: { cellWidth: availableWidth * 0.10 }, // Tipo Servicio - 10%
-        4: { cellWidth: availableWidth * 0.08 }, // Marca Veh. - 8%
-        5: { cellWidth: availableWidth * 0.08 }, // Modelo Veh. - 8%
-        6: { cellWidth: availableWidth * 0.08 }, // Patente Veh. - 8%
-        7: { cellWidth: availableWidth * 0.10 }, // Grúa - 10%
-        8: { cellWidth: availableWidth * 0.08 }, // Operador - 8%
-        9: { cellWidth: availableWidth * 0.12 }, // Origen-Destino - 12%
-        10: { cellWidth: availableWidth * 0.05 }, // Estado - 5%
-        11: { cellWidth: availableWidth * 0.08 }  // Valor - 8%
+        0: { cellWidth: availableWidth * 0.10 }, // Fecha - 10%
+        1: { cellWidth: availableWidth * 0.10 }, // Folio - 10%
+        2: { cellWidth: availableWidth * 0.18 }, // Cliente - 18%
+        3: { cellWidth: availableWidth * 0.15 }, // Tipo Servicio - 15%
+        4: { cellWidth: availableWidth * 0.10 }, // Marca Veh. - 10%
+        5: { cellWidth: availableWidth * 0.10 }, // Modelo Veh. - 10%
+        6: { cellWidth: availableWidth * 0.10 }, // Patente Veh. - 10%
+        7: { cellWidth: availableWidth * 0.25 }, // Origen-Destino - 25%
+        8: { cellWidth: availableWidth * 0.07 }, // Estado - 7%
+        9: { cellWidth: availableWidth * 0.10 }  // Valor - 10%
       }
     });
     
@@ -84,8 +80,8 @@ export const exportServiceReport = async ({ format, services, settings, appliedF
 
     // Hoja principal: Detalle completo de servicios
     const services_data = services.map(s => ({
-      'Folio': s.folio,
       'Fecha Servicio': formatDate(new Date(s.serviceDate + 'T00:00:00'), 'yyyy-MM-dd'),
+      'Folio': s.folio,
       'Cliente': s.client.name,
       'RUT Cliente': s.client.rut,
       'Tipo de Servicio': s.serviceType.name,
@@ -94,8 +90,6 @@ export const exportServiceReport = async ({ format, services, settings, appliedF
       'Patente Vehículo': s.licensePlate || 'N/A',
       'Origen': s.origin,
       'Destino': s.destination,
-      'Grúa Marca': s.crane.brand,
-      'Grúa Modelo': s.crane.model,
       'Patente Grúa': s.crane.licensePlate,
       'Operador': s.operator.name,
       'Estado': s.status,
