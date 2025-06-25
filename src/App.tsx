@@ -9,6 +9,7 @@ import { Layout } from '@/components/layout/Layout';
 import { OperatorLayout } from '@/components/layout/OperatorLayout';
 import { PortalLayout } from '@/components/portal/layout/PortalLayout';
 import ProtectedRoute from '@/components/layout/ProtectedRoute';
+import Index from '@/pages/Index';
 import Dashboard from '@/pages/Dashboard';
 import Auth from '@/pages/Auth';
 import Services from '@/pages/Services';
@@ -47,24 +48,102 @@ export default function App() {
               <div className="min-h-screen bg-black text-white">
                 <Routes>
                   <Route path="/auth" element={<Auth />} />
+                  <Route path="/" element={<Index />} />
 
-                  <Route path="/" element={
+                  <Route path="/dashboard" element={
                     <ProtectedRoute>
                       <Layout />
                     </ProtectedRoute>
                   }>
                     <Route index element={<Dashboard />} />
-                    <Route path="services" element={<Services />} />
-                    <Route path="clients" element={<Clients />} />
-                    <Route path="operators" element={<Operators />} />
-                    <Route path="cranes" element={<Cranes />} />
-                    <Route path="service-types" element={<ServiceTypes />} />
-                    <Route path="closures" element={<Closures />} />
-                    <Route path="invoices" element={<Invoices />} />
-                    <Route path="costs" element={<Costs />} />
-                    <Route path="reports" element={<Reports />} />
-                    <Route path="settings" element={<Settings />} />
-                    <Route path="calendar" element={<Calendar />} />
+                  </Route>
+
+                  <Route path="/services" element={
+                    <ProtectedRoute>
+                      <Layout />
+                    </ProtectedRoute>
+                  }>
+                    <Route index element={<Services />} />
+                  </Route>
+
+                  <Route path="/calendar" element={
+                    <ProtectedRoute>
+                      <Layout />
+                    </ProtectedRoute>
+                  }>
+                    <Route index element={<Calendar />} />
+                  </Route>
+
+                  <Route path="/closures" element={
+                    <ProtectedRoute>
+                      <Layout />
+                    </ProtectedRoute>
+                  }>
+                    <Route index element={<Closures />} />
+                  </Route>
+
+                  <Route path="/clients" element={
+                    <ProtectedRoute>
+                      <Layout />
+                    </ProtectedRoute>
+                  }>
+                    <Route index element={<Clients />} />
+                  </Route>
+
+                  <Route path="/operators" element={
+                    <ProtectedRoute>
+                      <Layout />
+                    </ProtectedRoute>
+                  }>
+                    <Route index element={<Operators />} />
+                  </Route>
+
+                  <Route path="/cranes" element={
+                    <ProtectedRoute>
+                      <Layout />
+                    </ProtectedRoute>
+                  }>
+                    <Route index element={<Cranes />} />
+                  </Route>
+
+                  <Route path="/service-types" element={
+                    <ProtectedRoute>
+                      <Layout />
+                    </ProtectedRoute>
+                  }>
+                    <Route index element={<ServiceTypes />} />
+                  </Route>
+
+                  <Route path="/invoices" element={
+                    <ProtectedRoute>
+                      <Layout />
+                    </ProtectedRoute>
+                  }>
+                    <Route index element={<Invoices />} />
+                  </Route>
+
+                  <Route path="/costs" element={
+                    <ProtectedRoute>
+                      <Layout />
+                    </ProtectedRoute>
+                  }>
+                    <Route index element={<Costs />} />
+                  </Route>
+
+                  <Route path="/reports" element={
+                    <ProtectedRoute>
+                      <Layout />
+                    </ProtectedRoute>
+                  }>
+                    <Route index element={<Reports />} />
+                  </Route>
+
+                  <Route path="/settings" element={
+                    <ProtectedRoute>
+                      <Layout />
+                    </ProtectedRoute>
+                  }>
+                    <Route index element={<Settings />} />
                   </Route>
 
                   <Route path="/operator" element={
