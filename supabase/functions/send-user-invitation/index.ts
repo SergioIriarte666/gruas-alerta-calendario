@@ -54,9 +54,9 @@ const handler = async (req: Request): Promise<Response> => {
 
     const roleLabel = roleLabels[role] || role;
 
-    // Crear el enlace de registro - usar la URL actual del request
+    // Crear el enlace de registro - usar el dominio correcto
     const url = new URL(req.url);
-    const origin = req.headers.get('origin') || 'https://gruas-5-norte-lovable.lovable.app';
+    const origin = req.headers.get('origin') || 'https://gruas5norte.com';
     const registerUrl = `${origin}/auth?tab=register&email=${encodeURIComponent(email)}&invited=true`;
 
     console.log('Generated registration URL:', registerUrl);
