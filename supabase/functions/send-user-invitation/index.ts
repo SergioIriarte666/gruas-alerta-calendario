@@ -54,10 +54,9 @@ const handler = async (req: Request): Promise<Response> => {
 
     const roleLabel = roleLabels[role] || role;
 
-    // Crear el enlace de registro con parámetros pre-llenados
-    // Usar la URL donde realmente está desplegada la aplicación
-    const baseUrl = Deno.env.get('SITE_URL') || window?.location?.origin || 'https://lovable.dev';
-    const registerUrl = `${baseUrl}/auth?tab=register&email=${encodeURIComponent(email)}&name=${encodeURIComponent(fullName)}`;
+    // Crear el enlace de registro - usar la URL de Lovable directamente
+    const baseUrl = 'https://gruas-5-norte-lovable.lovable.app';
+    const registerUrl = `${baseUrl}/auth?tab=register&email=${encodeURIComponent(email)}&invited=true`;
 
     console.log('Generated registration URL:', registerUrl);
 

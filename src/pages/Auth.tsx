@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUser } from '@/contexts/UserContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -11,13 +11,31 @@ import { LoginForm } from '@/components/auth/LoginForm';
 import { RegisterForm } from '@/components/auth/RegisterForm';
 
 const Auth = () => {
-  const [email, setEmail] = useState('');
+  const [searchParams] = useSearchParams();
+  const emailParam = searchParams.get('email');
+  const tabParam = searchParams.get('tab');
+  const isInvited = searchParams.get('invited') === 'true';
+  
+  const [email, setEmail] = useState(emailParam || '');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState<'login' | 'register'>('login');
+  const [activeTab, setActiveTab] = useState<'login' | 'register'>(
+    (tabParam as 'login' | 'register') || 'login'
+  );
+  
   const { user: authUser, loading: authLoading } = useAuth();
   const { user: profileUser, loading: profileLoading } = useUser();
   const navigate = useNavigate();
+
+  // Si viene de una invitación, mostrar mensaje y cambiar a registro
+  useEffect(() => {
+    if (isInvited && emailParam) {
+      setActiveTab('register');
+      toast.info('¡Bienvenido! Completa tu registro para acceder al sistema.', {
+        duration: 5000
+      });
+    }
+  }, [isInvited, emailParam]);
 
   useEffect(() => {
     // Only redirect when we have both auth user and profile user and are not loading
@@ -29,7 +47,7 @@ const Auth = () => {
       } else if (profileUser.role === 'operator') {
         navigate('/operator', { replace: true });
       } else {
-        navigate('/', { replace: true });
+        navigate('/dashboard', { replace: true });
       }
     }
   }, [authUser, profileUser, authLoading, profileLoading, navigate]);
@@ -76,24 +94,51 @@ const Auth = () => {
     try {
       console.log('Attempting signup...');
       
-      const { error } = await supabase.auth.signUp({
+      // Validar que los campos estén completos
+      if (!email || !password) {
+        toast.error('Por favor, completa todos los campos');
+        return;
+      }
+
+      if (password.length < 6) {
+        toast.error('La contraseña debe tener al menos 6 caracteres');
+        return;
+      }
+      
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          emailRedirectTo: `${window.location.origin}/`
+          emailRedirectTo: `${window.location.origin}/auth?registered=true`
         }
       });
       
       if (error) {
         console.error('Signup error:', error);
-        toast.error('Error en el registro', {
-          description: error.message
-        });
+        
+        // Manejar errores específicos
+        if (error.message.includes('already registered')) {
+          toast.error('Este email ya está registrado', {
+            description: 'Intenta iniciar sesión en su lugar.'
+          });
+          setActiveTab('login');
+        } else {
+          toast.error('Error en el registro', {
+            description: error.message
+          });
+        }
       } else {
-        console.log('Signup successful');
-        toast.success('Registro exitoso', {
-          description: 'Por favor, revisa tu correo para confirmar tu cuenta.'
-        });
+        console.log('Signup successful:', data);
+        
+        if (data.user && !data.user.email_confirmed_at) {
+          toast.success('Registro exitoso', {
+            description: 'Por favor, revisa tu correo para confirmarla cuenta.'
+          });
+        } else if (data.user) {
+          toast.success('¡Registro completado exitosamente!', {
+            description: 'Ya puedes acceder al sistema.'
+          });
+        }
       }
     } catch (error: any) {
       console.error('Signup exception:', error);
@@ -120,6 +165,15 @@ const Auth = () => {
   return (
     <AuthBackground>
       <div className="w-[400px]">
+        {isInvited && (
+          <div className="mb-6 p-4 bg-tms-green/10 border border-tms-green/30 rounded-lg">
+            <h3 className="text-tms-green font-semibold mb-2">¡Has sido invitado!</h3>
+            <p className="text-white text-sm">
+              Completa tu registro con el email <strong>{emailParam}</strong> para acceder al sistema.
+            </p>
+          </div>
+        )}
+        
         <AuthTabs activeTab={activeTab} setActiveTab={setActiveTab} />
 
         {activeTab === 'login' && (
