@@ -43,11 +43,13 @@ export const addEquipmentChecklist = (doc: jsPDF, data: InspectionPDFData, yPosi
     console.log('Equipos seleccionados:', selectedEquipment);
     console.log('Total de elementos en inventario:', allItems.length);
 
-    // Crear tabla con todos los elementos y su estado
+    // Crear tabla con todos los elementos y su estado usando símbolos más visibles
     const equipmentTableData = allItems.map(item => {
       const itemId = String(item.id);
       const isSelected = selectedEquipment.some(selectedId => String(selectedId) === itemId);
-      return [item.name, isSelected ? '✓' : '✗'];
+      // Usar símbolos más grandes y visibles
+      const checkSymbol = isSelected ? '✓' : '✗';
+      return [item.name, checkSymbol];
     });
 
     // Dividir en 3 columnas para mejor presentación
@@ -69,15 +71,30 @@ export const addEquipmentChecklist = (doc: jsPDF, data: InspectionPDFData, yPosi
       theme: 'striped',
       columnStyles: {
         0: { cellWidth: 50, fontSize: 8 },
-        1: { cellWidth: 10, halign: 'center', fontSize: 10 },
+        1: { 
+          cellWidth: 10, 
+          halign: 'center', 
+          fontSize: 12, // Aumentar tamaño de fuente para los símbolos
+          fontStyle: 'bold' // Hacer los símbolos más visibles
+        },
         2: { cellWidth: 50, fontSize: 8 },
-        3: { cellWidth: 10, halign: 'center', fontSize: 10 },
+        3: { 
+          cellWidth: 10, 
+          halign: 'center', 
+          fontSize: 12,
+          fontStyle: 'bold'
+        },
         4: { cellWidth: 50, fontSize: 8 },
-        5: { cellWidth: 10, halign: 'center', fontSize: 10 }
+        5: { 
+          cellWidth: 10, 
+          halign: 'center', 
+          fontSize: 12,
+          fontStyle: 'bold'
+        }
       },
       styles: {
         fontSize: 8,
-        cellPadding: 2,
+        cellPadding: 3, // Aumentar padding para mejor legibilidad
         textColor: [0, 0, 0],
       },
       headStyles: {
@@ -89,19 +106,36 @@ export const addEquipmentChecklist = (doc: jsPDF, data: InspectionPDFData, yPosi
       alternateRowStyles: {
         fillColor: [245, 245, 245]
       },
+      // Personalizar colores para los símbolos de check
+      didParseCell: function(data) {
+        // Solo aplicar colores especiales a las columnas de símbolos (1, 3, 5)
+        if ([1, 3, 5].includes(data.column.index) && data.cell.text.length > 0) {
+          const symbol = data.cell.text[0];
+          if (symbol === '✓') {
+            data.cell.styles.textColor = [0, 128, 0]; // Verde para checks
+            data.cell.styles.fontStyle = 'bold';
+          } else if (symbol === '✗') {
+            data.cell.styles.textColor = [128, 128, 128]; // Gris para elementos no verificados
+          }
+        }
+      },
       margin: { left: 20, right: 20 },
     });
 
     yPosition = (doc as any).lastAutoTable.finalY + 15;
 
-    // Resumen de elementos seleccionados
+    // Resumen de elementos seleccionados con mejor formato
     const selectedCount = selectedEquipment.length;
     const totalCount = allItems.length;
     
     doc.setFontSize(10);
     doc.setTextColor(60, 60, 60);
     doc.text(`Elementos verificados: ${selectedCount} de ${totalCount}`, 20, yPosition);
-    yPosition += 10;
+    
+    // Agregar porcentaje de completitud
+    const completionPercentage = Math.round((selectedCount / totalCount) * 100);
+    doc.text(`Porcentaje de completitud: ${completionPercentage}%`, 20, yPosition + 6);
+    yPosition += 20;
 
     console.log('Checklist de equipos agregado correctamente');
     return yPosition;
