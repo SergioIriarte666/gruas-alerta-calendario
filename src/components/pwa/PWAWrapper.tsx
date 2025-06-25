@@ -1,7 +1,6 @@
 
 import React from 'react';
 import { InstallPrompt } from './InstallPrompt';
-import { UpdateNotification } from './UpdateNotification';
 import { ConnectionStatus } from './ConnectionStatus';
 import { SyncIndicator } from './SyncIndicator';
 
@@ -14,7 +13,6 @@ export const PWAWrapper: React.FC<PWAWrapperProps> = ({ children }) => {
     <>
       {children}
       <InstallPrompt />
-      <UpdateNotification />
       <ConnectionStatus />
       <SyncIndicator />
     </>

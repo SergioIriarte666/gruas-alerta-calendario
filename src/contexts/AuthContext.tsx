@@ -2,7 +2,6 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
-import { cleanupAuthState, performGlobalSignOut } from '@/utils/authCleanup';
 
 interface AuthContextType {
   session: Session | null;
@@ -19,83 +18,74 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const getInitialSession = async () => {
-    try {
-      const { data: { session }, error } = await supabase.auth.getSession();
-      if (error) {
-        console.error('Error getting initial session:', error);
-      }
-      console.log('Initial session check:', session ? 'has session' : 'no session');
-      setSession(session);
-      setUser(session?.user ?? null);
-    } catch (error) {
-      console.error('Unexpected error getting session:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
-    console.log('AuthProvider: Initializing authentication...');
-    
+    let mounted = true;
+
+    const initializeAuth = async () => {
+      try {
+        // Get initial session
+        const { data: { session: initialSession } } = await supabase.auth.getSession();
+        
+        if (mounted) {
+          setSession(initialSession);
+          setUser(initialSession?.user ?? null);
+          setLoading(false);
+        }
+      } catch (error) {
+        console.error('Error getting initial session:', error);
+        if (mounted) {
+          setLoading(false);
+        }
+      }
+    };
+
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        console.log('Auth state change:', event, session ? 'has session' : 'no session');
-        setSession(session);
-        setUser(session?.user ?? null);
-        setLoading(false);
+      async (event, session) => {
+        if (mounted) {
+          console.log('Auth state change:', event);
+          setSession(session);
+          setUser(session?.user ?? null);
+          setLoading(false);
+        }
       }
     );
 
-    // Get initial session
-    getInitialSession();
+    initializeAuth();
 
     return () => {
+      mounted = false;
       subscription.unsubscribe();
     };
   }, []);
 
   const signOut = async () => {
     try {
-      console.log('AuthProvider: Signing out...');
-      
-      // Limpiar estado local inmediatamente
+      setLoading(true);
+      await supabase.auth.signOut();
+      // Clear local state
       setSession(null);
       setUser(null);
-      
-      // Limpiar estado de autenticación
-      cleanupAuthState();
-      
-      // Intentar cerrar sesión global
-      await performGlobalSignOut(supabase);
-      
-      // Forzar recarga completa para limpiar cualquier estado residual
-      setTimeout(() => {
-        window.location.href = '/auth';
-      }, 100);
+      // Force navigation to auth page
+      window.location.href = '/auth';
     } catch (error) {
       console.error('Error signing out:', error);
-      // Forzar limpieza y redirección incluso si hay error
-      cleanupAuthState();
+      // Force logout even if there's an error
       setSession(null);
       setUser(null);
       window.location.href = '/auth';
+    } finally {
+      setLoading(false);
     }
   };
 
   const forceRefresh = async () => {
     try {
-      console.log('AuthProvider: Force refreshing session...');
-      const { data: { session }, error } = await supabase.auth.refreshSession();
-      if (error) {
-        console.error('Error refreshing session:', error);
-      } else {
-        setSession(session);
-        setUser(session?.user ?? null);
-      }
+      const { data: { session } } = await supabase.auth.refreshSession();
+      setSession(session);
+      setUser(session?.user ?? null);
     } catch (error) {
-      console.error('Error force refreshing session:', error);
+      console.error('Error refreshing session:', error);
     }
   };
 
@@ -106,12 +96,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     signOut,
     forceRefresh,
   };
-
-  console.log('AuthProvider render:', { 
-    hasSession: !!session, 
-    hasUser: !!user, 
-    loading 
-  });
 
   return (
     <AuthContext.Provider value={value}>
