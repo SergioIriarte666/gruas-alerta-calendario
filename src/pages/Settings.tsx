@@ -75,7 +75,7 @@ const Settings = () => {
       <SettingsHeader onReset={resetSettings} />
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2 md:grid-cols-3 lg:grid-cols-5 bg-white border border-gray-200 h-auto p-1 gap-1">
+        <TabsList className="grid w-full grid-cols-2 md:grid-cols-2 lg:grid-cols-4 bg-white border border-gray-200 h-auto p-1 gap-1">
           <TabsTrigger 
             value="company" 
             className="flex flex-col md:flex-row items-center justify-center space-y-1 md:space-y-0 md:space-x-2 text-black data-[state=active]:text-black data-[state=active]:bg-tms-green hover:bg-gray-50 p-2 md:p-3 h-auto min-h-[60px] text-xs md:text-sm"
@@ -83,13 +83,14 @@ const Settings = () => {
             <Building2 className="w-4 h-4 flex-shrink-0" />
             <span className="text-center">Empresa</span>
           </TabsTrigger>
-          <TabsTrigger 
+          {/* Usuario tab temporalmente oculto - se retomará después */}
+          {/* <TabsTrigger 
             value="user" 
             className="flex flex-col md:flex-row items-center justify-center space-y-1 md:space-y-0 md:space-x-2 text-black data-[state=active]:text-black data-[state=active]:bg-tms-green hover:bg-gray-50 p-2 md:p-3 h-auto min-h-[60px] text-xs md:text-sm"
           >
             <User className="w-4 h-4 flex-shrink-0" />
             <span className="text-center">Usuario</span>
-          </TabsTrigger>
+          </TabsTrigger> */}
           <TabsTrigger 
             value="system" 
             className="flex flex-col md:flex-row items-center justify-center space-y-1 md:space-y-0 md:space-x-2 text-black data-[state=active]:text-black data-[state=active]:bg-tms-green hover:bg-gray-50 p-2 md:p-3 h-auto min-h-[60px] text-xs md:text-sm"
@@ -117,14 +118,15 @@ const Settings = () => {
           <CompanySettingsTab />
         </TabsContent>
 
-        <TabsContent value="user">
+        {/* Usuario tab content temporalmente oculto - se retomará después */}
+        {/* <TabsContent value="user">
           <UserSettingsTab 
             settings={settings.user} 
             saving={false} 
             onSave={async () => ({ success: true })} 
             onUpdateSettings={() => {}} 
           />
-        </TabsContent>
+        </TabsContent> */}
 
         <TabsContent value="system">
           <SystemSettingsTab 
