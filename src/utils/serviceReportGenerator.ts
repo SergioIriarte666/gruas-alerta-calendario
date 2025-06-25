@@ -72,7 +72,10 @@ const fetchServicesForReport = async (filters: GenerateReportArgs['filters']): P
     vehicleModel: s.vehicle_model,
     licensePlate: s.license_plate,
     client: s.client,
-    crane: s.crane,
+    crane: {
+      ...s.crane,
+      licensePlate: s.crane.license_plate // Mapear correctamente license_plate a licensePlate
+    },
     operator: s.operator,
     serviceType: s.serviceType
   }));
