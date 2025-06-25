@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -14,7 +13,21 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
 export const UserManagementTab = () => {
-  const { users, clients, loading, updating, creating, createUser, updateUserRole, assignClientToUser, toggleUserStatus, refetchUsers } = useUserManagement();
+  const { 
+    users, 
+    clients, 
+    loading, 
+    updating, 
+    creating, 
+    sendingInvitation,
+    createUser, 
+    updateUserRole, 
+    assignClientToUser, 
+    toggleUserStatus, 
+    refetchUsers,
+    resendInvitation,
+    getInvitationStatus
+  } = useUserManagement();
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [isClientAssignOpen, setIsClientAssignOpen] = useState(false);
   const [isCreateUserOpen, setIsCreateUserOpen] = useState(false);
@@ -46,6 +59,27 @@ export const UserManagementTab = () => {
         return 'Cliente';
       default:
         return role;
+    }
+  };
+
+  const getInvitationStatusBadge = (user: any) => {
+    const invitation = getInvitationStatus(user.id);
+    
+    if (!invitation) {
+      return <Badge variant="outline" className="text-gray-500">Sin invitación</Badge>;
+    }
+
+    switch (invitation.status) {
+      case 'pending':
+        return <Badge variant="outline" className="text-orange-500 border-orange-300">Pendiente</Badge>;
+      case 'sent':
+        return <Badge variant="outline" className="text-blue-500 border-blue-300">Enviada</Badge>;
+      case 'accepted':
+        return <Badge className="bg-green-500 text-white">Registrado</Badge>;
+      case 'expired':
+        return <Badge variant="outline" className="text-red-500 border-red-300">Expirada</Badge>;
+      default:
+        return <Badge variant="outline" className="text-gray-500">Desconocido</Badge>;
     }
   };
 
@@ -120,6 +154,7 @@ export const UserManagementTab = () => {
                   <TableHead className="text-black font-medium">Rol</TableHead>
                   <TableHead className="text-black font-medium">Cliente Asociado</TableHead>
                   <TableHead className="text-black font-medium">Estado</TableHead>
+                  <TableHead className="text-black font-medium">Estado Invitación</TableHead>
                   <TableHead className="text-black font-medium">Fecha Registro</TableHead>
                   <TableHead className="text-black font-medium">Acciones</TableHead>
                 </TableRow>
@@ -208,6 +243,26 @@ export const UserManagementTab = () => {
                         </span>
                       </div>
                     </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        {getInvitationStatusBadge(user)}
+                        {getInvitationStatus(user.id)?.status === 'sent' && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-6 px-2 text-xs"
+                            onClick={() => resendInvitation(user.id)}
+                            disabled={sendingInvitation === user.id}
+                          >
+                            {sendingInvitation === user.id ? (
+                              <Loader2 className="w-3 h-3 animate-spin" />
+                            ) : (
+                              'Reenviar'
+                            )}
+                          </Button>
+                        )}
+                      </div>
+                    </TableCell>
                     <TableCell className="text-black">
                       {format(new Date(user.created_at), 'dd/MM/yyyy', { locale: es })}
                     </TableCell>
@@ -251,28 +306,28 @@ export const UserManagementTab = () => {
           <div className="mt-6 p-4 bg-gray-50 rounded-lg border border-gray-300">
             <h4 className="text-black font-medium mb-2">Información sobre Gestión de Usuarios</h4>
             <p className="text-gray-600 text-sm mb-3">
-              Puedes crear nuevos usuarios desde el botón "Nuevo Usuario". Los usuarios creados deberán registrarse normalmente en la aplicación para poder acceder.
+              Al crear nuevos usuarios, se enviará automáticamente un email de invitación con instrucciones para completar el registro.
             </p>
             <div className="space-y-2 text-sm">
               <div className="text-black">
-                <strong>Roles disponibles:</strong>
+                <strong>Estados de invitación:</strong>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
-                <div className="p-2 bg-red-50 rounded border border-red-200">
-                  <strong className="text-red-700">Administrador:</strong>
-                  <p className="text-gray-600 text-xs">Acceso completo al sistema</p>
+                <div className="p-2 bg-orange-50 rounded border border-orange-200">
+                  <strong className="text-orange-700">Pendiente:</strong>
+                  <p className="text-gray-600 text-xs">Invitación creada, email por enviar</p>
                 </div>
                 <div className="p-2 bg-blue-50 rounded border border-blue-200">
-                  <strong className="text-blue-700">Operador:</strong>
-                  <p className="text-gray-600 text-xs">Acceso a funciones operativas</p>
+                  <strong className="text-blue-700">Enviada:</strong>
+                  <p className="text-gray-600 text-xs">Email enviado, esperando registro</p>
                 </div>
                 <div className="p-2 bg-green-50 rounded border border-green-200">
-                  <strong className="text-green-700">Visualizador:</strong>
-                  <p className="text-gray-600 text-xs">Solo lectura del sistema</p>
+                  <strong className="text-green-700">Registrado:</strong>
+                  <p className="text-gray-600 text-xs">Usuario completó su registro</p>
                 </div>
-                <div className="p-2 bg-purple-50 rounded border border-purple-200">
-                  <strong className="text-purple-700">Cliente:</strong>
-                  <p className="text-gray-600 text-xs">Acceso al portal de cliente</p>
+                <div className="p-2 bg-red-50 rounded border border-red-200">
+                  <strong className="text-red-700">Expirada:</strong>
+                  <p className="text-gray-600 text-xs">Invitación venció sin uso</p>
                 </div>
               </div>
             </div>
