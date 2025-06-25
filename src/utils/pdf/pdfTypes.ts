@@ -7,6 +7,7 @@ export interface InspectionPDFData {
     equipment?: string[];
     vehicleObservations?: string;
     operatorSignature?: string;
+    clientSignature?: string;
     clientName?: string;
     clientRut?: string;
     photosBeforeService?: string[];
