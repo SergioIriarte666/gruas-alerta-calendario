@@ -1,109 +1,87 @@
 
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
-import { Separator } from '@/components/ui/separator';
-import { Bell, Save } from 'lucide-react';
-import type { NotificationSettings } from '@/types/settings';
+import { PushNotificationManager } from '@/components/notifications/PushNotificationManager';
+import { Bell, Smartphone, Mail } from 'lucide-react';
 
-interface NotificationSettingsTabProps {
-  settings: NotificationSettings;
-  saving: boolean;
-  onSave: () => void;
-  onUpdateSettings: (updates: Partial<NotificationSettings>) => void;
-}
-
-export const NotificationSettingsTab: React.FC<NotificationSettingsTabProps> = ({
-  settings,
-  saving,
-  onSave,
-  onUpdateSettings
-}) => {
+export const NotificationSettingsTab: React.FC = () => {
   return (
-    <Card className="glass-card">
-      <CardHeader>
-        <CardTitle className="flex items-center space-x-2 text-white">
-          <Bell className="w-5 h-5 text-tms-green" />
-          <span>Configuración de Notificaciones</span>
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <Label className="text-gray-300">Notificaciones por Email</Label>
-              <p className="text-sm text-gray-500">Recibir notificaciones por correo electrónico</p>
-            </div>
-            <Switch 
-              checked={settings.emailNotifications}
-              onCheckedChange={(checked) => onUpdateSettings({ emailNotifications: checked })}
-            />
-          </div>
-          
-          <Separator className="bg-gray-700" />
-          
-          <div className="flex items-center justify-between">
-            <div>
-              <Label className="text-gray-300">Recordatorios de Servicios</Label>
-              <p className="text-sm text-gray-500">Alertas sobre servicios programados</p>
-            </div>
-            <Switch 
-              checked={settings.serviceReminders}
-              onCheckedChange={(checked) => onUpdateSettings({ serviceReminders: checked })}
-            />
-          </div>
-          
-          <Separator className="bg-gray-700" />
-          
-          <div className="flex items-center justify-between">
-            <div>
-              <Label className="text-gray-300">Alertas de Facturas</Label>
-              <p className="text-sm text-gray-500">Notificaciones sobre facturas nuevas</p>
-            </div>
-            <Switch 
-              checked={settings.invoiceAlerts}
-              onCheckedChange={(checked) => onUpdateSettings({ invoiceAlerts: checked })}
-            />
-          </div>
-          
-          <Separator className="bg-gray-700" />
-          
-          <div className="flex items-center justify-between">
-            <div>
-              <Label className="text-gray-300">Notificaciones de Vencimientos</Label>
-              <p className="text-sm text-gray-500">Alertas sobre facturas vencidas</p>
-            </div>
-            <Switch 
-              checked={settings.overdueNotifications}
-              onCheckedChange={(checked) => onUpdateSettings({ overdueNotifications: checked })}
-            />
-          </div>
-          
-          <Separator className="bg-gray-700" />
-          
-          <div className="flex items-center justify-between">
-            <div>
-              <Label className="text-gray-300">Actualizaciones del Sistema</Label>
-              <p className="text-sm text-gray-500">Notificaciones sobre actualizaciones disponibles</p>
-            </div>
-            <Switch 
-              checked={settings.systemUpdates}
-              onCheckedChange={(checked) => onUpdateSettings({ systemUpdates: checked })}
-            />
-          </div>
+    <div className="space-y-6">
+      <div className="flex items-center gap-3 mb-6">
+        <Bell className="w-6 h-6 text-tms-green" />
+        <div>
+          <h2 className="text-2xl font-bold text-white">Configuración de Notificaciones</h2>
+          <p className="text-slate-400">
+            Gestiona cómo y cuándo recibes notificaciones del sistema
+          </p>
         </div>
-        
-        <Button 
-          onClick={onSave}
-          disabled={saving}
-          className="bg-tms-green hover:bg-tms-green-dark text-white"
-        >
-          <Save className="w-4 h-4 mr-2" />
-          {saving ? 'Guardando...' : 'Guardar Configuración'}
-        </Button>
-      </CardContent>
-    </Card>
+      </div>
+
+      {/* Push Notifications */}
+      <Card className="bg-slate-800 border-slate-700">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Smartphone className="w-5 h-5" />
+            Notificaciones Push
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <PushNotificationManager />
+        </CardContent>
+      </Card>
+
+      {/* Email Notifications */}
+      <Card className="bg-slate-800 border-slate-700">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Mail className="w-5 h-5" />
+            Notificaciones por Email
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <p className="text-slate-400">
+              Las notificaciones por email están habilitadas automáticamente para:
+            </p>
+            <ul className="space-y-2 text-sm text-slate-300">
+              <li>• Confirmación de servicios completados</li>
+              <li>• Inspecciones con PDF adjunto</li>
+              <li>• Facturas generadas</li>
+              <li>• Invitaciones de usuario</li>
+              <li>• Recordatorios de vencimientos</li>
+            </ul>
+            <p className="text-xs text-slate-500 mt-4">
+              Las notificaciones por email no se pueden deshabilitar ya que contienen información crítica del negocio.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* In-App Notifications */}
+      <Card className="bg-slate-800 border-slate-700">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Bell className="w-5 h-5" />
+            Notificaciones en la Aplicación
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <p className="text-slate-400">
+              Las notificaciones dentro de la aplicación incluyen:
+            </p>
+            <ul className="space-y-2 text-sm text-slate-300">
+              <li>• Alertas de vencimientos en el dashboard</li>
+              <li>• Toasts de confirmación de acciones</li>
+              <li>• Estados de sincronización</li>
+              <li>• Errores y advertencias del sistema</li>
+            </ul>
+            <p className="text-xs text-slate-500 mt-4">
+              Estas notificaciones están siempre activas para garantizar el buen funcionamiento del sistema.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   );
 };
