@@ -42,7 +42,7 @@ const handler = async (req: Request): Promise<Response> => {
       .single();
 
     const businessName = companyData?.business_name || 'TMS Grúas';
-    const supportEmail = companyData?.email || 'soporte@tmsgruas.cl';
+    const supportEmail = companyData?.email || 'soporte@gruas5norte.cl';
 
     // Traducir roles al español
     const roleLabels: Record<string, string> = {
@@ -55,7 +55,7 @@ const handler = async (req: Request): Promise<Response> => {
     const roleLabel = roleLabels[role] || role;
 
     // Crear el enlace de registro con parámetros pre-llenados
-    const baseUrl = Deno.env.get('SUPABASE_URL')?.replace('/supabase', '') || 'http://localhost:3000';
+    const baseUrl = 'https://gruas5norte.cl';
     const registerUrl = `${baseUrl}/auth?tab=register&email=${encodeURIComponent(email)}&name=${encodeURIComponent(fullName)}`;
 
     console.log('Generated registration URL:', registerUrl);
@@ -155,9 +155,9 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log('Attempting to send email...');
 
-    // Intentar enviar el email
+    // Enviar el email usando el dominio verificado
     const emailResponse = await resend.emails.send({
-      from: `${businessName} <noreply@resend.dev>`,
+      from: `${businessName} <noreply@gruas5norte.cl>`,
       to: [email],
       subject: `🎉 Invitación al sistema ${businessName} - Rol: ${roleLabel}`,
       html: emailHtml,
@@ -165,37 +165,9 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log('Email response:', emailResponse);
 
-    // Verificar si hay error de dominio no verificado
+    // Verificar si hay error
     if (emailResponse.error) {
       console.error('Resend API error:', emailResponse.error);
-      
-      // Si es error de dominio no verificado, devolver respuesta específica
-      if (emailResponse.error.message?.includes('verify a domain') || 
-          emailResponse.error.message?.includes('testing emails')) {
-        
-        // Actualizar el estado de la invitación como 'pending' en lugar de 'sent'
-        await supabase
-          .from('user_invitations')
-          .update({ 
-            status: 'pending',
-            updated_at: new Date().toISOString()
-          })
-          .eq('user_id', userId);
-
-        return new Response(
-          JSON.stringify({ 
-            success: false, 
-            error: 'Para enviar emails de invitación a otros usuarios, debes verificar un dominio en Resend.com. Por ahora, el usuario ha sido creado pero debe registrarse manualmente.',
-            userCreated: true,
-            requiresDomainVerification: true
-          }),
-          {
-            status: 200, // No es un error del sistema, es configuración
-            headers: { "Content-Type": "application/json", ...corsHeaders },
-          }
-        );
-      }
-      
       throw new Error(`Error enviando email: ${emailResponse.error.message}`);
     }
 
