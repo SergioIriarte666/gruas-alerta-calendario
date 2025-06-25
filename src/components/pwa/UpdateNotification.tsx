@@ -1,134 +1,85 @@
 
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { RefreshCw, X } from 'lucide-react';
-import { useToast } from '@/components/ui/custom-toast';
+import { X, Download } from 'lucide-react';
 
-export const UpdateNotification = () => {
-  const [showUpdatePrompt, setShowUpdatePrompt] = useState(false);
+export const UpdateNotification: React.FC = () => {
+  const [showUpdate, setShowUpdate] = useState(false);
   const [waitingWorker, setWaitingWorker] = useState<ServiceWorker | null>(null);
-  const { toast } = useToast();
 
   useEffect(() => {
-    if ('serviceWorker' in navigator) {
-      const checkForUpdates = async () => {
-        try {
-          const registration = await navigator.serviceWorker.getRegistration();
-          if (registration) {
-            registration.addEventListener('updatefound', () => {
-              const newWorker = registration.installing;
-              if (newWorker) {
-                newWorker.addEventListener('statechange', () => {
-                  if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                    setWaitingWorker(newWorker);
-                    setShowUpdatePrompt(true);
-                  }
-                });
-              }
-            });
-
-            // Check if there's already a waiting worker
-            if (registration.waiting) {
-              setWaitingWorker(registration.waiting);
-              setShowUpdatePrompt(true);
-            }
-          }
-        } catch (error) {
-          console.error('Error checking for updates:', error);
-        }
-      };
-
-      checkForUpdates();
-
-      // Check for updates periodically
-      const interval = setInterval(checkForUpdates, 60000); // Check every minute
-      return () => clearInterval(interval);
+    // Only run on client side and if service workers are supported
+    if (typeof window === 'undefined' || !('serviceWorker' in navigator)) {
+      return;
     }
+
+    const handleUpdate = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      if (customEvent.detail?.waitingWorker) {
+        setWaitingWorker(customEvent.detail.waitingWorker);
+        setShowUpdate(true);
+      }
+    };
+
+    // Listen for update available events
+    window.addEventListener('sw-update-available', handleUpdate);
+
+    return () => {
+      window.removeEventListener('sw-update-available', handleUpdate);
+    };
   }, []);
 
   const handleUpdate = () => {
     if (waitingWorker) {
       waitingWorker.postMessage({ type: 'SKIP_WAITING' });
-      
-      toast({
-        type: 'success',
-        title: 'Actualizando...',
-        description: 'La aplicación se actualizará en unos segundos'
-      });
-
-      // Reload after a short delay to allow the new SW to take control
-      setTimeout(() => {
-        window.location.reload();
-      }, 1000);
+      window.location.reload();
     }
-    setShowUpdatePrompt(false);
   };
 
   const handleDismiss = () => {
-    setShowUpdatePrompt(false);
-    
-    toast({
-      type: 'info',
-      title: 'Actualización disponible',
-      description: 'Puedes actualizar más tarde desde configuración'
-    });
+    setShowUpdate(false);
   };
 
-  if (!showUpdatePrompt) return null;
+  if (!showUpdate) {
+    return null;
+  }
 
   return (
-    <div className="fixed bottom-4 left-4 z-50 max-w-sm">
-      <Card className="bg-slate-800/95 backdrop-blur-sm border-slate-700">
-        <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center">
-                <RefreshCw className="w-4 h-4 text-white" />
-              </div>
-              <div>
-                <CardTitle className="text-white text-sm">Nueva versión disponible</CardTitle>
-                <CardDescription className="text-xs">
-                  TMS Grúas se ha actualizado
-                </CardDescription>
-              </div>
-            </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handleDismiss}
-              className="text-gray-400 hover:text-white h-6 w-6"
-            >
-              <X className="w-3 h-3" />
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent className="pt-0">
-          <div className="space-y-3">
-            <p className="text-xs text-gray-400">
-              Mejoras de rendimiento y nuevas funcionalidades disponibles.
-            </p>
-            <div className="flex gap-2">
-              <Button
-                onClick={handleDismiss}
-                variant="ghost"
-                size="sm"
-                className="flex-1 text-gray-400 hover:text-white"
-              >
-                Más tarde
-              </Button>
-              <Button
-                onClick={handleUpdate}
-                size="sm"
-                className="flex-1 bg-blue-500 hover:bg-blue-600 text-white"
-              >
-                <RefreshCw className="w-3 h-3 mr-1" />
-                Actualizar
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+    <div className="fixed bottom-4 right-4 bg-slate-800 border border-slate-700 rounded-lg p-4 shadow-lg max-w-sm z-50">
+      <div className="flex items-start justify-between mb-2">
+        <div className="flex items-center gap-2">
+          <Download className="w-5 h-5 text-tms-green" />
+          <h3 className="font-semibold text-white">Actualización Disponible</h3>
+        </div>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={handleDismiss}
+          className="text-slate-400 hover:text-white p-1 h-auto"
+        >
+          <X className="w-4 h-4" />
+        </Button>
+      </div>
+      <p className="text-slate-300 text-sm mb-3">
+        Una nueva versión está disponible. Actualiza para obtener las últimas mejoras.
+      </p>
+      <div className="flex gap-2">
+        <Button
+          onClick={handleUpdate}
+          size="sm"
+          className="bg-tms-green hover:bg-tms-green-dark text-white"
+        >
+          Actualizar
+        </Button>
+        <Button
+          onClick={handleDismiss}
+          variant="outline"
+          size="sm"
+          className="border-slate-600 text-slate-300 hover:bg-slate-700"
+        >
+          Después
+        </Button>
+      </div>
     </div>
   );
 };
