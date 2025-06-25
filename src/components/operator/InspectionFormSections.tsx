@@ -1,4 +1,3 @@
-
 import React, { useRef } from 'react';
 import { UseFormReturn } from 'react-hook-form';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -32,7 +31,10 @@ export const InspectionFormSections = ({ form }: InspectionFormSectionsProps) =>
         render={({ field }) => (
           <FormItem>
             <PhotographicSet
-              photos={field.value}
+              photos={field.value?.filter(photo => photo.fileName) as Array<{
+                fileName: string;
+                category: 'izquierdo' | 'derecho' | 'frontal' | 'trasero' | 'interior' | 'motor';
+              }> || []}
               onPhotosChange={field.onChange}
             />
             <FormMessage />

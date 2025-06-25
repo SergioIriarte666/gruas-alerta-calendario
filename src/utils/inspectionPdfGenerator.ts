@@ -1,3 +1,4 @@
+
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import { InspectionPDFData } from './pdf/pdfTypes';
@@ -29,9 +30,18 @@ export const generateInspectionPDF = async (data: {
 
     const doc = new jsPDF();
     
+    // Filter out photos without fileName for PDF generation
+    const validPhotos = data.inspection.photographicSet?.filter(
+      (photo): photo is { fileName: string; category: 'izquierdo' | 'derecho' | 'frontal' | 'trasero' | 'interior' | 'motor' } => 
+        !!photo.fileName
+    ) || [];
+    
     const pdfData: InspectionPDFData = {
       service: data.service,
-      inspection: data.inspection,
+      inspection: {
+        ...data.inspection,
+        photographicSet: validPhotos
+      },
       companyData
     };
 
@@ -39,7 +49,7 @@ export const generateInspectionPDF = async (data: {
       serviceId: pdfData.service.id,
       companyName: pdfData.companyData.businessName,
       equipmentCount: pdfData.inspection.equipment?.length || 0,
-      photographicSetCount: pdfData.inspection.photographicSet?.length || 0
+      photographicSetCount: validPhotos.length
     });
 
     // Add header corporativo (ahora es asíncrono)
@@ -56,12 +66,12 @@ export const generateInspectionPDF = async (data: {
 
     // Add photographic set section
     try {
-      if (data.inspection.photographicSet && data.inspection.photographicSet.length > 0) {
-        console.log('Procesando set fotográfico:', data.inspection.photographicSet);
+      if (validPhotos.length > 0) {
+        console.log('Procesando set fotográfico:', validPhotos);
         const { addPhotographicSetSection } = await import('./pdf/pdfPhotos');
         yPosition = await addPhotographicSetSection(
           doc, 
-          data.inspection.photographicSet, 
+          validPhotos, 
           yPosition
         );
         console.log('Set fotográfico agregado, yPosition:', yPosition);
