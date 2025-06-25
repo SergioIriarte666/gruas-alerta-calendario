@@ -43,11 +43,11 @@ export const addEquipmentChecklist = (doc: jsPDF, data: InspectionPDFData, yPosi
     console.log('Equipos seleccionados:', selectedEquipment);
     console.log('Total de elementos en inventario:', allItems.length);
 
-    // Crear tabla con todos los elementos y su estado usando texto simple
+    // Crear tabla con todos los elementos y su estado usando texto simple compatible con PDF
     const equipmentTableData = allItems.map(item => {
       const itemId = String(item.id);
       const isSelected = selectedEquipment.some(selectedId => String(selectedId) === itemId);
-      // Usar texto simple compatible con PDF
+      // Usar texto simple que funciona en PDF
       const statusText = isSelected ? 'SI' : 'NO';
       return [item.name, statusText];
     });
@@ -74,21 +74,21 @@ export const addEquipmentChecklist = (doc: jsPDF, data: InspectionPDFData, yPosi
         1: { 
           cellWidth: 10, 
           halign: 'center', 
-          fontSize: 10,
+          fontSize: 11,
           fontStyle: 'bold'
         },
         2: { cellWidth: 50, fontSize: 8 },
         3: { 
           cellWidth: 10, 
           halign: 'center', 
-          fontSize: 10,
+          fontSize: 11,
           fontStyle: 'bold'
         },
         4: { cellWidth: 50, fontSize: 8 },
         5: { 
           cellWidth: 10, 
           halign: 'center', 
-          fontSize: 10,
+          fontSize: 11,
           fontStyle: 'bold'
         }
       },
@@ -106,13 +106,13 @@ export const addEquipmentChecklist = (doc: jsPDF, data: InspectionPDFData, yPosi
       alternateRowStyles: {
         fillColor: [245, 245, 245]
       },
-      // Personalizar colores para los estados
+      // Personalizar colores para SI/NO
       didParseCell: function(data) {
         // Solo aplicar colores especiales a las columnas de estado (1, 3, 5)
         if ([1, 3, 5].includes(data.column.index) && data.cell.text.length > 0) {
           const statusText = data.cell.text[0];
           if (statusText === 'SI') {
-            data.cell.styles.textColor = [0, 128, 0]; // Verde para SI
+            data.cell.styles.textColor = [0, 150, 0]; // Verde intenso para SI
             data.cell.styles.fontStyle = 'bold';
           } else if (statusText === 'NO') {
             data.cell.styles.textColor = [200, 50, 50]; // Rojo para NO
