@@ -10,9 +10,10 @@ export interface InspectionPDFData {
     clientSignature?: string;
     clientName?: string;
     clientRut?: string;
-    photosBeforeService?: string[];
-    photosClientVehicle?: string[];
-    photosEquipmentUsed?: string[];
+    photographicSet?: Array<{
+      fileName: string;
+      category: 'izquierdo' | 'derecho' | 'frontal' | 'trasero' | 'interior' | 'motor';
+    }>;
   };
   companyData: {
     businessName: string;

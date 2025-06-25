@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -39,9 +38,7 @@ export const InspectionForm = ({
       operatorSignature: '',
       clientName: '',
       clientRut: '',
-      photosBeforeService: [],
-      photosClientVehicle: [],
-      photosEquipmentUsed: [],
+      photographicSet: [], // Nuevo campo unificado
     },
   });
 

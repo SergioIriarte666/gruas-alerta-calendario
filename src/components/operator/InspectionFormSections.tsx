@@ -6,7 +6,7 @@ import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/comp
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { VehicleEquipmentChecklist } from '@/components/operator/VehicleEquipmentChecklist';
-import { PhotoCapture } from '@/components/operator/PhotoCapture';
+import { PhotographicSet } from '@/components/operator/PhotographicSet';
 import { SignaturePad, SignaturePadRef } from '@/components/operator/SignaturePad';
 import { InspectionFormValues } from '@/schemas/inspectionSchema';
 import { useUser } from '@/contexts/UserContext';
@@ -25,46 +25,20 @@ export const InspectionFormSections = ({ form }: InspectionFormSectionsProps) =>
     <>
       <VehicleEquipmentChecklist form={form} />
       
-      {/* Sección de Fotografías */}
-      <div className="space-y-6">
-        <h3 className="text-lg font-semibold text-white">Documentación Fotográfica</h3>
-        
-        <FormField
-          control={form.control}
-          name="photosBeforeService"
-          render={({ field }) => (
-            <PhotoCapture
-              title="Fotos Antes del Servicio"
+      {/* Sección de Set Fotográfico */}
+      <FormField
+        control={form.control}
+        name="photographicSet"
+        render={({ field }) => (
+          <FormItem>
+            <PhotographicSet
               photos={field.value}
               onPhotosChange={field.onChange}
             />
-          )}
-        />
-        
-        <FormField
-          control={form.control}
-          name="photosClientVehicle"
-          render={({ field }) => (
-            <PhotoCapture
-              title="Fotos del Vehículo del Cliente"
-              photos={field.value}
-              onPhotosChange={field.onChange}
-            />
-          )}
-        />
-        
-        <FormField
-          control={form.control}
-          name="photosEquipmentUsed"
-          render={({ field }) => (
-            <PhotoCapture
-              title="Fotos del Equipo Utilizado"
-              photos={field.value}
-              onPhotosChange={field.onChange}
-            />
-          )}
-        />
-      </div>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
       
       <Card className="bg-slate-800 border-slate-700">
         <CardHeader><CardTitle>Observaciones y Firmas</CardTitle></CardHeader>

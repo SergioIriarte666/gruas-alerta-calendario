@@ -10,9 +10,12 @@ export const inspectionFormSchema = z.object({
   clientSignature: z.string().optional(),
   clientName: z.string().optional(),
   clientRut: z.string().optional(),
-  photosBeforeService: z.array(z.string()).default([]),
-  photosClientVehicle: z.array(z.string()).default([]),
-  photosEquipmentUsed: z.array(z.string()).default([]),
+  photographicSet: z.array(z.object({
+    fileName: z.string(),
+    category: z.enum(['izquierdo', 'derecho', 'frontal', 'trasero', 'interior', 'motor'])
+  })).refine((value) => value.length > 0, {
+    message: "Debes tomar al menos 1 fotografía para el set fotográfico.",
+  }),
 });
 
 export type InspectionFormValues = z.infer<typeof inspectionFormSchema>;

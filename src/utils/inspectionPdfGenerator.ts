@@ -1,4 +1,3 @@
-
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import { InspectionPDFData } from './pdf/pdfTypes';
@@ -39,7 +38,8 @@ export const generateInspectionPDF = async (data: {
     console.log('Generando PDF con datos completos:', {
       serviceId: pdfData.service.id,
       companyName: pdfData.companyData.businessName,
-      equipmentCount: pdfData.inspection.equipment?.length || 0
+      equipmentCount: pdfData.inspection.equipment?.length || 0,
+      photographicSetCount: pdfData.inspection.photographicSet?.length || 0
     });
 
     // Add header corporativo (ahora es asíncrono)
@@ -54,50 +54,20 @@ export const generateInspectionPDF = async (data: {
     yPosition = addEquipmentChecklist(doc, pdfData, yPosition);
     console.log('Checklist agregado, yPosition:', yPosition);
 
-    // Add photos sections
+    // Add photographic set section
     try {
-      if (data.inspection.photosBeforeService && data.inspection.photosBeforeService.length > 0) {
-        console.log('Procesando fotos antes del servicio:', data.inspection.photosBeforeService);
-        yPosition = await addPhotosSection(
+      if (data.inspection.photographicSet && data.inspection.photographicSet.length > 0) {
+        console.log('Procesando set fotográfico:', data.inspection.photographicSet);
+        const { addPhotographicSetSection } = await import('./pdf/pdfPhotos');
+        yPosition = await addPhotographicSetSection(
           doc, 
-          'FOTOS ANTES DEL SERVICIO', 
-          data.inspection.photosBeforeService, 
+          data.inspection.photographicSet, 
           yPosition
         );
-        console.log('Fotos antes del servicio agregadas, yPosition:', yPosition);
+        console.log('Set fotográfico agregado, yPosition:', yPosition);
       }
     } catch (photoError) {
-      console.error('Error procesando fotos antes del servicio:', photoError);
-    }
-
-    try {
-      if (data.inspection.photosClientVehicle && data.inspection.photosClientVehicle.length > 0) {
-        console.log('Procesando fotos del vehículo:', data.inspection.photosClientVehicle);
-        yPosition = await addPhotosSection(
-          doc, 
-          'FOTOS DEL VEHÍCULO DEL CLIENTE', 
-          data.inspection.photosClientVehicle, 
-          yPosition
-        );
-        console.log('Fotos del vehículo agregadas, yPosition:', yPosition);
-      }
-    } catch (photoError) {
-      console.error('Error procesando fotos del vehículo:', photoError);
-    }
-
-    try {
-      if (data.inspection.photosEquipmentUsed && data.inspection.photosEquipmentUsed.length > 0) {
-        console.log('Procesando fotos del equipo:', data.inspection.photosEquipmentUsed);
-        yPosition = await addPhotosSection(
-          doc, 
-          'FOTOS DEL EQUIPO UTILIZADO', 
-          data.inspection.photosEquipmentUsed, 
-          yPosition
-        );
-        console.log('Fotos del equipo agregadas, yPosition:', yPosition);
-      }
-    } catch (photoError) {
-      console.error('Error procesando fotos del equipo:', photoError);
+      console.error('Error procesando set fotográfico:', photoError);
     }
 
     // Add digital signatures
