@@ -1,17 +1,13 @@
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useEffect } from 'react';
-import { useFormPersistence } from '@/hooks/useFormPersistence';
+
+import React from 'react';
 import { useServiceInspection } from '@/hooks/useServiceInspection';
-import { inspectionFormSchema, InspectionFormValues } from '@/schemas/inspectionSchema';
-import { validateFormBeforeSubmit } from '@/utils/inspectionValidation';
-import { Form } from '@/components/ui/form';
-import { Button } from '@/components/ui/button';
 import { ServiceDetailsCard } from '@/components/operator/ServiceDetailsCard';
-import { InspectionFormSections } from '@/components/operator/InspectionFormSections';
 import { PDFProgress } from '@/components/operator/PDFProgress';
-import { ArrowLeft, Download, AlertTriangle, RefreshCw } from 'lucide-react';
-import { useToast } from '@/components/ui/custom-toast';
+import { InspectionHeader } from '@/components/operator/inspection/InspectionHeader';
+import { InspectionErrorState } from '@/components/operator/inspection/InspectionErrorState';
+import { InspectionLoadingState } from '@/components/operator/inspection/InspectionLoadingState';
+import { InspectionForm } from '@/components/operator/inspection/InspectionForm';
+import { AlertTriangle } from 'lucide-react';
 
 const ServiceInspection = () => {
   const {
@@ -30,8 +26,6 @@ const ServiceInspection = () => {
     navigate
   } = useServiceInspection();
 
-  const { toast } = useToast();
-
   // Agregar logging detallado para debug
   console.log('🎬 ServiceInspection Component Render:', {
     id,
@@ -43,42 +37,9 @@ const ServiceInspection = () => {
     pathname: window.location.pathname
   });
 
-  const form = useForm<InspectionFormValues>({
-    resolver: zodResolver(inspectionFormSchema),
-    defaultValues: {
-      equipment: [],
-      vehicleObservations: '',
-      operatorSignature: '',
-      clientName: '',
-      clientRut: '',
-      photosBeforeService: [],
-      photosClientVehicle: [],
-      photosEquipmentUsed: [],
-    },
-  });
+  const handleBack = () => navigate(-1);
 
-  const { loadFormData } = useFormPersistence(form, id || '');
-
-  useEffect(() => {
-    if (id) {
-      const savedData = loadFormData();
-      if (savedData) {
-        toast({ type: 'info', title: 'Datos del formulario restaurados' });
-      }
-    }
-  }, [id, loadFormData, toast]);
-
-  const onSubmit = (values: InspectionFormValues) => {
-    const validationErrors = validateFormBeforeSubmit(values);
-    if (validationErrors.length > 0) {
-      validationErrors.forEach(error => toast({ type: 'error', title: error }));
-      return;
-    }
-    
-    processInspectionMutation.mutate(values);
-  };
-
-  // Mostrar error si no hay ID del servicio - PERO PRIMERO VERIFICAR SI REALMENTE NO HAY ID
+  // Mostrar error si no hay ID del servicio
   if (!id) {
     console.error('❌ No service ID found. URL params issue.');
     console.error('❌ Current pathname:', window.location.pathname);
@@ -86,12 +47,7 @@ const ServiceInspection = () => {
     
     return (
       <div className="space-y-6">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => navigate('/operator')}>
-            <ArrowLeft />
-          </Button>
-          <h1 className="text-2xl font-bold">Inspección Pre-Servicio</h1>
-        </div>
+        <InspectionHeader onBack={() => navigate('/operator')} />
         
         <div className="text-center p-8 bg-red-50 rounded-lg border border-red-200">
           <AlertTriangle className="w-16 h-16 mx-auto mb-4 text-red-500" />
@@ -107,69 +63,23 @@ const ServiceInspection = () => {
               Formato esperado: /operator/service/[ID]/inspection
             </p>
           </div>
-          <Button onClick={() => navigate('/operator')} variant="outline">
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Volver al Dashboard
-          </Button>
         </div>
       </div>
     );
   }
   
   if (isLoading) {
-    return (
-      <div className="space-y-4">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
-            <ArrowLeft />
-          </Button>
-          <h1 className="text-2xl font-bold">Inspección Pre-Servicio</h1>
-        </div>
-        <div className="text-center p-8">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-tms-green mx-auto"></div>
-          <p className="mt-4">Cargando servicio...</p>
-          <p className="text-sm text-gray-500 mt-2">ID: {id}</p>
-        </div>
-      </div>
-    );
+    return <InspectionLoadingState serviceId={id} onBack={handleBack} />;
   }
 
   if (error || !service) {
     return (
-      <div className="space-y-6">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
-            <ArrowLeft />
-          </Button>
-          <h1 className="text-2xl font-bold">Inspección Pre-Servicio</h1>
-        </div>
-        
-        <div className="text-center p-8 bg-red-50 rounded-lg border border-red-200">
-          <AlertTriangle className="w-16 h-16 mx-auto mb-4 text-red-500" />
-          <h2 className="text-xl font-semibold mb-2 text-red-800">Error al cargar el servicio</h2>
-          <p className="text-red-600 mb-4">
-            {error?.message || 'No se pudo cargar la información del servicio.'}
-          </p>
-          <div className="bg-red-100 p-3 rounded mb-6">
-            <p className="text-sm text-red-700 font-mono">
-              ID del servicio: {id}
-            </p>
-            <p className="text-sm text-red-700 font-mono">
-              URL: {window.location.pathname}
-            </p>
-          </div>
-          <div className="space-x-4">
-            <Button onClick={handleRetry} className="bg-red-600 hover:bg-red-700">
-              <RefreshCw className="w-4 h-4 mr-2" />
-              Reintentar
-            </Button>
-            <Button onClick={() => navigate('/operator')} variant="outline">
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Volver al Dashboard
-            </Button>
-          </div>
-        </div>
-      </div>
+      <InspectionErrorState 
+        error={error}
+        serviceId={id}
+        onRetry={handleRetry}
+        onBack={handleBack}
+      />
     );
   }
 
@@ -183,33 +93,18 @@ const ServiceInspection = () => {
         downloadUrl={pdfDownloadUrl}
       />
 
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
-          <ArrowLeft />
-        </Button>
-        <h1 className="text-2xl font-bold">Inspección Pre-Servicio</h1>
-      </div>
+      <InspectionHeader onBack={handleBack} />
 
       <ServiceDetailsCard service={service} />
 
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-          <InspectionFormSections form={form} />
-
-          <div className="flex justify-end">
-            <Button 
-              type="submit" 
-              disabled={processInspectionMutation.isPending || updateServiceStatusMutation.isPending || isGeneratingPDF}
-            >
-              <Download className="w-4 h-4 mr-2" />
-              {isGeneratingPDF ? 'Generando PDF...' : 
-               processInspectionMutation.isPending ? 'Procesando...' : 
-               updateServiceStatusMutation.isPending ? 'Iniciando Servicio...' : 
-               'Generar PDF e Iniciar Servicio'}
-            </Button>
-          </div>
-        </form>
-      </Form>
+      <InspectionForm
+        service={service}
+        serviceId={id}
+        onSubmit={(values) => processInspectionMutation.mutate(values)}
+        isProcessing={processInspectionMutation.isPending}
+        isGeneratingPDF={isGeneratingPDF}
+        isUpdatingStatus={updateServiceStatusMutation.isPending}
+      />
     </div>
   );
 };
