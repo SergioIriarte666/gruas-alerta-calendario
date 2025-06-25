@@ -52,6 +52,13 @@ export const AdvancedServiceFilters: React.FC<AdvancedServiceFiltersProps> = ({
     });
   };
 
+  const handleSelectChange = (field: keyof AdvancedFilters, value: string) => {
+    onFiltersChange({
+      ...filters,
+      [field]: value === 'all' ? undefined : value
+    });
+  };
+
   const handleNumberChange = (field: keyof AdvancedFilters, value: string) => {
     onFiltersChange({
       ...filters,
@@ -137,12 +144,12 @@ export const AdvancedServiceFilters: React.FC<AdvancedServiceFiltersProps> = ({
             
             <div className="space-y-2">
               <Label className="text-white">Cliente</Label>
-              <Select value={filters.clientId || ''} onValueChange={(value) => handleInputChange('clientId', value)}>
+              <Select value={filters.clientId || 'all'} onValueChange={(value) => handleSelectChange('clientId', value)}>
                 <SelectTrigger className="bg-black border-tms-green/30 text-white">
                   <SelectValue placeholder="Seleccionar cliente" />
                 </SelectTrigger>
                 <SelectContent className="bg-white text-black">
-                  <SelectItem value="">Todos los clientes</SelectItem>
+                  <SelectItem value="all">Todos los clientes</SelectItem>
                   {clients.map((client) => (
                     <SelectItem key={client.id} value={client.id}>
                       {client.name}
@@ -154,12 +161,12 @@ export const AdvancedServiceFilters: React.FC<AdvancedServiceFiltersProps> = ({
 
             <div className="space-y-2">
               <Label className="text-white">Tipo de Servicio</Label>
-              <Select value={filters.serviceTypeId || ''} onValueChange={(value) => handleInputChange('serviceTypeId', value)}>
+              <Select value={filters.serviceTypeId || 'all'} onValueChange={(value) => handleSelectChange('serviceTypeId', value)}>
                 <SelectTrigger className="bg-black border-tms-green/30 text-white">
                   <SelectValue placeholder="Seleccionar tipo" />
                 </SelectTrigger>
                 <SelectContent className="bg-white text-black">
-                  <SelectItem value="">Todos los tipos</SelectItem>
+                  <SelectItem value="all">Todos los tipos</SelectItem>
                   {serviceTypes.map((type) => (
                     <SelectItem key={type.id} value={type.id}>
                       {type.name}
@@ -171,12 +178,12 @@ export const AdvancedServiceFilters: React.FC<AdvancedServiceFiltersProps> = ({
 
             <div className="space-y-2">
               <Label className="text-white">Operador</Label>
-              <Select value={filters.operatorId || ''} onValueChange={(value) => handleInputChange('operatorId', value)}>
+              <Select value={filters.operatorId || 'all'} onValueChange={(value) => handleSelectChange('operatorId', value)}>
                 <SelectTrigger className="bg-black border-tms-green/30 text-white">
                   <SelectValue placeholder="Seleccionar operador" />
                 </SelectTrigger>
                 <SelectContent className="bg-white text-black">
-                  <SelectItem value="">Todos los operadores</SelectItem>
+                  <SelectItem value="all">Todos los operadores</SelectItem>
                   {operators.map((operator) => (
                     <SelectItem key={operator.id} value={operator.id}>
                       {operator.name}
@@ -188,12 +195,12 @@ export const AdvancedServiceFilters: React.FC<AdvancedServiceFiltersProps> = ({
 
             <div className="space-y-2">
               <Label className="text-white">Grúa</Label>
-              <Select value={filters.craneId || ''} onValueChange={(value) => handleInputChange('craneId', value)}>
+              <Select value={filters.craneId || 'all'} onValueChange={(value) => handleSelectChange('craneId', value)}>
                 <SelectTrigger className="bg-black border-tms-green/30 text-white">
                   <SelectValue placeholder="Seleccionar grúa" />
                 </SelectTrigger>
                 <SelectContent className="bg-white text-black">
-                  <SelectItem value="">Todas las grúas</SelectItem>
+                  <SelectItem value="all">Todas las grúas</SelectItem>
                   {cranes.map((crane) => (
                     <SelectItem key={crane.id} value={crane.id}>
                       {crane.brand} {crane.model} - {crane.licensePlate}
