@@ -48,11 +48,7 @@ export class EnhancedPDFGenerator {
       this.updateProgress(40, 'Cargando fotos del servicio...');
       
       // Verificar fotos disponibles
-      const totalPhotos = [
-        ...(data.inspection.photosBeforeService || []),
-        ...(data.inspection.photosClientVehicle || []),
-        ...(data.inspection.photosEquipmentUsed || [])
-      ].length;
+      const totalPhotos = data.inspection.photographicSet?.length || 0;
       
       console.log(`Total de fotos a procesar: ${totalPhotos}`);
       

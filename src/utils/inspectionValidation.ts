@@ -12,14 +12,10 @@ export const validateFormBeforeSubmit = (values: InspectionFormValues): string[]
     errors.push('Debe seleccionar al menos un elemento del inventario');
   }
   
-  const totalPhotos = [
-    ...(values.photosBeforeService || []),
-    ...(values.photosClientVehicle || []),
-    ...(values.photosEquipmentUsed || [])
-  ].length;
+  const totalPhotos = values.photographicSet?.length || 0;
   
   if (totalPhotos === 0) {
-    errors.push('Debe tomar al menos una fotografía');
+    errors.push('Debe tomar al menos una fotografía para el set fotográfico');
   }
   
   return errors;

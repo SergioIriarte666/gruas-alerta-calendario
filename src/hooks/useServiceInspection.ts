@@ -69,10 +69,9 @@ export const useServiceInspection = () => {
       }
       
       // 3. Limpiar fotos del localStorage
-      [...values.photosBeforeService, ...values.photosClientVehicle, ...values.photosEquipmentUsed]
-        .forEach(photoName => {
-          localStorage.removeItem(`photo-${photoName}`);
-        });
+      values.photographicSet?.forEach(photo => {
+        localStorage.removeItem(`photo-${photo.fileName}`);
+      });
       
       console.log('🧹 [PROCESS] Fotos limpiadas del localStorage');
       

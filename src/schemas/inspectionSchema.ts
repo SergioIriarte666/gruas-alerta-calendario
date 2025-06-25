@@ -11,7 +11,7 @@ export const inspectionFormSchema = z.object({
   clientName: z.string().optional(),
   clientRut: z.string().optional(),
   photographicSet: z.array(z.object({
-    fileName: z.string(),
+    fileName: z.string().min(1, 'El nombre del archivo es requerido'),
     category: z.enum(['izquierdo', 'derecho', 'frontal', 'trasero', 'interior', 'motor'])
   })).refine((value) => value.length > 0, {
     message: "Debes tomar al menos 1 fotografía para el set fotográfico.",

@@ -30,23 +30,23 @@ const PHOTO_CATEGORIES = [
 ] as const;
 
 export const PhotographicSet = ({ photos, onPhotosChange }: PhotographicSetProps) => {
-  const [photoData, setPhotoData] = useState<Record<string, PhotoData>>({});
+  const [loadedPhotoData, setLoadedPhotoData] = useState<Record<string, PhotoData>>({});
   const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<string>('izquierdo');
 
   // Cargar fotos existentes
   useEffect(() => {
     const loadExistingPhotos = async () => {
-      const loadedPhotos: Record<string, PhotoData> = {};
+      const photoDataMap: Record<string, PhotoData> = {};
       
       for (const photo of photos) {
         const photoData = PhotoStorage.load(photo.fileName);
         if (photoData) {
-          loadedPhotos[photo.fileName] = photoData;
+          photoDataMap[photo.fileName] = photoData;
         }
       }
       
-      setPhotoData(loadedPhotos);
+      setLoadedPhotoData(photoDataMap);
     };
 
     if (photos.length > 0) {
@@ -72,7 +72,7 @@ export const PhotographicSet = ({ photos, onPhotosChange }: PhotographicSetProps
       PhotoStorage.save(processedPhoto);
       
       // Actualizar estado local
-      setPhotoData(prev => ({
+      setLoadedPhotoData(prev => ({
         ...prev,
         [processedPhoto.name]: processedPhoto
       }));
@@ -101,7 +101,7 @@ export const PhotographicSet = ({ photos, onPhotosChange }: PhotographicSetProps
     PhotoStorage.remove(fileName);
     
     // Actualizar estado local
-    setPhotoData(prev => {
+    setLoadedPhotoData(prev => {
       const updated = { ...prev };
       delete updated[fileName];
       return updated;
@@ -155,7 +155,7 @@ export const PhotographicSet = ({ photos, onPhotosChange }: PhotographicSetProps
 
           {PHOTO_CATEGORIES.map((category) => {
             const photo = getPhotoForCategory(category.id);
-            const photoData = photo ? photoData[photo.fileName] : null;
+            const photoData = photo ? loadedPhotoData[photo.fileName] : null;
 
             return (
               <TabsContent key={category.id} value={category.id} className="mt-4">
