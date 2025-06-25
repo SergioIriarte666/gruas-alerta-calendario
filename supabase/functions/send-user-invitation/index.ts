@@ -55,7 +55,10 @@ const handler = async (req: Request): Promise<Response> => {
     const roleLabel = roleLabels[role] || role;
 
     // Crear el enlace de registro con parámetros pre-llenados
-    const registerUrl = `${Deno.env.get('SUPABASE_URL')?.replace('/supabase', '')}/auth?tab=register&email=${encodeURIComponent(email)}&name=${encodeURIComponent(fullName)}`;
+    const baseUrl = Deno.env.get('SUPABASE_URL')?.replace('/supabase', '') || 'http://localhost:3000';
+    const registerUrl = `${baseUrl}/auth?tab=register&email=${encodeURIComponent(email)}&name=${encodeURIComponent(fullName)}`;
+
+    console.log('Generated registration URL:', registerUrl);
 
     // Generar el HTML del email
     const emailHtml = `
@@ -81,6 +84,7 @@ const handler = async (req: Request): Promise<Response> => {
             }
             .info-box { background: #e0f2fe; padding: 15px; border-radius: 6px; margin: 15px 0; }
             .footer { text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb; color: #6b7280; }
+            .warning-box { background: #fef3c7; border: 1px solid #f59e0b; padding: 15px; border-radius: 6px; margin: 15px 0; }
           </style>
         </head>
         <body>
@@ -108,9 +112,14 @@ const handler = async (req: Request): Promise<Response> => {
                 <a href="${registerUrl}" class="btn">Completar Registro</a>
               </div>
               
+              <div class="warning-box">
+                <strong>⚠️ Importante:</strong> Si el botón no funciona, copia y pega esta URL en tu navegador:<br>
+                <code>${registerUrl}</code>
+              </div>
+              
               <p><strong>Instrucciones:</strong></p>
               <ol>
-                <li>Haz clic en el botón "Completar Registro"</li>
+                <li>Haz clic en el botón "Completar Registro" o usa la URL proporcionada</li>
                 <li>Crea tu contraseña segura</li>
                 <li>Confirma tu registro</li>
                 <li>¡Ya podrás acceder al sistema con tu rol de ${roleLabel}!</li>
@@ -144,7 +153,9 @@ const handler = async (req: Request): Promise<Response> => {
       </html>
     `;
 
-    // Enviar el email
+    console.log('Attempting to send email...');
+
+    // Intentar enviar el email
     const emailResponse = await resend.emails.send({
       from: `${businessName} <noreply@resend.dev>`,
       to: [email],
@@ -152,11 +163,43 @@ const handler = async (req: Request): Promise<Response> => {
       html: emailHtml,
     });
 
-    console.log('Email sent successfully:', emailResponse);
+    console.log('Email response:', emailResponse);
 
+    // Verificar si hay error de dominio no verificado
     if (emailResponse.error) {
+      console.error('Resend API error:', emailResponse.error);
+      
+      // Si es error de dominio no verificado, devolver respuesta específica
+      if (emailResponse.error.message?.includes('verify a domain') || 
+          emailResponse.error.message?.includes('testing emails')) {
+        
+        // Actualizar el estado de la invitación como 'pending' en lugar de 'sent'
+        await supabase
+          .from('user_invitations')
+          .update({ 
+            status: 'pending',
+            updated_at: new Date().toISOString()
+          })
+          .eq('user_id', userId);
+
+        return new Response(
+          JSON.stringify({ 
+            success: false, 
+            error: 'Para enviar emails de invitación a otros usuarios, debes verificar un dominio en Resend.com. Por ahora, el usuario ha sido creado pero debe registrarse manualmente.',
+            userCreated: true,
+            requiresDomainVerification: true
+          }),
+          {
+            status: 200, // No es un error del sistema, es configuración
+            headers: { "Content-Type": "application/json", ...corsHeaders },
+          }
+        );
+      }
+      
       throw new Error(`Error enviando email: ${emailResponse.error.message}`);
     }
+
+    console.log('Email sent successfully:', emailResponse.data);
 
     // Actualizar el registro de invitación en la base de datos
     const { error: updateError } = await supabase

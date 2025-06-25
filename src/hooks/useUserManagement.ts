@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { enhancedSupabase } from '@/integrations/supabase/enhancedClient';
 import { toast } from 'sonner';
@@ -169,7 +168,15 @@ export const useUserManagement = () => {
           toast.warning('Usuario creado, pero hubo un problema enviando la invitación por email');
         } else if (invitationResult.data?.error) {
           console.error('Error in invitation function:', invitationResult.data.error);
-          toast.warning('Usuario creado, pero hubo un problema enviando la invitación por email');
+          
+          // Manejar específicamente el error de dominio no verificado
+          if (invitationResult.data.requiresDomainVerification) {
+            toast.warning('Usuario creado exitosamente. Para enviar invitaciones por email, verifica un dominio en Resend.com', {
+              duration: 8000
+            });
+          } else {
+            toast.warning('Usuario creado, pero hubo un problema enviando la invitación por email');
+          }
         } else {
           console.log('Invitation sent successfully:', invitationResult.data);
           toast.success('Usuario creado e invitación enviada correctamente');
@@ -233,10 +240,17 @@ export const useUserManagement = () => {
       if (result.error) {
         throw result.error;
       } else if (result.data?.error) {
-        throw new Error(result.data.error);
+        if (result.data.requiresDomainVerification) {
+          toast.warning('Para enviar invitaciones por email, verifica un dominio en Resend.com', {
+            duration: 8000
+          });
+        } else {
+          throw new Error(result.data.error);
+        }
+      } else {
+        toast.success('Invitación reenviada correctamente');
       }
 
-      toast.success('Invitación reenviada correctamente');
       await fetchInvitations();
     } catch (error: any) {
       console.error('Error resending invitation:', error);
