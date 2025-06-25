@@ -37,18 +37,13 @@ const Auth = () => {
     }
   }, [isInvited, emailParam]);
 
+  // Redirigir usuarios autenticados
   useEffect(() => {
-    // Only redirect when we have both auth user and profile user and are not loading
     if (!authLoading && !profileLoading && authUser && profileUser) {
-      console.log('Redirecting authenticated user:', profileUser.role);
-      
-      // Forzar una redirección completa para evitar problemas de estado
-      const targetPath = profileUser.role === 'client' ? '/portal' : 
-                        profileUser.role === 'operator' ? '/operator' : '/dashboard';
-      
-      window.location.href = targetPath;
+      console.log('Auth: Redirecting authenticated user with role:', profileUser.role);
+      navigate('/', { replace: true });
     }
-  }, [authUser, profileUser, authLoading, profileLoading]);
+  }, [authUser, profileUser, authLoading, profileLoading, navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -137,7 +132,10 @@ const Auth = () => {
           toast.success('¡Registro completado exitosamente!', {
             description: 'Redirigiendo al sistema...'
           });
-          // La redirección automática se maneja en el useEffect
+          // Esperar un momento para que se actualice el perfil antes de redirigir
+          setTimeout(() => {
+            navigate('/', { replace: true });
+          }, 1000);
         }
       }
     } catch (error: any) {
