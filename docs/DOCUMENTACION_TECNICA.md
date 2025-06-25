@@ -3,440 +3,217 @@
 
 ## Arquitectura del Sistema
 
-### Tecnologías Principales
+### Stack Tecnológico Principal
 - **Frontend**: React 18 + TypeScript + Vite
 - **UI Framework**: Tailwind CSS + shadcn/ui
 - **Backend**: Supabase (PostgreSQL + Auth + Edge Functions)
 - **Estado**: React Query (TanStack Query) + Context API
 - **Enrutamiento**: React Router DOM
-- **Validación**: Zod
+- **Validación**: Zod + React Hook Form
 - **PDF Generation**: jsPDF + jsPDF AutoTable
-- **Excel Export**: XLSX
+- **Excel Export**: XLSX + PapaParse
 - **Notificaciones**: Sonner
 - **Iconos**: Lucide React
 - **Email**: Resend API
+- **PWA**: Service Workers + Manifest
 
-## Estructura del Proyecto
+## Estructura del Proyecto Actualizada
 
 ```
 src/
-├── components/           # Componentes reutilizables organizados por módulo
+├── components/           # Componentes organizados por módulo
 │   ├── ui/              # Componentes base de shadcn/ui
-│   ├── layout/          # Componentes de diseño (Header, Sidebar, etc.)
-│   ├── services/        # Componentes específicos de servicios
-│   ├── clients/         # Componentes de gestión de clientes
-│   ├── operators/       # Componentes del módulo de operadores
-│   ├── portal/          # Componentes del portal de clientes
-│   ├── settings/        # Componentes de configuración del sistema
+│   ├── layout/          # Layouts y navegación
+│   ├── operator/        # Módulo de operadores
+│   │   ├── PhotographicSet.tsx    # Set fotográfico unificado
+│   │   ├── InspectionFormSections.tsx
+│   │   ├── SignaturePad.tsx
+│   │   └── inspection/  # Subcomponentes de inspección
+│   ├── portal/          # Portal de clientes
+│   ├── settings/        # Configuraciones del sistema
 │   └── ...              # Otros módulos
-├── hooks/               # Hooks personalizados organizados por funcionalidad
-│   ├── services/        # Hooks relacionados con servicios
+├── hooks/               # Hooks especializados
 │   ├── inspection/      # Hooks de inspecciones
+│   │   ├── useInspectionPDF.ts
+│   │   ├── useInspectionEmail.ts
+│   │   └── useServiceStatusUpdate.ts
+│   ├── services/        # Hooks de servicios
 │   ├── settings/        # Hooks de configuración
-│   └── ...              # Otros módulos
-├── pages/               # Páginas principales de la aplicación
-├── contexts/            # Contextos de React para estado global
-├── types/               # Definiciones de tipos TypeScript
-├── utils/               # Utilidades y funciones auxiliares
-├── schemas/             # Esquemas de validación con Zod
-└── integrations/        # Integraciones externas (Supabase)
+│   └── ...              # Otros hooks
+├── utils/               # Utilidades especializadas
+│   ├── pdf/            # Generación de PDFs
+│   │   ├── pdfPhotos.ts          # Procesamiento de fotos
+│   │   ├── photos/               # Utilidades de fotos
+│   │   └── sections/             # Secciones del PDF
+│   ├── photoProcessor.ts         # Procesamiento de imágenes
+│   ├── photoStorage.ts           # Almacenamiento local
+│   └── ...              # Otras utilidades
+├── schemas/             # Esquemas de validación
+│   ├── inspectionSchema.ts       # Schema de inspecciones
+│   └── ...              # Otros schemas
+└── types/               # Definiciones de tipos
+    ├── photo.ts         # Tipos de fotografías
+    └── ...              # Otros tipos
 ```
 
 ## Gestión de Estado
 
-### React Query
-- Manejo de estado servidor con cache automático
-- Invalidación inteligente de queries
-- Manejo de loading states y errores
+### React Query (TanStack Query)
+- Cache automático con invalidación inteligente
 - Optimistic updates para mejor UX
+- Background refetching
+- Error handling centralizado
+- Loading states automáticos
 
 ### Context API
-- `AuthContext`: Autenticación y sesión del usuario
+- `AuthContext`: Autenticación y sesión
 - `UserContext`: Información del usuario actual
 - `NotificationContext`: Sistema de notificaciones
 
 ## Base de Datos
 
 ### Tablas Principales
-- `profiles`: Usuarios del sistema con roles
-- `clients`: Clientes de la empresa
-- `operators`: Operadores de grúas
-- `cranes`: Grúas disponibles
+- `profiles`: Usuarios con roles y estado
+- `clients`: Clientes con información completa
+- `operators`: Operadores con licencias
+- `cranes`: Flota de grúas
 - `service_types`: Tipos de servicios configurables
-- `services`: Servicios realizados
-- `invoices`: Facturas generadas
+- `services`: Servicios con estados
+- `invoices`: Facturas con tracking
 - `service_closures`: Cierres de servicios
-- `user_invitations`: Sistema de invitaciones por email
-- `company_data`: Configuración de la empresa
+- `user_invitations`: Sistema de invitaciones
+- `company_data`: Configuración de empresa
 - `system_settings`: Configuraciones del sistema
-- `backup_logs`: Registro de respaldos automáticos
-- `calendar_events`: Eventos del calendario integrado
+- `calendar_events`: Eventos del calendario
 
-### Políticas RLS (Row Level Security)
-- Implementadas para todos los módulos
-- Separación por roles (admin, operator, client, viewer)
-- Políticas específicas para lectura/escritura por usuario
-- Funciones de seguridad para validación de roles
+### Row Level Security (RLS)
+- Implementado en todas las tablas críticas
+- Políticas por rol (admin, operator, client, viewer)
+- Funciones de seguridad para operaciones críticas
+- Validación de permisos a nivel de base de datos
 
-### Funciones de Base de Datos
-- `admin_create_user`: Creación de usuarios por administradores
-- `get_all_users`: Obtención de usuarios con información completa
-- `update_user_role`: Actualización de roles de usuario
-- `toggle_user_status`: Activación/desactivación de usuarios
-- `validate_email`: Validación de formato de email
-- `get_client_id_for_user`: Obtención de cliente asociado a usuario
+## Sistema de Inspecciones Rediseñado
 
-## Sistema de Gestión de Usuarios
+### Set Fotográfico Unificado
+El sistema de fotos fue completamente rediseñado para unificar todas las fotografías bajo un solo componente:
 
-### Creación de Usuarios
-- **Flujo de Pre-registro**: Los administradores pueden crear usuarios sin que estos tengan cuenta en Auth
-- **Sistema de Invitaciones**: Envío automático de emails con enlaces de registro
-- **Configuración de Roles**: Asignación previa de roles (admin, operator, viewer, client)
-- **Asociación de Clientes**: Vinculación automática de usuarios tipo 'client' con empresas
-
-### Estados de Invitación
-- **Pending**: Invitación creada, email por enviar
-- **Sent**: Email enviado exitosamente
-- **Accepted**: Usuario completó su registro
-- **Expired**: Invitación venció sin usar
-
-### Funcionalidades Avanzadas
-- **Reenvío de Invitaciones**: Capacidad de reenviar emails de invitación
-- **Gestión de Estados**: Control granular del estado de cada usuario
-- **Validaciones**: Verificación de emails únicos y datos requeridos
-
-## Hooks Especializados
-
-### Servicios
-- `useServices`: CRUD completo de servicios
-- `useServiceFetcher`: Obtención optimizada de servicios
-- `useServiceMutations`: Operaciones de creación/actualización/eliminación
-- `useServiceTransformer`: Transformación de datos de la BD a tipos TS
-- `useServiceFormData`: Manejo de formularios de servicios
-- `useServiceFormValidation`: Validaciones específicas
-- `useServiceFormSubmission`: Lógica de envío de formularios
-
-### Gestión de Usuarios
-- `useUserManagement`: Hook principal para gestión completa de usuarios
-  - Creación de usuarios con pre-registro
-  - Envío automático de invitaciones por email
-  - Gestión de roles y permisos
-  - Control de estados de usuarios
-  - Reenvío de invitaciones
-
-### Inspecciones
-- `useServiceInspection`: Hook principal para inspecciones
-- `useInspectionPDF`: Generación de PDFs de inspección
-- `useInspectionEmail`: Envío de inspecciones por email
-- `useServiceStatusUpdate`: Actualización de estados de servicios
-
-### Portal de Clientes
-- `useClientServices`: Servicios del cliente autenticado
-- `useClientInvoices`: Facturas del cliente
-- `useServiceRequest`: Solicitud de nuevos servicios
-
-### Configuraciones
-- `useSettings`: Configuración general del sistema
-- `useSystemSettings`: Configuraciones específicas del sistema
-- `useSettingsFetcher`: Obtención de configuraciones
-- `useSettingsSaver`: Guardado de configuraciones
-
-## Validaciones
-
-### Esquemas Zod
-- `serviceSchema`: Validación de servicios
-- `inspectionSchema`: Validación de inspecciones
-- `costSchema`: Validación de costos
-- `portalRequestServiceSchema`: Validación de solicitudes del portal
-- `portalAuthSchema`: Validación de autenticación del portal
-
-## Generación de Documentos
-
-### PDFs
-- Inspecciones con fotos y firmas digitales
-- Reportes de servicios detallados
-- Facturas profesionales
-- Compresión automática de imágenes
-
-### Excel
-- Exportación de servicios con filtros
-- Reportes financieros detallados
-- Análisis de costos por período
-- Plantillas configurables
-
-## Autenticación y Autorización
-
-### Roles del Sistema
-- `admin`: Acceso completo al sistema y gestión de usuarios
-- `operator`: Acceso a módulos operativos y servicios
-- `client`: Acceso exclusivo al portal de clientes
-- `viewer`: Solo lectura en módulos permitidos
-
-### Sistema de Invitaciones
-- **Pre-registro**: Creación de perfiles antes del registro completo
-- **Emails Automáticos**: Envío de invitaciones con enlaces personalizados
-- **Seguimiento**: Control del estado de cada invitación
-- **Reenvío**: Capacidad de reenviar invitaciones no utilizadas
-
-### Flujos de Autenticación
-1. **Registro Normal**: Usuario se registra directamente
-2. **Registro por Invitación**: Usuario completa registro desde email de invitación
-3. **Verificación de Rol**: Asignación automática de rol pre-configurado
-4. **Redirección**: Direccionamiento según permisos del usuario
-
-## API y Edge Functions
-
-### Funciones Implementadas
-- `send-inspection-email`: Envío de inspecciones por email con PDFs
-- `send-invoice-email`: Envío de facturas a clientes
-- `send-operator-notification`: Notificaciones a operadores
-- `send-user-invitation`: **NUEVA** - Sistema completo de invitaciones
-  - Generación de emails HTML responsivos
-  - Enlaces de registro pre-llenados
-  - Integración con Resend API
-  - Actualización automática de estados
-- `generate-backup`: Generación de respaldos del sistema
-
-### Configuración de Email
-- **Proveedor**: Resend API
-- **Dominio Verificado**: `gruas5norte.cl`
-- **Remitente**: `noreply@gruas5norte.cl`
-- **Templates**: HTML responsive con estilos inline
-
-## Módulo de Configuraciones
-
-### Gestión de Empresa
-- **Datos Básicos**: Nombre, RUT, dirección, contacto
-- **Logo**: Subida y gestión de logotipo empresarial
-- **Configuraciones Legales**: Textos legales para documentos
-- **Parámetros Financieros**: IVA, días de vencimiento
-
-### Gestión de Usuarios
-- **Vista Completa**: Lista de todos los usuarios del sistema
-- **Creación Avanzada**: Formulario de creación con validaciones
-- **Gestión de Roles**: Cambio dinámico de roles de usuario
-- **Estados**: Activación/desactivación de usuarios
-- **Invitaciones**: Control completo del sistema de invitaciones
-
-### Configuraciones del Sistema
-- **Notificaciones**: Control de tipos de notificaciones
-- **Respaldos**: Configuración de respaldos automáticos
-- **Mantenimiento**: Modo de mantenimiento del sistema
-- **Retención de Datos**: Configuración de políticas de retención
-
-## Performance
-
-### Optimizaciones Implementadas
-- Lazy loading de componentes pesados
-- Memoización con React.memo en componentes críticos
-- Debounce en búsquedas y filtros
-- Paginación en todos los listados grandes
-- Cache inteligente con React Query
-- Compresión de imágenes en PDFs
-
-### Métricas de Performance
-- Time to Interactive < 3s
-- First Contentful Paint < 1.5s
-- Cumulative Layout Shift < 0.1
-- Bundle size optimizado
-
-## Seguridad
-
-### Medidas Implementadas
-- Row Level Security completo en Supabase
-- Validación de entrada en cliente y servidor
-- Sanitización de datos en formularios
-- Tokens JWT seguros con expiración
-- HTTPS obligatorio en producción
-- Funciones de seguridad definer para operaciones críticas
-
-### Sistema de Invitaciones Seguro
-- **Validación de Email**: Verificación de formato y unicidad
-- **Tokens Seguros**: Enlaces con parámetros encriptados
-- **Expiración**: Control de tiempo de vida de invitaciones
-- **Dominio Verificado**: Solo emails desde dominio autorizado
-
-## PWA (Progressive Web App)
-
-### Funcionalidades PWA
-- **Service Worker**: Cache inteligente de recursos
-- **Manifest**: Configuración para instalación en dispositivos
-- **Offline Support**: Funcionalidad básica sin conexión
-- **Push Notifications**: Notificaciones push (futuro)
-
-### Componentes PWA
-- `PWAWrapper`: Contenedor principal de funcionalidades PWA
-- `InstallPrompt`: Prompt de instalación personalizado
-- `UpdateNotification`: Notificaciones de actualizaciones
-- `ConnectionStatus`: Indicador de estado de conexión
-
-## Testing
-
-### Estrategia de Testing
-- Unit tests para utilidades críticas
-- Integration tests para flujos de usuario
-- E2E tests para casos de uso principales
-- Testing de Edge Functions con mocks
-
-## Deployment
-
-### Configuración de Producción
-- Build optimizado con Vite
-- Compresión gzip automática
-- CDN para assets estáticos
-- Health checks automáticos
-- Variables de entorno seguras
-
-### Variables de Entorno Requeridas
-```bash
-# Supabase
-SUPABASE_URL=https://jqszxljtfuknhuvuheko.supabase.co
-SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-SUPABASE_SERVICE_ROLE_KEY=[Clave de servicio]
-
-# Email
-RESEND_API_KEY=[Clave de Resend]
-
-# Aplicación
-SITE_URL=[URL de la aplicación en producción]
+#### Categorías de Fotos
+```typescript
+type PhotoCategory = 
+  | 'izquierdo'   // Vista izquierda
+  | 'derecho'     // Vista derecha  
+  | 'frontal'     // Vista frontal
+  | 'trasero'     // Vista trasera
+  | 'interior'    // Vista interior
+  | 'motor'       // Vista motor
 ```
 
-## Monitoreo
+#### Componente PhotographicSet
+- **Interfaz por pestañas**: Una pestaña por categoría
+- **Indicadores visuales**: Pestañas verdes cuando contienen foto
+- **Validación**: Mínimo 1 foto requerida
+- **Almacenamiento local**: Fotos guardadas en localStorage
+- **Compresión automática**: Optimización para PDFs
 
-### Métricas Trackeadas
-- Errores de aplicación con stack traces
-- Performance de queries de base de datos
-- Tiempo de respuesta de Edge Functions
-- Uso de recursos del servidor
-- Estados de invitaciones de usuarios
-
-### Logs Estructurados
-- Errores categorizados por módulo
-- Eventos de auditoría de usuarios
-- Performance metrics por página
-- Logs de Edge Functions con contexto
-
-## Funcionalidades Avanzadas Implementadas
-
-### Sistema de Calendario
-- **Vista Múltiple**: Mes, semana, día
-- **Eventos Integrados**: Servicios, inspecciones, vencimientos
-- **Filtros Avanzados**: Por tipo, cliente, operador
-- **Navegación Intuitiva**: Controles de fecha optimizados
-
-### Portal de Clientes
-- **Autenticación Separada**: Sistema de login independiente
-- **Dashboard Personalizado**: Métricas específicas del cliente
-- **Solicitud de Servicios**: Formulario avanzado con validaciones
-- **Historial Completo**: Servicios e inspecciones del cliente
-
-### Sistema de Respaldos
-- **Respaldos Automáticos**: Configurables por frecuencia
-- **Compresión**: Reducción del tamaño de respaldos
-- **Historial**: Registro completo de respaldos realizados
-- **Restauración**: Capacidad de restaurar datos (futuro)
-
-## Roadmap Técnico
-
-### Próximas Mejoras Planificadas
-1. **Real-time Updates**: WebSockets para actualizaciones en tiempo real
-2. **Push Notifications**: Notificaciones push móviles
-3. **Offline-first**: Funcionalidad completa sin conexión
-4. **Multi-tenancy**: Soporte para múltiples empresas
-5. **Advanced Analytics**: Dashboard analítico avanzado
-6. **Mobile App**: Aplicación móvil nativa
-7. **API REST**: API pública para integraciones
-
-### Deuda Técnica Identificada
-- **Refactorización**: Componentes de más de 300 líneas necesitan división
-- **Tipos TypeScript**: Mejora de tipos en algunos módulos
-- **Testing**: Aumentar cobertura de tests automatizados
-- **Error Boundaries**: Implementación en componentes críticos
-- **Bundle Splitting**: División más granular del código
-
-## Integración con Servicios Externos
-
-### Resend Email Service
-- **Configuración**: API key y dominio verificado
-- **Templates**: Emails HTML responsive
-- **Tracking**: Seguimiento de entregas y aperturas
-- **Límites**: Control de rate limiting
-
-### Supabase Backend
-- **Database**: PostgreSQL con extensiones
-- **Auth**: Autenticación JWT completa
-- **Storage**: Almacenamiento de archivos (futuro)
-- **Edge Functions**: Lógica serverless
-- **Real-time**: Subscripciones en tiempo real (futuro)
-
-## Convenciones de Código
-
-### Naming Conventions
-- **Componentes**: PascalCase (`UserManagementTab`)
-- **Hooks**: camelCase con prefijo 'use' (`useUserManagement`)
-- **Variables**: camelCase (`isUserActive`)
-- **Constantes**: UPPER_SNAKE_CASE (`RESEND_API_KEY`)
-- **Archivos**: kebab-case (`user-management-tab.tsx`)
-- **Tipos**: PascalCase (`UserInvitation`)
-
-### Estructura de Archivos
-- **Un componente por archivo**: Máximo 300 líneas
-- **Index files**: Para exports organizados
-- **Co-location**: Archivos relacionados juntos
-- **Separación de concerns**: UI, lógica, tipos separados
-
-### Patrones de Código
-- **Hooks personalizados**: Para lógica reutilizable
-- **Componentes funcionales**: Solo con hooks
-- **Error handling**: Try-catch en operaciones críticas
-- **Loading states**: Indicadores de carga consistentes
-
-## Troubleshooting Común
-
-### Problemas de Build
-1. **Dependencias**: Verificar versiones compatibles
-2. **Tipos TypeScript**: Resolver conflictos de tipos
-3. **Import paths**: Verificar rutas de importación
-4. **Bundle size**: Optimizar imports grandes
-
-### Problemas de Base de Datos
-1. **RLS Policies**: Verificar políticas de seguridad
-2. **Migraciones**: Ejecutar migraciones pendientes
-3. **Conexiones**: Verificar límites de conexiones
-4. **Performance**: Optimizar queries lentas
-
-### Problemas de Email
-1. **API Key**: Verificar configuración de Resend
-2. **Dominio**: Confirmar verificación del dominio
-3. **Rate Limits**: Verificar límites de envío
-4. **Templates**: Validar HTML de emails
-
-### Debugging Tools
-- **React Developer Tools**: Debug de componentes
-- **React Query DevTools**: Debug de cache y queries
-- **Supabase Dashboard**: Logs y métricas
-- **Network Tab**: Análisis de requests
-- **Console Logs**: Logs estructurados por módulo
-
-## Métricas y KPIs
-
-### Métricas Técnicas
-- **Uptime**: > 99.9%
-- **Response Time**: < 2s promedio
-- **Error Rate**: < 0.1%
-- **Bundle Size**: < 2MB inicial
-
-### Métricas de Usuario
-- **User Engagement**: Tiempo en aplicación
-- **Feature Adoption**: Uso de nuevas funcionalidades
-- **User Satisfaction**: Feedback y reportes
-- **Support Tickets**: Reducción de problemas reportados
-
-## Documentación de APIs
-
-### Supabase Edge Functions
+#### Schema de Validación
 ```typescript
-// Ejemplo de llamada a función de invitación
+photographicSet: z.array(z.object({
+  fileName: z.string().min(1, 'El nombre del archivo es requerido'),
+  category: z.enum(['izquierdo', 'derecho', 'frontal', 'trasero', 'interior', 'motor'])
+})).refine((value) => value.length > 0, {
+  message: "Debes tomar al menos 1 fotografía para el set fotográfico.",
+})
+```
+
+### Hooks de Inspección
+
+#### useServiceInspection
+Hook principal que coordina todo el flujo de inspección:
+- Obtención de datos del servicio
+- Generación de PDF con progreso
+- Envío de email automático
+- Actualización de estado del servicio
+- Limpieza de fotos del localStorage
+
+#### useInspectionPDF
+Manejo de generación de PDFs con progreso:
+- Validación de datos
+- Procesamiento de fotos
+- Generación progresiva
+- URLs de descarga
+- Limpieza de recursos
+
+#### useInspectionEmail
+Envío automático de inspecciones:
+- Validación de email del cliente
+- Envío con PDF adjunto
+- Manejo de errores
+- Confirmaciones de entrega
+
+## Generación de PDFs Mejorada
+
+### Procesamiento de Fotos
+```typescript
+// Función principal para set fotográfico
+export const addPhotographicSetSection = async (
+  doc: jsPDF, 
+  photographicSet: Array<{
+    fileName: string;
+    category: PhotoCategory;
+  }>, 
+  yPosition: number
+): Promise<number>
+```
+
+#### Características:
+- **Organización por categorías**: Fotos ordenadas según categorías definidas
+- **Compresión inteligente**: Reducción de tamaño para PDFs
+- **Layout responsive**: Adaptación automática de espacio
+- **Metadata**: Timestamps y información adicional
+- **Fallbacks**: Placeholders para fotos faltantes
+
+### Utilidades de Fotos
+
+#### PhotoProcessor
+- Validación de formatos de imagen
+- Compresión con calidad ajustable
+- Redimensionamiento automático
+- Conversión a formato base64
+
+#### PhotoStorage
+- Almacenamiento en localStorage
+- Gestión de memoria
+- Limpieza automática
+- Recuperación de fotos
+
+## Portal de Clientes
+
+### Arquitectura Independiente
+- Autenticación separada del sistema principal
+- Rutas específicas (`/portal/*`)
+- Contexto de usuario independiente
+- API calls específicas para clientes
+
+### Componentes Principales
+- `PortalLayout`: Layout específico del portal
+- `PortalDashboard`: Dashboard personalizado
+- `PortalRequestService`: Solicitud de servicios
+- `PortalServices`: Historial de servicios
+- `PortalInvoices`: Facturas del cliente
+
+## Sistema de Usuarios con Invitaciones
+
+### Flujo de Invitaciones
+1. **Creación**: Admin crea usuario con email
+2. **Pre-registro**: Perfil creado en estado 'pending'
+3. **Invitación**: Edge function envía email automático
+4. **Seguimiento**: Estado actualizado a 'sent'
+5. **Registro**: Usuario completa información
+6. **Activación**: Estado cambia a 'accepted'
+
+### Edge Function: send-user-invitation
+```typescript
+// Envío de invitaciones por email
 const { data, error } = await supabase.functions.invoke('send-user-invitation', {
   body: {
     userId: 'uuid',
@@ -448,14 +225,233 @@ const { data, error } = await supabase.functions.invoke('send-user-invitation', 
 });
 ```
 
-### React Query Patterns
+### Estados de Invitación
+- `pending`: Invitación creada, no enviada
+- `sent`: Email enviado exitosamente
+- `accepted`: Usuario completó registro
+- `expired`: Invitación venció sin usar
+
+## Hooks Especializados por Módulo
+
+### Servicios
+- `useServices`: CRUD completo con cache
+- `useServiceMutations`: Operaciones de modificación
+- `useServiceTransformer`: Transformación de datos
+- `useServiceFormData`: Manejo de formularios
+- `useServiceFormValidation`: Validaciones específicas
+
+### Operadores
+- `useOperatorService`: Servicio específico del operador
+- `useOperatorServices`: Lista de servicios asignados
+- `useOperatorServicesTabs`: Gestión de pestañas
+
+### Portal
+- `useClientServices`: Servicios del cliente autenticado
+- `useClientInvoices`: Facturas del cliente
+- `useServiceRequest`: Solicitud de nuevos servicios
+
+### Configuraciones
+- `useUserManagement`: Gestión completa de usuarios
+- `useSettings`: Configuración general
+- `useSystemSettings`: Configuraciones del sistema
+
+## Validaciones con Zod
+
+### Esquemas Principales
 ```typescript
-// Patrón estándar para queries
-const { data, isLoading, error } = useQuery({
-  queryKey: ['users', filters],
-  queryFn: () => fetchUsers(filters),
-  staleTime: 5 * 60 * 1000, // 5 minutos
+// Inspección con set fotográfico unificado
+export const inspectionFormSchema = z.object({
+  equipment: z.array(z.string()).min(1),
+  vehicleObservations: z.string().optional(),
+  operatorSignature: z.string().min(1),
+  clientSignature: z.string().optional(),
+  clientName: z.string().optional(),
+  photographicSet: z.array(z.object({
+    fileName: z.string().min(1),
+    category: z.enum(['izquierdo', 'derecho', 'frontal', 'trasero', 'interior', 'motor'])
+  })).min(1, "Debes tomar al menos 1 fotografía")
 });
 ```
 
-Esta documentación se mantendrá actualizada con cada nueva funcionalidad implementada en el sistema.
+## Edge Functions
+
+### Funciones Implementadas
+- `send-inspection-email`: Envío de inspecciones con PDF
+- `send-user-invitation`: Sistema de invitaciones
+- `send-invoice-email`: Envío de facturas
+- `send-operator-notification`: Notificaciones a operadores
+- `generate-backup`: Respaldos automáticos
+
+### Configuración de Email
+- **Proveedor**: Resend API
+- **Dominio**: `gruas5norte.cl`
+- **Remitente**: `noreply@gruas5norte.cl`
+- **Templates**: HTML responsive
+
+## Performance y Optimización
+
+### Optimizaciones Implementadas
+- Lazy loading de componentes pesados
+- Memoización con React.memo
+- Debounce en búsquedas
+- Paginación en listados
+- Cache inteligente con React Query
+- Compresión de imágenes
+- Bundle splitting
+
+### Métricas de Performance
+- Time to Interactive < 3s
+- First Contentful Paint < 1.5s
+- Cumulative Layout Shift < 0.1
+- Bundle size optimizado
+
+## Seguridad
+
+### Medidas de Seguridad
+- Row Level Security completo
+- Validación en cliente y servidor
+- Sanitización de datos
+- Tokens JWT seguros
+- HTTPS obligatorio
+- Funciones de seguridad 'SECURITY DEFINER'
+
+### Sistema de Invitaciones Seguro
+- Validación de email y unicidad
+- Tokens seguros en enlaces
+- Expiración controlada
+- Dominio verificado
+
+## PWA (Progressive Web App)
+
+### Funcionalidades PWA
+- Service Worker con cache inteligente
+- Manifest para instalación
+- Soporte offline básico
+- Notificaciones push (futuro)
+
+### Componentes PWA
+- `PWAWrapper`: Contenedor principal
+- `InstallPrompt`: Prompt de instalación
+- `UpdateNotification`: Notificaciones de actualización
+- `ConnectionStatus`: Estado de conexión
+
+## Testing
+
+### Estrategia de Testing
+- Unit tests para utilidades críticas
+- Integration tests para flujos principales
+- E2E tests para casos de uso críticos
+- Testing de Edge Functions
+
+## Deployment
+
+### Variables de Entorno
+```bash
+# Supabase
+SUPABASE_URL=https://tu-proyecto.supabase.co
+SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiI...
+SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiI...
+
+# Email
+RESEND_API_KEY=re_...
+
+# Aplicación
+SITE_URL=https://tu-dominio.com
+```
+
+### Configuración de Producción
+- Build optimizado con Vite
+- Compresión gzip
+- CDN para assets
+- Health checks
+- Variables seguras
+
+## Monitoreo
+
+### Métricas Trackeadas
+- Errores de aplicación con contexto
+- Performance de queries
+- Tiempo de respuesta de funciones
+- Uso de recursos
+- Estados de invitaciones
+
+### Logs Estructurados
+- Errores categorizados por módulo
+- Eventos de auditoría
+- Performance metrics
+- Logs de Edge Functions con contexto
+
+## Funcionalidades Recientes
+
+### Set Fotográfico Unificado (v2.0)
+- Migración de 3 sets independientes a 1 unificado
+- 6 categorías específicas de fotos
+- Interfaz por pestañas mejorada
+- Validación simplificada (mínimo 1 foto)
+- Integración completa con PDFs
+
+### Sistema de Invitaciones
+- Pre-registro de usuarios
+- Emails automáticos con plantillas HTML
+- Control de estados en tiempo real
+- Reenvío de invitaciones
+- Integración con Resend API
+
+### Portal de Clientes Avanzado
+- Autenticación independiente
+- Dashboard personalizado
+- Solicitud de servicios integrada
+- Acceso a inspecciones completas
+
+## Roadmap Técnico
+
+### Próximas Implementaciones
+1. **WebSockets**: Updates en tiempo real
+2. **Push Notifications**: Notificaciones nativas
+3. **Offline-first**: Funcionalidad completa sin conexión
+4. **Multi-tenancy**: Soporte múltiples empresas
+5. **Advanced Analytics**: Dashboard analítico
+6. **Mobile App**: Aplicación nativa
+7. **API REST**: API pública para integraciones
+
+### Deuda Técnica
+- Refactorización de componentes > 300 líneas
+- Mejora de tipos TypeScript
+- Aumento de cobertura de tests
+- Implementación de Error Boundaries
+- Bundle splitting más granular
+
+## Convenciones de Código
+
+### Naming Conventions
+- **Componentes**: PascalCase (`PhotographicSet`)
+- **Hooks**: camelCase con 'use' (`useServiceInspection`)
+- **Variables**: camelCase (`isPhotoValid`)
+- **Constantes**: UPPER_SNAKE_CASE (`PHOTO_CATEGORIES`)
+- **Archivos**: kebab-case (`photographic-set.tsx`)
+- **Tipos**: PascalCase (`PhotoCategory`)
+
+### Patrones Arquitectónicos
+- Hooks personalizados para lógica reutilizable
+- Componentes funcionales únicamente
+- Error handling con try-catch en operaciones críticas
+- Loading states consistentes
+- Separación clara de responsabilidades
+
+## Debugging y Troubleshooting
+
+### Tools de Debug
+- React Developer Tools
+- React Query DevTools
+- Supabase Dashboard
+- Network Analysis
+- Console logs estructurados
+
+### Problemas Comunes y Soluciones
+1. **Tipos TypeScript**: Verificar compatibilidad de tipos
+2. **RLS Policies**: Revisar políticas de seguridad
+3. **Email Delivery**: Validar configuración Resend
+4. **Photo Processing**: Verificar formatos y tamaños
+5. **Cache Issues**: Invalidar queries de React Query
+
+Esta documentación se mantiene actualizada con cada release del sistema.

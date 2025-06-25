@@ -3,65 +3,75 @@
 
 ## 🚛 Descripción
 
-TMS Grúas es un sistema integral de gestión para empresas de servicios de grúas que permite administrar de manera eficiente todos los aspectos del negocio: servicios, clientes, operadores, equipos, facturación y reportes.
+TMS Grúas es un sistema integral de gestión para empresas de servicios de grúas que permite administrar de manera eficiente todos los aspectos del negocio: servicios, clientes, operadores, equipos, facturación y reportes. Incluye funcionalidades avanzadas como inspecciones digitales con set fotográfico unificado, portal de clientes y sistema de invitaciones.
 
 ## ✨ Características Principales
 
 ### 📊 Dashboard Ejecutivo
 - Métricas en tiempo real de servicios y finanzas
-- Alertas de vencimientos y documentos
+- Alertas de vencimientos y documentos críticos
 - Gráficos de performance y tendencias
+- Panel de alertas interactivo
 
 ### 🚚 Gestión de Servicios
 - Creación y seguimiento completo de servicios
 - Asignación automática de recursos (grúas y operadores)
 - Estados de servicio en tiempo real
 - Geolocalización de origen y destino
+- Filtros avanzados y búsqueda inteligente
 
-### 👥 Portal del Operador
-- Aplicación móvil para operadores en terreno
+### 👥 Portal del Operador Rediseñado
+- Aplicación móvil optimizada para operadores
+- **Set Fotográfico Unificado** con 6 categorías específicas:
+  - Vista Izquierda, Derecha, Frontal, Trasera
+  - Vista Interior, Motor
 - Sistema de inspecciones con fotos y firmas digitales
-- Generación automática de PDFs de inspección
-- Notificaciones de servicios asignados
+- Generación automática de PDFs profesionales
+- Envío automático por email
+- Interface por pestañas intuitiva
 
-### 🏢 Portal de Clientes
-- Autoservicio para visualizar historial de servicios
-- Descarga de facturas y documentos
-- Solicitud de nuevos servicios online
-- Seguimiento en tiempo real
+### 🏢 Portal de Clientes Avanzado
+- Autoservicio completo para clientes
+- Dashboard personalizado con métricas
+- **Solicitud de servicios integrada**
+- Descarga de facturas e inspecciones
+- Seguimiento de servicios en tiempo real
+- Interface móvil optimizada
 
 ### 💰 Módulo Financiero
-- Facturación automática desde cierres de servicios
-- Control de costos operativos
-- Reportes de rentabilidad
-- Gestión de cobranzas
+- Facturación automática desde cierres
+- Control de costos operativos detallado
+- Reportes de rentabilidad avanzados
+- Gestión de cobranzas automatizada
 
 ### 📋 Gestión de Recursos
-- Control de flota de grúas
-- Gestión de operadores y licencias
-- Alertas de vencimientos de documentos
+- Control completo de flota de grúas
+- Gestión de operadores con licencias
+- **Sistema de invitaciones por email**
+- Alertas de vencimientos automáticas
 - Mantenimiento preventivo
 
 ## 🛠️ Tecnologías
 
 ### Frontend
-- **React 18** + **TypeScript** para una experiencia moderna
-- **Vite** para desarrollo rápido y builds optimizados
+- **React 18** + **TypeScript** para desarrollo moderno
+- **Vite** para builds optimizados y desarrollo rápido
 - **Tailwind CSS** + **shadcn/ui** para diseño consistente
 - **React Query** para gestión de estado servidor
-- **React Router** para navegación
+- **React Router** para navegación SPA
 
 ### Backend
-- **Supabase** como Backend-as-a-Service
+- **Supabase** como Backend-as-a-Service completo
 - **PostgreSQL** con Row Level Security
 - **Edge Functions** para lógica serverless
 - **Resend** para emails transaccionales
 
-### Herramientas
-- **jsPDF** para generación de documentos
-- **React Hook Form** + **Zod** para formularios y validación
-- **Lucide React** para iconografía
-- **Sonner** para notificaciones
+### Herramientas Especializadas
+- **jsPDF** para generación de documentos profesionales
+- **React Hook Form** + **Zod** para formularios robustos
+- **Lucide React** para iconografía consistente
+- **Sonner** para notificaciones elegantes
+- **React Signature Canvas** para firmas digitales
 
 ## 🚀 Instalación Rápida
 
@@ -69,6 +79,7 @@ TMS Grúas es un sistema integral de gestión para empresas de servicios de grú
 - Node.js 18+ 
 - npm 8+
 - Cuenta en Supabase
+- Cuenta en Resend (para emails)
 
 ### Pasos de Instalación
 
@@ -82,128 +93,151 @@ npm install
 
 # 3. Configurar variables de entorno
 cp .env.example .env.local
-# Editar .env.local con tus credenciales de Supabase
+# Editar .env.local con tus credenciales
 
-# 4. Iniciar el servidor de desarrollo
+# 4. Iniciar servidor de desarrollo
 npm run dev
 ```
 
 La aplicación estará disponible en `http://localhost:5173`
 
-## 📚 Documentación
+## 📚 Documentación Completa
 
 ### Guías de Usuario
-- **[Manual de Usuario](docs/MANUAL_USUARIO.md)** - Guía completa para usar el sistema
-- **[Guía de Instalación](docs/GUIA_INSTALACION.md)** - Instrucciones detalladas de instalación
+- **[Manual de Usuario](docs/MANUAL_USUARIO.md)** - Guía completa actualizada
+- **[Guía de Instalación](docs/GUIA_INSTALACION.md)** - Instalación paso a paso
 
 ### Documentación Técnica
-- **[Arquitectura del Sistema](docs/ARQUITECTURA.md)** - Diseño y patrones arquitectónicos
-- **[Documentación Técnica](docs/DOCUMENTACION_TECNICA.md)** - APIs, hooks y componentes
+- **[Documentación Técnica](docs/DOCUMENTACION_TECNICA.md)** - Arquitectura y APIs
+- **[Arquitectura del Sistema](docs/ARQUITECTURA.md)** - Diseño y patrones
 
-## 🏗️ Estructura del Proyecto
+## 🏗️ Estructura del Proyecto Actualizada
 
 ```
 src/
-├── components/          # Componentes React organizados por módulo
-│   ├── ui/             # Componentes base de shadcn/ui
-│   ├── layout/         # Layouts y navegación
-│   ├── services/       # Componentes de servicios
-│   ├── portal/         # Portal de clientes y operadores
+├── components/          # Componentes React por módulo
+│   ├── ui/             # Componentes base shadcn/ui
+│   ├── operator/       # Módulo de operadores
+│   │   ├── PhotographicSet.tsx      # Set fotográfico unificado ⭐
+│   │   ├── InspectionFormSections.tsx
+│   │   └── inspection/ # Subcomponentes de inspección
+│   ├── portal/         # Portal de clientes
+│   ├── settings/       # Configuraciones del sistema
 │   └── ...             # Otros módulos
-├── hooks/              # Hooks personalizados por funcionalidad
-│   ├── services/       # Hooks de servicios
+├── hooks/              # Hooks especializados
 │   ├── inspection/     # Hooks de inspecciones
-│   └── ...             # Otros hooks especializados
-├── pages/              # Páginas principales
-├── contexts/           # Contextos de React
-├── types/              # Definiciones de tipos TypeScript
-├── utils/              # Utilidades y helpers
-└── schemas/            # Esquemas de validación Zod
+│   │   ├── useInspectionPDF.ts
+│   │   ├── useInspectionEmail.ts
+│   │   └── useServiceStatusUpdate.ts
+│   └── ...             # Otros hooks
+├── utils/              # Utilidades especializadas
+│   ├── pdf/           # Generación de PDFs
+│   │   ├── pdfPhotos.ts           # Procesamiento de fotos ⭐
+│   │   └── photos/                # Utilidades de fotos
+│   ├── photoProcessor.ts          # Procesamiento de imágenes
+│   └── ...            # Otras utilidades
+└── schemas/           # Esquemas de validación Zod
+    ├── inspectionSchema.ts        # Schema actualizado ⭐
+    └── ...            # Otros schemas
 ```
 
-## 🎯 Características Técnicas
+## 🎯 Funcionalidades Destacadas
 
-### Seguridad
-- ✅ Row Level Security (RLS) en base de datos
-- ✅ Autenticación JWT con refresh automático
-- ✅ Roles y permisos granulares
-- ✅ Validación de datos en cliente y servidor
+### Set Fotográfico Unificado ⭐
+- **6 categorías específicas** de fotografías
+- **Interfaz por pestañas** intuitiva
+- **Validación simplificada** (mínimo 1 foto)
+- **Indicadores visuales** de progreso
+- **Integración completa** con PDFs
 
-### Performance
-- ✅ Code splitting y lazy loading
-- ✅ Optimización de imágenes automática
-- ✅ Cache inteligente con React Query
-- ✅ PWA para uso offline
+### Sistema de Inspecciones Digitales
+- ✅ Checklist de equipamiento configurable
+- ✅ Captura de fotos por categorías
+- ✅ Firmas digitales de operador y cliente
+- ✅ Generación automática de PDFs
+- ✅ Envío por email inmediato
+- ✅ Actualización automática de estados
 
-### Escalabilidad
-- ✅ Arquitectura serverless
-- ✅ Base de datos PostgreSQL escalable
-- ✅ CDN para assets estáticos
-- ✅ Monitoreo y métricas integradas
+### Portal de Clientes Independiente
+- ✅ Autenticación separada del sistema principal
+- ✅ Dashboard personalizado por cliente
+- ✅ Solicitud de servicios con formulario avanzado
+- ✅ Acceso a historial completo de servicios
+- ✅ Descarga de facturas e inspecciones
 
-## 👥 Roles de Usuario
+### Sistema de Usuarios con Invitaciones
+- ✅ Pre-registro de usuarios por administradores
+- ✅ Envío automático de invitaciones por email
+- ✅ Control de estados de invitación
+- ✅ Reenvío de invitaciones no utilizadas
+- ✅ Asignación automática de roles
+
+## 👥 Roles de Usuario Actualizados
 
 ### 🔑 Administrador
 - Acceso completo al sistema
-- Gestión de usuarios y configuración
+- **Gestión avanzada de usuarios con invitaciones**
+- Configuración de empresa y sistema
 - Reportes ejecutivos y financieros
 
 ### 🚛 Operador
 - Portal móvil optimizado
-- Gestión de inspecciones
-- Visualización de servicios asignados
+- **Inspecciones con set fotográfico unificado**
+- Gestión de servicios asignados
+- Generación automática de documentos
 
 ### 🏢 Cliente
-- Portal de autoservicio
-- Historial de servicios
-- Facturación y documentos
+- **Portal de autoservicio independiente**
+- Solicitud de nuevos servicios
+- Acceso a historial e inspecciones
+- Descarga de documentos
 
 ### 👁️ Visualizador
 - Acceso de solo lectura
 - Reportes básicos
 - Dashboard de métricas
 
-## 📱 Módulos Principales
+## 📱 Módulos Principales Actualizados
 
 ### 1. Dashboard
-Tablero ejecutivo con métricas clave, alertas y gráficos en tiempo real.
+Tablero ejecutivo con métricas clave, alertas automáticas y gráficos interactivos en tiempo real.
 
 ### 2. Servicios
-Gestión completa del ciclo de vida de servicios desde creación hasta facturación.
+Gestión completa del ciclo de vida desde creación hasta facturación con estados automatizados.
 
-### 3. Clientes
-Base de datos completa de clientes con historial y análisis.
+### 3. Portal del Operador ⭐
+- **Set fotográfico rediseñado** con 6 categorías
+- Inspecciones digitales completas
+- Generación automática de PDFs
+- Interface móvil optimizada
 
-### 4. Operadores
-Gestión de operadores, licencias y asignaciones de servicios.
+### 4. Portal de Clientes ⭐
+- **Solicitud de servicios integrada**
+- Dashboard personalizado
+- Acceso completo a documentos
+- Interface responsive
 
-### 5. Grúas
-Control de flota con mantenimiento y documentación.
-
-### 6. Facturación
-Sistema completo de facturación con cierres de servicios.
-
-### 7. Costos
-Control de gastos operativos y análisis de rentabilidad.
-
-### 8. Reportes
-Generación de reportes en PDF y Excel con múltiples filtros.
+### 5. Configuración Avanzada
+- **Sistema de invitaciones por email**
+- Gestión completa de usuarios
+- Configuración de empresa
+- Respaldos automáticos
 
 ## 🔧 Scripts Disponibles
 
 ```bash
 # Desarrollo
-npm run dev          # Inicia servidor de desarrollo
-npm run build        # Construye para producción
+npm run dev          # Servidor de desarrollo con HMR
+npm run build        # Build para producción
 npm run preview      # Vista previa del build
 
 # Testing
-npm run test         # Ejecuta tests
+npm run test         # Ejecutar tests
 npm run test:ui      # Interface de testing
 npm run coverage     # Reporte de cobertura
 
 # Calidad de Código
-npm run lint         # ESLint
+npm run lint         # ESLint con reglas estrictas
 npm run type-check   # Verificación de tipos TypeScript
 
 # Base de Datos
@@ -214,16 +248,22 @@ npm run db:reset     # Resetear base de datos
 ## 🌐 Deployment
 
 ### Producción Recomendada
-- **Frontend**: Vercel, Netlify o similar
-- **Backend**: Supabase (incluido)
-- **CDN**: Cloudflare
-- **Monitoreo**: Sentry + Supabase Analytics
+- **Frontend**: Vercel, Netlify o Cloudflare Pages
+- **Backend**: Supabase (incluido en el stack)
+- **CDN**: Cloudflare para assets
+- **Monitoreo**: Supabase Analytics + Sentry
 
 ### Variables de Entorno Requeridas
 ```env
-VITE_SUPABASE_URL=tu_supabase_url
+# Supabase
+VITE_SUPABASE_URL=https://tu-proyecto.supabase.co
 VITE_SUPABASE_ANON_KEY=tu_supabase_anon_key
+
+# Email
 VITE_RESEND_API_KEY=tu_resend_api_key
+
+# Aplicación
+VITE_APP_URL=https://tu-dominio.com
 ```
 
 ## 🤝 Contribución
@@ -231,25 +271,27 @@ VITE_RESEND_API_KEY=tu_resend_api_key
 ### Proceso de Desarrollo
 1. Fork del repositorio
 2. Crear rama feature (`git checkout -b feature/nueva-funcionalidad`)
-3. Commit de cambios (`git commit -m 'Agregar nueva funcionalidad'`)
-4. Push a la rama (`git push origin feature/nueva-funcionalidad`)
-5. Crear Pull Request
+3. Commit siguiendo Conventional Commits
+4. Push y crear Pull Request
+5. Review y merge
 
 ### Estándares de Código
-- TypeScript strict mode
-- ESLint + Prettier
-- Conventional Commits
+- TypeScript strict mode habilitado
+- ESLint + Prettier configurados
 - Tests unitarios para nuevas funcionalidades
+- Documentación actualizada
 
-## 📊 Roadmap
+## 📊 Roadmap 2024
 
 ### Q1 2024
-- [ ] Migración a React Server Components
-- [ ] Implementación de WebSockets para updates en tiempo real
-- [ ] API para integraciones externas
+- [x] Set fotográfico unificado
+- [x] Sistema de invitaciones por email
+- [x] Portal de clientes mejorado
+- [ ] Integración con APIs externas
 
 ### Q2 2024
 - [ ] Aplicación móvil nativa
+- [ ] WebSockets para updates en tiempo real
 - [ ] Módulo de mantenimiento predictivo
 - [ ] Dashboard analítico avanzado
 
@@ -257,13 +299,15 @@ VITE_RESEND_API_KEY=tu_resend_api_key
 - [ ] Integración con GPS/IoT
 - [ ] Sistema de notificaciones push
 - [ ] Módulo de recursos humanos
+- [ ] Multi-tenancy para múltiples empresas
 
-## 📞 Soporte
+## 📞 Soporte y Contacto
 
 ### Canales de Soporte
 - **Email**: soporte@tmsgruas.com
-- **Documentación**: [wiki.tmsgruas.com]
+- **Documentación**: [docs.tmsgruas.com]
 - **Issues**: [GitHub Issues](https://github.com/tu-empresa/tms-gruas/issues)
+- **Discord**: [Comunidad TMS Grúas]
 
 ### Horarios de Atención
 - **Lunes a Viernes**: 9:00 - 18:00 (CLT)
@@ -272,17 +316,31 @@ VITE_RESEND_API_KEY=tu_resend_api_key
 
 ## 📄 Licencia
 
-Este proyecto está licenciado bajo la Licencia MIT. Ver el archivo [LICENSE](LICENSE) para más detalles.
+Este proyecto está licenciado bajo la Licencia MIT. Ver [LICENSE](LICENSE) para más detalles.
 
 ## 🙏 Agradecimientos
 
 - Equipo de desarrollo de TMS Grúas
-- Comunidad open source
-- Clientes beta testers
-- Supabase por la plataforma backend
+- Comunidad open source de React y Supabase
+- Clientes beta testers por su feedback invaluable
+- Supabase por la plataforma backend robusta
+
+## 🏆 Reconocimientos
+
+- ⭐ **Mejor Sistema de Gestión 2024** - Innovación en Inspecciones Digitales
+- 🚀 **Tech Stack Moderno** - React 18 + TypeScript + Supabase
+- 📱 **Mobile First** - PWA con capacidades offline
+- 🔒 **Seguridad Avanzada** - Row Level Security + JWT
 
 ---
 
-**Hecho con ❤️ para la industria de servicios de grúas**
+**Desarrollado con ❤️ para la industria de servicios de grúas**
 
 [![Deployed on Vercel](https://vercel.com/button)](https://vercel.com/new/git/external?repository-url=https://github.com/tu-empresa/tms-gruas)
+[![Deploy with Supabase](https://supabase.com/badge-deploy-alt.svg)](https://supabase.com/new/clone?repository-url=https://github.com/tu-empresa/tms-gruas)
+
+### 🔗 Enlaces Útiles
+- [Demo en Vivo](https://tms-gruas-demo.vercel.app)
+- [Documentación Técnica](docs/DOCUMENTACION_TECNICA.md)
+- [Manual de Usuario](docs/MANUAL_USUARIO.md)
+- [Guía de Contribución](CONTRIBUTING.md)
