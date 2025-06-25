@@ -48,7 +48,11 @@ export default function App() {
                 <Routes>
                   <Route path="/auth" element={<Auth />} />
 
-                  <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
+                  <Route path="/" element={
+                    <ProtectedRoute>
+                      <Layout />
+                    </ProtectedRoute>
+                  }>
                     <Route index element={<Dashboard />} />
                     <Route path="services" element={<Services />} />
                     <Route path="clients" element={<Clients />} />
@@ -63,11 +67,19 @@ export default function App() {
                     <Route path="calendar" element={<Calendar />} />
                   </Route>
 
-                  <Route path="/operator" element={<ProtectedRoute requireRole="operator"><OperatorLayout /></ProtectedRoute>}>
+                  <Route path="/operator" element={
+                    <ProtectedRoute requireRole="operator">
+                      <OperatorLayout />
+                    </ProtectedRoute>
+                  }>
                     <Route index element={<OperatorDashboard />} />
                   </Route>
 
-                  <Route path="/portal" element={<ProtectedRoute requireRole="client"><PortalLayout /></ProtectedRoute>}>
+                  <Route path="/portal" element={
+                    <ProtectedRoute requireRole="client">
+                      <PortalLayout />
+                    </ProtectedRoute>
+                  }>
                     <Route index element={<PortalDashboard />} />
                     <Route path="services" element={<PortalServices />} />
                     <Route path="invoices" element={<PortalInvoices />} />

@@ -20,8 +20,10 @@ const Auth = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Only redirect when we have both auth user and profile user
+    // Only redirect when we have both auth user and profile user and are not loading
     if (!authLoading && !profileLoading && authUser && profileUser) {
+      console.log('Redirecting authenticated user:', profileUser.role);
+      
       if (profileUser.role === 'client') {
         navigate('/portal', { replace: true });
       } else if (profileUser.role === 'operator') {
@@ -34,22 +36,29 @@ const Auth = () => {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (loading) return;
+    
     setLoading(true);
     
     try {
+      console.log('Attempting login...');
+      
       const { error } = await supabase.auth.signInWithPassword({
         email,
         password
       });
       
       if (error) {
+        console.error('Login error:', error);
         toast.error('Error al iniciar sesión', {
           description: error.message
         });
       } else {
+        console.log('Login successful');
         toast.success('Inicio de sesión exitoso');
       }
     } catch (error: any) {
+      console.error('Login exception:', error);
       toast.error('Error al iniciar sesión', {
         description: error.message
       });
@@ -60,9 +69,13 @@ const Auth = () => {
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (loading) return;
+    
     setLoading(true);
     
     try {
+      console.log('Attempting signup...');
+      
       const { error } = await supabase.auth.signUp({
         email,
         password,
@@ -72,15 +85,18 @@ const Auth = () => {
       });
       
       if (error) {
+        console.error('Signup error:', error);
         toast.error('Error en el registro', {
           description: error.message
         });
       } else {
+        console.log('Signup successful');
         toast.success('Registro exitoso', {
           description: 'Por favor, revisa tu correo para confirmar tu cuenta.'
         });
       }
     } catch (error: any) {
+      console.error('Signup exception:', error);
       toast.error('Error en el registro', {
         description: error.message
       });
@@ -88,6 +104,18 @@ const Auth = () => {
       setLoading(false);
     }
   };
+
+  // Show loading while checking auth state
+  if (authLoading || profileLoading) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-gray-900 text-white">
+        <div className="text-center">
+          <div className="mb-4">Verificando autenticación...</div>
+          <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin mx-auto"></div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <AuthBackground>

@@ -2,7 +2,7 @@
 import * as React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUser } from '@/contexts/UserContext';
-import { Navigate, useLocation } from 'react-router-dom';
+import { Navigate } from 'react-router-dom';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -13,10 +13,6 @@ interface ProtectedRouteProps {
 const ProtectedRoute = ({ children, allowedRoles, requireRole }: ProtectedRouteProps) => {
   const { user: authUser, loading: authLoading } = useAuth();
   const { user: profileUser, loading: profileLoading } = useUser();
-  const location = useLocation();
-
-  // Combine allowedRoles and requireRole for backward compatibility
-  const effectiveAllowedRoles = allowedRoles || (requireRole ? [requireRole] : []);
 
   // Show loading while authenticating
   if (authLoading || profileLoading) {
@@ -35,43 +31,20 @@ const ProtectedRoute = ({ children, allowedRoles, requireRole }: ProtectedRouteP
     return <Navigate to="/auth" replace />;
   }
 
-  // If no profile user, redirect to auth (something is wrong)
+  // If we have auth user but no profile, something is wrong - redirect to auth
   if (!profileUser) {
     return <Navigate to="/auth" replace />;
   }
 
-  const userRole = profileUser.role;
-  const isClientPortalRoute = location.pathname.startsWith('/portal');
-  const isOperatorPortalRoute = location.pathname.startsWith('/operator');
-
-  // Handle role-based routing
-  if (userRole === 'client') {
-    if (!isClientPortalRoute) {
+  // Simple role-based access control
+  const effectiveAllowedRoles = allowedRoles || (requireRole ? [requireRole] : []);
+  
+  if (effectiveAllowedRoles.length > 0 && !effectiveAllowedRoles.includes(profileUser.role)) {
+    // Redirect based on user role
+    if (profileUser.role === 'client') {
       return <Navigate to="/portal" replace />;
-    }
-  } else if (isClientPortalRoute) {
-    return <Navigate to="/" replace />;
-  }
-
-  // Check specific role requirements
-  if (effectiveAllowedRoles.length > 0 && !effectiveAllowedRoles.includes(userRole)) {
-    const redirectTo = userRole === 'client' ? '/portal' : '/';
-    return <Navigate to={redirectTo} replace />;
-  }
-
-  // Handle operator portal access
-  if (userRole === 'operator' && isOperatorPortalRoute) {
-    // Allow access
-  } else if (userRole !== 'operator' && isOperatorPortalRoute) {
-    return <Navigate to="/" replace />;
-  }
-
-  // Handle root path redirections
-  if (location.pathname === '/') {
-    if (userRole === 'client') {
-      return <Navigate to="/portal" replace />;
-    } else if (userRole === 'operator') {
-      return <Navigate to="/operator" replace />;
+    } else {
+      return <Navigate to="/" replace />;
     }
   }
 

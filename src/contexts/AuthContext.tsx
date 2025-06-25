@@ -8,7 +8,6 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   signOut: () => Promise<void>;
-  forceRefresh: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -21,18 +20,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     let mounted = true;
 
-    const initializeAuth = async () => {
+    // Get initial session
+    const getInitialSession = async () => {
       try {
-        // Get initial session
         const { data: { session: initialSession } } = await supabase.auth.getSession();
         
         if (mounted) {
           setSession(initialSession);
           setUser(initialSession?.user ?? null);
-          setLoading(false);
         }
       } catch (error) {
         console.error('Error getting initial session:', error);
+      } finally {
         if (mounted) {
           setLoading(false);
         }
@@ -41,32 +40,32 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      (event, session) => {
         if (mounted) {
           console.log('Auth state change:', event);
           setSession(session);
           setUser(session?.user ?? null);
-          setLoading(false);
+          if (!loading) {
+            setLoading(false);
+          }
         }
       }
     );
 
-    initializeAuth();
+    getInitialSession();
 
     return () => {
       mounted = false;
       subscription.unsubscribe();
     };
-  }, []);
+  }, [loading]);
 
   const signOut = async () => {
     try {
-      setLoading(true);
       await supabase.auth.signOut();
-      // Clear local state
       setSession(null);
       setUser(null);
-      // Force navigation to auth page
+      // Force reload to clear any cached state
       window.location.href = '/auth';
     } catch (error) {
       console.error('Error signing out:', error);
@@ -74,18 +73,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setSession(null);
       setUser(null);
       window.location.href = '/auth';
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const forceRefresh = async () => {
-    try {
-      const { data: { session } } = await supabase.auth.refreshSession();
-      setSession(session);
-      setUser(session?.user ?? null);
-    } catch (error) {
-      console.error('Error refreshing session:', error);
     }
   };
 
@@ -94,7 +81,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     user,
     loading,
     signOut,
-    forceRefresh,
   };
 
   return (
