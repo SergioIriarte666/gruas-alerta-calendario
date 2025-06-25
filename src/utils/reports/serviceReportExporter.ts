@@ -92,7 +92,7 @@ export const exportServiceReport = async ({ format, services, settings, appliedF
       'Patente Vehículo': s.licensePlate || 'N/A',
       'Origen': s.origin,
       'Destino': s.destination,
-      'Patente Grúa': s.crane?.licensePlate || 'N/A',
+      'Patente Grúa': s.crane.licensePlate || 'N/A',
       'Estado': s.status,
       'Valor': s.value,
       'Observaciones': s.observations,
