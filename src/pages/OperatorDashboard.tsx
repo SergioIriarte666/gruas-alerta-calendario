@@ -1,18 +1,23 @@
+
 import { useUser } from '@/contexts/UserContext';
 import { Button } from '@/components/ui/button';
-import { RefreshCw, AlertCircle } from 'lucide-react';
-import { useOperatorServices } from '@/hooks/useOperatorServices';
+import { RefreshCw, AlertCircle, Clock, Play, CheckCircle } from 'lucide-react';
+import { useOperatorServicesTabs } from '@/hooks/useOperatorServicesTabs';
 import { AssignedServiceCard } from '@/components/operator/AssignedServiceCard';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useState } from 'react';
 
 const OperatorDashboard = () => {
   const { user } = useUser();
-  const { data: services, isLoading, error, refetch } = useOperatorServices(user?.id);
+  const { serviceTabs, isLoading, error, refetch } = useOperatorServicesTabs();
+  const [activeTab, setActiveTab] = useState('asignados');
 
   console.log('🏠 OperatorDashboard - Render state:', { 
     user: user ? { id: user.id, name: user.name, role: user.role, email: user.email } : 'no user',
-    servicesCount: services?.length || 0,
+    serviceTabs,
+    totalServices: serviceTabs.asignados.length + serviceTabs.activos.length + serviceTabs.completados.length,
     isLoading, 
     error: error?.message || 'no error'
   });
@@ -61,14 +66,16 @@ const OperatorDashboard = () => {
       </div>
     );
   }
+
+  const totalServices = serviceTabs.asignados.length + serviceTabs.activos.length + serviceTabs.completados.length;
   
-  if (!services || services.length === 0) {
+  if (totalServices === 0) {
     console.log('📭 Rendering no services state');
     return (
       <div className="text-center bg-slate-800 p-8 rounded-lg border border-slate-700">
-        <h2 className="text-xl font-semibold mb-2 text-white">No hay servicios asignados</h2>
+        <h2 className="text-xl font-semibold mb-2 text-white">No hay servicios</h2>
         <p className="text-gray-400 max-w-md mx-auto mb-4">
-          En este momento, no tienes ningún servicio de grúa pendiente o en progreso. Los nuevos servicios asignados aparecerán aquí.
+          En este momento, no tienes ningún servicio de grúa asignado. Los nuevos servicios asignados aparecerán aquí.
         </p>
         <div className="mt-4 p-4 bg-slate-700/50 rounded-lg">
           <p className="text-sm text-gray-400">
@@ -89,7 +96,7 @@ const OperatorDashboard = () => {
     );
   }
 
-  console.log('✅ Rendering services list:', services.length, 'services');
+  console.log('✅ Rendering services with tabs');
   
   return (
     <div className="space-y-8 animate-fade-in">
@@ -107,28 +114,114 @@ const OperatorDashboard = () => {
             )}
           </div>
         </div>
+        <Button 
+          onClick={handleRefresh} 
+          variant="ghost" 
+          size="sm"
+          className="text-gray-400 hover:text-white"
+        >
+          <RefreshCw className="w-4 h-4" />
+        </Button>
       </header>
       
       <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-xl font-semibold text-white">Tus Servicios Asignados</h2>
-          <div className="flex items-center gap-2">
-            <Badge className="bg-tms-green/20 text-tms-green border border-tms-green/30">
-              {services.length} servicio{services.length !== 1 ? 's' : ''}
-            </Badge>
-            <Button 
-              onClick={handleRefresh} 
-              variant="ghost" 
-              size="sm"
-              className="text-gray-400 hover:text-white"
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid w-full grid-cols-3 bg-slate-800 border border-slate-700">
+            <TabsTrigger 
+              value="asignados" 
+              className="data-[state=active]:bg-tms-green data-[state=active]:text-black text-gray-300 hover:text-white"
             >
-              <RefreshCw className="w-4 h-4" />
-            </Button>
-          </div>
-        </div>
-        {services.map(service => (
-          <AssignedServiceCard key={service.id} service={service} />
-        ))}
+              <Clock className="w-4 h-4 mr-2" />
+              Asignados
+              {serviceTabs.asignados.length > 0 && (
+                <Badge className="ml-2 bg-yellow-500/20 text-yellow-300 border border-yellow-500/30">
+                  {serviceTabs.asignados.length}
+                </Badge>
+              )}
+            </TabsTrigger>
+            <TabsTrigger 
+              value="activos" 
+              className="data-[state=active]:bg-tms-green data-[state=active]:text-black text-gray-300 hover:text-white"
+            >
+              <Play className="w-4 h-4 mr-2" />
+              Activos
+              {serviceTabs.activos.length > 0 && (
+                <Badge className="ml-2 bg-blue-500/20 text-blue-300 border border-blue-500/30">
+                  {serviceTabs.activos.length}
+                </Badge>
+              )}
+            </TabsTrigger>
+            <TabsTrigger 
+              value="completados" 
+              className="data-[state=active]:bg-tms-green data-[state=active]:text-black text-gray-300 hover:text-white"
+            >
+              <CheckCircle className="w-4 h-4 mr-2" />
+              Completados
+              {serviceTabs.completados.length > 0 && (
+                <Badge className="ml-2 bg-green-500/20 text-green-300 border border-green-500/30">
+                  {serviceTabs.completados.length}
+                </Badge>
+              )}
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="asignados" className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-semibold text-white">Servicios Asignados</h2>
+              <Badge className="bg-yellow-500/20 text-yellow-300 border border-yellow-500/30">
+                {serviceTabs.asignados.length} servicio{serviceTabs.asignados.length !== 1 ? 's' : ''}
+              </Badge>
+            </div>
+            {serviceTabs.asignados.length === 0 ? (
+              <div className="text-center py-8 text-gray-400">
+                <Clock className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                <p>No hay servicios asignados pendientes</p>
+              </div>
+            ) : (
+              serviceTabs.asignados.map(service => (
+                <AssignedServiceCard key={service.id} service={service} />
+              ))
+            )}
+          </TabsContent>
+
+          <TabsContent value="activos" className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-semibold text-white">Servicios Activos</h2>
+              <Badge className="bg-blue-500/20 text-blue-300 border border-blue-500/30">
+                {serviceTabs.activos.length} servicio{serviceTabs.activos.length !== 1 ? 's' : ''}
+              </Badge>
+            </div>
+            {serviceTabs.activos.length === 0 ? (
+              <div className="text-center py-8 text-gray-400">
+                <Play className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                <p>No hay servicios en progreso</p>
+              </div>
+            ) : (
+              serviceTabs.activos.map(service => (
+                <AssignedServiceCard key={service.id} service={service} />
+              ))
+            )}
+          </TabsContent>
+
+          <TabsContent value="completados" className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-semibold text-white">Servicios Completados</h2>
+              <Badge className="bg-green-500/20 text-green-300 border border-green-500/30">
+                {serviceTabs.completados.length} servicio{serviceTabs.completados.length !== 1 ? 's' : ''}
+              </Badge>
+            </div>
+            {serviceTabs.completados.length === 0 ? (
+              <div className="text-center py-8 text-gray-400">
+                <CheckCircle className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                <p>No hay servicios completados</p>
+              </div>
+            ) : (
+              serviceTabs.completados.map(service => (
+                <AssignedServiceCard key={service.id} service={service} />
+              ))
+            )}
+          </TabsContent>
+        </Tabs>
       </div>
 
       <footer className="text-center text-gray-500 text-sm pt-4">

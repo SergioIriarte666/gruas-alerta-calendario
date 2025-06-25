@@ -28,7 +28,7 @@ const fetchOperatorServices = async (userId: string): Promise<any[]> => {
 
     console.log('Found operator:', operatorData.id);
 
-    // Ahora obtener los servicios para este operador
+    // Ahora obtener los servicios para este operador - incluir todos los estados
     const { data: services, error } = await supabase
       .from('services')
       .select(`
@@ -39,7 +39,7 @@ const fetchOperatorServices = async (userId: string): Promise<any[]> => {
         operators (*)
       `)
       .eq('operator_id', operatorData.id)
-      .in('status', ['pending', 'in_progress'])
+      .in('status', ['pending', 'in_progress', 'completed'])
       .order('service_date', { ascending: true });
 
     if (error) {
