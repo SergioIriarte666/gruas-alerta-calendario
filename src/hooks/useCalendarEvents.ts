@@ -31,7 +31,7 @@ export const useCalendarEvents = () => {
     }
   };
 
-  const createEvent = async (eventData: Omit<CalendarEvent, 'id' | 'createdAt' | 'updatedAt'>) => {
+  const createEvent = async (eventData: Omit<CalendarEvent, 'id' | 'createdAt' | 'updatedAt'>): Promise<void> => {
     try {
       const { data, error } = await supabase
         .from('calendar_events')
@@ -53,16 +53,15 @@ export const useCalendarEvents = () => {
 
       if (error) {
         console.error('Error creating event:', error);
-        return null;
+        throw error;
       }
 
       // Use sanitization function for safe data processing
       const newEvent: CalendarEvent = sanitizeEventData(data);
       setEvents(prev => [...prev, newEvent]);
-      return newEvent;
     } catch (error) {
       console.error('Error creating event:', error);
-      return null;
+      throw error;
     }
   };
 
