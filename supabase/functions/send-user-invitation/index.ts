@@ -37,7 +37,7 @@ const handler = async (req: Request): Promise<Response> => {
     // Obtener datos de la empresa
     const companyData = await fetchCompanyData(supabase);
     const businessName = companyData.business_name || 'TMS Grúas';
-    const supportEmail = companyData.email || 'soporte@gruas5norte.cl';
+    const supportEmail = companyData.email || 'soporte@gruas5norte.com';
 
     // Traducir rol al español
     const roleLabel = translateRole(role);
@@ -61,7 +61,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Enviar el email
     const emailResponse = await sendInvitationEmail(resend, {
-      from: `${businessName} <onboarding@resend.dev>`,
+      from: `${businessName} <noreply@gruas5norte.com>`,
       to: [email],
       subject: `🎉 Invitación al sistema ${businessName} - Rol: ${roleLabel}`,
       html: emailHtml,

@@ -50,7 +50,7 @@ const handler = async (req: Request): Promise<Response> => {
     console.log("📎 PDF buffer creado, tamaño:", pdfBuffer.length, "bytes");
 
     const emailResponse = await resend.emails.send({
-      from: "Grúas 5 Norte <noreply@gruas5norte.cl>",
+      from: "Grúas 5 Norte <noreply@gruas5norte.com>",
       to: [inspectionData.clientEmail],
       subject: `Reporte de Inspección Pre-Servicio - ${inspectionData.folio}`,
       html: `
@@ -76,7 +76,7 @@ const handler = async (req: Request): Promise<Response> => {
             <div style="text-align: center; color: #6c757d; font-size: 14px;">
               <p><strong>Grúas 5 Norte</strong></p>
               <p>Teléfono: +56 52 2353533</p>
-              <p>Email: asistencia@gruas5norte.cl</p>
+              <p>Email: asistencia@gruas5norte.com</p>
               <p>Copiapo, Chile</p>
             </div>
           </div>

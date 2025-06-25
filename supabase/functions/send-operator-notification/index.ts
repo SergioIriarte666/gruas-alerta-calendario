@@ -57,7 +57,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     const companyName = companyData?.business_name || 'Grúas 5 Norte';
     const companyPhone = companyData?.phone || '';
-    const companyEmail = companyData?.email || 'contacto@gruas5norte.cl';
+    const companyEmail = companyData?.email || 'contacto@gruas5norte.com';
 
     // Formatear fecha
     const formattedDate = new Date(serviceDate).toLocaleDateString('es-CL', {
@@ -156,7 +156,7 @@ const handler = async (req: Request): Promise<Response> => {
     `;
 
     const emailResponse = await resend.emails.send({
-      from: `${companyName} <operaciones@gruas5norte.cl>`,
+      from: `${companyName} <operaciones@gruas5norte.com>`,
       to: [operatorEmail],
       subject: `🚛 Nuevo Servicio Asignado - Folio ${folio}`,
       html: emailHtml,
