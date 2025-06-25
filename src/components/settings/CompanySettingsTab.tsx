@@ -152,7 +152,7 @@ export const CompanySettingsTab = () => {
           <LogoUpload
             currentLogo={localSettings.logo}
             onLogoChange={handleLogoChange}
-            isUpdating={isLogoUpdating}
+            disabled={isLogoUpdating}
           />
         </CardContent>
       </Card>
