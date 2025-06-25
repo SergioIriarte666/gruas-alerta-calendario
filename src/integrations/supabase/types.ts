@@ -1108,6 +1108,10 @@ export type Database = {
         Args: { user_id?: string }
         Returns: Database["public"]["Enums"]["app_role"]
       }
+      is_admin_user: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
       toggle_user_status: {
         Args: { user_id: string; new_status: boolean }
         Returns: undefined
@@ -1122,6 +1126,10 @@ export type Database = {
       validate_email: {
         Args: { email: string }
         Returns: boolean
+      }
+      validate_rls_policies: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
       }
     }
     Enums: {
