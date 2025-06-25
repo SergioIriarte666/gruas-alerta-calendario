@@ -27,6 +27,10 @@ const fetchServicesForReport = async (filters: GenerateReportArgs['filters']): P
       destination,
       status,
       value,
+      vehicle_brand,
+      vehicle_model,
+      license_plate,
+      observations,
       client:clients!inner(
         id,
         name,
@@ -45,8 +49,7 @@ const fetchServicesForReport = async (filters: GenerateReportArgs['filters']): P
       serviceType:service_types!inner(
         id,
         name
-      ),
-      observations
+      )
     `)
     .gte('service_date', formatDate(dateFrom, 'yyyy-MM-dd'))
     .lte('service_date', formatDate(dateTo, 'yyyy-MM-dd'));
@@ -65,6 +68,9 @@ const fetchServicesForReport = async (filters: GenerateReportArgs['filters']): P
   const formattedServices: Service[] = data.map((s: any) => ({
     ...s,
     serviceDate: s.service_date,
+    vehicleBrand: s.vehicle_brand,
+    vehicleModel: s.vehicle_model,
+    licensePlate: s.license_plate,
     client: s.client,
     crane: s.crane,
     operator: s.operator,

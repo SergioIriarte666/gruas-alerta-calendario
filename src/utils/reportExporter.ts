@@ -1,3 +1,4 @@
+
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
@@ -219,8 +220,8 @@ export const exportServiceReport = async ({ format, services, settings, appliedF
   const totalValue = services.reduce((acc, service) => acc + (service.value || 0), 0);
 
   if (format === 'pdf') {
-    // Cambiar orientación a horizontal para más espacio
     const doc = new jsPDF('landscape', 'mm', 'a4');
+    const pageWidth = doc.internal.pageSize.getWidth();
     let startY = 15;
 
     if (company.logo) {
@@ -230,7 +231,6 @@ export const exportServiceReport = async ({ format, services, settings, appliedF
         img.src = company.logo;
         await new Promise((resolve, reject) => {
           img.onload = () => {
-            const pageWidth = doc.internal.pageSize.getWidth();
             const logoWidth = 35;
             const logoHeight = (img.height * logoWidth) / img.width;
             doc.addImage(img, 'PNG', pageWidth - 14 - logoWidth, startY, logoWidth, logoHeight);
@@ -277,7 +277,8 @@ export const exportServiceReport = async ({ format, services, settings, appliedF
     autoTable(doc, { head: [['Resumen', '']], body: summaryData, startY: lastY + 5, theme: 'grid' });
     lastY = (doc as any).lastAutoTable.finalY;
 
-    // Tabla ampliada con toda la información disponible
+    // Tabla optimizada para usar todo el ancho disponible
+    const availableWidth = pageWidth - 28; // Márgenes izquierdo y derecho
     autoTable(doc, {
         head: [['Folio', 'Fecha', 'Cliente', 'Tipo Servicio', 'Marca Veh.', 'Modelo Veh.', 'Patente Veh.', 'Grúa', 'Operador', 'Origen-Destino', 'Estado', 'Valor']],
         body: services.map(s => [
@@ -296,20 +297,21 @@ export const exportServiceReport = async ({ format, services, settings, appliedF
         ]),
         startY: lastY + 10,
         headStyles: { fillColor: [41, 128, 185], fontSize: 8 },
-        styles: { fontSize: 7, cellPadding: 2 },
+        styles: { fontSize: 7, cellPadding: 1.5 },
+        tableWidth: availableWidth,
         columnStyles: {
-            0: { cellWidth: 15 }, // Folio
-            1: { cellWidth: 18 }, // Fecha
-            2: { cellWidth: 25 }, // Cliente
-            3: { cellWidth: 20 }, // Tipo Servicio
-            4: { cellWidth: 15 }, // Marca Veh.
-            5: { cellWidth: 15 }, // Modelo Veh.
-            6: { cellWidth: 18 }, // Patente Veh.
-            7: { cellWidth: 25 }, // Grúa
-            8: { cellWidth: 20 }, // Operador
-            9: { cellWidth: 35 }, // Origen-Destino
-            10: { cellWidth: 15 }, // Estado
-            11: { cellWidth: 20 }  // Valor
+            0: { cellWidth: availableWidth * 0.08 }, // Folio - 8%
+            1: { cellWidth: availableWidth * 0.08 }, // Fecha - 8%
+            2: { cellWidth: availableWidth * 0.12 }, // Cliente - 12%
+            3: { cellWidth: availableWidth * 0.10 }, // Tipo Servicio - 10%
+            4: { cellWidth: availableWidth * 0.08 }, // Marca Veh. - 8%
+            5: { cellWidth: availableWidth * 0.08 }, // Modelo Veh. - 8%
+            6: { cellWidth: availableWidth * 0.08 }, // Patente Veh. - 8%
+            7: { cellWidth: availableWidth * 0.10 }, // Grúa - 10%
+            8: { cellWidth: availableWidth * 0.08 }, // Operador - 8%
+            9: { cellWidth: availableWidth * 0.12 }, // Origen-Destino - 12%
+            10: { cellWidth: availableWidth * 0.05 }, // Estado - 5%
+            11: { cellWidth: availableWidth * 0.08 }  // Valor - 8%
         }
     });
     
@@ -325,9 +327,9 @@ export const exportServiceReport = async ({ format, services, settings, appliedF
         'Cliente': s.client.name,
         'RUT Cliente': s.client.rut,
         'Tipo de Servicio': s.serviceType.name,
-        'Marca Vehículo': s.vehicleBrand,
-        'Modelo Vehículo': s.vehicleModel,
-        'Patente Vehículo': s.licensePlate,
+        'Marca Vehículo': s.vehicleBrand || 'N/A',
+        'Modelo Vehículo': s.vehicleModel || 'N/A',
+        'Patente Vehículo': s.licensePlate || 'N/A',
         'Origen': s.origin,
         'Destino': s.destination,
         'Grúa Marca': s.crane.brand,
