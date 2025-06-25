@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { NavLink, useLocation } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useUser } from '@/contexts/UserContext';
 import { useSettings } from '@/hooks/useSettings';
@@ -93,13 +93,11 @@ export const Sidebar = ({
     adminOnly: true
   }];
 
-  // Always show menu items - let the backend/ProtectedRoute handle access control
+  // Filter navigation items based on user role
   const filteredNavigation = navigationItems.filter(item => {
     if (!item.adminOnly) return true;
-    // For admin-only items, show them if user exists and is admin
     return user && user.role === 'admin';
   });
-  console.log('Sidebar - User role:', user?.role, 'Filtered items:', filteredNavigation.map(item => item.name));
   
   const handleLogout = async () => {
     try {
@@ -137,22 +135,25 @@ export const Sidebar = ({
 
       {/* Navigation */}
       <nav className="flex-1 p-4 space-y-2 bg-white" style={{ background: '#ffffff' }}>
-        {filteredNavigation.map(item => (
-          <NavLink 
-            key={item.name} 
-            to={item.href} 
-            className={({ isActive }) => cn(
-              "flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors nav-link",
-              isActive 
-                ? "active bg-tms-green text-black" 
-                : "text-black hover:bg-tms-green hover:text-black"
-            )} 
-            onClick={() => setIsMobileMenuOpen(false)}
-          >
-            <item.icon className={cn("w-5 h-5", isCollapsed ? "mx-auto" : "mr-3")} />
-            {!isCollapsed && <span>{item.name}</span>}
-          </NavLink>
-        ))}
+        {filteredNavigation.map(item => {
+          const isActive = location.pathname === item.href;
+          return (
+            <Link 
+              key={item.name} 
+              to={item.href} 
+              className={cn(
+                "flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors nav-link",
+                isActive 
+                  ? "active bg-tms-green text-black" 
+                  : "text-black hover:bg-tms-green hover:text-black"
+              )} 
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              <item.icon className={cn("w-5 h-5", isCollapsed ? "mx-auto" : "mr-3")} />
+              {!isCollapsed && <span>{item.name}</span>}
+            </Link>
+          );
+        })}
       </nav>
 
       {/* User section */}
@@ -169,6 +170,7 @@ export const Sidebar = ({
         </Button>
       </div>
     </div>;
+
   return <>
       {/* Mobile backdrop */}
       {isMobileMenuOpen && <div className="fixed inset-0 z-40 lg:hidden bg-black bg-opacity-50" onClick={() => setIsMobileMenuOpen(false)} />}
