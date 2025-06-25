@@ -8,7 +8,6 @@ import { CostCategory } from '@/types/costs';
 import { format as formatDate } from 'date-fns';
 import { es } from 'date-fns/locale';
 
-
 interface ExportReportArgs {
   format: 'pdf' | 'excel';
   metrics: ReportMetrics;
@@ -198,7 +197,6 @@ export const exportReport = async ({ format, metrics, settings, appliedFilters, 
   }
 };
 
-// New functionality for service reports
 interface AppliedServiceFilters {
   dateRange: {
     from: string;
@@ -221,7 +219,8 @@ export const exportServiceReport = async ({ format, services, settings, appliedF
   const totalValue = services.reduce((acc, service) => acc + (service.value || 0), 0);
 
   if (format === 'pdf') {
-    const doc = new jsPDF();
+    // Cambiar orientación a horizontal para más espacio
+    const doc = new jsPDF('landscape', 'mm', 'a4');
     let startY = 15;
 
     if (company.logo) {
@@ -278,18 +277,40 @@ export const exportServiceReport = async ({ format, services, settings, appliedF
     autoTable(doc, { head: [['Resumen', '']], body: summaryData, startY: lastY + 5, theme: 'grid' });
     lastY = (doc as any).lastAutoTable.finalY;
 
+    // Tabla ampliada con toda la información disponible
     autoTable(doc, {
-        head: [['Folio', 'Fecha', 'Cliente', 'Origen-Destino', 'Estado', 'Valor']],
+        head: [['Folio', 'Fecha', 'Cliente', 'Tipo Servicio', 'Marca Veh.', 'Modelo Veh.', 'Patente Veh.', 'Grúa', 'Operador', 'Origen-Destino', 'Estado', 'Valor']],
         body: services.map(s => [
             s.folio,
             formatDate(new Date(s.serviceDate + 'T00:00:00'), 'dd/MM/yy'),
-            s.client.name,
-            `${s.origin} / ${s.destination}`,
+            s.client.name.length > 15 ? s.client.name.substring(0, 15) + '...' : s.client.name,
+            s.serviceType.name.length > 12 ? s.serviceType.name.substring(0, 12) + '...' : s.serviceType.name,
+            s.vehicleBrand || 'N/A',
+            s.vehicleModel || 'N/A',
+            s.licensePlate || 'N/A',
+            `${s.crane.brand} ${s.crane.model}`.length > 15 ? `${s.crane.brand} ${s.crane.model}`.substring(0, 15) + '...' : `${s.crane.brand} ${s.crane.model}`,
+            s.operator.name.length > 12 ? s.operator.name.substring(0, 12) + '...' : s.operator.name,
+            `${s.origin} / ${s.destination}`.length > 20 ? `${s.origin} / ${s.destination}`.substring(0, 20) + '...' : `${s.origin} / ${s.destination}`,
             s.status,
             `$${(s.value || 0).toLocaleString('es-CL')}`
         ]),
         startY: lastY + 10,
-        headStyles: { fillColor: [41, 128, 185] }
+        headStyles: { fillColor: [41, 128, 185], fontSize: 8 },
+        styles: { fontSize: 7, cellPadding: 2 },
+        columnStyles: {
+            0: { cellWidth: 15 }, // Folio
+            1: { cellWidth: 18 }, // Fecha
+            2: { cellWidth: 25 }, // Cliente
+            3: { cellWidth: 20 }, // Tipo Servicio
+            4: { cellWidth: 15 }, // Marca Veh.
+            5: { cellWidth: 15 }, // Modelo Veh.
+            6: { cellWidth: 18 }, // Patente Veh.
+            7: { cellWidth: 25 }, // Grúa
+            8: { cellWidth: 20 }, // Operador
+            9: { cellWidth: 35 }, // Origen-Destino
+            10: { cellWidth: 15 }, // Estado
+            11: { cellWidth: 20 }  // Valor
+        }
     });
     
     doc.save(`${exportFileDefaultName}.pdf`);
@@ -297,6 +318,30 @@ export const exportServiceReport = async ({ format, services, settings, appliedF
   } else if (format === 'excel') {
     const wb = XLSX.utils.book_new();
 
+    // Hoja principal: Detalle completo de servicios
+    const services_data = services.map(s => ({
+        'Folio': s.folio,
+        'Fecha Servicio': formatDate(new Date(s.serviceDate + 'T00:00:00'), 'yyyy-MM-dd'),
+        'Cliente': s.client.name,
+        'RUT Cliente': s.client.rut,
+        'Tipo de Servicio': s.serviceType.name,
+        'Marca Vehículo': s.vehicleBrand,
+        'Modelo Vehículo': s.vehicleModel,
+        'Patente Vehículo': s.licensePlate,
+        'Origen': s.origin,
+        'Destino': s.destination,
+        'Grúa Marca': s.crane.brand,
+        'Grúa Modelo': s.crane.model,
+        'Patente Grúa': s.crane.licensePlate,
+        'Operador': s.operator.name,
+        'Estado': s.status,
+        'Valor': s.value,
+        'Observaciones': s.observations,
+    }));
+    const services_ws = XLSX.utils.json_to_sheet(services_data);
+    XLSX.utils.book_append_sheet(wb, services_ws, 'Detalle de Servicios');
+
+    // Hoja secundaria: Resumen
     const summary_ws_data = [
         [company.name],
         ['Informe de Servicios'], [],
@@ -310,23 +355,6 @@ export const exportServiceReport = async ({ format, services, settings, appliedF
     ];
     const summary_ws = XLSX.utils.aoa_to_sheet(summary_ws_data);
     XLSX.utils.book_append_sheet(wb, summary_ws, 'Resumen');
-    
-    const services_data = services.map(s => ({
-        'Folio': s.folio,
-        'Fecha Servicio': formatDate(new Date(s.serviceDate + 'T00:00:00'), 'yyyy-MM-dd'),
-        'Cliente': s.client.name,
-        'RUT Cliente': s.client.rut,
-        'Origen': s.origin,
-        'Destino': s.destination,
-        'Tipo Servicio': s.serviceType.name,
-        'Valor': s.value,
-        'Estado': s.status,
-        'Patente Grúa': s.crane.licensePlate,
-        'Operador': s.operator.name,
-        'Observaciones': s.observations,
-    }));
-    const services_ws = XLSX.utils.json_to_sheet(services_data);
-    XLSX.utils.book_append_sheet(wb, services_ws, 'Detalle de Servicios');
 
     XLSX.writeFile(wb, `${exportFileDefaultName}.xlsx`);
   }
