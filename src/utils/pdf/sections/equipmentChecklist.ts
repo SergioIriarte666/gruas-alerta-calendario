@@ -70,38 +70,41 @@ export const addEquipmentChecklist = (doc: jsPDF, data: InspectionPDFData, yPosi
       body: tableRows,
       theme: 'striped',
       columnStyles: {
-        0: { cellWidth: 50, fontSize: 8 },
+        0: { cellWidth: 45, fontSize: 8 },
         1: { 
-          cellWidth: 10, 
+          cellWidth: 15, 
           halign: 'center', 
-          fontSize: 11,
+          fontSize: 10,
           fontStyle: 'bold'
         },
-        2: { cellWidth: 50, fontSize: 8 },
+        2: { cellWidth: 45, fontSize: 8 },
         3: { 
-          cellWidth: 10, 
+          cellWidth: 15, 
           halign: 'center', 
-          fontSize: 11,
+          fontSize: 10,
           fontStyle: 'bold'
         },
-        4: { cellWidth: 50, fontSize: 8 },
+        4: { cellWidth: 45, fontSize: 8 },
         5: { 
-          cellWidth: 10, 
+          cellWidth: 15, 
           halign: 'center', 
-          fontSize: 11,
+          fontSize: 10,
           fontStyle: 'bold'
         }
       },
       styles: {
         fontSize: 8,
-        cellPadding: 3,
+        cellPadding: 2,
         textColor: [0, 0, 0],
+        overflow: 'linebreak',
+        minCellHeight: 8
       },
       headStyles: {
         fillColor: [0, 150, 136],
         textColor: [255, 255, 255],
         fontStyle: 'bold',
-        fontSize: 9
+        fontSize: 9,
+        halign: 'center'
       },
       alternateRowStyles: {
         fillColor: [245, 245, 245]
@@ -121,6 +124,7 @@ export const addEquipmentChecklist = (doc: jsPDF, data: InspectionPDFData, yPosi
         }
       },
       margin: { left: 20, right: 20 },
+      tableWidth: 'auto'
     });
 
     yPosition = (doc as any).lastAutoTable.finalY + 15;
