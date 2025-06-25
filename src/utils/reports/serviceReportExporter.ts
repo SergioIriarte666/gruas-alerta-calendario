@@ -39,10 +39,10 @@ export const exportServiceReport = async ({ format, services, settings, appliedF
     autoTable(doc, { head: [['Resumen', '']], body: summaryData, startY: lastY + 5, theme: 'grid' });
     lastY = (doc as any).lastAutoTable.finalY;
 
-    // Tabla optimizada para usar todo el ancho disponible - SIN grúa y operador
+    // Tabla optimizada - SIN operador, con origen-destino más claro
     const availableWidth = pageWidth - 28; // Márgenes izquierdo y derecho
     autoTable(doc, {
-      head: [['Fecha', 'Folio', 'Cliente', 'Tipo Servicio', 'Marca Veh.', 'Modelo Veh.', 'Patente Veh.', 'Origen-Destino', 'Estado', 'Valor']],
+      head: [['Fecha', 'Folio', 'Cliente', 'Tipo Servicio', 'Marca Veh.', 'Modelo Veh.', 'Patente Veh.', 'Origen', 'Destino', 'Estado', 'Valor']],
       body: services.map(s => [
         formatDate(new Date(s.serviceDate + 'T00:00:00'), 'dd/MM/yy'),
         s.folio,
@@ -51,7 +51,8 @@ export const exportServiceReport = async ({ format, services, settings, appliedF
         s.vehicleBrand || 'N/A',
         s.vehicleModel || 'N/A',
         s.licensePlate || 'N/A',
-        `${s.origin} / ${s.destination}`.length > 20 ? `${s.origin} / ${s.destination}`.substring(0, 20) + '...' : `${s.origin} / ${s.destination}`,
+        s.origin.length > 15 ? s.origin.substring(0, 15) + '...' : s.origin,
+        s.destination.length > 15 ? s.destination.substring(0, 15) + '...' : s.destination,
         s.status,
         `$${(s.value || 0).toLocaleString('es-CL')}`
       ]),
@@ -60,16 +61,17 @@ export const exportServiceReport = async ({ format, services, settings, appliedF
       styles: { fontSize: 7, cellPadding: 1.5 },
       tableWidth: availableWidth,
       columnStyles: {
-        0: { cellWidth: availableWidth * 0.08 }, // Fecha - 8%
-        1: { cellWidth: availableWidth * 0.08 }, // Folio - 8%
+        0: { cellWidth: availableWidth * 0.07 }, // Fecha - 7%
+        1: { cellWidth: availableWidth * 0.07 }, // Folio - 7%
         2: { cellWidth: availableWidth * 0.12 }, // Cliente - 12%
         3: { cellWidth: availableWidth * 0.10 }, // Tipo Servicio - 10%
         4: { cellWidth: availableWidth * 0.08 }, // Marca Veh. - 8%
         5: { cellWidth: availableWidth * 0.08 }, // Modelo Veh. - 8%
         6: { cellWidth: availableWidth * 0.08 }, // Patente Veh. - 8%
-        7: { cellWidth: availableWidth * 0.20 }, // Origen-Destino - 20%
-        8: { cellWidth: availableWidth * 0.08 }, // Estado - 8%
-        9: { cellWidth: availableWidth * 0.10 }  // Valor - 10%
+        7: { cellWidth: availableWidth * 0.15 }, // Origen - 15%
+        8: { cellWidth: availableWidth * 0.15 }, // Destino - 15%
+        9: { cellWidth: availableWidth * 0.06 }, // Estado - 6%
+        10: { cellWidth: availableWidth * 0.09 }  // Valor - 9%
       }
     });
     
@@ -78,7 +80,7 @@ export const exportServiceReport = async ({ format, services, settings, appliedF
   } else if (format === 'excel') {
     const wb = XLSX.utils.book_new();
 
-    // Hoja principal: Detalle completo de servicios
+    // Hoja principal: Detalle completo de servicios - SIN operador
     const services_data = services.map(s => ({
       'Fecha Servicio': formatDate(new Date(s.serviceDate + 'T00:00:00'), 'yyyy-MM-dd'),
       'Folio': s.folio,
@@ -91,7 +93,6 @@ export const exportServiceReport = async ({ format, services, settings, appliedF
       'Origen': s.origin,
       'Destino': s.destination,
       'Patente Grúa': s.crane?.licensePlate || 'N/A',
-      'Operador': s.operator.name,
       'Estado': s.status,
       'Valor': s.value,
       'Observaciones': s.observations,
