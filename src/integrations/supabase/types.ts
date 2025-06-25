@@ -1104,11 +1104,23 @@ export type Database = {
         Args: { p_user_id: string }
         Returns: string
       }
+      get_user_client_id: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       get_user_role: {
         Args: { user_id?: string }
         Returns: Database["public"]["Enums"]["app_role"]
       }
       is_admin_user: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
+      is_client_user: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
+      is_operator_user: {
         Args: Record<PropertyKey, never>
         Returns: boolean
       }
@@ -1121,6 +1133,10 @@ export type Database = {
           user_id: string
           new_role: Database["public"]["Enums"]["app_role"]
         }
+        Returns: undefined
+      }
+      validate_all_warnings_eliminated: {
+        Args: Record<PropertyKey, never>
         Returns: undefined
       }
       validate_email: {
