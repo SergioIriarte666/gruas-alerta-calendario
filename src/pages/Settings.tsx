@@ -136,12 +136,7 @@ const Settings = () => {
         </TabsContent>
 
         <TabsContent value="notifications">
-          <NotificationSettingsTab 
-            settings={notificationSettings} 
-            saving={systemSaving} 
-            onSave={handleSystemSave} 
-            onUpdateSettings={updateNotificationSettings} 
-          />
+          <NotificationSettingsTab />
         </TabsContent>
 
         <TabsContent value="users">

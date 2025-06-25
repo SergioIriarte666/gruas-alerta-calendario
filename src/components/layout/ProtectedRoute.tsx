@@ -7,12 +7,16 @@ import { Navigate, useLocation } from 'react-router-dom';
 interface ProtectedRouteProps {
   children: React.ReactNode;
   allowedRoles?: string[];
+  requireRole?: string;
 }
 
-const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
+const ProtectedRoute = ({ children, allowedRoles, requireRole }: ProtectedRouteProps) => {
   const { user: authUser, loading: authLoading } = useAuth();
   const { user: profileUser, loading: profileLoading, error, retryFetchProfile } = useUser();
   const location = useLocation();
+
+  // Combine allowedRoles and requireRole for backward compatibility
+  const effectiveAllowedRoles = allowedRoles || (requireRole ? [requireRole] : []);
 
   console.log('ProtectedRoute:', {
     authLoading,
@@ -21,7 +25,7 @@ const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
     hasProfileUser: !!profileUser,
     userRole: profileUser?.role,
     currentPath: location.pathname,
-    allowedRoles,
+    allowedRoles: effectiveAllowedRoles,
     error
   });
 
@@ -133,8 +137,8 @@ const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
     }
 
     // Role check for specific routes within a portal (e.g. admin-only pages)
-    if (allowedRoles && allowedRoles.length > 0 && !allowedRoles.includes(userRole)) {
-      console.log(`ProtectedRoute: Role '${userRole}' not in allowed roles [${allowedRoles.join(', ')}]. Redirecting.`);
+    if (effectiveAllowedRoles && effectiveAllowedRoles.length > 0 && !effectiveAllowedRoles.includes(userRole)) {
+      console.log(`ProtectedRoute: Role '${userRole}' not in allowed roles [${effectiveAllowedRoles.join(', ')}]. Redirecting.`);
       const redirectTo = userRole === 'client' ? '/portal/dashboard' : '/dashboard';
       return <Navigate to={redirectTo} replace />;
     }
