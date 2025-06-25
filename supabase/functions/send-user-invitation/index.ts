@@ -54,9 +54,9 @@ const handler = async (req: Request): Promise<Response> => {
 
     const roleLabel = roleLabels[role] || role;
 
-    // Crear el enlace de registro - usar el dominio correcto
+    // Crear el enlace de registro - usar el dominio lovable.app
     const url = new URL(req.url);
-    const origin = req.headers.get('origin') || 'https://gruas5norte.com';
+    const origin = req.headers.get('origin') || 'https://t-m-s.lovable.app';
     const registerUrl = `${origin}/auth?tab=register&email=${encodeURIComponent(email)}&invited=true`;
 
     console.log('Generated registration URL:', registerUrl);
@@ -156,9 +156,9 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log('Attempting to send email...');
 
-    // Enviar el email usando el dominio verificado
+    // Enviar el email usando onboarding@resend.dev para asegurar entrega
     const emailResponse = await resend.emails.send({
-      from: `${businessName} <noreply@gruas5norte.cl>`,
+      from: `${businessName} <onboarding@resend.dev>`,
       to: [email],
       subject: `🎉 Invitación al sistema ${businessName} - Rol: ${roleLabel}`,
       html: emailHtml,
