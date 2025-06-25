@@ -20,7 +20,7 @@ export const NotificationSettingsTab: React.FC = () => {
       {/* Push Notifications */}
       <Card className="bg-slate-800 border-slate-700">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+          <CardTitle className="flex items-center gap-2 text-white">
             <Smartphone className="w-5 h-5" />
             Notificaciones Push
           </CardTitle>
@@ -33,7 +33,7 @@ export const NotificationSettingsTab: React.FC = () => {
       {/* Email Notifications */}
       <Card className="bg-slate-800 border-slate-700">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+          <CardTitle className="flex items-center gap-2 text-white">
             <Mail className="w-5 h-5" />
             Notificaciones por Email
           </CardTitle>
@@ -60,7 +60,7 @@ export const NotificationSettingsTab: React.FC = () => {
       {/* In-App Notifications */}
       <Card className="bg-slate-800 border-slate-700">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+          <CardTitle className="flex items-center gap-2 text-white">
             <Bell className="w-5 h-5" />
             Notificaciones en la Aplicación
           </CardTitle>

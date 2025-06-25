@@ -1,3 +1,4 @@
+
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from '@/contexts/AuthContext';
@@ -8,10 +9,10 @@ import { Toaster } from '@/components/ui/sonner';
 import { Layout } from '@/components/layout/Layout';
 import { OperatorLayout } from '@/components/layout/OperatorLayout';
 import { PortalLayout } from '@/components/portal/layout/PortalLayout';
-import { ProtectedRoute } from '@/components/layout/ProtectedRoute';
+import ProtectedRoute from '@/components/layout/ProtectedRoute';
 import { useNotificationTriggers } from '@/hooks/useNotificationTriggers';
 import Dashboard from '@/pages/Dashboard';
-import Login from '@/pages/Login';
+import Auth from '@/pages/Auth';
 import Services from '@/pages/Services';
 import Clients from '@/pages/Clients';
 import Operators from '@/pages/Operators';
@@ -22,12 +23,12 @@ import Invoices from '@/pages/Invoices';
 import Costs from '@/pages/Costs';
 import Reports from '@/pages/Reports';
 import Settings from '@/pages/Settings';
-import OperatorDashboard from '@/pages/operator/OperatorDashboard';
+import OperatorDashboard from '@/pages/OperatorDashboard';
 import PortalDashboard from '@/pages/portal/PortalDashboard';
 import PortalServices from '@/pages/portal/PortalServices';
 import PortalInvoices from '@/pages/portal/PortalInvoices';
-import CalendarView from '@/pages/CalendarView';
-import { NotFound } from '@/pages/NotFound';
+import Calendar from '@/pages/Calendar';
+import NotFound from '@/pages/NotFound';
 
 // Component to initialize notification triggers
 const NotificationTriggerProvider = ({ children }: { children: React.ReactNode }) => {
@@ -56,7 +57,7 @@ export default function App() {
                   <div className="min-h-screen bg-black text-white">
                     <Routes>
                       {/* Public Routes */}
-                      <Route path="/login" element={<Login />} />
+                      <Route path="/auth" element={<Auth />} />
 
                       {/* App Routes */}
                       <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
@@ -71,7 +72,7 @@ export default function App() {
                         <Route path="costs" element={<Costs />} />
                         <Route path="reports" element={<Reports />} />
                         <Route path="settings" element={<Settings />} />
-                        <Route path="calendar" element={<CalendarView />} />
+                        <Route path="calendar" element={<Calendar />} />
                       </Route>
 
                       {/* Operator Routes */}
