@@ -100,10 +100,7 @@ export const Sidebar = ({
     return user && user.role === 'admin';
   });
   console.log('Sidebar - User role:', user?.role, 'Filtered items:', filteredNavigation.map(item => item.name));
-  const isActive = (href: string) => {
-    if (href === '/') return location.pathname === '/';
-    return location.pathname.startsWith(href);
-  };
+  
   const handleLogout = async () => {
     try {
       await logout();
@@ -111,6 +108,7 @@ export const Sidebar = ({
       console.error('Error during logout:', error);
     }
   };
+  
   const SidebarContent = () => <div className="flex flex-col h-full bg-white border-r border-gray-200" style={{ background: '#ffffff', borderColor: '#e5e7eb' }}>
       {/* Header with Company Branding */}
       <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-white" style={{ background: '#ffffff', borderColor: '#e5e7eb' }}>
@@ -139,12 +137,22 @@ export const Sidebar = ({
 
       {/* Navigation */}
       <nav className="flex-1 p-4 space-y-2 bg-white" style={{ background: '#ffffff' }}>
-        {filteredNavigation.map(item => <NavLink key={item.name} to={item.href} className={({
-        isActive: linkIsActive
-      }) => cn("flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors nav-link", linkIsActive || isActive(item.href) ? "active bg-tms-green text-black" : "text-black hover:bg-tms-green hover:text-black")} onClick={() => setIsMobileMenuOpen(false)}>
+        {filteredNavigation.map(item => (
+          <NavLink 
+            key={item.name} 
+            to={item.href} 
+            className={({ isActive }) => cn(
+              "flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors nav-link",
+              isActive 
+                ? "active bg-tms-green text-black" 
+                : "text-black hover:bg-tms-green hover:text-black"
+            )} 
+            onClick={() => setIsMobileMenuOpen(false)}
+          >
             <item.icon className={cn("w-5 h-5", isCollapsed ? "mx-auto" : "mr-3")} />
             {!isCollapsed && <span>{item.name}</span>}
-          </NavLink>)}
+          </NavLink>
+        ))}
       </nav>
 
       {/* User section */}
