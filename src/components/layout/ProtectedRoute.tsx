@@ -43,6 +43,8 @@ const ProtectedRoute = ({ children, allowedRoles, requireRole }: ProtectedRouteP
     // Redirect based on user role
     if (profileUser.role === 'client') {
       return <Navigate to="/portal" replace />;
+    } else if (profileUser.role === 'operator') {
+      return <Navigate to="/operator" replace />;
     } else {
       return <Navigate to="/" replace />;
     }
