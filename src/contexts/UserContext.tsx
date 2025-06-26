@@ -39,101 +39,50 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       console.log(`UserContext - Fetching profile for: ${authUser.email} (ID: ${authUser.id})`);
       
-      // PASO 1: Buscar perfil por ID de usuario autenticado (método correcto)
-      let { data: profileData, error } = await supabase
+      // Lógica simple como admin@admin.com: buscar directamente por ID
+      const { data: profileData, error } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', authUser.id)
-        .maybeSingle();
+        .single();
 
-      if (error && error.code !== 'PGRST116') {
-        console.error('UserContext - Error fetching profile by ID:', error);
-        setUser(null);
-        setLoading(false);
-        fetchingRef.current = false;
-        return;
-      }
-
-      // PASO 2: Si no existe perfil con el ID correcto, buscar por email
-      if (!profileData) {
-        console.log('UserContext - No profile found by ID, searching by email...');
+      if (error) {
+        console.error('UserContext - Error fetching profile:', error);
         
-        const { data: emailProfile, error: emailError } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('email', authUser.email)
-          .maybeSingle();
-
-        if (emailError && emailError.code !== 'PGRST116') {
-          console.error('UserContext - Error fetching profile by email:', emailError);
-          setUser(null);
-          setLoading(false);
-          fetchingRef.current = false;
-          return;
-        }
-
-        if (emailProfile) {
-          console.log('UserContext - Found profile by email, deleting old profile and creating new one...');
+        // Si no existe perfil, crear uno nuevo
+        if (error.code === 'PGRST116') {
+          console.log('UserContext - Creating new profile...');
           
-          // Eliminar el perfil con ID incorrecto
-          await supabase
-            .from('profiles')
-            .delete()
-            .eq('email', authUser.email);
-
-          // Crear nuevo perfil con ID correcto
           const { data: newProfile, error: createError } = await supabase
             .from('profiles')
             .insert({
               id: authUser.id,
               email: authUser.email,
-              full_name: emailProfile.full_name || authUser.email,
-              role: emailProfile.role || 'client',
-              client_id: emailProfile.client_id,
+              full_name: authUser.email,
+              role: 'client'
             })
             .select()
             .single();
 
           if (createError) {
-            console.error('UserContext - Error creating corrected profile:', createError);
+            console.error('UserContext - Error creating profile:', createError);
             setUser(null);
-            setLoading(false);
-            fetchingRef.current = false;
-            return;
+          } else {
+            const userProfile = {
+              id: newProfile.id,
+              email: newProfile.email,
+              name: newProfile.full_name || newProfile.email,
+              role: newProfile.role,
+              client_id: newProfile.client_id,
+            };
+            console.log('UserContext - New profile created:', userProfile);
+            setUser(userProfile);
           }
-
-          profileData = newProfile;
-        }
-      }
-
-      // PASO 3: Si aún no hay perfil, crear uno nuevo
-      if (!profileData) {
-        console.log('UserContext - Creating new profile...');
-        
-        const { data: newProfile, error: createError } = await supabase
-          .from('profiles')
-          .insert({
-            id: authUser.id,
-            email: authUser.email,
-            full_name: authUser.email,
-            role: 'client'
-          })
-          .select()
-          .single();
-
-        if (createError) {
-          console.error('UserContext - Error creating profile:', createError);
+        } else {
           setUser(null);
-          setLoading(false);
-          fetchingRef.current = false;
-          return;
         }
-
-        profileData = newProfile;
-      }
-
-      // PASO 4: Establecer el usuario
-      if (profileData) {
+      } else {
+        // Perfil encontrado - convertir a UserProfile
         const userProfile = {
           id: profileData.id,
           email: profileData.email,
@@ -141,7 +90,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
           role: profileData.role,
           client_id: profileData.client_id,
         };
-        console.log('UserContext - Profile set successfully:', userProfile);
+        console.log('UserContext - Profile found:', userProfile);
         setUser(userProfile);
       }
 
@@ -207,8 +156,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       updateUser, 
       forceRefreshProfile 
     }}>
-      {children}
-    </UserContext.Provider>
+      {children}</UserContext.Provider>
   );
 };
 
