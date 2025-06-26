@@ -20,6 +20,7 @@ import { useServiceFormSubmission } from '@/hooks/services/useServiceFormSubmiss
 import { useUser } from '@/contexts/UserContext';
 import { useToast } from '@/components/ui/custom-toast';
 import { useRef } from 'react';
+import { format } from 'date-fns';
 
 interface ServiceFormProps {
   service?: Service | null;
@@ -72,6 +73,37 @@ export const ServiceForm = ({ service, onSubmit, onCancel }: ServiceFormProps) =
     if (data.serviceDate) setServiceDate(new Date(data.serviceDate));
   };
 
+  const handleDataClear = () => {
+    // Resetear todos los campos del formulario a sus valores por defecto
+    setFolio('');
+    setIsManualFolio(false);
+    setFormData({
+      requestDate: format(new Date(), 'yyyy-MM-dd'),
+      serviceDate: format(new Date(), 'yyyy-MM-dd'),
+      clientId: '',
+      purchaseOrder: '',
+      vehicleBrand: '',
+      vehicleModel: '',
+      licensePlate: '',
+      origin: '',
+      destination: '',
+      serviceTypeId: '',
+      value: 0,
+      craneId: '',
+      operatorId: '',
+      operatorCommission: 0,
+      status: 'pending' as const,
+      observations: ''
+    });
+    setRequestDate(new Date());
+    setServiceDate(new Date());
+    
+    // Si no es manual, generar nuevo folio
+    if (!isManualFolio) {
+      handleGenerateNewFolio();
+    }
+  };
+
   const handleFormSubmit = async (e: React.FormEvent) => {
     try {
       await handleSubmit(e, folio, formData, isManualFolio);
@@ -117,6 +149,7 @@ export const ServiceForm = ({ service, onSubmit, onCancel }: ServiceFormProps) =
         requestDate={requestDate}
         serviceDate={serviceDate}
         onDataRestore={handleDataRestore}
+        onDataClear={handleDataClear}
         onMarkAsSubmitted={() => markAsSubmittedRef.current}
       />
 

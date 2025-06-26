@@ -15,6 +15,7 @@ interface ServiceFormPersistenceProps {
   requestDate: Date;
   serviceDate: Date;
   onDataRestore: (data: any) => void;
+  onDataClear?: () => void;
   onMarkAsSubmitted?: () => void;
 }
 
@@ -26,6 +27,7 @@ export const ServiceFormPersistence = ({
   requestDate,
   serviceDate,
   onDataRestore,
+  onDataClear,
   onMarkAsSubmitted
 }: ServiceFormPersistenceProps) => {
   const { toast } = useToast();
@@ -95,10 +97,16 @@ export const ServiceFormPersistence = ({
   const handleDiscardPersistedData = () => {
     clearFormData();
     setShowPersistedDataAlert(false);
+    
+    // Limpiar también el formulario actual
+    if (onDataClear) {
+      onDataClear();
+    }
+    
     toast({
       type: 'info',
       title: 'Datos descartados',
-      description: 'Se han eliminado los datos guardados anteriormente'
+      description: 'Se han eliminado los datos guardados y limpiado el formulario'
     });
   };
 
