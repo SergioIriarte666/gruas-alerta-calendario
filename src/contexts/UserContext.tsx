@@ -59,13 +59,16 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (error.code === 'PGRST116') {
           console.log('UserContext - Profile not found, attempting to create...');
           
+          // Para el usuario pagos@gruas5norte.cl, crear con rol client
+          const defaultRole = authUser.email === 'pagos@gruas5norte.cl' ? 'client' : 'viewer';
+          
           const { data: newProfile, error: createError } = await supabase
             .from('profiles')
             .insert({
               id: authUser.id,
               email: authUser.email || '',
               full_name: authUser.email || '',
-              role: 'viewer'
+              role: defaultRole
             })
             .select()
             .single();
@@ -99,7 +102,28 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const validRoles = ['admin', 'operator', 'viewer', 'client'];
         if (!validRoles.includes(data.role)) {
           console.error('UserContext - Invalid role detected:', data.role);
-          setUser(null);
+          
+          // Si el rol es inválido, intentar corregirlo
+          const correctedRole = data.email === 'pagos@gruas5norte.cl' ? 'client' : 'viewer';
+          console.log(`UserContext - Attempting to correct role to: ${correctedRole}`);
+          
+          const { error: updateError } = await supabase
+            .from('profiles')
+            .update({ role: correctedRole })
+            .eq('id', data.id);
+            
+          if (!updateError) {
+            setUser({
+              id: data.id,
+              email: data.email,
+              name: data.full_name || data.email,
+              role: correctedRole,
+              client_id: data.client_id,
+            });
+          } else {
+            console.error('UserContext - Error correcting role:', updateError);
+            setUser(null);
+          }
           return;
         }
 

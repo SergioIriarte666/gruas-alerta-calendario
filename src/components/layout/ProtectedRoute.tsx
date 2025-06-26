@@ -51,6 +51,21 @@ const ProtectedRoute = ({ children, allowedRoles, requireRole }: ProtectedRouteP
     console.warn(`ProtectedRoute - Access denied. User role '${profileUser.role}' not in allowed roles:`, effectiveAllowedRoles);
     console.log(`ProtectedRoute - Redirecting user with role '${profileUser.role}' to their appropriate area`);
     
+    // For client role specifically trying to access portal but failing
+    if (requireRole === 'client' && profileUser.role !== 'client') {
+      console.error('ProtectedRoute - User trying to access client portal but is not a client');
+      return (
+        <div className="flex items-center justify-center h-screen bg-gray-900 text-white">
+          <div className="text-center">
+            <h2 className="text-xl font-bold mb-4">Acceso Denegado</h2>
+            <p className="text-red-400 mb-4">No tienes permisos para acceder al portal de clientes.</p>
+            <p className="text-gray-400 text-sm">Tu rol actual: {profileUser.role}</p>
+            <p className="text-gray-400 text-sm">Contacta al administrador si crees que esto es un error.</p>
+          </div>
+        </div>
+      );
+    }
+    
     // Redirect based on user role to prevent unauthorized access
     switch (profileUser.role) {
       case 'client':
@@ -67,8 +82,17 @@ const ProtectedRoute = ({ children, allowedRoles, requireRole }: ProtectedRouteP
         return <Navigate to="/dashboard" replace />;
         
       default:
-        console.error('ProtectedRoute - Unknown role, redirecting to /auth');
-        return <Navigate to="/auth" replace />;
+        console.error('ProtectedRoute - Unknown role, showing error');
+        return (
+          <div className="flex items-center justify-center h-screen bg-gray-900 text-white">
+            <div className="text-center">
+              <h2 className="text-xl font-bold mb-4">Error de Configuración</h2>
+              <p className="text-red-400 mb-4">Tu cuenta no tiene un rol válido asignado.</p>
+              <p className="text-gray-400 text-sm">Rol actual: {profileUser.role}</p>
+              <p className="text-gray-400 text-sm">Contacta al administrador del sistema.</p>
+            </div>
+          </div>
+        );
     }
   }
 
