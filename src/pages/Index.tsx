@@ -10,20 +10,14 @@ const Index: React.FC = () => {
 
   console.log('Index page - Auth loading:', authLoading, 'Profile loading:', profileLoading);
   console.log('Index page - Auth user:', authUser?.email);
-  console.log('Index page - Profile user details:', {
-    id: profileUser?.id,
-    email: profileUser?.email,
-    role: profileUser?.role,
-    client_id: profileUser?.client_id,
-    name: profileUser?.name
-  });
+  console.log('Index page - Profile user role:', profileUser?.role);
 
   // Mostrar loading mientras se obtiene la información
   if (authLoading || profileLoading) {
     return (
       <div className="flex items-center justify-center h-screen bg-gray-900 text-white">
         <div className="text-center">
-          <div className="mb-4">Cargando información del usuario...</div>
+          <div className="mb-4">Cargando...</div>
           <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin mx-auto"></div>
         </div>
       </div>
@@ -36,38 +30,14 @@ const Index: React.FC = () => {
     return <Navigate to="/auth" replace />;
   }
 
-  // Si hay usuario autenticado pero no perfil, mostrar mensaje de error y redirigir a auth
+  // Si hay usuario autenticado pero no perfil, redirigir a auth
   if (authUser && !profileUser) {
-    console.error('Index - Auth user exists but no profile user found. This indicates a data integrity issue.');
-    console.log('Index - Auth user details:', {
-      id: authUser.id,
-      email: authUser.email,
-      created_at: authUser.created_at
-    });
-    console.log('Index - Redirecting to auth for profile recreation...');
+    console.log('Index - Auth user exists but no profile user found, redirecting to /auth');
     return <Navigate to="/auth" replace />;
   }
 
-  // Validar que el rol del usuario sea válido
-  const validRoles = ['admin', 'operator', 'viewer', 'client'];
-  if (!validRoles.includes(profileUser.role)) {
-    console.error('Index - Invalid user role detected:', profileUser.role);
-    return (
-      <div className="flex items-center justify-center h-screen bg-gray-900 text-white">
-        <div className="text-center">
-          <div className="mb-4">Error: Rol de usuario inválido</div>
-          <div className="text-red-400">Contacte al administrador del sistema</div>
-          <div className="text-sm text-gray-400 mt-2">
-            Rol detectado: {profileUser.role}
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Redirigir según el rol del usuario con logging detallado
-  console.log(`Index - Redirecting user with role: ${profileUser.role} to appropriate section`);
-  console.log(`Index - Full user profile:`, profileUser);
+  // Redirigir según el rol del usuario con la misma lógica simple
+  console.log(`Index - Redirecting user with role: ${profileUser.role}`);
   
   switch (profileUser.role) {
     case 'client':
@@ -84,7 +54,7 @@ const Index: React.FC = () => {
       return <Navigate to="/dashboard" replace />;
       
     default:
-      console.error('Index - Unhandled user role:', profileUser.role);
+      console.error('Index - Unknown role, redirecting to /dashboard');
       return <Navigate to="/dashboard" replace />;
   }
 };

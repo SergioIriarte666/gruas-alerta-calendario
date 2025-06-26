@@ -39,7 +39,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       console.log(`UserContext - Fetching profile for: ${authUser.email}`);
       
-      // Buscar perfil existente
+      // Buscar perfil existente directamente
       const { data: existingProfile, error } = await supabase
         .from('profiles')
         .select('*')
@@ -65,56 +65,12 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         };
         setUser(userProfile);
       } else {
-        console.log('UserContext - No profile found, creating new one');
-        
-        // Crear perfil solo si no existe
-        const defaultRole = authUser.email === 'pagos@gruas5norte.cl' ? 'client' : 'viewer';
-        
-        const { data: newProfile, error: createError } = await supabase
-          .from('profiles')
-          .insert({
-            id: authUser.id,
-            email: authUser.email || '',
-            full_name: authUser.email || '',
-            role: defaultRole
-          })
-          .select()
-          .maybeSingle();
-
-        if (createError) {
-          if (createError.code === '23505') {
-            // Si ya existe, intentar buscar de nuevo
-            console.log('UserContext - Profile exists, fetching again');
-            const { data: retryProfile } = await supabase
-              .from('profiles')
-              .select('*')
-              .eq('id', authUser.id)
-              .maybeSingle();
-              
-            if (retryProfile) {
-              setUser({
-                id: retryProfile.id,
-                email: retryProfile.email,
-                name: retryProfile.full_name || retryProfile.email,
-                role: retryProfile.role,
-                client_id: retryProfile.client_id,
-              });
-            }
-          } else {
-            console.error('UserContext - Error creating profile:', createError);
-          }
-        } else if (newProfile) {
-          setUser({
-            id: newProfile.id,
-            email: newProfile.email,
-            name: newProfile.full_name || newProfile.email,
-            role: newProfile.role,
-            client_id: newProfile.client_id,
-          });
-        }
+        console.log('UserContext - No profile found for user:', authUser.email);
+        setUser(null);
       }
     } catch (error) {
       console.error('UserContext - Exception:', error);
+      setUser(null);
     } finally {
       setLoading(false);
       fetchingRef.current = false;
