@@ -39,7 +39,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       console.log(`UserContext - Fetching profile for: ${authUser.email}`);
       
-      // Buscar perfil por email en lugar de ID
+      // Buscar perfil por email
       const { data: existingProfile, error } = await supabase
         .from('profiles')
         .select('*')
@@ -65,8 +65,34 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         };
         setUser(userProfile);
       } else {
-        console.log('UserContext - No profile found for user:', authUser.email);
-        setUser(null);
+        console.log('UserContext - No profile found, creating one for user:', authUser.email);
+        
+        // Crear perfil automáticamente si no existe
+        const { data: newProfile, error: createError } = await supabase
+          .from('profiles')
+          .insert({
+            id: authUser.id,
+            email: authUser.email,
+            full_name: authUser.email,
+            role: 'client' // Asignar rol por defecto
+          })
+          .select()
+          .single();
+
+        if (createError) {
+          console.error('UserContext - Error creating profile:', createError);
+          setUser(null);
+        } else {
+          console.log('UserContext - Profile created:', newProfile);
+          const userProfile = {
+            id: newProfile.id,
+            email: newProfile.email,
+            name: newProfile.full_name || newProfile.email,
+            role: newProfile.role,
+            client_id: newProfile.client_id,
+          };
+          setUser(userProfile);
+        }
       }
     } catch (error) {
       console.error('UserContext - Exception:', error);
