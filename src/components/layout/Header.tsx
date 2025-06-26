@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Menu, Search, User, Settings } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -9,6 +8,7 @@ import { toast } from 'sonner';
 import { useUser } from '@/contexts/UserContext';
 import { useSettings } from '@/hooks/useSettings';
 import { cleanupAuthState } from '@/utils/authCleanup';
+import { NotificationsDropdown } from './NotificationsDropdown';
 
 interface HeaderProps {
   setIsMobileMenuOpen: (open: boolean) => void;
