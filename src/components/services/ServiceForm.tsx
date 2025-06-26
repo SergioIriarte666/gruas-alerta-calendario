@@ -1,8 +1,4 @@
 
-import { useClients } from '@/hooks/useClients';
-import { useCranes } from '@/hooks/useCranes';
-import { useOperatorsData } from '@/hooks/operators/useOperatorsData';
-import { useServiceTypes } from '@/hooks/useServiceTypes';
 import { Service } from '@/types';
 import { FolioSection } from './form/FolioSection';
 import { DateSection } from './form/DateSection';
@@ -15,13 +11,9 @@ import { ObservationsSection } from './form/ObservationsSection';
 import { FormActions } from './form/FormActions';
 import { ServiceFormHeader } from './form/ServiceFormHeader';
 import { ServiceFormPersistence } from './form/ServiceFormPersistence';
-import { useServiceFormData } from '@/hooks/services/useServiceFormData';
-import { useServiceFormEffects } from '@/hooks/services/useServiceFormEffects';
-import { useServiceFormSubmission } from '@/hooks/services/useServiceFormSubmission';
-import { useUser } from '@/contexts/UserContext';
-import { useToast } from '@/components/ui/custom-toast';
-import { useRef } from 'react';
-import { format } from 'date-fns';
+import { ServiceFormSubmissionHandler } from './form/ServiceFormSubmissionHandler';
+import { useServiceFormContainer } from '@/hooks/services/useServiceFormContainer';
+import { useServiceFormDataHandler } from './form/ServiceFormDataHandler';
 
 interface ServiceFormProps {
   service?: Service | null;
@@ -30,15 +22,13 @@ interface ServiceFormProps {
 }
 
 export const ServiceForm = ({ service, onSubmit, onCancel }: ServiceFormProps) => {
-  const { clients } = useClients();
-  const { cranes } = useCranes();
-  const { data: operators = [] } = useOperatorsData();
-  const { serviceTypes, loading: serviceTypesLoading } = useServiceTypes();
-  const { user } = useUser();
-  const { toast } = useToast();
-  const markAsSubmittedRef = useRef<(() => void) | null>(null);
-
   const {
+    clients,
+    cranes,
+    operators,
+    serviceTypes,
+    serviceTypesLoading,
+    selectedServiceType,
     isManualFolio,
     setIsManualFolio,
     folio,
@@ -48,98 +38,25 @@ export const ServiceForm = ({ service, onSubmit, onCancel }: ServiceFormProps) =
     requestDate,
     setRequestDate,
     serviceDate,
-    setServiceDate
-  } = useServiceFormData(service);
+    setServiceDate,
+    handleGenerateNewFolio,
+    folioLoading,
+    markAsClearing,
+    handleSubmit,
+    canEdit,
+    markAsSubmittedRef,
+    toast
+  } = useServiceFormContainer({ service, onSubmit });
 
-  const { handleGenerateNewFolio, folioLoading, markAsClearing } = useServiceFormEffects(
-    isManualFolio,
-    service,
-    setFolio
-  );
-
-  const { handleSubmit } = useServiceFormSubmission({
-    service,
-    onSubmit,
-    clients,
-    cranes,
-    operators,
-    serviceTypes
+  const { handleDataRestore, handleDataClear } = useServiceFormDataHandler({
+    markAsClearing,
+    setFolio,
+    setIsManualFolio,
+    setFormData,
+    setRequestDate,
+    setServiceDate,
+    formData
   });
-
-  const handleDataRestore = (data: any) => {
-    console.log('📥 Restoring form data:', data);
-    setFolio(data.folio || '');
-    setIsManualFolio(data.isManualFolio || false);
-    setFormData(data.formData || formData);
-    if (data.requestDate) setRequestDate(new Date(data.requestDate));
-    if (data.serviceDate) setServiceDate(new Date(data.serviceDate));
-  };
-
-  const handleDataClear = () => {
-    console.log('🧹 Clearing form data completely');
-    
-    // Marcar que estamos limpiando para evitar generación automática de folio
-    markAsClearing();
-    
-    // Resetear todos los campos del formulario a sus valores por defecto
-    setFolio('');
-    setIsManualFolio(false); // Resetear a automático por defecto
-    setFormData({
-      requestDate: format(new Date(), 'yyyy-MM-dd'),
-      serviceDate: format(new Date(), 'yyyy-MM-dd'),
-      clientId: '',
-      purchaseOrder: '',
-      vehicleBrand: '',
-      vehicleModel: '',
-      licensePlate: '',
-      origin: '',
-      destination: '',
-      serviceTypeId: '',
-      value: 0,
-      craneId: '',
-      operatorId: '',
-      operatorCommission: 0,
-      status: 'pending' as const,
-      observations: ''
-    });
-    setRequestDate(new Date());
-    setServiceDate(new Date());
-  };
-
-  const handleFormSubmit = async (e: React.FormEvent) => {
-    try {
-      await handleSubmit(e, folio, formData, isManualFolio);
-      
-      // Limpiar datos de persistencia después del envío exitoso
-      if (markAsSubmittedRef.current) {
-        markAsSubmittedRef.current();
-      }
-      
-      toast({
-        type: 'success',
-        title: 'Servicio guardado',
-        description: 'El servicio se ha guardado correctamente'
-      });
-    } catch (error) {
-      console.error('Error submitting form:', error);
-      toast({
-        type: 'error',
-        title: 'Error al guardar',
-        description: 'No se pudo guardar el servicio. Los datos se mantienen guardados localmente.'
-      });
-    }
-  };
-
-  const compatibleServiceTypes = serviceTypes.map(st => ({
-    ...st,
-    description: st.description || '',
-  }));
-
-  const selectedServiceType = serviceTypes.find(st => st.id === formData.serviceTypeId);
-  
-  const isInvoiced = service?.status === 'invoiced';
-  const isAdmin = user?.role === 'admin';
-  const canEdit = !isInvoiced || isAdmin;
 
   return (
     <div className="space-y-6">
@@ -157,7 +74,14 @@ export const ServiceForm = ({ service, onSubmit, onCancel }: ServiceFormProps) =
 
       <ServiceFormHeader service={service} />
 
-      <form onSubmit={handleFormSubmit} className="space-y-6">
+      <ServiceFormSubmissionHandler
+        handleSubmit={handleSubmit}
+        folio={folio}
+        formData={formData}
+        isManualFolio={isManualFolio}
+        markAsSubmittedRef={markAsSubmittedRef}
+        toast={toast}
+      >
         <FolioSection
           folio={folio}
           onFolioChange={setFolio}
@@ -185,7 +109,7 @@ export const ServiceForm = ({ service, onSubmit, onCancel }: ServiceFormProps) =
           onPurchaseOrderChange={(value) => setFormData(prev => ({ ...prev, purchaseOrder: value }))}
           serviceTypeId={formData.serviceTypeId}
           onServiceTypeChange={(value) => setFormData(prev => ({ ...prev, serviceTypeId: value }))}
-          serviceTypes={compatibleServiceTypes}
+          serviceTypes={serviceTypes}
           serviceTypesLoading={serviceTypesLoading}
           disabled={!canEdit}
         />
@@ -240,7 +164,7 @@ export const ServiceForm = ({ service, onSubmit, onCancel }: ServiceFormProps) =
           isEditing={!!service} 
           disabled={!canEdit}
         />
-      </form>
+      </ServiceFormSubmissionHandler>
     </div>
   );
 };
