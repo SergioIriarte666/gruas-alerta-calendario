@@ -1,3 +1,4 @@
+
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from '@/contexts/AuthContext';
@@ -23,6 +24,7 @@ import Costs from '@/pages/Costs';
 import Reports from '@/pages/Reports';
 import Settings from '@/pages/Settings';
 import OperatorDashboard from '@/pages/OperatorDashboard';
+import ServiceInspection from '@/pages/operator/ServiceInspection';
 import PortalDashboard from '@/pages/portal/PortalDashboard';
 import PortalServices from '@/pages/portal/PortalServices';
 import PortalInvoices from '@/pages/portal/PortalInvoices';
@@ -154,6 +156,7 @@ export default function App() {
                       </ProtectedRoute>
                     }>
                       <Route index element={<OperatorDashboard />} />
+                      <Route path="service/:id/inspection" element={<ServiceInspection />} />
                     </Route>
 
                     <Route path="/portal" element={
