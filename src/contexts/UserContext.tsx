@@ -39,11 +39,11 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       console.log(`UserContext - Fetching profile for: ${authUser.email}`);
       
-      // Buscar perfil existente directamente
+      // Buscar perfil por email en lugar de ID
       const { data: existingProfile, error } = await supabase
         .from('profiles')
         .select('*')
-        .eq('id', authUser.id)
+        .eq('email', authUser.email)
         .maybeSingle();
 
       if (error && error.code !== 'PGRST116') {
