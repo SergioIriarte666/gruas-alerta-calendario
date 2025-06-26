@@ -16,7 +16,7 @@ interface ServiceFormPersistenceProps {
   serviceDate: Date;
   onDataRestore: (data: any) => void;
   onDataClear?: () => void;
-  onMarkAsSubmitted?: () => void;
+  onMarkAsSubmitted?: (fn: () => void) => void;
 }
 
 export const ServiceFormPersistence = ({
@@ -58,8 +58,8 @@ export const ServiceFormPersistence = ({
 
   // Exponer la función markAsSubmitted al componente padre
   useEffect(() => {
-    if (onMarkAsSubmitted) {
-      onMarkAsSubmitted = markAsSubmitted;
+    if (onMarkAsSubmitted && markAsSubmitted) {
+      onMarkAsSubmitted(markAsSubmitted);
     }
   }, [markAsSubmitted, onMarkAsSubmitted]);
 
@@ -95,11 +95,15 @@ export const ServiceFormPersistence = ({
   };
 
   const handleDiscardPersistedData = () => {
+    console.log('🗑️ Discarding persisted data and clearing form');
+    
+    // Primero limpiar los datos persistidos
     clearFormData();
     setShowPersistedDataAlert(false);
     
-    // Limpiar también el formulario actual
+    // Luego limpiar el formulario actual
     if (onDataClear) {
+      console.log('🧹 Calling onDataClear to reset form');
       onDataClear();
     }
     

@@ -16,6 +16,7 @@ export const useGenericFormPersistence = <T extends Record<string, any>>(
   const storageKey = `form-persistence-${key}`;
   const timeoutRef = useRef<NodeJS.Timeout>();
   const initializedRef = useRef(false);
+  const skipLoadRef = useRef(false); // Flag para evitar carga después de limpieza
 
   const saveFormData = useCallback(() => {
     try {
@@ -27,6 +28,13 @@ export const useGenericFormPersistence = <T extends Record<string, any>>(
   }, [formData, storageKey, key]);
 
   const loadFormData = useCallback(() => {
+    // Si skipLoadRef está activo, no cargar datos
+    if (skipLoadRef.current) {
+      console.log(`Skipping data load for ${key} due to recent clear`);
+      skipLoadRef.current = false;
+      return null;
+    }
+
     try {
       const savedData = localStorage.getItem(storageKey);
       if (savedData) {
@@ -45,7 +53,8 @@ export const useGenericFormPersistence = <T extends Record<string, any>>(
   const clearFormData = useCallback(() => {
     try {
       localStorage.removeItem(storageKey);
-      console.log(`Form data cleared for ${key}`);
+      skipLoadRef.current = true; // Activar flag para evitar siguiente carga
+      console.log(`Form data cleared for ${key}, skip load activated`);
     } catch (error) {
       console.error(`Error clearing form data for ${key}:`, error);
     }

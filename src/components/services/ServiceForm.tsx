@@ -50,7 +50,7 @@ export const ServiceForm = ({ service, onSubmit, onCancel }: ServiceFormProps) =
     setServiceDate
   } = useServiceFormData(service);
 
-  const { handleGenerateNewFolio, folioLoading } = useServiceFormEffects(
+  const { handleGenerateNewFolio, folioLoading, markAsClearing } = useServiceFormEffects(
     isManualFolio,
     service,
     setFolio
@@ -66,6 +66,7 @@ export const ServiceForm = ({ service, onSubmit, onCancel }: ServiceFormProps) =
   });
 
   const handleDataRestore = (data: any) => {
+    console.log('📥 Restoring form data:', data);
     setFolio(data.folio || '');
     setIsManualFolio(data.isManualFolio || false);
     setFormData(data.formData || formData);
@@ -74,9 +75,17 @@ export const ServiceForm = ({ service, onSubmit, onCancel }: ServiceFormProps) =
   };
 
   const handleDataClear = () => {
+    console.log('🧹 Clearing form data completely');
+    
+    // Marcar que estamos limpiando para evitar generación automática de folio
+    markAsClearing();
+    
+    // Guardar el estado actual de isManualFolio para mantenerlo
+    const currentIsManualFolio = isManualFolio;
+    
     // Resetear todos los campos del formulario a sus valores por defecto
     setFolio('');
-    setIsManualFolio(false);
+    setIsManualFolio(false); // Resetear a automático por defecto
     setFormData({
       requestDate: format(new Date(), 'yyyy-MM-dd'),
       serviceDate: format(new Date(), 'yyyy-MM-dd'),
@@ -98,9 +107,14 @@ export const ServiceForm = ({ service, onSubmit, onCancel }: ServiceFormProps) =
     setRequestDate(new Date());
     setServiceDate(new Date());
     
-    // Si no es manual, generar nuevo folio
-    if (!isManualFolio) {
-      handleGenerateNewFolio();
+    // Solo generar nuevo folio si no era manual antes de limpiar
+    if (!currentIsManualFolio) {
+      console.log('🔢 Generating new folio after clear (was automatic)');
+      setTimeout(() => {
+        handleGenerateNewFolio();
+      }, 100); // Pequeño delay para asegurar que el estado se actualice
+    } else {
+      console.log('📝 Keeping empty folio (was manual)');
     }
   };
 
@@ -150,7 +164,7 @@ export const ServiceForm = ({ service, onSubmit, onCancel }: ServiceFormProps) =
         serviceDate={serviceDate}
         onDataRestore={handleDataRestore}
         onDataClear={handleDataClear}
-        onMarkAsSubmitted={() => markAsSubmittedRef.current}
+        onMarkAsSubmitted={(fn) => markAsSubmittedRef.current = fn}
       />
 
       <ServiceFormHeader service={service} />
