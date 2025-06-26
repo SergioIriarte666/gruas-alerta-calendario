@@ -1,6 +1,6 @@
 
 import { useEffect, useState } from 'react';
-import { Save, X, AlertCircle } from 'lucide-react';
+import { X, AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { useGenericFormPersistence } from '@/hooks/useGenericFormPersistence';
@@ -58,7 +58,7 @@ export const ServiceFormPersistence = ({
 
   // Exponer la función markAsSubmitted al componente padre
   useEffect(() => {
-    if (onMarkAsSubmitted && markAsSubmitted) {
+    if (onMarkAsSubmitted) {
       onMarkAsSubmitted(markAsSubmitted);
     }
   }, [markAsSubmitted, onMarkAsSubmitted]);
@@ -150,13 +150,6 @@ export const ServiceFormPersistence = ({
           </AlertDescription>
         </Alert>
       )}
-
-      <div className="fixed bottom-4 right-4 z-50">
-        <div className="bg-gray-800/90 text-white text-xs px-3 py-1 rounded-full flex items-center space-x-2">
-          <Save className="w-3 h-3" />
-          <span>Guardado automático activo</span>
-        </div>
-      </div>
     </>
   );
 };

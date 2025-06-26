@@ -1,3 +1,4 @@
+
 import { useClients } from '@/hooks/useClients';
 import { useCranes } from '@/hooks/useCranes';
 import { useOperatorsData } from '@/hooks/operators/useOperatorsData';
@@ -80,9 +81,6 @@ export const ServiceForm = ({ service, onSubmit, onCancel }: ServiceFormProps) =
     // Marcar que estamos limpiando para evitar generación automática de folio
     markAsClearing();
     
-    // Guardar el estado actual de isManualFolio para mantenerlo
-    const currentIsManualFolio = isManualFolio;
-    
     // Resetear todos los campos del formulario a sus valores por defecto
     setFolio('');
     setIsManualFolio(false); // Resetear a automático por defecto
@@ -106,16 +104,6 @@ export const ServiceForm = ({ service, onSubmit, onCancel }: ServiceFormProps) =
     });
     setRequestDate(new Date());
     setServiceDate(new Date());
-    
-    // Solo generar nuevo folio si no era manual antes de limpiar
-    if (!currentIsManualFolio) {
-      console.log('🔢 Generating new folio after clear (was automatic)');
-      setTimeout(() => {
-        handleGenerateNewFolio();
-      }, 100); // Pequeño delay para asegurar que el estado se actualice
-    } else {
-      console.log('📝 Keeping empty folio (was manual)');
-    }
   };
 
   const handleFormSubmit = async (e: React.FormEvent) => {
