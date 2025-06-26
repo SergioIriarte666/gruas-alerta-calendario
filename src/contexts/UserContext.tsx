@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { useAuth } from './AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { cleanupAuthState, performGlobalSignOut } from '@/utils/authCleanup';
@@ -25,18 +25,30 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const { user: authUser, loading: authLoading, signOut } = useAuth();
   const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const isLoadingRef = useRef(false);
+  const retryCountRef = useRef(0);
+  const maxRetries = 3;
 
   const fetchUserProfile = async (forceRefresh = false) => {
+    // Prevenir ejecuciones simultáneas
+    if (isLoadingRef.current && !forceRefresh) {
+      console.log('UserContext - Profile fetch already in progress, skipping');
+      return;
+    }
+
     if (!authUser) {
       console.log('UserContext - No auth user, clearing profile');
       setUser(null);
       setLoading(false);
+      isLoadingRef.current = false;
+      retryCountRef.current = 0;
       return;
     }
 
     try {
+      isLoadingRef.current = true;
       setLoading(true);
-      console.log(`UserContext - Fetching profile for user: ${authUser.id} (${authUser.email}) - Force refresh: ${forceRefresh}`);
+      console.log(`UserContext - Fetching profile for user: ${authUser.id} (${authUser.email}) - Force refresh: ${forceRefresh} - Retry: ${retryCountRef.current}`);
       
       // Si es force refresh, limpiar cualquier cache local
       if (forceRefresh) {
@@ -46,50 +58,114 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         await new Promise(resolve => setTimeout(resolve, 500));
       }
       
+      // Usar maybeSingle() para evitar errores cuando no se encuentra el perfil
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', authUser.id)
-        .single();
+        .maybeSingle();
 
-      if (error) {
+      if (error && error.code !== 'PGRST116') {
         console.error('UserContext - Error fetching user profile:', error);
+        throw error;
+      }
+
+      if (!data) {
+        console.log('UserContext - Profile not found, attempting to create...');
         
-        // Si el perfil no existe, intentar crearlo
-        if (error.code === 'PGRST116') {
-          console.log('UserContext - Profile not found, attempting to create...');
-          
-          // Para el usuario pagos@gruas5norte.cl, crear con rol client
-          const defaultRole = authUser.email === 'pagos@gruas5norte.cl' ? 'client' : 'viewer';
-          
-          const { data: newProfile, error: createError } = await supabase
+        // Verificar si realmente no existe antes de crear
+        const { data: existingProfile, error: checkError } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('id', authUser.id)
+          .maybeSingle();
+
+        if (checkError && checkError.code !== 'PGRST116') {
+          console.error('UserContext - Error checking existing profile:', checkError);
+          throw checkError;
+        }
+
+        if (existingProfile) {
+          console.log('UserContext - Profile exists, refetching...');
+          // El perfil existe, intentar cargar de nuevo
+          const { data: refetchedProfile, error: refetchError } = await supabase
             .from('profiles')
-            .insert({
-              id: authUser.id,
-              email: authUser.email || '',
-              full_name: authUser.email || '',
-              role: defaultRole
-            })
-            .select()
+            .select('*')
+            .eq('id', authUser.id)
             .single();
 
-          if (createError) {
-            console.error('UserContext - Error creating profile:', createError);
-            setUser(null);
-          } else if (newProfile) {
-            console.log('UserContext - Profile created successfully:', newProfile);
-            setUser({
-              id: newProfile.id,
-              email: newProfile.email,
-              name: newProfile.full_name || newProfile.email,
-              role: newProfile.role,
-              client_id: newProfile.client_id,
-            });
+          if (refetchError) throw refetchError;
+          
+          if (refetchedProfile) {
+            const userProfile = {
+              id: refetchedProfile.id,
+              email: refetchedProfile.email,
+              name: refetchedProfile.full_name || refetchedProfile.email,
+              role: refetchedProfile.role,
+              client_id: refetchedProfile.client_id,
+            };
+            console.log('UserContext - Profile refetched successfully:', userProfile);
+            setUser(userProfile);
+            retryCountRef.current = 0;
+            return;
           }
-        } else {
-          setUser(null);
         }
-      } else if (data) {
+        
+        // Para el usuario pagos@gruas5norte.cl, crear con rol client
+        const defaultRole = authUser.email === 'pagos@gruas5norte.cl' ? 'client' : 'viewer';
+        
+        const { data: newProfile, error: createError } = await supabase
+          .from('profiles')
+          .insert({
+            id: authUser.id,
+            email: authUser.email || '',
+            full_name: authUser.email || '',
+            role: defaultRole
+          })
+          .select()
+          .single();
+
+        if (createError) {
+          console.error('UserContext - Error creating profile:', createError);
+          
+          // Si el error es que ya existe, intentar cargar el perfil existente
+          if (createError.code === '23505') { // Duplicate key error
+            console.log('UserContext - Profile already exists, attempting to fetch...');
+            const { data: existingData, error: fetchExistingError } = await supabase
+              .from('profiles')
+              .select('*')
+              .eq('id', authUser.id)
+              .single();
+              
+            if (!fetchExistingError && existingData) {
+              const userProfile = {
+                id: existingData.id,
+                email: existingData.email,
+                name: existingData.full_name || existingData.email,
+                role: existingData.role,
+                client_id: existingData.client_id,
+              };
+              console.log('UserContext - Existing profile loaded:', userProfile);
+              setUser(userProfile);
+              retryCountRef.current = 0;
+              return;
+            }
+          }
+          throw createError;
+        }
+
+        if (newProfile) {
+          console.log('UserContext - Profile created successfully:', newProfile);
+          setUser({
+            id: newProfile.id,
+            email: newProfile.email,
+            name: newProfile.full_name || newProfile.email,
+            role: newProfile.role,
+            client_id: newProfile.client_id,
+          });
+          retryCountRef.current = 0;
+        }
+      } else {
         console.log('UserContext - Profile fetched successfully:', {
           id: data.id,
           email: data.email,
@@ -120,9 +196,10 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
               role: correctedRole,
               client_id: data.client_id,
             });
+            retryCountRef.current = 0;
           } else {
             console.error('UserContext - Error correcting role:', updateError);
-            setUser(null);
+            throw updateError;
           }
           return;
         }
@@ -137,24 +214,69 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         console.log('UserContext - Setting user profile:', userProfile);
         setUser(userProfile);
+        retryCountRef.current = 0;
       }
     } catch (error) {
       console.error('UserContext - Exception in fetchUserProfile:', error);
-      setUser(null);
+      
+      // Implementar retry con backoff
+      if (retryCountRef.current < maxRetries) {
+        retryCountRef.current++;
+        const retryDelay = Math.pow(2, retryCountRef.current) * 1000; // Exponential backoff
+        console.log(`UserContext - Retrying in ${retryDelay}ms (attempt ${retryCountRef.current}/${maxRetries})`);
+        
+        setTimeout(() => {
+          fetchUserProfile(forceRefresh);
+        }, retryDelay);
+        return;
+      } else {
+        console.error('UserContext - Max retries exceeded, giving up');
+        setUser(null);
+        retryCountRef.current = 0;
+      }
     } finally {
       setLoading(false);
+      isLoadingRef.current = false;
     }
   };
 
   const forceRefreshProfile = async () => {
-    console.log('UserContext - Force refreshing profile with delay and cache clear...');
+    console.log('UserContext - Force refreshing profile with improved retry logic...');
+    retryCountRef.current = 0;
     await fetchUserProfile(true);
     
-    // Verificar que el perfil se haya cargado correctamente
-    if (!user && authUser) {
-      console.warn('UserContext - Profile still null after force refresh, retrying...');
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      await fetchUserProfile(true);
+    // Verificar que el perfil se haya cargado correctamente con timeout
+    const checkProfileLoaded = () => {
+      return new Promise<void>((resolve, reject) => {
+        const timeout = setTimeout(() => {
+          reject(new Error('Profile loading timeout'));
+        }, 10000); // 10 segundos timeout
+
+        const checkInterval = setInterval(() => {
+          if (user && !loading) {
+            clearTimeout(timeout);
+            clearInterval(checkInterval);
+            resolve();
+          } else if (!loading && !user && authUser && retryCountRef.current >= maxRetries) {
+            clearTimeout(timeout);
+            clearInterval(checkInterval);
+            reject(new Error('Profile loading failed after max retries'));
+          }
+        }, 500);
+      });
+    };
+
+    try {
+      await checkProfileLoaded();
+      console.log('UserContext - Profile loaded successfully after force refresh');
+    } catch (error) {
+      console.error('UserContext - Force refresh failed:', error);
+      // Intentar un último retry manual
+      if (authUser && !user && retryCountRef.current >= maxRetries) {
+        console.log('UserContext - Final retry attempt...');
+        retryCountRef.current = 0;
+        await fetchUserProfile(true);
+      }
     }
   };
 
@@ -191,6 +313,8 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Step 1: Clear user state immediately
       setUser(null);
       setLoading(false);
+      isLoadingRef.current = false;
+      retryCountRef.current = 0;
       
       // Step 2: Clean up auth state
       cleanupAuthState();
@@ -209,6 +333,8 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       cleanupAuthState();
       setUser(null);
       setLoading(false);
+      isLoadingRef.current = false;
+      retryCountRef.current = 0;
       window.location.href = '/auth';
     }
   };

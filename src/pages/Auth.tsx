@@ -20,6 +20,7 @@ const Auth = () => {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [redirecting, setRedirecting] = useState(false);
+  const [profileReady, setProfileReady] = useState(false);
   const [activeTab, setActiveTab] = useState<'login' | 'register'>(
     (tabParam as 'login' | 'register') || (isInvited ? 'register' : 'login')
   );
@@ -89,6 +90,16 @@ const Auth = () => {
     }
   };
 
+  // Detectar cuando el perfil está listo
+  useEffect(() => {
+    if (authUser && profileUser && !profileLoading && !authLoading) {
+      console.log('Auth: Profile is ready for redirect');
+      setProfileReady(true);
+    } else {
+      setProfileReady(false);
+    }
+  }, [authUser, profileUser, profileLoading, authLoading]);
+
   // Redirigir usuarios autenticados con lógica mejorada
   useEffect(() => {
     const handleAuthenticatedUserRedirect = async () => {
@@ -118,38 +129,54 @@ const Auth = () => {
         return;
       }
 
-      // Si no hay perfil de usuario, forzar recarga con múltiples intentos
+      // Si no hay perfil de usuario, forzar recarga con timeout mejorado
       if (!profileUser) {
-        console.log('Auth: No profile found, forcing refresh with retries...');
+        console.log('Auth: No profile found, forcing refresh with improved timeout...');
         setRedirecting(true);
         
         try {
-          // Primer intento de recarga
-          await forceRefreshProfile();
+          // Timeout de 15 segundos para la carga del perfil
+          const profileLoadPromise = forceRefreshProfile();
+          const timeoutPromise = new Promise((_, reject) => {
+            setTimeout(() => reject(new Error('Profile loading timeout')), 15000);
+          });
+
+          await Promise.race([profileLoadPromise, timeoutPromise]);
           
-          // Esperar más tiempo para que se actualice el estado
-          await new Promise(resolve => setTimeout(resolve, 2000));
+          // Esperar un poco más para que se actualice el estado
+          await new Promise(resolve => setTimeout(resolve, 1000));
           
-          // Segundo intento si aún no tenemos perfil
+          // Verificar si tenemos perfil después del force refresh
           if (!profileUser) {
-            console.log('Auth: First refresh attempt failed, trying again...');
-            await forceRefreshProfile();
-            await new Promise(resolve => setTimeout(resolve, 1500));
-          }
-          
-          // Si aún no tenemos perfil después de múltiples intentos, hay un problema
-          if (!profileUser) {
-            console.error('Auth: Failed to load profile after multiple attempts');
+            console.error('Auth: Failed to load profile after force refresh');
             toast.error('Error cargando perfil de usuario', {
-              description: 'Por favor, intenta cerrar sesión e iniciar sesión nuevamente.'
+              description: 'Por favor, intenta cerrar sesión e iniciar sesión nuevamente.',
+              action: {
+                label: 'Reintentar',
+                onClick: () => window.location.reload()
+              }
             });
+            setRedirecting(false);
+            return;
           }
           
         } catch (error) {
           console.error('Auth: Error forcing profile refresh:', error);
-        } finally {
+          toast.error('Error cargando perfil de usuario', {
+            description: 'Tiempo de espera agotado. Intenta nuevamente.',
+            action: {
+              label: 'Reintentar',
+              onClick: () => window.location.reload()
+            }
+          });
           setRedirecting(false);
+          return;
         }
+      }
+
+      // Solo proceder si el perfil está completamente listo
+      if (!profileReady) {
+        console.log('Auth: Profile not ready yet, waiting...');
         return;
       }
 
@@ -169,11 +196,14 @@ const Auth = () => {
       } catch (error) {
         console.error('Auth: Error during role-based redirect:', error);
         setRedirecting(false);
+        toast.error('Error en la redirección', {
+          description: 'Hubo un problema al redirigir. Intenta nuevamente.'
+        });
       }
     };
 
     handleAuthenticatedUserRedirect();
-  }, [authUser, profileUser, authLoading, profileLoading, navigate, forceRefreshProfile, redirecting]);
+  }, [authUser, profileUser, authLoading, profileLoading, profileReady, navigate, forceRefreshProfile, redirecting]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -288,6 +318,17 @@ const Auth = () => {
         <div className="text-center">
           <div className="mb-4">{message}</div>
           <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin mx-auto"></div>
+          {redirecting && (
+            <div className="mt-4">
+              <p className="text-sm text-gray-400">Si la redirección tarda mucho:</p>
+              <button 
+                onClick={() => window.location.reload()}
+                className="mt-2 px-4 py-2 bg-tms-green text-black rounded hover:bg-tms-green/80"
+              >
+                Reintentar
+              </button>
+            </div>
+          )}
         </div>
       </div>
     );
