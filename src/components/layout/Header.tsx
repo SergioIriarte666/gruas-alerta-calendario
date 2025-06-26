@@ -8,8 +8,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { toast } from 'sonner';
 import { useUser } from '@/contexts/UserContext';
 import { useSettings } from '@/hooks/useSettings';
-import { useAuth } from '@/contexts/AuthContext';
-import { NotificationsDropdown } from './NotificationsDropdown';
+import { cleanupAuthState } from '@/utils/authCleanup';
 
 interface HeaderProps {
   setIsMobileMenuOpen: (open: boolean) => void;
@@ -19,9 +18,8 @@ export const Header = ({
   setIsMobileMenuOpen
 }: HeaderProps) => {
   const navigate = useNavigate();
-  const { user } = useUser();
+  const { user, logout } = useUser();
   const { settings } = useSettings();
-  const { signOut } = useAuth();
   
   const isAdmin = user?.role === 'admin';
   const companyName = settings?.company?.name || 'Gruas 5 Norte';
@@ -29,13 +27,14 @@ export const Header = ({
 
   const handleLogout = async () => {
     try {
-      console.log('Header logout initiated...');
+      console.log('Header: Logout initiated...');
       
       toast.info('Cerrando sesión...', {
         description: 'Limpiando datos de usuario'
       });
       
-      await signOut();
+      // Use the improved logout from UserContext
+      await logout();
     } catch (error) {
       console.error("Header: Logout failed:", error);
       
@@ -44,6 +43,7 @@ export const Header = ({
       });
       
       // Forzar limpieza y redirección como último recurso
+      cleanupAuthState();
       window.location.href = '/auth';
     }
   };

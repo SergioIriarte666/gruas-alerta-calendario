@@ -2,6 +2,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useAuth } from './AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import { cleanupAuthState, performGlobalSignOut } from '@/utils/authCleanup';
 
 interface UserProfile {
   id: string;
@@ -136,8 +137,32 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const logout = async () => {
-    console.log('UserContext - Logging out user...');
-    await signOut();
+    try {
+      console.log('UserContext - Starting logout process...');
+      
+      // Step 1: Clear user state immediately
+      setUser(null);
+      setLoading(false);
+      
+      // Step 2: Clean up auth state
+      cleanupAuthState();
+      
+      // Step 3: Perform global sign out
+      await performGlobalSignOut(supabase);
+      
+      console.log('UserContext - Logout completed, forcing redirect...');
+      
+      // Step 4: Force complete page reload to ensure clean state
+      window.location.href = '/auth';
+    } catch (error) {
+      console.error('UserContext - Error during logout:', error);
+      
+      // Force cleanup and redirect even if there's an error
+      cleanupAuthState();
+      setUser(null);
+      setLoading(false);
+      window.location.href = '/auth';
+    }
   };
 
   useEffect(() => {
