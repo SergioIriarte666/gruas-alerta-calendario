@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { useAuth } from './AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -37,9 +36,9 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     fetchingRef.current = true;
     
     try {
-      console.log(`UserContext - Fetching profile for: ${authUser.email}`);
+      console.log(`UserContext - Fetching profile for: ${authUser.email} (ID: ${authUser.id})`);
       
-      // Buscar perfil por email
+      // Buscar perfil por email primero
       const { data: existingProfile, error } = await supabase
         .from('profiles')
         .select('*')
@@ -56,8 +55,61 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (existingProfile) {
         console.log('UserContext - Profile found:', existingProfile);
+        
+        // Si el ID del perfil no coincide con el ID del usuario autenticado, actualizarlo
+        if (existingProfile.id !== authUser.id) {
+          console.log(`UserContext - ID mismatch detected. Profile ID: ${existingProfile.id}, Auth ID: ${authUser.id}`);
+          console.log('UserContext - Updating profile ID to match auth user ID...');
+          
+          try {
+            // Actualizar el ID del perfil para que coincida con el usuario autenticado
+            const { error: updateError } = await supabase
+              .from('profiles')
+              .update({ id: authUser.id })
+              .eq('email', authUser.email);
+
+            if (updateError) {
+              console.error('UserContext - Error updating profile ID:', updateError);
+              // Si no se puede actualizar, crear un nuevo perfil con el ID correcto
+              const { data: newProfile, error: createError } = await supabase
+                .from('profiles')
+                .insert({
+                  id: authUser.id,
+                  email: authUser.email,
+                  full_name: existingProfile.full_name || authUser.email,
+                  role: existingProfile.role || 'client',
+                  client_id: existingProfile.client_id,
+                })
+                .select()
+                .single();
+
+              if (createError) {
+                console.error('UserContext - Error creating new profile:', createError);
+                setUser(null);
+                setLoading(false);
+                fetchingRef.current = false;
+                return;
+              }
+
+              // Eliminar el perfil antiguo con ID incorrecto
+              await supabase
+                .from('profiles')
+                .delete()
+                .eq('email', authUser.email)
+                .neq('id', authUser.id);
+
+              existingProfile.id = authUser.id;
+            } else {
+              console.log('UserContext - Profile ID updated successfully');
+              existingProfile.id = authUser.id;
+            }
+          } catch (updateException) {
+            console.error('UserContext - Exception updating profile:', updateException);
+          }
+        }
+
         const userProfile = {
-          id: existingProfile.id,
+          id: authUser.id, // Usar siempre el ID del usuario autenticado
           email: existingProfile.email,
           name: existingProfile.full_name || existingProfile.email,
           role: existingProfile.role,
@@ -67,11 +119,11 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       } else {
         console.log('UserContext - No profile found, creating one for user:', authUser.email);
         
-        // Crear perfil automáticamente si no existe
+        // Crear perfil automáticamente si no existe, usando el ID correcto
         const { data: newProfile, error: createError } = await supabase
           .from('profiles')
           .insert({
-            id: authUser.id,
+            id: authUser.id, // Usar el ID del usuario autenticado
             email: authUser.email,
             full_name: authUser.email,
             role: 'client' // Asignar rol por defecto
