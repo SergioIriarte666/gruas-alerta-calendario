@@ -51,6 +51,12 @@ export const useGenericFormPersistence = <T extends Record<string, any>>(
     }
   }, [storageKey, key]);
 
+  const markAsSubmitted = useCallback(() => {
+    if (clearOnSuccess) {
+      clearFormData();
+    }
+  }, [clearFormData, clearOnSuccess]);
+
   // Load data on mount
   useEffect(() => {
     if (!initializedRef.current) {
@@ -104,6 +110,7 @@ export const useGenericFormPersistence = <T extends Record<string, any>>(
     loadFormData,
     saveFormData,
     clearFormData,
+    markAsSubmitted,
     hasPersistedData: () => !!localStorage.getItem(storageKey)
   };
 };

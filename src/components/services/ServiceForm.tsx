@@ -1,4 +1,3 @@
-
 import { useClients } from '@/hooks/useClients';
 import { useCranes } from '@/hooks/useCranes';
 import { useOperatorsData } from '@/hooks/operators/useOperatorsData';
@@ -20,6 +19,7 @@ import { useServiceFormEffects } from '@/hooks/services/useServiceFormEffects';
 import { useServiceFormSubmission } from '@/hooks/services/useServiceFormSubmission';
 import { useUser } from '@/contexts/UserContext';
 import { useToast } from '@/components/ui/custom-toast';
+import { useRef } from 'react';
 
 interface ServiceFormProps {
   service?: Service | null;
@@ -34,6 +34,7 @@ export const ServiceForm = ({ service, onSubmit, onCancel }: ServiceFormProps) =
   const { serviceTypes, loading: serviceTypesLoading } = useServiceTypes();
   const { user } = useUser();
   const { toast } = useToast();
+  const markAsSubmittedRef = useRef<(() => void) | null>(null);
 
   const {
     isManualFolio,
@@ -74,6 +75,12 @@ export const ServiceForm = ({ service, onSubmit, onCancel }: ServiceFormProps) =
   const handleFormSubmit = async (e: React.FormEvent) => {
     try {
       await handleSubmit(e, folio, formData, isManualFolio);
+      
+      // Limpiar datos de persistencia después del envío exitoso
+      if (markAsSubmittedRef.current) {
+        markAsSubmittedRef.current();
+      }
+      
       toast({
         type: 'success',
         title: 'Servicio guardado',
@@ -110,6 +117,7 @@ export const ServiceForm = ({ service, onSubmit, onCancel }: ServiceFormProps) =
         requestDate={requestDate}
         serviceDate={serviceDate}
         onDataRestore={handleDataRestore}
+        onMarkAsSubmitted={() => markAsSubmittedRef.current}
       />
 
       <ServiceFormHeader service={service} />
