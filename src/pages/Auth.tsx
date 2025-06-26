@@ -20,7 +20,6 @@ const Auth = () => {
   const [email, setEmail] = useState(emailParam || '');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const [redirecting, setRedirecting] = useState(false);
   const [activeTab, setActiveTab] = useState<'login' | 'register'>(
     (tabParam as 'login' | 'register') || (isInvited ? 'register' : 'login')
   );
@@ -40,32 +39,35 @@ const Auth = () => {
     }
   }, [isInvited, isRegistered, emailParam]);
 
-  // Redirigir usuarios autenticados
+  // Redirigir usuarios autenticados - usar la misma lógica simple que el operador
   useEffect(() => {
-    if (redirecting || authLoading || profileLoading) return;
+    if (authLoading || profileLoading) return;
     
     if (authUser && profileUser) {
-      console.log(`Auth: Redirecting user with role: ${profileUser.role}`);
-      setRedirecting(true);
+      console.log(`Auth: User authenticated with role: ${profileUser.role}`);
       
-      // Redireccionar según el rol
+      // Redirección directa basada en rol - igual que funciona para admin@admin.com
       switch (profileUser.role) {
         case 'client':
+          console.log('Auth: Redirecting client to /portal');
           navigate('/portal', { replace: true });
           break;
         case 'operator':
+          console.log('Auth: Redirecting operator to /operator');
           navigate('/operator', { replace: true });
           break;
         case 'admin':
         case 'viewer':
+          console.log('Auth: Redirecting admin/viewer to /dashboard');
           navigate('/dashboard', { replace: true });
           break;
         default:
+          console.log('Auth: Defaulting to / for unknown role');
           navigate('/', { replace: true });
           break;
       }
     }
-  }, [authUser, profileUser, authLoading, profileLoading, redirecting, navigate]);
+  }, [authUser, profileUser, authLoading, profileLoading, navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -145,14 +147,12 @@ const Auth = () => {
     }
   };
 
-  // Mostrar loading mientras se verifica la autenticación
-  if (authLoading || profileLoading || redirecting) {
+  // Mostrar loading simple mientras se verifica la autenticación
+  if (authLoading || profileLoading) {
     return (
       <div className="flex items-center justify-center h-screen bg-gray-900 text-white">
         <div className="text-center">
-          <div className="mb-4">
-            {redirecting ? 'Redirigiendo...' : 'Cargando...'}
-          </div>
+          <div className="mb-4">Cargando...</div>
           <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin mx-auto"></div>
         </div>
       </div>
