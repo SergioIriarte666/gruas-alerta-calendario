@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useAuth } from './AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -27,8 +26,9 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const fetchUserProfile = async () => {
+  const fetchUserProfile = async (forceRefresh = false) => {
     if (!authUser) {
+      console.log('UserContext - No auth user, clearing profile');
       setUser(null);
       setLoading(false);
       return;
@@ -36,7 +36,15 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     try {
       setLoading(true);
-      console.log('UserContext - Fetching profile for user:', authUser.id, authUser.email);
+      console.log(`UserContext - Fetching profile for user: ${authUser.id} (${authUser.email}) - Force refresh: ${forceRefresh}`);
+      
+      // Si es force refresh, limpiar cualquier cache local
+      if (forceRefresh) {
+        console.log('UserContext - Force refresh: clearing local cache and waiting');
+        setUser(null);
+        // Pequeño delay para asegurar que la base de datos esté actualizada
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
       
       const { data, error } = await supabase
         .from('profiles')
@@ -79,7 +87,13 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setUser(null);
         }
       } else if (data) {
-        console.log('UserContext - Profile fetched successfully:', data);
+        console.log('UserContext - Profile fetched successfully:', {
+          id: data.id,
+          email: data.email,
+          role: data.role,
+          client_id: data.client_id,
+          full_name: data.full_name
+        });
         
         // Validar que el rol sea válido
         const validRoles = ['admin', 'operator', 'viewer', 'client'];
@@ -89,13 +103,16 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
           return;
         }
 
-        setUser({
+        const userProfile = {
           id: data.id,
           email: data.email,
           name: data.full_name || data.email,
           role: data.role,
           client_id: data.client_id,
-        });
+        };
+
+        console.log('UserContext - Setting user profile:', userProfile);
+        setUser(userProfile);
       }
     } catch (error) {
       console.error('UserContext - Exception in fetchUserProfile:', error);
@@ -106,8 +123,15 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const forceRefreshProfile = async () => {
-    console.log('UserContext - Force refreshing profile...');
-    await fetchUserProfile();
+    console.log('UserContext - Force refreshing profile with delay and cache clear...');
+    await fetchUserProfile(true);
+    
+    // Verificar que el perfil se haya cargado correctamente
+    if (!user && authUser) {
+      console.warn('UserContext - Profile still null after force refresh, retrying...');
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      await fetchUserProfile(true);
+    }
   };
 
   const updateUser = async (updates: Partial<UserProfile>) => {
@@ -172,7 +196,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     console.log('UserContext - Auth loading complete, fetching profile...');
-    fetchUserProfile();
+    fetchUserProfile(false);
   }, [authUser, authLoading]);
 
   return (

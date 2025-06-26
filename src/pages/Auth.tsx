@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -20,6 +19,7 @@ const Auth = () => {
   const [email, setEmail] = useState(emailParam || '');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [redirecting, setRedirecting] = useState(false);
   const [activeTab, setActiveTab] = useState<'login' | 'register'>(
     (tabParam as 'login' | 'register') || (isInvited ? 'register' : 'login')
   );
@@ -47,36 +47,110 @@ const Auth = () => {
     }
   }, [isRegistered]);
 
-  // Redirigir usuarios autenticados con mejor lógica
-  useEffect(() => {
-    if (!authLoading && !profileLoading && authUser && profileUser) {
-      console.log('Auth: Redirecting authenticated user with role:', profileUser.role);
-      
-      // Forzar refresh del perfil para asegurar datos actualizados
-      forceRefreshProfile().then(() => {
-        // Redirigir según el rol
-        switch (profileUser.role) {
-          case 'client':
-            console.log('Auth: Redirecting client to /portal');
-            navigate('/portal', { replace: true });
-            break;
-          case 'operator':
-            console.log('Auth: Redirecting operator to /operator');
-            navigate('/operator', { replace: true });
-            break;
-          case 'admin':
-          case 'viewer':
-            console.log('Auth: Redirecting admin/viewer to /dashboard');
-            navigate('/dashboard', { replace: true });
-            break;
-          default:
-            console.log('Auth: Unknown role, redirecting to /');
-            navigate('/', { replace: true });
-            break;
-        }
-      });
+  // Función mejorada para manejar redirección basada en rol
+  const handleRoleBasedRedirect = async (userProfile: any) => {
+    if (!userProfile || !userProfile.role) {
+      console.error('Auth: No user profile or role found for redirect');
+      return;
     }
-  }, [authUser, profileUser, authLoading, profileLoading, navigate, forceRefreshProfile]);
+
+    console.log(`Auth: Redirecting user with role: ${userProfile.role}`);
+    
+    // Pequeño delay para asegurar que la UI esté lista
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
+    switch (userProfile.role) {
+      case 'client':
+        console.log('Auth: Redirecting client to /portal');
+        navigate('/portal', { replace: true });
+        break;
+      case 'operator':
+        console.log('Auth: Redirecting operator to /operator');
+        navigate('/operator', { replace: true });
+        break;
+      case 'admin':
+      case 'viewer':
+        console.log('Auth: Redirecting admin/viewer to /dashboard');
+        navigate('/dashboard', { replace: true });
+        break;
+      default:
+        console.error('Auth: Unknown role, redirecting to /');
+        navigate('/', { replace: true });
+        break;
+    }
+  };
+
+  // Redirigir usuarios autenticados con lógica mejorada
+  useEffect(() => {
+    const handleAuthenticatedUserRedirect = async () => {
+      // No hacer nada si ya estamos redirigiendo
+      if (redirecting) {
+        console.log('Auth: Already redirecting, skipping...');
+        return;
+      }
+
+      // Esperar a que termine de cargar la autenticación
+      if (authLoading) {
+        console.log('Auth: Auth still loading, waiting...');
+        return;
+      }
+
+      // Si no hay usuario autenticado, no hacer nada
+      if (!authUser) {
+        console.log('Auth: No authenticated user found');
+        return;
+      }
+
+      console.log('Auth: Authenticated user found:', authUser.email);
+
+      // Esperar a que termine de cargar el perfil
+      if (profileLoading) {
+        console.log('Auth: Profile still loading, waiting...');
+        return;
+      }
+
+      // Si no hay perfil de usuario, forzar recarga
+      if (!profileUser) {
+        console.log('Auth: No profile found, forcing refresh...');
+        setRedirecting(true);
+        
+        try {
+          await forceRefreshProfile();
+          
+          // Esperar un poco más para que se actualice el estado
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          
+          // Verificar si ahora tenemos el perfil
+          // La redirección se manejará en la siguiente ejecución del useEffect
+        } catch (error) {
+          console.error('Auth: Error forcing profile refresh:', error);
+        } finally {
+          setRedirecting(false);
+        }
+        return;
+      }
+
+      // Si tenemos ambos (auth user y profile), proceder con redirección
+      console.log('Auth: Both auth user and profile available, proceeding with redirect');
+      console.log('Auth: Profile details:', {
+        id: profileUser.id,
+        email: profileUser.email,
+        role: profileUser.role,
+        client_id: profileUser.client_id
+      });
+
+      setRedirecting(true);
+      
+      try {
+        await handleRoleBasedRedirect(profileUser);
+      } catch (error) {
+        console.error('Auth: Error during role-based redirect:', error);
+        setRedirecting(false);
+      }
+    };
+
+    handleAuthenticatedUserRedirect();
+  }, [authUser, profileUser, authLoading, profileLoading, navigate, forceRefreshProfile, redirecting]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -178,12 +252,18 @@ const Auth = () => {
     }
   };
 
-  // Show loading while checking auth state
-  if (authLoading || profileLoading) {
+  // Show loading while checking auth state or redirecting
+  if (authLoading || profileLoading || redirecting) {
+    const message = redirecting 
+      ? 'Redirigiendo...' 
+      : profileLoading 
+        ? 'Cargando perfil de usuario...' 
+        : 'Verificando autenticación...';
+        
     return (
       <div className="flex items-center justify-center h-screen bg-gray-900 text-white">
         <div className="text-center">
-          <div className="mb-4">Verificando autenticación...</div>
+          <div className="mb-4">{message}</div>
           <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin mx-auto"></div>
         </div>
       </div>
