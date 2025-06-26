@@ -37,11 +37,11 @@ export const CostsTable = ({ costs, onEdit }: CostsTableProps) => {
     }
 
     return (
-        <Card className="bg-white/10 border-white/20">
+        <Card className="glass-card">
             <CardContent className="p-0">
                 <Table>
                     <TableHeader>
-                        <TableRow className="border-white/20 hover:bg-transparent">
+                        <TableRow className="border-gray-700 hover:bg-white/5">
                             <TableHead className="text-white">Fecha</TableHead>
                             <TableHead className="text-white">Descripción</TableHead>
                             <TableHead className="text-white">Categoría</TableHead>
@@ -59,7 +59,7 @@ export const CostsTable = ({ costs, onEdit }: CostsTableProps) => {
                             </TableRow>
                         ) : (
                             costs.map((cost) => (
-                                <TableRow key={cost.id} className="border-white/20">
+                                <TableRow key={cost.id} className="border-gray-800 hover:bg-white/5">
                                     <TableCell className="text-white">{new Date(cost.date + 'T00:00:00').toLocaleDateString()}</TableCell>
                                     <TableCell className="text-white font-medium">{cost.description}</TableCell>
                                     <TableCell className="text-gray-300">{cost.cost_categories.name}</TableCell>
@@ -73,12 +73,12 @@ export const CostsTable = ({ costs, onEdit }: CostsTableProps) => {
                                                     <MoreHorizontal className="h-4 w-4" />
                                                 </Button>
                                             </DropdownMenuTrigger>
-                                            <DropdownMenuContent align="end">
-                                                <DropdownMenuItem onClick={() => onEdit(cost)}>
+                                            <DropdownMenuContent align="end" className="bg-tms-dark border-gray-700">
+                                                <DropdownMenuItem onClick={() => onEdit(cost)} className="text-white hover:bg-white/10">
                                                     <Edit className="mr-2 h-4 w-4" />
                                                     <span>Editar</span>
                                                 </DropdownMenuItem>
-                                                <DropdownMenuItem onClick={() => handleDelete(cost.id)} className="text-red-500 focus:text-red-400 focus:bg-red-800/50">
+                                                <DropdownMenuItem onClick={() => handleDelete(cost.id)} className="text-red-400 hover:bg-red-900/20 focus:text-red-400 focus:bg-red-900/20">
                                                     <Trash2 className="mr-2 h-4 w-4" />
                                                     <span>Eliminar</span>
                                                 </DropdownMenuItem>

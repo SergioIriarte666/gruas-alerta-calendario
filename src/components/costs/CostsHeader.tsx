@@ -12,9 +12,9 @@ export const CostsHeader = ({ onAddCost }: CostsHeaderProps) => {
         <div className="flex flex-col md:flex-row justify-between md:items-center gap-4">
             <div>
                 <h1 className="text-3xl font-bold text-white">Gestión de Costos</h1>
-                <p className="text-gray-300 mt-1">Registra y analiza los costos operativos del negocio.</p>
+                <p className="text-gray-400 mt-1">Registra y analiza los costos operativos del negocio.</p>
             </div>
-            <Button onClick={onAddCost} className="bg-tms-green hover:bg-tms-green/90">
+            <Button onClick={onAddCost} className="bg-tms-green hover:bg-tms-green/80 text-black font-medium">
                 <PlusCircle className="w-4 h-4 mr-2" />
                 Registrar Costo
             </Button>
