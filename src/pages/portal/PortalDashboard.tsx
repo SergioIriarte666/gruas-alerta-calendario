@@ -45,7 +45,7 @@ const PortalDashboard: React.FC = () => {
       
       {/* Métricas principales */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <Card className="bg-gray-800 border-gray-700">
+        <Card className="glass-card">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-gray-400">Total Servicios</CardTitle>
             <History className="h-4 w-4 text-tms-green" />
@@ -57,7 +57,7 @@ const PortalDashboard: React.FC = () => {
           </CardContent>
         </Card>
 
-        <Card className="bg-gray-800 border-gray-700">
+        <Card className="glass-card">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-gray-400">Facturas Totales</CardTitle>
             <FileText className="h-4 w-4 text-tms-green" />
@@ -69,7 +69,7 @@ const PortalDashboard: React.FC = () => {
           </CardContent>
         </Card>
 
-        <Card className="bg-gray-800 border-gray-700">
+        <Card className="glass-card">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-gray-400">Pendiente de Pago</CardTitle>
             <Clock className="h-4 w-4 text-yellow-500" />
@@ -84,7 +84,7 @@ const PortalDashboard: React.FC = () => {
           </CardContent>
         </Card>
 
-        <Card className="bg-gray-800 border-gray-700">
+        <Card className="glass-card">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-gray-400">Facturas Vencidas</CardTitle>
             <AlertTriangle className="h-4 w-4 text-red-500" />
@@ -100,7 +100,7 @@ const PortalDashboard: React.FC = () => {
       {/* Grid principal */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Servicios recientes */}
-        <Card className="bg-gray-800 border-gray-700 lg:col-span-2">
+        <Card className="glass-card lg:col-span-2">
           <CardHeader>
             <CardTitle className="text-white flex items-center justify-between">
               Servicios Recientes
@@ -140,7 +140,7 @@ const PortalDashboard: React.FC = () => {
             ) : serviciosRecientes.length > 0 ? (
               <div className="space-y-3">
                 {serviciosRecientes.map((service) => (
-                  <div key={service.id} className="flex justify-between items-center p-3 bg-gray-700 rounded-lg">
+                  <div key={service.id} className="flex justify-between items-center p-3 bg-gray-700/50 border border-gray-600 rounded-lg">
                     <div>
                       <p className="font-medium text-white">{service.folio}</p>
                       <p className="text-sm text-gray-400">
@@ -183,7 +183,7 @@ const PortalDashboard: React.FC = () => {
           </Link>
 
           {/* Facturas pendientes */}
-          <Card className="bg-gray-800 border-gray-700">
+          <Card className="glass-card">
             <CardHeader>
               <CardTitle className="text-white flex items-center justify-between">
                 Facturas por Pagar
