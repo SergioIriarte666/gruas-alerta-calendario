@@ -16,10 +16,6 @@ export const CranesHeader = ({ onNewCrane }: CranesHeaderProps) => {
       <Button
         onClick={onNewCrane}
         className="bg-tms-green hover:bg-tms-green/80 text-black font-medium"
-        style={{
-          backgroundColor: '#9cfa24',
-          color: '#000000'
-        }}
       >
         <Plus className="w-4 h-4 mr-2" />
         Nueva Grúa

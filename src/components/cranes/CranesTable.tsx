@@ -47,7 +47,7 @@ export const CranesTable = ({
     );
   }
 
-  // Desktop view (unchanged functionality)
+  // Desktop view - Empty states
   if (cranes.length === 0 && searchTerm) {
     return (
       <Card className="glass-card">
