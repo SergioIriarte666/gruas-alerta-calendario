@@ -41,7 +41,7 @@ const Dashboard: React.FC = () => {
 
   if (dashboardLoading) {
     return (
-      <div className="space-y-6 sm:space-y-8 bg-tms-dark min-h-screen p-4 sm:p-6">
+      <div className="space-y-6 sm:space-y-8 min-h-screen p-4 sm:p-6" style={{ backgroundColor: '#000000', color: '#ffffff' }}>
         {/* Header Skeleton */}
         <div className="space-y-4">
           <Skeleton className="h-8 sm:h-10 w-60 sm:w-80 bg-gray-700" />
@@ -76,12 +76,12 @@ const Dashboard: React.FC = () => {
   if (!metrics) return null;
 
   return (
-    <div className="min-h-screen bg-tms-dark">
+    <div className="min-h-screen" style={{ backgroundColor: '#000000', color: '#ffffff' }}>
       <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6 animate-fade-in p-4 sm:p-6">
         {/* Header Section */}
         <div className="mb-6 sm:mb-8">
           <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-x-4 mb-3">
-            <h1 className="text-2xl sm:text-3xl font-bold text-white">
+            <h1 className="text-2xl sm:text-3xl font-bold" style={{ color: '#ffffff' }}>
               Dashboard Principal
             </h1>
             <Badge className="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center px-3 py-1 w-fit">
@@ -89,7 +89,7 @@ const Dashboard: React.FC = () => {
               En vivo
             </Badge>
           </div>
-          <p className="text-sm sm:text-base text-gray-400">
+          <p className="text-sm sm:text-base" style={{ color: 'rgba(148, 163, 184, 0.7)' }}>
             Vista general del sistema de gestión de grúas
           </p>
         </div>

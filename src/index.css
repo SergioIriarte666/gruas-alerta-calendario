@@ -7,28 +7,28 @@
 
 @layer base {
   :root {
-    --background: 0 0 0;
-    --foreground: 255 255 255;
-    --card: 15 23 42;
-    --card-foreground: 255 255 255;
-    --popover: 15 23 42;
-    --popover-foreground: 255 255 255;
-    --primary: 156 250 36;
-    --primary-foreground: 0 0 0;
-    --secondary: 30 41 59;
-    --secondary-foreground: 255 255 255;
-    --muted: 30 41 59;
-    --muted-foreground: 148 163 184;
-    --accent: 156 250 36;
-    --accent-foreground: 0 0 0;
-    --destructive: 239 68 68;
-    --destructive-foreground: 255 255 255;
-    --border: 51 65 85;
-    --input: 30 41 59;
-    --ring: 156 250 36;
+    --background: 0 0% 0%;
+    --foreground: 0 0% 100%;
+    --card: 222 84% 5%;
+    --card-foreground: 0 0% 100%;
+    --popover: 222 84% 5%;
+    --popover-foreground: 0 0% 100%;
+    --primary: 84 100% 56%;
+    --primary-foreground: 0 0% 0%;
+    --secondary: 215 28% 17%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 215 28% 17%;
+    --muted-foreground: 218 11% 65%;
+    --accent: 84 100% 56%;
+    --accent-foreground: 0 0% 0%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 215 28% 17%;
+    --input: 215 28% 17%;
+    --ring: 84 100% 56%;
     --radius: 0.5rem;
-    --tms-green: 156 250 36;
-    --tms-dark: 0 0 0;
+    --tms-green: 84 100% 56%;
+    --tms-dark: 0 0% 0%;
   }
 }
 
@@ -37,25 +37,35 @@
     @apply border-border;
   }
 
-  html, body, #root {
-    background: #000000;
-    color: #ffffff;
-  }
-
   html {
-    background: #000000;
+    background-color: #000000 !important;
+    color: #ffffff !important;
   }
 
   body {
-    background: #000000;
-    color: #ffffff;
+    background-color: #000000 !important;
+    color: #ffffff !important;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     min-height: 100vh;
   }
 
   #root {
-    background: #000000;
+    background-color: #000000 !important;
+    color: #ffffff !important;
     min-height: 100vh;
+  }
+
+  /* Forzar tema oscuro en todos los elementos */
+  .bg-background {
+    background-color: #000000 !important;
+  }
+
+  .bg-card {
+    background-color: rgba(30, 41, 59, 0.8) !important;
+  }
+
+  .text-foreground {
+    color: #ffffff !important;
   }
 
   /* Custom scrollbar */
@@ -68,7 +78,7 @@
   }
 
   ::-webkit-scrollbar-thumb {
-    background: rgb(156, 250, 36);
+    background: #9cfa24;
     border-radius: 3px;
   }
 
@@ -80,22 +90,24 @@
 @layer components {
   /* GLASS CARD STYLING - DARK THEME */
   .glass-card {
-    background: rgba(30, 41, 59, 0.8);
-    border: 1px solid rgba(156, 250, 36, 0.2);
+    background: rgba(30, 41, 59, 0.8) !important;
+    border: 1px solid rgba(156, 250, 36, 0.2) !important;
     border-radius: 8px;
     backdrop-filter: blur(10px);
     transition: all 0.3s;
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
+    color: #ffffff !important;
   }
 
   .metric-card {
     @apply glass-card p-6;
-    background: rgba(30, 41, 59, 0.8);
-    border: 1px solid rgba(156, 250, 36, 0.3);
+    background: rgba(30, 41, 59, 0.8) !important;
+    border: 1px solid rgba(156, 250, 36, 0.3) !important;
+    color: #ffffff !important;
   }
 
   .metric-card:hover {
-    border-color: rgb(156, 250, 36);
+    border-color: #9cfa24 !important;
     box-shadow: 0 10px 15px -3px rgba(156, 250, 36, 0.1), 0 4px 6px -2px rgba(156, 250, 36, 0.05);
   }
 
@@ -105,19 +117,19 @@
     align-items: center;
     padding: 12px 16px;
     border-radius: 8px;
-    color: #ffffff;
+    color: #ffffff !important;
     transition: all 0.2s;
     text-decoration: none;
   }
 
   .nav-link:hover {
-    background: rgba(156, 250, 36, 0.1);
-    color: rgb(156, 250, 36);
+    background: rgba(156, 250, 36, 0.1) !important;
+    color: #9cfa24 !important;
   }
 
   .nav-link.active {
-    background: rgba(156, 250, 36, 0.15);
-    color: rgb(156, 250, 36);
+    background: rgba(156, 250, 36, 0.15) !important;
+    color: #9cfa24 !important;
     font-weight: 500;
   }
 
@@ -146,27 +158,27 @@
   .text-tms-green,
   .text-green-500,
   .text-green-400 {
-    color: rgb(156, 250, 36);
+    color: #9cfa24 !important;
   }
 
   .bg-tms-green,
   .bg-green-500 {
-    background-color: rgb(156, 250, 36);
-    color: #000000;
+    background-color: #9cfa24 !important;
+    color: #000000 !important;
   }
 
   /* ENSURE PROPER CONTRAST FOR BUTTONS */
   .hover\:bg-tms-green:hover {
-    background-color: rgb(156, 250, 36);
-    color: #000000;
+    background-color: #9cfa24 !important;
+    color: #000000 !important;
   }
 
   /* CARDS AND CONTAINERS */
-  .card, .Card, [data-radix-card], .bg-card {
-    background: rgba(30, 41, 59, 0.8);
+  .card, .Card, [data-radix-card], [class*="card"] {
+    background: rgba(30, 41, 59, 0.8) !important;
     backdrop-filter: blur(10px);
-    border: 1px solid rgba(51, 65, 85, 0.5);
-    color: #ffffff;
+    border: 1px solid rgba(51, 65, 85, 0.5) !important;
+    color: #ffffff !important;
   }
 
   /* DROPDOWN MENUS */
@@ -190,26 +202,43 @@
 
   /* ALERT COMPONENTS */
   .alert, [role="alert"], [data-radix-alert-root] {
-    background: rgba(30, 41, 59, 0.8);
+    background: rgba(30, 41, 59, 0.8) !important;
     backdrop-filter: blur(10px);
-    color: #ffffff;
-    border-color: rgba(51, 65, 85, 0.5);
+    color: #ffffff !important;
+    border-color: rgba(51, 65, 85, 0.5) !important;
   }
 
   /* INPUT FIELDS */
   input, textarea, select {
-    background: rgba(30, 41, 59, 0.8);
-    border-color: rgba(51, 65, 85, 0.5);
-    color: #ffffff;
+    background: rgba(30, 41, 59, 0.8) !important;
+    border-color: rgba(51, 65, 85, 0.5) !important;
+    color: #ffffff !important;
   }
 
   input::placeholder, textarea::placeholder {
-    color: rgba(148, 163, 184, 0.7);
+    color: rgba(148, 163, 184, 0.7) !important;
   }
 
   input:focus, textarea:focus, select:focus {
-    border-color: rgb(156, 250, 36);
-    box-shadow: 0 0 0 2px rgba(156, 250, 36, 0.2);
+    border-color: #9cfa24 !important;
+    box-shadow: 0 0 0 2px rgba(156, 250, 36, 0.2) !important;
+  }
+
+  /* FORCE DARK THEME ON ALL ELEMENTS */
+  * {
+    background-color: inherit;
+  }
+
+  [class*="bg-white"] {
+    background-color: #000000 !important;
+  }
+
+  [class*="text-black"] {
+    color: #ffffff !important;
+  }
+
+  [class*="bg-gray-50"], [class*="bg-gray-100"] {
+    background-color: rgba(30, 41, 59, 0.8) !important;
   }
 }
 
