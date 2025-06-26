@@ -53,13 +53,13 @@ export default {
 					DEFAULT: 'hsl(var(--card))',
 					foreground: 'hsl(var(--card-foreground))'
 				},
-				// TMS colors optimized for light theme
+				// TMS colors optimized for dark theme
 				tms: {
-					dark: '#ffffff',
-					darker: '#ffffff',
+					dark: '#000000',
+					darker: '#0f172a',
 					green: '#9cfa24',
 					'green-light': '#9cfa24',
-					'green-dark': '#9cfa24',
+					'green-dark': '#8ae620',
 					status: {
 						pending: '#f59e0b',
 						closed: '#3b82f6',
@@ -67,19 +67,19 @@ export default {
 						overdue: '#ef4444'
 					}
 				},
-				// Light theme grays
+				// Dark theme grays
 				gray: {
-					50: '#f8fafc',
-					100: '#f1f5f9',
-					200: '#e2e8f0',
-					300: '#cbd5e1',
-					400: '#94a3b8',
-					500: '#64748b',
-					600: '#475569',
-					700: '#334155',
-					800: '#1e293b',
-					900: '#0f172a',
-					950: '#020617'
+					50: '#0f172a',
+					100: '#1e293b',
+					200: '#334155',
+					300: '#475569',
+					400: '#64748b',
+					500: '#94a3b8',
+					600: '#cbd5e1',
+					700: '#e2e8f0',
+					800: '#f1f5f9',
+					900: '#f8fafc',
+					950: '#ffffff'
 				}
 			},
 			borderRadius: {
@@ -88,8 +88,8 @@ export default {
 				sm: 'calc(var(--radius) - 4px)'
 			},
 			backgroundImage: {
-				'gradient-tms': 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',
-				'gradient-tms-card': 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',
+				'gradient-tms': 'linear-gradient(135deg, #000000 0%, #1e293b 100%)',
+				'gradient-tms-card': 'linear-gradient(135deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.9) 100%)',
 			},
 			keyframes: {
 				'accordion-down': {
