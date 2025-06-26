@@ -5,17 +5,34 @@ export const updateInvitationStatus = async (
   supabase: ReturnType<typeof createClient>,
   userId: string
 ): Promise<void> => {
-  const { error: updateError } = await supabase
-    .from('user_invitations')
-    .update({ 
-      status: 'sent', 
-      sent_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    })
-    .eq('user_id', userId);
+  console.log('📊 Updating invitation status for user:', userId);
+  
+  try {
+    const { error: updateError } = await supabase
+      .from('user_invitations')
+      .update({ 
+        status: 'sent', 
+        sent_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      })
+      .eq('user_id', userId);
 
-  if (updateError) {
-    console.error('Error updating invitation status:', updateError);
-    // No lanzamos error aquí porque el email ya se envió
+    if (updateError) {
+      console.error('❌ Error updating invitation status:', {
+        userId,
+        error: updateError.message,
+        code: updateError.code
+      });
+      // No lanzamos error aquí porque el email ya se envió exitosamente
+      return;
+    }
+
+    console.log('✅ Invitation status updated successfully for user:', userId);
+  } catch (error: any) {
+    console.error('💥 Exception updating invitation status:', {
+      userId,
+      error: error.message
+    });
+    // No lanzamos error aquí porque el email ya se envió exitosamente
   }
 };
