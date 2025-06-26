@@ -1,5 +1,10 @@
 
-import { format } from 'date-fns';
+import { 
+  getCurrentChileDate, 
+  formatForInput, 
+  parseFromInput,
+  toChileTime
+} from '@/utils/timezoneUtils';
 
 interface FormDataHandlerProps {
   markAsClearing: () => void;
@@ -25,8 +30,14 @@ export const useServiceFormDataHandler = ({
     setFolio(data.folio || '');
     setIsManualFolio(data.isManualFolio || false);
     setFormData(data.formData || formData);
-    if (data.requestDate) setRequestDate(new Date(data.requestDate));
-    if (data.serviceDate) setServiceDate(new Date(data.serviceDate));
+    
+    // Parse dates ensuring Chile timezone
+    if (data.requestDate) {
+      setRequestDate(typeof data.requestDate === 'string' ? parseFromInput(data.requestDate) : toChileTime(data.requestDate));
+    }
+    if (data.serviceDate) {
+      setServiceDate(typeof data.serviceDate === 'string' ? parseFromInput(data.serviceDate) : toChileTime(data.serviceDate));
+    }
   };
 
   const handleDataClear = () => {
@@ -35,12 +46,15 @@ export const useServiceFormDataHandler = ({
     // Marcar que estamos limpiando para evitar generación automática de folio
     markAsClearing();
     
+    // Get current date in Chile timezone
+    const currentDate = getCurrentChileDate();
+    
     // Resetear todos los campos del formulario a sus valores por defecto
     setFolio('');
     setIsManualFolio(false); // Resetear a automático por defecto
     setFormData({
-      requestDate: format(new Date(), 'yyyy-MM-dd'),
-      serviceDate: format(new Date(), 'yyyy-MM-dd'),
+      requestDate: formatForInput(currentDate),
+      serviceDate: formatForInput(currentDate),
       clientId: '',
       purchaseOrder: '',
       vehicleBrand: '',
@@ -56,8 +70,8 @@ export const useServiceFormDataHandler = ({
       status: 'pending' as const,
       observations: ''
     });
-    setRequestDate(new Date());
-    setServiceDate(new Date());
+    setRequestDate(currentDate);
+    setServiceDate(currentDate);
   };
 
   return {

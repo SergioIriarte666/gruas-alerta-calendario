@@ -1,15 +1,23 @@
 
 import { useState, useEffect } from 'react';
-import { format } from 'date-fns';
 import { Service } from '@/types';
+import { 
+  getCurrentChileDate, 
+  formatForInput, 
+  parseFromInput,
+  toChileTime
+} from '@/utils/timezoneUtils';
 
 export const useServiceFormData = (service?: Service | null) => {
   const [isManualFolio, setIsManualFolio] = useState(false);
   const [folio, setFolio] = useState(service?.folio || '');
 
+  // Initialize dates in Chile timezone
+  const currentDate = getCurrentChileDate();
+  
   const [formData, setFormData] = useState({
-    requestDate: service?.requestDate || format(new Date(), 'yyyy-MM-dd'),
-    serviceDate: service?.serviceDate || format(new Date(), 'yyyy-MM-dd'),
+    requestDate: service?.requestDate || formatForInput(currentDate),
+    serviceDate: service?.serviceDate || formatForInput(currentDate),
     clientId: service?.client.id || '',
     purchaseOrder: service?.purchaseOrder || '',
     vehicleBrand: service?.vehicleBrand || '',
@@ -27,17 +35,18 @@ export const useServiceFormData = (service?: Service | null) => {
   });
 
   const [requestDate, setRequestDate] = useState<Date>(
-    service?.requestDate ? new Date(service.requestDate) : new Date()
+    service?.requestDate ? toChileTime(service.requestDate) : currentDate
   );
   const [serviceDate, setServiceDate] = useState<Date>(
-    service?.serviceDate ? new Date(service.serviceDate) : new Date()
+    service?.serviceDate ? toChileTime(service.serviceDate) : currentDate
   );
 
+  // Update form data when dates change, ensuring Chile timezone
   useEffect(() => {
     setFormData(prev => ({
       ...prev,
-      requestDate: format(requestDate, 'yyyy-MM-dd'),
-      serviceDate: format(serviceDate, 'yyyy-MM-dd')
+      requestDate: formatForInput(requestDate),
+      serviceDate: formatForInput(serviceDate)
     }));
   }, [requestDate, serviceDate]);
 

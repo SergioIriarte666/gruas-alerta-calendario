@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react';
 import { X, AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -6,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { useGenericFormPersistence } from '@/hooks/useGenericFormPersistence';
 import { useToast } from '@/components/ui/custom-toast';
 import { Service } from '@/types';
+import { formatForInput } from '@/utils/timezoneUtils';
 
 interface ServiceFormPersistenceProps {
   service?: Service | null;
@@ -35,12 +35,14 @@ export const ServiceFormPersistence = ({
   const [hasShownAlert, setHasShownAlert] = useState(false);
   
   const persistenceKey = service ? `edit-service-${service.id}` : 'new-service';
+  
+  // Use timezone-aware formatting for persistence
   const persistenceData = {
     folio,
     isManualFolio,
     formData,
-    requestDate: requestDate.toISOString(),
-    serviceDate: serviceDate.toISOString()
+    requestDate: formatForInput(requestDate),
+    serviceDate: formatForInput(serviceDate)
   };
 
   const {
