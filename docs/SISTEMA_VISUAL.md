@@ -3,14 +3,13 @@
 
 ## Introducción al Sistema Visual
 
-El sistema TMS Grúas implementa un **tema oscuro elegante** con fondo negro profundo, texto blanco y acentos en verde brillante (`#9cfa24`). Esta decisión de diseño asegura una experiencia visual moderna, elegante y de alta legibilidad.
+El sistema TMS Grúas implementa un **tema blanco forzado** con acentos en verde (`#9cfa24`). Esta decisión de diseño asegura consistencia visual y legibilidad óptima en todos los componentes.
 
 ### Filosofía de Diseño
-- **Tema único**: Solo tema oscuro elegante, sin modo claro
+- **Tema único**: Solo tema claro, sin modo oscuro
 - **Consistencia**: Todos los componentes siguen las mismas reglas visuales
-- **Accesibilidad**: Alto contraste entre texto blanco y fondo negro
-- **Branding**: Color verde brillante corporativo como acento principal
-- **Elegancia**: Fondo negro profundo con efectos glass sutiles
+- **Accesibilidad**: Alto contraste entre texto negro y fondo blanco
+- **Branding**: Color verde corporativo como acento principal
 
 ### Tecnologías Utilizadas
 - **Tailwind CSS**: Framework principal de estilos
@@ -24,39 +23,39 @@ El sistema TMS Grúas implementa un **tema oscuro elegante** con fondo negro pro
 
 ### Archivos Principales
 
-#### 1. `src/index.css` (213 líneas)
+#### 1. `src/index.css` (365 líneas)
 **Archivo central del sistema visual**
 
 ```css
 /* Variables CSS globales */
 :root {
-  --background: 0 0 0;             /* Fondo negro profundo */
-  --foreground: 255 255 255;       /* Texto blanco */
-  --primary: 156 250 36;           /* Verde TMS brillante */
+  --background: 255 255 255;        /* Fondo blanco */
+  --foreground: 0 0 0;             /* Texto negro */
+  --primary: 156 250 36;           /* Verde TMS */
   --tms-green: 156 250 36;         /* Color corporativo */
-  --tms-dark: 0 0 0;              /* Negro profundo */
 }
 
-/* Forzar tema oscuro */
+/* Forzar tema claro */
 html {
-  background: #000000 !important;
+  @apply light;
+  background: #ffffff !important;
 }
 
 body {
-  background: #000000 !important;
-  color: #ffffff !important;
+  background: #ffffff !important;
+  color: #000000 !important;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 ```
 
 **Líneas críticas:**
-- **Líneas 8-24**: Variables CSS para colores del tema oscuro
-- **Líneas 32-44**: Forzado de tema oscuro en elementos raíz
-- **Líneas 58-70**: Estilos de scrollbar personalizados con verde brillante
-- **Líneas 75-90**: Efectos glass para componentes
+- **Líneas 8-24**: Variables CSS para colores del tema
+- **Líneas 38-50**: Forzado de tema claro en elementos raíz
+- **Líneas 58-70**: Estilos de scrollbar personalizados
+- **Líneas 75-90**: Clases universales para texto negro
 
 #### 2. `src/hooks/useTheme.ts` (76 líneas)
-**Hook que fuerza el tema oscuro**
+**Hook que fuerza el tema claro**
 
 ```typescript
 export const useTheme = () => {
@@ -65,22 +64,22 @@ export const useTheme = () => {
       const root = document.documentElement;
       const body = document.body;
       
-      // Forzar tema oscuro siempre (líneas 9-12)
-      root.classList.remove('light');
-      root.classList.add('dark');
-      body.classList.remove('light');
-      body.classList.add('dark');
+      // Forzar tema claro siempre (líneas 9-12)
+      root.classList.remove('dark');
+      root.classList.add('light');
+      body.classList.remove('dark');
+      body.classList.add('light');
 
-      // Variables CSS para tema oscuro (líneas 15-31)
-      root.style.setProperty('--background', '0 0 0');
-      root.style.setProperty('--foreground', '255 255 255');
-      root.style.setProperty('--primary', '156 250 36');
+      // Variables CSS para tema claro (líneas 15-31)
+      root.style.setProperty('--background', '#ffffff');
+      root.style.setProperty('--foreground', '#000000');
+      root.style.setProperty('--primary', '#9cfa24');
     };
   }, []);
 
-  // Retorna siempre tema oscuro (línea 74)
+  // Retorna siempre tema claro (línea 74)
   return {
-    theme: 'dark' as const,
+    theme: 'light' as const,
     setTheme
   };
 };
@@ -91,13 +90,13 @@ export const useTheme = () => {
 
 ```typescript
 colors: {
-  // Colores TMS optimizados para tema oscuro (líneas 35-47)
+  // Colores TMS optimizados para tema claro (líneas 35-47)
   tms: {
-    dark: '#000000',          // Negro profundo
-    darker: '#0f172a',        // Negro más profundo
-    green: '#9cfa24',         // Verde brillante corporativo
+    dark: '#ffffff',          // Convertido a blanco
+    darker: '#ffffff',        // Convertido a blanco
+    green: '#9cfa24',         // Verde corporativo
     'green-light': '#9cfa24',
-    'green-dark': '#8ae620',
+    'green-dark': '#9cfa24',
     status: {
       pending: '#f59e0b',     // Amarillo para pendientes
       closed: '#3b82f6',      // Azul para cerrados
@@ -108,153 +107,241 @@ colors: {
 }
 ```
 
-#### 4. `src/components/layout/Layout.tsx` (36 líneas)
-**Layout principal con tema oscuro**
+#### 4. `src/components/layout/Layout.tsx` (73 líneas)
+**Layout principal con forzado de tema**
 
 ```typescript
-export const Layout = () => {
-  // Asegurar tema oscuro al cargar (líneas 12-16)
+export const Layout = ({ children }: LayoutProps) => {
+  // Asegurar tema blanco al cargar (líneas 12-16)
   React.useEffect(() => {
-    document.body.style.backgroundColor = '#000000';
-    document.body.style.color = '#ffffff';
-    document.documentElement.style.colorScheme = 'dark';
+    document.body.style.backgroundColor = '#ffffff';
+    document.body.style.color = '#000000';
+    document.documentElement.style.colorScheme = 'light';
   }, []);
 
   return (
-    <div className="min-h-screen bg-tms-dark text-white flex">
+    <div 
+      className="min-h-screen w-full bg-white text-black"
+      style={{
+        background: '#ffffff',
+        color: '#000000'
+      }}
+    >
 ```
 
 ---
 
 ## Componentes UI Detallados
 
-### Tarjetas y Contenedores
+### Formularios
 
-#### Glass Cards (`src/index.css` líneas 75-85)
-```css
-.glass-card {
-  background: rgba(30, 41, 59, 0.8);
-  border: 1px solid rgba(156, 250, 36, 0.2);
-  border-radius: 8px;
-  backdrop-filter: blur(10px);
-  transition: all 0.3s;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
-}
-```
-
-#### MetricCard (`src/components/dashboard/MetricCard.tsx`)
+#### Input (`src/components/ui/input.tsx`)
 ```typescript
-const MetricCard = ({ title, value, icon: Icon, ... }) => {
-  return (
-    <Card className="metric-card group p-4 sm:p-6 h-full">
-      <div className="flex items-start justify-between space-x-3">
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium text-gray-400 mb-1">{title}</p>
-          <h3 className="text-lg font-bold text-white">{value}</h3>
-        </div>
-        <div className="p-3 bg-tms-green/20 rounded-lg">
-          <Icon className="w-6 h-6 text-tms-green" />
-        </div>
-      </div>
-    </Card>
-  );
-};
+const Input = React.forwardRef<HTMLInputElement, React.ComponentProps<"input">>(
+  ({ className, type, ...props }, ref) => {
+    return (
+      <input
+        className={cn(
+          "bg-white border-gray-300 text-black placeholder:text-gray-500",
+          className
+        )}
+        style={{
+          background: '#ffffff',      // Línea 15
+          color: '#000000',          // Línea 16
+          borderColor: '#d1d5db'     // Línea 17
+        }}
+      />
+    )
+  }
+)
 ```
 
-### Navegación
+#### Select (`src/components/ui/select.tsx`)
+```typescript
+const SelectTrigger = React.forwardRef(({ className, children, ...props }, ref) => (
+  <SelectPrimitive.Trigger
+    className={cn(
+      "bg-white border-gray-300 text-black",  // Línea 12
+      className
+    )}
+    style={{ 
+      background: '#ffffff',    // Línea 16
+      color: '#000000',        // Línea 17
+      borderColor: '#d1d5db'   // Línea 18
+    }}
+  >
+```
+
+#### Textarea (`src/components/ui/textarea.tsx`)
+```typescript
+const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
+  ({ className, ...props }, ref) => {
+    return (
+      <textarea
+        className={cn(
+          "bg-white border-gray-300 text-black placeholder:text-gray-500",
+          className
+        )}
+        style={{
+          background: '#ffffff',      // Línea 15
+          color: '#000000',          // Línea 16
+          borderColor: '#d1d5db'     // Línea 17
+        }}
+      />
+    )
+  }
+)
+```
+
+#### Label (`src/components/ui/label.tsx`)
+```typescript
+const labelVariants = cva(
+  "text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-black"  // Línea 9
+)
+
+const Label = React.forwardRef(({ className, ...props }, ref) => (
+  <LabelPrimitive.Root
+    className={cn(labelVariants(), className)}
+    style={{ color: '#000000' }}  // Línea 18
+  />
+))
+```
+
+### Controles Interactivos
+
+#### Switch (`src/components/ui/switch.tsx`)
+```typescript
+const Switch = React.forwardRef(({ className, ...props }, ref) => (
+  <SwitchPrimitives.Root
+    className={cn(
+      "data-[state=unchecked]:bg-gray-200 data-[state=checked]:bg-tms-green",  // Línea 12
+      className
+    )}
+    style={{
+      backgroundColor: props.checked ? '#9cfa24' : '#e5e7eb'  // Línea 17
+    }}
+  >
+    <SwitchPrimitives.Thumb
+      className={cn("bg-white")}  // Línea 22
+      style={{ backgroundColor: '#ffffff' }}  // Línea 23
+    />
+  </SwitchPrimitives.Root>
+))
+```
+
+#### Toggle (`src/components/ui/toggle.tsx`)
+```typescript
+const toggleVariants = cva(
+  "bg-transparent text-black border border-gray-300 hover:bg-gray-50",  // Línea 12
+  {
+    variants: {
+      default: "bg-transparent text-black border border-gray-300 hover:bg-gray-50",
+      outline: "border border-input bg-transparent hover:bg-accent hover:text-accent-foreground text-black",
+    }
+  }
+)
+```
+
+### Layout y Navegación
+
+#### Header (`src/components/layout/Header.tsx`)
+```typescript
+return (
+  <header className="flex h-16 items-center justify-between bg-white border-b border-gray-200 px-4 sm:px-6">  // Línea 41
+    {/* Botón de menú móvil */}
+    <Button 
+      variant="ghost" 
+      size="icon" 
+      className="lg:hidden text-black bg-tms-green/20 border border-tms-green/30 hover:bg-tms-green hover:text-black"  // Línea 46
+    >
+
+    {/* Dropdown de usuario */}
+    <DropdownMenuContent 
+      align="end" 
+      className="bg-white border-gray-200 min-w-[200px] z-50"  // Línea 74
+    >
+```
 
 #### Sidebar (`src/components/layout/Sidebar.tsx`)
 ```typescript
 const SidebarContent = () => (
-  <div className="flex flex-col h-full bg-tms-dark border-r border-gray-700">
+  <div className="flex flex-col h-full bg-white border-r border-gray-200">  // Línea 52
     {/* Header de la empresa */}
-    <div className="flex items-center justify-between p-4 border-b border-gray-700 bg-tms-dark">
-      <div className="flex items-center space-x-3">
-        <h1 className="text-lg font-bold text-white">{companyName}</h1>
-        <p className="text-xs font-bold text-tms-green">Sistema de Gestión</p>
-      </div>
-    </div>
+    <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-white">  // Línea 56
 
     {/* Navegación */}
-    <nav className="flex-1 p-4 space-y-2 bg-tms-dark">
+    <nav className="flex-1 p-4 space-y-2 bg-white">  // Línea 85
       {filteredNavigation.map(item => (
-        <Link 
-          className={cn(
+        <NavLink 
+          className={({ isActive: linkIsActive }) => cn(
             "flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors nav-link",
-            isActive 
-              ? "active bg-tms-green text-black" 
-              : "text-white hover:bg-tms-green hover:text-black"
+            linkIsActive || isActive(item.href) ? 
+              "active bg-tms-green text-black" :   // Línea 91
+              "text-black hover:bg-tms-green hover:text-black"  // Línea 92
           )}
         >
 ```
 
-### Dropdowns y Menús
+### Componentes de Dashboard
 
-#### Dropdown Styling (`src/index.css` líneas 175-190)
-```css
-[data-radix-popper-content-wrapper] {
-  background: rgba(15, 23, 42, 0.95) !important;
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(51, 65, 85, 0.5) !important;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
-  z-index: 50 !important;
-}
-
-[data-radix-dropdown-menu-content] {
-  background: rgba(15, 23, 42, 0.95) !important;
-  border: 1px solid rgba(51, 65, 85, 0.5) !important;
-  color: #ffffff !important;
-}
-```
-
-### Tablas y Datos
-
-#### CostsTable (`src/components/costs/CostsTable.tsx`)
+#### MetricCard (`src/components/dashboard/MetricCard.tsx`)
 ```typescript
 return (
-  <Card className="glass-card">
-    <CardContent className="p-0">
-      <Table>
-        <TableHeader>
-          <TableRow className="border-gray-700 hover:bg-white/5">
-            <TableHead className="text-white">Fecha</TableHead>
-            <TableHead className="text-white">Descripción</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {costs.map((cost) => (
-            <TableRow key={cost.id} className="border-gray-800 hover:bg-white/5">
-              <TableCell className="text-white">{cost.date}</TableCell>
-              <TableCell className="text-white font-medium">{cost.description}</TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </CardContent>
+  <Card 
+    className={cardClasses}
+    style={{ background: '#ffffff', color: '#000000' }}  // Línea 39
+  >
+    <div className="flex items-start justify-between">
+      <div className="flex-1">
+        <p className="text-sm font-medium text-gray-600 mb-1">{title}</p>  // Línea 43
+        <h3 className="text-2xl font-bold text-black">{value}</h3>  // Línea 45
+        
+        <div className="p-3 bg-tms-green/20 rounded-lg group-hover:bg-tms-green/30 transition-colors">  // Línea 53
+          <Icon className="w-6 h-6 text-tms-green" />  // Línea 54
+        </div>
+      </div>
+    </div>
   </Card>
 );
 ```
 
----
+#### AlertsPanel (`src/components/dashboard/AlertsPanel.tsx`)
+```typescript
+return (
+  <Card className="bg-white border border-gray-200" style={{ background: '#ffffff', color: '#000000' }}>  // Línea 38
+    <CardHeader>
+      <CardTitle className="flex items-center space-x-2 text-black">  // Línea 40
+        <AlertTriangle className="w-5 h-5 text-tms-green" />  // Línea 41
+        <span>Alertas y Recordatorios</span>
+      </CardTitle>
+    </CardHeader>
+    <CardContent className="space-y-3">
+      {events.length === 0 ? (
+        <div className="text-center py-8 text-gray-600">  // Línea 47
+```
 
-## Paleta de Colores
+### Componentes de Configuración
 
-### Colores Principales
-- **Fondo principal**: `#000000` (Negro profundo)
-- **Texto principal**: `#ffffff` (Blanco puro)
-- **Acento principal**: `#9cfa24` (Verde brillante TMS)
-- **Bordes**: `rgba(51, 65, 85, 0.5)` (Gris translúcido)
+#### UserManagementTab (`src/components/settings/UserManagementTab.tsx`)
+```typescript
+return (
+  <Card className="bg-white border-gray-300">  // Línea 39
+    <CardHeader>
+      <CardTitle className="text-black">Gestión de Usuarios</CardTitle>  // Línea 42
+      <CardDescription className="text-gray-600">  // Línea 43
+        Administra los usuarios y sus roles en el sistema
+      </CardDescription>
+      
+      <Button
+        variant="outline"
+        className="border-gray-300 text-black hover:bg-gray-50"  // Línea 52
+      >
 
-### Colores de Glass Effects
-- **Glass cards**: `rgba(30, 41, 59, 0.8)` (Azul oscuro translúcido)
-- **Hover effects**: `rgba(156, 250, 36, 0.1)` (Verde translúcido)
-- **Dropdowns**: `rgba(15, 23, 42, 0.95)` (Azul muy oscuro)
-
-### Colores de Estado
-- **Pendiente**: `#f59e0b` (Amarillo)
-- **Cerrado**: `#3b82f6` (Azul)
-- **Facturado**: `#10b981` (Verde)
-- **Vencido**: `#ef4444` (Rojo)
+    <Table>
+      <TableHeader>
+        <TableRow className="border-gray-300 hover:bg-gray-50">  // Línea 61
+          <TableHead className="text-black font-medium">Usuario</TableHead>  // Línea 62
+```
 
 ---
 
@@ -263,43 +350,88 @@ return (
 ### Variables CSS Principales (`src/index.css`)
 
 ```css
-/* Líneas 8-31: Variables del tema oscuro */
+/* Líneas 8-31: Variables del tema claro */
 :root {
-  --background: 0 0 0;              /* HSL: Negro profundo */
-  --foreground: 255 255 255;        /* HSL: Blanco puro */
-  --card: 15 23 42;                 /* HSL: Azul muy oscuro para cards */
-  --card-foreground: 255 255 255;   /* HSL: Blanco para texto en cards */
-  --primary: 156 250 36;            /* HSL: Verde TMS brillante */
+  --background: 255 255 255;         /* HSL: Blanco puro */
+  --foreground: 0 0 0;              /* HSL: Negro puro */
+  --card: 255 255 255;              /* HSL: Blanco para cards */
+  --card-foreground: 0 0 0;         /* HSL: Negro para texto en cards */
+  --primary: 156 250 36;            /* HSL: Verde TMS */
   --primary-foreground: 0 0 0;      /* HSL: Negro sobre verde */
-  --secondary: 30 41 59;            /* HSL: Azul oscuro */
-  --muted: 30 41 59;                /* HSL: Azul oscuro suave */
-  --muted-foreground: 148 163 184;  /* HSL: Gris claro */
-  --border: 51 65 85;               /* HSL: Gris para bordes */
-  --input: 30 41 59;                /* HSL: Azul oscuro para inputs */
+  --secondary: 248 250 252;         /* HSL: Gris muy claro */
+  --muted: 248 250 252;             /* HSL: Gris suave */
+  --muted-foreground: 71 85 105;    /* HSL: Gris medio */
+  --border: 226 232 240;            /* HSL: Gris para bordes */
+  --input: 255 255 255;             /* HSL: Blanco para inputs */
   --ring: 156 250 36;               /* HSL: Verde para focus ring */
   --tms-green: 156 250 36;          /* HSL: Color corporativo */
-  --tms-dark: 0 0 0;                /* HSL: Negro profundo */
 }
 
-/* Líneas 87-97: Navegación */
+/* Líneas 75-85: Texto negro universal */
+.tms-text-black,
+.tms-text-black *,
+p, span, div, h1, h2, h3, h4, h5, h6, td, th, label,
+input, textarea, select,
+[data-radix-select-trigger],
+[data-radix-select-trigger] *,
+[data-radix-select-value],
+[data-radix-select-content],
+[data-radix-select-item],
+[role="combobox"],
+[role="combobox"] * {
+  color: #000000 !important;
+}
+
+/* Líneas 87-97: Botones con texto negro */
+button,
+button *,
+[role="button"],
+[role="button"] *,
+.bg-tms-green,
+.bg-tms-green *,
+.bg-green-500,
+.bg-green-500 * {
+  color: #000000 !important;
+}
+
+/* Líneas 140-155: Navegación */
 .nav-link {
   display: flex;
   align-items: center;
   padding: 12px 16px;
   border-radius: 8px;
-  color: #ffffff;
+  color: #000000 !important;
   transition: all 0.2s;
 }
 
 .nav-link:hover {
-  background: rgba(156, 250, 36, 0.1);
-  color: rgb(156, 250, 36);
+  background: rgb(156, 250, 36) !important;
+  color: #000000 !important;
 }
 
 .nav-link.active {
-  background: rgba(156, 250, 36, 0.15);
-  color: rgb(156, 250, 36);
+  background: rgb(156, 250, 36) !important;
+  color: #000000 !important;
   font-weight: 500;
+}
+
+/* Líneas 200-230: Overrides para componentes Radix */
+[data-radix-select-trigger] {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  color: #000000 !important;
+}
+
+[data-radix-select-content] {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  color: #000000 !important;
+  z-index: 50 !important;
+}
+
+[data-radix-select-item]:hover {
+  background: rgba(156, 250, 36, 0.1) !important;
+  color: #000000 !important;
 }
 ```
 
@@ -307,28 +439,35 @@ return (
 
 ## Estados y Badges de Estado
 
-### Status Classes (`src/index.css` líneas 110-125)
+### Status Classes (`src/index.css` líneas 157-175)
 ```css
 .status-badge {
   @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
 }
 
 .status-pending {
-  @apply bg-amber-900/20 text-amber-400 border border-amber-800;
+  @apply bg-amber-100 text-amber-800 border border-amber-200;
 }
 
 .status-closed {
-  @apply bg-blue-900/20 text-blue-400 border border-blue-800;
+  @apply bg-blue-100 text-blue-800 border border-blue-200;
 }
 
 .status-invoiced {
-  @apply bg-emerald-900/20 text-emerald-400 border border-emerald-800;
+  @apply bg-emerald-100 text-emerald-800 border border-emerald-200;
 }
 
 .status-overdue {
-  @apply bg-red-900/20 text-red-400 border border-red-800;
+  @apply bg-red-100 text-red-800 border border-red-200;
 }
 ```
+
+### Implementación en Componentes
+Los badges de estado se utilizan principalmente en:
+- Tablas de servicios
+- Dashboard de métricas
+- Gestión de usuarios
+- Estados de facturas
 
 ---
 
@@ -336,47 +475,77 @@ return (
 
 ### Problemas Comunes
 
-#### 1. **Dropdowns transparentes o mal posicionados**
-**Síntoma**: Menús desplegables que se ven transparentes o no tienen el fondo correcto
+#### 1. **Texto invisible o poco visible**
+**Síntoma**: Texto que no se ve o se ve muy tenue
+**Causa**: Falta de override de color en componentes específicos
+**Solución**: Agregar `style={{ color: '#000000' }}` o clase `text-black`
+
+```typescript
+// ❌ Problemático
+<div className="some-class">
+  {text}
+</div>
+
+// ✅ Correcto
+<div className="some-class" style={{ color: '#000000' }}>
+  {text}
+</div>
+
+// ✅ O con clase
+<div className="some-class text-black">
+  {text}
+</div>
+```
+
+#### 2. **Fondos transparentes en dropdowns**
+**Síntoma**: Menús desplegables que se ven transparentes
 **Causa**: Falta de override de background en componentes Radix
-**Solución**: Asegurar que tengan `background: rgba(15, 23, 42, 0.95) !important` y `z-index: 50 !important`
+**Solución**: Forzar background blanco con alta especificidad
 
 ```css
-[data-radix-dropdown-menu-content] {
-  background: rgba(15, 23, 42, 0.95) !important;
-  border: 1px solid rgba(51, 65, 85, 0.5) !important;
-  color: #ffffff !important;
+[data-radix-select-content] {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
   z-index: 50 !important;
 }
 ```
 
-#### 2. **Componentes con fondos blancos**
-**Síntoma**: Algunos componentes aparecen con fondos blancos rompiendo el tema
-**Causa**: Estilos inline o clases que fuerzan fondos blancos
-**Solución**: Eliminar cualquier `style={{ background: '#ffffff' }}` o `bg-white` no deseado
+#### 3. **Botones sin contraste**
+**Síntoma**: Botones que no se distinguen del fondo
+**Causa**: Falta de estilos específicos para estados hover/active
+**Solución**: Usar clases con el patrón TMS
 
 ```typescript
-// ❌ Problemático
-<div style={{ background: '#ffffff' }}>
-  {content}
-</div>
-
-// ✅ Correcto
-<div className="bg-tms-dark">
-  {content}
-</div>
+// ✅ Patrón correcto para botones
+className="text-black bg-tms-green/20 border border-tms-green/30 hover:bg-tms-green hover:text-black"
 ```
 
-#### 3. **Texto invisible o poco visible**
-**Síntoma**: Texto que no se ve bien sobre fondo oscuro
-**Causa**: Colores de texto inadecuados
-**Solución**: Usar texto blanco para contenido principal y grises para secundario
+### Herramientas de Debugging
 
-```typescript
-// ✅ Patrón correcto
-<h1 className="text-white">Título Principal</h1>
-<p className="text-gray-400">Texto secundario</p>
-<span className="text-tms-green">Texto destacado</span>
+#### 1. **Inspección de CSS Variables**
+En DevTools Console:
+```javascript
+// Verificar variables CSS
+const root = document.documentElement;
+console.log('Background:', getComputedStyle(root).getPropertyValue('--background'));
+console.log('TMS Green:', getComputedStyle(root).getPropertyValue('--tms-green'));
+```
+
+#### 2. **Verificación de Clases Aplicadas**
+```javascript
+// Verificar si el tema se aplicó correctamente
+console.log('Body classes:', document.body.classList);
+console.log('Root classes:', document.documentElement.classList);
+console.log('Body background:', getComputedStyle(document.body).backgroundColor);
+```
+
+#### 3. **Detección de Overrides**
+```css
+/* Agregar temporalmente para debugging */
+* {
+  border: 1px solid red !important;
+  background: rgba(255, 0, 0, 0.1) !important;
+}
 ```
 
 ---
@@ -385,75 +554,113 @@ return (
 
 ### Checklist para Nuevos Componentes
 
-#### ✅ **Cards y Contenedores**
-- [ ] Card usa `glass-card` class
-- [ ] Fondo transparente sobre negro: `rgba(30, 41, 59, 0.8)`
-- [ ] Bordes verdes sutiles: `border border-tms-green/20`
-- [ ] Texto blanco principal: `text-white`
+#### ✅ **Formularios**
+- [ ] Input tiene `bg-white border-gray-300 text-black`
+- [ ] Placeholder usa `placeholder:text-gray-500`
+- [ ] Focus ring usa `focus:border-tms-green focus:ring-tms-green`
+- [ ] Style inline: `background: '#ffffff', color: '#000000'`
 
-#### ✅ **Botones y Interactivos**
-- [ ] Texto negro sobre verde: `bg-tms-green text-black`
-- [ ] Hover usa verde: `hover:bg-tms-green hover:text-black`
-- [ ] Estados ghost mantienen contraste adecuado
-- [ ] Focus ring verde: `focus:ring-tms-green`
+#### ✅ **Botones**
+- [ ] Texto siempre negro: `text-black`
+- [ ] Hover usa verde TMS: `hover:bg-tms-green hover:text-black`
+- [ ] Estados activos usan `bg-tms-green text-black`
+- [ ] Variants outline mantienen `text-black`
+
+#### ✅ **Cards y Contenedores**
+- [ ] Fondo blanco: `bg-white`
+- [ ] Bordes grises: `border-gray-200` o `border-gray-300`
+- [ ] Texto principal: `text-black`
+- [ ] Texto secundario: `text-gray-600`
 
 #### ✅ **Navegación**
 - [ ] Links usan clase `.nav-link`
 - [ ] Estados activos: `bg-tms-green text-black`
-- [ ] Hover: `hover:bg-tms-green/10 hover:text-tms-green`
-- [ ] Iconos mantienen consistencia visual
-
-#### ✅ **Dropdowns y Overlays**
-- [ ] Fondo oscuro: `bg-tms-dark` o `rgba(15, 23, 42, 0.95)`
-- [ ] Alto z-index: `z-50`
-- [ ] Bordes sutiles: `border-gray-700`
-- [ ] Texto blanco: `text-white`
+- [ ] Hover: `hover:bg-tms-green hover:text-black`
 
 ### Reglas de Oro
 
-#### 1. **Siempre Fondo Negro**
-Todos los componentes principales deben tener fondo negro:
+#### 1. **Siempre Fondo Blanco**
+Todos los componentes deben tener fondo blanco explícito:
 ```typescript
-className="bg-tms-dark" // Negro profundo
+style={{ background: '#ffffff' }}
+className="bg-white"
 ```
 
-#### 2. **Siempre Texto Blanco Principal**
-Todo texto principal debe ser blanco para máximo contraste:
+#### 2. **Siempre Texto Negro**
+Todo texto debe ser negro para máximo contraste:
 ```typescript
-className="text-white" // Texto principal
-className="text-gray-400" // Texto secundario
+style={{ color: '#000000' }}
+className="text-black"
 ```
 
-#### 3. **Verde Brillante como Acento**
-Usar `#9cfa24` para:
-- Estados activos en navegación
-- Botones principales
+#### 3. **Verde TMS como Acento**
+Usar `#9cfa24` solo para:
+- Estados activos
+- Hover states
 - Iconos de acción
-- Elementos destacados
+- Elementos de navegación activos
 
-#### 4. **Glass Effects Sutiles**
+#### 4. **Grises para Texto Secundario**
 ```css
-background: rgba(30, 41, 59, 0.8);
-backdrop-filter: blur(10px);
-border: 1px solid rgba(156, 250, 36, 0.2);
+text-gray-600  /* Texto secundario */
+text-gray-500  /* Placeholders */
+text-gray-400  /* Texto deshabilitado */
 ```
+
+### Testing Visual
+
+#### 1. **Test de Contraste**
+Verificar que todos los elementos tienen suficiente contraste:
+- Texto negro sobre fondo blanco ✅
+- Verde TMS sobre fondo blanco ✅
+- Texto blanco sobre verde TMS ❌ (usar texto negro)
+
+#### 2. **Test de Consistencia**
+Revisar que todos los componentes del mismo tipo se ven igual:
+- Todos los inputs tienen el mismo estilo
+- Todos los botones primarios usan verde TMS
+- Todos los cards tienen fondo blanco
+
+#### 3. **Test de Estados**
+Verificar todos los estados interactivos:
+- Hover: cambio a verde TMS
+- Active: mantiene verde TMS
+- Focus: ring verde TMS
+- Disabled: texto gris, fondo gris claro
 
 ---
 
 ## Modificaciones Futuras
 
-### Cómo Modificar el Color Principal
+### Cómo Agregar Nuevos Colores
 
-Si necesitas cambiar el verde brillante (`#9cfa24`):
+#### 1. **En tailwind.config.ts**
+```typescript
+colors: {
+  tms: {
+    // Agregar nuevos colores aquí
+    'new-color': '#hexcode',
+  }
+}
+```
+
+#### 2. **En index.css (si necesario)**
+```css
+:root {
+  --new-color: R G B; /* Valores RGB separados por espacios */
+}
+```
+
+### Cómo Modificar el Color Principal
 
 #### 1. **Cambiar en todas las ubicaciones**
 - `tailwind.config.ts` línea 39: `green: '#nuevo-color'`
-- `index.css` línea 16: `--primary: R G B`
-- `index.css` línea 23: `--tms-green: R G B`
-- `useTheme.ts` línea 22: `--primary', '#nuevo-color'`
+- `index.css` línea 23: `--primary: R G B`
+- `index.css` línea 31: `--tms-green: R G B`
+- `useTheme.ts` línea 17: `--primary', '#nuevo-color'`
 
 #### 2. **Verificar todos los componentes**
-Buscar y verificar todas las referencias a:
+Buscar y reemplazar todas las referencias a:
 - `text-tms-green`
 - `bg-tms-green`
 - `border-tms-green`
@@ -463,23 +670,22 @@ Buscar y verificar todas las referencias a:
 
 El archivo `index.css` incluye un comentario de versión:
 ```css
-/* TMS Design System - Grúas Management - DARK THEME */
-.tms-version-dark-restored {
+/* CACHE BUSTING - VERSION 4.0 LIGHT THEME */
+.tms-version-4-light {
   display: none;
 }
 ```
 
-Al hacer cambios mayores, actualizar el comentario para tracking.
+Al hacer cambios mayores, incrementar la versión para forzar actualización de cache.
 
 ---
 
 ## Conclusión
 
 Este sistema visual garantiza:
-- **Elegancia**: Tema oscuro moderno con efectos glass sutiles
-- **Consistencia**: Todos los componentes siguen las mismas reglas visuales
-- **Accesibilidad**: Alto contraste entre texto blanco y fondo negro
-- **Branding**: Color verde brillante como identidad visual
-- **Mantenibilidad**: Código organizado y bien documentado
+- **Consistencia**: Todos los componentes siguen las mismas reglas
+- **Accesibilidad**: Alto contraste y legibilidad
+- **Mantenibilidad**: Código organizado y documentado
+- **Escalabilidad**: Fácil agregar nuevos componentes respetando el tema
 
-El sistema está diseñado para ser robusto y fácil de mantener, con estilos específicos que aseguran que el tema oscuro elegante se mantenga consistente en toda la aplicación.
+El sistema está diseñado para ser robusto y fácil de mantener, con overrides específicos que aseguran que el tema blanco se mantenga independientemente de los estilos por defecto de las librerías externas.

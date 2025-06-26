@@ -14,7 +14,7 @@ export const Layout = () => {
   useServiceRequestAlerts();
 
   return (
-    <div className="min-h-screen bg-tms-dark text-white flex">
+    <div className="min-h-screen bg-black text-white flex">
       <Sidebar 
         isCollapsed={isCollapsed}
         setIsCollapsed={setIsCollapsed}
@@ -27,7 +27,7 @@ export const Layout = () => {
         isCollapsed && "lg:ml-16" // Reduced margin for collapsed sidebar
       )}>
         <Header setIsMobileMenuOpen={setIsMobileMenuOpen} />
-        <main className="flex-1 p-4 sm:p-6 overflow-auto bg-tms-dark">
+        <main className="flex-1 p-4 sm:p-6 overflow-auto">
           <Outlet />
         </main>
       </div>

@@ -41,33 +41,33 @@ const Dashboard: React.FC = () => {
 
   if (dashboardLoading) {
     return (
-      <div className="space-y-6 sm:space-y-8 min-h-screen p-4 sm:p-6" style={{ backgroundColor: '#000000', color: '#ffffff' }}>
+      <div className="space-y-6 sm:space-y-8 bg-white min-h-screen p-4 sm:p-6">
         {/* Header Skeleton */}
         <div className="space-y-4">
-          <Skeleton className="h-8 sm:h-10 w-60 sm:w-80 bg-gray-700" />
-          <Skeleton className="h-5 sm:h-6 w-80 sm:w-96 bg-gray-700" />
+          <Skeleton className="h-8 sm:h-10 w-60 sm:w-80 bg-gray-200" />
+          <Skeleton className="h-5 sm:h-6 w-80 sm:w-96 bg-gray-200" />
         </div>
         
         {/* Primary Metrics Skeleton */}
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-6">
           {[...Array(4)].map((_, i) => (
-            <Skeleton key={i} className="h-28 sm:h-36 bg-gray-700" />
+            <Skeleton key={i} className="h-28 sm:h-36 bg-gray-200" />
           ))}
         </div>
         
         {/* Secondary Metrics Skeleton */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
           {[...Array(3)].map((_, i) => (
-            <Skeleton key={i} className="h-24 sm:h-28 bg-gray-700" />
+            <Skeleton key={i} className="h-24 sm:h-28 bg-gray-200" />
           ))}
         </div>
         
         {/* Content Skeleton */}
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 sm:gap-8">
           <div className="xl:col-span-2">
-            <Skeleton className="h-80 sm:h-96 bg-gray-700" />
+            <Skeleton className="h-80 sm:h-96 bg-gray-200" />
           </div>
-          <Skeleton className="h-80 sm:h-96 bg-gray-700" />
+          <Skeleton className="h-80 sm:h-96 bg-gray-200" />
         </div>
       </div>
     );
@@ -76,20 +76,20 @@ const Dashboard: React.FC = () => {
   if (!metrics) return null;
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#000000', color: '#ffffff' }}>
-      <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6 animate-fade-in p-4 sm:p-6">
+    <div className="min-h-screen bg-white">
+      <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6 animate-fade-in p-4 sm:p-6" style={{ background: '#ffffff', color: '#000000' }}>
         {/* Header Section */}
         <div className="mb-6 sm:mb-8">
           <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-x-4 mb-3">
-            <h1 className="text-2xl sm:text-3xl font-bold" style={{ color: '#ffffff' }}>
+            <h1 className="text-2xl sm:text-3xl font-bold text-black">
               Dashboard Principal
             </h1>
-            <Badge className="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center px-3 py-1 w-fit">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 mr-2 animate-pulse"></span>
+            <Badge className="bg-emerald-500/20 text-emerald-600 border border-emerald-500/30 flex items-center px-3 py-1 w-fit">
+              <span className="w-2 h-2 rounded-full bg-emerald-600 mr-2 animate-pulse"></span>
               En vivo
             </Badge>
           </div>
-          <p className="text-sm sm:text-base" style={{ color: 'rgba(148, 163, 184, 0.7)' }}>
+          <p className="text-sm sm:text-base text-gray-600">
             Vista general del sistema de gestión de grúas
           </p>
         </div>

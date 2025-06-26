@@ -70,61 +70,57 @@ const Cranes = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-tms-dark p-6">
-        <div className="flex items-center justify-center h-64">
-          <div className="text-white">Cargando grúas...</div>
-        </div>
+      <div className="flex items-center justify-center h-64">
+        <div className="text-white">Cargando grúas...</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-tms-dark p-6">
-      <div className="space-y-6">
-        <CranesHeader onNewCrane={handleCreate} />
+    <div className="space-y-6">
+      <CranesHeader onNewCrane={handleCreate} />
 
-        <CranesFilters searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
+      <CranesFilters searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
 
-        <CranesTable
-          cranes={paginatedCranes}
-          totalCranes={filteredCranes.length}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
-          onToggleStatus={handleToggleStatus}
-          onViewDetails={handleViewDetails}
-          onNewCrane={handleCreate}
-          searchTerm={searchTerm}
-        />
+      <CranesTable
+        cranes={paginatedCranes}
+        totalCranes={filteredCranes.length}
+        onEdit={handleEdit}
+        onDelete={handleDelete}
+        onToggleStatus={handleToggleStatus}
+        onViewDetails={handleViewDetails}
+        onNewCrane={handleCreate}
+        searchTerm={searchTerm}
+      />
 
-        <AppPagination
-          currentPage={currentPage}
-          totalPages={totalPages}
-          onPageChange={setCurrentPage}
-        />
+      <AppPagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={setCurrentPage}
+      />
 
-        <Dialog open={isDialogOpen} onOpenChange={(isOpen) => {
-          setIsDialogOpen(isOpen);
-          if (!isOpen) {
-            setEditingCrane(undefined);
-          }
-        }}>
-          <DialogContent className="bg-tms-dark border-gray-700 max-w-2xl">
-            <DialogHeader>
-              <DialogTitle className="text-white">
-                {editingCrane ? 'Editar Grúa' : 'Nueva Grúa'}
-              </DialogTitle>
-            </DialogHeader>
-            <CraneForm
-              crane={editingCrane}
-              onSubmit={handleSubmit}
-              onCancel={() => {
-                setIsDialogOpen(false);
-                setEditingCrane(undefined);
-              }}
-            />
-          </DialogContent>
-        </Dialog>
-      </div>
+      <Dialog open={isDialogOpen} onOpenChange={(isOpen) => {
+        setIsDialogOpen(isOpen);
+        if (!isOpen) {
+          setEditingCrane(undefined);
+        }
+      }}>
+        <DialogContent className="bg-tms-dark border-gray-700 max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-white">
+              {editingCrane ? 'Editar Grúa' : 'Nueva Grúa'}
+            </DialogTitle>
+          </DialogHeader>
+          <CraneForm
+            crane={editingCrane}
+            onSubmit={handleSubmit}
+            onCancel={() => {
+              setIsDialogOpen(false);
+              setEditingCrane(undefined);
+            }}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

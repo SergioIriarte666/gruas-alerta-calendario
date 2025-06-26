@@ -1,3 +1,4 @@
+
 import * as React from 'react';
 import { useClients } from '@/hooks/useClients';
 import { Client } from '@/types';
@@ -91,14 +92,14 @@ const Clients = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64" style={{ backgroundColor: '#000000' }}>
+      <div className="flex items-center justify-center h-64">
         <div className="text-white">Cargando clientes...</div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6 animate-fade-in min-h-screen" style={{ backgroundColor: '#000000', color: '#ffffff' }}>
+    <div className="space-y-6 animate-fade-in">
       <ClientsHeader
         isDialogOpen={isDialogOpen}
         setIsDialogOpen={setIsDialogOpen}
