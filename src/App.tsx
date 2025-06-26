@@ -28,6 +28,7 @@ import ServiceInspection from '@/pages/operator/ServiceInspection';
 import PortalDashboard from '@/pages/portal/PortalDashboard';
 import PortalServices from '@/pages/portal/PortalServices';
 import PortalInvoices from '@/pages/portal/PortalInvoices';
+import PortalRequestService from '@/pages/portal/PortalRequestService';
 import Calendar from '@/pages/Calendar';
 import NotFound from '@/pages/NotFound';
 
@@ -167,7 +168,9 @@ export default function App() {
                       </ProtectedRoute>
                     }>
                       <Route index element={<PortalDashboard />} />
+                      <Route path="dashboard" element={<PortalDashboard />} />
                       <Route path="services" element={<PortalServices />} />
+                      <Route path="request-service" element={<PortalRequestService />} />
                       <Route path="invoices" element={<PortalInvoices />} />
                     </Route>
 

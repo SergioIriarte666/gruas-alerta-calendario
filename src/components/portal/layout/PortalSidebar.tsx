@@ -1,11 +1,37 @@
 
 import React from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import { LayoutDashboard, FileText, History, Plus } from 'lucide-react';
 import { useSettings } from '@/hooks/useSettings';
+import { cn } from '@/lib/utils';
 
 const PortalSidebar: React.FC = () => {
   const { settings } = useSettings();
+  const location = useLocation();
   const companyName = settings?.company?.name || 'Grúas Alerta';
+
+  const navigationItems = [
+    {
+      name: 'Dashboard',
+      href: '/portal/dashboard',
+      icon: LayoutDashboard,
+    },
+    {
+      name: 'Mis Servicios',
+      href: '/portal/services',
+      icon: History,
+    },
+    {
+      name: 'Solicitar Servicio',
+      href: '/portal/request-service',
+      icon: Plus,
+    },
+    {
+      name: 'Mis Facturas',
+      href: '/portal/invoices',
+      icon: FileText,
+    },
+  ];
 
   return (
     <aside className="w-64 bg-gray-900 border-r border-gray-800 p-4 flex flex-col">
@@ -25,22 +51,24 @@ const PortalSidebar: React.FC = () => {
         </div>
       </div>
       <nav className="flex flex-col space-y-2">
-        <a href="/portal/dashboard" className="flex items-center space-x-3 px-3 py-2 rounded-md text-gray-300 hover:bg-gray-700 hover:text-white">
-          <LayoutDashboard className="w-5 h-5" />
-          <span>Dashboard</span>
-        </a>
-        <a href="/portal/services" className="flex items-center space-x-3 px-3 py-2 rounded-md text-gray-300 hover:bg-gray-700 hover:text-white">
-          <History className="w-5 h-5" />
-          <span>Mis Servicios</span>
-        </a>
-        <a href="/portal/request-service" className="flex items-center space-x-3 px-3 py-2 rounded-md bg-gray-700 text-white font-medium">
-          <Plus className="w-5 h-5" />
-          <span>Solicitar Servicio</span>
-        </a>
-        <a href="/portal/invoices" className="flex items-center space-x-3 px-3 py-2 rounded-md text-gray-300 hover:bg-gray-700 hover:text-white">
-          <FileText className="w-5 h-5" />
-          <span>Mis Facturas</span>
-        </a>
+        {navigationItems.map((item) => {
+          const isActive = location.pathname === item.href;
+          return (
+            <Link
+              key={item.name}
+              to={item.href}
+              className={cn(
+                "flex items-center space-x-3 px-3 py-2 rounded-md transition-colors",
+                isActive 
+                  ? "bg-gray-700 text-white font-medium" 
+                  : "text-gray-300 hover:bg-gray-700 hover:text-white"
+              )}
+            >
+              <item.icon className="w-5 h-5" />
+              <span>{item.name}</span>
+            </Link>
+          );
+        })}
       </nav>
       <div className="mt-auto">
         <p className="text-xs text-center text-gray-500">© 2025 {companyName}</p>
