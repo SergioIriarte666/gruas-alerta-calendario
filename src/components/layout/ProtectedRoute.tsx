@@ -49,6 +49,7 @@ const ProtectedRoute = ({ children, allowedRoles, requireRole }: ProtectedRouteP
   // Check role-based access control
   if (effectiveAllowedRoles.length > 0 && !effectiveAllowedRoles.includes(profileUser.role)) {
     console.warn(`ProtectedRoute - Access denied. User role '${profileUser.role}' not in allowed roles:`, effectiveAllowedRoles);
+    console.log(`ProtectedRoute - Redirecting user with role '${profileUser.role}' to their appropriate area`);
     
     // Redirect based on user role to prevent unauthorized access
     switch (profileUser.role) {

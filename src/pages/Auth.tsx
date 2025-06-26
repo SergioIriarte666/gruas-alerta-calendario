@@ -55,9 +55,18 @@ const Auth = () => {
     }
 
     console.log(`Auth: Redirecting user with role: ${userProfile.role}`);
+    console.log('Auth: Full profile data:', userProfile);
+    
+    // Validar que el rol sea válido
+    const validRoles = ['admin', 'operator', 'viewer', 'client'];
+    if (!validRoles.includes(userProfile.role)) {
+      console.error('Auth: Invalid role detected:', userProfile.role);
+      toast.error('Error: Rol de usuario inválido');
+      return;
+    }
     
     // Pequeño delay para asegurar que la UI esté lista
-    await new Promise(resolve => setTimeout(resolve, 100));
+    await new Promise(resolve => setTimeout(resolve, 200));
     
     switch (userProfile.role) {
       case 'client':
@@ -109,19 +118,33 @@ const Auth = () => {
         return;
       }
 
-      // Si no hay perfil de usuario, forzar recarga
+      // Si no hay perfil de usuario, forzar recarga con múltiples intentos
       if (!profileUser) {
-        console.log('Auth: No profile found, forcing refresh...');
+        console.log('Auth: No profile found, forcing refresh with retries...');
         setRedirecting(true);
         
         try {
+          // Primer intento de recarga
           await forceRefreshProfile();
           
-          // Esperar un poco más para que se actualice el estado
-          await new Promise(resolve => setTimeout(resolve, 1000));
+          // Esperar más tiempo para que se actualice el estado
+          await new Promise(resolve => setTimeout(resolve, 2000));
           
-          // Verificar si ahora tenemos el perfil
-          // La redirección se manejará en la siguiente ejecución del useEffect
+          // Segundo intento si aún no tenemos perfil
+          if (!profileUser) {
+            console.log('Auth: First refresh attempt failed, trying again...');
+            await forceRefreshProfile();
+            await new Promise(resolve => setTimeout(resolve, 1500));
+          }
+          
+          // Si aún no tenemos perfil después de múltiples intentos, hay un problema
+          if (!profileUser) {
+            console.error('Auth: Failed to load profile after multiple attempts');
+            toast.error('Error cargando perfil de usuario', {
+              description: 'Por favor, intenta cerrar sesión e iniciar sesión nuevamente.'
+            });
+          }
+          
         } catch (error) {
           console.error('Auth: Error forcing profile refresh:', error);
         } finally {
@@ -132,7 +155,7 @@ const Auth = () => {
 
       // Si tenemos ambos (auth user y profile), proceder con redirección
       console.log('Auth: Both auth user and profile available, proceeding with redirect');
-      console.log('Auth: Profile details:', {
+      console.log('Auth: Profile details for redirect:', {
         id: profileUser.id,
         email: profileUser.email,
         role: profileUser.role,
@@ -255,7 +278,7 @@ const Auth = () => {
   // Show loading while checking auth state or redirecting
   if (authLoading || profileLoading || redirecting) {
     const message = redirecting 
-      ? 'Redirigiendo...' 
+      ? 'Redirigiendo según tu rol de usuario...' 
       : profileLoading 
         ? 'Cargando perfil de usuario...' 
         : 'Verificando autenticación...';

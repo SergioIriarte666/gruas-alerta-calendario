@@ -53,9 +53,9 @@ export default function App() {
                     <Route path="/auth" element={<Auth />} />
                     <Route path="/" element={<Index />} />
 
-                    {/* Main application routes - using absolute paths */}
+                    {/* Administrative routes - restricted to admin and viewer only */}
                     <Route path="/dashboard" element={
-                      <ProtectedRoute>
+                      <ProtectedRoute allowedRoles={['admin', 'viewer']}>
                         <Layout />
                       </ProtectedRoute>
                     }>
@@ -63,7 +63,7 @@ export default function App() {
                     </Route>
 
                     <Route path="/services" element={
-                      <ProtectedRoute>
+                      <ProtectedRoute allowedRoles={['admin', 'viewer']}>
                         <Layout />
                       </ProtectedRoute>
                     }>
@@ -71,7 +71,7 @@ export default function App() {
                     </Route>
 
                     <Route path="/calendar" element={
-                      <ProtectedRoute>
+                      <ProtectedRoute allowedRoles={['admin', 'viewer']}>
                         <Layout />
                       </ProtectedRoute>
                     }>
@@ -79,7 +79,7 @@ export default function App() {
                     </Route>
 
                     <Route path="/closures" element={
-                      <ProtectedRoute>
+                      <ProtectedRoute allowedRoles={['admin', 'viewer']}>
                         <Layout />
                       </ProtectedRoute>
                     }>
@@ -87,7 +87,7 @@ export default function App() {
                     </Route>
 
                     <Route path="/clients" element={
-                      <ProtectedRoute>
+                      <ProtectedRoute allowedRoles={['admin', 'viewer']}>
                         <Layout />
                       </ProtectedRoute>
                     }>
@@ -95,7 +95,7 @@ export default function App() {
                     </Route>
 
                     <Route path="/operators" element={
-                      <ProtectedRoute>
+                      <ProtectedRoute allowedRoles={['admin']}>
                         <Layout />
                       </ProtectedRoute>
                     }>
@@ -103,7 +103,7 @@ export default function App() {
                     </Route>
 
                     <Route path="/cranes" element={
-                      <ProtectedRoute>
+                      <ProtectedRoute allowedRoles={['admin', 'viewer']}>
                         <Layout />
                       </ProtectedRoute>
                     }>
@@ -111,7 +111,7 @@ export default function App() {
                     </Route>
 
                     <Route path="/service-types" element={
-                      <ProtectedRoute>
+                      <ProtectedRoute allowedRoles={['admin']}>
                         <Layout />
                       </ProtectedRoute>
                     }>
@@ -119,7 +119,7 @@ export default function App() {
                     </Route>
 
                     <Route path="/invoices" element={
-                      <ProtectedRoute>
+                      <ProtectedRoute allowedRoles={['admin', 'viewer']}>
                         <Layout />
                       </ProtectedRoute>
                     }>
@@ -127,7 +127,7 @@ export default function App() {
                     </Route>
 
                     <Route path="/costs" element={
-                      <ProtectedRoute>
+                      <ProtectedRoute allowedRoles={['admin', 'viewer']}>
                         <Layout />
                       </ProtectedRoute>
                     }>
@@ -135,7 +135,7 @@ export default function App() {
                     </Route>
 
                     <Route path="/reports" element={
-                      <ProtectedRoute>
+                      <ProtectedRoute allowedRoles={['admin', 'viewer']}>
                         <Layout />
                       </ProtectedRoute>
                     }>
@@ -143,13 +143,14 @@ export default function App() {
                     </Route>
 
                     <Route path="/settings" element={
-                      <ProtectedRoute>
+                      <ProtectedRoute allowedRoles={['admin']}>
                         <Layout />
                       </ProtectedRoute>
                     }>
                       <Route index element={<Settings />} />
                     </Route>
 
+                    {/* Operator routes - restricted to operators only */}
                     <Route path="/operator" element={
                       <ProtectedRoute requireRole="operator">
                         <OperatorLayout />
@@ -159,6 +160,7 @@ export default function App() {
                       <Route path="service/:id/inspection" element={<ServiceInspection />} />
                     </Route>
 
+                    {/* Client portal routes - restricted to clients only */}
                     <Route path="/portal" element={
                       <ProtectedRoute requireRole="client">
                         <PortalLayout />
