@@ -1070,6 +1070,10 @@ export type Database = {
         }
         Returns: string
       }
+      cleanup_duplicate_profiles: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       generate_database_backup: {
         Args: Record<PropertyKey, never>
         Returns: string

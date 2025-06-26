@@ -15,6 +15,7 @@ const Auth = () => {
   const emailParam = searchParams.get('email');
   const tabParam = searchParams.get('tab');
   const isInvited = searchParams.get('invited') === 'true';
+  const isRegistered = searchParams.get('registered') === 'true';
   
   const [email, setEmail] = useState(emailParam || '');
   const [password, setPassword] = useState('');
@@ -24,7 +25,7 @@ const Auth = () => {
   );
   
   const { user: authUser, loading: authLoading } = useAuth();
-  const { user: profileUser, loading: profileLoading } = useUser();
+  const { user: profileUser, loading: profileLoading, forceRefreshProfile } = useUser();
   const navigate = useNavigate();
 
   // Si viene de una invitación, mostrar mensaje y cambiar a registro
@@ -37,13 +38,45 @@ const Auth = () => {
     }
   }, [isInvited, emailParam]);
 
-  // Redirigir usuarios autenticados
+  // Si viene de confirmación de email
+  useEffect(() => {
+    if (isRegistered) {
+      toast.success('¡Cuenta confirmada exitosamente!', {
+        description: 'Ya puedes iniciar sesión en el sistema.'
+      });
+    }
+  }, [isRegistered]);
+
+  // Redirigir usuarios autenticados con mejor lógica
   useEffect(() => {
     if (!authLoading && !profileLoading && authUser && profileUser) {
       console.log('Auth: Redirecting authenticated user with role:', profileUser.role);
-      navigate('/', { replace: true });
+      
+      // Forzar refresh del perfil para asegurar datos actualizados
+      forceRefreshProfile().then(() => {
+        // Redirigir según el rol
+        switch (profileUser.role) {
+          case 'client':
+            console.log('Auth: Redirecting client to /portal');
+            navigate('/portal', { replace: true });
+            break;
+          case 'operator':
+            console.log('Auth: Redirecting operator to /operator');
+            navigate('/operator', { replace: true });
+            break;
+          case 'admin':
+          case 'viewer':
+            console.log('Auth: Redirecting admin/viewer to /dashboard');
+            navigate('/dashboard', { replace: true });
+            break;
+          default:
+            console.log('Auth: Unknown role, redirecting to /');
+            navigate('/', { replace: true });
+            break;
+        }
+      });
     }
-  }, [authUser, profileUser, authLoading, profileLoading, navigate]);
+  }, [authUser, profileUser, authLoading, profileLoading, navigate, forceRefreshProfile]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -52,7 +85,7 @@ const Auth = () => {
     setLoading(true);
     
     try {
-      console.log('Attempting login...');
+      console.log('Auth: Attempting login for:', email);
       
       const { error } = await supabase.auth.signInWithPassword({
         email,
@@ -60,17 +93,17 @@ const Auth = () => {
       });
       
       if (error) {
-        console.error('Login error:', error);
+        console.error('Auth: Login error:', error);
         toast.error('Error al iniciar sesión', {
           description: error.message
         });
       } else {
-        console.log('Login successful');
+        console.log('Auth: Login successful');
         toast.success('Inicio de sesión exitoso');
         // La redirección se maneja en el useEffect
       }
     } catch (error: any) {
-      console.error('Login exception:', error);
+      console.error('Auth: Login exception:', error);
       toast.error('Error al iniciar sesión', {
         description: error.message
       });
@@ -86,7 +119,7 @@ const Auth = () => {
     setLoading(true);
     
     try {
-      console.log('Attempting signup...');
+      console.log('Auth: Attempting signup for:', email);
       
       // Validar que los campos estén completos
       if (!email || !password) {
@@ -108,7 +141,7 @@ const Auth = () => {
       });
       
       if (error) {
-        console.error('Signup error:', error);
+        console.error('Auth: Signup error:', error);
         
         // Manejar errores específicos
         if (error.message.includes('already registered')) {
@@ -122,7 +155,7 @@ const Auth = () => {
           });
         }
       } else {
-        console.log('Signup successful:', data);
+        console.log('Auth: Signup successful:', data);
         
         if (data.user && !data.user.email_confirmed_at) {
           toast.success('Registro exitoso', {
@@ -132,14 +165,11 @@ const Auth = () => {
           toast.success('¡Registro completado exitosamente!', {
             description: 'Redirigiendo al sistema...'
           });
-          // Esperar un momento para que se actualice el perfil antes de redirigir
-          setTimeout(() => {
-            navigate('/', { replace: true });
-          }, 1000);
+          // La redirección se maneja en el useEffect
         }
       }
     } catch (error: any) {
-      console.error('Signup exception:', error);
+      console.error('Auth: Signup exception:', error);
       toast.error('Error en el registro', {
         description: error.message
       });
@@ -168,6 +198,15 @@ const Auth = () => {
             <h3 className="text-tms-green font-semibold mb-2">¡Has sido invitado!</h3>
             <p className="text-white text-sm">
               Completa tu registro con el email <strong>{emailParam}</strong> para acceder al sistema.
+            </p>
+          </div>
+        )}
+
+        {isRegistered && (
+          <div className="mb-6 p-4 bg-green-500/10 border border-green-500/30 rounded-lg">
+            <h3 className="text-green-400 font-semibold mb-2">¡Cuenta confirmada!</h3>
+            <p className="text-white text-sm">
+              Tu cuenta ha sido confirmada exitosamente. Ya puedes iniciar sesión.
             </p>
           </div>
         )}

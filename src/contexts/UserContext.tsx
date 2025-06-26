@@ -35,6 +35,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     try {
       setLoading(true);
+      console.log('UserContext - Fetching profile for user:', authUser.id, authUser.email);
       
       const { data, error } = await supabase
         .from('profiles')
@@ -43,9 +44,50 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .single();
 
       if (error) {
-        console.error('Error fetching user profile:', error);
-        setUser(null);
+        console.error('UserContext - Error fetching user profile:', error);
+        
+        // Si el perfil no existe, intentar crearlo
+        if (error.code === 'PGRST116') {
+          console.log('UserContext - Profile not found, attempting to create...');
+          
+          const { data: newProfile, error: createError } = await supabase
+            .from('profiles')
+            .insert({
+              id: authUser.id,
+              email: authUser.email || '',
+              full_name: authUser.email || '',
+              role: 'viewer'
+            })
+            .select()
+            .single();
+
+          if (createError) {
+            console.error('UserContext - Error creating profile:', createError);
+            setUser(null);
+          } else if (newProfile) {
+            console.log('UserContext - Profile created successfully:', newProfile);
+            setUser({
+              id: newProfile.id,
+              email: newProfile.email,
+              name: newProfile.full_name || newProfile.email,
+              role: newProfile.role,
+              client_id: newProfile.client_id,
+            });
+          }
+        } else {
+          setUser(null);
+        }
       } else if (data) {
+        console.log('UserContext - Profile fetched successfully:', data);
+        
+        // Validar que el rol sea válido
+        const validRoles = ['admin', 'operator', 'viewer', 'client'];
+        if (!validRoles.includes(data.role)) {
+          console.error('UserContext - Invalid role detected:', data.role);
+          setUser(null);
+          return;
+        }
+
         setUser({
           id: data.id,
           email: data.email,
@@ -55,7 +97,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         });
       }
     } catch (error) {
-      console.error('Error in fetchUserProfile:', error);
+      console.error('UserContext - Exception in fetchUserProfile:', error);
       setUser(null);
     } finally {
       setLoading(false);
@@ -63,6 +105,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const forceRefreshProfile = async () => {
+    console.log('UserContext - Force refreshing profile...');
     await fetchUserProfile();
   };
 
@@ -70,6 +113,8 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (!user) return;
 
     try {
+      console.log('UserContext - Updating user:', updates);
+      
       const { error } = await supabase
         .from('profiles')
         .update({
@@ -83,21 +128,25 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       // Update local state
       setUser(prev => prev ? { ...prev, ...updates } : null);
+      console.log('UserContext - User updated successfully');
     } catch (error) {
-      console.error('Error updating user:', error);
+      console.error('UserContext - Error updating user:', error);
       throw error;
     }
   };
 
   const logout = async () => {
+    console.log('UserContext - Logging out user...');
     await signOut();
   };
 
   useEffect(() => {
     if (authLoading) {
+      console.log('UserContext - Auth still loading, waiting...');
       return;
     }
 
+    console.log('UserContext - Auth loading complete, fetching profile...');
     fetchUserProfile();
   }, [authUser, authLoading]);
 
