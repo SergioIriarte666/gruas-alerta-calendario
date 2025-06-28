@@ -33,6 +33,7 @@ const PortalRequestService = () => {
   }, [selectedServiceTypeId, serviceTypes]);
 
   const onSubmit = (data: PortalRequestServiceSchema) => {
+    console.log('Enviando solicitud con datos:', data);
     requestService(data);
   };
 
@@ -46,7 +47,7 @@ const PortalRequestService = () => {
         <CardHeader>
           <CardTitle className="text-white">Detalles de la Solicitud</CardTitle>
           <CardDescription className="text-gray-400">
-            Complete el formulario para solicitar un nuevo servicio de grúa. Nos pondremos en contacto a la brevedad.
+            Complete el formulario para solicitar un nuevo servicio de grúa. Su solicitud será revisada y se asignarán los recursos necesarios.
           </CardDescription>
         </CardHeader>
         <CardContent>

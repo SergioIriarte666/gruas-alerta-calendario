@@ -47,26 +47,29 @@ export const useServiceFormValidation = () => {
       return { isValid: false };
     }
 
+    // Para servicios en estado 'pending', los recursos pueden estar sin asignar
+    const isPendingService = service?.status === 'pending' || !service;
+    
     // Validación condicional basada en el tipo de servicio
-    if (selectedServiceType.craneRequired) {
+    if (selectedServiceType.craneRequired && !isPendingService) {
       const selectedCrane = cranes.find(c => c.id === formData.craneId);
-      if (!selectedCrane) {
+      if (!selectedCrane && formData.craneId) {
         toast({
           type: "error",
           title: "Error",
-          description: "La grúa es requerida para este tipo de servicio",
+          description: "La grúa seleccionada no es válida",
         });
         return { isValid: false };
       }
     }
 
-    if (selectedServiceType.operatorRequired) {
+    if (selectedServiceType.operatorRequired && !isPendingService) {
       const selectedOperator = operators.find(o => o.id === formData.operatorId);
-      if (!selectedOperator) {
+      if (!selectedOperator && formData.operatorId) {
         toast({
           type: "error",
           title: "Error",
-          description: "El operador es requerido para este tipo de servicio",
+          description: "El operador seleccionado no es válido",
         });
         return { isValid: false };
       }

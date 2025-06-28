@@ -19,27 +19,8 @@ const createServiceRequest = async ({
   const timestamp = Date.now();
   const folio = `REQ-${timestamp}`;
 
-  // Obtener operador y grúa de placeholder (primer disponible)
-  const { data: operators } = await supabase
-    .from('operators')
-    .select('id')
-    .eq('is_active', true)
-    .limit(1);
-
-  const { data: cranes } = await supabase
-    .from('cranes')
-    .select('id')
-    .eq('is_active', true)
-    .limit(1);
-
-  if (!operators || operators.length === 0) {
-    throw new Error('No hay operadores disponibles en el sistema');
-  }
-
-  if (!cranes || cranes.length === 0) {
-    throw new Error('No hay grúas disponibles en el sistema');
-  }
-
+  // Crear servicio en estado pendiente SIN asignar operador ni grúa
+  // Estos se asignarán después por el administrador
   const serviceData = {
     folio: folio,
     client_id: clientId,
@@ -54,8 +35,9 @@ const createServiceRequest = async ({
     observations: formData.observations || '',
     status: 'pending' as const,
     value: 0,
-    operator_id: operators[0].id,
-    crane_id: cranes[0].id,
+    // Estos campos se asignarán después por el administrador
+    operator_id: null,
+    crane_id: null,
     operator_commission: 0,
   };
 
@@ -123,7 +105,7 @@ export const useServiceRequest = () => {
         toast({
           type: 'success',
           title: 'Solicitud Enviada',
-          description: `Tu solicitud ${data.folio} ha sido recibida exitosamente. Pronto será revisada y recibirás una confirmación por email.`,
+          description: `Tu solicitud ${data.folio} ha sido recibida exitosamente. Pronto será revisada y se asignarán los recursos necesarios.`,
         });
       } catch (emailError) {
         console.error('Error enviando email de confirmación:', emailError);
@@ -131,7 +113,7 @@ export const useServiceRequest = () => {
         toast({
           type: 'success',
           title: 'Solicitud Enviada',
-          description: `Tu solicitud ${data.folio} ha sido recibida exitosamente. Pronto será revisada.`,
+          description: `Tu solicitud ${data.folio} ha sido recibada exitosamente. Pronto será revisada.`,
         });
       }
       
