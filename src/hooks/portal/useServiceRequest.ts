@@ -88,6 +88,7 @@ export const useServiceRequest = () => {
 
         // Enviar email de confirmación si el cliente tiene email
         if (clientData?.email && data) {
+          console.log('📧 Enviando email de confirmación de solicitud...');
           await supabase.functions.invoke('send-service-confirmation', {
             body: {
               serviceId: data.id,
@@ -100,6 +101,7 @@ export const useServiceRequest = () => {
               clientName: clientData.name
             }
           });
+          console.log('✅ Email de confirmación enviado exitosamente');
         }
 
         toast({
@@ -113,7 +115,7 @@ export const useServiceRequest = () => {
         toast({
           type: 'success',
           title: 'Solicitud Enviada',
-          description: `Tu solicitud ${data.folio} ha sido recibada exitosamente. Pronto será revisada.`,
+          description: `Tu solicitud ${data.folio} ha sido recibida exitosamente. Pronto será revisada.`,
         });
       }
       

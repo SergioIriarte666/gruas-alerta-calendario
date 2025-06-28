@@ -52,13 +52,14 @@ export const useServiceInspection = () => {
       let emailSent = false;
       if (service.client?.email && service.client.email.includes('@')) {
         try {
-          console.log('📧 [PROCESS] Enviando email...');
+          console.log('📧 [PROCESS] Enviando email de inspección...');
           await sendInspectionEmailMutation.mutateAsync({
             pdfBlob: blob,
             service,
             inspection: values
           });
           emailSent = true;
+          console.log('✅ [PROCESS] Email de inspección enviado exitosamente');
         } catch (emailError) {
           console.error('⚠️ [PROCESS] Error en email:', emailError);
           toast.error('PDF generado correctamente, pero no se pudo enviar por email');

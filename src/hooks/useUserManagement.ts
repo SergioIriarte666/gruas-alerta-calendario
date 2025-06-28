@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -129,7 +128,7 @@ export const useUserManagement = () => {
         const clientName = userData.client_id ? 
           clients.find(c => c.id === userData.client_id)?.name : undefined;
 
-        console.log('Sending invitation email for user:', {
+        console.log('📧 Enviando invitación por email para usuario:', {
           userId: newUserId,
           email: userData.email,
           fullName: userData.full_name,
@@ -156,7 +155,7 @@ export const useUserManagement = () => {
           console.error('Error in invitation function:', invitationData.error);
           toast.warning('Usuario creado, pero hubo un problema enviando la invitación por email');
         } else {
-          console.log('Invitation sent successfully:', invitationData);
+          console.log('✅ Invitación enviada exitosamente:', invitationData);
           toast.success('Usuario creado e invitación enviada correctamente');
         }
       } catch (inviteError) {
@@ -179,7 +178,7 @@ export const useUserManagement = () => {
   const resendInvitation = async (userId: string) => {
     try {
       setSendingInvitation(userId);
-      console.log('Resending invitation for user:', userId);
+      console.log('📧 Reenviando invitación para usuario:', userId);
       
       const user = users.find(u => u.id === userId);
       if (!user) {
@@ -215,6 +214,7 @@ export const useUserManagement = () => {
       } else if (data?.error) {
         throw new Error(data.error);
       } else {
+        console.log('✅ Invitación reenviada exitosamente');
         toast.success('Invitación reenviada correctamente');
       }
 
