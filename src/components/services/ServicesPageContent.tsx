@@ -10,10 +10,14 @@ import { ServiceFilters } from './ServiceFilters';
 import { AdvancedServiceFilters } from './AdvancedServiceFilters';
 import { useToast } from '@/components/ui/custom-toast';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useUser } from '@/contexts/UserContext';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 export const ServicesPageContent = () => {
-  const { services = [], loading, createService, updateService, deleteService } = useServices();
+  const { services = [], loading, createService, updateService, deleteService, refetch } = useServices();
   const { toast } = useToast();
+  const { user } = useUser();
+  const isMobile = useIsMobile();
   
   // Estados del formulario
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -26,15 +30,10 @@ export const ServicesPageContent = () => {
   
   // Estados de filtros
   const [searchTerm, setSearchTerm] = useState('');
-  const [filters, setFilters] = useState({
-    status: '',
-    client: '',
-    serviceType: '',
-    operator: '',
-    crane: '',
-    dateRange: { from: '', to: '' }
-  });
-  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [refreshing, setRefreshing] = useState(false);
+
+  const isAdmin = user?.role === 'admin';
 
   // Función para abrir el formulario de nuevo servicio
   const handleNewService = () => {
@@ -44,6 +43,14 @@ export const ServicesPageContent = () => {
 
   // Función para editar servicio
   const handleEditService = (service: Service) => {
+    if (service.status === 'invoiced' && !isAdmin) {
+      toast({
+        type: 'error',
+        title: 'Error',
+        description: 'No se puede editar un servicio facturado. Solo los administradores pueden hacerlo.'
+      });
+      return;
+    }
     setEditingService(service);
     setIsFormOpen(true);
   };
@@ -116,6 +123,36 @@ export const ServicesPageContent = () => {
     }
   };
 
+  // Función para cerrar servicio
+  const handleCloseService = async (service: Service) => {
+    if (service.status === 'invoiced') {
+      toast({
+        type: 'error',
+        title: 'Error',
+        description: 'No se puede cerrar un servicio que ya está facturado'
+      });
+      return;
+    }
+
+    if (window.confirm(`¿Estás seguro de que deseas cerrar el servicio ${service.folio}?`)) {
+      try {
+        await updateService(service.id, { status: 'completed' });
+        toast({
+          type: 'success',
+          title: 'Servicio cerrado',
+          description: 'El servicio se ha cerrado exitosamente'
+        });
+      } catch (error) {
+        console.error('Error closing service:', error);
+        toast({
+          type: 'error',
+          title: 'Error',
+          description: 'No se pudo cerrar el servicio'
+        });
+      }
+    }
+  };
+
   // Función para manejar éxito de carga CSV
   const handleCSVSuccess = (count: number) => {
     toast({
@@ -126,6 +163,28 @@ export const ServicesPageContent = () => {
     setIsCSVUploadOpen(false);
   };
 
+  // Función para actualizar datos
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await refetch();
+      toast({
+        type: 'success',
+        title: 'Datos actualizados',
+        description: 'Los datos se han actualizado correctamente'
+      });
+    } catch (error) {
+      console.error('Error refreshing data:', error);
+      toast({
+        type: 'error',
+        title: 'Error',
+        description: 'No se pudieron actualizar los datos'
+      });
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
   // Aplicar filtros a los servicios
   const filteredServices = services.filter(service => {
     const matchesSearch = !searchTerm || 
@@ -134,14 +193,10 @@ export const ServicesPageContent = () => {
       service.origin?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       service.destination?.toLowerCase().includes(searchTerm.toLowerCase());
 
-    const matchesStatus = !filters.status || service.status === filters.status;
-    const matchesClient = !filters.client || service.client?.id === filters.client;
-    const matchesServiceType = !filters.serviceType || service.serviceType?.id === filters.serviceType;
-    const matchesOperator = !filters.operator || service.operator?.id === filters.operator;
-    const matchesCrane = !filters.crane || service.crane?.id === filters.crane;
+    const statusesToFilter = statusFilter === 'all' ? [] : statusFilter.split(',');
+    const matchesStatus = statusFilter === 'all' || statusesToFilter.includes(service.status);
 
-    return matchesSearch && matchesStatus && matchesClient && 
-           matchesServiceType && matchesOperator && matchesCrane;
+    return matchesSearch && matchesStatus;
   });
 
   if (loading) {
@@ -161,44 +216,43 @@ export const ServicesPageContent = () => {
   return (
     <div className="space-y-6">
       <ServicesHeader 
-        onNewService={handleNewService}
+        isAdmin={isAdmin}
+        refreshing={refreshing}
+        onRefresh={handleRefresh}
         onCSVUpload={() => setIsCSVUploadOpen(true)}
-        servicesCount={services.length}
+        onNewService={handleNewService}
       />
 
       <ServiceFilters
         searchTerm={searchTerm}
         onSearchChange={setSearchTerm}
-        filters={filters}
-        onFiltersChange={setFilters}
-        showAdvancedFilters={showAdvancedFilters}
-        onToggleAdvancedFilters={() => setShowAdvancedFilters(!showAdvancedFilters)}
+        statusFilter={statusFilter}
+        onStatusFilterChange={setStatusFilter}
+        showAdvancedFilters={false}
+        onToggleAdvancedFilters={() => {}}
       />
 
-      {showAdvancedFilters && (
-        <AdvancedServiceFilters
-          filters={filters}
-          onFiltersChange={setFilters}
-        />
-      )}
-
-      <div className="block md:hidden">
+      {isMobile ? (
         <ServicesMobileView
           services={filteredServices}
-          onEditService={handleEditService}
-          onViewService={handleViewService}
-          onDeleteService={handleDeleteService}
+          hasInitialServices={services.length > 0}
+          onViewDetails={handleViewService}
+          onEdit={isAdmin ? handleEditService : undefined}
+          onDelete={isAdmin ? handleDeleteService : undefined}
+          onCloseService={handleCloseService}
+          onAddNewService={isAdmin ? handleNewService : undefined}
         />
-      </div>
-
-      <div className="hidden md:block">
+      ) : (
         <ServicesTable
           services={filteredServices}
-          onEditService={handleEditService}
-          onViewService={handleViewService}
-          onDeleteService={handleDeleteService}
+          hasInitialServices={services.length > 0}
+          onViewDetails={handleViewService}
+          onEdit={isAdmin ? handleEditService : undefined}
+          onDelete={isAdmin ? handleDeleteService : undefined}
+          onCloseService={handleCloseService}
+          onAddNewService={isAdmin ? handleNewService : undefined}
         />
-      </div>
+      )}
 
       <ServicesDialogs
         isCSVUploadOpen={isCSVUploadOpen}
