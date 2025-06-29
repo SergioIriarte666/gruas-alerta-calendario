@@ -1,4 +1,3 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -143,4 +142,79 @@
     background-color: rgb(156, 250, 36);
     color: #000000;
   }
+}
+
+/* ===== ARREGLOS PARA TEXTO VISIBLE ===== */
+
+/* Forzar texto negro en toda la aplicación */
+* {
+  color: #000000 !important;
+}
+
+/* Arreglo específico para tablas */
+table, 
+table *,
+tbody,
+tbody *,
+tr,
+tr *,
+td,
+td *,
+th,
+th * {
+  color: #000000 !important;
+  background-color: #ffffff !important;
+}
+
+/* Arreglo para texto general */
+p, span, div, 
+h1, h2, h3, h4, h5, h6, 
+label, input, textarea, select,
+button, a {
+  color: #000000 !important;
+}
+
+/* Arreglo para componentes específicos */
+[class*="text-"], 
+[class*="content"],
+[class*="table"],
+[class*="cell"],
+[class*="row"] {
+  color: #000000 !important;
+}
+
+/* Arreglo para estados de servicios */
+.status-badge,
+.badge,
+[class*="status"] {
+  color: #000000 !important;
+}
+
+/* Forzar fondos blancos */
+.bg-white,
+[class*="card"],
+[class*="table"],
+[class*="content"] {
+  background-color: #ffffff !important;
+}
+
+/* Arreglo para formularios */
+input, 
+textarea, 
+select,
+[role="combobox"],
+[data-radix-select-trigger] {
+  background-color: #ffffff !important;
+  color: #000000 !important;
+  border: 1px solid #e2e8f0 !important;
+}
+
+/* Arreglo para dropdowns y menús */
+[data-radix-select-content],
+[data-radix-dropdown-menu-content],
+[role="menu"],
+[role="menuitem"] {
+  background-color: #ffffff !important;
+  color: #000000 !important;
+  border: 1px solid #e2e8f0 !important;
 }
