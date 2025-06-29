@@ -105,9 +105,9 @@ export const ServicesPageContent = () => {
   };
 
   // Función para eliminar servicio
-  const handleDeleteService = async (serviceId: string) => {
+  const handleDeleteService = async (service: Service) => {
     try {
-      await deleteService(serviceId);
+      await deleteService(service.id);
       toast({
         type: 'success',
         title: 'Servicio eliminado',
@@ -227,9 +227,8 @@ export const ServicesPageContent = () => {
         searchTerm={searchTerm}
         onSearchChange={setSearchTerm}
         statusFilter={statusFilter}
-        onStatusFilterChange={setStatusFilter}
-        showAdvancedFilters={false}
-        onToggleAdvancedFilters={() => {}}
+        onStatusChange={setStatusFilter}
+        onAdvancedFiltersChange={() => {}}
       />
 
       {isMobile ? (

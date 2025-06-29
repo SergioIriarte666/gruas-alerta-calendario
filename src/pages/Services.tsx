@@ -33,6 +33,9 @@ const Services = () => {
     ITEMS_PER_PAGE,
     
     // Setters
+    setIsCSVUploadOpen,
+    setIsFormOpen,
+    setIsDetailsOpen,
     setSearchTerm,
     setStatusFilter,
     setCurrentPage,
@@ -80,9 +83,8 @@ const Services = () => {
         searchTerm={searchTerm}
         onSearchChange={setSearchTerm}
         statusFilter={statusFilter}
-        onStatusFilterChange={setStatusFilter}
-        showAdvancedFilters={hasAdvancedFilters}
-        onToggleAdvancedFilters={() => {}}
+        onStatusChange={setStatusFilter}
+        onAdvancedFiltersChange={handleAdvancedFiltersChange}
       />
 
       {hasAdvancedFilters && (
@@ -118,7 +120,6 @@ const Services = () => {
           currentPage={currentPage}
           totalPages={totalPages}
           onPageChange={setCurrentPage}
-          itemsPerPage={ITEMS_PER_PAGE}
           totalItems={filteredServices.length}
         />
       )}
