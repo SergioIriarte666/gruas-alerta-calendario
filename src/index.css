@@ -2,32 +2,33 @@
 @tailwind components;
 @tailwind utilities;
 
-/* TMS Design System - Grúas Management */
+/* TMS Design System - Tema Oscuro AGRESIVO para Dashboard */
 
 @layer base {
   :root {
-    --background: 255 255 255;
-    --foreground: 0 0 0;
-    --card: 255 255 255;
-    --card-foreground: 0 0 0;
-    --popover: 255 255 255;
-    --popover-foreground: 0 0 0;
-    --primary: 156 250 36;
-    --primary-foreground: 0 0 0;
-    --secondary: 248 250 252;
-    --secondary-foreground: 0 0 0;
-    --muted: 248 250 252;
-    --muted-foreground: 71 85 105;
+    /* TEMA OSCURO - Forzado agresivo */
+    --background: 15 23 42;          /* slate-900 */
+    --foreground: 248 250 252;       /* slate-50 */
+    --card: 30 41 59;                /* slate-800 */
+    --card-foreground: 248 250 252;  /* slate-50 */
+    --popover: 30 41 59;             /* slate-800 */
+    --popover-foreground: 248 250 252;
+    --primary: 156 250 36;           /* Verde TMS */
+    --primary-foreground: 15 23 42;  /* slate-900 */
+    --tms-green: 156 250 36;
+    --tms-dark: 15 23 42;
+    --secondary: 51 65 85;           /* slate-700 */
+    --secondary-foreground: 248 250 252;
+    --muted: 51 65 85;               /* slate-700 */
+    --muted-foreground: 148 163 184; /* slate-400 */
     --accent: 156 250 36;
-    --accent-foreground: 0 0 0;
+    --accent-foreground: 15 23 42;
     --destructive: 239 68 68;
-    --destructive-foreground: 255 255 255;
-    --border: 226 232 240;
-    --input: 255 255 255;
+    --destructive-foreground: 248 250 252;
+    --border: 71 85 105;             /* slate-600 */
+    --input: 30 41 59;               /* slate-800 */
     --ring: 156 250 36;
     --radius: 0.5rem;
-    --tms-green: 156 250 36;
-    --tms-white: 255 255 255;
   }
 }
 
@@ -36,9 +37,19 @@
     @apply border-border;
   }
 
-  html, body, #root {
-    background: #ffffff;
-    color: #000000;
+  /* FORZAR TEMA OSCURO UNIVERSALMENTE */
+  html,
+  html *,
+  body,
+  body *,
+  #root,
+  #root * {
+    background: #0f172a !important;  /* Negro suave */
+    color: #f8fafc !important;       /* Blanco suave */
+  }
+
+  html {
+    color-scheme: dark !important;
   }
 
   body {
@@ -46,175 +57,586 @@
     min-height: 100vh;
   }
 
-  /* Custom scrollbar */
+  /* Scrollbars oscuros */
   ::-webkit-scrollbar {
-    width: 6px;
+    width: 8px;
   }
 
   ::-webkit-scrollbar-track {
-    background: #f1f5f9;
+    background: #1e293b !important;
   }
 
   ::-webkit-scrollbar-thumb {
-    background: rgb(156, 250, 36);
-    border-radius: 3px;
-  }
-
-  ::-webkit-scrollbar-thumb:hover {
-    background: rgba(156, 250, 36, 0.8);
+    background: rgb(156, 250, 36) !important;
+    border-radius: 4px;
   }
 }
 
 @layer components {
-  /* GLASS CARD STYLING */
+  /* FORZAR DASHBOARD OSCURO */
+  main,
+  main *,
+  [role="main"],
+  [role="main"] *,
+  .dashboard,
+  .dashboard *,
+  .main-content,
+  .main-content * {
+    background: #0f172a !important;  /* Fondo oscuro principal */
+    color: #f8fafc !important;       /* Texto blanco */
+  }
+
+  /* CARDS AGRESIVO */
+  .glass-card,
+  .glass-card *,
+  .metric-card,
+  .metric-card *,
+  [class*="card"],
+  [class*="card"] *,
+  .bg-white,
+  .bg-white * {
+    background: #1e293b !important;  /* slate-800 */
+    color: #f8fafc !important;       /* texto blanco */
+    border-color: #475569 !important; /* slate-600 */
+  }
+
   .glass-card {
-    background: #ffffff;
-    border: 1px solid #e2e8f0;
     border-radius: 8px;
     transition: all 0.3s;
-    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+  }
+
+  .glass-card:hover {
+    background: #334155 !important;  /* slate-700 */
+    transform: translateY(-1px);
   }
 
   .metric-card {
     @apply glass-card p-6;
-    border: 1px solid rgba(156, 250, 36, 0.3);
+    border: 1px solid rgba(156, 250, 36, 0.3) !important;
+    position: relative;
   }
 
-  .metric-card:hover {
-    border-color: rgb(156, 250, 36);
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  .metric-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: rgb(156, 250, 36) !important;
   }
 
-  /* NAVIGATION STYLING */
+  /* NAVEGACIÓN OSCURA */
   .nav-link {
     display: flex;
     align-items: center;
     padding: 12px 16px;
     border-radius: 8px;
-    color: #000000;
+    color: #f8fafc !important;
     transition: all 0.2s;
     text-decoration: none;
   }
 
   .nav-link:hover {
-    background: rgb(156, 250, 36);
-    color: #000000;
+    background: rgba(156, 250, 36, 0.15) !important;
+    color: #f8fafc !important;
+    transform: translateX(2px);
   }
 
   .nav-link.active {
-    background: rgb(156, 250, 36);
-    color: #000000;
+    background: rgb(156, 250, 36) !important;
+    color: #0f172a !important;  /* texto oscuro sobre verde */
     font-weight: 500;
   }
 
-  /* STATUS BADGES */
+  /* BADGES ESTADOS OSCUROS */
   .status-badge {
     @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
   }
 
   .status-pending {
-    @apply bg-amber-100 text-amber-800 border border-amber-200;
+    background: rgba(245, 158, 11, 0.2) !important;
+    color: #fbbf24 !important;
+    border: 1px solid rgba(245, 158, 11, 0.3) !important;
+  }
+
+  .status-in-progress {
+    background: rgba(59, 130, 246, 0.2) !important;
+    color: #60a5fa !important;
+    border: 1px solid rgba(59, 130, 246, 0.3) !important;
+  }
+
+  .status-completed {
+    background: rgba(16, 185, 129, 0.2) !important;
+    color: #34d399 !important;
+    border: 1px solid rgba(16, 185, 129, 0.3) !important;
   }
 
   .status-closed {
-    @apply bg-blue-100 text-blue-800 border border-blue-200;
+    background: rgba(59, 130, 246, 0.2) !important;
+    color: #60a5fa !important;
+    border: 1px solid rgba(59, 130, 246, 0.3) !important;
   }
 
   .status-invoiced {
-    @apply bg-emerald-100 text-emerald-800 border border-emerald-200;
+    background: rgba(16, 185, 129, 0.2) !important;
+    color: #34d399 !important;
+    border: 1px solid rgba(16, 185, 129, 0.3) !important;
+  }
+
+  .status-cancelled {
+    background: rgba(239, 68, 68, 0.2) !important;
+    color: #f87171 !important;
+    border: 1px solid rgba(239, 68, 68, 0.3) !important;
   }
 
   .status-overdue {
-    @apply bg-red-100 text-red-800 border border-red-200;
+    background: rgba(239, 68, 68, 0.2) !important;
+    color: #f87171 !important;
+    border: 1px solid rgba(239, 68, 68, 0.3) !important;
   }
 
-  /* TMS GREEN COLORS */
+  /* VERDE TMS */
   .text-tms-green {
-    color: rgb(156, 250, 36);
+    color: rgb(156, 250, 36) !important;
   }
 
-  .bg-tms-green {
-    background-color: rgb(156, 250, 36);
-    color: #000000;
+  .bg-tms-green,
+  .bg-tms-green * {
+    background-color: rgb(156, 250, 36) !important;
+    color: #0f172a !important;
   }
 
   .hover\:bg-tms-green:hover {
-    background-color: rgb(156, 250, 36);
-    color: #000000;
+    background-color: rgb(156, 250, 36) !important;
+    color: #0f172a !important;
   }
 }
 
-/* ===== ARREGLOS PARA TEXTO VISIBLE ===== */
+/* ===== FORZADO AGRESIVO UNIVERSAL ===== */
 
-/* Forzar texto negro en toda la aplicación */
-* {
-  color: #000000 !important;
+/* TODO TEXTO BLANCO */
+*,
+*::before,
+*::after,
+div, span, p, a, label,
+h1, h2, h3, h4, h5, h6,
+button, input, textarea, select {
+  color: #f8fafc !important;
+  background-color: transparent !important;
 }
 
-/* Arreglo específico para tablas */
-table, 
-table *,
-tbody,
-tbody *,
-tr,
-tr *,
-td,
-td *,
-th,
-th * {
-  color: #000000 !important;
-  background-color: #ffffff !important;
+/* EXCEPCIONES PARA VERDE TMS */
+.bg-tms-green,
+.bg-tms-green *,
+button.bg-tms-green,
+button.bg-tms-green *,
+.nav-link.active,
+.nav-link.active * {
+  background-color: rgb(156, 250, 36) !important;
+  color: #0f172a !important;
 }
 
-/* Arreglo para texto general */
-p, span, div, 
-h1, h2, h3, h4, h5, h6, 
-label, input, textarea, select,
-button, a {
-  color: #000000 !important;
+/* FORZAR FONDOS OSCUROS EN CONTENEDORES */
+div,
+section,
+article,
+aside,
+header,
+footer,
+main,
+nav {
+  background-color: #0f172a !important;
 }
 
-/* Arreglo para componentes específicos */
-[class*="text-"], 
-[class*="content"],
-[class*="table"],
-[class*="cell"],
-[class*="row"] {
-  color: #000000 !important;
-}
-
-/* Arreglo para estados de servicios */
-.status-badge,
-.badge,
-[class*="status"] {
-  color: #000000 !important;
-}
-
-/* Forzar fondos blancos */
-.bg-white,
+/* CARDS Y COMPONENTES */
 [class*="card"],
-[class*="table"],
-[class*="content"] {
-  background-color: #ffffff !important;
+[class*="metric"],
+[class*="glass"],
+.bg-white,
+.bg-gray-50,
+.bg-gray-100 {
+  background-color: #1e293b !important;
+  border-color: #475569 !important;
 }
 
-/* Arreglo para formularios */
-input, 
-textarea, 
+/* TABLAS OSCURAS */
+table,
+tbody,
+tr,
+td,
+th {
+  background-color: #1e293b !important;
+  color: #f8fafc !important;
+  border-color: #475569 !important;
+}
+
+th {
+  background-color: #334155 !important;
+  font-weight: 600 !important;
+}
+
+tr:hover {
+  background-color: #334155 !important;
+}
+
+/* FORMULARIOS OSCUROS */
+input,
+textarea,
 select,
 [role="combobox"],
 [data-radix-select-trigger] {
-  background-color: #ffffff !important;
-  color: #000000 !important;
-  border: 1px solid #e2e8f0 !important;
+  background-color: #1e293b !important;
+  color: #f8fafc !important;
+  border: 1px solid #475569 !important;
 }
 
-/* Arreglo para dropdowns y menús */
+input:focus,
+textarea:focus,
+select:focus {
+  border-color: rgb(156, 250, 36) !important;
+  box-shadow: 0 0 0 3px rgba(156, 250, 36, 0.2) !important;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #94a3b8 !important;
+}
+
+/* DROPDOWNS OSCUROS */
 [data-radix-select-content],
 [data-radix-dropdown-menu-content],
 [role="menu"],
 [role="menuitem"] {
-  background-color: #ffffff !important;
-  color: #000000 !important;
-  border: 1px solid #e2e8f0 !important;
+  background-color: #1e293b !important;
+  color: #f8fafc !important;
+  border: 1px solid #475569 !important;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5) !important;
+}
+
+[role="menuitem"]:hover,
+[data-radix-select-item]:hover {
+  background-color: rgba(156, 250, 36, 0.15) !important;
+  color: #f8fafc !important;
+}
+
+/* TEXTO SECUNDARIO */
+.text-gray-500,
+.text-muted-foreground {
+  color: #94a3b8 !important;
+}
+
+.text-gray-400 {
+  color: #64748b !important;
+}
+
+.text-gray-600 {
+  color: #94a3b8 !important;
+}
+
+/* BORDES */
+.border,
+.border-t,
+.border-b,
+.border-l,
+.border-r {
+  border-color: #475569 !important;
+}
+
+/* DASHBOARD ESPECÍFICO - SUPER FORZADO */
+[class*="dashboard"],
+[class*="dashboard"] *,
+[class*="metric"],
+[class*="metric"] *,
+[data-dashboard],
+[data-dashboard] * {
+  background-color: #0f172a !important;
+  color: #f8fafc !important;
+}
+
+/* CONTENIDO PRINCIPAL */
+.content,
+.content *,
+.main-content,
+.main-content *,
+[role="main"],
+[role="main"] * {
+  background-color: #0f172a !important;
+  color: #f8fafc !important;
+}
+
+/* ÁREA DE TRABAJO */
+.workspace,
+.workspace *,
+.container,
+.container * {
+  background-color: #0f172a !important;
+  color: #f8fafc !important;
+}
+
+/* ===== ARREGLO SIMPLE PARA ÍCONOS ===== */
+
+/* OCULTAR ÍCONOS SMILE/SONRISA VERDES */
+.lucide-smile,
+svg[data-lucide="smile"],
+[class*="smile"] {
+  display: none !important;
+}
+
+/* ÍCONOS LUCIDE NORMALES - BLANCOS Y VISIBLES */
+svg.lucide:not(.lucide-smile) {
+  color: #f8fafc !important;
+  stroke: currentColor !important;
+  fill: none !important;
+  stroke-width: 2 !important;
+  opacity: 1 !important;
+}
+
+/* ÍCONOS EN BOTONES VERDES - OSCUROS */
+.bg-tms-green svg.lucide,
+.nav-link.active svg.lucide {
+  color: #0f172a !important;
+}
+
+/* HOVER SUAVE */
+svg.lucide:hover {
+  color: rgb(156, 250, 36) !important;
+  transition: color 0.2s ease !important;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 640px) {
+  .metric-card {
+    padding: 16px;
+  }
+  
+  .nav-link {
+    padding: 10px 12px;
+  }
+}
+
+/* ===== ACCESSIBILITY ===== */
+*:focus-visible {
+  outline: 2px solid rgb(156, 250, 36);
+  outline-offset: 2px;
+}
+
+/* ===== UTILITIES ===== */
+.tms-shadow {
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+}
+
+.tms-border {
+  border: 1px solid rgba(156, 250, 36, 0.3);
+}
+/* ===== ARREGLO PARA CONSISTENCIA DE ÍCONOS ===== */
+/* AGREGAR ESTO AL FINAL DE TU index.css ACTUAL */
+
+/* FORZAR TODOS LOS ÍCONOS LUCIDE VISIBLES EN TODAS LAS PÁGINAS */
+svg.lucide,
+.lucide,
+[data-lucide],
+svg[data-testid],
+svg[aria-label] {
+  color: #f8fafc !important;           /* Blanco brillante */
+  stroke: currentColor !important;
+  fill: none !important;
+  stroke-width: 2 !important;
+  stroke-linecap: round !important;
+  stroke-linejoin: round !important;
+  opacity: 1 !important;
+  display: inline-block !important;    /* Asegurar que se muestren */
+  visibility: visible !important;      /* Forzar visibilidad */
+}
+
+/* ÍCONOS ESPECÍFICOS POR NOMBRE - FORZAR VISIBILIDAD */
+.lucide-check,
+.lucide-eye,
+.lucide-edit,
+.lucide-pencil,
+.lucide-trash,
+.lucide-trash-2,
+.lucide-plus,
+.lucide-search,
+.lucide-settings,
+.lucide-user,
+.lucide-users,
+.lucide-truck,
+.lucide-calendar,
+.lucide-file-text,
+.lucide-dollar-sign,
+.lucide-bar-chart {
+  color: #f8fafc !important;
+  display: inline-block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+/* ÍCONOS EN BOTONES DE ACCIÓN - CONSISTENCIA TOTAL */
+button svg,
+button .lucide,
+[role="button"] svg,
+[role="button"] .lucide,
+.action-button svg,
+.action-button .lucide {
+  color: #f8fafc !important;
+  stroke-width: 2 !important;
+  display: inline-block !important;
+  visibility: visible !important;
+}
+
+/* ÍCONOS EN TABLAS - TODAS LAS PÁGINAS IGUALES */
+table svg,
+table .lucide,
+tbody svg,
+tbody .lucide,
+tr svg,
+tr .lucide,
+td svg,
+td .lucide,
+th svg,
+th .lucide {
+  color: #f8fafc !important;
+  stroke-width: 2 !important;
+  display: inline-block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+/* ÍCONOS EN CARDS DE ACCIONES */
+.actions svg,
+.actions .lucide,
+[class*="action"] svg,
+[class*="action"] .lucide {
+  color: #f8fafc !important;
+  stroke-width: 2 !important;
+}
+
+/* HOVER CONSISTENTE EN TODAS LAS PÁGINAS */
+svg.lucide:hover,
+.lucide:hover,
+button:hover svg,
+button:hover .lucide,
+[role="button"]:hover svg,
+[role="button"]:hover .lucide {
+  color: rgb(156, 250, 36) !important;
+  transition: all 0.2s ease !important;
+  transform: scale(1.05) !important;
+}
+
+/* ÍCONOS EN ELEMENTOS ACTIVOS - VERDE TMS */
+.bg-tms-green svg,
+.bg-tms-green .lucide,
+.nav-link.active svg,
+.nav-link.active .lucide,
+button.bg-tms-green svg,
+button.bg-tms-green .lucide {
+  color: #0f172a !important;          /* Oscuro sobre verde */
+}
+
+/* ASEGURAR QUE NO SE OCULTEN ÍCONOS VÁLIDOS */
+svg:not(.lucide-smile):not([class*="smile"]) {
+  display: inline-block !important;
+  visibility: visible !important;
+}
+
+/* ÍCONOS EN DIFERENTES CONTEXTOS - MISMA APARIENCIA */
+.data-table svg,
+.data-table .lucide,
+.list-view svg,
+.list-view .lucide,
+.card-view svg,
+.card-view .lucide {
+  color: #f8fafc !important;
+  stroke-width: 2 !important;
+}
+
+/* FORZAR ÍCONOS EN DROPDOWNS Y MENÚS */
+[data-radix-dropdown-menu-content] svg,
+[data-radix-dropdown-menu-content] .lucide,
+[data-radix-select-content] svg,
+[data-radix-select-content] .lucide,
+[role="menu"] svg,
+[role="menu"] .lucide,
+[role="menuitem"] svg,
+[role="menuitem"] .lucide {
+  color: #f8fafc !important;
+  stroke-width: 2 !important;
+  display: inline-block !important;
+}
+
+/* ÍCONOS EN FORMULARIOS Y CONTROLES */
+.form-control svg,
+.form-control .lucide,
+.input-group svg,
+.input-group .lucide,
+.select-trigger svg,
+.select-trigger .lucide {
+  color: #f8fafc !important;
+  stroke-width: 2 !important;
+}
+
+/* ÍCONOS EN NAVEGACIÓN SECUNDARIA */
+.pagination svg,
+.pagination .lucide,
+.breadcrumb svg,
+.breadcrumb .lucide,
+.toolbar svg,
+.toolbar .lucide {
+  color: #f8fafc !important;
+  stroke-width: 2 !important;
+}
+
+/* MANTENER ÍCONOS DE ESTADO VISIBLES */
+.status-icon svg,
+.status-icon .lucide,
+.state-icon svg,
+.state-icon .lucide {
+  color: #f8fafc !important;
+  stroke-width: 2 !important;
+}
+
+/* OVERRIDE PARA ESTILOS CONFLICTIVOS */
+svg[style*="display: none"],
+.lucide[style*="display: none"] {
+  display: inline-block !important;
+}
+
+svg[style*="visibility: hidden"],
+.lucide[style*="visibility: hidden"] {
+  visibility: visible !important;
+}
+
+/* ASEGURAR TAMAÑOS CONSISTENTES */
+.w-4.h-4,
+.w-5.h-5,
+.w-6.h-6 {
+  flex-shrink: 0 !important;
+  display: inline-block !important;
+}
+
+/* ÍCONOS EN DIFERENTES ESTADOS DE PÁGINA */
+.page-header svg,
+.page-header .lucide,
+.page-content svg,
+.page-content .lucide,
+.page-footer svg,
+.page-footer .lucide {
+  color: #f8fafc !important;
+  stroke-width: 2 !important;
+}
+
+/* FINAL: FORZAR VISIBILIDAD TOTAL */
+svg.lucide:not(.lucide-smile),
+.lucide:not(.smile):not([class*="smile"]) {
+  color: #f8fafc !important;
+  stroke: currentColor !important;
+  fill: none !important;
+  stroke-width: 2 !important;
+  opacity: 1 !important;
+  display: inline-block !important;
+  visibility: visible !important;
+  position: relative !important;
+  z-index: 1 !important;
 }
