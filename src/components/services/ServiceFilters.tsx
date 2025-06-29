@@ -40,7 +40,8 @@ export const ServiceFilters = ({
 
   const handleClearFilters = () => {
     clearFilters();
-    onAdvancedFiltersChange(false, (services) => services);
+    const filterFunction = (services: Service[]) => services;
+    onAdvancedFiltersChange(false, filterFunction);
   };
 
   return (
