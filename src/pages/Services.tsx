@@ -3,7 +3,6 @@ import React from 'react';
 import { useServicesPage } from '@/hooks/services/useServicesPage';
 import { ServicesHeader } from '@/components/services/ServicesHeader';
 import { ServiceFilters } from '@/components/services/ServiceFilters';
-import { AdvancedServiceFilters } from '@/components/services/AdvancedServiceFilters';
 import { ServicesTable } from '@/components/services/ServicesTable';
 import { ServicesMobileView } from '@/components/services/ServicesMobileView';
 import { ServicesDialogs } from '@/components/services/ServicesDialogs';
@@ -86,12 +85,6 @@ const Services = () => {
         onStatusChange={setStatusFilter}
         onAdvancedFiltersChange={handleAdvancedFiltersChange}
       />
-
-      {hasAdvancedFilters && (
-        <AdvancedServiceFilters
-          onFiltersChange={handleAdvancedFiltersChange}
-        />
-      )}
 
       {isMobile ? (
         <ServicesMobileView
