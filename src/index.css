@@ -3,7 +3,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* TMS Design System - Grúas Management - FORCED WHITE THEME */
+/* TMS Design System - Grúas Management */
 
 @layer base {
   :root {
@@ -38,37 +38,13 @@
   }
 
   html, body, #root {
-    background: #ffffff !important;
-    color: #000000 !important;
-  }
-
-  html {
-    background: #ffffff !important;
+    background: #ffffff;
+    color: #000000;
   }
 
   body {
-    background: #ffffff !important;
-    color: #000000 !important;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     min-height: 100vh;
-  }
-
-  #root {
-    background: #ffffff !important;
-    min-height: 100vh;
-  }
-
-  /* FORCE WHITE BACKGROUNDS EVERYWHERE */
-  div, section, main, header, aside, nav, article, 
-  .bg-black, .bg-gray-900, .bg-gray-800, .bg-gray-700,
-  [role="alert"], [data-radix-alert-root] {
-    background: #ffffff !important;
-    background-color: #ffffff !important;
-  }
-
-  /* FORCE BLACK TEXT EVERYWHERE */
-  *, *::before, *::after {
-    color: #000000 !important;
   }
 
   /* Custom scrollbar */
@@ -91,18 +67,10 @@
 }
 
 @layer components {
-  /* ALERT COMPONENTS - FORCE WHITE */
-  .alert, [role="alert"], [data-radix-alert-root] {
-    background: #ffffff !important;
-    background-color: #ffffff !important;
-    color: #000000 !important;
-    border-color: #e5e7eb !important;
-  }
-
-  /* GLASS CARD STYLING - WHITE THEME */
+  /* GLASS CARD STYLING */
   .glass-card {
-    background: #ffffff !important;
-    border: 1px solid #e2e8f0 !important;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
     border-radius: 8px;
     transition: all 0.3s;
     box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
@@ -110,12 +78,11 @@
 
   .metric-card {
     @apply glass-card p-6;
-    background: #ffffff !important;
-    border: 1px solid rgba(156, 250, 36, 0.3) !important;
+    border: 1px solid rgba(156, 250, 36, 0.3);
   }
 
   .metric-card:hover {
-    border-color: rgb(156, 250, 36) !important;
+    border-color: rgb(156, 250, 36);
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
   }
 
@@ -125,19 +92,19 @@
     align-items: center;
     padding: 12px 16px;
     border-radius: 8px;
-    color: #000000 !important;
+    color: #000000;
     transition: all 0.2s;
     text-decoration: none;
   }
 
   .nav-link:hover {
-    background: rgb(156, 250, 36) !important;
-    color: #000000 !important;
+    background: rgb(156, 250, 36);
+    color: #000000;
   }
 
   .nav-link.active {
-    background: rgb(156, 250, 36) !important;
-    color: #000000 !important;
+    background: rgb(156, 250, 36);
+    color: #000000;
     font-weight: 500;
   }
 
@@ -163,44 +130,17 @@
   }
 
   /* TMS GREEN COLORS */
-  .text-tms-green,
-  .text-green-500,
-  .text-green-400 {
-    color: rgb(156, 250, 36) !important;
+  .text-tms-green {
+    color: rgb(156, 250, 36);
   }
 
-  .bg-tms-green,
-  .bg-green-500 {
-    background-color: rgb(156, 250, 36) !important;
-    color: #000000 !important;
+  .bg-tms-green {
+    background-color: rgb(156, 250, 36);
+    color: #000000;
   }
 
-  /* ENSURE PROPER CONTRAST FOR BUTTONS */
   .hover\:bg-tms-green:hover {
-    background-color: rgb(156, 250, 36) !important;
-    color: #000000 !important;
+    background-color: rgb(156, 250, 36);
+    color: #000000;
   }
-
-  /* FORCE ALL CARDS AND CONTAINERS TO WHITE */
-  .card, .Card, [data-radix-card], .bg-card {
-    background: #ffffff !important;
-    background-color: #ffffff !important;
-    color: #000000 !important;
-  }
-
-  /* FORCE DROPDOWN MENUS */
-  [data-radix-popper-content-wrapper] {
-    background: #ffffff !important;
-    border: 1px solid #e2e8f0 !important;
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-  }
-
-  [data-radix-popper-content-wrapper] * {
-    color: #000000 !important;
-  }
-}
-
-/* CACHE BUSTING - VERSION 5.0 FORCED WHITE THEME */
-.tms-version-5-forced-white {
-  display: none;
 }

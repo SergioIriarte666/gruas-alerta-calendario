@@ -1,3 +1,4 @@
+
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -56,61 +57,41 @@ export const ServiceFilters = ({
                   placeholder="Buscar por folio, cliente, patente, marca..."
                   value={searchTerm}
                   onChange={(e) => onSearchChange(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 bg-black border border-tms-green/30 rounded-lg text-white placeholder-gray-400 focus:border-tms-green focus:outline-none"
-                  style={{
-                    backgroundColor: '#000000',
-                    borderColor: 'rgba(156, 250, 36, 0.3)',
-                    color: '#ffffff'
-                  }}
+                  className="w-full pl-10 pr-4 py-2 bg-white border border-gray-300 rounded-lg text-black placeholder-gray-400 focus:border-tms-green focus:outline-none"
                 />
               </div>
             </div>
             <div className="flex gap-4">
               <Select value={statusFilter} onValueChange={onStatusChange}>
                 <SelectTrigger 
-                  className="w-48 bg-black border-tms-green/30 text-white"
-                  style={{
-                    backgroundColor: '#000000',
-                    borderColor: 'rgba(156, 250, 36, 0.3)',
-                    color: '#ffffff'
-                  }}
+                  className="w-48 bg-white border-gray-300 text-black"
                 >
                   <SelectValue placeholder="Filtrar por estado" />
                 </SelectTrigger>
                 <SelectContent 
-                  className="bg-black border-tms-green text-white z-50"
-                  style={{
-                    backgroundColor: '#000000',
-                    borderColor: '#9cfa24',
-                    color: '#ffffff',
-                    zIndex: 50
-                  }}
+                  className="bg-white border-gray-300 text-black z-50"
                 >
                   <SelectItem 
                     value="all" 
-                    className="text-white hover:bg-tms-green/20 focus:bg-tms-green/20"
-                    style={{ color: '#ffffff' }}
+                    className="text-black hover:bg-gray-100 focus:bg-gray-100"
                   >
                     Todos los estados
                   </SelectItem>
                   <SelectItem 
                     value="pending" 
-                    className="text-white hover:bg-tms-green/20 focus:bg-tms-green/20"
-                    style={{ color: '#ffffff' }}
+                    className="text-black hover:bg-gray-100 focus:bg-gray-100"
                   >
                     En Curso
                   </SelectItem>
                   <SelectItem 
                     value="closed" 
-                    className="text-white hover:bg-tms-green/20 focus:bg-tms-green/20"
-                    style={{ color: '#ffffff' }}
+                    className="text-black hover:bg-gray-100 focus:bg-gray-100"
                   >
                     Cerrados
                   </SelectItem>
                   <SelectItem 
                     value="invoiced" 
-                    className="text-white hover:bg-tms-green/20 focus:bg-tms-green/20"
-                    style={{ color: '#ffffff' }}
+                    className="text-black hover:bg-gray-100 focus:bg-gray-100"
                   >
                     Facturados
                   </SelectItem>
@@ -119,14 +100,9 @@ export const ServiceFilters = ({
               <Button 
                 variant="outline" 
                 onClick={() => setIsOpen(true)}
-                className={`border-gray-400/50 bg-gray-400/10 text-gray-300 hover:bg-gray-400/20 hover:text-white relative ${
-                  hasActiveFilters ? 'border-tms-green bg-tms-green/10 text-tms-green' : ''
+                className={`border-gray-400 bg-gray-100 text-gray-700 hover:bg-gray-200 hover:text-black relative ${
+                  hasActiveFilters ? 'border-tms-green bg-green-50 text-green-700' : ''
                 }`}
-                style={{
-                  borderColor: hasActiveFilters ? '#9cfa24' : 'rgba(156, 163, 175, 0.5)',
-                  backgroundColor: hasActiveFilters ? 'rgba(156, 250, 36, 0.1)' : 'rgba(156, 163, 175, 0.1)',
-                  color: hasActiveFilters ? '#9cfa24' : '#d1d5db'
-                }}
               >
                 <Filter className="w-4 h-4 mr-2" />
                 Más Filtros
@@ -139,7 +115,7 @@ export const ServiceFilters = ({
                   variant="ghost" 
                   size="sm"
                   onClick={handleClearFilters}
-                  className="text-red-400 hover:text-red-300 hover:bg-red-900/20"
+                  className="text-red-600 hover:text-red-700 hover:bg-red-50"
                 >
                   <X className="w-4 h-4" />
                 </Button>
