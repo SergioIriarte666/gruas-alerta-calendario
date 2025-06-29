@@ -32,7 +32,7 @@ export const ResourceSection = ({
             <SelectValue placeholder="Seleccionar grúa" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">Sin asignar</SelectItem>
+            <SelectItem value="unassigned">Sin asignar</SelectItem>
             {cranes.filter(c => c.isActive).map((crane) => (
               <SelectItem key={crane.id} value={crane.id}>
                 {crane.licensePlate} - {crane.brand} {crane.model}
@@ -50,7 +50,7 @@ export const ResourceSection = ({
             <SelectValue placeholder="Seleccionar operador" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">Sin asignar</SelectItem>
+            <SelectItem value="unassigned">Sin asignar</SelectItem>
             {operators.filter(o => o.isActive).map((operator) => (
               <SelectItem key={operator.id} value={operator.id}>
                 {operator.name}
