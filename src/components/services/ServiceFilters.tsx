@@ -100,7 +100,7 @@ export const ServiceFilters = ({
               <Button 
                 variant="outline" 
                 onClick={() => setIsOpen(true)}
-                className={`border-gray-400 bg-gray-100 text-gray-700 hover:bg-gray-200 hover:text-black relative ${
+                className={`border-gray-300 bg-white text-gray-700 hover:bg-gray-50 relative ${
                   hasActiveFilters ? 'border-tms-green bg-green-50 text-green-700' : ''
                 }`}
               >
