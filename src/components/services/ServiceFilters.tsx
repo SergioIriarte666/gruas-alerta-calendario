@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Search, Filter, X } from 'lucide-react';
 import { AdvancedServiceFilters } from './AdvancedServiceFilters';
-import { useAdvancedFilters } from '@/hooks/useAdvancedFilters';
+import { useAdvancedFilters, AdvancedFilters } from '@/hooks/useAdvancedFilters';
 import { Service } from '@/types';
 
 interface ServiceFiltersProps {
