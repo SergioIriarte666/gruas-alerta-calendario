@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -37,6 +36,7 @@ export const EditClosureForm: React.FC<EditClosureFormProps> = ({
     register,
     handleSubmit,
     setValue,
+    watch,
     formState: { errors }
   } = useForm<EditClosureFormData>({
     resolver: zodResolver(editClosureSchema),
@@ -47,6 +47,22 @@ export const EditClosureForm: React.FC<EditClosureFormProps> = ({
       status: closure.status
     }
   });
+
+  // ✅ MANEJADOR CORREGIDO PARA CLIENTE
+  const handleClientChange = (value: string) => {
+    if (value === "all") {
+      setValue('clientId', ''); // Convertir "all" a string vacío para el formulario
+    } else {
+      setValue('clientId', value);
+    }
+  };
+
+  // ✅ FUNCIÓN PARA OBTENER EL VALOR CORRECTO DEL SELECT
+  const getClientDisplayValue = () => {
+    const currentClientId = watch('clientId');
+    if (!currentClientId || currentClientId === '') return 'all';
+    return currentClientId;
+  };
 
   const handleFormSubmit = (data: EditClosureFormData) => {
     onSubmit(data);
@@ -90,14 +106,19 @@ export const EditClosureForm: React.FC<EditClosureFormProps> = ({
               )}
             </div>
 
+            {/* SELECT DE CLIENTE - TOTALMENTE CORREGIDO */}
             <div>
               <Label htmlFor="clientId" className="text-gray-300">Cliente</Label>
-              <Select onValueChange={(value) => setValue('clientId', value)}>
+              <Select 
+                value={getClientDisplayValue()} 
+                onValueChange={handleClientChange}
+              >
                 <SelectTrigger className="bg-white/5 border-gray-700 text-white">
                   <SelectValue placeholder="Seleccionar cliente (opcional)" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todos los clientes</SelectItem>
+                  {/* ✅ CORREGIDO: Cambié value="" por value="all" */}
+                  <SelectItem value="all">Todos los clientes</SelectItem>
                   {activeClients.map((client) => (
                     <SelectItem key={client.id} value={client.id}>
                       {client.name}
