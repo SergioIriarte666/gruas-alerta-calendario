@@ -120,7 +120,6 @@ const Services = () => {
           currentPage={currentPage}
           totalPages={totalPages}
           onPageChange={setCurrentPage}
-          totalItems={filteredServices.length}
         />
       )}
 

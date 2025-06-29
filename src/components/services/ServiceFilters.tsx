@@ -5,13 +5,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Search, Filter, X } from 'lucide-react';
 import { AdvancedServiceFilters } from './AdvancedServiceFilters';
 import { useAdvancedFilters } from '@/hooks/useAdvancedFilters';
+import { Service } from '@/types';
 
 interface ServiceFiltersProps {
   searchTerm: string;
   onSearchChange: (value: string) => void;
   statusFilter: string;
   onStatusChange: (value: string) => void;
-  onAdvancedFiltersChange: (hasFilters: boolean, filterFunction: (services: any[]) => any[]) => void;
+  onAdvancedFiltersChange: (hasFilters: boolean, filterFunction: (services: Service[]) => Service[]) => void;
 }
 
 export const ServiceFilters = ({ 
@@ -32,7 +33,7 @@ export const ServiceFilters = ({
   } = useAdvancedFilters();
 
   const handleApplyFilters = () => {
-    const filterFunction = (services: any[]) => 
+    const filterFunction = (services: Service[]) => 
       applyAdvancedFilters(services, { searchTerm, statusFilter });
     onAdvancedFiltersChange(hasActiveFilters, filterFunction);
   };
