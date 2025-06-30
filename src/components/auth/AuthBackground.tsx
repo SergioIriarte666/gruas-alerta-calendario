@@ -12,7 +12,7 @@ export const AuthBackground: React.FC<AuthBackgroundProps> = ({ children }) => {
       <div 
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
         style={{
-          backgroundImage: 'url(/lovable-uploads/34884c4b-2118-47b1-a1c9-9225c0edcd48.png)',
+          backgroundImage: 'url(/lovable-uploads/15e851aa-b80f-4988-bbe7-bb524a68737e.png)',
         }}
       />
       {/* Overlay */}
