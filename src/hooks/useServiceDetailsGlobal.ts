@@ -35,15 +35,12 @@ export const useServiceDetailsForForm = (serviceId: string | null) => {
 };
 
 /**
- * Hook específico para visualización que detecta automáticamente si necesita datos mejorados
+ * Hook específico para visualización que siempre necesita datos completos
+ * para calcular correctamente la ganancia neta incluyendo todos los costos
  */
 export const useServiceDetailsForView = (serviceId: string | null) => {
-  const basicDetails = useServiceDetails(serviceId);
-  
-  // Si el servicio básico es de custodia, usar datos mejorados para obtener todos los campos
-  const needsEnhanced = basicDetails.data && isCustodyService(basicDetails.data);
-  
-  return useServiceDetailsGlobal(serviceId, needsEnhanced);
+  // Siempre usar datos mejorados para obtener costos completos y calcular ganancia neta correctamente
+  return useServiceDetailsGlobal(serviceId, true);
 };
 
 /**
