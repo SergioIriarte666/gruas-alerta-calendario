@@ -1,0 +1,63 @@
+import { Service } from '@/types';
+
+/**
+ * Calculates the value that should be used for closure calculations.
+ * Priority: custody_total_amount > client_covered_amount > service.value
+ */
+export const getServiceValueForClosure = (service: any): number => {
+  // Priority 1: Custody service total amount (support both camelCase and snake_case)
+  const custodyTotal = service.custody_total_amount || service.custodyTotalAmount;
+  if (custodyTotal && custodyTotal > 0) {
+    return custodyTotal;
+  }
+  
+  // Priority 2: Client covered amount for excess services
+  if (service.hasExcess && service.client_covered_amount !== null && service.client_covered_amount !== undefined) {
+    return service.client_covered_amount;
+  }
+  
+  // Priority 3: Regular service value
+  return service.value || 0;
+};
+
+/**
+ * Checks if a service is a custody service (supports both camelCase and snake_case)
+ */
+export const isCustodyService = (service: any): boolean => {
+  const custodyMode = service.custody_mode || service.custodyMode;
+  return custodyMode && custodyMode !== 'none';
+};
+
+/**
+ * Gets custody information for a service (supports both camelCase and snake_case)
+ */
+export const getCustodyInfo = (service: any) => {
+  if (!isCustodyService(service)) return null;
+  return {
+    mode: service.custody_mode || service.custodyMode,
+    days: service.custody_days || service.custodyDays,
+    dailyRate: service.custody_daily_rate || service.custodyDailyRate,
+    startDate: service.custody_start_date || service.custodyStartDate,
+    endDate: service.custody_end_date || service.custodyEndDate,
+    vehicleType: service.custody_vehicle_type || service.custodyVehicleType,
+    discountPercentage: (service.custody_discount_percentage !== undefined ? service.custody_discount_percentage : service.custodyDiscountPercentage) || 0,
+    totalAmount: service.custody_total_amount || service.custodyTotalAmount,
+    notes: service.custody_notes || service.custodyNotes
+  };
+};
+
+/**
+ * Calculates the total value for an array of services for closure purposes.
+ */
+export const calculateClosureTotal = (services: Service[]): number => {
+  if (!services || !Array.isArray(services)) {
+    return 0;
+  }
+  
+  return services.reduce((sum, service) => {
+    if (!service) {
+      return sum;
+    }
+    return sum + getServiceValueForClosure(service);
+  }, 0);
+};

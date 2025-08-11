@@ -1,0 +1,230 @@
+import { useState } from 'react';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { useServicesForClosures } from '@/hooks/useServicesForClosures';
+import { ServiceClosure } from '@/types';
+import DateRangePicker from './DateRangePicker';
+import ClientSelector from './ClientSelector';
+import EnhancedServicesSelector from './EnhancedServicesSelector';
+import FormActions from './FormActions';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { AlertCircle } from 'lucide-react';
+import { calculateClosureTotal } from '@/utils/serviceValueCalculations';
+interface ClosureFormProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSubmit: (closure: Omit<ServiceClosure, 'id' | 'folio' | 'createdAt' | 'updatedAt'>) => Promise<void>;
+}
+interface FormData {
+  dateFrom: Date | undefined;
+  dateTo: Date | undefined;
+  clientId: string;
+  serviceIds: string[];
+  total: number;
+  status: 'open' | 'closed' | 'invoiced';
+  purchaseOrder: string;
+}
+const ClosureForm = ({
+  open,
+  onOpenChange,
+  onSubmit
+}: ClosureFormProps) => {
+  const [formData, setFormData] = useState<FormData>({
+    dateFrom: undefined,
+    dateTo: undefined,
+    clientId: '',
+    serviceIds: [],
+    total: 0,
+    status: 'open',
+    purchaseOrder: ''
+  });
+
+  // Pass date range to the hook for filtering
+  const {
+    services,
+    pendingServices,
+    usedServiceIds,
+    totalCompleted,
+    loading: servicesLoading,
+    completeService,
+    completeMultipleServices,
+    refetch
+  } = useServicesForClosures({
+    dateFrom: formData.dateFrom,
+    dateTo: formData.dateTo
+  });
+  const [loading, setLoading] = useState(false);
+  console.log('ClosureForm render - open:', open, 'servicesLoading:', servicesLoading, 'services count:', services.length);
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.dateFrom || !formData.dateTo) return;
+
+    // Validate that at least one service is selected
+    if (formData.serviceIds.length === 0) {
+      console.log('No services selected, preventing submission');
+      return;
+    }
+    console.log('Submitting closure form with data:', formData);
+    setLoading(true);
+    try {
+      await onSubmit({
+        dateRange: {
+          from: formData.dateFrom.toISOString().split('T')[0],
+          to: formData.dateTo.toISOString().split('T')[0]
+        },
+        clientId: formData.clientId || undefined,
+        serviceIds: formData.serviceIds,
+        total: formData.total,
+        status: formData.status,
+        purchaseOrder: formData.purchaseOrder || undefined
+      });
+
+      // Reset form
+      setFormData({
+        dateFrom: undefined,
+        dateTo: undefined,
+        clientId: '',
+        serviceIds: [],
+        total: 0,
+        status: 'open',
+        purchaseOrder: ''
+      });
+
+      // Refresh available services after creating closure
+      refetch();
+      onOpenChange(false);
+    } catch (error) {
+      console.error('Error creating closure:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+  const handleServiceSelection = (serviceId: string, checked: boolean) => {
+    console.log('Service selection changed:', serviceId, checked);
+    setFormData(prev => {
+      const newServiceIds = checked ? [...prev.serviceIds, serviceId] : prev.serviceIds.filter(id => id !== serviceId);
+
+      // Calculate new total using closure-specific value calculation (includes excess)
+      const selectedServices = services.filter(s => newServiceIds.includes(s.id));
+      const total = calculateClosureTotal(selectedServices);
+      console.log('Updated service IDs:', newServiceIds, 'New total:', total);
+      return {
+        ...prev,
+        serviceIds: newServiceIds,
+        total
+      };
+    });
+  };
+  const handleClientChange = (clientId: string) => {
+    console.log('Client changed:', clientId);
+    setFormData(prev => ({
+      ...prev,
+      clientId,
+      serviceIds: [],
+      total: 0
+    }));
+  };
+  const handleDateFromChange = (date: Date | undefined) => {
+    setFormData(prev => ({
+      ...prev,
+      dateFrom: date,
+      serviceIds: [],
+      total: 0
+    }));
+  };
+  const handleDateToChange = (date: Date | undefined) => {
+    setFormData(prev => ({
+      ...prev,
+      dateTo: date,
+      serviceIds: [],
+      total: 0
+    }));
+  };
+
+  // Updated validation: require dates AND at least one service selected
+  const isFormValid = formData.dateFrom && formData.dateTo && formData.serviceIds.length > 0;
+  return <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="text-white">Nuevo Cierre de Servicios</DialogTitle>
+        </DialogHeader>
+        
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <Alert className="border-blue-500/50 bg-blue-500/10">
+            <AlertCircle className="h-4 w-4 text-blue-400" />
+            <AlertDescription className="text-blue-200">
+              Solo se pueden incluir servicios completados del rango de fechas seleccionado que no hayan sido facturados previamente.
+              Una vez incluido en un cierre, el servicio no estará disponible para futuros cierres.
+            </AlertDescription>
+          </Alert>
+
+          <DateRangePicker dateFrom={formData.dateFrom} dateTo={formData.dateTo} onDateFromChange={handleDateFromChange} onDateToChange={handleDateToChange} />
+
+          <ClientSelector clientId={formData.clientId} onClientChange={handleClientChange} />
+
+          <EnhancedServicesSelector 
+            services={services} 
+            pendingServices={pendingServices}
+            loading={servicesLoading} 
+            clientId={formData.clientId} 
+            selectedServiceIds={formData.serviceIds} 
+            onServiceToggle={handleServiceSelection}
+            onCompleteService={completeService}
+            onCompleteMultipleServices={completeMultipleServices}
+            totalCompleted={totalCompleted}
+            usedServiceIds={usedServiceIds}
+          />
+
+          {/* Show validation error when no services are selected */}
+          {formData.dateFrom && formData.dateTo && formData.serviceIds.length === 0 && !servicesLoading}
+
+          {/* Purchase Order */}
+          <div className="space-y-2">
+            <Label className="text-gray-300">Orden de Compra (Opcional)</Label>
+            <Input 
+              type="text" 
+              placeholder="Ej: OC-2024-001"
+              value={formData.purchaseOrder} 
+              onChange={e => setFormData(prev => ({
+                ...prev,
+                purchaseOrder: e.target.value
+              }))} 
+              className="bg-white/5 border-gray-700 text-white placeholder:text-gray-500" 
+            />
+          </div>
+
+          {/* Total */}
+          <div className="space-y-2">
+            <Label className="text-gray-300">Total</Label>
+            <Input type="number" value={formData.total} onChange={e => setFormData(prev => ({
+            ...prev,
+            total: Number(e.target.value)
+          }))} className="bg-white/5 border-gray-700 text-white" readOnly />
+          </div>
+
+          {/* Status */}
+          <div className="space-y-2">
+            <Label className="text-gray-300">Estado</Label>
+            <Select value={formData.status} onValueChange={(value: 'open' | 'closed' | 'invoiced') => setFormData(prev => ({
+            ...prev,
+            status: value
+          }))}>
+              <SelectTrigger className="bg-white/5 border-gray-700 text-white">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="open">Abierto</SelectItem>
+                <SelectItem value="closed">Cerrado</SelectItem>
+                <SelectItem value="invoiced">Facturado</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <FormActions loading={loading} isFormValid={!!isFormValid} hasSelectedServices={formData.serviceIds.length > 0} selectedServicesCount={formData.serviceIds.length} onCancel={() => onOpenChange(false)} />
+        </form>
+      </DialogContent>
+    </Dialog>;
+};
+export default ClosureForm;
