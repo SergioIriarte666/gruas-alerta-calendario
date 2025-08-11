@@ -131,7 +131,10 @@ export const useServiceManager = () => {
           service_date: serviceData.serviceDate && serviceData.serviceDate.trim() !== '' 
             ? serviceData.serviceDate 
             : null,
-          client_id: serviceData.client,
+          // ✅ FIX: Validar UUID fields - convertir cadenas vacías a null
+          client_id: serviceData.client && serviceData.client.trim() !== '' 
+            ? serviceData.client 
+            : null,
           purchase_order: serviceData.purchaseOrder || null,
           
           // VALIDACIÓN INTEGRAL DE CAMPOS DE VEHÍCULO
@@ -156,20 +159,27 @@ export const useServiceManager = () => {
             ? null 
             : serviceData.destination || null,
 
-          service_type_id: serviceData.serviceType,
+          // ✅ FIX: Validar UUID fields - convertir cadenas vacías a null
+          service_type_id: serviceData.serviceType && serviceData.serviceType.trim() !== '' 
+            ? serviceData.serviceType 
+            : null,
           value: serviceData.value,
           
           // VALIDACIÓN INTEGRAL DE GRÚA
           // Tipos especiales: Custodia, Lavado, Servicios Mecánicos (crane_required false)
+          // ✅ FIX: Validar UUID fields - convertir cadenas vacías a null
           crane_id: !serviceTypeConfig?.crane_required 
             ? null 
-            : (serviceData.crane || null),
+            : (serviceData.crane && serviceData.crane.trim() !== '' ? serviceData.crane : null),
             
           // VALIDACIÓN INTEGRAL DE OPERADOR
           // Tipos especiales: Custodia, Lavado, Servicios Mecánicos (operator_required false)
+          // ✅ FIX: Validar UUID fields - convertir cadenas vacías a null
           operator_id: !serviceTypeConfig?.operator_required 
             ? null 
-            : (serviceData.operators?.[0]?.operatorId || null),
+            : (serviceData.operators?.[0]?.operatorId && serviceData.operators[0].operatorId.trim() !== '' 
+               ? serviceData.operators[0].operatorId 
+               : null),
             
           operator_commission: serviceData.operators?.[0]?.commission || 0,
           status: serviceData.status,
@@ -307,7 +317,7 @@ export const useServiceManager = () => {
   // ACTUALIZAR SERVICIO
   const updateServiceMutation = useMutation({
     mutationFn: async ({ id, serviceData }: { id: string; serviceData: Partial<ServiceFormData> }): Promise<Service> => {
-      // Transformar datos para Supabase con validación de fechas
+      // Transformar datos para Supabase con validación de fechas y UUIDs
       const transformedData = {
         ...serviceData,
         // Validar fechas - convertir cadenas vacías a null
@@ -317,16 +327,23 @@ export const useServiceManager = () => {
         service_date: serviceData.serviceDate && serviceData.serviceDate.trim() !== '' 
           ? serviceData.serviceDate 
           : null,
-        client_id: serviceData.client,
+        // ✅ FIX: Validar UUID fields - convertir cadenas vacías a null
+        client_id: serviceData.client && serviceData.client.trim() !== '' 
+          ? serviceData.client 
+          : null,
         purchase_order: serviceData.purchaseOrder,
-        service_type_id: serviceData.serviceType,
-        crane_id: serviceData.crane,
+        service_type_id: serviceData.serviceType && serviceData.serviceType.trim() !== '' 
+          ? serviceData.serviceType 
+          : null,
+        crane_id: serviceData.crane && serviceData.crane.trim() !== '' 
+          ? serviceData.crane 
+          : null,
         vehicle_brand: serviceData.vehicleBrand,
         vehicle_model: serviceData.vehicleModel,
         license_plate: serviceData.licensePlate,
         has_excess: serviceData.hasExcess,
         client_covered_amount: serviceData.clientCoveredAmount,
-        excess_amount: serviceData.excessAmount,
+        excess_amount: serviceData.excessAmount || null,
         // Transform custody fields from camelCase to snake_case con validación
         custody_mode: serviceData.custodyMode,
         custody_days: serviceData.custodyDays,
@@ -434,7 +451,7 @@ export const useServiceManager = () => {
         
         // 1. Actualizar operador principal en la tabla services
         const mainOperator = serviceData.operators.find(op => op.role === 'Principal') || serviceData.operators[0];
-        if (mainOperator) {
+        if (mainOperator && mainOperator.operatorId && mainOperator.operatorId.trim() !== '') {
           (transformedData as any).operator_id = mainOperator.operatorId;
           (transformedData as any).operator_commission = mainOperator.commission || 0;
         } else {
@@ -466,30 +483,34 @@ export const useServiceManager = () => {
             .eq('id', id)
             .single();
 
-          const commissionCosts = additionalOperators.map(operator => ({
-            amount: operator.commission || 0,
-            category_id: commissionCategoryId,
-            service_id: id,
-            service_folio: currentService?.folio || 'Unknown',
-            date: currentService?.service_date || new Date().toISOString().split('T')[0],
-            description: `Comisión operador - Servicio ${currentService?.folio || id}`,
-            subcategory: 'Comisiones',
-            notes: operator.hours ? `${operator.hours} horas trabajadas` : null,
-            operator_id: operator.operatorId,
-            crane_id: currentService?.crane_id,
-            created_by: null
-          }));
+          const commissionCosts = additionalOperators
+            .filter(operator => operator.operatorId && operator.operatorId.trim() !== '') // ✅ FIX: Filtrar operadores con UUID válido
+            .map(operator => ({
+              amount: operator.commission || 0,
+              category_id: commissionCategoryId,
+              service_id: id,
+              service_folio: currentService?.folio || 'Unknown',
+              date: currentService?.service_date || new Date().toISOString().split('T')[0],
+              description: `Comisión operador - Servicio ${currentService?.folio || id}`,
+              subcategory: 'Comisiones',
+              notes: operator.hours ? `${operator.hours} horas trabajadas` : null,
+              operator_id: operator.operatorId,
+              crane_id: currentService?.crane_id,
+              created_by: null
+            }));
 
-          console.log('[updateService] Inserting commission costs for additional operators:', commissionCosts);
+          if (commissionCosts.length > 0) {
+            console.log('[updateService] Inserting commission costs for additional operators:', commissionCosts);
 
-          const { error: insertCommissionsError } = await supabase
-            .from('costs')
-            .insert(commissionCosts);
+            const { error: insertCommissionsError } = await supabase
+              .from('costs')
+              .insert(commissionCosts);
 
-          if (insertCommissionsError) {
-            console.error('[updateService] Error inserting commission costs:', insertCommissionsError);
-          } else {
-            console.log('[updateService] Commission costs inserted successfully');
+            if (insertCommissionsError) {
+              console.error('[updateService] Error inserting commission costs:', insertCommissionsError);
+            } else {
+              console.log('[updateService] Commission costs inserted successfully');
+            }
           }
         }
       }
