@@ -2289,6 +2289,47 @@ export type Database = {
           },
         ]
       }
+      service_update_error_logs: {
+        Row: {
+          attempted_data: Json | null
+          created_at: string | null
+          error_code: string | null
+          error_details: Json | null
+          error_message: string | null
+          id: string
+          service_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          attempted_data?: Json | null
+          created_at?: string | null
+          error_code?: string | null
+          error_details?: Json | null
+          error_message?: string | null
+          id?: string
+          service_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          attempted_data?: Json | null
+          created_at?: string | null
+          error_code?: string | null
+          error_details?: Json | null
+          error_message?: string | null
+          id?: string
+          service_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_update_error_logs_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       services: {
         Row: {
           client_covered_amount: number | null
@@ -2768,6 +2809,10 @@ export type Database = {
         Args: { p_crane_id?: string }
         Returns: Json
       }
+      diagnose_service_update_issues: {
+        Args: { service_id_param?: string }
+        Returns: Json
+      }
       emergency_close_service: {
         Args: { p_service_id: string }
         Returns: Json
@@ -3010,6 +3055,16 @@ export type Database = {
         }
         Returns: undefined
       }
+      log_service_update_error: {
+        Args: {
+          p_service_id: string
+          p_error_code: string
+          p_error_message: string
+          p_error_details?: Json
+          p_attempted_data?: Json
+        }
+        Returns: undefined
+      }
       migrate_existing_consumption_movements: {
         Args: Record<PropertyKey, never>
         Returns: Json
@@ -3036,6 +3091,10 @@ export type Database = {
       }
       repair_commission_system: {
         Args: Record<PropertyKey, never>
+        Returns: Json
+      }
+      safe_update_service: {
+        Args: { service_id_param: string; update_data: Json }
         Returns: Json
       }
       sync_closure_invoice_status: {
@@ -3074,6 +3133,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      update_service_comprehensive: {
+        Args: { p_service_id: string; p_service_data: Json }
+        Returns: Json
+      }
       update_services_to_invoiced_batch: {
         Args: {
           p_service_ids: string[]
@@ -3107,6 +3170,10 @@ export type Database = {
       validate_rls_policies: {
         Args: Record<PropertyKey, never>
         Returns: undefined
+      }
+      validate_service_update_data: {
+        Args: { p_service_id: string; p_service_data: Json }
+        Returns: Json
       }
       verify_auth_system: {
         Args: Record<PropertyKey, never>
