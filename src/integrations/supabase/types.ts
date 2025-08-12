@@ -2697,12 +2697,12 @@ export type Database = {
         Returns: string
       }
       apply_payment_fifo: {
-        Args: { p_payment_id: string; p_client_id?: string }
-        Returns: Json
+        Args: { p_payment_id: string; p_client_id: string }
+        Returns: undefined
       }
       apply_payment_manual: {
         Args: { p_payment_id: string; p_applications: Json }
-        Returns: Json
+        Returns: undefined
       }
       apply_pending_payments_to_invoices: {
         Args: Record<PropertyKey, never>
@@ -2757,8 +2757,10 @@ export type Database = {
         Returns: Json
       }
       create_automatic_payment_for_invoice: {
-        Args: { p_invoice_id: string }
-        Returns: Json
+        Args:
+          | { p_invoice_id: string }
+          | { p_invoice_id: string; p_client_id: string; p_amount: number }
+        Returns: string
       }
       create_inventory_consumption_movement: {
         Args:
