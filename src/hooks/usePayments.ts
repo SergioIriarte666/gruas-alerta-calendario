@@ -76,37 +76,7 @@ export const usePayments = () => {
         p_auto_apply: autoApply
       });
 
-      if (error) {
-        // Manejo específico del error de remaining_amount
-        if (error.message?.includes('remaining_amount') && error.message?.includes('can only be updated to DEFAULT')) {
-          console.warn('⚠️ Error de remaining_amount detectado, intentando limpieza automática...');
-          toast.warning('Error detectado, ejecutando limpieza automática...');
-          
-          try {
-            // Intentar limpieza y sincronización automática
-            await fullPaymentCleanupAndSync();
-            
-            // Reintentar la aplicación del pago
-            const { data: retryData, error: retryError } = await supabase.rpc('smart_apply_payment', {
-              p_payment_id: paymentId,
-              p_auto_apply: autoApply
-            });
-            
-            if (retryError) throw retryError;
-            
-            const result = retryData[0];
-            toast.success(`${result.message} (después de limpieza automática)`);
-            await fetchPayments();
-            return result;
-          } catch (cleanupError) {
-            console.error('🚨 Error en limpieza automática:', cleanupError);
-            toast.error('Error persistente en el sistema de pagos. Contacte al administrador.');
-            throw cleanupError;
-          }
-        }
-        throw error;
-      }
-      
+      if (error) throw error;
       const result = data[0];
       toast.success(result.message);
       await fetchPayments();
@@ -125,36 +95,7 @@ export const usePayments = () => {
         p_client_id: clientId
       });
 
-      if (error) {
-        // Manejo específico del error de remaining_amount
-        if (error.message?.includes('remaining_amount') && error.message?.includes('can only be updated to DEFAULT')) {
-          console.warn('⚠️ Error de remaining_amount detectado en FIFO, intentando limpieza automática...');
-          toast.warning('Error detectado, ejecutando limpieza automática...');
-          
-          try {
-            await fullPaymentCleanupAndSync();
-            
-            // Reintentar
-            const { data: retryData, error: retryError } = await supabase.rpc('apply_payment_fifo', {
-              p_payment_id: paymentId,
-              p_client_id: clientId
-            });
-            
-            if (retryError) throw retryError;
-            
-            const result = retryData as any;
-            toast.success(`Pago aplicado automáticamente después de limpieza. ${result.applications_made} facturas procesadas.`);
-            await fetchPayments();
-            return result;
-          } catch (cleanupError) {
-            console.error('🚨 Error en limpieza automática FIFO:', cleanupError);
-            toast.error('Error persistente en aplicación FIFO. Contacte al administrador.');
-            throw cleanupError;
-          }
-        }
-        throw error;
-      }
-      
+      if (error) throw error;
       const result = data as any;
       toast.success(`Pago aplicado automáticamente. ${result.applications_made} facturas procesadas.`);
       await fetchPayments();
@@ -178,33 +119,6 @@ export const usePayments = () => {
       console.log('🔍 RPC Response:', { data, error });
 
       if (error) {
-        // Manejo específico del error de remaining_amount
-        if (error.message?.includes('remaining_amount') && error.message?.includes('can only be updated to DEFAULT')) {
-          console.warn('⚠️ Error de remaining_amount detectado en aplicación manual, intentando limpieza automática...');
-          toast.warning('Error detectado, ejecutando limpieza automática...');
-          
-          try {
-            await fullPaymentCleanupAndSync();
-            
-            // Reintentar
-            const { data: retryData, error: retryError } = await supabase.rpc('apply_payment_manual', {
-              p_payment_id: paymentId,
-              p_applications: applications as any
-            });
-            
-            if (retryError) throw retryError;
-            
-            const result = retryData as any;
-            toast.success(`Pago aplicado manualmente después de limpieza a ${result.applications_made} facturas.`);
-            await fetchPayments();
-            return result;
-          } catch (cleanupError) {
-            console.error('🚨 Error en limpieza automática manual:', cleanupError);
-            toast.error('Error persistente en aplicación manual. Contacte al administrador.');
-            throw cleanupError;
-          }
-        }
-        
         console.error('🚨 Supabase RPC Error:', error);
         throw error;
       }
@@ -368,7 +282,7 @@ export const usePayments = () => {
 
   const fullPaymentCleanupAndSync = async () => {
     try {
-      const { data, error } = await supabase.rpc('full_payment_cleanup_and_sync_v2');
+      const { data, error } = await supabase.rpc('full_payment_cleanup_and_sync');
       
       if (error) throw error;
       
@@ -380,28 +294,6 @@ export const usePayments = () => {
     } catch (error) {
       console.error('Error in full payment cleanup:', error);
       toast.error('Error en la limpieza completa de pagos');
-      throw error;
-    }
-  };
-
-  // Nueva función para sincronización de emergencia
-  const emergencySync = async () => {
-    try {
-      toast.info('Iniciando sincronización de emergencia...');
-      
-      // 1. Limpieza de duplicados
-      await cleanupDuplicatePayments();
-      
-      // 2. Sincronización completa
-      await fullPaymentCleanupAndSync();
-      
-      // 3. Refrescar datos
-      await fetchPayments();
-      
-      toast.success('Sincronización de emergencia completada exitosamente');
-    } catch (error) {
-      console.error('Error en sincronización de emergencia:', error);
-      toast.error('Error en la sincronización de emergencia');
       throw error;
     }
   };
@@ -422,7 +314,6 @@ export const usePayments = () => {
     syncPaidInvoicesWithPayments,
     getReconciliationStats,
     fullPaymentCleanupAndSync,
-    emergencySync,
     refetch: fetchPayments
   };
 };
