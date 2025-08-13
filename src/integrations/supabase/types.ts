@@ -3099,6 +3099,15 @@ export type Database = {
         Args: { service_id_param: string; update_data: Json }
         Returns: Json
       }
+      smart_apply_payment: {
+        Args: { p_payment_id: string; p_auto_apply?: boolean }
+        Returns: {
+          success: boolean
+          applications_made: number
+          remaining_amount: number
+          message: string
+        }[]
+      }
       sync_closure_invoice_status: {
         Args: Record<PropertyKey, never>
         Returns: Json

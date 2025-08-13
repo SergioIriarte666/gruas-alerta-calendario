@@ -69,6 +69,25 @@ export const usePayments = () => {
     }
   };
 
+  const smartApplyPayment = async (paymentId: string, autoApply: boolean = true) => {
+    try {
+      const { data, error } = await supabase.rpc('smart_apply_payment', {
+        p_payment_id: paymentId,
+        p_auto_apply: autoApply
+      });
+
+      if (error) throw error;
+      const result = data[0];
+      toast.success(result.message);
+      await fetchPayments();
+      return result;
+    } catch (error) {
+      console.error('Error applying payment:', error);
+      toast.error('Error al aplicar el pago');
+      throw error;
+    }
+  };
+
   const applyPaymentFIFO = async (paymentId: string, clientId?: string) => {
     try {
       const { data, error } = await supabase.rpc('apply_payment_fifo', {
@@ -286,6 +305,7 @@ export const usePayments = () => {
     createPayment,
     applyPaymentFIFO,
     applyPaymentManual,
+    smartApplyPayment,
     getUnpaidInvoicesForClient,
     checkPaymentSystemAvailability,
     syncExistingPaidInvoices,

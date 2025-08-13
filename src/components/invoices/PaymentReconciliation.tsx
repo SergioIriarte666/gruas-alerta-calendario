@@ -3,7 +3,7 @@ import { usePayments } from '@/hooks/usePayments';
 import { useClients } from '@/hooks/useClients';
 import { PaymentWithDetails } from '@/types/payments';
 import { PaymentApplicationModal } from './PaymentApplicationModal';
-import { PaymentForm } from './PaymentForm';
+import { SmartPaymentForm } from './SmartPaymentForm';
 import { PaymentHistory } from './PaymentHistory';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -290,9 +290,8 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
 
         {/* Modals */}
         {showPaymentForm && (
-          <PaymentForm
+          <SmartPaymentForm
             onClose={() => setShowPaymentForm(false)}
-            onCancel={() => setShowPaymentForm(false)}
             preselectedClientId={selectedClient === 'all' ? undefined : selectedClient}
           />
         )}
