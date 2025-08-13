@@ -195,13 +195,68 @@ export const usePayments = () => {
       
       if (error) throw error;
       
-      const result = data as any;
-      toast.success(`${result.removed_count} pagos duplicados eliminados exitosamente`);
+      const result = data as number;
+      const deletedCount = Array.isArray(result) ? result[0] : result;
+      toast.success(`${deletedCount} pagos duplicados eliminados exitosamente`);
       await fetchPayments();
-      return data;
+      return deletedCount;
     } catch (error) {
       console.error('Error cleaning up duplicate payments:', error);
       toast.error('Error al limpiar pagos duplicados');
+      throw error;
+    }
+  };
+
+  const syncPaidInvoicesWithPayments = async () => {
+    try {
+      const { data, error } = await supabase.rpc('sync_paid_invoices_with_payments');
+      
+      if (error) throw error;
+      
+      const result = data as number;
+      const syncedCount = Array.isArray(result) ? result[0] : result;
+      toast.success(`${syncedCount} facturas pagadas sincronizadas exitosamente`);
+      await fetchPayments();
+      return syncedCount;
+    } catch (error) {
+      console.error('Error syncing paid invoices:', error);
+      toast.error('Error al sincronizar facturas pagadas');
+      throw error;
+    }
+  };
+
+  const getReconciliationStats = async () => {
+    try {
+      // Calcular estadísticas manualmente hasta que la función esté disponible
+      const { data: paymentsData, error: paymentsError } = await supabase
+        .from('payments')
+        .select('status, amount, remaining_amount');
+      
+      if (paymentsError) throw paymentsError;
+      
+      const { data: invoicesData, error: invoicesError } = await supabase
+        .from('invoices')
+        .select('status, paid_amount')
+        .eq('status', 'paid');
+        
+      if (invoicesError) throw invoicesError;
+      
+      const stats = {
+        total_payments: paymentsData.length,
+        pending_payments: paymentsData.filter(p => p.status === 'pending').length,
+        applied_payments: paymentsData.filter(p => p.status === 'applied').length,
+        partial_payments: paymentsData.filter(p => p.status === 'partial').length,
+        total_pending_amount: paymentsData
+          .filter(p => p.remaining_amount > 0)
+          .reduce((sum, p) => sum + p.remaining_amount, 0),
+        invoices_without_payments: 0, // Simplificado por ahora
+        payments_without_applications: paymentsData.filter(p => p.status === 'pending').length
+      };
+      
+      return stats;
+    } catch (error) {
+      console.error('Error fetching reconciliation stats:', error);
+      toast.error('Error al obtener estadísticas de reconciliación');
       throw error;
     }
   };
@@ -236,6 +291,8 @@ export const usePayments = () => {
     syncExistingPaidInvoices,
     getClientPaymentHistory,
     cleanupDuplicatePayments,
+    syncPaidInvoicesWithPayments,
+    getReconciliationStats,
     fullPaymentCleanupAndSync,
     refetch: fetchPayments
   };

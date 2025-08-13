@@ -11,7 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Plus, Zap, Edit, DollarSign, AlertTriangle, History } from 'lucide-react';
+import { Plus, Zap, Edit, DollarSign, AlertTriangle, History, RefreshCw, Trash2 } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 
 interface PaymentReconciliationProps {
@@ -26,8 +26,9 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
     applyPaymentFIFO,
     getUnpaidInvoicesForClient,
     checkPaymentSystemAvailability,
-    syncExistingPaidInvoices,
-    fullPaymentCleanupAndSync
+    cleanupDuplicatePayments,
+    syncPaidInvoicesWithPayments,
+    getReconciliationStats
   } = usePayments();
   
   const [selectedClient, setSelectedClient] = useState<string>('all');
@@ -36,12 +37,25 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
   const [selectedPayment, setSelectedPayment] = useState<PaymentWithDetails | null>(null);
   const [availableInvoices, setAvailableInvoices] = useState<any[]>([]);
   const [showHistory, setShowHistory] = useState(false);
+  const [reconciliationStats, setReconciliationStats] = useState<any>(null);
+  const [loadingCleanup, setLoadingCleanup] = useState(false);
+  const [loadingSync, setLoadingSync] = useState(false);
 
   const { clients } = useClients();
 
   useEffect(() => {
     checkPaymentSystemAvailability();
+    loadReconciliationStats();
   }, []);
+
+  const loadReconciliationStats = async () => {
+    try {
+      const stats = await getReconciliationStats();
+      setReconciliationStats(stats);
+    } catch (error) {
+      console.error('Error loading reconciliation stats:', error);
+    }
+  };
 
   const handleAutoApply = async (payment: PaymentWithDetails) => {
     try {
@@ -105,15 +119,48 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
         </div>
 
         {/* Summary Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           <Card className="bg-white/10 backdrop-blur-sm border-white/20">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-white">Pagos Pendientes</CardTitle>
               <DollarSign className="h-4 w-4 text-yellow-400" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-white">{pendingPayments.length}</div>
-              <p className="text-xs text-gray-300">{formatCurrency(totalPendingAmount)}</p>
+              <div className="text-2xl font-bold text-white">{reconciliationStats?.pending_payments || 0}</div>
+              <p className="text-xs text-gray-300">{formatCurrency(reconciliationStats?.total_pending_amount || 0)}</p>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-white/10 backdrop-blur-sm border-white/20">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-white">Pagos Aplicados</CardTitle>
+              <DollarSign className="h-4 w-4 text-green-400" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-white">{reconciliationStats?.applied_payments || 0}</div>
+              <p className="text-xs text-gray-300">Pagos completamente procesados</p>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-white/10 backdrop-blur-sm border-white/20">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-white">Sin Pagos</CardTitle>
+              <AlertTriangle className="h-4 w-4 text-red-400" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-white">{reconciliationStats?.invoices_without_payments || 0}</div>
+              <p className="text-xs text-gray-300">Facturas pagadas sin registro</p>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-white/10 backdrop-blur-sm border-white/20">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-white">Sin Aplicar</CardTitle>
+              <AlertTriangle className="h-4 w-4 text-orange-400" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-white">{reconciliationStats?.payments_without_applications || 0}</div>
+              <p className="text-xs text-gray-300">Pagos no aplicados a facturas</p>
             </CardContent>
           </Card>
         </div>
@@ -133,20 +180,38 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
           </Select>
           
           <Button 
-            onClick={syncExistingPaidInvoices}
+            onClick={async () => {
+              setLoadingSync(true);
+              try {
+                await syncPaidInvoicesWithPayments();
+                await loadReconciliationStats();
+              } finally {
+                setLoadingSync(false);
+              }
+            }}
             variant="outline"
-            disabled={paymentsLoading}
+            disabled={paymentsLoading || loadingSync}
             className="border-orange-500 text-orange-400 hover:bg-orange-500 hover:text-white"
           >
+            <RefreshCw className={`h-4 w-4 mr-2 ${loadingSync ? 'animate-spin' : ''}`} />
             Sincronizar Pagadas
           </Button>
 
           <Button 
-            onClick={fullPaymentCleanupAndSync}
+            onClick={async () => {
+              setLoadingCleanup(true);
+              try {
+                await cleanupDuplicatePayments();
+                await loadReconciliationStats();
+              } finally {
+                setLoadingCleanup(false);
+              }
+            }}
             variant="outline"
-            disabled={paymentsLoading}
+            disabled={paymentsLoading || loadingCleanup}
             className="border-red-500 text-red-400 hover:bg-red-500 hover:text-white"
           >
+            <Trash2 className={`h-4 w-4 mr-2 ${loadingCleanup ? 'animate-spin' : ''}`} />
             Limpiar Duplicados
           </Button>
 
