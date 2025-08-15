@@ -3176,6 +3176,18 @@ export type Database = {
         Args: { email: string }
         Returns: boolean
       }
+      validate_payment_amounts: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          amount: number
+          applied_amount: number
+          calculated_applied: number
+          folio: string
+          is_inconsistent: boolean
+          payment_id: string
+          remaining_amount: number
+        }[]
+      }
       validate_rls_policies: {
         Args: Record<PropertyKey, never>
         Returns: undefined
