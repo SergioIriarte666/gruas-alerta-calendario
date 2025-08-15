@@ -7,7 +7,7 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "12.2.3 (519615d)"
@@ -2689,20 +2689,20 @@ export type Database = {
     Functions: {
       admin_create_user: {
         Args: {
+          p_client_id?: string
           p_email: string
           p_full_name: string
           p_role: Database["public"]["Enums"]["app_role"]
-          p_client_id?: string
         }
         Returns: string
       }
       apply_payment_fifo: {
-        Args: { p_payment_id: string; p_client_id: string }
-        Returns: undefined
+        Args: { p_client_id?: string; p_payment_id: string }
+        Returns: Json
       }
       apply_payment_manual: {
-        Args: { p_payment_id: string; p_applications: Json }
-        Returns: undefined
+        Args: { p_applications: Json; p_payment_id: string }
+        Returns: Json
       }
       apply_pending_payments_to_invoices: {
         Args: Record<PropertyKey, never>
@@ -2757,28 +2757,26 @@ export type Database = {
         Returns: Json
       }
       create_automatic_payment_for_invoice: {
-        Args:
-          | { p_invoice_id: string }
-          | { p_invoice_id: string; p_client_id: string; p_amount: number }
-        Returns: string
+        Args: { p_invoice_id: string }
+        Returns: Json
       }
       create_inventory_consumption_movement: {
         Args:
           | {
-              p_inventory_item_id: string
-              p_quantity: number
               p_crane_id: string
-              p_operator_id?: string
-              p_reference_document?: string
+              p_inventory_item_id: string
               p_observations?: string
+              p_operator_id?: string
+              p_quantity: number
+              p_reference_document?: string
             }
           | {
-              p_inventory_item_id: string
-              p_quantity: number
               p_crane_id: string
-              p_operator_id?: string
-              p_reference_document?: string
+              p_inventory_item_id: string
               p_observations?: string
+              p_operator_id?: string
+              p_quantity: number
+              p_reference_document?: string
               p_unit_cost?: number
             }
         Returns: string
@@ -2786,8 +2784,8 @@ export type Database = {
       create_invoice_transaction: {
         Args: { p_invoice_data: Json; p_service_ids: string[] }
         Returns: {
-          invoice_id: string
           invoice_folio: string
+          invoice_id: string
         }[]
       }
       current_user_role: {
@@ -2797,9 +2795,9 @@ export type Database = {
       debug_service_states: {
         Args: Record<PropertyKey, never>
         Returns: {
-          service_folio: string
           current_status: Database["public"]["Enums"]["service_status"]
           invoice_folio: string
+          service_folio: string
           should_be_invoiced: boolean
         }[]
       }
@@ -2853,9 +2851,9 @@ export type Database = {
       }
       force_update_service_to_invoiced: {
         Args: {
-          p_service_id: string
           p_invoice_folio: string
           p_numero_fiscal?: string
+          p_service_id: string
         }
         Returns: Json
       }
@@ -2882,15 +2880,15 @@ export type Database = {
       get_all_users: {
         Args: Record<PropertyKey, never>
         Returns: {
-          id: string
-          email: string
-          full_name: string
-          role: Database["public"]["Enums"]["app_role"]
-          is_active: boolean
-          created_at: string
-          updated_at: string
           client_id: string
           client_name: string
+          created_at: string
+          email: string
+          full_name: string
+          id: string
+          is_active: boolean
+          role: Database["public"]["Enums"]["app_role"]
+          updated_at: string
         }[]
       }
       get_client_id_for_user: {
@@ -2904,21 +2902,21 @@ export type Database = {
       get_commissions_with_details: {
         Args: Record<PropertyKey, never>
         Returns: {
-          id: string
+          amount: number
+          client_name: string
+          created_at: string
           date: string
           description: string
-          amount: number
+          id: string
           operator_id: string
-          service_id: string
-          service_folio: string
-          subcategory: string
-          created_at: string
-          updated_at: string
-          service_value: number
-          service_date: string
-          client_name: string
           operator_name: string
           operator_rut: string
+          service_date: string
+          service_folio: string
+          service_id: string
+          service_value: number
+          subcategory: string
+          updated_at: string
         }[]
       }
       get_crane_metrics: {
@@ -2938,9 +2936,9 @@ export type Database = {
         Returns: {
           crane_id: string
           crane_license_plate: string
+          days_until_expiry: number
           document_type: string
           expiry_date: string
-          days_until_expiry: number
         }[]
       }
       get_invoice_overdue_stats: {
@@ -2950,13 +2948,13 @@ export type Database = {
       get_invoices_due_soon: {
         Args: { days_ahead?: number }
         Returns: {
-          id: string
-          folio: string
           client_name: string
-          due_date: string
-          total: number
           days_until_due: number
+          due_date: string
+          folio: string
+          id: string
           status: Database["public"]["Enums"]["invoice_status"]
+          total: number
         }[]
       }
       get_operator_id_by_user: {
@@ -2966,29 +2964,29 @@ export type Database = {
       get_overdue_invoices_for_alerts: {
         Args: Record<PropertyKey, never>
         Returns: {
-          id: string
-          folio: string
           client_name: string
-          due_date: string
-          total: number
           days_overdue: number
+          due_date: string
+          folio: string
+          id: string
           status: Database["public"]["Enums"]["invoice_status"]
+          total: number
         }[]
       }
       get_parts_traceability: {
         Args: { p_crane_id?: string }
         Returns: {
-          part_id: string
-          part_name: string
-          supplier: string
-          purchase_date: string
-          purchase_cost: number
+          crane_license_plate: string
+          current_stock: number
           inventory_item_id: string
           inventory_item_name: string
-          current_stock: number
-          total_purchased: number
+          part_id: string
+          part_name: string
+          purchase_cost: number
+          purchase_date: string
+          supplier: string
           total_consumed: number
-          crane_license_plate: string
+          total_purchased: number
         }[]
       }
       get_table_structure: {
@@ -3051,19 +3049,19 @@ export type Database = {
       }
       log_security_event: {
         Args: {
-          event_type: string
-          event_description: string
           additional_data?: Json
+          event_description: string
+          event_type: string
         }
         Returns: undefined
       }
       log_service_update_error: {
         Args: {
-          p_service_id: string
-          p_error_code: string
-          p_error_message: string
-          p_error_details?: Json
           p_attempted_data?: Json
+          p_error_code: string
+          p_error_details?: Json
+          p_error_message: string
+          p_service_id: string
         }
         Returns: undefined
       }
@@ -3100,12 +3098,12 @@ export type Database = {
         Returns: Json
       }
       smart_apply_payment: {
-        Args: { p_payment_id: string; p_auto_apply?: boolean }
+        Args: { p_auto_apply?: boolean; p_payment_id: string }
         Returns: {
-          success: boolean
           applications_made: number
-          remaining_amount: number
           message: string
+          remaining_amount: number
+          success: boolean
         }[]
       }
       sync_closure_invoice_status: {
@@ -3129,7 +3127,7 @@ export type Database = {
         Returns: string
       }
       toggle_user_status: {
-        Args: { user_id: string; new_status: boolean }
+        Args: { new_status: boolean; user_id: string }
         Returns: undefined
       }
       trigger_global_data_refresh: {
@@ -3145,28 +3143,28 @@ export type Database = {
         Returns: undefined
       }
       update_service_comprehensive: {
-        Args: { p_service_id: string; p_service_data: Json }
+        Args: { p_service_data: Json; p_service_id: string }
         Returns: Json
       }
       update_services_to_invoiced_batch: {
         Args: {
-          p_service_ids: string[]
           p_invoice_folio: string
           p_numero_fiscal?: string
+          p_service_ids: string[]
         }
         Returns: Json
       }
       update_user_role: {
         Args: {
-          user_id: string
           new_role: Database["public"]["Enums"]["app_role"]
+          user_id: string
         }
         Returns: undefined
       }
       update_user_role_secure: {
         Args: {
-          target_user_id: string
           new_role: Database["public"]["Enums"]["app_role"]
+          target_user_id: string
         }
         Returns: undefined
       }
@@ -3183,7 +3181,7 @@ export type Database = {
         Returns: undefined
       }
       validate_service_update_data: {
-        Args: { p_service_id: string; p_service_data: Json }
+        Args: { p_service_data: Json; p_service_id: string }
         Returns: Json
       }
       verify_auth_system: {
