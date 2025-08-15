@@ -29,38 +29,34 @@ export const PaymentApplicationModal: React.FC<PaymentApplicationModalProps> = (
     if (checked) {
       const invoice = availableInvoices.find(inv => inv.id === invoiceId);
       if (invoice) {
-        const maxAmount = Math.min(
-          invoice.remaining_amount,
-          payment.remaining_amount ?? (payment.amount - (payment.applied_amount ?? 0))
-        );
-        setApplications(prev => [...prev, {
-          invoice_id: invoiceId,
-          amount: maxAmount
-        }]);
+        const invoiceRemaining = invoice.remaining_amount ?? (invoice.total - (invoice.paid_amount ?? 0));
+        const paymentRemaining = payment.remaining_amount ?? (payment.amount - (payment.applied_amount ?? 0));
+        const maxAmount = Math.min(invoiceRemaining, paymentRemaining - getTotalSelected());
+        
+        if (maxAmount > 0) {
+          setApplications([...applications, { invoice_id: invoiceId, amount: maxAmount }]);
+        } else {
+          toast.error('No hay monto disponible para aplicar a esta factura');
+        }
       }
     } else {
-      setApplications(prev => prev.filter(app => app.invoice_id !== invoiceId));
+      setApplications(applications.filter(app => app.invoice_id !== invoiceId));
     }
   };
 
   const handleAmountChange = (invoiceId: string, amount: number) => {
     const invoice = availableInvoices.find(inv => inv.id === invoiceId);
     if (!invoice) return;
-
-    const maxAmount = Math.min(
-      invoice.remaining_amount,
-      payment.remaining_amount ?? (payment.amount - (payment.applied_amount ?? 0))
-    );
-
-    if (amount > maxAmount) {
-      toast.error(`El monto no puede exceder ${formatCurrency(maxAmount)}`);
-      return;
-    }
-
-    setApplications(prev => prev.map(app => 
-      app.invoice_id === invoiceId 
-        ? { ...app, amount: Math.max(0, amount) }
-        : app
+    
+    const invoiceRemaining = invoice.remaining_amount ?? (invoice.total - (invoice.paid_amount ?? 0));
+    const paymentRemaining = payment.remaining_amount ?? (payment.amount - (payment.applied_amount ?? 0));
+    const currentApplication = applications.find(app => app.invoice_id === invoiceId)?.amount || 0;
+    
+    const maxAmount = Math.min(invoiceRemaining, paymentRemaining - getTotalSelected() + currentApplication);
+    const validAmount = Math.max(0, Math.min(amount || 0, maxAmount));
+    
+    setApplications(applications.map(app => 
+      app.invoice_id === invoiceId ? { ...app, amount: validAmount } : app
     ));
   };
 
@@ -94,7 +90,6 @@ export const PaymentApplicationModal: React.FC<PaymentApplicationModalProps> = (
     setLoading(true);
     try {
       await applyPaymentManual(payment.id, applications);
-      toast.success('Pago aplicado exitosamente');
       onClose();
     } catch (error) {
       console.error('Error applying payment:', error);
