@@ -280,6 +280,47 @@ export const usePayments = () => {
     }
   };
 
+  const validatePaymentAmounts = async () => {
+    try {
+      const { data, error } = await supabase.rpc('validate_payment_amounts');
+      if (error) throw error;
+      return data;
+    } catch (error) {
+      console.error('Error validating payment amounts:', error);
+      throw error;
+    }
+  };
+
+  const recalculatePaymentBalances = async () => {
+    try {
+      const { data, error } = await supabase.rpc('recalculate_payment_balances');
+      if (error) throw error;
+      const result = data as any;
+      toast.success(result.message || 'Balances recalculados exitosamente');
+      await fetchPayments();
+      return result;
+    } catch (error) {
+      console.error('Error recalculating payment balances:', error);
+      toast.error('Error al recalcular balances de pagos');
+      throw error;
+    }
+  };
+
+  const fixNegativeRemainingAmounts = async () => {
+    try {
+      const { data, error } = await supabase.rpc('fix_negative_remaining_amounts');
+      if (error) throw error;
+      const result = data as any;
+      toast.success(result.message || 'Montos negativos corregidos');
+      await fetchPayments();
+      return result;
+    } catch (error) {
+      console.error('Error fixing negative amounts:', error);
+      toast.error('Error al corregir montos negativos');
+      throw error;
+    }
+  };
+
   const fullPaymentCleanupAndSync = async () => {
     try {
       const { data, error } = await supabase.rpc('full_payment_cleanup_and_sync');
@@ -313,6 +354,9 @@ export const usePayments = () => {
     cleanupDuplicatePayments,
     syncPaidInvoicesWithPayments,
     getReconciliationStats,
+    validatePaymentAmounts,
+    recalculatePaymentBalances,
+    fixNegativeRemainingAmounts,
     fullPaymentCleanupAndSync,
     refetch: fetchPayments
   };

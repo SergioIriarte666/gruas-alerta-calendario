@@ -29,6 +29,9 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
     cleanupDuplicatePayments,
     syncPaidInvoicesWithPayments,
     getReconciliationStats,
+    validatePaymentAmounts,
+    recalculatePaymentBalances,
+    fixNegativeRemainingAmounts,
     refetch // Agregado para actualización manual
   } = usePayments();
   
@@ -49,6 +52,20 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
     checkPaymentSystemAvailability();
     loadReconciliationStats();
   }, []);
+
+  const handleRepairPayments = async () => {
+    try {
+      setLoadingSync(true);
+      await recalculatePaymentBalances();
+      await fixNegativeRemainingAmounts();
+      await loadReconciliationStats();
+      await refetch();
+    } catch (error) {
+      console.error('Error repairing payments:', error);
+    } finally {
+      setLoadingSync(false);
+    }
+  };
 
   const loadReconciliationStats = async () => {
     try {
@@ -121,6 +138,13 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
 
   const pendingPayments = payments.filter(p => p.status === 'pending');
   const totalPendingAmount = pendingPayments.reduce((sum, p) => sum + p.amount, 0);
+  
+  // Detectar pagos con problemas
+  const problematicPayments = payments.filter(p => 
+    p.remaining_amount < 0 || 
+    p.applied_amount > p.amount ||
+    (p.applied_amount === 0 && p.status !== 'pending')
+  );
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-indigo-900 p-6">
@@ -137,6 +161,17 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
             </Button>
           )}
         </div>
+
+        {/* Alerta para pagos con problemas */}
+        {problematicPayments.length > 0 && (
+          <Alert className="border-red-500 bg-red-500/10">
+            <AlertTriangle className="h-4 w-4 text-red-400" />
+            <AlertDescription className="text-red-300">
+              Se detectaron {problematicPayments.length} pagos con montos inconsistentes. 
+              Use el botón "Reparar Montos" para corregir automáticamente estos problemas.
+            </AlertDescription>
+          </Alert>
+        )}
 
         {/* Stats Cards */}
         {reconciliationStats && (
@@ -257,6 +292,16 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
             </Button>
 
             <Button 
+              onClick={handleRepairPayments}
+              variant="outline"
+              disabled={paymentsLoading || loadingSync}
+              className="border-yellow-500 text-yellow-400 hover:bg-yellow-500 hover:text-white"
+            >
+              <AlertTriangle className={`h-4 w-4 mr-2 ${loadingSync ? 'animate-spin' : ''}`} />
+              Reparar Montos
+            </Button>
+
+            <Button 
               onClick={() => setShowPaymentForm(true)} 
               className="bg-blue-600 hover:bg-blue-700"
             >
@@ -294,14 +339,26 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredPayments.map((payment) => (
-                  <TableRow key={payment.id} className="border-white/10">
-                    <TableCell className="text-white">{payment.client?.name}</TableCell>
-                    <TableCell className="text-white">{formatCurrency(payment.amount)}</TableCell>
-                    <TableCell className="text-white">{new Date(payment.payment_date).toLocaleDateString()}</TableCell>
-                    <TableCell>{getStatusBadge(payment.status)}</TableCell>
-                    <TableCell className="text-white">{formatCurrency(payment.applied_amount || 0)}</TableCell>
-                    <TableCell className="text-white">{formatCurrency(payment.remaining_amount || 0)}</TableCell>
+                 {filteredPayments.map((payment) => {
+                   const isProblematic = problematicPayments.some(p => p.id === payment.id);
+                   return (
+                   <TableRow key={payment.id} className={`border-white/10 ${isProblematic ? 'bg-red-500/10 border-red-500/30' : ''}`}>
+                     <TableCell className="text-white">{payment.client?.name}</TableCell>
+                     <TableCell className="text-white">{formatCurrency(payment.amount)}</TableCell>
+                     <TableCell className="text-white">{new Date(payment.payment_date).toLocaleDateString()}</TableCell>
+                     <TableCell>{getStatusBadge(payment.status)}</TableCell>
+                     <TableCell className={`${payment.applied_amount > payment.amount ? 'text-red-400 font-bold' : 'text-white'}`}>
+                       {formatCurrency(payment.applied_amount || 0)}
+                       {payment.applied_amount > payment.amount && (
+                         <AlertTriangle className="h-3 w-3 inline ml-1 text-red-400" />
+                       )}
+                     </TableCell>
+                     <TableCell className={`${payment.remaining_amount < 0 ? 'text-red-400 font-bold' : 'text-white'}`}>
+                       {formatCurrency(payment.remaining_amount || 0)}
+                       {payment.remaining_amount < 0 && (
+                         <AlertTriangle className="h-3 w-3 inline ml-1 text-red-400" />
+                       )}
+                     </TableCell>
                     <TableCell>
                       <div className="flex gap-2">
                         {(payment.remaining_amount || 0) > 0 && (
@@ -327,9 +384,10 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
                         )}
                       </div>
                     </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
+                   </TableRow>
+                   );
+                 })}
+               </TableBody>
             </Table>
           </CardContent>
         </Card>
