@@ -34,7 +34,7 @@ export const SmartPaymentForm: React.FC<SmartPaymentFormProps> = ({
   preselectedClientId 
 }) => {
   const { clients } = useClients();
-  const { createPayment } = usePayments();
+  const { createPayment, refetch } = usePayments();
   
   const [formData, setFormData] = useState({
     client_id: preselectedClientId && preselectedClientId !== 'all' ? preselectedClientId : '',
@@ -63,7 +63,7 @@ export const SmartPaymentForm: React.FC<SmartPaymentFormProps> = ({
 
   const fetchClientInvoices = async () => {
     if (!formData.client_id) return;
-    
+
     try {
       const { data, error } = await supabase
         .from('invoices')
@@ -72,7 +72,7 @@ export const SmartPaymentForm: React.FC<SmartPaymentFormProps> = ({
         .in('status', ['sent', 'overdue'])
         .gt('remaining_amount', 0)
         .order('due_date', { ascending: true })
-        .limit(5);
+        .limit(10);
 
       if (error) throw error;
       setClientInvoices(data || []);
@@ -82,24 +82,21 @@ export const SmartPaymentForm: React.FC<SmartPaymentFormProps> = ({
   };
 
   const checkForDuplicates = async () => {
-    if (!formData.client_id || !formData.amount || !formData.payment_date) {
-      setDuplicateWarning('');
-      return;
-    }
+    if (!formData.client_id || !formData.amount || !formData.payment_date) return;
 
     try {
       const { data, error } = await supabase
         .from('payments')
-        .select('id, amount, payment_date, status')
+        .select('id, bank_reference, amount')
         .eq('client_id', formData.client_id)
-        .eq('amount', parseFloat(formData.amount))
         .eq('payment_date', formData.payment_date)
-        .gte('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString());
+        .eq('amount', parseFloat(formData.amount))
+        .limit(1);
 
       if (error) throw error;
       
       if (data && data.length > 0) {
-        setDuplicateWarning(`⚠️ Ya existe un pago similar por ${formatCurrency(parseFloat(formData.amount))} del ${formData.payment_date}`);
+        setDuplicateWarning(`Posible duplicado: Ya existe un pago de ${formatCurrency(data[0].amount)} para esta fecha`);
       } else {
         setDuplicateWarning('');
       }
@@ -108,290 +105,264 @@ export const SmartPaymentForm: React.FC<SmartPaymentFormProps> = ({
     }
   };
 
-  const getTotalPendingAmount = () => {
-    return clientInvoices.reduce((sum, inv) => sum + (inv.remaining_amount || inv.total), 0);
-  };
-
-  const getPaymentRecommendation = () => {
-    const paymentAmount = parseFloat(formData.amount) || 0;
-    const totalPending = getTotalPendingAmount();
-    
-    if (paymentAmount === 0) return null;
-    
-    if (paymentAmount === totalPending) {
-      return {
-        type: 'perfect',
-        message: `Pago exacto para liquidar todas las facturas pendientes`,
-        icon: <CheckCircle className="h-4 w-4 text-green-500" />
-      };
-    } else if (paymentAmount < totalPending) {
-      return {
-        type: 'partial',
-        message: `Se aplicará a las facturas más antiguas (FIFO)`,
-        icon: <Clock className="h-4 w-4 text-yellow-500" />
-      };
-    } else {
-      return {
-        type: 'excess',
-        message: `Excede el total pendiente. Sobrante: ${formatCurrency(paymentAmount - totalPending)}`,
-        icon: <AlertTriangle className="h-4 w-4 text-orange-500" />
-      };
-    }
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.client_id || !formData.amount) return;
+    
+    if (!formData.client_id || !formData.amount) {
+      toast.error('Cliente y monto son requeridos');
+      return;
+    }
 
-    if (duplicateWarning && !confirm('Se detectó un posible duplicado. ¿Desea continuar?')) {
+    const amount = parseFloat(formData.amount);
+    if (amount <= 0) {
+      toast.error('El monto debe ser mayor a 0');
       return;
     }
 
     setLoading(true);
     try {
-      // Crear pago
-      const payment = await createPayment({
-        client_id: formData.client_id,
-        amount: parseFloat(formData.amount),
-        payment_date: formData.payment_date,
-        bank_reference: formData.bank_reference || undefined,
-        payment_method: formData.payment_method,
-        notes: formData.notes || undefined,
-        status: 'pending'
-      });
+      const paymentData = {
+        ...formData,
+        amount,
+        applied_amount: 0,
+        status: 'pending' as const,
+        application_method: paymentMode === 'auto' ? 'automatic' as const : 'manual' as const
+      };
 
-      // Aplicar pago usando la nueva función smart
-      if (paymentMode === 'auto') {
-        await supabase.rpc('smart_apply_payment', {
-          p_payment_id: payment.id,
-          p_auto_apply: true
-        });
-      }
-
+      await createPayment(paymentData);
       toast.success('Pago registrado exitosamente');
+      
+      // Actualizar la lista de pagos
+      await refetch();
+      
       onClose();
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error creating payment:', error);
-      if (error.message?.includes('duplicado')) {
-        toast.error('Pago duplicado detectado. Revise los pagos existentes.');
-      } else {
-        toast.error(`Error al registrar el pago: ${error.message || 'Error desconocido'}`);
-      }
+      toast.error('Error al registrar el pago');
     } finally {
       setLoading(false);
     }
   };
 
-  const selectedClient = clients.find(c => c.id === formData.client_id);
-  const recommendation = getPaymentRecommendation();
+  const getInvoiceStatusBadge = (status: string) => {
+    const variants = {
+      sent: { color: 'bg-blue-500', icon: Clock },
+      overdue: { color: 'bg-red-500', icon: AlertTriangle },
+      paid: { color: 'bg-green-500', icon: CheckCircle }
+    };
+    
+    const config = variants[status as keyof typeof variants] || variants.sent;
+    const Icon = config.icon;
+    
+    return (
+      <Badge className={`${config.color} text-white flex items-center gap-1`}>
+        <Icon className="h-3 w-3" />
+        {status}
+      </Badge>
+    );
+  };
+
+  const totalPendingAmount = clientInvoices.reduce((sum, inv) => sum + inv.remaining_amount, 0);
+  const paymentAmount = parseFloat(formData.amount) || 0;
+  const coverage = totalPendingAmount > 0 ? (paymentAmount / totalPendingAmount) * 100 : 0;
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-      <Card className="w-full max-w-2xl bg-white max-h-[90vh] overflow-y-auto">
+      <Card className="w-full max-w-4xl max-h-[90vh] overflow-auto bg-white">
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
-            <Zap className="h-5 w-5 text-blue-500" />
-            Registrar Pago Inteligente
-          </CardTitle>
+          <div>
+            <CardTitle>Registrar Pago Inteligente</CardTitle>
+            <p className="text-sm text-gray-600">Registra un nuevo pago y visualiza su impacto</p>
+          </div>
           <Button variant="ghost" size="sm" onClick={onClose}>
             <X className="h-4 w-4" />
           </Button>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Cliente */}
-            <div>
-              <Label htmlFor="client">Cliente *</Label>
-              <Select 
-                value={formData.client_id || undefined} 
-                onValueChange={(value) => setFormData({...formData, client_id: value})}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Seleccionar cliente" />
-                </SelectTrigger>
-                <SelectContent className="bg-white border border-gray-200 shadow-lg z-50">
-                  {clients.map(client => (
-                    <SelectItem key={client.id} value={client.id}>{client.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Información del cliente y facturas */}
-            {selectedClient && (
-              <Card className="bg-gray-50">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-lg">{selectedClient.name}</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {clientInvoices.length > 0 ? (
-                    <>
-                      <div className="text-sm text-gray-600">
-                        <span className="font-medium">Facturas pendientes:</span> {clientInvoices.length}
-                      </div>
-                      <div className="text-sm text-gray-600">
-                        <span className="font-medium">Total pendiente:</span> {formatCurrency(getTotalPendingAmount())}
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <div className="text-sm font-medium text-gray-700">Próximas facturas a pagar:</div>
-                        {clientInvoices.slice(0, 3).map((invoice) => (
-                          <div key={invoice.id} className="flex justify-between items-center text-sm p-2 bg-white rounded border">
-                            <div className="flex items-center gap-2">
-                              <span className="font-medium">{invoice.folio}</span>
-                              <Badge variant={invoice.status === 'overdue' ? 'destructive' : 'secondary'}>
-                                {invoice.status}
-                              </Badge>
-                            </div>
-                            <span>{formatCurrency(invoice.remaining_amount || invoice.total)}</span>
-                          </div>
-                        ))}
-                        {clientInvoices.length > 3 && (
-                          <div className="text-xs text-gray-500 text-center">
-                            +{clientInvoices.length - 3} facturas más
-                          </div>
-                        )}
-                      </div>
-                    </>
-                  ) : (
-                    <Alert>
-                      <AlertTriangle className="h-4 w-4" />
-                      <AlertDescription>
-                        Este cliente no tiene facturas pendientes de pago.
-                      </AlertDescription>
-                    </Alert>
-                  )}
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Modo de aplicación */}
-            <div>
-              <Label>Modo de Aplicación</Label>
-              <div className="flex gap-4 mt-2">
-                <label className="flex items-center space-x-2">
-                  <input
-                    type="radio"
-                    name="paymentMode"
-                    value="auto"
-                    checked={paymentMode === 'auto'}
-                    onChange={(e) => setPaymentMode(e.target.value as 'auto' | 'manual')}
-                    className="text-blue-600"
-                  />
-                  <span>Automático (FIFO)</span>
-                </label>
-                <label className="flex items-center space-x-2">
-                  <input
-                    type="radio"
-                    name="paymentMode"
-                    value="manual"
-                    checked={paymentMode === 'manual'}
-                    onChange={(e) => setPaymentMode(e.target.value as 'auto' | 'manual')}
-                    className="text-blue-600"
-                  />
-                  <span>Solo registrar</span>
-                </label>
-              </div>
-            </div>
-
-            {/* Monto */}
-            <div>
-              <Label htmlFor="amount">Monto del Pago *</Label>
-              <Input
-                id="amount"
-                type="number"
-                step="0.01"
-                value={formData.amount}
-                onChange={(e) => setFormData({...formData, amount: e.target.value})}
-                placeholder="0.00"
-                required
-              />
-              
-              {/* Recomendación de pago */}
-              {recommendation && (
-                <div className={`mt-2 p-3 rounded-lg border flex items-center gap-2 text-sm ${
-                  recommendation.type === 'perfect' ? 'bg-green-50 border-green-200' :
-                  recommendation.type === 'partial' ? 'bg-yellow-50 border-yellow-200' :
-                  'bg-orange-50 border-orange-200'
-                }`}>
-                  {recommendation.icon}
-                  <span>{recommendation.message}</span>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Payment Form */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold">Información del Pago</h3>
+                
+                <div>
+                  <Label htmlFor="client_id">Cliente *</Label>
+                  <Select 
+                    value={formData.client_id} 
+                    onValueChange={(value) => setFormData(prev => ({ ...prev, client_id: value }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Seleccionar cliente" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {clients.map(client => (
+                        <SelectItem key={client.id} value={client.id}>
+                          {client.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
-              )}
 
-              {/* Advertencia de duplicado */}
-              {duplicateWarning && (
-                <Alert className="mt-2">
-                  <AlertTriangle className="h-4 w-4" />
-                  <AlertDescription>{duplicateWarning}</AlertDescription>
-                </Alert>
-              )}
-            </div>
+                <div>
+                  <Label htmlFor="amount">Monto *</Label>
+                  <Input
+                    id="amount"
+                    type="number"
+                    step="0.01"
+                    value={formData.amount}
+                    onChange={(e) => setFormData(prev => ({ ...prev, amount: e.target.value }))}
+                    placeholder="0.00"
+                    required
+                  />
+                </div>
 
-            <Separator />
+                <div>
+                  <Label htmlFor="payment_date">Fecha de Pago *</Label>
+                  <Input
+                    id="payment_date"
+                    type="date"
+                    value={formData.payment_date}
+                    onChange={(e) => setFormData(prev => ({ ...prev, payment_date: e.target.value }))}
+                    required
+                  />
+                </div>
 
-            {/* Campos adicionales */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="payment_date">Fecha de Pago *</Label>
-                <Input
-                  id="payment_date"
-                  type="date"
-                  value={formData.payment_date}
-                  onChange={(e) => setFormData({...formData, payment_date: e.target.value})}
-                  required
-                />
+                <div>
+                  <Label htmlFor="bank_reference">Referencia Bancaria</Label>
+                  <Input
+                    id="bank_reference"
+                    value={formData.bank_reference}
+                    onChange={(e) => setFormData(prev => ({ ...prev, bank_reference: e.target.value }))}
+                    placeholder="Número de referencia"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="payment_method">Método de Pago</Label>
+                  <Select 
+                    value={formData.payment_method} 
+                    onValueChange={(value) => setFormData(prev => ({ ...prev, payment_method: value }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="transferencia">Transferencia</SelectItem>
+                      <SelectItem value="cheque">Cheque</SelectItem>
+                      <SelectItem value="efectivo">Efectivo</SelectItem>
+                      <SelectItem value="deposito">Depósito</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label htmlFor="notes">Notas</Label>
+                  <Textarea
+                    id="notes"
+                    value={formData.notes}
+                    onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
+                    placeholder="Notas adicionales..."
+                    rows={3}
+                  />
+                </div>
+
+                <div>
+                  <Label>Modo de Aplicación</Label>
+                  <div className="flex gap-2 mt-2">
+                    <Button
+                      type="button"
+                      variant={paymentMode === 'auto' ? 'default' : 'outline'}
+                      onClick={() => setPaymentMode('auto')}
+                      className="flex items-center gap-2"
+                    >
+                      <Zap className="h-4 w-4" />
+                      Automático
+                    </Button>
+                    <Button
+                      type="button"
+                      variant={paymentMode === 'manual' ? 'default' : 'outline'}
+                      onClick={() => setPaymentMode('manual')}
+                      className="flex items-center gap-2"
+                    >
+                      Manual
+                    </Button>
+                  </div>
+                  <p className="text-sm text-gray-600 mt-1">
+                    {paymentMode === 'auto' 
+                      ? 'El pago se aplicará automáticamente a las facturas más antiguas'
+                      : 'Podrás seleccionar manualmente a qué facturas aplicar el pago'
+                    }
+                  </p>
+                </div>
               </div>
 
-              <div>
-                <Label htmlFor="payment_method">Método de Pago</Label>
-                <Select value={formData.payment_method} onValueChange={(value) => setFormData({...formData, payment_method: value})}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="bg-white border border-gray-200 shadow-lg z-50">
-                    <SelectItem value="transferencia">Transferencia</SelectItem>
-                    <SelectItem value="efectivo">Efectivo</SelectItem>
-                    <SelectItem value="cheque">Cheque</SelectItem>
-                    <SelectItem value="deposito">Depósito</SelectItem>
-                  </SelectContent>
-                </Select>
+              {/* Invoice Preview */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold">Facturas Pendientes</h3>
+                
+                {duplicateWarning && (
+                  <Alert>
+                    <AlertTriangle className="h-4 w-4" />
+                    <AlertDescription>{duplicateWarning}</AlertDescription>
+                  </Alert>
+                )}
+
+                {formData.client_id && clientInvoices.length > 0 && (
+                  <div className="bg-blue-50 p-4 rounded-lg">
+                    <div className="grid grid-cols-2 gap-4 text-sm mb-4">
+                      <div>
+                        <span className="font-medium">Total Pendiente:</span>
+                        <div className="text-lg font-bold text-blue-600">
+                          {formatCurrency(totalPendingAmount)}
+                        </div>
+                      </div>
+                      <div>
+                        <span className="font-medium">Cobertura:</span>
+                        <div className="text-lg font-bold text-green-600">
+                          {coverage.toFixed(1)}%
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <Separator className="my-4" />
+                    
+                    <div className="space-y-2 max-h-64 overflow-y-auto">
+                      {clientInvoices.map(invoice => (
+                        <div key={invoice.id} className="flex justify-between items-center p-2 bg-white rounded border">
+                          <div>
+                            <div className="font-medium">{invoice.folio}</div>
+                            <div className="text-sm text-gray-600">
+                              Vence: {new Date(invoice.due_date).toLocaleDateString()}
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <div className="font-medium">{formatCurrency(invoice.remaining_amount)}</div>
+                            {getInvoiceStatusBadge(invoice.status)}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {formData.client_id && clientInvoices.length === 0 && (
+                  <Alert>
+                    <CheckCircle className="h-4 w-4" />
+                    <AlertDescription>
+                      Este cliente no tiene facturas pendientes.
+                    </AlertDescription>
+                  </Alert>
+                )}
               </div>
             </div>
 
-            <div>
-              <Label htmlFor="bank_reference">Referencia Bancaria</Label>
-              <Input
-                id="bank_reference"
-                value={formData.bank_reference}
-                onChange={(e) => setFormData({...formData, bank_reference: e.target.value})}
-                placeholder="Número de referencia o comprobante"
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="notes">Notas</Label>
-              <Textarea
-                id="notes"
-                value={formData.notes}
-                onChange={(e) => setFormData({...formData, notes: e.target.value})}
-                placeholder="Observaciones adicionales"
-                rows={3}
-              />
-            </div>
-
-            <div className="flex gap-2 pt-4">
-              <Button 
-                type="submit" 
-                disabled={loading || !!duplicateWarning} 
-                className="flex-1 bg-blue-600 hover:bg-blue-700"
-              >
-                {loading ? 'Procesando...' : 
-                 paymentMode === 'auto' ? 'Registrar y Aplicar' : 'Solo Registrar'
-                }
-              </Button>
+            <div className="flex justify-end gap-2 pt-4">
               <Button type="button" variant="outline" onClick={onClose}>
                 Cancelar
+              </Button>
+              <Button type="submit" disabled={loading} className="bg-blue-600 hover:bg-blue-700">
+                {loading ? 'Registrando...' : 'Registrar Pago'}
               </Button>
             </div>
           </form>
