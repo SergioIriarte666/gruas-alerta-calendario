@@ -2833,6 +2833,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: Json
       }
+      fix_negative_remaining_amounts: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
       force_close_service_bypass_triggers: {
         Args: { p_service_id: string }
         Returns: Json
