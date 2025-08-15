@@ -3089,6 +3089,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
+      recalculate_payment_balances: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
       repair_commission_system: {
         Args: Record<PropertyKey, never>
         Returns: Json
