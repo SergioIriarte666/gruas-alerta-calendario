@@ -12,7 +12,7 @@ export interface ServiceOperator {
   hours?: number;
 }
 
-// Interfaz extendida del servicio
+// Interfaz extendida del servicio (incluye todos los campos de custodia del Service base)
 export interface EnhancedService extends Omit<Service, 'operator' | 'operatorCommission'> {
   operators: ServiceOperator[];
   serviceCosts: Cost[]; // Changed from costDetails to serviceCosts to align with costs table

@@ -20,7 +20,7 @@ const fetchEnhancedServiceDetails = async (serviceId: string): Promise<EnhancedS
 
   console.log('🔍 [ENHANCED_SERVICE] Fetching complete service data for:', serviceId);
 
-  // 1. Obtener datos básicos del servicio con relaciones
+  // 1. Obtener datos básicos del servicio con relaciones (incluyendo campos de custodia)
   const { data: serviceData, error: serviceError } = await supabase
     .from('services')
     .select(`
@@ -202,6 +202,16 @@ const fetchEnhancedServiceDetails = async (serviceId: string): Promise<EnhancedS
     excessAmount: serviceData.excess_amount,
     invoiceFolio: serviceData.invoice_folio,
     invoiceNumeroFiscal: serviceData.invoice_numero_fiscal,
+    // Campos de custodia
+    custodyMode: serviceData.custody_mode as 'manual' | 'calendar' | 'none' | undefined,
+    custodyDays: serviceData.custody_days,
+    custodyDailyRate: serviceData.custody_daily_rate,
+    custodyStartDate: serviceData.custody_start_date,
+    custodyEndDate: serviceData.custody_end_date,
+    custodyVehicleType: serviceData.custody_vehicle_type,
+    custodyDiscountPercentage: serviceData.custody_discount_percentage,
+    custodyTotalAmount: serviceData.custody_total_amount,
+    custodyNotes: serviceData.custody_notes,
     createdAt: serviceData.created_at,
     updatedAt: serviceData.updated_at,
     // Datos mejorados
