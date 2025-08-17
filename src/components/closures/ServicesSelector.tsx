@@ -2,6 +2,7 @@ import { Label } from '@/components/ui/label';
 import { Service } from '@/types';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { InfoIcon, CheckCircle } from 'lucide-react';
+import { getServiceDisplayValue } from '@/utils/serviceValueCalculations';
 interface ServicesSelectorProps {
   services: Service[];
   loading: boolean;
@@ -68,7 +69,7 @@ const ServicesSelector = ({
                 <label htmlFor={service.id} className="text-sm text-gray-300 flex-1 cursor-pointer">
                   <div className="flex justify-between items-center">
                     <span>{service.folio} - {service.client.name}</span>
-                    <span className="font-medium text-tms-green">${service.value.toLocaleString()}</span>
+                    <span className="font-medium text-tms-green">${getServiceDisplayValue(service).toLocaleString()}</span>
                   </div>
                   <div className="text-xs text-gray-500">
                     {service.serviceDate} • {service.licensePlate} • Status: {service.status}

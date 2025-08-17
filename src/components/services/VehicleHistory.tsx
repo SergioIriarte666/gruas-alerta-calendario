@@ -9,6 +9,7 @@ import { formatForDisplay } from '@/utils/timezoneUtils';
 import { formatUserCurrency } from '@/utils/currencyUtils';
 import { ServiceStatus } from '@/types';
 import { AlertCircle, History, Car, User } from 'lucide-react';
+import { getServiceDisplayValue } from '@/utils/serviceValueCalculations';
 
 interface VehicleHistoryProps {
   licensePlate: string;
@@ -177,7 +178,7 @@ export const VehicleHistory = ({ licensePlate, currentServiceId, clientId, clien
                     {service.origin} → {service.destination}
                   </div>
                 </TableCell>
-                <TableCell className="text-gray-300 font-semibold">{formatUserCurrency(service.value)}</TableCell>
+                <TableCell className="text-gray-300 font-semibold">{formatUserCurrency(getServiceDisplayValue(service))}</TableCell>
                 <TableCell>{getStatusBadge(service.status)}</TableCell>
               </TableRow>
             ))}

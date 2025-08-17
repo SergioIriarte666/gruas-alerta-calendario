@@ -61,3 +61,11 @@ export const calculateClosureTotal = (services: Service[]): number => {
     return sum + getServiceValueForClosure(service);
   }, 0);
 };
+
+/**
+ * Gets the total value to display for a service (service value + custody if applicable).
+ * This is the main function that should be used throughout the UI for displaying service values.
+ */
+export const getServiceDisplayValue = (service: any): number => {
+  return getServiceValueForClosure(service);
+};

@@ -15,6 +15,7 @@ import {
 import { Crane } from '@/types';
 import { formatForDisplay } from '@/utils/timezoneUtils';
 import { useCraneServices } from '@/hooks/useCraneServices';
+import { getServiceDisplayValue } from '@/utils/serviceValueCalculations';
 
 interface CraneServiceHistoryProps {
   crane: Crane;
@@ -214,7 +215,7 @@ export const CraneServiceHistory = ({ crane }: CraneServiceHistoryProps) => {
 
                     <div className="text-right">
                       <div className="text-2xl font-bold text-tms-green">
-                        ${service.value.toLocaleString()}
+                        ${getServiceDisplayValue(service).toLocaleString()}
                       </div>
                       <div className="text-gray-400 text-sm">
                         Valor del servicio

@@ -9,6 +9,7 @@ import { useUser } from '@/contexts/UserContext';
 import { useDeviceType } from '@/hooks/useDeviceType';
 import { parseFromDatabase } from '@/utils/timezoneUtils';
 import { shouldShowVehicleInfo, formatVehicleInfo, getServiceStatusBadge, formatCurrency } from '@/utils/statusHelpers';
+import { getServiceDisplayValue } from '@/utils/serviceValueCalculations';
 import { cn } from '@/lib/utils';
 
 interface ServicesMobileViewProps {
@@ -121,7 +122,7 @@ export const ServicesMobileView = ({
 
                 <div className="flex items-center text-tms-green text-sm font-semibold">
                   <DollarSign className="w-4 h-4 mr-2 flex-shrink-0" />
-                  <span>{formatCurrency(service.value)}</span>
+                  <span>{formatCurrency(getServiceDisplayValue(service))}</span>
                 </div>
               </div>
 
