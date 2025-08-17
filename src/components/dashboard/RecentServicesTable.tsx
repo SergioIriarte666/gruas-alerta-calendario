@@ -7,7 +7,6 @@ import { formatForDisplay } from '@/utils/timezoneUtils';
 import { Eye, Truck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { shouldShowVehicleInfo, getServiceStatusBadge, formatCurrency } from '@/utils/statusHelpers';
-import { getServiceDisplayValue } from '@/utils/serviceValueCalculations';
 
 interface RecentServicesTableProps {
   services: Service[];
@@ -71,7 +70,7 @@ export const RecentServicesTable = ({ services, onViewDetails }: RecentServicesT
                       )}
                     </TableCell>
                     <TableCell className="text-gray-700 py-4">
-                      <span className="font-semibold">{formatCurrency(getServiceDisplayValue(service))}</span>
+                      <span className="font-semibold">{formatCurrency(service.value)}</span>
                     </TableCell>
                     <TableCell className="py-4">
                       {getServiceStatusBadge(service.status)}
