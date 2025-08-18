@@ -1,5 +1,4 @@
 
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,6 +12,8 @@ import { useAddCost, useUpdateCost, useDeleteCost } from '@/hooks/useCosts';
 import { useCostCategories } from '@/hooks/useCostCategories';
 import { toast } from 'sonner';
 import { getCurrentChileDateString } from '@/utils/timezoneUtils';
+import { useCallback } from 'react';
+import { debounce } from 'lodash';
 
 interface ServiceCostDetail {
   id: string;
@@ -427,3 +428,76 @@ export const ServiceCostDetailsSection = ({
     </Card>
   );
 };
+
+
+// ✅ NUEVO: Debounce para prevenir múltiples llamadas rápidas
+const debouncedSaveCostDetail = useCallback(
+  debounce(async (costDetail: CostDetail, index: number) => {
+    // Lógica original de saveCostDetail
+    if (!serviceId) {
+      console.log('[ServiceCostDetailsSection] No serviceId, cost will be saved on service creation');
+      return;
+    }
+
+    if (!costDetail.category_id) {
+      toast.error("Debe seleccionar una categoría");
+      return;
+    }
+
+    if (!costDetail.description.trim()) {
+      toast.error("La descripción es obligatoria");
+      return;
+    }
+
+    if (costDetail.amount <= 0) {
+      toast.error("El monto debe ser mayor a 0");
+      return;
+    }
+
+    const costData = {
+      service_id: serviceId,
+      category_id: costDetail.category_id,
+      description: costDetail.description.trim(),
+      amount: costDetail.amount,
+      date: getCurrentChileDateString(),
+      notes: costDetail.notes || '',
+      subcategory: costDetail.subcategory || ''
+    };
+
+    if (costDetail.isExisting) {
+      // Update existing cost
+      updateCost({ id: costDetail.id, ...costData }, {
+        onSuccess: () => {
+          console.log('[ServiceCostDetailsSection] Cost updated successfully:', costDetail.id);
+          refetchCosts();
+          toast.success("Costo actualizado correctamente");
+        },
+        onError: (error) => {
+          console.error('[ServiceCostDetailsSection] Error updating cost:', error);
+          toast.error("Error al actualizar el costo");
+        }
+      });
+    } else {
+      // Add new cost
+      addCost(costData, {
+        onSuccess: (data) => {
+          console.log('[ServiceCostDetailsSection] Cost added successfully:', data);
+          
+          // Update the cost detail with the new ID from database
+          if (data && data[0]) {
+            updateCostDetail(costDetail.id, 'id', data[0].id);
+            updateCostDetail(costDetail.id, 'isExisting', true);
+          }
+          
+          refetchCosts();
+          toast.success("Costo agregado correctamente");
+        },
+        onError: (error) => {
+          console.error('[ServiceCostDetailsSection] Error adding cost:', error);
+          toast.error("Error al agregar el costo");
+        }
+      });
+    }
+  }, 300),
+  [serviceId, updateCost, addCost]
+);
