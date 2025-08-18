@@ -384,9 +384,14 @@ export const useServiceManager = () => {
       delete transformedData.custodyTotalAmount;
       delete transformedData.custodyNotes;
 
-      // ✅ NEW: Handle service costs (gastos) update
+      // ✅ MODIFICADO: Handle service costs (gastos) update con prevención de duplicación
       if (serviceData.costDetails && Array.isArray(serviceData.costDetails)) {
-        console.log('[updateService] Updating service costs:', serviceData.costDetails);
+      // ✅ NUEVO: Solo procesar costos si viene del formulario principal
+      const isFromMainForm = serviceData._source === 'main_form' || serviceData._processCosts === true;
+      const isFromServiceModal = serviceData._source === 'service_modal';
+      
+      if (isFromMainForm) {
+        console.log('[updateService] Processing service costs from main form:', serviceData.costDetails);
         
         const commissionCategoryId = '440296d4-09c2-4f3a-b02b-835f861df4c4';
         
@@ -396,18 +401,18 @@ export const useServiceManager = () => {
           .delete()
           .eq('service_id', id)
           .neq('category_id', commissionCategoryId);
-
+      
         if (deleteCostsError) {
           console.error('[updateService] Error deleting existing service costs:', deleteCostsError);
         } else {
           console.log('[updateService] Existing service costs (non-commission) deleted');
         }
-
+      
         // Filter valid cost details
         const validCostDetails = serviceData.costDetails.filter(cost => 
           cost.description && cost.amount > 0 && cost.category_id
         );
-
+      
         if (validCostDetails.length > 0) {
           // Get current service data for foreign keys
           const { data: currentService } = await supabase
@@ -415,7 +420,7 @@ export const useServiceManager = () => {
             .select('folio, service_date, crane_id')
             .eq('id', id)
             .single();
-
+      
           const serviceCosts = validCostDetails.map(cost => ({
             amount: cost.amount,
             category_id: cost.category_id,
@@ -428,19 +433,24 @@ export const useServiceManager = () => {
             crane_id: currentService?.crane_id,
             created_by: null
           }));
-
+      
           console.log('[updateService] Inserting updated service costs:', serviceCosts);
-
+      
           const { error: insertCostsError } = await supabase
             .from('costs')
             .insert(serviceCosts);
-
+      
           if (insertCostsError) {
             console.error('[updateService] Error inserting updated service costs:', insertCostsError);
           } else {
             console.log('[updateService] Service costs updated successfully');
           }
         }
+      } else if (isFromServiceModal) {
+        console.log('[updateService] Skipping cost processing - handled by ServiceDetailsModal components');
+      } else {
+        console.log('[updateService] Skipping cost processing - no source flag or not from main form');
+      }
       }
 
       // ✅ NEW: Handle operators update
