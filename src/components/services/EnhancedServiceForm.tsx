@@ -656,3 +656,23 @@ export const EnhancedServiceForm = ({
     </div>
   );
 };
+
+const handleSubmit = async (data: ServiceFormData) => {
+  try {
+    const serviceDataWithSource = {
+      ...data,
+      _source: 'main_form', // ✅ NUEVO: Flag de origen
+      _processCosts: true    // ✅ NUEVO: Indicar que debe procesar costos
+    };
+    
+    if (editingService) {
+      await updateService({ id: editingService.id, serviceData: serviceDataWithSource });
+    } else {
+      await createService(serviceDataWithSource);
+    }
+    
+    // ... resto del código
+  } catch (error) {
+    // ... manejo de errores
+  }
+};
