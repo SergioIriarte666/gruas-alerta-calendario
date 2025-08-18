@@ -26,12 +26,24 @@ export const getServiceStatusBadge = (status: string) => {
   return React.createElement(Badge, { className: `${config.className} border-none` }, config.label);
 };
 
-export const formatCurrency = (amount: number) => {
+export const formatCurrency = (amount: number | null | undefined) => {
+  // Validar que el valor sea un número válido
+  if (amount === null || amount === undefined || isNaN(Number(amount))) {
+    return '$0';
+  }
+  
+  // Convertir a número si es necesario
+  const numericAmount = Number(amount);
+  
+  if (isNaN(numericAmount)) {
+    return '$0';
+  }
+  
   return new Intl.NumberFormat('es-CL', {
     style: 'currency',
     currency: 'CLP',
     minimumFractionDigits: 0
-  }).format(amount);
+  }).format(numericAmount);
 };
 
 export const shouldShowVehicleInfo = (service: any) => {
