@@ -499,5 +499,5 @@ const debouncedSaveCostDetail = useCallback(
       });
     }
   }, 300),
-  [serviceId, updateCost, addCost]
+  [serviceId, updateCost, addCost, updateCostDetail, refetchCosts]
 );
