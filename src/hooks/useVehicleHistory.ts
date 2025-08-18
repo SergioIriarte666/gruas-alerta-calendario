@@ -35,6 +35,9 @@ const fetchVehicleHistory = async (licensePlate: string): Promise<VehicleHistory
       value,
       origin,
       destination,
+      custody_total_amount,
+      has_excess,
+      client_covered_amount,
       service_types(name),
       clients(name)
     `)
@@ -57,7 +60,11 @@ const fetchVehicleHistory = async (licensePlate: string): Promise<VehicleHistory
     client: item.clients || { name: 'Desconocido' },
     value: Number(item.value || 0),
     origin: item.origin || '',
-    destination: item.destination || ''
+    destination: item.destination || '',
+    // Agregar campos necesarios para getServiceValueForClosure
+    custody_total_amount: item.custody_total_amount,
+    has_excess: item.has_excess,
+    client_covered_amount: item.client_covered_amount
   }));
 };
 
@@ -68,11 +75,11 @@ export const useVehicleHistory = (licensePlate: string) => {
     enabled: !!licensePlate,
   });
 
-  // En la consulta, después de obtener los datos:
-  const processedEntries = data.map(entry => ({
+  // Process entries only if data exists
+  const processedEntries = data ? data.map(entry => ({
     ...entry,
-    value: getServiceValueForClosure(entry) // Usar el cálculo correcto
-  }));
+    value: getServiceValueForClosure(entry) // Use correct calculation
+  })) : [];
 
-  return { history: data ?? [], isLoading, error };
+  return { history: processedEntries, isLoading, error };
 };
