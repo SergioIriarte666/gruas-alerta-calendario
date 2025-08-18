@@ -7,8 +7,11 @@ import { Service } from '@/types';
 export const getServiceValueForClosure = (service: any): number => {
   // Priority 1: Custody service total amount (support both camelCase and snake_case)
   const custodyTotal = service.custody_total_amount || service.custodyTotalAmount;
+  const baseValue = service.value || 0;
+  
+  // Si es un servicio de custodia, sumar el valor base + custodia
   if (custodyTotal && custodyTotal > 0) {
-    return custodyTotal;
+    return baseValue + custodyTotal;
   }
   
   // Priority 2: Client covered amount for excess services
@@ -17,7 +20,7 @@ export const getServiceValueForClosure = (service: any): number => {
   }
   
   // Priority 3: Regular service value
-  return service.value || 0;
+  return baseValue;
 };
 
 /**
