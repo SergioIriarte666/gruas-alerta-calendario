@@ -269,7 +269,7 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose }: ServiceDetails
                    <DetailSection title="Finanzas" icon={DollarSign}>
                        <DetailItem 
                          icon={DollarSign} 
-                         label={isCustody ? "Valor Total Custodia" : "Valor del Servicio"} 
+                         label={isCustody ? "Valor Total Servicio" : "Valor del Servicio"} 
                          value={formatCurrency(displayServiceValue)} 
                          valueClass="text-lg text-tms-green font-bold" 
                        />
