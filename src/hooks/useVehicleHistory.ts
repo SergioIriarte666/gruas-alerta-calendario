@@ -2,6 +2,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { ServiceStatus } from '@/types';
+import { getServiceValueForClosure } from '@/utils/serviceValueCalculations';
 
 export interface VehicleHistoryEntry {
   id: string;
@@ -66,6 +67,12 @@ export const useVehicleHistory = (licensePlate: string) => {
     queryFn: () => fetchVehicleHistory(licensePlate),
     enabled: !!licensePlate,
   });
+
+  // En la consulta, después de obtener los datos:
+  const processedEntries = data.map(entry => ({
+    ...entry,
+    value: getServiceValueForClosure(entry) // Usar el cálculo correcto
+  }));
 
   return { history: data ?? [], isLoading, error };
 };
