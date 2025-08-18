@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -93,32 +94,30 @@ export const ServiceCostDetailsSection = ({
     !cat.name.toLowerCase().includes('comision')
   );
 
+  // ✅ AGREGAR: Estado para prevenir doble clic
+  const [isAddingCost, setIsAddingCost] = useState(false);
+  
   const addCostDetail = () => {
-    try {
-      console.log('[ServiceCostDetailsSection] ✅ addCostDetail clicked!');
-      
-      const newCostDetail: ServiceCostDetail = {
-        id: `temp-${Date.now()}`, // Use timestamp for unique ID
-        description: '',
-        amount: 0,
-        quantity: 1,
-        unitPrice: 0,
-        category_id: '',
-        subcategory: '',
-        isExisting: false
-      };
-      
-      const updatedCostDetails = [...costDetails, newCostDetail];
-      console.log('[ServiceCostDetailsSection] Adding new cost:', newCostDetail);
-      console.log('[ServiceCostDetailsSection] Updated array:', updatedCostDetails);
-      
-      onCostDetailsChange(updatedCostDetails);
-      setNextId(prev => prev + 1);
-      
-      console.log('[ServiceCostDetailsSection] ✅ Cost detail added successfully!');
-    } catch (error) {
-      console.error('[ServiceCostDetailsSection] ❌ Error adding cost:', error);
-    }
+    if (isAddingCost) return; // Prevenir múltiples clics
+    
+    setIsAddingCost(true);
+    
+    const newCostDetail: CostDetail = {
+      id: `temp-${Date.now()}`,
+      description: '',
+      amount: 0,
+      category_id: '',
+      subcategory: '',
+      notes: '',
+      quantity: 1,
+      unitPrice: 0,
+      isExisting: false
+    };
+    
+    setCostDetails(prev => [...prev, newCostDetail]);
+    
+    // Resetear el flag después de un breve delay
+    setTimeout(() => setIsAddingCost(false), 300);
   };
 
   const removeCostDetail = async (id: string) => {
