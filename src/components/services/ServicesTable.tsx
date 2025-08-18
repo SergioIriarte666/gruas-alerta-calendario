@@ -11,6 +11,7 @@ import { useDeviceType } from '@/hooks/useDeviceType';
 import { ServicesMobileView } from './ServicesMobileView';
 import { formatForDisplay } from '@/utils/timezoneUtils';
 import { shouldShowVehicleInfo, formatVehicleInfo, getServiceStatusBadge, formatCurrency } from '@/utils/statusHelpers';
+import { getServiceValueForClosure } from '@/utils/serviceValueCalculations';
 
 interface ServicesTableProps {
   services: Service[];
@@ -190,7 +191,7 @@ export const ServicesTable = ({
                         {service.operator?.name || 'Sin asignar'}
                       </TableCell>
                       <TableCell className="text-white font-medium">
-                        {formatCurrency(service.value)}
+                        {formatCurrency(getServiceValueForClosure(service))}
                       </TableCell>
                       <TableCell>
                         {getServiceStatusBadge(service.status)}
