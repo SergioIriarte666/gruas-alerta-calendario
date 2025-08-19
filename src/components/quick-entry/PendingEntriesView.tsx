@@ -1,0 +1,357 @@
+import React, { useEffect, useState } from 'react';
+import { CheckCircle, XCircle, Clock, Trash2, Plus, Eye } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { useQuickEntry, QuickEntry } from '@/hooks/useQuickEntry';
+import { QuickEntryForm } from './QuickEntryForm';
+import { QuickEntryPreview } from './QuickEntryPreview';
+import { useQuickEntryContext } from '@/contexts/QuickEntryContext';
+import { formatDistanceToNow } from 'date-fns';
+import { es } from 'date-fns/locale';
+import { EnhancedServiceForm } from '@/components/services/EnhancedServiceForm';
+import { useNavigate } from 'react-router-dom';
+
+const TYPE_LABELS = {
+  service: 'Servicio',
+  cost: 'Costo/Gasto',
+  inventory: 'Bodega',
+  maintenance: 'Mantenimiento',
+};
+
+const TYPE_COLORS = {
+  service: 'bg-blue-100 text-blue-800',
+  cost: 'bg-red-100 text-red-800',
+  inventory: 'bg-green-100 text-green-800',
+  maintenance: 'bg-yellow-100 text-yellow-800',
+};
+
+export function PendingEntriesView() {
+  const [entries, setEntries] = useState<QuickEntry[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [selectedEntry, setSelectedEntry] = useState<QuickEntry | null>(null);
+  const [isServiceFormOpen, setIsServiceFormOpen] = useState(false);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [previewEntry, setPreviewEntry] = useState<QuickEntry | null>(null);
+  const { getPendingEntries, updateEntryStatus, deleteEntry } = useQuickEntry();
+  const { refreshTrigger } = useQuickEntryContext();
+  const navigate = useNavigate();
+
+  const loadEntries = async () => {
+    setIsLoading(true);
+    try {
+      const data = await getPendingEntries();
+      setEntries(data);
+    } catch (error) {
+      console.error('Error loading entries:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadEntries();
+  }, []);
+
+  // Listen for refresh triggers from other components
+  useEffect(() => {
+    if (refreshTrigger > 0) {
+      loadEntries();
+    }
+  }, [refreshTrigger]);
+
+  // Helper function to prepare data for forms
+  const prepareDataForForm = (entry: QuickEntry) => {
+    const baseData = {
+      quickEntryId: entry.id,
+      date: entry.date,
+      description: entry.description,
+      notes: entry.notes,
+      amount: entry.amount,
+    };
+
+    switch (entry.type) {
+      case 'service':
+        return {
+          ...baseData,
+          value: entry.amount || 0,
+          requestDate: entry.date,
+          serviceDate: entry.date,
+          observations: `${entry.description}${entry.notes ? '\nNotas: ' + entry.notes : ''}`,
+        };
+      case 'cost':
+        return {
+          ...baseData,
+          amount: entry.amount || 0,
+          date: entry.date,
+          description: entry.description,
+          notes: entry.notes,
+        };
+      default:
+        return baseData;
+    }
+  };
+
+  const handleShowPreview = (entry: QuickEntry) => {
+    setPreviewEntry(entry);
+    setIsPreviewOpen(true);
+  };
+
+  const handlePreviewComplete = (entry: QuickEntry) => {
+    setIsPreviewOpen(false);
+    setPreviewEntry(null);
+    handleComplete(entry);
+  };
+
+  const handlePreviewDiscard = (id: string) => {
+    setIsPreviewOpen(false);
+    setPreviewEntry(null);
+    handleStatusUpdate(id, 'discarded');
+  };
+
+  const handleComplete = async (entry: QuickEntry) => {
+    setSelectedEntry(entry);
+    
+    try {
+      switch (entry.type) {
+        case 'service':
+          setIsServiceFormOpen(true);
+          break;
+        case 'cost':
+          // Navigate to costs page with prefilled data
+          navigate('/costs', { state: { prefilledData: prepareDataForForm(entry) } });
+          // Delete the quick entry after successful navigation
+          await deleteEntry(entry.id!);
+          loadEntries();
+          break;
+        case 'maintenance':
+          // Navigate to cranes page where maintenance functionality is implemented
+          navigate('/cranes', { state: { prefilledData: prepareDataForForm(entry) } });
+          // Delete the quick entry after successful navigation
+          await deleteEntry(entry.id!);
+          loadEntries();
+          break;
+        case 'inventory':
+          // Navigate to inventory page with prefilled data
+          navigate('/inventory', { state: { prefilledData: prepareDataForForm(entry) } });
+          // Delete the quick entry after successful navigation
+          await deleteEntry(entry.id!);
+          loadEntries();
+          break;
+        default:
+          // Fallback to direct completion
+          handleStatusUpdate(entry.id!, 'completed');
+      }
+    } catch (error) {
+      console.error('Error completing quick entry:', error);
+    }
+  };
+
+  const handleStatusUpdate = async (id: string, status: 'completed' | 'discarded') => {
+    await updateEntryStatus(id, status);
+    loadEntries();
+  };
+
+  const handleServiceFormSubmit = async (serviceData: any) => {
+    // After service is created, delete the quick entry
+    if (selectedEntry) {
+      try {
+        await deleteEntry(selectedEntry.id!);
+      } catch (error) {
+        console.error('Error deleting quick entry after service creation:', error);
+      }
+      setSelectedEntry(null);
+      setIsServiceFormOpen(false);
+      loadEntries();
+      navigate('/services');
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    await deleteEntry(id);
+    loadEntries();
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  if (entries.length === 0) {
+    return (
+      <Card>
+        <CardContent className="p-8 text-center">
+          <Clock className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+          <h3 className="text-lg font-medium mb-2">No hay registros pendientes</h3>
+          <p className="text-muted-foreground">
+            Los registros rápidos aparecerán aquí para ser completados
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-bold">Registros Pendientes</h2>
+        <div className="flex items-center gap-2">
+          <Badge variant="secondary">{entries.length} pendientes</Badge>
+          <Button
+            onClick={() => setIsFormOpen(true)}
+            size="sm"
+            className="flex items-center gap-2"
+          >
+            <Plus className="h-4 w-4" />
+            Nueva Entrada
+          </Button>
+        </div>
+      </div>
+
+      <div className="grid gap-4">
+        {entries.map((entry) => (
+          <Card key={entry.id}>
+            <CardHeader className="pb-3">
+              <div className="flex items-start justify-between">
+                <div className="flex items-center gap-2">
+                  <Badge className={TYPE_COLORS[entry.type]}>
+                    {TYPE_LABELS[entry.type]}
+                  </Badge>
+                  <span className="text-sm text-muted-foreground">
+                    {formatDistanceToNow(new Date(entry.created_at!), { 
+                      addSuffix: true, 
+                      locale: es 
+                    })}
+                  </span>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => handleDelete(entry.id!)}
+                  className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+              <CardTitle className="text-base">{entry.description}</CardTitle>
+            </CardHeader>
+            
+            <CardContent className="pt-0">
+              <div className="space-y-3">
+                {/* Details */}
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <span className="text-muted-foreground">Fecha:</span>
+                    <p className="font-medium">{new Date(entry.date).toLocaleDateString()}</p>
+                  </div>
+                  {entry.amount && (
+                    <div>
+                      <span className="text-muted-foreground">Monto:</span>
+                      <p className="font-medium">${entry.amount.toLocaleString()}</p>
+                    </div>
+                  )}
+                </div>
+
+                {entry.notes && (
+                  <div>
+                    <span className="text-muted-foreground text-sm">Notas:</span>
+                    <p className="text-sm">{entry.notes}</p>
+                  </div>
+                )}
+
+
+                {/* Actions */}
+                <div className="flex gap-2 pt-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleShowPreview(entry)}
+                    className="flex-1"
+                  >
+                    <Eye className="h-4 w-4 mr-2" />
+                    Ver detalle
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleComplete(entry)}
+                    className="flex-1"
+                  >
+                    <CheckCircle className="h-4 w-4 mr-2" />
+                    Completar
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleStatusUpdate(entry.id!, 'discarded')}
+                    className="flex-1"
+                  >
+                    <XCircle className="h-4 w-4 mr-2" />
+                    Descartar
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      <QuickEntryForm 
+        isOpen={isFormOpen} 
+        onClose={() => {
+          setIsFormOpen(false);
+          loadEntries();
+        }}
+      />
+
+      {/* Preview Modal */}
+      {previewEntry && (
+        <QuickEntryPreview
+          entry={previewEntry}
+          isOpen={isPreviewOpen}
+          onClose={() => {
+            setIsPreviewOpen(false);
+            setPreviewEntry(null);
+          }}
+          onComplete={handlePreviewComplete}
+          onDiscard={handlePreviewDiscard}
+        />
+      )}
+
+      {/* Service Form Modal */}
+      {isServiceFormOpen && selectedEntry && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+          <div className="bg-background rounded-lg shadow-lg w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-semibold">Completar Servicio</h2>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  onClick={() => {
+                    setIsServiceFormOpen(false);
+                    setSelectedEntry(null);
+                  }}
+                >
+                  <XCircle className="h-4 w-4" />
+                </Button>
+              </div>
+              <EnhancedServiceForm
+                prefilledData={prepareDataForForm(selectedEntry)}
+                onSubmit={handleServiceFormSubmit}
+                onCancel={() => {
+                  setIsServiceFormOpen(false);
+                  setSelectedEntry(null);
+                }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

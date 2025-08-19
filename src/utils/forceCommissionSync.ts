@@ -1,0 +1,205 @@
+import { supabase } from '@/integrations/supabase/client';
+import { createLogger } from '@/lib/logger';
+
+const logger = createLogger('ForceCommissionSync');
+
+/**
+ * Emergency function to force sync commissions for a specific service
+ * This is for immediate fixes when commissions aren't showing up
+ */
+export const forceCommissionSyncForService = async (serviceId: string): Promise<{ success: boolean; message: string }> => {
+  try {
+    logger.info('🚨 [FORCE_SYNC] Emergency commission sync for service:', serviceId);
+    
+    const commissionCategoryId = '440296d4-09c2-4f3a-b02b-835f861df4c4';
+    
+    // Step 1: Get service_resources with commissions
+    const { data: serviceResources, error: resourcesError } = await supabase
+      .from('service_resources')
+      .select(`
+        id,
+        operator_id,
+        commission_amount,
+        operators(id, name, rut)
+      `)
+      .eq('service_id', serviceId)
+      .eq('resource_type', 'operator')
+      .gt('commission_amount', 0);
+
+    if (resourcesError) {
+      logger.error('❌ [FORCE_SYNC] Error fetching service_resources:', resourcesError);
+      return { success: false, message: `Error al obtener recursos: ${resourcesError.message}` };
+    }
+
+    if (!serviceResources || serviceResources.length === 0) {
+      logger.info('ℹ️ [FORCE_SYNC] No commissions found in service_resources');
+      return { success: true, message: 'No hay comisiones para sincronizar' };
+    }
+
+    logger.info('✅ [FORCE_SYNC] Found commissions to sync:', {
+      count: serviceResources.length,
+      commissions: serviceResources.map(r => ({
+        operatorId: r.operator_id,
+        amount: r.commission_amount,
+        operatorName: r.operators?.name
+      }))
+    });
+
+    // Step 2: Get service data
+    const { data: service, error: serviceError } = await supabase
+      .from('services')
+      .select('folio, service_date, crane_id')
+      .eq('id', serviceId)
+      .single();
+
+    if (serviceError || !service) {
+      logger.error('❌ [FORCE_SYNC] Error fetching service:', serviceError);
+      return { success: false, message: `Error al obtener servicio: ${serviceError?.message}` };
+    }
+
+    // Step 3: Delete existing commission costs (avoid duplicates)
+    const { error: deleteError } = await supabase
+      .from('costs')
+      .delete()
+      .eq('service_id', serviceId)
+      .eq('category_id', commissionCategoryId);
+
+    if (deleteError) {
+      logger.error('❌ [FORCE_SYNC] Error deleting existing commissions:', deleteError);
+      return { success: false, message: `Error al eliminar comisiones existentes: ${deleteError.message}` };
+    }
+
+    logger.info('🗑️ [FORCE_SYNC] Deleted existing commission costs');
+
+    // Step 4: Create new commission costs
+    const commissionCosts = serviceResources.map(resource => ({
+      amount: resource.commission_amount,
+      category_id: commissionCategoryId,
+      service_id: serviceId,
+      operator_id: resource.operator_id,
+      service_folio: service.folio,
+      date: service.service_date,
+      description: `Comisión ${resource.operators?.name || 'Operador'}`,
+      subcategory: 'comisiones',
+      notes: 'Comisión sincronizada manualmente - corrección de emergencia',
+      crane_id: service.crane_id,
+      created_by: null
+    }));
+
+    const { data: insertedCosts, error: insertError } = await supabase
+      .from('costs')
+      .insert(commissionCosts)
+      .select('id, amount, operator_id, description');
+
+    if (insertError) {
+      logger.error('❌ [FORCE_SYNC] Error inserting commissions:', insertError);
+      return { success: false, message: `Error al crear comisiones: ${insertError.message}` };
+    }
+
+    logger.info('🎉 [FORCE_SYNC] Commission sync completed successfully:', {
+      serviceId,
+      serviceFolio: service.folio,
+      commissionsCreated: insertedCosts?.length || 0,
+      totalAmount: commissionCosts.reduce((sum, c) => sum + c.amount, 0),
+      insertedCosts: insertedCosts?.map(c => ({
+        id: c.id,
+        amount: c.amount,
+        operatorId: c.operator_id,
+        description: c.description
+      })) || []
+    });
+
+    // Step 5: Verify the sync worked
+    const { data: verificationCosts } = await supabase
+      .from('costs')
+      .select('id, amount, description, operator_id')
+      .eq('service_id', serviceId)
+      .eq('category_id', commissionCategoryId);
+
+    logger.info('✅ [FORCE_SYNC] VERIFICATION - Final costs in database:', {
+      count: verificationCosts?.length || 0,
+      costs: verificationCosts?.map(c => ({
+        id: c.id,
+        amount: c.amount,
+        description: c.description,
+        operatorId: c.operator_id
+      })) || []
+    });
+
+    return { 
+      success: true, 
+      message: `Sincronizadas ${insertedCosts?.length || 0} comisiones exitosamente para ${service.folio}` 
+    };
+
+  } catch (error) {
+    logger.error('💥 [FORCE_SYNC] Critical error:', error);
+    return { success: false, message: `Error crítico: ${error}` };
+  }
+};
+
+/**
+ * Diagnose commission sync issues for a service
+ */
+export const diagnoseCommissionSync = async (serviceId: string) => {
+  try {
+    const commissionCategoryId = '440296d4-09c2-4f3a-b02b-835f861df4c4';
+    
+    // Check service_resources
+    const { data: serviceResources } = await supabase
+      .from('service_resources')
+      .select(`
+        id,
+        operator_id,
+        commission_amount,
+        operators(id, name, rut)
+      `)
+      .eq('service_id', serviceId)
+      .eq('resource_type', 'operator');
+
+    // Check costs
+    const { data: costs } = await supabase
+      .from('costs')
+      .select('id, amount, description, operator_id')
+      .eq('service_id', serviceId)
+      .eq('category_id', commissionCategoryId);
+
+    // Check service info
+    const { data: service } = await supabase
+      .from('services')
+      .select('id, folio, service_date')
+      .eq('id', serviceId)
+      .single();
+
+    const diagnosis = {
+      serviceId,
+      serviceFolio: service?.folio,
+      serviceDate: service?.service_date,
+      serviceResources: {
+        total: serviceResources?.length || 0,
+        withCommissions: serviceResources?.filter(r => r.commission_amount > 0).length || 0,
+        details: serviceResources?.map(r => ({
+          operatorId: r.operator_id,
+          operatorName: r.operators?.name,
+          commission: r.commission_amount
+        })) || []
+      },
+      costs: {
+        total: costs?.length || 0,
+        details: costs?.map(c => ({
+          id: c.id,
+          amount: c.amount,
+          description: c.description,
+          operatorId: c.operator_id
+        })) || []
+      },
+      syncNeeded: (serviceResources?.filter(r => r.commission_amount > 0).length || 0) > (costs?.length || 0)
+    };
+
+    logger.info('🔍 [DIAGNOSIS] Commission sync status:', diagnosis);
+    return diagnosis;
+
+  } catch (error) {
+    logger.error('💥 [DIAGNOSIS] Error during diagnosis:', error);
+    return null;
+  }
+};

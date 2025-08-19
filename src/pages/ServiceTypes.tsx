@@ -1,0 +1,176 @@
+
+import { useState } from 'react';
+import { useServiceTypesManagement } from '@/hooks/useServiceTypesManagement';
+import { ServiceTypeConfig } from '@/types/serviceTypes';
+import { ServiceTypesHeader } from '@/components/service-types/ServiceTypesHeader';
+import { ServiceTypesTable } from '@/components/service-types/ServiceTypesTable';
+import { ServiceTypeForm } from '@/components/service-types/ServiceTypeForm';
+import { ServiceTypeDetailsModal } from '@/components/service-types/ServiceTypeDetailsModal';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Card, CardContent } from '@/components/ui/card';
+import { Search } from 'lucide-react';
+import { useUser } from '@/contexts/UserContext';
+import { toast } from 'sonner';
+
+const ServiceTypes = () => {
+  const { user } = useUser();
+  const { serviceTypes, loading, createServiceType, updateServiceType, deleteServiceType, refetch } = useServiceTypesManagement();
+  const [selectedServiceType, setSelectedServiceType] = useState<ServiceTypeConfig | null>(null);
+  const [editingServiceType, setEditingServiceType] = useState<ServiceTypeConfig | null>(null);
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+
+  console.log('ServiceTypes: Current user role:', user?.role);
+
+  const isAdmin = user?.role === 'admin';
+
+  if (!isAdmin) {
+    console.log('ServiceTypes: Access denied - user is not admin');
+    return (
+      <div className="flex items-center justify-center min-h-96">
+        <div className="text-center">
+          <h2 className="text-xl font-semibold text-white mb-2">Acceso Restringido</h2>
+          <p className="text-gray-400">Solo los administradores pueden gestionar tipos de servicio.</p>
+          <p className="text-gray-500 text-sm mt-2">Tu rol actual: {user?.role || 'No definido'}</p>
+        </div>
+      </div>
+    );
+  }
+
+  console.log('ServiceTypes: Admin access granted, showing page');
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await refetch();
+      toast.success('Datos actualizados correctamente');
+    } catch (error) {
+      console.error('Error refreshing:', error);
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
+  const handleNewServiceType = () => {
+    setEditingServiceType(null);
+    setIsFormOpen(true);
+  };
+
+  const handleEdit = (serviceType: ServiceTypeConfig) => {
+    setEditingServiceType(serviceType);
+    setIsFormOpen(true);
+  };
+
+  const handleView = (serviceType: ServiceTypeConfig) => {
+    setSelectedServiceType(serviceType);
+    setIsDetailsOpen(true);
+  };
+
+  const handleDelete = async (serviceType: ServiceTypeConfig) => {
+    if (!confirm(`¿Estás seguro de que deseas eliminar el tipo de servicio "${serviceType.name}"?`)) {
+      return;
+    }
+
+    try {
+      await deleteServiceType(serviceType.id);
+    } catch (error) {
+      console.error('Error deleting service type:', error);
+    }
+  };
+
+  const handleFormSubmit = async (data: any) => {
+    try {
+      if (editingServiceType) {
+        await updateServiceType(editingServiceType.id, data);
+      } else {
+        await createServiceType(data);
+      }
+      setIsFormOpen(false);
+      setEditingServiceType(null);
+    } catch (error) {
+      console.error('Error submitting form:', error);
+    }
+  };
+
+  const handleFormClose = () => {
+    setIsFormOpen(false);
+    setEditingServiceType(null);
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-96">
+        <div className="text-white">Cargando tipos de servicio...</div>
+      </div>
+    );
+  }
+
+  // Filter service types based on search term
+  const filteredServiceTypes = serviceTypes.filter(serviceType =>
+    serviceType.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (serviceType.description || '').toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  return (
+    <div className="space-y-6 animate-fade-in">
+      <ServiceTypesHeader
+        onNewServiceType={handleNewServiceType}
+        onRefresh={handleRefresh}
+        refreshing={refreshing}
+      />
+
+      {/* Search Bar */}
+      <Card className="glass-card">
+        <CardContent className="p-6">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <input
+              type="text"
+              placeholder="Buscar tipos de servicio..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 bg-white border border-gray-300 rounded-lg text-black placeholder-gray-400 focus:border-tms-green focus:outline-none"
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      <ServiceTypesTable
+        serviceTypes={filteredServiceTypes}
+        onEdit={handleEdit}
+        onDelete={handleDelete}
+        onView={handleView}
+      />
+
+      <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] bg-gray-800 border-gray-700 p-0 gap-0">
+          <DialogHeader className="p-6 pb-0">
+            <DialogTitle className="text-white text-xl">
+              {editingServiceType ? 'Editar' : 'Crear'} Tipo de Servicio
+            </DialogTitle>
+          </DialogHeader>
+          <div className="p-6 pt-4">
+            <ServiceTypeForm
+              serviceType={editingServiceType}
+              onSubmit={handleFormSubmit}
+              onCancel={handleFormClose}
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <ServiceTypeDetailsModal
+        serviceType={selectedServiceType}
+        isOpen={isDetailsOpen}
+        onClose={() => {
+          setIsDetailsOpen(false);
+          setSelectedServiceType(null);
+        }}
+      />
+    </div>
+  );
+};
+
+export default ServiceTypes;

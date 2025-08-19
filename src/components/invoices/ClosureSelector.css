@@ -1,0 +1,99 @@
+/* ClosureSelector Specific Styles */
+.ClosureSelector-container {
+  width: 100%;
+}
+
+/* Trigger styling */
+.ClosureSelector-container [data-radix-select-trigger] {
+  min-width: 0 !important;
+  width: 100% !important;
+  background-color: rgba(255, 255, 255, 0.05) !important;
+  border-color: #374151 !important;
+  color: #f8fafc !important;
+  height: auto !important;
+  min-height: 60px !important;
+  padding: 12px !important;
+}
+
+/* SelectValue - the key fix */
+.ClosureSelector-container [data-radix-select-trigger] [data-radix-select-value] {
+  overflow: visible !important;
+  text-overflow: unset !important;
+  white-space: normal !important;
+  display: block !important;
+  width: 100% !important;
+  max-width: none !important;
+  line-height: 1.4 !important;
+}
+
+.ClosureSelector-container [data-radix-select-trigger] > span {
+  overflow: visible !important;
+  text-overflow: unset !important;
+  white-space: normal !important;
+  display: block !important;
+  width: 100% !important;
+  max-width: none !important;
+  line-height: 1.4 !important;
+}
+
+/* Content styling */
+.ClosureSelector-container [data-radix-select-content] {
+  min-width: 600px !important;
+  max-width: 90vw !important;
+  width: auto !important;
+  background-color: #1f2937 !important;
+  border-color: #374151 !important;
+  color: #f8fafc !important;
+  z-index: 50 !important;
+}
+
+/* Item styling */
+.ClosureSelector-container [data-radix-select-item] {
+  white-space: normal !important;
+  word-wrap: break-word !important;
+  min-height: auto !important;
+  height: auto !important;
+  padding: 12px 8px !important;
+  color: #f8fafc !important;
+}
+
+.ClosureSelector-container [data-radix-select-item]:hover {
+  background-color: rgba(156, 250, 36, 0.15) !important;
+}
+
+.ClosureSelector-container [data-radix-select-item] .text-green-600 {
+  color: rgb(156, 250, 36) !important;
+}
+
+/* Item text styling */
+.ClosureSelector-container [data-radix-select-item] [data-radix-select-item-text] {
+  color: #f8fafc !important;
+  white-space: normal !important;
+  word-wrap: break-word !important;
+}
+
+/* Multi-line layout for items */
+.ClosureSelector-item-content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+}
+
+.ClosureSelector-folio {
+  font-weight: 500;
+  font-size: 0.875rem;
+  color: #f8fafc !important;
+}
+
+.ClosureSelector-date,
+.ClosureSelector-client {
+  font-size: 0.75rem;
+  color: #94a3b8 !important;
+}
+
+.ClosureSelector-amount {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: rgb(156, 250, 36) !important;
+}
