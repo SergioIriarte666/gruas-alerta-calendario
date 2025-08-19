@@ -11,81 +11,78 @@ import {
   Plus, 
   Edit2, 
   Trash2, 
-  CreditCard, 
-  Calendar,
-  CheckCircle,
-  Clock,
-  AlertTriangle,
-  X,
+  Building2, 
+  Mail, 
+  Phone, 
+  MapPin,
+  ToggleLeft,
+  ToggleRight,
   Loader2
 } from 'lucide-react';
-import { useSupplierPayments, getStatusLabel, getStatusColor } from '@/hooks/useSupplierPayments';
 import { useSuppliers, getCategoryLabel } from '@/hooks/useSuppliers';
-import { PaymentForm } from './PaymentForm';
-import { SupplierPayment, SupplierPaymentStatus } from '@/types/suppliers';
+import { SupplierForm } from './SupplierForm';
+import { Supplier, SupplierCategory } from '@/types/suppliers';
 import { formatCurrency } from '@/lib/utils';
-import { format } from 'date-fns';
-import { es } from 'date-fns/locale';
 
-export const PaymentList: React.FC = () => {
+export const SupplierList: React.FC = () => {
   const { 
-    payments, 
+    suppliers, 
     isLoading, 
-    deletePayment, 
-    markPaymentAsPaid,
-    updateOverduePayments,
+    deleteSupplier, 
+    toggleSupplierStatus, 
     isDeleting 
-  } = useSupplierPayments();
-  
-  const { suppliers } = useSuppliers();
+  } = useSuppliers();
 
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedStatus, setSelectedStatus] = useState<string>('all');
-  const [selectedSupplier, setSelectedSupplier] = useState<string>('all');
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
   const [showForm, setShowForm] = useState(false);
-  const [editingPayment, setEditingPayment] = useState<SupplierPayment | null>(null);
+  const [editingSupplier, setEditingSupplier] = useState<Supplier | null>(null);
 
-  const statusOptions: SupplierPaymentStatus[] = ['pending', 'paid', 'overdue', 'cancelled'];
+  const categories: SupplierCategory[] = [
+    'combustible',
+    'mantenimiento',
+    'seguros', 
+    'peajes',
+    'salarios',
+    'administrativos',
+    'impuestos',
+    'comision_operador',
+    'otros'
+  ];
 
-  const filteredPayments = useMemo(() => {
-    return payments.filter(payment => {
-      const supplier = suppliers.find(s => s.id === payment.supplier_id);
-      const supplierName = supplier?.name || '';
+  const filteredSuppliers = useMemo(() => {
+    return suppliers.filter(supplier => {
+      const matchesSearch = supplier.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          supplier.rut.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          (supplier.email && supplier.email.toLowerCase().includes(searchTerm.toLowerCase()));
       
-      const matchesSearch = payment.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          supplierName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          (payment.reference_number && payment.reference_number.toLowerCase().includes(searchTerm.toLowerCase()));
+      const matchesCategory = selectedCategory === 'all' || supplier.category === selectedCategory;
       
-      const matchesStatus = selectedStatus === 'all' || payment.status === selectedStatus;
-      const matchesSupplier = selectedSupplier === 'all' || payment.supplier_id === selectedSupplier;
+      const matchesStatus = statusFilter === 'all' || 
+                          (statusFilter === 'active' && supplier.is_active) ||
+                          (statusFilter === 'inactive' && !supplier.is_active);
 
-      return matchesSearch && matchesStatus && matchesSupplier;
+      return matchesSearch && matchesCategory && matchesStatus;
     });
-  }, [payments, suppliers, searchTerm, selectedStatus, selectedSupplier]);
+  }, [suppliers, searchTerm, selectedCategory, statusFilter]);
 
-  const handleEdit = (payment: SupplierPayment) => {
-    setEditingPayment(payment);
+  const handleEdit = (supplier: Supplier) => {
+    setEditingSupplier(supplier);
     setShowForm(true);
   };
 
   const handleCloseForm = () => {
     setShowForm(false);
-    setEditingPayment(null);
+    setEditingSupplier(null);
   };
 
   const handleDelete = (id: string) => {
-    deletePayment(id);
+    deleteSupplier(id);
   };
 
-  const handleMarkAsPaid = (payment: SupplierPayment) => {
-    markPaymentAsPaid({ 
-      id: payment.id, 
-      paid_amount: payment.amount 
-    });
-  };
-
-  const getSupplierName = (supplierId: string) => {
-    return suppliers.find(s => s.id === supplierId)?.name || 'Proveedor no encontrado';
+  const handleToggleStatus = (supplier: Supplier) => {
+    toggleSupplierStatus({ id: supplier.id, is_active: !supplier.is_active });
   };
 
   if (isLoading) {
@@ -98,30 +95,20 @@ export const PaymentList: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {/* Header and Actions */}
+      {/* Header and Filters */}
       <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-white">Pagos a Proveedores</h2>
-          <p className="text-gray-400">Gestiona los pagos pendientes y realizados</p>
+          <h2 className="text-2xl font-bold text-white">Proveedores</h2>
+          <p className="text-gray-400">Gestiona los proveedores del sistema</p>
         </div>
 
-        <div className="flex gap-2">
-          <Button
-            onClick={() => updateOverduePayments()}
-            variant="outline"
-            className="border-yellow-500/30 text-yellow-300 hover:bg-yellow-500/20"
-          >
-            <Clock className="h-4 w-4 mr-2" />
-            Actualizar Vencidos
-          </Button>
-          <Button
-            onClick={() => setShowForm(true)}
-            className="bg-blue-600 hover:bg-blue-700"
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Nuevo Pago
-          </Button>
-        </div>
+        <Button
+          onClick={() => setShowForm(true)}
+          className="bg-blue-600 hover:bg-blue-700"
+        >
+          <Plus className="h-4 w-4 mr-2" />
+          Nuevo Proveedor
+        </Button>
       </div>
 
       {/* Filters */}
@@ -133,7 +120,7 @@ export const PaymentList: React.FC = () => {
               <div className="relative">
                 <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                 <Input
-                  placeholder="Buscar por descripción, proveedor..."
+                  placeholder="Buscar por nombre, RUT o email..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10 bg-gray-700 border-gray-600 text-white"
@@ -142,22 +129,22 @@ export const PaymentList: React.FC = () => {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm text-gray-300">Estado</label>
-              <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+              <label className="text-sm text-gray-300">Categoría</label>
+              <Select value={selectedCategory} onValueChange={setSelectedCategory}>
                 <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="bg-gray-700 border-gray-600">
                   <SelectItem value="all" className="text-white hover:bg-gray-600">
-                    Todos los estados
+                    Todas las categorías
                   </SelectItem>
-                  {statusOptions.map((status) => (
+                  {categories.map((category) => (
                     <SelectItem 
-                      key={status} 
-                      value={status}
+                      key={category} 
+                      value={category}
                       className="text-white hover:bg-gray-600"
                     >
-                      {getStatusLabel(status)}
+                      {getCategoryLabel(category)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -165,24 +152,21 @@ export const PaymentList: React.FC = () => {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm text-gray-300">Proveedor</label>
-              <Select value={selectedSupplier} onValueChange={setSelectedSupplier}>
+              <label className="text-sm text-gray-300">Estado</label>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
                 <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="bg-gray-700 border-gray-600">
                   <SelectItem value="all" className="text-white hover:bg-gray-600">
-                    Todos los proveedores
+                    Todos
                   </SelectItem>
-                  {suppliers.map((supplier) => (
-                    <SelectItem 
-                      key={supplier.id} 
-                      value={supplier.id}
-                      className="text-white hover:bg-gray-600"
-                    >
-                      {supplier.name}
-                    </SelectItem>
-                  ))}
+                  <SelectItem value="active" className="text-white hover:bg-gray-600">
+                    Activos
+                  </SelectItem>
+                  <SelectItem value="inactive" className="text-white hover:bg-gray-600">
+                    Inactivos
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -194,20 +178,20 @@ export const PaymentList: React.FC = () => {
       <Card className="bg-gray-800 border-gray-700">
         <CardHeader>
           <CardTitle className="text-white">
-            Pagos ({filteredPayments.length})
+            Proveedores ({filteredSuppliers.length})
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {filteredPayments.length === 0 ? (
+          {filteredSuppliers.length === 0 ? (
             <div className="text-center py-8">
-              <CreditCard className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+              <Building2 className="h-16 w-16 text-gray-400 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-white mb-2">
-                No se encontraron pagos
+                No se encontraron proveedores
               </h3>
               <p className="text-gray-400">
-                {searchTerm || selectedStatus !== 'all' || selectedSupplier !== 'all'
+                {searchTerm || selectedCategory !== 'all' || statusFilter !== 'all'
                   ? 'Intenta ajustar los filtros de búsqueda'
-                  : 'Comienza agregando tu primer pago'
+                  : 'Comienza agregando tu primer proveedor'
                 }
               </p>
             </div>
@@ -217,88 +201,96 @@ export const PaymentList: React.FC = () => {
                 <TableHeader>
                   <TableRow className="border-gray-700">
                     <TableHead className="text-gray-300">Proveedor</TableHead>
-                    <TableHead className="text-gray-300">Descripción</TableHead>
-                    <TableHead className="text-gray-300">Monto</TableHead>
-                    <TableHead className="text-gray-300">Vencimiento</TableHead>
+                    <TableHead className="text-gray-300">Contacto</TableHead>
+                    <TableHead className="text-gray-300">Categoría</TableHead>
+                    <TableHead className="text-gray-300">Pagos</TableHead>
                     <TableHead className="text-gray-300">Estado</TableHead>
                     <TableHead className="text-gray-300">Acciones</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredPayments.map((payment) => (
-                    <TableRow key={payment.id} className="border-gray-700">
+                  {filteredSuppliers.map((supplier) => (
+                    <TableRow key={supplier.id} className="border-gray-700">
                       <TableCell>
                         <div className="space-y-1">
-                          <div className="font-medium text-white">
-                            {getSupplierName(payment.supplier_id)}
-                          </div>
-                          {payment.reference_number && (
-                            <div className="text-sm text-gray-400">
-                              Ref: {payment.reference_number}
-                            </div>
-                          )}
+                          <div className="font-medium text-white">{supplier.name}</div>
+                          <div className="text-sm text-gray-400">{supplier.rut}</div>
                         </div>
                       </TableCell>
                       
                       <TableCell>
                         <div className="space-y-1">
-                          <div className="text-white">{payment.description}</div>
-                          <Badge variant="outline" className="border-blue-500/30 text-blue-300">
-                            {getCategoryLabel(payment.category)}
-                          </Badge>
-                        </div>
-                      </TableCell>
-
-                      <TableCell>
-                        <div className="space-y-1">
-                          <div className="font-medium text-white">
-                            {formatCurrency(payment.amount)}
-                          </div>
-                          {payment.paid_amount && payment.paid_amount !== payment.amount && (
-                            <div className="text-sm text-green-400">
-                              Pagado: {formatCurrency(payment.paid_amount)}
+                          {supplier.email && (
+                            <div className="flex items-center text-sm text-gray-300">
+                              <Mail className="h-3 w-3 mr-1" />
+                              {supplier.email}
+                            </div>
+                          )}
+                          {supplier.phone && (
+                            <div className="flex items-center text-sm text-gray-300">
+                              <Phone className="h-3 w-3 mr-1" />
+                              {supplier.phone}
+                            </div>
+                          )}
+                          {supplier.contact_name && (
+                            <div className="text-sm text-gray-400">
+                              {supplier.contact_name}
                             </div>
                           )}
                         </div>
                       </TableCell>
 
                       <TableCell>
-                        <div className="space-y-1">
-                          <div className="text-white">
-                            {format(new Date(payment.due_date), 'dd/MM/yyyy', { locale: es })}
-                          </div>
-                          {payment.paid_date && (
-                            <div className="text-sm text-green-400">
-                              Pagado: {format(new Date(payment.paid_date), 'dd/MM/yyyy', { locale: es })}
-                            </div>
-                          )}
-                        </div>
-                      </TableCell>
-
-                      <TableCell>
-                        <Badge className={getStatusColor(payment.status)}>
-                          {getStatusLabel(payment.status)}
+                        <Badge variant="outline" className="border-blue-500/30 text-blue-300">
+                          {getCategoryLabel(supplier.category)}
                         </Badge>
                       </TableCell>
 
                       <TableCell>
-                        <div className="flex items-center space-x-2">
-                          {payment.status === 'pending' && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleMarkAsPaid(payment)}
-                              className="text-green-400 hover:text-green-300"
-                              title="Marcar como pagado"
-                            >
-                              <CheckCircle className="h-4 w-4" />
-                            </Button>
+                        <div className="space-y-1">
+                          <div className="text-sm text-white">
+                            {supplier.total_payments || 0} pagos
+                          </div>
+                          {(supplier.pending_amount || 0) > 0 && (
+                            <div className="text-sm text-yellow-400">
+                              Pendiente: {formatCurrency(supplier.pending_amount || 0)}
+                            </div>
                           )}
-                          
+                          {(supplier.overdue_count || 0) > 0 && (
+                            <div className="text-sm text-red-400">
+                              {supplier.overdue_count} vencidos
+                            </div>
+                          )}
+                        </div>
+                      </TableCell>
+
+                      <TableCell>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleToggleStatus(supplier)}
+                          className="p-0 h-auto"
+                        >
+                          {supplier.is_active ? (
+                            <div className="flex items-center text-green-400">
+                              <ToggleRight className="h-4 w-4 mr-1" />
+                              Activo
+                            </div>
+                          ) : (
+                            <div className="flex items-center text-gray-400">
+                              <ToggleLeft className="h-4 w-4 mr-1" />
+                              Inactivo
+                            </div>
+                          )}
+                        </Button>
+                      </TableCell>
+
+                      <TableCell>
+                        <div className="flex items-center space-x-2">
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => handleEdit(payment)}
+                            onClick={() => handleEdit(supplier)}
                             className="text-blue-400 hover:text-blue-300"
                           >
                             <Edit2 className="h-4 w-4" />
@@ -317,11 +309,11 @@ export const PaymentList: React.FC = () => {
                             <AlertDialogContent className="bg-gray-800 border-gray-700">
                               <AlertDialogHeader>
                                 <AlertDialogTitle className="text-white">
-                                  ¿Eliminar pago?
+                                  ¿Eliminar proveedor?
                                 </AlertDialogTitle>
                                 <AlertDialogDescription className="text-gray-300">
                                   Esta acción no se puede deshacer. Se eliminará permanentemente
-                                  el pago "{payment.description}".
+                                  el proveedor "{supplier.name}" del sistema.
                                 </AlertDialogDescription>
                               </AlertDialogHeader>
                               <AlertDialogFooter>
@@ -329,7 +321,7 @@ export const PaymentList: React.FC = () => {
                                   Cancelar
                                 </AlertDialogCancel>
                                 <AlertDialogAction
-                                  onClick={() => handleDelete(payment.id)}
+                                  onClick={() => handleDelete(supplier.id)}
                                   className="bg-red-600 hover:bg-red-700"
                                 >
                                   Eliminar
@@ -350,8 +342,8 @@ export const PaymentList: React.FC = () => {
 
       {/* Form Modal */}
       {showForm && (
-        <PaymentForm
-          payment={editingPayment || undefined}
+        <SupplierForm
+          supplier={editingSupplier || undefined}
           onClose={handleCloseForm}
         />
       )}
