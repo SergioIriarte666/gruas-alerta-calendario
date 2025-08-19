@@ -3,10 +3,7 @@ import { Client, Service } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { CalendarDays, FileX, Clock, TrendingUp } from 'lucide-react';
-// Cambiar esta línea:
 import { formatDate } from 'date-fns';
-// Por esta:
-import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { formatVehicleInfo, shouldShowVehicleInfo } from '@/utils/statusHelpers';
 

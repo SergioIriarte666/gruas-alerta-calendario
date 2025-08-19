@@ -5,8 +5,7 @@ import { MaintenanceCharts } from './maintenance/MaintenanceCharts';
 import { MaintenanceTables } from './maintenance/MaintenanceTables';
 import { MaintenanceFilters } from './maintenance/MaintenanceFilters';
 import { useState } from 'react';
-
-import { format } from 'date-fns';
+import { format, formatDate } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Button } from '@/components/ui/button';
 import { Download, FileText, FileSpreadsheet } from 'lucide-react';

@@ -3,10 +3,7 @@ import { Client, ServiceClosure } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { CalendarDays, FileText, TrendingUp, Package } from 'lucide-react';
-// Cambiar esta línea:
 import { formatDate } from 'date-fns';
-// Por esta:
-import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
 interface MetricCardProps {

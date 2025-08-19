@@ -1,11 +1,27 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { PaymentFormData, SupplierPayment, SupplierPaymentStatus } from '@/types/suppliers';
 import { toast } from 'sonner';
-import { 
-  SupplierPayment, 
-  PaymentFormData,
-  SupplierPaymentStatus 
-} from '@/types/suppliers';
+
+export const getStatusLabel = (status: SupplierPaymentStatus): string => {
+  const labels = {
+    pending: 'Pendiente',
+    paid: 'Pagado',
+    overdue: 'Vencido',
+    cancelled: 'Cancelado'
+  };
+  return labels[status] || status;
+};
+
+export const getStatusColor = (status: SupplierPaymentStatus): string => {
+  const colors = {
+    pending: 'bg-yellow-500/20 text-yellow-300 border-yellow-500/30',
+    paid: 'bg-green-500/20 text-green-300 border-green-500/30',
+    overdue: 'bg-red-500/20 text-red-300 border-red-500/30',
+    cancelled: 'bg-gray-500/20 text-gray-300 border-gray-500/30'
+  };
+  return colors[status] || colors.pending;
+};
 
 export const useSupplierPayments = () => {
   const queryClient = useQueryClient();
@@ -16,7 +32,7 @@ export const useSupplierPayments = () => {
       const { data, error } = await supabase
         .from('supplier_payments')
         .select('*')
-        .order('due_date', { ascending: false });
+        .order('due_date', { ascending: true });
 
       if (error) throw error;
       return data || [];
@@ -25,91 +41,78 @@ export const useSupplierPayments = () => {
 
   const createPaymentMutation = useMutation({
     mutationFn: async (data: PaymentFormData): Promise<SupplierPayment> => {
-      const { data: newPayment, error } = await supabase
+      const { data: payment, error } = await supabase
         .from('supplier_payments')
-        .insert({
-          supplier_id: data.supplier_id,
-          amount: data.amount,
-          due_date: data.due_date,
-          description: data.description,
-          category: data.category,
-          reference_number: data.reference_number,
-          notes: data.notes,
-          status: data.status,
-          created_by: (await supabase.auth.getUser()).data.user?.id
-        })
+        .insert([data])
         .select()
         .single();
 
       if (error) throw error;
-      return newPayment;
+      return payment;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['supplier-payments'] });
-      queryClient.invalidateQueries({ queryKey: ['suppliers'] });
+      queryClient.invalidateQueries({ queryKey: ['supplier-stats'] });
       toast.success('Pago creado exitosamente');
     },
     onError: (error) => {
       console.error('Error creating payment:', error);
-      toast.error('Error al crear pago');
+      toast.error('Error al crear el pago');
     }
   });
 
   const updatePaymentMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: Partial<PaymentFormData> }): Promise<SupplierPayment> => {
-      const { data: updatedPayment, error } = await supabase
+      const { data: payment, error } = await supabase
+        .from('supplier_payments')
+        .update(data)
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return payment;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['supplier-payments'] });
+      queryClient.invalidateQueries({ queryKey: ['supplier-stats'] });
+      toast.success('Pago actualizado exitosamente');
+    },
+    onError: (error) => {
+      console.error('Error updating payment:', error);
+      toast.error('Error al actualizar el pago');
+    }
+  });
+
+  const markPaymentAsPaidMutation = useMutation({
+    mutationFn: async ({ id, paid_amount }: { id: string; paid_amount: number }) => {
+      const { data, error } = await supabase
         .from('supplier_payments')
         .update({
-          ...data,
-          updated_by: (await supabase.auth.getUser()).data.user?.id,
-          updated_at: new Date().toISOString()
+          status: 'paid',
+          paid_date: new Date().toISOString().split('T')[0],
+          paid_amount
         })
         .eq('id', id)
         .select()
         .single();
 
       if (error) throw error;
-      return updatedPayment;
+      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['supplier-payments'] });
-      queryClient.invalidateQueries({ queryKey: ['suppliers'] });
-      toast.success('Pago actualizado exitosamente');
-    },
-    onError: (error) => {
-      console.error('Error updating payment:', error);
-      toast.error('Error al actualizar pago');
-    }
-  });
-
-  const markPaymentAsPaidMutation = useMutation({
-    mutationFn: async ({ id, paid_amount }: { id: string; paid_amount: number }): Promise<void> => {
-      const { error } = await supabase
-        .from('supplier_payments')
-        .update({
-          status: 'paid',
-          paid_date: new Date().toISOString().split('T')[0],
-          paid_amount,
-          updated_by: (await supabase.auth.getUser()).data.user?.id,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', id);
-
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['supplier-payments'] });
-      queryClient.invalidateQueries({ queryKey: ['suppliers'] });
+      queryClient.invalidateQueries({ queryKey: ['supplier-stats'] });
       toast.success('Pago marcado como pagado');
     },
     onError: (error) => {
       console.error('Error marking payment as paid:', error);
-      toast.error('Error al marcar pago como pagado');
+      toast.error('Error al marcar el pago como pagado');
     }
   });
 
   const deletePaymentMutation = useMutation({
-    mutationFn: async (id: string): Promise<void> => {
+    mutationFn: async (id: string) => {
       const { error } = await supabase
         .from('supplier_payments')
         .delete()
@@ -119,23 +122,23 @@ export const useSupplierPayments = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['supplier-payments'] });
-      queryClient.invalidateQueries({ queryKey: ['suppliers'] });
+      queryClient.invalidateQueries({ queryKey: ['supplier-stats'] });
       toast.success('Pago eliminado exitosamente');
     },
     onError: (error) => {
       console.error('Error deleting payment:', error);
-      toast.error('Error al eliminar pago');
+      toast.error('Error al eliminar el pago');
     }
   });
 
   const updateOverduePaymentsMutation = useMutation({
-    mutationFn: async (): Promise<void> => {
+    mutationFn: async () => {
       const { error } = await supabase.rpc('update_overdue_supplier_payments');
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['supplier-payments'] });
-      queryClient.invalidateQueries({ queryKey: ['suppliers'] });
+      queryClient.invalidateQueries({ queryKey: ['supplier-stats'] });
       toast.success('Pagos vencidos actualizados');
     },
     onError: (error) => {
@@ -157,24 +160,4 @@ export const useSupplierPayments = () => {
     isUpdating: updatePaymentMutation.isPending,
     isDeleting: deletePaymentMutation.isPending
   };
-};
-
-export const getStatusLabel = (status: SupplierPaymentStatus): string => {
-  const labels: Record<SupplierPaymentStatus, string> = {
-    pending: 'Pendiente',
-    paid: 'Pagado',
-    overdue: 'Vencido',
-    cancelled: 'Cancelado'
-  };
-  return labels[status];
-};
-
-export const getStatusColor = (status: SupplierPaymentStatus): string => {
-  const colors: Record<SupplierPaymentStatus, string> = {
-    pending: 'bg-yellow-500/20 text-yellow-300 border-yellow-500/30',
-    paid: 'bg-green-500/20 text-green-300 border-green-500/30',
-    overdue: 'bg-red-500/20 text-red-300 border-red-500/30',
-    cancelled: 'bg-gray-500/20 text-gray-300 border-gray-500/30'
-  };
-  return colors[status];
 };

@@ -12,10 +12,7 @@ import {
   BarChart3,
   Activity
 } from 'lucide-react';
-// Cambiar esta línea:
 import { formatDate } from 'date-fns';
-// Por esta:
-import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
 interface MetricCardProps {
