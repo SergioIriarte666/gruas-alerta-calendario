@@ -13,7 +13,7 @@ export const useSupplierPayments = (supplierId?: string) => {
 
   const paymentsQuery = useQuery({
     queryKey: ['supplier-payments', supplierId],
-    queryFn: async (): Promise<any[]> => {
+    queryFn: async (): Promise<SupplierPayment[]> => {
       let query = supabase
         .from('supplier_payments')
         .select('*')
@@ -33,7 +33,17 @@ export const useSupplierPayments = (supplierId?: string) => {
     mutationFn: async (data: PaymentFormData): Promise<SupplierPayment> => {
       const { data: newPayment, error } = await supabase
         .from('supplier_payments')
-        .insert(data as any)
+        .insert({
+          supplier_id: data.supplier_id,
+          amount: data.amount,
+          due_date: data.due_date,
+          description: data.description,
+          category: data.category,
+          reference_number: data.reference_number,
+          notes: data.notes,
+          status: data.status,
+          created_by: (await supabase.auth.getUser()).data.user?.id
+        })
         .select()
         .single();
 
@@ -55,7 +65,11 @@ export const useSupplierPayments = (supplierId?: string) => {
     mutationFn: async ({ id, data }: { id: string; data: Partial<PaymentFormData> }): Promise<SupplierPayment> => {
       const { data: updatedPayment, error } = await supabase
         .from('supplier_payments')
-        .update(data as any)
+        .update({
+          ...data,
+          updated_by: (await supabase.auth.getUser()).data.user?.id,
+          updated_at: new Date().toISOString()
+        })
         .eq('id', id)
         .select()
         .single();
@@ -81,7 +95,9 @@ export const useSupplierPayments = (supplierId?: string) => {
         .update({
           status: 'paid',
           paid_date: paid_date || new Date().toISOString().split('T')[0],
-          paid_amount: paid_amount
+          paid_amount: paid_amount,
+          updated_by: (await supabase.auth.getUser()).data.user?.id,
+          updated_at: new Date().toISOString()
         })
         .eq('id', id);
 
@@ -124,7 +140,10 @@ export const useSupplierPayments = (supplierId?: string) => {
       const today = new Date().toISOString().split('T')[0];
       const { error } = await supabase
         .from('supplier_payments')
-        .update({ status: 'overdue' })
+        .update({ 
+          status: 'overdue',
+          updated_at: new Date().toISOString()
+        })
         .eq('status', 'pending')
         .lt('due_date', today);
       if (error) throw error;

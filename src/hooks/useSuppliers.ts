@@ -3,8 +3,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { 
   Supplier, 
-  SupplierInsert, 
-  SupplierUpdate, 
   SupplierWithStats,
   SupplierFormData,
   SupplierCategory 
@@ -31,15 +29,15 @@ export const useSuppliers = () => {
 
       return data.map(supplier => {
         const payments = supplier.supplier_payments || [];
-        const pendingPayments = payments.filter(p => p.status === 'pending');
-        const paidPayments = payments.filter(p => p.status === 'paid');
-        const overduePayments = payments.filter(p => p.status === 'overdue');
+        const pendingPayments = payments.filter((p: any) => p.status === 'pending');
+        const paidPayments = payments.filter((p: any) => p.status === 'paid');
+        const overduePayments = payments.filter((p: any) => p.status === 'overdue');
 
         return {
           ...supplier,
           total_payments: payments.length,
-          pending_amount: pendingPayments.reduce((sum, p) => sum + (p.amount || 0), 0),
-          paid_amount: paidPayments.reduce((sum, p) => sum + (p.amount || 0), 0),
+          pending_amount: pendingPayments.reduce((sum: number, p: any) => sum + (p.amount || 0), 0),
+          paid_amount: paidPayments.reduce((sum: number, p: any) => sum + (p.amount || 0), 0),
           overdue_count: overduePayments.length
         };
       });

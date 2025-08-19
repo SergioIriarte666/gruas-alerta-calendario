@@ -7,13 +7,43 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "12.2.3 (519615d)"
   }
   public: {
     Tables: {
+      audit_log: {
+        Row: {
+          id: number
+          new_data: Json | null
+          old_data: Json | null
+          operation: string
+          table_name: string
+          timestamp: string | null
+          user_id: string | null
+        }
+        Insert: {
+          id?: number
+          new_data?: Json | null
+          old_data?: Json | null
+          operation: string
+          table_name: string
+          timestamp?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          id?: number
+          new_data?: Json | null
+          old_data?: Json | null
+          operation?: string
+          table_name?: string
+          timestamp?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       backup_logs: {
         Row: {
           backup_type: string
@@ -434,6 +464,7 @@ export type Database = {
           service_folio: string | null
           service_id: string | null
           subcategory: string | null
+          supplier_payment_id: string | null
           updated_at: string
         }
         Insert: {
@@ -452,6 +483,7 @@ export type Database = {
           service_folio?: string | null
           service_id?: string | null
           subcategory?: string | null
+          supplier_payment_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -470,6 +502,7 @@ export type Database = {
           service_folio?: string | null
           service_id?: string | null
           subcategory?: string | null
+          supplier_payment_id?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -520,6 +553,13 @@ export type Database = {
             columns: ["service_id"]
             isOneToOne: false
             referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "costs_supplier_payment_id_fkey"
+            columns: ["supplier_payment_id"]
+            isOneToOne: false
+            referencedRelation: "supplier_payments"
             referencedColumns: ["id"]
           },
         ]
@@ -2022,6 +2062,59 @@ export type Database = {
         }
         Relationships: []
       }
+      scheduled_payments: {
+        Row: {
+          amount: number
+          created_at: string | null
+          id: string
+          notes: string | null
+          payment_method: string | null
+          priority: string | null
+          reminder_date: string | null
+          reminder_sent: boolean | null
+          scheduled_date: string
+          status: string | null
+          supplier_invoice_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          payment_method?: string | null
+          priority?: string | null
+          reminder_date?: string | null
+          reminder_sent?: boolean | null
+          scheduled_date: string
+          status?: string | null
+          supplier_invoice_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          payment_method?: string | null
+          priority?: string | null
+          reminder_date?: string | null
+          reminder_sent?: boolean | null
+          scheduled_date?: string
+          status?: string | null
+          supplier_invoice_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scheduled_payments_supplier_invoice_id_fkey"
+            columns: ["supplier_invoice_id"]
+            isOneToOne: false
+            referencedRelation: "supplier_invoices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       service_closures: {
         Row: {
           client_id: string | null
@@ -2480,6 +2573,211 @@ export type Database = {
           },
         ]
       }
+      supplier_invoices: {
+        Row: {
+          amount: number
+          created_at: string | null
+          currency: string | null
+          description: string | null
+          due_date: string
+          id: string
+          invoice_number: string
+          issue_date: string
+          net_amount: number
+          payment_terms: number | null
+          status: string | null
+          supplier_id: string | null
+          tax_amount: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          currency?: string | null
+          description?: string | null
+          due_date: string
+          id?: string
+          invoice_number: string
+          issue_date: string
+          net_amount: number
+          payment_terms?: number | null
+          status?: string | null
+          supplier_id?: string | null
+          tax_amount?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          currency?: string | null
+          description?: string | null
+          due_date?: string
+          id?: string
+          invoice_number?: string
+          issue_date?: string
+          net_amount?: number
+          payment_terms?: number | null
+          status?: string | null
+          supplier_id?: string | null
+          tax_amount?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supplier_invoices_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      supplier_payment_cost_links: {
+        Row: {
+          cost_id: string
+          created_at: string | null
+          id: string
+          supplier_payment_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          cost_id: string
+          created_at?: string | null
+          id?: string
+          supplier_payment_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          cost_id?: string
+          created_at?: string | null
+          id?: string
+          supplier_payment_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supplier_payment_cost_links_cost_id_fkey"
+            columns: ["cost_id"]
+            isOneToOne: false
+            referencedRelation: "costs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supplier_payment_cost_links_supplier_payment_id_fkey"
+            columns: ["supplier_payment_id"]
+            isOneToOne: false
+            referencedRelation: "supplier_payments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      supplier_payments: {
+        Row: {
+          amount: number
+          category: Database["public"]["Enums"]["supplier_category"]
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          due_date: string
+          id: string
+          paid_date: string | null
+          status: Database["public"]["Enums"]["supplier_payment_status"]
+          supplier_id: string
+          supplier_name: string
+          updated_at: string | null
+          updated_by: string | null
+        }
+        Insert: {
+          amount: number
+          category?: Database["public"]["Enums"]["supplier_category"]
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          due_date: string
+          id?: string
+          paid_date?: string | null
+          status?: Database["public"]["Enums"]["supplier_payment_status"]
+          supplier_id: string
+          supplier_name: string
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Update: {
+          amount?: number
+          category?: Database["public"]["Enums"]["supplier_category"]
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          due_date?: string
+          id?: string
+          paid_date?: string | null
+          status?: Database["public"]["Enums"]["supplier_payment_status"]
+          supplier_id?: string
+          supplier_name?: string
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supplier_payments_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      suppliers: {
+        Row: {
+          address: string | null
+          category: Database["public"]["Enums"]["supplier_category"]
+          contact_name: string | null
+          created_at: string | null
+          created_by: string | null
+          email: string | null
+          id: string
+          is_active: boolean
+          name: string
+          notes: string | null
+          phone: string | null
+          rut: string
+          updated_at: string | null
+          updated_by: string | null
+        }
+        Insert: {
+          address?: string | null
+          category?: Database["public"]["Enums"]["supplier_category"]
+          contact_name?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          email?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          notes?: string | null
+          phone?: string | null
+          rut: string
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Update: {
+          address?: string | null
+          category?: Database["public"]["Enums"]["supplier_category"]
+          contact_name?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          email?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          notes?: string | null
+          phone?: string | null
+          rut?: string
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       system_settings: {
         Row: {
           auto_backup: boolean
@@ -2689,20 +2987,20 @@ export type Database = {
     Functions: {
       admin_create_user: {
         Args: {
+          p_client_id?: string
           p_email: string
           p_full_name: string
           p_role: Database["public"]["Enums"]["app_role"]
-          p_client_id?: string
         }
         Returns: string
       }
       apply_payment_fifo: {
-        Args: { p_payment_id: string; p_client_id: string }
-        Returns: undefined
+        Args: { p_client_id?: string; p_payment_id: string }
+        Returns: Json
       }
       apply_payment_manual: {
-        Args: { p_payment_id: string; p_applications: Json }
-        Returns: undefined
+        Args: { p_applications: Json; p_payment_id: string }
+        Returns: Json
       }
       apply_pending_payments_to_invoices: {
         Args: Record<PropertyKey, never>
@@ -2752,33 +3050,48 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      cleanup_orphaned_supplier_costs: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
       close_service_status_only: {
         Args: { p_service_id: string }
         Returns: Json
       }
       create_automatic_payment_for_invoice: {
-        Args:
-          | { p_invoice_id: string }
-          | { p_invoice_id: string; p_client_id: string; p_amount: number }
-        Returns: string
+        Args: { p_invoice_id: string }
+        Returns: Json
+      }
+      create_cost_with_payment_link: {
+        Args: {
+          p_amount: number
+          p_category: string
+          p_cost_category_mapping?: Json
+          p_default_category?: string
+          p_description: string
+          p_paid_date: string
+          p_payment_id: string
+          p_supplier_name: string
+        }
+        Returns: Json
       }
       create_inventory_consumption_movement: {
         Args:
           | {
-              p_inventory_item_id: string
-              p_quantity: number
               p_crane_id: string
-              p_operator_id?: string
-              p_reference_document?: string
+              p_inventory_item_id: string
               p_observations?: string
+              p_operator_id?: string
+              p_quantity: number
+              p_reference_document?: string
             }
           | {
-              p_inventory_item_id: string
-              p_quantity: number
               p_crane_id: string
-              p_operator_id?: string
-              p_reference_document?: string
+              p_inventory_item_id: string
               p_observations?: string
+              p_operator_id?: string
+              p_quantity: number
+              p_reference_document?: string
               p_unit_cost?: number
             }
         Returns: string
@@ -2786,8 +3099,8 @@ export type Database = {
       create_invoice_transaction: {
         Args: { p_invoice_data: Json; p_service_ids: string[] }
         Returns: {
-          invoice_id: string
           invoice_folio: string
+          invoice_id: string
         }[]
       }
       current_user_role: {
@@ -2797,9 +3110,9 @@ export type Database = {
       debug_service_states: {
         Args: Record<PropertyKey, never>
         Returns: {
-          service_folio: string
           current_status: Database["public"]["Enums"]["service_status"]
           invoice_folio: string
+          service_folio: string
           should_be_invoiced: boolean
         }[]
       }
@@ -2835,6 +3148,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: Json
       }
+      fix_negative_remaining_amounts: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
       force_close_service_bypass_triggers: {
         Args: { p_service_id: string }
         Returns: Json
@@ -2853,9 +3170,9 @@ export type Database = {
       }
       force_update_service_to_invoiced: {
         Args: {
-          p_service_id: string
           p_invoice_folio: string
           p_numero_fiscal?: string
+          p_service_id: string
         }
         Returns: Json
       }
@@ -2882,15 +3199,15 @@ export type Database = {
       get_all_users: {
         Args: Record<PropertyKey, never>
         Returns: {
-          id: string
-          email: string
-          full_name: string
-          role: Database["public"]["Enums"]["app_role"]
-          is_active: boolean
-          created_at: string
-          updated_at: string
           client_id: string
           client_name: string
+          created_at: string
+          email: string
+          full_name: string
+          id: string
+          is_active: boolean
+          role: Database["public"]["Enums"]["app_role"]
+          updated_at: string
         }[]
       }
       get_client_id_for_user: {
@@ -2899,26 +3216,34 @@ export type Database = {
       }
       get_client_payment_history: {
         Args: { p_client_id: string }
-        Returns: Json
+        Returns: {
+          amount: number
+          invoice_folio: string
+          invoice_id: string
+          notes: string
+          payment_date: string
+          payment_id: string
+          payment_method: string
+        }[]
       }
       get_commissions_with_details: {
         Args: Record<PropertyKey, never>
         Returns: {
-          id: string
+          amount: number
+          client_name: string
+          created_at: string
           date: string
           description: string
-          amount: number
+          id: string
           operator_id: string
-          service_id: string
-          service_folio: string
-          subcategory: string
-          created_at: string
-          updated_at: string
-          service_value: number
-          service_date: string
-          client_name: string
           operator_name: string
           operator_rut: string
+          service_date: string
+          service_folio: string
+          service_id: string
+          service_value: number
+          subcategory: string
+          updated_at: string
         }[]
       }
       get_crane_metrics: {
@@ -2938,9 +3263,9 @@ export type Database = {
         Returns: {
           crane_id: string
           crane_license_plate: string
+          days_until_expiry: number
           document_type: string
           expiry_date: string
-          days_until_expiry: number
         }[]
       }
       get_invoice_overdue_stats: {
@@ -2950,13 +3275,13 @@ export type Database = {
       get_invoices_due_soon: {
         Args: { days_ahead?: number }
         Returns: {
-          id: string
-          folio: string
           client_name: string
-          due_date: string
-          total: number
           days_until_due: number
+          due_date: string
+          folio: string
+          id: string
           status: Database["public"]["Enums"]["invoice_status"]
+          total: number
         }[]
       }
       get_operator_id_by_user: {
@@ -2966,29 +3291,40 @@ export type Database = {
       get_overdue_invoices_for_alerts: {
         Args: Record<PropertyKey, never>
         Returns: {
-          id: string
-          folio: string
           client_name: string
-          due_date: string
-          total: number
           days_overdue: number
+          due_date: string
+          folio: string
+          id: string
           status: Database["public"]["Enums"]["invoice_status"]
+          total: number
         }[]
       }
       get_parts_traceability: {
         Args: { p_crane_id?: string }
         Returns: {
-          part_id: string
-          part_name: string
-          supplier: string
-          purchase_date: string
-          purchase_cost: number
+          crane_license_plate: string
+          current_stock: number
           inventory_item_id: string
           inventory_item_name: string
-          current_stock: number
-          total_purchased: number
+          part_id: string
+          part_name: string
+          purchase_cost: number
+          purchase_date: string
+          supplier: string
           total_consumed: number
-          crane_license_plate: string
+          total_purchased: number
+        }[]
+      }
+      get_supplier_payment_stats: {
+        Args: { p_supplier_id: string }
+        Returns: {
+          count_overdue: number
+          count_paid: number
+          count_pending: number
+          total_overdue: number
+          total_paid: number
+          total_pending: number
         }[]
       }
       get_table_structure: {
@@ -3051,21 +3387,25 @@ export type Database = {
       }
       log_security_event: {
         Args: {
-          event_type: string
-          event_description: string
           additional_data?: Json
+          event_description: string
+          event_type: string
         }
         Returns: undefined
       }
       log_service_update_error: {
         Args: {
-          p_service_id: string
-          p_error_code: string
-          p_error_message: string
-          p_error_details?: Json
           p_attempted_data?: Json
+          p_error_code: string
+          p_error_details?: Json
+          p_error_message: string
+          p_service_id: string
         }
         Returns: undefined
+      }
+      mark_supplier_payment_as_paid: {
+        Args: { p_paid_date?: string; p_payment_id: string }
+        Returns: boolean
       }
       migrate_existing_consumption_movements: {
         Args: Record<PropertyKey, never>
@@ -3091,6 +3431,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
+      recalculate_payment_balances: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
       repair_commission_system: {
         Args: Record<PropertyKey, never>
         Returns: Json
@@ -3100,12 +3444,12 @@ export type Database = {
         Returns: Json
       }
       smart_apply_payment: {
-        Args: { p_payment_id: string; p_auto_apply?: boolean }
+        Args: { p_auto_apply?: boolean; p_payment_id: string }
         Returns: {
-          success: boolean
           applications_made: number
-          remaining_amount: number
           message: string
+          remaining_amount: number
+          success: boolean
         }[]
       }
       sync_closure_invoice_status: {
@@ -3129,7 +3473,7 @@ export type Database = {
         Returns: string
       }
       toggle_user_status: {
-        Args: { user_id: string; new_status: boolean }
+        Args: { new_status: boolean; user_id: string }
         Returns: undefined
       }
       trigger_global_data_refresh: {
@@ -3144,29 +3488,33 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      update_overdue_supplier_payments: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       update_service_comprehensive: {
-        Args: { p_service_id: string; p_service_data: Json }
+        Args: { p_service_data: Json; p_service_id: string }
         Returns: Json
       }
       update_services_to_invoiced_batch: {
         Args: {
-          p_service_ids: string[]
           p_invoice_folio: string
           p_numero_fiscal?: string
+          p_service_ids: string[]
         }
         Returns: Json
       }
       update_user_role: {
         Args: {
-          user_id: string
           new_role: Database["public"]["Enums"]["app_role"]
+          user_id: string
         }
         Returns: undefined
       }
       update_user_role_secure: {
         Args: {
-          target_user_id: string
           new_role: Database["public"]["Enums"]["app_role"]
+          target_user_id: string
         }
         Returns: undefined
       }
@@ -3178,12 +3526,24 @@ export type Database = {
         Args: { email: string }
         Returns: boolean
       }
+      validate_payment_amounts: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          amount: number
+          applied_amount: number
+          calculated_applied: number
+          folio: string
+          is_inconsistent: boolean
+          payment_id: string
+          remaining_amount: number
+        }[]
+      }
       validate_rls_policies: {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
       validate_service_update_data: {
-        Args: { p_service_id: string; p_service_data: Json }
+        Args: { p_service_data: Json; p_service_id: string }
         Returns: Json
       }
       verify_auth_system: {
@@ -3209,6 +3569,17 @@ export type Database = {
         | "cancelled"
         | "invoiced"
         | "inspection_completed"
+      supplier_category:
+        | "combustible"
+        | "mantenimiento"
+        | "seguros"
+        | "otros"
+        | "peajes"
+        | "salarios"
+        | "administrativos"
+        | "impuestos"
+        | "comision_operador"
+      supplier_payment_status: "pending" | "paid" | "overdue" | "cancelled"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -3350,6 +3721,18 @@ export const Constants = {
         "invoiced",
         "inspection_completed",
       ],
+      supplier_category: [
+        "combustible",
+        "mantenimiento",
+        "seguros",
+        "otros",
+        "peajes",
+        "salarios",
+        "administrativos",
+        "impuestos",
+        "comision_operador",
+      ],
+      supplier_payment_status: ["pending", "paid", "overdue", "cancelled"],
     },
   },
 } as const

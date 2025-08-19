@@ -318,7 +318,7 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose }: ServiceDetails
 };
 
 // Cuando se actualiza desde el modal de detalles
-const handleServiceUpdate = async (serviceData: Partial<ServiceFormData>) => {
+const handleServiceUpdate = async (serviceData: Partial<any>) => {
   const serviceDataWithSource = {
     ...serviceData,
     _source: 'service_modal', // ✅ NUEVO: Flag de origen

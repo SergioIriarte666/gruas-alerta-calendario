@@ -71,6 +71,11 @@ export const Sidebar = ({
     icon: Package,
     adminOnly: false
   }, {
+    name: 'Proveedores',
+    href: '/suppliers',
+    icon: Building2,
+    adminOnly: false
+  }, {
     name: 'Costos',
     href: '/costs',
     icon: DollarSign,

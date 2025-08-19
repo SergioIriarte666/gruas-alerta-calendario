@@ -387,8 +387,8 @@ export const useServiceManager = () => {
       // ✅ MODIFICADO: Handle service costs (gastos) update con prevención de duplicación
       if (serviceData.costDetails && Array.isArray(serviceData.costDetails)) {
       // ✅ NUEVO: Solo procesar costos si viene del formulario principal
-      const isFromMainForm = serviceData._source === 'main_form' || serviceData._processCosts === true;
-      const isFromServiceModal = serviceData._source === 'service_modal';
+      const isFromMainForm = (serviceData as any)._source === 'main_form' || (serviceData as any)._processCosts === true;
+      const isFromServiceModal = (serviceData as any)._source === 'service_modal';
       
       if (isFromMainForm) {
         console.log('[updateService] Processing service costs from main form:', serviceData.costDetails);

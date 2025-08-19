@@ -37,6 +37,7 @@ import PortalRequestService from '@/pages/portal/PortalRequestService';
 import Calendar from '@/pages/Calendar';
 import QuickEntries from '@/pages/QuickEntries';
 import { BackupPage } from '@/pages/BackupPage';
+import { Suppliers } from '@/pages/Suppliers';
 import NotFound from '@/pages/NotFound';
 
 const queryClient = new QueryClient({
@@ -201,6 +202,14 @@ function AppContent() {
           </ProtectedRoute>
         }>
           <Route index element={<BackupPage />} />
+        </Route>
+
+        <Route path="/suppliers" element={
+          <ProtectedRoute allowedRoles={['admin', 'viewer']}>
+            <Layout />
+          </ProtectedRoute>
+        }>
+          <Route index element={<Suppliers />} />
         </Route>
 
         {/* Operator routes - restricted to operators only */}
