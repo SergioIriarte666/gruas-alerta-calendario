@@ -3180,15 +3180,7 @@ export type Database = {
       }
       get_client_payment_history: {
         Args: { p_client_id: string }
-        Returns: {
-          amount: number
-          invoice_folio: string
-          invoice_id: string
-          notes: string
-          payment_date: string
-          payment_id: string
-          payment_method: string
-        }[]
+        Returns: Json
       }
       get_commissions_with_details: {
         Args: Record<PropertyKey, never>

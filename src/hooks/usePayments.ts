@@ -199,7 +199,18 @@ export const usePayments = () => {
         p_client_id: clientId
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error in getClientPaymentHistory RPC:', error);
+        throw error;
+      }
+
+      // Handle SQL function errors returned in data
+      if (data && typeof data === 'object' && 'error' in data && (data as any).error) {
+        console.error('SQL function error:', (data as any).message);
+        toast.error(`Error del sistema: ${(data as any).message || 'Error desconocido'}`);
+        return null;
+      }
+
       return data;
     } catch (error) {
       console.error('Error fetching client payment history:', error);
