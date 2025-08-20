@@ -77,11 +77,12 @@ const fetchEnhancedServiceDetails = async (serviceId: string): Promise<EnhancedS
   const operators: ServiceOperator[] = [];
   const processedOperatorIds = new Set<string>();
   
-  // Agregar operador principal si existe
+  // Agregar operador principal si existe y tiene comisión > 0
   console.log('🔍 [ENHANCED_SERVICE] Service data operators:', serviceData.operators);
   console.log('🔍 [ENHANCED_SERVICE] Service data operator_id:', serviceData.operator_id);
+  console.log('🔍 [ENHANCED_SERVICE] Service operator_commission:', serviceData.operator_commission);
   
-  if (serviceData.operators && serviceData.operator_id) {
+  if (serviceData.operators && serviceData.operator_id && (serviceData.operator_commission || 0) > 0) {
     operators.push({
       id: 'main-operator',
       operatorId: serviceData.operator_id,
@@ -106,9 +107,9 @@ const fetchEnhancedServiceDetails = async (serviceId: string): Promise<EnhancedS
     processedOperatorIds.add(serviceData.operator_id);
   }
 
-  // Agregar operadores adicionales desde costos de comisiones (solo si no están ya procesados)
+  // Agregar operadores adicionales desde costos de comisiones (solo si no están ya procesados y tienen comisión > 0)
   commissionCosts.forEach((cost, index) => {
-    if (cost.operator_id && cost.operators && !processedOperatorIds.has(cost.operator_id)) {
+    if (cost.operator_id && cost.operators && !processedOperatorIds.has(cost.operator_id) && (cost.amount || 0) > 0) {
       operators.push({
         id: `additional-${cost.id}`,
         operatorId: cost.operator_id,
