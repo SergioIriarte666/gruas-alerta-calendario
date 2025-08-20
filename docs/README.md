@@ -1,80 +1,35 @@
-# 📚 TMS Grúas v2.1.0 - Documentación Completa
+# TMS Grúas v2.1.0
+## Sistema Integral de Gestión de Transporte y Servicios
 
-## 🚀 Inicio Rápido
-- [📥 Instalación](getting-started/installation.md)
-- [⚙️ Configuración](getting-started/configuration.md)
-- [🎯 Primeros Pasos](getting-started/first-steps.md)
+### 🚀 Características Principales
+- **Sistema de Inventario Completo**: Control de stock, alertas automáticas, movimientos
+- **Gestión de Servicios TMS**: Servicios de grúa, operadores, facturación
+- **Portal del Cliente**: Interfaz dedicada para clientes
+- **Aplicación Móvil PWA**: Funcionalidades offline y responsive
+- **Reportes Avanzados**: Dashboard en tiempo real con métricas empresariales
+- **Seguridad Empresarial**: Autenticación Supabase con roles granulares
 
-## 👥 Guías de Usuario
-- [👨‍💼 Manual del Administrador](user-guides/admin-guide.md)
-- [🚛 Manual del Operador](user-guides/operator-guide.md)
-- [🌐 Portal del Cliente](user-guides/client-portal.md)
+### 📖 Documentación
 
-## 🏗️ Arquitectura del Sistema
-- [📋 Visión General](architecture/overview.md)
-- [🎨 Frontend (React)](architecture/frontend.md)
-- [🔧 Backend (Supabase)](architecture/backend.md)
-- [🔒 Seguridad](architecture/security.md)
+#### 📋 **Manual de Usuario**
+- **[Manual de Usuario Completo](user-manual.md)** - Guía completa del sistema para todos los usuarios
 
-## 🔧 Desarrollo
-- [🤝 Guía de Contribución](development/contributing.md)
-- [📡 Referencia de API](development/api-reference.md)
-- [🧪 Pruebas](development/testing.md)
-- [🎨 Sistema de Diseño](development/design-system.md)
+#### 🔧 **Documentación Técnica**
+- **[Sistema de Pagos](technical/payment-system.md)** - Correcciones y mejoras del sistema de pagos
+- **[Configuración del Sistema](technical/configuration.md)** - Configuraciones globales y parámetros
+- **[Resolución de Problemas](technical/troubleshooting.md)** - Guía de troubleshooting técnico
 
-## 🐛 Solución de Problemas
-- [❗ Problemas Comunes](troubleshooting/common-issues.md)
-- [⚡ Optimización de Rendimiento](troubleshooting/performance.md)
+### 🎯 **Inicio Rápido**
 
-## 📋 Cambios y Actualizaciones
-- [📝 Historial de Versiones](changelog/releases.md)
-- [🔄 Guía de Migración](changelog/migration-guide.md)
-- [✨ Registro de Mejoras](changelog/improvements-log.md)
+1. **Acceso al Sistema**: Usar credenciales proporcionadas por administrador
+2. **Roles Disponibles**: Administrador, Supervisor, Operador, Cliente
+3. **Funcionalidades Clave**: Servicios, Inventario, Facturación, Reportes
+4. **Soporte**: Contactar al administrador del sistema
 
----
-
-## 🎯 Características Principales
-
-### 📱 **Sistema Responsivo Avanzado**
-- Diseño mobile-first optimizado
-- Hooks especializados para diferentes dispositivos
-- PWA con funcionalidades offline
-
-### 📊 **Gestión Integral de Inventario**
-- Sistema de alertas automáticas inteligente
-- Control de stock multi-ubicación
-- Trazabilidad completa de movimientos
-
-### 🚛 **TMS Completo**
-- Gestión de servicios de grúas
-- Portal de clientes independiente
-- Sistema de facturación integrado
-
-### 🔒 **Seguridad Empresarial**
-- Autenticación robusta con Supabase
-- Control de acceso basado en roles
-- Auditoría completa de operaciones
+### 🏗️ **Tecnologías**
+- **Frontend**: React 18.3, TypeScript, Tailwind CSS
+- **Backend**: Supabase (PostgreSQL, Auth, Storage)
+- **Despliegue**: PWA con funcionalidades offline
 
 ---
-
-## 🆘 Soporte y Ayuda
-
-### 🚨 **Problemas Urgentes**
-Para problemas críticos que afecten la operación:
-1. Consultar [Problemas Comunes](troubleshooting/common-issues.md)
-2. Revisar logs del sistema
-3. Contactar soporte técnico
-
-### 💬 **Soporte General**
-- **Email**: soporte@tmsgruas.com
-- **Documentación**: Este repositorio
-- **Issues**: GitHub Issues para reportar bugs
-
-### 📖 **Recursos Adicionales**
-- [🎥 Tutoriales en Video](https://youtube.com/tmsgruas)
-- [📱 App Móvil](https://app.tmsgruas.com)
-- [🌐 Portal Web](https://portal.tmsgruas.com)
-
----
-
-*Documentación actualizada para TMS Grúas v2.1.0 - Julio 2025*
+**Documentación actualizada - TMS Grúas v2.1.0**
