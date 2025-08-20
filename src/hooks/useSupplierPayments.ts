@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { PaymentFormData, SupplierPayment, SupplierPaymentStatus } from '@/types/suppliers';
 import { toast } from 'sonner';
+import { useCostInvalidation } from './useCostInvalidation';
 
 export const getStatusLabel = (status: SupplierPaymentStatus): string => {
   const labels = {
@@ -25,6 +26,7 @@ export const getStatusColor = (status: SupplierPaymentStatus): string => {
 
 export const useSupplierPayments = () => {
   const queryClient = useQueryClient();
+  const { invalidateAllCostQueries } = useCostInvalidation();
 
   const paymentsQuery = useQuery({
     queryKey: ['supplier-payments'],
@@ -35,7 +37,7 @@ export const useSupplierPayments = () => {
         .order('due_date', { ascending: true });
 
       if (error) throw error;
-      return data || [];
+      return (data || []) as SupplierPayment[];
     }
   });
 
@@ -58,7 +60,7 @@ export const useSupplierPayments = () => {
         .single();
 
       if (error) throw error;
-      return payment;
+      return payment as SupplierPayment;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['supplier-payments'] });
@@ -81,7 +83,7 @@ export const useSupplierPayments = () => {
         .single();
 
       if (error) throw error;
-      return payment;
+      return payment as SupplierPayment;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['supplier-payments'] });
@@ -113,7 +115,9 @@ export const useSupplierPayments = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['supplier-payments'] });
       queryClient.invalidateQueries({ queryKey: ['supplier-stats'] });
-      toast.success('Pago marcado como pagado');
+      // Invalidar también las queries de costos ya que se creará automáticamente un costo
+      invalidateAllCostQueries();
+      toast.success('Pago marcado como pagado - Se registrará automáticamente en costos');
     },
     onError: (error) => {
       console.error('Error marking payment as paid:', error);

@@ -555,13 +555,6 @@ export type Database = {
             referencedRelation: "services"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "costs_supplier_payment_id_fkey"
-            columns: ["supplier_payment_id"]
-            isOneToOne: false
-            referencedRelation: "supplier_payments"
-            referencedColumns: ["id"]
-          },
         ]
       }
       crane_documents: {
@@ -2632,88 +2625,55 @@ export type Database = {
           },
         ]
       }
-      supplier_payment_cost_links: {
-        Row: {
-          cost_id: string
-          created_at: string | null
-          id: string
-          supplier_payment_id: string
-          updated_at: string | null
-        }
-        Insert: {
-          cost_id: string
-          created_at?: string | null
-          id?: string
-          supplier_payment_id: string
-          updated_at?: string | null
-        }
-        Update: {
-          cost_id?: string
-          created_at?: string | null
-          id?: string
-          supplier_payment_id?: string
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "supplier_payment_cost_links_cost_id_fkey"
-            columns: ["cost_id"]
-            isOneToOne: false
-            referencedRelation: "costs"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "supplier_payment_cost_links_supplier_payment_id_fkey"
-            columns: ["supplier_payment_id"]
-            isOneToOne: false
-            referencedRelation: "supplier_payments"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       supplier_payments: {
         Row: {
           amount: number
-          category: Database["public"]["Enums"]["supplier_category"]
+          category: string
           created_at: string | null
           created_by: string | null
-          description: string | null
+          description: string
           due_date: string
           id: string
+          notes: string | null
+          paid_amount: number | null
           paid_date: string | null
-          status: Database["public"]["Enums"]["supplier_payment_status"]
+          reference_number: string | null
+          status: string
           supplier_id: string
-          supplier_name: string
           updated_at: string | null
           updated_by: string | null
         }
         Insert: {
           amount: number
-          category?: Database["public"]["Enums"]["supplier_category"]
+          category: string
           created_at?: string | null
           created_by?: string | null
-          description?: string | null
+          description: string
           due_date: string
           id?: string
+          notes?: string | null
+          paid_amount?: number | null
           paid_date?: string | null
-          status?: Database["public"]["Enums"]["supplier_payment_status"]
+          reference_number?: string | null
+          status?: string
           supplier_id: string
-          supplier_name: string
           updated_at?: string | null
           updated_by?: string | null
         }
         Update: {
           amount?: number
-          category?: Database["public"]["Enums"]["supplier_category"]
+          category?: string
           created_at?: string | null
           created_by?: string | null
-          description?: string | null
+          description?: string
           due_date?: string
           id?: string
+          notes?: string | null
+          paid_amount?: number | null
           paid_date?: string | null
-          status?: Database["public"]["Enums"]["supplier_payment_status"]
+          reference_number?: string | null
+          status?: string
           supplier_id?: string
-          supplier_name?: string
           updated_at?: string | null
           updated_by?: string | null
         }
@@ -3463,6 +3423,10 @@ export type Database = {
       sync_existing_services_to_resources: {
         Args: Record<PropertyKey, never>
         Returns: undefined
+      }
+      sync_existing_supplier_payments_to_costs: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
       }
       sync_paid_invoices_with_payments: {
         Args: Record<PropertyKey, never>
