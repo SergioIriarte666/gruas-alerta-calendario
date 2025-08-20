@@ -1,36 +1,29 @@
 # TMS Grúas v2.1.0
-## Sistema Integral de Gestión de Transporte y Servicios
+## Sistema de Gestión de Transporte y Servicios
 
-### 🚀 Características Principales
-- **Sistema de Inventario Completo**: Control de stock, alertas automáticas, movimientos
-- **Gestión de Servicios TMS**: Servicios de grúa, operadores, facturación
-- **Portal del Cliente**: Interfaz dedicada para clientes
-- **Aplicación Móvil PWA**: Funcionalidades offline y responsive
-- **Reportes Avanzados**: Dashboard en tiempo real con métricas empresariales
-- **Seguridad Empresarial**: Autenticación Supabase con roles granulares
+### 📋 **Documentación del Sistema**
 
-### 📖 Documentación
+#### Manual del Usuario
+- **[Manual de Usuario](user-manual.md)** - Guía completa de uso del sistema
 
-#### 📋 **Manual de Usuario**
-- **[Manual de Usuario Completo](user-manual.md)** - Guía completa del sistema para todos los usuarios
+#### Documentación Técnica
+- **[Sistema de Pagos](technical/payment-system.md)** - Configuración y funcionamiento del módulo de pagos
+- **[Configuración Global](technical/configuration.md)** - Parámetros y configuraciones del sistema
+- **[Resolución de Problemas](technical/troubleshooting.md)** - Guía de troubleshooting
+- **[Correcciones de Pagos](technical/payment-corrections.md)** - Fixes específicos implementados
 
-#### 🔧 **Documentación Técnica**
-- **[Sistema de Pagos](technical/payment-system.md)** - Correcciones y mejoras del sistema de pagos
-- **[Configuración del Sistema](technical/configuration.md)** - Configuraciones globales y parámetros
-- **[Resolución de Problemas](technical/troubleshooting.md)** - Guía de troubleshooting técnico
-- **[Correcciones de Pagos](technical/payment-corrections.md)** - Correcciones específicas implementadas
+### 🚀 **Características del Sistema**
+- Gestión completa de servicios de grúas
+- Control de inventario con alertas automáticas
+- Portal dedicado para clientes
+- Aplicación móvil PWA
+- Reportes financieros en tiempo real
+- Sistema de roles y permisos granular
 
-### 🎯 **Inicio Rápido**
-
-1. **Acceso al Sistema**: Usar credenciales proporcionadas por administrador
-2. **Roles Disponibles**: Administrador, Supervisor, Operador, Cliente
-3. **Funcionalidades Clave**: Servicios, Inventario, Facturación, Reportes
-4. **Soporte**: Contactar al administrador del sistema
-
-### 🏗️ **Tecnologías**
+### ⚙️ **Tecnologías**
 - **Frontend**: React 18.3, TypeScript, Tailwind CSS
 - **Backend**: Supabase (PostgreSQL, Auth, Storage)
-- **Despliegue**: PWA con funcionalidades offline
+- **Despliegue**: PWA con capacidades offline
 
 ---
-**Documentación actualizada - TMS Grúas v2.1.0**
+*Documentación v2.1.0 - TMS Grúas*

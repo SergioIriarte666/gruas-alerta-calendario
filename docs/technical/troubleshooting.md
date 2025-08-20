@@ -1,89 +1,62 @@
-# Resolución de Problemas Técnicos
+# Resolución de Problemas
 
-## Problemas Comunes de Acceso
+## Problemas de Acceso
 
-### 🔐 Error de Autenticación
-**Síntoma**: No puede iniciar sesión
-**Soluciones**:
-1. Verificar credenciales (email/contraseña)
+### No puedo iniciar sesión
+1. Verificar credenciales
 2. Usar recuperación de contraseña
 3. Limpiar cache del navegador
-4. Verificar conexión a Supabase
+4. Contactar administrador
 
-### 📱 Problemas PWA
-**Síntoma**: App no se instala o funciona offline
-**Soluciones**:
-1. Verificar que el navegador soporta PWA
-2. Limpiar datos de la aplicación
-3. Reinstalar PWA desde el navegador
-4. Verificar Service Worker en DevTools
+### App PWA no funciona
+1. Verificar instalación correcta
+2. Limpiar datos de aplicación
+3. Reinstalar desde navegador
+4. Verificar Service Worker
 
 ## Problemas de Datos
 
-### 📊 Datos No Cargan
-**Síntoma**: Pantallas vacías o carga infinita
-**Soluciones**:
+### Datos no cargan
 1. Verificar conexión a internet
 2. Revisar permisos de usuario
-3. Limpiar cache del navegador
+3. Limpiar cache
 4. Verificar estado de Supabase
 
-### 💰 Inconsistencias de Pagos
-**Síntoma**: Facturas con estados incorrectos
-**Soluciones**:
-1. Usar función de "Corregir Inconsistencias" en panel admin
-2. Ejecutar validación de integridad del sistema
+### Inconsistencias de pagos
+1. Usar botón "Corregir Inconsistencias" (admin)
+2. Ejecutar validación de integridad
 3. Revisar logs de auditoría
 4. Contactar soporte técnico
 
 ## Problemas de Performance
 
-### 🐌 Sistema Lento
-**Síntomas**: Carga lenta de páginas
-**Soluciones**:
-1. Verificar conexión a internet
-2. Limpiar cache del navegador
-3. Cerrar tabs innecesarias
-4. Verificar filtros de reportes (reducir rango de fechas)
+### Sistema lento
+1. Verificar conexión
+2. Reducir rango de fechas en reportes
+3. Cerrar pestañas innecesarias
+4. Actualizar navegador
 
-### 📱 Problemas Móviles
-**Síntomas**: Interface no responsive
-**Soluciones**:
+### Interface móvil no responsive
 1. Actualizar navegador móvil
-2. Verificar orientación del dispositivo
-3. Limpiar cache móvil
-4. Reinstalar PWA
+2. Verificar orientación dispositivo
+3. Reinstalar PWA
+4. Limpiar cache móvil
 
 ## Problemas de Inventario
 
-### 📦 Stock Inconsistente
-**Síntomas**: Números de stock incorrectos
-**Soluciones**:
-1. Revisar movimientos de inventario
-2. Verificar entradas y salidas duplicadas
-3. Ejecutar reporte de auditoría de stock
-4. Contactar administrador del sistema
-
-### 🚨 Alertas No Funcionan
-**Síntomas**: No recibe notificaciones de stock
-**Soluciones**:
-1. Verificar configuración de alertas
-2. Revisar niveles mínimos configurados
-3. Verificar permisos de notificaciones
-4. Revisar filtros de ubicación
+### Stock inconsistente
+1. Revisar movimientos duplicados
+2. Ejecutar reporte de auditoría
+3. Verificar entradas/salidas
+4. Contactar administrador
 
 ## Contacto de Soporte
 
-### 🚨 Soporte Urgente
+### Urgente
 - **Email**: soporte@tmsgruas.cl
-- **Teléfono**: +56 9 XXXX XXXX
-- **Horario**: 24/7 para emergencias
+- **Teléfono**: +56 9 XXXX XXXX  
+- **Horario**: 24/7 emergencias
 
-### 📧 Soporte General  
+### General
 - **Email**: ayuda@tmsgruas.cl
-- **Horario**: Lunes a Viernes 8:00-18:00
-
-### 📖 Recursos Adicionales
-- Manual de usuario completo
-- Videos tutoriales
-- Portal web: www.tmsgruas.cl
+- **Horario**: Lunes-Viernes 8:00-18:00
