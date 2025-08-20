@@ -459,23 +459,28 @@ export class XMLSupplierParser {
     
     // Extraer detalles si existen
     const items: XMLDocumentItem[] = [];
-    const detalleElements = dteElement.querySelectorAll('Documento/Detalle');
-    detalleElements.forEach(detalle => {
-      const descripcion = detalle.querySelector('NmbItem')?.textContent?.trim() || '';
-      const cantidad = parseFloat(detalle.querySelector('QtyItem')?.textContent || '1');
-      const precio = parseFloat(detalle.querySelector('PrcItem')?.textContent || '0');
-      const total = parseFloat(detalle.querySelector('MontoItem')?.textContent || '0');
-      
-      if (descripcion) {
-        items.push({
-          description: descripcion,
-          quantity: cantidad,
-          unit_price: precio,
-          total: total,
-          tax_rate: 19 // IVA estándar en Chile
-        });
-      }
-    });
+    
+    // Navegar paso a paso para encontrar elementos Detalle
+    const documentoElement = dteElement.querySelector('Documento');
+    if (documentoElement) {
+      const detalleElements = documentoElement.querySelectorAll('Detalle');
+      detalleElements.forEach(detalle => {
+        const descripcion = detalle.querySelector('NmbItem')?.textContent?.trim() || '';
+        const cantidad = parseFloat(detalle.querySelector('QtyItem')?.textContent || '1');
+        const precio = parseFloat(detalle.querySelector('PrcItem')?.textContent || '0');
+        const total = parseFloat(detalle.querySelector('MontoItem')?.textContent || '0');
+        
+        if (descripcion) {
+          items.push({
+            description: descripcion,
+            quantity: cantidad,
+            unit_price: precio,
+            total: total,
+            tax_rate: 19 // IVA estándar en Chile
+          });
+        }
+      });
+    }
 
     if (!folio || !rutEmisor) return null;
 
