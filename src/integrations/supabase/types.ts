@@ -3104,6 +3104,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
+      fix_invoice_payment_inconsistencies: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
       fix_maintenance_status_inconsistencies: {
         Args: Record<PropertyKey, never>
         Returns: Json
@@ -3501,6 +3505,10 @@ export type Database = {
           payment_id: string
           remaining_amount: number
         }[]
+      }
+      validate_payment_system_integrity: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
       }
       validate_rls_policies: {
         Args: Record<PropertyKey, never>

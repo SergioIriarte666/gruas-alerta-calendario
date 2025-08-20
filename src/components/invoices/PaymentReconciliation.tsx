@@ -11,7 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Plus, Zap, Edit, DollarSign, AlertTriangle, History, RefreshCw, Trash2 } from 'lucide-react';
+import { Plus, Zap, Edit, DollarSign, AlertTriangle, History, RefreshCw, Trash2, Settings, CheckCircle } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 
 interface PaymentReconciliationProps {
@@ -28,7 +28,9 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
     checkPaymentSystemAvailability,
     cleanupDuplicatePayments,
     syncPaidInvoicesWithPayments,
-    getReconciliationStats
+    getReconciliationStats,
+    fixPaymentInconsistencies,
+    validateSystemIntegrity
   } = usePayments();
   
   const [selectedClient, setSelectedClient] = useState<string>('all');
@@ -213,6 +215,39 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
           >
             <Trash2 className={`h-4 w-4 mr-2 ${loadingCleanup ? 'animate-spin' : ''}`} />
             Limpiar Duplicados
+          </Button>
+
+          <Button 
+            onClick={async () => {
+              try {
+                await fixPaymentInconsistencies();
+                await loadReconciliationStats();
+              } catch (error) {
+                console.error('Error fixing inconsistencies:', error);
+              }
+            }}
+            variant="outline"
+            disabled={paymentsLoading}
+            className="border-yellow-500 text-yellow-400 hover:bg-yellow-500 hover:text-white"
+          >
+            <Settings className="h-4 w-4 mr-2" />
+            Corregir Inconsistencias
+          </Button>
+
+          <Button 
+            onClick={async () => {
+              try {
+                await validateSystemIntegrity();
+              } catch (error) {
+                console.error('Error validating system:', error);
+              }
+            }}
+            variant="outline"
+            disabled={paymentsLoading}
+            className="border-green-500 text-green-400 hover:bg-green-500 hover:text-white"
+          >
+            <CheckCircle className="h-4 w-4 mr-2" />
+            Validar Sistema
           </Button>
 
           <Button onClick={() => setShowPaymentForm(true)} className="bg-blue-600 hover:bg-blue-700">

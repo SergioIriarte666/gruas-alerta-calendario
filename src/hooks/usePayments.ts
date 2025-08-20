@@ -298,6 +298,50 @@ export const usePayments = () => {
     }
   };
 
+  // Función para corregir inconsistencias de pagos
+  const fixPaymentInconsistencies = async () => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase.rpc('fix_invoice_payment_inconsistencies');
+      
+      if (error) throw error;
+      
+      const result = data as any;
+      toast.success(`Inconsistencias corregidas: ${result.message}`);
+      await fetchPayments();
+      return data;
+    } catch (error) {
+      console.error('Error fixing payment inconsistencies:', error);
+      toast.error('Error al corregir inconsistencias de pago');
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Función para validar integridad del sistema
+  const validateSystemIntegrity = async () => {
+    try {
+      const { data, error } = await supabase.rpc('validate_payment_system_integrity');
+      
+      if (error) throw error;
+      
+      const result = data as any;
+      
+      if (result.system_health === 'HEALTHY') {
+        toast.success('Sistema de pagos en perfecto estado');
+      } else {
+        toast.warning(`Sistema requiere atención: ${result.issues.inconsistent_invoices} facturas inconsistentes`);
+      }
+      
+      return data;
+    } catch (error) {
+      console.error('Error validating system integrity:', error);
+      toast.error('Error al validar integridad del sistema');
+      throw error;
+    }
+  };
+
   return {
     payments,
     loading,
@@ -314,6 +358,8 @@ export const usePayments = () => {
     syncPaidInvoicesWithPayments,
     getReconciliationStats,
     fullPaymentCleanupAndSync,
+    fixPaymentInconsistencies,
+    validateSystemIntegrity,
     refetch: fetchPayments
   };
 };
