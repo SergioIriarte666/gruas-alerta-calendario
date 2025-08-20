@@ -1,4 +1,4 @@
-import { XMLSupplierData, XMLSupplierParseResult, SupplierCategory } from '@/types/suppliers';
+import { XMLSupplierData, XMLSupplierParseResult, SupplierCategory, XMLCompleteParseResult, XMLDocumentData, XMLSupplierPaymentData, SupplierPaymentStatus, XMLDocumentItem } from '@/types/suppliers';
 
 export class XMLSupplierParser {
   private parser: DOMParser;
@@ -19,6 +19,79 @@ export class XMLSupplierParser {
         warnings: [],
         totalRows: 0,
         validRows: 0
+      };
+    }
+  }
+
+  public async parseXMLCompleteFile(file: File): Promise<XMLCompleteParseResult> {
+    try {
+      const text = await this.readFileAsText(file);
+      return this.parseXMLCompleteString(text);
+    } catch (error) {
+      return {
+        success: false,
+        suppliers: [],
+        documents: [],
+        errors: [`Error leyendo archivo: ${error instanceof Error ? error.message : 'Error desconocido'}`],
+        warnings: [],
+        totalSuppliers: 0,
+        validSuppliers: 0,
+        totalDocuments: 0,
+        validDocuments: 0
+      };
+    }
+  }
+
+  public parseXMLCompleteString(xmlString: string): XMLCompleteParseResult {
+    try {
+      const doc = this.parser.parseFromString(xmlString, 'text/xml');
+      
+      const parseError = doc.querySelector('parsererror');
+      if (parseError) {
+        return {
+          success: false,
+          suppliers: [],
+          documents: [],
+          errors: ['El archivo XML no es válido'],
+          warnings: [],
+          totalSuppliers: 0,
+          validSuppliers: 0,
+          totalDocuments: 0,
+          validDocuments: 0
+        };
+      }
+
+      const suppliers = this.extractSuppliersFromXML(doc);
+      const documents = this.extractDocumentsFromXML(doc);
+      
+      const supplierValidation = this.validateData(suppliers);
+      const documentValidation = this.validateDocuments(documents);
+
+      const allErrors = [...supplierValidation.errors, ...documentValidation.errors];
+      const allWarnings = [...supplierValidation.warnings, ...documentValidation.warnings];
+
+      return {
+        success: allErrors.length === 0,
+        suppliers: suppliers,
+        documents: documents,
+        errors: allErrors,
+        warnings: allWarnings,
+        totalSuppliers: suppliers.length,
+        validSuppliers: suppliers.filter(item => this.isValidSupplier(item)).length,
+        totalDocuments: documents.length,
+        validDocuments: documents.filter(doc => this.isValidDocument(doc)).length
+      };
+    } catch (error) {
+      return {
+        success: false,
+        suppliers: [],
+        documents: [],
+        errors: [`Error procesando XML: ${error instanceof Error ? error.message : 'Error desconocido'}`],
+        warnings: [],
+        totalSuppliers: 0,
+        validSuppliers: 0,
+        totalDocuments: 0,
+        validDocuments: 0
       };
     }
   }
@@ -322,6 +395,269 @@ export class XMLSupplierParser {
 
   private isValidSupplier(supplier: XMLSupplierData): boolean {
     return !!(supplier.name && supplier.name.trim().length > 0);
+  }
+
+  private extractDocumentsFromXML(doc: Document): XMLDocumentData[] {
+    const documents: XMLDocumentData[] = [];
+
+    // Detectar estructura DTE (facturas electrónicas chilenas)
+    const dteElements = doc.querySelectorAll('DTE');
+    if (dteElements.length > 0) {
+      dteElements.forEach(dte => {
+        const document = this.extractDocumentFromDTE(dte);
+        if (document) {
+          documents.push(document);
+        }
+      });
+    }
+
+    // Detectar desde facturas genéricas
+    const facturaElements = doc.querySelectorAll('factura, invoice');
+    if (facturaElements.length > 0) {
+      facturaElements.forEach(factura => {
+        const document = this.extractDocumentFromGenericInvoice(factura);
+        if (document) {
+          documents.push(document);
+        }
+      });
+    }
+
+    return documents;
+  }
+
+  private extractDocumentFromDTE(dteElement: Element): XMLDocumentData | null {
+    const getNestedValue = (path: string): string => {
+      const parts = path.split('/');
+      let current = dteElement;
+      for (const part of parts) {
+        const child = current.querySelector(part);
+        if (!child) return '';
+        current = child;
+      }
+      return current.textContent?.trim() || '';
+    };
+
+    const getNestedNumber = (path: string): number => {
+      const value = getNestedValue(path);
+      return value ? parseFloat(value.replace(/[^\d.-]/g, '')) || 0 : 0;
+    };
+
+    // Extraer información del documento
+    const folio = getNestedValue('Documento/Encabezado/IdDoc/Folio');
+    const tipoDTE = getNestedValue('Documento/Encabezado/IdDoc/TipoDTE');
+    const fechaEmision = getNestedValue('Documento/Encabezado/IdDoc/FchEmis');
+    const fechaVencimiento = getNestedValue('Documento/Encabezado/IdDoc/FchVenc');
+    
+    // Extraer totales
+    const montoNeto = getNestedNumber('Documento/Encabezado/Totales/MntNeto');
+    const iva = getNestedNumber('Documento/Encabezado/Totales/IVA');
+    const montoTotal = getNestedNumber('Documento/Encabezado/Totales/MntTotal');
+    
+    // Extraer información del emisor
+    const rutEmisor = getNestedValue('Documento/Encabezado/Emisor/RUTEmisor');
+    const razonSocial = getNestedValue('Documento/Encabezado/Emisor/RznSoc');
+    
+    // Extraer detalles si existen
+    const items: XMLDocumentItem[] = [];
+    const detalleElements = dteElement.querySelectorAll('Documento/Detalle');
+    detalleElements.forEach(detalle => {
+      const descripcion = detalle.querySelector('NmbItem')?.textContent?.trim() || '';
+      const cantidad = parseFloat(detalle.querySelector('QtyItem')?.textContent || '1');
+      const precio = parseFloat(detalle.querySelector('PrcItem')?.textContent || '0');
+      const total = parseFloat(detalle.querySelector('MontoItem')?.textContent || '0');
+      
+      if (descripcion) {
+        items.push({
+          description: descripcion,
+          quantity: cantidad,
+          unit_price: precio,
+          total: total,
+          tax_rate: 19 // IVA estándar en Chile
+        });
+      }
+    });
+
+    if (!folio || !rutEmisor) return null;
+
+    return {
+      folio: folio,
+      document_type: this.getDocumentTypeLabel(tipoDTE),
+      issue_date: this.formatDate(fechaEmision),
+      due_date: fechaVencimiento ? this.formatDate(fechaVencimiento) : undefined,
+      net_amount: montoNeto,
+      vat_amount: iva,
+      total_amount: montoTotal,
+      currency: 'CLP',
+      description: `${this.getDocumentTypeLabel(tipoDTE)} N° ${folio} - ${razonSocial}`,
+      supplier_rut: this.formatRUT(rutEmisor),
+      status: 'emitido',
+      items: items.length > 0 ? items : undefined
+    };
+  }
+
+  private extractDocumentFromGenericInvoice(facturaElement: Element): XMLDocumentData | null {
+    const getValue = (selector: string): string => {
+      return facturaElement.querySelector(selector)?.textContent?.trim() || '';
+    };
+
+    const getNumber = (selector: string): number => {
+      const value = getValue(selector);
+      return value ? parseFloat(value.replace(/[^\d.-]/g, '')) || 0 : 0;
+    };
+
+    const folio = getValue('folio, numero, number, invoice_number');
+    const fecha = getValue('fecha, date, issue_date');
+    const fechaVencimiento = getValue('fecha_vencimiento, due_date, vencimiento');
+    const total = getNumber('total, amount, monto_total');
+    const neto = getNumber('neto, net_amount, subtotal');
+    const iva = getNumber('iva, tax, impuesto');
+    const rutProveedor = getValue('rut_proveedor, supplier_rut, tax_id');
+    const nombreProveedor = getValue('proveedor, supplier_name, vendor_name, razon_social');
+    const descripcion = getValue('descripcion, description, concepto');
+
+    if (!folio && !total) return null;
+
+    return {
+      folio: folio || `DOC-${Date.now()}`,
+      document_type: 'Factura',
+      issue_date: this.formatDate(fecha) || this.formatDate(new Date().toISOString()),
+      due_date: fechaVencimiento ? this.formatDate(fechaVencimiento) : undefined,
+      net_amount: neto || (total * 0.84), // Si no hay neto, calcularlo aproximado
+      vat_amount: iva || (total * 0.19), // Si no hay IVA, calcularlo aproximado
+      total_amount: total,
+      currency: 'CLP',
+      description: descripcion || `Factura ${folio} - ${nombreProveedor}`,
+      supplier_rut: rutProveedor ? this.formatRUT(rutProveedor) : '',
+      status: 'emitido'
+    };
+  }
+
+  private getDocumentTypeLabel(tipoDTE: string): string {
+    const tipos: Record<string, string> = {
+      '33': 'Factura Electrónica',
+      '34': 'Factura No Gravada',
+      '39': 'Boleta Electrónica',
+      '41': 'Boleta Exenta',
+      '43': 'Liquidación Factura',
+      '46': 'Factura de Compra',
+      '52': 'Guía de Despacho',
+      '56': 'Nota de Débito',
+      '61': 'Nota de Crédito'
+    };
+    return tipos[tipoDTE] || `Documento Tipo ${tipoDTE}` || 'Factura';
+  }
+
+  private formatDate(dateString: string): string {
+    if (!dateString) return '';
+    
+    // Intentar parsear diferentes formatos de fecha
+    let date: Date;
+    
+    if (dateString.includes('-')) {
+      date = new Date(dateString);
+    } else if (dateString.length === 8) {
+      // Formato YYYYMMDD
+      const year = dateString.substring(0, 4);
+      const month = dateString.substring(4, 6);
+      const day = dateString.substring(6, 8);
+      date = new Date(`${year}-${month}-${day}`);
+    } else {
+      date = new Date(dateString);
+    }
+    
+    if (isNaN(date.getTime())) {
+      return dateString; // Retornar el original si no se puede parsear
+    }
+    
+    return date.toISOString().split('T')[0]; // Formato YYYY-MM-DD
+  }
+
+  private validateDocuments(documents: XMLDocumentData[]): { errors: string[], warnings: string[] } {
+    const errors: string[] = [];
+    const warnings: string[] = [];
+
+    documents.forEach((doc, index) => {
+      // Validar folio
+      if (!doc.folio || doc.folio.trim().length === 0) {
+        errors.push(`Documento ${index + 1}: Folio es requerido`);
+      }
+
+      // Validar montos
+      if (doc.total_amount <= 0) {
+        errors.push(`Documento ${index + 1}: Monto total debe ser mayor a 0`);
+      }
+
+      // Validar fecha de emisión
+      if (!doc.issue_date) {
+        warnings.push(`Documento ${index + 1}: Fecha de emisión no especificada`);
+      }
+
+      // Validar RUT del proveedor
+      if (doc.supplier_rut && !this.validateRUT(doc.supplier_rut)) {
+        warnings.push(`Documento ${index + 1}: RUT del proveedor "${doc.supplier_rut}" no es válido`);
+      }
+
+      if (!doc.supplier_rut) {
+        warnings.push(`Documento ${index + 1}: RUT del proveedor no especificado`);
+      }
+
+      // Advertencia si no hay fecha de vencimiento
+      if (!doc.due_date) {
+        warnings.push(`Documento ${index + 1}: Fecha de vencimiento no especificada`);
+      }
+    });
+
+    return { errors, warnings };
+  }
+
+  private isValidDocument(document: XMLDocumentData): boolean {
+    return !!(document.folio && document.folio.trim().length > 0 && document.total_amount > 0);
+  }
+
+  public convertDocumentsToPayments(documents: XMLDocumentData[], suppliers: XMLSupplierData[]): XMLSupplierPaymentData[] {
+    const payments: XMLSupplierPaymentData[] = [];
+    const supplierMap = new Map<string, XMLSupplierData>();
+    
+    // Crear mapa de proveedores por RUT
+    suppliers.forEach(supplier => {
+      if (supplier.rut) {
+        supplierMap.set(supplier.rut, supplier);
+      }
+    });
+
+    documents.forEach(doc => {
+      if (!doc.supplier_rut || !this.isValidDocument(doc)) return;
+
+      const supplier = supplierMap.get(doc.supplier_rut);
+      const category = supplier ? supplier.category : this.categorizeByBusiness(doc.description);
+
+      payments.push({
+        supplier_rut: doc.supplier_rut,
+        amount: doc.total_amount,
+        due_date: doc.due_date || this.calculateDefaultDueDate(doc.issue_date),
+        description: doc.description,
+        category: category,
+        reference_number: doc.folio,
+        notes: `Generado automáticamente desde ${doc.document_type}. Monto neto: $${doc.net_amount.toLocaleString()}, IVA: $${doc.vat_amount.toLocaleString()}`,
+        status: 'pending' as SupplierPaymentStatus,
+        document_data: doc
+      });
+    });
+
+    return payments;
+  }
+
+  private calculateDefaultDueDate(issueDate: string): string {
+    if (!issueDate) {
+      // Si no hay fecha de emisión, usar fecha actual + 30 días
+      const today = new Date();
+      today.setDate(today.getDate() + 30);
+      return today.toISOString().split('T')[0];
+    }
+
+    const date = new Date(issueDate);
+    date.setDate(date.getDate() + 30); // 30 días por defecto
+    return date.toISOString().split('T')[0];
   }
 
   private readFileAsText(file: File): Promise<string> {

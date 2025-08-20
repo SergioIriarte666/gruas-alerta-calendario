@@ -94,6 +94,57 @@ export interface XMLSupplierData {
   is_active: boolean;
 }
 
+// Tipos para XML parsing de documentos
+export interface XMLDocumentData {
+  folio: string;
+  document_type: string;
+  issue_date: string;
+  due_date?: string;
+  net_amount: number;
+  vat_amount: number;
+  total_amount: number;
+  currency: string;
+  description: string;
+  supplier_rut: string;
+  status?: string;
+  payment_terms?: string;
+  items?: XMLDocumentItem[];
+}
+
+export interface XMLDocumentItem {
+  description: string;
+  quantity: number;
+  unit_price: number;
+  total: number;
+  tax_rate?: number;
+}
+
+// Resultado de parsing completo
+export interface XMLCompleteParseResult {
+  success: boolean;
+  suppliers: XMLSupplierData[];
+  documents: XMLDocumentData[];
+  errors: string[];
+  warnings: string[];
+  totalSuppliers: number;
+  validSuppliers: number;
+  totalDocuments: number;
+  validDocuments: number;
+}
+
+// Datos para crear pagos automáticamente
+export interface XMLSupplierPaymentData {
+  supplier_rut: string;
+  amount: number;
+  due_date: string;
+  description: string;
+  category: SupplierCategory;
+  reference_number: string;
+  notes?: string;
+  status: SupplierPaymentStatus;
+  document_data: XMLDocumentData;
+}
+
 export interface XMLSupplierParseResult {
   success: boolean;
   data: XMLSupplierData[];

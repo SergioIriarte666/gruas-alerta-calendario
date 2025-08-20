@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Building2, Upload, Plus, FileText, CreditCard, Calendar } from 'lucide-react';
 import { CustomTabs, CustomTabsList, CustomTabsTrigger, CustomTabsContent } from '@/components/ui/custom-tabs';
-import { XMLSupplierUpload } from '@/components/suppliers/XMLSupplierUpload';
+import { XMLDocumentUpload } from '@/components/suppliers/XMLDocumentUpload';
 import { SupplierList } from '@/components/suppliers/SupplierList';
 import { PaymentList } from '@/components/suppliers/PaymentList';
 import { SupplierPaymentCalendar } from '@/components/suppliers/SupplierPaymentCalendar';
@@ -175,25 +175,29 @@ export const Suppliers: React.FC = () => {
           <CustomTabsContent value="import" className="mt-6">
             <Card>
               <CardHeader>
-                <CardTitle>Importar Proveedores desde XML</CardTitle>
+                <CardTitle>Importar Documentos XML</CardTitle>
               </CardHeader>
               <CardContent>
-                <XMLSupplierUpload
+                <XMLDocumentUpload
                   isOpen={true}
                   onClose={() => setActiveTab('suppliers')}
-                  onSuccess={handleXMLUploadSuccess}
+                  onSuccess={() => setActiveTab('suppliers')}
                 />
               </CardContent>
             </Card>
           </CustomTabsContent>
         </CustomTabs>
 
-        {/* Modals */}
-        <XMLSupplierUpload
-          isOpen={showXMLUpload}
-          onClose={() => setShowXMLUpload(false)}
-          onSuccess={handleXMLUploadSuccess}
-        />
+        {/* XML Document Upload Modal */}
+        {showXMLUpload && (
+          <XMLDocumentUpload
+            isOpen={showXMLUpload}
+            onClose={() => setShowXMLUpload(false)}
+            onSuccess={() => {
+              setShowXMLUpload(false);
+            }}
+          />
+        )}
 
         {showSupplierForm && (
           <SupplierForm
