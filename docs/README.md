@@ -18,6 +18,7 @@
 - **[Sistema de Pagos](technical/payment-system.md)** - Correcciones y mejoras del sistema de pagos
 - **[Configuración del Sistema](technical/configuration.md)** - Configuraciones globales y parámetros
 - **[Resolución de Problemas](technical/troubleshooting.md)** - Guía de troubleshooting técnico
+- **[Correcciones de Pagos](technical/payment-corrections.md)** - Correcciones específicas implementadas
 
 ### 🎯 **Inicio Rápido**
 

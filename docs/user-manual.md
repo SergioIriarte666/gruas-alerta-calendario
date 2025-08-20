@@ -1,932 +1,546 @@
 # Manual de Usuario - TMS Grúas v2.1.0
+## Sistema Integral de Gestión de Transporte y Servicios
 
-## Tabla de Contenidos
+### 📋 Introducción al Sistema
 
-1. [Introducción al Sistema](#introducción-al-sistema)
-2. [Acceso y Roles de Usuario](#acceso-y-roles-de-usuario)
-3. [Dashboard Principal](#dashboard-principal)
-4. [Gestión de Servicios](#gestión-de-servicios)
-5. [Gestión de Grúas](#gestión-de-grúas)
-6. [Gestión de Operadores](#gestión-de-operadores)
-7. [Calendario de Eventos](#calendario-de-eventos)
-8. [Sistema de Inventario](#sistema-de-inventario)
-9. [Módulo Financiero](#módulo-financiero)
-10. [Sistema de Reportes](#sistema-de-reportes)
-11. [Configuraciones](#configuraciones)
-12. [Portal del Cliente](#portal-del-cliente)
-13. [Funcionalidades Móviles](#funcionalidades-móviles)
-14. [Solución de Problemas](#solución-de-problemas)
+TMS Grúas es un sistema integral diseñado para la gestión completa de servicios de transporte y grúas, que permite a las empresas administrar de manera eficiente todos los aspectos de su operación.
 
----
+#### Características Principales:
+- **Gestión de Servicios TMS**: Control completo del ciclo de vida de servicios
+- **Control de Inventario**: Gestión de stock, alertas y movimientos
+- **Administración de Recursos**: Grúas, operadores y equipamiento
+- **Reportes Financieros**: Análisis detallado de costos y rentabilidad
+- **Portal del Cliente**: Acceso directo para clientes con funcionalidades específicas
+- **Diseño Responsivo**: Optimizado para desktop, tablet y móvil
+- **Funcionalidades TMS Completas**: Desde solicitud hasta facturación
+- **Seguridad Robusta**: Control de acceso basado en roles
 
-## 1. Introducción al Sistema
+### 🔐 Acceso al Sistema
 
-### ¿Qué es TMS Grúas?
+#### Inicio de Sesión
+1. Acceder a la URL del sistema proporcionada
+2. Ingresar email y contraseña
+3. El sistema redirigirá según el rol del usuario
 
-TMS Grúas v2.1.0 es un sistema integral de gestión de transporte y servicios de grúas que permite:
+#### Recuperación de Contraseña
+1. Hacer clic en "¿Olvidaste tu contraseña?"
+2. Ingresar email registrado
+3. Seguir instrucciones del correo recibido
 
-- **Gestión completa de servicios**: Desde la creación hasta la facturación
-- **Control de inventario**: Seguimiento de repuestos y consumibles
-- **Administración de recursos**: Grúas, operadores y equipos
-- **Reportes financieros**: Costos, comisiones e ingresos
-- **Portal del cliente**: Acceso directo para clientes
-- **Aplicación móvil**: Funcionalidades PWA para uso en campo
+#### Roles de Usuario
 
-### Características Principales
+**Administrador**
+- Acceso completo a todas las funcionalidades
+- Gestión de usuarios y permisos
+- Configuración del sistema
+- Reportes ejecutivos
 
-- ✅ **Diseño Responsivo**: Funciona en desktop, tablet y móvil
-- ✅ **Gestión de Inventario**: Control completo de stock y movimientos
-- ✅ **TMS Completo**: Todas las funcionalidades de un TMS profesional
-- ✅ **Seguridad Empresarial**: Autenticación robusta y control de acceso
-- ✅ **Reportes Avanzados**: Dashboard con métricas en tiempo real
-- ✅ **Portal del Cliente**: Interfaz dedicada para clientes
-
----
-
-## 2. Acceso y Roles de Usuario
-
-### Inicio de Sesión
-
-1. **Acceder al sistema**:
-   - Abrir la URL del sistema en el navegador
-   - Introducir email y contraseña
-   - Hacer clic en "Iniciar Sesión"
-
-2. **Recuperación de contraseña**:
-   - Hacer clic en "¿Olvidaste tu contraseña?"
-   - Introducir email registrado
-   - Revisar email para instrucciones de recuperación
-
-### Roles de Usuario
-
-#### 👑 **Administrador**
-- Acceso completo al sistema
-- Gestión de usuarios y configuraciones
-- Acceso a todos los módulos y reportes
-- Configuración de empresa y sistema
-
-#### 👨‍💼 **Supervisor**
+**Supervisor**
 - Gestión de servicios y operaciones
-- Acceso a reportes operacionales
-- Supervisión de operadores
-- Gestión de inventario
+- Reportes operacionales
+- Administración de recursos
+- Control de inventario
 
-#### 🚛 **Operador**
-- Vista simplificada para operaciones de campo
-- Actualización de estados de servicio
-- Registro de eventos y novedades
-- Acceso móvil optimizado
+**Operador**
+- Registro de servicios asignados
+- Actualización de estados
+- Acceso a información operacional
+- Funcionalidades móviles
 
-#### 👤 **Cliente**
-- Acceso al portal del cliente
-- Visualización de servicios contratados
-- Solicitud de nuevos servicios
-- Consulta de facturas y pagos
+**Cliente**
+- Portal dedicado
+- Solicitud de servicios
+- Seguimiento de órdenes
+- Historial de facturación
 
----
+### 🏠 Dashboard Principal
 
-## 3. Dashboard Principal
+#### Vista General
+El dashboard proporciona una vista panorámica de las métricas clave:
+- **Servicios Activos**: Cantidad de servicios en proceso
+- **Ingresos del Mes**: Total facturado en el período actual
+- **Grúas Disponibles**: Estado de la flota
+- **Alertas**: Notificaciones importantes
 
-### Vista General
+#### Gráficos y Métricas
+- **Gráfico de Servicios**: Evolución mensual
+- **Estado de Grúas**: Distribución por estado
+- **Top Clientes**: Clientes más activos
+- **Indicadores Financieros**: KPIs principales
 
-El dashboard proporciona una vista consolidada de:
-
-#### 📊 **Métricas Principales**
-- **Servicios Activos**: Número de servicios en curso
-- **Grúas Disponibles**: Estado actual de la flota
-- **Ingresos del Mes**: Facturación mensual
-- **Operadores Activos**: Personal en servicio
-
-#### 📈 **Gráficos y Tendencias**
-- **Servicios por Estado**: Distribución de servicios
-- **Ingresos Mensuales**: Tendencia de facturación
-- **Utilización de Grúas**: Eficiencia de la flota
-- **Costos vs Ingresos**: Análisis de rentabilidad
-
-#### 🔔 **Notificaciones y Alertas**
-- Servicios próximos a vencer
-- Mantenimientos programados
-- Inventario bajo stock
-- Facturas pendientes
-
-### Navegación
-
-#### Menú Principal
-- **Dashboard**: Vista general del sistema
-- **Servicios**: Gestión de servicios de transporte
-- **Grúas**: Administración de la flota
+#### Navegación Principal
+El menú lateral permite acceso a todos los módulos:
+- **Dashboard**: Vista principal
+- **Servicios**: Gestión de servicios TMS
+- **Grúas**: Administración de flota
 - **Operadores**: Gestión de personal
 - **Calendario**: Programación de eventos
 - **Inventario**: Control de stock
-- **Finanzas**: Costos, comisiones y facturación
+- **Finanzas**: Módulo financiero
 - **Reportes**: Análisis y estadísticas
-- **Configuración**: Ajustes del sistema
+- **Configuración**: Parámetros del sistema
 
----
+### 🚛 Gestión de Servicios
 
-## 4. Gestión de Servicios
+#### Crear Nuevo Servicio
+1. **Información Básica**:
+   - Folio (generado automáticamente)
+   - Cliente
+   - Fecha de solicitud
+   - Fecha de servicio
+   - Descripción del trabajo
 
-### Creación de Servicios
+2. **Asignación de Recursos**:
+   - Seleccionar grúa disponible
+   - Asignar operador
+   - Definir ubicación de origen y destino
+   - Especificar tipo de servicio
 
-#### Paso 1: Información Básica
-1. **Acceder a Servicios** → "Nuevo Servicio"
-2. **Completar datos obligatorios**:
-   - **Folio**: Número único del servicio
-   - **Cliente**: Seleccionar de la lista
-   - **Fecha de Servicio**: Programación
-   - **Tipo de Servicio**: Categoría del trabajo
+3. **Definición de Costos**:
+   - Tarifa base
+   - Costos adicionales
+   - Impuestos aplicables
+   - Total del servicio
 
-#### Paso 2: Detalles del Servicio
-3. **Información operacional**:
-   - **Origen**: Dirección de recogida
-   - **Destino**: Dirección de entrega
-   - **Descripción**: Detalles del trabajo
-   - **Observaciones**: Notas adicionales
+#### Estados de Servicio
 
-#### Paso 3: Asignación de Recursos
-4. **Seleccionar recursos**:
-   - **Grúa**: Equipo asignado
-   - **Operador**: Personal responsable
-   - **Vehículo de Apoyo**: Si es necesario
+**Pendiente** (Amarillo)
+- Servicio creado pero no confirmado
+- Acciones: Confirmar, Editar, Cancelar
 
-#### Paso 4: Costos y Tarifas
-5. **Definir precios**:
-   - **Tarifa Base**: Costo del servicio
-   - **Costos Adicionales**: Extras y recargos
-   - **Descuentos**: Si aplican
+**Confirmado** (Azul)
+- Servicio confirmado y programado
+- Acciones: Iniciar, Reagendar, Cancelar
 
-### Estados de Servicio
-
-#### 🟡 **Pendiente**
-- Servicio creado, esperando confirmación
-- **Acciones disponibles**: Editar, confirmar, cancelar
-
-#### 🔵 **Confirmado**
-- Servicio aprobado y programado
-- **Acciones disponibles**: Iniciar, reprogramar, cancelar
-
-#### 🟢 **En Proceso**
+**En Proceso** (Verde)
 - Servicio en ejecución
-- **Acciones disponibles**: Actualizar estado, agregar notas
+- Acciones: Completar, Pausar, Reportar incidencia
 
-#### ✅ **Completado**
+**Completado** (Verde Oscuro)
 - Servicio finalizado exitosamente
-- **Acciones disponibles**: Facturar, generar reporte
+- Acciones: Generar factura, Ver detalles
 
-#### 🔴 **Cancelado**
-- Servicio cancelado por cualquier motivo
-- **Acciones disponibles**: Ver historial, reactivar
-
-### Gestión de Servicios Existentes
+**Cancelado** (Rojo)
+- Servicio cancelado
+- Acciones: Ver razón, Reactivar (si aplica)
 
 #### Búsqueda y Filtros
-- **Por Folio**: Búsqueda directa por número
-- **Por Cliente**: Filtrar por empresa
-- **Por Estado**: Filtrar por estado actual
-- **Por Fecha**: Rango de fechas
-- **Por Operador**: Servicios asignados
+- **Filtro por Cliente**: Buscar servicios específicos
+- **Filtro por Estado**: Ver servicios por estado
+- **Filtro por Fecha**: Rango de fechas
+- **Filtro por Operador**: Servicios por operador
+- **Búsqueda por Folio**: Búsqueda directa
 
 #### Acciones Masivas
-- **Exportar**: Generar reportes en Excel/PDF
-- **Actualizar Estados**: Cambios masivos
-- **Asignar Recursos**: Reasignación múltiple
+- **Exportar a Excel**: Descargar lista filtrada
+- **Generar Reportes**: Crear análisis personalizado
+- **Actualización Masiva**: Cambiar estados múltiples
 
----
+### 🏗️ Gestión de Grúas
 
-## 5. Gestión de Grúas
+#### Registro de Nueva Grúa
+1. **Información Básica**:
+   - Patente única
+   - Marca y modelo
+   - Año de fabricación
+   - Número de serie
 
-### Registro de Grúas
+2. **Especificaciones Técnicas**:
+   - Capacidad de carga
+   - Altura máxima
+   - Radio de trabajo
+   - Tipo de combustible
 
-#### Información Básica
-1. **Acceder a Grúas** → "Nueva Grúa"
-2. **Datos del equipo**:
-   - **Código**: Identificador único
-   - **Marca y Modelo**: Especificaciones
-   - **Año**: Año de fabricación
-   - **Capacidad**: Tonelaje máximo
-   - **Placa**: Número de matrícula
+3. **Documentación**:
+   - Certificaciones vigentes
+   - Seguros
+   - Revisiones técnicas
+   - Permisos de circulación
 
-#### Especificaciones Técnicas
-3. **Características operacionales**:
-   - **Altura Máxima**: Alcance vertical
-   - **Radio de Trabajo**: Alcance horizontal
-   - **Tipo de Combustible**: Diesel, eléctrico, etc.
-   - **Consumo**: Litros por hora
-
-#### Documentación
-4. **Documentos requeridos**:
-   - **SOAT**: Seguro obligatorio
-   - **Revisión Técnica**: Certificación vigente
-   - **Licencia de Operación**: Permisos municipales
-   - **Certificados**: Documentos adicionales
-
-### Mantenimiento de Grúas
-
-#### Programación de Mantenimientos
+#### Mantenimiento de Grúas
 1. **Mantenimiento Preventivo**:
-   - **Por Horas**: Cada X horas de operación
-   - **Por Fecha**: Mantenimientos periódicos
-   - **Por Kilometraje**: Según uso
+   - Programar según horas de uso
+   - Calendario automático
+   - Alertas de vencimiento
+   - Historial de mantenciones
 
 2. **Mantenimiento Correctivo**:
-   - **Reportes de Fallas**: Registro de problemas
-   - **Reparaciones**: Seguimiento de trabajos
-   - **Repuestos**: Control de piezas utilizadas
+   - Registro de fallas
+   - Reparaciones realizadas
+   - Costos asociados
+   - Tiempo fuera de servicio
 
-#### Historial de Mantenimiento
-- **Registro completo**: Todas las intervenciones
-- **Costos asociados**: Gastos por mantenimiento
-- **Tiempo fuera de servicio**: Impacto operacional
-- **Proveedores**: Talleres y técnicos
+#### Estados de Grúa
 
-### Estados de Grúas
+**Disponible**: Lista para asignar a servicios
+**En Servicio**: Actualmente en operación
+**Mantenimiento**: En proceso de mantención
+**Fuera de Servicio**: No disponible por falla o reparación
 
-#### 🟢 **Disponible**
-- Grúa lista para asignación
-- Sin servicios programados
-- Mantenimiento al día
+### 👷 Gestión de Operadores
 
-#### 🔵 **En Servicio**
-- Grúa asignada a un trabajo
-- Operador designado
-- Ubicación en tiempo real
+#### Registro de Operador
+1. **Información Personal**:
+   - Nombre completo
+   - RUT
+   - Fecha de nacimiento
+   - Datos de contacto
 
-#### 🟡 **Mantenimiento**
-- Grúa en taller o revisión
-- No disponible para servicios
-- Fecha estimada de retorno
+2. **Información Profesional**:
+   - Licencia de conducir
+   - Certificaciones
+   - Experiencia
+   - Especialidades
 
-#### 🔴 **Fuera de Servicio**
-- Grúa con fallas graves
-- Requiere reparación mayor
-- Evaluación de viabilidad
+3. **Licencias y Certificaciones**:
+   - Tipo de licencia
+   - Fecha de vencimiento
+   - Certificaciones adicionales
+   - Cursos de capacitación
 
----
+#### Asignación de Servicios
+- **Criterios de Asignación**:
+  - Disponibilidad del operador
+  - Proximidad geográfica
+  - Especialización requerida
+  - Carga de trabajo actual
 
-## 6. Gestión de Operadores
-
-### Registro de Operadores
-
-#### Información Personal
-1. **Datos básicos**:
-   - **Nombre Completo**: Identificación
-   - **Documento**: Cédula o pasaporte
-   - **Teléfono**: Contacto principal
-   - **Email**: Correo electrónico
-   - **Dirección**: Domicilio
-
-#### Información Laboral
-2. **Datos profesionales**:
-   - **Código de Empleado**: Identificador interno
-   - **Fecha de Ingreso**: Inicio de labores
-   - **Cargo**: Posición en la empresa
-   - **Salario Base**: Remuneración básica
-
-#### Licencias y Certificaciones
-3. **Documentos requeridos**:
-   - **Licencia de Conducir**: Categoría requerida
-   - **Certificación de Operador**: Grúas específicas
-   - **Cursos de Seguridad**: Capacitaciones
-   - **Exámenes Médicos**: Aptitud física
-
-### Asignación de Servicios
-
-#### Criterios de Asignación
-- **Disponibilidad**: Horarios libres
-- **Especialización**: Tipo de grúa certificada
-- **Ubicación**: Proximidad al servicio
-- **Carga de Trabajo**: Distribución equitativa
-
-#### Proceso de Asignación
-1. **Seleccionar Servicio**: Desde la lista de pendientes
-2. **Elegir Operador**: Basado en criterios
-3. **Confirmar Asignación**: Notificar al operador
-4. **Seguimiento**: Monitorear ejecución
-
-### Control de Horarios
-
-#### Registro de Tiempo
-- **Hora de Inicio**: Comienzo del servicio
-- **Hora de Fin**: Finalización del trabajo
-- **Tiempo de Viaje**: Desplazamientos
-- **Tiempo de Espera**: Demoras en sitio
+#### Control de Horarios
+- **Horario Regular**: Definir horario estándar
+- **Horas Extra**: Registro de tiempo adicional
+- **Días Libres**: Programación de descansos
+- **Turnos Especiales**: Asignaciones fuera de horario
 
 #### Cálculo de Comisiones
-- **Tarifa por Hora**: Pago base
+- **Por Servicio**: Porcentaje fijo por servicio
+- **Por Monto**: Porcentaje sobre valor del servicio
 - **Bonificaciones**: Incentivos adicionales
 - **Descuentos**: Penalizaciones si aplican
-- **Total Devengado**: Cálculo final
 
----
+### 📅 Calendario de Eventos
 
-## 7. Calendario de Eventos
+#### Vistas del Calendario
+- **Vista Mensual**: Panorama general del mes
+- **Vista Semanal**: Detalle por semana
+- **Vista Diaria**: Agenda del día
 
-### Vistas del Calendario
+#### Tipos de Eventos
+- **Servicios** (Verde): Servicios programados
+- **Mantenimiento** (Naranja): Mantenciones de grúas
+- **Inspecciones** (Azul): Revisiones programadas
+- **Eventos Especiales** (Morado): Reuniones, capacitaciones
 
-#### 📅 **Vista Mensual**
-- Panorama general del mes
-- Servicios programados por día
-- Mantenimientos y eventos
-- Disponibilidad de recursos
+#### Gestión de Eventos
+1. **Crear Evento**:
+   - Título descriptivo
+   - Fecha y hora
+   - Duración
+   - Recursos involucrados
+   - Descripción detallada
 
-#### 📊 **Vista Semanal**
-- Detalle semanal de actividades
-- Horarios específicos
-- Asignaciones de operadores
-- Conflictos de programación
+2. **Editar Evento**:
+   - Modificar fecha/hora
+   - Cambiar recursos asignados
+   - Actualizar descripción
+   - Notificar cambios
 
-#### 📋 **Vista Diaria**
-- Agenda detallada del día
-- Cronograma hora por hora
-- Rutas optimizadas
-- Notas y observaciones
+3. **Eliminar Evento**:
+   - Confirmar eliminación
+   - Notificar a involucrados
+   - Liberar recursos
 
-### Tipos de Eventos
+### 📦 Sistema de Inventario
 
-#### 🚛 **Servicios**
-- **Color**: Azul
-- **Información**: Cliente, grúa, operador
-- **Estado**: Pendiente, confirmado, en proceso
+#### Catálogo de Productos
+1. **Categorías**:
+   - Repuestos de grúas
+   - Herramientas
+   - Equipos de seguridad
+   - Consumibles
+   - Otros materiales
 
-#### 🔧 **Mantenimientos**
-- **Color**: Naranja
-- **Información**: Grúa, tipo de mantenimiento
-- **Duración**: Tiempo estimado
+2. **Información del Producto**:
+   - **Básica**: Código, nombre, descripción
+   - **Comercial**: Precio, proveedor, marca
+   - **Control de Stock**: Mínimo, máximo, punto de reorden
 
-#### 📋 **Inspecciones**
-- **Color**: Verde
-- **Información**: Equipo, inspector
-- **Periodicidad**: Frecuencia requerida
+#### Movimientos de Inventario
+1. **Entradas de Stock**:
+   - Compras a proveedores
+   - Devoluciones de clientes
+   - Ajustes positivos
+   - Transferencias entre ubicaciones
 
-#### 🎯 **Eventos Especiales**
-- **Color**: Rojo
-- **Información**: Descripción del evento
-- **Importancia**: Prioridad alta
-
-### Gestión de Eventos
-
-#### Crear Evento
-1. **Hacer clic** en fecha deseada
-2. **Seleccionar tipo** de evento
-3. **Completar información** requerida
-4. **Asignar recursos** necesarios
-5. **Guardar** y confirmar
-
-#### Editar Evento
-1. **Hacer clic** en evento existente
-2. **Modificar** información necesaria
-3. **Actualizar** asignaciones
-4. **Guardar** cambios
-
-#### Eliminar Evento
-1. **Seleccionar** evento
-2. **Confirmar** eliminación
-3. **Notificar** a involucrados
-
----
-
-## 8. Sistema de Inventario
-
-### Catálogo de Productos
-
-#### Categorías de Productos
-- **Repuestos**: Piezas para grúas
-- **Consumibles**: Aceites, filtros, combustible
-- **Herramientas**: Equipos de trabajo
-- **EPP**: Elementos de protección personal
-- **Materiales**: Insumos diversos
-
-#### Información de Productos
-1. **Datos básicos**:
-   - **Código**: SKU único
-   - **Nombre**: Descripción del producto
-   - **Categoría**: Clasificación
-   - **Unidad**: Medida (unidad, litro, kg)
-
-2. **Información comercial**:
-   - **Precio de Compra**: Costo de adquisición
-   - **Precio de Venta**: Valor de salida
-   - **Proveedor Principal**: Suministrador
-   - **Tiempo de Entrega**: Días de reposición
-
-3. **Control de stock**:
-   - **Stock Actual**: Cantidad disponible
-   - **Stock Mínimo**: Punto de reorden
-   - **Stock Máximo**: Límite de almacenamiento
-   - **Ubicación**: Posición en bodega
-
-### Movimientos de Inventario
-
-#### Tipos de Movimientos
-
-##### 📥 **Entradas**
-- **Compras**: Adquisiciones a proveedores
-- **Devoluciones**: Retornos de clientes
-- **Ajustes Positivos**: Correcciones de inventario
-- **Transferencias**: Entre bodegas
-
-##### 📤 **Salidas**
-- **Ventas**: Despachos a clientes
-- **Consumo Interno**: Uso en servicios
-- **Ajustes Negativos**: Correcciones de inventario
-- **Mermas**: Pérdidas y desperdicios
+2. **Salidas de Stock**:
+   - Ventas a clientes
+   - Uso en servicios
+   - Ajustes negativos
+   - Pérdidas o mermas
 
 #### Proceso de Movimientos
-
 1. **Registrar Movimiento**:
-   - **Seleccionar tipo** de movimiento
-   - **Elegir producto** del catálogo
-   - **Indicar cantidad** y motivo
-   - **Asignar responsable**
+   - Seleccionar producto
+   - Especificar cantidad
+   - Definir ubicación
+   - Agregar observaciones
 
-2. **Validar Información**:
-   - **Verificar disponibilidad** (para salidas)
-   - **Confirmar precios** y costos
-   - **Revisar documentos** de soporte
+2. **Validar Movimiento**:
+   - Verificar disponibilidad
+   - Confirmar ubicación
+   - Autorizar transacción
+   - Actualizar stock
 
-3. **Procesar Movimiento**:
-   - **Actualizar stock** automáticamente
-   - **Generar comprobante** del movimiento
-   - **Notificar** a responsables
+#### Reportes de Inventario
+- **Reporte de Stock**: Stock actual por producto
+- **Movimientos**: Histórico de entradas y salidas
+- **Valorización**: Valor del inventario
+- **Productos Críticos**: Alertas de stock mínimo
 
-### Reportes de Inventario
+### 💰 Módulo Financiero
 
-#### 📊 **Reporte de Stock**
-- **Stock actual** por producto
-- **Valorización** del inventario
-- **Productos bajo mínimo**
-- **Productos sin movimiento**
+#### Gestión de Costos
+1. **Categorías de Costos**:
+   - **Operacionales**: Combustible, mantención, peajes
+   - **Personal**: Sueldos, comisiones, bonificaciones
+   - **Administrativos**: Oficina, seguros, licencias
 
-#### 📈 **Reporte de Movimientos**
-- **Entradas y salidas** por período
-- **Consumo por servicio**
-- **Rotación de productos**
-- **Análisis ABC**
+2. **Registro de Costos**:
+   - Fecha del gasto
+   - Categoría
+   - Monto
+   - Descripción
+   - Centro de costo
+   - Documentos respaldo
 
-#### 💰 **Reporte Financiero**
-- **Costo de inventario**
-- **Margen por producto**
-- **Impacto en costos de servicio**
-- **Rentabilidad por categoría**
+#### Sistema de Comisiones
+1. **Configuración**:
+   - **Por Operador**: Porcentaje individual
+   - **Por Tipo de Servicio**: Porcentaje por categoría
+   - **Escala de Comisiones**: Rangos de porcentajes
 
----
+2. **Cálculo de Comisiones**:
+   - Base de cálculo (servicio/monto)
+   - Aplicar porcentaje configurado
+   - Considerar bonificaciones
+   - Aplicar descuentos si corresponde
 
-## 9. Módulo Financiero
+3. **Pago de Comisiones**:
+   - Generar liquidación
+   - Aprobar pago
+   - Registrar transferencia
+   - Notificar operador
 
-### Gestión de Costos
+#### Facturación
+1. **Creación de Facturas**:
+   - Seleccionar servicios completados
+   - Verificar datos del cliente
+   - Aplicar impuestos
+   - Generar documento
 
-#### Tipos de Costos
+2. **Estados de Factura**:
+   - **Borrador**: En construcción
+   - **Enviada**: Emitida al cliente
+   - **Pagada**: Cobrada completamente
+   - **Vencida**: Plazo de pago superado
 
-##### 🚛 **Costos Operacionales**
-- **Combustible**: Consumo por servicio
-- **Mantenimiento**: Reparaciones y revisiones
-- **Peajes**: Costos de tránsito
-- **Parqueaderos**: Estacionamientos
+3. **Conciliación de Pagos**:
+   - Registrar pagos recibidos
+   - Asociar a facturas
+   - Calcular saldos pendientes
+   - Generar estados de cuenta
 
-##### 👨‍💼 **Costos de Personal**
-- **Salarios**: Remuneración base
-- **Comisiones**: Pagos por servicio
-- **Prestaciones**: Beneficios sociales
-- **Capacitación**: Formación del personal
+### 📊 Sistema de Reportes
 
-##### 🏢 **Costos Administrativos**
-- **Seguros**: Pólizas de la flota
-- **Licencias**: Permisos y certificaciones
-- **Servicios**: Comunicaciones, software
-- **Otros**: Gastos diversos
+#### Dashboard de Reportes
+El sistema ofrece múltiples pestañas de análisis:
 
-#### Registro de Costos
-
-1. **Crear Costo**:
-   - **Seleccionar categoría** del costo
-   - **Asignar a servicio** o grúa
-   - **Indicar monto** y fecha
-   - **Adjuntar soporte** (factura, recibo)
-
-2. **Validar Costo**:
-   - **Revisar información** ingresada
-   - **Verificar documentos** de soporte
-   - **Aprobar** o rechazar
-
-3. **Procesar Costo**:
-   - **Afectar contabilidad**
-   - **Actualizar reportes**
-   - **Notificar** a responsables
-
-### Sistema de Comisiones
-
-#### Configuración de Comisiones
-
-##### Por Operador
-- **Porcentaje fijo**: % sobre valor del servicio
-- **Monto fijo**: Valor constante por servicio
-- **Escala variable**: Según tipo de servicio
-- **Bonificaciones**: Incentivos adicionales
-
-##### Por Tipo de Servicio
-- **Servicios estándar**: Comisión base
-- **Servicios especiales**: Comisión premium
-- **Servicios nocturnos**: Recargo adicional
-- **Servicios de emergencia**: Bonificación extra
-
-#### Cálculo de Comisiones
-
-1. **Automático**:
-   - **Al completar servicio**: Cálculo inmediato
-   - **Según configuración**: Reglas predefinidas
-   - **Validación**: Revisión automática
-
-2. **Manual**:
-   - **Casos especiales**: Situaciones particulares
-   - **Ajustes**: Correcciones necesarias
-   - **Aprobación**: Validación manual
-
-#### Pago de Comisiones
-
-1. **Generar Lote**:
-   - **Seleccionar período**: Rango de fechas
-   - **Filtrar operadores**: Específicos o todos
-   - **Revisar cálculos**: Validar montos
-
-2. **Procesar Pago**:
-   - **Generar comprobantes**: Documentos de pago
-   - **Actualizar estados**: Marcar como pagado
-   - **Registrar en contabilidad**: Asientos contables
-
-### Facturación
-
-#### Creación de Facturas
-
-1. **Desde Servicios**:
-   - **Seleccionar servicios** completados
-   - **Agrupar por cliente** si es necesario
-   - **Generar factura** automáticamente
-
-2. **Manual**:
-   - **Crear factura** desde cero
-   - **Agregar conceptos** manualmente
-   - **Calcular impuestos** y totales
-
-#### Estados de Factura
-
-##### 🟡 **Borrador**
-- Factura en creación
-- **Acciones**: Editar, eliminar
-
-##### 🔵 **Enviada**
-- Factura entregada al cliente
-- **Acciones**: Ver, anular
-
-##### 🟢 **Pagada**
-- Factura cancelada por el cliente
-- **Acciones**: Ver, generar recibo
-
-##### 🔴 **Vencida**
-- Factura no pagada en término
-- **Acciones**: Gestión de cartera
-
-#### Conciliación de Pagos
-
-1. **Registrar Pago**:
-   - **Seleccionar factura**
-   - **Indicar monto** recibido
-   - **Método de pago**: Efectivo, transferencia, etc.
-   - **Fecha de pago**
-
-2. **Conciliar**:
-   - **Verificar montos**
-   - **Aplicar descuentos** si existen
-   - **Generar recibo** de pago
-   - **Actualizar cartera**
-
----
-
-## 10. Sistema de Reportes
-
-### Dashboard de Reportes
-
-#### Pestañas Principales
-
-##### 📊 **Dashboard**
-- **Métricas generales**: KPIs principales
-- **Gráficos de tendencias**: Evolución temporal
-- **Alertas**: Indicadores críticos
-- **Resumen ejecutivo**: Vista consolidada
-
-##### 🚛 **Operacional**
-- **Servicios por estado**: Distribución actual
-- **Utilización de grúas**: Eficiencia de flota
-- **Productividad de operadores**: Rendimiento
-- **Tiempos de servicio**: Análisis de duración
-
-##### 💰 **Costos**
-- **Costos por categoría**: Distribución de gastos
-- **Costos por grúa**: Análisis individual
-- **Costos por servicio**: Rentabilidad
-- **Tendencias de costos**: Evolución temporal
-
-##### 🔧 **Mantenimiento**
-- **Programación**: Mantenimientos pendientes
-- **Historial**: Trabajos realizados
-- **Costos de mantenimiento**: Gastos por equipo
-- **Disponibilidad**: Tiempo operativo vs. mantenimiento
-
-### Filtros y Personalización
+1. **Dashboard**: Métricas generales y KPIs
+2. **Operacional**: Análisis de servicios y recursos
+3. **Costos**: Análisis financiero detallado
+4. **Mantenimiento**: Estado y costos de mantención
 
 #### Filtros Disponibles
-- **Rango de fechas**: Período específico
-- **Cliente**: Servicios por empresa
-- **Grúa**: Análisis por equipo
-- **Operador**: Rendimiento individual
-- **Tipo de servicio**: Categorización
-- **Estado**: Filtro por estado actual
-
-#### Opciones de Vista
-- **Gráficos**: Visualización gráfica
-- **Tablas**: Datos tabulares
-- **Resumen**: Vista consolidada
-- **Detalle**: Información completa
-
-### Exportación de Reportes
-
-#### Formatos Disponibles
-- **Excel**: Hojas de cálculo editables
-- **PDF**: Documentos para impresión
-- **CSV**: Datos para análisis
-- **Imagen**: Gráficos para presentaciones
+- **Rango de Fechas**: Período específico de análisis
+- **Cliente**: Filtrar por cliente específico
+- **Operador**: Análisis por operador
+- **Grúa**: Rendimiento por equipo
+- **Ubicación**: Análisis geográfico
 
 #### Opciones de Exportación
-1. **Seleccionar reporte** deseado
-2. **Aplicar filtros** necesarios
-3. **Elegir formato** de exportación
-4. **Descargar archivo** generado
+- **Excel**: Para análisis adicional
+- **PDF**: Para presentaciones
+- **CSV**: Para integración con otros sistemas
+- **Imagen**: Para documentos y presentaciones
 
----
+### ⚙️ Configuraciones
 
-## 11. Configuraciones
+#### Configuración de Empresa
+1. **Información Básica**:
+   - Nombre de la empresa
+   - RUT
+   - Dirección
+   - Teléfonos y email
 
-### Configuración de Empresa
+2. **Configuración Visual**:
+   - Logo de la empresa
+   - Colores corporativos
+   - Plantillas de documentos
 
-#### Información Básica
-- **Razón Social**: Nombre legal de la empresa
-- **NIT**: Número de identificación tributaria
-- **Dirección**: Domicilio principal
-- **Teléfono**: Contacto principal
-- **Email**: Correo corporativo
-- **Sitio Web**: URL de la empresa
+#### Configuración del Sistema
+1. **Parámetros Generales**:
+   - Zona horaria
+   - Moneda
+   - Formato de fecha
+   - Idioma
 
-#### Configuración Visual
-- **Logo**: Imagen corporativa
-- **Colores**: Paleta de la empresa
-- **Tema**: Claro u oscuro
-- **Idioma**: Configuración regional
+2. **Configuración por Módulo**:
+   - Tipos de servicio
+   - Categorías de costos
+   - Niveles de stock
+   - Porcentajes de comisión
 
-### Configuración del Sistema
+#### Gestión de Usuarios
+1. **Crear Usuario**:
+   - Información personal
+   - Credenciales de acceso
+   - Asignar rol
+   - Permisos específicos
 
-#### Parámetros Generales
-- **Zona Horaria**: Configuración temporal
-- **Moneda**: Divisa principal
-- **Formato de Fecha**: DD/MM/YYYY o MM/DD/YYYY
-- **Separador Decimal**: Punto o coma
+2. **Gestión de Permisos**:
+   - Definir accesos por módulo
+   - Configurar nivel de autorización
+   - Restricciones específicas
 
-#### Configuración de Módulos
-- **Inventario**: Activar/desactivar módulo
-- **Comisiones**: Configurar cálculos
-- **Facturación**: Parámetros fiscales
-- **Reportes**: Métricas disponibles
+#### Configuración de Notificaciones
+- **Tipos de Notificación**: Email, SMS, push
+- **Eventos**: Qué acciones disparan notificaciones
+- **Destinatarios**: Quién recibe cada tipo de notificación
+- **Plantillas**: Personalizar mensajes
 
-### Gestión de Usuarios
+### 👥 Portal del Cliente
 
-#### Crear Usuario
-1. **Información básica**:
-   - **Nombre completo**
-   - **Email** (será el usuario)
-   - **Teléfono**
-   - **Rol** asignado
+#### Acceso al Portal
+Los clientes reciben credenciales específicas para acceder a su portal dedicado.
 
-2. **Configuración de acceso**:
-   - **Contraseña temporal**
-   - **Forzar cambio** en primer acceso
-   - **Fecha de expiración**
-   - **Estado** (activo/inactivo)
+#### Funcionalidades del Cliente
+1. **Dashboard Personal**:
+   - Servicios activos
+   - Próximas citas
+   - Estado de facturas
+   - Historial reciente
 
-3. **Permisos específicos**:
-   - **Módulos** accesibles
-   - **Acciones** permitidas
-   - **Restricciones** especiales
+2. **Seguimiento de Servicios**:
+   - Estado en tiempo real
+   - Ubicación de la grúa
+   - Estimación de llegada
+   - Contacto directo con operador
 
-#### Gestionar Usuarios Existentes
-- **Editar información**: Actualizar datos
-- **Cambiar rol**: Modificar permisos
-- **Resetear contraseña**: Nueva clave temporal
-- **Desactivar usuario**: Suspender acceso
+3. **Solicitud de Servicios**:
+   - Formulario simplificado
+   - Programación de fecha/hora
+   - Especificaciones del trabajo
+   - Confirmación automática
 
-### Configuración de Notificaciones
+4. **Gestión de Facturas**:
+   - Ver facturas pendientes
+   - Descargar documentos
+   - Historial de pagos
+   - Estado de cuenta
 
-#### Tipos de Notificaciones
-- **Email**: Correos electrónicos
-- **SMS**: Mensajes de texto
-- **Push**: Notificaciones del navegador
-- **En sistema**: Alertas internas
+#### Características del Portal
+- **Diseño Responsivo**: Optimizado para móvil
+- **Tema Oscuro**: Opción de visualización
+- **Notificaciones**: Alertas automáticas
+- **Seguridad**: Acceso protegido por rol
 
-#### Eventos de Notificación
-- **Servicios**: Creación, cambios de estado
-- **Mantenimientos**: Recordatorios, vencimientos
-- **Inventario**: Stock bajo, movimientos
-- **Facturación**: Vencimientos, pagos
+### 📱 Funcionalidades Móviles
 
----
+#### PWA (Progressive Web App)
+El sistema funciona como aplicación móvil nativa:
+- **Instalación**: Se puede instalar en el dispositivo
+- **Offline**: Funcionalidades básicas sin internet
+- **Push Notifications**: Notificaciones automáticas
+- **Cámara**: Captura de fotos para documentación
 
-## 12. Portal del Cliente
+#### Funcionalidades por Rol
 
-### Acceso al Portal
+**Operadores Móviles**:
+- Actualizar estado de servicios
+- Subir fotos del trabajo
+- Registrar incidencias
+- Recibir nuevas asignaciones
+- Navegación GPS integrada
 
-#### Credenciales de Cliente
-- **URL específica**: Portal dedicado
-- **Usuario**: Email registrado
-- **Contraseña**: Asignada por administrador
-- **Recuperación**: Proceso automático
+**Supervisores Móviles**:
+- Monitoreo en tiempo real
+- Aprobación de servicios
+- Comunicación con operadores
+- Reportes rápidos
 
-### Funcionalidades del Cliente
+**Clientes Móviles**:
+- Solicitar servicios de emergencia
+- Seguimiento en vivo
+- Comunicación directa
+- Confirmación de trabajos
 
-#### 📊 **Dashboard del Cliente**
-- **Servicios activos**: En curso
-- **Próximos servicios**: Programados
-- **Historial reciente**: Últimos trabajos
-- **Estado de cuenta**: Facturas y pagos
+#### Optimizaciones Móviles
+- **Interfaz Táctil**: Botones y controles adaptados
+- **Carga Rápida**: Optimización de recursos
+- **Batería**: Uso eficiente de energía
+- **Conectividad**: Funcionamiento con conexión limitada
 
-#### 🚛 **Mis Servicios**
-- **Lista completa**: Todos los servicios
-- **Filtros**: Por fecha, estado, tipo
-- **Detalles**: Información completa
-- **Seguimiento**: Estado en tiempo real
+### 🆘 Solución de Problemas
 
-#### 📝 **Solicitar Servicio**
-- **Formulario simplificado**: Datos básicos
-- **Selección de fecha**: Calendario disponible
-- **Tipo de servicio**: Opciones predefinidas
-- **Observaciones**: Notas especiales
+#### Problemas de Acceso
+1. **No puedo iniciar sesión**:
+   - Verificar email y contraseña
+   - Usar recuperación de contraseña
+   - Contactar al administrador
 
-#### 📄 **Facturas y Pagos**
-- **Facturas pendientes**: Por pagar
-- **Historial de pagos**: Comprobantes
-- **Descargar PDF**: Documentos fiscales
-- **Estado de cuenta**: Resumen financiero
+2. **La página no carga**:
+   - Verificar conexión a internet
+   - Limpiar cache del navegador
+   - Probar en navegador diferente
 
-### Características del Portal
+#### Problemas de Datos
+1. **Los datos no aparecen**:
+   - Verificar filtros aplicados
+   - Revisar permisos de usuario
+   - Contactar soporte técnico
 
-#### 📱 **Diseño Responsivo**
-- **Móvil**: Optimizado para smartphones
-- **Tablet**: Adaptado para tablets
-- **Desktop**: Experiencia completa
+2. **Error al guardar información**:
+   - Verificar campos obligatorios
+   - Revisar formato de datos
+   - Intentar nuevamente
 
-#### 🌙 **Tema Oscuro**
-- **Cambio automático**: Según preferencias del sistema
-- **Cambio manual**: Botón de alternancia
-- **Persistencia**: Recordar preferencia
+#### Problemas con la App Móvil
+1. **La app no se instala**:
+   - Verificar compatibilidad del navegador
+   - Seguir pasos de instalación
+   - Probar desde navegador diferente
 
-#### 🔒 **Seguridad**
-- **RLS (Row Level Security)**: Datos propios únicamente
-- **Sesiones seguras**: Tokens JWT
-- **Protección de rutas**: Acceso autorizado
-- **Auditoría**: Registro de accesos
+2. **Funcionalidades offline no funcionan**:
+   - Verificar que la app esté instalada
+   - Asegurar sincronización previa
+   - Reiniciar la aplicación
 
----
-
-## 13. Funcionalidades Móviles
-
-### PWA (Progressive Web App)
-
-#### Instalación
-1. **Abrir el sistema** en navegador móvil
-2. **Buscar opción** "Agregar a pantalla de inicio"
-3. **Confirmar instalación**
-4. **Acceder desde** icono en pantalla
-
-#### Características PWA
-- **Funcionamiento offline**: Datos en caché
-- **Notificaciones push**: Alertas en tiempo real
-- **Instalación nativa**: Como app móvil
-- **Actualizaciones automáticas**: Siempre actualizada
-
-### Funcionalidades Móviles
-
-#### Para Operadores
-- **Vista simplificada**: Interfaz optimizada
-- **Actualización de estados**: Servicios en curso
-- **Captura de fotos**: Evidencias del trabajo
-- **Geolocalización**: Ubicación en tiempo real
-- **Modo offline**: Trabajo sin conexión
-
-#### Para Supervisores
-- **Monitoreo en tiempo real**: Estado de servicios
-- **Asignación rápida**: Recursos disponibles
-- **Comunicación directa**: Chat con operadores
-- **Reportes móviles**: Consultas rápidas
-
-#### Para Clientes
-- **Portal móvil**: Acceso completo
-- **Seguimiento de servicios**: Estado actual
-- **Solicitudes rápidas**: Formulario simplificado
-- **Notificaciones**: Actualizaciones automáticas
-
-### Optimizaciones Móviles
-
-#### Rendimiento
-- **Carga rápida**: Optimización de recursos
-- **Navegación fluida**: Transiciones suaves
-- **Uso eficiente de datos**: Compresión de imágenes
-- **Batería optimizada**: Consumo reducido
-
-#### Usabilidad
-- **Botones grandes**: Fácil interacción táctil
-- **Menús accesibles**: Navegación intuitiva
-- **Formularios optimizados**: Entrada de datos eficiente
-- **Feedback visual**: Confirmaciones claras
-
----
-
-## 14. Solución de Problemas
-
-### Problemas Comunes
-
-#### 🔐 **Problemas de Acceso**
-
-**Síntoma**: No puedo iniciar sesión
-**Soluciones**:
-1. **Verificar credenciales**: Email y contraseña correctos
-2. **Limpiar caché**: Borrar datos del navegador
-3. **Probar navegador diferente**: Chrome, Firefox, Safari
-4. **Contactar administrador**: Reseteo de contraseña
-
-**Síntoma**: Sesión se cierra automáticamente
-**Soluciones**:
-1. **Verificar conexión**: Internet estable
-2. **Actualizar navegador**: Versión más reciente
-3. **Revisar configuración**: Cookies habilitadas
-
-#### 📊 **Problemas de Datos**
-
-**Síntoma**: Los datos no se cargan
-**Soluciones**:
-1. **Refrescar página**: F5 o Ctrl+R
-2. **Verificar conexión**: Internet funcionando
-3. **Revisar filtros**: Configuración de búsqueda
-4. **Contactar soporte**: Si persiste el problema
-
-**Síntoma**: Información desactualizada
-**Soluciones**:
-1. **Actualizar manualmente**: Botón de refresh
-2. **Limpiar caché**: Datos temporales
-3. **Verificar sincronización**: Estado del sistema
-
-#### 📱 **Problemas Móviles**
-
-**Síntoma**: La app móvil no funciona
-**Soluciones**:
-1. **Verificar conexión**: WiFi o datos móviles
-2. **Actualizar app**: Versión más reciente
-3. **Reiniciar dispositivo**: Cerrar y abrir
-4. **Reinstalar PWA**: Eliminar y volver a instalar
-
-### Contacto de Soporte
-
-#### Información para Reportar
-- **Descripción del problema**: Detallada
-- **Pasos para reproducir**: Secuencia exacta
-- **Navegador y versión**: Chrome 120, Firefox 119, etc.
-- **Sistema operativo**: Windows, macOS, Android, iOS
-- **Capturas de pantalla**: Si es posible
+### 📞 Contacto y Soporte
 
 #### Canales de Soporte
-- **Email**: soporte@tmsgruas.com
-- **Teléfono**: +57 (1) 234-5678
-- **Chat en línea**: Disponible en horario laboral
-- **Tickets**: Sistema interno de soporte
+- **Email**: soporte@tmsgruas.cl
+- **Teléfono**: +56 9 XXXX XXXX
+- **Portal Web**: www.tmsgruas.cl
+- **Chat en línea**: Disponible en horario de oficina
 
-### Mantenimiento del Sistema
+#### Horarios de Atención
+- **Soporte General**: Lunes a Viernes 8:00-18:00
+- **Emergencias**: 24/7 para clientes premium
+- **Mantenimiento**: Domingos 2:00-6:00 AM
 
-#### Horarios de Mantenimiento
-- **Mantenimiento programado**: Domingos 2:00 AM - 4:00 AM
-- **Actualizaciones menores**: Sin interrupción del servicio
-- **Actualizaciones mayores**: Notificación previa
-
-#### Durante el Mantenimiento
-- **Acceso limitado**: Funcionalidades básicas
-- **Datos seguros**: Respaldos automáticos
-- **Notificaciones**: Avisos en el sistema
-- **Tiempo estimado**: Información actualizada
+#### Procedimientos de Soporte
+1. **Incidencia Menor**: Email con descripción
+2. **Incidencia Mayor**: Llamada telefónica directa
+3. **Emergencia**: Línea dedicada 24/7
 
 ---
-
-## Conclusión
-
-Este manual proporciona una guía completa para el uso del sistema TMS Grúas v2.1.0. Para obtener ayuda adicional o reportar problemas, no dude en contactar al equipo de soporte técnico.
-
-**¡Gracias por usar TMS Grúas!**
-
----
-
-*Documento actualizado: Enero 2025*  
-*Versión del manual: 1.0*  
-*Versión del sistema: 2.1.0*
+**Manual actualizado - TMS Grúas v2.1.0**
