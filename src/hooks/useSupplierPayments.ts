@@ -43,7 +43,17 @@ export const useSupplierPayments = () => {
     mutationFn: async (data: PaymentFormData): Promise<SupplierPayment> => {
       const { data: payment, error } = await supabase
         .from('supplier_payments')
-        .insert([data])
+        .insert({
+          supplier_id: data.supplier_id,
+          amount: data.amount,
+          due_date: data.due_date,
+          description: data.description,
+          category: data.category,
+          reference_number: data.reference_number || null,
+          notes: data.notes || null,
+          status: data.status || 'pending',
+          created_by: (await supabase.auth.getUser()).data.user?.id
+        } as any) // Temporary any to bypass type issues
         .select()
         .single();
 

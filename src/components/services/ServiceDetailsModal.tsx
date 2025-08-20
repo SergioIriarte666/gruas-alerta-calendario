@@ -316,14 +316,3 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose }: ServiceDetails
     </Dialog>
   );
 };
-
-// Cuando se actualiza desde el modal de detalles
-const handleServiceUpdate = async (serviceData: Partial<any>) => {
-  const serviceDataWithSource = {
-    ...serviceData,
-    _source: 'service_modal', // ✅ NUEVO: Flag de origen
-    _processCosts: false      // ✅ NUEVO: No procesar costos aquí
-  };
-  
-  await updateService({ id: service.id, serviceData: serviceDataWithSource });
-};

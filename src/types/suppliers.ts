@@ -80,3 +80,32 @@ export interface SupplierStats {
   total_overdue_amount: number;
   suppliers_by_category: Record<SupplierCategory, number>;
 }
+
+// Tipos para XML parsing de proveedores
+export interface XMLSupplierData {
+  name: string;
+  rut: string;
+  email: string;
+  phone: string;
+  address: string;
+  contact_name: string;
+  category: SupplierCategory;
+  notes?: string;
+  is_active: boolean;
+}
+
+export interface XMLSupplierParseResult {
+  success: boolean;
+  data: XMLSupplierData[];
+  errors: string[];
+  warnings: string[];
+  totalRows: number;
+  validRows: number;
+}
+
+export interface XMLSupplierFieldMapping {
+  xmlField: string;
+  targetField: keyof XMLSupplierData;
+  required: boolean;
+  transform?: (value: any) => any;
+}
