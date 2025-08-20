@@ -1,18 +1,34 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Building2, Upload, Plus, FileText } from 'lucide-react';
+import { Building2, Upload, Plus, FileText, CreditCard, Calendar } from 'lucide-react';
+import { CustomTabs, CustomTabsList, CustomTabsTrigger, CustomTabsContent } from '@/components/ui/custom-tabs';
 import { XMLSupplierUpload } from '@/components/suppliers/XMLSupplierUpload';
+import { SupplierList } from '@/components/suppliers/SupplierList';
+import { PaymentList } from '@/components/suppliers/PaymentList';
+import { SupplierPaymentCalendar } from '@/components/suppliers/SupplierPaymentCalendar';
+import { SupplierForm } from '@/components/suppliers/SupplierForm';
+import { PaymentForm } from '@/components/suppliers/PaymentForm';
 import { useSupplierStats } from '@/hooks/useSupplierStats';
-import { useSuppliers } from '@/hooks/useSuppliers';
 
 export const Suppliers: React.FC = () => {
+  const [activeTab, setActiveTab] = useState('suppliers');
   const [showXMLUpload, setShowXMLUpload] = useState(false);
+  const [showSupplierForm, setShowSupplierForm] = useState(false);
+  const [showPaymentForm, setShowPaymentForm] = useState(false);
   const { data: stats, isLoading: statsLoading } = useSupplierStats();
-  const { suppliers, isLoading: suppliersLoading } = useSuppliers();
 
   const handleXMLUploadSuccess = (count: number) => {
     console.log(`${count} proveedores importados exitosamente`);
+    setShowXMLUpload(false);
+  };
+
+  const handleSupplierCreated = () => {
+    setShowSupplierForm(false);
+  };
+
+  const handlePaymentCreated = () => {
+    setShowPaymentForm(false);
   };
 
   return (
@@ -38,7 +54,18 @@ export const Suppliers: React.FC = () => {
               <Upload className="w-4 h-4" />
               Importar XML
             </Button>
-            <Button className="flex items-center gap-2">
+            <Button 
+              variant="outline"
+              onClick={() => setShowPaymentForm(true)}
+              className="flex items-center gap-2"
+            >
+              <CreditCard className="w-4 h-4" />
+              Nuevo Pago
+            </Button>
+            <Button 
+              onClick={() => setShowSupplierForm(true)}
+              className="flex items-center gap-2"
+            >
               <Plus className="w-4 h-4" />
               Nuevo Proveedor
             </Button>
@@ -112,60 +139,75 @@ export const Suppliers: React.FC = () => {
           </div>
         )}
 
-        {/* Main Content */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Funcionalidades Disponibles</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-3">
-                <h3 className="font-semibold text-lg">Importación de Datos</h3>
-                <ul className="space-y-2 text-sm text-muted-foreground">
-                  <li className="flex items-center gap-2">
-                    <Upload className="w-4 h-4 text-primary" />
-                    Importar proveedores desde archivos XML
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <FileText className="w-4 h-4 text-primary" />
-                    Soporte para facturas DTE chilenas
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Building2 className="w-4 h-4 text-primary" />
-                    Detección automática de datos de proveedores
-                  </li>
-                </ul>
-                <Button 
-                  variant="outline" 
-                  onClick={() => setShowXMLUpload(true)}
-                  className="w-full"
-                >
-                  <Upload className="w-4 h-4 mr-2" />
-                  Importar XML
-                </Button>
-              </div>
+        {/* Main Content - Tabs */}
+        <CustomTabs value={activeTab} onValueChange={setActiveTab}>
+          <CustomTabsList className="grid w-full grid-cols-4">
+            <CustomTabsTrigger value="suppliers">
+              <Building2 className="w-4 h-4 mr-2" />
+              Proveedores
+            </CustomTabsTrigger>
+            <CustomTabsTrigger value="payments">
+              <CreditCard className="w-4 h-4 mr-2" />
+              Pagos
+            </CustomTabsTrigger>
+            <CustomTabsTrigger value="calendar">
+              <Calendar className="w-4 h-4 mr-2" />
+              Calendario
+            </CustomTabsTrigger>
+            <CustomTabsTrigger value="import">
+              <Upload className="w-4 h-4 mr-2" />
+              Importar
+            </CustomTabsTrigger>
+          </CustomTabsList>
 
-              <div className="space-y-3">
-                <h3 className="font-semibold text-lg">Próximas Funcionalidades</h3>
-                <ul className="space-y-2 text-sm text-muted-foreground">
-                  <li>• CRUD completo de proveedores</li>
-                  <li>• Gestión de pagos a proveedores</li>
-                  <li>• Calendario de vencimientos</li>
-                  <li>• Estadísticas y reportes detallados</li>
-                  <li>• Categorización automática por giro</li>
-                  <li>• Validación de RUT chileno</li>
-                </ul>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+          <CustomTabsContent value="suppliers" className="mt-6">
+            <SupplierList />
+          </CustomTabsContent>
 
-        {/* XML Upload Modal */}
+          <CustomTabsContent value="payments" className="mt-6">
+            <PaymentList />
+          </CustomTabsContent>
+
+          <CustomTabsContent value="calendar" className="mt-6">
+            <SupplierPaymentCalendar />
+          </CustomTabsContent>
+
+          <CustomTabsContent value="import" className="mt-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Importar Proveedores desde XML</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <XMLSupplierUpload
+                  isOpen={true}
+                  onClose={() => setActiveTab('suppliers')}
+                  onSuccess={handleXMLUploadSuccess}
+                />
+              </CardContent>
+            </Card>
+          </CustomTabsContent>
+        </CustomTabs>
+
+        {/* Modals */}
         <XMLSupplierUpload
           isOpen={showXMLUpload}
           onClose={() => setShowXMLUpload(false)}
           onSuccess={handleXMLUploadSuccess}
         />
+
+        {showSupplierForm && (
+          <SupplierForm
+            onClose={() => setShowSupplierForm(false)}
+            onSave={handleSupplierCreated}
+          />
+        )}
+
+        {showPaymentForm && (
+          <PaymentForm
+            onClose={() => setShowPaymentForm(false)}
+            onSave={handlePaymentCreated}
+          />
+        )}
       </div>
     </div>
   );
