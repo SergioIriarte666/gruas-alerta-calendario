@@ -143,7 +143,7 @@ export const ServiceCostsSection = ({ serviceId, enhancedService }: ServiceCosts
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <div className="flex items-center space-x-2 mb-2">
-                    <h5 className="font-medium text-white">Comisión operador - Servicio {serviceId}</h5>
+                    <h5 className="font-medium text-white">Comisión operador - Servicio {enhancedService?.folio || serviceId}</h5>
                     <Badge variant="outline" className="text-xs">
                       comisiones
                     </Badge>
@@ -162,7 +162,7 @@ export const ServiceCostsSection = ({ serviceId, enhancedService }: ServiceCosts
 
                     <p>
                       <span className="font-medium">Folio:</span>{' '}
-                      {serviceId}
+                      {enhancedService?.folio || serviceId}
                     </p>
                   </div>
                 </div>
