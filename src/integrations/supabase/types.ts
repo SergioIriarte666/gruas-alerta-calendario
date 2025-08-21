@@ -3395,6 +3395,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: Json
       }
+      resolve_commission_conflicts: {
+        Args: { p_service_id: string }
+        Returns: Json
+      }
       safe_update_service: {
         Args: { service_id_param: string; update_data: Json }
         Returns: Json
