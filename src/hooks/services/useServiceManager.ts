@@ -607,25 +607,26 @@ export const useServiceManager = () => {
             created_by: null
           }));
 
-          // Usar ON CONFLICT DO NOTHING como fallback para evitar duplicados
+          // Insertar nuevas comisiones con manejo seguro de duplicados
           const { error: insertCommissionsError } = await supabase
             .from('costs')
-            .upsert(newCommissionCosts, { 
-              onConflict: 'service_id,operator_id,category_id',
-              ignoreDuplicates: true 
-            });
+            .insert(newCommissionCosts);
 
           if (insertCommissionsError) {
             console.error('[SMART SYNC] Error inserting new commission costs:', insertCommissionsError);
             
-            // Fallback: Intentar inserción individual con manejo de errores
+            // Fallback: Intentar inserción individual con manejo de errores de duplicados
             for (const cost of newCommissionCosts) {
               const { error: individualError } = await supabase
                 .from('costs')
                 .insert(cost);
                 
-              if (individualError && !individualError.message.includes('duplicate')) {
-                console.error('[SMART SYNC] Individual insert error:', individualError);
+              if (individualError) {
+                // Solo reportar errores que no sean de duplicados
+                if (!individualError.message.includes('duplicate') && 
+                    !individualError.message.includes('violates unique constraint')) {
+                  console.error('[SMART SYNC] Individual insert error:', individualError);
+                }
               }
             }
           } else {
