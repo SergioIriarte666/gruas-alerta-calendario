@@ -4,6 +4,77 @@ import { supabase } from '@/integrations/supabase/client';
 import { Service, ServiceFormData } from '@/types';
 import { toast } from 'sonner';
 
+// Función helper para detectar comisiones existentes y comparar con nuevas
+const detectExistingCommissions = async (serviceId: string, newOperators: any[]) => {
+  const commissionCategoryId = '440296d4-09c2-4f3a-b02b-835f861df4c4';
+  
+  // Obtener comisiones existentes
+  const { data: existingCommissions, error } = await supabase
+    .from('costs')
+    .select('id, operator_id, amount, description')
+    .eq('service_id', serviceId)
+    .eq('category_id', commissionCategoryId);
+
+  if (error) {
+    console.error('Error fetching existing commissions:', error);
+    return { toCreate: [], toUpdate: [], toDelete: [], existingCommissions: [] };
+  }
+
+  console.log('🔍 [SMART SYNC] Existing commissions:', existingCommissions);
+  
+  // Filtrar operadores adicionales (excluyendo el principal)
+  const mainOperator = newOperators.find(op => op.role === 'Principal') || newOperators[0];
+  const additionalOperators = newOperators.filter(op => 
+    op.role !== 'Principal' && 
+    op !== mainOperator &&
+    op.operatorId && 
+    op.operatorId.trim() !== ''
+  );
+
+  const toCreate = [];
+  const toUpdate = [];
+  const toDelete = [...existingCommissions]; // Start with all existing, remove those that still exist
+
+  // Comparar cada operador adicional con las comisiones existentes
+  for (const operator of additionalOperators) {
+    const existingCommission = existingCommissions.find(
+      comm => comm.operator_id === operator.operatorId
+    );
+
+    if (existingCommission) {
+      // Verificar si el monto cambió
+      if (existingCommission.amount !== (operator.commission || 0)) {
+        toUpdate.push({
+          id: existingCommission.id,
+          operator_id: operator.operatorId,
+          amount: operator.commission || 0,
+          hours: operator.hours
+        });
+      }
+      // Remover de la lista de eliminación ya que aún existe
+      const deleteIndex = toDelete.findIndex(comm => comm.id === existingCommission.id);
+      if (deleteIndex > -1) {
+        toDelete.splice(deleteIndex, 1);
+      }
+    } else {
+      // Nueva comisión a crear
+      toCreate.push({
+        operator_id: operator.operatorId,
+        amount: operator.commission || 0,
+        hours: operator.hours
+      });
+    }
+  }
+
+  console.log('🔍 [SMART SYNC] Analysis result:', {
+    toCreate: toCreate.length,
+    toUpdate: toUpdate.length,
+    toDelete: toDelete.length
+  });
+
+  return { toCreate, toUpdate, toDelete, existingCommissions };
+};
+
 // Función para transformar datos de Supabase a Service con manejo robusto de campos opcionales
 const transformToService = (data: any): Service => {
   console.log('🔄 Transforming service data:', { folio: data.folio, hasClient: !!data.client, hasServiceType: !!data.serviceType });
@@ -469,60 +540,100 @@ export const useServiceManager = () => {
           (transformedData as any).operator_commission = 0;
         }
         
-        // 2. Eliminar costos de comisiones existentes para este servicio
-        const { error: deleteCommissionsError } = await supabase
-          .from('costs')
-          .delete()
-          .eq('service_id', id)
-          .eq('category_id', commissionCategoryId);
-
-        if (deleteCommissionsError) {
-          console.error('[updateService] Error deleting existing commissions:', deleteCommissionsError);
-        } else {
-          console.log('[updateService] Existing commission costs deleted');
-        }
+        // 2. DETECCIÓN INTELIGENTE DE COMISIONES - Evitar eliminación/creación innecesaria
+        console.log('🚀 [SMART SYNC] Starting intelligent commission detection for service:', id);
         
-        // 3. Crear costos de comisiones para operadores adicionales (excluyendo el principal)
-        const additionalOperators = serviceData.operators.filter(op => op.role !== 'Principal' && op !== mainOperator);
+        const { toCreate, toUpdate, toDelete } = await detectExistingCommissions(id, serviceData.operators);
         
-        if (additionalOperators.length > 0) {
-          // Get current service data for foreign keys
-          const { data: currentService } = await supabase
-            .from('services')
-            .select('folio, service_date, crane_id')
-            .eq('id', id)
-            .single();
+        // Get current service data for foreign keys
+        const { data: currentService } = await supabase
+          .from('services')
+          .select('folio, service_date, crane_id')
+          .eq('id', id)
+          .single();
 
-          const commissionCosts = additionalOperators
-            .filter(operator => operator.operatorId && operator.operatorId.trim() !== '') // ✅ FIX: Filtrar operadores con UUID válido
-            .map(operator => ({
-              amount: operator.commission || 0,
-              category_id: commissionCategoryId,
-              service_id: id,
-              service_folio: currentService?.folio || 'Unknown',
-              date: currentService?.service_date || new Date().toISOString().split('T')[0],
-              description: `Comisión operador - Servicio ${currentService?.folio || id}`,
-              subcategory: 'Comisiones',
-              notes: operator.hours ? `${operator.hours} horas trabajadas` : null,
-              operator_id: operator.operatorId,
-              crane_id: currentService?.crane_id,
-              created_by: null
-            }));
+        // 3. ELIMINAR solo las comisiones que ya no existen
+        if (toDelete.length > 0) {
+          console.log('🗑️ [SMART SYNC] Deleting obsolete commissions:', toDelete.map(c => c.id));
+          
+          const { error: deleteCommissionsError } = await supabase
+            .from('costs')
+            .delete()
+            .in('id', toDelete.map(c => c.id));
 
-          if (commissionCosts.length > 0) {
-            console.log('[updateService] Inserting commission costs for additional operators:', commissionCosts);
-
-            const { error: insertCommissionsError } = await supabase
-              .from('costs')
-              .insert(commissionCosts);
-
-            if (insertCommissionsError) {
-              console.error('[updateService] Error inserting commission costs:', insertCommissionsError);
-            } else {
-              console.log('[updateService] Commission costs inserted successfully');
-            }
+          if (deleteCommissionsError) {
+            console.error('[SMART SYNC] Error deleting obsolete commissions:', deleteCommissionsError);
+          } else {
+            console.log('✅ [SMART SYNC] Obsolete commission costs deleted successfully');
           }
         }
+
+        // 4. ACTUALIZAR comisiones existentes que cambiaron
+        if (toUpdate.length > 0) {
+          console.log('✏️ [SMART SYNC] Updating existing commissions:', toUpdate.length);
+          
+          for (const updateData of toUpdate) {
+            const { error: updateError } = await supabase
+              .from('costs')
+              .update({
+                amount: updateData.amount,
+                notes: updateData.hours ? `${updateData.hours} horas trabajadas` : null,
+                updated_at: new Date().toISOString()
+              })
+              .eq('id', updateData.id);
+
+            if (updateError) {
+              console.error('[SMART SYNC] Error updating commission:', updateError);
+            }
+          }
+          console.log('✅ [SMART SYNC] Commission costs updated successfully');
+        }
+
+        // 5. CREAR solo las nuevas comisiones
+        if (toCreate.length > 0) {
+          console.log('➕ [SMART SYNC] Creating new commissions:', toCreate.length);
+          
+          const newCommissionCosts = toCreate.map(operator => ({
+            amount: operator.amount,
+            category_id: commissionCategoryId,
+            service_id: id,
+            service_folio: currentService?.folio || 'Unknown',
+            date: currentService?.service_date || new Date().toISOString().split('T')[0],
+            description: `Comisión operador - Servicio ${currentService?.folio || id}`,
+            subcategory: 'Comisiones',
+            notes: operator.hours ? `${operator.hours} horas trabajadas` : null,
+            operator_id: operator.operator_id,
+            crane_id: currentService?.crane_id,
+            created_by: null
+          }));
+
+          // Usar ON CONFLICT DO NOTHING como fallback para evitar duplicados
+          const { error: insertCommissionsError } = await supabase
+            .from('costs')
+            .upsert(newCommissionCosts, { 
+              onConflict: 'service_id,operator_id,category_id',
+              ignoreDuplicates: true 
+            });
+
+          if (insertCommissionsError) {
+            console.error('[SMART SYNC] Error inserting new commission costs:', insertCommissionsError);
+            
+            // Fallback: Intentar inserción individual con manejo de errores
+            for (const cost of newCommissionCosts) {
+              const { error: individualError } = await supabase
+                .from('costs')
+                .insert(cost);
+                
+              if (individualError && !individualError.message.includes('duplicate')) {
+                console.error('[SMART SYNC] Individual insert error:', individualError);
+              }
+            }
+          } else {
+            console.log('✅ [SMART SYNC] New commission costs created successfully');
+          }
+        }
+        
+        console.log('🎉 [SMART SYNC] Intelligent commission sync completed successfully');
       }
 
       // Remove costDetails and operators after processing
