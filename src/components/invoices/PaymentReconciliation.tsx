@@ -60,6 +60,23 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
     }
   };
 
+  const loadSystemDiagnosis = async () => {
+    setDiagnosisLoading(true);
+    try {
+      const diagnosis = await getComprehensiveDiagnosis();
+      setSystemDiagnosis(diagnosis);
+      
+      // Si hay problemas y el panel de mantenimiento no está abierto, abrirlo automáticamente
+      if (diagnosis.system_health === 'NEEDS_REPAIR' && !showMaintenancePanel) {
+        setShowMaintenancePanel(true);
+      }
+    } catch (error) {
+      console.error('Error loading system diagnosis:', error);
+    } finally {
+      setDiagnosisLoading(false);
+    }
+  };
+
   // Función para ejecutar mantenimiento automático en segundo plano
   const performAutomaticMaintenance = async () => {
     try {

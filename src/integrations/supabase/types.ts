@@ -3024,6 +3024,10 @@ export type Database = {
         Args: { p_service_id: string }
         Returns: Json
       }
+      comprehensive_payment_diagnosis: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
       create_automatic_payment_for_invoice: {
         Args: { p_invoice_id: string }
         Returns: Json
@@ -3119,6 +3123,10 @@ export type Database = {
         Returns: Json
       }
       fix_negative_remaining_amounts: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
+      fix_payment_system_inconsistencies: {
         Args: Record<PropertyKey, never>
         Returns: Json
       }
@@ -3397,6 +3405,10 @@ export type Database = {
         Returns: string
       }
       recalculate_payment_balances: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
+      remove_duplicate_payment_applications: {
         Args: Record<PropertyKey, never>
         Returns: Json
       }

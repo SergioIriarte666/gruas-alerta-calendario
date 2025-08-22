@@ -476,41 +476,82 @@ export const usePayments = () => {
     }
   };
 
-  // Función principal de mantenimiento en segundo plano
+  // Función de corrección global de inconsistencias
+  const fixSystemInconsistencies = async () => {
+    try {
+      const { data, error } = await supabase.rpc('fix_payment_system_inconsistencies');
+      
+      if (error) throw error;
+      
+      const result = data as any;
+      if (result?.success) {
+        toast.success(result.message);
+        await fetchPayments();
+        return result;
+      }
+      
+      return { success: false, error: 'No se pudo ejecutar la corrección' };
+    } catch (error: any) {
+      console.error('Error corrigiendo inconsistencias:', error);
+      toast.error(`Error: ${error.message}`);
+      return { success: false, error: error.message };
+    }
+  };
+
+  // Función para eliminar aplicaciones duplicadas
+  const removeDuplicateApplications = async () => {
+    try {
+      const { data, error } = await supabase.rpc('remove_duplicate_payment_applications');
+      
+      if (error) throw error;
+      
+      const result = data as any;
+      if (result?.success) {
+        toast.success(result.message);
+        await fetchPayments();
+        return result;
+      }
+      
+      return { success: false, error: 'No se pudo eliminar duplicados' };
+    } catch (error: any) {
+      console.error('Error eliminando duplicados:', error);
+      toast.error(`Error: ${error.message}`);
+      return { success: false, error: error.message };
+    }
+  };
+
+  // Función de diagnóstico completo
+  const getComprehensiveDiagnosis = async () => {
+    try {
+      const { data, error } = await supabase.rpc('comprehensive_payment_diagnosis');
+      
+      if (error) throw error;
+      
+      return (data as any) || { system_health: 'UNKNOWN', issues: {}, total_issues: 0 };
+    } catch (error: any) {
+      console.error('Error en diagnóstico:', error);
+      return { 
+        system_health: 'ERROR', 
+        issues: { error: error.message }, 
+        total_issues: 1 
+      };
+    }
+  };
+
   const performBackgroundMaintenance = async () => {
     try {
       console.log('Iniciando mantenimiento automático en segundo plano...');
       
-      // Ejecutar validación y corrección silenciosa
-      await silentSystemValidation();
+      const diagnosis = await getComprehensiveDiagnosis();
       
-      // Limpiar pagos duplicados automáticamente
-      const { data: duplicates } = await supabase
-        .from('payments')
-        .select('bank_reference, client_id, amount, payment_date')
-        .not('bank_reference', 'is', null);
-
-      if (duplicates?.length) {
-        // Lógica para eliminar duplicados silenciosamente
-        const seen = new Set();
-        const toDelete = [];
-        
-        for (const payment of duplicates) {
-          const key = `${payment.bank_reference}-${payment.client_id}-${payment.amount}`;
-          if (seen.has(key)) {
-            toDelete.push(payment);
-          } else {
-            seen.add(key);
-          }
-        }
-        
-        if (toDelete.length > 0) {
-          console.log(`Eliminando ${toDelete.length} pagos duplicados...`);
-          // Eliminar duplicados (implementar según necesidad)
-        }
+      if (diagnosis.system_health === 'NEEDS_REPAIR' && diagnosis.total_issues > 0) {
+        console.log(`Detectados ${diagnosis.total_issues} problemas, ejecutando correcciones...`);
+        await fixSystemInconsistencies();
+        await removeDuplicateApplications();
+        console.log('Correcciones automáticas completadas');
+      } else {
+        console.log('Sistema saludable, no requiere mantenimiento');
       }
-      
-      console.log('Mantenimiento automático completado');
     } catch (error) {
       console.error('Error en mantenimiento automático:', error);
     }
@@ -534,7 +575,10 @@ export const usePayments = () => {
     fullPaymentCleanupAndSync,
     fixPaymentInconsistencies,
     validateSystemIntegrity,
-    performBackgroundMaintenance, // Nueva función
+    performBackgroundMaintenance,
+    fixSystemInconsistencies,
+    removeDuplicateApplications,
+    getComprehensiveDiagnosis,
     refetch: fetchPayments
   };
 };
