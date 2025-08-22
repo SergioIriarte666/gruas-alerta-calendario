@@ -30,7 +30,11 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
     syncPaidInvoicesWithPayments,
     getReconciliationStats,
     fixPaymentInconsistencies,
-    validateSystemIntegrity
+    validateSystemIntegrity,
+    performBackgroundMaintenance,
+    fixSystemInconsistencies,
+    removeDuplicateApplications,
+    getComprehensiveDiagnosis
   } = usePayments();
   
   const [selectedClient, setSelectedClient] = useState<string>('all');
@@ -41,15 +45,29 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
   const [showHistory, setShowHistory] = useState(false);
   const [reconciliationStats, setReconciliationStats] = useState<any>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [systemDiagnosis, setSystemDiagnosis] = useState<any>(null);
+  const [diagnosisLoading, setDiagnosisLoading] = useState(false);
+  const [showMaintenancePanel, setShowMaintenancePanel] = useState(false);
 
   const { clients } = useClients();
 
   useEffect(() => {
     checkPaymentSystemAvailability();
     loadReconciliationStats();
+    loadSystemDiagnosis();
     // Ejecutar correcciones automáticas en segundo plano
     performAutomaticMaintenance();
   }, []);
+
+  const performAutomaticMaintenance = async () => {
+    try {
+      await performBackgroundMaintenance();
+      await loadReconciliationStats();
+      await loadSystemDiagnosis();
+    } catch (error) {
+      console.error('Error in automatic maintenance:', error);
+    }
+  };
 
   const loadReconciliationStats = async () => {
     try {
@@ -77,22 +95,6 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
     }
   };
 
-  // Función para ejecutar mantenimiento automático en segundo plano
-  const performAutomaticMaintenance = async () => {
-    try {
-      // Ejecutar correcciones automáticamente sin mostrar al usuario
-      await Promise.all([
-        cleanupDuplicatePayments(),
-        syncPaidInvoicesWithPayments(),
-        fixPaymentInconsistencies(),
-        validateSystemIntegrity()
-      ]);
-      // Recargar estadísticas después del mantenimiento
-      await loadReconciliationStats();
-    } catch (error) {
-      console.error('Error during automatic maintenance:', error);
-    }
-  };
 
   const handleAutoApply = async (payment: PaymentWithDetails) => {
     try {
