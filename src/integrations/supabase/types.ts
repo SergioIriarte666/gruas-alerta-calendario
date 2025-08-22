@@ -461,6 +461,8 @@ export type Database = {
           inventory_movement_id: string | null
           notes: string | null
           operator_id: string | null
+          payment_batch_id: string | null
+          payment_date: string | null
           service_folio: string | null
           service_id: string | null
           subcategory: string | null
@@ -480,6 +482,8 @@ export type Database = {
           inventory_movement_id?: string | null
           notes?: string | null
           operator_id?: string | null
+          payment_batch_id?: string | null
+          payment_date?: string | null
           service_folio?: string | null
           service_id?: string | null
           subcategory?: string | null
@@ -499,6 +503,8 @@ export type Database = {
           inventory_movement_id?: string | null
           notes?: string | null
           operator_id?: string | null
+          payment_batch_id?: string | null
+          payment_date?: string | null
           service_folio?: string | null
           service_id?: string | null
           subcategory?: string | null
@@ -3187,6 +3193,7 @@ export type Database = {
         Returns: {
           amount: number
           client_name: string
+          commission_percentage: number
           created_at: string
           date: string
           description: string
@@ -3194,6 +3201,8 @@ export type Database = {
           operator_id: string
           operator_name: string
           operator_rut: string
+          payment_batch_id: string
+          payment_date: string
           service_date: string
           service_folio: string
           service_id: string

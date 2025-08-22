@@ -65,6 +65,8 @@ export interface AppliedCommissionFilters {
   clientName?: string;
   dateFrom?: string;
   dateTo?: string;
+  paymentDateFrom?: string; // Filtro por fecha de pago
+  paymentDateTo?: string; // Filtro por fecha de pago
   amountFrom?: number;
   amountTo?: number;
 }

@@ -28,6 +28,8 @@ const fetchCommissions = async (): Promise<Commission[]> => {
     return {
       ...commission,
       amount: commissionAmount,
+      payment_date: commission.payment_date, // Fecha real de pago
+      payment_batch_id: commission.payment_batch_id, // ID del lote de pago
       status: commission.subcategory === 'comisiones_pagadas' ? 'paid' as const : 'pending' as const,
       commission_percentage: Math.round(commissionPercentage * 100) / 100,
       service_value: serviceValue,
@@ -92,6 +94,8 @@ const fetchCommissionsByOperator = async (operatorId: string): Promise<Commissio
     return {
       ...commission,
       amount: commissionAmount,
+      payment_date: commission.payment_date, // Fecha real de pago
+      payment_batch_id: commission.payment_batch_id, // ID del lote de pago
       status: commission.subcategory === 'comisiones_pagadas' ? 'paid' as const : 'pending' as const,
       commission_percentage: Math.round(commissionPercentage * 100) / 100,
       service_value: serviceValue,

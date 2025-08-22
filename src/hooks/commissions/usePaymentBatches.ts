@@ -39,10 +39,14 @@ const createPaymentBatch = async (data: CreatePaymentBatchData) => {
   };
   
   // Marcar comisiones como pagadas según la documentación
+  const currentDate = new Date().toISOString().split('T')[0]; // Fecha actual en formato YYYY-MM-DD
+  
   const { error: updateError } = await supabase
     .from('costs')
     .update({ 
       subcategory: 'comisiones_pagadas',
+      payment_date: currentDate, // Registrar fecha real de pago
+      payment_batch_id: batchNumber, // Asociar al lote de pago
       notes: `Pagado en lote ${batchNumber}. ${data.notes || ''}`.trim()
     })
     .in('id', data.commission_ids);

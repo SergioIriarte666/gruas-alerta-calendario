@@ -8,7 +8,7 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 
-export type SortField = 'status' | 'folio' | 'service_date' | 'client_name' | 'operator_name' | 'service_value' | 'amount' | 'commission_percentage' | 'created_at';
+export type SortField = 'status' | 'folio' | 'service_date' | 'client_name' | 'operator_name' | 'service_value' | 'amount' | 'commission_percentage' | 'created_at' | 'payment_date';
 export type SortDirection = 'asc' | 'desc' | null;
 
 interface CommissionTableProps {
@@ -107,6 +107,9 @@ export const CommissionTable: React.FC<CommissionTableProps> = ({
             <TableHead>
               <SortButton field="created_at">Fecha Creación</SortButton>
             </TableHead>
+            <TableHead>
+              <SortButton field="payment_date">Fecha Pago</SortButton>
+            </TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -148,6 +151,15 @@ export const CommissionTable: React.FC<CommissionTableProps> = ({
               </TableCell>
               <TableCell>
                 {formatDate(commission.created_at)}
+              </TableCell>
+              <TableCell>
+                {commission.payment_date ? (
+                  <span className="text-green-700 font-medium">
+                    {formatDate(commission.payment_date)}
+                  </span>
+                ) : (
+                  <span className="text-muted-foreground">-</span>
+                )}
               </TableCell>
             </TableRow>
           ))}

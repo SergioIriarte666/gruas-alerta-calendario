@@ -118,6 +118,10 @@ const Commissions = () => {
           aValue = new Date(a.created_at);
           bValue = new Date(b.created_at);
           break;
+        case 'payment_date':
+          aValue = a.payment_date ? new Date(a.payment_date) : new Date(0); // Sin fecha de pago al final
+          bValue = b.payment_date ? new Date(b.payment_date) : new Date(0);
+          break;
         default:
           return 0;
       }

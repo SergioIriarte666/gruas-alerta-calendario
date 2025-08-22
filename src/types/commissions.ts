@@ -3,6 +3,8 @@
 export interface Commission {
   id: string;
   date: string;
+  payment_date?: string; // Fecha real de pago (diferente de date que es fecha de generación)
+  payment_batch_id?: string; // ID del lote de pago para trazabilidad
   description: string;
   amount: number;
   operator_id: string;
@@ -74,6 +76,8 @@ export interface CommissionFilters {
   client_name?: string;
   date_from?: Date;
   date_to?: Date;
+  payment_date_from?: Date; // Filtro por fecha de pago
+  payment_date_to?: Date; // Filtro por fecha de pago
   amount_from?: number;
   amount_to?: number;
 }
