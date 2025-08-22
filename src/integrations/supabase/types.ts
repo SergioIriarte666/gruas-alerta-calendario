@@ -2961,7 +2961,7 @@ export type Database = {
         Returns: string
       }
       apply_payment_fifo: {
-        Args: { p_client_id?: string; p_payment_id: string }
+        Args: { p_client_id: string; p_payment_id: string }
         Returns: Json
       }
       apply_payment_manual: {
@@ -3557,7 +3557,13 @@ export type Database = {
       application_method: "fifo" | "manual" | "proportional"
       closure_status: "open" | "closed" | "invoiced"
       crane_type: "light" | "medium" | "heavy" | "taxi" | "other" | "horquilla"
-      invoice_status: "draft" | "sent" | "paid" | "overdue" | "cancelled"
+      invoice_status:
+        | "draft"
+        | "sent"
+        | "paid"
+        | "overdue"
+        | "cancelled"
+        | "partial"
       payment_status: "pending" | "applied" | "partial" | "cancelled"
       service_status:
         | "pending"
@@ -3708,7 +3714,14 @@ export const Constants = {
       application_method: ["fifo", "manual", "proportional"],
       closure_status: ["open", "closed", "invoiced"],
       crane_type: ["light", "medium", "heavy", "taxi", "other", "horquilla"],
-      invoice_status: ["draft", "sent", "paid", "overdue", "cancelled"],
+      invoice_status: [
+        "draft",
+        "sent",
+        "paid",
+        "overdue",
+        "cancelled",
+        "partial",
+      ],
       payment_status: ["pending", "applied", "partial", "cancelled"],
       service_status: [
         "pending",
