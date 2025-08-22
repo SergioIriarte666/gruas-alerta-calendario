@@ -3469,6 +3469,14 @@ export type Database = {
         Args: { p_closure_id: string }
         Returns: undefined
       }
+      update_commission_payment_date: {
+        Args: {
+          p_commission_ids: string[]
+          p_payment_batch_id?: string
+          p_payment_date: string
+        }
+        Returns: Json
+      }
       update_overdue_invoices: {
         Args: Record<PropertyKey, never>
         Returns: undefined

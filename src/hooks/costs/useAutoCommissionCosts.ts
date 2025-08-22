@@ -9,14 +9,14 @@ interface CreateCommissionCostParams {
   commissionAmount: number;
 }
 
-// ⚠️ DEPRECATED: This hook is now disabled to prevent commission duplication
-// Commissions are now handled exclusively through MultipleOperatorsSection
+// ✅ RESTAURADO: Sistema original de comisiones automáticas
+// Las comisiones se crean automáticamente por el trigger de BD al completar servicios
 const createCommissionCost = async ({ service, commissionAmount }: CreateCommissionCostParams) => {
-  console.warn('[useAutoCommissionCosts] DISABLED: Automatic commission cost creation is disabled to prevent duplication');
-  console.warn('[useAutoCommissionCosts] Commissions should be managed through MultipleOperatorsSection');
+  console.log('[useAutoCommissionCosts] RESTAURADO: Sistema automático de comisiones habilitado');
+  console.log('[useAutoCommissionCosts] Las comisiones se crean automáticamente por trigger de BD');
   
-  // Return early without creating cost to prevent duplication
-  return null;
+  // El trigger de BD se encarga de crear las comisiones, este hook solo es para compatibilidad
+  return { success: true, message: 'Las comisiones se crean automáticamente por trigger de BD' };
 };
 
 export const useAutoCommissionCosts = () => {

@@ -64,10 +64,10 @@ export const MultipleOperatorsSection = ({
           {operatorRequired && <span className="text-red-500">*</span>}
           {!operatorRequired}
         </CardTitle>
-        <div className="text-sm text-green-700 bg-green-100 p-2 rounded border">
+        <div className="text-sm text-blue-700 bg-blue-100 p-2 rounded border">
           <DollarSign className="h-4 w-4 inline mr-1" />
-          <strong>Sistema Unificado:</strong> Esta es la única sección donde se gestionan las comisiones de operadores. 
-          Las comisiones aquí configuradas son la fuente de verdad para todos los cálculos financieros.
+          <strong>Sistema Simplificado:</strong> Para servicios con un solo operador, la comisión se maneja en el campo principal del servicio.
+          Esta sección es para servicios con múltiples operadores.
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
