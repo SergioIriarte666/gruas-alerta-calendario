@@ -11,7 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Plus, Zap, Edit, DollarSign, AlertTriangle, History, RefreshCw, Trash2, Settings, CheckCircle } from 'lucide-react';
+import { Plus, Zap, Edit, DollarSign, AlertTriangle, History, RefreshCw } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 
 interface PaymentReconciliationProps {
@@ -40,14 +40,15 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
   const [availableInvoices, setAvailableInvoices] = useState<any[]>([]);
   const [showHistory, setShowHistory] = useState(false);
   const [reconciliationStats, setReconciliationStats] = useState<any>(null);
-  const [loadingCleanup, setLoadingCleanup] = useState(false);
-  const [loadingSync, setLoadingSync] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const { clients } = useClients();
 
   useEffect(() => {
     checkPaymentSystemAvailability();
     loadReconciliationStats();
+    // Ejecutar correcciones automáticas en segundo plano
+    performAutomaticMaintenance();
   }, []);
 
   const loadReconciliationStats = async () => {
@@ -59,11 +60,32 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
     }
   };
 
+  // Función para ejecutar mantenimiento automático en segundo plano
+  const performAutomaticMaintenance = async () => {
+    try {
+      // Ejecutar correcciones automáticamente sin mostrar al usuario
+      await Promise.all([
+        cleanupDuplicatePayments(),
+        syncPaidInvoicesWithPayments(),
+        fixPaymentInconsistencies(),
+        validateSystemIntegrity()
+      ]);
+      // Recargar estadísticas después del mantenimiento
+      await loadReconciliationStats();
+    } catch (error) {
+      console.error('Error during automatic maintenance:', error);
+    }
+  };
+
   const handleAutoApply = async (payment: PaymentWithDetails) => {
     try {
+      setIsProcessing(true);
       await applyPaymentFIFO(payment.id, payment.client_id);
+      await loadReconciliationStats();
     } catch (error) {
       console.error('Error applying payment:', error);
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -72,6 +94,15 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
     setAvailableInvoices(invoices);
     setSelectedPayment(payment);
     setShowApplicationModal(true);
+  };
+
+  const handleRefresh = async () => {
+    setIsProcessing(true);
+    try {
+      await performAutomaticMaintenance();
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   const getStatusBadge = (status: string) => {
@@ -111,7 +142,7 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
         <div className="flex justify-between items-center">
           <div>
             <h2 className="text-2xl font-bold text-white">Conciliación de Pagos</h2>
-            <p className="text-gray-300">Gestiona y aplica pagos recibidos a facturas pendientes</p>
+            <p className="text-gray-300">Registra y aplica pagos recibidos a facturas pendientes</p>
           </div>
           {onClose && (
             <Button variant="outline" onClick={onClose}>
@@ -146,28 +177,28 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
 
           <Card className="bg-white/10 backdrop-blur-sm border-white/20">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-white">Sin Pagos</CardTitle>
+              <CardTitle className="text-sm font-medium text-white">Facturas sin Pago</CardTitle>
               <AlertTriangle className="h-4 w-4 text-red-400" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-white">{reconciliationStats?.invoices_without_payments || 0}</div>
-              <p className="text-xs text-gray-300">Facturas pagadas sin registro</p>
+              <p className="text-xs text-gray-300">Facturas marcadas como pagadas sin registro</p>
             </CardContent>
           </Card>
 
           <Card className="bg-white/10 backdrop-blur-sm border-white/20">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-white">Sin Aplicar</CardTitle>
+              <CardTitle className="text-sm font-medium text-white">Pagos sin Aplicar</CardTitle>
               <AlertTriangle className="h-4 w-4 text-orange-400" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-white">{reconciliationStats?.payments_without_applications || 0}</div>
-              <p className="text-xs text-gray-300">Pagos no aplicados a facturas</p>
+              <p className="text-xs text-gray-300">Pagos registrados pendientes de aplicar</p>
             </CardContent>
           </Card>
         </div>
 
-        {/* Controls */}
+        {/* Controls - Simplificados */}
         <div className="flex flex-col sm:flex-row gap-4">
           <Select value={selectedClient} onValueChange={setSelectedClient}>
             <SelectTrigger className="w-full sm:w-64 bg-white/10 border-white/20 text-white">
@@ -182,72 +213,13 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
           </Select>
           
           <Button 
-            onClick={async () => {
-              setLoadingSync(true);
-              try {
-                await syncPaidInvoicesWithPayments();
-                await loadReconciliationStats();
-              } finally {
-                setLoadingSync(false);
-              }
-            }}
+            onClick={handleRefresh}
             variant="outline"
-            disabled={paymentsLoading || loadingSync}
-            className="border-orange-500 text-orange-400 hover:bg-orange-500 hover:text-white"
+            disabled={paymentsLoading || isProcessing}
+            className="border-blue-500 text-blue-400 hover:bg-blue-500 hover:text-white"
           >
-            <RefreshCw className={`h-4 w-4 mr-2 ${loadingSync ? 'animate-spin' : ''}`} />
-            Sincronizar Pagadas
-          </Button>
-
-          <Button 
-            onClick={async () => {
-              setLoadingCleanup(true);
-              try {
-                await cleanupDuplicatePayments();
-                await loadReconciliationStats();
-              } finally {
-                setLoadingCleanup(false);
-              }
-            }}
-            variant="outline"
-            disabled={paymentsLoading || loadingCleanup}
-            className="border-red-500 text-red-400 hover:bg-red-500 hover:text-white"
-          >
-            <Trash2 className={`h-4 w-4 mr-2 ${loadingCleanup ? 'animate-spin' : ''}`} />
-            Limpiar Duplicados
-          </Button>
-
-          <Button 
-            onClick={async () => {
-              try {
-                await fixPaymentInconsistencies();
-                await loadReconciliationStats();
-              } catch (error) {
-                console.error('Error fixing inconsistencies:', error);
-              }
-            }}
-            variant="outline"
-            disabled={paymentsLoading}
-            className="border-yellow-500 text-yellow-400 hover:bg-yellow-500 hover:text-white"
-          >
-            <Settings className="h-4 w-4 mr-2" />
-            Corregir Inconsistencias
-          </Button>
-
-          <Button 
-            onClick={async () => {
-              try {
-                await validateSystemIntegrity();
-              } catch (error) {
-                console.error('Error validating system:', error);
-              }
-            }}
-            variant="outline"
-            disabled={paymentsLoading}
-            className="border-green-500 text-green-400 hover:bg-green-500 hover:text-white"
-          >
-            <CheckCircle className="h-4 w-4 mr-2" />
-            Validar Sistema
+            <RefreshCw className={`h-4 w-4 mr-2 ${isProcessing ? 'animate-spin' : ''}`} />
+            Actualizar
           </Button>
 
           <Button onClick={() => setShowPaymentForm(true)} className="bg-blue-600 hover:bg-blue-700">
@@ -299,15 +271,17 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
                             <Button
                               size="sm"
                               onClick={() => handleAutoApply(payment)}
+                              disabled={isProcessing}
                               className="bg-green-600 hover:bg-green-700"
                             >
                               <Zap className="h-3 w-3 mr-1" />
-                              Auto
+                              Aplicar
                             </Button>
                             <Button
                               size="sm"
                               variant="outline"
                               onClick={() => handleManualApplication(payment)}
+                              disabled={isProcessing}
                             >
                               <Edit className="h-3 w-3 mr-1" />
                               Manual
