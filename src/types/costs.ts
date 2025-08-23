@@ -33,7 +33,12 @@ export type CostFormData = Omit<Database['public']['Tables']['costs']['Insert'],
 // Constantes para las categorías de servicios
 export const SERVICE_SUBCATEGORIES = [
   'Combustible',
-  'Peajes', 
+  'Peajes',
+  'Viáticos',
+  'Estacionamiento',
+  'Materiales',
+  'Transporte',
+  'Hospedaje',
   'Otros'
 ] as const;
 
@@ -42,6 +47,10 @@ export const MAINTENANCE_SUBCATEGORIES = [
   'Piezas y Repuestos',
   'Mano de obra',
   'Servicios externos',
+  'Lubricantes y Fluidos',
+  'Herramientas',
+  'Calibración',
+  'Inspecciones',
   'Otros'
 ] as const;
 
