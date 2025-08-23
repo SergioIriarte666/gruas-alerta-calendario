@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { CostCategory, MAINTENANCE_SUBCATEGORIES } from '@/types/costs';
+import { CostCategory, MAINTENANCE_SUBCATEGORIES, SERVICE_SUBCATEGORIES } from '@/types/costs';
 import { CostFormValues } from '@/schemas/costSchema';
 import { Crane, Operator, Service } from '@/types';
 import { ServiceSelector } from './ServiceSelector';
@@ -52,7 +52,7 @@ export const CostFormInputs = ({
     const isMantenimiento = selectedCategory?.name === 'Mantenimiento';
     const isPiezasYRepuestos = isMantenimiento && selectedSubcategory === 'Piezas y Repuestos';
 
-    const subcategorias = ['Combustible', 'Peajes', 'Otros'];
+    
 
     const quantity = form.watch('quantity');
     const unitPrice = form.watch('unit_price');
@@ -183,7 +183,7 @@ export const CostFormInputs = ({
                                             </SelectTrigger>
                                         </FormControl>
                                         <SelectContent>
-                                            {subcategorias.map(sub => (
+                                            {SERVICE_SUBCATEGORIES.map(sub => (
                                                 <SelectItem key={sub} value={sub}>{sub}</SelectItem>
                                             ))}
                                         </SelectContent>
