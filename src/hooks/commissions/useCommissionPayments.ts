@@ -38,10 +38,14 @@ export const useCommissionPayments = () => {
       queryClient.invalidateQueries({ queryKey: ['commissions'] });
       queryClient.invalidateQueries({ queryKey: ['costs'] });
       
+      // Verificar que data es un objeto y tiene la propiedad updated_count
+      const result = data as any;
+      const updatedCount = result?.updated_count || 0;
+      
       toast.success(
         "Fechas de Pago Actualizadas", 
         { 
-          description: `Se actualizaron ${data.updated_count} comisiones con la fecha de pago.` 
+          description: `Se actualizaron ${updatedCount} comisiones con la fecha de pago.` 
         }
       );
     },

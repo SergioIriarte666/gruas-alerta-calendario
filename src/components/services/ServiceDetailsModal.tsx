@@ -87,6 +87,20 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose }: ServiceDetails
   const totalCommissions = enhancedService?.totalCommissions || 0;
   const totalServiceCosts = enhancedService?.totalCosts || 0;
   
+  // Obtener información del operador principal
+  const getPrimaryOperator = () => {
+    if (enhancedService?.operators && enhancedService.operators.length > 0) {
+      // Usar datos enhanced: buscar operador principal o tomar el primero
+      const primaryOperator = enhancedService.operators.find(op => op.role === 'Principal') || enhancedService.operators[0];
+      return primaryOperator.operator;
+    }
+    // Usar datos básicos como fallback
+    return serviceData.operator;
+  };
+  
+  const primaryOperator = getPrimaryOperator();
+  const hasMultipleOperators = enhancedService?.operators && enhancedService.operators.length > 1;
+  
   // Detectar si es un servicio de custodia y obtener información
   const isCustody = isCustodyService(serviceData);
   const custodyInfo = isCustody ? getCustodyInfo(serviceData) : null;
@@ -262,7 +276,7 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose }: ServiceDetails
                        <DetailItem 
                            icon={UserCheck} 
                            label="Operador" 
-                           value={serviceData.operator ? `${serviceData.operator.name} (${serviceData.operator.rut})` : 'Sin asignar'} 
+                           value={primaryOperator ? `${primaryOperator.name} (${primaryOperator.rut})${hasMultipleOperators ? ' (Principal)' : ''}` : 'Sin asignar'} 
                        />
                   </DetailSection>
                    <Separator className="bg-gray-700"/>
