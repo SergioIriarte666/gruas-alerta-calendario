@@ -3106,6 +3106,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: Json
       }
+      fix_all_invoice_statuses: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
       fix_all_invoiced_services_status: {
         Args: Record<PropertyKey, never>
         Returns: Json
