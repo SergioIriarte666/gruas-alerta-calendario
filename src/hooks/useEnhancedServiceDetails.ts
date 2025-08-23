@@ -77,12 +77,12 @@ const fetchEnhancedServiceDetails = async (serviceId: string): Promise<EnhancedS
   const operators: ServiceOperator[] = [];
   const processedOperatorIds = new Set<string>();
   
-  // Agregar operador principal si existe y tiene comisión > 0
+  // Agregar operador principal si existe (independientemente de la comisión)
   console.log('🔍 [ENHANCED_SERVICE] Service data operators:', serviceData.operators);
   console.log('🔍 [ENHANCED_SERVICE] Service data operator_id:', serviceData.operator_id);
   console.log('🔍 [ENHANCED_SERVICE] Service operator_commission:', serviceData.operator_commission);
   
-  if (serviceData.operators && serviceData.operator_id && (serviceData.operator_commission || 0) > 0) {
+  if (serviceData.operators && serviceData.operator_id) {
     operators.push({
       id: 'main-operator',
       operatorId: serviceData.operator_id,
