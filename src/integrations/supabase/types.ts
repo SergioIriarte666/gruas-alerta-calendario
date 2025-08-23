@@ -3104,6 +3104,10 @@ export type Database = {
         Args: { p_crane_id?: string }
         Returns: Json
       }
+      diagnose_maintenance_cost_integration: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
       diagnose_service_update_issues: {
         Args: { service_id_param?: string }
         Returns: Json
@@ -3141,6 +3145,10 @@ export type Database = {
         Returns: Json
       }
       fix_payment_system_inconsistencies: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
+      fix_unlinked_maintenance_costs: {
         Args: Record<PropertyKey, never>
         Returns: Json
       }
