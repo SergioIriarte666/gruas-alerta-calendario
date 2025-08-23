@@ -3128,6 +3128,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: Json
       }
+      fix_all_maintenance_cost_descriptions: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
       fix_existing_overdue_invoices: {
         Args: Record<PropertyKey, never>
         Returns: string

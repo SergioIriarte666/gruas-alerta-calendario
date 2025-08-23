@@ -171,12 +171,24 @@ const CostsPage = () => {
             const costId = searchTerm.substring(3);
             filtered = filtered.filter(cost => cost.id === costId);
         } else if (searchTerm) {
-            // Filtro por búsqueda normal
-            filtered = filtered.filter(cost => 
-                cost.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                cost.cost_categories?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                (cost.service_folio && cost.service_folio.toLowerCase().includes(searchTerm.toLowerCase()))
-            );
+            // Enhanced search filter (includes maintenance descriptions)
+            const searchLower = searchTerm.toLowerCase();
+            filtered = filtered.filter(cost => {
+                // Search in cost fields
+                const matchesCost = cost.description.toLowerCase().includes(searchLower) ||
+                    cost.notes?.toLowerCase().includes(searchLower) ||
+                    cost.cost_categories?.name.toLowerCase().includes(searchLower) ||
+                    cost.subcategory?.toLowerCase().includes(searchLower) ||
+                    (cost.service_folio && cost.service_folio.toLowerCase().includes(searchLower));
+                
+                // Search in linked maintenance description if exists
+                const matchesMaintenance = cost.crane_maintenance?.description?.toLowerCase().includes(searchLower) ||
+                    cost.crane_maintenance?.provider?.toLowerCase().includes(searchLower) ||
+                    cost.crane_maintenance?.maintenance_type?.toLowerCase().includes(searchLower) ||
+                    cost.crane_maintenance?.notes?.toLowerCase().includes(searchLower);
+                
+                return matchesCost || matchesMaintenance;
+            });
         }
 
         // Filtros avanzados

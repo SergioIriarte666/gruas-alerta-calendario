@@ -18,6 +18,13 @@ export type Cost = Database['public']['Tables']['costs']['Row'] & {
     total_value: number | null;
     kilometraje: number | null;
   }[] | null;
+  crane_maintenance: {
+    id: string;
+    description: string;
+    maintenance_type: string;
+    provider: string | null;
+    notes: string | null;
+  } | null;
 };
 
 export type CostFormData = Omit<Database['public']['Tables']['costs']['Insert'], 'id' | 'created_at' | 'updated_at' | 'created_by'> & {

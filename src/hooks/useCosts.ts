@@ -21,9 +21,17 @@ const fetchCosts = async (): Promise<Cost[]> => {
         unit_price,
         total_value,
         kilometraje
+      ),
+      crane_maintenance (
+        id,
+        description,
+        maintenance_type,
+        provider,
+        notes
       )
     `)
-    .order('date', { ascending: false });
+    .order('date', { ascending: false })
+    .order('created_at', { ascending: false });
 
   if (error) {
     console.error('Error fetching costs:', error);
