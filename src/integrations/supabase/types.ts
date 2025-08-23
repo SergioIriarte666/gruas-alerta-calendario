@@ -3468,6 +3468,10 @@ export type Database = {
           success: boolean
         }[]
       }
+      smart_link_maintenance_costs: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
       sync_closure_invoice_status: {
         Args: Record<PropertyKey, never>
         Returns: Json
