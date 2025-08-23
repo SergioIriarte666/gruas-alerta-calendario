@@ -2,8 +2,9 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Plus, Wrench, Calendar, DollarSign, User, CheckCircle, Clock, AlertCircle, Edit, Trash2 } from 'lucide-react';
+import { Plus, Wrench, Calendar, DollarSign, User, CheckCircle, Clock, AlertCircle, Edit, Trash2, Receipt, ExternalLink } from 'lucide-react';
 import { useCraneMaintenance, useDeleteMaintenance, type MaintenanceRecord } from '@/hooks/useCraneMaintenance';
+import { useMaintenanceCostStatus } from '@/hooks/useMaintenanceCostStatus';
 import { MaintenanceForm } from './forms/MaintenanceForm';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -31,6 +32,7 @@ export const CraneMaintenance = ({ crane }: CraneMaintenanceProps) => {
   const [recordToDelete, setRecordToDelete] = useState<MaintenanceRecord | null>(null);
   
   const { data: maintenanceRecords = [], isLoading } = useCraneMaintenance(crane.id);
+  const { data: costStatusData = [] } = useMaintenanceCostStatus(maintenanceRecords.map(r => r.id));
   const deleteMutation = useDeleteMaintenance();
 
   const handleEdit = (record: MaintenanceRecord) => {
@@ -108,6 +110,10 @@ export const CraneMaintenance = ({ crane }: CraneMaintenanceProps) => {
     }
   };
 
+  const getCostStatus = (maintenanceId: string) => {
+    return costStatusData.find(status => status.maintenanceId === maintenanceId);
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-8">
@@ -159,13 +165,27 @@ export const CraneMaintenance = ({ crane }: CraneMaintenanceProps) => {
                 <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                   <div className="flex-1 space-y-3">
                     {/* Status and Type Badges */}
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3 flex-wrap">
                       <Badge className={getStatusColor(record.status)}>
                         {getStatusLabel(record.status)}
                       </Badge>
                       <Badge className={getTypeColor(record.maintenanceType)}>
                         {getTypeLabel(record.maintenanceType)}
                       </Badge>
+                      {/* Cost Integration Status */}
+                      {record.status === 'completed' && record.cost > 0 && (
+                        getCostStatus(record.id)?.hasCost ? (
+                          <Badge className="bg-green-500/20 text-green-400 border-green-500/30">
+                            <Receipt className="w-3 h-3 mr-1" />
+                            Costo Registrado
+                          </Badge>
+                        ) : (
+                          <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30">
+                            <AlertCircle className="w-3 h-3 mr-1" />
+                            Sincronizando...
+                          </Badge>
+                        )
+                      )}
                     </div>
 
                     {/* Description and Provider */}
@@ -201,12 +221,22 @@ export const CraneMaintenance = ({ crane }: CraneMaintenanceProps) => {
                       )}
                     </div>
 
-                    {/* Cost */}
-                    <div className="flex items-center gap-2">
-                      <DollarSign className="w-4 h-4 text-tms-green" />
-                      <span className="text-tms-green font-semibold">
-                        ${record.cost.toLocaleString('es-CL')}
-                      </span>
+                    {/* Cost with Integration Status */}
+                    <div className="flex items-center gap-4">
+                      <div className="flex items-center gap-2">
+                        <DollarSign className="w-4 h-4 text-tms-green" />
+                        <span className="text-tms-green font-semibold">
+                          ${record.cost.toLocaleString('es-CL')}
+                        </span>
+                      </div>
+                      
+                      {/* Show associated cost info if available */}
+                      {getCostStatus(record.id)?.hasCost && (
+                        <div className="flex items-center gap-2 text-sm text-gray-400">
+                          <ExternalLink className="w-3 h-3" />
+                          <span>Vinculado a costos</span>
+                        </div>
+                      )}
                     </div>
 
                     {/* Notes */}

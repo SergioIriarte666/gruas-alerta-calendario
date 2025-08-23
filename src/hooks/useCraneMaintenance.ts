@@ -117,11 +117,17 @@ export const useUpdateMaintenance = () => {
       if (error) throw error;
       return data;
     },
-    onSuccess: (data) => {
+    onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['crane-maintenance', data.crane_id] });
       queryClient.invalidateQueries({ queryKey: ['crane-metrics', data.crane_id] });
       invalidateAllCostQueries(); // Invalidar queries de costos cuando se actualiza mantenimiento
-      toast.success('Registro de mantenimiento actualizado exitosamente');
+      
+      // If maintenance was completed, show specific message about cost generation
+      if (variables.updates.status === 'completed' && variables.updates.cost && variables.updates.cost > 0) {
+        toast.success('Mantenimiento completado - Costo generado automáticamente');
+      } else {
+        toast.success('Registro de mantenimiento actualizado exitosamente');
+      }
     },
     onError: (error) => {
       console.error('Error updating maintenance record:', error);
@@ -133,6 +139,7 @@ export const useUpdateMaintenance = () => {
 // Hook to delete a maintenance record
 export const useDeleteMaintenance = () => {
   const queryClient = useQueryClient();
+  const { invalidateAllCostQueries } = useCostInvalidation();
 
   return useMutation({
     mutationFn: async (id: string) => {
@@ -147,6 +154,7 @@ export const useDeleteMaintenance = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['crane-maintenance'] });
       queryClient.invalidateQueries({ queryKey: ['crane-metrics'] });
+      invalidateAllCostQueries(); // Invalidate costs in case there was an associated cost
       toast.success('Registro de mantenimiento eliminado exitosamente');
     },
     onError: (error: any) => {

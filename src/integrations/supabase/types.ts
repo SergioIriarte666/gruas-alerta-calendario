@@ -459,6 +459,7 @@ export type Database = {
           description: string
           id: string
           inventory_movement_id: string | null
+          maintenance_id: string | null
           notes: string | null
           operator_id: string | null
           payment_batch_id: string | null
@@ -480,6 +481,7 @@ export type Database = {
           description: string
           id?: string
           inventory_movement_id?: string | null
+          maintenance_id?: string | null
           notes?: string | null
           operator_id?: string | null
           payment_batch_id?: string | null
@@ -501,6 +503,7 @@ export type Database = {
           description?: string
           id?: string
           inventory_movement_id?: string | null
+          maintenance_id?: string | null
           notes?: string | null
           operator_id?: string | null
           payment_batch_id?: string | null
@@ -545,6 +548,13 @@ export type Database = {
             columns: ["inventory_movement_id"]
             isOneToOne: false
             referencedRelation: "inventory_movements"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "costs_maintenance_id_fkey"
+            columns: ["maintenance_id"]
+            isOneToOne: false
+            referencedRelation: "crane_maintenance"
             referencedColumns: ["id"]
           },
           {
@@ -3261,6 +3271,19 @@ export type Database = {
           total: number
         }[]
       }
+      get_maintenance_with_cost: {
+        Args: { maintenance_id_param: string }
+        Returns: {
+          cost_amount: number
+          cost_date: string
+          cost_description: string
+          cost_id: string
+          maintenance_cost: number
+          maintenance_description: string
+          maintenance_id: string
+          maintenance_status: string
+        }[]
+      }
       get_operator_id_by_user: {
         Args: { p_user_id: string }
         Returns: string
@@ -3452,6 +3475,10 @@ export type Database = {
       sync_existing_supplier_payments_to_costs: {
         Args: Record<PropertyKey, never>
         Returns: Json
+      }
+      sync_maintenance_costs: {
+        Args: Record<PropertyKey, never>
+        Returns: string
       }
       sync_paid_invoices_with_payments: {
         Args: Record<PropertyKey, never>
