@@ -13,6 +13,7 @@ import { useCostCategories } from '@/hooks/useCostCategories';
 import { toast } from 'sonner';
 import { getCurrentChileDateString } from '@/utils/timezoneUtils';
 import { debounce } from 'lodash';
+import { SERVICE_SUBCATEGORIES, MAINTENANCE_SUBCATEGORIES } from '@/types/costs';
 
 interface ServiceCostDetail {
   id: string;
@@ -156,6 +157,11 @@ export const ServiceCostDetailsSection = ({
             updated.amount = quantity * unitPrice;
           }
           
+          // Si se cambia la categoría, limpiar la subcategoría
+          if (field === 'category_id') {
+            updated.subcategory = '';
+          }
+          
           return updated;
         }
         return cost;
@@ -171,6 +177,13 @@ export const ServiceCostDetailsSection = ({
 
     if (!costDetail.category_id) {
       toast.error("Debe seleccionar una categoría");
+      return;
+    }
+
+    // Validar subcategoría si es requerida para la categoría seleccionada
+    const requiredSubcategories = getSubcategoriesForCategory(costDetail.category_id);
+    if (requiredSubcategories.length > 0 && !costDetail.subcategory?.trim()) {
+      toast.error("Debe seleccionar una subcategoría");
       return;
     }
 
@@ -253,6 +266,22 @@ export const ServiceCostDetailsSection = ({
     return grouped;
   };
 
+  // Función para obtener subcategorías basadas en la categoría
+  const getSubcategoriesForCategory = (categoryId: string) => {
+    const category = nonCommissionCategories.find(cat => cat.id === categoryId);
+    if (!category) return [];
+
+    const categoryName = category.name.toLowerCase();
+    
+    if (categoryName.includes('gastos') || categoryName.includes('servicio')) {
+      return SERVICE_SUBCATEGORIES;
+    } else if (categoryName.includes('mantenimiento')) {
+      return MAINTENANCE_SUBCATEGORIES;
+    }
+    
+    return [];
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -324,6 +353,29 @@ export const ServiceCostDetailsSection = ({
                   </SelectContent>
                 </Select>
               </div>
+
+              {/* Subcategoría */}
+              {cost.category_id && getSubcategoriesForCategory(cost.category_id).length > 0 && (
+                <div className="space-y-2">
+                  <Label>Subcategoría *</Label>
+                  <Select
+                    value={cost.subcategory || ''}
+                    onValueChange={(value) => updateCostDetail(cost.id, 'subcategory', value)}
+                    disabled={disabled}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Seleccionar subcategoría" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {getSubcategoriesForCategory(cost.category_id).map((subcategory) => (
+                        <SelectItem key={subcategory} value={subcategory}>
+                          {subcategory}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
 
               {/* Descripción */}
               <div className="space-y-2">
