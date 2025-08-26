@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Plus, Edit, Trash2 } from 'lucide-react';
+import React, { useState, useMemo } from 'react';
+import { Plus, Edit, Trash2, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -33,12 +33,17 @@ import {
 import { useVehicleBrands } from '@/hooks/useVehicleBrands';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 
+type SortField = 'name' | 'created_at';
+type SortDirection = 'asc' | 'desc';
+
 export const VehicleBrandsManager: React.FC = () => {
   const { brands, loading, createBrand, updateBrand, deleteBrand, isCreating, isUpdating, isDeleting } = useVehicleBrands();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingBrand, setEditingBrand] = useState<any>(null);
   const [formData, setFormData] = useState({ name: '' });
+  const [sortField, setSortField] = useState<SortField | null>(null);
+  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
 
   const handleCreate = () => {
     if (!formData.name.trim()) return;
@@ -66,6 +71,51 @@ export const VehicleBrandsManager: React.FC = () => {
   const handleDelete = (brandId: string) => {
     deleteBrand(brandId);
   };
+
+  const handleSort = (field: SortField) => {
+    if (sortField === field) {
+      if (sortDirection === 'asc') {
+        setSortDirection('desc');
+      } else {
+        setSortField(null);
+        setSortDirection('asc');
+      }
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
+    }
+  };
+
+  const SortIcon = ({ field }: { field: SortField }) => {
+    if (sortField !== field) return <ArrowUpDown className="ml-2 h-4 w-4 opacity-50" />;
+    return sortDirection === 'asc' ? 
+      <ArrowUp className="ml-2 h-4 w-4" /> : 
+      <ArrowDown className="ml-2 h-4 w-4" />;
+  };
+
+  const sortedBrands = useMemo(() => {
+    if (!sortField) return brands;
+    
+    return [...brands].sort((a, b) => {
+      let aValue, bValue;
+      switch (sortField) {
+        case 'name':
+          aValue = a.name.toLowerCase();
+          bValue = b.name.toLowerCase();
+          break;
+        case 'created_at':
+          aValue = new Date(a.created_at);
+          bValue = new Date(b.created_at);
+          break;
+        default:
+          return 0;
+      }
+      
+      if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
+      if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
+      return 0;
+    });
+  }, [brands, sortField, sortDirection]);
 
   if (loading) {
     return <LoadingSpinner />;
@@ -122,13 +172,29 @@ export const VehicleBrandsManager: React.FC = () => {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Nombre</TableHead>
-              <TableHead>Fecha de Creación</TableHead>
+              <TableHead 
+                className="cursor-pointer hover:bg-muted/50 transition-colors" 
+                onClick={() => handleSort('name')}
+              >
+                <div className="flex items-center">
+                  Nombre
+                  <SortIcon field="name" />
+                </div>
+              </TableHead>
+              <TableHead 
+                className="cursor-pointer hover:bg-muted/50 transition-colors" 
+                onClick={() => handleSort('created_at')}
+              >
+                <div className="flex items-center">
+                  Fecha de Creación
+                  <SortIcon field="created_at" />
+                </div>
+              </TableHead>
               <TableHead className="text-right">Acciones</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {brands.map((brand) => (
+            {sortedBrands.map((brand) => (
               <TableRow key={brand.id}>
                 <TableCell className="font-medium">{brand.name}</TableCell>
                 <TableCell>
@@ -176,7 +242,7 @@ export const VehicleBrandsManager: React.FC = () => {
                 </TableCell>
               </TableRow>
             ))}
-            {brands.length === 0 && (
+            {sortedBrands.length === 0 && (
               <TableRow>
                 <TableCell colSpan={3} className="text-center text-muted-foreground">
                   No hay marcas registradas

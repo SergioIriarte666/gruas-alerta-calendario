@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Plus, Edit, Trash2 } from 'lucide-react';
+import React, { useState, useMemo } from 'react';
+import { Plus, Edit, Trash2, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -41,6 +41,9 @@ import { useVehicleBrands } from '@/hooks/useVehicleBrands';
 import { useVehicleModels } from '@/hooks/useVehicleModels';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 
+type SortField = 'name' | 'created_at' | 'brand';
+type SortDirection = 'asc' | 'desc';
+
 export const VehicleModelsManager: React.FC = () => {
   const { brands } = useVehicleBrands();
   const { models, loading, createModel, updateModel, deleteModel, isCreating, isUpdating, isDeleting } = useVehicleModels();
@@ -48,6 +51,8 @@ export const VehicleModelsManager: React.FC = () => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingModel, setEditingModel] = useState<any>(null);
   const [formData, setFormData] = useState({ name: '', brand_id: '' });
+  const [sortField, setSortField] = useState<SortField | null>(null);
+  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
 
   const handleCreate = () => {
     if (!formData.name.trim() || !formData.brand_id) return;
@@ -85,6 +90,55 @@ export const VehicleModelsManager: React.FC = () => {
   const handleDelete = (modelId: string) => {
     deleteModel(modelId);
   };
+
+  const handleSort = (field: SortField) => {
+    if (sortField === field) {
+      if (sortDirection === 'asc') {
+        setSortDirection('desc');
+      } else {
+        setSortField(null);
+        setSortDirection('asc');
+      }
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
+    }
+  };
+
+  const SortIcon = ({ field }: { field: SortField }) => {
+    if (sortField !== field) return <ArrowUpDown className="ml-2 h-4 w-4 opacity-50" />;
+    return sortDirection === 'asc' ? 
+      <ArrowUp className="ml-2 h-4 w-4" /> : 
+      <ArrowDown className="ml-2 h-4 w-4" />;
+  };
+
+  const sortedModels = useMemo(() => {
+    if (!sortField) return models;
+    
+    return [...models].sort((a, b) => {
+      let aValue, bValue;
+      switch (sortField) {
+        case 'name':
+          aValue = a.name.toLowerCase();
+          bValue = b.name.toLowerCase();
+          break;
+        case 'created_at':
+          aValue = new Date(a.created_at);
+          bValue = new Date(b.created_at);
+          break;
+        case 'brand':
+          aValue = a.vehicle_brands?.name?.toLowerCase() || '';
+          bValue = b.vehicle_brands?.name?.toLowerCase() || '';
+          break;
+        default:
+          return 0;
+      }
+      
+      if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
+      if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
+      return 0;
+    });
+  }, [models, sortField, sortDirection]);
 
   if (loading) {
     return <LoadingSpinner />;
@@ -156,14 +210,38 @@ export const VehicleModelsManager: React.FC = () => {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Marca</TableHead>
-              <TableHead>Modelo</TableHead>
-              <TableHead>Fecha de Creación</TableHead>
+              <TableHead 
+                className="cursor-pointer hover:bg-muted/50 transition-colors" 
+                onClick={() => handleSort('brand')}
+              >
+                <div className="flex items-center">
+                  Marca
+                  <SortIcon field="brand" />
+                </div>
+              </TableHead>
+              <TableHead 
+                className="cursor-pointer hover:bg-muted/50 transition-colors" 
+                onClick={() => handleSort('name')}
+              >
+                <div className="flex items-center">
+                  Modelo
+                  <SortIcon field="name" />
+                </div>
+              </TableHead>
+              <TableHead 
+                className="cursor-pointer hover:bg-muted/50 transition-colors" 
+                onClick={() => handleSort('created_at')}
+              >
+                <div className="flex items-center">
+                  Fecha de Creación
+                  <SortIcon field="created_at" />
+                </div>
+              </TableHead>
               <TableHead className="text-right">Acciones</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {models.map((model) => (
+            {sortedModels.map((model) => (
               <TableRow key={model.id}>
                 <TableCell>{model.vehicle_brands?.name}</TableCell>
                 <TableCell className="font-medium">{model.name}</TableCell>
@@ -211,7 +289,7 @@ export const VehicleModelsManager: React.FC = () => {
                 </TableCell>
               </TableRow>
             ))}
-            {models.length === 0 && (
+            {sortedModels.length === 0 && (
               <TableRow>
                 <TableCell colSpan={4} className="text-center text-muted-foreground">
                   No hay modelos registrados
