@@ -69,6 +69,11 @@ export interface PaymentFormData {
   reference_number?: string;
   notes?: string;
   status: SupplierPaymentStatus;
+  // Campos opcionales para detalles de piezas
+  part_name?: string;
+  part_quantity?: number;
+  part_unit_price?: number;
+  crane_id?: string;
 }
 
 export interface SupplierStats {
