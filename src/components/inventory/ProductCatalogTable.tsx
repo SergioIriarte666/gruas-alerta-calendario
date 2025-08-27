@@ -12,6 +12,7 @@ import { useInventoryItems, useInventoryCategories, useDeleteInventoryItem, type
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { ProductFormModal } from './ProductFormModal';
 import { ProductDetailsModal } from './ProductDetailsModal';
+import type { SimilarItem } from '@/utils/inventoryHelper';
 
 export const ProductCatalogTable = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -57,6 +58,19 @@ export const ProductCatalogTable = () => {
     } catch (error) {
       console.error('Error deleting product:', error);
     }
+  };
+
+  // Convert InventoryItem to SimilarItem format for ProductDetailsModal
+  const convertToSimilarItem = (item: InventoryItem): SimilarItem => {
+    return {
+      id: item.id,
+      name: item.name,
+      sku: item.sku,
+      unit_cost: item.unit_cost || 0,
+      current_stock: 0, // We don't have stock info in this component
+      similarity_score: 1, // Perfect match since it's the exact item
+      match_type: 'exact' as const
+    };
   };
 
   const getStockStatusBadge = (product: InventoryItem) => {
@@ -265,8 +279,9 @@ export const ProductCatalogTable = () => {
           </DialogHeader>
           {selectedProduct && (
             <ProductDetailsModal 
-              product={selectedProduct} 
-              onClose={() => setShowDetails(false)} 
+              isOpen={showDetails}
+              onClose={() => setShowDetails(false)}
+              product={convertToSimilarItem(selectedProduct)} 
             />
           )}
         </DialogContent>
