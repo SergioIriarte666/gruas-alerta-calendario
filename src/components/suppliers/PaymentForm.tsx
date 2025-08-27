@@ -44,7 +44,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
   onSave,
   preselectedSupplierId 
 }) => {
-  const { createPayment, updatePayment, isCreating, isUpdating } = useSupplierPayments();
+  const { createPayment, updatePayment, markPaymentAsPaid, isCreating, isUpdating } = useSupplierPayments();
   const { suppliers } = useSuppliers();
   const { cranes } = useCranes();
   const categories = useSupplierCategories();
@@ -71,29 +71,57 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
   });
 
   const onSubmit = (data: PaymentFormData) => {
-    // Lógica de detección automática: Si se llenan campos de piezas, cambiar subcategoría
-    let processedData = { ...data };
+    // Filtrar campos que no existen en la tabla supplier_payments
+    const { part_name, part_quantity, part_unit_price, crane_id, ...paymentData } = data;
     
-    // Si es mantenimiento Y se llenaron campos de piezas, es una compra de piezas
-    if (data.category === 'mantenimiento' && 
-        data.part_name && 
-        data.part_quantity && 
-        data.part_unit_price && 
-        data.crane_id) {
-      // El backend detectará esto automáticamente por la subcategoría "Piezas y Repuestos"
-      // que se genera en el trigger create_cost_from_supplier_payment()
-    }
+    // Determinar si tiene detalles de piezas válidos
+    const hasPartDetails = data.category === 'mantenimiento' && 
+                          part_name && 
+                          part_quantity && 
+                          part_unit_price && 
+                          crane_id;
     
-    if (payment) {
-      updatePayment({ id: payment.id, data: processedData }, {
-        onSuccess: () => {
-          onSave?.();
-          onClose();
-        }
-      });
+    // Si es un nuevo pago o una actualización SIN marcar como pagado
+    if (!payment || data.status !== 'paid') {
+      if (payment) {
+        updatePayment({ id: payment.id, data: paymentData }, {
+          onSuccess: () => {
+            onSave?.();
+            onClose();
+          }
+        });
+      } else {
+        createPayment(paymentData, {
+          onSuccess: () => {
+            onSave?.();
+            onClose();
+          }
+        });
+      }
     } else {
-      createPayment(processedData, {
+      // Si es una actualización Y se está marcando como pagado
+      // Primero actualizar el pago, luego marcarlo como pagado con detalles de piezas
+      updatePayment({ id: payment.id, data: { ...paymentData, status: 'pending' } }, {
         onSuccess: () => {
+          // Ahora marcar como pagado con detalles de piezas si existen
+          if (hasPartDetails) {
+            markPaymentAsPaid({
+              id: payment.id,
+              paid_amount: data.amount,
+              partDetails: {
+                part_name: part_name!,
+                part_quantity: part_quantity!,
+                part_unit_price: part_unit_price!,
+                crane_id: crane_id!
+              }
+            });
+          } else {
+            markPaymentAsPaid({
+              id: payment.id,
+              paid_amount: data.amount
+            });
+          }
+          
           onSave?.();
           onClose();
         }

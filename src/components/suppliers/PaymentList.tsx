@@ -120,6 +120,8 @@ export const PaymentList: React.FC = () => {
   };
 
   const handleMarkAsPaid = (payment: SupplierPayment) => {
+    // Por ahora, simplemente marcar como pagado sin detalles de piezas
+    // Los detalles de piezas se pasan desde el formulario de edición
     markPaymentAsPaid({ 
       id: payment.id, 
       paid_amount: payment.amount 

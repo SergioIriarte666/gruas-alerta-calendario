@@ -100,8 +100,22 @@ export const useSupplierPayments = () => {
   });
 
   const markPaymentAsPaidMutation = useMutation({
-    mutationFn: async ({ id, paid_amount }: { id: string; paid_amount: number }) => {
-      const { data, error } = await supabase
+    mutationFn: async ({ 
+      id, 
+      paid_amount, 
+      partDetails 
+    }: { 
+      id: string; 
+      paid_amount: number; 
+      partDetails?: {
+        part_name: string;
+        part_quantity: number;
+        part_unit_price: number;
+        crane_id: string;
+      }
+    }) => {
+      // Marcar el pago como pagado
+      const { data: paymentData, error: paymentError } = await supabase
         .from('supplier_payments')
         .update({
           status: 'paid',
@@ -112,15 +126,83 @@ export const useSupplierPayments = () => {
         .select()
         .single();
 
-      if (error) throw error;
-      return data;
+      if (paymentError) throw paymentError;
+
+      // Si hay detalles de piezas, crear costo específico y registro en crane_parts
+      if (partDetails) {
+        // Obtener nombre del proveedor
+        let supplierName = 'Proveedor';
+        if (paymentData.supplier_id) {
+          const { data: supplierData } = await supabase
+            .from('suppliers')
+            .select('name')
+            .eq('id', paymentData.supplier_id)
+            .single();
+          
+          if (supplierData) {
+            supplierName = supplierData.name;
+          }
+        }
+
+        // Obtener categoría de Mantenimiento
+        const { data: maintenanceCategory } = await supabase
+          .from('cost_categories')
+          .select('id')
+          .eq('name', 'Mantenimiento')
+          .single();
+
+        if (maintenanceCategory) {
+          // Crear costo específico para piezas
+          const { data: costData, error: costError } = await supabase
+            .from('costs')
+            .insert({
+              amount: paid_amount,
+              category_id: maintenanceCategory.id,
+              crane_id: partDetails.crane_id,
+              date: new Date().toISOString().split('T')[0],
+              description: `Compra de piezas: ${partDetails.part_name}`,
+              notes: `Pago a proveedor automático por compra de piezas. Cantidad: ${partDetails.part_quantity}, Precio unitario: $${partDetails.part_unit_price}`,
+              subcategory: 'Piezas y Repuestos',
+              supplier_payment_id: id,
+              created_by: (await supabase.auth.getUser()).data.user?.id
+            })
+            .select()
+            .single();
+
+          if (costError) throw costError;
+
+          // Crear registro en crane_parts
+          const { error: cranePartError } = await supabase
+            .from('crane_parts')
+            .insert({
+              crane_id: partDetails.crane_id,
+              part_name: partDetails.part_name,
+              date: new Date().toISOString().split('T')[0],
+              quantity: partDetails.part_quantity,
+              unit_price: partDetails.part_unit_price,
+              supplier: supplierName,
+              notes: 'Registrado automáticamente desde pago de proveedor',
+              cost_id: costData.id,
+              created_by: (await supabase.auth.getUser()).data.user?.id
+            });
+
+          if (cranePartError) throw cranePartError;
+        }
+      }
+
+      return paymentData;
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['supplier-payments'] });
       queryClient.invalidateQueries({ queryKey: ['supplier-stats'] });
       // Invalidar también las queries de costos ya que se creará automáticamente un costo
       invalidateAllCostQueries();
-      toast.success('Pago marcado como pagado - Se registrará automáticamente en costos');
+      
+      const message = variables.partDetails 
+        ? 'Pago marcado como pagado - Se registró automáticamente en costos y piezas'
+        : 'Pago marcado como pagado - Se registrará automáticamente en costos';
+      
+      toast.success(message);
     },
     onError: (error) => {
       console.error('Error marking payment as paid:', error);
