@@ -4,7 +4,7 @@ import { FolioSection } from './form/FolioSection';
 import { DateSection } from './form/DateSection';
 import { ClientServiceSection } from './form/ClientServiceSection';
 import { VehicleSection } from './form/VehicleSection';
-import { LocationSection } from './form/LocationSection';
+import { EnhancedLocationSection } from './form/EnhancedLocationSection';
 import { MultipleOperatorsSection } from './form/MultipleOperatorsSection';
 import { ServiceCostDetailsSection } from './form/ServiceCostDetailsSection';
 import { EnhancedFinancialSection } from './form/EnhancedFinancialSection';
@@ -416,7 +416,7 @@ export const EnhancedServiceForm = ({
               disabled={false}
             />
 
-            <LocationSection
+            <EnhancedLocationSection
               origin={formData.origin}
               onOriginChange={(value) => setFormData(prev => ({ ...prev, origin: value }))}
               destination={formData.destination}
