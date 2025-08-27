@@ -12,6 +12,10 @@ import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useCreateCranePart, useUpdateCranePart, type CranePart, type CreateCranePartData } from '@/hooks/useCraneParts';
 import { useUnifiedPartsPurchase, useCheckInventoryItem } from '@/hooks/useUnifiedParts';
+import { useSimilarItemsSearch } from '@/utils/inventoryHelper';
+import { SimilarProductAlert } from './SimilarProductAlert';
+import { ProductDetailsModal } from '@/components/inventory/ProductDetailsModal';
+import type { SimilarItem } from '@/utils/inventoryHelper';
 
 interface PartsFormProps {
   isOpen: boolean;
@@ -24,6 +28,9 @@ type FormData = Omit<CreateCranePartData, 'crane_id' | 'created_by'>;
 
 export const PartsForm = ({ isOpen, onClose, craneId, editingPart }: PartsFormProps) => {
   const [selectedDate, setSelectedDate] = useState<Date>(editingPart ? new Date(editingPart.date) : new Date());
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [selectedProductForDetails, setSelectedProductForDetails] = useState<SimilarItem | null>(null);
+  const [confirmCreateNew, setConfirmCreateNew] = useState(false);
   const createMutation = useCreateCranePart();
   const updateMutation = useUpdateCranePart();
   const unifiedPurchaseMutation = useUnifiedPartsPurchase();
@@ -55,22 +62,35 @@ export const PartsForm = ({ isOpen, onClose, craneId, editingPart }: PartsFormPr
   const unitPrice = watch('unit_price') || 0;
   const totalValue = quantity * unitPrice;
 
-  // Check if part exists in inventory
-  const { data: inventoryItem } = useCheckInventoryItem(partName);
+  // Use similarity search instead of basic inventory check
+  const { similarItems, shouldAlert, alertMessage, isLoading } = useSimilarItemsSearch(
+    partName, 
+    !editingPart && partName.length > 2 // Only check for new parts with meaningful names
+  );
 
   const onSubmit = async (data: FormData) => {
     try {
+      // If editing, proceed directly
       if (editingPart) {
         await updateMutation.mutateAsync({
           id: editingPart.id,
           ...data,
         });
-      } else {
-        await createMutation.mutateAsync({
-          ...data,
-          crane_id: craneId,
-        });
+        handleClose();
+        return;
       }
+
+      // For new parts, check if we should alert about similarities
+      if (shouldAlert && !confirmCreateNew) {
+        // Don't submit yet, let user decide via SimilarProductAlert
+        return;
+      }
+
+      // Create new part
+      await createMutation.mutateAsync({
+        ...data,
+        crane_id: craneId,
+      });
       handleClose();
     } catch (error) {
       // Error is handled by the mutation hooks
@@ -80,7 +100,28 @@ export const PartsForm = ({ isOpen, onClose, craneId, editingPart }: PartsFormPr
   const handleClose = () => {
     reset();
     setSelectedDate(new Date());
+    setConfirmCreateNew(false);
+    setShowDetailsModal(false);
+    setSelectedProductForDetails(null);
     onClose();
+  };
+
+  const handleUseExisting = (item: SimilarItem) => {
+    // Fill form with existing item data
+    setValue('part_name', item.name);
+    setValue('unit_price', item.unit_cost);
+    // Note: We don't auto-submit here, let user review and submit manually
+  };
+
+  const handleCreateNew = () => {
+    setConfirmCreateNew(true);
+    // Trigger form submission by calling handleSubmit programmatically
+    handleSubmit(onSubmit)();
+  };
+
+  const handleViewDetails = (item: SimilarItem) => {
+    setSelectedProductForDetails(item);
+    setShowDetailsModal(true);
   };
 
   const handleDateSelect = (date: Date | undefined) => {
@@ -198,31 +239,21 @@ export const PartsForm = ({ isOpen, onClose, craneId, editingPart }: PartsFormPr
               <span className="text-red-400 text-sm">{errors.part_name.message}</span>
             )}
             
-            {/* Inventory Information */}
-            {inventoryItem && partName.length > 2 && (
-              <div className="bg-tms-green/10 border border-tms-green/30 rounded-md p-3 mt-2">
-                <div className="flex items-center gap-2 text-tms-green font-medium mb-2">
-                  <Database className="w-4 h-4" />
-                  Pieza encontrada en inventario
-                </div>
-                <div className="space-y-1 text-sm text-white">
-                  <div>Nombre: {inventoryItem.name}</div>
-                  <div>Costo unitario registrado: ${inventoryItem.unit_cost?.toLocaleString('es-CL')}</div>
-                   {(inventoryItem as any).inventory_stock && (inventoryItem as any).inventory_stock.length > 0 && (
-                     <div>
-                       Stock disponible: {(inventoryItem as any).inventory_stock.reduce((total: number, stock: any) => total + stock.current_quantity, 0)} unidades
-                       {(inventoryItem as any).inventory_stock.map((stock: any, idx: number) => (
-                        <div key={idx} className="text-xs text-gray-400 ml-2">
-                          • {stock.location?.name}: {stock.current_quantity} unidades
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-                <div className="flex items-center gap-1 text-yellow-400 text-xs mt-2">
-                  <AlertCircle className="w-3 h-3" />
-                  Al registrar esta pieza se creará automáticamente el movimiento de inventario
-                </div>
+            
+            {/* Similarity Alert - only for new parts */}
+            {!editingPart && shouldAlert && (
+              <div className="mt-2">
+                <SimilarProductAlert
+                  similarityResult={{
+                    shouldAlert,
+                    exactMatch: similarItems.find(item => item.match_type === 'exact') || null,
+                    similarItems,
+                    alertMessage
+                  }}
+                  onUseExisting={handleUseExisting}
+                  onCreateNew={handleCreateNew}
+                  onViewDetails={handleViewDetails}
+                />
               </div>
             )}
           </div>
@@ -315,6 +346,13 @@ export const PartsForm = ({ isOpen, onClose, craneId, editingPart }: PartsFormPr
             </Button>
           </div>
         </form>
+
+        {/* Product Details Modal */}
+        <ProductDetailsModal
+          isOpen={showDetailsModal}
+          onClose={() => setShowDetailsModal(false)}
+          product={selectedProductForDetails}
+        />
       </DialogContent>
     </Dialog>
   );

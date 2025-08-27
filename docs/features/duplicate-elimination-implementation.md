@@ -154,3 +154,14 @@ El sistema ahora maneja de manera eficiente tanto costos como inventario sin gen
 ✅ **InventorySyncDashboard Removido de Grúas:** Eliminado de `/cranes` ya que la sincronización es automática
 ✅ **UI Simplificada:** Página de grúas enfocada únicamente en gestión de grúas
 ✅ **Documentación Actualizada:** Reflejando que la sincronización bidireccional es automática
+
+### Sistema de Alertas de Similitud (27 Agosto 2025)
+✅ **Integración en PartsForm:** Sistema de detección inteligente integrado para prevenir duplicados en tiempo real
+✅ **Alertas de Similitud:** Usuarios reciben alertas inmediatas cuando nombres son similares a productos existentes
+✅ **SimilarProductAlert:** Componente visual con opciones claras: usar existente, crear nuevo, ver detalles
+✅ **Flujo de Decisión Informada:** 
+- Detección automática con umbral de 80% de similitud
+- Coincidencias exactas resaltadas como críticas
+- Información completa del producto (precio, stock, SKU)
+- Decisión consciente del usuario requerida antes de crear duplicados
+✅ **Prevención en la Fuente:** No más duplicados silenciosos como "Magueras y Adaptadores" vs "Mangueras y Adaptadores"
