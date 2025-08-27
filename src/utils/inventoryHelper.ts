@@ -1,0 +1,225 @@
+import { supabase } from '@/integrations/supabase/client';
+
+export interface SimilarItem {
+  id: string;
+  name: string;
+  sku?: string;
+  unit_cost: number;
+  current_stock?: number;
+  similarity_score: number;
+  match_type: 'exact' | 'similar';
+}
+
+export interface SimilarityResult {
+  exactMatch?: SimilarItem;
+  similarItems: SimilarItem[];
+  shouldAlert: boolean;
+  alertMessage: string;
+}
+
+/**
+ * Normaliza el nombre de un producto para búsquedas consistentes
+ */
+export const normalizeItemName = (name: string): string => {
+  if (!name) return '';
+  
+  return name
+    .toLowerCase()
+    .trim()
+    // Remover acentos y caracteres especiales
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    // Normalizar espacios múltiples a uno solo
+    .replace(/\s+/g, ' ')
+    // Remover caracteres especiales comunes pero mantener espacios y guiones
+    .replace(/[^\w\s\-]/g, '')
+    // Normalizar variaciones comunes
+    .replace(/\bY\b/g, 'y')
+    .replace(/\bDE\b/g, 'de')
+    .replace(/\bLA\b/g, 'la')
+    .replace(/\bEL\b/g, 'el');
+};
+
+/**
+ * Calcula la similitud entre dos strings usando algoritmo de Levenshtein
+ */
+export const calculateSimilarity = (str1: string, str2: string): number => {
+  const norm1 = normalizeItemName(str1);
+  const norm2 = normalizeItemName(str2);
+  
+  if (norm1 === norm2) return 1;
+  
+  const matrix = Array(norm2.length + 1).fill(null).map(() => Array(norm1.length + 1).fill(null));
+  
+  for (let i = 0; i <= norm1.length; i++) {
+    matrix[0][i] = i;
+  }
+  
+  for (let j = 0; j <= norm2.length; j++) {
+    matrix[j][0] = j;
+  }
+  
+  for (let j = 1; j <= norm2.length; j++) {
+    for (let i = 1; i <= norm1.length; i++) {
+      const indicator = norm1[i - 1] === norm2[j - 1] ? 0 : 1;
+      matrix[j][i] = Math.min(
+        matrix[j][i - 1] + 1, // deletion
+        matrix[j - 1][i] + 1, // insertion
+        matrix[j - 1][i - 1] + indicator // substitution
+      );
+    }
+  }
+  
+  const maxLength = Math.max(norm1.length, norm2.length);
+  return maxLength === 0 ? 1 : (maxLength - matrix[norm2.length][norm1.length]) / maxLength;
+};
+
+/**
+ * Busca productos similares en el inventario
+ */
+export const findSimilarItems = async (partName: string, similarityThreshold = 0.8): Promise<SimilarityResult> => {
+  if (!partName || partName.trim().length < 2) {
+    return {
+      similarItems: [],
+      shouldAlert: false,
+      alertMessage: ''
+    };
+  }
+
+  try {
+    // Obtener todos los items activos del inventario
+    const { data: inventoryItems, error } = await supabase
+      .from('inventory_items')
+      .select(`
+        id,
+        name,
+        sku,
+        unit_cost
+      `)
+      .eq('is_active', true);
+
+    if (error) throw error;
+
+    if (!inventoryItems || inventoryItems.length === 0) {
+      return {
+        similarItems: [],
+        shouldAlert: false,
+        alertMessage: ''
+      };
+    }
+
+    const normalizedInput = normalizeItemName(partName);
+    const results: SimilarItem[] = [];
+    let exactMatch: SimilarItem | undefined;
+
+    // Obtener stock actual para los items
+    const { data: stockData } = await supabase
+      .from('inventory_stock')
+      .select(`
+        item_id,
+        current_quantity
+      `);
+
+    const stockMap = new Map(stockData?.map(s => [s.item_id, s.current_quantity]) || []);
+
+    for (const item of inventoryItems) {
+      const normalizedItemName = normalizeItemName(item.name);
+      const similarity = calculateSimilarity(normalizedInput, normalizedItemName);
+      
+      const similarItem: SimilarItem = {
+        id: item.id,
+        name: item.name,
+        sku: item.sku,
+        unit_cost: item.unit_cost || 0,
+        current_stock: stockMap.get(item.id) || 0,
+        similarity_score: similarity,
+        match_type: similarity === 1 ? 'exact' : 'similar'
+      };
+
+      // Coincidencia exacta
+      if (similarity === 1) {
+        exactMatch = similarItem;
+      }
+      // Coincidencia similar (por encima del umbral)
+      else if (similarity >= similarityThreshold) {
+        results.push(similarItem);
+      }
+    }
+
+    // Ordenar por similitud descendente
+    results.sort((a, b) => b.similarity_score - a.similarity_score);
+
+    // Determinar si mostrar alerta
+    const shouldAlert = !!exactMatch || results.length > 0;
+    let alertMessage = '';
+
+    if (exactMatch) {
+      alertMessage = `⚠️ Producto Existente: "${exactMatch.name}" (Stock: ${exactMatch.current_stock} unidades)`;
+    } else if (results.length > 0) {
+      const topMatch = results[0];
+      const percentage = Math.round(topMatch.similarity_score * 100);
+      alertMessage = `⚠️ Producto Similar: "${topMatch.name}" (${percentage}% similar, Stock: ${topMatch.current_stock})`;
+    }
+
+    return {
+      exactMatch,
+      similarItems: results.slice(0, 5), // Máximo 5 sugerencias
+      shouldAlert,
+      alertMessage
+    };
+  } catch (error) {
+    console.error('Error searching for similar items:', error);
+    return {
+      similarItems: [],
+      shouldAlert: false,
+      alertMessage: ''
+    };
+  }
+};
+
+/**
+ * Hook para buscar productos similares con debounce
+ */
+export const useSimilarItemsSearch = (partName: string, enabled = true) => {
+  const [results, setResults] = useState<SimilarityResult>({
+    similarItems: [],
+    shouldAlert: false,
+    alertMessage: ''
+  });
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    if (!enabled || !partName || partName.trim().length < 2) {
+      setResults({
+        similarItems: [],
+        shouldAlert: false,
+        alertMessage: ''
+      });
+      return;
+    }
+
+    const timeoutId = setTimeout(async () => {
+      setIsLoading(true);
+      try {
+        const similarityResults = await findSimilarItems(partName);
+        setResults(similarityResults);
+      } catch (error) {
+        console.error('Error searching similar items:', error);
+        setResults({
+          similarItems: [],
+          shouldAlert: false,
+          alertMessage: ''
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    }, 300); // Debounce de 300ms
+
+    return () => clearTimeout(timeoutId);
+  }, [partName, enabled]);
+
+  return { ...results, isLoading };
+};
+
+// Re-export necesario para useState
+import { useState, useEffect } from 'react';

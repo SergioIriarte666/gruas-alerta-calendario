@@ -208,10 +208,10 @@ export const PartsForm = ({ isOpen, onClose, craneId, editingPart }: PartsFormPr
                 <div className="space-y-1 text-sm text-white">
                   <div>Nombre: {inventoryItem.name}</div>
                   <div>Costo unitario registrado: ${inventoryItem.unit_cost?.toLocaleString('es-CL')}</div>
-                  {inventoryItem.inventory_stock && inventoryItem.inventory_stock.length > 0 && (
-                    <div>
-                      Stock disponible: {inventoryItem.inventory_stock.reduce((total, stock) => total + stock.current_quantity, 0)} unidades
-                      {inventoryItem.inventory_stock.map((stock, idx) => (
+                   {(inventoryItem as any).inventory_stock && (inventoryItem as any).inventory_stock.length > 0 && (
+                     <div>
+                       Stock disponible: {(inventoryItem as any).inventory_stock.reduce((total: number, stock: any) => total + stock.current_quantity, 0)} unidades
+                       {(inventoryItem as any).inventory_stock.map((stock: any, idx: number) => (
                         <div key={idx} className="text-xs text-gray-400 ml-2">
                           • {stock.location?.name}: {stock.current_quantity} unidades
                         </div>

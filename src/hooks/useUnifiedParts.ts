@@ -85,19 +85,26 @@ export const useUnifiedPartsPurchase = () => {
         calculated_from: `${purchaseData.quantity} × ${purchaseData.unit_price}`
       });
 
-      // FASE 1: Crear o encontrar item de inventario
+      // FASE 1: Crear o encontrar item de inventario (con normalización)
       let inventoryItemId: string;
       
-      const { data: existingItem, error: searchError } = await supabase
+      // Importar función de normalización
+      const { normalizeItemName } = await import('@/utils/inventoryHelper');
+      const normalizedInput = normalizeItemName(purchaseData.part_name);
+      
+      // Buscar coincidencia exacta normalizada primero
+      const { data: allItems, error: searchError } = await supabase
         .from('inventory_items')
-        .select('id')
-        .ilike('name', purchaseData.part_name.trim())
-        .limit(1)
-        .single();
+        .select('id, name')
+        .eq('is_active', true);
+      
+      const existingItem = allItems?.find(item => 
+        normalizeItemName(item.name) === normalizedInput
+      );
 
-      if (existingItem && !searchError) {
+      if (existingItem) {
         inventoryItemId = existingItem.id;
-        console.log('📦 Usando item de inventario existente:', inventoryItemId);
+        console.log('📦 Usando item de inventario existente:', inventoryItemId, existingItem.name);
       } else {
         const { data: newItem, error: itemError } = await supabase
           .from('inventory_items')
@@ -235,13 +242,54 @@ export const useInventoryConsumption = () => {
   });
 };
 
-// Hook para verificar si una pieza ya existe en inventario
+// Hook para verificar si una pieza ya existe en inventario (MEJORADO con normalización)
 export const useCheckInventoryItem = (partName: string) => {
   return useQuery({
     queryKey: ['check-inventory-item', partName],
     queryFn: async () => {
       if (!partName) return null;
       
+      // Importar función de normalización
+      const { normalizeItemName } = await import('@/utils/inventoryHelper');
+      const normalizedInput = normalizeItemName(partName);
+      
+      // Buscar coincidencia exacta normalizada primero
+      const { data: exactMatch, error: exactError } = await supabase
+        .from('inventory_items')
+        .select(`
+          id,
+          name,
+          sku,
+          unit_cost,
+          minimum_stock,
+          maximum_stock,
+          safety_stock,
+          is_active
+        `)
+        .eq('is_active', true);
+      
+      if (exactError) throw exactError;
+      
+      // Buscar coincidencia exacta normalizada
+      const exactItem = exactMatch?.find(item => 
+        normalizeItemName(item.name) === normalizedInput
+      );
+      
+      if (exactItem) {
+        // Obtener stock actual
+        const { data: stockData } = await supabase
+          .from('inventory_stock')
+          .select('current_quantity')
+          .eq('item_id', exactItem.id)
+          .single();
+        
+        return {
+          ...exactItem,
+          current_stock: stockData?.current_quantity || 0
+        };
+      }
+      
+      // Si no hay coincidencia exacta, buscar con ilike como fallback
       const { data, error } = await supabase
         .from('inventory_items')
         .select(`
@@ -259,6 +307,12 @@ export const useCheckInventoryItem = (partName: string) => {
         .single();
 
       if (error && error.code !== 'PGRST116') throw error;
+      
+      // Mantener compatibilidad con el formato existente
+      if (data && 'inventory_stock' in data) {
+        return data;
+      }
+      
       return data;
     },
     enabled: !!partName && partName.length > 2,
