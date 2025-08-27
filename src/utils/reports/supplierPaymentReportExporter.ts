@@ -4,6 +4,8 @@ import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
 import { format, addDays, isBefore, isAfter } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { fetchCompanyData } from '@/utils/pdf/companyDataFetcher';
+import { addCompanyHeader } from '@/utils/reports/reportUtils';
 
 export const exportSupplierPaymentReport = async ({
   format,
@@ -13,13 +15,13 @@ export const exportSupplierPaymentReport = async ({
   appliedFilters,
 }: ExportSupplierPaymentReportArgs) => {
   if (format === 'pdf') {
-    generatePDF(payments, suppliers, settings, appliedFilters);
+    await generatePDF(payments, suppliers, settings, appliedFilters);
   } else {
-    generateExcel(payments, suppliers, settings, appliedFilters);
+    await generateExcel(payments, suppliers, settings, appliedFilters);
   }
 };
 
-const generatePDF = (payments: any[], suppliers: any[], settings: any, filters: any) => {
+const generatePDF = async (payments: any[], suppliers: any[], settings: any, filters: any) => {
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.width;
   const today = format(new Date(), 'dd/MM/yyyy', { locale: es });
@@ -29,27 +31,44 @@ const generatePDF = (payments: any[], suppliers: any[], settings: any, filters: 
     return suppliers.find(s => s.id === supplierId)?.name || 'N/A';
   };
   
+  // Obtener datos de empresa
+  const companyData = await fetchCompanyData();
+  
   // Calcular métricas
   const metrics = calculateMetrics(payments, filters);
   
-  // Header
-  doc.setFontSize(20);
+  // Agregar header profesional con logo y datos de empresa
+  let yPos = await addCompanyHeader(doc, {
+    name: companyData.businessName,
+    taxId: companyData.rut,
+    address: companyData.address,
+    phone: companyData.phone,
+    email: companyData.email,
+    logo: companyData.logoUrl,
+    folioFormat: 'SRV-{number}' // Campo requerido por CompanySettings
+  }, 10);
+  
+  // Título del reporte
+  yPos += 10;
+  doc.setFontSize(18);
   doc.setTextColor(0, 0, 0);
   
   const title = filters.reportType === 'future' 
-    ? `Proyección de Pagos a Proveedores - Próximos ${filters.daysAhead} días`
+    ? `Proyección de Pagos a Proveedores - Próximos ${filters.daysAhead || 30} días`
     : 'Listado de Pagos a Proveedores';
     
-  doc.text(title, pageWidth / 2, 20, { align: 'center' });
+  doc.text(title, pageWidth / 2, yPos, { align: 'center' });
+  yPos += 5;
   
-  // Company info
-  doc.setFontSize(12);
-  doc.text(settings.company_name || 'Empresa', 14, 35);
-  doc.text(`Generado el: ${today}`, 14, 42);
+  // Fecha de generación
+  doc.setFontSize(10);
+  doc.setTextColor(100, 100, 100);
+  doc.text(`Generado el: ${today}`, pageWidth / 2, yPos, { align: 'center' });
+  yPos += 15;
   
   // Applied filters
-  let yPos = 55;
   doc.setFontSize(11);
+  doc.setTextColor(0, 0, 0);
   doc.text('Filtros aplicados:', 14, yPos);
   yPos += 7;
   
@@ -129,9 +148,12 @@ const generatePDF = (payments: any[], suppliers: any[], settings: any, filters: 
   doc.save(filename);
 };
 
-const generateExcel = (payments: any[], suppliers: any[], settings: any, filters: any) => {
+const generateExcel = async (payments: any[], suppliers: any[], settings: any, filters: any) => {
   const workbook = XLSX.utils.book_new();
   const metrics = calculateMetrics(payments, filters);
+  
+  // Obtener datos de empresa
+  const companyData = await fetchCompanyData();
   
   // Helper function to get supplier name
   const getSupplierName = (supplierId: string) => {
@@ -142,7 +164,11 @@ const generateExcel = (payments: any[], suppliers: any[], settings: any, filters
   const summaryData = [
     ['Reporte de Pagos a Proveedores'],
     [''],
-    ['Empresa:', settings.company_name || 'N/A'],
+    ['Empresa:', companyData.businessName],
+    ['RUT:', companyData.rut],
+    ['Dirección:', companyData.address],
+    ['Teléfono:', companyData.phone],
+    ['Email:', companyData.email],
     ['Fecha de generación:', format(new Date(), 'dd/MM/yyyy', { locale: es })],
     ['Tipo de reporte:', filters.reportType === 'future' ? 'Pagos Futuros' : 'Listado Completo'],
     [''],

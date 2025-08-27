@@ -35,3 +35,10 @@ VITE_APP_NAME=TMS Grúas
 - Datos fiscales (RUT, razón social)
 - Información de contacto
 - Plantillas de documentos
+
+## Sistema de Reportes
+- **Header Corporativo**: Todos los PDFs incluyen logo y datos completos de empresa
+- **Datos de Empresa**: Se obtienen de `company_data` tabla en Supabase
+- **Fallback**: Valores por defecto si no hay configuración
+- **Formatos**: PDF con headers profesionales, Excel con múltiples hojas
+- **Integración**: `fetchCompanyData()` y `addCompanyHeader()` para consistencia
