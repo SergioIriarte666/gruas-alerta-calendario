@@ -22,6 +22,7 @@ import {
 import { useSupplierPayments, getStatusLabel, getStatusColor } from '@/hooks/useSupplierPayments';
 import { useSuppliers, getCategoryLabel } from '@/hooks/useSuppliers';
 import { PaymentForm } from './PaymentForm';
+import { SupplierPaymentExportButton } from './SupplierPaymentExportButton';
 import { SupplierPayment, SupplierPaymentStatus } from '@/types/suppliers';
 import { formatCurrency } from '@/lib/utils';
 import { format } from 'date-fns';
@@ -85,6 +86,7 @@ export const PaymentList: React.FC = () => {
   };
 
   const getSupplierName = (supplierId: string) => {
+    if (supplierId === 'all') return undefined;
     return suppliers.find(s => s.id === supplierId)?.name || 'Proveedor no encontrado';
   };
 
@@ -106,6 +108,17 @@ export const PaymentList: React.FC = () => {
         </div>
 
         <div className="flex gap-2">
+          <SupplierPaymentExportButton 
+            payments={filteredPayments}
+            suppliers={suppliers}
+            filters={{
+              searchTerm,
+              status: selectedStatus,
+              supplierId: selectedSupplier,
+              supplierName: getSupplierName(selectedSupplier),
+              reportType: 'current'
+            }}
+          />
           <Button
             onClick={() => updateOverduePayments()}
             variant="outline"
@@ -228,16 +241,16 @@ export const PaymentList: React.FC = () => {
                   {filteredPayments.map((payment) => (
                     <TableRow key={payment.id} className="border-gray-700">
                       <TableCell>
-                        <div className="space-y-1">
-                          <div className="font-medium text-white">
-                            {getSupplierName(payment.supplier_id)}
-                          </div>
-                          {payment.reference_number && (
-                            <div className="text-sm text-gray-400">
-                              Ref: {payment.reference_number}
-                            </div>
-                          )}
-                        </div>
+                         <div className="space-y-1">
+                           <div className="font-medium text-white">
+                             {suppliers.find(s => s.id === payment.supplier_id)?.name || 'Proveedor no encontrado'}
+                           </div>
+                           {payment.reference_number && (
+                             <div className="text-sm text-gray-400">
+                               Ref: {payment.reference_number}
+                             </div>
+                           )}
+                         </div>
                       </TableCell>
                       
                       <TableCell>

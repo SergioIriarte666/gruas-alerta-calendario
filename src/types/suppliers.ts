@@ -160,3 +160,13 @@ export interface XMLSupplierFieldMapping {
   required: boolean;
   transform?: (value: any) => any;
 }
+
+// Export report types
+export interface SupplierPaymentReportFilters {
+  searchTerm?: string;
+  status?: string;
+  supplierId?: string;
+  supplierName?: string;
+  reportType: 'current' | 'future';
+  daysAhead?: number; // For future payments report
+}

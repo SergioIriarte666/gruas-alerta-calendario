@@ -77,3 +77,20 @@ export interface ExportCommissionReportArgs {
   settings: Settings;
   appliedFilters: AppliedCommissionFilters;
 }
+
+export interface AppliedSupplierPaymentFilters {
+  searchTerm?: string;
+  status?: string;
+  supplierId?: string;
+  supplierName?: string;
+  reportType: 'current' | 'future';
+  daysAhead?: number;
+}
+
+export interface ExportSupplierPaymentReportArgs {
+  format: 'pdf' | 'excel';
+  payments: any[];
+  suppliers: any[];
+  settings: Settings;
+  appliedFilters: AppliedSupplierPaymentFilters;
+}
