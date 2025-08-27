@@ -68,6 +68,16 @@ export const PartsForm = ({ isOpen, onClose, craneId, editingPart }: PartsFormPr
     !editingPart && partName.length > 2 // Only check for new parts with meaningful names
   );
 
+  // Debug logging para verificar el estado
+  console.log('🐛 [PartsForm] Estado de similitud:', {
+    partName,
+    shouldAlert,
+    alertMessage,
+    similarItemsCount: similarItems?.length || 0,
+    isLoading,
+    editingPart: !!editingPart
+  });
+
   const onSubmit = async (data: FormData) => {
     try {
       // If editing, proceed directly
@@ -239,6 +249,13 @@ export const PartsForm = ({ isOpen, onClose, craneId, editingPart }: PartsFormPr
               <span className="text-red-400 text-sm">{errors.part_name.message}</span>
             )}
             
+            {/* Debug info */}
+            {!editingPart && partName && (
+              <div className="text-xs text-muted-foreground p-2 bg-muted/50 rounded mt-2">
+                <div>🐛 Debug: "{partName}" | Loading: {isLoading ? 'SI' : 'NO'} | Alert: {shouldAlert ? 'SI' : 'NO'}</div>
+                {alertMessage && <div>Mensaje: {alertMessage}</div>}
+              </div>
+            )}
             
             {/* Similarity Alert - only for new parts */}
             {!editingPart && shouldAlert && (
