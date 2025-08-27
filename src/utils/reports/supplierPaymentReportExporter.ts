@@ -72,18 +72,63 @@ const generatePDF = async (payments: any[], suppliers: any[], settings: any, fil
   doc.text('Filtros aplicados:', 14, yPos);
   yPos += 7;
   
-  if (filters.supplierName) {
-    doc.text(`• Proveedor: ${filters.supplierName}`, 20, yPos);
-    yPos += 5;
-  }
-  if (filters.status) {
-    doc.text(`• Estado: ${getStatusLabel(filters.status)}`, 20, yPos);
-    yPos += 5;
-  }
+  doc.setFontSize(9);
+  doc.setTextColor(60, 60, 60);
+  
   if (filters.searchTerm) {
-    doc.text(`• Búsqueda: ${filters.searchTerm}`, 20, yPos);
+    doc.text(`• Búsqueda: ${filters.searchTerm}`, 14, yPos);
     yPos += 5;
   }
+  
+  if (filters.status && filters.status !== 'all') {
+    const statusLabels = {
+      pending: 'Pendiente',
+      paid: 'Pagado',
+      overdue: 'Vencido',
+      cancelled: 'Cancelado'
+    };
+    doc.text(`• Estado: ${statusLabels[filters.status] || filters.status}`, 14, yPos);
+    yPos += 5;
+  }
+  
+  if (filters.supplierName) {
+    doc.text(`• Proveedor: ${filters.supplierName}`, 14, yPos);
+    yPos += 5;
+  }
+  
+  // Filtros de fecha
+  if (filters.dateFrom || filters.dateTo) {
+    const getDateTypeLabel = (type: string) => {
+      switch (type) {
+        case 'due_date': return 'Fecha de Vencimiento';
+        case 'created_at': return 'Fecha de Creación';
+        case 'paid_date': return 'Fecha de Pago';
+        default: return 'Fecha de Vencimiento';
+      }
+    };
+    
+    const dateTypeLabel = getDateTypeLabel(filters.dateType);
+    let dateRangeText = `• ${dateTypeLabel}:`;
+    
+    if (filters.dateFrom && filters.dateTo) {
+      dateRangeText += ` desde ${format(new Date(filters.dateFrom), 'dd/MM/yyyy')} hasta ${format(new Date(filters.dateTo), 'dd/MM/yyyy')}`;
+    } else if (filters.dateFrom) {
+      dateRangeText += ` desde ${format(new Date(filters.dateFrom), 'dd/MM/yyyy')}`;
+    } else if (filters.dateTo) {
+      dateRangeText += ` hasta ${format(new Date(filters.dateTo), 'dd/MM/yyyy')}`;
+    }
+    
+    doc.text(dateRangeText, 14, yPos);
+    yPos += 5;
+  }
+  
+  if (!filters.searchTerm && (!filters.status || filters.status === 'all') && 
+      !filters.supplierName && !filters.dateFrom && !filters.dateTo) {
+    doc.text('• Sin filtros aplicados (todos los pagos)', 14, yPos);
+    yPos += 5;
+  }
+  
+  yPos += 5;
   
   // Summary metrics
   yPos += 10;
@@ -160,6 +205,15 @@ const generateExcel = async (payments: any[], suppliers: any[], settings: any, f
     return suppliers.find(s => s.id === supplierId)?.name || 'N/A';
   };
   
+  const getDateTypeLabel = (type: string) => {
+    switch (type) {
+      case 'due_date': return 'Fecha de Vencimiento';
+      case 'created_at': return 'Fecha de Creación';
+      case 'paid_date': return 'Fecha de Pago';
+      default: return 'Fecha de Vencimiento';
+    }
+  };
+  
   // Summary sheet
   const summaryData = [
     ['Reporte de Pagos a Proveedores'],
@@ -176,6 +230,11 @@ const generateExcel = async (payments: any[], suppliers: any[], settings: any, f
     ['Proveedor:', filters.supplierName || 'Todos'],
     ['Estado:', filters.status ? getStatusLabel(filters.status) : 'Todos'],
     ['Búsqueda:', filters.searchTerm || 'Sin filtros'],
+    ...(filters.dateFrom || filters.dateTo ? [
+      ['Tipo de fecha:', getDateTypeLabel(filters.dateType || 'due_date')],
+      ...(filters.dateFrom ? [['Fecha desde:', format(new Date(filters.dateFrom), 'dd/MM/yyyy')]] : []),
+      ...(filters.dateTo ? [['Fecha hasta:', format(new Date(filters.dateTo), 'dd/MM/yyyy')]] : [])
+    ] : []),
     [''],
     ['Métricas:'],
     ['Total de pagos:', metrics.totalPayments],

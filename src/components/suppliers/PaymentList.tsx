@@ -6,13 +6,15 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { 
   Search, 
   Plus, 
   Edit2, 
   Trash2, 
   CreditCard, 
-  Calendar,
+  Calendar as CalendarIcon,
   CheckCircle,
   Clock,
   AlertTriangle,
@@ -24,8 +26,8 @@ import { useSuppliers, getCategoryLabel } from '@/hooks/useSuppliers';
 import { PaymentForm } from './PaymentForm';
 import { SupplierPaymentExportButton } from './SupplierPaymentExportButton';
 import { SupplierPayment, SupplierPaymentStatus } from '@/types/suppliers';
-import { formatCurrency } from '@/lib/utils';
-import { format } from 'date-fns';
+import { formatCurrency, cn } from '@/lib/utils';
+import { format, isAfter, isBefore, isSameDay } from 'date-fns';
 import { es } from 'date-fns/locale';
 
 export const PaymentList: React.FC = () => {
@@ -43,6 +45,9 @@ export const PaymentList: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
   const [selectedSupplier, setSelectedSupplier] = useState<string>('all');
+  const [dateFrom, setDateFrom] = useState<Date | undefined>();
+  const [dateTo, setDateTo] = useState<Date | undefined>();
+  const [dateType, setDateType] = useState<'due_date' | 'created_at' | 'paid_date'>('due_date');
   const [showForm, setShowForm] = useState(false);
   const [editingPayment, setEditingPayment] = useState<SupplierPayment | null>(null);
 
@@ -53,6 +58,7 @@ export const PaymentList: React.FC = () => {
       const supplier = suppliers.find(s => s.id === payment.supplier_id);
       const supplierName = supplier?.name || '';
       
+      // Filtros existentes
       const matchesSearch = payment.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
                           supplierName.toLowerCase().includes(searchTerm.toLowerCase()) ||
                           (payment.reference_number && payment.reference_number.toLowerCase().includes(searchTerm.toLowerCase()));
@@ -60,9 +66,44 @@ export const PaymentList: React.FC = () => {
       const matchesStatus = selectedStatus === 'all' || payment.status === selectedStatus;
       const matchesSupplier = selectedSupplier === 'all' || payment.supplier_id === selectedSupplier;
 
-      return matchesSearch && matchesStatus && matchesSupplier;
+      // Filtros de fecha
+      let matchesDateRange = true;
+      if (dateFrom || dateTo) {
+        let compareDate: Date;
+        
+        // Determinar qué fecha usar para comparar
+        switch (dateType) {
+          case 'due_date':
+            compareDate = new Date(payment.due_date);
+            break;
+          case 'created_at':
+            compareDate = new Date(payment.created_at);
+            break;
+          case 'paid_date':
+            if (!payment.paid_date) {
+              matchesDateRange = false;
+              break;
+            }
+            compareDate = new Date(payment.paid_date);
+            break;
+          default:
+            compareDate = new Date(payment.due_date);
+        }
+
+        // Aplicar filtros de fecha si matchesDateRange aún es true
+        if (matchesDateRange) {
+          if (dateFrom && isBefore(compareDate, dateFrom) && !isSameDay(compareDate, dateFrom)) {
+            matchesDateRange = false;
+          }
+          if (dateTo && isAfter(compareDate, dateTo) && !isSameDay(compareDate, dateTo)) {
+            matchesDateRange = false;
+          }
+        }
+      }
+
+      return matchesSearch && matchesStatus && matchesSupplier && matchesDateRange;
     });
-  }, [payments, suppliers, searchTerm, selectedStatus, selectedSupplier]);
+  }, [payments, suppliers, searchTerm, selectedStatus, selectedSupplier, dateFrom, dateTo, dateType]);
 
   const handleEdit = (payment: SupplierPayment) => {
     setEditingPayment(payment);
@@ -88,6 +129,38 @@ export const PaymentList: React.FC = () => {
   const getSupplierName = (supplierId: string) => {
     if (supplierId === 'all') return undefined;
     return suppliers.find(s => s.id === supplierId)?.name || 'Proveedor no encontrado';
+  };
+
+  const handleDateFromSelect = (date: Date | undefined) => {
+    if (date) {
+      const localDate = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 12, 0, 0);
+      setDateFrom(localDate);
+    } else {
+      setDateFrom(undefined);
+    }
+  };
+
+  const handleDateToSelect = (date: Date | undefined) => {
+    if (date) {
+      const localDate = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 12, 0, 0);
+      setDateTo(localDate);
+    } else {
+      setDateTo(undefined);
+    }
+  };
+
+  const clearDateFilters = () => {
+    setDateFrom(undefined);
+    setDateTo(undefined);
+  };
+
+  const getDateTypeLabel = (type: 'due_date' | 'created_at' | 'paid_date') => {
+    switch (type) {
+      case 'due_date': return 'Fecha de Vencimiento';
+      case 'created_at': return 'Fecha de Creación';
+      case 'paid_date': return 'Fecha de Pago';
+      default: return 'Fecha de Vencimiento';
+    }
   };
 
   if (isLoading) {
@@ -116,7 +189,10 @@ export const PaymentList: React.FC = () => {
               status: selectedStatus,
               supplierId: selectedSupplier,
               supplierName: getSupplierName(selectedSupplier),
-              reportType: 'current'
+              reportType: 'current',
+              dateFrom: dateFrom ? format(dateFrom, 'yyyy-MM-dd') : undefined,
+              dateTo: dateTo ? format(dateTo, 'yyyy-MM-dd') : undefined,
+              dateType
             }}
           />
           <Button
@@ -198,6 +274,169 @@ export const PaymentList: React.FC = () => {
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Date Filters */}
+      <Card className="bg-gray-800 border-gray-700">
+        <CardContent className="p-4">
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-medium text-gray-300">Filtros por Fecha</h3>
+              {(dateFrom || dateTo) && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={clearDateFilters}
+                  className="text-gray-400 hover:text-gray-300"
+                >
+                  <X className="h-4 w-4 mr-1" />
+                  Limpiar
+                </Button>
+              )}
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <label className="text-sm text-gray-300">Tipo de Fecha</label>
+                <Select value={dateType} onValueChange={(value: 'due_date' | 'created_at' | 'paid_date') => setDateType(value)}>
+                  <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-gray-700 border-gray-600">
+                    <SelectItem value="due_date" className="text-white hover:bg-gray-600">
+                      Fecha de Vencimiento
+                    </SelectItem>
+                    <SelectItem value="created_at" className="text-white hover:bg-gray-600">
+                      Fecha de Creación
+                    </SelectItem>
+                    <SelectItem value="paid_date" className="text-white hover:bg-gray-600">
+                      Fecha de Pago
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm text-gray-300">Fecha Desde</label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full justify-start text-left font-normal bg-gray-700 border-gray-600 text-white hover:bg-gray-600",
+                        !dateFrom && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {dateFrom ? format(dateFrom, "dd/MM/yyyy") : "Seleccionar fecha"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={dateFrom}
+                      onSelect={handleDateFromSelect}
+                      initialFocus
+                      className="pointer-events-auto"
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm text-gray-300">Fecha Hasta</label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full justify-start text-left font-normal bg-gray-700 border-gray-600 text-white hover:bg-gray-600",
+                        !dateTo && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {dateTo ? format(dateTo, "dd/MM/yyyy") : "Seleccionar fecha"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={dateTo}
+                      onSelect={handleDateToSelect}
+                      disabled={(date) => dateFrom ? isBefore(date, dateFrom) : false}
+                      initialFocus
+                      className="pointer-events-auto"
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+            </div>
+
+            {/* Quick Date Filters */}
+            <div className="flex flex-wrap gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  const today = new Date();
+                  today.setHours(12, 0, 0, 0);
+                  setDateFrom(today);
+                  setDateTo(today);
+                }}
+                className="text-xs text-gray-400 hover:text-gray-300"
+              >
+                Hoy
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  const today = new Date();
+                  const weekStart = new Date(today);
+                  weekStart.setDate(today.getDate() - today.getDay());
+                  weekStart.setHours(12, 0, 0, 0);
+                  const weekEnd = new Date(weekStart);
+                  weekEnd.setDate(weekStart.getDate() + 6);
+                  setDateFrom(weekStart);
+                  setDateTo(weekEnd);
+                }}
+                className="text-xs text-gray-400 hover:text-gray-300"
+              >
+                Esta Semana
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  const today = new Date();
+                  const monthStart = new Date(today.getFullYear(), today.getMonth(), 1, 12, 0, 0);
+                  const monthEnd = new Date(today.getFullYear(), today.getMonth() + 1, 0, 12, 0, 0);
+                  setDateFrom(monthStart);
+                  setDateTo(monthEnd);
+                }}
+                className="text-xs text-gray-400 hover:text-gray-300"
+              >
+                Este Mes
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  const today = new Date();
+                  const thirtyDaysAgo = new Date(today);
+                  thirtyDaysAgo.setDate(today.getDate() - 30);
+                  thirtyDaysAgo.setHours(12, 0, 0, 0);
+                  today.setHours(12, 0, 0, 0);
+                  setDateFrom(thirtyDaysAgo);
+                  setDateTo(today);
+                }}
+                className="text-xs text-gray-400 hover:text-gray-300"
+              >
+                Últimos 30 días
+              </Button>
             </div>
           </div>
         </CardContent>

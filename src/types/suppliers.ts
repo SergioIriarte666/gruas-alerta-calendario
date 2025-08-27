@@ -169,4 +169,7 @@ export interface SupplierPaymentReportFilters {
   supplierName?: string;
   reportType: 'current' | 'future';
   daysAhead?: number; // For future payments report
+  dateFrom?: string; // Fecha desde
+  dateTo?: string; // Fecha hasta
+  dateType?: 'due_date' | 'created_at' | 'paid_date'; // Tipo de fecha para filtrar
 }
