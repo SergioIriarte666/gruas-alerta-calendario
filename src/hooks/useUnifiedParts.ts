@@ -85,32 +85,108 @@ export const useUnifiedPartsPurchase = () => {
         calculated_from: `${purchaseData.quantity} × ${purchaseData.unit_price}`
       });
 
-      // El trigger se encargará de crear el costo y sincronizar inventario
-      const { data, error } = await supabase
+      // FASE 1: Crear o encontrar item de inventario
+      let inventoryItemId: string;
+      
+      const { data: existingItem, error: searchError } = await supabase
+        .from('inventory_items')
+        .select('id')
+        .ilike('name', purchaseData.part_name.trim())
+        .limit(1)
+        .single();
+
+      if (existingItem && !searchError) {
+        inventoryItemId = existingItem.id;
+        console.log('📦 Usando item de inventario existente:', inventoryItemId);
+      } else {
+        const { data: newItem, error: itemError } = await supabase
+          .from('inventory_items')
+          .insert({
+            name: purchaseData.part_name.trim(),
+            description: 'Creado desde compra unificada de piezas',
+            unit_of_measure: 'unidad',
+            unit_cost: purchaseData.unit_price
+          })
+          .select()
+          .single();
+
+        if (itemError) {
+          console.error('❌ Error creando item de inventario:', itemError);
+          throw itemError;
+        }
+
+        inventoryItemId = newItem.id;
+        console.log('✅ Nuevo item de inventario creado:', inventoryItemId);
+      }
+
+      // FASE 2: Obtener ubicación por defecto
+      const { data: location, error: locationError } = await supabase
+        .from('inventory_locations')
+        .select('id')
+        .eq('is_active', true)
+        .order('created_at')
+        .limit(1)
+        .single();
+
+      if (locationError) {
+        console.error('❌ Error encontrando ubicación de inventario:', locationError);
+        throw new Error('No se encontró ubicación de inventario activa');
+      }
+
+      // FASE 3: Crear movimiento de inventario PRIMERO
+      const { data: inventoryMovement, error: movementError } = await supabase
+        .from('inventory_movements')
+        .insert({
+          item_id: inventoryItemId,
+          location_id: location.id,
+          movement_type: 'entry',
+          quantity: purchaseData.quantity,
+          unit_cost: purchaseData.unit_price,
+          total_cost: total_value,
+          movement_date: purchaseData.date,
+          supplier_name: purchaseData.supplier.trim(),
+          reason: 'Compra de pieza para grúa',
+          observations: `Compra unificada desde frontend. Pieza: ${purchaseData.part_name.trim()}`
+        })
+        .select()
+        .single();
+
+      if (movementError) {
+        console.error('❌ Error creando movimiento de inventario:', movementError);
+        throw movementError;
+      }
+
+      console.log('✅ Movimiento de inventario creado:', inventoryMovement);
+
+      // FASE 4: Crear crane_parts con inventory_movement_id para prevenir trigger automático
+      const { data: cranePart, error: cranePartError } = await supabase
         .from('crane_parts')
-        .insert([{
+        .insert({
           crane_id: purchaseData.crane_id,
           part_name: purchaseData.part_name.trim(),
           supplier: purchaseData.supplier.trim(),
           quantity: purchaseData.quantity,
           unit_price: purchaseData.unit_price,
-          total_value, // Valor calculado explícitamente
+          total_value,
           date: purchaseData.date,
-          notes: purchaseData.notes?.trim() || null,
+          notes: purchaseData.notes ? `${purchaseData.notes.trim()} - frontend-unified` : 'Compra unificada desde frontend - frontend-unified',
           phone: purchaseData.phone?.trim() || null,
           kilometraje: purchaseData.kilometraje || null,
-          // created_by será asignado por el trigger usando auth.uid()
-        }])
+          inventory_movement_id: inventoryMovement.id // Esto previene el trigger automático
+        })
         .select()
         .single();
 
-      if (error) {
-        console.error('❌ Error al insertar pieza:', error);
-        throw error;
+      if (cranePartError) {
+        console.error('❌ Error insertando crane_parts:', cranePartError);
+        // Rollback: eliminar movimiento de inventario creado
+        await supabase.from('inventory_movements').delete().eq('id', inventoryMovement.id);
+        throw cranePartError;
       }
 
-      console.log('✅ Pieza creada exitosamente:', data);
-      return data;
+      console.log('✅ Crane part creado exitosamente:', cranePart);
+      
+      return { cranePart, inventoryMovement };
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['crane-parts'] });
