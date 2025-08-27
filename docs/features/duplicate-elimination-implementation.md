@@ -149,3 +149,8 @@ Estos warnings no afectan la funcionalidad implementada y son parte de las confi
 ✅ **Integridad de Referencias:** Referencias de crane_parts actualizadas antes de eliminación
 
 El sistema ahora maneja de manera eficiente tanto costos como inventario sin generar registros duplicados y sin mostrar duplicados visuales en las pantallas de inventario.
+
+### Refactoring de Componentes (27 Agosto 2025)
+✅ **InventorySyncDashboard Removido de Grúas:** Eliminado de `/cranes` ya que la sincronización es automática
+✅ **UI Simplificada:** Página de grúas enfocada únicamente en gestión de grúas
+✅ **Documentación Actualizada:** Reflejando que la sincronización bidireccional es automática

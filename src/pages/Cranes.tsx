@@ -9,7 +9,7 @@ import { AppPagination } from '@/components/shared/AppPagination';
 import { CranesHeader } from '@/components/cranes/CranesHeader';
 import { CranesFilters } from '@/components/cranes/CranesFilters';
 import { CranesTable } from '@/components/cranes/CranesTable';
-import { InventorySyncDashboard } from '@/components/inventory/InventorySyncDashboard';
+
 
 const Cranes = () => {
   const { cranes, loading, createCrane, updateCrane, deleteCrane, toggleCraneStatus } = useCranes();
@@ -96,8 +96,6 @@ const Cranes = () => {
       <CranesHeader onNewCrane={handleCreate} />
 
       <CranesFilters searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
-
-      <InventorySyncDashboard />
 
       <CranesTable
         cranes={paginatedCranes}
