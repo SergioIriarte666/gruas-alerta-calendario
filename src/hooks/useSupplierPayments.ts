@@ -75,9 +75,12 @@ export const useSupplierPayments = () => {
 
   const updatePaymentMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: Partial<PaymentFormData> }): Promise<SupplierPayment> => {
+      // Filtrar campos que no existen en la tabla supplier_payments
+      const { part_name, part_quantity, part_unit_price, crane_id, ...paymentData } = data;
+      
       const { data: payment, error } = await supabase
         .from('supplier_payments')
-        .update(data)
+        .update(paymentData)
         .eq('id', id)
         .select()
         .single();
