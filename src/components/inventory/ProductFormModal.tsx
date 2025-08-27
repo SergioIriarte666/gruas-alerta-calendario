@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -11,6 +11,9 @@ import { Switch } from '@/components/ui/switch';
 import { useInventoryCategories, useCreateInventoryItem, useUpdateInventoryItem, type InventoryItem } from '@/hooks/useInventory';
 import { toast } from 'sonner';
 import { isDuplicateError, extractDuplicateField, getDuplicateErrorMessage } from '@/utils/validationUtils';
+import { useSimilarItemsSearch } from '@/utils/inventoryHelper';
+import { SimilarProductAlert } from '@/components/cranes/forms/SimilarProductAlert';
+import { ProductDetailsModal } from '@/components/inventory/ProductDetailsModal';
 
 const productSchema = z.object({
   name: z.string().min(1, 'El nombre es requerido'),
@@ -45,6 +48,11 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({ product, onS
   const { data: categories = [] } = useInventoryCategories();
   const createProduct = useCreateInventoryItem();
   const updateProduct = useUpdateInventoryItem();
+  
+  // Estados para el sistema de alertas de similitud
+  const [confirmCreateNew, setConfirmCreateNew] = useState(false);
+  const [detailsModalOpen, setDetailsModalOpen] = useState(false);
+  const [selectedSimilarProduct, setSelectedSimilarProduct] = useState(null);
 
   const {
     register,
@@ -72,8 +80,50 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({ product, onS
   });
 
   const watchedValues = watch();
+  
+  // Hook para detectar productos similares (solo para productos nuevos)
+  const { similarItems, shouldAlert, alertMessage, isLoading } = useSimilarItemsSearch(
+    watchedValues.name || '', 
+    !product // Solo buscar similitudes cuando no estamos editando
+  );
+
+  // Handlers para el sistema de alertas
+  const handleUseExisting = (similarProduct) => {
+    // Llenar el formulario con los datos del producto existente
+    setValue('name', similarProduct.name);
+    setValue('description', similarProduct.description || '');
+    setValue('sku', similarProduct.sku || '');
+    setValue('barcode', similarProduct.barcode || '');
+    setValue('category_id', similarProduct.category_id || '');
+    setValue('unit_of_measure', similarProduct.unit_of_measure);
+    setValue('minimum_stock', similarProduct.minimum_stock || 0);
+    setValue('maximum_stock', similarProduct.maximum_stock || 0);
+    setValue('safety_stock', similarProduct.safety_stock || 0);
+    setValue('unit_cost', similarProduct.unit_cost || 0);
+    setValue('is_active', similarProduct.is_active);
+    setValue('is_critical', similarProduct.is_critical);
+    setValue('has_expiration', similarProduct.has_expiration);
+    
+    toast.success('Datos del producto existente cargados en el formulario');
+  };
+
+  const handleViewDetails = (similarProduct) => {
+    setSelectedSimilarProduct(similarProduct);
+    setDetailsModalOpen(true);
+  };
+
+  const handleCreateNew = () => {
+    setConfirmCreateNew(true);
+    toast.info('Confirmado: Se creará un nuevo producto');
+  };
 
   const onSubmit = async (data: ProductFormData) => {
+    // Si hay productos similares y no hemos confirmado, bloquear envío
+    if (!product && shouldAlert && !confirmCreateNew) {
+      toast.warning('Hay productos similares. Por favor, revisa las opciones antes de continuar.');
+      return;
+    }
+    
     try {
       const productData = {
         name: data.name,
@@ -148,6 +198,21 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({ product, onS
               <p className="text-sm text-destructive mt-1">{errors.name.message}</p>
             )}
           </div>
+
+          {/* Alerta de productos similares - Solo para productos nuevos */}
+          {!product && shouldAlert && (
+            <SimilarProductAlert
+              similarityResult={{
+                exactMatch: similarItems.find(item => item.match_type === 'exact') || null,
+                similarItems: similarItems,
+                alertMessage: alertMessage,
+                shouldAlert: shouldAlert
+              }}
+              onUseExisting={handleUseExisting}
+              onCreateNew={handleCreateNew}
+              onViewDetails={handleViewDetails}
+            />
+          )}
 
           <div>
             <Label htmlFor="sku">SKU</Label>
@@ -323,6 +388,13 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({ product, onS
           {isSubmitting ? 'Guardando...' : product ? 'Actualizar' : 'Crear Producto'}
         </Button>
       </div>
+
+      {/* Modal de detalles del producto */}
+      <ProductDetailsModal
+        isOpen={detailsModalOpen}
+        onClose={() => setDetailsModalOpen(false)}
+        product={selectedSimilarProduct}
+      />
     </form>
   );
 };
