@@ -11,9 +11,11 @@ import { Switch } from '@/components/ui/switch';
 import { useInventoryCategories, useCreateInventoryItem, useUpdateInventoryItem, type InventoryItem } from '@/hooks/useInventory';
 import { toast } from 'sonner';
 import { isDuplicateError, extractDuplicateField, getDuplicateErrorMessage } from '@/utils/validationUtils';
+import { supabase } from '@/integrations/supabase/client';
 import { useSimilarItemsSearch } from '@/utils/inventoryHelper';
 import { SimilarProductAlert } from '@/components/cranes/forms/SimilarProductAlert';
 import { ProductDetailsModal } from '@/components/inventory/ProductDetailsModal';
+import { PurchaseModal } from '@/components/inventory/PurchaseModal';
 
 const productSchema = z.object({
   name: z.string().min(1, 'El nombre es requerido'),
@@ -42,9 +44,10 @@ type ProductFormData = z.infer<typeof productSchema>;
 interface ProductFormModalProps {
   product?: InventoryItem;
   onSuccess: () => void;
+  onClose?: () => void;
 }
 
-export const ProductFormModal: React.FC<ProductFormModalProps> = ({ product, onSuccess }) => {
+export const ProductFormModal: React.FC<ProductFormModalProps> = ({ product, onSuccess, onClose }) => {
   const { data: categories = [] } = useInventoryCategories();
   const createProduct = useCreateInventoryItem();
   const updateProduct = useUpdateInventoryItem();
@@ -53,6 +56,8 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({ product, onS
   const [confirmCreateNew, setConfirmCreateNew] = useState(false);
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
   const [selectedSimilarProduct, setSelectedSimilarProduct] = useState(null);
+  const [purchaseModalOpen, setPurchaseModalOpen] = useState(false);
+  const [selectedItemForPurchase, setSelectedItemForPurchase] = useState<any>(null);
 
   const {
     register,
@@ -88,23 +93,26 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({ product, onS
   );
 
   // Handlers para el sistema de alertas
-  const handleUseExisting = (similarProduct) => {
-    // Llenar el formulario con los datos del producto existente
-    setValue('name', similarProduct.name);
-    setValue('description', similarProduct.description || '');
-    setValue('sku', similarProduct.sku || '');
-    setValue('barcode', similarProduct.barcode || '');
-    setValue('category_id', similarProduct.category_id || '');
-    setValue('unit_of_measure', similarProduct.unit_of_measure);
-    setValue('minimum_stock', similarProduct.minimum_stock || 0);
-    setValue('maximum_stock', similarProduct.maximum_stock || 0);
-    setValue('safety_stock', similarProduct.safety_stock || 0);
-    setValue('unit_cost', similarProduct.unit_cost || 0);
-    setValue('is_active', similarProduct.is_active);
-    setValue('is_critical', similarProduct.is_critical);
-    setValue('has_expiration', similarProduct.has_expiration);
-    
-    toast.success('Datos del producto existente cargados en el formulario');
+  const handleUseExisting = async (similarProduct) => {
+    try {
+      // Buscar el producto completo en la base de datos
+      const { data: fullProduct, error } = await supabase
+        .from('inventory_items')
+        .select('*')
+        .eq('id', similarProduct.id)
+        .single();
+
+      if (error) throw error;
+
+      // Abrir modal de compra en lugar de llenar formulario
+      setSelectedItemForPurchase(fullProduct);
+      setPurchaseModalOpen(true);
+      
+      toast.success('Abriendo registro de compra para producto existente');
+    } catch (error) {
+      console.error('Error fetching product details:', error);
+      toast.error('Error al obtener detalles del producto');
+    }
   };
 
   const handleViewDetails = (similarProduct) => {
@@ -113,14 +121,20 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({ product, onS
   };
 
   const handleCreateNew = () => {
-    setConfirmCreateNew(true);
-    toast.info('Confirmado: Se creará un nuevo producto');
+    // Mostrar advertencia más fuerte para crear duplicados
+    const similarItemsNames = similarItems.map(item => `"${item.name}"`).join(', ');
+    const warningMessage = `¿Estás seguro de crear un nuevo producto cuando ya existe: ${similarItemsNames}? Solo hazlo si hay diferencias significativas (marca, especificación, etc.)`;
+    
+    if (window.confirm(warningMessage)) {
+      setConfirmCreateNew(true);
+      toast.success('Confirmado: Se creará un nuevo producto');
+    }
   };
 
   const onSubmit = async (data: ProductFormData) => {
     // Si hay productos similares y no hemos confirmado, bloquear envío
     if (!product && shouldAlert && !confirmCreateNew) {
-      toast.warning('Hay productos similares. Por favor, revisa las opciones antes de continuar.');
+      toast.warning('Hay productos similares. Usa "Usar Existente" para registrar una compra o confirma la creación de un nuevo producto.');
       return;
     }
     
@@ -394,6 +408,21 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({ product, onS
         isOpen={detailsModalOpen}
         onClose={() => setDetailsModalOpen(false)}
         product={selectedSimilarProduct}
+      />
+
+      {/* Modal de compra para producto existente */}
+      <PurchaseModal
+        isOpen={purchaseModalOpen}
+        onClose={() => {
+          setPurchaseModalOpen(false);
+          setSelectedItemForPurchase(null);
+        }}
+        item={selectedItemForPurchase}
+        onSuccess={() => {
+          onSuccess?.();
+          // Cerrar también el modal principal después de una compra exitosa
+          onClose?.();
+        }}
       />
     </form>
   );
