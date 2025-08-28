@@ -44,7 +44,7 @@ export const CraneTabsWithCounters = ({ crane }: CraneTabsWithCountersProps) => 
 
   return (
     <Tabs defaultValue="overview" className="w-full h-full flex flex-col">
-      <TabsList className="grid w-full grid-cols-6 bg-black/50 border-b border-tms-green/30">
+      <TabsList className="grid w-full grid-cols-5 lg:grid-cols-6 bg-black/50 border-b border-tms-green/30">
         <TabsTrigger value="overview" className="data-[state=active]:bg-tms-green/20 data-[state=active]:text-tms-green">
           Resumen
         </TabsTrigger>
@@ -64,7 +64,7 @@ export const CraneTabsWithCounters = ({ crane }: CraneTabsWithCountersProps) => 
           Mantenimiento
           <CounterBadge count={counters?.maintenance || 0} />
         </TabsTrigger>
-        <TabsTrigger value="inventory" className="data-[state=active]:bg-tms-green/20 data-[state=active]:text-tms-green">
+        <TabsTrigger value="inventory" className="data-[state=active]:bg-tms-green/20 data-[state=active]:text-tms-green hidden lg:flex">
           Inventario
         </TabsTrigger>
       </TabsList>
