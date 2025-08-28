@@ -3361,6 +3361,16 @@ export type Database = {
         Args: { user_id?: string }
         Returns: Database["public"]["Enums"]["app_role"]
       }
+      insert_notification_if_not_exists: {
+        Args: {
+          p_body: string
+          p_data?: Json
+          p_title: string
+          p_type: string
+          p_user_id: string
+        }
+        Returns: undefined
+      }
       is_admin_user: {
         Args: Record<PropertyKey, never>
         Returns: boolean
