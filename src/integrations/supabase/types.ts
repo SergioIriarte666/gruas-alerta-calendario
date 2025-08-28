@@ -2990,6 +2990,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: Json
       }
+      can_access_client_sensitive_data: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
       can_view_notification: {
         Args: { target_user_id: string }
         Returns: boolean
