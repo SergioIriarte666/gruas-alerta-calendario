@@ -200,9 +200,9 @@ export const CraneMetricsOverview = ({ crane }: CraneMetricsOverviewProps) => {
           />
           <MetricCard
             title="Gasto Mensual"
-            value={`$${((inventoryMetrics?.monthlySpending || 0) / 1000).toFixed(0)}K`}
+            value={`$${((metrics?.maintenanceCosts || 0) / 1000).toFixed(0)}K`}
             icon={TrendingUp}
-            trend="Este mes"
+            trend="Costos de mantenimiento"
             status="info"
           />
         </div>
