@@ -1,4 +1,4 @@
-# Manual de Usuario - TMS Grúas v2.1.0
+# Manual de Usuario - TMS Grúas v2.2.0
 
 ## Tabla de Contenidos
 
@@ -10,12 +10,17 @@
 6. [Gestión de Operadores](#gestión-de-operadores)
 7. [Calendario de Eventos](#calendario-de-eventos)
 8. [Sistema de Inventario](#sistema-de-inventario)
-9. [Módulo Financiero](#módulo-financiero)
-10. [Sistema de Reportes](#sistema-de-reportes)
-11. [Configuraciones](#configuraciones)
-12. [Portal del Cliente](#portal-del-cliente)
-13. [Funcionalidades Móviles](#funcionalidades-móviles)
-14. [Solución de Problemas](#solución-de-problemas)
+9. [Gestión de Proveedores](#gestión-de-proveedores)
+10. [Sistema de Backup y Restauración](#sistema-de-backup-y-restauración)
+11. [Entradas Rápidas](#entradas-rápidas)
+12. [Módulo Financiero](#módulo-financiero)
+13. [Sistema de Reportes](#sistema-de-reportes)
+14. [Configuraciones](#configuraciones)
+15. [Portal del Cliente](#portal-del-cliente)
+16. [Funcionalidades Móviles](#funcionalidades-móviles)
+17. [Integración Inventario-Grúas](#integración-inventario-grúas)
+18. [Mejores Prácticas y Flujos de Trabajo](#mejores-prácticas-y-flujos-de-trabajo)
+19. [Solución de Problemas](#solución-de-problemas)
 
 ---
 
@@ -23,23 +28,32 @@
 
 ### ¿Qué es TMS Grúas?
 
-TMS Grúas v2.1.0 es un sistema integral de gestión de transporte y servicios de grúas que permite:
+TMS Grúas v2.2.0 es un sistema integral de gestión de transporte y servicios de grúas que permite:
 
-- **Gestión completa de servicios**: Desde la creación hasta la facturación
-- **Control de inventario**: Seguimiento de repuestos y consumibles
-- **Administración de recursos**: Grúas, operadores y equipos
-- **Reportes financieros**: Costos, comisiones e ingresos
-- **Portal del cliente**: Acceso directo para clientes
-- **Aplicación móvil**: Funcionalidades PWA para uso en campo
+- **Gestión completa de servicios**: Desde la creación hasta la facturación con flujos optimizados
+- **Control de inventario avanzado**: Seguimiento de repuestos con integración automática a grúas
+- **Administración de recursos**: Grúas, operadores y equipos con métricas avanzadas
+- **Gestión de proveedores**: Sistema completo de proveedores y programación de pagos
+- **Sistema de backup**: Respaldos automáticos y restauración completa
+- **Entradas rápidas**: Registro móvil de gastos y eventos con GPS
+- **Reportes financieros**: Costos, comisiones e ingresos con análisis avanzado
+- **Portal del cliente**: Acceso directo para clientes con funcionalidades ampliadas
+- **Aplicación móvil PWA**: Funcionalidades offline mejoradas para uso en campo
 
-### Características Principales
+### Características Principales v2.2.0
 
-- ✅ **Diseño Responsivo**: Funciona en desktop, tablet y móvil
-- ✅ **Gestión de Inventario**: Control completo de stock y movimientos
+- ✅ **Diseño Responsivo**: Funciona perfectamente en desktop, tablet y móvil
+- ✅ **Gestión de Inventario**: Control completo con integración automática
 - ✅ **TMS Completo**: Todas las funcionalidades de un TMS profesional
-- ✅ **Seguridad Empresarial**: Autenticación robusta y control de acceso
-- ✅ **Reportes Avanzados**: Dashboard con métricas en tiempo real
-- ✅ **Portal del Cliente**: Interfaz dedicada para clientes
+- ✅ **Seguridad Empresarial**: Autenticación robusta con auditoría completa
+- ✅ **Reportes Avanzados**: Dashboard con métricas en tiempo real y alertas
+- ✅ **Portal del Cliente**: Interfaz dedicada con acceso a servicios y facturas
+- ✅ **Sistema de Backup**: Respaldos automáticos programables
+- ✅ **Gestión de Proveedores**: Módulo completo para proveedores y pagos
+- ✅ **Entradas Rápidas**: Registro móvil con GPS y fotografías
+- ✅ **Integración Automática**: Inventario-Grúas sincronizado para evitar duplicados
+- ✅ **PWA Avanzada**: Funcionalidad offline con sincronización inteligente
+- ✅ **Auditoría Completa**: Trazabilidad de todas las operaciones del sistema
 
 ---
 
