@@ -12,7 +12,30 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { X, Save, Loader2 } from 'lucide-react';
 import { useSuppliers } from '@/hooks/useSuppliers';
 import { useSupplierCategoryManager } from '@/hooks/useSupplierCategoryManager';
-import { SupplierFormData, Supplier } from '@/types/suppliers';
+import { SupplierFormData, Supplier, SupplierCategory } from '@/types/suppliers';
+
+// Mapeo de categorías dinámicas a valores del enum
+const mapCategoryToEnum = (categoryName: string): SupplierCategory => {
+  const mappings: Record<string, SupplierCategory> = {
+    'combustible': 'combustible',
+    'mantenimiento': 'mantenimiento',
+    'seguros': 'seguros',
+    'otros': 'otros',
+    'peajes': 'peajes',
+    'salarios': 'salarios',
+    'administrativos': 'administrativos',
+    'impuestos': 'impuestos',
+    'comision_operador': 'comision_operador',
+    // Mapeos adicionales para categorías personalizadas
+    'leasing': 'otros',
+    'arrendamiento': 'otros',
+    'vehiculos': 'otros',
+    'equipamiento': 'otros',
+    'servicios': 'otros'
+  };
+  
+  return mappings[categoryName.toLowerCase()] || 'otros';
+};
 
 const supplierSchema = z.object({
   name: z.string().min(1, 'El nombre es requerido'),
@@ -66,7 +89,7 @@ export const SupplierForm: React.FC<SupplierFormProps> = ({
       phone: data.phone || '',
       address: data.address || '',
       contact_name: data.contact_name || '',
-      category: data.category as any, // Convert string to SupplierCategory type
+      category: mapCategoryToEnum(data.category), // Map to valid enum value
       notes: data.notes || '',
       is_active: data.is_active
     };
