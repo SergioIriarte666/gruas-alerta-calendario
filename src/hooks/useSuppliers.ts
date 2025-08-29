@@ -159,6 +159,8 @@ export const useSuppliers = () => {
 };
 
 export const useSupplierCategories = (): SupplierCategory[] => {
+  // Mantener compatibilidad con código existente
+  // TODO: Migrar a usar datos dinámicos de la base de datos
   return [
     'combustible',
     'mantenimiento', 

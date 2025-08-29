@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Building2, Upload, Plus, FileText, CreditCard, Calendar } from 'lucide-react';
+import { Building2, Upload, Plus, FileText, CreditCard, Calendar, Tag } from 'lucide-react';
 import { CustomTabs, CustomTabsList, CustomTabsTrigger, CustomTabsContent } from '@/components/ui/custom-tabs';
 import { XMLDocumentUpload } from '@/components/suppliers/XMLDocumentUpload';
 import { SupplierList } from '@/components/suppliers/SupplierList';
 import { PaymentList } from '@/components/suppliers/PaymentList';
 import { SupplierPaymentCalendar } from '@/components/suppliers/SupplierPaymentCalendar';
+import { SupplierCategoryList } from '@/components/suppliers/categories/SupplierCategoryList';
 import { SupplierForm } from '@/components/suppliers/SupplierForm';
 import { PaymentForm } from '@/components/suppliers/PaymentForm';
 import { useSupplierStats } from '@/hooks/useSupplierStats';
@@ -141,7 +142,7 @@ export const Suppliers: React.FC = () => {
 
         {/* Main Content - Tabs */}
         <CustomTabs value={activeTab} onValueChange={setActiveTab}>
-          <CustomTabsList className="grid w-full grid-cols-4">
+          <CustomTabsList className="grid w-full grid-cols-5">
             <CustomTabsTrigger value="suppliers">
               <Building2 className="w-4 h-4 mr-2" />
               Proveedores
@@ -149,6 +150,10 @@ export const Suppliers: React.FC = () => {
             <CustomTabsTrigger value="payments">
               <CreditCard className="w-4 h-4 mr-2" />
               Pagos
+            </CustomTabsTrigger>
+            <CustomTabsTrigger value="categories">
+              <Tag className="w-4 h-4 mr-2" />
+              Categorías
             </CustomTabsTrigger>
             <CustomTabsTrigger value="calendar">
               <Calendar className="w-4 h-4 mr-2" />
@@ -166,6 +171,10 @@ export const Suppliers: React.FC = () => {
 
           <CustomTabsContent value="payments" className="mt-6">
             <PaymentList />
+          </CustomTabsContent>
+
+          <CustomTabsContent value="categories" className="mt-6">
+            <SupplierCategoryList />
           </CustomTabsContent>
 
           <CustomTabsContent value="calendar" className="mt-6">

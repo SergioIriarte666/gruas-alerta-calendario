@@ -2,6 +2,38 @@
 
 Fecha: 2025-08-29
 
+## Gestión de Categorías de Proveedores
+
+Cambios implementados - Sistema completo de gestión de categorías dinámicas:
+
+**Nueva Funcionalidad - Categorías de Proveedores:**
+- Creada tabla `supplier_categories` en base de datos con campos: id, name, label, description, is_active.
+- Hook `useSupplierCategoryManager` para operaciones CRUD completas (crear, leer, actualizar, eliminar).
+- Componente `SupplierCategoryList` para visualizar y gestionar todas las categorías.
+- Componente `SupplierCategoryForm` para crear y editar categorías con validación.
+- Nueva pestaña "Categorías" agregada a la página principal de proveedores.
+- Funcionalidades incluyen: crear, editar, eliminar, activar/desactivar categorías.
+- Migración automática de categorías hardcodeadas existentes a la base de datos.
+- Interfaz moderna usando componentes shadcn/ui con validación Zod.
+
+**Mejoras Técnicas:**
+- Row Level Security (RLS) habilitado para acceso seguro a categorías.
+- Triggers automáticos para actualización de timestamps.
+- Compatibilidad mantenida con código existente durante transición.
+- Gestión de estados optimizada con React Query.
+- Notificaciones toast integradas para feedback del usuario.
+
+Archivos agregados:
+- src/hooks/useSupplierCategoryManager.ts (lógica de gestión de categorías)
+- src/components/suppliers/categories/SupplierCategoryList.tsx (lista y acciones)
+- src/components/suppliers/categories/SupplierCategoryForm.tsx (formulario CRUD)
+
+Archivos modificados:
+- src/pages/Suppliers.tsx (nueva pestaña de categorías)
+- src/hooks/useSuppliers.ts (comentario de compatibilidad)
+
+Fecha: 2025-08-29
+
 Cambios implementados en Proveedores (Corrección completa de problema de fechas):
 
 **Calendario de Pagos:**
