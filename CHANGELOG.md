@@ -6,6 +6,42 @@ Todos los cambios notables en este proyecto serán documentados en este archivo.
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 y este proyecto se adhiere a [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.1] - 2025-01-29
+
+### Added - Sistema de Métricas de Servicios
+- **📊 Métricas de Servicios**: Implementación completa de 4 tarjetas de métricas principales
+  - **Total Servicios**: Cantidad total de servicios con valor generado
+  - **Gastos**: Suma de costos operativos asociados a servicios
+  - **Total Generado**: Ingresos totales por servicios realizados  
+  - **Balance**: Utilidad/pérdida neta con margen de ganancia porcentual
+- **🎛️ Filtros de Fecha**: Sistema de filtros rápidos (Hoy, Esta Semana, Este Mes, Ver Todos)
+- **⚡ Hook useServicesMetrics**: Lógica de cálculo en tiempo real con optimización de consultas
+- **🎨 Componente ServicesDateFilter**: Filtros visuales integrados con diseño consistente
+
+### Enhanced - Componentes de Servicios
+- **`ServicesMetrics.tsx`**: Componente de métricas con diseño responsive
+- **`ServicesHeader.tsx`**: Integración completa de métricas con sección dedicada
+- **`ServicesDateFilter.tsx`**: Filtros de fecha con interfaz optimizada
+
+### Enhanced - Hooks y Lógica
+- **`useServicesMetrics.ts`**: Hook personalizado con:
+  - Cálculos financieros avanzados (ingresos, costos, utilidad, márgenes)
+  - Filtrado inteligente por rangos de fecha
+  - Consultas optimizadas a tablas `services` y `costs`
+  - Manejo de estados de carga y errores
+
+### Enhanced - Experiencia de Usuario  
+- **Estados de Carga**: Skeletons animados durante la carga de métricas
+- **Formateo de Moneda**: Integración con `formatCurrency` para CLP
+- **Diseño Consistente**: Uso de `ReportMetricCard` para coherencia visual
+- **Responsive Design**: Grid adaptativo para todos los dispositivos
+
+### Technical - Arquitectura
+- **Consultas Supabase Optimizadas**: Joins eficientes entre `services` y `costs`
+- **TypeScript Completo**: Interfaces y tipos para todas las métricas
+- **Performance**: Cálculos memoizados y consultas bajo demanda
+- **Reutilización**: Aprovechamiento de componentes existentes del sistema
+
 ## [2.1.0] - 2025-01-12
 
 ### Added - Sistema de Inventario y Bodega Completo
