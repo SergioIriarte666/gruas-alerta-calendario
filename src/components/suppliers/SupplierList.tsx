@@ -19,7 +19,8 @@ import {
   ToggleRight,
   Loader2
 } from 'lucide-react';
-import { useSuppliers, getCategoryLabel } from '@/hooks/useSuppliers';
+import { useSuppliers } from '@/hooks/useSuppliers';
+import { useSupplierCategoryManager } from '@/hooks/useSupplierCategoryManager';
 import { SupplierForm } from './SupplierForm';
 import { Supplier, SupplierCategory } from '@/types/suppliers';
 import { formatCurrency } from '@/lib/utils';
@@ -33,23 +34,19 @@ export const SupplierList: React.FC = () => {
     isDeleting 
   } = useSuppliers();
 
+  const { activeCategories, isLoading: categoriesLoading } = useSupplierCategoryManager();
+
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [showForm, setShowForm] = useState(false);
   const [editingSupplier, setEditingSupplier] = useState<Supplier | null>(null);
 
-  const categories: SupplierCategory[] = [
-    'combustible',
-    'mantenimiento',
-    'seguros', 
-    'peajes',
-    'salarios',
-    'administrativos',
-    'impuestos',
-    'comision_operador',
-    'otros'
-  ];
+  // Helper function to get category label from dynamic categories
+  const getCategoryLabel = (categoryName: string) => {
+    const category = activeCategories?.find(cat => cat.name === categoryName);
+    return category?.label || categoryName;
+  };
 
   const filteredSuppliers = useMemo(() => {
     return suppliers.filter(supplier => {
@@ -138,15 +135,21 @@ export const SupplierList: React.FC = () => {
                   <SelectItem value="all" className="text-white hover:bg-gray-600">
                     Todas las categorías
                   </SelectItem>
-                  {categories.map((category) => (
-                    <SelectItem 
-                      key={category} 
-                      value={category}
-                      className="text-white hover:bg-gray-600"
-                    >
-                      {getCategoryLabel(category)}
+                  {categoriesLoading ? (
+                    <SelectItem value="" disabled className="text-gray-400">
+                      Cargando categorías...
                     </SelectItem>
-                  ))}
+                  ) : (
+                    activeCategories?.map((category) => (
+                      <SelectItem 
+                        key={category.id} 
+                        value={category.name}
+                        className="text-white hover:bg-gray-600"
+                      >
+                        {category.label}
+                      </SelectItem>
+                    ))
+                  )}
                 </SelectContent>
               </Select>
             </div>
