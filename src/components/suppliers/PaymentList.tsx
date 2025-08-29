@@ -27,8 +27,15 @@ import { PaymentForm } from './PaymentForm';
 import { SupplierPaymentExportButton } from './SupplierPaymentExportButton';
 import { SupplierPayment, SupplierPaymentStatus } from '@/types/suppliers';
 import { formatCurrency, cn } from '@/lib/utils';
-import { format, isAfter, isBefore, isSameDay } from 'date-fns';
+import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { 
+  getCurrentChileDate, 
+  parseFromDatabase, 
+  formatForInput, 
+  formatForDisplay,
+  getCurrentMonthRange
+} from '@/utils/timezoneUtils';
 
 export const PaymentList: React.FC = () => {
   const { 
@@ -69,33 +76,36 @@ export const PaymentList: React.FC = () => {
       // Filtros de fecha
       let matchesDateRange = true;
       if (dateFrom || dateTo) {
-        let compareDate: Date;
+        let compareDateString: string;
         
         // Determinar qué fecha usar para comparar
         switch (dateType) {
           case 'due_date':
-            compareDate = new Date(payment.due_date);
+            compareDateString = formatForInput(parseFromDatabase(payment.due_date));
             break;
           case 'created_at':
-            compareDate = new Date(payment.created_at);
+            compareDateString = formatForInput(parseFromDatabase(payment.created_at));
             break;
           case 'paid_date':
             if (!payment.paid_date) {
               matchesDateRange = false;
               break;
             }
-            compareDate = new Date(payment.paid_date);
+            compareDateString = formatForInput(parseFromDatabase(payment.paid_date));
             break;
           default:
-            compareDate = new Date(payment.due_date);
+            compareDateString = formatForInput(parseFromDatabase(payment.due_date));
         }
 
         // Aplicar filtros de fecha si matchesDateRange aún es true
         if (matchesDateRange) {
-          if (dateFrom && isBefore(compareDate, dateFrom) && !isSameDay(compareDate, dateFrom)) {
+          const dateFromString = dateFrom ? formatForInput(dateFrom) : '';
+          const dateToString = dateTo ? formatForInput(dateTo) : '';
+          
+          if (dateFromString && compareDateString < dateFromString) {
             matchesDateRange = false;
           }
-          if (dateTo && isAfter(compareDate, dateTo) && !isSameDay(compareDate, dateTo)) {
+          if (dateToString && compareDateString > dateToString) {
             matchesDateRange = false;
           }
         }
@@ -135,8 +145,9 @@ export const PaymentList: React.FC = () => {
 
   const handleDateFromSelect = (date: Date | undefined) => {
     if (date) {
-      const localDate = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 12, 0, 0);
-      setDateFrom(localDate);
+      // Normalizar la fecha seleccionada a medianoche en zona horaria Chile
+      const normalizedDate = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0);
+      setDateFrom(normalizedDate);
     } else {
       setDateFrom(undefined);
     }
@@ -144,8 +155,9 @@ export const PaymentList: React.FC = () => {
 
   const handleDateToSelect = (date: Date | undefined) => {
     if (date) {
-      const localDate = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 12, 0, 0);
-      setDateTo(localDate);
+      // Normalizar la fecha seleccionada a medianoche en zona horaria Chile
+      const normalizedDate = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59);
+      setDateTo(normalizedDate);
     } else {
       setDateTo(undefined);
     }
@@ -192,8 +204,8 @@ export const PaymentList: React.FC = () => {
               supplierId: selectedSupplier,
               supplierName: getSupplierName(selectedSupplier),
               reportType: 'current',
-              dateFrom: dateFrom ? format(dateFrom, 'yyyy-MM-dd') : undefined,
-              dateTo: dateTo ? format(dateTo, 'yyyy-MM-dd') : undefined,
+              dateFrom: dateFrom ? formatForInput(dateFrom) : undefined,
+              dateTo: dateTo ? formatForInput(dateTo) : undefined,
               dateType
             }}
           />
@@ -333,7 +345,7 @@ export const PaymentList: React.FC = () => {
                       )}
                     >
                       <CalendarIcon className="mr-2 h-4 w-4" />
-                      {dateFrom ? format(dateFrom, "dd/MM/yyyy") : "Seleccionar fecha"}
+                      {dateFrom ? formatForDisplay(dateFrom) : "Seleccionar fecha"}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0" align="start">
@@ -360,7 +372,7 @@ export const PaymentList: React.FC = () => {
                       )}
                     >
                       <CalendarIcon className="mr-2 h-4 w-4" />
-                      {dateTo ? format(dateTo, "dd/MM/yyyy") : "Seleccionar fecha"}
+                      {dateTo ? formatForDisplay(dateTo) : "Seleccionar fecha"}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0" align="start">
@@ -368,7 +380,7 @@ export const PaymentList: React.FC = () => {
                       mode="single"
                       selected={dateTo}
                       onSelect={handleDateToSelect}
-                      disabled={(date) => dateFrom ? isBefore(date, dateFrom) : false}
+                      disabled={(date) => dateFrom ? date < dateFrom : false}
                       initialFocus
                       className="pointer-events-auto"
                     />
@@ -383,10 +395,9 @@ export const PaymentList: React.FC = () => {
                 variant="ghost"
                 size="sm"
                 onClick={() => {
-                  const today = new Date();
-                  today.setHours(12, 0, 0, 0);
-                  setDateFrom(today);
-                  setDateTo(today);
+                  const today = getCurrentChileDate();
+                  setDateFrom(new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0));
+                  setDateTo(new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59));
                 }}
                 className="text-xs text-gray-400 hover:text-gray-300"
               >
@@ -396,12 +407,13 @@ export const PaymentList: React.FC = () => {
                 variant="ghost"
                 size="sm"
                 onClick={() => {
-                  const today = new Date();
+                  const today = getCurrentChileDate();
                   const weekStart = new Date(today);
                   weekStart.setDate(today.getDate() - today.getDay());
-                  weekStart.setHours(12, 0, 0, 0);
+                  weekStart.setHours(0, 0, 0, 0);
                   const weekEnd = new Date(weekStart);
                   weekEnd.setDate(weekStart.getDate() + 6);
+                  weekEnd.setHours(23, 59, 59, 999);
                   setDateFrom(weekStart);
                   setDateTo(weekEnd);
                 }}
@@ -413,11 +425,9 @@ export const PaymentList: React.FC = () => {
                 variant="ghost"
                 size="sm"
                 onClick={() => {
-                  const today = new Date();
-                  const monthStart = new Date(today.getFullYear(), today.getMonth(), 1, 12, 0, 0);
-                  const monthEnd = new Date(today.getFullYear(), today.getMonth() + 1, 0, 12, 0, 0);
-                  setDateFrom(monthStart);
-                  setDateTo(monthEnd);
+                  const { start, end } = getCurrentMonthRange();
+                  setDateFrom(new Date(start.getFullYear(), start.getMonth(), start.getDate(), 0, 0, 0));
+                  setDateTo(new Date(end.getFullYear(), end.getMonth(), end.getDate(), 23, 59, 59));
                 }}
                 className="text-xs text-gray-400 hover:text-gray-300"
               >
@@ -427,11 +437,11 @@ export const PaymentList: React.FC = () => {
                 variant="ghost"
                 size="sm"
                 onClick={() => {
-                  const today = new Date();
+                  const today = getCurrentChileDate();
                   const thirtyDaysAgo = new Date(today);
                   thirtyDaysAgo.setDate(today.getDate() - 30);
-                  thirtyDaysAgo.setHours(12, 0, 0, 0);
-                  today.setHours(12, 0, 0, 0);
+                  thirtyDaysAgo.setHours(0, 0, 0, 0);
+                  today.setHours(23, 59, 59, 999);
                   setDateFrom(thirtyDaysAgo);
                   setDateTo(today);
                 }}
@@ -519,11 +529,11 @@ export const PaymentList: React.FC = () => {
                       <TableCell>
                         <div className="space-y-1">
                           <div className="text-white">
-                            {format(new Date(payment.due_date), 'dd/MM/yyyy', { locale: es })}
+                            {formatForDisplay(parseFromDatabase(payment.due_date))}
                           </div>
                           {payment.paid_date && (
                             <div className="text-sm text-green-400">
-                              Pagado: {format(new Date(payment.paid_date), 'dd/MM/yyyy', { locale: es })}
+                              Pagado: {formatForDisplay(parseFromDatabase(payment.paid_date))}
                             </div>
                           )}
                         </div>
