@@ -2,6 +2,21 @@
 
 Fecha: 2025-08-29
 
+Cambios implementados en Proveedores (Corrección de problema de fechas en calendario):
+
+- Corregido desfase de 1 día en calendario de pagos de proveedores.
+  - Integradas las utilidades de `timezoneUtils.ts` para manejo correcto de fechas.
+  - Todas las comparaciones de fechas ahora usan zona horaria Chile/Santiago.
+  - Botón "Hoy" actualizado para usar fecha correcta del sistema.
+  - Formateo de fechas consistente con configuración del usuario.
+  - Eliminado uso directo de `date-fns` sin zona horaria.
+- El calendario ahora muestra correctamente las fechas de vencimiento de pagos.
+
+Archivos modificados:
+- src/components/suppliers/SupplierPaymentCalendar.tsx (lógica de fechas y zona horaria)
+
+Fecha: 2025-08-29
+
 Cambios implementados en Métricas de Servicios (Corrección de problema de fechas):
 
 - Corregido problema de zona horaria en métricas de servicios.

@@ -6,29 +6,44 @@ import { ChevronLeft, ChevronRight, Calendar, Clock, CheckCircle, AlertTriangle 
 import { useSupplierPayments, getStatusColor, getStatusLabel } from '@/hooks/useSupplierPayments';
 import { useSuppliers } from '@/hooks/useSuppliers';
 import { formatCurrency } from '@/lib/utils';
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isToday, addMonths, subMonths } from 'date-fns';
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, addMonths, subMonths } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { 
+  getCurrentChileDate, 
+  parseFromDatabase, 
+  formatForInput, 
+  formatForDisplay,
+  getCurrentMonthRange,
+  toChileTime
+} from '@/utils/timezoneUtils';
 
 export const SupplierPaymentCalendar: React.FC = () => {
   const { payments } = useSupplierPayments();
   const { suppliers } = useSuppliers();
-  const [currentDate, setCurrentDate] = useState(new Date());
+  const [currentDate, setCurrentDate] = useState(getCurrentChileDate());
 
-  const monthStart = startOfMonth(currentDate);
-  const monthEnd = endOfMonth(currentDate);
+  const monthStart = startOfMonth(toChileTime(currentDate));
+  const monthEnd = endOfMonth(toChileTime(currentDate));
   const monthDays = eachDayOfInterval({ start: monthStart, end: monthEnd });
 
   const paymentsInMonth = useMemo(() => {
     return payments.filter(payment => {
-      const paymentDate = new Date(payment.due_date);
-      return paymentDate >= monthStart && paymentDate <= monthEnd;
+      const paymentDate = parseFromDatabase(payment.due_date);
+      const paymentDateString = formatForInput(paymentDate);
+      const monthStartString = formatForInput(monthStart);
+      const monthEndString = formatForInput(monthEnd);
+      
+      return paymentDateString >= monthStartString && paymentDateString <= monthEndString;
     });
   }, [payments, monthStart, monthEnd]);
 
   const getPaymentsForDay = (date: Date) => {
-    return paymentsInMonth.filter(payment => 
-      isSameDay(new Date(payment.due_date), date)
-    );
+    const dateString = formatForInput(date);
+    return paymentsInMonth.filter(payment => {
+      const paymentDate = parseFromDatabase(payment.due_date);
+      const paymentDateString = formatForInput(paymentDate);
+      return paymentDateString === dateString;
+    });
   };
 
   const getSupplierName = (supplierId: string) => {
@@ -140,7 +155,7 @@ export const SupplierPaymentCalendar: React.FC = () => {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setCurrentDate(new Date())}
+                onClick={() => setCurrentDate(getCurrentChileDate())}
                 className="border-gray-600 text-gray-300 hover:text-white"
               >
                 Hoy
@@ -174,7 +189,8 @@ export const SupplierPaymentCalendar: React.FC = () => {
             {/* Month Days */}
             {monthDays.map((date) => {
               const dayPayments = getPaymentsForDay(date);
-              const isCurrentDay = isToday(date);
+              const today = getCurrentChileDate();
+              const isCurrentDay = formatForInput(date) === formatForInput(today);
 
               return (
                 <div
@@ -238,7 +254,7 @@ export const SupplierPaymentCalendar: React.FC = () => {
           <CardContent>
             <div className="space-y-3">
               {paymentsInMonth
-                .sort((a, b) => new Date(a.due_date).getTime() - new Date(b.due_date).getTime())
+                .sort((a, b) => parseFromDatabase(a.due_date).getTime() - parseFromDatabase(b.due_date).getTime())
                 .map((payment) => (
                   <div key={payment.id} className="flex items-center justify-between p-3 bg-gray-900 rounded-lg">
                     <div className="flex-1">
@@ -259,7 +275,7 @@ export const SupplierPaymentCalendar: React.FC = () => {
                         {formatCurrency(payment.amount)}
                       </div>
                       <div className="text-sm text-gray-400">
-                        {format(new Date(payment.due_date), 'dd/MM/yyyy', { locale: es })}
+                        {formatForDisplay(parseFromDatabase(payment.due_date))}
                       </div>
                     </div>
                   </div>
