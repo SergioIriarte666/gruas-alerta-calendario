@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Building2, Upload, Plus, FileText, CreditCard, Calendar, Tag } from 'lucide-react';
+import { Building2, Upload, Plus, FileText, CreditCard, Calendar, Settings } from 'lucide-react';
 import { CustomTabs, CustomTabsList, CustomTabsTrigger, CustomTabsContent } from '@/components/ui/custom-tabs';
 import { XMLDocumentUpload } from '@/components/suppliers/XMLDocumentUpload';
 import { SupplierList } from '@/components/suppliers/SupplierList';
@@ -152,7 +152,7 @@ export const Suppliers: React.FC = () => {
               Pagos
             </CustomTabsTrigger>
             <CustomTabsTrigger value="categories">
-              <Tag className="w-4 h-4 mr-2" />
+              <Settings className="w-4 h-4 mr-2" />
               Categorías
             </CustomTabsTrigger>
             <CustomTabsTrigger value="calendar">
