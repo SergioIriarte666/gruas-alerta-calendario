@@ -10,7 +10,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { X, Save, Loader2 } from 'lucide-react';
-import { useSuppliers, useSupplierCategories, getCategoryLabel } from '@/hooks/useSuppliers';
+import { useSuppliers } from '@/hooks/useSuppliers';
+import { useSupplierCategoryManager } from '@/hooks/useSupplierCategoryManager';
 import { SupplierFormData, Supplier } from '@/types/suppliers';
 
 const supplierSchema = z.object({
@@ -25,6 +26,8 @@ const supplierSchema = z.object({
   is_active: z.boolean()
 });
 
+type FormData = z.infer<typeof supplierSchema>;
+
 interface SupplierFormProps {
   supplier?: Supplier;
   onClose: () => void;
@@ -37,9 +40,9 @@ export const SupplierForm: React.FC<SupplierFormProps> = ({
   onSave 
 }) => {
   const { createSupplier, updateSupplier, isCreating, isUpdating } = useSuppliers();
-  const categories = useSupplierCategories();
+  const { activeCategories, isLoading: categoriesLoading } = useSupplierCategoryManager();
 
-  const form = useForm<SupplierFormData>({
+  const form = useForm<FormData>({
     resolver: zodResolver(supplierSchema),
     defaultValues: {
       name: supplier?.name || '',
@@ -48,22 +51,35 @@ export const SupplierForm: React.FC<SupplierFormProps> = ({
       phone: supplier?.phone || '',
       address: supplier?.address || '',
       contact_name: supplier?.contact_name || '',
-      category: supplier?.category || 'otros',
+      category: supplier?.category?.toString() || (activeCategories?.[0]?.name || ''),
       notes: supplier?.notes || '',
       is_active: supplier?.is_active ?? true
     }
   });
 
-  const onSubmit = (data: SupplierFormData) => {
+  const onSubmit = (data: FormData) => {
+    // Convert to the expected SupplierFormData format for the API
+    const supplierData: SupplierFormData = {
+      name: data.name,
+      rut: data.rut,
+      email: data.email || '',
+      phone: data.phone || '',
+      address: data.address || '',
+      contact_name: data.contact_name || '',
+      category: data.category as any, // Convert string to SupplierCategory type
+      notes: data.notes || '',
+      is_active: data.is_active
+    };
+    
     if (supplier) {
-      updateSupplier({ id: supplier.id, data }, {
+      updateSupplier({ id: supplier.id, data: supplierData }, {
         onSuccess: () => {
           onSave?.();
           onClose();
         }
       });
     } else {
-      createSupplier(data, {
+      createSupplier(supplierData, {
         onSuccess: () => {
           onSave?.();
           onClose();
@@ -72,7 +88,7 @@ export const SupplierForm: React.FC<SupplierFormProps> = ({
     }
   };
 
-  const isLoading = isCreating || isUpdating;
+  const isLoading = isCreating || isUpdating || categoriesLoading;
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
@@ -195,18 +211,19 @@ export const SupplierForm: React.FC<SupplierFormProps> = ({
                 <Select
                   value={form.watch('category')}
                   onValueChange={(value) => form.setValue('category', value as any)}
+                  disabled={categoriesLoading || !activeCategories?.length}
                 >
                   <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
-                    <SelectValue placeholder="Seleccionar categoría" />
+                    <SelectValue placeholder={categoriesLoading ? "Cargando categorías..." : "Seleccionar categoría"} />
                   </SelectTrigger>
                   <SelectContent className="bg-gray-700 border-gray-600">
-                    {categories.map((category) => (
+                    {activeCategories?.map((category) => (
                       <SelectItem 
-                        key={category} 
-                        value={category}
+                        key={category.id} 
+                        value={category.name}
                         className="text-white hover:bg-gray-600"
                       >
-                        {getCategoryLabel(category)}
+                        {category.label}
                       </SelectItem>
                     ))}
                   </SelectContent>
