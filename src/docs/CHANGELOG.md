@@ -1,5 +1,19 @@
 # Registro de Cambios
 
+Fecha: 2025-08-29
+
+Cambios implementados en Métricas de Servicios (Corrección de problema de fechas):
+
+- Corregido problema de zona horaria en métricas de servicios.
+  - Integradas las utilidades de `timezoneUtils.ts` para manejo correcto de fechas.
+  - Filtro "Hoy" ahora usa comparación exacta (`service_date = fecha_actual`) en lugar de rangos.
+  - Todos los filtros de fecha ahora consideran la zona horaria Chile/Santiago configurada.
+  - Agregado logging para debugging de filtros de fecha.
+- Las métricas ahora muestran correctamente el conteo de servicios para cada período.
+
+Archivos modificados:
+- src/hooks/services/useServicesMetrics.ts (lógica de filtrado de fechas y zona horaria)
+
 Fecha: 2025-08-09
 
 Cambios implementados en Reportes (Clientes con múltiples departamentos):
