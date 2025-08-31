@@ -47,6 +47,12 @@ export default function VipClientPipeline() {
     }
   };
 
+  const handleServiceEdit = (service: Service) => {
+    // TODO: Implementar navegación a formulario de edición
+    console.log('Editar servicio:', service);
+    toast.info(`Función de edición para servicio ${service.folio} - Por implementar`);
+  };
+
   if (!clientId) {
     navigate('/clients');
     return null;
@@ -148,6 +154,8 @@ export default function VipClientPipeline() {
               loading={loading}
               clientId={clientId}
               onServiceUpdate={handleServiceUpdate}
+              onServiceSelect={handleServiceSelect}
+              onServiceEdit={handleServiceEdit}
             />
           </div>
         </TabsContent>

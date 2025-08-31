@@ -39,6 +39,8 @@ interface PipelineListViewProps {
   loading: boolean;
   clientId: string;
   onServiceUpdate: () => void;
+  onServiceSelect?: (service: Service) => void;
+  onServiceEdit?: (service: Service) => void;
 }
 
 // Definir los estados del pipeline con sus colores
@@ -91,7 +93,9 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
   services,
   loading,
   clientId,
-  onServiceUpdate
+  onServiceUpdate,
+  onServiceSelect,
+  onServiceEdit
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [expandedGroups, setExpandedGroups] = useState<Set<ServiceStatus>>(new Set());
@@ -383,16 +387,18 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
                                   <Button
                                     variant="ghost"
                                     size="sm"
-                                    onClick={() => {/* TODO: Ver detalles */}}
+                                    onClick={() => onServiceSelect?.(service)}
                                     className="h-8 w-8 p-0 text-blue-400 hover:text-blue-300"
+                                    title="Ver detalles del servicio"
                                   >
                                     <Eye className="w-3 h-3" />
                                   </Button>
                                   <Button
                                     variant="ghost"
                                     size="sm"
-                                    onClick={() => {/* TODO: Editar */}}
+                                    onClick={() => onServiceEdit?.(service)}
                                     className="h-8 w-8 p-0 text-green-400 hover:text-green-300"
+                                    title="Editar servicio"
                                   >
                                     <Edit className="w-3 h-3" />
                                   </Button>
