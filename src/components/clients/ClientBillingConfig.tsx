@@ -120,14 +120,14 @@ export const ClientBillingConfigComponent: React.FC<ClientBillingConfigProps> = 
             <div className="space-y-2">
               <Label className="text-white">Día del Mes para Facturación (Opcional)</Label>
               <Select 
-                value={config.billingCycleDay?.toString() || ''} 
-                onValueChange={(value) => updateConfig({ billingCycleDay: value ? parseInt(value) : undefined })}
+                value={config.billingCycleDay?.toString() || 'none'} 
+                onValueChange={(value) => updateConfig({ billingCycleDay: value === 'none' ? undefined : parseInt(value) })}
               >
                 <SelectTrigger className="glass-input">
                   <SelectValue placeholder="Seleccionar día específico del mes" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Sin día específico</SelectItem>
+                  <SelectItem value="none">Sin día específico</SelectItem>
                   {Array.from({ length: 31 }, (_, i) => i + 1).map(day => (
                     <SelectItem key={day} value={day.toString()}>
                       Día {day} del mes
