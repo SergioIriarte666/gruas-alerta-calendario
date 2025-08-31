@@ -151,17 +151,21 @@ export const useDeferredBilling = () => {
   const calculateBillingDate = (serviceDate: string, delayDays: number, cycleDay?: number): string => {
     const date = new Date(serviceDate);
     
-    // Obtener el primer día del mes siguiente
-    const nextMonth = new Date(date.getFullYear(), date.getMonth() + 1 + delayDays, 1);
+    // Obtener el primer día del mes del servicio
+    const serviceMonth = new Date(date.getFullYear(), date.getMonth(), 1);
+    
+    // Calcular el mes siguiente más los DÍAS de diferimiento
+    const nextMonth = new Date(serviceMonth.getFullYear(), serviceMonth.getMonth() + 1);
+    nextMonth.setDate(nextMonth.getDate() + delayDays);
     
     // Si se especifica un día del ciclo, usar ese día, sino usar el día 5
     if (cycleDay && cycleDay >= 1 && cycleDay <= 28) {
-      nextMonth.setDate(cycleDay);
+      const billingMonth = new Date(nextMonth.getFullYear(), nextMonth.getMonth(), cycleDay);
+      return billingMonth.toISOString().split('T')[0];
     } else {
-      nextMonth.setDate(5);
+      const billingMonth = new Date(nextMonth.getFullYear(), nextMonth.getMonth(), 5);
+      return billingMonth.toISOString().split('T')[0];
     }
-    
-    return nextMonth.toISOString().split('T')[0];
   };
 
   const generateInvoicesForClient = async (clientId: string, serviceIds: string[]) => {
