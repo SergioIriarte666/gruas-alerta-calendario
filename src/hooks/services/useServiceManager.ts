@@ -119,6 +119,7 @@ const transformToService = (data: any): Service => {
       updatedAt: new Date().toISOString()
     },
     purchaseOrder: data.purchase_order || '',
+    quoteNumber: data.quote_number || '',
     vehicleBrand: data.vehicle_brand || '',
     vehicleModel: data.vehicle_model || '',
     licensePlate: data.license_plate || '',
@@ -207,6 +208,7 @@ export const useServiceManager = () => {
             ? serviceData.client 
             : null,
           purchase_order: serviceData.purchaseOrder || null,
+          quote_number: serviceData.quoteNumber || null,
           
           // VALIDACIÓN INTEGRAL DE CAMPOS DE VEHÍCULO
           // Tipos especiales: Taxi, Traslado de Insumos (vehicle fields false)
@@ -403,6 +405,7 @@ export const useServiceManager = () => {
           ? serviceData.client 
           : null,
         purchase_order: serviceData.purchaseOrder,
+        quote_number: serviceData.quoteNumber,
         service_type_id: serviceData.serviceType && serviceData.serviceType.trim() !== '' 
           ? serviceData.serviceType 
           : null,
@@ -434,6 +437,7 @@ export const useServiceManager = () => {
       // Remover campos que no van en la tabla services
       delete transformedData.client;
       delete transformedData.purchaseOrder;
+      delete transformedData.quoteNumber;
       delete transformedData.serviceType;
       delete transformedData.crane;
       delete transformedData.vehicleBrand;
