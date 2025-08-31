@@ -12,6 +12,9 @@ import { KanbanBoard } from '@/components/vip/KanbanBoard';
 import { PipelineMetrics } from '@/components/vip/PipelineMetrics';
 import { PurchaseOrderManager } from '@/components/vip/PurchaseOrderManager';
 import { PurchaseOrderDialog } from '@/components/vip/PurchaseOrderDialog';
+import { AutomationRules } from '@/components/vip/AutomationRules';
+import { NotificationCenter } from '@/components/vip/NotificationCenter';
+import { SmartAlerts } from '@/components/vip/SmartAlerts';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 
@@ -102,14 +105,26 @@ export default function VipClientPipeline() {
       {/* Pipeline Metrics */}
       <PipelineMetrics services={services} clientName={client.name} />
 
+      {/* Smart Alerts */}
+      <SmartAlerts 
+        services={services}
+        clientId={clientId}
+      />
+
       {/* Main Content Tabs */}
       <Tabs defaultValue="pipeline" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2 bg-gray-800 border-gray-700">
+        <TabsList className="grid w-full grid-cols-4 bg-gray-800 border-gray-700">
           <TabsTrigger value="pipeline" className="data-[state=active]:bg-blue-600">
             Pipeline Kanban
           </TabsTrigger>
           <TabsTrigger value="purchase-orders" className="data-[state=active]:bg-blue-600">
             Órdenes de Compra
+          </TabsTrigger>
+          <TabsTrigger value="automation" className="data-[state=active]:bg-blue-600">
+            Automatización
+          </TabsTrigger>
+          <TabsTrigger value="notifications" className="data-[state=active]:bg-blue-600">
+            Notificaciones
           </TabsTrigger>
         </TabsList>
 
@@ -128,6 +143,20 @@ export default function VipClientPipeline() {
           <PurchaseOrderManager 
             services={services}
             onServiceSelect={handleServiceSelect}
+          />
+        </TabsContent>
+
+        <TabsContent value="automation" className="space-y-0">
+          <AutomationRules 
+            clientId={clientId}
+            clientName={client.name}
+          />
+        </TabsContent>
+
+        <TabsContent value="notifications" className="space-y-0">
+          <NotificationCenter 
+            clientId={clientId}
+            clientName={client.name}
           />
         </TabsContent>
       </Tabs>
