@@ -38,16 +38,17 @@ export const useDeferredBilling = () => {
       
       const formattedServices: ServiceReadyForBilling[] = data.map((service: any) => ({
         id: service.id,
-        folio: service.folio,
-        serviceDate: service.service_date,
         clientId: service.client_id,
         clientName: service.client_name,
-        value: service.value,
+        serviceMonth: service.service_month,
+        serviceCount: service.service_count,
+        totalValue: service.total_value,
         billingReadyDate: service.billing_ready_date,
         billingCycleType: service.billing_cycle_type,
         billingDelayDays: service.billing_delay_days,
         billingCycleDay: service.billing_cycle_day,
         autoInvoiceGeneration: service.auto_invoice_generation,
+        servicePeriod: service.service_period,
       }));
       
       setReadyServices(formattedServices);
@@ -59,7 +60,7 @@ export const useDeferredBilling = () => {
 
   const fetchCalendarEvents = async () => {
     try {
-      // Crear una consulta manual ya que la función específica no existe
+      // Obtener servicios diferidos agrupados por mes
       const { data: servicesData, error: servicesError } = await supabase
         .from('services')
         .select(`
@@ -88,7 +89,7 @@ export const useDeferredBilling = () => {
       
       const invoicedServiceIds = new Set(invoicedServices?.map(item => item.service_id) || []);
       
-      // Filtrar servicios no facturados y agrupar por cliente y fecha de facturación
+      // Agrupar servicios por cliente y mes de servicio
       const eventMap = new Map<string, DeferredBillingCalendarEvent>();
       
       servicesData?.forEach((service: any) => {
@@ -96,22 +97,33 @@ export const useDeferredBilling = () => {
         if (invoicedServiceIds.has(service.id)) return;
         
         const client = service.clients;
+        const serviceDate = new Date(service.service_date);
+        const serviceMonth = `${serviceDate.getFullYear()}-${String(serviceDate.getMonth() + 1).padStart(2, '0')}`;
+        
+        // Calcular fecha de facturación usando la función de base de datos
         const billingDate = calculateBillingDate(
           service.service_date,
           client.billing_delay_days,
           client.billing_cycle_day
         );
-        const eventKey = `${client.id}-${billingDate}`;
+        
+        const eventKey = `${client.id}-${serviceMonth}`;
         
         if (eventMap.has(eventKey)) {
           const existing = eventMap.get(eventKey)!;
           existing.serviceCount++;
           existing.totalAmount += service.value;
         } else {
+          const monthNames = [
+            'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+            'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+          ];
+          const monthName = monthNames[serviceDate.getMonth()];
+          
           eventMap.set(eventKey, {
             id: eventKey,
             clientId: client.id,
-            clientName: client.name,
+            clientName: `${client.name} - Servicios de ${monthName} ${serviceDate.getFullYear()}`,
             serviceCount: 1,
             totalAmount: service.value,
             billingDate,
@@ -138,13 +150,18 @@ export const useDeferredBilling = () => {
 
   const calculateBillingDate = (serviceDate: string, delayDays: number, cycleDay?: number): string => {
     const date = new Date(serviceDate);
-    date.setDate(date.getDate() + delayDays);
     
-    if (cycleDay) {
-      date.setDate(cycleDay);
+    // Obtener el primer día del mes siguiente
+    const nextMonth = new Date(date.getFullYear(), date.getMonth() + 1 + delayDays, 1);
+    
+    // Si se especifica un día del ciclo, usar ese día, sino usar el día 5
+    if (cycleDay && cycleDay >= 1 && cycleDay <= 28) {
+      nextMonth.setDate(cycleDay);
+    } else {
+      nextMonth.setDate(5);
     }
     
-    return date.toISOString().split('T')[0];
+    return nextMonth.toISOString().split('T')[0];
   };
 
   const generateInvoicesForClient = async (clientId: string, serviceIds: string[]) => {

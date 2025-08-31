@@ -7,16 +7,17 @@ export interface DeferredBillingSummary {
 
 export interface ServiceReadyForBilling {
   id: string;
-  folio: string;
-  serviceDate: string;
   clientId: string;
   clientName: string;
-  value: number;
+  serviceMonth: string;
+  serviceCount: number;
+  totalValue: number;
   billingReadyDate: string;
   billingCycleType: 'immediate' | 'deferred';
   billingDelayDays: number;
   billingCycleDay?: number;
   autoInvoiceGeneration: boolean;
+  servicePeriod: string;
 }
 
 export interface ClientBillingConfig {

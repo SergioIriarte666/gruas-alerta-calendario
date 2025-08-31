@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useDeferredBilling } from '@/hooks/useDeferredBilling';
-import { Calendar, Clock, DollarSign, Users, FileText, AlertCircle } from 'lucide-react';
+import { Calendar, Clock, DollarSign, Users, FileText, AlertCircle, Receipt } from 'lucide-react';
 import { ClientBillingSettings } from './ClientBillingSettings';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -134,9 +134,9 @@ export const DeferredBillingDashboard: React.FC = () => {
                     >
                       <div className="space-y-1">
                         <div className="flex items-center gap-2">
-                          <span className="font-medium text-white">{service.folio}</span>
+                          <span className="font-medium text-white">{service.clientName}</span>
                           <Badge variant="outline" className="text-xs">
-                            {service.clientName}
+                            {service.serviceCount} servicios
                           </Badge>
                           {service.autoInvoiceGeneration && (
                             <Badge variant="secondary" className="text-xs">
@@ -145,19 +145,26 @@ export const DeferredBillingDashboard: React.FC = () => {
                           )}
                         </div>
                         <div className="text-sm text-white/70">
-                          Servicio: {format(new Date(service.serviceDate), 'dd/MM/yyyy', { locale: es })} • 
+                          Período: {new Date(service.serviceMonth).toLocaleDateString('es', { month: 'long', year: 'numeric' })} • 
                           Listo desde: {format(new Date(service.billingReadyDate), 'dd/MM/yyyy', { locale: es })}
+                          {service.billingCycleDay && ` • Día ciclo: ${service.billingCycleDay}`}
                         </div>
                       </div>
                       <div className="flex items-center gap-4">
-                        <span className="font-bold text-primary">
-                          {formatCurrency(service.value)}
-                        </span>
+                        <div className="text-right">
+                          <span className="font-bold text-primary text-lg">
+                            {formatCurrency(service.totalValue)}
+                          </span>
+                          <div className="text-xs text-white/60">
+                            {service.serviceCount} servicios
+                          </div>
+                        </div>
                         <Button
                           size="sm"
                           onClick={() => generateInvoicesForClient(service.clientId, [service.id])}
                         >
-                          Facturar
+                          <Receipt className="w-4 h-4 mr-1" />
+                          Facturar Período
                         </Button>
                       </div>
                     </div>
