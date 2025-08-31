@@ -53,17 +53,18 @@ export const ClientBillingConfigComponent: React.FC<ClientBillingConfigProps> = 
   }, [config]);
 
   return (
-    <Card className="glass-card border-primary/20">
-      <CardHeader>
-        <CardTitle className="text-white flex items-center gap-2">
-          <Settings className="w-5 h-5" />
-          Configuración de Facturación
-        </CardTitle>
-        <CardDescription className="text-white/70">
-          Configura el período y tipo de facturación para este cliente.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-6">
+    <div className="max-h-[60vh] overflow-y-auto pr-2 space-y-6">
+      <Card className="glass-card border-primary/20">
+        <CardHeader>
+          <CardTitle className="text-white flex items-center gap-2">
+            <Settings className="w-5 h-5" />
+            Configuración de Facturación
+          </CardTitle>
+          <CardDescription className="text-white/70">
+            Configura el período y tipo de facturación para este cliente.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
         {/* Tipo de Facturación */}
         <div className="space-y-3">
           <Label className="text-white">Tipo de Facturación</Label>
@@ -211,5 +212,6 @@ export const ClientBillingConfigComponent: React.FC<ClientBillingConfigProps> = 
         </div>
       </CardContent>
     </Card>
+    </div>
   );
 };

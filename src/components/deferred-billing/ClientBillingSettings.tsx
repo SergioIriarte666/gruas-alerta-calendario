@@ -211,14 +211,15 @@ export const ClientBillingSettings: React.FC = () => {
       {/* Modal de configuración detallada */}
       <Dialog open={configModalOpen} onOpenChange={setConfigModalOpen}>
         <DialogContent 
-          className="max-w-2xl max-h-[90vh] glass-card select-none"
+          className="max-w-2xl max-h-[85vh] glass-card select-none overflow-hidden"
           style={{ 
             position: 'fixed',
             top: '50%',
             left: '50%',
             transform: 'translate(-50%, -50%)',
             userSelect: 'none',
-            pointerEvents: 'auto'
+            pointerEvents: 'auto',
+            margin: '0'
           }}
           onMouseDown={(e) => e.stopPropagation()}
           onDragStart={(e) => e.preventDefault()}
