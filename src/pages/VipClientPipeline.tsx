@@ -12,6 +12,7 @@ import { KanbanBoard } from '@/components/vip/KanbanBoard';
 import { PipelineMetrics } from '@/components/vip/PipelineMetrics';
 import { PurchaseOrderManager } from '@/components/vip/PurchaseOrderManager';
 import { PurchaseOrderDialog } from '@/components/vip/PurchaseOrderDialog';
+import { ServiceDetailsModal } from '@/components/services/ServiceDetailsModal';
 import { AutomationRules } from '@/components/vip/AutomationRules';
 import { NotificationCenter } from '@/components/vip/NotificationCenter';
 import { SmartAlerts } from '@/components/vip/SmartAlerts';
@@ -28,6 +29,7 @@ export default function VipClientPipeline() {
   const { services, loading, refetch } = useClientServices(clientId || null);
   const [selectedService, setSelectedService] = React.useState<Service | null>(null);
   const [showPurchaseOrderDialog, setShowPurchaseOrderDialog] = React.useState(false);
+  const [showServiceDetailsModal, setShowServiceDetailsModal] = React.useState(false);
 
   const client = clients.find(c => c.id === clientId);
 
@@ -40,6 +42,8 @@ export default function VipClientPipeline() {
     setSelectedService(service);
     if (service.status === 'purchase_order_pending' && !service.purchaseOrderNumber) {
       setShowPurchaseOrderDialog(true);
+    } else {
+      setShowServiceDetailsModal(true);
     }
   };
 
@@ -210,6 +214,15 @@ export default function VipClientPipeline() {
         service={selectedService}
         onUpdate={handleServiceUpdate}
       />
+
+      {/* Service Details Modal */}
+      {selectedService && (
+        <ServiceDetailsModal
+          service={selectedService}
+          isOpen={showServiceDetailsModal}
+          onClose={() => setShowServiceDetailsModal(false)}
+        />
+      )}
     </div>
   );
 }
