@@ -2,9 +2,10 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Edit, Trash2, Eye, UserCheck, UserX, Plus, Users, Phone, Mail, MapPin, User } from 'lucide-react';
+import { Edit, Trash2, Eye, UserCheck, UserX, Plus, Users, Phone, Mail, MapPin, User, TrendingUp } from 'lucide-react';
 import { Client } from '@/types';
 import { useDeviceType } from '@/hooks/useDeviceType';
+import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 
 interface ClientsMobileViewProps {
@@ -29,6 +30,11 @@ export const ClientsMobileView = ({
   searchTerm,
 }: ClientsMobileViewProps) => {
   const { isMobile, isTablet } = useDeviceType();
+  const navigate = useNavigate();
+
+  const handleViewPipeline = (client: Client) => {
+    navigate(`/clients/${client.id}/pipeline`);
+  };
   if (clients.length === 0 && searchTerm) {
     return (
       <Card className="glass-card">
@@ -124,6 +130,19 @@ export const ClientsMobileView = ({
               "flex gap-2",
               isMobile ? "flex-col" : "flex-wrap"
             )}>
+              <Button
+                variant="ghost"
+                size={isMobile ? "default" : "sm"}
+                onClick={() => handleViewPipeline(client)}
+                className={cn(
+                  "text-purple-400 hover:text-purple-300 hover:bg-purple-400/10 border border-purple-400/50 touch-target",
+                  isMobile ? "w-full" : "flex-1"
+                )}
+              >
+                <TrendingUp className="w-4 h-4 mr-1" />
+                Pipeline VIP
+              </Button>
+              
               <Button
                 variant="ghost"
                 size={isMobile ? "default" : "sm"}

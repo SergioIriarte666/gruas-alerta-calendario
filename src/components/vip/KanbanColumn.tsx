@@ -1,0 +1,123 @@
+import React from 'react';
+import { Service, ServiceStatus } from '@/types';
+import { ServiceCard } from './ServiceCard';
+import { Badge } from '@/components/ui/badge';
+import { Clock, Package, AlertCircle } from 'lucide-react';
+
+interface ColumnConfig {
+  id: ServiceStatus;
+  title: string;
+  description: string;
+  color: string;
+  textColor: string;
+}
+
+interface KanbanColumnProps {
+  column: ColumnConfig;
+  services: Service[];
+  clientId: string;
+  onServiceUpdate: () => void;
+}
+
+export const KanbanColumn: React.FC<KanbanColumnProps> = ({
+  column,
+  services,
+  clientId,
+  onServiceUpdate
+}) => {
+  const getColumnIcon = () => {
+    switch (column.id) {
+      case 'quoted':
+        return <Package className="w-4 h-4" />;
+      case 'purchase_order_pending':
+        return <AlertCircle className="w-4 h-4" />;
+      case 'pending':
+        return <Clock className="w-4 h-4" />;
+      case 'in_progress':
+        return <Clock className="w-4 h-4" />;
+      case 'completed':
+        return <Package className="w-4 h-4" />;
+      case 'invoiced':
+        return <Package className="w-4 h-4" />;
+      default:
+        return <Package className="w-4 h-4" />;
+    }
+  };
+
+  // Calcular métricas de la columna
+  const totalValue = services.reduce((sum, service) => sum + service.value, 0);
+  const avgDays = services.length > 0 ? Math.round(
+    services.reduce((sum, service) => {
+      const daysDiff = Math.floor(
+        (new Date().getTime() - new Date(service.serviceDate).getTime()) / (1000 * 60 * 60 * 24)
+      );
+      return sum + daysDiff;
+    }, 0) / services.length
+  ) : 0;
+
+  return (
+    <div className={`rounded-lg border ${column.color} p-4 space-y-3 min-h-[400px]`}>
+      {/* Column Header */}
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className={column.textColor}>
+              {getColumnIcon()}
+            </div>
+            <h3 className={`font-medium ${column.textColor}`}>
+              {column.title}
+            </h3>
+          </div>
+          <Badge variant="outline" className={`${column.textColor} border-current`}>
+            {services.length}
+          </Badge>
+        </div>
+        
+        <p className="text-xs text-gray-400 leading-relaxed">
+          {column.description}
+        </p>
+
+        {/* Column Metrics */}
+        {services.length > 0 && (
+          <div className="grid grid-cols-2 gap-2 text-xs">
+            <div className="bg-black/20 rounded p-2">
+              <div className="text-gray-400">Total</div>
+              <div className={`font-medium ${column.textColor}`}>
+                ${totalValue.toLocaleString()}
+              </div>
+            </div>
+            <div className="bg-black/20 rounded p-2">
+              <div className="text-gray-400">Prom. días</div>
+              <div className={`font-medium ${column.textColor}`}>
+                {avgDays}d
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Service Cards */}
+      <div className="space-y-2 flex-1">
+        {services.length === 0 ? (
+          <div className="flex items-center justify-center py-8 text-gray-500">
+            <div className="text-center">
+              <Package className="w-8 h-8 mx-auto mb-2 opacity-50" />
+              <p className="text-sm">Sin servicios</p>
+            </div>
+          </div>
+        ) : (
+          services
+            .sort((a, b) => new Date(b.serviceDate).getTime() - new Date(a.serviceDate).getTime())
+            .map(service => (
+              <ServiceCard
+                key={service.id}
+                service={service}
+                columnColor={column.color}
+                onUpdate={onServiceUpdate}
+              />
+            ))
+        )}
+      </div>
+    </div>
+  );
+};

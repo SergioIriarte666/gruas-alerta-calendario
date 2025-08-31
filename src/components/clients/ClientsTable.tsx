@@ -1,9 +1,10 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Edit, Trash2, Eye, UserCheck, UserX, Plus, Users } from 'lucide-react';
+import { Edit, Trash2, Eye, UserCheck, UserX, Plus, Users, TrendingUp } from 'lucide-react';
 import { Client } from '@/types';
 import { useDeviceType } from '@/hooks/useDeviceType';
+import { useNavigate } from 'react-router-dom';
 import { ClientsMobileView } from './ClientsMobileView';
 
 interface ClientsTableProps {
@@ -28,6 +29,11 @@ export const ClientsTable = ({
   searchTerm,
 }: ClientsTableProps) => {
   const { isMobile } = useDeviceType();
+  const navigate = useNavigate();
+
+  const handleViewPipeline = (client: Client) => {
+    navigate(`/clients/${client.id}/pipeline`);
+  };
 
   // Render mobile view if on mobile device
   if (isMobile) {
@@ -125,7 +131,16 @@ export const ClientsTable = ({
                     </Badge>
                   </td>
                   <td className="py-3 px-4">
-                    <div className="flex items-center justify-center space-x-2">
+                    <div className="flex items-center justify-center space-x-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleViewPipeline(client)}
+                        className="text-purple-400 hover:text-purple-300 hover:bg-purple-400/10 border border-purple-400/50"
+                        title="Pipeline VIP"
+                      >
+                        <TrendingUp className="w-4 h-4" />
+                      </Button>
                       <Button
                         variant="ghost"
                         size="sm"

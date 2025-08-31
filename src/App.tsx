@@ -38,6 +38,7 @@ import Calendar from '@/pages/Calendar';
 import QuickEntries from '@/pages/QuickEntries';
 import { BackupPage } from '@/pages/BackupPage';
 import { Suppliers } from '@/pages/Suppliers';
+import VipClientPipeline from '@/pages/VipClientPipeline';
 import NotFound from '@/pages/NotFound';
 
 const queryClient = new QueryClient({
@@ -210,6 +211,15 @@ function AppContent() {
           </ProtectedRoute>
         }>
           <Route index element={<Suppliers />} />
+        </Route>
+
+        {/* VIP Client Pipeline - Fase 2 */}
+        <Route path="/clients/:clientId/pipeline" element={
+          <ProtectedRoute allowedRoles={['admin', 'viewer']}>
+            <Layout />
+          </ProtectedRoute>
+        }>
+          <Route index element={<VipClientPipeline />} />
         </Route>
 
         {/* Operator routes - restricted to operators only */}
