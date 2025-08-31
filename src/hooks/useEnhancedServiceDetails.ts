@@ -24,7 +24,7 @@ const fetchEnhancedServiceDetails = async (serviceId: string): Promise<EnhancedS
   const { data: serviceData, error: serviceError } = await supabase
     .from('services')
     .select(`
-      *,
+      *, quote_number,
       clients!inner(id, name, rut, phone, email, address, is_active, created_at, updated_at),
       cranes(id, license_plate, brand, model, type, is_active, circulation_permit_expiry, insurance_expiry, technical_review_expiry, created_at, updated_at),
       operators(id, name, rut, phone, license_number, is_active, exam_expiry, created_at, updated_at),
@@ -159,6 +159,7 @@ const fetchEnhancedServiceDetails = async (serviceId: string): Promise<EnhancedS
       updatedAt: serviceData.clients.updated_at
     },
     purchaseOrder: serviceData.purchase_order,
+    quoteNumber: serviceData.quote_number || '',
     vehicleBrand: serviceData.vehicle_brand,
     vehicleModel: serviceData.vehicle_model,
     licensePlate: serviceData.license_plate,
