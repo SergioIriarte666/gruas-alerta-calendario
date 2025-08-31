@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { useNavigate } from 'react-router-dom';
 import { useClients } from '@/hooks/useClients';
 import { useClientServices } from '@/hooks/useClientServices';
-import { KanbanBoard } from '@/components/vip/KanbanBoard';
+import { PipelineListView } from '@/components/vip/PipelineListView';
 import { PipelineMetrics } from '@/components/vip/PipelineMetrics';
 import { PurchaseOrderManager } from '@/components/vip/PurchaseOrderManager';
 import { PurchaseOrderDialog } from '@/components/vip/PurchaseOrderDialog';
@@ -143,7 +143,7 @@ export default function VipClientPipeline() {
 
         <TabsContent value="pipeline" className="space-y-0">
           <div className="min-h-[600px]">
-            <KanbanBoard 
+            <PipelineListView 
               services={services} 
               loading={loading}
               clientId={clientId}
