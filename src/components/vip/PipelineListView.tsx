@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Checkbox } from '@/components/ui/checkbox';
 import { 
   BarChart3, 
   Search, 
@@ -18,11 +19,16 @@ import {
   Eye,
   Edit,
   User,
-  Truck
+  Truck,
+  Hash,
+  CheckSquare,
+  SquareCheck
 } from 'lucide-react';
 import { Service, ServiceStatus } from '@/types';
 import { format, differenceInDays } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { BatchUpdateModal, BatchUpdateData } from './BatchUpdateModal';
+import { toast } from 'sonner';
 
 interface ServiceGroup {
   status: ServiceStatus;
@@ -38,9 +44,11 @@ interface PipelineListViewProps {
   services: Service[];
   loading: boolean;
   clientId: string;
+  clientName: string;
   onServiceUpdate: () => void;
   onServiceSelect?: (service: Service) => void;
   onServiceEdit?: (service: Service) => void;
+  onBatchUpdate?: (updates: BatchUpdateData) => Promise<void>;
 }
 
 // Definir los estados del pipeline con sus colores
@@ -93,12 +101,16 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
   services,
   loading,
   clientId,
+  clientName,
   onServiceUpdate,
   onServiceSelect,
-  onServiceEdit
+  onServiceEdit,
+  onBatchUpdate
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [expandedGroups, setExpandedGroups] = useState<Set<ServiceStatus>>(new Set());
+  const [selectedServices, setSelectedServices] = useState<Set<string>>(new Set());
+  const [showBatchModal, setShowBatchModal] = useState(false);
 
   // Agrupar servicios por estado
   const serviceGroups = useMemo(() => {
@@ -163,6 +175,37 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
     setExpandedGroups(new Set());
   };
 
+  const handleServiceSelection = (serviceId: string, checked: boolean) => {
+    const newSelected = new Set(selectedServices);
+    if (checked) {
+      newSelected.add(serviceId);
+    } else {
+      newSelected.delete(serviceId);
+    }
+    setSelectedServices(newSelected);
+  };
+
+  const handleSelectAll = (groupServices: Service[], checked: boolean) => {
+    const newSelected = new Set(selectedServices);
+    groupServices.forEach(service => {
+      if (checked) {
+        newSelected.add(service.id);
+      } else {
+        newSelected.delete(service.id);
+      }
+    });
+    setSelectedServices(newSelected);
+  };
+
+  const handleBatchUpdate = async (updates: BatchUpdateData) => {
+    if (onBatchUpdate) {
+      await onBatchUpdate(updates);
+      setSelectedServices(new Set()); // Limpiar selección después de actualizar
+    }
+  };
+
+  const selectedServicesArray = services.filter(s => selectedServices.has(s.id));
+
   const getStatusBadge = (status: ServiceStatus) => {
     const statusConfig = PIPELINE_STATUSES.find(s => s.id === status);
     if (!statusConfig) return null;
@@ -212,6 +255,17 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
               <Button variant="outline" size="sm" onClick={collapseAll}>
                 Contraer Todo
               </Button>
+              {selectedServices.size > 0 && (
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => setShowBatchModal(true)}
+                  className="border-blue-500/30 text-blue-300 hover:bg-blue-500/10"
+                >
+                  <Hash className="w-4 h-4 mr-2" />
+                  Actualizar por Lotes ({selectedServices.size})
+                </Button>
+              )}
             </div>
           </div>
         </CardHeader>
@@ -289,17 +343,24 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
                         ) : (
                           <ChevronRight className="w-4 h-4 text-white" />
                         )}
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <Badge className={`${group.color} ${group.textColor} border-0`}>
-                              {group.title}
-                            </Badge>
-                          </div>
-                          <div className="text-sm text-muted-foreground mt-1 flex items-center gap-4">
-                            <span className="flex items-center gap-1">
-                              <Clock className="w-3 h-3" />
-                              Promedio: {group.averageDays} días
-                            </span>
+                        <div className="flex items-center gap-2">
+                          <Checkbox
+                            checked={group.services.every(s => selectedServices.has(s.id))}
+                            onCheckedChange={(checked) => handleSelectAll(group.services, checked as boolean)}
+                            className="border-gray-500"
+                          />
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <Badge className={`${group.color} ${group.textColor} border-0`}>
+                                {group.title}
+                              </Badge>
+                            </div>
+                            <div className="text-sm text-muted-foreground mt-1 flex items-center gap-4">
+                              <span className="flex items-center gap-1">
+                                <Clock className="w-3 h-3" />
+                                Promedio: {group.averageDays} días
+                              </span>
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -320,6 +381,9 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
                     <Table>
                       <TableHeader>
                         <TableRow>
+                          <TableHead className="text-gray-300 w-12">
+                            <CheckSquare className="w-4 h-4" />
+                          </TableHead>
                           <TableHead className="text-gray-300">Folio</TableHead>
                           <TableHead className="text-gray-300">Tipo de Servicio</TableHead>
                           <TableHead className="text-gray-300">Fecha</TableHead>
@@ -336,6 +400,13 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
                           const daysInStatus = differenceInDays(new Date(), new Date(service.serviceDate));
                           return (
                             <TableRow key={service.id} className="border-gray-700">
+                              <TableCell>
+                                <Checkbox
+                                  checked={selectedServices.has(service.id)}
+                                  onCheckedChange={(checked) => handleServiceSelection(service.id, checked as boolean)}
+                                  className="border-gray-500"
+                                />
+                              </TableCell>
                               <TableCell>
                                 <div className="font-medium text-white">{service.folio}</div>
                               </TableCell>
@@ -414,8 +485,17 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
               </Card>
             </Collapsible>
           ))
-        )}
+          )}
       </div>
+
+      {/* Batch Update Modal */}
+      <BatchUpdateModal
+        open={showBatchModal}
+        onOpenChange={setShowBatchModal}
+        selectedServices={selectedServicesArray}
+        onBatchUpdate={handleBatchUpdate}
+        clientName={clientName}
+      />
     </div>
   );
 };

@@ -93,6 +93,27 @@ export default function VipClientPipeline() {
     }
   };
 
+  // Función para actualización por lotes
+  const handleBatchUpdate = async (updates: any) => {
+    try {
+      // Actualizar cada servicio individualmente
+      const updatePromises = updates.services.map(async (serviceUpdate: any) => {
+        return await updateService(serviceUpdate.id, {
+          quoteNumber: serviceUpdate.quote_number,
+          purchaseOrder: serviceUpdate.purchase_order_number
+        });
+      });
+
+      await Promise.all(updatePromises);
+      toast.success(`${updates.services.length} servicios actualizados correctamente`);
+      refetch();
+    } catch (error) {
+      console.error('Error en actualización por lotes:', error);
+      toast.error('Error al actualizar los servicios');
+      throw error;
+    }
+  };
+
   if (!clientId) {
     navigate('/clients');
     return null;
@@ -193,9 +214,11 @@ export default function VipClientPipeline() {
               services={services} 
               loading={loading}
               clientId={clientId}
+              clientName={client.name}
               onServiceUpdate={handleServiceUpdate}
               onServiceSelect={handleServiceSelect}
               onServiceEdit={handleServiceEdit}
+              onBatchUpdate={handleBatchUpdate}
             />
           </div>
         </TabsContent>
