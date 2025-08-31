@@ -15,6 +15,9 @@ import { PurchaseOrderDialog } from '@/components/vip/PurchaseOrderDialog';
 import { AutomationRules } from '@/components/vip/AutomationRules';
 import { NotificationCenter } from '@/components/vip/NotificationCenter';
 import { SmartAlerts } from '@/components/vip/SmartAlerts';
+import { ClientAnalytics } from '@/components/vip/ClientAnalytics';
+import { ExecutiveReports } from '@/components/vip/ExecutiveReports';
+import { PredictiveInsights } from '@/components/vip/PredictiveInsights';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 
@@ -113,18 +116,24 @@ export default function VipClientPipeline() {
 
       {/* Main Content Tabs */}
       <Tabs defaultValue="pipeline" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4 bg-gray-800 border-gray-700">
+        <TabsList className="grid w-full grid-cols-6 bg-gray-800 border-gray-700">
           <TabsTrigger value="pipeline" className="data-[state=active]:bg-blue-600">
-            Pipeline Kanban
+            Pipeline
           </TabsTrigger>
           <TabsTrigger value="purchase-orders" className="data-[state=active]:bg-blue-600">
-            Órdenes de Compra
+            O.C.
           </TabsTrigger>
           <TabsTrigger value="automation" className="data-[state=active]:bg-blue-600">
             Automatización
           </TabsTrigger>
           <TabsTrigger value="notifications" className="data-[state=active]:bg-blue-600">
             Notificaciones
+          </TabsTrigger>
+          <TabsTrigger value="analytics" className="data-[state=active]:bg-blue-600">
+            Analytics
+          </TabsTrigger>
+          <TabsTrigger value="reports" className="data-[state=active]:bg-blue-600">
+            Reportes
           </TabsTrigger>
         </TabsList>
 
@@ -155,6 +164,27 @@ export default function VipClientPipeline() {
 
         <TabsContent value="notifications" className="space-y-0">
           <NotificationCenter 
+            clientId={clientId}
+            clientName={client.name}
+          />
+        </TabsContent>
+
+        <TabsContent value="analytics" className="space-y-0">
+          <div className="space-y-6">
+            <ClientAnalytics 
+              services={services}
+              clientName={client.name}
+            />
+            <PredictiveInsights 
+              services={services}
+              clientName={client.name}
+            />
+          </div>
+        </TabsContent>
+
+        <TabsContent value="reports" className="space-y-0">
+          <ExecutiveReports 
+            services={services}
             clientId={clientId}
             clientName={client.name}
           />
