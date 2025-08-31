@@ -1,40 +1,47 @@
-import React, { useState } from 'react';
-import { Service } from '@/types';
+import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { 
-  BarChart, 
-  Bar, 
-  LineChart, 
-  Line, 
-  PieChart, 
-  Pie, 
-  Cell, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  Legend, 
-  ResponsiveContainer 
+import { Progress } from '@/components/ui/progress';
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  LineChart,
+  Line,
+  PieChart,
+  Pie,
+  Cell,
+  Legend
 } from 'recharts';
-import { 
-  FileText, 
-  Download, 
-  Calendar, 
-  TrendingUp, 
-  TrendingDown, 
-  Clock, 
+import {
+  Download,
+  TrendingUp,
+  TrendingDown,
+  Clock,
   DollarSign,
+  CheckCircle,
+  AlertCircle,
+  Users,
+  Truck,
   Target,
   Award,
   AlertTriangle,
-  Filter
+  Filter,
+  FileText
 } from 'lucide-react';
 import { format, subDays, subMonths, differenceInDays } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { toast } from 'sonner';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import * as XLSX from 'xlsx';
+import { Service } from '@/types';
 
 interface ExecutiveReportsProps {
   services: Service[];
@@ -185,12 +192,164 @@ export const ExecutiveReports: React.FC<ExecutiveReportsProps> = ({
     }
   ];
 
-  const exportReport = (format: 'pdf' | 'excel') => {
-    toast.success(`Exportando reporte en formato ${format.toUpperCase()}...`);
-    // Simulate export delay
-    setTimeout(() => {
-      toast.success(`Reporte ejecutivo exportado exitosamente`);
-    }, 2000);
+  const exportReport = async (exportFormat: 'pdf' | 'excel') => {
+    if (!services || services.length === 0) {
+      toast.error('No hay servicios para exportar');
+      return;
+    }
+
+    try {
+      toast.loading(`Generando reporte ejecutivo en formato ${exportFormat.toUpperCase()}...`);
+      
+      const metrics = calculateMetrics();
+      const currentDate = format(new Date(), 'yyyy-MM-dd');
+      const fileName = `reporte-ejecutivo-${clientName}-${currentDate}`;
+      
+      if (exportFormat === 'pdf') {
+        await exportToPDF(metrics, fileName);
+      } else {
+        await exportToExcel(metrics, fileName);
+      }
+      
+      toast.success(`Reporte ejecutivo exportado exitosamente como ${fileName}.${exportFormat}`);
+    } catch (error) {
+      console.error('Error exportando reporte:', error);
+      toast.error('Error al exportar el reporte. Intente nuevamente.');
+    }
+  };
+
+  const exportToPDF = async (metrics: ServiceMetrics, fileName: string) => {
+    const doc = new jsPDF('portrait', 'mm', 'a4');
+    const pageWidth = doc.internal.pageSize.width;
+    let yPosition = 20;
+
+    // Header
+    doc.setFontSize(18);
+    doc.setFont("helvetica", "bold");
+    doc.text('REPORTE EJECUTIVO', pageWidth / 2, yPosition, { align: 'center' });
+    yPosition += 10;
+
+    doc.setFontSize(14);
+    doc.setFont("helvetica", "normal");
+    doc.text(`Cliente: ${clientName}`, pageWidth / 2, yPosition, { align: 'center' });
+    yPosition += 8;
+
+    doc.setFontSize(10);
+    doc.text(`Generado: ${format(new Date(), 'dd/MM/yyyy HH:mm')}`, pageWidth / 2, yPosition, { align: 'center' });
+    yPosition += 15;
+
+    // Métricas principales
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "bold");
+    doc.text('MÉTRICAS PRINCIPALES', 14, yPosition);
+    yPosition += 10;
+
+    const metricsData = [
+      ['Total de Servicios', metrics.totalServices.toString()],
+      ['Ingresos Totales', `$${metrics.totalRevenue.toLocaleString('es-CL')}`],
+      ['Tiempo Promedio de Servicio', `${metrics.averageServiceTime} días`],
+      ['Tasa de Completación', `${metrics.completionRate}%`],
+      ['Satisfacción del Cliente', `${metrics.customerSatisfaction.toFixed(1)}/5.0`]
+    ];
+
+    autoTable(doc, {
+      body: metricsData,
+      startY: yPosition,
+      theme: 'grid',
+      headStyles: { fillColor: [41, 128, 185] },
+      styles: { fontSize: 10 }
+    });
+
+    yPosition = (doc as any).lastAutoTable.finalY + 15;
+
+    // Servicios por estado
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "bold");
+    doc.text('DISTRIBUCIÓN POR ESTADO', 14, yPosition);
+    yPosition += 10;
+
+    const statusData = [
+      ['Estado', 'Cantidad', 'Porcentaje'],
+      ['Cotizados', services.filter(s => s.status === 'quoted').length.toString(), 
+       `${((services.filter(s => s.status === 'quoted').length / services.length) * 100).toFixed(1)}%`],
+      ['Esperando O.C.', services.filter(s => s.status === 'purchase_order_pending').length.toString(), 
+       `${((services.filter(s => s.status === 'purchase_order_pending').length / services.length) * 100).toFixed(1)}%`],
+      ['Programados', services.filter(s => s.status === 'pending').length.toString(), 
+       `${((services.filter(s => s.status === 'pending').length / services.length) * 100).toFixed(1)}%`],
+      ['En Progreso', services.filter(s => s.status === 'in_progress').length.toString(), 
+       `${((services.filter(s => s.status === 'in_progress').length / services.length) * 100).toFixed(1)}%`],
+      ['Completados', services.filter(s => s.status === 'completed').length.toString(), 
+       `${((services.filter(s => s.status === 'completed').length / services.length) * 100).toFixed(1)}%`],
+      ['Facturados', services.filter(s => s.status === 'invoiced').length.toString(), 
+       `${((services.filter(s => s.status === 'invoiced').length / services.length) * 100).toFixed(1)}%`]
+    ];
+
+    autoTable(doc, {
+      head: [statusData[0]],
+      body: statusData.slice(1),
+      startY: yPosition,
+      theme: 'grid',
+      headStyles: { fillColor: [41, 128, 185] },
+      styles: { fontSize: 9 }
+    });
+
+    doc.save(`${fileName}.pdf`);
+  };
+
+  const exportToExcel = async (metrics: ServiceMetrics, fileName: string) => {
+    const wb = XLSX.utils.book_new();
+
+    // Hoja 1: Resumen Ejecutivo
+    const summaryData = [
+      ['REPORTE EJECUTIVO - ' + clientName.toUpperCase()],
+      [''],
+      ['Fecha de Generación:', format(new Date(), 'dd/MM/yyyy HH:mm')],
+      [''],
+      ['MÉTRICAS PRINCIPALES'],
+      ['Total de Servicios', metrics.totalServices],
+      ['Ingresos Totales', metrics.totalRevenue, `$${metrics.totalRevenue.toLocaleString('es-CL')}`],
+      ['Tiempo Promedio de Servicio (días)', metrics.averageServiceTime],
+      ['Tasa de Completación (%)', metrics.completionRate],
+      ['Satisfacción del Cliente', metrics.customerSatisfaction.toFixed(1)],
+      [''],
+      ['DISTRIBUCIÓN POR ESTADO'],
+      ['Estado', 'Cantidad', 'Porcentaje'],
+      ['Cotizados', services.filter(s => s.status === 'quoted').length, 
+       `${((services.filter(s => s.status === 'quoted').length / services.length) * 100).toFixed(1)}%`],
+      ['Esperando O.C.', services.filter(s => s.status === 'purchase_order_pending').length, 
+       `${((services.filter(s => s.status === 'purchase_order_pending').length / services.length) * 100).toFixed(1)}%`],
+      ['Programados', services.filter(s => s.status === 'pending').length, 
+       `${((services.filter(s => s.status === 'pending').length / services.length) * 100).toFixed(1)}%`],
+      ['En Progreso', services.filter(s => s.status === 'in_progress').length, 
+       `${((services.filter(s => s.status === 'in_progress').length / services.length) * 100).toFixed(1)}%`],
+      ['Completados', services.filter(s => s.status === 'completed').length, 
+       `${((services.filter(s => s.status === 'completed').length / services.length) * 100).toFixed(1)}%`],
+      ['Facturados', services.filter(s => s.status === 'invoiced').length, 
+       `${((services.filter(s => s.status === 'invoiced').length / services.length) * 100).toFixed(1)}%`]
+    ];
+
+    const ws1 = XLSX.utils.aoa_to_sheet(summaryData);
+    XLSX.utils.book_append_sheet(wb, ws1, 'Resumen Ejecutivo');
+
+    // Hoja 2: Detalle de Servicios
+    const servicesDetailData = services.map(service => ({
+      'Folio': service.folio,
+      'Fecha': format(new Date(service.serviceDate), 'dd/MM/yyyy'),
+      'Estado': service.status,
+      'Tipo de Servicio': service.serviceType.name,
+      'Valor': service.value,
+      'Cliente': service.client.name,
+      'Operador': service.operator?.name || 'Sin asignar',
+      'Grúa': service.crane?.licensePlate || 'Sin asignar',
+      'Origen': service.origin,
+      'Destino': service.destination,
+      'Observaciones': service.observations || ''
+    }));
+
+    const ws2 = XLSX.utils.json_to_sheet(servicesDetailData);
+    XLSX.utils.book_append_sheet(wb, ws2, 'Detalle Servicios');
+
+    XLSX.writeFile(wb, `${fileName}.xlsx`);
   };
 
   const formatCurrency = (amount: number) => {
