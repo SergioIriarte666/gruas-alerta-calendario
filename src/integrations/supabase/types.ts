@@ -2461,6 +2461,7 @@ export type Database = {
           operator_id: string | null
           origin: string | null
           purchase_order: string | null
+          purchase_order_number: string | null
           request_date: string
           service_date: string
           service_type_id: string
@@ -2498,6 +2499,7 @@ export type Database = {
           operator_id?: string | null
           origin?: string | null
           purchase_order?: string | null
+          purchase_order_number?: string | null
           request_date: string
           service_date: string
           service_type_id: string
@@ -2535,6 +2537,7 @@ export type Database = {
           operator_id?: string | null
           origin?: string | null
           purchase_order?: string | null
+          purchase_order_number?: string | null
           request_date?: string
           service_date?: string
           service_type_id?: string
@@ -3649,7 +3652,12 @@ export type Database = {
     Enums: {
       app_role: "admin" | "operator" | "viewer" | "client"
       application_method: "fifo" | "manual" | "proportional"
-      closure_status: "open" | "closed" | "invoiced"
+      closure_status:
+        | "open"
+        | "closed"
+        | "invoiced"
+        | "quoted"
+        | "purchase_order_pending"
       crane_type: "light" | "medium" | "heavy" | "taxi" | "other" | "horquilla"
       invoice_status:
         | "draft"
@@ -3666,6 +3674,8 @@ export type Database = {
         | "cancelled"
         | "invoiced"
         | "inspection_completed"
+        | "quoted"
+        | "purchase_order_pending"
       supplier_category:
         | "combustible"
         | "mantenimiento"
@@ -3806,7 +3816,13 @@ export const Constants = {
     Enums: {
       app_role: ["admin", "operator", "viewer", "client"],
       application_method: ["fifo", "manual", "proportional"],
-      closure_status: ["open", "closed", "invoiced"],
+      closure_status: [
+        "open",
+        "closed",
+        "invoiced",
+        "quoted",
+        "purchase_order_pending",
+      ],
       crane_type: ["light", "medium", "heavy", "taxi", "other", "horquilla"],
       invoice_status: [
         "draft",
@@ -3824,6 +3840,8 @@ export const Constants = {
         "cancelled",
         "invoiced",
         "inspection_completed",
+        "quoted",
+        "purchase_order_pending",
       ],
       supplier_category: [
         "combustible",

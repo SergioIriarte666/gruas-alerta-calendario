@@ -7,6 +7,7 @@ export interface Service {
   serviceDate: string;
   client: Client;
   purchaseOrder?: string;
+  purchaseOrderNumber?: string; // Añadido para flujo especial cliente (Fase 1)
   vehicleBrand: string;
   vehicleModel: string;
   licensePlate: string;
@@ -185,6 +186,9 @@ export interface Invoice {
   updatedAt: string;
 }
 
+// Define closure status type for consistency (Fase 1)
+export type ClosureStatus = 'open' | 'closed' | 'invoiced' | 'quoted' | 'purchase_order_pending';
+
 export interface ServiceClosure {
   id: string;
   folio: string;
@@ -195,14 +199,14 @@ export interface ServiceClosure {
   };
   clientId?: string;
   total: number;
-  status: 'open' | 'closed' | 'invoiced';
+  status: ClosureStatus;
   purchaseOrder?: string;
   createdAt: string;
   updatedAt: string;
 }
 
-// Updated to match database enums - Added 'inspection_completed' and 'invoiced' status
-export type ServiceStatus = 'pending' | 'in_progress' | 'inspection_completed' | 'completed' | 'cancelled' | 'invoiced';
+// Updated to match database enums - Added new states for special client workflow (Fase 1)
+export type ServiceStatus = 'pending' | 'in_progress' | 'inspection_completed' | 'completed' | 'cancelled' | 'invoiced' | 'quoted' | 'purchase_order_pending';
 export type InvoiceStatus = 'draft' | 'sent' | 'paid' | 'overdue' | 'cancelled';
 export type CraneType = 'light' | 'medium' | 'heavy' | 'taxi' | 'other' | 'horquilla';
 

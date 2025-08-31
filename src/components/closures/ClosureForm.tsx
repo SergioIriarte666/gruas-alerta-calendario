@@ -4,7 +4,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useServicesForClosures } from '@/hooks/useServicesForClosures';
-import { ServiceClosure } from '@/types';
+import { ServiceClosure, ClosureStatus } from '@/types';
 import DateRangePicker from './DateRangePicker';
 import ClientSelector from './ClientSelector';
 import EnhancedServicesSelector from './EnhancedServicesSelector';
@@ -12,20 +12,23 @@ import FormActions from './FormActions';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
 import { calculateClosureTotal } from '@/utils/serviceValueCalculations';
+
 interface ClosureFormProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSubmit: (closure: Omit<ServiceClosure, 'id' | 'folio' | 'createdAt' | 'updatedAt'>) => Promise<void>;
 }
+
 interface FormData {
   dateFrom: Date | undefined;
   dateTo: Date | undefined;
   clientId: string;
   serviceIds: string[];
   total: number;
-  status: 'open' | 'closed' | 'invoiced';
+  status: ClosureStatus;
   purchaseOrder: string;
 }
+
 const ClosureForm = ({
   open,
   onOpenChange,
@@ -207,10 +210,10 @@ const ClosureForm = ({
           {/* Status */}
           <div className="space-y-2">
             <Label className="text-gray-300">Estado</Label>
-            <Select value={formData.status} onValueChange={(value: 'open' | 'closed' | 'invoiced') => setFormData(prev => ({
-            ...prev,
-            status: value
-          }))}>
+            <Select value={formData.status} onValueChange={(value: ClosureStatus) => setFormData(prev => ({
+              ...prev,
+              status: value
+            }))}>
               <SelectTrigger className="bg-white/5 border-gray-700 text-white">
                 <SelectValue />
               </SelectTrigger>
@@ -218,6 +221,8 @@ const ClosureForm = ({
                 <SelectItem value="open">Abierto</SelectItem>
                 <SelectItem value="closed">Cerrado</SelectItem>
                 <SelectItem value="invoiced">Facturado</SelectItem>
+                <SelectItem value="quoted">Cotizado</SelectItem>
+                <SelectItem value="purchase_order_pending">Esperando Orden de Compra</SelectItem>
               </SelectContent>
             </Select>
           </div>

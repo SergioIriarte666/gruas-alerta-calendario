@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { ServiceClosure } from '@/types';
+import { ServiceClosure, ClosureStatus } from '@/types';
 import { useClients } from '@/hooks/useClients';
 import { useEditClosure } from '@/hooks/closures/useEditClosure';
 import EnhancedServicesSelector from './EnhancedServicesSelector';
@@ -18,7 +18,7 @@ const editClosureSchema = z.object({
   dateFrom: z.string().min(1, 'Fecha de inicio es requerida'),
   dateTo: z.string().min(1, 'Fecha de fin es requerida'),
   clientId: z.string().optional(),
-  status: z.enum(['open', 'closed', 'invoiced'] as const)
+  status: z.enum(['open', 'closed', 'invoiced', 'quoted', 'purchase_order_pending'] as const)
 });
 
 type EditClosureFormData = z.infer<typeof editClosureSchema>;
