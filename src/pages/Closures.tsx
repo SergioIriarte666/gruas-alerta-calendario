@@ -25,6 +25,7 @@ const Closures = () => {
   const { clients } = useClients();
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showReportSheet, setShowReportSheet] = useState(false);
   const [editingClosure, setEditingClosure] = useState<ServiceClosure | null>(null);
@@ -33,11 +34,13 @@ const Closures = () => {
 
   console.log('Closures page render - closures:', closures.length, 'loading:', loading, 'showCreateModal:', showCreateModal);
 
-  // Filter closures by search term
-  const filteredClosures = closures.filter(closure =>
-    closure.folio.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    closure.status.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Filter closures by search term and status
+  const filteredClosures = closures.filter(closure => {
+    const matchesSearch = closure.folio.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         closure.status.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = statusFilter === 'all' || closure.status === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
 
   const handleDelete = (id: string, folio: string) => {
     if (window.confirm(`¿Está seguro de eliminar el cierre "${folio}"?`)) {
@@ -165,6 +168,8 @@ const Closures = () => {
       <ClosuresSearch
         searchTerm={searchTerm}
         onSearchChange={setSearchTerm}
+        statusFilter={statusFilter}
+        onStatusFilterChange={setStatusFilter}
       />
       
       <ClosuresTable
