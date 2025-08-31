@@ -6,6 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ServiceClosure } from '@/types';
 import { Client } from '@/types';
+import { formatForDisplay } from '@/utils/timezoneUtils';
 
 interface ClosuresTableProps {
   closures: ServiceClosure[];
@@ -45,8 +46,8 @@ const ClosuresTable = ({ closures, clients, onEdit, onDelete, onClose }: Closure
   };
 
   const formatDateRange = (dateRange: { from: string; to: string }) => {
-    const fromDate = new Date(dateRange.from).toLocaleDateString('es-CL');
-    const toDate = new Date(dateRange.to).toLocaleDateString('es-CL');
+    const fromDate = formatForDisplay(dateRange.from);
+    const toDate = formatForDisplay(dateRange.to);
     return `${fromDate} - ${toDate}`;
   };
 
