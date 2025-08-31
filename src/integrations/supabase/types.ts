@@ -173,11 +173,23 @@ export type Database = {
             referencedRelation: "services"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "calendar_events_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services_ready_for_deferred_billing"
+            referencedColumns: ["id"]
+          },
         ]
       }
       clients: {
         Row: {
           address: string | null
+          auto_invoice_generation: boolean | null
+          billing_cycle_day: number | null
+          billing_cycle_type: string | null
+          billing_delay_days: number | null
+          billing_notes: string | null
           contact_name: string | null
           created_at: string | null
           created_by: string | null
@@ -193,6 +205,11 @@ export type Database = {
         }
         Insert: {
           address?: string | null
+          auto_invoice_generation?: boolean | null
+          billing_cycle_day?: number | null
+          billing_cycle_type?: string | null
+          billing_delay_days?: number | null
+          billing_notes?: string | null
           contact_name?: string | null
           created_at?: string | null
           created_by?: string | null
@@ -208,6 +225,11 @@ export type Database = {
         }
         Update: {
           address?: string | null
+          auto_invoice_generation?: boolean | null
+          billing_cycle_day?: number | null
+          billing_cycle_type?: string | null
+          billing_delay_days?: number | null
+          billing_notes?: string | null
           contact_name?: string | null
           created_at?: string | null
           created_by?: string | null
@@ -260,6 +282,13 @@ export type Database = {
             columns: ["service_id"]
             isOneToOne: false
             referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "closure_services_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services_ready_for_deferred_billing"
             referencedColumns: ["id"]
           },
         ]
@@ -569,6 +598,13 @@ export type Database = {
             columns: ["service_id"]
             isOneToOne: false
             referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "costs_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services_ready_for_deferred_billing"
             referencedColumns: ["id"]
           },
         ]
@@ -941,6 +977,13 @@ export type Database = {
             columns: ["service_id"]
             isOneToOne: false
             referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inspections_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services_ready_for_deferred_billing"
             referencedColumns: ["id"]
           },
         ]
@@ -1613,6 +1656,13 @@ export type Database = {
             referencedRelation: "services"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "invoice_services_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services_ready_for_deferred_billing"
+            referencedColumns: ["id"]
+          },
         ]
       }
       invoices: {
@@ -2253,6 +2303,13 @@ export type Database = {
             referencedRelation: "services"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "service_costs_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services_ready_for_deferred_billing"
+            referencedColumns: ["id"]
+          },
         ]
       }
       service_resources: {
@@ -2319,6 +2376,13 @@ export type Database = {
             columns: ["service_id"]
             isOneToOne: false
             referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_resources_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services_ready_for_deferred_billing"
             referencedColumns: ["id"]
           },
         ]
@@ -2428,6 +2492,13 @@ export type Database = {
             columns: ["service_id"]
             isOneToOne: false
             referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_update_error_logs_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services_ready_for_deferred_billing"
             referencedColumns: ["id"]
           },
         ]
@@ -2997,7 +3068,90 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      services_ready_for_deferred_billing: {
+        Row: {
+          auto_invoice_generation: boolean | null
+          billing_cycle_day: number | null
+          billing_cycle_type: string | null
+          billing_delay_days: number | null
+          billing_ready_date: string | null
+          client_covered_amount: number | null
+          client_id: string | null
+          client_name: string | null
+          crane_id: string | null
+          created_at: string | null
+          created_by: string | null
+          custody_daily_rate: number | null
+          custody_days: number | null
+          custody_discount_percentage: number | null
+          custody_end_date: string | null
+          custody_mode: string | null
+          custody_notes: string | null
+          custody_start_date: string | null
+          custody_total_amount: number | null
+          custody_vehicle_type: string | null
+          destination: string | null
+          excess_amount: number | null
+          folio: string | null
+          has_excess: boolean | null
+          id: string | null
+          invoice_folio: string | null
+          invoice_numero_fiscal: string | null
+          license_plate: string | null
+          observations: string | null
+          operator_commission: number | null
+          operator_id: string | null
+          origin: string | null
+          purchase_order: string | null
+          purchase_order_number: string | null
+          quote_number: string | null
+          request_date: string | null
+          service_date: string | null
+          service_type_id: string | null
+          status: Database["public"]["Enums"]["service_status"] | null
+          updated_at: string | null
+          value: number | null
+          vehicle_brand: string | null
+          vehicle_model: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "services_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "services_crane_id_fkey"
+            columns: ["crane_id"]
+            isOneToOne: false
+            referencedRelation: "cranes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "services_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "services_operator_id_fkey"
+            columns: ["operator_id"]
+            isOneToOne: false
+            referencedRelation: "operators"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "services_service_type_id_fkey"
+            columns: ["service_type_id"]
+            isOneToOne: false
+            referencedRelation: "service_types"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       admin_create_user: {
@@ -3028,6 +3182,15 @@ export type Database = {
       backfill_maintenance_costs: {
         Args: Record<PropertyKey, never>
         Returns: Json
+      }
+      calculate_billing_date: {
+        Args: {
+          billing_cycle_day?: number
+          billing_cycle_type: string
+          billing_delay_days?: number
+          service_date: string
+        }
+        Returns: string
       }
       can_access_client_sensitive_data: {
         Args: Record<PropertyKey, never>
@@ -3299,6 +3462,10 @@ export type Database = {
       get_current_user_role_safe: {
         Args: Record<PropertyKey, never>
         Returns: Database["public"]["Enums"]["app_role"]
+      }
+      get_deferred_services_summary: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
       }
       get_document_expiry_alerts: {
         Args: Record<PropertyKey, never>

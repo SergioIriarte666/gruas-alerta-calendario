@@ -24,7 +24,13 @@ const fetchClients = async (): Promise<Client[]> => {
     contactName: client.contact_name || '',
     isActive: client.is_active ?? false,
     createdAt: client.created_at,
-    updatedAt: client.updated_at
+    updatedAt: client.updated_at,
+    // Nuevos campos de facturación diferida
+    billingCycleType: client.billing_cycle_type || 'immediate',
+    billingDelayDays: client.billing_delay_days || 0,
+    billingCycleDay: client.billing_cycle_day || undefined,
+    autoInvoiceGeneration: client.auto_invoice_generation || false,
+    billingNotes: client.billing_notes || ''
   }));
 
   return formattedClients;
@@ -153,6 +159,13 @@ export const useClients = () => {
       if (clientData.department !== undefined) updateData.department = clientData.department;
       if (clientData.contactName !== undefined) updateData.contact_name = clientData.contactName;
       if (clientData.isActive !== undefined) updateData.is_active = clientData.isActive;
+      
+      // Nuevos campos de facturación diferida
+      if (clientData.billingCycleType !== undefined) updateData.billing_cycle_type = clientData.billingCycleType;
+      if (clientData.billingDelayDays !== undefined) updateData.billing_delay_days = clientData.billingDelayDays;
+      if (clientData.billingCycleDay !== undefined) updateData.billing_cycle_day = clientData.billingCycleDay;
+      if (clientData.autoInvoiceGeneration !== undefined) updateData.auto_invoice_generation = clientData.autoInvoiceGeneration;
+      if (clientData.billingNotes !== undefined) updateData.billing_notes = clientData.billingNotes;
 
       const { error } = await supabase
         .from('clients')

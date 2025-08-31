@@ -39,6 +39,7 @@ import QuickEntries from '@/pages/QuickEntries';
 import { BackupPage } from '@/pages/BackupPage';
 import { Suppliers } from '@/pages/Suppliers';
 import VipClientPipeline from '@/pages/VipClientPipeline';
+import DeferredBilling from '@/pages/DeferredBilling';
 import NotFound from '@/pages/NotFound';
 
 const queryClient = new QueryClient({
@@ -211,6 +212,14 @@ function AppContent() {
           </ProtectedRoute>
         }>
           <Route index element={<Suppliers />} />
+        </Route>
+
+        <Route path="/deferred-billing" element={
+          <ProtectedRoute allowedRoles={['admin', 'viewer']}>
+            <Layout />
+          </ProtectedRoute>
+        }>
+          <Route index element={<DeferredBilling />} />
         </Route>
 
         {/* VIP Client Pipeline - Fase 2 */}

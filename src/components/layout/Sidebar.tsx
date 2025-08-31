@@ -86,6 +86,11 @@ export const Sidebar = ({
     icon: Percent,
     adminOnly: true
   }, {
+    name: 'Facturación Diferida',
+    href: '/deferred-billing',
+    icon: Calendar,
+    adminOnly: false
+  }, {
     name: 'Facturas',
     href: '/invoices',
     icon: Receipt,
