@@ -2462,6 +2462,7 @@ export type Database = {
           origin: string | null
           purchase_order: string | null
           purchase_order_number: string | null
+          quote_number: string | null
           request_date: string
           service_date: string
           service_type_id: string
@@ -2500,6 +2501,7 @@ export type Database = {
           origin?: string | null
           purchase_order?: string | null
           purchase_order_number?: string | null
+          quote_number?: string | null
           request_date: string
           service_date: string
           service_type_id: string
@@ -2538,6 +2540,7 @@ export type Database = {
           origin?: string | null
           purchase_order?: string | null
           purchase_order_number?: string | null
+          quote_number?: string | null
           request_date?: string
           service_date?: string
           service_type_id?: string

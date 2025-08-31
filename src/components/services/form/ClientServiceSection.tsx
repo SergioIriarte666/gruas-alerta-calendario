@@ -10,6 +10,8 @@ interface ClientServiceSectionProps {
   clients: Client[];
   purchaseOrder: string;
   onPurchaseOrderChange: (value: string) => void;
+  quoteNumber?: string;
+  onQuoteNumberChange?: (value: string) => void;
   serviceTypeId: string;
   onServiceTypeChange: (serviceTypeId: string) => void;
   serviceTypes: ServiceType[];
@@ -26,6 +28,8 @@ export const ClientServiceSection = ({
   clients,
   purchaseOrder,
   onPurchaseOrderChange,
+  quoteNumber = '',
+  onQuoteNumberChange,
   serviceTypeId,
   onServiceTypeChange,
   serviceTypes,
@@ -61,6 +65,18 @@ export const ClientServiceSection = ({
           value={purchaseOrder}
           onChange={(e) => onPurchaseOrderChange(e.target.value)}
           placeholder="Ej: OC-12345"
+          disabled={disabled}
+        />
+      </div>
+
+      {/* Número de Cotización */}
+      <div className="space-y-2">
+        <Label htmlFor="quoteNumber">Número de Cotización (Opcional)</Label>
+        <Input
+          id="quoteNumber"
+          value={quoteNumber}
+          onChange={(e) => onQuoteNumberChange?.(e.target.value)}
+          placeholder="Ej: COT-24-001"
           disabled={disabled}
         />
       </div>

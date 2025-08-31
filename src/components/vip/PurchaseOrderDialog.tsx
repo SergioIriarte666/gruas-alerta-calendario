@@ -35,6 +35,7 @@ export const PurchaseOrderDialog: React.FC<PurchaseOrderDialogProps> = ({
   onUpdate
 }) => {
   const [purchaseOrderNumber, setPurchaseOrderNumber] = useState('');
+  const [quoteNumber, setQuoteNumber] = useState('');
   const [notes, setNotes] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -49,25 +50,33 @@ export const PurchaseOrderDialog: React.FC<PurchaseOrderDialogProps> = ({
 
     setLoading(true);
     try {
+      const updateData: any = {
+        purchase_order_number: purchaseOrderNumber.trim(),
+        status: 'pending',
+        updated_at: new Date().toISOString()
+      };
+
+      // Agregar quote_number solo si se proporcionó
+      if (quoteNumber.trim()) {
+        updateData.quote_number = quoteNumber.trim();
+      }
+
       const { error } = await supabase
         .from('services')
-        .update({
-          purchase_order_number: purchaseOrderNumber.trim(),
-          status: 'pending',
-          updated_at: new Date().toISOString()
-        })
+        .update(updateData)
         .eq('id', service.id);
 
       if (error) throw error;
 
-      toast.success('Orden de compra registrada correctamente');
+      toast.success('Información registrada correctamente');
       onUpdate();
       onOpenChange(false);
       setPurchaseOrderNumber('');
+      setQuoteNumber('');
       setNotes('');
     } catch (error: any) {
       console.error('Error updating purchase order:', error);
-      toast.error('Error al registrar la orden de compra');
+      toast.error('Error al registrar la información');
     } finally {
       setLoading(false);
     }
@@ -86,7 +95,7 @@ export const PurchaseOrderDialog: React.FC<PurchaseOrderDialogProps> = ({
         <DialogHeader>
           <DialogTitle className="text-white flex items-center gap-2">
             <FileText className="w-5 h-5 text-blue-400" />
-            Registrar Orden de Compra
+            Registrar Información del Servicio
           </DialogTitle>
         </DialogHeader>
 
@@ -156,6 +165,19 @@ export const PurchaseOrderDialog: React.FC<PurchaseOrderDialogProps> = ({
             </div>
 
             <div className="space-y-2">
+              <Label htmlFor="quote-number" className="text-white">
+                Número de Cotización (Opcional)
+              </Label>
+              <Input
+                id="quote-number"
+                value={quoteNumber}
+                onChange={(e) => setQuoteNumber(e.target.value)}
+                placeholder="Ej: COT-24-001"
+                className="bg-gray-800 border-gray-600 text-white"
+              />
+            </div>
+
+            <div className="space-y-2">
               <Label htmlFor="notes" className="text-white">
                 Observaciones (opcional)
               </Label>
@@ -187,7 +209,7 @@ export const PurchaseOrderDialog: React.FC<PurchaseOrderDialogProps> = ({
                 ) : (
                   <>
                     <Send className="w-4 h-4 mr-2" />
-                    Registrar O.C.
+                    Registrar Información
                   </>
                 )}
               </Button>

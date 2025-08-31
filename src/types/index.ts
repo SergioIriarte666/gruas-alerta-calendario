@@ -8,6 +8,7 @@ export interface Service {
   client: Client;
   purchaseOrder?: string;
   purchaseOrderNumber?: string; // Añadido para flujo especial cliente (Fase 1)
+  quoteNumber?: string; // Número de cotización opcional
   vehicleBrand: string;
   vehicleModel: string;
   licensePlate: string;
@@ -47,6 +48,7 @@ export interface ServiceFormData {
   serviceDate: string;
   client: string;
   purchaseOrder?: string;
+  quoteNumber?: string;
   serviceType: string;
   vehicleBrand: string;
   vehicleModel: string;

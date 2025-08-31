@@ -28,6 +28,7 @@ export interface ServiceFormData {
   serviceDate: string;
   clientId: string;
   purchaseOrder?: string;
+  quoteNumber?: string;
   serviceTypeId: string;
   
   // Vehículo

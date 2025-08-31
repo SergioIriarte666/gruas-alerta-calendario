@@ -61,6 +61,7 @@ export const EnhancedServiceForm = ({
     serviceDate: service?.serviceDate || getCurrentChileDateString(),
     client: service?.client?.id || '',
     purchaseOrder: service?.purchaseOrder || '',
+    quoteNumber: service?.quoteNumber || '',
     serviceType: service?.serviceType?.id || '',
     vehicleBrand: service?.vehicleBrand || '',
     vehicleModel: service?.vehicleModel || '',
@@ -177,6 +178,7 @@ export const EnhancedServiceForm = ({
         serviceDate: service.serviceDate,
         client: service.client?.id || '',
         purchaseOrder: service.purchaseOrder || '',
+        quoteNumber: service.quoteNumber || '',
         serviceType: service.serviceType?.id || '',
         vehicleBrand: service.vehicleBrand,
         vehicleModel: service.vehicleModel,
@@ -383,6 +385,8 @@ export const EnhancedServiceForm = ({
               clients={clients}
               purchaseOrder={formData.purchaseOrder}
               onPurchaseOrderChange={(value) => setFormData(prev => ({ ...prev, purchaseOrder: value }))}
+              quoteNumber={formData.quoteNumber}
+              onQuoteNumberChange={(value) => setFormData(prev => ({ ...prev, quoteNumber: value }))}
               serviceTypeId={formData.serviceType}
               onServiceTypeChange={(value) => setFormData(prev => ({ ...prev, serviceType: value }))}
               serviceTypes={serviceTypes}
