@@ -159,6 +159,34 @@ export const getCurrentMonthRange = () => {
   };
 };
 
+// Get start and end of current week in Chile timezone (Monday to Sunday)
+export const getCurrentWeekRange = () => {
+  const chileDate = getCurrentChileDate();
+  const weekStart = new Date(chileDate);
+  // Calculate days to subtract to get to Monday (1)
+  const dayOfWeek = chileDate.getDay();
+  const daysToSubtract = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Sunday = 0, so subtract 6 to get to Monday
+  weekStart.setDate(chileDate.getDate() - daysToSubtract);
+  weekStart.setHours(0, 0, 0, 0);
+  
+  const weekEnd = new Date(weekStart);
+  weekEnd.setDate(weekStart.getDate() + 6);
+  weekEnd.setHours(23, 59, 59, 999);
+  
+  return { start: weekStart, end: weekEnd };
+};
+
+// Get the start of the current week in Chile timezone (Monday)
+export const getWeekStart = (date?: Date) => {
+  const targetDate = date || getCurrentChileDate();
+  const weekStart = new Date(targetDate);
+  const dayOfWeek = targetDate.getDay();
+  const daysToSubtract = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+  weekStart.setDate(targetDate.getDate() - daysToSubtract);
+  weekStart.setHours(0, 0, 0, 0);
+  return weekStart;
+};
+
 // ===================== UTILIDADES PARA FORMULARIOS =====================
 
 // Format date for form input (yyyy-MM-dd) manteniendo fecha exacta

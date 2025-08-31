@@ -5,6 +5,7 @@ import {
   getCurrentChileDate, 
   getCurrentChileDateString, 
   getCurrentMonthRange,
+  getCurrentWeekRange,
   formatForDatabase
 } from '@/utils/timezoneUtils';
 
@@ -37,14 +38,14 @@ export const useServicesMetrics = (dateFilter: DateFilter = 'all') => {
           date: currentChileDateString 
         };
       case 'week':
-        const weekStart = new Date(currentChileDate);
-        weekStart.setDate(currentChileDate.getDate() - currentChileDate.getDay());
-        const weekStartString = formatForDatabase(weekStart);
-        console.log('📅 Filtro WEEK aplicado desde:', weekStartString, 'hasta:', currentChileDateString);
+        const weekRange = getCurrentWeekRange();
+        const weekStartString = formatForDatabase(weekRange.start);
+        const weekEndString = formatForDatabase(weekRange.end);
+        console.log('📅 Filtro WEEK aplicado desde:', weekStartString, 'hasta:', weekEndString, '(lunes a domingo)');
         return { 
           type: 'range', 
           start: weekStartString, 
-          end: currentChileDateString 
+          end: weekEndString 
         };
       case 'month':
         const monthRange = getCurrentMonthRange();

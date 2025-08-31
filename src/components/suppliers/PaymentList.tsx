@@ -34,7 +34,8 @@ import {
   parseFromDatabase, 
   formatForInput, 
   formatForDisplay,
-  getCurrentMonthRange
+  getCurrentMonthRange,
+  getCurrentWeekRange
 } from '@/utils/timezoneUtils';
 
 export const PaymentList: React.FC = () => {
@@ -407,15 +408,9 @@ export const PaymentList: React.FC = () => {
                 variant="ghost"
                 size="sm"
                 onClick={() => {
-                  const today = getCurrentChileDate();
-                  const weekStart = new Date(today);
-                  weekStart.setDate(today.getDate() - today.getDay());
-                  weekStart.setHours(0, 0, 0, 0);
-                  const weekEnd = new Date(weekStart);
-                  weekEnd.setDate(weekStart.getDate() + 6);
-                  weekEnd.setHours(23, 59, 59, 999);
-                  setDateFrom(weekStart);
-                  setDateTo(weekEnd);
+                  const { start, end } = getCurrentWeekRange();
+                  setDateFrom(start);
+                  setDateTo(end);
                 }}
                 className="text-xs text-gray-400 hover:text-gray-300"
               >

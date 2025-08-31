@@ -16,6 +16,12 @@ import { useDateFilters } from '@/hooks/useDateFilters';
 import { Cost } from '@/types/costs';
 import { Skeleton } from '@/components/ui/skeleton';
 import * as XLSX from 'xlsx';
+import { 
+  getCurrentChileDate, 
+  formatForDisplay,
+  formatForDatabase,
+  getCurrentWeekRange 
+} from '@/utils/timezoneUtils';
 
 const CostsPage = () => {
     const [searchParams] = useSearchParams();
@@ -137,13 +143,11 @@ const CostsPage = () => {
                 });
                 break;
             case 'week':
-                const weekStart = new Date(today);
-                weekStart.setDate(today.getDate() - today.getDay());
-                weekStart.setHours(0, 0, 0, 0);
+                const { start: weekStart, end: weekEnd } = getCurrentWeekRange();
                 
                 filtered = costs.filter(cost => {
                     const costDate = new Date(cost.date + 'T00:00:00');
-                    return costDate >= weekStart;
+                    return costDate >= weekStart && costDate <= weekEnd;
                 });
                 break;
             case 'month':
