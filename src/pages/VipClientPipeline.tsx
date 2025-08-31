@@ -8,11 +8,13 @@ import { Badge } from '@/components/ui/badge';
 import { useNavigate } from 'react-router-dom';
 import { useClients } from '@/hooks/useClients';
 import { useClientServices } from '@/hooks/useClientServices';
+import { useServices } from '@/hooks/useServices';
 import { PipelineListView } from '@/components/vip/PipelineListView';
 import { PipelineMetrics } from '@/components/vip/PipelineMetrics';
 import { PurchaseOrderManager } from '@/components/vip/PurchaseOrderManager';
 import { PurchaseOrderDialog } from '@/components/vip/PurchaseOrderDialog';
 import { ServiceDetailsModal } from '@/components/services/ServiceDetailsModal';
+import { ServicesDialogs } from '@/components/services/ServicesDialogs';
 import { AutomationRules } from '@/components/vip/AutomationRules';
 import { NotificationCenter } from '@/components/vip/NotificationCenter';
 import { SmartAlerts } from '@/components/vip/SmartAlerts';
@@ -27,9 +29,16 @@ export default function VipClientPipeline() {
   const navigate = useNavigate();
   const { clients } = useClients();
   const { services, loading, refetch } = useClientServices(clientId || null);
+  const { createService, updateService } = useServices();
+  
+  // Estados para modales y formularios
   const [selectedService, setSelectedService] = React.useState<Service | null>(null);
   const [showPurchaseOrderDialog, setShowPurchaseOrderDialog] = React.useState(false);
   const [showServiceDetailsModal, setShowServiceDetailsModal] = React.useState(false);
+  
+  // Estados para edición de servicios
+  const [editingService, setEditingService] = React.useState<Service | null>(null);
+  const [isFormOpen, setIsFormOpen] = React.useState(false);
 
   const client = clients.find(c => c.id === clientId);
 
@@ -48,9 +57,40 @@ export default function VipClientPipeline() {
   };
 
   const handleServiceEdit = (service: Service) => {
-    // TODO: Implementar navegación a formulario de edición
-    console.log('Editar servicio:', service);
-    toast.info(`Función de edición para servicio ${service.folio} - Por implementar`);
+    if (service.status === 'invoiced') {
+      toast.error('No se puede editar un servicio facturado');
+      return;
+    }
+    setEditingService(service);
+    setIsFormOpen(true);
+  };
+
+  // Función para crear servicio
+  const handleCreateService = async (serviceData: any) => {
+    try {
+      await createService(serviceData);
+      setIsFormOpen(false);
+      setEditingService(null);
+      toast.success('Servicio creado correctamente');
+      refetch();
+    } catch (error) {
+      console.error('Error creando servicio:', error);
+    }
+  };
+
+  // Función para actualizar servicio
+  const handleUpdateService = async (serviceData: any) => {
+    try {
+      if (editingService?.id) {
+        await updateService(editingService.id, serviceData);
+        setIsFormOpen(false);
+        setEditingService(null);
+        toast.success('Servicio actualizado correctamente');
+        refetch();
+      }
+    } catch (error) {
+      console.error('Error actualizando servicio:', error);
+    }
   };
 
   if (!clientId) {
@@ -231,6 +271,21 @@ export default function VipClientPipeline() {
           onClose={() => setShowServiceDetailsModal(false)}
         />
       )}
+
+      {/* Services Form Dialog */}
+      <ServicesDialogs
+        isCSVUploadOpen={false}
+        onCSVUploadClose={() => {}}
+        onCSVSuccess={() => {}}
+        isFormOpen={isFormOpen}
+        onFormOpenChange={setIsFormOpen}
+        editingService={editingService}
+        onCreateService={handleCreateService}
+        onUpdateService={handleUpdateService}
+        selectedService={null}
+        isDetailsOpen={false}
+        onDetailsClose={() => {}}
+      />
     </div>
   );
 }
