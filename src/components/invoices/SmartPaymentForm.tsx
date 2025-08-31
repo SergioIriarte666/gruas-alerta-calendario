@@ -23,6 +23,7 @@ interface SmartPaymentFormProps {
 interface InvoiceSummary {
   id: string;
   folio: string;
+  numero_fiscal?: string;
   total: number;
   remaining_amount: number;
   due_date: string;
@@ -49,6 +50,7 @@ export const SmartPaymentForm: React.FC<SmartPaymentFormProps> = ({
   const [clientInvoices, setClientInvoices] = useState<InvoiceSummary[]>([]);
   const [paymentMode, setPaymentMode] = useState<'auto' | 'manual'>('auto');
   const [duplicateWarning, setDuplicateWarning] = useState<string>('');
+  const [showAllInvoices, setShowAllInvoices] = useState(false);
 
   // Fetch client invoices when client changes
   useEffect(() => {
@@ -67,12 +69,12 @@ export const SmartPaymentForm: React.FC<SmartPaymentFormProps> = ({
     try {
       const { data, error } = await supabase
         .from('invoices')
-        .select('id, folio, total, remaining_amount, due_date, status')
+        .select('id, folio, numero_fiscal, total, remaining_amount, due_date, status')
         .eq('client_id', formData.client_id)
         .in('status', ['sent', 'overdue'])
         .gt('remaining_amount', 0)
         .order('due_date', { ascending: true })
-        .limit(5);
+        .limit(20);
 
       if (error) throw error;
       setClientInvoices(data || []);
@@ -235,10 +237,10 @@ export const SmartPaymentForm: React.FC<SmartPaymentFormProps> = ({
                       
                       <div className="space-y-2">
                         <div className="text-sm font-medium text-gray-700">Próximas facturas a pagar:</div>
-                        {clientInvoices.slice(0, 3).map((invoice) => (
+                        {(showAllInvoices ? clientInvoices : clientInvoices.slice(0, 3)).map((invoice) => (
                           <div key={invoice.id} className="flex justify-between items-center text-sm p-2 bg-white rounded border">
                             <div className="flex items-center gap-2">
-                              <span className="font-medium">{invoice.folio}</span>
+                              <span className="font-medium">{invoice.numero_fiscal || invoice.folio}</span>
                               <Badge variant={invoice.status === 'overdue' ? 'destructive' : 'secondary'}>
                                 {invoice.status}
                               </Badge>
@@ -247,9 +249,15 @@ export const SmartPaymentForm: React.FC<SmartPaymentFormProps> = ({
                           </div>
                         ))}
                         {clientInvoices.length > 3 && (
-                          <div className="text-xs text-gray-500 text-center">
-                            +{clientInvoices.length - 3} facturas más
-                          </div>
+                          <button 
+                            onClick={() => setShowAllInvoices(!showAllInvoices)}
+                            className="text-xs text-blue-600 hover:text-blue-800 text-center w-full py-1 rounded hover:bg-blue-50 transition-colors"
+                          >
+                            {showAllInvoices 
+                              ? 'Mostrar menos' 
+                              : `+${clientInvoices.length - 3} facturas más`
+                            }
+                          </button>
                         )}
                       </div>
                     </>

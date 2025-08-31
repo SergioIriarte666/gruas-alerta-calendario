@@ -149,7 +149,7 @@ export const PaymentApplicationModal: React.FC<PaymentApplicationModalProps> = (
                         onCheckedChange={(checked) => handleInvoiceToggle(invoice.id, checked as boolean)}
                       />
                     </TableCell>
-                    <TableCell>{invoice.folio}</TableCell>
+                    <TableCell>{invoice.numero_fiscal || invoice.folio}</TableCell>
                     <TableCell>{new Date(invoice.due_date).toLocaleDateString()}</TableCell>
                     <TableCell>{formatCurrency(invoice.total)}</TableCell>
                     <TableCell>{formatCurrency(invoice.remaining_amount)}</TableCell>
