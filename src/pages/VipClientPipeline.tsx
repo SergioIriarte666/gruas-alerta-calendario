@@ -1,5 +1,6 @@
 import React from 'react';
 import { useParams } from 'react-router-dom';
+import { Service } from '@/types';
 import { ArrowLeft, Clock, TrendingUp, AlertTriangle, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,15 +10,32 @@ import { useClients } from '@/hooks/useClients';
 import { useClientServices } from '@/hooks/useClientServices';
 import { KanbanBoard } from '@/components/vip/KanbanBoard';
 import { PipelineMetrics } from '@/components/vip/PipelineMetrics';
+import { PurchaseOrderManager } from '@/components/vip/PurchaseOrderManager';
+import { PurchaseOrderDialog } from '@/components/vip/PurchaseOrderDialog';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 
 export default function VipClientPipeline() {
   const { clientId } = useParams<{ clientId: string }>();
   const navigate = useNavigate();
   const { clients } = useClients();
-  const { services, loading } = useClientServices(clientId || null);
+  const { services, loading, refetch } = useClientServices(clientId || null);
+  const [selectedService, setSelectedService] = React.useState<Service | null>(null);
+  const [showPurchaseOrderDialog, setShowPurchaseOrderDialog] = React.useState(false);
 
   const client = clients.find(c => c.id === clientId);
+
+  const handleServiceUpdate = () => {
+    refetch();
+    toast.success('Servicio actualizado correctamente');
+  };
+
+  const handleServiceSelect = (service: Service) => {
+    setSelectedService(service);
+    if (service.status === 'purchase_order_pending' && !service.purchaseOrderNumber) {
+      setShowPurchaseOrderDialog(true);
+    }
+  };
 
   if (!clientId) {
     navigate('/clients');
@@ -84,18 +102,35 @@ export default function VipClientPipeline() {
       {/* Pipeline Metrics */}
       <PipelineMetrics services={services} clientName={client.name} />
 
-      {/* Kanban Board */}
-      <div className="min-h-[600px]">
-        <KanbanBoard 
-          services={services} 
-          loading={loading}
-          clientId={clientId}
-          onServiceUpdate={() => {
-            // Trigger refresh of services
-            toast.success('Servicio actualizado correctamente');
-          }}
-        />
-      </div>
+      {/* Main Content Tabs */}
+      <Tabs defaultValue="pipeline" className="space-y-6">
+        <TabsList className="grid w-full grid-cols-2 bg-gray-800 border-gray-700">
+          <TabsTrigger value="pipeline" className="data-[state=active]:bg-blue-600">
+            Pipeline Kanban
+          </TabsTrigger>
+          <TabsTrigger value="purchase-orders" className="data-[state=active]:bg-blue-600">
+            Órdenes de Compra
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="pipeline" className="space-y-0">
+          <div className="min-h-[600px]">
+            <KanbanBoard 
+              services={services} 
+              loading={loading}
+              clientId={clientId}
+              onServiceUpdate={handleServiceUpdate}
+            />
+          </div>
+        </TabsContent>
+
+        <TabsContent value="purchase-orders" className="space-y-0">
+          <PurchaseOrderManager 
+            services={services}
+            onServiceSelect={handleServiceSelect}
+          />
+        </TabsContent>
+      </Tabs>
 
       {/* Info Footer */}
       <Card className="glass-card border-blue-500/20">
@@ -108,6 +143,14 @@ export default function VipClientPipeline() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Purchase Order Dialog */}
+      <PurchaseOrderDialog
+        open={showPurchaseOrderDialog}
+        onOpenChange={setShowPurchaseOrderDialog}
+        service={selectedService}
+        onUpdate={handleServiceUpdate}
+      />
     </div>
   );
 }

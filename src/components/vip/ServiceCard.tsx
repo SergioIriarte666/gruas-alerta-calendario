@@ -72,13 +72,28 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({
               {service.serviceType.name}
             </h4>
           </div>
-          <Button 
-            variant="ghost" 
-            size="sm"
-            className="opacity-0 group-hover:opacity-100 transition-opacity p-1 h-auto"
-          >
-            <Eye className="w-3 h-3" />
-          </Button>
+          <div className="flex gap-1">
+            {service.status === 'purchase_order_pending' && !service.purchaseOrderNumber && (
+              <Button 
+                variant="ghost" 
+                size="sm"
+                className="opacity-0 group-hover:opacity-100 transition-opacity p-1 h-auto text-orange-400 hover:text-orange-300"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  // Trigger purchase order registration
+                }}
+              >
+                <FileText className="w-3 h-3" />
+              </Button>
+            )}
+            <Button 
+              variant="ghost" 
+              size="sm"
+              className="opacity-0 group-hover:opacity-100 transition-opacity p-1 h-auto"
+            >
+              <Eye className="w-3 h-3" />
+            </Button>
+          </div>
         </div>
 
         {/* Service Details */}
