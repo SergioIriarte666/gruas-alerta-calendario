@@ -184,7 +184,19 @@ export const BatchUpdateModal: React.FC<BatchUpdateModalProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] glass-card">
+      <DialogContent 
+        className="max-w-4xl max-h-[90vh] glass-card select-none"
+        style={{ 
+          position: 'fixed',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          userSelect: 'none',
+          pointerEvents: 'auto'
+        }}
+        onMouseDown={(e) => e.stopPropagation()}
+        onDragStart={(e) => e.preventDefault()}
+        draggable={false}>
         <DialogHeader>
           <DialogTitle className="text-white flex items-center gap-2">
             <Hash className="w-5 h-5" />
