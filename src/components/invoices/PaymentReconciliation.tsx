@@ -266,6 +266,7 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
               <TableHeader>
                 <TableRow className="border-white/20">
                   <TableHead className="text-gray-300">Cliente</TableHead>
+                  <TableHead className="text-gray-300">N° Fiscal</TableHead>
                   <TableHead className="text-gray-300">Monto</TableHead>
                   <TableHead className="text-gray-300">Fecha</TableHead>
                   <TableHead className="text-gray-300">Estado</TableHead>
@@ -278,6 +279,12 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
                 {filteredPayments.map(payment => (
                   <TableRow key={payment.id} className="border-white/20">
                     <TableCell className="text-white">{payment.client?.name}</TableCell>
+                    <TableCell className="text-white">
+                      {payment.fiscal_numbers && payment.fiscal_numbers.length > 0 
+                        ? payment.fiscal_numbers.join(', ') 
+                        : '-'
+                      }
+                    </TableCell>
                     <TableCell className="text-white">{formatCurrency(payment.amount)}</TableCell>
                     <TableCell className="text-white">{new Date(payment.payment_date).toLocaleDateString()}</TableCell>
                     <TableCell>{getStatusBadge(payment.status)}</TableCell>

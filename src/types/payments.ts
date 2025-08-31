@@ -18,6 +18,7 @@ export interface Payment {
 
 export interface PaymentWithDetails extends Payment {
   client?: { id: string; name: string; };
+  fiscal_numbers?: string[];
 }
 
 export interface PaymentApplication {

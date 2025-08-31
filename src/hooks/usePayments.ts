@@ -26,12 +26,24 @@ export const usePayments = () => {
         .from('payments')
         .select(`
           *,
-          client:clients(id, name)
+          client:clients(id, name),
+          payment_applications(
+            invoice:invoices(numero_fiscal)
+          )
         `)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setPayments(data || []);
+      
+      // Procesar los datos para extraer los números fiscales
+      const processedPayments = (data || []).map(payment => ({
+        ...payment,
+        fiscal_numbers: payment.payment_applications?.map(app => 
+          app.invoice?.numero_fiscal
+        ).filter(Boolean) || []
+      }));
+      
+      setPayments(processedPayments);
     } catch (error) {
       console.error('Error fetching payments:', error);
       toast.error('Error al cargar los pagos');
