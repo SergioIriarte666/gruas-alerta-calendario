@@ -43,6 +43,8 @@ export const useClientServices = (clientId: string | null) => {
                   updatedAt: ''
                 },
                 purchaseOrder: service.purchase_order,
+                purchaseOrderNumber: service.purchase_order_number || '',
+                quoteNumber: service.quote_number || '',
                 vehicleBrand: service.vehicle_brand,
                 vehicleModel: service.vehicle_model,
                 licensePlate: service.license_plate,
