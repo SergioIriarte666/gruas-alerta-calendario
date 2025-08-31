@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useDeferredBilling } from '@/hooks/useDeferredBilling';
 import { Calendar, Clock, DollarSign, Users, FileText, AlertCircle } from 'lucide-react';
+import { ClientBillingSettings } from './ClientBillingSettings';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -237,19 +238,7 @@ export const DeferredBillingDashboard: React.FC = () => {
         </TabsContent>
 
         <TabsContent value="settings" className="space-y-4">
-          <Card className="glass-card">
-            <CardHeader>
-              <CardTitle className="text-white">Configuración de Facturación Diferida</CardTitle>
-              <CardDescription className="text-white/70">
-                Configurar clientes y parámetros de facturación diferida.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-8 text-white/70">
-                Panel de configuración - Próximamente
-              </div>
-            </CardContent>
-          </Card>
+          <ClientBillingSettings />
         </TabsContent>
       </Tabs>
     </div>
