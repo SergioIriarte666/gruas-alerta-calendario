@@ -196,8 +196,18 @@ export const createServiceFormSchema = (serviceTypeConfig?: ServiceTypeConfig) =
       }
       return true;
     }, {
-      message: 'Servicios de custodia requieren tipo de vehículo',
+      message: 'Servicios de custodia/arriendo requieren tipo de vehículo/equipo',
       path: ['custodyVehicleType']
+    })
+    .refine((data) => {
+      // Validación específica para "Arriendo de Equipos"
+      if (serviceTypeConfig?.name === 'Arriendo de Equipos') {
+        return data.custodyStartDate && data.custodyEndDate && data.custodyVehicleType && data.custodyDailyRate;
+      }
+      return true;
+    }, {
+      message: 'Arriendo de equipos requiere fechas de inicio/fin, tipo de equipo y tarifa diaria',
+      path: ['custodyStartDate']
     });
 };
 

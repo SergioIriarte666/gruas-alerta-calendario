@@ -1,53 +1,52 @@
 import React, { useEffect } from 'react';
-import { useFormContext } from 'react-hook-form';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { Shield, Wrench } from 'lucide-react';
+import { Wrench, Shield } from 'lucide-react';
 
-interface CustodySectionProps {
+interface RentalEquipmentSectionProps {
   serviceTypeName?: string;
+  custodyMode: string;
+  custodyDays?: number;
+  custodyDailyRate?: number;
+  custodyStartDate: string;
+  custodyEndDate: string;
+  custodyVehicleType: string;
+  custodyDiscountPercentage: number;
+  custodyTotalAmount?: number;
+  custodyNotes: string;
+  onCustodyModeChange: (value: string) => void;
+  onCustodyDaysChange: (value: number) => void;
+  onCustodyDailyRateChange: (value: number) => void;
+  onCustodyStartDateChange: (value: string) => void;
+  onCustodyEndDateChange: (value: string) => void;
+  onCustodyVehicleTypeChange: (value: string) => void;
+  onCustodyDiscountPercentageChange: (value: number) => void;
+  onCustodyNotesChange: (value: string) => void;
 }
 
-export const CustodySection = ({ serviceTypeName }: CustodySectionProps) => {
-  const { watch, setValue, register, formState: { errors } } = useFormContext();
-  
-  const custodyMode = watch('custodyMode');
-  const custodyDays = watch('custodyDays');
-  const custodyDailyRate = watch('custodyDailyRate');
-  const custodyStartDate = watch('custodyStartDate');
-  const custodyEndDate = watch('custodyEndDate');
-  const custodyDiscountPercentage = watch('custodyDiscountPercentage');
-
-  // Cálculo automático para modo manual
-  useEffect(() => {
-    if (custodyMode === 'manual' && custodyDays && custodyDailyRate) {
-      const subtotal = custodyDays * custodyDailyRate;
-      const discount = (subtotal * (custodyDiscountPercentage || 0)) / 100;
-      const total = subtotal - discount;
-      setValue('custodyTotalAmount', total);
-    }
-  }, [custodyDays, custodyDailyRate, custodyDiscountPercentage, custodyMode, setValue]);
-
-  // Cálculo automático para modo calendario
-  useEffect(() => {
-    if (custodyMode === 'calendar' && custodyStartDate && custodyEndDate && custodyDailyRate) {
-      const start = new Date(custodyStartDate);
-      const end = new Date(custodyEndDate);
-      const diffTime = Math.abs(end.getTime() - start.getTime());
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
-      
-      setValue('custodyDays', diffDays);
-      
-      const subtotal = diffDays * custodyDailyRate;
-      const discount = (subtotal * (custodyDiscountPercentage || 0)) / 100;
-      const total = subtotal - discount;
-      setValue('custodyTotalAmount', total);
-    }
-  }, [custodyStartDate, custodyEndDate, custodyDailyRate, custodyDiscountPercentage, custodyMode, setValue]);
-
+export const RentalEquipmentSection = ({
+  serviceTypeName,
+  custodyMode,
+  custodyDays,
+  custodyDailyRate,
+  custodyStartDate,
+  custodyEndDate,
+  custodyVehicleType,
+  custodyDiscountPercentage,
+  custodyTotalAmount,
+  custodyNotes,
+  onCustodyModeChange,
+  onCustodyDaysChange,
+  onCustodyDailyRateChange,
+  onCustodyStartDateChange,
+  onCustodyEndDateChange,
+  onCustodyVehicleTypeChange,
+  onCustodyDiscountPercentageChange,
+  onCustodyNotesChange,
+}: RentalEquipmentSectionProps) => {
   // Determinar si es servicio de arriendo de equipos
   const isEquipmentRental = serviceTypeName === 'Arriendo de Equipos';
   
@@ -57,9 +56,9 @@ export const CustodySection = ({ serviceTypeName }: CustodySectionProps) => {
   // Para arriendo de equipos, forzar modo calendar si está en none
   useEffect(() => {
     if (isEquipmentRental && custodyMode === 'none') {
-      setValue('custodyMode', 'calendar');
+      onCustodyModeChange('calendar');
     }
-  }, [isEquipmentRental, custodyMode, setValue]);
+  }, [isEquipmentRental, custodyMode, onCustodyModeChange]);
 
   return (
     <Card>
@@ -85,8 +84,8 @@ export const CustodySection = ({ serviceTypeName }: CustodySectionProps) => {
               {isEquipmentRental ? 'Modo de Arriendo' : 'Modo de Custodia'}
             </Label>
             <Select 
-              onValueChange={(value) => setValue('custodyMode', value)} 
-              defaultValue={custodyMode}
+              value={custodyMode}
+              onValueChange={onCustodyModeChange}
               disabled={isEquipmentRental} // Para arriendo siempre debe ser calendar
             >
               <SelectTrigger>
@@ -107,12 +106,10 @@ export const CustodySection = ({ serviceTypeName }: CustodySectionProps) => {
               {isEquipmentRental ? 'Tipo de Equipo' : 'Tipo de Vehículo'}
             </Label>
             <Input
-              {...register('custodyVehicleType')}
+              value={custodyVehicleType}
+              onChange={(e) => onCustodyVehicleTypeChange(e.target.value)}
               placeholder={isEquipmentRental ? "Ej: Grúa, Montacarga, Excavadora" : "Ej: Automóvil, Camioneta, Motocicleta"}
             />
-            {errors.custodyVehicleType && (
-              <p className="text-destructive text-sm mt-1">{String(errors.custodyVehicleType.message)}</p>
-            )}
           </div>
         </div>
 
@@ -124,24 +121,20 @@ export const CustodySection = ({ serviceTypeName }: CustodySectionProps) => {
               </Label>
               <Input
                 type="number"
-                {...register('custodyDays', { valueAsNumber: true })}
+                value={custodyDays || ''}
+                onChange={(e) => onCustodyDaysChange(Number(e.target.value))}
                 placeholder="Número de días"
               />
-              {errors.custodyDays && (
-                <p className="text-destructive text-sm mt-1">{String(errors.custodyDays.message)}</p>
-              )}
             </div>
 
             <div>
               <Label htmlFor="custodyDailyRate">Tarifa Diaria</Label>
               <Input
                 type="number"
-                {...register('custodyDailyRate', { valueAsNumber: true })}
+                value={custodyDailyRate || ''}
+                onChange={(e) => onCustodyDailyRateChange(Number(e.target.value))}
                 placeholder="Tarifa por día"
               />
-              {errors.custodyDailyRate && (
-                <p className="text-destructive text-sm mt-1">{String(errors.custodyDailyRate.message)}</p>
-              )}
             </div>
           </div>
         )}
@@ -154,11 +147,9 @@ export const CustodySection = ({ serviceTypeName }: CustodySectionProps) => {
               </Label>
               <Input
                 type="date"
-                {...register('custodyStartDate')}
+                value={custodyStartDate}
+                onChange={(e) => onCustodyStartDateChange(e.target.value)}
               />
-              {errors.custodyStartDate && (
-                <p className="text-destructive text-sm mt-1">{String(errors.custodyStartDate.message)}</p>
-              )}
             </div>
 
             <div>
@@ -167,18 +158,17 @@ export const CustodySection = ({ serviceTypeName }: CustodySectionProps) => {
               </Label>
               <Input
                 type="date"
-                {...register('custodyEndDate')}
+                value={custodyEndDate}
+                onChange={(e) => onCustodyEndDateChange(e.target.value)}
               />
-              {errors.custodyEndDate && (
-                <p className="text-destructive text-sm mt-1">{String(errors.custodyEndDate.message)}</p>
-              )}
             </div>
 
             <div>
               <Label htmlFor="custodyDailyRate">Tarifa Diaria</Label>
               <Input
                 type="number"
-                {...register('custodyDailyRate', { valueAsNumber: true })}
+                value={custodyDailyRate || ''}
+                onChange={(e) => onCustodyDailyRateChange(Number(e.target.value))}
                 placeholder="Tarifa por día"
               />
             </div>
@@ -190,7 +180,8 @@ export const CustodySection = ({ serviceTypeName }: CustodySectionProps) => {
             <Label htmlFor="custodyDiscountPercentage">Descuento (%)</Label>
             <Input
               type="number"
-              {...register('custodyDiscountPercentage', { valueAsNumber: true })}
+              value={custodyDiscountPercentage}
+              onChange={(e) => onCustodyDiscountPercentageChange(Number(e.target.value))}
               placeholder="0"
               min="0"
               max="100"
@@ -203,7 +194,7 @@ export const CustodySection = ({ serviceTypeName }: CustodySectionProps) => {
             </Label>
             <Input
               type="number"
-              {...register('custodyTotalAmount', { valueAsNumber: true })}
+              value={custodyTotalAmount || ''}
               placeholder="Total calculado"
               readOnly
               className="bg-muted"
@@ -216,7 +207,8 @@ export const CustodySection = ({ serviceTypeName }: CustodySectionProps) => {
             {isEquipmentRental ? 'Notas del Arriendo' : 'Notas de Custodia'}
           </Label>
           <Textarea
-            {...register('custodyNotes')}
+            value={custodyNotes}
+            onChange={(e) => onCustodyNotesChange(e.target.value)}
             placeholder={isEquipmentRental ? "Observaciones adicionales sobre el arriendo" : "Observaciones adicionales sobre la custodia"}
             rows={3}
           />

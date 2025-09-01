@@ -12,6 +12,7 @@ import { ObservationsSection } from './form/ObservationsSection';
 import { FormActions } from './form/FormActions';
 import { ServiceFormHeader } from './form/ServiceFormHeader';
 import { CustodySection } from '../forms/CustodySection';
+import { RentalEquipmentSection } from '../forms/RentalEquipmentSection';
 import { useServiceManager } from '@/hooks/services/useServiceManager';
 import { useClients } from '@/hooks/useClients';
 import { useCranes } from '@/hooks/useCranes';
@@ -505,140 +506,29 @@ export const EnhancedServiceForm = ({
           disabled={false}
         />
 
-        {/* Custodia de Vehículos */}
-        <div className="custody-section">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Shield className="h-5 w-5" />
-                Información de Custodia
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="custodyMode">Modo de Custodia</Label>
-                  <Select value={formData.custodyMode} onValueChange={(value) => setFormData(prev => ({ ...prev, custodyMode: value as any }))}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Seleccionar modo" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">Sin custodia</SelectItem>
-                      <SelectItem value="manual">Manual (días específicos)</SelectItem>
-                      <SelectItem value="calendar">Calendario (fechas)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {formData.custodyMode !== 'none' && (
-                  <div>
-                    <Label htmlFor="custodyVehicleType">Tipo de Vehículo</Label>
-                    <Input
-                      value={formData.custodyVehicleType}
-                      onChange={(e) => setFormData(prev => ({ ...prev, custodyVehicleType: e.target.value }))}
-                      placeholder="Ej: Automóvil, Camioneta, Motocicleta"
-                    />
-                  </div>
-                )}
-              </div>
-
-              {formData.custodyMode === 'manual' && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="custodyDays">Días de Custodia</Label>
-                    <Input
-                      type="number"
-                      value={formData.custodyDays || ''}
-                      onChange={(e) => setFormData(prev => ({ ...prev, custodyDays: Number(e.target.value) }))}
-                      placeholder="Número de días"
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="custodyDailyRate">Tarifa Diaria</Label>
-                    <Input
-                      type="number"
-                      value={formData.custodyDailyRate || ''}
-                      onChange={(e) => setFormData(prev => ({ ...prev, custodyDailyRate: Number(e.target.value) }))}
-                      placeholder="Tarifa por día"
-                    />
-                  </div>
-                </div>
-              )}
-
-              {formData.custodyMode === 'calendar' && (
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
-                    <Label htmlFor="custodyStartDate">Fecha de Inicio</Label>
-                    <Input
-                      type="date"
-                      value={formData.custodyStartDate}
-                      onChange={(e) => setFormData(prev => ({ ...prev, custodyStartDate: e.target.value }))}
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="custodyEndDate">Fecha de Fin</Label>
-                    <Input
-                      type="date"
-                      value={formData.custodyEndDate}
-                      onChange={(e) => setFormData(prev => ({ ...prev, custodyEndDate: e.target.value }))}
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="custodyDailyRate">Tarifa Diaria</Label>
-                    <Input
-                      type="number"
-                      value={formData.custodyDailyRate || ''}
-                      onChange={(e) => setFormData(prev => ({ ...prev, custodyDailyRate: Number(e.target.value) }))}
-                      placeholder="Tarifa por día"
-                    />
-                  </div>
-                </div>
-              )}
-
-              {formData.custodyMode !== 'none' && (
-                <>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="custodyDiscountPercentage">Descuento (%)</Label>
-                      <Input
-                        type="number"
-                        value={formData.custodyDiscountPercentage}
-                        onChange={(e) => setFormData(prev => ({ ...prev, custodyDiscountPercentage: Number(e.target.value) }))}
-                        placeholder="0"
-                        min="0"
-                        max="100"
-                      />
-                    </div>
-
-                    <div>
-                      <Label htmlFor="custodyTotalAmount">Total Custodia</Label>
-                      <Input
-                        type="number"
-                        value={formData.custodyTotalAmount || ''}
-                        readOnly
-                        className="bg-muted"
-                        placeholder="Total calculado"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <Label htmlFor="custodyNotes">Notas de Custodia</Label>
-                    <Textarea
-                      value={formData.custodyNotes}
-                      onChange={(e) => setFormData(prev => ({ ...prev, custodyNotes: e.target.value }))}
-                      placeholder="Observaciones adicionales sobre la custodia"
-                      rows={3}
-                    />
-                  </div>
-                </>
-              )}
-            </CardContent>
-          </Card>
-        </div>
+        {/* Custodia/Arriendo de Equipos */}
+        {(formData.custodyMode !== 'none' || selectedServiceType?.name === 'Arriendo de Equipos') && (
+          <RentalEquipmentSection 
+            serviceTypeName={selectedServiceType?.name}
+            custodyMode={formData.custodyMode}
+            custodyDays={formData.custodyDays}
+            custodyDailyRate={formData.custodyDailyRate}
+            custodyStartDate={formData.custodyStartDate}
+            custodyEndDate={formData.custodyEndDate}
+            custodyVehicleType={formData.custodyVehicleType}
+            custodyDiscountPercentage={formData.custodyDiscountPercentage}
+            custodyTotalAmount={formData.custodyTotalAmount}
+            custodyNotes={formData.custodyNotes}
+            onCustodyModeChange={(value) => setFormData(prev => ({ ...prev, custodyMode: value as any }))}
+            onCustodyDaysChange={(value) => setFormData(prev => ({ ...prev, custodyDays: value }))}
+            onCustodyDailyRateChange={(value) => setFormData(prev => ({ ...prev, custodyDailyRate: value }))}
+            onCustodyStartDateChange={(value) => setFormData(prev => ({ ...prev, custodyStartDate: value }))}
+            onCustodyEndDateChange={(value) => setFormData(prev => ({ ...prev, custodyEndDate: value }))}
+            onCustodyVehicleTypeChange={(value) => setFormData(prev => ({ ...prev, custodyVehicleType: value }))}
+            onCustodyDiscountPercentageChange={(value) => setFormData(prev => ({ ...prev, custodyDiscountPercentage: value }))}
+            onCustodyNotesChange={(value) => setFormData(prev => ({ ...prev, custodyNotes: value }))}
+          />
+        )}
 
         {/* Observaciones */}
         <ObservationsSection
