@@ -22,7 +22,9 @@ import {
   Truck,
   Hash,
   CheckSquare,
-  SquareCheck
+  SquareCheck,
+  ChevronUp,
+  ChevronsUpDown
 } from 'lucide-react';
 import { Service, ServiceStatus } from '@/types';
 import { format, differenceInDays } from 'date-fns';
@@ -52,6 +54,9 @@ interface PipelineListViewProps {
   onServiceEdit?: (service: Service) => void;
   onBatchUpdate?: (updates: BatchUpdateData) => Promise<void>;
 }
+
+type SortField = 'folio' | 'serviceType' | 'serviceDate' | 'value' | 'daysInStatus' | 'quoteNumber';
+type SortDirection = 'asc' | 'desc';
 
 // Definir los estados del pipeline con sus colores
 const PIPELINE_STATUSES = [
@@ -113,6 +118,49 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
   const [expandedGroups, setExpandedGroups] = useState<Set<ServiceStatus>>(new Set());
   const [selectedServices, setSelectedServices] = useState<Set<string>>(new Set());
   const [showBatchModal, setShowBatchModal] = useState(false);
+  const [sortField, setSortField] = useState<SortField>('serviceDate');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
+
+  // Función para ordenar servicios
+  const sortServices = (services: Service[]): Service[] => {
+    return [...services].sort((a, b) => {
+      let aValue: any;
+      let bValue: any;
+
+      switch (sortField) {
+        case 'folio':
+          aValue = a.folio || '';
+          bValue = b.folio || '';
+          break;
+        case 'serviceType':
+          aValue = a.serviceType.name || '';
+          bValue = b.serviceType.name || '';
+          break;
+        case 'serviceDate':
+          aValue = new Date(a.serviceDate);
+          bValue = new Date(b.serviceDate);
+          break;
+        case 'value':
+          aValue = a.value || 0;
+          bValue = b.value || 0;
+          break;
+        case 'daysInStatus':
+          aValue = differenceInDays(new Date(), new Date(a.serviceDate));
+          bValue = differenceInDays(new Date(), new Date(b.serviceDate));
+          break;
+        case 'quoteNumber':
+          aValue = a.quoteNumber || '';
+          bValue = b.quoteNumber || '';
+          break;
+        default:
+          return 0;
+      }
+
+      if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
+      if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
+      return 0;
+    });
+  };
 
   // Agrupar servicios por estado
   const serviceGroups = useMemo(() => {
@@ -175,7 +223,7 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
         return {
           status: statusConfig.id,
           title: statusConfig.title,
-          services: statusServices,
+          services: sortServices(statusServices),
           totalValue,
           averageDays: Math.round(averageDays),
           color: statusConfig.color,
@@ -195,7 +243,7 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
           service.quoteNumber?.toLowerCase().includes(searchLower)
         ) && group.services.length > 0;
       });
-  }, [services, searchTerm]);
+  }, [services, searchTerm, sortField, sortDirection]);
 
   const toggleGroup = (status: ServiceStatus) => {
     const newExpanded = new Set(expandedGroups);
@@ -245,6 +293,36 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
   };
 
   const selectedServicesArray = services.filter(s => selectedServices.has(s.id));
+
+  const handleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
+    }
+  };
+
+  const getSortIcon = (field: SortField) => {
+    if (sortField !== field) {
+      return <ChevronsUpDown className="w-4 h-4 text-gray-500" />;
+    }
+    return sortDirection === 'asc' 
+      ? <ChevronUp className="w-4 h-4 text-blue-400" />
+      : <ChevronDown className="w-4 h-4 text-blue-400" />;
+  };
+
+  const SortableHeader = ({ field, children }: { field: SortField; children: React.ReactNode }) => (
+    <TableHead 
+      className="text-gray-300 cursor-pointer hover:text-white transition-colors select-none"
+      onClick={() => handleSort(field)}
+    >
+      <div className="flex items-center gap-1">
+        {children}
+        {getSortIcon(field)}
+      </div>
+    </TableHead>
+  );
 
   const getStatusBadge = (status: ServiceStatus) => {
     const statusConfig = PIPELINE_STATUSES.find(s => s.id === status);
@@ -430,14 +508,14 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
                           <TableHead className="text-gray-300 w-12">
                             <CheckSquare className="w-4 h-4" />
                           </TableHead>
-                          <TableHead className="text-gray-300">Folio</TableHead>
-                          <TableHead className="text-gray-300">Tipo de Servicio</TableHead>
-                          <TableHead className="text-gray-300">Fecha</TableHead>
+                          <SortableHeader field="folio">Folio</SortableHeader>
+                          <SortableHeader field="serviceType">Tipo de Servicio</SortableHeader>
+                          <SortableHeader field="serviceDate">Fecha</SortableHeader>
                           <TableHead className="text-gray-300">Operador</TableHead>
                           <TableHead className="text-gray-300">Grúa</TableHead>
-                          <TableHead className="text-gray-300">Valor</TableHead>
-                          <TableHead className="text-gray-300">Días en Estado</TableHead>
-                          <TableHead className="text-gray-300">Cotización</TableHead>
+                          <SortableHeader field="value">Valor</SortableHeader>
+                          <SortableHeader field="daysInStatus">Días en Estado</SortableHeader>
+                          <SortableHeader field="quoteNumber">Cotización</SortableHeader>
                           <TableHead className="text-gray-300">Acciones</TableHead>
                         </TableRow>
                       </TableHeader>
