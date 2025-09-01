@@ -46,6 +46,7 @@ export const ObservationsSection = ({
               <SelectItem value="invoiced">Facturado</SelectItem>
               <SelectItem value="quoted">Cotizado</SelectItem>
               <SelectItem value="purchase_order_pending">Orden de Compra Pendiente</SelectItem>
+              <SelectItem value="with_purchase_order">Con Orden de Compra</SelectItem>
             </SelectContent>
           </Select>
         </div>
