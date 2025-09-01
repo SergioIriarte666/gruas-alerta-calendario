@@ -113,6 +113,7 @@ export const AutomationRules = () => {
   const [rules, setRules] = useState<AutomationRule[]>(defaultRules);
   const [editingRule, setEditingRule] = useState<AutomationRule | null>(null);
   const [isNewRuleDialogOpen, setIsNewRuleDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
   const activeRules = rules.filter(r => r.isActive);
   const temporalRules = rules.filter(r => r.trigger.type === 'time_based');
@@ -122,6 +123,45 @@ export const AutomationRules = () => {
     setRules(prev => prev.map(rule => 
       rule.id === ruleId ? { ...rule, isActive: !rule.isActive } : rule
     ));
+  };
+
+  const createNewRule = () => {
+    const newRule: AutomationRule = {
+      id: Date.now().toString(),
+      name: 'Nueva Regla',
+      description: 'Describe qué hace esta regla',
+      isActive: false,
+      trigger: {
+        type: 'state_change',
+        value: 'pending → in_progress'
+      },
+      action: {
+        type: 'notification',
+        config: {
+          title: 'Nueva Notificación',
+          message: 'Mensaje de la notificación'
+        }
+      },
+      icon: Bell
+    };
+    setEditingRule(newRule);
+    setIsEditDialogOpen(true);
+  };
+
+  const saveRule = (rule: AutomationRule) => {
+    if (rules.find(r => r.id === rule.id)) {
+      // Update existing rule
+      setRules(prev => prev.map(r => r.id === rule.id ? rule : r));
+    } else {
+      // Add new rule
+      setRules(prev => [...prev, rule]);
+    }
+    setIsEditDialogOpen(false);
+    setEditingRule(null);
+  };
+
+  const deleteRule = (ruleId: string) => {
+    setRules(prev => prev.filter(r => r.id !== ruleId));
   };
 
   const RuleCard = ({ rule }: { rule: AutomationRule }) => {
@@ -143,26 +183,16 @@ export const AutomationRules = () => {
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <Dialog>
-                <DialogTrigger asChild>
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => setEditingRule(rule)}
-                  >
-                    <Settings className="h-4 w-4" />
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-2xl">
-                  <DialogHeader>
-                    <DialogTitle>Configurar Regla: {rule.name}</DialogTitle>
-                  </DialogHeader>
-                  <RuleConfigForm rule={rule} onSave={(updatedRule) => {
-                    setRules(prev => prev.map(r => r.id === rule.id ? updatedRule : r));
-                    setEditingRule(null);
-                  }} />
-                </DialogContent>
-              </Dialog>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => {
+                  setEditingRule(rule);
+                  setIsEditDialogOpen(true);
+                }}
+              >
+                <Settings className="h-4 w-4" />
+              </Button>
               <Switch 
                 checked={rule.isActive}
                 onCheckedChange={() => toggleRule(rule.id)}
@@ -196,14 +226,23 @@ export const AutomationRules = () => {
     );
   };
 
-  const RuleConfigForm = ({ rule, onSave }: { 
+  const RuleConfigForm = ({ rule, onSave, onDelete }: { 
     rule: AutomationRule; 
-    onSave: (rule: AutomationRule) => void 
+    onSave: (rule: AutomationRule) => void;
+    onDelete?: (ruleId: string) => void;
   }) => {
     const [formData, setFormData] = useState(rule);
 
     const handleSave = () => {
       onSave(formData);
+    };
+
+    const handleDelete = () => {
+      if (onDelete && rule.id) {
+        onDelete(rule.id);
+        setIsEditDialogOpen(false);
+        setEditingRule(null);
+      }
     };
 
     return (
@@ -314,13 +353,25 @@ export const AutomationRules = () => {
           </div>
         )}
 
-        <div className="flex justify-end gap-2 pt-4">
-          <Button variant="outline" onClick={() => setEditingRule(null)}>
-            Cancelar
-          </Button>
-          <Button onClick={handleSave}>
-            Guardar Cambios
-          </Button>
+        <div className="flex justify-between pt-4">
+          <div>
+            {onDelete && rule.id && rules.find(r => r.id === rule.id) && (
+              <Button variant="destructive" onClick={handleDelete}>
+                Eliminar Regla
+              </Button>
+            )}  
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => {
+              setIsEditDialogOpen(false);
+              setEditingRule(null);
+            }}>
+              Cancelar
+            </Button>
+            <Button onClick={handleSave}>
+              {rule.id && rules.find(r => r.id === rule.id) ? 'Guardar Cambios' : 'Crear Regla'}
+            </Button>
+          </div>
         </div>
       </div>
     );
@@ -339,7 +390,7 @@ export const AutomationRules = () => {
             <p className="text-muted-foreground">Configura automatizaciones personalizadas para Amphos 21</p>
           </div>
         </div>
-        <Button onClick={() => setIsNewRuleDialogOpen(true)} className="gap-2">
+        <Button onClick={createNewRule} className="gap-2">
           <Zap className="h-4 w-4" />
           Nueva Regla
         </Button>
@@ -396,6 +447,27 @@ export const AutomationRules = () => {
           <RuleCard key={rule.id} rule={rule} />
         ))}
       </div>
+
+      {/* Edit Rule Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>
+              {editingRule && rules.find(r => r.id === editingRule.id) 
+                ? `Configurar Regla: ${editingRule.name}` 
+                : 'Nueva Regla de Automatización'
+              }
+            </DialogTitle>
+          </DialogHeader>
+          {editingRule && (
+            <RuleConfigForm 
+              rule={editingRule} 
+              onSave={saveRule}
+              onDelete={deleteRule}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
