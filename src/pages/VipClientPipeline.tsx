@@ -96,8 +96,15 @@ export default function VipClientPipeline() {
   // Función para actualización por lotes
   const handleBatchUpdate = async (updates: any) => {
     try {
+      console.log('🔄 Iniciando actualización por lotes:', updates);
+      
       // Actualizar cada servicio individualmente
       const updatePromises = updates.services.map(async (serviceUpdate: any) => {
+        console.log('📝 Actualizando servicio:', serviceUpdate.id, {
+          quoteNumber: serviceUpdate.quote_number,
+          purchaseOrder: serviceUpdate.purchase_order_number
+        });
+        
         return await updateService(serviceUpdate.id, {
           quoteNumber: serviceUpdate.quote_number,
           purchaseOrder: serviceUpdate.purchase_order_number
@@ -108,7 +115,7 @@ export default function VipClientPipeline() {
       toast.success(`${updates.services.length} servicios actualizados correctamente`);
       refetch();
     } catch (error) {
-      console.error('Error en actualización por lotes:', error);
+      console.error('❌ Error en actualización por lotes:', error);
       toast.error('Error al actualizar los servicios');
       throw error;
     }

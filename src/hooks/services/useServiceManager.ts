@@ -391,6 +391,12 @@ export const useServiceManager = () => {
   const updateServiceMutation = useMutation({
     mutationFn: async ({ id, serviceData }: { id: string; serviceData: Partial<ServiceFormData> }): Promise<Service> => {
       // Transformar datos para Supabase con validación de fechas y UUIDs
+      console.log('🔧 Datos de servicio recibidos en useServiceManager:', {
+        id: id,
+        quoteNumber: serviceData.quoteNumber,
+        purchaseOrder: serviceData.purchaseOrder
+      });
+      
       const transformedData = {
         ...serviceData,
         // Validar fechas - convertir cadenas vacías a null
