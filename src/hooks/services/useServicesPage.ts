@@ -69,7 +69,16 @@ export const useServicesPage = () => {
           service.vehicleBrand.toLowerCase().includes(searchTerm.toLowerCase());
         
         const statusesToFilter = statusFilter === 'all' ? [] : statusFilter.split(',');
-        const matchesStatus = statusFilter === 'all' || statusesToFilter.includes(service.status);
+        let matchesStatus = false;
+        
+        if (statusFilter === 'all') {
+          matchesStatus = true;
+        } else if (statusFilter === 'with_purchase_order') {
+          // Filtrar servicios que tienen orden de compra asignada
+          matchesStatus = !!(service.purchaseOrderNumber || service.purchaseOrder);
+        } else {
+          matchesStatus = statusesToFilter.includes(service.status);
+        }
         
         // Filtro para servicios futuros si se especifica el parámetro - FIXED: Solo filtrar si explicitly future=true
         const matchesFuture = futureParam !== 'true' || isFutureDate(service.serviceDate);

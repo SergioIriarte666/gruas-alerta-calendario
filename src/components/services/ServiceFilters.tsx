@@ -119,6 +119,12 @@ export const ServiceFilters = ({
                   >
                     Esperando O.C.
                   </SelectItem>
+                  <SelectItem 
+                    value="with_purchase_order" 
+                    className="text-black hover:bg-gray-100 focus:bg-gray-100"
+                  >
+                    Con Orden de Compra
+                  </SelectItem>
                 </SelectContent>
               </Select>
               <Button 
