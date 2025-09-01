@@ -126,11 +126,6 @@ export const Sidebar = ({
     icon: Zap,
     adminOnly: true
   }, {
-    name: 'Automatización',
-    href: '/automation',
-    icon: Bot,
-    adminOnly: true
-  }, {
     name: 'Configuración',
     href: '/settings',
     icon: Settings,

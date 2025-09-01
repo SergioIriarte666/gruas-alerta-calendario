@@ -15,7 +15,7 @@ import { PurchaseOrderManager } from '@/components/vip/PurchaseOrderManager';
 import { PurchaseOrderDialog } from '@/components/vip/PurchaseOrderDialog';
 import { ServiceDetailsModal } from '@/components/services/ServiceDetailsModal';
 import { ServicesDialogs } from '@/components/services/ServicesDialogs';
-import { AutomationRules } from '@/components/vip/AutomationRules';
+
 import { NotificationCenter } from '@/components/vip/NotificationCenter';
 import { SmartAlerts } from '@/components/vip/SmartAlerts';
 import { ClientAnalytics } from '@/components/vip/ClientAnalytics';
@@ -194,15 +194,12 @@ export default function VipClientPipeline() {
 
       {/* Main Content Tabs */}
       <Tabs defaultValue="pipeline" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-6 bg-gray-800 border-gray-700">
+        <TabsList className="grid w-full grid-cols-5 bg-gray-800 border-gray-700">
           <TabsTrigger value="pipeline" className="data-[state=active]:bg-blue-600">
             Pipeline
           </TabsTrigger>
           <TabsTrigger value="purchase-orders" className="data-[state=active]:bg-blue-600">
             O.C.
-          </TabsTrigger>
-          <TabsTrigger value="automation" className="data-[state=active]:bg-blue-600">
-            Automatización
           </TabsTrigger>
           <TabsTrigger value="notifications" className="data-[state=active]:bg-blue-600">
             Notificaciones
@@ -237,12 +234,6 @@ export default function VipClientPipeline() {
           />
         </TabsContent>
 
-        <TabsContent value="automation" className="space-y-0">
-          <AutomationRules 
-            clientId={clientId}
-            clientName={client.name}
-          />
-        </TabsContent>
 
         <TabsContent value="notifications" className="space-y-0">
           <NotificationCenter 
