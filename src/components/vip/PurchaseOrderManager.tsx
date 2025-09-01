@@ -28,11 +28,11 @@ export const PurchaseOrderManager: React.FC<PurchaseOrderManagerProps> = ({
   onServiceSelect
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'quoted' | 'purchase_order_pending' | 'pending' | 'with_po'>('all');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'quoted' | 'purchase_order_pending' | 'with_purchase_order' | 'pending' | 'with_po'>('all');
 
   // Filtrar servicios relevantes para órdenes de compra
   const relevantServices = services.filter(service => 
-    ['quoted', 'purchase_order_pending', 'pending', 'in_progress', 'completed'].includes(service.status)
+    ['quoted', 'purchase_order_pending', 'with_purchase_order', 'pending', 'in_progress', 'completed'].includes(service.status)
   );
 
   // Aplicar filtros
@@ -68,6 +68,12 @@ export const PurchaseOrderManager: React.FC<PurchaseOrderManagerProps> = ({
           label: 'Esperando O.C.',
           color: 'bg-orange-500/20 text-orange-300 border-orange-500/30',
           icon: AlertTriangle
+        };
+      case 'with_purchase_order':
+        return {
+          label: 'Con Orden de Compra',
+          color: 'bg-teal-500/20 text-teal-300 border-teal-500/30',
+          icon: CheckCircle
         };
       case 'pending':
         return {
@@ -207,6 +213,14 @@ export const PurchaseOrderManager: React.FC<PurchaseOrderManagerProps> = ({
                 className="text-orange-400 border-orange-500/30"
               >
                 Esperando O.C.
+              </Button>
+              <Button
+                variant={statusFilter === 'with_purchase_order' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setStatusFilter('with_purchase_order')}
+                className="text-teal-400 border-teal-500/30"
+              >
+                Con Orden de Compra
               </Button>
               <Button
                 variant={statusFilter === 'with_po' ? 'default' : 'outline'}
