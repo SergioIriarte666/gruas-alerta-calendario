@@ -3731,6 +3731,7 @@ export type Database = {
         | "inspection_completed"
         | "quoted"
         | "purchase_order_pending"
+        | "with_purchase_order"
       supplier_category:
         | "combustible"
         | "mantenimiento"
@@ -3897,6 +3898,7 @@ export const Constants = {
         "inspection_completed",
         "quoted",
         "purchase_order_pending",
+        "with_purchase_order",
       ],
       supplier_category: [
         "combustible",
