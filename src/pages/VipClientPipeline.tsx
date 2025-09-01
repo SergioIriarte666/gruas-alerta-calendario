@@ -16,8 +16,6 @@ import { PurchaseOrderDialog } from '@/components/vip/PurchaseOrderDialog';
 import { ServiceDetailsModal } from '@/components/services/ServiceDetailsModal';
 import { ServicesDialogs } from '@/components/services/ServicesDialogs';
 
-import { NotificationCenter } from '@/components/vip/NotificationCenter';
-import { SmartAlerts } from '@/components/vip/SmartAlerts';
 import { ClientAnalytics } from '@/components/vip/ClientAnalytics';
 import { ExecutiveReports } from '@/components/vip/ExecutiveReports';
 import { PredictiveInsights } from '@/components/vip/PredictiveInsights';
@@ -186,23 +184,14 @@ export default function VipClientPipeline() {
       {/* Pipeline Metrics */}
       <PipelineMetrics services={services} clientName={client.name} />
 
-      {/* Smart Alerts */}
-      <SmartAlerts 
-        services={services}
-        clientId={clientId}
-      />
-
       {/* Main Content Tabs */}
       <Tabs defaultValue="pipeline" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-5 bg-gray-800 border-gray-700">
+        <TabsList className="grid w-full grid-cols-4 bg-gray-800 border-gray-700">
           <TabsTrigger value="pipeline" className="data-[state=active]:bg-blue-600">
             Pipeline
           </TabsTrigger>
           <TabsTrigger value="purchase-orders" className="data-[state=active]:bg-blue-600">
             O.C.
-          </TabsTrigger>
-          <TabsTrigger value="notifications" className="data-[state=active]:bg-blue-600">
-            Notificaciones
           </TabsTrigger>
           <TabsTrigger value="analytics" className="data-[state=active]:bg-blue-600">
             Analytics
@@ -234,13 +223,6 @@ export default function VipClientPipeline() {
           />
         </TabsContent>
 
-
-        <TabsContent value="notifications" className="space-y-0">
-          <NotificationCenter 
-            clientId={clientId}
-            clientName={client.name}
-          />
-        </TabsContent>
 
         <TabsContent value="analytics" className="space-y-0">
           <div className="space-y-6">
