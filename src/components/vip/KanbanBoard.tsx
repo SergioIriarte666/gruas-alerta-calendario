@@ -27,6 +27,13 @@ const PIPELINE_COLUMNS = [
     textColor: 'text-amber-300'
   },
   {
+    id: 'with_purchase_order' as ServiceStatus,
+    title: 'Con Orden de Compra',
+    description: 'Servicios con orden de compra recibida',
+    color: 'bg-teal-500/20 border-teal-500/30',
+    textColor: 'text-teal-300'
+  },
+  {
     id: 'pending' as ServiceStatus,
     title: 'Programados',
     description: 'Servicios confirmados y programados',
