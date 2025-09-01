@@ -393,52 +393,135 @@ export const useServiceManager = () => {
       // Transformar datos para Supabase con validación de fechas y UUIDs
       console.log('🔧 Datos de servicio recibidos en useServiceManager:', {
         id: id,
+        keys: Object.keys(serviceData),
         quoteNumber: serviceData.quoteNumber,
         purchaseOrder: serviceData.purchaseOrder
       });
-      
-      const transformedData = {
-        ...serviceData,
-        // Validar fechas - convertir cadenas vacías a null
-        request_date: serviceData.requestDate && serviceData.requestDate.trim() !== '' 
-          ? serviceData.requestDate 
-          : null,
-        service_date: serviceData.serviceDate && serviceData.serviceDate.trim() !== '' 
-          ? serviceData.serviceDate 
-          : null,
-        // ✅ FIX: Validar UUID fields - convertir cadenas vacías a null
-        client_id: serviceData.client && serviceData.client.trim() !== '' 
-          ? serviceData.client 
-          : null,
-        purchase_order_number: serviceData.purchaseOrder,
-        quote_number: serviceData.quoteNumber,
-        service_type_id: serviceData.serviceType && serviceData.serviceType.trim() !== '' 
-          ? serviceData.serviceType 
-          : null,
-        crane_id: serviceData.crane && serviceData.crane.trim() !== '' 
-          ? serviceData.crane 
-          : null,
-        vehicle_brand: serviceData.vehicleBrand,
-        vehicle_model: serviceData.vehicleModel,
-        license_plate: serviceData.licensePlate,
-        has_excess: serviceData.hasExcess,
-        client_covered_amount: serviceData.clientCoveredAmount,
-        excess_amount: serviceData.excessAmount || null,
-        // Transform custody fields from camelCase to snake_case con validación
-        custody_mode: serviceData.custodyMode,
-        custody_days: serviceData.custodyDays,
-        custody_daily_rate: serviceData.custodyDailyRate,
-        custody_start_date: serviceData.custodyStartDate && serviceData.custodyStartDate.trim() !== '' 
-          ? serviceData.custodyStartDate 
-          : null,
-        custody_end_date: serviceData.custodyEndDate && serviceData.custodyEndDate.trim() !== '' 
-          ? serviceData.custodyEndDate 
-          : null,
-        custody_vehicle_type: serviceData.custodyVehicleType,
-        custody_discount_percentage: serviceData.custodyDiscountPercentage,
-        custody_total_amount: serviceData.custodyTotalAmount,
-        custody_notes: serviceData.custodyNotes
-      };
+
+      // 🚀 DETECTAR ACTUALIZACIÓN PARCIAL (batch update)
+      const isPartialUpdate = Object.keys(serviceData).length <= 3 && 
+                            (serviceData.quoteNumber !== undefined || serviceData.purchaseOrder !== undefined) &&
+                            !serviceData.requestDate && !serviceData.serviceDate;
+
+      console.log('📊 Update type detection:', { isPartialUpdate, fieldsCount: Object.keys(serviceData).length });
+
+      let transformedData: any = {};
+
+      if (isPartialUpdate) {
+        // ✅ ACTUALIZACIÓN PARCIAL - Solo procesar campos específicos enviados
+        console.log('🎯 Processing PARTIAL update - only specific fields');
+        
+        if (serviceData.quoteNumber !== undefined) {
+          transformedData.quote_number = serviceData.quoteNumber;
+        }
+        if (serviceData.purchaseOrder !== undefined) {
+          transformedData.purchase_order = serviceData.purchaseOrder;
+        }
+      } else {
+        // ✅ ACTUALIZACIÓN COMPLETA - Procesar todos los campos con validación
+        console.log('🔄 Processing FULL update - all fields with validation');
+        
+        transformedData = {
+          // Validar fechas - convertir cadenas vacías a null SOLO si están presentes
+          ...(serviceData.requestDate !== undefined && {
+            request_date: serviceData.requestDate && serviceData.requestDate.trim() !== '' 
+              ? serviceData.requestDate 
+              : null
+          }),
+          ...(serviceData.serviceDate !== undefined && {
+            service_date: serviceData.serviceDate && serviceData.serviceDate.trim() !== '' 
+              ? serviceData.serviceDate 
+              : null
+          }),
+          // ✅ FIX: Validar UUID fields - convertir cadenas vacías a null SOLO si están presentes
+          ...(serviceData.client !== undefined && {
+            client_id: serviceData.client && serviceData.client.trim() !== '' 
+              ? serviceData.client 
+              : null
+          }),
+          ...(serviceData.purchaseOrder !== undefined && {
+            purchase_order: serviceData.purchaseOrder
+          }),
+          ...(serviceData.quoteNumber !== undefined && {
+            quote_number: serviceData.quoteNumber
+          }),
+          ...(serviceData.serviceType !== undefined && {
+            service_type_id: serviceData.serviceType && serviceData.serviceType.trim() !== '' 
+              ? serviceData.serviceType 
+              : null
+          }),
+          ...(serviceData.crane !== undefined && {
+            crane_id: serviceData.crane && serviceData.crane.trim() !== '' 
+              ? serviceData.crane 
+              : null
+          }),
+          ...(serviceData.vehicleBrand !== undefined && {
+            vehicle_brand: serviceData.vehicleBrand
+          }),
+          ...(serviceData.vehicleModel !== undefined && {
+            vehicle_model: serviceData.vehicleModel
+          }),
+          ...(serviceData.licensePlate !== undefined && {
+            license_plate: serviceData.licensePlate
+          }),
+          ...(serviceData.origin !== undefined && {
+            origin: serviceData.origin
+          }),
+          ...(serviceData.destination !== undefined && {
+            destination: serviceData.destination
+          }),
+          ...(serviceData.value !== undefined && {
+            value: serviceData.value
+          }),
+          ...(serviceData.status !== undefined && {
+            status: serviceData.status
+          }),
+          ...(serviceData.observations !== undefined && {
+            observations: serviceData.observations
+          }),
+          ...(serviceData.hasExcess !== undefined && {
+            has_excess: serviceData.hasExcess
+          }),
+          ...(serviceData.clientCoveredAmount !== undefined && {
+            client_covered_amount: serviceData.clientCoveredAmount
+          }),
+          ...(serviceData.excessAmount !== undefined && {
+            excess_amount: serviceData.excessAmount || null
+          }),
+          // Transform custody fields from camelCase to snake_case con validación SOLO si están presentes
+          ...(serviceData.custodyMode !== undefined && {
+            custody_mode: serviceData.custodyMode
+          }),
+          ...(serviceData.custodyDays !== undefined && {
+            custody_days: serviceData.custodyDays
+          }),
+          ...(serviceData.custodyDailyRate !== undefined && {
+            custody_daily_rate: serviceData.custodyDailyRate
+          }),
+          ...(serviceData.custodyStartDate !== undefined && {
+            custody_start_date: serviceData.custodyStartDate && serviceData.custodyStartDate.trim() !== '' 
+              ? serviceData.custodyStartDate 
+              : null
+          }),
+          ...(serviceData.custodyEndDate !== undefined && {
+            custody_end_date: serviceData.custodyEndDate && serviceData.custodyEndDate.trim() !== '' 
+              ? serviceData.custodyEndDate 
+              : null
+          }),
+          ...(serviceData.custodyVehicleType !== undefined && {
+            custody_vehicle_type: serviceData.custodyVehicleType
+          }),
+          ...(serviceData.custodyDiscountPercentage !== undefined && {
+            custody_discount_percentage: serviceData.custodyDiscountPercentage
+          }),
+          ...(serviceData.custodyTotalAmount !== undefined && {
+            custody_total_amount: serviceData.custodyTotalAmount
+          }),
+          ...(serviceData.custodyNotes !== undefined && {
+            custody_notes: serviceData.custodyNotes
+          })
+        };
+      }
 
       // Remover campos que no van en la tabla services
       delete transformedData.client;
