@@ -507,7 +507,27 @@ export const EnhancedServiceForm = ({
 
         {/* Custodia/Arriendo de Equipos */}
         {(formData.custodyMode !== 'none' || selectedServiceType?.name === 'Arriendo de Equipos') && (
-          <CustodySection serviceTypeName={selectedServiceType?.name} />
+          <CustodySection 
+            serviceTypeName={selectedServiceType?.name}
+            custodyMode={formData.custodyMode}
+            custodyDays={formData.custodyDays}
+            custodyDailyRate={formData.custodyDailyRate}
+            custodyStartDate={formData.custodyStartDate}
+            custodyEndDate={formData.custodyEndDate}
+            custodyVehicleType={formData.custodyVehicleType}
+            custodyDiscountPercentage={formData.custodyDiscountPercentage}
+            custodyTotalAmount={formData.custodyTotalAmount}
+            custodyNotes={formData.custodyNotes}
+            onCustodyModeChange={(value) => setFormData(prev => ({ ...prev, custodyMode: value }))}
+            onCustodyDaysChange={(value) => setFormData(prev => ({ ...prev, custodyDays: value }))}
+            onCustodyDailyRateChange={(value) => setFormData(prev => ({ ...prev, custodyDailyRate: value }))}
+            onCustodyStartDateChange={(value) => setFormData(prev => ({ ...prev, custodyStartDate: value }))}
+            onCustodyEndDateChange={(value) => setFormData(prev => ({ ...prev, custodyEndDate: value }))}
+            onCustodyVehicleTypeChange={(value) => setFormData(prev => ({ ...prev, custodyVehicleType: value }))}
+            onCustodyDiscountPercentageChange={(value) => setFormData(prev => ({ ...prev, custodyDiscountPercentage: value }))}
+            onCustodyTotalAmountChange={(value) => setFormData(prev => ({ ...prev, custodyTotalAmount: value }))}
+            onCustodyNotesChange={(value) => setFormData(prev => ({ ...prev, custodyNotes: value }))}
+          />
         )}
 
         {/* Observaciones */}
