@@ -31,7 +31,7 @@ import { parseFromDatabase } from '@/utils/timezoneUtils';
 import { shouldShowVehicleInfo, formatVehicleInfo, getServiceStatusBadge, formatCurrency } from '@/utils/statusHelpers';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { getServiceValueForClosure, isCustodyService, getCustodyInfo } from '@/utils/serviceValueCalculations';
+import { getServiceValueForClosure, isCustodyService, getCustodyInfo, isEquipmentRentalService } from '@/utils/serviceValueCalculations';
 
 interface ServiceDetailsModalProps {
   service: Service;
@@ -104,6 +104,7 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose }: ServiceDetails
   // Detectar si es un servicio de custodia y obtener información
   const isCustody = isCustodyService(serviceData);
   const custodyInfo = isCustody ? getCustodyInfo(serviceData) : null;
+  const isEquipmentRental = isEquipmentRentalService(serviceData);
   
   // FASE 4: VERIFICACIÓN SILENCIOSA DE INTEGRIDAD DE COMISIONES
   useEffect(() => {
@@ -244,18 +245,34 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose }: ServiceDetails
                       <DetailItem icon={MapPin} label="Destino" value={serviceData.destination} isFullWidth={true} />
                   </DetailSection>
                   
-                  {/* Sección de Custodia */}
+                  {/* Sección de Custodia/Arriendo */}
                   {isCustody && custodyInfo && (
                     <>
                       <Separator className="bg-gray-700"/>
-                      <DetailSection title="Información de Custodia" icon={Shield}>
-                        <DetailItem icon={Shield} label="Tipo de Vehículo" value={custodyInfo.vehicleType} />
-                        <DetailItem icon={Calendar} label="Días de Custodia" value={custodyInfo.days} />
+                      <DetailSection 
+                        title={isEquipmentRental ? "Información de Arriendo" : "Información de Custodia"} 
+                        icon={isEquipmentRental ? Wrench : Shield}
+                      >
+                        <DetailItem 
+                          icon={isEquipmentRental ? Wrench : Shield} 
+                          label={isEquipmentRental ? "Tipo de Equipo" : "Tipo de Vehículo"} 
+                          value={custodyInfo.vehicleType} 
+                        />
+                        <DetailItem 
+                          icon={Calendar} 
+                          label={isEquipmentRental ? "Días de Arriendo" : "Días de Custodia"} 
+                          value={custodyInfo.days} 
+                        />
                         <DetailItem icon={DollarSign} label="Tarifa Diaria" value={formatCurrency(custodyInfo.dailyRate)} />
                         {custodyInfo.discountPercentage > 0 && (
                           <DetailItem icon={DollarSign} label="Descuento" value={`${custodyInfo.discountPercentage}%`} />
                         )}
-                        <DetailItem icon={DollarSign} label="Total Custodia" value={formatCurrency(custodyInfo.totalAmount)} valueClass="text-lg text-tms-green font-bold" />
+                        <DetailItem 
+                          icon={DollarSign} 
+                          label={isEquipmentRental ? "Total Arriendo" : "Total Custodia"} 
+                          value={formatCurrency(custodyInfo.totalAmount)} 
+                          valueClass="text-lg text-tms-green font-bold" 
+                        />
                         {custodyInfo.startDate && (
                           <DetailItem icon={Calendar} label="Fecha Inicio" value={format(new Date(custodyInfo.startDate), 'dd/MM/yyyy', { locale: es })} />
                         )}
