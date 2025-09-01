@@ -410,7 +410,7 @@ export const useServiceManager = () => {
         client_id: serviceData.client && serviceData.client.trim() !== '' 
           ? serviceData.client 
           : null,
-        purchase_order: serviceData.purchaseOrder,
+        purchase_order_number: serviceData.purchaseOrder,
         quote_number: serviceData.quoteNumber,
         service_type_id: serviceData.serviceType && serviceData.serviceType.trim() !== '' 
           ? serviceData.serviceType 
