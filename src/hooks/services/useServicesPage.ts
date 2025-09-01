@@ -74,8 +74,11 @@ export const useServicesPage = () => {
         if (statusFilter === 'all') {
           matchesStatus = true;
         } else if (statusFilter === 'with_purchase_order') {
-          // Filtrar servicios que tienen orden de compra asignada
-          matchesStatus = !!(service.purchaseOrderNumber || service.purchaseOrder);
+          // Filtrar servicios que tienen orden de compra asignada (no vacía)
+          matchesStatus = !!(
+            (service.purchaseOrderNumber && service.purchaseOrderNumber.trim() !== '') ||
+            (service.purchaseOrder && service.purchaseOrder.trim() !== '')
+          );
         } else {
           matchesStatus = statusesToFilter.includes(service.status);
         }
