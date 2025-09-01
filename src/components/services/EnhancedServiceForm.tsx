@@ -12,7 +12,6 @@ import { ObservationsSection } from './form/ObservationsSection';
 import { FormActions } from './form/FormActions';
 import { ServiceFormHeader } from './form/ServiceFormHeader';
 import { CustodySection } from '../forms/CustodySection';
-import { RentalEquipmentSection } from '../forms/RentalEquipmentSection';
 import { useServiceManager } from '@/hooks/services/useServiceManager';
 import { useClients } from '@/hooks/useClients';
 import { useCranes } from '@/hooks/useCranes';
@@ -508,26 +507,7 @@ export const EnhancedServiceForm = ({
 
         {/* Custodia/Arriendo de Equipos */}
         {(formData.custodyMode !== 'none' || selectedServiceType?.name === 'Arriendo de Equipos') && (
-          <RentalEquipmentSection 
-            serviceTypeName={selectedServiceType?.name}
-            custodyMode={formData.custodyMode}
-            custodyDays={formData.custodyDays}
-            custodyDailyRate={formData.custodyDailyRate}
-            custodyStartDate={formData.custodyStartDate}
-            custodyEndDate={formData.custodyEndDate}
-            custodyVehicleType={formData.custodyVehicleType}
-            custodyDiscountPercentage={formData.custodyDiscountPercentage}
-            custodyTotalAmount={formData.custodyTotalAmount}
-            custodyNotes={formData.custodyNotes}
-            onCustodyModeChange={(value) => setFormData(prev => ({ ...prev, custodyMode: value as any }))}
-            onCustodyDaysChange={(value) => setFormData(prev => ({ ...prev, custodyDays: value }))}
-            onCustodyDailyRateChange={(value) => setFormData(prev => ({ ...prev, custodyDailyRate: value }))}
-            onCustodyStartDateChange={(value) => setFormData(prev => ({ ...prev, custodyStartDate: value }))}
-            onCustodyEndDateChange={(value) => setFormData(prev => ({ ...prev, custodyEndDate: value }))}
-            onCustodyVehicleTypeChange={(value) => setFormData(prev => ({ ...prev, custodyVehicleType: value }))}
-            onCustodyDiscountPercentageChange={(value) => setFormData(prev => ({ ...prev, custodyDiscountPercentage: value }))}
-            onCustodyNotesChange={(value) => setFormData(prev => ({ ...prev, custodyNotes: value }))}
-          />
+          <CustodySection serviceTypeName={selectedServiceType?.name} />
         )}
 
         {/* Observaciones */}
