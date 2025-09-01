@@ -248,6 +248,17 @@ export const EnhancedServiceForm = ({
     }
   }, [formData.custodyStartDate, formData.custodyEndDate, formData.custodyDailyRate, formData.custodyDiscountPercentage, formData.custodyMode]);
 
+  // Sync custody total amount with main service value for rental equipment
+  useEffect(() => {
+    if (formData.custodyTotalAmount && formData.custodyTotalAmount > 0) {
+      // Update main service value to match custody total for rental services
+      setFormData(prev => ({ 
+        ...prev, 
+        value: formData.custodyTotalAmount 
+      }));
+    }
+  }, [formData.custodyTotalAmount]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -269,7 +280,11 @@ export const EnhancedServiceForm = ({
         ...formData,
         folio,
         operators: formData.operators || [],
-        costDetails: formData.costDetails || []
+        costDetails: formData.costDetails || [],
+        // Ensure value is set from custodyTotalAmount for rental services
+        value: formData.custodyTotalAmount && formData.custodyTotalAmount > 0 
+          ? formData.custodyTotalAmount 
+          : formData.value
       };
 
       console.log('📤 Final data prepared:', finalData);

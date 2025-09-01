@@ -64,9 +64,9 @@ export const PurchaseOrderManager: React.FC<PurchaseOrderManagerProps> = ({
         };
       case 'pending':
         return {
-          label: 'Con O.C.',
-          color: 'bg-green-500/20 text-green-300 border-green-500/30',
-          icon: CheckCircle
+          label: 'Pendiente',
+          color: 'bg-blue-500/20 text-blue-300 border-blue-500/30',
+          icon: Clock
         };
       default:
         return {
@@ -88,7 +88,9 @@ export const PurchaseOrderManager: React.FC<PurchaseOrderManagerProps> = ({
   const stats = {
     quoted: relevantServices.filter(s => s.status === 'quoted').length,
     pending_po: relevantServices.filter(s => s.status === 'purchase_order_pending').length,
-    with_po: relevantServices.filter(s => s.status === 'pending' && s.purchaseOrderNumber).length,
+    with_po: relevantServices.filter(s => 
+      s.status === 'pending' && (s.purchaseOrderNumber || s.purchaseOrder)
+    ).length,
     total_value: relevantServices.reduce((sum, s) => sum + s.value, 0)
   };
 
@@ -248,9 +250,10 @@ export const PurchaseOrderManager: React.FC<PurchaseOrderManagerProps> = ({
                           {statusInfo.label}
                         </Badge>
 
-                        {service.purchaseOrderNumber && (
-                          <Badge variant="secondary" className="bg-purple-500/20 text-purple-300 border-purple-500/30">
-                            O.C: {service.purchaseOrderNumber}
+                        {(service.purchaseOrderNumber || service.purchaseOrder) && (
+                          <Badge variant="secondary" className="bg-green-500/20 text-green-300 border-green-500/30">
+                            <CheckCircle className="w-3 h-3 mr-1" />
+                            Con O.C: {service.purchaseOrderNumber || service.purchaseOrder}
                           </Badge>
                         )}
                       </div>
