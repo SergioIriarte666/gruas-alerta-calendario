@@ -19,6 +19,7 @@ import {
   Eye,
   Edit,
   User,
+  Car,
   Truck,
   Hash,
   CheckSquare,
@@ -511,7 +512,7 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
                           <SortableHeader field="folio">Folio</SortableHeader>
                           <SortableHeader field="serviceType">Tipo de Servicio</SortableHeader>
                           <SortableHeader field="serviceDate">Fecha</SortableHeader>
-                          <TableHead className="text-gray-300">Operador</TableHead>
+                          <TableHead className="text-gray-300">Patente Vehículo</TableHead>
                           <TableHead className="text-gray-300">Grúa</TableHead>
                           <SortableHeader field="value">Valor</SortableHeader>
                           <SortableHeader field="daysInStatus">Días en Estado</SortableHeader>
@@ -544,9 +545,9 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
                               </TableCell>
                               <TableCell>
                                 <div className="flex items-center gap-1 text-gray-300">
-                                  <User className="w-3 h-3" />
+                                  <Car className="w-3 h-3" />
                                   <span className="text-sm">
-                                    {service.operator?.name || 'Sin asignar'}
+                                    {service.licensePlate || 'Sin vehículo'}
                                   </span>
                                 </div>
                               </TableCell>
