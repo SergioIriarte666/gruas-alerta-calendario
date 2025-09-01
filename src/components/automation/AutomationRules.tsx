@@ -20,6 +20,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { toast } from 'sonner';
 
 interface AutomationRule {
   id: string;
@@ -123,9 +124,15 @@ export const AutomationRules = () => {
     setRules(prev => prev.map(rule => 
       rule.id === ruleId ? { ...rule, isActive: !rule.isActive } : rule
     ));
+    
+    const rule = rules.find(r => r.id === ruleId);
+    if (rule) {
+      toast.success(`Regla "${rule.name}" ${rule.isActive ? 'desactivada' : 'activada'}`);
+    }
   };
 
   const createNewRule = () => {
+    console.log('createNewRule clicked');
     const newRule: AutomationRule = {
       id: Date.now().toString(),
       name: 'Nueva Regla',
@@ -146,22 +153,29 @@ export const AutomationRules = () => {
     };
     setEditingRule(newRule);
     setIsEditDialogOpen(true);
+    console.log('Dialog should be open:', true);
   };
 
   const saveRule = (rule: AutomationRule) => {
     if (rules.find(r => r.id === rule.id)) {
       // Update existing rule
       setRules(prev => prev.map(r => r.id === rule.id ? rule : r));
+      toast.success('Regla actualizada correctamente');
     } else {
       // Add new rule
       setRules(prev => [...prev, rule]);
+      toast.success('Nueva regla creada correctamente');
     }
     setIsEditDialogOpen(false);
     setEditingRule(null);
   };
 
   const deleteRule = (ruleId: string) => {
+    const rule = rules.find(r => r.id === ruleId);
     setRules(prev => prev.filter(r => r.id !== ruleId));
+    if (rule) {
+      toast.success(`Regla "${rule.name}" eliminada`);
+    }
   };
 
   const RuleCard = ({ rule }: { rule: AutomationRule }) => {
@@ -187,8 +201,10 @@ export const AutomationRules = () => {
                 variant="outline" 
                 size="sm"
                 onClick={() => {
+                  console.log('Edit rule clicked:', rule.name);
                   setEditingRule(rule);
                   setIsEditDialogOpen(true);
+                  console.log('Edit dialog should be open:', true);
                 }}
               >
                 <Settings className="h-4 w-4" />
