@@ -16,8 +16,7 @@ import {
   Building2,
   Filter
 } from 'lucide-react';
-import { format } from 'date-fns';
-import { es } from 'date-fns/locale';
+import { formatForDisplay, parseFromDatabase } from '@/utils/timezoneUtils';
 
 interface PurchaseOrderManagerProps {
   services: Service[];
@@ -29,11 +28,11 @@ export const PurchaseOrderManager: React.FC<PurchaseOrderManagerProps> = ({
   onServiceSelect
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'quoted' | 'purchase_order_pending' | 'pending'>('all');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'quoted' | 'purchase_order_pending' | 'pending' | 'with_po'>('all');
 
   // Filtrar servicios relevantes para órdenes de compra
   const relevantServices = services.filter(service => 
-    ['quoted', 'purchase_order_pending', 'pending'].includes(service.status)
+    ['quoted', 'purchase_order_pending', 'pending', 'in_progress', 'completed'].includes(service.status)
   );
 
   // Aplicar filtros
@@ -41,9 +40,17 @@ export const PurchaseOrderManager: React.FC<PurchaseOrderManagerProps> = ({
     const matchesSearch = 
       service.folio.toLowerCase().includes(searchTerm.toLowerCase()) ||
       service.serviceType.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (service.purchaseOrderNumber && service.purchaseOrderNumber.toLowerCase().includes(searchTerm.toLowerCase()));
+      (service.purchaseOrderNumber && service.purchaseOrderNumber.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (service.purchaseOrder && service.purchaseOrder.toLowerCase().includes(searchTerm.toLowerCase()));
     
-    const matchesStatus = statusFilter === 'all' || service.status === statusFilter;
+    let matchesStatus = false;
+    if (statusFilter === 'all') {
+      matchesStatus = true;
+    } else if (statusFilter === 'with_po') {
+      matchesStatus = !!(service.purchaseOrderNumber || service.purchaseOrder);
+    } else {
+      matchesStatus = service.status === statusFilter;
+    }
     
     return matchesSearch && matchesStatus;
   });
@@ -89,7 +96,7 @@ export const PurchaseOrderManager: React.FC<PurchaseOrderManagerProps> = ({
     quoted: relevantServices.filter(s => s.status === 'quoted').length,
     pending_po: relevantServices.filter(s => s.status === 'purchase_order_pending').length,
     with_po: relevantServices.filter(s => 
-      s.status === 'pending' && (s.purchaseOrderNumber || s.purchaseOrder)
+      s.purchaseOrderNumber || s.purchaseOrder
     ).length,
     total_value: relevantServices.reduce((sum, s) => sum + s.value, 0)
   };
@@ -202,9 +209,9 @@ export const PurchaseOrderManager: React.FC<PurchaseOrderManagerProps> = ({
                 Esperando O.C.
               </Button>
               <Button
-                variant={statusFilter === 'pending' ? 'default' : 'outline'}
+                variant={statusFilter === 'with_po' ? 'default' : 'outline'}
                 size="sm"
-                onClick={() => setStatusFilter('pending')}
+                onClick={() => setStatusFilter('with_po')}
                 className="text-green-400 border-green-500/30"
               >
                 Con O.C.
@@ -262,7 +269,7 @@ export const PurchaseOrderManager: React.FC<PurchaseOrderManagerProps> = ({
                         <div className="space-y-1">
                           <div className="flex items-center gap-2 text-gray-300">
                             <Calendar className="w-3 h-3" />
-                            <span>{format(new Date(service.serviceDate), 'dd/MM/yyyy', { locale: es })}</span>
+                            <span>{formatForDisplay(parseFromDatabase(service.serviceDate))}</span>
                           </div>
                           <div className="flex items-center gap-2 text-gray-300">
                             <Building2 className="w-3 h-3" />
