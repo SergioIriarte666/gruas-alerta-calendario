@@ -38,6 +38,8 @@ interface ServiceGroup {
   averageDays: number;
   color: string;
   textColor: string;
+  sortingDate: Date | null;
+  sortingDateLabel: string;
 }
 
 interface PipelineListViewProps {
@@ -134,6 +136,42 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
             }, 0) / statusServices.length
           : 0;
 
+        // Calcular fecha de ordenamiento según el estado
+        let sortingDate: Date | null = null;
+        let sortingDateLabel = '';
+        
+        if (statusServices.length > 0) {
+          switch (statusConfig.id) {
+            case 'pending':
+              // Para programados: mostrar la fecha más próxima
+              sortingDate = statusServices
+                .map(s => new Date(s.serviceDate))
+                .sort((a, b) => a.getTime() - b.getTime())[0];
+              sortingDateLabel = 'Próximo';
+              break;
+            case 'completed':
+              // Para completados: mostrar la fecha más reciente
+              sortingDate = statusServices
+                .map(s => new Date(s.serviceDate))
+                .sort((a, b) => b.getTime() - a.getTime())[0];
+              sortingDateLabel = 'Último';
+              break;
+            case 'invoiced':
+              // Para facturados: mostrar la fecha más reciente
+              sortingDate = statusServices
+                .map(s => new Date(s.serviceDate))
+                .sort((a, b) => b.getTime() - a.getTime())[0];
+              sortingDateLabel = 'Último';
+              break;
+            default:
+              // Para otros estados: mostrar la fecha más reciente
+              sortingDate = statusServices
+                .map(s => new Date(s.serviceDate))
+                .sort((a, b) => b.getTime() - a.getTime())[0];
+              sortingDateLabel = 'Reciente';
+          }
+        }
+
         return {
           status: statusConfig.id,
           title: statusConfig.title,
@@ -141,7 +179,9 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
           totalValue,
           averageDays: Math.round(averageDays),
           color: statusConfig.color,
-          textColor: statusConfig.textColor
+          textColor: statusConfig.textColor,
+          sortingDate,
+          sortingDateLabel
         } as ServiceGroup;
       })
       .filter(group => {
@@ -360,6 +400,12 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
                                 <Clock className="w-3 h-3" />
                                 Promedio: {group.averageDays} días
                               </span>
+                              {group.sortingDate && (
+                                <span className="flex items-center gap-1">
+                                  <Calendar className="w-3 h-3" />
+                                  {group.sortingDateLabel}: {format(group.sortingDate, 'dd/MM/yyyy', { locale: es })}
+                                </span>
+                              )}
                             </div>
                           </div>
                         </div>
