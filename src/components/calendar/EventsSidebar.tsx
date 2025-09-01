@@ -8,8 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { CalendarEvent } from '@/types/calendar';
 import { ConvertEventToServiceModal } from './ConvertEventToServiceModal';
-import { format } from 'date-fns';
-import { es } from 'date-fns/locale';
+import { formatForInput, formatForDisplayLong } from '@/utils/timezoneUtils';
 import { Plus, Clock, Trash2, ArrowRight } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -53,7 +52,7 @@ export const EventsSidebar: React.FC<EventsSidebarProps> = ({
     try {
       await createEvent({
         ...newEvent,
-        date: format(selectedDate, 'yyyy-MM-dd'),
+        date: formatForInput(selectedDate),
         status: 'scheduled'
       });
       
@@ -85,7 +84,7 @@ export const EventsSidebar: React.FC<EventsSidebarProps> = ({
       <Card className="glass-card">
         <CardHeader>
           <CardTitle className="flex items-center justify-between text-white">
-            <span>Eventos - {format(selectedDate, 'd MMMM yyyy', { locale: es })}</span>
+            <span>Eventos - {formatForDisplayLong(selectedDate)}</span>
             <Button
               size="sm"
               onClick={() => setShowForm(!showForm)}

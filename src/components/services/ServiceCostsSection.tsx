@@ -3,10 +3,8 @@ import { useServiceCosts } from '@/hooks/useServiceCosts';
 import { EnhancedService } from '@/types/serviceDetails';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
-import { format } from 'date-fns';
-import { es } from 'date-fns/locale';
+import { formatForDisplay, parseFromDatabase } from '@/utils/timezoneUtils';
 import { DollarSign, FileText, AlertTriangle, Calculator, TrendingDown, Users } from 'lucide-react';
-import { parseFromDatabase } from '@/utils/timezoneUtils';
 
 interface ServiceCostsSectionProps {
   serviceId: string;
@@ -152,7 +150,7 @@ export const ServiceCostsSection = ({ serviceId, enhancedService }: ServiceCosts
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-gray-400">
                     <p>
                       <span className="font-medium">Fecha:</span>{' '}
-                      {format(new Date(), 'dd/MM/yyyy', { locale: es })}
+                      {formatForDisplay(new Date())}
                     </p>
                     
                     <p>
@@ -203,7 +201,7 @@ export const ServiceCostsSection = ({ serviceId, enhancedService }: ServiceCosts
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-gray-400">
                         <p>
                           <span className="font-medium">Fecha:</span>{' '}
-                          {format(parseFromDatabase(cost.date), 'dd/MM/yyyy', { locale: es })}
+                          {formatForDisplay(parseFromDatabase(cost.date))}
                         </p>
                         
                         {cost.cranes && (

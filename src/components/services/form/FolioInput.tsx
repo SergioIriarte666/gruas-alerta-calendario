@@ -5,8 +5,7 @@ import { Label } from '@/components/ui/label';
 import { AlertCircle, CheckCircle, Loader2 } from 'lucide-react';
 import { useFolioValidation } from '@/hooks/services/useFolioValidation';
 import { useDebounce } from '@/hooks/useDebounce';
-import { format } from 'date-fns';
-import { es } from 'date-fns/locale';
+import { formatForDisplay, parseFromDatabase } from '@/utils/timezoneUtils';
 
 interface FolioInputProps {
   folio: string;
@@ -84,7 +83,7 @@ export const FolioInput: React.FC<FolioInputProps> = ({
     }
     
     if (validation.error && validation.existingService) {
-      const createdDate = format(new Date(validation.existingService.createdAt), 'dd/MM/yyyy', { locale: es });
+      const createdDate = formatForDisplay(parseFromDatabase(validation.existingService.createdAt));
       return (
         <div className="text-sm text-red-600">
           <div className="font-medium">❌ {validation.error}</div>

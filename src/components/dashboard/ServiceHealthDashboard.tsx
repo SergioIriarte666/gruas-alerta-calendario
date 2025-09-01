@@ -19,8 +19,7 @@ import {
   TrendingUp,
   Clock
 } from 'lucide-react';
-import { format } from 'date-fns';
-import { es } from 'date-fns/locale';
+import { formatForDisplay, formatForDisplayWithTime, parseFromDatabase } from '@/utils/timezoneUtils';
 
 /**
  * FASE 6: DASHBOARD DE MONITOREO CONTINUO
@@ -285,7 +284,7 @@ export const ServiceHealthDashboard = () => {
                         <div className="font-medium">{issue.serviceFolio}</div>
                         <div className="text-sm text-gray-600">{issue.description}</div>
                         <div className="text-xs text-gray-500">
-                          {format(issue.detectedAt, 'dd/MM/yyyy HH:mm', { locale: es })}
+                          {formatForDisplayWithTime(issue.detectedAt)}
                         </div>
                       </div>
                       <div className="flex items-center space-x-2">
@@ -368,7 +367,7 @@ export const ServiceHealthDashboard = () => {
               <div className="text-center py-8 text-muted-foreground">
                 <p>Última auditoría: {
                   metrics.lastAuditTime 
-                    ? format(metrics.lastAuditTime, 'dd/MM/yyyy HH:mm', { locale: es })
+                    ? formatForDisplayWithTime(metrics.lastAuditTime)
                     : 'Nunca'
                 }</p>
                 <p className="text-sm mt-2">

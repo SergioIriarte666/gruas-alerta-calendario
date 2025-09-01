@@ -3,8 +3,7 @@ import { Client, ServiceClosure } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { CalendarDays, FileText, TrendingUp, Package } from 'lucide-react';
-import { formatDate } from 'date-fns';
-import { es } from 'date-fns/locale';
+import { formatForDisplay, parseFromDatabase } from '@/utils/timezoneUtils';
 
 interface MetricCardProps {
   icon: React.ElementType;
@@ -114,7 +113,7 @@ export const ClientClosureHistory = ({ client }: { client: Client }) => {
                         {getStatusBadge(closure.status)}
                       </div>
                       <div className="text-sm text-gray-300">
-                        Período: {formatDate(new Date(closure.dateRange.from), 'dd/MM/yyyy', { locale: es })} - {formatDate(new Date(closure.dateRange.to), 'dd/MM/yyyy', { locale: es })}
+                        Período: {formatForDisplay(parseFromDatabase(closure.dateRange.from))} - {formatForDisplay(parseFromDatabase(closure.dateRange.to))}
                       </div>
                       <div className="text-sm text-gray-300">
                         Servicios incluidos: {closure.serviceIds.length}
@@ -125,7 +124,7 @@ export const ClientClosureHistory = ({ client }: { client: Client }) => {
                         {formatCurrency(closure.total)}
                       </div>
                       <div className="text-sm text-gray-300">
-                        {formatDate(new Date(closure.createdAt), 'dd/MM/yyyy', { locale: es })}
+                        {formatForDisplay(parseFromDatabase(closure.createdAt))}
                       </div>
                     </div>
                   </div>

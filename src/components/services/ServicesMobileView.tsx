@@ -3,11 +3,9 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Plus, Eye, Edit, Trash2, Truck, Check, Calendar, MapPin, User, DollarSign } from 'lucide-react';
-import { format } from 'date-fns';
-import { es } from 'date-fns/locale';
+import { formatForDisplay, parseFromDatabase } from '@/utils/timezoneUtils';
 import { useUser } from '@/contexts/UserContext';
 import { useDeviceType } from '@/hooks/useDeviceType';
-import { parseFromDatabase } from '@/utils/timezoneUtils';
 import { shouldShowVehicleInfo, formatVehicleInfo, getServiceStatusBadge, formatCurrency } from '@/utils/statusHelpers';
 import { cn } from '@/lib/utils';
 
@@ -96,7 +94,7 @@ export const ServicesMobileView = ({
               <div className="space-y-2 mb-4">
                 <div className="flex items-center text-white text-sm">
                   <Calendar className="w-4 h-4 mr-2 text-gray-400 flex-shrink-0" />
-                  <span>{format(parseFromDatabase(service.serviceDate), 'dd/MM/yyyy', { locale: es })}</span>
+                  <span>{formatForDisplay(parseFromDatabase(service.serviceDate))}</span>
                 </div>
 
                 {shouldShowVehicleInfo(service) && (

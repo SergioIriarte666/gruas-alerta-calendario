@@ -5,8 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { FileText, DollarSign, FileWarning, FileCheck2 } from 'lucide-react';
-import { format } from 'date-fns';
-import { es } from 'date-fns/locale';
+import { formatForDisplay, parseFromDatabase } from '@/utils/timezoneUtils';
 
 interface MetricCardProps {
   icon: React.ElementType;
@@ -87,8 +86,8 @@ export const ClientInvoicing = ({ client }: { client: Client }) => {
                   {invoices.map(invoice => (
                     <TableRow key={invoice.id} className="border-gray-700">
                       <TableCell className="font-medium text-tms-green">{invoice.folio}</TableCell>
-                      <TableCell className="text-gray-300">{format(new Date(invoice.issueDate), 'dd/MM/yy', { locale: es })}</TableCell>
-                      <TableCell className="text-gray-300">{format(new Date(invoice.dueDate), 'dd/MM/yy', { locale: es })}</TableCell>
+                      <TableCell className="text-gray-300">{formatForDisplay(parseFromDatabase(invoice.issueDate))}</TableCell>
+                      <TableCell className="text-gray-300">{formatForDisplay(parseFromDatabase(invoice.dueDate))}</TableCell>
                       <TableCell className="text-gray-300 font-semibold">{formatCurrency(invoice.total)}</TableCell>
                       <TableCell>{getStatusBadge(invoice.status)}</TableCell>
                     </TableRow>

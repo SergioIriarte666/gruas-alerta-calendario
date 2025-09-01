@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isToday, startOfWeek, endOfWeek } from 'date-fns';
+import { startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isToday, startOfWeek, endOfWeek } from 'date-fns';
 import { CalendarEvent } from '@/hooks/useCalendar';
 
 interface MonthViewProps {
@@ -58,7 +58,7 @@ export const MonthView = ({
                 text-sm font-medium mb-1
                 ${isDayToday ? 'text-green-500' : 'text-gray-300'}
               `}>
-                {format(day, 'd')}
+                {day.getDate()}
               </div>
               <div className="space-y-1">
                 {dayEvents.slice(0, 2).map(event => (

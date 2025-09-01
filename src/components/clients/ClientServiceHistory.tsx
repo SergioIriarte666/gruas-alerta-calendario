@@ -4,8 +4,7 @@ import { useClientServices } from '@/hooks/useClientServices';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Truck, DollarSign, Hash } from 'lucide-react';
-import { format } from 'date-fns';
-import { es } from 'date-fns/locale';
+import { formatForDisplay, parseFromDatabase } from '@/utils/timezoneUtils';
 import { getServiceStatusBadge, formatCurrency, formatVehicleInfo } from '@/utils/statusHelpers';
 
 interface MetricCardProps {
@@ -68,7 +67,7 @@ export const ClientServiceHistory = ({ client }: { client: Client }) => {
                   {services.map(service => (
                     <TableRow key={service.id} className="border-gray-700">
                       <TableCell className="font-medium text-tms-green">{service.folio}</TableCell>
-                      <TableCell className="text-gray-300">{format(new Date(service.serviceDate), 'dd/MM/yyyy', { locale: es })}</TableCell>
+                      <TableCell className="text-gray-300">{formatForDisplay(parseFromDatabase(service.serviceDate))}</TableCell>
                       <TableCell className="text-gray-300">{formatVehicleInfo(service)}</TableCell>
                       <TableCell className="text-gray-300 max-w-xs truncate">{service.origin} → {service.destination}</TableCell>
                       <TableCell className="text-gray-300 font-semibold">{formatCurrency(service.value)}</TableCell>

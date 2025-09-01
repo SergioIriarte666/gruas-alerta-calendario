@@ -4,12 +4,10 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Plus, Eye, Edit, Trash2, Truck, Check, ChevronUp, ChevronDown } from 'lucide-react';
-import { format } from 'date-fns';
-import { es } from 'date-fns/locale';
+import { formatForDisplay, parseFromDatabase } from '@/utils/timezoneUtils';
 import { useUser } from '@/contexts/UserContext';
 import { useDeviceType } from '@/hooks/useDeviceType';
 import { ServicesMobileView } from './ServicesMobileView';
-import { formatForDisplay } from '@/utils/timezoneUtils';
 import { shouldShowVehicleInfo, formatVehicleInfo, getServiceStatusBadge, formatCurrency } from '@/utils/statusHelpers';
 import { getServiceValueForClosure } from '@/utils/serviceValueCalculations';
 
@@ -160,14 +158,7 @@ export const ServicesTable = ({
                         {service.folio}
                       </TableCell>
                       <TableCell className="text-white">
-                        {(() => {
-                          // Direct conversion from yyyy-MM-dd to dd/MM/yyyy without any Date object conversion
-                          if (service.serviceDate && typeof service.serviceDate === 'string' && service.serviceDate.match(/^\d{4}-\d{2}-\d{2}$/)) {
-                            const [year, month, day] = service.serviceDate.split('-');
-                            return `${day}/${month}/${year}`;
-                          }
-                          return service.serviceDate || 'N/A';
-                        })()}
+                        {formatForDisplay(parseFromDatabase(service.serviceDate))}
                       </TableCell>
                       <TableCell className="text-white">
                         <div className="font-medium text-white">{service.client.name}</div>

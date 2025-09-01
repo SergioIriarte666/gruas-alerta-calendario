@@ -1,7 +1,6 @@
 
 import React, { useState } from 'react';
-import { format } from 'date-fns';
-import { es } from 'date-fns/locale';
+import { formatForDisplayLong } from '@/utils/timezoneUtils';
 import { Clock, Trash2, ArrowRight } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -57,7 +56,7 @@ export const DayView = ({
     <div className="space-y-4">
       <div className="text-center">
         <h3 className="text-xl font-semibold text-white mb-2">
-          {format(selectedDate, 'EEEE, d MMMM yyyy', { locale: es })}
+          {formatForDisplayLong(selectedDate)}
         </h3>
       </div>
       

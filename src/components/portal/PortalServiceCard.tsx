@@ -1,7 +1,6 @@
 
 import React from 'react';
-import { format } from 'date-fns';
-import { es } from 'date-fns/locale';
+import { formatForDisplay, parseFromDatabase } from '@/utils/timezoneUtils';
 import { getServiceStatusBadge, formatCurrency, shouldShowVehicleInfo, formatVehicleInfo } from '@/utils/statusHelpers';
 
 interface PortalServiceCardProps {
@@ -21,7 +20,7 @@ export const PortalServiceCard: React.FC<PortalServiceCardProps> = ({ service })
         <div className="flex justify-between">
           <span className="text-gray-400">Fecha:</span>
           <span className="text-white">
-            {format(new Date(service.service_date), 'dd/MM/yyyy', { locale: es })}
+            {formatForDisplay(parseFromDatabase(service.service_date))}
           </span>
         </div>
         

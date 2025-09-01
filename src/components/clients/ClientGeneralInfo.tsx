@@ -3,8 +3,7 @@ import * as React from 'react';
 import { Client } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { User, Phone, Mail, MapPin, CheckCircle, XCircle, CalendarClock } from 'lucide-react';
-import { format } from 'date-fns';
-import { es } from 'date-fns/locale';
+import { formatForDisplayLong, parseFromDatabase } from '@/utils/timezoneUtils';
 
 interface DetailItemProps {
   icon: React.ElementType;
@@ -55,7 +54,7 @@ export const ClientGeneralInfo = ({ client }: ClientGeneralInfoProps) => {
              <DetailItem 
               icon={CalendarClock} 
               label="Miembro desde" 
-              value={format(new Date(client.createdAt), "dd 'de' MMMM, yyyy", { locale: es })}
+              value={formatForDisplayLong(parseFromDatabase(client.createdAt))}
             />
           </div>
         </CardContent>

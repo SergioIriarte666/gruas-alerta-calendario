@@ -12,8 +12,7 @@ import {
   BarChart3,
   Activity
 } from 'lucide-react';
-import { formatDate } from 'date-fns';
-import { es } from 'date-fns/locale';
+import { formatForDisplay, parseFromDatabase } from '@/utils/timezoneUtils';
 
 interface MetricCardProps {
   icon: React.ElementType;
@@ -206,7 +205,7 @@ export const ClientMetricsOverview = ({ client }: { client: Client }) => {
               <div className="flex items-center justify-between">
                 <span className="text-sm text-gray-300">Último servicio</span>
                 <span className="text-sm font-medium text-white">
-                  {formatDate(new Date(metrics.lastServiceDate), 'dd/MM/yyyy', { locale: es })}
+                  {formatForDisplay(new Date(metrics.lastServiceDate))}
                 </span>
               </div>
             )}
@@ -214,7 +213,7 @@ export const ClientMetricsOverview = ({ client }: { client: Client }) => {
               <div className="flex items-center justify-between">
                 <span className="text-sm text-gray-300">Última factura</span>
                 <span className="text-sm font-medium text-white">
-                  {formatDate(new Date(metrics.lastInvoiceDate), 'dd/MM/yyyy', { locale: es })}
+                  {formatForDisplay(new Date(metrics.lastInvoiceDate))}
                 </span>
               </div>
             )}

@@ -3,8 +3,7 @@ import { Client, Service } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { CalendarDays, FileX, Clock, TrendingUp } from 'lucide-react';
-import { formatDate } from 'date-fns';
-import { es } from 'date-fns/locale';
+import { formatForDisplay, parseFromDatabase } from '@/utils/timezoneUtils';
 import { formatVehicleInfo, shouldShowVehicleInfo } from '@/utils/statusHelpers';
 
 interface MetricCardProps {
@@ -133,10 +132,10 @@ export const ClientRequestHistory = ({ client }: { client: Client }) => {
                         {formatCurrency(request.value)}
                       </div>
                       <div className="text-sm text-gray-300">
-                        Solicitud: {formatDate(new Date(request.requestDate), 'dd/MM/yyyy', { locale: es })}
+                        Solicitud: {formatForDisplay(parseFromDatabase(request.requestDate))}
                       </div>
                       <div className="text-sm text-gray-300">
-                        Servicio: {formatDate(new Date(request.serviceDate), 'dd/MM/yyyy', { locale: es })}
+                        Servicio: {formatForDisplay(parseFromDatabase(request.serviceDate))}
                       </div>
                       <div className="text-xs text-gray-400">
                         Grúa: {request.crane.licensePlate}

@@ -1,7 +1,7 @@
 
 import React from 'react';
-import { format, startOfWeek, addDays, isSameDay, isToday } from 'date-fns';
-import { es } from 'date-fns/locale';
+import { startOfWeek, addDays, isSameDay, isToday } from 'date-fns';
+import { formatForDisplayShort } from '@/utils/timezoneUtils';
 import { CalendarEvent } from '@/hooks/useCalendar';
 
 interface WeekViewProps {
@@ -49,7 +49,7 @@ export const WeekView = ({
                 text-sm font-medium mb-2
                 ${isDayToday ? 'text-green-500' : 'text-gray-300'}
               `}>
-                {format(day, 'd MMM', { locale: es })}
+                {formatForDisplayShort(day)}
               </div>
               <div className="space-y-1">
                 {dayEvents.map(event => (
