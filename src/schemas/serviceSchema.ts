@@ -49,7 +49,7 @@ const baseServiceFormSchema = z.object({
     subcategory: z.string().optional(),
     isExisting: z.boolean().optional()
   })).default([]),
-  status: z.enum(['pending', 'in_progress', 'completed', 'cancelled', 'invoiced']),
+  status: z.enum(['pending', 'in_progress', 'completed', 'cancelled', 'invoiced', 'quoted', 'purchase_order_pending', 'with_purchase_order']),
   observations: z.string().optional(),
   // Optional excess functionality
   hasExcess: z.boolean().default(false),
