@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
@@ -249,7 +249,28 @@ export const AutomationRules = () => {
   }) => {
     const [formData, setFormData] = useState(rule);
 
+    // Sincronizar formData cuando rule cambie
+    useEffect(() => {
+      console.log('Rule changed in form:', rule);
+      setFormData(rule);
+    }, [rule]);
+
+    // Logs para debugging
+    useEffect(() => {
+      console.log('FormData updated:', formData);
+    }, [formData]);
+
     const handleSave = () => {
+      console.log('Saving rule:', formData);
+      // Validación básica
+      if (!formData.name.trim()) {
+        toast.error('El nombre de la regla es requerido');
+        return;
+      }
+      if (!formData.trigger.value.trim()) {
+        toast.error('La condición del trigger es requerida');
+        return;
+      }
       onSave(formData);
     };
 
@@ -269,7 +290,11 @@ export const AutomationRules = () => {
             <Input
               id="ruleName"
               value={formData.name}
-              onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+              onChange={(e) => {
+                console.log('Name changed:', e.target.value);
+                setFormData(prev => ({ ...prev, name: e.target.value }));
+              }}
+              placeholder="Nombre descriptivo de la regla"
             />
           </div>
           <div>
@@ -277,7 +302,10 @@ export const AutomationRules = () => {
             <div className="flex items-center space-x-2 pt-2">
               <Switch 
                 checked={formData.isActive}
-                onCheckedChange={(checked) => setFormData(prev => ({ ...prev, isActive: checked }))}
+                onCheckedChange={(checked) => {
+                  console.log('Active state changed:', checked);
+                  setFormData(prev => ({ ...prev, isActive: checked }));
+                }}
               />
               <span className="text-sm text-muted-foreground">
                 {formData.isActive ? 'Activa' : 'Inactiva'}
@@ -291,8 +319,12 @@ export const AutomationRules = () => {
           <Textarea
             id="description"
             value={formData.description}
-            onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+            onChange={(e) => {
+              console.log('Description changed:', e.target.value);
+              setFormData(prev => ({ ...prev, description: e.target.value }));
+            }}
             rows={2}
+            placeholder="Descripción detallada de la regla"
           />
         </div>
 
@@ -301,13 +333,16 @@ export const AutomationRules = () => {
             <Label>Tipo de Trigger</Label>
             <Select 
               value={formData.trigger.type}
-              onValueChange={(value: any) => setFormData(prev => ({
-                ...prev,
-                trigger: { ...prev.trigger, type: value }
-              }))}
+              onValueChange={(value: any) => {
+                console.log('Trigger type changed:', value);
+                setFormData(prev => ({
+                  ...prev,
+                  trigger: { ...prev.trigger, type: value }
+                }));
+              }}
             >
               <SelectTrigger>
-                <SelectValue />
+                <SelectValue placeholder="Seleccionar tipo de trigger" />
               </SelectTrigger>
               <SelectContent>
                 {TRIGGER_TYPES.map(type => (
@@ -322,13 +357,16 @@ export const AutomationRules = () => {
             <Label>Tipo de Acción</Label>
             <Select 
               value={formData.action.type}
-              onValueChange={(value: any) => setFormData(prev => ({
-                ...prev,
-                action: { ...prev.action, type: value }
-              }))}
+              onValueChange={(value: any) => {
+                console.log('Action type changed:', value);
+                setFormData(prev => ({
+                  ...prev,
+                  action: { ...prev.action, type: value }
+                }));
+              }}
             >
               <SelectTrigger>
-                <SelectValue />
+                <SelectValue placeholder="Seleccionar tipo de acción" />
               </SelectTrigger>
               <SelectContent>
                 {ACTION_TYPES.map(type => (
@@ -346,10 +384,13 @@ export const AutomationRules = () => {
           <Input
             id="triggerValue"
             value={formData.trigger.value}
-            onChange={(e) => setFormData(prev => ({
-              ...prev,
-              trigger: { ...prev.trigger, value: e.target.value }
-            }))}
+            onChange={(e) => {
+              console.log('Trigger value changed:', e.target.value);
+              setFormData(prev => ({
+                ...prev,
+                trigger: { ...prev.trigger, value: e.target.value }
+              }));
+            }}
             placeholder="ej: quoted → purchase_order_pending"
           />
         </div>
@@ -361,10 +402,15 @@ export const AutomationRules = () => {
               id="delay"
               type="number"
               value={formData.trigger.delay || 0}
-              onChange={(e) => setFormData(prev => ({
-                ...prev,
-                trigger: { ...prev.trigger, delay: parseInt(e.target.value) }
-              }))}
+              onChange={(e) => {
+                console.log('Delay changed:', e.target.value);
+                setFormData(prev => ({
+                  ...prev,
+                  trigger: { ...prev.trigger, delay: parseInt(e.target.value) || 0 }
+                }));
+              }}
+              placeholder="0"
+              min="0"
             />
           </div>
         )}
