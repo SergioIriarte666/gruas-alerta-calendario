@@ -28,8 +28,8 @@ import {
   ChevronsUpDown
 } from 'lucide-react';
 import { Service, ServiceStatus } from '@/types';
-import { format, differenceInDays } from 'date-fns';
-import { es } from 'date-fns/locale';
+import { differenceInDays } from 'date-fns';
+import { formatForDisplay, parseFromDatabase } from '@/utils/timezoneUtils';
 import { BatchUpdateModal, BatchUpdateData } from './BatchUpdateModal';
 import { toast } from 'sonner';
 
@@ -138,16 +138,16 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
           bValue = b.serviceType.name || '';
           break;
         case 'serviceDate':
-          aValue = new Date(a.serviceDate);
-          bValue = new Date(b.serviceDate);
+          aValue = parseFromDatabase(a.serviceDate);
+          bValue = parseFromDatabase(b.serviceDate);
           break;
         case 'value':
           aValue = a.value || 0;
           bValue = b.value || 0;
           break;
         case 'daysInStatus':
-          aValue = differenceInDays(new Date(), new Date(a.serviceDate));
-          bValue = differenceInDays(new Date(), new Date(b.serviceDate));
+          aValue = differenceInDays(new Date(), parseFromDatabase(a.serviceDate));
+          bValue = differenceInDays(new Date(), parseFromDatabase(b.serviceDate));
           break;
         case 'quoteNumber':
           aValue = a.quoteNumber || '';
@@ -180,7 +180,7 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
         const totalValue = statusServices.reduce((sum, s) => sum + (s.value || 0), 0);
         const averageDays = statusServices.length > 0 
           ? statusServices.reduce((sum, s) => {
-              const days = differenceInDays(new Date(), new Date(s.serviceDate));
+              const days = differenceInDays(new Date(), parseFromDatabase(s.serviceDate));
               return sum + days;
             }, 0) / statusServices.length
           : 0;
@@ -194,28 +194,28 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
             case 'pending':
               // Para programados: mostrar la fecha más próxima
               sortingDate = statusServices
-                .map(s => new Date(s.serviceDate))
+                .map(s => parseFromDatabase(s.serviceDate))
                 .sort((a, b) => a.getTime() - b.getTime())[0];
               sortingDateLabel = 'Próximo';
               break;
             case 'completed':
               // Para completados: mostrar la fecha más reciente
               sortingDate = statusServices
-                .map(s => new Date(s.serviceDate))
+                .map(s => parseFromDatabase(s.serviceDate))
                 .sort((a, b) => b.getTime() - a.getTime())[0];
               sortingDateLabel = 'Último';
               break;
             case 'invoiced':
               // Para facturados: mostrar la fecha más reciente
               sortingDate = statusServices
-                .map(s => new Date(s.serviceDate))
+                .map(s => parseFromDatabase(s.serviceDate))
                 .sort((a, b) => b.getTime() - a.getTime())[0];
               sortingDateLabel = 'Último';
               break;
             default:
               // Para otros estados: mostrar la fecha más reciente
               sortingDate = statusServices
-                .map(s => new Date(s.serviceDate))
+                .map(s => parseFromDatabase(s.serviceDate))
                 .sort((a, b) => b.getTime() - a.getTime())[0];
               sortingDateLabel = 'Reciente';
           }
@@ -482,7 +482,7 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
                               {group.sortingDate && (
                                 <span className="flex items-center gap-1">
                                   <Calendar className="w-3 h-3" />
-                                  {group.sortingDateLabel}: {format(group.sortingDate, 'dd/MM/yyyy', { locale: es })}
+                                  {group.sortingDateLabel}: {formatForDisplay(group.sortingDate)}
                                 </span>
                               )}
                             </div>
@@ -522,27 +522,27 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
                       </TableHeader>
                       <TableBody>
                         {group.services.map((service) => {
-                          const daysInStatus = differenceInDays(new Date(), new Date(service.serviceDate));
+                          const daysInStatus = differenceInDays(new Date(), parseFromDatabase(service.serviceDate));
                           return (
-                            <TableRow key={service.id} className="border-gray-700">
-                              <TableCell>
-                                <Checkbox
-                                  checked={selectedServices.has(service.id)}
-                                  onCheckedChange={(checked) => handleServiceSelection(service.id, checked as boolean)}
-                                  className="border-gray-500"
-                                />
-                              </TableCell>
-                              <TableCell>
-                                <div className="font-medium text-white">{service.folio}</div>
-                              </TableCell>
-                              <TableCell>
-                                <div className="text-white">{service.serviceType.name}</div>
-                              </TableCell>
-                              <TableCell>
-                                <div className="text-sm text-gray-300">
-                                  {format(new Date(service.serviceDate), 'dd/MM/yyyy', { locale: es })}
-                                </div>
-                              </TableCell>
+                        <TableRow key={service.id} className="border-gray-700">
+                          <TableCell>
+                            <Checkbox
+                              checked={selectedServices.has(service.id)}
+                              onCheckedChange={(checked) => handleServiceSelection(service.id, checked as boolean)}
+                              className="border-gray-500"
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <div className="font-medium text-white">{service.folio}</div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="text-white">{service.serviceType.name}</div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="text-sm text-gray-300">
+                              {formatForDisplay(parseFromDatabase(service.serviceDate))}
+                            </div>
+                          </TableCell>
                               <TableCell>
                                 <div className="flex items-center gap-1 text-gray-300">
                                   <Car className="w-3 h-3" />
