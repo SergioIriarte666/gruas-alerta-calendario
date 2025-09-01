@@ -1,6 +1,15 @@
 import { Service } from '@/types';
 
 /**
+ * Checks if a service is an equipment rental service
+ */
+export const isEquipmentRentalService = (service: any): boolean => {
+  // Check both service type name and service_type relation
+  const serviceTypeName = service.service_type?.name || service.serviceType?.name || service.serviceTypeName;
+  return serviceTypeName === 'Arriendo de Equipos';
+};
+
+/**
  * Calculates the value that should be used for closure calculations.
  * Priority: custody_total_amount > client_covered_amount > service.value
  */
@@ -9,9 +18,13 @@ export const getServiceValueForClosure = (service: any): number => {
   const custodyTotal = service.custody_total_amount || service.custodyTotalAmount;
   const baseValue = service.value || 0;
   
-  // Si es un servicio de custodia, sumar el valor base + custodia
+  // Para servicios de Arriendo de Equipos, usar SOLO el custodyTotal
   if (custodyTotal && custodyTotal > 0) {
-    return baseValue + custodyTotal;
+    if (isEquipmentRentalService(service)) {
+      return custodyTotal; // Solo el valor de arriendo, sin sumar al baseValue
+    } else {
+      return baseValue + custodyTotal; // Servicios regulares con custodia
+    }
   }
   
   // Priority 2: Client covered amount for excess services
