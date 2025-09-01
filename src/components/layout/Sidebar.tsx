@@ -6,7 +6,7 @@ import { useUser } from '@/contexts/UserContext';
 import { useSettings } from '@/hooks/useSettings';
 import { useDeviceType } from '@/hooks/useDeviceType';
 import { cn } from '@/lib/utils';
-import { LayoutDashboard, Calendar, Truck, Users, Building2, Wrench, DollarSign, Target, FileText, Receipt, BarChart3, Settings, Menu, X, LogOut, ChevronLeft, ChevronRight, Tags, Car, Package, Zap, Percent } from 'lucide-react';
+import { LayoutDashboard, Calendar, Truck, Users, Building2, Wrench, DollarSign, Target, FileText, Receipt, BarChart3, Settings, Menu, X, LogOut, ChevronLeft, ChevronRight, Tags, Car, Package, Zap, Percent, Bot } from 'lucide-react';
 
 interface SidebarProps {
   isCollapsed: boolean;
@@ -124,6 +124,11 @@ export const Sidebar = ({
     name: 'Registros Rápidos',
     href: '/quick-entries',
     icon: Zap,
+    adminOnly: true
+  }, {
+    name: 'Automatización',
+    href: '/automation',
+    icon: Bot,
     adminOnly: true
   }, {
     name: 'Configuración',
