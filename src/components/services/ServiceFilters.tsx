@@ -107,6 +107,18 @@ export const ServiceFilters = ({
                   >
                     Facturados
                   </SelectItem>
+                  <SelectItem 
+                    value="quoted" 
+                    className="text-black hover:bg-gray-100 focus:bg-gray-100"
+                  >
+                    Cotizados
+                  </SelectItem>
+                  <SelectItem 
+                    value="purchase_order_pending" 
+                    className="text-black hover:bg-gray-100 focus:bg-gray-100"
+                  >
+                    Esperando O.C.
+                  </SelectItem>
                 </SelectContent>
               </Select>
               <Button 

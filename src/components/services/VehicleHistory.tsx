@@ -21,8 +21,12 @@ const getStatusBadge = (status: ServiceStatus) => {
     const statusConfig = {
       pending: { label: 'Pendiente', className: 'bg-yellow-500 text-white' },
       in_progress: { label: 'En Progreso', className: 'bg-blue-500 text-white' },
+      inspection_completed: { label: 'Inspección Completada', className: 'bg-orange-500 text-white' },
       completed: { label: 'Completado', className: 'bg-green-500 text-white' },
-      cancelled: { label: 'Cancelado', className: 'bg-red-500 text-white' }
+      cancelled: { label: 'Cancelado', className: 'bg-red-500 text-white' },
+      invoiced: { label: 'Facturado', className: 'bg-purple-500 text-white' },
+      quoted: { label: 'Cotizado', className: 'bg-cyan-500 text-white' },
+      purchase_order_pending: { label: 'Esperando O.C.', className: 'bg-amber-500 text-white' }
     };
 
     const config = statusConfig[status] || { label: 'Desconocido', className: 'bg-gray-500 text-white' };
