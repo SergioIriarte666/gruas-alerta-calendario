@@ -385,3 +385,28 @@ export const formatForAlert = (date: Date | string): string => {
   const userTimezone = getUserTimezoneSync();
   return formatInTimeZone(dateObj, userTimezone, 'dd MMM', { locale: es });
 };
+
+// Format date and time for display (respects user's timezone and format)
+export const formatForDisplayWithTime = (date: Date | string): string => {
+  if (!date) return 'N/A';
+  
+  const userFormat = getUserDateFormat();
+  const dateObj = typeof date === 'string' ? parseFromDatabase(date) : date;
+  const userTimezone = getUserTimezoneSync();
+  
+  let displayFormat: string;
+  switch (userFormat) {
+    case 'MM/DD/YYYY':
+      displayFormat = 'MM/dd/yyyy HH:mm';
+      break;
+    case 'YYYY-MM-DD':
+      displayFormat = 'yyyy-MM-dd HH:mm';
+      break;
+    case 'DD/MM/YYYY':
+    default:
+      displayFormat = 'dd/MM/yyyy HH:mm';
+      break;
+  }
+  
+  return formatInTimeZone(dateObj, userTimezone, displayFormat, { locale: es });
+};

@@ -5,8 +5,6 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Service } from '@/types';
-import { format } from 'date-fns';
-import { es } from 'date-fns/locale';
 import { 
   Calendar, 
   User, 
@@ -27,11 +25,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { VehicleHistory } from './VehicleHistory';
 import { ServiceCostsSection } from './ServiceCostsSection';
 import { useServiceDetailsForView } from '@/hooks/useServiceDetailsGlobal';
-import { parseFromDatabase } from '@/utils/timezoneUtils';
 import { shouldShowVehicleInfo, formatVehicleInfo, getServiceStatusBadge, formatCurrency } from '@/utils/statusHelpers';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { getServiceValueForClosure, isCustodyService, getCustodyInfo, isEquipmentRentalService } from '@/utils/serviceValueCalculations';
+import { formatForDisplay, formatForDisplayWithTime } from '@/utils/timezoneUtils';
 
 interface ServiceDetailsModalProps {
   service: Service;
@@ -239,8 +237,8 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose }: ServiceDetails
                       {serviceData.invoiceNumeroFiscal && (
                         <DetailItem icon={FileText} label="Número Fiscal" value={serviceData.invoiceNumeroFiscal} />
                       )}
-                      <DetailItem icon={Calendar} label="Fecha de Solicitud" value={format(parseFromDatabase(serviceData.requestDate), 'dd/MM/yyyy', { locale: es })} />
-                      <DetailItem icon={Clock} label="Fecha y Hora de Servicio" value={format(parseFromDatabase(serviceData.serviceDate), "dd/MM/yyyy HH:mm", { locale: es })} />
+                      <DetailItem icon={Calendar} label="Fecha de Solicitud" value={formatForDisplay(serviceData.requestDate)} />
+                      <DetailItem icon={Clock} label="Fecha y Hora de Servicio" value={formatForDisplayWithTime(serviceData.serviceDate)} />
                       <DetailItem icon={MapPin} label="Origen" value={serviceData.origin} isFullWidth={true} />
                       <DetailItem icon={MapPin} label="Destino" value={serviceData.destination} isFullWidth={true} />
                   </DetailSection>
@@ -274,10 +272,10 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose }: ServiceDetails
                           valueClass="text-lg text-tms-green font-bold" 
                         />
                         {custodyInfo.startDate && (
-                          <DetailItem icon={Calendar} label="Fecha Inicio" value={format(new Date(custodyInfo.startDate), 'dd/MM/yyyy', { locale: es })} />
+                          <DetailItem icon={Calendar} label="Fecha Inicio" value={formatForDisplay(custodyInfo.startDate)} />
                         )}
                         {custodyInfo.endDate && (
-                          <DetailItem icon={Calendar} label="Fecha Fin" value={format(new Date(custodyInfo.endDate), 'dd/MM/yyyy', { locale: es })} />
+                          <DetailItem icon={Calendar} label="Fecha Fin" value={formatForDisplay(custodyInfo.endDate)} />
                         )}
                         {custodyInfo.notes && (
                           <DetailItem icon={FileText} label="Notas" value={custodyInfo.notes} isFullWidth={true} />
@@ -342,8 +340,8 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose }: ServiceDetails
           </Tabs>
 
           <div className="flex justify-between text-sm text-gray-400 pt-4 mt-6 mb-6 border-t border-gray-700">
-            <span>Creado: {format(parseFromDatabase(serviceData.createdAt), 'dd/MM/yyyy HH:mm', { locale: es })}</span>
-            <span>Actualizado: {format(parseFromDatabase(serviceData.updatedAt), 'dd/MM/yyyy HH:mm', { locale: es })}</span>
+            <span>Creado: {formatForDisplayWithTime(serviceData.createdAt)}</span>
+            <span>Actualizado: {formatForDisplayWithTime(serviceData.updatedAt)}</span>
           </div>
         </ScrollArea>
       </DialogContent>
