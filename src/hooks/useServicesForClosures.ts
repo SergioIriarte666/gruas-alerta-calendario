@@ -33,8 +33,8 @@ export const useServicesForClosures = (options: UseServicesForClosuresOptions = 
       setLoading(true);
       console.log('Fetching services data for closures with date filter:', { dateFrom, dateTo });
       
-      // Build the query for completed services
-      let completedQuery = supabase
+      // Build the query for billable services (completed and with purchase order)
+      let billableQuery = supabase
         .from('services')
         .select(`
           *,
@@ -43,7 +43,7 @@ export const useServicesForClosures = (options: UseServicesForClosuresOptions = 
           operators!left(id, name, rut, phone, license_number, is_active),
           service_types!inner(id, name, description, is_active)
         `)
-        .eq('status', 'completed')
+        .in('status', ['completed', 'with_purchase_order'])
         .order('folio', { ascending: true });
 
       // Build the query for pending services
@@ -61,22 +61,22 @@ export const useServicesForClosures = (options: UseServicesForClosuresOptions = 
 
       // Add date range filter if provided
       if (dateFrom) {
-        completedQuery = completedQuery.gte('service_date', dateFrom.toISOString().split('T')[0]);
+        billableQuery = billableQuery.gte('service_date', dateFrom.toISOString().split('T')[0]);
         pendingQuery = pendingQuery.gte('service_date', dateFrom.toISOString().split('T')[0]);
       }
       if (dateTo) {
-        completedQuery = completedQuery.lte('service_date', dateTo.toISOString().split('T')[0]);
+        billableQuery = billableQuery.lte('service_date', dateTo.toISOString().split('T')[0]);
         pendingQuery = pendingQuery.lte('service_date', dateTo.toISOString().split('T')[0]);
       }
 
-      const [completedResult, pendingResult] = await Promise.all([
-        completedQuery,
+      const [billableResult, pendingResult] = await Promise.all([
+        billableQuery,
         pendingQuery
       ]);
 
-      if (completedResult.error) {
-        console.error('Error fetching completed services:', completedResult.error);
-        throw completedResult.error;
+      if (billableResult.error) {
+        console.error('Error fetching billable services:', billableResult.error);
+        throw billableResult.error;
       }
 
       if (pendingResult.error) {
@@ -84,10 +84,10 @@ export const useServicesForClosures = (options: UseServicesForClosuresOptions = 
         throw pendingResult.error;
       }
 
-      const completedServices = completedResult.data || [];
+      const billableServices = billableResult.data || [];
       const pendingServices = pendingResult.data || [];
 
-      console.log('Completed services found:', completedServices.length);
+      console.log('Billable services found (completed + with purchase order):', billableServices.length);
       console.log('Pending services found:', pendingServices.length);
 
       // Get all service IDs that are already included in closures
@@ -103,7 +103,7 @@ export const useServicesForClosures = (options: UseServicesForClosuresOptions = 
       console.log('Services already in closures:', usedServiceIds.size);
 
       // Filter out services that are already in closures
-      const availableCompletedServices = completedServices.filter(service => {
+      const availableBillableServices = billableServices.filter(service => {
         const isInClosure = usedServiceIds.has(service.id);
         const isAvailable = !isInClosure;
         
@@ -112,17 +112,17 @@ export const useServicesForClosures = (options: UseServicesForClosuresOptions = 
         return isAvailable;
       });
 
-      console.log('Available completed services for new closures:', availableCompletedServices.length);
+      console.log('Available billable services for new closures:', availableBillableServices.length);
 
       // Transform the raw data to match the Service type
-      const transformedCompleted = transformRawServiceData(availableCompletedServices);
+      const transformedBillable = transformRawServiceData(availableBillableServices);
       const transformedPending = transformRawServiceData(pendingServices);
 
       setData({
-        availableServices: transformedCompleted,
+        availableServices: transformedBillable,
         pendingServices: transformedPending,
         usedServiceIds,
-        totalCompleted: completedServices.length
+        totalCompleted: billableServices.length
       });
     } catch (error: any) {
       console.error('Error fetching services data for closures:', error);
