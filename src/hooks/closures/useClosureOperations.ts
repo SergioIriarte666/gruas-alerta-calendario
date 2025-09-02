@@ -35,7 +35,8 @@ export const useClosureOperations = () => {
           date_to: closureData.dateRange.to,
           client_id: closureData.clientId || null,
           total: closureData.total,
-          status: closureData.status
+          status: closureData.status,
+          purchase_order: closureData.purchaseOrder || null
         })
         .select()
         .single();
@@ -94,6 +95,9 @@ export const useClosureOperations = () => {
       }
       if (closureData.status !== undefined) {
         updateData.status = closureData.status;
+      }
+      if (closureData.purchaseOrder !== undefined) {
+        updateData.purchase_order = closureData.purchaseOrder;
       }
 
       const { error } = await supabase

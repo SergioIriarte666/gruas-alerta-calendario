@@ -12,6 +12,7 @@ import FormActions from './FormActions';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
 import { calculateClosureTotal } from '@/utils/serviceValueCalculations';
+import { detectPurchaseOrders, getPurchaseOrderSummary } from '@/utils/closureUtils';
 
 interface ClosureFormProps {
   open: boolean;
@@ -112,11 +113,16 @@ const ClosureForm = ({
       // Calculate new total using closure-specific value calculation (includes excess)
       const selectedServices = services.filter(s => newServiceIds.includes(s.id));
       const total = calculateClosureTotal(selectedServices);
-      console.log('Updated service IDs:', newServiceIds, 'New total:', total);
+      
+      // Auto-detect purchase orders from selected services
+      const detectedPO = detectPurchaseOrders(selectedServices);
+      
+      console.log('Updated service IDs:', newServiceIds, 'New total:', total, 'Detected PO:', detectedPO);
       return {
         ...prev,
         serviceIds: newServiceIds,
-        total
+        total,
+        purchaseOrder: detectedPO
       };
     });
   };
@@ -185,7 +191,14 @@ const ClosureForm = ({
 
           {/* Purchase Order */}
           <div className="space-y-2">
-            <Label className="text-gray-300">Orden de Compra (Opcional)</Label>
+            <Label className="text-gray-300">
+              Orden de Compra 
+              {formData.serviceIds.length > 0 && (
+                <span className="text-xs text-blue-400 ml-2">
+                  (Auto-detectada de servicios seleccionados)
+                </span>
+              )}
+            </Label>
             <Input 
               type="text" 
               placeholder="Ej: OC-2024-001"
@@ -196,6 +209,11 @@ const ClosureForm = ({
               }))} 
               className="bg-white/5 border-gray-700 text-white placeholder:text-gray-500" 
             />
+            {formData.serviceIds.length > 0 && formData.purchaseOrder && (
+              <div className="text-xs text-gray-400">
+                {getPurchaseOrderSummary(services.filter(s => formData.serviceIds.includes(s.id)))}
+              </div>
+            )}
           </div>
 
           {/* Total */}
