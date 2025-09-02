@@ -66,7 +66,10 @@ export const useServicesPage = () => {
           service.folio.toLowerCase().includes(searchTerm.toLowerCase()) ||
           (service.client?.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
           service.licensePlate.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          service.vehicleBrand.toLowerCase().includes(searchTerm.toLowerCase());
+          service.vehicleBrand.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          (service.quoteNumber || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+          (service.purchaseOrder || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+          (service.purchaseOrderNumber || '').toLowerCase().includes(searchTerm.toLowerCase());
         
         const statusesToFilter = statusFilter === 'all' ? [] : statusFilter.split(',');
         let matchesStatus = false;
