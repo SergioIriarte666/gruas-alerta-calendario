@@ -159,6 +159,7 @@ const fetchEnhancedServiceDetails = async (serviceId: string): Promise<EnhancedS
       updatedAt: serviceData.clients.updated_at
     },
     purchaseOrder: serviceData.purchase_order,
+    purchaseOrderNumber: serviceData.purchase_order_number || '',
     quoteNumber: serviceData.quote_number || '',
     vehicleBrand: serviceData.vehicle_brand,
     vehicleModel: serviceData.vehicle_model,
@@ -225,6 +226,8 @@ const fetchEnhancedServiceDetails = async (serviceId: string): Promise<EnhancedS
 
   console.log('✅ [ENHANCED_SERVICE] Enhanced service created:', {
     folio: enhancedService.folio,
+    purchaseOrder: enhancedService.purchaseOrder,
+    purchaseOrderNumber: enhancedService.purchaseOrderNumber,
     operatorsCount: operators.length,
     serviceCostsCount: serviceCosts.length,
     totalCommissions,
