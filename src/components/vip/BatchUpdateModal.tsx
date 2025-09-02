@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
@@ -22,7 +22,9 @@ import {
   X, 
   AlertCircle,
   Hash,
-  Calendar
+  Calendar,
+  ToggleLeft,
+  ToggleRight
 } from 'lucide-react';
 import { Service } from '@/types';
 import { format } from 'date-fns';
@@ -38,7 +40,7 @@ interface BatchUpdateModalProps {
 }
 
 export interface BatchUpdateData {
-  type: 'quote' | 'purchase_order';
+  types: ('quote' | 'purchase_order')[];
   services: {
     id: string;
     quote_number?: string;
@@ -54,8 +56,9 @@ export const BatchUpdateModal: React.FC<BatchUpdateModalProps> = ({
   onBatchUpdate,
   clientName
 }) => {
-  const [activeTab, setActiveTab] = useState<'quote' | 'purchase_order'>('quote');
   const [isLoading, setIsLoading] = useState(false);
+  const [enableQuote, setEnableQuote] = useState(true);
+  const [enablePurchaseOrder, setEnablePurchaseOrder] = useState(false);
   const [batchData, setBatchData] = useState({
     quote: {
       baseNumber: '',
@@ -77,48 +80,69 @@ export const BatchUpdateModal: React.FC<BatchUpdateModalProps> = ({
       return;
     }
 
-    const currentData = batchData[activeTab];
+    if (!enableQuote && !enablePurchaseOrder) {
+      toast.error('Debe habilitar al menos una opción: Cotización o Orden de Compra');
+      return;
+    }
+
+    // Validar datos según las opciones habilitadas
+    const quoteData = batchData.quote;
+    const poData = batchData.purchase_order;
     
-    if (!currentData.baseNumber && !currentData.startingNumber) {
-      toast.error('Debe ingresar un número base o número inicial');
+    if (enableQuote && !quoteData.baseNumber && !quoteData.startingNumber) {
+      toast.error('Debe ingresar un número base o inicial para cotizaciones');
+      return;
+    }
+    
+    if (enablePurchaseOrder && !poData.baseNumber && !poData.startingNumber) {
+      toast.error('Debe ingresar un número base o inicial para órdenes de compra');
       return;
     }
 
     setIsLoading(true);
     
     try {
-      let services: BatchUpdateData['services'] = [];
-      
-      if (currentData.baseNumber) {
-        // Usar el mismo número para todos los servicios
-        services = selectedServices.map(service => ({
-          id: service.id,
-          ...(activeTab === 'quote' 
-            ? { quote_number: `${currentData.prefix}${currentData.baseNumber}` }
-            : { purchase_order_number: `${currentData.prefix}${currentData.baseNumber}` }
-          )
-        }));
-      } else if (currentData.startingNumber) {
-        // Numerar secuencialmente
-        const startNum = parseInt(currentData.startingNumber);
-        services = selectedServices.map((service, index) => ({
-          id: service.id,
-          ...(activeTab === 'quote' 
-            ? { quote_number: `${currentData.prefix}${startNum + index}` }
-            : { purchase_order_number: `${currentData.prefix}${startNum + index}` }
-          )
-        }));
-      }
+      const services: BatchUpdateData['services'] = selectedServices.map((service, index) => {
+        const serviceData: any = { id: service.id };
+        
+        // Procesar cotizaciones si están habilitadas
+        if (enableQuote) {
+          if (quoteData.baseNumber) {
+            serviceData.quote_number = `${quoteData.prefix}${quoteData.baseNumber}`;
+          } else if (quoteData.startingNumber) {
+            const startNum = parseInt(quoteData.startingNumber);
+            serviceData.quote_number = `${quoteData.prefix}${startNum + index}`;
+          }
+        }
+        
+        // Procesar órdenes de compra si están habilitadas
+        if (enablePurchaseOrder) {
+          if (poData.baseNumber) {
+            serviceData.purchase_order_number = `${poData.prefix}${poData.baseNumber}`;
+          } else if (poData.startingNumber) {
+            const startNum = parseInt(poData.startingNumber);
+            serviceData.purchase_order_number = `${poData.prefix}${startNum + index}`;
+          }
+        }
+        
+        return serviceData;
+      });
+
+      const activeTypes: ('quote' | 'purchase_order')[] = [];
+      if (enableQuote) activeTypes.push('quote');
+      if (enablePurchaseOrder) activeTypes.push('purchase_order');
 
       const updateData: BatchUpdateData = {
-        type: activeTab,
+        types: activeTypes,
         services,
-        notes: currentData.notes || undefined
+        notes: (enableQuote ? quoteData.notes : poData.notes) || undefined
       };
 
       await onBatchUpdate(updateData);
       
-      toast.success(`${selectedServices.length} servicios actualizados correctamente`);
+      const typesText = activeTypes.length === 2 ? 'cotizaciones y órdenes de compra' : 
+                       activeTypes[0] === 'quote' ? 'cotizaciones' : 'órdenes de compra';
+      toast.success(`${selectedServices.length} servicios actualizados con ${typesText}`);
       onOpenChange(false);
       
       // Resetear formulario
@@ -136,6 +160,8 @@ export const BatchUpdateModal: React.FC<BatchUpdateModalProps> = ({
           notes: ''
         }
       });
+      setEnableQuote(true);
+      setEnablePurchaseOrder(false);
       
     } catch (error) {
       console.error('Error en actualización por lotes:', error);
@@ -145,12 +171,11 @@ export const BatchUpdateModal: React.FC<BatchUpdateModalProps> = ({
     }
   };
 
-  const currentData = batchData[activeTab];
-  const updateCurrentData = (field: string, value: string) => {
+  const updateData = (type: 'quote' | 'purchase_order', field: string, value: string) => {
     setBatchData(prev => ({
       ...prev,
-      [activeTab]: {
-        ...prev[activeTab],
+      [type]: {
+        ...prev[type],
         [field]: value
       }
     }));
@@ -158,26 +183,37 @@ export const BatchUpdateModal: React.FC<BatchUpdateModalProps> = ({
 
   // Generar preview de números
   const generatePreview = () => {
-    if (!currentData.baseNumber && !currentData.startingNumber) return [];
+    const previews: any[] = [];
     
-    if (currentData.baseNumber) {
-      return [{ 
-        folio: selectedServices[0]?.folio || 'SRV-XXXX', 
-        number: `${currentData.prefix}${currentData.baseNumber}`,
-        isExample: true
-      }];
-    }
+    selectedServices.slice(0, 3).forEach((service, index) => {
+      const item: any = { folio: service.folio };
+      
+      if (enableQuote) {
+        const quoteData = batchData.quote;
+        if (quoteData.baseNumber) {
+          item.quote = `${quoteData.prefix}${quoteData.baseNumber}`;
+        } else if (quoteData.startingNumber) {
+          const startNum = parseInt(quoteData.startingNumber);
+          item.quote = `${quoteData.prefix}${startNum + index}`;
+        }
+      }
+      
+      if (enablePurchaseOrder) {
+        const poData = batchData.purchase_order;
+        if (poData.baseNumber) {
+          item.purchaseOrder = `${poData.prefix}${poData.baseNumber}`;
+        } else if (poData.startingNumber) {
+          const startNum = parseInt(poData.startingNumber);
+          item.purchaseOrder = `${poData.prefix}${startNum + index}`;
+        }
+      }
+      
+      if (item.quote || item.purchaseOrder) {
+        previews.push(item);
+      }
+    });
     
-    if (currentData.startingNumber) {
-      const startNum = parseInt(currentData.startingNumber);
-      return selectedServices.slice(0, 3).map((service, index) => ({
-        folio: service.folio,
-        number: `${currentData.prefix}${startNum + index}`,
-        isExample: false
-      }));
-    }
-    
-    return [];
+    return previews;
   };
 
   const preview = generatePreview();
@@ -237,133 +273,140 @@ export const BatchUpdateModal: React.FC<BatchUpdateModalProps> = ({
             </ScrollArea>
           </div>
 
-          {/* Tabs para tipo de actualización */}
-          <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'quote' | 'purchase_order')}>
-            <TabsList className="grid w-full grid-cols-2 bg-gray-800">
-              <TabsTrigger value="quote" className="data-[state=active]:bg-blue-600">
-                <FileText className="w-4 h-4 mr-2" />
-                Cotizaciones
-              </TabsTrigger>
-              <TabsTrigger value="purchase_order" className="data-[state=active]:bg-green-600">
-                <ShoppingCart className="w-4 h-4 mr-2" />
-                Órdenes de Compra
-              </TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="quote" className="space-y-4">
-              <div className="p-4 bg-blue-500/10 border border-blue-500/20 rounded-lg">
-                <h4 className="text-blue-300 font-medium mb-2">Configuración de Cotizaciones</h4>
-                <p className="text-gray-400 text-sm mb-4">
-                  Configure cómo asignar números de cotización a los servicios seleccionados.
-                </p>
-                
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="quote-prefix" className="text-gray-300">Prefijo</Label>
-                    <Input
-                      id="quote-prefix"
-                      value={currentData.prefix}
-                      onChange={(e) => updateCurrentData('prefix', e.target.value)}
-                      placeholder="COT-"
-                      className="bg-gray-800 border-gray-700 text-white"
-                    />
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="quote-base" className="text-gray-300">Número base (mismo para todos)</Label>
-                    <Input
-                      id="quote-base"
-                      value={currentData.baseNumber}
-                      onChange={(e) => {
-                        updateCurrentData('baseNumber', e.target.value);
-                        if (e.target.value) updateCurrentData('startingNumber', '');
-                      }}
-                      placeholder="2024001"
-                      className="bg-gray-800 border-gray-700 text-white"
-                    />
-                  </div>
-                  
-                  <div className="col-span-2">
-                    <Label htmlFor="quote-start" className="text-gray-300">Número inicial (secuencial)</Label>
-                    <Input
-                      id="quote-start"
-                      type="number"
-                      value={currentData.startingNumber}
-                      onChange={(e) => {
-                        updateCurrentData('startingNumber', e.target.value);
-                        if (e.target.value) updateCurrentData('baseNumber', '');
-                      }}
-                      placeholder="1001"
-                      className="bg-gray-800 border-gray-700 text-white"
-                      disabled={!!currentData.baseNumber}
-                    />
-                    {currentData.startingNumber && (
-                      <p className="text-xs text-gray-400 mt-1">
-                        Se numerarán del {currentData.prefix}{currentData.startingNumber} al {currentData.prefix}{parseInt(currentData.startingNumber) + selectedServices.length - 1}
-                      </p>
-                    )}
+          {/* Configuración de tipos */}
+          <div className="space-y-6">
+            {/* Cotizaciones */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <FileText className="w-5 h-5 text-blue-400" />
+                  <h3 className="text-lg font-medium text-white">Cotizaciones</h3>
+                </div>
+                <Switch
+                  checked={enableQuote}
+                  onCheckedChange={setEnableQuote}
+                />
+              </div>
+              
+              {enableQuote && (
+                <div className="p-4 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="quote-prefix" className="text-gray-300">Prefijo</Label>
+                      <Input
+                        id="quote-prefix"
+                        value={batchData.quote.prefix}
+                        onChange={(e) => updateData('quote', 'prefix', e.target.value)}
+                        placeholder="COT-"
+                        className="bg-gray-800 border-gray-700 text-white"
+                      />
+                    </div>
+                    
+                    <div>
+                      <Label htmlFor="quote-base" className="text-gray-300">Número base (mismo para todos)</Label>
+                      <Input
+                        id="quote-base"
+                        value={batchData.quote.baseNumber}
+                        onChange={(e) => {
+                          updateData('quote', 'baseNumber', e.target.value);
+                          if (e.target.value) updateData('quote', 'startingNumber', '');
+                        }}
+                        placeholder="2024001"
+                        className="bg-gray-800 border-gray-700 text-white"
+                      />
+                    </div>
+                    
+                    <div className="col-span-2">
+                      <Label htmlFor="quote-start" className="text-gray-300">Número inicial (secuencial)</Label>
+                      <Input
+                        id="quote-start"
+                        type="number"
+                        value={batchData.quote.startingNumber}
+                        onChange={(e) => {
+                          updateData('quote', 'startingNumber', e.target.value);
+                          if (e.target.value) updateData('quote', 'baseNumber', '');
+                        }}
+                        placeholder="1001"
+                        className="bg-gray-800 border-gray-700 text-white"
+                        disabled={!!batchData.quote.baseNumber}
+                      />
+                      {batchData.quote.startingNumber && (
+                        <p className="text-xs text-gray-400 mt-1">
+                          Se numerarán del {batchData.quote.prefix}{batchData.quote.startingNumber} al {batchData.quote.prefix}{parseInt(batchData.quote.startingNumber) + selectedServices.length - 1}
+                        </p>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            </TabsContent>
+              )}
+            </div>
 
-            <TabsContent value="purchase_order" className="space-y-4">
-              <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-lg">
-                <h4 className="text-green-300 font-medium mb-2">Configuración de Órdenes de Compra</h4>
-                <p className="text-gray-400 text-sm mb-4">
-                  Configure cómo asignar números de orden de compra a los servicios seleccionados.
-                </p>
-                
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="po-prefix" className="text-gray-300">Prefijo</Label>
-                    <Input
-                      id="po-prefix"
-                      value={currentData.prefix}
-                      onChange={(e) => updateCurrentData('prefix', e.target.value)}
-                      placeholder="OC-"
-                      className="bg-gray-800 border-gray-700 text-white"
-                    />
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="po-base" className="text-gray-300">Número base (mismo para todos)</Label>
-                    <Input
-                      id="po-base"
-                      value={currentData.baseNumber}
-                      onChange={(e) => {
-                        updateCurrentData('baseNumber', e.target.value);
-                        if (e.target.value) updateCurrentData('startingNumber', '');
-                      }}
-                      placeholder="2024001"
-                      className="bg-gray-800 border-gray-700 text-white"
-                    />
-                  </div>
-                  
-                  <div className="col-span-2">
-                    <Label htmlFor="po-start" className="text-gray-300">Número inicial (secuencial)</Label>
-                    <Input
-                      id="po-start"
-                      type="number"
-                      value={currentData.startingNumber}
-                      onChange={(e) => {
-                        updateCurrentData('startingNumber', e.target.value);
-                        if (e.target.value) updateCurrentData('baseNumber', '');
-                      }}
-                      placeholder="1001"
-                      className="bg-gray-800 border-gray-700 text-white"
-                      disabled={!!currentData.baseNumber}
-                    />
-                    {currentData.startingNumber && (
-                      <p className="text-xs text-gray-400 mt-1">
-                        Se numerarán del {currentData.prefix}{currentData.startingNumber} al {currentData.prefix}{parseInt(currentData.startingNumber) + selectedServices.length - 1}
-                      </p>
-                    )}
+            {/* Órdenes de Compra */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <ShoppingCart className="w-5 h-5 text-green-400" />
+                  <h3 className="text-lg font-medium text-white">Órdenes de Compra</h3>
+                </div>
+                <Switch
+                  checked={enablePurchaseOrder}
+                  onCheckedChange={setEnablePurchaseOrder}
+                />
+              </div>
+              
+              {enablePurchaseOrder && (
+                <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-lg">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="po-prefix" className="text-gray-300">Prefijo</Label>
+                      <Input
+                        id="po-prefix"
+                        value={batchData.purchase_order.prefix}
+                        onChange={(e) => updateData('purchase_order', 'prefix', e.target.value)}
+                        placeholder="OC-"
+                        className="bg-gray-800 border-gray-700 text-white"
+                      />
+                    </div>
+                    
+                    <div>
+                      <Label htmlFor="po-base" className="text-gray-300">Número base (mismo para todos)</Label>
+                      <Input
+                        id="po-base"
+                        value={batchData.purchase_order.baseNumber}
+                        onChange={(e) => {
+                          updateData('purchase_order', 'baseNumber', e.target.value);
+                          if (e.target.value) updateData('purchase_order', 'startingNumber', '');
+                        }}
+                        placeholder="2024001"
+                        className="bg-gray-800 border-gray-700 text-white"
+                      />
+                    </div>
+                    
+                    <div className="col-span-2">
+                      <Label htmlFor="po-start" className="text-gray-300">Número inicial (secuencial)</Label>
+                      <Input
+                        id="po-start"
+                        type="number"
+                        value={batchData.purchase_order.startingNumber}
+                        onChange={(e) => {
+                          updateData('purchase_order', 'startingNumber', e.target.value);
+                          if (e.target.value) updateData('purchase_order', 'baseNumber', '');
+                        }}
+                        placeholder="1001"
+                        className="bg-gray-800 border-gray-700 text-white"
+                        disabled={!!batchData.purchase_order.baseNumber}
+                      />
+                      {batchData.purchase_order.startingNumber && (
+                        <p className="text-xs text-gray-400 mt-1">
+                          Se numerarán del {batchData.purchase_order.prefix}{batchData.purchase_order.startingNumber} al {batchData.purchase_order.prefix}{parseInt(batchData.purchase_order.startingNumber) + selectedServices.length - 1}
+                        </p>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            </TabsContent>
-          </Tabs>
+              )}
+            </div>
+          </div>
 
           {/* Preview */}
           {preview.length > 0 && (
@@ -374,14 +417,23 @@ export const BatchUpdateModal: React.FC<BatchUpdateModalProps> = ({
               </h4>
               <div className="space-y-2">
                 {preview.map((item, index) => (
-                  <div key={index} className="flex items-center justify-between bg-gray-900/50 p-2 rounded">
-                    <span className="text-gray-300">{item.folio}</span>
-                    <Badge variant="outline" className="bg-blue-500/20 text-blue-300">
-                      {item.number}
-                    </Badge>
+                  <div key={index} className="flex items-center justify-between bg-gray-900/50 p-3 rounded">
+                    <span className="text-gray-300 font-medium">{item.folio}</span>
+                    <div className="flex items-center gap-2">
+                      {item.quote && (
+                        <Badge variant="outline" className="bg-blue-500/20 text-blue-300 border-blue-500/30">
+                          COT: {item.quote}
+                        </Badge>
+                      )}
+                      {item.purchaseOrder && (
+                        <Badge variant="outline" className="bg-green-500/20 text-green-300 border-green-500/30">
+                          O.C.: {item.purchaseOrder}
+                        </Badge>
+                      )}
+                    </div>
                   </div>
                 ))}
-                {currentData.startingNumber && selectedServices.length > 3 && (
+                {selectedServices.length > 3 && (
                   <div className="text-center text-gray-400 text-sm">
                     ... y {selectedServices.length - 3} servicios más
                   </div>
@@ -395,8 +447,11 @@ export const BatchUpdateModal: React.FC<BatchUpdateModalProps> = ({
             <Label htmlFor="notes" className="text-gray-300">Notas (opcional)</Label>
             <Textarea
               id="notes"
-              value={currentData.notes}
-              onChange={(e) => updateCurrentData('notes', e.target.value)}
+              value={enableQuote ? batchData.quote.notes : batchData.purchase_order.notes}
+              onChange={(e) => {
+                if (enableQuote) updateData('quote', 'notes', e.target.value);
+                if (enablePurchaseOrder) updateData('purchase_order', 'notes', e.target.value);
+              }}
               placeholder="Observaciones sobre esta actualización por lotes..."
               className="bg-gray-800 border-gray-700 text-white"
               rows={3}
@@ -409,7 +464,10 @@ export const BatchUpdateModal: React.FC<BatchUpdateModalProps> = ({
             <X className="w-4 h-4 mr-2" />
             Cancelar
           </Button>
-          <Button onClick={handleSubmit} disabled={isLoading || (!currentData.baseNumber && !currentData.startingNumber)}>
+          <Button 
+            onClick={handleSubmit} 
+            disabled={isLoading || (!enableQuote && !enablePurchaseOrder)}
+          >
             <Check className="w-4 h-4 mr-2" />
             {isLoading ? 'Actualizando...' : `Actualizar ${selectedServices.length} servicios`}
           </Button>

@@ -98,15 +98,19 @@ export default function VipClientPipeline() {
       
       // Actualizar cada servicio individualmente
       const updatePromises = updates.services.map(async (serviceUpdate: any) => {
-        console.log('📝 Actualizando servicio:', serviceUpdate.id, {
-          quoteNumber: serviceUpdate.quote_number,
-          purchaseOrder: serviceUpdate.purchase_order_number
-        });
+        const updateData: any = {};
         
-        return await updateService(serviceUpdate.id, {
-          quoteNumber: serviceUpdate.quote_number,
-          purchaseOrder: serviceUpdate.purchase_order_number
-        });
+        // Agregar campos según lo que se esté actualizando
+        if (serviceUpdate.quote_number) {
+          updateData.quoteNumber = serviceUpdate.quote_number;
+        }
+        if (serviceUpdate.purchase_order_number) {
+          updateData.purchaseOrder = serviceUpdate.purchase_order_number;
+        }
+        
+        console.log('📝 Actualizando servicio:', serviceUpdate.id, updateData);
+        
+        return await updateService(serviceUpdate.id, updateData);
       });
 
       await Promise.all(updatePromises);
