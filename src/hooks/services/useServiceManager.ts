@@ -389,7 +389,10 @@ export const useServiceManager = () => {
 
   // ACTUALIZAR SERVICIO
   const updateServiceMutation = useMutation({
-    mutationFn: async ({ id, serviceData }: { id: string; serviceData: Partial<ServiceFormData> }): Promise<Service> => {
+    mutationFn: async ({ id, serviceData }: { 
+      id: string; 
+      serviceData: Partial<ServiceFormData> & { purchaseOrderNumber?: string } 
+    }): Promise<Service> => {
       // Transformar datos para Supabase con validación de fechas y UUIDs
       console.log('🔧 Datos de servicio recibidos en useServiceManager:', {
         id: id,
@@ -400,7 +403,7 @@ export const useServiceManager = () => {
 
       // 🚀 DETECTAR ACTUALIZACIÓN PARCIAL (batch update)
       const isPartialUpdate = Object.keys(serviceData).length <= 3 && 
-                            (serviceData.quoteNumber !== undefined || serviceData.purchaseOrder !== undefined) &&
+                            (serviceData.quoteNumber !== undefined || serviceData.purchaseOrder !== undefined || serviceData.purchaseOrderNumber !== undefined) &&
                             !serviceData.requestDate && !serviceData.serviceDate;
 
       console.log('📊 Update type detection:', { isPartialUpdate, fieldsCount: Object.keys(serviceData).length });
@@ -416,6 +419,9 @@ export const useServiceManager = () => {
         }
         if (serviceData.purchaseOrder !== undefined) {
           transformedData.purchase_order = serviceData.purchaseOrder;
+        }
+        if (serviceData.purchaseOrderNumber !== undefined) {
+          transformedData.purchase_order_number = serviceData.purchaseOrderNumber;
         }
       } else {
         // ✅ ACTUALIZACIÓN COMPLETA - Procesar todos los campos con validación

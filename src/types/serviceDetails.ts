@@ -28,6 +28,7 @@ export interface ServiceFormData {
   serviceDate: string;
   clientId: string;
   purchaseOrder?: string;
+  purchaseOrderNumber?: string;
   quoteNumber?: string;
   serviceTypeId: string;
   
