@@ -221,7 +221,7 @@ export const BatchUpdateModal: React.FC<BatchUpdateModalProps> = ({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent 
-        className="max-w-4xl max-h-[80vh] glass-card select-none flex flex-col"
+        className="max-w-4xl max-h-[75vh] glass-card select-none flex flex-col"
         style={{ 
           position: 'fixed',
           top: '50%',
@@ -253,7 +253,7 @@ export const BatchUpdateModal: React.FC<BatchUpdateModalProps> = ({
               </Badge>
             </div>
             
-            <div className="h-24 overflow-y-auto space-y-2 border border-gray-700 bg-gray-800/50 p-3 rounded-md">
+            <div className="h-20 overflow-y-auto space-y-2 border border-gray-700 bg-gray-800/50 p-3 rounded-md">
               <div className="space-y-2">
                 {selectedServices.map((service, index) => (
                   <div key={service.id} className="flex items-center justify-between text-sm">
@@ -275,7 +275,7 @@ export const BatchUpdateModal: React.FC<BatchUpdateModalProps> = ({
           </div>
 
           {/* Configuración de tipos */}
-          <div className="space-y-4">
+          <div className="space-y-3">
             {/* Cotizaciones */}
             <div className="space-y-4">
               <div className="flex items-center justify-between">
@@ -290,8 +290,8 @@ export const BatchUpdateModal: React.FC<BatchUpdateModalProps> = ({
               </div>
               
               {enableQuote && (
-                <div className="p-4 bg-blue-500/10 border border-blue-500/20 rounded-lg">
-                  <div className="grid grid-cols-2 gap-4">
+                <div className="p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+                  <div className="grid grid-cols-2 gap-3">
                     <div>
                       <Label htmlFor="quote-prefix" className="text-gray-300">Prefijo</Label>
                       <Input
@@ -356,8 +356,8 @@ export const BatchUpdateModal: React.FC<BatchUpdateModalProps> = ({
               </div>
               
               {enablePurchaseOrder && (
-                <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-lg">
-                  <div className="grid grid-cols-2 gap-4">
+                <div className="p-3 bg-green-500/10 border border-green-500/20 rounded-lg">
+                  <div className="grid grid-cols-2 gap-3">
                     <div>
                       <Label htmlFor="po-prefix" className="text-gray-300">Prefijo</Label>
                       <Input
