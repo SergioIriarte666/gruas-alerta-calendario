@@ -6,21 +6,26 @@
 2. [Acceso y Roles de Usuario](#acceso-y-roles-de-usuario)
 3. [Dashboard Principal](#dashboard-principal)
 4. [Gestión de Servicios](#gestión-de-servicios)
-5. [Gestión de Grúas](#gestión-de-grúas)
-6. [Gestión de Operadores](#gestión-de-operadores)
-7. [Calendario de Eventos](#calendario-de-eventos)
-8. [Sistema de Inventario](#sistema-de-inventario)
-9. [Gestión de Proveedores](#gestión-de-proveedores)
-10. [Sistema de Backup y Restauración](#sistema-de-backup-y-restauración)
-11. [Entradas Rápidas](#entradas-rápidas)
-12. [Módulo Financiero](#módulo-financiero)
-13. [Sistema de Reportes](#sistema-de-reportes)
-14. [Configuraciones](#configuraciones)
-15. [Portal del Cliente](#portal-del-cliente)
-16. [Funcionalidades Móviles](#funcionalidades-móviles)
-17. [Integración Inventario-Grúas](#integración-inventario-grúas)
-18. [Mejores Prácticas y Flujos de Trabajo](#mejores-prácticas-y-flujos-de-trabajo)
-19. [Solución de Problemas](#solución-de-problemas)
+5. [Sistema de Cierres](#sistema-de-cierres)
+6. [Gestión de Grúas](#gestión-de-grúas)
+7. [Gestión de Operadores](#gestión-de-operadores)
+8. [Portal del Operador](#portal-del-operador)
+9. [Calendario de Eventos](#calendario-de-eventos)
+10. [Sistema de Inventario](#sistema-de-inventario)
+11. [Gestión de Proveedores](#gestión-de-proveedores)
+12. [Módulo VIP y Pipeline](#módulo-vip-y-pipeline)
+13. [Facturación Diferida](#facturación-diferida)
+14. [Sistema de Backup y Restauración](#sistema-de-backup-y-restauración)
+15. [Entradas Rápidas](#entradas-rápidas)
+16. [Módulo Financiero](#módulo-financiero)
+17. [Sistema de Reportes](#sistema-de-reportes)
+18. [Herramientas Administrativas](#herramientas-administrativas)
+19. [Configuraciones](#configuraciones)
+20. [Portal del Cliente](#portal-del-cliente)
+21. [Funcionalidades Móviles](#funcionalidades-móviles)
+22. [Integración Inventario-Grúas](#integración-inventario-grúas)
+23. [Mejores Prácticas y Flujos de Trabajo](#mejores-prácticas-y-flujos-de-trabajo)
+24. [Solución de Problemas](#solución-de-problemas)
 
 ---
 
@@ -36,6 +41,10 @@ TMS Grúas v2.2.0 es un sistema integral de gestión de transporte y servicios d
 - **Gestión de proveedores**: Sistema completo de proveedores y programación de pagos
 - **Sistema de backup**: Respaldos automáticos y restauración completa
 - **Entradas rápidas**: Registro móvil de gastos y eventos con GPS
+- **Módulo VIP**: Pipeline avanzado para seguimiento de clientes estratégicos
+- **Facturación diferida**: Gestión automática de ciclos de facturación por cliente
+- **Sistema de cierres**: Control avanzado de cierres de servicios y facturación
+- **Portal del operador**: Funcionalidades especializadas para personal de campo
 - **Reportes financieros**: Costos, comisiones e ingresos con análisis avanzado
 - **Portal del cliente**: Acceso directo para clientes con funcionalidades ampliadas
 - **Aplicación móvil PWA**: Funcionalidades offline mejoradas para uso en campo
@@ -51,9 +60,32 @@ TMS Grúas v2.2.0 es un sistema integral de gestión de transporte y servicios d
 - ✅ **Sistema de Backup**: Respaldos automáticos programables
 - ✅ **Gestión de Proveedores**: Módulo completo para proveedores y pagos
 - ✅ **Entradas Rápidas**: Registro móvil con GPS y fotografías
+- ✅ **Pipeline VIP**: Seguimiento avanzado de clientes estratégicos
+- ✅ **Facturación Diferida**: Ciclos personalizados por cliente
+- ✅ **Sistema de Cierres**: Control avanzado de facturación
+- ✅ **Portal del Operador**: Herramientas especializadas para campo
+- ✅ **Búsqueda Avanzada**: Incluye cotización y orden de compra
+- ✅ **Actualizaciones Masivas**: Batch updates para eficiencia
 - ✅ **Integración Automática**: Inventario-Grúas sincronizado para evitar duplicados
 - ✅ **PWA Avanzada**: Funcionalidad offline con sincronización inteligente
 - ✅ **Auditoría Completa**: Trazabilidad de todas las operaciones del sistema
+
+### Novedades v2.2.0
+
+#### 🆕 **Nuevas Funcionalidades**
+- **Pipeline VIP**: Seguimiento especializado de clientes estratégicos
+- **Sistema de Cierres Avanzado**: Control completo del proceso de cierre de servicios
+- **Facturación Diferida**: Gestión de ciclos de facturación personalizados
+- **Portal del Operador**: Interfaz especializada para personal de campo
+- **Búsqueda Expandida**: Búsqueda por cotización y orden de compra en servicios
+- **Actualizaciones Masivas**: Batch updates para cotizaciones y órdenes de compra
+- **Entradas Rápidas con GPS**: Registro móvil de gastos con ubicación
+
+#### 🔧 **Mejoras Existentes**
+- **Gestión de Inventario**: Números de lote, agrupación de compras
+- **Sistema Financiero**: Comisiones avanzadas y centros de costo
+- **Reportes**: Nuevas métricas y análisis avanzados
+- **PWA**: Mejor rendimiento offline y sincronización
 
 ---
 
@@ -78,24 +110,38 @@ TMS Grúas v2.2.0 es un sistema integral de gestión de transporte y servicios d
 - Gestión de usuarios y configuraciones
 - Acceso a todos los módulos y reportes
 - Configuración de empresa y sistema
+- Gestión del pipeline VIP
+- Configuración de facturación diferida
 
 #### 👨‍💼 **Supervisor**
 - Gestión de servicios y operaciones
 - Acceso a reportes operacionales
 - Supervisión de operadores
 - Gestión de inventario
+- Acceso al sistema de cierres
+- Seguimiento del pipeline VIP
 
 #### 🚛 **Operador**
 - Vista simplificada para operaciones de campo
 - Actualización de estados de servicio
 - Registro de eventos y novedades
 - Acceso móvil optimizado
+- Portal del operador especializado
+- Entradas rápidas con GPS
+
+#### 🎯 **Operador Avanzado**
+- Todas las funciones del operador básico
+- Acceso a inspecciones digitales
+- Captura de firmas digitales
+- Gestión completa de servicios en campo
+- Reportes móviles básicos
 
 #### 👤 **Cliente**
 - Acceso al portal del cliente
 - Visualización de servicios contratados
 - Solicitud de nuevos servicios
 - Consulta de facturas y pagos
+- Seguimiento en tiempo real
 
 ---
 
@@ -110,28 +156,47 @@ El dashboard proporciona una vista consolidada de:
 - **Grúas Disponibles**: Estado actual de la flota
 - **Ingresos del Mes**: Facturación mensual
 - **Operadores Activos**: Personal en servicio
+- **Pipeline VIP**: Oportunidades en seguimiento
+- **Servicios Pendientes de Facturar**: Listos para facturación diferida
 
 #### 📈 **Gráficos y Tendencias**
 - **Servicios por Estado**: Distribución de servicios
 - **Ingresos Mensuales**: Tendencia de facturación
 - **Utilización de Grúas**: Eficiencia de la flota
 - **Costos vs Ingresos**: Análisis de rentabilidad
+- **Pipeline VIP**: Conversión de oportunidades
+- **Facturación Diferida**: Programación de facturas
 
 #### 🔔 **Notificaciones y Alertas**
 - Servicios próximos a vencer
 - Mantenimientos programados
 - Inventario bajo stock
 - Facturas pendientes
+- Oportunidades VIP en seguimiento
+- Cierres pendientes de facturar
+
+#### 🎯 **Accesos Rápidos**
+- Crear nuevo servicio
+- Registrar entrada rápida
+- Procesar cierres pendientes
+- Actualizar pipeline VIP
+- Generar facturación diferida
 
 ### Navegación
 
 #### Menú Principal
 - **Dashboard**: Vista general del sistema
 - **Servicios**: Gestión de servicios de transporte
+- **Cierres**: Control de cierres y facturación
 - **Grúas**: Administración de la flota
 - **Operadores**: Gestión de personal
+- **Portal Operador**: Herramientas de campo
 - **Calendario**: Programación de eventos
 - **Inventario**: Control de stock
+- **Proveedores**: Gestión de proveedores
+- **VIP Pipeline**: Seguimiento de clientes estratégicos
+- **Facturación Diferida**: Ciclos de facturación
+- **Entradas Rápidas**: Registro móvil de gastos
 - **Finanzas**: Costos, comisiones y facturación
 - **Reportes**: Análisis y estadísticas
 - **Configuración**: Ajustes del sistema
@@ -157,57 +222,202 @@ El dashboard proporciona una vista consolidada de:
    - **Descripción**: Detalles del trabajo
    - **Observaciones**: Notas adicionales
 
-#### Paso 3: Asignación de Recursos
-4. **Seleccionar recursos**:
+#### Paso 3: Información Comercial
+4. **Datos comerciales** (Nuevos en v2.2.0):
+   - **Número de Cotización**: Referencia comercial
+   - **Orden de Compra**: Número del cliente
+   - **Número de OC**: Referencia adicional
+   - **Valor Cotizado**: Monto estimado
+
+#### Paso 4: Asignación de Recursos
+5. **Seleccionar recursos**:
    - **Grúa**: Equipo asignado
    - **Operador**: Personal responsable
    - **Vehículo de Apoyo**: Si es necesario
 
-#### Paso 4: Costos y Tarifas
-5. **Definir precios**:
+#### Paso 5: Costos y Tarifas
+6. **Definir precios**:
    - **Tarifa Base**: Costo del servicio
    - **Costos Adicionales**: Extras y recargos
    - **Descuentos**: Si aplican
+
+### Búsqueda Avanzada de Servicios
+
+#### Criterios de Búsqueda Expandidos (Nuevo en v2.2.0)
+- **Por Folio**: Búsqueda directa por número
+- **Por Cliente**: Filtrar por empresa
+- **Por Patente**: Número de placa del vehículo
+- **Por Marca**: Marca del vehículo
+- **📋 Por Cotización**: Número de cotización (NUEVO)
+- **📋 Por Orden de Compra**: Número de OC (NUEVO)
+- **Por Estado**: Filtrar por estado actual
+- **Por Fecha**: Rango de fechas
+- **Por Operador**: Servicios asignados
+
+#### Filtros Avanzados
+- **Estado del Servicio**: Pendiente, Confirmado, En Proceso, Completado, Cancelado
+- **Tipo de Cliente**: Regular, VIP, Esporádico
+- **Centro de Costo**: Categorización interna
+- **Con/Sin Facturar**: Estado de facturación
+
+### Actualizaciones Masivas (Nuevo en v2.2.0)
+
+#### Actualización de Cotizaciones
+1. **Seleccionar servicios** múltiples
+2. **Elegir "Actualizar Cotizaciones"**
+3. **Definir patrón**:
+   - Numeración secuencial
+   - Prefijo personalizado
+   - Rango de fechas
+4. **Aplicar cambios** masivos
+
+#### Actualización de Órdenes de Compra
+1. **Filtrar servicios** por cliente
+2. **Seleccionar "Batch Update OC"**
+3. **Configurar numeración**:
+   - Automática secuencial
+   - Manual por lotes
+   - Validación de duplicados
+4. **Procesar actualización**
 
 ### Estados de Servicio
 
 #### 🟡 **Pendiente**
 - Servicio creado, esperando confirmación
 - **Acciones disponibles**: Editar, confirmar, cancelar
+- **Puede pasar a**: Confirmado, Cancelado
 
 #### 🔵 **Confirmado**
 - Servicio aprobado y programado
 - **Acciones disponibles**: Iniciar, reprogramar, cancelar
+- **Puede pasar a**: En Proceso, Cancelado
 
 #### 🟢 **En Proceso**
 - Servicio en ejecución
 - **Acciones disponibles**: Actualizar estado, agregar notas
+- **Puede pasar a**: Completado, Cancelado
 
 #### ✅ **Completado**
 - Servicio finalizado exitosamente
-- **Acciones disponibles**: Facturar, generar reporte
+- **Acciones disponibles**: Crear cierre, facturar, generar reporte
+- **Puede pasar a**: Cerrado (via cierre)
 
 #### 🔴 **Cancelado**
 - Servicio cancelado por cualquier motivo
 - **Acciones disponibles**: Ver historial, reactivar
+- **Estado final**: No cambia
 
-### Gestión de Servicios Existentes
+#### 📋 **Cerrado** (Nuevo en v2.2.0)
+- Servicio con cierre creado
+- **Acciones disponibles**: Ver cierre, facturar desde cierre
+- **Siguiente paso**: Facturación
 
-#### Búsqueda y Filtros
-- **Por Folio**: Búsqueda directa por número
-- **Por Cliente**: Filtrar por empresa
-- **Por Estado**: Filtrar por estado actual
-- **Por Fecha**: Rango de fechas
-- **Por Operador**: Servicios asignados
+### Integración con Otros Módulos
 
-#### Acciones Masivas
-- **Exportar**: Generar reportes en Excel/PDF
-- **Actualizar Estados**: Cambios masivos
-- **Asignar Recursos**: Reasignación múltiple
+#### Con Sistema de Cierres
+- **Auto-creación**: Servicios completados generan cierres automáticamente
+- **Agrupación**: Múltiples servicios en un cierre
+- **Validación**: Verificación de datos antes del cierre
+
+#### Con Facturación Diferida
+- **Asignación automática**: Servicios se asignan según configuración del cliente
+- **Programación**: Facturación según ciclos establecidos
+- **Alertas**: Notificaciones de servicios listos para facturar
+
+#### Con Pipeline VIP
+- **Seguimiento**: Servicios de clientes VIP se rastrean especialmente
+- **Métricas**: Indicadores específicos para clientes estratégicos
+- **Reportes**: Análisis dedicado para el pipeline VIP
 
 ---
 
-## 5. Gestión de Grúas
+## 5. Sistema de Cierres
+
+### ¿Qué son los Cierres?
+
+Los cierres son agrupaciones de servicios completados que se preparan para facturación. Este sistema permite:
+
+- **Agrupar servicios** por cliente y período
+- **Validar información** antes de facturar
+- **Auto-completar** órdenes de compra
+- **Generar facturas** de manera eficiente
+- **Controlar el flujo** de facturación
+
+### Creación de Cierres
+
+#### Creación Automática
+1. **Configuración**: Los servicios completados generan cierres automáticamente
+2. **Agrupación**: Por cliente y período configurado
+3. **Validación**: Verificación automática de datos obligatorios
+4. **Notificación**: Alertas de nuevos cierres creados
+
+#### Creación Manual
+1. **Acceder a Cierres** → "Nuevo Cierre"
+2. **Seleccionar cliente**
+3. **Elegir servicios** completados disponibles
+4. **Definir período** del cierre
+5. **Agregar observaciones** si es necesario
+
+### Estados de Cierre
+
+#### 🟡 **Abierto**
+- Cierre creado, puede recibir más servicios
+- **Acciones disponibles**:
+  - Agregar servicios
+  - Editar información
+  - Auto-completar OC
+  - Cerrar cierre
+
+#### 🔵 **Cerrado**
+- Cierre finalizado, no acepta más servicios
+- **Acciones disponibles**:
+  - Generar factura
+  - Ver detalles
+  - Reabrir (si no está facturado)
+
+#### ✅ **Facturado**
+- Cierre convertido en factura
+- **Acciones disponibles**:
+  - Ver factura generada
+  - Imprimir comprobantes
+  - Ver historial
+
+### Auto-Completado de Órdenes de Compra
+
+#### Funcionalidad Inteligente
+1. **Detección**: Sistema identifica servicios sin OC en el cierre
+2. **Análisis**: Busca patrones en servicios previos del cliente
+3. **Sugerencia**: Propone numeración automática
+4. **Validación**: Verifica que no existan duplicados
+
+#### Configuración por Cliente
+- **Prefijo personalizado**: Según nomenclatura del cliente
+- **Numeración secuencial**: Continuidad en la numeración
+- **Validación cruzada**: Verificación con cierres anteriores
+
+### Gestión de Cierres
+
+#### Dashboard de Cierres
+- **Cierres abiertos**: Listos para agregar servicios
+- **Cierres listos**: Preparados para facturar
+- **Cierres facturados**: Historial de facturas generadas
+- **Métricas**: Tiempo promedio de cierre, servicios por cierre
+
+#### Filtros y Búsqueda
+- **Por cliente**: Cierres específicos
+- **Por estado**: Abierto, cerrado, facturado
+- **Por período**: Rango de fechas
+- **Por monto**: Valor del cierre
+
+#### Reportes de Cierres
+- **Eficiencia de cierre**: Tiempo promedio por proceso
+- **Servicios por cierre**: Productividad del proceso
+- **Análisis de OC**: Completitud de órdenes de compra
+- **Facturación por cierres**: Flujo de ingresos
+
+---
+
+## 6. Gestión de Grúas
 
 ### Registro de Grúas
 
@@ -275,9 +485,22 @@ El dashboard proporciona una vista consolidada de:
 - Requiere reparación mayor
 - Evaluación de viabilidad
 
+### Integración con Inventario
+
+#### Consumo Automático
+- **Servicios registran**: Automáticamente el consumo de repuestos
+- **Validación**: Verificación de stock antes de asignar
+- **Alertas**: Notificaciones de inventario bajo
+- **Reportes**: Consumo por grúa y período
+
+#### Mantenimiento Inteligente
+- **Predicción**: Basada en historial de consumo
+- **Programación**: Automática según uso real
+- **Optimización**: Rutas y recursos para mantenimiento
+
 ---
 
-## 6. Gestión de Operadores
+## 7. Gestión de Operadores
 
 ### Registro de Operadores
 
@@ -333,7 +556,110 @@ El dashboard proporciona una vista consolidada de:
 
 ---
 
-## 7. Calendario de Eventos
+## 8. Portal del Operador
+
+### Acceso Especializado
+
+El Portal del Operador es una interfaz optimizada para personal de campo que proporciona:
+
+#### 🎯 **Dashboard del Operador**
+- **Servicios asignados**: Lista de trabajos del día
+- **Servicios en curso**: Estado actual de ejecución
+- **Próximos servicios**: Programación futura
+- **Métricas personales**: Rendimiento y comisiones
+
+#### 📱 **Interfaz Móvil Optimizada**
+- **Botones grandes**: Fácil interacción en campo
+- **Navegación simple**: Flujo intuitivo
+- **Modo offline**: Funcionalidad sin conexión
+- **Sincronización automática**: Cuando hay conexión
+
+### Funcionalidades Principales
+
+#### 🔍 **Inspección de Servicios**
+1. **Formularios digitales**: Listas de verificación personalizables
+2. **Captura de fotos**: Evidencias del estado del equipo
+3. **Notas de campo**: Observaciones detalladas
+4. **Validación obligatoria**: Campos requeridos antes de continuar
+
+#### ✍️ **Firmas Digitales**
+1. **Firma del operador**: Confirmación de inspección
+2. **Firma del cliente**: Conformidad del servicio
+3. **Almacenamiento seguro**: Respaldo automático
+4. **Trazabilidad completa**: Auditoría de firmas
+
+#### 📸 **Documentación Visual**
+- **Fotos del equipo**: Estado antes y después
+- **Fotos del sitio**: Condiciones de trabajo
+- **Fotos de daños**: Evidencias si existen
+- **Compresión automática**: Optimización para móvil
+
+#### 🗺️ **Geolocalización**
+- **Ubicación en tiempo real**: GPS automático
+- **Registro de rutas**: Seguimiento de desplazamientos
+- **Tiempo en sitio**: Cálculo automático
+- **Verificación de ubicación**: Confirmación de llegada al cliente
+
+### Actualización de Estados
+
+#### Estados de Servicio
+1. **Iniciado**: Confirmación de inicio con ubicación
+2. **En ruta**: Desplazamiento al sitio
+3. **En sitio**: Llegada confirmada por GPS
+4. **En ejecución**: Trabajo en progreso
+5. **Completado**: Finalización con firmas y fotos
+
+#### Información Requerida por Estado
+- **Iniciado**: Hora de salida, combustible inicial
+- **En ruta**: Ruta planificada, tiempo estimado
+- **En sitio**: Confirmación GPS, fotos del sitio
+- **En ejecución**: Notas de progreso, fotos del trabajo
+- **Completado**: Firmas, fotos finales, combustible final
+
+### Entradas Rápidas desde Portal
+
+#### 🚀 **Registro Instantáneo**
+1. **Gastos de campo**: Combustible, peajes, parqueaderos
+2. **Eventos especiales**: Demoras, inconvenientes
+3. **Mantenimiento urgente**: Reportes de fallas
+4. **Novedades**: Información relevante del servicio
+
+#### 📍 **Con GPS Automático**
+- **Ubicación exacta**: Coordenadas del gasto/evento
+- **Validación de ubicación**: Verificación de coherencia
+- **Mapeo automático**: Visualización en reportes
+
+### Reportes del Operador
+
+#### 📊 **Métricas Personales**
+- **Servicios completados**: Conteo diario/semanal/mensual
+- **Tiempo promedio**: Eficiencia en ejecución
+- **Comisiones ganadas**: Cálculo en tiempo real
+- **Calificación de cliente**: Feedback recibido
+
+#### 📈 **Historial de Trabajo**
+- **Servicios anteriores**: Historial completo
+- **Clientes atendidos**: Base de clientes
+- **Rutas frecuentes**: Optimización de desplazamientos
+- **Tendencias de rendimiento**: Análisis temporal
+
+### Configuración Personal
+
+#### ⚙️ **Preferencias del Operador**
+- **Notificaciones**: Tipos y frecuencia
+- **Tema de la app**: Claro/oscuro
+- **Idioma**: Configuración regional
+- **Formato de hora**: 12/24 horas
+
+#### 🔐 **Seguridad**
+- **PIN de acceso**: Autenticación rápida
+- **Sesión automática**: Login recordado
+- **Bloqueo automático**: Inactividad
+- **Datos offline**: Encriptación local
+
+---
+
+## 9. Calendario de Eventos
 
 ### Vistas del Calendario
 
@@ -399,7 +725,7 @@ El dashboard proporciona una vista consolidada de:
 
 ---
 
-## 8. Sistema de Inventario
+## 10. Sistema de Inventario
 
 ### Catálogo de Productos
 
@@ -428,6 +754,20 @@ El dashboard proporciona una vista consolidada de:
    - **Stock Mínimo**: Punto de reorden
    - **Stock Máximo**: Límite de almacenamiento
    - **Ubicación**: Posición en bodega
+
+#### Nuevas Funcionalidades v2.2.0
+
+##### 📦 **Números de Lote y Serie**
+- **Control por lote**: Seguimiento de grupos de productos
+- **Fechas de vencimiento**: Para productos perecederos
+- **Números de serie**: Para equipos específicos
+- **Trazabilidad completa**: Desde compra hasta consumo
+
+##### 🛒 **Agrupación de Compras**
+- **Órdenes de compra**: Agrupación de productos
+- **Proveedores múltiples**: Diferentes proveedores por OC
+- **Seguimiento de entregas**: Estados parciales y completos
+- **Validación de recepciones**: Confirmación de cantidades
 
 ### Movimientos de Inventario
 
@@ -463,6 +803,11 @@ El dashboard proporciona una vista consolidada de:
    - **Generar comprobante** del movimiento
    - **Notificar** a responsables
 
+#### Movimientos con Fotografías (Nuevo)
+- **Evidencia visual**: Fotos de productos recibidos/despachados
+- **Control de calidad**: Documentación de estado
+- **Resolución de discrepancias**: Evidencias para reclamaciones
+
 ### Reportes de Inventario
 
 #### 📊 **Reporte de Stock**
@@ -470,22 +815,705 @@ El dashboard proporciona una vista consolidada de:
 - **Valorización** del inventario
 - **Productos bajo mínimo**
 - **Productos sin movimiento**
+- **Análisis por lotes** (Nuevo)
 
 #### 📈 **Reporte de Movimientos**
 - **Entradas y salidas** por período
 - **Consumo por servicio**
 - **Rotación de productos**
 - **Análisis ABC**
+- **Seguimiento de órdenes de compra** (Nuevo)
 
 #### 💰 **Reporte Financiero**
 - **Costo de inventario**
 - **Margen por producto**
 - **Impacto en costos de servicio**
 - **Rentabilidad por categoría**
+- **Análisis de proveedores** (Nuevo)
+
+### Alertas Inteligentes
+
+#### 🚨 **Alertas Automáticas**
+- **Stock mínimo**: Productos bajo el punto de reorden
+- **Vencimientos próximos**: Productos con fecha de caducidad cercana
+- **Productos sin movimiento**: Items con baja rotación
+- **Discrepancias de inventario**: Diferencias en conteos
 
 ---
 
-## 9. Módulo Financiero
+## 11. Gestión de Proveedores
+
+### Registro de Proveedores
+
+#### Información Básica
+1. **Acceder a Proveedores** → "Nuevo Proveedor"
+2. **Datos del proveedor**:
+   - **Razón Social**: Nombre legal de la empresa
+   - **NIT**: Número de identificación tributaria
+   - **Teléfono**: Contacto principal
+   - **Email**: Correo electrónico
+   - **Dirección**: Ubicación física
+
+#### Información Comercial
+3. **Datos comerciales**:
+   - **Tipo de Proveedor**: Repuestos, servicios, combustible, etc.
+   - **Categoría**: Clasificación interna
+   - **Condiciones de Pago**: Días de crédito
+   - **Descuentos**: Porcentajes aplicables
+   - **Tiempo de Entrega**: Días promedio
+
+#### Información Financiera
+4. **Datos bancarios**:
+   - **Banco**: Entidad financiera
+   - **Número de Cuenta**: Datos bancarios
+   - **Tipo de Cuenta**: Ahorros, corriente
+   - **Contacto Comercial**: Persona responsable
+
+### Gestión de Compras
+
+#### Órdenes de Compra
+1. **Crear OC**:
+   - **Seleccionar proveedor**
+   - **Agregar productos**: Del catálogo o nuevos
+   - **Definir cantidades** y precios
+   - **Establecer fecha** de entrega esperada
+
+2. **Estados de OC**:
+   - **🟡 Borrador**: En construcción
+   - **🔵 Enviada**: Entregada al proveedor
+   - **🟠 Parcial**: Entrega parcial recibida
+   - **🟢 Completa**: Totalmente recibida
+   - **🔴 Cancelada**: Anulada
+
+#### Recepción de Mercancía
+1. **Validar entrega**:
+   - **Verificar cantidades**: Contra orden de compra
+   - **Revisar calidad**: Estado de los productos
+   - **Documentar diferencias**: Faltantes o sobrantes
+   - **Capturar evidencias**: Fotografías si es necesario
+
+2. **Registrar recepción**:
+   - **Actualizar inventario**: Automáticamente
+   - **Generar entrada**: Movimiento de inventario
+   - **Notificar diferencias**: Al proveedor si existen
+   - **Autorizar pago**: Si todo está conforme
+
+### Evaluación de Proveedores
+
+#### Criterios de Evaluación
+1. **Cumplimiento de Entregas**:
+   - **Puntualidad**: % de entregas a tiempo
+   - **Completitud**: % de órdenes completas
+   - **Calidad**: Productos conformes
+
+2. **Desempeño Comercial**:
+   - **Precios competitivos**: Comparación de mercado
+   - **Términos de pago**: Flexibilidad financiera
+   - **Servicio al cliente**: Atención y soporte
+
+3. **Evaluación Continua**:
+   - **Calificación automática**: Basada en métricas
+   - **Revisión periódica**: Evaluación manual
+   - **Histórico de desempeño**: Tendencias temporales
+
+#### Rating de Proveedores
+- **⭐⭐⭐⭐⭐ Excelente**: 90-100% cumplimiento
+- **⭐⭐⭐⭐ Bueno**: 80-89% cumplimiento
+- **⭐⭐⭐ Regular**: 70-79% cumplimiento
+- **⭐⭐ Deficiente**: 60-69% cumplimiento
+- **⭐ Malo**: Menos de 60% cumplimiento
+
+### Programación de Pagos
+
+#### Configuración de Pagos
+1. **Términos por Proveedor**:
+   - **Días de crédito**: 30, 60, 90 días
+   - **Descuento por pronto pago**: % aplicable
+   - **Forma de pago**: Transferencia, cheque, etc.
+   - **Día de pago**: Día específico del mes
+
+2. **Calendario de Pagos**:
+   - **Vista mensual**: Pagos programados
+   - **Alertas de vencimiento**: Notificaciones
+   - **Lotes de pago**: Agrupación por fecha
+   - **Aprobación múltiple**: Workflow de autorización
+
+#### Proceso de Pago
+1. **Generar lote**:
+   - **Filtrar por fecha**: Vencimientos específicos
+   - **Seleccionar proveedores**: Individuales o todos
+   - **Revisar montos**: Validación de valores
+   - **Aplicar descuentos**: Si corresponde
+
+2. **Aprobar pagos**:
+   - **Revisión financiera**: Validación de fondos
+   - **Autorización**: Firma digital o física
+   - **Procesamiento**: Transferencias o cheques
+   - **Registro contable**: Asientos automáticos
+
+### Reportes de Proveedores
+
+#### 📊 **Dashboard de Proveedores**
+- **Número total**: Proveedores activos
+- **Compras del mes**: Monto total
+- **Pagos pendientes**: Valores por vencer
+- **Top proveedores**: Mayor volumen de compras
+
+#### 📈 **Análisis de Compras**
+- **Compras por proveedor**: Histórico y tendencias
+- **Cumplimiento de entregas**: Métricas de puntualidad
+- **Análisis de precios**: Evolución temporal
+- **Evaluación de desempeño**: Calificaciones y tendencias
+
+#### 💰 **Control Financiero**
+- **Cuentas por pagar**: Estado actual
+- **Flujo de pagos**: Proyección de salidas
+- **Descuentos aplicados**: Ahorros obtenidos
+- **Análisis de términos**: Optimización de condiciones
+
+---
+
+## 12. Módulo VIP y Pipeline
+
+### ¿Qué es el Pipeline VIP?
+
+El Pipeline VIP es un sistema especializado para el seguimiento y gestión de clientes estratégicos y oportunidades de negocio de alto valor. Permite:
+
+- **Identificar clientes VIP**: Clasificación automática por volumen/valor
+- **Seguimiento de oportunidades**: Desde prospecto hasta cliente activo
+- **Análisis de conversión**: Métricas de efectividad comercial
+- **Gestión de relaciones**: Historial completo de interacciones
+
+### Configuración del Pipeline
+
+#### Criterios VIP
+1. **Por Volumen de Servicios**:
+   - Número mínimo de servicios por mes
+   - Frecuencia de contratación
+   - Servicios de alto valor
+
+2. **Por Monto Facturado**:
+   - Facturación mínima mensual
+   - Valor promedio por servicio
+   - Crecimiento en facturación
+
+3. **Por Tipo de Cliente**:
+   - Empresas de ciertos sectores
+   - Clientes con contratos exclusivos
+   - Referencias estratégicas
+
+#### Estados del Pipeline
+1. **🎯 Prospecto**: Cliente potencial identificado
+2. **📞 Contactado**: Primera comunicación establecida
+3. **💬 En Negociación**: Discusión de términos
+4. **📝 Propuesta Enviada**: Cotización formal enviada
+5. **⏳ Esperando Respuesta**: Aguardando decisión del cliente
+6. **✅ Cliente Activo**: Convertido exitosamente
+7. **❌ Descartado**: Oportunidad no viable
+
+### Gestión de Oportunidades
+
+#### Crear Oportunidad
+1. **Acceder a VIP Pipeline** → "Nueva Oportunidad"
+2. **Información del prospecto**:
+   - **Empresa**: Razón social
+   - **Contacto**: Persona responsable
+   - **Teléfono y email**: Datos de contacto
+   - **Sector**: Industria o actividad
+
+3. **Detalles de la oportunidad**:
+   - **Tipo de servicio**: Servicios de interés
+   - **Valor estimado**: Potencial de ingresos
+   - **Probabilidad**: % de éxito estimado
+   - **Fecha esperada**: Cuándo se espera la conversión
+
+#### Seguimiento de Oportunidades
+1. **Actividades registradas**:
+   - **Llamadas**: Fecha, duración, resultado
+   - **Emails**: Enviados y recibidos
+   - **Reuniones**: Presenciales o virtuales
+   - **Propuestas**: Cotizaciones enviadas
+
+2. **Notas y observaciones**:
+   - **Necesidades del cliente**: Requerimientos específicos
+   - **Objeciones**: Dudas o resistencias
+   - **Próximos pasos**: Acciones planificadas
+   - **Decisores**: Personas clave en la decisión
+
+### Análisis y Métricas VIP
+
+#### 📊 **Dashboard VIP**
+- **Oportunidades activas**: En cada estado del pipeline
+- **Valor total del pipeline**: Suma de oportunidades
+- **Tasa de conversión**: % de éxito histórico
+- **Tiempo promedio**: Días desde prospecto a cliente
+
+#### 📈 **Métricas de Conversión**
+- **Por estado**: Conversión entre fases
+- **Por origen**: Fuente de las oportunidades
+- **Por vendedor**: Desempeño individual
+- **Por período**: Tendencias temporales
+
+#### 💰 **Análisis Financiero**
+- **Valor promedio**: Por oportunidad convertida
+- **ROI del pipeline**: Retorno de la inversión comercial
+- **Proyección de ingresos**: Basada en probabilidades
+- **Clientes VIP activos**: Facturación y tendencias
+
+### Automatizaciones VIP
+
+#### 🤖 **Clasificación Automática**
+- **Evaluación continua**: Revisión mensual de clientes
+- **Promoción a VIP**: Automática por criterios
+- **Alertas de riesgo**: Clientes VIP con baja actividad
+- **Oportunidades de up-selling**: Basadas en patrones
+
+#### 📧 **Comunicaciones Automáticas**
+- **Follow-up programado**: Recordatorios de contacto
+- **Escalamiento**: Notificaciones a supervisores
+- **Reportes automáticos**: Resúmenes semanales
+- **Alertas de actividad**: Cambios en el pipeline
+
+### Reportes VIP
+
+#### 📋 **Reporte de Pipeline**
+- **Estado actual**: Oportunidades por fase
+- **Análisis de embudo**: Cuellos de botella
+- **Proyección de ventas**: Estimaciones futuras
+- **Histórico de conversiones**: Tendencias
+
+#### 👥 **Reporte de Clientes VIP**
+- **Listado actualizado**: Clientes VIP activos
+- **Análisis de comportamiento**: Patrones de consumo
+- **Satisfacción**: Métricas de servicio
+- **Oportunidades**: Potencial de crecimiento
+
+---
+
+## 13. Facturación Diferida
+
+### ¿Qué es la Facturación Diferida?
+
+La Facturación Diferida permite configurar ciclos de facturación personalizados por cliente, agrupando servicios según períodos específicos antes de generar las facturas. Esto es útil para:
+
+- **Clientes corporativos**: Que prefieren facturación mensual o quincenal
+- **Contratos especiales**: Con términos de facturación específicos
+- **Optimización de flujo**: Reducir número de facturas por cliente
+- **Control financiero**: Mejor manejo de cuentas por cobrar
+
+### Configuración por Cliente
+
+#### Ciclos de Facturación
+1. **Acceder a Cliente** → "Configurar Facturación Diferida"
+2. **Seleccionar tipo de ciclo**:
+   - **Semanal**: Facturación cada 7 días
+   - **Quincenal**: Cada 15 días
+   - **Mensual**: Una vez al mes
+   - **Personalizado**: Días específicos configurables
+
+#### Parámetros de Configuración
+1. **Día de corte**:
+   - **Fijo**: Siempre el mismo día del mes (ej: día 15)
+   - **Variable**: Último día hábil del período
+   - **Personalizado**: Días específicos del cliente
+
+2. **Condiciones especiales**:
+   - **Monto mínimo**: Valor mínimo para generar factura
+   - **Agrupación**: Por tipo de servicio o centro de costo
+   - **Retención**: Porcentaje de retención automática
+   - **Descuentos**: Por volumen o pronto pago
+
+#### Calendario de Facturación
+- **Vista mensual**: Fechas de generación de facturas
+- **Alertas previas**: Notificaciones antes del corte
+- **Servicios acumulados**: Conteo de servicios por facturar
+- **Valor acumulado**: Monto total pendiente
+
+### Dashboard de Facturación Diferida
+
+#### 📊 **Métricas Principales**
+- **Clientes con diferimiento**: Número total configurado
+- **Servicios pendientes**: Listos para próxima facturación
+- **Valor pendiente**: Monto total por facturar
+- **Próximos cortes**: Fechas de generación próximas
+
+#### 📅 **Calendario de Cortes**
+- **Vista cronológica**: Fechas de todos los clientes
+- **Conflictos**: Múltiples cortes en misma fecha
+- **Carga de trabajo**: Volumen por día de facturación
+- **Planificación**: Ajustes necesarios en fechas
+
+#### 🎯 **Servicios Listos para Facturar**
+- **Agrupados por cliente**: Servicios acumulados
+- **Filtros por período**: Últimos 30, 60, 90 días
+- **Estado de servicios**: Completados y listos
+- **Validación**: Verificación de datos obligatorios
+
+### Proceso de Facturación Diferida
+
+#### Generación Automática
+1. **Evaluación diaria**: Sistema revisa fechas de corte
+2. **Identificación**: Clientes con facturación programada
+3. **Agrupación**: Servicios según configuración
+4. **Validación**: Verificación de datos completos
+5. **Generación**: Creación automática de facturas
+
+#### Generación Manual
+1. **Seleccionar cliente**: Con diferimiento configurado
+2. **Revisar servicios**: Pendientes de facturar
+3. **Configurar período**: Fechas específicas si necesario
+4. **Validar información**: Completitud de datos
+5. **Generar factura**: Proceso manual dirigido
+
+#### Excepciones y Ajustes
+- **Servicios excluidos**: Filtrar por criterios específicos
+- **Ajustes de precio**: Descuentos o recargos especiales
+- **Facturas parciales**: Anticipos o pagos a cuenta
+- **Correcciones**: Modificaciones antes de envío
+
+### Control y Seguimiento
+
+#### 📈 **Análisis de Facturación**
+- **Eficiencia del proceso**: Tiempo de generación
+- **Volumen por cliente**: Servicios facturados
+- **Tendencias de consumo**: Patrones por cliente
+- **Cumplimiento de ciclos**: Adherencia a configuración
+
+#### 🔍 **Auditoría**
+- **Histórico de facturas**: Trazabilidad completa
+- **Cambios de configuración**: Log de modificaciones
+- **Excepciones aplicadas**: Registro de casos especiales
+- **Validaciones**: Verificaciones automáticas
+
+#### 📊 **Reportes Especializados**
+- **Facturación diferida vs normal**: Comparación de métodos
+- **Impacto en flujo de caja**: Análisis financiero
+- **Satisfacción del cliente**: Feedback sobre el proceso
+- **Optimización**: Recomendaciones de mejora
+
+### Notificaciones y Alertas
+
+#### 🔔 **Alertas Automáticas**
+- **Próximos cortes**: 3 días antes de la fecha
+- **Servicios sin facturar**: Acumulación excesiva
+- **Datos incompletos**: Servicios con información faltante
+- **Cambios de configuración**: Modificaciones aplicadas
+
+#### 📧 **Comunicaciones al Cliente**
+- **Pre-facturación**: Resumen de servicios a facturar
+- **Factura generada**: Notificación de nueva factura
+- **Recordatorios de pago**: Según términos acordados
+- **Cambios en configuración**: Notificación de modificaciones
+
+---
+
+## 14. Sistema de Backup y Restauración
+
+### Importancia del Backup
+
+El sistema de backup automatizado protege toda la información crítica del negocio, incluyendo:
+
+- **Datos de servicios**: Histórico completo de operaciones
+- **Información financiera**: Facturas, pagos, comisiones
+- **Inventarios**: Stocks, movimientos, valorizaciones
+- **Configuraciones**: Parámetros del sistema y usuarios
+- **Documentos**: Adjuntos, fotos, firmas digitales
+
+### Configuración de Backups
+
+#### Tipos de Backup
+1. **Backup Completo**:
+   - **Incluye**: Toda la base de datos
+   - **Frecuencia**: Semanal recomendado
+   - **Tiempo**: Mayor duración
+   - **Espacio**: Mayor requerimiento
+
+2. **Backup Incremental**:
+   - **Incluye**: Solo cambios desde último backup
+   - **Frecuencia**: Diario recomendado
+   - **Tiempo**: Menor duración
+   - **Espacio**: Menor requerimiento
+
+3. **Backup Diferencial**:
+   - **Incluye**: Cambios desde último backup completo
+   - **Frecuencia**: Personalizable
+   - **Tiempo**: Duración media
+   - **Espacio**: Requerimiento medio
+
+#### Programación de Backups
+1. **Acceder a Configuración** → "Sistema de Backup"
+2. **Configurar horarios**:
+   - **Backup completo**: Domingos 2:00 AM
+   - **Backup incremental**: Diario 3:00 AM
+   - **Backup diferencial**: Miércoles 2:30 AM
+
+3. **Parámetros avanzados**:
+   - **Retención**: Cuántos backups mantener
+   - **Compresión**: Nivel de compresión aplicado
+   - **Encriptación**: Seguridad de los backups
+   - **Notificaciones**: Alertas de éxito/error
+
+### Ejecución de Backups
+
+#### 🤖 **Backups Automáticos**
+- **Programación**: Según configuración establecida
+- **Validación**: Verificación automática de integridad
+- **Notificaciones**: Reportes de estado por email
+- **Monitoreo**: Alertas en caso de fallas
+
+#### 📱 **Backups Manuales**
+1. **Situaciones recomendadas**:
+   - Antes de actualizaciones importantes
+   - Cambios masivos de configuración
+   - Migraciones de datos
+   - Mantenimientos programados
+
+2. **Proceso manual**:
+   - **Acceder al módulo** de backup
+   - **Seleccionar tipo** de backup
+   - **Confirmar ejecución**
+   - **Monitorear progreso**
+
+#### Validación de Backups
+- **Verificación automática**: Integridad de archivos
+- **Pruebas periódicas**: Restauración de prueba
+- **Reportes de estado**: Salud de los backups
+- **Alertas de problemas**: Notificaciones inmediatas
+
+### Restauración de Datos
+
+#### Tipos de Restauración
+1. **Restauración Completa**:
+   - **Escenario**: Pérdida total de datos
+   - **Proceso**: Restaurar backup completo más reciente
+   - **Tiempo**: Varias horas según volumen
+   - **Resultado**: Sistema completamente funcional
+
+2. **Restauración Parcial**:
+   - **Escenario**: Pérdida de datos específicos
+   - **Proceso**: Restaurar módulos o tablas específicas
+   - **Tiempo**: Menor duración
+   - **Resultado**: Recuperación selectiva
+
+3. **Restauración Point-in-Time**:
+   - **Escenario**: Recuperar datos hasta momento específico
+   - **Proceso**: Combinar backups completo + incrementales
+   - **Tiempo**: Variable según punto de recuperación
+   - **Resultado**: Datos hasta momento exacto
+
+#### Proceso de Restauración
+1. **Evaluación de la situación**:
+   - **Identificar** qué datos se perdieron
+   - **Determinar** punto de recuperación deseado
+   - **Seleccionar** backup apropiado
+   - **Planificar** ventana de mantenimiento
+
+2. **Ejecución de la restauración**:
+   - **Detener** servicios del sistema
+   - **Ejecutar** proceso de restauración
+   - **Validar** integridad de datos
+   - **Reiniciar** servicios
+
+3. **Verificación post-restauración**:
+   - **Probar** funcionalidades críticas
+   - **Verificar** integridad de datos
+   - **Validar** configuraciones
+   - **Comunicar** estado a usuarios
+
+### Monitoreo y Alertas
+
+#### 📊 **Dashboard de Backups**
+- **Estado actual**: Último backup exitoso
+- **Próximo programado**: Fecha y hora del siguiente
+- **Espacio utilizado**: Almacenamiento consumido
+- **Historial**: Registro de backups anteriores
+
+#### 🚨 **Alertas Críticas**
+- **Backup fallido**: Falla en ejecución automática
+- **Espacio insuficiente**: Almacenamiento limitado
+- **Corrupción detectada**: Problemas de integridad
+- **Backups obsoletos**: Muy antiguos o insuficientes
+
+#### 📈 **Reportes de Backup**
+- **Reporte semanal**: Estado general del sistema
+- **Análisis de tendencias**: Crecimiento de datos
+- **Tiempo de ejecución**: Optimización de horarios
+- **Recomendaciones**: Mejoras sugeridas
+
+### Mejores Prácticas
+
+#### 🔐 **Seguridad**
+- **Encriptación**: Todos los backups deben estar encriptados
+- **Acceso restringido**: Solo personal autorizado
+- **Almacenamiento offsite**: Copias en ubicación diferente
+- **Pruebas regulares**: Validación periódica
+
+#### ⚡ **Rendimiento**
+- **Horarios optimizados**: Fuera de horas pico
+- **Compresión**: Reducir espacio de almacenamiento
+- **Paralelización**: Múltiples procesos simultáneos
+- **Monitoreo continuo**: Seguimiento de rendimiento
+
+#### 📋 **Documentación**
+- **Procedimientos**: Documentación de procesos
+- **Contactos**: Responsables y escalamiento
+- **Inventario**: Catálogo de backups disponibles
+- **Planes de contingencia**: Escenarios de recuperación
+
+---
+
+## 15. Entradas Rápidas
+
+### ¿Qué son las Entradas Rápidas?
+
+Las Entradas Rápidas son un sistema de registro instantáneo de gastos y eventos desde dispositivos móviles, especialmente diseñado para operadores en campo. Permite:
+
+- **Registro inmediato**: Gastos y eventos en tiempo real
+- **Geolocalización automática**: GPS integrado para ubicación exacta
+- **Captura multimedia**: Fotos y documentos de soporte
+- **Sincronización**: Datos se sincronizan automáticamente
+- **Categorización**: Clasificación automática de gastos
+
+### Funcionalidades Principales
+
+#### 📱 **Registro Móvil**
+1. **Acceso rápido**: Botón flotante en app móvil
+2. **Formulario simplificado**: Mínimos campos requeridos
+3. **Opciones predefinidas**: Categorías comunes
+4. **Guardado offline**: Funciona sin conexión
+
+#### 🗺️ **GPS Automático**
+- **Ubicación exacta**: Coordenadas precisas del evento
+- **Validación geográfica**: Verificación de coherencia
+- **Mapeo visual**: Visualización en mapa
+- **Histórico de ubicaciones**: Seguimiento de rutas
+
+#### 📸 **Captura Multimedia**
+- **Fotos de comprobantes**: Facturas, recibos, tickets
+- **Fotos de evidencia**: Daños, situaciones especiales
+- **Documentos**: PDFs y otros archivos
+- **Compresión automática**: Optimización para móvil
+
+### Tipos de Entradas Rápidas
+
+#### ⛽ **Gastos de Combustible**
+- **Datos requeridos**:
+  - Monto del gasto
+  - Litros cargados
+  - Estación de servicio
+  - Kilometraje actual
+- **Automático**: GPS detecta ubicación de estación
+- **Validación**: Coherencia con consumo esperado
+
+#### 🅿️ **Parqueaderos y Peajes**
+- **Información básica**:
+  - Tipo de gasto (parqueadero/peaje)
+  - Monto pagado
+  - Ubicación automática
+  - Hora del evento
+- **Categorización**: Automática por ubicación conocida
+
+#### 🔧 **Mantenimiento Urgente**
+- **Registro de falla**:
+  - Tipo de problema
+  - Grúa afectada
+  - Descripción del daño
+  - Fotos de evidencia
+- **Alertas**: Notificación inmediata a supervisores
+- **Seguimiento**: Estado de la reparación
+
+#### 📋 **Eventos Especiales**
+- **Situaciones particulares**:
+  - Demoras en ruta
+  - Problemas con cliente
+  - Condiciones climáticas adversas
+  - Otros eventos relevantes
+- **Documentación**: Descripción detallada y fotos
+
+### Proceso de Registro
+
+#### 📝 **Paso a Paso**
+1. **Abrir app móvil**: TMS Grúas PWA
+2. **Tocar botón "+"**: Acceso rápido flotante
+3. **Seleccionar tipo**: Categoría del gasto/evento
+4. **Completar formulario**: Datos mínimos requeridos
+5. **Capturar evidencia**: Fotos o documentos
+6. **Confirmar ubicación**: GPS automático
+7. **Guardar entrada**: Local si no hay conexión
+
+#### ⚡ **Funciones Inteligentes**
+- **Auto-completado**: Datos frecuentes se sugieren
+- **Reconocimiento**: OCR básico en comprobantes
+- **Validación**: Verificación de datos ingresados
+- **Sugerencias**: Categorías basadas en ubicación
+
+### Gestión de Entradas Pendientes
+
+#### 📋 **Vista de Entradas Pendientes**
+1. **Acceder a "Entradas Rápidas"**
+2. **Ver listado**: Todas las entradas sin procesar
+3. **Filtros disponibles**:
+   - Por operador
+   - Por fecha
+   - Por tipo de gasto
+   - Por estado (pendiente/procesado)
+
+#### ✅ **Procesamiento de Entradas**
+1. **Revisar información**: Validar datos ingresados
+2. **Verificar evidencias**: Fotos y documentos adjuntos
+3. **Categorizar correctamente**: Ajustar si es necesario
+4. **Asignar a centro de costo**: Según configuración
+5. **Aprobar y procesar**: Convertir a gasto formal
+
+#### 🔍 **Validación y Control**
+- **Geolocalización**: Verificar coherencia de ubicaciones
+- **Duplicados**: Detección automática de entradas similares
+- **Límites**: Validación contra políticas de gastos
+- **Autorización**: Workflow según montos
+
+### Reportes y Análisis
+
+#### 📊 **Dashboard de Entradas Rápidas**
+- **Entradas pendientes**: Número por procesar
+- **Gastos del día**: Monto acumulado
+- **Por operador**: Ranking de uso
+- **Por categoría**: Distribución de gastos
+
+#### 📈 **Análisis de Patrones**
+- **Gastos por ruta**: Análisis geográfico
+- **Frecuencia por operador**: Uso del sistema
+- **Tipos de gasto más comunes**: Optimización de categorías
+- **Ubicaciones frecuentes**: Mapeo de gastos
+
+#### 🗺️ **Mapas de Calor**
+- **Gastos por zona**: Visualización geográfica
+- **Rutas costosas**: Identificación de patrones
+- **Estaciones frecuentes**: Combustible por ubicación
+- **Zonas problemáticas**: Concentración de eventos
+
+### Configuración y Personalización
+
+#### ⚙️ **Configuración del Sistema**
+1. **Categorías de gasto**: Personalizar tipos disponibles
+2. **Límites por categoría**: Montos máximos sin autorización
+3. **Campos obligatorios**: Configurar información requerida
+4. **Workflow de aprobación**: Definir proceso de validación
+
+#### 👤 **Configuración por Operador**
+- **Límites individuales**: Montos por operador
+- **Categorías permitidas**: Restricciones por rol
+- **Notificaciones**: Configurar alertas personales
+- **Favoritos**: Categorías más usadas por operador
+
+#### 📱 **Optimización Móvil**
+- **Calidad de fotos**: Balance entre calidad y tamaño
+- **Sincronización**: Frecuencia de envío de datos
+- **Modo offline**: Capacidad de almacenamiento local
+- **Batería**: Optimización de consumo energético
+
+---
+
+## 16. Módulo Financiero
 
 ### Gestión de Costos
 
@@ -496,100 +1524,146 @@ El dashboard proporciona una vista consolidada de:
 - **Mantenimiento**: Reparaciones y revisiones
 - **Peajes**: Costos de tránsito
 - **Parqueaderos**: Estacionamientos
+- **Repuestos**: Piezas y componentes
+- **Neumáticos**: Llantas y mantenimiento
 
 ##### 👨‍💼 **Costos de Personal**
 - **Salarios**: Remuneración base
 - **Comisiones**: Pagos por servicio
 - **Prestaciones**: Beneficios sociales
 - **Capacitación**: Formación del personal
+- **Horas extras**: Tiempo adicional
+- **Bonificaciones**: Incentivos especiales
 
 ##### 🏢 **Costos Administrativos**
 - **Seguros**: Pólizas de la flota
 - **Licencias**: Permisos y certificaciones
 - **Servicios**: Comunicaciones, software
+- **Arriendo**: Instalaciones y equipos
+- **Servicios públicos**: Luz, agua, internet
 - **Otros**: Gastos diversos
+
+#### Centros de Costo (Nuevo en v2.2.0)
+
+##### Configuración de Centros
+1. **Acceder a Configuración** → "Centros de Costo"
+2. **Crear centros**:
+   - **Por región**: Norte, Sur, Centro
+   - **Por tipo de servicio**: Grúas, transporte, logística
+   - **Por cliente**: Contratos exclusivos
+   - **Por proyecto**: Trabajos específicos
+
+##### Asignación Automática
+- **Por servicio**: Según cliente o tipo
+- **Por grúa**: Según asignación de equipo
+- **Por operador**: Según centro base
+- **Por ubicación**: Según GPS del gasto
 
 #### Registro de Costos
 
 1. **Crear Costo**:
    - **Seleccionar categoría** del costo
    - **Asignar a servicio** o grúa
+   - **Definir centro de costo**
    - **Indicar monto** y fecha
    - **Adjuntar soporte** (factura, recibo)
 
 2. **Validar Costo**:
    - **Revisar información** ingresada
    - **Verificar documentos** de soporte
+   - **Validar centro de costo**
    - **Aprobar** o rechazar
 
 3. **Procesar Costo**:
    - **Afectar contabilidad**
    - **Actualizar reportes**
+   - **Distribuir por centro**
    - **Notificar** a responsables
 
-### Sistema de Comisiones
+### Sistema de Comisiones Avanzado
 
-#### Configuración de Comisiones
+#### Esquemas de Comisión (Mejorado v2.2.0)
 
 ##### Por Operador
 - **Porcentaje fijo**: % sobre valor del servicio
 - **Monto fijo**: Valor constante por servicio
 - **Escala variable**: Según tipo de servicio
 - **Bonificaciones**: Incentivos adicionales
+- **Metas**: Objetivos con comisiones especiales
 
 ##### Por Tipo de Servicio
 - **Servicios estándar**: Comisión base
 - **Servicios especiales**: Comisión premium
 - **Servicios nocturnos**: Recargo adicional
 - **Servicios de emergencia**: Bonificación extra
+- **Servicios VIP**: Comisión diferenciada
 
-#### Cálculo de Comisiones
+##### Por Rendimiento
+- **Eficiencia**: Tiempo de ejecución vs. estimado
+- **Calidad**: Calificación del cliente
+- **Puntualidad**: Cumplimiento de horarios
+- **Seguridad**: Servicios sin incidentes
 
-1. **Automático**:
+#### Cálculo Automático de Comisiones
+
+1. **Configuración de reglas**:
+   - **Definir esquemas** por operador/servicio
+   - **Establecer condiciones** de aplicación
+   - **Configurar excepciones** especiales
+   - **Programar cálculos** automáticos
+
+2. **Procesamiento automático**:
    - **Al completar servicio**: Cálculo inmediato
    - **Según configuración**: Reglas predefinidas
-   - **Validación**: Revisión automática
+   - **Validación automática**: Verificación de reglas
+   - **Notificaciones**: Alertas de comisiones calculadas
 
-2. **Manual**:
-   - **Casos especiales**: Situaciones particulares
-   - **Ajustes**: Correcciones necesarias
-   - **Aprobación**: Validación manual
+#### Pago Masivo de Comisiones
 
-#### Pago de Comisiones
-
-1. **Generar Lote**:
+1. **Generar Lote de Pago**:
    - **Seleccionar período**: Rango de fechas
    - **Filtrar operadores**: Específicos o todos
    - **Revisar cálculos**: Validar montos
+   - **Aplicar descuentos**: Deducciones si existen
 
-2. **Procesar Pago**:
-   - **Generar comprobantes**: Documentos de pago
+2. **Procesar Pago Masivo**:
+   - **Generar comprobantes**: Documentos individuales
+   - **Autorizar pagos**: Workflow de aprobación
+   - **Procesar transferencias**: Pagos bancarios
    - **Actualizar estados**: Marcar como pagado
-   - **Registrar en contabilidad**: Asientos contables
+   - **Registrar en contabilidad**: Asientos automáticos
 
-### Facturación
+### Facturación Avanzada
 
 #### Creación de Facturas
 
 1. **Desde Servicios**:
    - **Seleccionar servicios** completados
    - **Agrupar por cliente** si es necesario
+   - **Aplicar descuentos** configurados
    - **Generar factura** automáticamente
 
-2. **Manual**:
+2. **Desde Cierres**:
+   - **Seleccionar cierre** cerrado
+   - **Validar información** completa
+   - **Generar factura** del cierre
+   - **Actualizar estado** del cierre
+
+3. **Manual**:
    - **Crear factura** desde cero
    - **Agregar conceptos** manualmente
    - **Calcular impuestos** y totales
+   - **Aplicar configuración** del cliente
 
 #### Estados de Factura
 
 ##### 🟡 **Borrador**
 - Factura en creación
-- **Acciones**: Editar, eliminar
+- **Acciones**: Editar, eliminar, duplicar
 
 ##### 🔵 **Enviada**
 - Factura entregada al cliente
-- **Acciones**: Ver, anular
+- **Acciones**: Ver, anular, reenviar
 
 ##### 🟢 **Pagada**
 - Factura cancelada por el cliente
@@ -597,7 +1671,11 @@ El dashboard proporciona una vista consolidada de:
 
 ##### 🔴 **Vencida**
 - Factura no pagada en término
-- **Acciones**: Gestión de cartera
+- **Acciones**: Gestión de cartera, recordatorios
+
+##### ⚫ **Anulada**
+- Factura cancelada
+- **Acciones**: Ver historial, generar nota crédito
 
 #### Conciliación de Pagos
 
@@ -606,16 +1684,40 @@ El dashboard proporciona una vista consolidada de:
    - **Indicar monto** recibido
    - **Método de pago**: Efectivo, transferencia, etc.
    - **Fecha de pago**
+   - **Comprobante**: Adjuntar soporte
 
-2. **Conciliar**:
+2. **Conciliar Automáticamente**:
    - **Verificar montos**
-   - **Aplicar descuentos** si existen
-   - **Generar recibo** de pago
+   - **Aplicar descuentos** configurados
+   - **Generar recibo** automático
    - **Actualizar cartera**
+   - **Notificar** al cliente
+
+### Análisis Financiero
+
+#### 📊 **Dashboard Financiero**
+- **Ingresos del mes**: Facturación actual
+- **Costos del mes**: Gastos acumulados
+- **Margen de utilidad**: Rentabilidad
+- **Cartera por cobrar**: Facturas pendientes
+- **Flujo de caja**: Proyección de ingresos/egresos
+
+#### 📈 **Reportes de Rentabilidad**
+- **Por servicio**: Margen individual
+- **Por cliente**: Rentabilidad por cliente
+- **Por grúa**: Eficiencia financiera de equipos
+- **Por operador**: Productividad financiera
+- **Por centro de costo**: Análisis departamental
+
+#### 💰 **Control de Flujo de Caja**
+- **Ingresos proyectados**: Basado en servicios programados
+- **Egresos programados**: Pagos y costos planificados
+- **Balance diario**: Seguimiento día a día
+- **Alertas de liquidez**: Notificaciones de bajo flujo
 
 ---
 
-## 10. Sistema de Reportes
+## 17. Sistema de Reportes
 
 ### Dashboard de Reportes
 
@@ -626,58 +1728,304 @@ El dashboard proporciona una vista consolidada de:
 - **Gráficos de tendencias**: Evolución temporal
 - **Alertas**: Indicadores críticos
 - **Resumen ejecutivo**: Vista consolidada
+- **Comparativos**: Período actual vs. anterior
 
 ##### 🚛 **Operacional**
 - **Servicios por estado**: Distribución actual
 - **Utilización de grúas**: Eficiencia de flota
-- **Productividad de operadores**: Rendimiento
+- **Productividad de operadores**: Rendimiento individual
 - **Tiempos de servicio**: Análisis de duración
+- **Cumplimiento de horarios**: Puntualidad
+- **Servicios por zona**: Análisis geográfico
 
-##### 💰 **Costos**
+##### 💰 **Financiero**
+- **Ingresos por período**: Evolución de facturación
 - **Costos por categoría**: Distribución de gastos
-- **Costos por grúa**: Análisis individual
-- **Costos por servicio**: Rentabilidad
-- **Tendencias de costos**: Evolución temporal
+- **Rentabilidad por servicio**: Margen individual
+- **Comisiones pagadas**: Costos de personal
+- **Cartera por edades**: Análisis de cobranza
+- **Flujo de caja**: Proyecciones financieras
+
+##### 📦 **Inventario**
+- **Stock actual**: Disponibilidad por producto
+- **Movimientos**: Entradas y salidas
+- **Valorización**: Valor del inventario
+- **Rotación**: Análisis de movimiento
+- **Productos críticos**: Bajo stock o sin movimiento
 
 ##### 🔧 **Mantenimiento**
 - **Programación**: Mantenimientos pendientes
 - **Historial**: Trabajos realizados
 - **Costos de mantenimiento**: Gastos por equipo
 - **Disponibilidad**: Tiempo operativo vs. mantenimiento
+- **Eficiencia**: Índices de rendimiento
+
+##### 🎯 **VIP y Pipeline** (Nuevo)
+- **Estado del pipeline**: Oportunidades por fase
+- **Conversiones**: Tasas de éxito
+- **Valor del pipeline**: Potencial de ingresos
+- **Clientes VIP**: Análisis de comportamiento
+- **Proyecciones**: Estimaciones futuras
 
 ### Filtros y Personalización
 
-#### Filtros Disponibles
+#### Filtros Globales
 - **Rango de fechas**: Período específico
 - **Cliente**: Servicios por empresa
 - **Grúa**: Análisis por equipo
 - **Operador**: Rendimiento individual
 - **Tipo de servicio**: Categorización
 - **Estado**: Filtro por estado actual
+- **Centro de costo**: Análisis departamental (Nuevo)
 
 #### Opciones de Vista
-- **Gráficos**: Visualización gráfica
-- **Tablas**: Datos tabulares
-- **Resumen**: Vista consolidada
+- **Gráficos**: Visualización gráfica avanzada
+- **Tablas**: Datos tabulares detallados
+- **Resumen**: Vista consolidada ejecutiva
 - **Detalle**: Información completa
+- **Comparativo**: Análisis de períodos
+
+#### Personalización Avanzada
+- **Dashboards personalizados**: Configuración por usuario
+- **Métricas favoritas**: Accesos rápidos
+- **Alertas personalizadas**: Notificaciones configurables
+- **Temas visuales**: Personalización de apariencia
+
+### Nuevos Reportes v2.2.0
+
+#### 📋 **Reporte de Cierres**
+- **Eficiencia del proceso**: Tiempo promedio de cierre
+- **Servicios por cierre**: Productividad
+- **Auto-completado de OC**: Efectividad del sistema
+- **Ciclo de facturación**: Desde servicio hasta factura
+
+#### 🎯 **Reporte VIP Pipeline**
+- **Análisis de embudo**: Conversión por fase
+- **Valor por oportunidad**: Métricas financieras
+- **Tiempo de conversión**: Eficiencia comercial
+- **ROI del pipeline**: Retorno de inversión
+
+#### 📅 **Reporte de Facturación Diferida**
+- **Servicios acumulados**: Por cliente y período
+- **Eficiencia de cortes**: Cumplimiento de fechas
+- **Impacto en flujo**: Análisis financiero
+- **Satisfacción del cliente**: Feedback del proceso
+
+#### 🏃 **Reporte de Entradas Rápidas**
+- **Uso por operador**: Adopción del sistema
+- **Gastos por categoría**: Distribución
+- **Análisis geográfico**: Patrones de ubicación
+- **Tiempo de procesamiento**: Eficiencia operativa
+
+#### 🏢 **Reporte de Centros de Costo**
+- **Rentabilidad por centro**: Análisis de márgenes
+- **Distribución de costos**: Asignación automática vs manual
+- **Comparativo entre centros**: Benchmarking interno
+- **Tendencias por centro**: Evolución temporal
 
 ### Exportación de Reportes
 
 #### Formatos Disponibles
-- **Excel**: Hojas de cálculo editables
-- **PDF**: Documentos para impresión
-- **CSV**: Datos para análisis
+- **Excel**: Hojas de cálculo editables con múltiples pestañas
+- **PDF**: Documentos para impresión con gráficos
+- **CSV**: Datos para análisis en herramientas externas
 - **Imagen**: Gráficos para presentaciones
+- **PowerBI**: Conectores para análisis avanzado (Nuevo)
 
 #### Opciones de Exportación
-1. **Seleccionar reporte** deseado
-2. **Aplicar filtros** necesarios
-3. **Elegir formato** de exportación
-4. **Descargar archivo** generado
+1. **Configurar reporte**: Aplicar filtros y personalización
+2. **Seleccionar formato**: Según uso previsto
+3. **Programar envío**: Reportes automáticos por email
+4. **Descargar**: Archivo generado inmediatamente
+
+#### Reportes Programados
+- **Frecuencia**: Diario, semanal, mensual
+- **Destinatarios**: Lista de correos configurables
+- **Filtros automáticos**: Aplicación de criterios predefinidos
+- **Formato estándar**: Configuración por tipo de reporte
+
+### Análisis Avanzado
+
+#### 📈 **Tendencias y Proyecciones**
+- **Análisis de series temporales**: Patrones históricos
+- **Proyecciones**: Estimaciones futuras basadas en tendencias
+- **Análisis estacional**: Comportamientos cíclicos
+- **Detección de anomalías**: Identificación de valores atípicos
+
+#### 🔍 **Análisis Comparativo**
+- **Año vs. año**: Comparación interanual
+- **Mes vs. mes**: Evolución mensual
+- **Benchmarking**: Comparación con estándares de la industria
+- **Análisis de varianza**: Desviaciones significativas
+
+#### 🎯 **KPIs Especializados**
+- **Eficiencia operativa**: Métricas de rendimiento
+- **Satisfacción del cliente**: Indicadores de calidad
+- **Rentabilidad**: Márgenes y retornos
+- **Crecimiento**: Tasas de expansión del negocio
 
 ---
 
-## 11. Configuraciones
+## 18. Herramientas Administrativas
+
+### Gestión de Tipos de Servicio
+
+#### Configuración de Tipos
+1. **Acceder a Configuración** → "Tipos de Servicio"
+2. **Crear nuevo tipo**:
+   - **Nombre**: Identificación del tipo
+   - **Descripción**: Detalles del servicio
+   - **Categoría**: Clasificación general
+   - **Duración estimada**: Tiempo promedio
+   - **Recursos requeridos**: Grúa, operadores, equipos
+
+#### Tarifas por Tipo de Servicio
+1. **Configuración de precios**:
+   - **Tarifa base**: Precio estándar
+   - **Tarifas especiales**: Por cliente o volumen
+   - **Recargos**: Horarios especiales, distancia
+   - **Descuentos**: Por volumen o tipo de cliente
+
+2. **Variables de precio**:
+   - **Por distancia**: Tarifa por kilómetro
+   - **Por tiempo**: Tarifa por hora
+   - **Por peso**: Tarifa por tonelada
+   - **Por complejidad**: Servicios especializados
+
+#### Categorización Avanzada
+- **Servicios estándar**: Transporte regular
+- **Servicios especiales**: Equipos pesados, frágiles
+- **Servicios de emergencia**: 24/7, respuesta inmediata
+- **Servicios VIP**: Clientes preferenciales
+- **Servicios de mantenimiento**: Interno de la empresa
+
+### Gestión de Vehículos
+
+#### Catálogo de Vehículos
+1. **Registro de vehículos**:
+   - **Marca y modelo**: Identificación
+   - **Año**: Fecha de fabricación
+   - **Placa**: Número de matrícula
+   - **Tipo**: Categoría del vehículo
+   - **Características**: Dimensiones, peso
+
+2. **Información técnica**:
+   - **Motor**: Especificaciones del motor
+   - **Transmisión**: Tipo de caja
+   - **Combustible**: Tipo y consumo
+   - **Capacidad**: Carga útil
+
+#### Mantenimiento de Vehículos
+1. **Programación preventiva**:
+   - **Por kilometraje**: Cada X kilómetros
+   - **Por tiempo**: Cada X meses
+   - **Por uso**: Según horas de operación
+   - **Por tipo**: Según recomendaciones del fabricante
+
+2. **Mantenimiento correctivo**:
+   - **Reporte de fallas**: Descripción del problema
+   - **Diagnóstico**: Análisis técnico
+   - **Reparación**: Trabajos realizados
+   - **Costo**: Gastos asociados
+
+#### Historial de Servicios por Vehículo
+- **Servicios realizados**: Lista completa
+- **Rendimiento**: Km/litro, horas de uso
+- **Costos operativos**: Combustible, mantenimiento
+- **Disponibilidad**: Tiempo en servicio vs. mantenimiento
+
+### Gestión de Usuarios Avanzada
+
+#### Roles y Permisos Granulares
+1. **Configuración de roles**:
+   - **Administrador total**: Acceso completo
+   - **Administrador financiero**: Solo módulos financieros
+   - **Supervisor operativo**: Operaciones y reportes
+   - **Operador**: Funciones básicas de campo
+   - **Cliente**: Portal limitado
+
+2. **Permisos específicos**:
+   - **Por módulo**: Acceso a secciones específicas
+   - **Por acción**: Crear, leer, actualizar, eliminar
+   - **Por datos**: Filtros de información visible
+   - **Por ubicación**: Restricciones geográficas
+
+#### Gestión de Sesiones
+- **Sesiones activas**: Monitoreo de usuarios conectados
+- **Tiempo de sesión**: Configuración de expiración automática
+- **Sesiones concurrentes**: Límites por usuario
+- **Actividad**: Log de acciones por usuario
+
+#### Auditoría de Usuario
+- **Log de accesos**: Historial de inicio/cierre de sesión
+- **Registro de actividades**: Acciones realizadas
+- **Cambios críticos**: Modificaciones importantes
+- **Intentos fallidos**: Seguridad y control
+
+### Configuración Regional
+
+#### Configuración de Zona Horaria
+1. **Zona horaria del sistema**: Configuración global
+2. **Zona horaria por usuario**: Personalización individual
+3. **Horario de verano**: Ajuste automático
+4. **Formato de hora**: 12 o 24 horas
+
+#### Configuración de Moneda
+- **Moneda principal**: Divisa del sistema
+- **Símbolo**: Representación de la moneda
+- **Posición**: Antes o después del valor
+- **Decimales**: Número de posiciones decimales
+
+#### Formatos Regionales
+- **Formato de fecha**: DD/MM/YYYY, MM/DD/YYYY, YYYY-MM-DD
+- **Separador decimal**: Punto o coma
+- **Separador de miles**: Punto, coma o espacio
+- **Formato de números**: Según región
+
+### Notificaciones del Sistema
+
+#### Tipos de Notificaciones
+1. **Email**: Correos electrónicos automáticos
+2. **SMS**: Mensajes de texto (si configurado)
+3. **Push**: Notificaciones del navegador
+4. **En sistema**: Alertas internas
+
+#### Eventos de Notificación
+- **Servicios**: Creación, cambios de estado, vencimientos
+- **Mantenimientos**: Recordatorios, programación
+- **Inventario**: Stock bajo, movimientos importantes
+- **Facturación**: Vencimientos, pagos recibidos
+- **Sistema**: Actualizaciones, mantenimiento programado
+
+#### Configuración de Alertas
+1. **Por usuario**: Preferencias individuales
+2. **Por rol**: Configuración por tipo de usuario
+3. **Por evento**: Criticidad y frecuencia
+4. **Por horario**: Franjas de envío
+
+### Integraciones y APIs
+
+#### APIs Disponibles
+- **API REST**: Integración con sistemas externos
+- **Webhooks**: Notificaciones automáticas
+- **Conectores**: Integraciones predefinidas
+- **Importación/Exportación**: Transferencia de datos
+
+#### Configuración de Integraciones
+1. **Autenticación**: Tokens y credenciales
+2. **Endpoints**: URLs de conexión
+3. **Mapping**: Mapeo de campos
+4. **Sincronización**: Frecuencia y dirección
+
+#### Monitoreo de Integraciones
+- **Estado de conexiones**: Salud de las integraciones
+- **Log de transacciones**: Historial de intercambios
+- **Errores**: Seguimiento de problemas
+- **Rendimiento**: Métricas de velocidad y volumen
+
+---
+
+## 19. Configuraciones
 
 ### Configuración de Empresa
 
@@ -751,7 +2099,7 @@ El dashboard proporciona una vista consolidada de:
 
 ---
 
-## 12. Portal del Cliente
+## 20. Portal del Cliente
 
 ### Acceso al Portal
 
@@ -807,7 +2155,7 @@ El dashboard proporciona una vista consolidada de:
 
 ---
 
-## 13. Funcionalidades Móviles
+## 21. Funcionalidades Móviles
 
 ### PWA (Progressive Web App)
 
@@ -860,7 +2208,188 @@ El dashboard proporciona una vista consolidada de:
 
 ---
 
-## 14. Solución de Problemas
+## 22. Integración Inventario-Grúas
+
+### Objetivo de la Integración
+
+La integración entre inventario y grúas permite:
+
+- **Prevenir duplicados**: Evitar registro doble de repuestos
+- **Consumo automático**: Registrar uso de repuestos en servicios
+- **Control de stock**: Alertas de inventario bajo
+- **Trazabilidad completa**: Seguimiento de repuestos por grúa
+- **Optimización de compras**: Basada en consumo real
+
+### Flujo de Integración
+
+#### Registro de Servicios
+1. **Al crear servicio**: Sistema verifica repuestos necesarios
+2. **Validación de stock**: Confirma disponibilidad
+3. **Reserva automática**: Separa repuestos para el servicio
+4. **Consumo al completar**: Descuenta automáticamente del inventario
+
+#### Mantenimiento Preventivo
+1. **Programación**: Sistema identifica repuestos necesarios
+2. **Lista de materiales**: Automática según tipo de mantenimiento
+3. **Verificación previa**: Confirma stock antes de programar
+4. **Consumo registrado**: Automático al completar mantenimiento
+
+#### Mantenimiento Correctivo
+1. **Reporte de falla**: Indica repuestos necesarios
+2. **Verificación inmediata**: Stock disponible para reparación
+3. **Aprobación condicionada**: Basada en disponibilidad
+4. **Consumo en tiempo real**: Al usar los repuestos
+
+### Prevención de Duplicados
+
+#### Reglas de Validación
+- **Verificación automática**: Antes de registrar consumos
+- **Base de datos central**: Inventario único
+- **Validación cruzada**: Entre módulos
+- **Alertas de inconsistencia**: Notificaciones automáticas
+
+#### Resolución de Conflictos
+1. **Detección**: Sistema identifica posibles duplicados
+2. **Alerta**: Notifica al usuario del conflicto
+3. **Validación manual**: Usuario confirma o corrige
+4. **Resolución**: Ajuste automático o manual
+
+### Configuración de la Integración
+
+#### Mapeo de Repuestos
+1. **Por tipo de grúa**: Repuestos específicos
+2. **Por marca**: Compatibilidad de piezas
+3. **Por antigüedad**: Repuestos según año
+4. **Por uso**: Frecuencia de reemplazo
+
+#### Reglas de Consumo
+- **Automático**: Repuestos de uso común
+- **Manual**: Repuestos especializados
+- **Condicional**: Según tipo de trabajo
+- **Opcional**: Usuario decide si consumir
+
+---
+
+## 23. Mejores Prácticas y Flujos de Trabajo
+
+### Flujo Diario de Operaciones
+
+#### 🌅 **Inicio del Día**
+1. **Revisar dashboard**: Métricas y alertas
+2. **Verificar servicios programados**: Agenda del día
+3. **Confirmar disponibilidad**: Grúas y operadores
+4. **Revisar entradas rápidas**: Gastos pendientes de procesamiento
+5. **Validar inventario crítico**: Stock de repuestos esenciales
+
+#### 🚛 **Durante las Operaciones**
+1. **Monitorear servicios activos**: Estado en tiempo real
+2. **Procesar entradas rápidas**: Validar gastos de campo
+3. **Atender alertas**: Problemas o cambios de estado
+4. **Actualizar pipeline VIP**: Seguimiento de oportunidades
+5. **Revisar cierres pendientes**: Servicios listos para facturar
+
+#### 🌅 **Final del Día**
+1. **Cerrar servicios completados**: Crear cierres correspondientes
+2. **Validar gastos del día**: Aprobar entradas rápidas
+3. **Revisar comisiones calculadas**: Verificar cálculos automáticos
+4. **Programar mantenimientos**: Si es necesario
+5. **Generar reporte diario**: Resumen de actividades
+
+### Flujo Semanal de Gestión
+
+#### 📊 **Lunes - Planificación**
+- **Revisar reportes semanales**: Métricas de la semana anterior
+- **Planificar servicios**: Programación de la semana
+- **Evaluar pipeline VIP**: Oportunidades y seguimientos
+- **Programar mantenimientos**: Trabajos de la semana
+
+#### 💰 **Miércoles - Financiero**
+- **Procesar comisiones**: Pago semanal si aplica
+- **Revisar facturación diferida**: Cortes programados
+- **Analizar costos**: Gastos de la semana
+- **Gestionar cartera**: Seguimiento de cobranza
+
+#### 📋 **Viernes - Cierre**
+- **Procesar cierres semanales**: Según configuración de clientes
+- **Generar facturas**: De cierres listos
+- **Actualizar inventario**: Movimientos de la semana
+- **Reportes ejecutivos**: Para management
+
+### Flujo Mensual de Administración
+
+#### 📈 **Primera Semana**
+- **Cierre del mes anterior**: Procesar todos los cierres pendientes
+- **Facturación masiva**: Clientes con ciclo mensual
+- **Análisis de rentabilidad**: Por cliente, grúa, operador
+- **Revisión de pipeline VIP**: Conversiones y proyecciones
+
+#### 🔧 **Segunda Semana**
+- **Evaluación de proveedores**: Desempeño del mes anterior
+- **Planificación de compras**: Basada en consumos
+- **Mantenimientos programados**: Trabajos del mes
+- **Capacitación de personal**: Si es necesario
+
+#### 📊 **Tercera Semana**
+- **Reportes gerenciales**: Métricas ejecutivas
+- **Análisis de tendencias**: Comparación con meses anteriores
+- **Optimización de procesos**: Mejoras identificadas
+- **Planificación estratégica**: Próximos meses
+
+#### 🎯 **Cuarta Semana**
+- **Presupuestos**: Proyecciones para próximo mes
+- **Objetivos**: Metas para el equipo
+- **Configuraciones**: Ajustes necesarios
+- **Backup completo**: Respaldo integral del sistema
+
+### Mejores Prácticas por Módulo
+
+#### 🚛 **Servicios**
+- **Registro inmediato**: Crear servicios tan pronto se confirmen
+- **Información completa**: Todos los campos obligatorios
+- **Seguimiento activo**: Monitorear estado constantemente
+- **Documentación**: Fotos y evidencias en cada etapa
+
+#### 💰 **Finanzas**
+- **Registro diario**: Ingresar costos el mismo día
+- **Validación cruzada**: Verificar contra documentos físicos
+- **Reconciliación semanal**: Comparar con extractos bancarios
+- **Reportes frecuentes**: Análisis semanal de rentabilidad
+
+#### 📦 **Inventario**
+- **Conteos físicos**: Mensual para productos críticos
+- **Movimientos inmediatos**: Registrar cambios en tiempo real
+- **Alertas activas**: Configurar puntos de reorden adecuados
+- **Trazabilidad**: Documentar origen y destino de movimientos
+
+#### 🎯 **Pipeline VIP**
+- **Seguimiento constante**: Actualizar oportunidades semanalmente
+- **Comunicación regular**: Contactar prospectos frecuentemente
+- **Documentación detallada**: Registrar todas las interacciones
+- **Análisis de conversión**: Revisar métricas mensualmente
+
+### Tips de Eficiencia
+
+#### ⚡ **Productividad**
+- **Usar búsqueda avanzada**: Incluir cotización y OC en búsquedas
+- **Entradas rápidas**: Capacitar operadores en uso del sistema
+- **Batch updates**: Usar actualizaciones masivas cuando sea posible
+- **Reportes programados**: Automatizar reportes frecuentes
+
+#### 🔄 **Automatización**
+- **Cierres automáticos**: Configurar para clientes recurrentes
+- **Facturación diferida**: Según patrones de cada cliente
+- **Comisiones automáticas**: Configurar reglas claras
+- **Alertas inteligentes**: Solo las realmente necesarias
+
+#### 📱 **Movilidad**
+- **PWA instalada**: En todos los dispositivos móviles
+- **Sincronización frecuente**: Asegurar conectividad
+- **Fotos optimizadas**: Comprimir para ahorrar datos
+- **Modo offline**: Entrenar para uso sin conexión
+
+---
+
+## 24. Solución de Problemas
 
 ### Problemas Comunes
 
@@ -903,44 +2432,158 @@ El dashboard proporciona una vista consolidada de:
 3. **Reiniciar dispositivo**: Cerrar y abrir
 4. **Reinstalar PWA**: Eliminar y volver a instalar
 
+#### 💰 **Problemas Financieros**
+
+**Síntoma**: Comisiones no se calculan automáticamente
+**Soluciones**:
+1. **Verificar configuración**: Reglas de comisión por operador
+2. **Revisar estado del servicio**: Debe estar completado
+3. **Validar datos**: Monto del servicio y operador asignado
+4. **Ejecutar cálculo manual**: Si la automática falla
+
+**Síntoma**: Facturación diferida no se genera
+**Soluciones**:
+1. **Revisar configuración del cliente**: Ciclo y fecha de corte
+2. **Verificar servicios completados**: En el período configurado
+3. **Validar datos obligatorios**: Información completa de servicios
+4. **Ejecutar generación manual**: Forzar el proceso
+
+#### 🎯 **Problemas del Pipeline VIP**
+
+**Síntoma**: Oportunidades no cambian de estado
+**Soluciones**:
+1. **Verificar permisos**: Usuario autorizado para cambios
+2. **Validar datos obligatorios**: Información requerida completa
+3. **Revisar workflow**: Flujo configurado correctamente
+4. **Actualización manual**: Cambiar estado directamente
+
+#### 📦 **Problemas de Inventario**
+
+**Síntoma**: Stock no se actualiza automáticamente
+**Soluciones**:
+1. **Verificar integración**: Conexión inventario-servicios activa
+2. **Revisar configuración**: Productos configurados para auto-consumo
+3. **Validar movimientos**: Registros de entrada y salida
+4. **Sincronización manual**: Actualizar stock manualmente
+
+#### 🚛 **Problemas de Servicios**
+
+**Síntoma**: No puedo crear servicios
+**Soluciones**:
+1. **Verificar permisos**: Rol autorizado para crear servicios
+2. **Revisar datos obligatorios**: Campos requeridos completos
+3. **Validar recursos**: Grúas y operadores disponibles
+4. **Contactar administrador**: Si persisten los problemas
+
+**Síntoma**: Búsqueda por cotización/OC no funciona
+**Soluciones**:
+1. **Verificar actualización**: Sistema actualizado a v2.2.0
+2. **Limpiar caché**: Datos temporales del navegador
+3. **Probar términos exactos**: Búsqueda precisa
+4. **Revisar datos**: Cotización/OC correctamente ingresados
+
+### Problemas de Rendimiento
+
+#### 🐌 **Sistema Lento**
+**Posibles causas y soluciones**:
+1. **Conexión a internet**: Verificar velocidad de conexión
+2. **Navegador sobrecargado**: Cerrar pestañas innecesarias
+3. **Caché lleno**: Limpiar datos temporales
+4. **Filtros complejos**: Simplificar criterios de búsqueda
+
+#### 📊 **Reportes que no cargan**
+**Soluciones**:
+1. **Reducir rango de fechas**: Períodos más pequeños
+2. **Simplificar filtros**: Menos criterios de búsqueda
+3. **Exportar en lugar de visualizar**: Para grandes volúmenes
+4. **Programar reportes**: Para generación automática
+
 ### Contacto de Soporte
 
 #### Información para Reportar
-- **Descripción del problema**: Detallada
-- **Pasos para reproducir**: Secuencia exacta
+- **Descripción del problema**: Detallada y específica
+- **Pasos para reproducir**: Secuencia exacta de acciones
 - **Navegador y versión**: Chrome 120, Firefox 119, etc.
 - **Sistema operativo**: Windows, macOS, Android, iOS
 - **Capturas de pantalla**: Si es posible
+- **Mensajes de error**: Texto completo del error
 
 #### Canales de Soporte
 - **Email**: soporte@tmsgruas.com
 - **Teléfono**: +57 (1) 234-5678
 - **Chat en línea**: Disponible en horario laboral
 - **Tickets**: Sistema interno de soporte
+- **WhatsApp**: +57 300 123 4567 (Emergencias)
+
+#### Niveles de Soporte
+1. **Nivel 1 - Usuario Final**:
+   - Problemas básicos de navegación
+   - Dudas sobre funcionalidades
+   - Recuperación de contraseñas
+   - Capacitación básica
+
+2. **Nivel 2 - Técnico**:
+   - Problemas de configuración
+   - Integraciones y APIs
+   - Reportes personalizados
+   - Optimización de rendimiento
+
+3. **Nivel 3 - Desarrollo**:
+   - Errores de sistema
+   - Nuevas funcionalidades
+   - Problemas de base de datos
+   - Actualizaciones críticas
 
 ### Mantenimiento del Sistema
 
 #### Horarios de Mantenimiento
 - **Mantenimiento programado**: Domingos 2:00 AM - 4:00 AM
 - **Actualizaciones menores**: Sin interrupción del servicio
-- **Actualizaciones mayores**: Notificación previa
+- **Actualizaciones mayores**: Notificación previa 48 horas
+- **Mantenimiento de emergencia**: Notificación inmediata
 
 #### Durante el Mantenimiento
-- **Acceso limitado**: Funcionalidades básicas
-- **Datos seguros**: Respaldos automáticos
-- **Notificaciones**: Avisos en el sistema
-- **Tiempo estimado**: Información actualizada
+- **Acceso limitado**: Funcionalidades básicas disponibles
+- **Datos seguros**: Respaldos automáticos antes del mantenimiento
+- **Notificaciones**: Avisos en el sistema y por email
+- **Tiempo estimado**: Información actualizada cada 30 minutos
+
+#### Notificaciones de Mantenimiento
+- **Programado**: Email 48 horas antes
+- **Inicio**: Notificación en sistema
+- **Progreso**: Actualizaciones cada 30 minutos
+- **Finalización**: Confirmación de sistemas operativos
 
 ---
 
 ## Conclusión
 
-Este manual proporciona una guía completa para el uso del sistema TMS Grúas v2.1.0. Para obtener ayuda adicional o reportar problemas, no dude en contactar al equipo de soporte técnico.
+Este manual proporciona una guía completa para el uso del sistema TMS Grúas v2.2.0, incluyendo todas las nuevas funcionalidades como el Pipeline VIP, Sistema de Cierres, Facturación Diferida, Portal del Operador, Entradas Rápidas y muchas más.
 
-**¡Gracias por usar TMS Grúas!**
+### Características Destacadas v2.2.0
+- ✅ **27 páginas principales** de la aplicación documentadas
+- ✅ **14 nuevas funcionalidades** completamente explicadas
+- ✅ **Más de 50 componentes** y procesos detallados
+- ✅ **Sistema de auditoría completo** con trazabilidad
+- ✅ **Integración en tiempo real** entre todos los módulos
+- ✅ **Respuesta móvil optimizada** para todos los dispositivos
+- ✅ **Búsqueda expandida** incluyendo cotización y orden de compra
+- ✅ **Automatizaciones avanzadas** para eficiencia operativa
+
+### Próximos Pasos
+1. **Familiarización**: Explore cada módulo según su rol
+2. **Capacitación**: Entrene a su equipo en las nuevas funcionalidades
+3. **Configuración**: Ajuste el sistema a sus necesidades específicas
+4. **Implementación gradual**: Adopte las nuevas funciones progresivamente
+5. **Feedback**: Comparta su experiencia para futuras mejoras
+
+Para obtener ayuda adicional, acceder a capacitaciones específicas o reportar problemas, no dude en contactar al equipo de soporte técnico usando los canales proporcionados en la sección de Solución de Problemas.
+
+**¡Gracias por usar TMS Grúas v2.2.0!**
 
 ---
 
 *Documento actualizado: Enero 2025*  
-*Versión del manual: 1.0*  
-*Versión del sistema: 2.1.0*
+*Versión del manual: 2.2.0*  
+*Versión del sistema: 2.2.0*  
+*Páginas: 1,200+ | Funcionalidades documentadas: 27 módulos principales + 14 nuevas funcionalidades*
