@@ -2148,6 +2148,7 @@ export type Database = {
           date_to: string
           folio: string
           id: string
+          purchase_order: string | null
           status: Database["public"]["Enums"]["closure_status"] | null
           total: number
           updated_at: string | null
@@ -2160,6 +2161,7 @@ export type Database = {
           date_to: string
           folio: string
           id?: string
+          purchase_order?: string | null
           status?: Database["public"]["Enums"]["closure_status"] | null
           total: number
           updated_at?: string | null
@@ -2172,6 +2174,7 @@ export type Database = {
           date_to?: string
           folio?: string
           id?: string
+          purchase_order?: string | null
           status?: Database["public"]["Enums"]["closure_status"] | null
           total?: number
           updated_at?: string | null
