@@ -28,7 +28,7 @@ export const PurchaseOrderManager: React.FC<PurchaseOrderManagerProps> = ({
   onServiceSelect
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'quoted' | 'purchase_order_pending' | 'with_purchase_order' | 'pending' | 'with_po'>('all');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'quoted' | 'purchase_order_pending' | 'with_purchase_order' | 'pending'>('all');
 
   // Filtrar servicios relevantes para órdenes de compra
   const relevantServices = services.filter(service => 
@@ -46,7 +46,7 @@ export const PurchaseOrderManager: React.FC<PurchaseOrderManagerProps> = ({
     let matchesStatus = false;
     if (statusFilter === 'all') {
       matchesStatus = true;
-    } else if (statusFilter === 'with_po') {
+    } else if (statusFilter === 'with_purchase_order') {
       matchesStatus = !!(service.purchaseOrderNumber || service.purchaseOrder);
     } else {
       matchesStatus = service.status === statusFilter;
@@ -101,7 +101,7 @@ export const PurchaseOrderManager: React.FC<PurchaseOrderManagerProps> = ({
   const stats = {
     quoted: relevantServices.filter(s => s.status === 'quoted').length,
     pending_po: relevantServices.filter(s => s.status === 'purchase_order_pending').length,
-    with_po: relevantServices.filter(s => 
+    with_purchase_order: relevantServices.filter(s => 
       s.purchaseOrderNumber || s.purchaseOrder
     ).length,
     total_value: relevantServices.reduce((sum, s) => sum + s.value, 0)
@@ -146,7 +146,7 @@ export const PurchaseOrderManager: React.FC<PurchaseOrderManagerProps> = ({
                 <CheckCircle className="w-4 h-4 text-green-400" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-white">{stats.with_po}</p>
+                <p className="text-2xl font-bold text-white">{stats.with_purchase_order}</p>
                 <p className="text-xs text-green-400">Con O.C.</p>
               </div>
             </div>
@@ -221,14 +221,6 @@ export const PurchaseOrderManager: React.FC<PurchaseOrderManagerProps> = ({
                 className="text-teal-400 border-teal-500/30"
               >
                 Con Orden de Compra
-              </Button>
-              <Button
-                variant={statusFilter === 'with_po' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setStatusFilter('with_po')}
-                className="text-green-400 border-green-500/30"
-              >
-                Con O.C.
               </Button>
             </div>
           </div>
