@@ -264,7 +264,7 @@ export const EnhancedServiceForm = ({
 
   // Auto-initialize custody mode for "Custodia de Vehículos" service type
   useEffect(() => {
-    if (selectedServiceType?.name === 'Custodia de Vehículos' && formData.custodyMode === 'none') {
+    if (selectedServiceType?.name === 'Custodia de Vehículos ' && formData.custodyMode === 'none') {
       setFormData(prev => ({ 
         ...prev, 
         custodyMode: 'manual' 
@@ -535,7 +535,7 @@ export const EnhancedServiceForm = ({
         />
 
         {/* Custodia/Arriendo de Equipos */}
-        {(formData.custodyMode !== 'none' || selectedServiceType?.name === 'Arriendo de Equipos' || selectedServiceType?.name === 'Custodia de Vehículos') && (
+        {(formData.custodyMode !== 'none' || selectedServiceType?.name === 'Arriendo de Equipos' || selectedServiceType?.name === 'Custodia de Vehículos ') && (
           <CustodySection 
             serviceTypeName={selectedServiceType?.name}
             custodyMode={formData.custodyMode}
