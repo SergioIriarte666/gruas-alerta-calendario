@@ -221,7 +221,7 @@ export const BatchUpdateModal: React.FC<BatchUpdateModalProps> = ({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent 
-        className="max-w-4xl max-h-[90vh] glass-card select-none"
+        className="max-w-4xl max-h-[85vh] glass-card select-none flex flex-col"
         style={{ 
           position: 'fixed',
           top: '50%',
@@ -233,7 +233,7 @@ export const BatchUpdateModal: React.FC<BatchUpdateModalProps> = ({
         onMouseDown={(e) => e.stopPropagation()}
         onDragStart={(e) => e.preventDefault()}
         draggable={false}>
-        <DialogHeader>
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle className="text-white flex items-center gap-2">
             <Hash className="w-5 h-5" />
             Registro por Lotes - {clientName}
@@ -243,7 +243,8 @@ export const BatchUpdateModal: React.FC<BatchUpdateModalProps> = ({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-6">
+        <ScrollArea className="flex-1 pr-4">
+          <div className="space-y-4">
           {/* Servicios seleccionados */}
           <div>
             <div className="flex items-center gap-2 mb-3">
@@ -252,7 +253,7 @@ export const BatchUpdateModal: React.FC<BatchUpdateModalProps> = ({
               </Badge>
             </div>
             
-            <ScrollArea className="h-32 rounded-md border border-gray-700 bg-gray-800/50 p-3">
+            <div className="h-32 overflow-y-auto space-y-2 border border-gray-700 bg-gray-800/50 p-3 rounded-md">
               <div className="space-y-2">
                 {selectedServices.map((service, index) => (
                   <div key={service.id} className="flex items-center justify-between text-sm">
@@ -270,7 +271,7 @@ export const BatchUpdateModal: React.FC<BatchUpdateModalProps> = ({
                   </div>
                 ))}
               </div>
-            </ScrollArea>
+            </div>
           </div>
 
           {/* Configuración de tipos */}
@@ -457,9 +458,10 @@ export const BatchUpdateModal: React.FC<BatchUpdateModalProps> = ({
               rows={3}
             />
           </div>
-        </div>
+          </div>
+        </ScrollArea>
 
-        <DialogFooter>
+        <DialogFooter className="flex-shrink-0">
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isLoading}>
             <X className="w-4 h-4 mr-2" />
             Cancelar
