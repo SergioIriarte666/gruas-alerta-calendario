@@ -209,6 +209,9 @@ export const EnhancedServiceForm = ({
     }
   }, [service, enhancedService]);
 
+  // Obtener el tipo de servicio seleccionado
+  const selectedServiceType = serviceTypes?.find(st => st.id === formData.serviceType);
+
   // Calculadores de totales
   const getTotalCommissions = () => {
     return formData.operators?.reduce((total, op) => total + (op.commission || 0), 0) || 0;
@@ -258,6 +261,16 @@ export const EnhancedServiceForm = ({
       }));
     }
   }, [formData.custodyTotalAmount]);
+
+  // Auto-initialize custody mode for "Custodia de Vehículos" service type
+  useEffect(() => {
+    if (selectedServiceType?.name === 'Custodia de Vehículos' && formData.custodyMode === 'none') {
+      setFormData(prev => ({ 
+        ...prev, 
+        custodyMode: 'manual' 
+      }));
+    }
+  }, [selectedServiceType?.name, formData.custodyMode]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -350,8 +363,6 @@ export const EnhancedServiceForm = ({
       toast.error(`Error al ${service ? 'actualizar' : 'crear'} el servicio: ${errorMessage}`);
     }
   };
-
-  const selectedServiceType = serviceTypes?.find(st => st.id === formData.serviceType);
 
   return (
     <div className="space-y-6">
@@ -524,7 +535,7 @@ export const EnhancedServiceForm = ({
         />
 
         {/* Custodia/Arriendo de Equipos */}
-        {(formData.custodyMode !== 'none' || selectedServiceType?.name === 'Arriendo de Equipos') && (
+        {(formData.custodyMode !== 'none' || selectedServiceType?.name === 'Arriendo de Equipos' || selectedServiceType?.name === 'Custodia de Vehículos') && (
           <CustodySection 
             serviceTypeName={selectedServiceType?.name}
             custodyMode={formData.custodyMode}
