@@ -56,7 +56,7 @@ interface PipelineListViewProps {
   onBatchUpdate?: (updates: BatchUpdateData) => Promise<void>;
 }
 
-type SortField = 'folio' | 'serviceType' | 'serviceDate' | 'value' | 'daysInStatus' | 'quoteNumber';
+type SortField = 'folio' | 'serviceType' | 'serviceDate' | 'value' | 'daysInStatus' | 'quoteNumber' | 'purchaseOrder';
 type SortDirection = 'asc' | 'desc';
 
 // Definir los estados del pipeline con sus colores
@@ -159,6 +159,10 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
         case 'quoteNumber':
           aValue = a.quoteNumber || '';
           bValue = b.quoteNumber || '';
+          break;
+        case 'purchaseOrder':
+          aValue = a.purchaseOrderNumber || a.purchaseOrder || '';
+          bValue = b.purchaseOrderNumber || b.purchaseOrder || '';
           break;
         default:
           return 0;
@@ -516,15 +520,15 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
                           <TableHead className="text-gray-300 w-12">
                             <CheckSquare className="w-4 h-4" />
                           </TableHead>
-                          <SortableHeader field="folio">Folio</SortableHeader>
-                          <SortableHeader field="serviceType">Tipo de Servicio</SortableHeader>
-                          <SortableHeader field="serviceDate">Fecha</SortableHeader>
-                          <TableHead className="text-gray-300">Patente Vehículo</TableHead>
-                          <TableHead className="text-gray-300">Grúa</TableHead>
-                          <SortableHeader field="value">Valor</SortableHeader>
-                          <SortableHeader field="daysInStatus">Días en Estado</SortableHeader>
-                          <SortableHeader field="quoteNumber">Cotización</SortableHeader>
-                          <TableHead className="text-gray-300">Acciones</TableHead>
+                           <SortableHeader field="folio">Folio</SortableHeader>
+                           <SortableHeader field="serviceType">Tipo de Servicio</SortableHeader>
+                           <SortableHeader field="serviceDate">Fecha</SortableHeader>
+                           <TableHead className="text-gray-300">Patente Vehículo</TableHead>
+                           <SortableHeader field="value">Valor</SortableHeader>
+                           <SortableHeader field="daysInStatus">Días en Estado</SortableHeader>
+                           <SortableHeader field="quoteNumber">Cotización</SortableHeader>
+                           <SortableHeader field="purchaseOrder">Orden de Compra</SortableHeader>
+                           <TableHead className="text-gray-300">Acciones</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -550,41 +554,42 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
                               {formatForDisplay(parseFromDatabase(service.serviceDate))}
                             </div>
                           </TableCell>
-                              <TableCell>
-                                <div className="flex items-center gap-1 text-gray-300">
-                                  <Car className="w-3 h-3" />
-                                  <span className="text-sm">
-                                    {service.licensePlate || 'Sin vehículo'}
-                                  </span>
-                                </div>
-                              </TableCell>
-                              <TableCell>
-                                <div className="flex items-center gap-1 text-gray-300">
-                                  <Truck className="w-3 h-3" />
-                                  <span className="text-sm">
-                                    {service.crane?.licensePlate || 'Sin asignar'}
-                                  </span>
-                                </div>
-                              </TableCell>
-                              <TableCell>
-                                <span className="font-medium text-white">
-                                  ${(service.value || 0).toLocaleString()}
-                                </span>
-                              </TableCell>
-                              <TableCell>
-                                <Badge variant="outline" className="text-xs">
-                                  {daysInStatus} días
-                                </Badge>
-                              </TableCell>
-                              <TableCell>
-                                {service.quoteNumber ? (
-                                  <code className="text-xs bg-muted px-1 rounded text-blue-300">
-                                    {service.quoteNumber}
-                                  </code>
-                                ) : (
-                                  <span className="text-muted-foreground">-</span>
-                                )}
-                              </TableCell>
+                               <TableCell>
+                                 <div className="flex items-center gap-1 text-gray-300">
+                                   <Car className="w-3 h-3" />
+                                   <span className="text-sm">
+                                     {service.licensePlate || 'Sin vehículo'}
+                                   </span>
+                                 </div>
+                               </TableCell>
+                               <TableCell>
+                                 <span className="font-medium text-white">
+                                   ${(service.value || 0).toLocaleString()}
+                                 </span>
+                               </TableCell>
+                               <TableCell>
+                                 <Badge variant="outline" className="text-xs">
+                                   {daysInStatus} días
+                                 </Badge>
+                               </TableCell>
+                               <TableCell>
+                                 {service.quoteNumber ? (
+                                   <code className="text-xs bg-muted px-1 rounded text-blue-300">
+                                     {service.quoteNumber}
+                                   </code>
+                                 ) : (
+                                   <span className="text-muted-foreground">-</span>
+                                 )}
+                               </TableCell>
+                               <TableCell>
+                                 {(service.purchaseOrderNumber || service.purchaseOrder) ? (
+                                   <code className="text-xs bg-muted px-1 rounded text-teal-300">
+                                     {service.purchaseOrderNumber || service.purchaseOrder}
+                                   </code>
+                                 ) : (
+                                   <span className="text-muted-foreground">-</span>
+                                 )}
+                               </TableCell>
                               <TableCell>
                                 <div className="flex gap-1">
                                   <Button
