@@ -221,7 +221,7 @@ export const BatchUpdateModal: React.FC<BatchUpdateModalProps> = ({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent 
-        className="max-w-4xl max-h-[85vh] glass-card select-none flex flex-col"
+        className="max-w-4xl max-h-[80vh] glass-card select-none flex flex-col"
         style={{ 
           position: 'fixed',
           top: '50%',
@@ -244,7 +244,7 @@ export const BatchUpdateModal: React.FC<BatchUpdateModalProps> = ({
         </DialogHeader>
 
         <ScrollArea className="flex-1 pr-4">
-          <div className="space-y-4">
+          <div className="space-y-4 pb-4">
           {/* Servicios seleccionados */}
           <div>
             <div className="flex items-center gap-2 mb-3">
@@ -253,7 +253,7 @@ export const BatchUpdateModal: React.FC<BatchUpdateModalProps> = ({
               </Badge>
             </div>
             
-            <div className="h-32 overflow-y-auto space-y-2 border border-gray-700 bg-gray-800/50 p-3 rounded-md">
+            <div className="h-24 overflow-y-auto space-y-2 border border-gray-700 bg-gray-800/50 p-3 rounded-md">
               <div className="space-y-2">
                 {selectedServices.map((service, index) => (
                   <div key={service.id} className="flex items-center justify-between text-sm">
@@ -275,7 +275,7 @@ export const BatchUpdateModal: React.FC<BatchUpdateModalProps> = ({
           </div>
 
           {/* Configuración de tipos */}
-          <div className="space-y-6">
+          <div className="space-y-4">
             {/* Cotizaciones */}
             <div className="space-y-4">
               <div className="flex items-center justify-between">
@@ -418,7 +418,7 @@ export const BatchUpdateModal: React.FC<BatchUpdateModalProps> = ({
               </h4>
               <div className="space-y-2">
                 {preview.map((item, index) => (
-                  <div key={index} className="flex items-center justify-between bg-gray-900/50 p-3 rounded">
+                  <div key={index} className="flex items-center justify-between bg-gray-900/50 p-2 rounded">
                     <span className="text-gray-300 font-medium">{item.folio}</span>
                     <div className="flex items-center gap-2">
                       {item.quote && (
