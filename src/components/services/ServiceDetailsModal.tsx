@@ -225,8 +225,8 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose }: ServiceDetails
               <div className="space-y-6">
                   <DetailSection title="Información del Servicio" icon={FileText}>
                       <DetailItem icon={FileText} label="Tipo de Servicio" value={serviceData.serviceType.name} />
-                      {serviceData.purchaseOrder && (
-                        <DetailItem icon={Building} label="Orden de Compra" value={serviceData.purchaseOrder} />
+                      {(serviceData.purchaseOrderNumber || serviceData.purchaseOrder) && (
+                        <DetailItem icon={Building} label="Orden de Compra" value={serviceData.purchaseOrderNumber || serviceData.purchaseOrder} />
                       )}
                       {serviceData.quoteNumber && (
                         <DetailItem icon={FileText} label="Número de Cotización" value={serviceData.quoteNumber} />

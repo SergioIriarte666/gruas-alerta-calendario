@@ -115,6 +115,7 @@ export const useServiceTransformer = () => {
         status: item.status || 'pending',
         observations: item.observations || '',
         purchaseOrder: item.purchase_order || '',
+        purchaseOrderNumber: item.purchase_order_number || '',
         quoteNumber: item.quote_number || '',
         // Optional excess functionality
         hasExcess: item.has_excess || false,
