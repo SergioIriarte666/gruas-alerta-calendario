@@ -309,6 +309,9 @@ export const EnhancedServiceForm = ({
       // Llamar callback
       onSubmit?.(result);
       
+      // Cerrar modal automáticamente después del éxito
+      onCancel?.();
+      
       console.log('✅ Form submission completed successfully');
       
     } catch (error) {
