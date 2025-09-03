@@ -48,7 +48,6 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
   const [systemDiagnosis, setSystemDiagnosis] = useState<any>(null);
   const [diagnosisLoading, setDiagnosisLoading] = useState(false);
   const [showMaintenancePanel, setShowMaintenancePanel] = useState(false);
-  const [selectedPaymentIds, setSelectedPaymentIds] = useState<string[]>([]);
 
   const { clients } = useClients();
 
@@ -133,22 +132,6 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
       cancelled: 'bg-red-500'
     };
     return <Badge className={variants[status as keyof typeof variants] || 'bg-gray-500'}>{status}</Badge>;
-  };
-
-  const handleSelectAllToggle = (checked: boolean) => {
-    if (checked) {
-      setSelectedPaymentIds(filteredPayments.map(payment => payment.id));
-    } else {
-      setSelectedPaymentIds([]);
-    }
-  };
-
-  const handlePaymentToggle = (paymentId: string, checked: boolean) => {
-    if (checked) {
-      setSelectedPaymentIds(prev => [...prev, paymentId]);
-    } else {
-      setSelectedPaymentIds(prev => prev.filter(id => id !== paymentId));
-    }
   };
 
   if (!paymentSystemAvailable) {
@@ -282,15 +265,6 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
             <Table>
               <TableHeader>
                 <TableRow className="border-white/20">
-                  <TableHead className="text-gray-300 w-12">
-                    <input
-                      type="checkbox"
-                      checked={filteredPayments.length > 0 && selectedPaymentIds.length === filteredPayments.length}
-                      onChange={(e) => handleSelectAllToggle(e.target.checked)}
-                      className="w-4 h-4 rounded border-2 border-white bg-transparent checked:bg-tms-green checked:border-tms-green cursor-pointer"
-                      style={{ accentColor: '#10B981' }}
-                    />
-                  </TableHead>
                   <TableHead className="text-gray-300">Cliente</TableHead>
                   <TableHead className="text-gray-300">N° Fiscal</TableHead>
                   <TableHead className="text-gray-300">Monto</TableHead>
@@ -302,60 +276,48 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredPayments.map(payment => {
-                  const isSelected = selectedPaymentIds.includes(payment.id);
-                  return (
-                    <TableRow key={payment.id} className="border-white/20">
-                      <TableCell>
-                        <input
-                          type="checkbox"
-                          checked={isSelected}
-                          onChange={(e) => handlePaymentToggle(payment.id, e.target.checked)}
-                          className="w-4 h-4 rounded border-2 border-white bg-transparent checked:bg-tms-green checked:border-tms-green cursor-pointer"
-                          style={{ accentColor: '#10B981' }}
-                        />
-                      </TableCell>
-                      <TableCell className="text-white">{payment.client?.name}</TableCell>
-                      <TableCell className="text-white">
-                        {payment.fiscal_numbers && payment.fiscal_numbers.length > 0 
-                          ? payment.fiscal_numbers.join(', ') 
-                          : '-'
-                        }
-                      </TableCell>
-                      <TableCell className="text-white">{formatCurrency(payment.amount)}</TableCell>
-                      <TableCell className="text-white">{new Date(payment.payment_date).toLocaleDateString()}</TableCell>
-                      <TableCell>{getStatusBadge(payment.status)}</TableCell>
-                      <TableCell className="text-white">{formatCurrency(payment.applied_amount)}</TableCell>
-                      <TableCell className="text-white">{formatCurrency(payment.remaining_amount)}</TableCell>
-                      <TableCell>
-                        <div className="flex gap-2">
-                          {payment.remaining_amount > 0 && (
-                            <>
-                              <Button
-                                size="sm"
-                                onClick={() => handleAutoApply(payment)}
-                                disabled={isProcessing}
-                                className="bg-green-600 hover:bg-green-700"
-                              >
-                                <Zap className="h-3 w-3 mr-1" />
-                                Aplicar
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => handleManualApplication(payment)}
-                                disabled={isProcessing}
-                              >
-                                <Edit className="h-3 w-3 mr-1" />
-                                Manual
-                              </Button>
-                            </>
-                          )}
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
+                {filteredPayments.map(payment => (
+                  <TableRow key={payment.id} className="border-white/20">
+                    <TableCell className="text-white">{payment.client?.name}</TableCell>
+                    <TableCell className="text-white">
+                      {payment.fiscal_numbers && payment.fiscal_numbers.length > 0 
+                        ? payment.fiscal_numbers.join(', ') 
+                        : '-'
+                      }
+                    </TableCell>
+                    <TableCell className="text-white">{formatCurrency(payment.amount)}</TableCell>
+                    <TableCell className="text-white">{new Date(payment.payment_date).toLocaleDateString()}</TableCell>
+                    <TableCell>{getStatusBadge(payment.status)}</TableCell>
+                    <TableCell className="text-white">{formatCurrency(payment.applied_amount)}</TableCell>
+                    <TableCell className="text-white">{formatCurrency(payment.remaining_amount)}</TableCell>
+                    <TableCell>
+                      <div className="flex gap-2">
+                        {payment.remaining_amount > 0 && (
+                          <>
+                            <Button
+                              size="sm"
+                              onClick={() => handleAutoApply(payment)}
+                              disabled={isProcessing}
+                              className="bg-green-600 hover:bg-green-700"
+                            >
+                              <Zap className="h-3 w-3 mr-1" />
+                              Aplicar
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleManualApplication(payment)}
+                              disabled={isProcessing}
+                            >
+                              <Edit className="h-3 w-3 mr-1" />
+                              Manual
+                            </Button>
+                          </>
+                        )}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
               </TableBody>
             </Table>
           </CardContent>
