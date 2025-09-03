@@ -226,8 +226,12 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose }: ServiceDetails
             
             <TabsContent value="details" className="mt-0">
               <div className="space-y-6">
-                  <DetailSection title="Información del Servicio" icon={FileText}>
-                      <DetailItem icon={FileText} label="Tipo de Servicio" value={serviceData.serviceType.name} />
+                   <DetailSection title="Información del Servicio" icon={FileText}>
+                       <DetailItem 
+                         icon={FileText} 
+                         label="Tipo de Servicio" 
+                         value={serviceData.serviceType?.name || serviceData.service_type?.name || 'N/A'} 
+                       />
                       {(serviceData.purchaseOrderNumber || serviceData.purchaseOrder) && (
                         <DetailItem icon={Building} label="Orden de Compra" value={serviceData.purchaseOrderNumber || serviceData.purchaseOrder} />
                       )}
