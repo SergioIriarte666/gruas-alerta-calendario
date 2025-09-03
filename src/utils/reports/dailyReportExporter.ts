@@ -60,7 +60,7 @@ export const exportDailyReport = async ({ format, data, settings, appliedFilters
     const servicesData = [
       ['Servicios Completados Hoy', data.services.completed?.length || 0],
       ['Servicios Programados Hoy', data.services.scheduled.length],
-      ['Servicios en proceso de facturación', data.services.overdue.length],
+      ['Servicios en Proceso de Facturación', data.services.overdue.length],
       ['Servicios Próxima Semana', data.services.nextWeek.length],
       ['Total Servicios Activos', data.services.total]
     ];
