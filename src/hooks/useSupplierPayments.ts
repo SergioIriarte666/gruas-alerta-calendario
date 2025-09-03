@@ -171,22 +171,8 @@ export const useSupplierPayments = () => {
 
           if (costError) throw costError;
 
-          // Crear registro en crane_parts
-          const { error: cranePartError } = await supabase
-            .from('crane_parts')
-            .insert({
-              crane_id: partDetails.crane_id,
-              part_name: partDetails.part_name,
-              date: new Date().toISOString().split('T')[0],
-              quantity: partDetails.part_quantity,
-              unit_price: partDetails.part_unit_price,
-              supplier: supplierName,
-              notes: 'Registrado automáticamente desde pago de proveedor',
-              cost_id: costData.id,
-              created_by: (await supabase.auth.getUser()).data.user?.id
-            });
-
-          if (cranePartError) throw cranePartError;
+          // NOTA: La creación de crane_parts ahora se maneja automáticamente por triggers
+          // cuando se crea el costo específico. No se crea manualmente para evitar duplicados.
         }
       }
 
