@@ -287,15 +287,6 @@ const Invoices = () => {
 
   return (
     <div className="space-y-6">
-      {/* 🚨 DEBUG: Verificar que InvoicesTable se renderiza */}
-      <div style={{ position: 'fixed', top: '10px', right: '10px', background: 'red', color: 'white', padding: '5px', zIndex: 9999 }}>
-        DEBUG: InvoicesTable renderizando - Props: {JSON.stringify({
-          invoicesCount: invoices.length,
-          selectedCount: selectedInvoiceIds.length,
-          hasToggleFunctions: !!(handleInvoiceToggle && handleSelectAllToggle)
-        })}
-      </div>
-      
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid w-full grid-cols-4 max-w-2xl mx-auto bg-white/10 backdrop-blur-sm border-white/20">
               <TabsTrigger value="invoices" className="text-white data-[state=active]:bg-white/20">
