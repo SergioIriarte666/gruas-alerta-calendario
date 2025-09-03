@@ -402,8 +402,8 @@ export const useServiceManager = () => {
       });
 
       // 🚀 DETECTAR ACTUALIZACIÓN PARCIAL (batch update)
-      const isPartialUpdate = Object.keys(serviceData).length <= 3 && 
-                            (serviceData.quoteNumber !== undefined || serviceData.purchaseOrder !== undefined || serviceData.purchaseOrderNumber !== undefined) &&
+      const isPartialUpdate = Object.keys(serviceData).length <= 4 && 
+                            (serviceData.quoteNumber !== undefined || serviceData.purchaseOrder !== undefined || serviceData.purchaseOrderNumber !== undefined || serviceData.status !== undefined) &&
                             !serviceData.requestDate && !serviceData.serviceDate;
 
       console.log('📊 Update type detection:', { isPartialUpdate, fieldsCount: Object.keys(serviceData).length });
@@ -422,6 +422,9 @@ export const useServiceManager = () => {
         }
         if (serviceData.purchaseOrderNumber !== undefined) {
           transformedData.purchase_order_number = serviceData.purchaseOrderNumber;
+        }
+        if (serviceData.status !== undefined) {
+          transformedData.status = serviceData.status;
         }
       } else {
         // ✅ ACTUALIZACIÓN COMPLETA - Procesar todos los campos con validación

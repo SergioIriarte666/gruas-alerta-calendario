@@ -105,7 +105,7 @@ export default function VipClientPipeline() {
           updateData.quoteNumber = serviceUpdate.quote_number;
         }
         if (serviceUpdate.purchase_order_number) {
-          updateData.purchaseOrderNumber = serviceUpdate.purchase_order_number;
+          updateData.purchaseOrder = serviceUpdate.purchase_order_number;
         }
         
         // Agregar cambio de estado automático si está habilitado
