@@ -100,6 +100,14 @@ export default function VipClientPipeline() {
       const updatePromises = updates.services.map(async (serviceUpdate: any) => {
         const updateData: any = {};
         
+        // 🔍 DEBUG: Logging condiciones de estado
+        console.log('🔍 VipClientPipeline - Verificando condiciones:', {
+          serviceId: serviceUpdate.id,
+          autoUpdateStatus: updates.auto_update_status,
+          targetStatus: serviceUpdate.target_status,
+          shouldUpdateStatus: updates.auto_update_status && serviceUpdate.target_status
+        });
+        
         // Agregar campos según lo que se esté actualizando
         if (serviceUpdate.quote_number) {
           updateData.quoteNumber = serviceUpdate.quote_number;
@@ -111,9 +119,13 @@ export default function VipClientPipeline() {
         // Agregar cambio de estado automático si está habilitado
         if (updates.auto_update_status && serviceUpdate.target_status) {
           updateData.status = serviceUpdate.target_status;
+          console.log('✅ VipClientPipeline - Agregando status al updateData:', updateData.status);
         }
         
-        console.log('📝 Actualizando servicio:', serviceUpdate.id, updateData);
+        console.log('📝 VipClientPipeline - Datos finales para updateService:', { 
+          serviceId: serviceUpdate.id, 
+          updateData 
+        });
         
         return await updateService(serviceUpdate.id, updateData);
       });

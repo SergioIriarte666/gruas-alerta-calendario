@@ -425,6 +425,7 @@ export const useServiceManager = () => {
         }
         if (serviceData.status !== undefined) {
           transformedData.status = serviceData.status;
+          console.log('✅ useServiceManager - Procesando campo status:', serviceData.status);
         }
       } else {
         // ✅ ACTUALIZACIÓN COMPLETA - Procesar todos los campos con validación

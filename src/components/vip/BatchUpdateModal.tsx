@@ -122,6 +122,15 @@ export const BatchUpdateModal: React.FC<BatchUpdateModalProps> = ({
     try {
       const targetStatus = determineTargetStatus(enableQuote, enablePurchaseOrder);
       
+      // 🔍 DEBUG: Logging valores de diagnóstico
+      console.log('🔍 BatchUpdateModal - Valores de diagnóstico:', {
+        autoUpdateStatus,
+        enableQuote,
+        enablePurchaseOrder,
+        targetStatus,
+        selectedServicesCount: selectedServices.length
+      });
+      
       const services: BatchUpdateData['services'] = selectedServices.map((service, index) => {
         const serviceData: any = { id: service.id };
         
@@ -163,6 +172,12 @@ export const BatchUpdateModal: React.FC<BatchUpdateModalProps> = ({
         notes: (enableQuote ? quoteData.notes : poData.notes) || undefined,
         auto_update_status: autoUpdateStatus
       };
+
+      // 🔍 DEBUG: Logging datos finales antes de enviar
+      console.log('🔍 BatchUpdateModal - Datos finales a enviar:', {
+        updateData,
+        firstServiceSample: services[0]
+      });
 
       await onBatchUpdate(updateData);
       
