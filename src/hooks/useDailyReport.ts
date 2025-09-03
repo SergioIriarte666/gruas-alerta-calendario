@@ -113,7 +113,7 @@ const fetchDailyReportData = async (selectedDate: string): Promise<DailyReportDa
     supabase.from('supplier_payments').select(`
       id, amount, due_date, status, description, category, reference_number,
       supplier_id,
-      suppliers(id, name, category, rut, email, phone, contact_name)
+      suppliers!supplier_id(id, name, category, rut, email, phone, contact_name)
     `).in('status', ['pending', 'overdue'])
       .lte('due_date', formatForDatabase(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000))),
 
