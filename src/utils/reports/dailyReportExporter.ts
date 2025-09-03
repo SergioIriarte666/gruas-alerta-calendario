@@ -1,5 +1,6 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { formatForDisplayShort } from '@/utils/timezoneUtils';
 import * as XLSX from 'xlsx';
 import { format as formatDate } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -133,22 +134,30 @@ export const exportDailyReport = async ({ format, data, settings, appliedFilters
     }
 
     // Sección de Agenda
-    if (data.calendar.events.length > 0) {
+    const hasEvents = data.calendar.events.length > 0 || data.calendar.weekEvents.length > 0;
+    
+    if (hasEvents) {
       doc.setFontSize(14);
       doc.setTextColor(0, 150, 136);
-      doc.text('AGENDA DEL DÍA', 14, lastY);
+      doc.text('AGENDA', 14, lastY);
       lastY += 10;
 
-      const eventsData = data.calendar.events.map(event => [
-        event.title,
-        event.start_time || 'Sin hora',
-        event.type === 'maintenance' ? 'Mantención' : 
-        event.type === 'service' ? 'Inspección' : 
-        event.type === 'meeting' ? 'Reunión' : 'Otro',
-        event.client?.name || event.operator?.name || 'N/A'
-      ]);
+      // Eventos del día
+      if (data.calendar.events.length > 0) {
+        doc.setFontSize(12);
+        doc.setTextColor(0, 100, 100);
+        doc.text('Eventos del Día', 14, lastY);
+        lastY += 8;
 
-      if (eventsData.length > 0) {
+        const eventsData = data.calendar.events.map(event => [
+          event.title,
+          event.start_time || 'Sin hora',
+          event.type === 'maintenance' ? 'Mantención' : 
+          event.type === 'service' ? 'Inspección' : 
+          event.type === 'meeting' ? 'Reunión' : 'Otro',
+          event.client?.name || event.operator?.name || 'N/A'
+        ]);
+
         autoTable(doc, {
           head: [['Evento', 'Hora', 'Tipo', 'Responsable']],
           body: eventsData,
@@ -157,12 +166,45 @@ export const exportDailyReport = async ({ format, data, settings, appliedFilters
           styles: { fontSize: 9 }
         });
 
+        lastY = (doc as any).lastAutoTable.finalY + 8;
+      }
+
+      // Eventos de la semana
+      if (data.calendar.weekEvents.length > 0) {
+        doc.setFontSize(12);
+        doc.setTextColor(0, 100, 100);
+        doc.text('Eventos de la Semana', 14, lastY);
+        lastY += 8;
+
+        const weekEventsData = data.calendar.weekEvents.map(event => [
+          event.title,
+          formatForDisplayShort(event.date),
+          event.start_time || 'Sin hora',
+          event.type === 'maintenance' ? 'Mantención' : 
+          event.type === 'service' ? 'Inspección' : 
+          event.type === 'meeting' ? 'Reunión' : 'Otro',
+          event.client?.name || event.operator?.name || 'N/A'
+        ]);
+
+        autoTable(doc, {
+          head: [['Evento', 'Fecha', 'Hora', 'Tipo', 'Responsable']],
+          body: weekEventsData,
+          startY: lastY,
+          theme: 'grid',
+          styles: { fontSize: 9 }
+        });
+
         lastY = (doc as any).lastAutoTable.finalY + 10;
       }
     } else {
+      doc.setFontSize(14);
+      doc.setTextColor(0, 150, 136);
+      doc.text('AGENDA', 14, lastY);
+      lastY += 10;
+      
       doc.setFontSize(10);
       doc.setTextColor(128, 128, 128);
-      doc.text('No hay eventos programados para hoy', 14, lastY);
+      doc.text('No hay eventos programados', 14, lastY);
       lastY += 15;
     }
 
@@ -355,16 +397,46 @@ export const exportDailyReport = async ({ format, data, settings, appliedFilters
     const summary_ws = XLSX.utils.aoa_to_sheet(summary_ws_data);
     XLSX.utils.book_append_sheet(wb, summary_ws, 'Resumen');
 
-    // Hoja 2: Agenda del Día
-    if (data.calendar.events.length > 0) {
-      const events_data = data.calendar.events.map(event => ({
-        'Evento': event.title,
-        'Hora': event.startTime || 'Sin hora',
-        'Descripción': event.description || 'Sin descripción',
-        'Ubicación': event.location || 'Sin ubicación'
-      }));
-      const events_ws = XLSX.utils.json_to_sheet(events_data);
-      XLSX.utils.book_append_sheet(wb, events_ws, 'Agenda');
+    // Hoja 2: Agenda (Eventos del Día y de la Semana)
+    const hasEvents = data.calendar.events.length > 0 || data.calendar.weekEvents.length > 0;
+    
+    if (hasEvents) {
+      const agenda_data = [];
+      
+      // Agregar eventos del día
+      if (data.calendar.events.length > 0) {
+        agenda_data.push(['EVENTOS DEL DÍA', '', '', '', '']);
+        data.calendar.events.forEach(event => {
+          agenda_data.push([
+            event.title,
+            'HOY',
+            event.start_time || 'Sin hora',
+            event.description || 'Sin descripción',
+            event.location || 'Sin ubicación'
+          ]);
+        });
+        agenda_data.push(['', '', '', '', '']); // Separador
+      }
+      
+      // Agregar eventos de la semana
+      if (data.calendar.weekEvents.length > 0) {
+        agenda_data.push(['EVENTOS DE LA SEMANA', '', '', '', '']);
+        data.calendar.weekEvents.forEach(event => {
+          agenda_data.push([
+            event.title,
+            formatForDisplayShort(event.date),
+            event.start_time || 'Sin hora',
+            event.description || 'Sin descripción',
+            event.location || 'Sin ubicación'
+          ]);
+        });
+      }
+      
+      const agenda_ws = XLSX.utils.aoa_to_sheet([
+        ['Evento', 'Fecha', 'Hora', 'Descripción', 'Ubicación'],
+        ...agenda_data
+      ]);
+      XLSX.utils.book_append_sheet(wb, agenda_ws, 'Agenda');
     }
 
     // Hoja 3: Estado Financiero - Facturas
