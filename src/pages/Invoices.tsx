@@ -15,6 +15,7 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
 import { AppPagination } from '@/components/shared/AppPagination';
+import InvoiceBatchActions from '@/components/invoices/InvoiceBatchActions';
 
 const INVOICE_STATUS_MAP: { [key: string]: string } = {
   all: 'Todas',
@@ -41,6 +42,7 @@ const Invoices = () => {
   const [activeTab, setActiveTab] = useState(tabFromQuery);
   const [sortField, setSortField] = useState<string>('issueDate');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+  const [selectedInvoiceIds, setSelectedInvoiceIds] = useState<string[]>([]);
   const ITEMS_PER_PAGE = 10;
 
   // Check for preselected closure from navigation state
@@ -53,6 +55,16 @@ const Invoices = () => {
     }
   }, [location.state]);
 
+  // Clear selection when filters change
+  useEffect(() => {
+    setSelectedInvoiceIds([]);
+  }, [searchTerm, statusFilter]);
+
+  // Clear selection when page changes
+  useEffect(() => {
+    setSelectedInvoiceIds([]);
+  }, [currentPage]);
+
   const handleSort = (field: string) => {
     if (sortField === field) {
       setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
@@ -61,6 +73,7 @@ const Invoices = () => {
       setSortDirection('asc');
     }
     setCurrentPage(1); // Reset to first page when sorting
+    setSelectedInvoiceIds([]); // Clear selection when sorting
   };
 
   const filteredInvoices = invoices.filter(invoice => {
@@ -193,6 +206,60 @@ const Invoices = () => {
     refetch();
   };
 
+  const handleInvoiceToggle = (invoiceId: string, checked: boolean) => {
+    if (checked) {
+      setSelectedInvoiceIds(prev => [...prev, invoiceId]);
+    } else {
+      setSelectedInvoiceIds(prev => prev.filter(id => id !== invoiceId));
+    }
+  };
+
+  const handleSelectAllToggle = (checked: boolean) => {
+    if (checked) {
+      setSelectedInvoiceIds(paginatedInvoices.map(inv => inv.id));
+    } else {
+      setSelectedInvoiceIds([]);
+    }
+  };
+
+  const handleBatchMarkAsPaid = async (invoiceIds: string[]) => {
+    try {
+      for (const id of invoiceIds) {
+        await markAsPaid(id);
+      }
+      setSelectedInvoiceIds([]);
+      setTimeout(() => {
+        refetch();
+      }, 500);
+      toast.success(`${invoiceIds.length} facturas marcadas como pagadas`);
+    } catch (error) {
+      console.error('Error marking invoices as paid:', error);
+    }
+  };
+
+  const handleBatchDelete = async (invoiceIds: string[]) => {
+    try {
+      for (const id of invoiceIds) {
+        await deleteInvoice(id);
+      }
+      setSelectedInvoiceIds([]);
+      toast.success(`${invoiceIds.length} facturas eliminadas`);
+    } catch (error) {
+      console.error('Error deleting invoices:', error);
+    }
+  };
+
+  const handleBatchExport = (invoiceIds: string[]) => {
+    // TODO: Implement batch export functionality
+    toast.success(`Exportando ${invoiceIds.length} facturas...`);
+  };
+
+  const handleClearSelection = () => {
+    setSelectedInvoiceIds([]);
+  };
+
+  const selectedInvoices = invoices.filter(inv => selectedInvoiceIds.includes(inv.id));
+
   if (showForm) {
     return (
       <div className="space-y-6">
@@ -265,6 +332,16 @@ const Invoices = () => {
               ))}
             </div>
           </div>
+
+          {selectedInvoiceIds.length > 0 && (
+            <InvoiceBatchActions
+              selectedInvoices={selectedInvoices}
+              onMarkAsPaid={handleBatchMarkAsPaid}
+              onDelete={handleBatchDelete}
+              onExport={handleBatchExport}
+              onClearSelection={handleClearSelection}
+            />
+          )}
           
           <InvoicesTable
             invoices={paginatedInvoices}
@@ -276,6 +353,9 @@ const Invoices = () => {
             sortField={sortField}
             sortDirection={sortDirection}
             onSort={handleSort}
+            selectedInvoiceIds={selectedInvoiceIds}
+            onInvoiceToggle={handleInvoiceToggle}
+            onSelectAllToggle={handleSelectAllToggle}
           />
 
           <AppPagination

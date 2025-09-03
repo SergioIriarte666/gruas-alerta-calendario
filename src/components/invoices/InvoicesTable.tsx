@@ -2,6 +2,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Edit, Trash2, DollarSign, FileText, CheckCircle, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import { Invoice } from '@/types';
 import { format, isValid, parseISO } from 'date-fns';
@@ -19,6 +20,9 @@ interface InvoicesTableProps {
   sortField?: string;
   sortDirection?: 'asc' | 'desc';
   onSort?: (field: string) => void;
+  selectedInvoiceIds: string[];
+  onInvoiceToggle: (invoiceId: string, checked: boolean) => void;
+  onSelectAllToggle: (checked: boolean) => void;
 }
 
 // Safe date formatting with validation and fallbacks
@@ -117,7 +121,10 @@ const InvoicesTable = ({
   onRefresh,
   sortField,
   sortDirection,
-  onSort
+  onSort,
+  selectedInvoiceIds,
+  onInvoiceToggle,
+  onSelectAllToggle
 }: InvoicesTableProps) => {
   const handleInvoiceDeleted = () => {
     if (onRefresh) {
@@ -142,13 +149,27 @@ const InvoicesTable = ({
   return (
     <Card className="glass-card">
       <CardHeader>
-        <CardTitle className="text-white">Facturas ({invoices.length})</CardTitle>
+        <CardTitle className="flex items-center justify-between text-white">
+          <span>Facturas ({invoices.length})</span>
+          {selectedInvoiceIds.length > 0 && (
+            <span className="text-sm bg-tms-green/20 text-tms-green px-3 py-1 rounded-full">
+              {selectedInvoiceIds.length} seleccionadas
+            </span>
+          )}
+        </CardTitle>
       </CardHeader>
       <CardContent>
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
               <tr className="border-b border-gray-700">
+                <th className="text-left py-3 px-4 font-medium text-white w-12">
+                  <Checkbox
+                    checked={invoices.length > 0 && selectedInvoiceIds.length === invoices.length}
+                    onCheckedChange={(checked) => onSelectAllToggle(checked as boolean)}
+                    className="border-gray-500"
+                  />
+                </th>
                 <SortableHeader field="folio" label="Folio" sortField={sortField} sortDirection={sortDirection} onSort={onSort} />
                 <SortableHeader field="numeroFiscal" label="N° Fiscal" sortField={sortField} sortDirection={sortDirection} onSort={onSort} />
                 <SortableHeader field="client" label="Cliente" sortField={sortField} sortDirection={sortDirection} onSort={onSort} />
@@ -169,8 +190,23 @@ const InvoicesTable = ({
 
                 const invoiceWithDetails = getInvoiceWithDetails(invoice);
                 
+                const isSelected = selectedInvoiceIds.includes(invoice.id);
+                
                 return (
-                  <tr key={invoice.id} className="border-b border-gray-800 hover:bg-white/5">
+                  <tr 
+                    key={invoice.id} 
+                    className={`border-b border-gray-800 hover:bg-white/5 cursor-pointer transition-colors ${
+                      isSelected ? 'bg-tms-green/10 border-tms-green/30' : ''
+                    }`}
+                    onClick={() => onInvoiceToggle(invoice.id, !isSelected)}
+                  >
+                    <td className="py-3 px-4" onClick={(e) => e.stopPropagation()}>
+                      <Checkbox
+                        checked={isSelected}
+                        onCheckedChange={(checked) => onInvoiceToggle(invoice.id, checked as boolean)}
+                        className="border-gray-500"
+                      />
+                    </td>
                     <td className="py-3 px-4 text-white font-medium">
                       {invoice.folio || 'Sin folio'}
                     </td>
@@ -211,7 +247,7 @@ const InvoicesTable = ({
                         )}
                       </div>
                     </td>
-                    <td className="py-3 px-4">
+                    <td className="py-3 px-4" onClick={(e) => e.stopPropagation()}>
                       <div className="flex items-center justify-center space-x-2">
                         <Button
                           variant="ghost"
