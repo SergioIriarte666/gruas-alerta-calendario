@@ -164,11 +164,13 @@ const InvoicesTable = ({
             <thead>
               <tr className="border-b border-gray-700">
                 <th className="text-left py-3 px-4 font-medium text-white w-12">
-                  <Checkbox
-                    checked={invoices.length > 0 && selectedInvoiceIds.length === invoices.length}
-                    onCheckedChange={(checked) => onSelectAllToggle(checked as boolean)}
-                    className="border-gray-500"
-                  />
+                  <div className="flex items-center gap-2">
+                    <Checkbox
+                      checked={invoices.length > 0 && selectedInvoiceIds.length === invoices.length}
+                      onCheckedChange={(checked) => onSelectAllToggle(checked as boolean)}
+                    />
+                    <span className="text-xs text-gray-400">Todo</span>
+                  </div>
                 </th>
                 <SortableHeader field="folio" label="Folio" sortField={sortField} sortDirection={sortDirection} onSort={onSort} />
                 <SortableHeader field="numeroFiscal" label="N° Fiscal" sortField={sortField} sortDirection={sortDirection} onSort={onSort} />
@@ -204,7 +206,6 @@ const InvoicesTable = ({
                       <Checkbox
                         checked={isSelected}
                         onCheckedChange={(checked) => onInvoiceToggle(invoice.id, checked as boolean)}
-                        className="border-gray-500"
                       />
                     </td>
                     <td className="py-3 px-4 text-white font-medium">
