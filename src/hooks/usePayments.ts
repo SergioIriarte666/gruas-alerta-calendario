@@ -52,9 +52,45 @@ export const usePayments = () => {
     }
   };
 
+  const checkForDuplicatePayment = async (clientId: string, amount: number, paymentDate: string, toleranceDays: number = 3) => {
+    try {
+      const { data, error } = await supabase.rpc('check_for_duplicate_payment', {
+        p_client_id: clientId,
+        p_amount: amount,
+        p_payment_date: paymentDate,
+        p_tolerance_days: toleranceDays
+      });
+
+      if (error) throw error;
+      return data as any;
+    } catch (error) {
+      console.error('Error checking for duplicate payment:', error);
+      return { has_duplicates: false, duplicate_count: 0, similar_payments: [] };
+    }
+  };
+
   const createPayment = async (payment: Omit<Payment, 'id' | 'applied_amount' | 'remaining_amount' | 'created_at' | 'updated_at'>) => {
     try {
       console.log('🔍 Creating payment:', payment);
+      
+      // Verificar pagos duplicados antes de crear
+      const duplicateCheck = await checkForDuplicatePayment(
+        payment.client_id, 
+        payment.amount, 
+        payment.payment_date
+      );
+
+      if (duplicateCheck.has_duplicates && duplicateCheck.duplicate_count > 0) {
+        const similarPayments = duplicateCheck.similar_payments || [];
+        const duplicateInfo = similarPayments.map(p => 
+          `${p.amount} (${p.payment_date}) - ${p.status}`
+        ).join(', ');
+        
+        console.warn('⚠️ Potential duplicate payment detected:', duplicateCheck);
+        toast.warning(`Advertencia: Se encontraron ${duplicateCheck.duplicate_count} pagos similares: ${duplicateInfo}`);
+        
+        // Continuar con la creación pero con advertencia
+      }
       
       const { data, error } = await supabase
         .from('payments')
@@ -321,6 +357,23 @@ export const usePayments = () => {
     }
   };
 
+  const cleanupPaymentDuplicates = async () => {
+    try {
+      const { data, error } = await supabase.rpc('cleanup_payment_duplicates');
+      
+      if (error) throw error;
+      
+      const result = data as any;
+      toast.success(result.message);
+      await fetchPayments();
+      return result;
+    } catch (error) {
+      console.error('Error cleaning up payment duplicates:', error);
+      toast.error('Error al limpiar duplicados de pagos');
+      throw error;
+    }
+  };
+
   // Función mejorada para corregir inconsistencias de pagos
   const fixPaymentInconsistencies = async () => {
     try {
@@ -574,6 +627,7 @@ export const usePayments = () => {
     loading,
     paymentSystemAvailable,
     createPayment,
+    checkForDuplicatePayment,
     applyPaymentFIFO,
     applyPaymentManual,
     smartApplyPayment,
@@ -582,6 +636,7 @@ export const usePayments = () => {
     syncExistingPaidInvoices,
     getClientPaymentHistory,
     cleanupDuplicatePayments,
+    cleanupPaymentDuplicates,
     syncPaidInvoicesWithPayments,
     getReconciliationStats,
     fullPaymentCleanupAndSync,

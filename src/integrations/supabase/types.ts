@@ -3096,6 +3096,15 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: Json
       }
+      check_for_duplicate_payment: {
+        Args: {
+          p_amount: number
+          p_client_id: string
+          p_payment_date: string
+          p_tolerance_days?: number
+        }
+        Returns: Json
+      }
       check_inventory_sync_status: {
         Args: Record<PropertyKey, never>
         Returns: Json
@@ -3123,6 +3132,10 @@ export type Database = {
       cleanup_orphaned_supplier_costs: {
         Args: Record<PropertyKey, never>
         Returns: number
+      }
+      cleanup_payment_duplicates: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
       }
       close_service_status_only: {
         Args: { p_service_id: string }
