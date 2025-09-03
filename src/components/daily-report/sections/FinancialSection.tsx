@@ -24,9 +24,12 @@ interface FinancialSectionProps {
     totalDue: number;
     totalOverdue: number;
   } | null;
+  onViewInvoice?: (invoice: any) => void;
+  onViewPayment?: (payment: any) => void;
+  onViewServiceToInvoice?: (service: any) => void;
 }
 
-export const FinancialSection = ({ data }: FinancialSectionProps) => {
+export const FinancialSection = ({ data, onViewInvoice, onViewPayment, onViewServiceToInvoice }: FinancialSectionProps) => {
   if (!data) {
     return (
       <Card>
@@ -56,7 +59,7 @@ export const FinancialSection = ({ data }: FinancialSectionProps) => {
             </div>
           </div>
           
-          <Button variant="ghost" size="sm">
+          <Button variant="ghost" size="sm" onClick={() => onViewInvoice?.(invoice)}>
             <Eye className="w-4 h-4" />
           </Button>
         </div>
@@ -86,7 +89,7 @@ export const FinancialSection = ({ data }: FinancialSectionProps) => {
             </div>
           </div>
           
-          <Button variant="ghost" size="sm">
+          <Button variant="ghost" size="sm" onClick={() => onViewPayment?.(payment)}>
             <Eye className="w-4 h-4" />
           </Button>
         </div>
@@ -114,7 +117,7 @@ export const FinancialSection = ({ data }: FinancialSectionProps) => {
             </div>
           </div>
           
-          <Button variant="ghost" size="sm">
+          <Button variant="ghost" size="sm" onClick={() => onViewServiceToInvoice?.(service)}>
             <Eye className="w-4 h-4" />
           </Button>
         </div>

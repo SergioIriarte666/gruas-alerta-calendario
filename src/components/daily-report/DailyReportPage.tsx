@@ -28,10 +28,31 @@ import { ServicesSection } from './sections/ServicesSection';
 import { CalendarSection } from './sections/CalendarSection';
 import { FinancialSection } from './sections/FinancialSection';
 import { OperationsSection } from './sections/OperationsSection';
+import { ServiceDetailsModal } from '@/components/services/ServiceDetailsModal';
+import { CraneDetailsModal } from '@/components/cranes/CraneDetailsModal';
+import { InvoiceDetailsModal } from '@/components/invoices/InvoiceDetailsModal';
+import { PaymentDetailsModal } from '@/components/payments/PaymentDetailsModal';
+import { EventDetailsModal } from '@/components/calendar/EventDetailsModal';
+import { OperatorDetailsModal } from '@/components/operators/OperatorDetailsModal';
 
 const DailyReportPage = () => {
   const [selectedDate, setSelectedDate] = useState(formatForInput(new Date()));
   const [isExporting, setIsExporting] = useState(false);
+  
+  // Modal states
+  const [selectedService, setSelectedService] = useState<any>(null);
+  const [selectedEvent, setSelectedEvent] = useState<any>(null);
+  const [selectedInvoice, setSelectedInvoice] = useState<any>(null);
+  const [selectedPayment, setSelectedPayment] = useState<any>(null);
+  const [selectedCrane, setSelectedCrane] = useState<any>(null);
+  const [selectedOperator, setSelectedOperator] = useState<any>(null);
+  
+  const [isServiceModalOpen, setIsServiceModalOpen] = useState(false);
+  const [isEventModalOpen, setIsEventModalOpen] = useState(false);
+  const [isInvoiceModalOpen, setIsInvoiceModalOpen] = useState(false);
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [isCraneModalOpen, setIsCraneModalOpen] = useState(false);
+  const [isOperatorModalOpen, setIsOperatorModalOpen] = useState(false);
   const { data, loading, refetch } = useDailyReport(selectedDate);
   const { settings } = useSettings();
   const { toast } = useToast();
@@ -122,6 +143,37 @@ const DailyReportPage = () => {
     } finally {
       setIsExporting(false);
     }
+  };
+
+  // Modal handlers
+  const handleViewService = (service: any) => {
+    setSelectedService(service);
+    setIsServiceModalOpen(true);
+  };
+
+  const handleViewEvent = (event: any) => {
+    setSelectedEvent(event);
+    setIsEventModalOpen(true);
+  };
+
+  const handleViewInvoice = (invoice: any) => {
+    setSelectedInvoice(invoice);
+    setIsInvoiceModalOpen(true);
+  };
+
+  const handleViewPayment = (payment: any) => {
+    setSelectedPayment(payment);
+    setIsPaymentModalOpen(true);
+  };
+
+  const handleViewCrane = (crane: any) => {
+    setSelectedCrane(crane);
+    setIsCraneModalOpen(true);
+  };
+
+  const handleViewOperator = (operator: any) => {
+    setSelectedOperator(operator);
+    setIsOperatorModalOpen(true);
   };
 
   if (loading) {
@@ -291,21 +343,74 @@ const DailyReportPage = () => {
         </TabsList>
 
         <TabsContent value="services">
-          <ServicesSection data={data?.services} />
+          <ServicesSection 
+            data={data?.services} 
+            onViewService={handleViewService}
+          />
         </TabsContent>
 
         <TabsContent value="calendar">
-          <CalendarSection data={data?.calendar} />
+          <CalendarSection 
+            data={data?.calendar}
+            onViewEvent={handleViewEvent}
+          />
         </TabsContent>
 
         <TabsContent value="financial">
-          <FinancialSection data={data?.financial} />
+          <FinancialSection 
+            data={data?.financial}
+            onViewInvoice={handleViewInvoice}
+            onViewPayment={handleViewPayment}
+            onViewServiceToInvoice={handleViewService}
+          />
         </TabsContent>
 
         <TabsContent value="operations">
-          <OperationsSection data={data?.operations} />
+          <OperationsSection 
+            data={data?.operations}
+            onViewCrane={handleViewCrane}
+            onViewOperator={handleViewOperator}
+          />
         </TabsContent>
       </Tabs>
+
+      {/* Modals */}
+      <ServiceDetailsModal
+        service={selectedService}
+        isOpen={isServiceModalOpen}
+        onClose={() => setIsServiceModalOpen(false)}
+      />
+
+      <EventDetailsModal
+        event={selectedEvent}
+        isOpen={isEventModalOpen}
+        onClose={() => setIsEventModalOpen(false)}
+      />
+
+      <InvoiceDetailsModal
+        invoice={selectedInvoice}
+        isOpen={isInvoiceModalOpen}
+        onClose={() => setIsInvoiceModalOpen(false)}
+      />
+
+      <PaymentDetailsModal
+        payment={selectedPayment}
+        isOpen={isPaymentModalOpen}
+        onClose={() => setIsPaymentModalOpen(false)}
+      />
+
+      <CraneDetailsModal
+        crane={selectedCrane}
+        isOpen={isCraneModalOpen}
+        onClose={() => setIsCraneModalOpen(false)}
+        onEdit={() => {}} // Empty handler since we're just viewing
+      />
+
+      <OperatorDetailsModal
+        operator={selectedOperator}
+        isOpen={isOperatorModalOpen}
+        onClose={() => setIsOperatorModalOpen(false)}
+      />
     </div>
   );
 };

@@ -20,9 +20,10 @@ interface CalendarSectionProps {
     meetings: any[];
     total: number;
   } | null;
+  onViewEvent?: (event: any) => void;
 }
 
-export const CalendarSection = ({ data }: CalendarSectionProps) => {
+export const CalendarSection = ({ data, onViewEvent }: CalendarSectionProps) => {
   if (!data) {
     return (
       <Card>
@@ -99,7 +100,7 @@ export const CalendarSection = ({ data }: CalendarSectionProps) => {
             </div>
           </div>
           
-          <Button variant="ghost" size="sm">
+          <Button variant="ghost" size="sm" onClick={() => onViewEvent?.(event)}>
             <Eye className="w-4 h-4" />
           </Button>
         </div>

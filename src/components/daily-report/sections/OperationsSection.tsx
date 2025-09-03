@@ -27,9 +27,11 @@ interface OperationsSectionProps {
     };
     documentAlerts: any[];
   } | null;
+  onViewCrane?: (crane: any) => void;
+  onViewOperator?: (operator: any) => void;
 }
 
-export const OperationsSection = ({ data }: OperationsSectionProps) => {
+export const OperationsSection = ({ data, onViewCrane, onViewOperator }: OperationsSectionProps) => {
   if (!data) {
     return (
       <Card>
@@ -90,7 +92,7 @@ export const OperationsSection = ({ data }: OperationsSectionProps) => {
               </div>
             </div>
             
-            <Button variant="ghost" size="sm">
+            <Button variant="ghost" size="sm" onClick={() => onViewCrane?.(alert)}>
               <Eye className="w-4 h-4" />
             </Button>
           </div>
@@ -123,7 +125,7 @@ export const OperationsSection = ({ data }: OperationsSectionProps) => {
             </div>
           </div>
           
-          <Button variant="ghost" size="sm">
+          <Button variant="ghost" size="sm" onClick={() => onViewOperator?.(operator)}>
             <Eye className="w-4 h-4" />
           </Button>
         </div>
@@ -253,7 +255,7 @@ export const OperationsSection = ({ data }: OperationsSectionProps) => {
                         </div>
                       </div>
                       
-                      <Button variant="ghost" size="sm">
+                      <Button variant="ghost" size="sm" onClick={() => onViewCrane?.(crane)}>
                         <Eye className="w-4 h-4" />
                       </Button>
                     </div>

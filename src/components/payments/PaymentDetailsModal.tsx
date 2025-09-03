@@ -1,0 +1,123 @@
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { formatCurrency } from '@/lib/utils';
+import { 
+  CreditCard,
+  Calendar,
+  Building,
+  DollarSign,
+  FileText,
+  Clock
+} from 'lucide-react';
+
+interface PaymentDetailsModalProps {
+  payment: any | null;
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+export const PaymentDetailsModal = ({ payment, isOpen, onClose }: PaymentDetailsModalProps) => {
+  if (!payment) return null;
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <CreditCard className="w-5 h-5" />
+            Pago {formatCurrency(payment.amount)}
+          </DialogTitle>
+        </DialogHeader>
+
+        <div className="space-y-6">
+          {/* Estado */}
+          <div className="flex items-center gap-2">
+            <Badge variant={payment.status === 'pending' ? 'secondary' : 'default'}>
+              {payment.status === 'pending' ? 'Pendiente' : 'Programado'}
+            </Badge>
+          </div>
+
+          {/* Información del Pago */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <DollarSign className="w-4 h-4 text-muted-foreground" />
+                <span className="font-medium">Monto</span>
+              </div>
+              <p className="text-sm font-semibold">{formatCurrency(payment.amount)}</p>
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <CreditCard className="w-4 h-4 text-muted-foreground" />
+                <span className="font-medium">Método de Pago</span>
+              </div>
+              <p className="text-sm">{payment.payment_method || 'N/A'}</p>
+            </div>
+          </div>
+
+          {/* Información del Proveedor */}
+          {payment.supplier_invoice && (
+            <div className="bg-muted/50 p-4 rounded-lg space-y-3">
+              <div className="flex items-center gap-2">
+                <Building className="w-4 h-4 text-muted-foreground" />
+                <span className="font-medium">Información del Proveedor</span>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <p className="text-muted-foreground">Proveedor</p>
+                  <p className="font-medium">{payment.supplier_invoice.supplier_name || 'N/A'}</p>
+                </div>
+                {payment.supplier_invoice.invoice_number && (
+                  <div>
+                    <p className="text-muted-foreground">Número de Factura</p>
+                    <p className="font-medium">{payment.supplier_invoice.invoice_number}</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Fechas */}
+          <div className="grid grid-cols-2 gap-4">
+            {payment.due_date && (
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <Calendar className="w-4 h-4 text-muted-foreground" />
+                  <span className="font-medium">Fecha de Vencimiento</span>
+                </div>
+                <p className="text-sm">{payment.due_date}</p>
+              </div>
+            )}
+
+            {payment.scheduled_date && (
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <Clock className="w-4 h-4 text-muted-foreground" />
+                  <span className="font-medium">Fecha Programada</span>
+                </div>
+                <p className="text-sm">{payment.scheduled_date}</p>
+              </div>
+            )}
+          </div>
+
+          {/* Notas */}
+          {payment.notes && (
+            <div className="space-y-2">
+              <span className="font-medium">Notas</span>
+              <p className="text-sm text-muted-foreground">{payment.notes}</p>
+            </div>
+          )}
+
+          <div className="flex justify-end">
+            <Button variant="outline" onClick={onClose}>
+              Cerrar
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+};

@@ -20,9 +20,10 @@ interface ServicesSectionProps {
     nextWeek: any[];
     total: number;
   } | null;
+  onViewService?: (service: any) => void;
 }
 
-export const ServicesSection = ({ data }: ServicesSectionProps) => {
+export const ServicesSection = ({ data, onViewService }: ServicesSectionProps) => {
   if (!data) {
     return (
       <Card>
@@ -72,7 +73,7 @@ export const ServicesSection = ({ data }: ServicesSectionProps) => {
             </div>
           </div>
           
-          <Button variant="ghost" size="sm">
+          <Button variant="ghost" size="sm" onClick={() => onViewService?.(service)}>
             <Eye className="w-4 h-4" />
           </Button>
         </div>
@@ -180,9 +181,9 @@ export const ServicesSection = ({ data }: ServicesSectionProps) => {
                           <strong>{service.client?.name}</strong> - {service.service_date}
                         </p>
                       </div>
-                      <Button variant="ghost" size="sm">
-                        <Eye className="w-4 h-4" />
-                      </Button>
+                  <Button variant="ghost" size="sm" onClick={() => onViewService?.(service)}>
+                    <Eye className="w-4 h-4" />
+                  </Button>
                     </div>
                   </CardContent>
                 </Card>
