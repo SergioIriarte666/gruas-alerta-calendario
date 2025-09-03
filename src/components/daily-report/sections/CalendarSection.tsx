@@ -11,6 +11,7 @@ import {
   Eye,
   MapPin
 } from 'lucide-react';
+import { formatForDisplayShort } from '@/utils/timezoneUtils';
 
 interface CalendarSectionProps {
   data?: {
@@ -264,7 +265,7 @@ export const CalendarSection = ({ data, onViewEvent }: CalendarSectionProps) => 
                           <span className="font-medium">{event.title}</span>
                           {getStatusBadge(event.status)}
                           <Badge variant="secondary" className="text-xs">
-                            {new Date(event.date).toLocaleDateString('es-CL')}
+                            {formatForDisplayShort(event.date)}
                           </Badge>
                         </div>
                         
