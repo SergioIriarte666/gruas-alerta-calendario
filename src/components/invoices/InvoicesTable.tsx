@@ -167,7 +167,7 @@ const InvoicesTable = ({
                   <div className="flex items-center gap-2">
                     <Checkbox
                       checked={invoices.length > 0 && selectedInvoiceIds.length === invoices.length}
-                      onCheckedChange={(checked) => onSelectAllToggle(checked as boolean)}
+                      onCheckedChange={checked => onSelectAllToggle(checked === true)}
                     />
                     <span className="text-xs text-gray-400">Todo</span>
                   </div>
@@ -205,7 +205,7 @@ const InvoicesTable = ({
                     <td className="py-3 px-4" onClick={(e) => e.stopPropagation()}>
                       <Checkbox
                         checked={isSelected}
-                        onCheckedChange={(checked) => onInvoiceToggle(invoice.id, checked as boolean)}
+                        onCheckedChange={checked => onInvoiceToggle(invoice.id, checked === true)}
                       />
                     </td>
                     <td className="py-3 px-4 text-white font-medium">
