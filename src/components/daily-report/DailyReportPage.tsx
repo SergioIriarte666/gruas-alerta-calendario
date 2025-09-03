@@ -362,6 +362,7 @@ const DailyReportPage = () => {
             onViewInvoice={handleViewInvoice}
             onViewPayment={handleViewPayment}
             onViewServiceToInvoice={handleViewService}
+            onViewSupplierPayment={handleViewPayment}
           />
         </TabsContent>
 
