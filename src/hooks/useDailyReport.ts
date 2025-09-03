@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { formatForDatabase, formatForDisplay } from '@/utils/timezoneUtils';
+import { formatForDatabase, formatForDisplay, getWeekStart, getCurrentChileDate } from '@/utils/timezoneUtils';
 
 export interface DailyReportData {
   selectedDate: string;
@@ -67,12 +67,11 @@ export interface DailyReportData {
 
 const fetchDailyReportData = async (selectedDate: string): Promise<DailyReportData> => {
   const dateForDB = formatForDatabase(new Date(selectedDate));
-  const currentWeekStart = new Date(selectedDate);
-  currentWeekStart.setDate(currentWeekStart.getDate() - currentWeekStart.getDay());
-  const currentWeekEnd = new Date(currentWeekStart);
-  currentWeekEnd.setDate(currentWeekEnd.getDate() + 6);
-  const nextWeekEnd = new Date(currentWeekEnd);
-  nextWeekEnd.setDate(nextWeekEnd.getDate() + 7);
+  
+  // Usar funciones de zona horaria para cálculos de semana
+  const currentWeekStart = getWeekStart(new Date(selectedDate));
+  const currentWeekEnd = new Date(currentWeekStart.getTime() + 6 * 24 * 60 * 60 * 1000);
+  const nextWeekEnd = new Date(currentWeekEnd.getTime() + 7 * 24 * 60 * 60 * 1000);
 
   // Fetch services data - expandir rango para incluir semana actual y próxima
   const [servicesRes, calendarRes, invoicesRes, paymentsRes, supplierPaymentsRes, cranesRes, operatorsRes] = await Promise.all([
@@ -86,14 +85,14 @@ const fetchDailyReportData = async (selectedDate: string): Promise<DailyReportDa
     `).gte('service_date', formatForDatabase(currentWeekStart))
       .lte('service_date', formatForDatabase(nextWeekEnd)),
 
-    // Eventos del calendario - incluir semana actual
+    // Eventos del calendario - incluir semana actual y próxima para mejor visibilidad
     supabase.from('calendar_events').select(`
       id, title, date, start_time, end_time, type, status, description,
       client:clients(name),
       operator:operators(name),
       crane:cranes(brand, model)
     `).gte('date', formatForDatabase(currentWeekStart))
-      .lte('date', formatForDatabase(currentWeekEnd)),
+      .lte('date', formatForDatabase(nextWeekEnd)),
 
     // Facturas - próximas 30 días y vencidas
     supabase.from('invoices').select(`
@@ -168,7 +167,7 @@ const fetchDailyReportData = async (selectedDate: string): Promise<DailyReportDa
 
   // Process financial data with better categorization
   const invoices = invoicesRes.data || [];
-  const currentDate = new Date();
+  const currentDate = getCurrentChileDate();
   const tomorrow = new Date(currentDate);
   tomorrow.setDate(tomorrow.getDate() + 1);
   
@@ -225,7 +224,7 @@ const fetchDailyReportData = async (selectedDate: string): Promise<DailyReportDa
   // Process cranes and generate detailed alerts
   const cranes = cranesRes.data || [];
   const alertDays = 30; // días de alerta por defecto
-  const todayDate = new Date();
+  const todayDate = getCurrentChileDate();
 
   const documentAlerts = cranes.reduce((alerts: any[], crane) => {
     const techReview = new Date(crane.technical_review_expiry);
