@@ -125,13 +125,13 @@ const InvoicesTable = ({
   onInvoiceToggle,
   onSelectAllToggle
 }: InvoicesTableProps) => {
-  // 🚨 LOGS CRÍTICOS PARA DEBUGGING
-  console.log("🚨 InvoicesTable Props Check:", {
+  // 🚨 LOGS CRÍTICOS - Verificar renderizado
+  console.log("🚨 InvoicesTable STARTING RENDER");
+  console.log("🚨 Props received:", {
+    invoicesCount: invoices?.length,
     selectedInvoiceIds: selectedInvoiceIds,
-    selectedCount: selectedInvoiceIds?.length || 0,
     hasOnInvoiceToggle: typeof onInvoiceToggle === 'function',
-    hasOnSelectAllToggle: typeof onSelectAllToggle === 'function',
-    invoicesCount: invoices.length
+    hasOnSelectAllToggle: typeof onSelectAllToggle === 'function'
   });
 
   const handleInvoiceDeleted = () => {
