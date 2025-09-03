@@ -49,6 +49,16 @@ export const CustodySection = ({
   onCustodyTotalAmountChange,
   onCustodyNotesChange
 }: CustodySectionProps) => {
+  // Determinar si es servicio de arriendo de equipos
+  const isEquipmentRental = serviceTypeName === 'Arriendo de Equipos';
+  
+  // Para arriendo de equipos, forzar modo calendar si está en none
+  useEffect(() => {
+    if (isEquipmentRental && custodyMode === 'none') {
+      onCustodyModeChange?.('calendar');
+    }
+  }, [isEquipmentRental, custodyMode, onCustodyModeChange]);
+
   // Cálculo automático para modo manual
   useEffect(() => {
     if (custodyMode === 'manual' && custodyDays && custodyDailyRate) {
@@ -76,18 +86,8 @@ export const CustodySection = ({
     }
   }, [custodyStartDate, custodyEndDate, custodyDailyRate, custodyDiscountPercentage, custodyMode, onCustodyDaysChange, onCustodyTotalAmountChange]);
 
-  // Determinar si es servicio de arriendo de equipos
-  const isEquipmentRental = serviceTypeName === 'Arriendo de Equipos';
-  
   // Si es "none" y no es arriendo de equipos, no mostrar
   if (custodyMode === 'none' && !isEquipmentRental) return null;
-
-  // Para arriendo de equipos, forzar modo calendar si está en none
-  useEffect(() => {
-    if (isEquipmentRental && custodyMode === 'none') {
-      onCustodyModeChange?.('calendar');
-    }
-  }, [isEquipmentRental, custodyMode, onCustodyModeChange]);
 
   return (
     <Card>
