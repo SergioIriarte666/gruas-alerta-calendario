@@ -126,10 +126,31 @@ const InvoicesTable = ({
   onInvoiceToggle,
   onSelectAllToggle
 }: InvoicesTableProps) => {
+  // 🔍 DEBUG: Logging para identificar el problema
+  console.log("🔍 InvoicesTable RENDER DEBUG:", {
+    invoicesCount: invoices?.length || 0,
+    selectedCount: selectedInvoiceIds?.length || 0,
+    selectedIds: selectedInvoiceIds,
+    hasOnToggle: typeof onInvoiceToggle === 'function',
+    hasOnSelectAll: typeof onSelectAllToggle === 'function',
+    timestamp: new Date().toISOString()
+  });
+
   const handleInvoiceDeleted = () => {
     if (onRefresh) {
       onRefresh();
     }
+  };
+
+  // 🔍 DEBUG: Wrapper functions para logging
+  const debugOnSelectAllToggle = (checked: boolean) => {
+    console.log("🔍 SELECT ALL DEBUG:", { checked, invoicesCount: invoices.length });
+    onSelectAllToggle(checked);
+  };
+
+  const debugOnInvoiceToggle = (invoiceId: string, checked: boolean) => {
+    console.log("🔍 INVOICE TOGGLE DEBUG:", { invoiceId, checked, currentSelected: selectedInvoiceIds });
+    onInvoiceToggle(invoiceId, checked);
   };
 
   if (invoices.length === 0) {
@@ -167,7 +188,7 @@ const InvoicesTable = ({
                   <div className="flex items-center gap-2">
                     <Checkbox
                       checked={invoices.length > 0 && selectedInvoiceIds.length === invoices.length}
-                      onCheckedChange={checked => onSelectAllToggle(checked === true)}
+                      onCheckedChange={checked => debugOnSelectAllToggle(checked === true)}
                     />
                     <span className="text-xs text-gray-400">Todo</span>
                   </div>
@@ -205,7 +226,7 @@ const InvoicesTable = ({
                     <td className="py-3 px-4" onClick={(e) => e.stopPropagation()}>
                       <Checkbox
                         checked={isSelected}
-                        onCheckedChange={checked => onInvoiceToggle(invoice.id, checked === true)}
+                        onCheckedChange={checked => debugOnInvoiceToggle(invoice.id, checked === true)}
                       />
                     </td>
                     <td className="py-3 px-4 text-white font-medium">
