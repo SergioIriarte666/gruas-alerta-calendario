@@ -60,7 +60,7 @@ export const exportDailyReport = async ({ format, data, settings, appliedFilters
     const servicesData = [
       ['Servicios Completados Hoy', data.services.completed?.length || 0],
       ['Servicios Programados Hoy', data.services.scheduled.length],
-      ['Servicios Atrasados', data.services.overdue.length],
+      ['Servicios en proceso de facturación', data.services.overdue.length],
       ['Servicios Próxima Semana', data.services.nextWeek.length],
       ['Total Servicios Activos', data.services.total]
     ];
@@ -94,6 +94,32 @@ export const exportDailyReport = async ({ format, data, settings, appliedFilters
         startY: lastY,
         theme: 'grid',
         styles: { fontSize: 8 }
+      });
+
+      lastY = (doc as any).lastAutoTable.finalY + 10;
+    }
+
+    // Detalle de servicios en proceso de facturación
+    if (data.services.overdue && data.services.overdue.length > 0) {
+      doc.setFontSize(12);
+      doc.setTextColor(255, 140, 0);
+      doc.text('SERVICIOS EN PROCESO DE FACTURACIÓN', 14, lastY);
+      lastY += 8;
+
+      const overdueData = data.services.overdue.slice(0, 10).map(service => [
+        service.folio || 'N/A',
+        service.client?.name || 'Cliente',
+        service.service_type?.name || 'Servicio',
+        `$${(service.value || 0).toLocaleString()}`
+      ]);
+
+      autoTable(doc, {
+        head: [['Folio', 'Cliente', 'Tipo', 'Valor']],
+        body: overdueData,
+        startY: lastY,
+        theme: 'grid',
+        styles: { fontSize: 8 },
+        headStyles: { fillColor: [255, 140, 0] }
       });
 
       lastY = (doc as any).lastAutoTable.finalY + 10;
@@ -254,7 +280,7 @@ export const exportDailyReport = async ({ format, data, settings, appliedFilters
       ['Tipo', 'Cantidad'],
       ['Servicios Programados', data.services.scheduled.length],
       ['Servicios Pendientes', data.services.pending.length],
-      ['Servicios Atrasados', data.services.overdue.length],
+      ['Servicios en proceso de facturación', data.services.overdue.length],
       ['Total de Servicios', data.services.total]
     ];
     const summary_ws = XLSX.utils.aoa_to_sheet(summary_ws_data);
