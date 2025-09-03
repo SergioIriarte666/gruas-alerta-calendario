@@ -109,13 +109,13 @@ const fetchDailyReportData = async (selectedDate: string): Promise<DailyReportDa
     `).gte('scheduled_date', dateForDB)
       .lte('scheduled_date', formatForDatabase(new Date(Date.now() + 15 * 24 * 60 * 60 * 1000))),
 
-    // Pagos a proveedores - próximos 15 días y vencidos
+    // Pagos a proveedores - próximos 30 días y vencidos (ampliado para debugging)
     supabase.from('supplier_payments').select(`
       id, amount, due_date, status, description, category, reference_number,
       supplier_id,
       suppliers(id, name, category)
     `).in('status', ['pending', 'overdue'])
-      .lte('due_date', formatForDatabase(new Date(Date.now() + 15 * 24 * 60 * 60 * 1000))),
+      .lte('due_date', formatForDatabase(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000))),
 
     // Estado de grúas
     supabase.from('cranes').select(`
@@ -190,6 +190,13 @@ const fetchDailyReportData = async (selectedDate: string): Promise<DailyReportDa
 
   // Process supplier payments
   const supplierPayments = supplierPaymentsRes.data || [];
+  
+  console.log('🔍 SUPPLIER PAYMENTS DEBUG:');
+  console.log('- Raw supplier payments:', supplierPayments);
+  console.log('- Selected date (dateForDB):', dateForDB);
+  console.log('- Current date:', currentDate);
+  console.log('- Supplier payments length:', supplierPayments.length);
+  
   const supplierPaymentsDueToday = supplierPayments.filter(sp => sp.due_date === dateForDB);
   const supplierPaymentsOverdue = supplierPayments.filter(sp => new Date(sp.due_date) < currentDate);
   const supplierPaymentsDueWeek = supplierPayments.filter(sp => {
@@ -197,9 +204,17 @@ const fetchDailyReportData = async (selectedDate: string): Promise<DailyReportDa
     return dueDate > currentDate && dueDate <= new Date(currentDate.getTime() + 7 * 24 * 60 * 60 * 1000);
   });
   
+  console.log('- Due today:', supplierPaymentsDueToday.length, supplierPaymentsDueToday);
+  console.log('- Overdue:', supplierPaymentsOverdue.length, supplierPaymentsOverdue);
+  console.log('- Due this week:', supplierPaymentsDueWeek.length, supplierPaymentsDueWeek);
+  
   const supplierTotalDueToday = supplierPaymentsDueToday.reduce((sum, sp) => sum + (sp.amount || 0), 0);
   const supplierTotalOverdue = supplierPaymentsOverdue.reduce((sum, sp) => sum + (sp.amount || 0), 0);
   const supplierTotalDueWeek = supplierPaymentsDueWeek.reduce((sum, sp) => sum + (sp.amount || 0), 0);
+  
+  console.log('- Total due today:', supplierTotalDueToday);
+  console.log('- Total overdue:', supplierTotalOverdue);
+  console.log('- Total due week:', supplierTotalDueWeek);
   
   // Get services ready for invoicing
   const invoicesToIssueRes = await supabase.from('services').select(`
