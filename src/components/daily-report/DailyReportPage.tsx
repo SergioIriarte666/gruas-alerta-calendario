@@ -22,12 +22,14 @@ import {
   Truck,
   Users,
   FileText,
-  TrendingUp
+  TrendingUp,
+  Building2
 } from 'lucide-react';
 import { ServicesSection } from './sections/ServicesSection';
 import { CalendarSection } from './sections/CalendarSection';
 import { FinancialSection } from './sections/FinancialSection';
 import { OperationsSection } from './sections/OperationsSection';
+import { SuppliersSection } from './sections/SuppliersSection';
 import { ServiceDetailsModal } from '@/components/services/ServiceDetailsModal';
 import { CraneDetailsModal } from '@/components/cranes/CraneDetailsModal';
 import { InvoiceDetailsModal } from '@/components/invoices/InvoiceDetailsModal';
@@ -300,7 +302,7 @@ const DailyReportPage = () => {
 
       {/* Main Content Tabs */}
       <Tabs defaultValue="services" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="services" className="flex items-center gap-2">
             <Truck className="w-4 h-4" />
             Servicios
@@ -327,6 +329,22 @@ const DailyReportPage = () => {
             {data && (data.financial.invoicesDue.length + data.financial.paymentsToMake.length) > 0 && (
               <Badge variant="secondary" className="ml-1">
                 {data.financial.invoicesDue.length + data.financial.paymentsToMake.length}
+              </Badge>
+            )}
+          </TabsTrigger>
+          
+          <TabsTrigger value="suppliers" className="flex items-center gap-2">
+            <Building2 className="w-4 h-4" />
+            Proveedores
+            {data && data.financial.supplierPayments && (
+              (data.financial.supplierPayments.overdue?.length || 0) + 
+              (data.financial.supplierPayments.dueToday?.length || 0) + 
+              (data.financial.supplierPayments.dueThisWeek?.length || 0)
+            ) > 0 && (
+              <Badge variant="secondary" className="ml-1">
+                {(data.financial.supplierPayments.overdue?.length || 0) + 
+                 (data.financial.supplierPayments.dueToday?.length || 0) + 
+                 (data.financial.supplierPayments.dueThisWeek?.length || 0)}
               </Badge>
             )}
           </TabsTrigger>
@@ -362,7 +380,13 @@ const DailyReportPage = () => {
             onViewInvoice={handleViewInvoice}
             onViewPayment={handleViewPayment}
             onViewServiceToInvoice={handleViewService}
-            onViewSupplierPayment={handleViewPayment}
+          />
+        </TabsContent>
+
+        <TabsContent value="suppliers">
+          <SuppliersSection 
+            data={data?.financial.supplierPayments}
+            onViewPayment={handleViewPayment}
           />
         </TabsContent>
 
