@@ -29,6 +29,14 @@ export interface DailyReportData {
     paymentsWeek: any[];
     paymentsPending: any[];
     invoicesToIssue: any[];
+    supplierPayments: {
+      dueToday: any[];
+      overdue: any[];
+      dueThisWeek: any[];
+      totalDueToday: number;
+      totalOverdue: number;
+      totalDueWeek: number;
+    };
     totalDue: number;
     totalDueWeek: number;
     totalOverdue: number;
@@ -67,7 +75,7 @@ const fetchDailyReportData = async (selectedDate: string): Promise<DailyReportDa
   nextWeekEnd.setDate(nextWeekEnd.getDate() + 7);
 
   // Fetch services data - expandir rango para incluir semana actual y próxima
-  const [servicesRes, calendarRes, invoicesRes, paymentsRes, cranesRes, operatorsRes] = await Promise.all([
+  const [servicesRes, calendarRes, invoicesRes, paymentsRes, supplierPaymentsRes, cranesRes, operatorsRes] = await Promise.all([
     // Servicios - incluir semana actual y próxima
     supabase.from('services').select(`
       id, folio, service_date, status, value,
@@ -100,6 +108,14 @@ const fetchDailyReportData = async (selectedDate: string): Promise<DailyReportDa
       supplier_invoice:supplier_invoices(invoice_number, supplier_name)
     `).gte('scheduled_date', dateForDB)
       .lte('scheduled_date', formatForDatabase(new Date(Date.now() + 15 * 24 * 60 * 60 * 1000))),
+
+    // Pagos a proveedores - próximos 15 días y vencidos
+    supabase.from('supplier_payments').select(`
+      id, amount, due_date, status, description, category, reference_number,
+      supplier_id,
+      suppliers(id, name, category)
+    `).in('status', ['pending', 'overdue'])
+      .lte('due_date', formatForDatabase(new Date(Date.now() + 15 * 24 * 60 * 60 * 1000))),
 
     // Estado de grúas
     supabase.from('cranes').select(`
@@ -171,6 +187,19 @@ const fetchDailyReportData = async (selectedDate: string): Promise<DailyReportDa
   const payments = paymentsRes.data || [];
   const paymentsToday = payments.filter(p => p.scheduled_date === dateForDB);
   const paymentsWeek = payments.filter(p => p.scheduled_date !== dateForDB);
+
+  // Process supplier payments
+  const supplierPayments = supplierPaymentsRes.data || [];
+  const supplierPaymentsDueToday = supplierPayments.filter(sp => sp.due_date === dateForDB);
+  const supplierPaymentsOverdue = supplierPayments.filter(sp => new Date(sp.due_date) < currentDate);
+  const supplierPaymentsDueWeek = supplierPayments.filter(sp => {
+    const dueDate = new Date(sp.due_date);
+    return dueDate > currentDate && dueDate <= new Date(currentDate.getTime() + 7 * 24 * 60 * 60 * 1000);
+  });
+  
+  const supplierTotalDueToday = supplierPaymentsDueToday.reduce((sum, sp) => sum + (sp.amount || 0), 0);
+  const supplierTotalOverdue = supplierPaymentsOverdue.reduce((sum, sp) => sum + (sp.amount || 0), 0);
+  const supplierTotalDueWeek = supplierPaymentsDueWeek.reduce((sum, sp) => sum + (sp.amount || 0), 0);
   
   // Get services ready for invoicing
   const invoicesToIssueRes = await supabase.from('services').select(`
@@ -232,7 +261,7 @@ const fetchDailyReportData = async (selectedDate: string): Promise<DailyReportDa
   const available = operators.length - assigned;
 
   // Calculate improved summary metrics
-  const criticalTasks = overdue.length + invoicesOverdue.length + documentAlerts.filter(a => a.priority === 'VENCIDO' || a.priority === 'CRÍTICO').length;
+  const criticalTasks = overdue.length + invoicesOverdue.length + supplierPaymentsOverdue.length + documentAlerts.filter(a => a.priority === 'VENCIDO' || a.priority === 'CRÍTICO').length;
   const completedToday = completed.length;
   const totalTasksToday = scheduled.length + todayEvents.length + invoicesDueToday.length + paymentsToday.length;
   const totalTasksWeek = allServices.length + events.length + invoices.length + payments.length;
@@ -261,6 +290,14 @@ const fetchDailyReportData = async (selectedDate: string): Promise<DailyReportDa
       paymentsWeek: paymentsWeek,
       paymentsPending: payments.filter(p => p.status === 'pending'),
       invoicesToIssue: invoicesToIssueRes.data || [],
+      supplierPayments: {
+        dueToday: supplierPaymentsDueToday,
+        overdue: supplierPaymentsOverdue,
+        dueThisWeek: supplierPaymentsDueWeek,
+        totalDueToday: supplierTotalDueToday,
+        totalOverdue: supplierTotalOverdue,
+        totalDueWeek: supplierTotalDueWeek
+      },
       totalDue: totalDueToday,
       totalDueWeek: totalDueWeek,
       totalOverdue
@@ -311,6 +348,7 @@ export const useDailyReport = (selectedDate: string) => {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'calendar_events' }, handleChanges)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'invoices' }, handleChanges)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'scheduled_payments' }, handleChanges)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'supplier_payments' }, handleChanges)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'cranes' }, handleChanges)
       .subscribe();
 

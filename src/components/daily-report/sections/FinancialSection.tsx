@@ -21,15 +21,24 @@ interface FinancialSectionProps {
     paymentsToMake: any[];
     paymentsPending: any[];
     invoicesToIssue: any[];
+    supplierPayments?: {
+      dueToday: any[];
+      overdue: any[];
+      dueThisWeek: any[];
+      totalDueToday: number;
+      totalOverdue: number;
+      totalDueWeek: number;
+    };
     totalDue: number;
     totalOverdue: number;
   } | null;
   onViewInvoice?: (invoice: any) => void;
   onViewPayment?: (payment: any) => void;
   onViewServiceToInvoice?: (service: any) => void;
+  onViewSupplierPayment?: (payment: any) => void;
 }
 
-export const FinancialSection = ({ data, onViewInvoice, onViewPayment, onViewServiceToInvoice }: FinancialSectionProps) => {
+export const FinancialSection = ({ data, onViewInvoice, onViewPayment, onViewServiceToInvoice, onViewSupplierPayment }: FinancialSectionProps) => {
   if (!data) {
     return (
       <Card>
@@ -125,6 +134,38 @@ export const FinancialSection = ({ data, onViewInvoice, onViewPayment, onViewSer
     </Card>
   );
 
+  const SupplierPaymentCard = ({ payment, isOverdue = false }: { payment: any; isOverdue?: boolean }) => (
+    <Card className={`${isOverdue ? 'border-red-200 bg-red-50' : ''}`}>
+      <CardContent className="p-4">
+        <div className="flex items-start justify-between">
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <DollarSign className="w-4 h-4 text-muted-foreground" />
+              <span className="font-medium">{payment.suppliers?.name || payment.supplier_name || 'Proveedor'}</span>
+              {isOverdue && <AlertTriangle className="w-4 h-4 text-red-500" />}
+              <Badge variant={payment.suppliers?.category ? 'outline' : 'secondary'}>
+                {payment.suppliers?.category || payment.category || 'General'}
+              </Badge>
+            </div>
+            
+            <div className="text-sm text-muted-foreground space-y-1">
+              <p><strong>Descripción:</strong> {payment.description || 'Sin descripción'}</p>
+              <p><strong>Vencimiento:</strong> {payment.due_date}</p>
+              <p><strong>Monto:</strong> {formatCurrency(payment.amount)}</p>
+              {payment.reference_number && (
+                <p><strong>Referencia:</strong> {payment.reference_number}</p>
+              )}
+            </div>
+          </div>
+          
+          <Button variant="ghost" size="sm" onClick={() => onViewSupplierPayment?.(payment)}>
+            <Eye className="w-4 h-4" />
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+
   return (
     <div className="space-y-6">
       {/* Resumen Financiero */}
@@ -157,10 +198,12 @@ export const FinancialSection = ({ data, onViewInvoice, onViewPayment, onViewSer
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Pagos Programados</p>
-                <p className="text-2xl font-bold">{data.paymentsToMake.length}</p>
+                <p className="text-sm font-medium text-muted-foreground">Pagos a Proveedores</p>
+                <p className="text-2xl font-bold text-purple-600">
+                  {formatCurrency((data.supplierPayments?.totalDueToday || 0) + (data.supplierPayments?.totalOverdue || 0))}
+                </p>
               </div>
-              <CreditCard className="w-8 h-8 text-orange-500" />
+              <DollarSign className="w-8 h-8 text-purple-500" />
             </div>
           </CardContent>
         </Card>
@@ -200,6 +243,46 @@ export const FinancialSection = ({ data, onViewInvoice, onViewPayment, onViewSer
             <div className="space-y-3">
               {data.invoicesDue.map((invoice) => (
                 <InvoiceCard key={invoice.id} invoice={invoice} />
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Pagos a Proveedores Vencidos */}
+      {data.supplierPayments?.overdue && data.supplierPayments.overdue.length > 0 && (
+        <Card className="border-red-200">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-red-600">
+              <AlertTriangle className="w-5 h-5" />
+              Pagos a Proveedores Vencidos
+              <Badge variant="destructive">{data.supplierPayments.overdue.length}</Badge>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {data.supplierPayments.overdue.map((payment) => (
+                <SupplierPaymentCard key={payment.id} payment={payment} isOverdue />
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Pagos a Proveedores con Vencimiento Hoy */}
+      {data.supplierPayments?.dueToday && data.supplierPayments.dueToday.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <DollarSign className="w-5 h-5 text-purple-500" />
+              Pagos a Proveedores Hoy
+              <Badge variant="outline">{data.supplierPayments.dueToday.length}</Badge>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {data.supplierPayments.dueToday.map((payment) => (
+                <SupplierPaymentCard key={payment.id} payment={payment} />
               ))}
             </div>
           </CardContent>
@@ -255,7 +338,9 @@ export const FinancialSection = ({ data, onViewInvoice, onViewPayment, onViewSer
       {data.invoicesDue.length === 0 && 
        data.invoicesOverdue.length === 0 && 
        data.paymentsToMake.length === 0 && 
-       data.invoicesToIssue.length === 0 && (
+       data.invoicesToIssue.length === 0 &&
+       (!data.supplierPayments?.dueToday || data.supplierPayments.dueToday.length === 0) &&
+       (!data.supplierPayments?.overdue || data.supplierPayments.overdue.length === 0) && (
         <Card>
           <CardContent className="p-6">
             <p className="text-muted-foreground text-center">
