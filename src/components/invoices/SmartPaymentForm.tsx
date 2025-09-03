@@ -51,6 +51,7 @@ export const SmartPaymentForm: React.FC<SmartPaymentFormProps> = ({
   const [paymentMode, setPaymentMode] = useState<'auto' | 'manual'>('auto');
   const [duplicateWarning, setDuplicateWarning] = useState<string>('');
   const [showAllInvoices, setShowAllInvoices] = useState(false);
+  const [selectedInvoiceIds, setSelectedInvoiceIds] = useState<string[]>([]);
 
   // Fetch client invoices when client changes
   useEffect(() => {
@@ -107,6 +108,22 @@ export const SmartPaymentForm: React.FC<SmartPaymentFormProps> = ({
       }
     } catch (error) {
       console.error('Error checking duplicates:', error);
+    }
+  };
+
+  const handleInvoiceToggle = (invoiceId: string, checked: boolean) => {
+    if (checked) {
+      setSelectedInvoiceIds(prev => [...prev, invoiceId]);
+    } else {
+      setSelectedInvoiceIds(prev => prev.filter(id => id !== invoiceId));
+    }
+  };
+
+  const handleSelectAllInvoices = (checked: boolean) => {
+    if (checked) {
+      setSelectedInvoiceIds(clientInvoices.map(inv => inv.id));
+    } else {
+      setSelectedInvoiceIds([]);
     }
   };
 
@@ -235,19 +252,39 @@ export const SmartPaymentForm: React.FC<SmartPaymentFormProps> = ({
                         <span className="font-medium">Total pendiente:</span> {formatCurrency(getTotalPendingAmount())}
                       </div>
                       
-                      <div className="space-y-2">
-                        <div className="text-sm font-medium text-gray-700">Próximas facturas a pagar:</div>
-                        {(showAllInvoices ? clientInvoices : clientInvoices.slice(0, 3)).map((invoice) => (
-                          <div key={invoice.id} className="flex justify-between items-center text-sm p-2 bg-white rounded border">
-                            <div className="flex items-center gap-2">
-                              <span className="font-medium">{invoice.numero_fiscal || invoice.folio}</span>
-                              <Badge variant={invoice.status === 'overdue' ? 'destructive' : 'secondary'}>
-                                {invoice.status}
-                              </Badge>
-                            </div>
-                            <span>{formatCurrency(invoice.remaining_amount || invoice.total)}</span>
-                          </div>
-                        ))}
+                       <div className="space-y-2">
+                         <div className="text-sm font-medium text-gray-700 flex items-center justify-between">
+                           <span>Próximas facturas a pagar:</span>
+                           <label className="flex items-center gap-2 text-xs">
+                             <input
+                               type="checkbox"
+                               checked={clientInvoices.length > 0 && selectedInvoiceIds.length === clientInvoices.length}
+                               onChange={(e) => handleSelectAllInvoices(e.target.checked)}
+                               className="w-3 h-3 rounded border border-gray-300 checked:bg-blue-600 checked:border-blue-600"
+                             />
+                             Seleccionar todas
+                           </label>
+                         </div>
+                         {(showAllInvoices ? clientInvoices : clientInvoices.slice(0, 3)).map((invoice) => {
+                           const isSelected = selectedInvoiceIds.includes(invoice.id);
+                           return (
+                             <div key={invoice.id} className={`flex justify-between items-center text-sm p-2 bg-white rounded border ${isSelected ? 'border-blue-500 bg-blue-50' : ''}`}>
+                               <div className="flex items-center gap-2">
+                                 <input
+                                   type="checkbox"
+                                   checked={isSelected}
+                                   onChange={(e) => handleInvoiceToggle(invoice.id, e.target.checked)}
+                                   className="w-4 h-4 rounded border border-gray-300 checked:bg-blue-600 checked:border-blue-600"
+                                 />
+                                 <span className="font-medium">{invoice.numero_fiscal || invoice.folio}</span>
+                                 <Badge variant={invoice.status === 'overdue' ? 'destructive' : 'secondary'}>
+                                   {invoice.status}
+                                 </Badge>
+                               </div>
+                               <span>{formatCurrency(invoice.remaining_amount || invoice.total)}</span>
+                             </div>
+                           );
+                         })}
                         {clientInvoices.length > 3 && (
                           <button 
                             onClick={() => setShowAllInvoices(!showAllInvoices)}
