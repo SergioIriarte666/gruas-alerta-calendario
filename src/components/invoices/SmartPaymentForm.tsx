@@ -52,6 +52,7 @@ export const SmartPaymentForm: React.FC<SmartPaymentFormProps> = ({
   const [duplicateWarning, setDuplicateWarning] = useState<string>('');
   const [showAllInvoices, setShowAllInvoices] = useState(false);
   const [selectedInvoiceIds, setSelectedInvoiceIds] = useState<string[]>([]);
+  const [isAmountAutoCalculated, setIsAmountAutoCalculated] = useState(false);
 
   // Fetch client invoices when client changes
   useEffect(() => {
@@ -63,6 +64,25 @@ export const SmartPaymentForm: React.FC<SmartPaymentFormProps> = ({
       setDuplicateWarning('');
     }
   }, [formData.client_id, formData.amount, formData.payment_date]);
+
+  // Auto-update amount when invoices are selected
+  useEffect(() => {
+    if (selectedInvoiceIds.length > 0) {
+      const selectedTotal = getSelectedInvoicesTotal();
+      setFormData(prev => ({ ...prev, amount: selectedTotal.toString() }));
+      setIsAmountAutoCalculated(true);
+    } else if (isAmountAutoCalculated) {
+      setFormData(prev => ({ ...prev, amount: '' }));
+      setIsAmountAutoCalculated(false);
+    }
+  }, [selectedInvoiceIds]);
+
+  // Clear selection when amount is manually changed
+  useEffect(() => {
+    if (!isAmountAutoCalculated && formData.amount && selectedInvoiceIds.length > 0) {
+      setSelectedInvoiceIds([]);
+    }
+  }, [formData.amount, isAmountAutoCalculated]);
 
   const fetchClientInvoices = async () => {
     if (!formData.client_id) return;
@@ -129,6 +149,12 @@ export const SmartPaymentForm: React.FC<SmartPaymentFormProps> = ({
 
   const getTotalPendingAmount = () => {
     return clientInvoices.reduce((sum, inv) => sum + (inv.remaining_amount || inv.total), 0);
+  };
+
+  const getSelectedInvoicesTotal = () => {
+    return clientInvoices
+      .filter(inv => selectedInvoiceIds.includes(inv.id))
+      .reduce((sum, inv) => sum + (inv.remaining_amount || inv.total), 0);
   };
 
   const getPaymentRecommendation = () => {
@@ -347,10 +373,20 @@ export const SmartPaymentForm: React.FC<SmartPaymentFormProps> = ({
                 type="number"
                 step="0.01"
                 value={formData.amount}
-                onChange={(e) => setFormData({...formData, amount: e.target.value})}
+                onChange={(e) => {
+                  setFormData({...formData, amount: e.target.value});
+                  setIsAmountAutoCalculated(false);
+                }}
                 placeholder="0.00"
                 required
+                className={isAmountAutoCalculated ? "border-blue-300 bg-blue-50" : ""}
               />
+              {isAmountAutoCalculated && (
+                <div className="mt-1 text-xs text-blue-600 flex items-center gap-1">
+                  <CheckCircle className="h-3 w-3" />
+                  Monto calculado automáticamente de facturas seleccionadas
+                </div>
+              )}
               
               {/* Recomendación de pago */}
               {recommendation && (
