@@ -106,7 +106,7 @@ export const exportDailyReport = async ({ format, data, settings, appliedFilters
       doc.text('SERVICIOS EN PROCESO DE FACTURACIÓN', 14, lastY);
       lastY += 8;
 
-      const overdueData = data.services.overdue.slice(0, 10).map(service => [
+      const overdueData = data.services.overdue.slice(0, 20).map(service => [
         service.folio || 'N/A',
         service.client?.name || 'Cliente',
         service.service_type?.name || 'Servicio',
