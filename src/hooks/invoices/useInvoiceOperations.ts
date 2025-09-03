@@ -235,7 +235,8 @@ export const useInvoiceOperations = () => {
         updateData.numero_fiscal = invoiceData.numeroFiscal || null;
       }
       if (invoiceData.paymentDate !== undefined) {
-        updateData.payment_date = invoiceData.paymentDate;
+        // Convertir cadena vacía a null para evitar error de PostgreSQL
+        updateData.payment_date = invoiceData.paymentDate === '' ? null : invoiceData.paymentDate;
       }
       
       // Handle calculated fields with validation
