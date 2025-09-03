@@ -10,6 +10,7 @@ export interface DailyReportData {
     pending: any[];
     overdue: any[];
     nextWeek: any[];
+    completed: any[];
     total: number;
   };
   calendar: {
@@ -17,15 +18,19 @@ export interface DailyReportData {
     maintenances: any[];
     inspections: any[];
     meetings: any[];
+    weekEvents: any[];
     total: number;
   };
   financial: {
     invoicesDue: any[];
+    invoicesDueWeek: any[];
     invoicesOverdue: any[];
     paymentsToMake: any[];
+    paymentsWeek: any[];
     paymentsPending: any[];
     invoicesToIssue: any[];
     totalDue: number;
+    totalDueWeek: number;
     totalOverdue: number;
   };
   operations: {
@@ -44,47 +49,57 @@ export interface DailyReportData {
   summary: {
     criticalTasks: number;
     totalTasks: number;
+    totalTasksWeek: number;
     completionRate: number;
+    completedToday: number;
     alerts: number;
+    urgentAlerts: number;
   };
 }
 
 const fetchDailyReportData = async (selectedDate: string): Promise<DailyReportData> => {
   const dateForDB = formatForDatabase(new Date(selectedDate));
-  const nextWeekDate = new Date(selectedDate);
-  nextWeekDate.setDate(nextWeekDate.getDate() + 7);
-  const nextWeekForDB = formatForDatabase(nextWeekDate);
+  const currentWeekStart = new Date(selectedDate);
+  currentWeekStart.setDate(currentWeekStart.getDate() - currentWeekStart.getDay());
+  const currentWeekEnd = new Date(currentWeekStart);
+  currentWeekEnd.setDate(currentWeekEnd.getDate() + 6);
+  const nextWeekEnd = new Date(currentWeekEnd);
+  nextWeekEnd.setDate(nextWeekEnd.getDate() + 7);
 
-  // Fetch services data
-  const [servicesRes, calendarRes, invoicesRes, paymentsRes, cranesRes, operatorsRes, alertsRes] = await Promise.all([
-    // Servicios del día, pendientes y próximos
+  // Fetch services data - expandir rango para incluir semana actual y próxima
+  const [servicesRes, calendarRes, invoicesRes, paymentsRes, cranesRes, operatorsRes] = await Promise.all([
+    // Servicios - incluir semana actual y próxima
     supabase.from('services').select(`
       id, folio, service_date, status, value,
       client:clients(id, name),
       operator:operators(id, name),
       crane:cranes(id, brand, model),
       service_type:service_types(name)
-    `).or(`service_date.eq.${dateForDB},status.eq.pending,status.eq.in_progress`),
+    `).gte('service_date', formatForDatabase(currentWeekStart))
+      .lte('service_date', formatForDatabase(nextWeekEnd)),
 
-    // Eventos del calendario
+    // Eventos del calendario - incluir semana actual
     supabase.from('calendar_events').select(`
-      id, title, date, start_time, end_time, type, status,
+      id, title, date, start_time, end_time, type, status, description,
       client:clients(name),
       operator:operators(name),
       crane:cranes(brand, model)
-    `).eq('date', dateForDB),
+    `).gte('date', formatForDatabase(currentWeekStart))
+      .lte('date', formatForDatabase(currentWeekEnd)),
 
-    // Facturas con vencimiento hoy o vencidas
+    // Facturas - próximas 30 días y vencidas
     supabase.from('invoices').select(`
       id, folio, due_date, total, status, paid_amount,
       client:clients(name)
-    `).or(`due_date.eq.${dateForDB},due_date.lt.${dateForDB}`).eq('status', 'sent'),
+    `).lte('due_date', formatForDatabase(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)))
+      .eq('status', 'sent'),
 
-    // Pagos programados
+    // Pagos programados - próximos 15 días
     supabase.from('scheduled_payments').select(`
       id, amount, scheduled_date, status, payment_method,
       supplier_invoice:supplier_invoices(invoice_number, supplier_name)
-    `).eq('scheduled_date', dateForDB),
+    `).gte('scheduled_date', dateForDB)
+      .lte('scheduled_date', formatForDatabase(new Date(Date.now() + 15 * 24 * 60 * 60 * 1000))),
 
     // Estado de grúas
     supabase.from('cranes').select(`
@@ -92,52 +107,70 @@ const fetchDailyReportData = async (selectedDate: string): Promise<DailyReportDa
       technical_review_expiry, insurance_expiry, circulation_permit_expiry
     `),
 
-    // Operadores y asignaciones
+    // Operadores - todos activos
     supabase.from('operators').select(`
-      id, name, is_active,
-      services!inner(id, service_date, status)
-    `).eq('services.service_date', dateForDB),
-
-    // Alertas de documentos próximos a vencer
-    supabase.from('document_alerts').select(`
-      id, document_type, alert_days,
-      crane:cranes(brand, model, technical_review_expiry, insurance_expiry, circulation_permit_expiry)
+      id, name, is_active
     `).eq('is_active', true)
   ]);
 
-  // Process services
+  // Process services with better categorization
   const allServices = servicesRes.data || [];
-  const scheduled = allServices.filter(s => s.service_date === dateForDB && (s.status === 'pending' || s.status === 'in_progress'));
+  const selectedDateObj = new Date(selectedDate);
+  
+  const scheduled = allServices.filter(s => 
+    s.service_date === dateForDB && ['pending', 'in_progress'].includes(s.status)
+  );
+  const completed = allServices.filter(s => 
+    s.service_date === dateForDB && s.status === 'completed'
+  );
   const pending = allServices.filter(s => s.status === 'pending');
-  const overdue = allServices.filter(s => s.service_date < dateForDB && s.status !== 'completed');
-  
-  // Get next week services
-  const nextWeekRes = await supabase.from('services').select(`
-    id, folio, service_date, status,
-    client:clients(name)
-  `).gte('service_date', dateForDB).lte('service_date', nextWeekForDB);
-  
-  const nextWeek = nextWeekRes.data || [];
+  const overdue = allServices.filter(s => 
+    new Date(s.service_date) < selectedDateObj && !['completed', 'cancelled'].includes(s.status)
+  );
+  const nextWeek = allServices.filter(s => {
+    const serviceDate = new Date(s.service_date);
+    const nextWeekStart = new Date(selectedDateObj);
+    nextWeekStart.setDate(nextWeekStart.getDate() + 1);
+    const nextWeekEnd = new Date(selectedDateObj);
+    nextWeekEnd.setDate(nextWeekEnd.getDate() + 7);
+    return serviceDate >= nextWeekStart && serviceDate <= nextWeekEnd;
+  });
 
-  // Process calendar events
+  // Process calendar events with better filtering
   const events = calendarRes.data || [];
+  const todayEvents = events.filter(e => e.date === dateForDB);
+  const weekEvents = events.filter(e => e.date !== dateForDB);
+  
   const calendarData = {
-    events: events.filter(e => e.type === 'meeting' || e.type === 'other'),
-    maintenances: events.filter(e => e.type === 'maintenance'),
-    inspections: events.filter(e => e.type === 'service'),
-    meetings: events.filter(e => e.type === 'meeting'),
-    total: events.length
+    events: todayEvents,
+    maintenances: todayEvents.filter(e => e.type === 'maintenance'),
+    inspections: todayEvents.filter(e => e.type === 'service'),
+    meetings: todayEvents.filter(e => e.type === 'meeting'),
+    weekEvents: weekEvents,
+    total: todayEvents.length
   };
 
-  // Process financial data
+  // Process financial data with better categorization
   const invoices = invoicesRes.data || [];
-  const invoicesDue = invoices.filter(i => i.due_date === dateForDB);
-  const invoicesOverdue = invoices.filter(i => i.due_date < dateForDB);
-  const totalDue = invoicesDue.reduce((sum, i) => sum + (i.total - (i.paid_amount || 0)), 0);
+  const currentDate = new Date();
+  const tomorrow = new Date(currentDate);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  
+  const invoicesDueToday = invoices.filter(i => i.due_date === dateForDB);
+  const invoicesDueThisWeek = invoices.filter(i => {
+    const dueDate = new Date(i.due_date);
+    return dueDate > currentDate && dueDate <= new Date(currentDate.getTime() + 7 * 24 * 60 * 60 * 1000);
+  });
+  const invoicesOverdue = invoices.filter(i => new Date(i.due_date) < currentDate);
+  
+  const totalDueToday = invoicesDueToday.reduce((sum, i) => sum + (i.total - (i.paid_amount || 0)), 0);
+  const totalDueWeek = invoicesDueThisWeek.reduce((sum, i) => sum + (i.total - (i.paid_amount || 0)), 0);
   const totalOverdue = invoicesOverdue.reduce((sum, i) => sum + (i.total - (i.paid_amount || 0)), 0);
 
   // Process payments
   const payments = paymentsRes.data || [];
+  const paymentsToday = payments.filter(p => p.scheduled_date === dateForDB);
+  const paymentsWeek = payments.filter(p => p.scheduled_date !== dateForDB);
   
   // Get services ready for invoicing
   const invoicesToIssueRes = await supabase.from('services').select(`
@@ -145,32 +178,69 @@ const fetchDailyReportData = async (selectedDate: string): Promise<DailyReportDa
     client:clients(name)
   `).eq('status', 'completed').is('invoice_id', null).lte('service_date', dateForDB);
 
-  // Process cranes and alerts
+  // Process cranes and generate detailed alerts
   const cranes = cranesRes.data || [];
-  const today = new Date();
   const alertDays = 30; // días de alerta por defecto
+  const todayDate = new Date();
 
-  const documentAlerts = cranes.filter(crane => {
+  const documentAlerts = cranes.reduce((alerts: any[], crane) => {
     const techReview = new Date(crane.technical_review_expiry);
     const insurance = new Date(crane.insurance_expiry);
     const permit = new Date(crane.circulation_permit_expiry);
     
-    const daysDiff = (date: Date) => Math.ceil((date.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+    const getDaysDiff = (date: Date) => Math.ceil((date.getTime() - todayDate.getTime()) / (1000 * 60 * 60 * 24));
     
-    return daysDiff(techReview) <= alertDays || 
-           daysDiff(insurance) <= alertDays || 
-           daysDiff(permit) <= alertDays;
-  });
+    const checkDocument = (expiryDate: Date, docType: string, docName: string) => {
+      const daysDiff = getDaysDiff(expiryDate);
+      if (daysDiff <= alertDays) {
+        const urgency = daysDiff <= 0 ? 'VENCIDO' : daysDiff <= 7 ? 'CRÍTICO' : daysDiff <= 15 ? 'URGENTE' : 'PRÓXIMO';
+        const daysText = daysDiff <= 0 ? `${Math.abs(daysDiff)} días vencido` : `${daysDiff} días restantes`;
+        
+        alerts.push({
+          type: docType,
+          message: `${docName} de ${crane.brand} ${crane.model} (${crane.license_plate})`,
+          description: `${urgency}: ${daysText}`,
+          priority: urgency,
+          daysRemaining: daysDiff,
+          crane: `${crane.brand} ${crane.model}`,
+          licensePlate: crane.license_plate,
+          expiryDate: expiryDate.toISOString().split('T')[0]
+        });
+      }
+    };
 
-  // Process operators
+    checkDocument(techReview, 'REVISIÓN TÉCNICA', 'Revisión Técnica');
+    checkDocument(insurance, 'SEGURO', 'Seguro Obligatorio');
+    checkDocument(permit, 'PERMISO', 'Permiso de Circulación');
+
+    return alerts;
+  }, []);
+
+  // Ordenar alertas por urgencia (más urgentes primero)
+  documentAlerts.sort((a, b) => a.daysRemaining - b.daysRemaining);
+
+  // Process operators with real assignments
   const operators = operatorsRes.data || [];
-  const assigned = operators.filter(o => o.services.length > 0).length;
-  const available = operators.filter(o => o.is_active && o.services.length === 0).length;
+  const assignedOperators = scheduled.reduce((acc, service) => {
+    if (service.operator?.id && !acc.includes(service.operator.id)) {
+      acc.push(service.operator.id);
+    }
+    return acc;
+  }, [] as string[]);
+  
+  const assigned = assignedOperators.length;
+  const available = operators.length - assigned;
 
-  // Calculate summary
-  const criticalTasks = overdue.length + invoicesOverdue.length + documentAlerts.length;
-  const totalTasks = scheduled.length + pending.length + events.length + invoicesDue.length + payments.length;
-  const completionRate = totalTasks > 0 ? ((totalTasks - criticalTasks) / totalTasks) * 100 : 100;
+  // Calculate improved summary metrics
+  const criticalTasks = overdue.length + invoicesOverdue.length + documentAlerts.filter(a => a.priority === 'VENCIDO' || a.priority === 'CRÍTICO').length;
+  const completedToday = completed.length;
+  const totalTasksToday = scheduled.length + todayEvents.length + invoicesDueToday.length + paymentsToday.length;
+  const totalTasksWeek = allServices.length + events.length + invoices.length + payments.length;
+  
+  // Mejorar cálculo de tasa de completitud
+  const completionRate = totalTasksToday > 0 ? 
+    Math.max(0, Math.min(100, (completedToday / (completedToday + scheduled.length)) * 100)) : 
+    (totalTasksWeek > criticalTasks ? 85 : 60); // Estimación basada en alertas
 
   return {
     selectedDate: formatForDisplay(new Date(selectedDate)),
@@ -179,16 +249,20 @@ const fetchDailyReportData = async (selectedDate: string): Promise<DailyReportDa
       pending,
       overdue,
       nextWeek,
-      total: scheduled.length + pending.length
+      completed,
+      total: scheduled.length + pending.length + completed.length
     },
     calendar: calendarData,
     financial: {
-      invoicesDue,
+      invoicesDue: invoicesDueToday,
+      invoicesDueWeek: invoicesDueThisWeek,
       invoicesOverdue,
-      paymentsToMake: payments,
+      paymentsToMake: paymentsToday,
+      paymentsWeek: paymentsWeek,
       paymentsPending: payments.filter(p => p.status === 'pending'),
       invoicesToIssue: invoicesToIssueRes.data || [],
-      totalDue,
+      totalDue: totalDueToday,
+      totalDueWeek: totalDueWeek,
       totalOverdue
     },
     operations: {
@@ -200,15 +274,18 @@ const fetchDailyReportData = async (selectedDate: string): Promise<DailyReportDa
       operators: {
         assigned,
         available,
-        assignments: operators.filter(o => o.services.length > 0)
+        assignments: assignedOperators.map(id => operators.find(o => o.id === id)).filter(Boolean)
       },
       documentAlerts
     },
     summary: {
       criticalTasks,
-      totalTasks,
+      totalTasks: totalTasksToday,
+      totalTasksWeek,
       completionRate,
-      alerts: documentAlerts.length
+      completedToday,
+      alerts: documentAlerts.length,
+      urgentAlerts: documentAlerts.filter(a => a.priority === 'VENCIDO' || a.priority === 'CRÍTICO').length
     }
   };
 };

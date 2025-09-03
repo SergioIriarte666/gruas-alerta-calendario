@@ -33,10 +33,12 @@ export const exportDailyReport = async ({ format, data, settings, appliedFilters
     startY += 10;
 
     const summaryData = [
-      ['Total de Tareas', data.summary.totalTasks.toString()],
-      ['Tareas Críticas', data.summary.criticalTasks.toString()],
-      ['% Completitud', `${data.summary.completionRate.toFixed(1)}%`],
-      ['Alertas Activas', data.summary.alerts.toString()]
+      ['Tareas del Día', data.summary.totalTasks.toString()],
+      ['Servicios Completados Hoy', data.summary.completedToday?.toString() || '0'],
+      ['Eficiencia Operacional', `${data.summary.completionRate.toFixed(1)}%`],
+      ['Alertas Críticas', data.summary.urgentAlerts?.toString() || '0'],
+      ['Total Alertas', data.summary.alerts.toString()],
+      ['Ingresos Potenciales', `$${(data.services.completed?.reduce((sum, s) => sum + (s.value || 0), 0) || 0).toLocaleString()}`]
     ];
 
     autoTable(doc, {
@@ -49,25 +51,49 @@ export const exportDailyReport = async ({ format, data, settings, appliedFilters
 
     let lastY = (doc as any).lastAutoTable.finalY + 15;
 
-    // Sección de Servicios
-    if (data.services.scheduled.length > 0 || data.services.pending.length > 0 || data.services.overdue.length > 0) {
-      doc.setFontSize(14);
-      doc.setTextColor(0, 150, 136);
-      doc.text('SERVICIOS', 14, lastY);
-      lastY += 10;
+    // Sección de Servicios Detallada
+    doc.setFontSize(14);
+    doc.setTextColor(0, 150, 136);
+    doc.text('ACTIVIDAD DE SERVICIOS', 14, lastY);
+    lastY += 10;
 
-      const servicesData = [
-        ['Servicios Programados', data.services.scheduled.length.toString()],
-        ['Servicios Pendientes', data.services.pending.length.toString()],
-        ['Servicios Atrasados', data.services.overdue.length.toString()],
-        ['Total de Servicios', data.services.total.toString()]
-      ];
+    const servicesData = [
+      ['Servicios Completados Hoy', data.services.completed?.length || 0],
+      ['Servicios Programados Hoy', data.services.scheduled.length],
+      ['Servicios Atrasados', data.services.overdue.length],
+      ['Servicios Próxima Semana', data.services.nextWeek.length],
+      ['Total Servicios Activos', data.services.total]
+    ];
+
+    autoTable(doc, {
+      body: servicesData,
+      startY: lastY,
+      theme: 'striped',
+      styles: { fontSize: 9 }
+    });
+
+    lastY = (doc as any).lastAutoTable.finalY + 10;
+
+    // Detalle de servicios completados hoy
+    if (data.services.completed && data.services.completed.length > 0) {
+      doc.setFontSize(12);
+      doc.setTextColor(0, 100, 0);
+      doc.text('SERVICIOS COMPLETADOS HOY', 14, lastY);
+      lastY += 8;
+
+      const completedData = data.services.completed.slice(0, 5).map(service => [
+        service.folio || 'N/A',
+        service.client?.name || 'Cliente',
+        service.service_type?.name || 'Servicio',
+        `$${(service.value || 0).toLocaleString()}`
+      ]);
 
       autoTable(doc, {
-        body: servicesData,
+        head: [['Folio', 'Cliente', 'Tipo', 'Valor']],
+        body: completedData,
         startY: lastY,
-        theme: 'striped',
-        styles: { fontSize: 9 }
+        theme: 'grid',
+        styles: { fontSize: 8 }
       });
 
       lastY = (doc as any).lastAutoTable.finalY + 10;
@@ -82,72 +108,119 @@ export const exportDailyReport = async ({ format, data, settings, appliedFilters
 
       const eventsData = data.calendar.events.map(event => [
         event.title,
-        event.startTime || 'Sin hora',
-        event.description || 'Sin descripción'
+        event.start_time || 'Sin hora',
+        event.type === 'maintenance' ? 'Mantención' : 
+        event.type === 'service' ? 'Inspección' : 
+        event.type === 'meeting' ? 'Reunión' : 'Otro',
+        event.client?.name || event.operator?.name || 'N/A'
       ]);
 
-      autoTable(doc, {
-        head: [['Evento', 'Hora', 'Descripción']],
-        body: eventsData,
-        startY: lastY,
-        theme: 'grid',
-        styles: { fontSize: 9 }
-      });
+      if (eventsData.length > 0) {
+        autoTable(doc, {
+          head: [['Evento', 'Hora', 'Tipo', 'Responsable']],
+          body: eventsData,
+          startY: lastY,
+          theme: 'grid',
+          styles: { fontSize: 9 }
+        });
 
-      lastY = (doc as any).lastAutoTable.finalY + 10;
-    }
-
-    // Sección Financiera
-    if (data.financial.invoicesDue.length > 0 || data.financial.paymentsToMake.length > 0) {
-      // Verificar si necesita nueva página
-      if (lastY > 220) {
-        doc.addPage();
-        lastY = 20;
+        lastY = (doc as any).lastAutoTable.finalY + 10;
       }
-
-      doc.setFontSize(14);
-      doc.setTextColor(0, 150, 136);
-      doc.text('ESTADO FINANCIERO', 14, lastY);
-      lastY += 10;
-
-      const financialData = [
-        ['Facturas por Vencer', data.financial.invoicesDue.length.toString()],
-        ['Pagos Programados', data.financial.paymentsToMake.length.toString()],
-        ['Total Compromisos Financieros', (data.financial.invoicesDue.length + data.financial.paymentsToMake.length).toString()]
-      ];
-
-      autoTable(doc, {
-        body: financialData,
-        startY: lastY,
-        theme: 'striped',
-        styles: { fontSize: 9 }
-      });
-
-      lastY = (doc as any).lastAutoTable.finalY + 10;
+    } else {
+      doc.setFontSize(10);
+      doc.setTextColor(128, 128, 128);
+      doc.text('No hay eventos programados para hoy', 14, lastY);
+      lastY += 15;
     }
 
-    // Sección de Operaciones
-    if (data.operations.documentAlerts.length > 0) {
-      doc.setFontSize(14);
-      doc.setTextColor(0, 150, 136);
-      doc.text('ALERTAS OPERACIONALES', 14, lastY);
-      lastY += 10;
+    // Sección Financiera Mejorada
+    // Verificar si necesita nueva página
+    if (lastY > 220) {
+      doc.addPage();
+      lastY = 20;
+    }
 
-      const alertsData = data.operations.documentAlerts.map(alert => [
-        alert.type || 'Alerta',
-        alert.message || 'Sin descripción',
+    doc.setFontSize(14);
+    doc.setTextColor(0, 150, 136);
+    doc.text('SITUACIÓN FINANCIERA', 14, lastY);
+    lastY += 10;
+
+    const financialData = [
+      ['Facturas Vencen Hoy', data.financial.invoicesDue.length.toString()],
+      ['Monto Vence Hoy', `$${data.financial.totalDue.toLocaleString()}`],
+      ['Facturas Vence Esta Semana', data.financial.invoicesDueWeek?.length || 0],
+      ['Monto Semana', `$${(data.financial.totalDueWeek || 0).toLocaleString()}`],
+      ['Facturas Vencidas', data.financial.invoicesOverdue.length.toString()],
+      ['Monto Vencido', `$${data.financial.totalOverdue.toLocaleString()}`],
+      ['Pagos Programados Hoy', data.financial.paymentsToMake.length.toString()],
+      ['Servicios por Facturar', data.financial.invoicesToIssue.length.toString()]
+    ];
+
+    autoTable(doc, {
+      body: financialData,
+      startY: lastY,
+      theme: 'striped',
+      styles: { fontSize: 9 },
+      columnStyles: {
+        1: { halign: 'right' }
+      }
+    });
+
+    lastY = (doc as any).lastAutoTable.finalY + 10;
+
+    // Sección de Operaciones Mejorada
+    doc.setFontSize(14);
+    doc.setTextColor(0, 150, 136);
+    doc.text('ESTADO OPERACIONAL', 14, lastY);
+    lastY += 10;
+
+    // Resumen operacional
+    const operationalData = [
+      ['Grúas Activas', data.operations.cranes.active.toString()],
+      ['Grúas en Mantención', data.operations.cranes.maintenance.toString()],
+      ['Operadores Asignados', data.operations.operators.assigned.toString()],
+      ['Operadores Disponibles', data.operations.operators.available.toString()]
+    ];
+
+    autoTable(doc, {
+      body: operationalData,
+      startY: lastY,
+      theme: 'striped',
+      styles: { fontSize: 9 }
+    });
+
+    lastY = (doc as any).lastAutoTable.finalY + 15;
+
+    // Alertas de documentos con más detalle
+    if (data.operations.documentAlerts.length > 0) {
+      doc.setFontSize(12);
+      doc.setTextColor(220, 53, 69);
+      doc.text('ALERTAS DE DOCUMENTOS', 14, lastY);
+      lastY += 8;
+
+      const alertsData = data.operations.documentAlerts.slice(0, 10).map(alert => [
+        alert.type || 'Documento',
+        alert.crane || 'N/A',
+        alert.licensePlate || 'N/A',
+        alert.description || 'Sin descripción',
         alert.priority || 'Normal'
       ]);
 
       autoTable(doc, {
-        head: [['Tipo', 'Descripción', 'Prioridad']],
+        head: [['Documento', 'Grúa', 'Patente', 'Estado', 'Urgencia']],
         body: alertsData,
         startY: lastY,
         theme: 'grid',
-        styles: { fontSize: 9 }
+        styles: { fontSize: 8 },
+        headStyles: { fillColor: [220, 53, 69] }
       });
 
       lastY = (doc as any).lastAutoTable.finalY + 10;
+    } else {
+      doc.setFontSize(10);
+      doc.setTextColor(40, 167, 69);
+      doc.text('✓ Todos los documentos están al día', 14, lastY);
+      lastY += 15;
     }
 
     // Footer
