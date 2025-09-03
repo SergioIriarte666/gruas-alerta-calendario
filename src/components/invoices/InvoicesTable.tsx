@@ -125,15 +125,6 @@ const InvoicesTable = ({
   onInvoiceToggle,
   onSelectAllToggle
 }: InvoicesTableProps) => {
-  // 🚨 LOGS CRÍTICOS - Verificar renderizado
-  console.log("🚨 InvoicesTable STARTING RENDER");
-  console.log("🚨 Props received:", {
-    invoicesCount: invoices?.length,
-    selectedInvoiceIds: selectedInvoiceIds,
-    hasOnInvoiceToggle: typeof onInvoiceToggle === 'function',
-    hasOnSelectAllToggle: typeof onSelectAllToggle === 'function'
-  });
-
   const handleInvoiceDeleted = () => {
     if (onRefresh) {
       onRefresh();
@@ -171,37 +162,6 @@ const InvoicesTable = ({
           <table className="w-full">
             <thead>
               <tr className="border-b border-gray-700">
-                <th className="text-left py-3 px-4 font-medium text-white w-12">
-                  <div className="flex items-center gap-2">
-                    <div className="relative">
-                      <input
-                        type="checkbox"
-                        checked={invoices.length > 0 && selectedInvoiceIds.length === invoices.length}
-                        onChange={(e) => {
-                          console.log("🚨 SELECT ALL CLICKED:", e.target.checked);
-                          onSelectAllToggle(e.target.checked);
-                        }}
-                        className="appearance-none w-5 h-5 border-2 border-white rounded-sm bg-transparent checked:bg-tms-green checked:border-tms-green relative cursor-pointer"
-                        style={{ 
-                          minWidth: '20px', 
-                          minHeight: '20px',
-                          accentColor: '#10B981',
-                          display: 'block',
-                          visibility: 'visible',
-                          opacity: '1'
-                        }}
-                      />
-                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                        {invoices.length > 0 && selectedInvoiceIds.length === invoices.length && (
-                          <svg className="w-3 h-3 text-black" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                          </svg>
-                        )}
-                      </div>
-                    </div>
-                    <span className="text-xs text-gray-400">Todo</span>
-                  </div>
-                </th>
                 <SortableHeader field="folio" label="Folio" sortField={sortField} sortDirection={sortDirection} onSort={onSort} />
                 <SortableHeader field="numeroFiscal" label="N° Fiscal" sortField={sortField} sortDirection={sortDirection} onSort={onSort} />
                 <SortableHeader field="client" label="Cliente" sortField={sortField} sortDirection={sortDirection} onSort={onSort} />
@@ -231,38 +191,10 @@ const InvoicesTable = ({
                       isSelected ? 'bg-tms-green/10 border-tms-green/30' : ''
                     }`}
                     onClick={() => onInvoiceToggle(invoice.id, !isSelected)}
-                  >
-                    <td className="py-3 px-4" onClick={(e) => e.stopPropagation()}>
-                      <div className="relative">
-                        <input
-                          type="checkbox"
-                          checked={isSelected}
-                          onChange={(e) => {
-                            console.log("🚨 INVOICE CHECKBOX CLICKED:", invoice.id, e.target.checked);
-                            onInvoiceToggle(invoice.id, e.target.checked);
-                          }}
-                          className="appearance-none w-5 h-5 border-2 border-white rounded-sm bg-transparent checked:bg-tms-green checked:border-tms-green relative cursor-pointer"
-                          style={{ 
-                            minWidth: '20px', 
-                            minHeight: '20px',
-                            accentColor: '#10B981',
-                            display: 'block',
-                            visibility: 'visible',
-                            opacity: '1'
-                          }}
-                        />
-                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                          {isSelected && (
-                            <svg className="w-3 h-3 text-black" fill="currentColor" viewBox="0 0 20 20">
-                              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                            </svg>
-                          )}
-                        </div>
-                      </div>
-                    </td>
-                    <td className="py-3 px-4 text-white font-medium">
-                      {invoice.folio || 'Sin folio'}
-                    </td>
+                   >
+                     <td className="py-3 px-4 text-white font-medium">
+                       {invoice.folio || 'Sin folio'}
+                     </td>
                     <td className="py-3 px-4 text-white">
                       {invoice.numeroFiscal ? (
                         <span className="text-tms-green font-medium">{invoice.numeroFiscal}</span>
