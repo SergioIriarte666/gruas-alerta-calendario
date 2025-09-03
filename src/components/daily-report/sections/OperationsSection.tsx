@@ -229,58 +229,8 @@ export const OperationsSection = ({ data, onViewCrane, onViewOperator }: Operati
         </Card>
       )}
 
-      {/* Estado de Grúas con Alertas */}
-      {data.cranes.alerts.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Truck className="w-5 h-5 text-orange-500" />
-              Grúas con Alertas
-              <Badge variant="outline">{data.cranes.alerts.length}</Badge>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {data.cranes.alerts.map((crane, index) => (
-                <Card key={index} className="border-orange-200">
-                  <CardContent className="p-4">
-                    <div className="flex items-start justify-between">
-                      <div className="space-y-2">
-                        <div className="flex items-center gap-2">
-                          <Truck className="w-4 h-4 text-orange-500" />
-                          <span className="font-medium">
-                            {crane.brand && crane.model 
-                              ? `${crane.brand} ${crane.model}` 
-                              : crane.name || 'Grúa'
-                            }
-                          </span>
-                          <Badge variant="secondary">Requiere atención</Badge>
-                        </div>
-                        
-                        <div className="text-sm text-muted-foreground space-y-1">
-                          <p><strong>Patente:</strong> {crane.license_plate || crane.licensePlate || 'No especificada'}</p>
-                          <p><strong>Estado:</strong> {crane.is_active ? 'Activa' : 'Inactiva'}</p>
-                          {crane.alertReason && (
-                            <p><strong>Motivo:</strong> {crane.alertReason}</p>
-                          )}
-                        </div>
-                      </div>
-                      
-                      <Button variant="ghost" size="sm" onClick={() => onViewCrane?.(crane)}>
-                        <Eye className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
       {/* Sin alertas operacionales */}
       {data.documentAlerts.length === 0 && 
-       data.cranes.alerts.length === 0 && 
        data.operators.assignments.length === 0 && (
         <Card>
           <CardContent className="p-6">
