@@ -74,6 +74,9 @@ const DetailSection = ({ title, icon: Icon, children }: DetailSectionProps) => (
 );
 
 export const ServiceDetailsModal = ({ service, isOpen, onClose }: ServiceDetailsModalProps) => {
+  // Verificar si service es null antes de continuar
+  if (!service) return null;
+  
   const queryClient = useQueryClient();
   
   // Usar el nuevo sistema global para obtener datos completos del servicio
