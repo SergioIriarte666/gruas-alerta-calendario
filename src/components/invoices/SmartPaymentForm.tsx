@@ -35,7 +35,7 @@ export const SmartPaymentForm: React.FC<SmartPaymentFormProps> = ({
   preselectedClientId 
 }) => {
   const { clients } = useClients();
-  const { createPayment } = usePayments();
+  const { createPayment, getInvoicePaymentStatus } = usePayments();
   
   const [formData, setFormData] = useState({
     client_id: preselectedClientId && preselectedClientId !== 'all' ? preselectedClientId : '',
@@ -53,6 +53,7 @@ export const SmartPaymentForm: React.FC<SmartPaymentFormProps> = ({
   const [showAllInvoices, setShowAllInvoices] = useState(false);
   const [selectedInvoiceIds, setSelectedInvoiceIds] = useState<string[]>([]);
   const [isAmountAutoCalculated, setIsAmountAutoCalculated] = useState(false);
+  const [paymentStatusWarnings, setPaymentStatusWarnings] = useState<Record<string, string>>({});
 
   // Fetch client invoices when client changes
   useEffect(() => {
@@ -83,6 +84,39 @@ export const SmartPaymentForm: React.FC<SmartPaymentFormProps> = ({
       setSelectedInvoiceIds([]);
     }
   }, [formData.amount, isAmountAutoCalculated]);
+
+  // Verificar estado de pago de facturas seleccionadas
+  const checkInvoicePaymentStatus = async () => {
+    if (selectedInvoiceIds.length === 0) {
+      setPaymentStatusWarnings({});
+      return;
+    }
+
+    const warnings: Record<string, string> = {};
+    
+    for (const invoiceId of selectedInvoiceIds) {
+      try {
+        const status = await getInvoicePaymentStatus(invoiceId);
+        // Verificación segura del tipo
+        if (status && typeof status === 'object' && 'has_automatic_payments' in status && status.has_automatic_payments) {
+          warnings[invoiceId] = 'Esta factura fue marcada como pagada automáticamente';
+        }
+      } catch (error) {
+        console.error('Error checking invoice payment status:', error);
+      }
+    }
+    
+    setPaymentStatusWarnings(warnings);
+  };
+
+  // Verificar estado de facturas cuando cambian las selecciones
+  useEffect(() => {
+    if (selectedInvoiceIds.length > 0) {
+      checkInvoicePaymentStatus();
+    } else {
+      setPaymentStatusWarnings({});
+    }
+  }, [selectedInvoiceIds]);
 
   const fetchClientInvoices = async () => {
     if (!formData.client_id) return;
@@ -294,21 +328,26 @@ export const SmartPaymentForm: React.FC<SmartPaymentFormProps> = ({
                          {(showAllInvoices ? clientInvoices : clientInvoices.slice(0, 3)).map((invoice) => {
                            const isSelected = selectedInvoiceIds.includes(invoice.id);
                            return (
-                             <div key={invoice.id} className={`flex justify-between items-center text-sm p-2 bg-white rounded border ${isSelected ? 'border-blue-500 bg-blue-50' : ''}`}>
-                               <div className="flex items-center gap-2">
-                                 <input
-                                   type="checkbox"
-                                   checked={isSelected}
-                                   onChange={(e) => handleInvoiceToggle(invoice.id, e.target.checked)}
-                                   className="w-4 h-4 rounded border border-gray-300 checked:bg-blue-600 checked:border-blue-600"
-                                 />
-                                 <span className="font-medium">{invoice.numero_fiscal || invoice.folio}</span>
-                                 <Badge variant={invoice.status === 'overdue' ? 'destructive' : 'secondary'}>
-                                   {invoice.status}
-                                 </Badge>
-                               </div>
-                               <span>{formatCurrency(invoice.remaining_amount || invoice.total)}</span>
-                             </div>
+                              <div key={invoice.id} className={`flex justify-between items-center text-sm p-2 bg-white rounded border ${isSelected ? 'border-blue-500 bg-blue-50' : ''}`}>
+                                <div className="flex items-center gap-2">
+                                  <input
+                                    type="checkbox"
+                                    checked={isSelected}
+                                    onChange={(e) => handleInvoiceToggle(invoice.id, e.target.checked)}
+                                    className="w-4 h-4 rounded border border-gray-300 checked:bg-blue-600 checked:border-blue-600"
+                                  />
+                                  <span className="font-medium">{invoice.numero_fiscal || invoice.folio}</span>
+                                  <Badge variant={invoice.status === 'overdue' ? 'destructive' : 'secondary'}>
+                                    {invoice.status}
+                                  </Badge>
+                                  {paymentStatusWarnings[invoice.id] && (
+                                    <Badge variant="outline" className="text-orange-600 border-orange-300">
+                                      ⚠️ Pago automático
+                                    </Badge>
+                                  )}
+                                </div>
+                                <span>{formatCurrency(invoice.remaining_amount || invoice.total)}</span>
+                              </div>
                            );
                          })}
                         {clientInvoices.length > 3 && (
@@ -398,6 +437,17 @@ export const SmartPaymentForm: React.FC<SmartPaymentFormProps> = ({
                   {recommendation.icon}
                   <span>{recommendation.message}</span>
                 </div>
+              )}
+
+              {/* Advertencias de conflictos de pago */}
+              {Object.keys(paymentStatusWarnings).length > 0 && (
+                <Alert className="mt-2">
+                  <AlertTriangle className="h-4 w-4" />
+                  <AlertDescription>
+                    Algunas facturas seleccionadas ya tienen pagos automáticos aplicados. 
+                    Proceda solo si está seguro de aplicar pagos adicionales.
+                  </AlertDescription>
+                </Alert>
               )}
 
               {/* Advertencia de duplicado */}

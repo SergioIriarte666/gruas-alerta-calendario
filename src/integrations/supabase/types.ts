@@ -3215,6 +3215,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: Json
       }
+      diagnose_mixed_payment_invoices: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
       diagnose_service_update_issues: {
         Args: { service_id_param?: string }
         Returns: Json
@@ -3380,6 +3384,10 @@ export type Database = {
       }
       get_invoice_overdue_stats: {
         Args: Record<PropertyKey, never>
+        Returns: Json
+      }
+      get_invoice_payment_status: {
+        Args: { p_invoice_id: string }
         Returns: Json
       }
       get_invoices_due_soon: {

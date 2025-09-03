@@ -622,6 +622,32 @@ export const usePayments = () => {
     }
   };
 
+  // Nueva función para diagnosticar facturas con pagos mixtos
+  const diagnoseMixedPaymentInvoices = async () => {
+    try {
+      const { data, error } = await supabase.rpc('diagnose_mixed_payment_invoices');
+      if (error) throw error;
+      return data;
+    } catch (error) {
+      console.error('Error diagnosing mixed payment invoices:', error);
+      throw error;
+    }
+  };
+
+  // Nueva función para obtener estado de pago de una factura
+  const getInvoicePaymentStatus = async (invoiceId: string) => {
+    try {
+      const { data, error } = await supabase.rpc('get_invoice_payment_status', {
+        p_invoice_id: invoiceId
+      });
+      if (error) throw error;
+      return data;
+    } catch (error) {
+      console.error('Error getting invoice payment status:', error);
+      throw error;
+    }
+  };
+
   return {
     payments,
     loading,
@@ -646,6 +672,8 @@ export const usePayments = () => {
     fixSystemInconsistencies,
     removeDuplicateApplications,
     getComprehensiveDiagnosis,
+    diagnoseMixedPaymentInvoices,
+    getInvoicePaymentStatus,
     refetch: fetchPayments
   };
 };
