@@ -249,6 +249,34 @@ export const FinancialSection = ({ data, onViewInvoice, onViewPayment, onViewSer
         </Card>
       )}
 
+      {/* DEBUG: Pagos a Proveedores - SIEMPRE VISIBLE PARA DEBUG */}
+      <Card className="border-purple-200 bg-purple-50">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-purple-600">
+            <DollarSign className="w-5 h-5" />
+            DEBUG: Pagos a Proveedores 
+            <Badge variant="secondary">
+              Total: {data.supplierPayments ? 
+                (data.supplierPayments.dueToday?.length || 0) + (data.supplierPayments.overdue?.length || 0) : 0}
+            </Badge>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-2 text-sm">
+            <p><strong>Datos supplier_payments:</strong> {data.supplierPayments ? 'SÍ' : 'NO'}</p>
+            {data.supplierPayments && (
+              <>
+                <p><strong>Due today:</strong> {data.supplierPayments.dueToday?.length || 0}</p>
+                <p><strong>Overdue:</strong> {data.supplierPayments.overdue?.length || 0}</p>
+                <p><strong>Due this week:</strong> {data.supplierPayments.dueThisWeek?.length || 0}</p>
+                <p><strong>Total due today:</strong> {formatCurrency(data.supplierPayments.totalDueToday || 0)}</p>
+                <p><strong>Total overdue:</strong> {formatCurrency(data.supplierPayments.totalOverdue || 0)}</p>
+              </>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Pagos a Proveedores Vencidos */}
       {data.supplierPayments?.overdue && data.supplierPayments.overdue.length > 0 && (
         <Card className="border-red-200">
