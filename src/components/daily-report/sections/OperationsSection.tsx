@@ -248,13 +248,21 @@ export const OperationsSection = ({ data, onViewCrane, onViewOperator }: Operati
                       <div className="space-y-2">
                         <div className="flex items-center gap-2">
                           <Truck className="w-4 h-4 text-orange-500" />
-                          <span className="font-medium">{crane.brand} {crane.model}</span>
+                          <span className="font-medium">
+                            {crane.brand && crane.model 
+                              ? `${crane.brand} ${crane.model}` 
+                              : crane.name || 'Grúa'
+                            }
+                          </span>
                           <Badge variant="secondary">Requiere atención</Badge>
                         </div>
                         
-                        <div className="text-sm text-muted-foreground">
-                          <p><strong>Patente:</strong> {crane.license_plate}</p>
+                        <div className="text-sm text-muted-foreground space-y-1">
+                          <p><strong>Patente:</strong> {crane.license_plate || crane.licensePlate || 'No especificada'}</p>
                           <p><strong>Estado:</strong> {crane.is_active ? 'Activa' : 'Inactiva'}</p>
+                          {crane.alertReason && (
+                            <p><strong>Motivo:</strong> {crane.alertReason}</p>
+                          )}
                         </div>
                       </div>
                       
