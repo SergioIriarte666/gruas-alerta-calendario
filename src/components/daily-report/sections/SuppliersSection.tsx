@@ -25,7 +25,7 @@ interface SupplierPayment {
   reference_number?: string;
   notes?: string;
   status: string;
-  supplier?: {
+  suppliers?: {
     id: string;
     name: string;
     rut?: string;
@@ -76,7 +76,7 @@ const PaymentCard: React.FC<{
   };
 
   const config = priorityConfig[priority];
-  const supplier = payment.supplier;
+  const supplier = payment.suppliers;
 
   return (
     <Card className={`${config.borderColor} ${config.bgColor}`}>
