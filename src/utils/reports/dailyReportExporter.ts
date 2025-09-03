@@ -32,12 +32,19 @@ export const exportDailyReport = async ({ format, data, settings, appliedFilters
     doc.text('RESUMEN EJECUTIVO', 14, startY);
     startY += 10;
 
+    // Calcular alertas de proveedores para el resumen
+    const supplierPaymentsData = data.financial.supplierPayments || {};
+    const urgentPayments = (supplierPaymentsData.overdue || []).length + (supplierPaymentsData.dueToday || []).length;
+    const urgentAmount = (supplierPaymentsData.overdue || []).reduce((sum, p) => sum + (p.amount || 0), 0) + 
+                        (supplierPaymentsData.dueToday || []).reduce((sum, p) => sum + (p.amount || 0), 0);
+
     const summaryData = [
       ['Tareas del Día', data.summary.totalTasks.toString()],
       ['Servicios Completados Hoy', data.summary.completedToday?.toString() || '0'],
       ['Eficiencia Operacional', `${data.summary.completionRate.toFixed(1)}%`],
       ['Alertas Críticas', data.summary.urgentAlerts?.toString() || '0'],
-      ['Total Alertas', data.summary.alerts.toString()],
+      ['Pagos Urgentes Proveedores', urgentPayments.toString()],
+      ['Monto Pagos Urgentes', `$${urgentAmount.toLocaleString()}`],
       ['Ingresos Potenciales', `$${(data.services.completed?.reduce((sum, s) => sum + (s.value || 0), 0) || 0).toLocaleString()}`]
     ];
 
@@ -171,14 +178,32 @@ export const exportDailyReport = async ({ format, data, settings, appliedFilters
     doc.text('SITUACIÓN FINANCIERA', 14, lastY);
     lastY += 10;
 
+    // Métricas de proveedores
+    const supplierPaymentsFinancial = data.financial.supplierPayments || {};
+    const overduePayments = supplierPaymentsFinancial.overdue || [];
+    const todayPayments = supplierPaymentsFinancial.dueToday || [];
+    const weekPayments = supplierPaymentsFinancial.dueThisWeek || [];
+    
+    const overdueAmount = overduePayments.reduce((sum, p) => sum + (p.amount || 0), 0);
+    const todayAmount = todayPayments.reduce((sum, p) => sum + (p.amount || 0), 0);
+    const weekAmount = weekPayments.reduce((sum, p) => sum + (p.amount || 0), 0);
+
     const financialData = [
+      ['FACTURAS Y COBRANZAS', ''],
       ['Facturas Vencen Hoy', data.financial.invoicesDue.length.toString()],
       ['Monto Vence Hoy', `$${data.financial.totalDue.toLocaleString()}`],
-      ['Facturas Vence Esta Semana', data.financial.invoicesDueWeek?.length || 0],
-      ['Monto Semana', `$${(data.financial.totalDueWeek || 0).toLocaleString()}`],
       ['Facturas Vencidas', data.financial.invoicesOverdue.length.toString()],
       ['Monto Vencido', `$${data.financial.totalOverdue.toLocaleString()}`],
-      ['Pagos Programados Hoy', data.financial.paymentsToMake.length.toString()],
+      ['', ''],
+      ['PAGOS A PROVEEDORES', ''],
+      ['Pagos Vencidos', overduePayments.length.toString()],
+      ['Monto Vencido Proveedores', `$${overdueAmount.toLocaleString()}`],
+      ['Pagos Vencen Hoy', todayPayments.length.toString()],
+      ['Monto Vence Hoy Proveedores', `$${todayAmount.toLocaleString()}`],
+      ['Pagos Vencen Esta Semana', weekPayments.length.toString()],
+      ['Monto Semana Proveedores', `$${weekAmount.toLocaleString()}`],
+      ['', ''],
+      ['OTROS', ''],
       ['Servicios por Facturar', data.financial.invoicesToIssue.length.toString()]
     ];
 
@@ -192,7 +217,51 @@ export const exportDailyReport = async ({ format, data, settings, appliedFilters
       }
     });
 
-    lastY = (doc as any).lastAutoTable.finalY + 10;
+    lastY = (doc as any).lastAutoTable.finalY + 15;
+
+    // Nueva Sección Detallada de Pagos a Proveedores
+    const allUpcomingPayments = [
+      ...(overduePayments || []).map(p => ({ ...p, urgency: 'high', status: 'Vencido' })),
+      ...(todayPayments || []).map(p => ({ ...p, urgency: 'high', status: 'Vence Hoy' })),
+      ...(weekPayments || []).map(p => ({ ...p, urgency: 'medium', status: 'Esta Semana' }))
+    ].sort((a, b) => new Date(a.due_date).getTime() - new Date(b.due_date).getTime());
+
+    if (allUpcomingPayments.length > 0) {
+      // Verificar si necesita nueva página
+      if (lastY > 200) {
+        doc.addPage();
+        lastY = 20;
+      }
+
+      doc.setFontSize(14);
+      doc.setTextColor(220, 53, 69);
+      doc.text('PAGOS A PROVEEDORES - VENCIMIENTOS PRÓXIMOS', 14, lastY);
+      lastY += 10;
+
+      const paymentsData = allUpcomingPayments.slice(0, 15).map(payment => [
+        payment.supplier?.name || 'Proveedor',
+        payment.description || 'Concepto',
+        `$${(payment.amount || 0).toLocaleString()}`,
+        formatDate(new Date(payment.due_date), 'dd/MM/yyyy', { locale: es }),
+        payment.status
+      ]);
+
+      autoTable(doc, {
+        head: [['Proveedor', 'Concepto', 'Monto', 'Vencimiento', 'Estado']],
+        body: paymentsData,
+        startY: lastY,
+        theme: 'grid',
+        styles: { fontSize: 8 },
+        headStyles: { fillColor: [220, 53, 69] },
+        columnStyles: {
+          2: { halign: 'right' }, // Monto alineado a la derecha
+          3: { halign: 'center' }, // Fecha centrada
+          4: { halign: 'center' } // Estado centrado
+        }
+      });
+
+      lastY = (doc as any).lastAutoTable.finalY + 15;
+    }
 
     // Sección de Operaciones Mejorada
     doc.setFontSize(14);
@@ -298,8 +367,8 @@ export const exportDailyReport = async ({ format, data, settings, appliedFilters
       XLSX.utils.book_append_sheet(wb, events_ws, 'Agenda');
     }
 
-    // Hoja 3: Estado Financiero
-    if (data.financial.invoicesDue.length > 0 || data.financial.paymentsToMake.length > 0) {
+    // Hoja 3: Estado Financiero - Facturas
+    if (data.financial.invoicesDue.length > 0) {
       const financial_data = [
         ['FACTURAS POR VENCER', '', '', ''],
         ['Cliente', 'Número', 'Monto', 'Vencimiento'],
@@ -308,19 +377,36 @@ export const exportDailyReport = async ({ format, data, settings, appliedFilters
           invoice.number || 'N/A',
           invoice.amount || 0,
           invoice.dueDate || 'Sin fecha'
-        ]),
-        [],
-        ['PAGOS PROGRAMADOS', '', '', ''],
-        ['Proveedor', 'Concepto', 'Monto', 'Fecha'],
-        ...data.financial.paymentsToMake.map(payment => [
-          payment.supplierName || 'Proveedor',
-          payment.concept || 'Pago',
-          payment.amount || 0,
-          payment.dueDate || 'Sin fecha'
         ])
       ];
       const financial_ws = XLSX.utils.aoa_to_sheet(financial_data);
       XLSX.utils.book_append_sheet(wb, financial_ws, 'Financiero');
+    }
+
+    // Hoja 4: Proveedores - Detalle Completo
+    const supplierPaymentsExcel = data.financial.supplierPayments || {};
+    const allSupplierPayments = [
+      ...(supplierPaymentsExcel.overdue || []).map(p => ({ ...p, status_label: 'Vencido', urgency: 'Alta' })),
+      ...(supplierPaymentsExcel.dueToday || []).map(p => ({ ...p, status_label: 'Vence Hoy', urgency: 'Alta' })),
+      ...(supplierPaymentsExcel.dueThisWeek || []).map(p => ({ ...p, status_label: 'Esta Semana', urgency: 'Media' }))
+    ];
+
+    if (allSupplierPayments.length > 0) {
+      const suppliers_data = [
+        ['PAGOS A PROVEEDORES', '', '', '', '', ''],
+        ['Proveedor', 'RUT', 'Concepto', 'Monto', 'Vencimiento', 'Estado', 'Urgencia'],
+        ...allSupplierPayments.map(payment => [
+          payment.supplier?.name || 'Proveedor',
+          payment.supplier?.rut || 'N/A',
+          payment.description || 'Concepto',
+          payment.amount || 0,
+          formatDate(new Date(payment.due_date), 'dd/MM/yyyy', { locale: es }),
+          payment.status_label,
+          payment.urgency
+        ])
+      ];
+      const suppliers_ws = XLSX.utils.aoa_to_sheet(suppliers_data);
+      XLSX.utils.book_append_sheet(wb, suppliers_ws, 'Proveedores');
     }
 
     // Hoja 4: Alertas Operacionales
