@@ -2,7 +2,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Edit, Trash2, DollarSign, FileText, CheckCircle } from 'lucide-react';
+import { Edit, Trash2, DollarSign, FileText, CheckCircle, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import { Invoice } from '@/types';
 import { format, isValid, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -16,6 +16,9 @@ interface InvoicesTableProps {
   onMarkAsPaid: (id: string) => void;
   getInvoiceWithDetails: (invoice: Invoice) => any;
   onRefresh?: () => void;
+  sortField?: string;
+  sortDirection?: 'asc' | 'desc';
+  onSort?: (field: string) => void;
 }
 
 // Safe date formatting with validation and fallbacks
@@ -48,6 +51,43 @@ const formatSafeAmount = (amount: any): string => {
   return `$${numAmount.toLocaleString('es-CL')}`;
 };
 
+// Sort icon component
+const SortIcon = ({ field, sortField, sortDirection }: { field: string; sortField?: string; sortDirection?: 'asc' | 'desc' }) => {
+  if (sortField !== field) {
+    return <ArrowUpDown className="w-4 h-4 text-gray-500" />;
+  }
+  return sortDirection === 'asc' 
+    ? <ArrowUp className="w-4 h-4 text-tms-green" />
+    : <ArrowDown className="w-4 h-4 text-tms-green" />;
+};
+
+// Sortable header component
+const SortableHeader = ({ 
+  field, 
+  label, 
+  sortField, 
+  sortDirection, 
+  onSort 
+}: { 
+  field: string; 
+  label: string; 
+  sortField?: string; 
+  sortDirection?: 'asc' | 'desc'; 
+  onSort?: (field: string) => void; 
+}) => {
+  return (
+    <th className="text-left py-3 px-4 font-medium text-white">
+      <button
+        onClick={() => onSort?.(field)}
+        className="flex items-center gap-2 hover:text-tms-green transition-colors"
+      >
+        {label}
+        <SortIcon field={field} sortField={sortField} sortDirection={sortDirection} />
+      </button>
+    </th>
+  );
+};
+
 // Enhanced status badge with validation
 const getStatusBadge = (status: string) => {
   const statusConfig = {
@@ -74,7 +114,10 @@ const InvoicesTable = ({
   onDelete, 
   onMarkAsPaid, 
   getInvoiceWithDetails,
-  onRefresh
+  onRefresh,
+  sortField,
+  sortDirection,
+  onSort
 }: InvoicesTableProps) => {
   const handleInvoiceDeleted = () => {
     if (onRefresh) {
@@ -106,13 +149,13 @@ const InvoicesTable = ({
           <table className="w-full">
             <thead>
               <tr className="border-b border-gray-700">
-                <th className="text-left py-3 px-4 font-medium text-white">Folio</th>
-                <th className="text-left py-3 px-4 font-medium text-white">N° Fiscal</th>
-                <th className="text-left py-3 px-4 font-medium text-white">Cliente</th>
-                <th className="text-left py-3 px-4 font-medium text-white">Fecha Emisión</th>
-                <th className="text-left py-3 px-4 font-medium text-white">Fecha Vencimiento</th>
-                <th className="text-left py-3 px-4 font-medium text-white">Total</th>
-                <th className="text-left py-3 px-4 font-medium text-white">Estado</th>
+                <SortableHeader field="folio" label="Folio" sortField={sortField} sortDirection={sortDirection} onSort={onSort} />
+                <SortableHeader field="numeroFiscal" label="N° Fiscal" sortField={sortField} sortDirection={sortDirection} onSort={onSort} />
+                <SortableHeader field="client" label="Cliente" sortField={sortField} sortDirection={sortDirection} onSort={onSort} />
+                <SortableHeader field="issueDate" label="Fecha Emisión" sortField={sortField} sortDirection={sortDirection} onSort={onSort} />
+                <SortableHeader field="dueDate" label="Fecha Vencimiento" sortField={sortField} sortDirection={sortDirection} onSort={onSort} />
+                <SortableHeader field="total" label="Total" sortField={sortField} sortDirection={sortDirection} onSort={onSort} />
+                <SortableHeader field="status" label="Estado" sortField={sortField} sortDirection={sortDirection} onSort={onSort} />
                 <th className="text-center py-3 px-4 font-medium text-white">Acciones</th>
               </tr>
             </thead>

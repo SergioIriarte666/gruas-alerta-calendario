@@ -39,6 +39,8 @@ const Invoices = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [preselectedClosureId, setPreselectedClosureId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState(tabFromQuery);
+  const [sortField, setSortField] = useState<string>('issueDate');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const ITEMS_PER_PAGE = 10;
 
   // Check for preselected closure from navigation state
@@ -51,6 +53,16 @@ const Invoices = () => {
     }
   }, [location.state]);
 
+  const handleSort = (field: string) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
+    }
+    setCurrentPage(1); // Reset to first page when sorting
+  };
+
   const filteredInvoices = invoices.filter(invoice => {
     const invoiceWithDetails = getInvoiceWithDetails(invoice);
     const matchesSearch = (
@@ -60,6 +72,50 @@ const Invoices = () => {
     );
     const matchesStatus = statusFilter === 'all' || invoice.status === statusFilter;
     return matchesSearch && matchesStatus;
+  }).sort((a, b) => {
+    let aValue: any;
+    let bValue: any;
+
+    switch (sortField) {
+      case 'folio':
+        aValue = a.folio || '';
+        bValue = b.folio || '';
+        break;
+      case 'numeroFiscal':
+        aValue = a.numeroFiscal || '';
+        bValue = b.numeroFiscal || '';
+        break;
+      case 'client':
+        const aClient = getInvoiceWithDetails(a).client?.name || '';
+        const bClient = getInvoiceWithDetails(b).client?.name || '';
+        aValue = aClient;
+        bValue = bClient;
+        break;
+      case 'issueDate':
+        aValue = new Date(a.issueDate || 0);
+        bValue = new Date(b.issueDate || 0);
+        break;
+      case 'dueDate':
+        aValue = new Date(a.dueDate || 0);
+        bValue = new Date(b.dueDate || 0);
+        break;
+      case 'total':
+        aValue = Number(a.total) || 0;
+        bValue = Number(b.total) || 0;
+        break;
+      case 'status':
+        aValue = a.status || '';
+        bValue = b.status || '';
+        break;
+      default:
+        return 0;
+    }
+
+    if (sortDirection === 'asc') {
+      return aValue > bValue ? 1 : aValue < bValue ? -1 : 0;
+    } else {
+      return aValue < bValue ? 1 : aValue > bValue ? -1 : 0;
+    }
   });
 
   const totalPages = Math.ceil(filteredInvoices.length / ITEMS_PER_PAGE);
@@ -217,6 +273,9 @@ const Invoices = () => {
             onMarkAsPaid={handleMarkAsPaid}
             getInvoiceWithDetails={getInvoiceWithDetails}
             onRefresh={handleRefresh}
+            sortField={sortField}
+            sortDirection={sortDirection}
+            onSort={handleSort}
           />
 
           <AppPagination
