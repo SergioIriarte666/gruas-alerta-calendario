@@ -6,7 +6,7 @@ import { useUser } from '@/contexts/UserContext';
 import { useSettings } from '@/hooks/useSettings';
 import { useDeviceType } from '@/hooks/useDeviceType';
 import { cn } from '@/lib/utils';
-import { LayoutDashboard, Calendar, Truck, Users, Building2, Wrench, DollarSign, Target, FileText, Receipt, BarChart3, Settings, Menu, X, LogOut, ChevronLeft, ChevronRight, Tags, Car, Package, Zap, Percent, Bot } from 'lucide-react';
+import { LayoutDashboard, Calendar, Truck, Users, Building2, Wrench, DollarSign, Target, FileText, Receipt, BarChart3, Settings, Menu, X, LogOut, ChevronLeft, ChevronRight, Tags, Car, Package, Zap, Percent, Bot, ClipboardList } from 'lucide-react';
 
 interface SidebarProps {
   isCollapsed: boolean;
@@ -39,6 +39,11 @@ export const Sidebar = ({
     name: 'Dashboard',
     href: '/dashboard',
     icon: LayoutDashboard,
+    adminOnly: false
+  }, {
+    name: 'Informe Diario',
+    href: '/daily-report',
+    icon: ClipboardList,
     adminOnly: false
   }, {
     name: 'Servicios',

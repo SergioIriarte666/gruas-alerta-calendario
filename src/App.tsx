@@ -41,6 +41,7 @@ import { Suppliers } from '@/pages/Suppliers';
 import VipClientPipeline from '@/pages/VipClientPipeline';
 import DeferredBilling from '@/pages/DeferredBilling';
 import NotFound from '@/pages/NotFound';
+import DailyReport from '@/pages/DailyReport';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -220,6 +221,14 @@ function AppContent() {
           </ProtectedRoute>
         }>
           <Route index element={<DeferredBilling />} />
+        </Route>
+
+        <Route path="/daily-report" element={
+          <ProtectedRoute allowedRoles={['admin', 'viewer']}>
+            <Layout />
+          </ProtectedRoute>
+        }>
+          <Route index element={<DailyReport />} />
         </Route>
 
 
