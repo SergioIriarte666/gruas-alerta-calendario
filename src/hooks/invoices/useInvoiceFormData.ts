@@ -20,6 +20,7 @@ export const useInvoiceFormData = ({ invoice, preselectedClosureId }: UseInvoice
         issueDate: invoice.issueDate || new Date().toISOString().split('T')[0],
         dueDate: invoice.dueDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
         status: invoice.status || 'draft' as InvoiceStatus,
+        paymentDate: invoice.paymentDate || '',
         numeroFiscal: invoice.numeroFiscal || ''
       };
     }
@@ -29,6 +30,7 @@ export const useInvoiceFormData = ({ invoice, preselectedClosureId }: UseInvoice
       issueDate: new Date().toISOString().split('T')[0],
       dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
       status: 'draft' as InvoiceStatus,
+      paymentDate: '',
       numeroFiscal: ''
     };
   }, [invoice?.id, preselectedClosureId]);

@@ -29,6 +29,13 @@ const invoiceSchema = z.object({
       return !isNaN(d.getTime());
     }, 'Fecha de vencimiento inválida'),
   status: z.enum(['draft', 'sent', 'paid', 'overdue', 'cancelled'] as const),
+  paymentDate: z.string()
+    .optional()
+    .refine((date) => {
+      if (!date || date.trim() === '') return true;
+      const d = new Date(date);
+      return !isNaN(d.getTime());
+    }, 'Fecha de pago inválida'),
   numeroFiscal: z.string()
     .optional()
     .refine((val) => {
@@ -42,6 +49,24 @@ const invoiceSchema = z.object({
 }, {
   message: 'La fecha de vencimiento debe ser posterior a la fecha de emisión',
   path: ['dueDate']
+}).refine((data) => {
+  if (data.status === 'paid' && (!data.paymentDate || data.paymentDate.trim() === '')) {
+    return false;
+  }
+  return true;
+}, {
+  message: 'La fecha de pago es requerida cuando el estado es "pagada"',
+  path: ['paymentDate']
+}).refine((data) => {
+  if (data.paymentDate && data.paymentDate.trim() !== '') {
+    const issueDate = new Date(data.issueDate);
+    const paymentDate = new Date(data.paymentDate);
+    return paymentDate >= issueDate;
+  }
+  return true;
+}, {
+  message: 'La fecha de pago no puede ser anterior a la fecha de emisión',
+  path: ['paymentDate']
 });
 
 type InvoiceFormData = z.infer<typeof invoiceSchema>;
@@ -87,12 +112,14 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
         issueDate: invoice.issueDate || new Date().toISOString().split('T')[0],
         dueDate: invoice.dueDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
         status: invoice.status || 'draft' as InvoiceStatus,
+        paymentDate: invoice.paymentDate || '',
         numeroFiscal: invoice.numeroFiscal || ''
       } : {
         closureId: preselectedClosureId || '',
         issueDate: new Date().toISOString().split('T')[0],
         dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
         status: 'draft' as InvoiceStatus,
+        paymentDate: '',
         numeroFiscal: ''
       };
       console.log('InvoiceForm - Resetting form with data:', resetFormData);
@@ -109,6 +136,7 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
           canEditDates: true,
           canEditNumeroFiscal: true,
           canEditStatus: true,
+          canEditPaymentDate: false,
           message: 'Factura en borrador - se puede editar completamente'
         };
       case 'sent':
@@ -117,6 +145,7 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
           canEditDates: true,
           canEditNumeroFiscal: true,
           canEditStatus: true,
+          canEditPaymentDate: false,
           message: 'Factura enviada - se puede cambiar cierre, fechas, número fiscal y estado'
         };
       case 'paid':
@@ -125,7 +154,8 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
           canEditDates: false,
           canEditNumeroFiscal: false,
           canEditStatus: true,
-          message: 'Factura pagada - solo se puede cambiar el estado si fue marcada por error'
+          canEditPaymentDate: true,
+          message: 'Factura pagada - se puede cambiar el estado y fecha de pago'
         };
       case 'overdue':
         return {
@@ -133,6 +163,7 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
           canEditDates: true,
           canEditNumeroFiscal: true,
           canEditStatus: true,
+          canEditPaymentDate: false,
           message: 'Factura vencida - se puede cambiar cierre, fechas, número fiscal y estado'
         };
       case 'cancelled':
@@ -141,6 +172,7 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
           canEditDates: false,
           canEditNumeroFiscal: false,
           canEditStatus: true,
+          canEditPaymentDate: false,
           message: 'Factura cancelada - solo se puede reactivar cambiando el estado'
         };
       default:
@@ -149,6 +181,7 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
           canEditDates: true,
           canEditNumeroFiscal: true,
           canEditStatus: true,
+          canEditPaymentDate: false,
           message: ''
         };
     }
@@ -159,6 +192,7 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
     canEditDates: true,
     canEditNumeroFiscal: true,
     canEditStatus: true,
+    canEditPaymentDate: false,
     message: ''
   };
 
@@ -307,6 +341,25 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
                 Número fiscal para registro SII (opcional)
               </p>
             </div>
+
+            {watch('status') === 'paid' && (
+              <div>
+                <Label htmlFor="paymentDate" className="text-gray-300">Fecha de Pago</Label>
+                <Input
+                  id="paymentDate"
+                  type="date"
+                  {...register('paymentDate')}
+                  disabled={!editableFields.canEditPaymentDate}
+                  className="mt-1 bg-white/5 border-gray-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                />
+                {errors.paymentDate && (
+                  <p className="text-sm text-red-400 mt-1">{errors.paymentDate.message}</p>
+                )}
+                <p className="text-xs text-gray-400 mt-1">
+                  Fecha en que se recibió el pago
+                </p>
+              </div>
+            )}
 
             <div>
               <Label htmlFor="issueDate" className="text-gray-300">Fecha de Emisión</Label>
