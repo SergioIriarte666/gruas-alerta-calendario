@@ -2,7 +2,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Edit, Trash2, DollarSign, FileText, CheckCircle, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import { Invoice } from '@/types';
 import { format, isValid, parseISO } from 'date-fns';
@@ -186,9 +185,11 @@ const InvoicesTable = ({
               <tr className="border-b border-gray-700">
                 <th className="text-left py-3 px-4 font-medium text-white w-12">
                   <div className="flex items-center gap-2">
-                    <Checkbox
+                    <input
+                      type="checkbox"
                       checked={invoices.length > 0 && selectedInvoiceIds.length === invoices.length}
-                      onCheckedChange={checked => debugOnSelectAllToggle(checked === true)}
+                      onChange={(e) => debugOnSelectAllToggle(e.target.checked)}
+                      className="h-4 w-4 rounded border-gray-300 text-tms-green focus:ring-tms-green focus:ring-offset-0"
                     />
                     <span className="text-xs text-gray-400">Todo</span>
                   </div>
@@ -224,9 +225,11 @@ const InvoicesTable = ({
                     onClick={() => onInvoiceToggle(invoice.id, !isSelected)}
                   >
                     <td className="py-3 px-4" onClick={(e) => e.stopPropagation()}>
-                      <Checkbox
+                      <input
+                        type="checkbox"
                         checked={isSelected}
-                        onCheckedChange={checked => debugOnInvoiceToggle(invoice.id, checked === true)}
+                        onChange={(e) => debugOnInvoiceToggle(invoice.id, e.target.checked)}
+                        className="h-4 w-4 rounded border-gray-300 text-tms-green focus:ring-tms-green focus:ring-offset-0"
                       />
                     </td>
                     <td className="py-3 px-4 text-white font-medium">
