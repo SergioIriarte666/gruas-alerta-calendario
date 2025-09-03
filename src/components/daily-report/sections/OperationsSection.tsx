@@ -42,11 +42,19 @@ export const OperationsSection = ({ data, onViewCrane, onViewOperator }: Operati
     );
   }
 
-  const getAlertLevel = (daysUntilExpiry: number) => {
-    if (daysUntilExpiry < 0) return { color: 'red', text: 'Vencido' };
-    if (daysUntilExpiry <= 7) return { color: 'red', text: 'Crítico' };
-    if (daysUntilExpiry <= 30) return { color: 'orange', text: 'Urgente' };
-    return { color: 'yellow', text: 'Atención' };
+  const getAlertLevel = (priority: string) => {
+    switch (priority) {
+      case 'VENCIDO':
+        return { color: 'red', text: 'Vencido' };
+      case 'CRÍTICO':
+        return { color: 'red', text: 'Crítico' };
+      case 'URGENTE':
+        return { color: 'orange', text: 'Urgente' };
+      case 'PRÓXIMO':
+        return { color: 'yellow', text: 'Próximo' };
+      default:
+        return { color: 'yellow', text: 'Atención' };
+    }
   };
 
   const getDocumentTypeName = (type: string) => {
@@ -63,14 +71,8 @@ export const OperationsSection = ({ data, onViewCrane, onViewOperator }: Operati
   };
 
   const AlertCard = ({ alert }: { alert: any }) => {
-    const today = new Date();
-    const expiryDate = new Date(
-      alert.technical_review_expiry || 
-      alert.insurance_expiry || 
-      alert.circulation_permit_expiry
-    );
-    const daysUntilExpiry = Math.ceil((expiryDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-    const alertLevel = getAlertLevel(daysUntilExpiry);
+    const alertLevel = getAlertLevel(alert.priority);
+    const expiryDate = new Date(alert.expiryDate);
 
     return (
       <Card className={`border-${alertLevel.color}-200 bg-${alertLevel.color}-50`}>
@@ -79,16 +81,17 @@ export const OperationsSection = ({ data, onViewCrane, onViewOperator }: Operati
             <div className="space-y-2">
               <div className="flex items-center gap-2">
                 <AlertTriangle className={`w-4 h-4 text-${alertLevel.color}-500`} />
-                <span className="font-medium">{alert.brand} {alert.model}</span>
+                <span className="font-medium">{alert.crane}</span>
                 <Badge variant={alertLevel.color === 'red' ? 'destructive' : 'secondary'}>
                   {alertLevel.text}
                 </Badge>
               </div>
               
               <div className="text-sm text-muted-foreground space-y-1">
-                <p><strong>Documento:</strong> {getDocumentTypeName(alert.document_type)}</p>
-                <p><strong>Vencimiento:</strong> {expiryDate.toLocaleDateString()}</p>
-                <p><strong>Días restantes:</strong> {daysUntilExpiry} días</p>
+                <p><strong>Patente:</strong> {alert.licensePlate}</p>
+                <p><strong>Documento:</strong> {getDocumentTypeName(alert.type)}</p>
+                <p><strong>Vencimiento:</strong> {expiryDate.toLocaleDateString('es-CL')}</p>
+                <p><strong>Días restantes:</strong> {alert.daysRemaining} días</p>
               </div>
             </div>
             
