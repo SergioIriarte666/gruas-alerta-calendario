@@ -18,6 +18,7 @@ interface CalendarSectionProps {
     maintenances: any[];
     inspections: any[];
     meetings: any[];
+    weekEvents: any[];
     total: number;
   } | null;
   onViewEvent?: (event: any) => void;
@@ -241,12 +242,79 @@ export const CalendarSection = ({ data, onViewEvent }: CalendarSectionProps) => 
         </Card>
       )}
 
+      {/* Eventos de la Semana */}
+      {data.weekEvents && data.weekEvents.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Calendar className="w-5 h-5 text-purple-500" />
+              Eventos de la Semana
+              <Badge variant="outline">{data.weekEvents.length}</Badge>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {data.weekEvents.map((event) => (
+                <Card key={event.id}>
+                  <CardContent className="p-4">
+                    <div className="flex items-start justify-between">
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                          {getEventIcon(event.type)}
+                          <span className="font-medium">{event.title}</span>
+                          {getStatusBadge(event.status)}
+                          <Badge variant="secondary" className="text-xs">
+                            {new Date(event.date).toLocaleDateString('es-CL')}
+                          </Badge>
+                        </div>
+                        
+                        <div className="text-sm text-muted-foreground space-y-1">
+                          <div className="flex items-center gap-1">
+                            <Clock className="w-3 h-3" />
+                            <span>{event.start_time} - {event.end_time}</span>
+                          </div>
+                          
+                          {event.client && (
+                            <div className="flex items-center gap-1">
+                              <Users className="w-3 h-3" />
+                              <span>Cliente: {event.client.name}</span>
+                            </div>
+                          )}
+                          
+                          {event.operator && (
+                            <div className="flex items-center gap-1">
+                              <Users className="w-3 h-3" />
+                              <span>Operador: {event.operator.name}</span>
+                            </div>
+                          )}
+                          
+                          {event.crane && (
+                            <div className="flex items-center gap-1">
+                              <MapPin className="w-3 h-3" />
+                              <span>Grúa: {event.crane.brand} {event.crane.model}</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      
+                      <Button variant="ghost" size="sm" onClick={() => onViewEvent?.(event)}>
+                        <Eye className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Sin eventos */}
-      {data.total === 0 && (
+      {data.total === 0 && (!data.weekEvents || data.weekEvents.length === 0) && (
         <Card>
           <CardContent className="p-6">
             <p className="text-muted-foreground text-center">
-              No hay eventos programados para este día
+              No hay eventos programados para este día ni para la semana
             </p>
           </CardContent>
         </Card>
