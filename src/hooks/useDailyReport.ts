@@ -109,10 +109,11 @@ const fetchDailyReportData = async (selectedDate: string): Promise<DailyReportDa
     `).gte('scheduled_date', dateForDB)
       .lte('scheduled_date', formatForDatabase(new Date(Date.now() + 15 * 24 * 60 * 60 * 1000))),
 
-    // Pagos a proveedores - próximos 30 días y vencidos
+    // Pagos a proveedores - próximos 30 días y vencidos (ampliado para debugging)
     supabase.from('supplier_payments').select(`
       id, amount, due_date, status, description, category, reference_number,
-      supplier_id, created_at, updated_at
+      supplier_id,
+      suppliers!supplier_id(id, name, category, rut, email, phone, contact_name)
     `).in('status', ['pending', 'overdue'])
       .lte('due_date', formatForDatabase(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000))),
 
