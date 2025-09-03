@@ -104,37 +104,47 @@ export const OperationsSection = ({ data, onViewCrane, onViewOperator }: Operati
     );
   };
 
-  const OperatorAssignmentCard = ({ operator }: { operator: any }) => (
-    <Card>
-      <CardContent className="p-4">
-        <div className="flex items-start justify-between">
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <Users className="w-4 h-4 text-blue-500" />
-              <span className="font-medium">{operator.name}</span>
-              <Badge variant="default">Asignado</Badge>
+  const OperatorAssignmentCard = ({ operator }: { operator: any }) => {
+    const services = operator.services || [];
+    
+    return (
+      <Card>
+        <CardContent className="p-4">
+          <div className="flex items-start justify-between">
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <Users className="w-4 h-4 text-blue-500" />
+                <span className="font-medium">{operator.name}</span>
+                <Badge variant="default">Asignado</Badge>
+              </div>
+              
+              <div className="text-sm text-muted-foreground">
+                <p><strong>Servicios del día:</strong> {services.length}</p>
+                {services.length > 0 ? (
+                  <>
+                    {services.slice(0, 2).map((service: any) => (
+                      <p key={service.id} className="text-xs">
+                        • Servicio {service.id.slice(0, 8)}... ({service.status})
+                      </p>
+                    ))}
+                    {services.length > 2 && (
+                      <p className="text-xs">y {services.length - 2} más...</p>
+                    )}
+                  </>
+                ) : (
+                  <p className="text-xs text-muted-foreground">Sin servicios asignados</p>
+                )}
+              </div>
             </div>
             
-            <div className="text-sm text-muted-foreground">
-              <p><strong>Servicios del día:</strong> {operator.services.length}</p>
-              {operator.services.slice(0, 2).map((service: any) => (
-                <p key={service.id} className="text-xs">
-                  • Servicio {service.id.slice(0, 8)}... ({service.status})
-                </p>
-              ))}
-              {operator.services.length > 2 && (
-                <p className="text-xs">y {operator.services.length - 2} más...</p>
-              )}
-            </div>
+            <Button variant="ghost" size="sm" onClick={() => onViewOperator?.(operator)}>
+              <Eye className="w-4 h-4" />
+            </Button>
           </div>
-          
-          <Button variant="ghost" size="sm" onClick={() => onViewOperator?.(operator)}>
-            <Eye className="w-4 h-4" />
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
-  );
+        </CardContent>
+      </Card>
+    );
+  };
 
   return (
     <div className="space-y-6">
