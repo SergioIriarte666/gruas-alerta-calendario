@@ -6,6 +6,9 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { useDailyReport } from '@/hooks/useDailyReport';
 import { formatForInput, formatForDisplay } from '@/utils/timezoneUtils';
+import { useSettings } from '@/hooks/useSettings';
+import { exportDailyReport } from '@/utils/reportExporter';
+import { useToast } from '@/components/ui/custom-toast';
 import { 
   Calendar, 
   ChevronLeft, 
@@ -28,7 +31,10 @@ import { OperationsSection } from './sections/OperationsSection';
 
 const DailyReportPage = () => {
   const [selectedDate, setSelectedDate] = useState(formatForInput(new Date()));
+  const [isExporting, setIsExporting] = useState(false);
   const { data, loading, refetch } = useDailyReport(selectedDate);
+  const { settings } = useSettings();
+  const { toast } = useToast();
 
   const handlePreviousDay = () => {
     const date = new Date(selectedDate);
@@ -46,14 +52,76 @@ const DailyReportPage = () => {
     setSelectedDate(formatForInput(new Date()));
   };
 
-  const handleExportPDF = () => {
-    // TODO: Implementar exportación a PDF
-    console.log('Exportar a PDF');
+  const handleExportPDF = async () => {
+    if (!data || !settings) {
+      toast({
+        title: "Error",
+        description: "No hay datos disponibles para exportar",
+        type: "error"
+      });
+      return;
+    }
+
+    try {
+      setIsExporting(true);
+      await exportDailyReport({
+        format: 'pdf',
+        data,
+        settings,
+        appliedFilters: { selectedDate }
+      });
+      
+      toast({
+        title: "Éxito",
+        description: "Informe diario exportado a PDF correctamente",
+        type: "success"
+      });
+    } catch (error) {
+      console.error('Error exporting to PDF:', error);
+      toast({
+        title: "Error",
+        description: "Error al exportar el informe a PDF",
+        type: "error"
+      });
+    } finally {
+      setIsExporting(false);
+    }
   };
 
-  const handleExportExcel = () => {
-    // TODO: Implementar exportación a Excel
-    console.log('Exportar a Excel');
+  const handleExportExcel = async () => {
+    if (!data || !settings) {
+      toast({
+        title: "Error", 
+        description: "No hay datos disponibles para exportar",
+        type: "error"
+      });
+      return;
+    }
+
+    try {
+      setIsExporting(true);
+      await exportDailyReport({
+        format: 'excel',
+        data,
+        settings,
+        appliedFilters: { selectedDate }
+      });
+      
+      toast({
+        title: "Éxito",
+        description: "Informe diario exportado a Excel correctamente",
+        type: "success"
+      });
+    } catch (error) {
+      console.error('Error exporting to Excel:', error);
+      toast({
+        title: "Error",
+        description: "Error al exportar el informe a Excel", 
+        type: "error"
+      });
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   if (loading) {
@@ -81,12 +149,12 @@ const DailyReportPage = () => {
             Actualizar
           </Button>
 
-          <Button variant="outline" onClick={handleExportPDF}>
+          <Button variant="outline" onClick={handleExportPDF} disabled={isExporting || !data}>
             <Download className="w-4 h-4 mr-2" />
             PDF
           </Button>
 
-          <Button variant="outline" onClick={handleExportExcel}>
+          <Button variant="outline" onClick={handleExportExcel} disabled={isExporting || !data}>
             <Download className="w-4 h-4 mr-2" />
             Excel
           </Button>

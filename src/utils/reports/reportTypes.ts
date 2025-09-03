@@ -94,3 +94,14 @@ export interface ExportSupplierPaymentReportArgs {
   settings: Settings;
   appliedFilters: AppliedSupplierPaymentFilters;
 }
+
+export interface AppliedDailyReportFilters {
+  selectedDate: string;
+}
+
+export interface ExportDailyReportArgs {
+  format: 'pdf' | 'excel';
+  data: any; // DailyReportData from useDailyReport hook
+  settings: Settings;
+  appliedFilters: AppliedDailyReportFilters;
+}
