@@ -23,7 +23,9 @@ import {
   Hash,
   Calendar,
   ToggleLeft,
-  ToggleRight
+  ToggleRight,
+  RefreshCw,
+  ArrowRight
 } from 'lucide-react';
 import { Service } from '@/types';
 import { format } from 'date-fns';
@@ -44,8 +46,10 @@ export interface BatchUpdateData {
     id: string;
     quote_number?: string;
     purchase_order_number?: string;
+    target_status?: string;
   }[];
   notes?: string;
+  auto_update_status?: boolean;
 }
 
 export const BatchUpdateModal: React.FC<BatchUpdateModalProps> = ({
@@ -58,6 +62,7 @@ export const BatchUpdateModal: React.FC<BatchUpdateModalProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [enableQuote, setEnableQuote] = useState(true);
   const [enablePurchaseOrder, setEnablePurchaseOrder] = useState(false);
+  const [autoUpdateStatus, setAutoUpdateStatus] = useState(true);
   const [batchData, setBatchData] = useState({
     quote: {
       baseNumber: '',
@@ -72,6 +77,20 @@ export const BatchUpdateModal: React.FC<BatchUpdateModalProps> = ({
       notes: ''
     }
   });
+
+  // Función para determinar el estado objetivo (OC prevalece)
+  const determineTargetStatus = (enableQuote: boolean, enablePO: boolean): string | null => {
+    if (!autoUpdateStatus) return null;
+    
+    if (enablePO && enableQuote) {
+      return 'with_purchase_order'; // OC PREVALECE SIEMPRE
+    } else if (enablePO) {
+      return 'with_purchase_order';
+    } else if (enableQuote) {
+      return 'quoted';
+    }
+    return null;
+  };
 
   const handleSubmit = async () => {
     if (selectedServices.length === 0) {
@@ -101,6 +120,8 @@ export const BatchUpdateModal: React.FC<BatchUpdateModalProps> = ({
     setIsLoading(true);
     
     try {
+      const targetStatus = determineTargetStatus(enableQuote, enablePurchaseOrder);
+      
       const services: BatchUpdateData['services'] = selectedServices.map((service, index) => {
         const serviceData: any = { id: service.id };
         
@@ -124,6 +145,11 @@ export const BatchUpdateModal: React.FC<BatchUpdateModalProps> = ({
           }
         }
         
+        // Agregar estado objetivo si el cambio automático está habilitado
+        if (targetStatus) {
+          serviceData.target_status = targetStatus;
+        }
+        
         return serviceData;
       });
 
@@ -134,14 +160,16 @@ export const BatchUpdateModal: React.FC<BatchUpdateModalProps> = ({
       const updateData: BatchUpdateData = {
         types: activeTypes,
         services,
-        notes: (enableQuote ? quoteData.notes : poData.notes) || undefined
+        notes: (enableQuote ? quoteData.notes : poData.notes) || undefined,
+        auto_update_status: autoUpdateStatus
       };
 
       await onBatchUpdate(updateData);
       
       const typesText = activeTypes.length === 2 ? 'cotizaciones y órdenes de compra' : 
                        activeTypes[0] === 'quote' ? 'cotizaciones' : 'órdenes de compra';
-      toast.success(`${selectedServices.length} servicios actualizados con ${typesText}`);
+      const statusText = targetStatus ? ` - Estado cambiado a '${targetStatus === 'quoted' ? 'Cotizado' : 'Con Orden de Compra'}'` : '';
+      toast.success(`${selectedServices.length} servicios actualizados con ${typesText}${statusText}`);
       onOpenChange(false);
       
       // Resetear formulario
@@ -161,6 +189,7 @@ export const BatchUpdateModal: React.FC<BatchUpdateModalProps> = ({
       });
       setEnableQuote(true);
       setEnablePurchaseOrder(false);
+      setAutoUpdateStatus(true);
       
     } catch (error) {
       console.error('Error en actualización por lotes:', error);
@@ -180,12 +209,17 @@ export const BatchUpdateModal: React.FC<BatchUpdateModalProps> = ({
     }));
   };
 
-  // Generar preview de números
+  // Generar preview de números y estados
   const generatePreview = () => {
     const previews: any[] = [];
+    const targetStatus = determineTargetStatus(enableQuote, enablePurchaseOrder);
     
     selectedServices.slice(0, 3).forEach((service, index) => {
-      const item: any = { folio: service.folio };
+      const item: any = { 
+        folio: service.folio, 
+        currentStatus: service.status,
+        targetStatus: targetStatus 
+      };
       
       if (enableQuote) {
         const quoteData = batchData.quote;
@@ -207,7 +241,7 @@ export const BatchUpdateModal: React.FC<BatchUpdateModalProps> = ({
         }
       }
       
-      if (item.quote || item.purchaseOrder) {
+      if (item.quote || item.purchaseOrder || targetStatus) {
         previews.push(item);
       }
     });
@@ -416,6 +450,56 @@ export const BatchUpdateModal: React.FC<BatchUpdateModalProps> = ({
               </div>
             </div>
 
+            {/* Gestión Automática de Estado */}
+            <div className="space-y-4">
+              <Separator className="bg-gray-700" />
+              
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <RefreshCw className="w-5 h-5 text-purple-400" />
+                  <h3 className="text-lg font-medium text-white">Gestión Automática de Estado</h3>
+                </div>
+                <Switch
+                  checked={autoUpdateStatus}
+                  onCheckedChange={setAutoUpdateStatus}
+                />
+              </div>
+              
+              {autoUpdateStatus && (enableQuote || enablePurchaseOrder) && (
+                <div className="p-3 bg-purple-500/10 border border-purple-500/20 rounded-lg">
+                  <div className="flex items-center gap-3 mb-2">
+                    <AlertCircle className="w-4 h-4 text-purple-400" />
+                    <span className="text-purple-300 font-medium">Estado Resultante</span>
+                  </div>
+                  <div className="text-sm text-gray-300">
+                    {enablePurchaseOrder && enableQuote ? (
+                      <div className="flex items-center gap-2">
+                        <span>Los servicios cambiarán automáticamente a</span>
+                        <Badge className="bg-green-500/20 text-green-300 border-green-500/30">
+                          Con Orden de Compra
+                        </Badge>
+                        <span className="text-purple-400">(OC prevalece sobre cotización)</span>
+                      </div>
+                    ) : enablePurchaseOrder ? (
+                      <div className="flex items-center gap-2">
+                        <span>Los servicios cambiarán automáticamente a</span>
+                        <Badge className="bg-green-500/20 text-green-300 border-green-500/30">
+                          Con Orden de Compra
+                        </Badge>
+                      </div>
+                    ) : enableQuote ? (
+                      <div className="flex items-center gap-2">
+                        <span>Los servicios cambiarán automáticamente a</span>
+                        <Badge className="bg-blue-500/20 text-blue-300 border-blue-500/30">
+                          Cotizado
+                        </Badge>
+                      </div>
+                    ) : null}
+                  </div>
+                </div>
+              )}
+            </div>
+
             {/* Preview */}
             {preview.length > 0 && (
               <div className="p-4 bg-gray-800/50 border border-gray-700 rounded-lg">
@@ -425,20 +509,37 @@ export const BatchUpdateModal: React.FC<BatchUpdateModalProps> = ({
                 </h4>
                 <div className="space-y-2">
                   {preview.map((item, index) => (
-                    <div key={index} className="flex items-center justify-between bg-gray-900/50 p-2 rounded">
-                      <span className="text-gray-300 font-medium">{item.folio}</span>
-                      <div className="flex items-center gap-2">
-                        {item.quote && (
-                          <Badge variant="outline" className="bg-blue-500/20 text-blue-300 border-blue-500/30">
-                            COT: {item.quote}
-                          </Badge>
-                        )}
-                        {item.purchaseOrder && (
-                          <Badge variant="outline" className="bg-green-500/20 text-green-300 border-green-500/30">
-                            O.C.: {item.purchaseOrder}
-                          </Badge>
-                        )}
+                    <div key={index} className="bg-gray-900/50 p-3 rounded border border-gray-700">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-gray-300 font-medium">{item.folio}</span>
+                        <div className="flex items-center gap-2">
+                          {item.quote && (
+                            <Badge variant="outline" className="bg-blue-500/20 text-blue-300 border-blue-500/30">
+                              COT: {item.quote}
+                            </Badge>
+                          )}
+                          {item.purchaseOrder && (
+                            <Badge variant="outline" className="bg-green-500/20 text-green-300 border-green-500/30">
+                              O.C.: {item.purchaseOrder}
+                            </Badge>
+                          )}
+                        </div>
                       </div>
+                      
+                      {autoUpdateStatus && item.targetStatus && (
+                        <div className="flex items-center gap-2 text-xs">
+                          <Badge variant="secondary" className="bg-gray-700 text-gray-300">
+                            {item.currentStatus === 'new' ? 'Nuevo' : 
+                             item.currentStatus === 'quoted' ? 'Cotizado' : 
+                             item.currentStatus === 'with_purchase_order' ? 'Con O.C.' : 
+                             item.currentStatus}
+                          </Badge>
+                          <ArrowRight className="w-3 h-3 text-purple-400" />
+                          <Badge className="bg-purple-500/20 text-purple-300 border-purple-500/30">
+                            {item.targetStatus === 'quoted' ? 'Cotizado' : 'Con Orden de Compra'}
+                          </Badge>
+                        </div>
+                      )}
                     </div>
                   ))}
                   {selectedServices.length > 3 && (

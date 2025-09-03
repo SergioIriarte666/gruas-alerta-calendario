@@ -108,13 +108,26 @@ export default function VipClientPipeline() {
           updateData.purchaseOrderNumber = serviceUpdate.purchase_order_number;
         }
         
+        // Agregar cambio de estado automático si está habilitado
+        if (updates.auto_update_status && serviceUpdate.target_status) {
+          updateData.status = serviceUpdate.target_status;
+        }
+        
         console.log('📝 Actualizando servicio:', serviceUpdate.id, updateData);
         
         return await updateService(serviceUpdate.id, updateData);
       });
 
       await Promise.all(updatePromises);
-      toast.success(`${updates.services.length} servicios actualizados correctamente`);
+      
+      // Mensaje más detallado según lo que se actualizó
+      let message = `${updates.services.length} servicios actualizados correctamente`;
+      if (updates.auto_update_status && updates.services[0]?.target_status) {
+        const statusName = updates.services[0].target_status === 'quoted' ? 'Cotizado' : 'Con Orden de Compra';
+        message += ` - Estado cambiado a '${statusName}'`;
+      }
+      
+      toast.success(message);
       refetch();
     } catch (error) {
       console.error('❌ Error en actualización por lotes:', error);
