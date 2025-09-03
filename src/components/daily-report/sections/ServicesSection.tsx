@@ -113,7 +113,7 @@ export const ServicesSection = ({ data, onViewService }: ServicesSectionProps) =
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-red-600">
               <AlertTriangle className="w-5 h-5" />
-              Servicios Atrasados
+              Servicios Pendientes de Facturación
               <Badge variant="destructive">{data.overdue.length}</Badge>
             </CardTitle>
           </CardHeader>
