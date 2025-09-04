@@ -206,7 +206,7 @@ export const SupplierForm: React.FC<SupplierFormProps> = ({
                 </SelectTrigger>
                 <SelectContent className="bg-gray-700 border-gray-600">
                   {categoriesLoading ? (
-                    <SelectItem value="" disabled>Cargando categorías...</SelectItem>
+                    <SelectItem value="loading" disabled>Cargando categorías...</SelectItem>
                   ) : (
                     activeCategories.map((category) => (
                       <SelectItem 

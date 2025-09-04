@@ -136,7 +136,7 @@ export const SupplierList: React.FC = () => {
                     Todas las categorías
                   </SelectItem>
                   {categoriesLoading ? (
-                    <SelectItem value="" disabled className="text-gray-400">
+                    <SelectItem value="loading" disabled className="text-gray-400">
                       Cargando categorías...
                     </SelectItem>
                   ) : (

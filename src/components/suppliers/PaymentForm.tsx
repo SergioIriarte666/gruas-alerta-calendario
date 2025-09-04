@@ -221,7 +221,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
                 </SelectTrigger>
                 <SelectContent className="bg-gray-700 border-gray-600">
                   {categoriesLoading ? (
-                    <SelectItem value="" disabled>Cargando categorías...</SelectItem>
+                    <SelectItem value="loading" disabled>Cargando categorías...</SelectItem>
                   ) : (
                     activeCategories.map((category) => (
                       <SelectItem 
@@ -321,7 +321,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
                         <SelectValue placeholder="Seleccionar grúa" />
                       </SelectTrigger>
                       <SelectContent className="bg-gray-700 border-gray-600">
-                        <SelectItem value="">Sin grúa específica</SelectItem>
+                        <SelectItem value="none">Sin grúa específica</SelectItem>
                         {cranes.map((crane) => (
                           <SelectItem 
                             key={crane.id} 
