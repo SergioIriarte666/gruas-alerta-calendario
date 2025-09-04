@@ -35,7 +35,7 @@ export const useSuppliers = () => {
         .insert([{
           ...data,
           created_by: (await supabase.auth.getUser()).data.user?.id
-        }])
+        } as any]) // Type assertion to bypass old enum constraint
         .select()
         .single();
 
@@ -61,7 +61,7 @@ export const useSuppliers = () => {
           ...data,
           updated_by: (await supabase.auth.getUser()).data.user?.id,
           updated_at: new Date().toISOString()
-        })
+        } as any) // Type assertion to bypass old enum constraint
         .eq('id', id)
         .select()
         .single();

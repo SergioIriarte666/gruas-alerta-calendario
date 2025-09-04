@@ -2763,7 +2763,7 @@ export type Database = {
       suppliers: {
         Row: {
           address: string | null
-          category: Database["public"]["Enums"]["supplier_category"]
+          category: string
           contact_name: string | null
           created_at: string | null
           created_by: string | null
@@ -2779,7 +2779,7 @@ export type Database = {
         }
         Insert: {
           address?: string | null
-          category?: Database["public"]["Enums"]["supplier_category"]
+          category?: string
           contact_name?: string | null
           created_at?: string | null
           created_by?: string | null
@@ -2795,7 +2795,7 @@ export type Database = {
         }
         Update: {
           address?: string | null
-          category?: Database["public"]["Enums"]["supplier_category"]
+          category?: string
           contact_name?: string | null
           created_at?: string | null
           created_by?: string | null

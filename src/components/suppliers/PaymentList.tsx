@@ -22,7 +22,9 @@ import {
   Loader2
 } from 'lucide-react';
 import { useSupplierPayments, getStatusLabel, getStatusColor } from '@/hooks/useSupplierPayments';
-import { useSuppliers, getCategoryLabel } from '@/hooks/useSuppliers';
+import { useSuppliers } from '@/hooks/useSuppliers';
+import { useSupplierCategoryManager } from '@/hooks/useSupplierCategoryManager';
+import { getCategoryLabel } from '@/utils/categoryUtils';
 import { PaymentForm } from './PaymentForm';
 import { SupplierPaymentExportButton } from './SupplierPaymentExportButton';
 import { SupplierPayment, SupplierPaymentStatus } from '@/types/suppliers';
@@ -49,6 +51,7 @@ export const PaymentList: React.FC = () => {
   } = useSupplierPayments();
   
   const { suppliers } = useSuppliers();
+  const { activeCategories } = useSupplierCategoryManager();
 
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
@@ -503,7 +506,7 @@ export const PaymentList: React.FC = () => {
                         <div className="space-y-1">
                           <div className="text-white">{payment.description}</div>
                           <Badge variant="outline" className="border-blue-500/30 text-blue-300">
-                            {getCategoryLabel(payment.category)}
+                            {getCategoryLabel(activeCategories, payment.category)}
                           </Badge>
                         </div>
                       </TableCell>
