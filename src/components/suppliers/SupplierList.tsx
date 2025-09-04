@@ -24,6 +24,7 @@ import { useSupplierCategoryManager } from '@/hooks/useSupplierCategoryManager';
 import { SupplierForm } from './SupplierForm';
 import { SupplierWithStats } from '@/types/suppliers';
 import { formatCurrency } from '@/lib/utils';
+import { getCategoryLabel } from '@/utils/categoryUtils';
 
 export const SupplierList: React.FC = () => {
   const { 
@@ -41,12 +42,6 @@ export const SupplierList: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [showForm, setShowForm] = useState(false);
   const [editingSupplier, setEditingSupplier] = useState<SupplierWithStats | null>(null);
-
-  // Helper function to get category label from dynamic categories
-  const getCategoryLabel = (categoryName: string) => {
-    const category = activeCategories?.find(cat => cat.name === categoryName);
-    return category?.label || categoryName;
-  };
 
   const filteredSuppliers = useMemo(() => {
     return suppliers.filter(supplier => {
@@ -245,7 +240,7 @@ export const SupplierList: React.FC = () => {
 
                       <TableCell>
                         <Badge variant="outline" className="border-blue-500/30 text-blue-300">
-                          {getCategoryLabel(supplier.category)}
+                          {getCategoryLabel(activeCategories || [], supplier.category)}
                         </Badge>
                       </TableCell>
 
