@@ -25,10 +25,10 @@ export const useAdvancedFilters = () => {
     return services.filter(service => {
       // Apply basic filters first
       const matchesSearch = 
-        service.folio.toLowerCase().includes(basicFilters.searchTerm.toLowerCase()) ||
+        (service.folio || '').toLowerCase().includes(basicFilters.searchTerm.toLowerCase()) ||
         (service.client?.name || '').toLowerCase().includes(basicFilters.searchTerm.toLowerCase()) ||
         (service.licensePlate || '').toLowerCase().includes(basicFilters.searchTerm.toLowerCase()) ||
-        service.vehicleBrand.toLowerCase().includes(basicFilters.searchTerm.toLowerCase()) ||
+        (service.vehicleBrand || '').toLowerCase().includes(basicFilters.searchTerm.toLowerCase()) ||
         (service.quoteNumber || '').toLowerCase().includes(basicFilters.searchTerm.toLowerCase()) ||
         (service.purchaseOrderNumber || service.purchaseOrder || '').toLowerCase().includes(basicFilters.searchTerm.toLowerCase()) ||
         (service.invoiceNumeroFiscal || '').toLowerCase().includes(basicFilters.searchTerm.toLowerCase());
