@@ -25,8 +25,12 @@ import {
   CheckSquare,
   SquareCheck,
   ChevronUp,
-  ChevronsUpDown
+  ChevronsUpDown,
+  Filter,
+  X
 } from 'lucide-react';
+import { AdvancedServiceFilters } from '@/components/services/AdvancedServiceFilters';
+import { useAdvancedFilters } from '@/hooks/useAdvancedFilters';
 import { Service, ServiceStatus } from '@/types';
 import { differenceInDays } from 'date-fns';
 import { formatForDisplay, parseFromDatabase } from '@/utils/timezoneUtils';
@@ -129,6 +133,17 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
   const [sortField, setSortField] = useState<SortField>('serviceDate');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
 
+  // Hook para filtros avanzados
+  const {
+    isOpen: isAdvancedFiltersOpen,
+    setIsOpen: setIsAdvancedFiltersOpen,
+    filters: advancedFilters,
+    hasActiveFilters,
+    applyAdvancedFilters,
+    clearFilters: clearAdvancedFilters,
+    updateFilters: updateAdvancedFilters
+  } = useAdvancedFilters();
+
   // Función para ordenar servicios
   const sortServices = (services: Service[]): Service[] => {
     return [...services].sort((a, b) => {
@@ -174,9 +189,12 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
     });
   };
 
-  // Agrupar servicios por estado
+  // Aplicar filtros avanzados y agrupar servicios por estado
   const serviceGroups = useMemo(() => {
-    const groupedServices = services.reduce((groups, service) => {
+    // Aplicar filtros avanzados primero
+    const filteredServices = applyAdvancedFilters(services, { searchTerm, statusFilter: 'all' });
+    
+    const groupedServices = filteredServices.reduce((groups, service) => {
       const status = service.status;
       if (!groups[status]) {
         groups[status] = [];
@@ -244,20 +262,8 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
           sortingDateLabel
         } as ServiceGroup;
       })
-      .filter(group => {
-        // Filtrar por búsqueda
-        if (!searchTerm.trim()) return group.services.length > 0;
-        
-        const searchLower = searchTerm.toLowerCase();
-        return group.services.some(service => 
-          service.folio?.toLowerCase().includes(searchLower) ||
-          service.serviceType.name?.toLowerCase().includes(searchLower) ||
-          service.quoteNumber?.toLowerCase().includes(searchLower) ||
-          service.purchaseOrderNumber?.toLowerCase().includes(searchLower) ||
-          service.purchaseOrder?.toLowerCase().includes(searchLower)
-        ) && group.services.length > 0;
-      });
-  }, [services, searchTerm, sortField, sortDirection]);
+      .filter(group => group.services.length > 0);
+  }, [services, searchTerm, sortField, sortDirection, advancedFilters, applyAdvancedFilters]);
 
   const toggleGroup = (status: ServiceStatus) => {
     const newExpanded = new Set(expandedGroups);
@@ -304,6 +310,16 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
       await onBatchUpdate(updates);
       setSelectedServices(new Set()); // Limpiar selección después de actualizar
     }
+  };
+
+  // Handlers para filtros avanzados
+  const handleApplyAdvancedFilters = () => {
+    setIsAdvancedFiltersOpen(false);
+  };
+
+  const handleClearAdvancedFilters = () => {
+    clearAdvancedFilters();
+    setIsAdvancedFiltersOpen(false);
   };
 
   const selectedServicesArray = services.filter(s => selectedServices.has(s.id));
@@ -381,6 +397,30 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
               />
             </div>
             <div className="flex gap-2">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => setIsAdvancedFiltersOpen(true)}
+                className={`border-gray-600 text-gray-300 hover:bg-gray-700 relative ${
+                  hasActiveFilters ? 'border-blue-500/50 bg-blue-500/10 text-blue-300' : ''
+                }`}
+              >
+                <Filter className="w-4 h-4 mr-2" />
+                Más Filtros
+                {hasActiveFilters && (
+                  <span className="absolute -top-1 -right-1 w-2 h-2 bg-blue-400 rounded-full"></span>
+                )}
+              </Button>
+              {hasActiveFilters && (
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  onClick={handleClearAdvancedFilters}
+                  className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              )}
               <Button variant="outline" size="sm" onClick={expandAll}>
                 Expandir Todo
               </Button>
@@ -634,6 +674,16 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
         selectedServices={selectedServicesArray}
         onBatchUpdate={handleBatchUpdate}
         clientName={clientName}
+      />
+
+      {/* Modal de Filtros Avanzados */}
+      <AdvancedServiceFilters
+        isOpen={isAdvancedFiltersOpen}
+        onClose={() => setIsAdvancedFiltersOpen(false)}
+        filters={advancedFilters}
+        onFiltersChange={updateAdvancedFilters}
+        onApply={handleApplyAdvancedFilters}
+        onClear={handleClearAdvancedFilters}
       />
     </div>
   );
