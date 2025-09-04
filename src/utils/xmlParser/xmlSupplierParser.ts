@@ -1,4 +1,4 @@
-import { XMLSupplierData, XMLSupplierParseResult, SupplierCategory, XMLCompleteParseResult, XMLDocumentData, XMLSupplierPaymentData, SupplierPaymentStatus, XMLDocumentItem } from '@/types/suppliers';
+import { XMLSupplierData, XMLSupplierParseResult, XMLCompleteParseResult, XMLDocumentData, XMLSupplierPaymentData, SupplierPaymentStatus, XMLDocumentItem } from '@/types/suppliers';
 
 export class XMLSupplierParser {
   private parser: DOMParser;
@@ -263,7 +263,7 @@ export class XMLSupplierParser {
     };
   }
 
-  private categorizeByBusiness(businessDescription: string): SupplierCategory {
+  private categorizeByBusiness(businessDescription: string): string {
     const description = businessDescription.toLowerCase();
     
     if (description.includes('combustible') || description.includes('petróleo') || 

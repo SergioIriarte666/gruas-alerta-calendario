@@ -22,7 +22,7 @@ import {
 import { useSuppliers } from '@/hooks/useSuppliers';
 import { useSupplierCategoryManager } from '@/hooks/useSupplierCategoryManager';
 import { SupplierForm } from './SupplierForm';
-import { Supplier, SupplierCategory } from '@/types/suppliers';
+import { SupplierWithStats } from '@/types/suppliers';
 import { formatCurrency } from '@/lib/utils';
 
 export const SupplierList: React.FC = () => {
@@ -40,7 +40,7 @@ export const SupplierList: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [showForm, setShowForm] = useState(false);
-  const [editingSupplier, setEditingSupplier] = useState<Supplier | null>(null);
+  const [editingSupplier, setEditingSupplier] = useState<SupplierWithStats | null>(null);
 
   // Helper function to get category label from dynamic categories
   const getCategoryLabel = (categoryName: string) => {
@@ -64,7 +64,7 @@ export const SupplierList: React.FC = () => {
     });
   }, [suppliers, searchTerm, selectedCategory, statusFilter]);
 
-  const handleEdit = (supplier: Supplier) => {
+  const handleEdit = (supplier: SupplierWithStats) => {
     setEditingSupplier(supplier);
     setShowForm(true);
   };
@@ -78,8 +78,8 @@ export const SupplierList: React.FC = () => {
     deleteSupplier(id);
   };
 
-  const handleToggleStatus = (supplier: Supplier) => {
-    toggleSupplierStatus({ id: supplier.id, is_active: !supplier.is_active });
+  const handleToggleStatus = (supplier: SupplierWithStats) => {
+    toggleSupplierStatus(supplier.id);
   };
 
   if (isLoading) {
@@ -252,18 +252,8 @@ export const SupplierList: React.FC = () => {
                       <TableCell>
                         <div className="space-y-1">
                           <div className="text-sm text-white">
-                            {supplier.total_payments || 0} pagos
+                            0 pagos
                           </div>
-                          {(supplier.pending_amount || 0) > 0 && (
-                            <div className="text-sm text-yellow-400">
-                              Pendiente: {formatCurrency(supplier.pending_amount || 0)}
-                            </div>
-                          )}
-                          {(supplier.overdue_count || 0) > 0 && (
-                            <div className="text-sm text-red-400">
-                              {supplier.overdue_count} vencidos
-                            </div>
-                          )}
                         </div>
                       </TableCell>
 

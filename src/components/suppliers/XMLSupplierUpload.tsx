@@ -23,7 +23,9 @@ import {
 } from 'lucide-react';
 import { XMLSupplierParser } from '@/utils/xmlParser/xmlSupplierParser';
 import { XMLSupplierData, XMLSupplierParseResult } from '@/types/suppliers';
-import { useSuppliers, useSupplierCategories, getCategoryLabel } from '@/hooks/useSuppliers';
+import { useSuppliers } from '@/hooks/useSuppliers';
+import { useSupplierCategoryManager } from '@/hooks/useSupplierCategoryManager';
+import { getCategoryLabel } from '@/utils/categoryUtils';
 import { toast } from 'sonner';
 
 interface XMLSupplierUploadProps {
@@ -37,10 +39,10 @@ export const XMLSupplierUpload = ({ isOpen, onClose, onSuccess }: XMLSupplierUpl
   const [parseResult, setParseResult] = useState<XMLSupplierParseResult | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
-  const [categoryMappings, setCategoryMappings] = useState<{ [key: string]: SupplierCategory }>({});
+  const [categoryMappings, setCategoryMappings] = useState<{ [key: string]: string }>({});
   
   const { createSupplier } = useSuppliers();
-  const categories = useSupplierCategories();
+  const { activeCategories } = useSupplierCategoryManager();
   const parser = new XMLSupplierParser();
 
   const handleFileSelect = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
@@ -145,7 +147,7 @@ export const XMLSupplierUpload = ({ isOpen, onClose, onSuccess }: XMLSupplierUpl
     }
   };
 
-  const handleCategoryChange = (index: number, categoryId: SupplierCategory) => {
+  const handleCategoryChange = (index: number, categoryId: string) => {
     setCategoryMappings(prev => ({
       ...prev,
       [`${index}-category`]: categoryId
@@ -385,15 +387,15 @@ export const XMLSupplierUpload = ({ isOpen, onClose, onSuccess }: XMLSupplierUpl
                               <TableCell>
                                 <Select
                                   value={categoryMappings[`${index}-category`] || supplier.category}
-                                  onValueChange={(value) => handleCategoryChange(index, value as SupplierCategory)}
+                                  onValueChange={(value) => handleCategoryChange(index, value)}
                                 >
                                   <SelectTrigger className="w-48">
                                     <SelectValue />
                                   </SelectTrigger>
                                   <SelectContent>
-                                    {categories.map(category => (
-                                      <SelectItem key={category} value={category}>
-                                        {getCategoryLabel(category)}
+                                    {activeCategories?.map(category => (
+                                      <SelectItem key={category.id} value={category.name}>
+                                        {getCategoryLabel(activeCategories, category.name)}
                                       </SelectItem>
                                     ))}
                                   </SelectContent>

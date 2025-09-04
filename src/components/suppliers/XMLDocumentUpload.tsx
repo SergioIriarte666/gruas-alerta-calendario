@@ -11,7 +11,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { Upload, FileText, AlertCircle, CheckCircle, Loader2, X, FileSpreadsheet, Users, Receipt, DollarSign, Calendar, Building } from 'lucide-react';
 import { XMLCompleteParseResult, XMLDocumentData, XMLSupplierData, XMLSupplierPaymentData } from '@/types/suppliers';
-import { useSuppliers, useSupplierCategories, getCategoryLabel } from '@/hooks/useSuppliers';
+import { useSuppliers } from '@/hooks/useSuppliers';
+import { useSupplierCategoryManager } from '@/hooks/useSupplierCategoryManager';
+import { getCategoryLabel } from '@/utils/categoryUtils';
 import { useSupplierPayments } from '@/hooks/useSupplierPayments';
 import { toast } from 'sonner';
 interface XMLDocumentUploadProps {
@@ -29,7 +31,7 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
-  const [supplierCategoryMapping, setSupplierCategoryMapping] = useState<Record<string, SupplierCategory>>({});
+  const [supplierCategoryMapping, setSupplierCategoryMapping] = useState<Record<string, string>>({});
   const [selectedSuppliers, setSelectedSuppliers] = useState<Set<string>>(new Set());
   const [selectedDocuments, setSelectedDocuments] = useState<Set<string>>(new Set());
   const [createPayments, setCreatePayments] = useState(true);
@@ -40,7 +42,7 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
   const {
     createPayment
   } = useSupplierPayments();
-  const categories = useSupplierCategories();
+  const { activeCategories } = useSupplierCategoryManager();
   const onDrop = useCallback((acceptedFiles: File[]) => {
     const file = acceptedFiles[0];
     if (file) {
@@ -90,7 +92,7 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
       setSelectedDocuments(validDocuments);
 
       // Initialize category mapping
-      const categoryMap: Record<string, SupplierCategory> = {};
+      const categoryMap: Record<string, string> = {};
       result.suppliers.forEach(supplier => {
         categoryMap[supplier.rut] = supplier.category;
       });
@@ -186,7 +188,7 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
       setUploadProgress(0);
     }
   };
-  const handleCategoryChange = (supplierRut: string, category: SupplierCategory) => {
+  const handleCategoryChange = (supplierRut: string, category: string) => {
     setSupplierCategoryMapping(prev => ({
       ...prev,
       [supplierRut]: category
@@ -428,13 +430,13 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
                             </div>
                           </div>
                           <div className="flex items-center space-x-2">
-                            <Select value={supplierCategoryMapping[supplier.rut] || supplier.category} onValueChange={value => handleCategoryChange(supplier.rut, value as SupplierCategory)}>
+                            <Select value={supplierCategoryMapping[supplier.rut] || supplier.category} onValueChange={value => handleCategoryChange(supplier.rut, value)}>
                               <SelectTrigger className="w-40 bg-gray-600 border-gray-500">
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent className="bg-gray-700 border-gray-600">
-                                {categories.map(category => <SelectItem key={category} value={category}>
-                                    {getCategoryLabel(category)}
+                                {activeCategories?.map(category => <SelectItem key={category.id} value={category.name}>
+                                    {getCategoryLabel(activeCategories, category.name)}
                                   </SelectItem>)}
                               </SelectContent>
                             </Select>
