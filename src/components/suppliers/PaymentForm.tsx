@@ -10,7 +10,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { X, Save, Loader2, Calendar, DollarSign } from 'lucide-react';
 import { useSupplierPayments, getStatusLabel } from '@/hooks/useSupplierPayments';
-import { useSuppliers, useSupplierCategories, getCategoryLabel } from '@/hooks/useSuppliers';
+import { useSuppliers } from '@/hooks/useSuppliers';
+import { useSupplierCategoryManager } from '@/hooks/useSupplierCategoryManager';
 import { PaymentFormData, SupplierPayment, SupplierPaymentStatus } from '@/types/suppliers';
 import { useCranes } from '@/hooks/useCranes';
 import { Wrench, Package } from 'lucide-react';
@@ -47,7 +48,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
   const { createPayment, updatePayment, markPaymentAsPaid, isCreating, isUpdating } = useSupplierPayments();
   const { suppliers } = useSuppliers();
   const { cranes } = useCranes();
-  const categories = useSupplierCategories();
+  const { activeCategories, isLoading: categoriesLoading } = useSupplierCategoryManager();
 
   const statusOptions: SupplierPaymentStatus[] = ['pending', 'paid', 'overdue', 'cancelled'];
 
@@ -58,7 +59,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
       amount: payment?.amount || 0,
       due_date: payment?.due_date ? payment.due_date.split('T')[0] : '',
       description: payment?.description || '',
-      category: payment?.category || 'otros',
+      category: payment?.category || (activeCategories?.[0]?.id || ''),
       reference_number: payment?.reference_number || '',
       notes: payment?.notes || '',
       status: payment?.status || 'pending',
@@ -74,54 +75,16 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
     // Filtrar campos que no existen en la tabla supplier_payments
     const { part_name, part_quantity, part_unit_price, crane_id, ...paymentData } = data;
     
-    // Determinar si tiene detalles de piezas válidos
-    const hasPartDetails = data.category === 'mantenimiento' && 
-                          part_name && 
-                          part_quantity && 
-                          part_unit_price && 
-                          crane_id;
-    
-    // Si es un nuevo pago o una actualización SIN marcar como pagado
-    if (!payment || data.status !== 'paid') {
-      if (payment) {
-        updatePayment({ id: payment.id, data: paymentData }, {
-          onSuccess: () => {
-            onSave?.();
-            onClose();
-          }
-        });
-      } else {
-        createPayment(paymentData, {
-          onSuccess: () => {
-            onSave?.();
-            onClose();
-          }
-        });
-      }
-    } else {
-      // Si es una actualización Y se está marcando como pagado
-      // Primero actualizar el pago, luego marcarlo como pagado con detalles de piezas
-      updatePayment({ id: payment.id, data: { ...paymentData, status: 'pending' } }, {
+    if (payment) {
+      updatePayment({ id: payment.id, data: paymentData }, {
         onSuccess: () => {
-          // Ahora marcar como pagado con detalles de piezas si existen
-          if (hasPartDetails) {
-            markPaymentAsPaid({
-              id: payment.id,
-              paid_amount: data.amount,
-              partDetails: {
-                part_name: part_name!,
-                part_quantity: part_quantity!,
-                part_unit_price: part_unit_price!,
-                crane_id: crane_id!
-              }
-            });
-          } else {
-            markPaymentAsPaid({
-              id: payment.id,
-              paid_amount: data.amount
-            });
-          }
-          
+          onSave?.();
+          onClose();
+        }
+      });
+    } else {
+      createPayment(paymentData, {
+        onSuccess: () => {
           onSave?.();
           onClose();
         }
@@ -129,153 +92,100 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
     }
   };
 
-  const isLoading = isCreating || isUpdating;
-  
-  // Detectar si es categoría mantenimiento para mostrar campos de piezas
-  const isMaintenanceCategory = form.watch('category') === 'mantenimiento';
+  const isSubmitting = isCreating || isUpdating;
+  const selectedCategory = form.watch('category');
+  const isPiezasCategory = selectedCategory === 'mantenimiento' || 
+    activeCategories.find(cat => cat.id === selectedCategory)?.name === 'mantenimiento';
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-gray-800 border-gray-700">
-        <CardHeader className="flex flex-row items-center justify-between pb-4">
-          <CardTitle className="text-white">
-            {payment ? 'Editar Pago' : 'Nuevo Pago'}
+      <Card className="w-full max-w-4xl max-h-[90vh] overflow-auto bg-gray-800 border-gray-700">
+        <CardHeader className="flex flex-row items-center justify-between bg-gray-700">
+          <CardTitle className="text-white flex items-center gap-2">
+            <DollarSign className="h-5 w-5" />
+            {payment ? 'Editar Pago a Proveedor' : 'Nuevo Pago a Proveedor'}
           </CardTitle>
-          <Button
-            variant="ghost"
-            size="sm"
+          <Button 
+            variant="ghost" 
+            size="sm" 
             onClick={onClose}
-            className="text-gray-400 hover:text-white"
+            className="text-white hover:bg-gray-600"
           >
             <X className="h-4 w-4" />
           </Button>
         </CardHeader>
-
-        <CardContent>
+        
+        <CardContent className="p-6 bg-gray-800">
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            {/* Supplier Selection */}
-            <div className="space-y-2">
-              <Label className="text-white">Proveedor *</Label>
-              <Select
-                value={form.watch('supplier_id')}
-                onValueChange={(value) => form.setValue('supplier_id', value)}
-              >
-                <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
-                  <SelectValue placeholder="Seleccionar proveedor" />
-                </SelectTrigger>
-                <SelectContent className="bg-gray-700 border-gray-600">
-                  {suppliers.map((supplier) => (
-                    <SelectItem 
-                      key={supplier.id} 
-                      value={supplier.id}
-                      className="text-white hover:bg-gray-600"
-                    >
-                      {supplier.name} - {supplier.rut}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {form.formState.errors.supplier_id && (
-                <span className="text-red-400 text-sm">
-                  {form.formState.errors.supplier_id.message}
-                </span>
-              )}
-            </div>
-
-            {/* Amount and Due Date */}
+            {/* Información básica del pago */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="amount" className="text-white flex items-center gap-2">
-                  <DollarSign className="h-4 w-4" />
-                  Monto *
-                </Label>
-                <Input
-                  id="amount"
-                  type="number"
-                  step="0.01"
-                  {...form.register('amount', { valueAsNumber: true })}
-                  className="bg-gray-700 border-gray-600 text-white"
-                  placeholder="0.00"
-                />
-                {form.formState.errors.amount && (
-                  <span className="text-red-400 text-sm">
-                    {form.formState.errors.amount.message}
-                  </span>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="due_date" className="text-white flex items-center gap-2">
-                  <Calendar className="h-4 w-4" />
-                  Fecha de Vencimiento *
-                </Label>
-                <Input
-                  id="due_date"
-                  type="date"
-                  {...form.register('due_date')}
-                  className="bg-gray-700 border-gray-600 text-white"
-                />
-                {form.formState.errors.due_date && (
-                  <span className="text-red-400 text-sm">
-                    {form.formState.errors.due_date.message}
-                  </span>
-                )}
-              </div>
-            </div>
-
-            {/* Description */}
-            <div className="space-y-2">
-              <Label htmlFor="description" className="text-white">
-                Descripción *
-              </Label>
-              <Input
-                id="description"
-                {...form.register('description')}
-                className="bg-gray-700 border-gray-600 text-white"
-                placeholder="Descripción del pago o servicio"
-              />
-              {form.formState.errors.description && (
-                <span className="text-red-400 text-sm">
-                  {form.formState.errors.description.message}
-                </span>
-              )}
-            </div>
-
-            {/* Category and Status */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label className="text-white">Categoría *</Label>
+              <div>
+                <Label className="text-white">Proveedor *</Label>
                 <Select
-                  value={form.watch('category')}
-                  onValueChange={(value) => form.setValue('category', value as any)}
+                  value={form.watch('supplier_id')}
+                  onValueChange={(value) => form.setValue('supplier_id', value)}
                 >
                   <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
-                    <SelectValue placeholder="Seleccionar categoría" />
+                    <SelectValue placeholder="Seleccionar proveedor" />
                   </SelectTrigger>
                   <SelectContent className="bg-gray-700 border-gray-600">
-                    {categories.map((category) => (
+                    {suppliers.map((supplier) => (
                       <SelectItem 
-                        key={category} 
-                        value={category}
+                        key={supplier.id} 
+                        value={supplier.id}
                         className="text-white hover:bg-gray-600"
                       >
-                        {getCategoryLabel(category)}
+                        {supplier.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
-                {form.formState.errors.category && (
-                  <span className="text-red-400 text-sm">
-                    {form.formState.errors.category.message}
-                  </span>
+                {form.formState.errors.supplier_id && (
+                  <p className="text-red-400 text-sm mt-1">
+                    {form.formState.errors.supplier_id.message}
+                  </p>
                 )}
               </div>
 
-              <div className="space-y-2">
+              <div>
+                <Label className="text-white">Monto *</Label>
+                <Input
+                  {...form.register('amount', { valueAsNumber: true })}
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  placeholder="0.00"
+                  className="bg-gray-700 border-gray-600 text-white"
+                />
+                {form.formState.errors.amount && (
+                  <p className="text-red-400 text-sm mt-1">
+                    {form.formState.errors.amount.message}
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <Label className="text-white flex items-center gap-2">
+                  <Calendar className="h-4 w-4" />
+                  Fecha de Vencimiento *
+                </Label>
+                <Input
+                  {...form.register('due_date')}
+                  type="date"
+                  className="bg-gray-700 border-gray-600 text-white"
+                />
+                {form.formState.errors.due_date && (
+                  <p className="text-red-400 text-sm mt-1">
+                    {form.formState.errors.due_date.message}
+                  </p>
+                )}
+              </div>
+
+              <div>
                 <Label className="text-white">Estado *</Label>
                 <Select
                   value={form.watch('status')}
-                  onValueChange={(value) => form.setValue('status', value as any)}
+                  onValueChange={(value) => form.setValue('status', value as SupplierPaymentStatus)}
                 >
                   <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
                     <SelectValue placeholder="Seleccionar estado" />
@@ -293,62 +203,125 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
                   </SelectContent>
                 </Select>
                 {form.formState.errors.status && (
-                  <span className="text-red-400 text-sm">
+                  <p className="text-red-400 text-sm mt-1">
                     {form.formState.errors.status.message}
-                  </span>
+                  </p>
                 )}
               </div>
             </div>
 
-            {/* Reference Number */}
-            <div className="space-y-2">
-              <Label htmlFor="reference_number" className="text-white">
-                Número de Referencia
-              </Label>
-              <Input
-                id="reference_number"
-                {...form.register('reference_number')}
-                className="bg-gray-700 border-gray-600 text-white"
-                placeholder="Número de factura, orden de compra, etc."
-              />
+            <div>
+              <Label className="text-white">Categoría *</Label>
+              <Select
+                value={form.watch('category')}
+                onValueChange={(value) => form.setValue('category', value)}
+              >
+                <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
+                  <SelectValue placeholder="Seleccionar categoría" />
+                </SelectTrigger>
+                <SelectContent className="bg-gray-700 border-gray-600">
+                  {categoriesLoading ? (
+                    <SelectItem value="" disabled>Cargando categorías...</SelectItem>
+                  ) : (
+                    activeCategories.map((category) => (
+                      <SelectItem 
+                        key={category.id} 
+                        value={category.id}
+                        className="text-white hover:bg-gray-600"
+                      >
+                        {category.label}
+                      </SelectItem>
+                    ))
+                  )}
+                </SelectContent>
+              </Select>
+              {form.formState.errors.category && (
+                <p className="text-red-400 text-sm mt-1">
+                  {form.formState.errors.category.message}
+                </p>
+              )}
             </div>
 
-            {/* Detalles de Piezas - Solo para categoría Mantenimiento */}
-            {isMaintenanceCategory && (
-              <div className="space-y-4 p-4 border border-yellow-600/30 bg-yellow-900/10 rounded-lg">
-                <div className="flex items-center gap-2 text-yellow-400 mb-2">
-                  <Wrench className="h-4 w-4" />
-                  <span className="font-medium">Detalles de Piezas (Opcional)</span>
-                  <Package className="h-4 w-4" />
-                </div>
-                <p className="text-sm text-gray-400 mb-3">
-                  Si este pago es para compra de piezas, complete estos campos para registrar automáticamente en el sistema de piezas.
+            <div>
+              <Label className="text-white">Descripción *</Label>
+              <Input
+                {...form.register('description')}
+                placeholder="Descripción del pago o servicio"
+                className="bg-gray-700 border-gray-600 text-white"
+              />
+              {form.formState.errors.description && (
+                <p className="text-red-400 text-sm mt-1">
+                  {form.formState.errors.description.message}
                 </p>
+              )}
+            </div>
 
-                {/* Nombre de la pieza y Grúa */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="part_name" className="text-white">
-                      Nombre de la Pieza
-                    </Label>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label className="text-white">Número de Referencia</Label>
+                <Input
+                  {...form.register('reference_number')}
+                  placeholder="Factura, OC, etc."
+                  className="bg-gray-700 border-gray-600 text-white"
+                />
+              </div>
+            </div>
+
+            {/* Sección de Piezas y Repuestos - Solo para categoría mantenimiento */}
+            {isPiezasCategory && (
+              <div className="border-t border-gray-600 pt-6">
+                <div className="flex items-center gap-2 mb-4">
+                  <Package className="h-5 w-5 text-blue-400" />
+                  <h3 className="text-lg font-semibold text-white">Detalles de Piezas y Repuestos</h3>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div>
+                    <Label className="text-white">Nombre de la Pieza</Label>
                     <Input
-                      id="part_name"
                       {...form.register('part_name')}
+                      placeholder="ej: Filtro de aceite"
                       className="bg-gray-700 border-gray-600 text-white"
-                      placeholder="Ej: Filtro de aceite, Pastillas de freno..."
                     />
                   </div>
 
-                  <div className="space-y-2">
-                    <Label className="text-white">Grúa Destino</Label>
+                  <div>
+                    <Label className="text-white">Cantidad</Label>
+                    <Input
+                      {...form.register('part_quantity', { valueAsNumber: true })}
+                      type="number"
+                      min="1"
+                      placeholder="1"
+                      className="bg-gray-700 border-gray-600 text-white"
+                    />
+                  </div>
+
+                  <div>
+                    <Label className="text-white">Precio Unitario</Label>
+                    <Input
+                      {...form.register('part_unit_price', { valueAsNumber: true })}
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      placeholder="0.00"
+                      className="bg-gray-700 border-gray-600 text-white"
+                    />
+                  </div>
+
+                  <div>
+                    <Label className="text-white flex items-center gap-2">
+                      <Wrench className="h-4 w-4" />
+                      Grúa Asociada
+                    </Label>
                     <Select
-                      value={form.watch('crane_id')}
+                      value={form.watch('crane_id') || ''}
                       onValueChange={(value) => form.setValue('crane_id', value)}
                     >
                       <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
                         <SelectValue placeholder="Seleccionar grúa" />
                       </SelectTrigger>
                       <SelectContent className="bg-gray-700 border-gray-600">
+                        <SelectItem value="">Sin grúa específica</SelectItem>
                         {cranes.map((crane) => (
                           <SelectItem 
                             key={crane.id} 
@@ -362,83 +335,45 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
                     </Select>
                   </div>
                 </div>
-
-                {/* Cantidad y Precio unitario */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="part_quantity" className="text-white">
-                      Cantidad
-                    </Label>
-                    <Input
-                      id="part_quantity"
-                      type="number"
-                      step="1"
-                      {...form.register('part_quantity', { valueAsNumber: true })}
-                      className="bg-gray-700 border-gray-600 text-white"
-                      placeholder="1"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="part_unit_price" className="text-white">
-                      Precio Unitario
-                    </Label>
-                    <Input
-                      id="part_unit_price"
-                      type="number"
-                      step="0.01"
-                      {...form.register('part_unit_price', { valueAsNumber: true })}
-                      className="bg-gray-700 border-gray-600 text-white"
-                      placeholder="0.00"
-                    />
-                  </div>
-                </div>
-
-                {/* Indicador automático */}
-                {form.watch('part_name') && form.watch('part_quantity') && form.watch('part_unit_price') && form.watch('crane_id') && (
-                  <div className="text-sm text-green-400 bg-green-900/20 p-2 rounded border border-green-600/30">
-                    ✓ Este pago se registrará automáticamente como "Piezas y Repuestos" en el sistema de costos y piezas.
-                  </div>
-                )}
               </div>
             )}
 
-            {/* Notes */}
-            <div className="space-y-2">
-              <Label htmlFor="notes" className="text-white">
-                Notas
-              </Label>
+            <div>
+              <Label className="text-white">Notas</Label>
               <Textarea
-                id="notes"
                 {...form.register('notes')}
+                placeholder="Información adicional sobre el pago..."
                 className="bg-gray-700 border-gray-600 text-white"
-                placeholder="Notas adicionales sobre el pago"
                 rows={3}
               />
             </div>
 
-            {/* Actions */}
             <div className="flex justify-end space-x-2 pt-4">
               <Button
                 type="button"
                 variant="outline"
                 onClick={onClose}
-                disabled={isLoading}
-                className="border-gray-600 text-gray-300 hover:text-white"
+                disabled={isSubmitting}
+                className="bg-gray-700 border-gray-600 text-white hover:bg-gray-600"
               >
                 Cancelar
               </Button>
               <Button
                 type="submit"
-                disabled={isLoading}
+                disabled={isSubmitting}
                 className="bg-blue-600 hover:bg-blue-700"
               >
-                {isLoading ? (
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    {payment ? 'Actualizando...' : 'Creando...'}
+                  </>
                 ) : (
-                  <Save className="h-4 w-4 mr-2" />
+                  <>
+                    <Save className="h-4 w-4 mr-2" />
+                    {payment ? 'Actualizar' : 'Crear'}
+                  </>
                 )}
-                {payment ? 'Actualizar' : 'Crear'} Pago
               </Button>
             </div>
           </form>

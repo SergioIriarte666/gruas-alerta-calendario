@@ -1,3 +1,6 @@
+// Re-export dynamic supplier category type
+export type { SupplierCategory } from '@/hooks/useSupplierCategoryManager';
+
 export interface Supplier {
   id: string;
   name: string;
@@ -6,7 +9,7 @@ export interface Supplier {
   phone: string;
   address: string;
   contact_name: string;
-  category: SupplierCategory;
+  category: string; // Now stores category ID
   notes?: string;
   is_active: boolean;
   created_at: string;
@@ -22,7 +25,7 @@ export interface SupplierPayment {
   due_date: string;
   paid_date?: string;
   description: string;
-  category: SupplierCategory;
+  category: string; // Now stores category ID
   reference_number?: string;
   notes?: string;
   status: SupplierPaymentStatus;
@@ -32,8 +35,6 @@ export interface SupplierPayment {
   created_by?: string;
   updated_by?: string;
 }
-
-export type SupplierCategory = 'combustible' | 'mantenimiento' | 'seguros' | 'peajes' | 'salarios' | 'administrativos' | 'impuestos' | 'comision_operador' | 'otros';
 
 export type SupplierPaymentStatus = 'pending' | 'paid' | 'overdue' | 'cancelled';
 
@@ -55,7 +56,7 @@ export interface SupplierFormData {
   phone: string;
   address: string;
   contact_name: string;
-  category: SupplierCategory;
+  category: string;
   notes?: string;
   is_active: boolean;
 }
@@ -65,7 +66,7 @@ export interface PaymentFormData {
   amount: number;
   due_date: string;
   description: string;
-  category: SupplierCategory;
+  category: string;
   reference_number?: string;
   notes?: string;
   status: SupplierPaymentStatus;
@@ -83,7 +84,7 @@ export interface SupplierStats {
   total_pending_amount: number;
   total_overdue_payments: number;
   total_overdue_amount: number;
-  suppliers_by_category: Record<SupplierCategory, number>;
+  suppliers_by_category: Record<string, number>;
 }
 
 // Tipos para XML parsing de proveedores
@@ -94,7 +95,7 @@ export interface XMLSupplierData {
   phone: string;
   address: string;
   contact_name: string;
-  category: SupplierCategory;
+  category: string;
   notes?: string;
   is_active: boolean;
 }
@@ -143,7 +144,7 @@ export interface XMLSupplierPaymentData {
   amount: number;
   due_date: string;
   description: string;
-  category: SupplierCategory;
+  category: string;
   reference_number: string;
   notes?: string;
   status: SupplierPaymentStatus;
