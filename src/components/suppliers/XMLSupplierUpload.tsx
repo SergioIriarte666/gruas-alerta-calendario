@@ -22,7 +22,7 @@ import {
   Mail
 } from 'lucide-react';
 import { XMLSupplierParser } from '@/utils/xmlParser/xmlSupplierParser';
-import { XMLSupplierData, XMLSupplierParseResult, SupplierCategory } from '@/types/suppliers';
+import { XMLSupplierData, XMLSupplierParseResult } from '@/types/suppliers';
 import { useSuppliers, useSupplierCategories, getCategoryLabel } from '@/hooks/useSuppliers';
 import { toast } from 'sonner';
 

@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Upload, FileText, AlertCircle, CheckCircle, Loader2, X, FileSpreadsheet, Users, Receipt, DollarSign, Calendar, Building } from 'lucide-react';
-import { XMLCompleteParseResult, XMLDocumentData, XMLSupplierData, XMLSupplierPaymentData, SupplierCategory } from '@/types/suppliers';
+import { XMLCompleteParseResult, XMLDocumentData, XMLSupplierData, XMLSupplierPaymentData } from '@/types/suppliers';
 import { useSuppliers, useSupplierCategories, getCategoryLabel } from '@/hooks/useSuppliers';
 import { useSupplierPayments } from '@/hooks/useSupplierPayments';
 import { toast } from 'sonner';

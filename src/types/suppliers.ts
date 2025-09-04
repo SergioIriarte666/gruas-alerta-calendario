@@ -1,5 +1,6 @@
-// Re-export dynamic supplier category type
-export type { SupplierCategory } from '@/hooks/useSupplierCategoryManager';
+// Re-export dynamic supplier category type for components that need the full object
+import type { SupplierCategory as SupplierCategoryObject } from '@/hooks/useSupplierCategoryManager';
+export type { SupplierCategory as SupplierCategoryObject } from '@/hooks/useSupplierCategoryManager';
 
 export interface Supplier {
   id: string;

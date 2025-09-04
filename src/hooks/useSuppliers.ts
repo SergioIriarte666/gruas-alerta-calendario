@@ -1,84 +1,61 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { 
-  Supplier, 
-  SupplierWithStats,
-  SupplierFormData,
-  SupplierCategory 
-} from '@/types/suppliers';
+import { Supplier, SupplierFormData } from '@/types/suppliers';
+
+const fetchSuppliers = async (): Promise<Supplier[]> => {
+  const { data, error } = await supabase
+    .from('suppliers')
+    .select('*')
+    .order('name', { ascending: true });
+
+  if (error) {
+    throw error;
+  }
+
+  return data || [];
+};
 
 export const useSuppliers = () => {
   const queryClient = useQueryClient();
 
-  const suppliersQuery = useQuery({
+  const {
+    data: suppliers = [],
+    isLoading,
+    error
+  } = useQuery({
     queryKey: ['suppliers'],
-    queryFn: async (): Promise<SupplierWithStats[]> => {
-      const { data, error } = await supabase
-        .from('suppliers')
-        .select(`
-          *,
-          supplier_payments(
-            amount,
-            status
-          )
-        `)
-        .order('name');
-
-      if (error) throw error;
-
-      return data.map(supplier => {
-        const payments = supplier.supplier_payments || [];
-        const pendingPayments = payments.filter((p: any) => p.status === 'pending');
-        const paidPayments = payments.filter((p: any) => p.status === 'paid');
-        const overduePayments = payments.filter((p: any) => p.status === 'overdue');
-
-        return {
-          ...supplier,
-          total_payments: payments.length,
-          pending_amount: pendingPayments.reduce((sum: number, p: any) => sum + (p.amount || 0), 0),
-          paid_amount: paidPayments.reduce((sum: number, p: any) => sum + (p.amount || 0), 0),
-          overdue_count: overduePayments.length
-        };
-      });
-    }
+    queryFn: fetchSuppliers,
   });
 
   const createSupplierMutation = useMutation({
-    mutationFn: async (data: SupplierFormData): Promise<Supplier> => {
-      const { data: newSupplier, error } = await supabase
+    mutationFn: async (data: SupplierFormData) => {
+      const { data: result, error } = await supabase
         .from('suppliers')
-        .insert({
-          name: data.name,
-          rut: data.rut,
-          email: data.email,
-          phone: data.phone,
-          address: data.address,
-          contact_name: data.contact_name,
-          category: data.category,
-          notes: data.notes,
-          is_active: data.is_active,
+        .insert([{
+          ...data,
           created_by: (await supabase.auth.getUser()).data.user?.id
-        })
+        }])
         .select()
         .single();
 
       if (error) throw error;
-      return newSupplier;
+      return result;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['suppliers'] });
+      queryClient.invalidateQueries({ queryKey: ['supplier-stats'] });
       toast.success('Proveedor creado exitosamente');
     },
-    onError: (error) => {
+    onError: (error: any) => {
       console.error('Error creating supplier:', error);
-      toast.error('Error al crear proveedor');
-    }
+      toast.error('Error al crear el proveedor');
+    },
   });
 
   const updateSupplierMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: Partial<SupplierFormData> }): Promise<Supplier> => {
-      const { data: updatedSupplier, error } = await supabase
+    mutationFn: async ({ id, data }: { id: string; data: Partial<SupplierFormData> }) => {
+      const { data: result, error } = await supabase
         .from('suppliers')
         .update({
           ...data,
@@ -90,20 +67,21 @@ export const useSuppliers = () => {
         .single();
 
       if (error) throw error;
-      return updatedSupplier;
+      return result;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['suppliers'] });
+      queryClient.invalidateQueries({ queryKey: ['supplier-stats'] });
       toast.success('Proveedor actualizado exitosamente');
     },
-    onError: (error) => {
+    onError: (error: any) => {
       console.error('Error updating supplier:', error);
-      toast.error('Error al actualizar proveedor');
-    }
+      toast.error('Error al actualizar el proveedor');
+    },
   });
 
   const deleteSupplierMutation = useMutation({
-    mutationFn: async (id: string): Promise<void> => {
+    mutationFn: async (id: string) => {
       const { error } = await supabase
         .from('suppliers')
         .delete()
@@ -113,41 +91,56 @@ export const useSuppliers = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['suppliers'] });
+      queryClient.invalidateQueries({ queryKey: ['supplier-stats'] });
       toast.success('Proveedor eliminado exitosamente');
     },
-    onError: (error) => {
+    onError: (error: any) => {
       console.error('Error deleting supplier:', error);
-      toast.error('Error al eliminar proveedor');
-    }
+      toast.error('Error al eliminar el proveedor');
+    },
   });
 
   const toggleSupplierStatusMutation = useMutation({
-    mutationFn: async ({ id, is_active }: { id: string; is_active: boolean }): Promise<void> => {
-      const { error } = await supabase
+    mutationFn: async (id: string) => {
+      // Primero obtener el estado actual
+      const { data: currentSupplier, error: fetchError } = await supabase
+        .from('suppliers')
+        .select('is_active')
+        .eq('id', id)
+        .single();
+
+      if (fetchError) throw fetchError;
+
+      // Cambiar el estado
+      const { data, error } = await supabase
         .from('suppliers')
         .update({ 
-          is_active,
+          is_active: !currentSupplier.is_active,
           updated_by: (await supabase.auth.getUser()).data.user?.id,
           updated_at: new Date().toISOString()
         })
-        .eq('id', id);
+        .eq('id', id)
+        .select()
+        .single();
 
       if (error) throw error;
+      return data;
     },
-    onSuccess: (_, { is_active }) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['suppliers'] });
-      toast.success(`Proveedor ${is_active ? 'activado' : 'desactivado'} exitosamente`);
+      queryClient.invalidateQueries({ queryKey: ['supplier-stats'] });
+      toast.success('Estado del proveedor actualizado');
     },
-    onError: (error) => {
+    onError: (error: any) => {
       console.error('Error toggling supplier status:', error);
-      toast.error('Error al cambiar estado del proveedor');
-    }
+      toast.error('Error al cambiar el estado del proveedor');
+    },
   });
 
   return {
-    suppliers: suppliersQuery.data || [],
-    isLoading: suppliersQuery.isLoading,
-    error: suppliersQuery.error,
+    suppliers,
+    isLoading,
+    error,
     createSupplier: createSupplierMutation.mutate,
     updateSupplier: updateSupplierMutation.mutate,
     deleteSupplier: deleteSupplierMutation.mutate,
@@ -156,35 +149,4 @@ export const useSuppliers = () => {
     isUpdating: updateSupplierMutation.isPending,
     isDeleting: deleteSupplierMutation.isPending
   };
-};
-
-export const useSupplierCategories = (): SupplierCategory[] => {
-  // Mantener compatibilidad con código existente
-  // TODO: Migrar a usar datos dinámicos de la base de datos
-  return [
-    'combustible',
-    'mantenimiento', 
-    'seguros',
-    'peajes',
-    'salarios',
-    'administrativos',
-    'impuestos',
-    'comision_operador',
-    'otros'
-  ];
-};
-
-export const getCategoryLabel = (category: SupplierCategory): string => {
-  const labels: Record<SupplierCategory, string> = {
-    combustible: 'Combustible',
-    mantenimiento: 'Mantenimiento',
-    seguros: 'Seguros',
-    peajes: 'Peajes',
-    salarios: 'Salarios',
-    administrativos: 'Administrativos',
-    impuestos: 'Impuestos',
-    comision_operador: 'Comisión Operador',
-    otros: 'Otros'
-  };
-  return labels[category];
 };
