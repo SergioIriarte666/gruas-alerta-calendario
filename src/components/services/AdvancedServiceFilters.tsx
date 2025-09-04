@@ -245,6 +245,28 @@ export const AdvancedServiceFilters: React.FC<AdvancedServiceFiltersProps> = ({
               />
             </div>
 
+            <h3 className="text-lg font-semibold text-tms-green mt-6">Documentos</h3>
+            
+            <div className="space-y-2">
+              <Label className="text-white">Número de Cotización</Label>
+              <Input
+                placeholder="Filtrar por cotización"
+                value={filters.quoteNumber || ''}
+                onChange={(e) => handleInputChange('quoteNumber', e.target.value)}
+                className="bg-black border-tms-green/30 text-white placeholder-gray-400"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-white">Orden de Compra</Label>
+              <Input
+                placeholder="Filtrar por O.C."
+                value={filters.purchaseOrderNumber || ''}
+                onChange={(e) => handleInputChange('purchaseOrderNumber', e.target.value)}
+                className="bg-black border-tms-green/30 text-white placeholder-gray-400"
+              />
+            </div>
+
             <h3 className="text-lg font-semibold text-tms-green mt-6">Financiero</h3>
             
             <div className="space-y-2">

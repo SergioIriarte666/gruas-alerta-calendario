@@ -252,7 +252,9 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
         return group.services.some(service => 
           service.folio?.toLowerCase().includes(searchLower) ||
           service.serviceType.name?.toLowerCase().includes(searchLower) ||
-          service.quoteNumber?.toLowerCase().includes(searchLower)
+          service.quoteNumber?.toLowerCase().includes(searchLower) ||
+          service.purchaseOrderNumber?.toLowerCase().includes(searchLower) ||
+          service.purchaseOrder?.toLowerCase().includes(searchLower)
         ) && group.services.length > 0;
       });
   }, [services, searchTerm, sortField, sortDirection]);
@@ -372,7 +374,7 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
             <div className="relative flex-1 max-w-md">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
               <Input
-                placeholder="Buscar por folio, tipo de servicio, cotización..."
+                placeholder="Buscar por folio, tipo, cotización, orden de compra..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10 bg-gray-800 border-gray-700 text-white"

@@ -17,6 +17,8 @@ export interface AdvancedFilters {
   vehicleModel?: string;
   licensePlate?: string;
   statuses?: string[];
+  quoteNumber?: string;
+  purchaseOrderNumber?: string;
 }
 
 export const useAdvancedFilters = () => {
@@ -37,7 +39,9 @@ export const useAdvancedFilters = () => {
         service.folio.toLowerCase().includes(basicFilters.searchTerm.toLowerCase()) ||
         (service.client?.name || '').toLowerCase().includes(basicFilters.searchTerm.toLowerCase()) ||
         service.licensePlate.toLowerCase().includes(basicFilters.searchTerm.toLowerCase()) ||
-        service.vehicleBrand.toLowerCase().includes(basicFilters.searchTerm.toLowerCase());
+        service.vehicleBrand.toLowerCase().includes(basicFilters.searchTerm.toLowerCase()) ||
+        (service.quoteNumber || '').toLowerCase().includes(basicFilters.searchTerm.toLowerCase()) ||
+        (service.purchaseOrderNumber || service.purchaseOrder || '').toLowerCase().includes(basicFilters.searchTerm.toLowerCase());
 
       const statusesToFilter = basicFilters.statusFilter === 'all' ? [] : basicFilters.statusFilter.split(',');
       const matchesBasicStatus = basicFilters.statusFilter === 'all' || statusesToFilter.includes(service.status);
@@ -61,6 +65,9 @@ export const useAdvancedFilters = () => {
       if (filters.vehicleBrand && !service.vehicleBrand.toLowerCase().includes(filters.vehicleBrand.toLowerCase())) return false;
       if (filters.vehicleModel && !service.vehicleModel.toLowerCase().includes(filters.vehicleModel.toLowerCase())) return false;
       if (filters.licensePlate && !service.licensePlate.toLowerCase().includes(filters.licensePlate.toLowerCase())) return false;
+      
+      if (filters.quoteNumber && !(service.quoteNumber || '').toLowerCase().includes(filters.quoteNumber.toLowerCase())) return false;
+      if (filters.purchaseOrderNumber && !(service.purchaseOrderNumber || service.purchaseOrder || '').toLowerCase().includes(filters.purchaseOrderNumber.toLowerCase())) return false;
       
       if (filters.statuses && filters.statuses.length > 0 && !filters.statuses.includes(service.status)) return false;
 
