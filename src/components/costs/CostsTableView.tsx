@@ -14,6 +14,8 @@ import { Cost } from '@/types/costs';
 import { Card, CardContent } from '@/components/ui/card';
 import { ServiceDetailsModal } from '@/components/services/ServiceDetailsModal';
 import { useServiceDetails } from '@/hooks/useServiceDetails';
+import { useSupplierCategoryManager } from '@/hooks/useSupplierCategoryManager';
+import { getCategoryLabel } from '@/utils/categoryUtils';
 
 interface CostsTableViewProps {
   costs: Cost[];
@@ -35,6 +37,9 @@ export const CostsTableView = ({ costs, onEdit, onDelete, onViewDetails, loading
   
   // Obtener detalles completos del servicio
   const { data: serviceDetails } = useServiceDetails(selectedServiceId);
+  
+  // Obtener categorías de proveedores para resolver UUIDs
+  const { activeCategories } = useSupplierCategoryManager();
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
@@ -59,10 +64,29 @@ export const CostsTableView = ({ costs, onEdit, onDelete, onViewDetails, loading
     }
   };
 
+  // Función para detectar si una cadena es un UUID
+  const isUUID = (str: string) => {
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    return uuidRegex.test(str);
+  };
+
+  // Función para obtener el nombre legible de la subcategoría
+  const getSubcategoryDisplay = (subcategory: string) => {
+    if (!subcategory) return null;
+    
+    // Si es un UUID, buscar en las categorías de proveedores
+    if (isUUID(subcategory)) {
+      return getCategoryLabel(activeCategories || [], subcategory);
+    }
+    
+    // Si no es UUID, mostrar el valor directamente
+    return subcategory;
+  };
+
   const getCategoryDisplay = (cost: Cost) => {
     const categoryName = cost.cost_categories?.name || 'Sin categoría';
     if (cost.subcategory && categoryName === 'Gastos de Servicios') {
-      return `${categoryName} - ${cost.subcategory}`;
+      return `${categoryName} - ${getSubcategoryDisplay(cost.subcategory)}`;
     }
     return categoryName;
   };
@@ -86,8 +110,8 @@ export const CostsTableView = ({ costs, onEdit, onDelete, onViewDetails, loading
           bValue = getCategoryDisplay(b).toLowerCase();
           break;
         case 'subcategory':
-          aValue = a.subcategory?.toLowerCase() || '';
-          bValue = b.subcategory?.toLowerCase() || '';
+          aValue = (getSubcategoryDisplay(a.subcategory || '') || '').toLowerCase();
+          bValue = (getSubcategoryDisplay(b.subcategory || '') || '').toLowerCase();
           break;
         case 'amount':
           aValue = Number(a.amount);
@@ -212,7 +236,7 @@ export const CostsTableView = ({ costs, onEdit, onDelete, onViewDetails, loading
                       <TableCell>
                         {cost.subcategory && (
                           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200">
-                            {cost.subcategory}
+                            {getSubcategoryDisplay(cost.subcategory)}
                           </span>
                         )}
                       </TableCell>
