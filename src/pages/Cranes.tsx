@@ -23,7 +23,7 @@ const Cranes = () => {
   const ITEMS_PER_PAGE = 10;
 
   const filteredCranes = cranes.filter(crane =>
-    crane.licensePlate.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (crane.licensePlate || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
     crane.brand.toLowerCase().includes(searchTerm.toLowerCase()) ||
     crane.model.toLowerCase().includes(searchTerm.toLowerCase())
   );

@@ -27,7 +27,7 @@ export const useAdvancedFilters = () => {
       const matchesSearch = 
         service.folio.toLowerCase().includes(basicFilters.searchTerm.toLowerCase()) ||
         (service.client?.name || '').toLowerCase().includes(basicFilters.searchTerm.toLowerCase()) ||
-        service.licensePlate.toLowerCase().includes(basicFilters.searchTerm.toLowerCase()) ||
+        (service.licensePlate || '').toLowerCase().includes(basicFilters.searchTerm.toLowerCase()) ||
         service.vehicleBrand.toLowerCase().includes(basicFilters.searchTerm.toLowerCase()) ||
         (service.quoteNumber || '').toLowerCase().includes(basicFilters.searchTerm.toLowerCase()) ||
         (service.purchaseOrderNumber || service.purchaseOrder || '').toLowerCase().includes(basicFilters.searchTerm.toLowerCase()) ||
@@ -40,7 +40,7 @@ export const useAdvancedFilters = () => {
 
       // Apply advanced filters
       if (filters.serviceTypeId && service.serviceType?.id !== filters.serviceTypeId) return false;
-      if (filters.licensePlate && !service.licensePlate.toLowerCase().includes(filters.licensePlate.toLowerCase())) return false;
+      if (filters.licensePlate && !(service.licensePlate || '').toLowerCase().includes(filters.licensePlate.toLowerCase())) return false;
       if (filters.quoteNumber && !(service.quoteNumber || '').toLowerCase().includes(filters.quoteNumber.toLowerCase())) return false;
       if (filters.purchaseOrderNumber && !(service.purchaseOrderNumber || service.purchaseOrder || '').toLowerCase().includes(filters.purchaseOrderNumber.toLowerCase())) return false;
       if (filters.numeroFiscal && !(service.invoiceNumeroFiscal || '').toLowerCase().includes(filters.numeroFiscal.toLowerCase())) return false;
