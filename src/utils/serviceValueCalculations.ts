@@ -18,13 +18,9 @@ export const getServiceValueForClosure = (service: any): number => {
   const custodyTotal = service.custody_total_amount || service.custodyTotalAmount;
   const baseValue = service.value || 0;
   
-  // Para servicios de Arriendo de Equipos, usar SOLO el custodyTotal
+  // Para cualquier servicio con custodia, usar SOLO el custodyTotal
   if (custodyTotal && custodyTotal > 0) {
-    if (isEquipmentRentalService(service)) {
-      return custodyTotal; // Solo el valor de arriendo, sin sumar al baseValue
-    } else {
-      return baseValue + custodyTotal; // Servicios regulares con custodia
-    }
+    return custodyTotal; // Solo el valor de custodia, sin duplicar con baseValue
   }
   
   // Priority 2: Client covered amount for excess services
