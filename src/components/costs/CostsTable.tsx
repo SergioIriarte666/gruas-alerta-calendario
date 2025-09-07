@@ -82,7 +82,12 @@ export const CostsTable = ({ costs, onEdit, onViewDetails }: CostsTableProps) =>
                         ) : (
                             costs.map((cost) => (
                                 <TableRow key={cost.id} className="border-white/20">
-                                    <TableCell className="text-white">{getDisplayDate(cost)}</TableCell>
+                                    <TableCell className="text-white">
+                                        {cost.cost_categories?.name === 'Comisión Operador' && cost.payment_date 
+                                            ? formatForDisplay(parseFromDatabase(cost.payment_date))
+                                            : formatForDisplay(parseFromDatabase(cost.date))
+                                        }
+                                    </TableCell>
                                     <TableCell className="text-white font-medium">{cost.description}</TableCell>
                                     <TableCell className="text-gray-300">{getCategoryDisplay(cost)}</TableCell>
                                     <TableCell className="text-white text-right">${Number(cost.amount).toLocaleString('es-CL')}</TableCell>

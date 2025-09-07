@@ -49,6 +49,7 @@ export const useCosts = () => {
     staleTime: 0, // Always fresh data for reports
     refetchOnWindowFocus: true,
     refetchOnMount: true,
+    refetchInterval: 30000, // Refetch every 30 seconds to ensure fresh data
   });
 };
 
