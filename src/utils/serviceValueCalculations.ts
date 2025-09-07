@@ -49,6 +49,7 @@ export const getCustodyInfo = (service: any) => {
     mode: service.custody_mode || service.custodyMode,
     days: service.custody_days || service.custodyDays,
     dailyRate: service.custody_daily_rate || service.custodyDailyRate,
+    rateType: service.custody_rate_type || service.custodyRateType || 'daily',
     startDate: service.custody_start_date || service.custodyStartDate,
     endDate: service.custody_end_date || service.custodyEndDate,
     vehicleType: service.custody_vehicle_type || service.custodyVehicleType,

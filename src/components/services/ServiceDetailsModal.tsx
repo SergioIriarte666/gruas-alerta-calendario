@@ -268,7 +268,15 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose }: ServiceDetails
                           label={isEquipmentRental ? "Días de Arriendo" : "Días de Custodia"} 
                           value={custodyInfo.days} 
                         />
-                        <DetailItem icon={DollarSign} label="Tarifa Diaria" value={formatCurrency(custodyInfo.dailyRate)} />
+                        <DetailItem 
+                          icon={DollarSign} 
+                          label={
+                            custodyInfo.rateType === 'weekly' ? 'Tarifa Semanal' :
+                            custodyInfo.rateType === 'monthly' ? 'Tarifa Mensual' :
+                            'Tarifa Diaria'
+                          } 
+                          value={formatCurrency(custodyInfo.dailyRate)} 
+                        />
                         {custodyInfo.discountPercentage > 0 && (
                           <DetailItem icon={DollarSign} label="Descuento" value={`${custodyInfo.discountPercentage}%`} />
                         )}
