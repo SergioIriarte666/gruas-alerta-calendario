@@ -4,8 +4,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Commission } from '@/types/commissions';
-import { format } from 'date-fns';
-import { es } from 'date-fns/locale';
+import { formatForDisplay, parseFromDatabase } from '@/utils/timezoneUtils';
 import { ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import { EditPaymentDateDialog } from './EditPaymentDateDialog';
 
@@ -40,7 +39,8 @@ export const CommissionTable: React.FC<CommissionTableProps> = ({
   };
 
   const formatDate = (dateString: string) => {
-    return format(new Date(dateString), 'dd/MM/yyyy', { locale: es });
+    const date = parseFromDatabase(dateString);
+    return formatForDisplay(date);
   };
 
   const getSortIcon = (field: SortField) => {
