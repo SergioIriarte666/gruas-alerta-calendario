@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Shield, Wrench } from 'lucide-react';
+import { calculateCustodyTotal, calculateDaysBetween, isCustodyDataComplete, type CustodyData } from '@/utils/custodyCalculations';
 
 interface CustodySectionProps {
   serviceTypeName?: string;
@@ -63,48 +64,41 @@ export const CustodySection = ({
     }
   }, [isEquipmentRental, custodyMode, onCustodyModeChange]);
 
-  // Cálculo automático para modo manual
+  // Cálculo automático para modo manual usando utility centralizada
   useEffect(() => {
     if (custodyMode === 'manual' && custodyDays && custodyDailyRate) {
-      let dailyRate = custodyDailyRate;
-      
-      // Ajustar tarifa según el tipo seleccionado
-      if (custodyRateType === 'weekly') {
-        dailyRate = custodyDailyRate / 7;
-      } else if (custodyRateType === 'monthly') {
-        dailyRate = custodyDailyRate / 30;
+      const custodyData: CustodyData = {
+        mode: 'manual',
+        originalRate: custodyDailyRate,
+        rateType: (custodyRateType as 'daily' | 'weekly' | 'monthly') || 'daily',
+        days: custodyDays,
+        discountPercentage: custodyDiscountPercentage || 0
+      };
+
+      if (isCustodyDataComplete(custodyData)) {
+        const result = calculateCustodyTotal(custodyData);
+        onCustodyTotalAmountChange?.(result.total);
       }
-      
-      const subtotal = custodyDays * dailyRate;
-      const discount = (subtotal * (custodyDiscountPercentage || 0)) / 100;
-      const total = subtotal - discount;
-      onCustodyTotalAmountChange?.(total);
     }
   }, [custodyDays, custodyDailyRate, custodyRateType, custodyDiscountPercentage, custodyMode, onCustodyTotalAmountChange]);
 
-  // Cálculo automático para modo calendario
+  // Cálculo automático para modo calendario usando utility centralizada
   useEffect(() => {
     if (custodyMode === 'calendar' && custodyStartDate && custodyEndDate && custodyDailyRate) {
-      const start = new Date(custodyStartDate);
-      const end = new Date(custodyEndDate);
-      const diffTime = Math.abs(end.getTime() - start.getTime());
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
-      
-      onCustodyDaysChange?.(diffDays);
-      
-      let dailyRate = custodyDailyRate;
-      
-      // Ajustar tarifa según el tipo seleccionado
-      if (custodyRateType === 'weekly') {
-        dailyRate = custodyDailyRate / 7;
-      } else if (custodyRateType === 'monthly') {
-        dailyRate = custodyDailyRate / 30;
+      const custodyData: CustodyData = {
+        mode: 'calendar',
+        originalRate: custodyDailyRate,
+        rateType: (custodyRateType as 'daily' | 'weekly' | 'monthly') || 'daily',
+        startDate: custodyStartDate,
+        endDate: custodyEndDate,
+        discountPercentage: custodyDiscountPercentage || 0
+      };
+
+      if (isCustodyDataComplete(custodyData)) {
+        const result = calculateCustodyTotal(custodyData);
+        onCustodyDaysChange?.(result.totalDays);
+        onCustodyTotalAmountChange?.(result.total);
       }
-      
-      const subtotal = diffDays * dailyRate;
-      const discount = (subtotal * (custodyDiscountPercentage || 0)) / 100;
-      const total = subtotal - discount;
-      onCustodyTotalAmountChange?.(total);
     }
   }, [custodyStartDate, custodyEndDate, custodyDailyRate, custodyRateType, custodyDiscountPercentage, custodyMode, onCustodyDaysChange, onCustodyTotalAmountChange]);
 
