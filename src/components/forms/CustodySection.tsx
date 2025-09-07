@@ -11,6 +11,7 @@ interface CustodySectionProps {
   custodyMode?: string;
   custodyDays?: number;
   custodyDailyRate?: number;
+  custodyRateType?: string;
   custodyStartDate?: string;
   custodyEndDate?: string;
   custodyVehicleType?: string;
@@ -20,6 +21,7 @@ interface CustodySectionProps {
   onCustodyModeChange?: (value: string) => void;
   onCustodyDaysChange?: (value: number) => void;
   onCustodyDailyRateChange?: (value: number) => void;
+  onCustodyRateTypeChange?: (value: string) => void;
   onCustodyStartDateChange?: (value: string) => void;
   onCustodyEndDateChange?: (value: string) => void;
   onCustodyVehicleTypeChange?: (value: string) => void;
@@ -33,6 +35,7 @@ export const CustodySection = ({
   custodyMode,
   custodyDays,
   custodyDailyRate,
+  custodyRateType,
   custodyStartDate,
   custodyEndDate,
   custodyVehicleType,
@@ -42,6 +45,7 @@ export const CustodySection = ({
   onCustodyModeChange,
   onCustodyDaysChange,
   onCustodyDailyRateChange,
+  onCustodyRateTypeChange,
   onCustodyStartDateChange,
   onCustodyEndDateChange,
   onCustodyVehicleTypeChange,
@@ -62,12 +66,21 @@ export const CustodySection = ({
   // Cálculo automático para modo manual
   useEffect(() => {
     if (custodyMode === 'manual' && custodyDays && custodyDailyRate) {
-      const subtotal = custodyDays * custodyDailyRate;
+      let dailyRate = custodyDailyRate;
+      
+      // Ajustar tarifa según el tipo seleccionado
+      if (custodyRateType === 'weekly') {
+        dailyRate = custodyDailyRate / 7;
+      } else if (custodyRateType === 'monthly') {
+        dailyRate = custodyDailyRate / 30;
+      }
+      
+      const subtotal = custodyDays * dailyRate;
       const discount = (subtotal * (custodyDiscountPercentage || 0)) / 100;
       const total = subtotal - discount;
       onCustodyTotalAmountChange?.(total);
     }
-  }, [custodyDays, custodyDailyRate, custodyDiscountPercentage, custodyMode, onCustodyTotalAmountChange]);
+  }, [custodyDays, custodyDailyRate, custodyRateType, custodyDiscountPercentage, custodyMode, onCustodyTotalAmountChange]);
 
   // Cálculo automático para modo calendario
   useEffect(() => {
@@ -79,12 +92,21 @@ export const CustodySection = ({
       
       onCustodyDaysChange?.(diffDays);
       
-      const subtotal = diffDays * custodyDailyRate;
+      let dailyRate = custodyDailyRate;
+      
+      // Ajustar tarifa según el tipo seleccionado
+      if (custodyRateType === 'weekly') {
+        dailyRate = custodyDailyRate / 7;
+      } else if (custodyRateType === 'monthly') {
+        dailyRate = custodyDailyRate / 30;
+      }
+      
+      const subtotal = diffDays * dailyRate;
       const discount = (subtotal * (custodyDiscountPercentage || 0)) / 100;
       const total = subtotal - discount;
       onCustodyTotalAmountChange?.(total);
     }
-  }, [custodyStartDate, custodyEndDate, custodyDailyRate, custodyDiscountPercentage, custodyMode, onCustodyDaysChange, onCustodyTotalAmountChange]);
+  }, [custodyStartDate, custodyEndDate, custodyDailyRate, custodyRateType, custodyDiscountPercentage, custodyMode, onCustodyDaysChange, onCustodyTotalAmountChange]);
 
   // Si es "none" y no es arriendo de equipos, no mostrar
   if (custodyMode === 'none' && !isEquipmentRental) return null;
@@ -157,49 +179,99 @@ export const CustodySection = ({
             </div>
 
             <div>
-              <Label htmlFor="custodyDailyRate">Tarifa Diaria</Label>
+              <Label htmlFor="custodyRateType">Tipo de Tarifa</Label>
+              <Select 
+                onValueChange={(value) => onCustodyRateTypeChange?.(value)} 
+                value={custodyRateType || 'daily'}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Seleccionar tipo" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="daily">Tarifa Diaria</SelectItem>
+                  <SelectItem value="weekly">Tarifa Semanal</SelectItem>
+                  <SelectItem value="monthly">Tarifa Mensual</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label htmlFor="custodyDailyRate">
+                {custodyRateType === 'weekly' ? 'Tarifa Semanal' : 
+                 custodyRateType === 'monthly' ? 'Tarifa Mensual' : 'Tarifa Diaria'}
+              </Label>
               <Input
                 type="number"
                 value={custodyDailyRate || ''}
                 onChange={(e) => onCustodyDailyRateChange?.(parseFloat(e.target.value) || 0)}
-                placeholder="Tarifa por día"
+                placeholder={
+                  custodyRateType === 'weekly' ? 'Tarifa por semana' : 
+                  custodyRateType === 'monthly' ? 'Tarifa por mes' : 'Tarifa por día'
+                }
               />
             </div>
           </div>
         )}
 
         {custodyMode === 'calendar' && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <Label htmlFor="custodyStartDate">
-                {isEquipmentRental ? 'Fecha de Inicio del Arriendo' : 'Fecha de Inicio'}
-              </Label>
-              <Input
-                type="date"
-                value={custodyStartDate || ''}
-                onChange={(e) => onCustodyStartDateChange?.(e.target.value)}
-              />
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="custodyStartDate">
+                  {isEquipmentRental ? 'Fecha de Inicio del Arriendo' : 'Fecha de Inicio'}
+                </Label>
+                <Input
+                  type="date"
+                  value={custodyStartDate || ''}
+                  onChange={(e) => onCustodyStartDateChange?.(e.target.value)}
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="custodyEndDate">
+                  {isEquipmentRental ? 'Fecha de Fin del Arriendo' : 'Fecha de Fin'}
+                </Label>
+                <Input
+                  type="date"
+                  value={custodyEndDate || ''}
+                  onChange={(e) => onCustodyEndDateChange?.(e.target.value)}
+                />
+              </div>
             </div>
 
-            <div>
-              <Label htmlFor="custodyEndDate">
-                {isEquipmentRental ? 'Fecha de Fin del Arriendo' : 'Fecha de Fin'}
-              </Label>
-              <Input
-                type="date"
-                value={custodyEndDate || ''}
-                onChange={(e) => onCustodyEndDateChange?.(e.target.value)}
-              />
-            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="custodyRateType">Tipo de Tarifa</Label>
+                <Select 
+                  onValueChange={(value) => onCustodyRateTypeChange?.(value)} 
+                  value={custodyRateType || 'daily'}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccionar tipo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="daily">Tarifa Diaria</SelectItem>
+                    <SelectItem value="weekly">Tarifa Semanal</SelectItem>
+                    <SelectItem value="monthly">Tarifa Mensual</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
 
-            <div>
-              <Label htmlFor="custodyDailyRate">Tarifa Diaria</Label>
-              <Input
-                type="number"
-                value={custodyDailyRate || ''}
-                onChange={(e) => onCustodyDailyRateChange?.(parseFloat(e.target.value) || 0)}
-                placeholder="Tarifa por día"
-              />
+              <div>
+                <Label htmlFor="custodyDailyRate">
+                  {custodyRateType === 'weekly' ? 'Tarifa Semanal' : 
+                   custodyRateType === 'monthly' ? 'Tarifa Mensual' : 'Tarifa Diaria'}
+                </Label>
+                <Input
+                  type="number"
+                  value={custodyDailyRate || ''}
+                  onChange={(e) => onCustodyDailyRateChange?.(parseFloat(e.target.value) || 0)}
+                  placeholder={
+                    custodyRateType === 'weekly' ? 'Tarifa por semana' : 
+                    custodyRateType === 'monthly' ? 'Tarifa por mes' : 'Tarifa por día'
+                  }
+                />
+              </div>
             </div>
           </div>
         )}

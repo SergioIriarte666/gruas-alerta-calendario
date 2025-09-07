@@ -87,6 +87,7 @@ export const EnhancedServiceForm = ({
     custodyMode: service?.custodyMode || (service as any)?.custody_mode || 'none',
     custodyDays: service?.custodyDays || (service as any)?.custody_days || undefined,
     custodyDailyRate: service?.custodyDailyRate || (service as any)?.custody_daily_rate || undefined,
+    custodyRateType: (service as any)?.custodyRateType || (service as any)?.custody_rate_type || 'daily',
     custodyStartDate: service?.custodyStartDate || (service as any)?.custody_start_date || '',
     custodyEndDate: service?.custodyEndDate || (service as any)?.custody_end_date || '',
     custodyVehicleType: service?.custodyVehicleType || (service as any)?.custody_vehicle_type || '',
@@ -150,6 +151,7 @@ export const EnhancedServiceForm = ({
         custodyMode: enhancedService.custodyMode || enhancedService.custody_mode || prev.custodyMode,
         custodyDays: enhancedService.custodyDays || enhancedService.custody_days || prev.custodyDays,
         custodyDailyRate: enhancedService.custodyDailyRate || enhancedService.custody_daily_rate || prev.custodyDailyRate,
+        custodyRateType: enhancedService.custodyRateType || enhancedService.custody_rate_type || prev.custodyRateType,
         custodyStartDate: enhancedService.custodyStartDate || enhancedService.custody_start_date || prev.custodyStartDate,
         custodyEndDate: enhancedService.custodyEndDate || enhancedService.custody_end_date || prev.custodyEndDate,
         custodyVehicleType: enhancedService.custodyVehicleType || enhancedService.custody_vehicle_type || prev.custodyVehicleType,
@@ -198,6 +200,7 @@ export const EnhancedServiceForm = ({
         custodyMode: service.custodyMode || (service as any)?.custody_mode || 'none',
         custodyDays: service.custodyDays || (service as any)?.custody_days || undefined,
         custodyDailyRate: service.custodyDailyRate || (service as any)?.custody_daily_rate || undefined,
+        custodyRateType: (service as any)?.custodyRateType || (service as any)?.custody_rate_type || 'daily',
         custodyStartDate: service.custodyStartDate || (service as any)?.custody_start_date || '',
         custodyEndDate: service.custodyEndDate || (service as any)?.custody_end_date || '',
         custodyVehicleType: service.custodyVehicleType || (service as any)?.custody_vehicle_type || '',
@@ -224,12 +227,21 @@ export const EnhancedServiceForm = ({
   // Custody calculations - Manual mode
   useEffect(() => {
     if (formData.custodyMode === 'manual' && formData.custodyDays && formData.custodyDailyRate) {
-      const subtotal = formData.custodyDays * formData.custodyDailyRate;
+      let dailyRate = formData.custodyDailyRate;
+      
+      // Ajustar tarifa según el tipo seleccionado
+      if (formData.custodyRateType === 'weekly') {
+        dailyRate = formData.custodyDailyRate / 7;
+      } else if (formData.custodyRateType === 'monthly') {
+        dailyRate = formData.custodyDailyRate / 30;
+      }
+      
+      const subtotal = formData.custodyDays * dailyRate;
       const discount = (subtotal * (formData.custodyDiscountPercentage || 0)) / 100;
       const total = subtotal - discount;
       setFormData(prev => ({ ...prev, custodyTotalAmount: total }));
     }
-  }, [formData.custodyDays, formData.custodyDailyRate, formData.custodyDiscountPercentage, formData.custodyMode]);
+  }, [formData.custodyDays, formData.custodyDailyRate, formData.custodyRateType, formData.custodyDiscountPercentage, formData.custodyMode]);
 
   // Custody calculations - Calendar mode
   useEffect(() => {
@@ -239,7 +251,16 @@ export const EnhancedServiceForm = ({
       const diffTime = Math.abs(end.getTime() - start.getTime());
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
       
-      const subtotal = diffDays * formData.custodyDailyRate;
+      let dailyRate = formData.custodyDailyRate;
+      
+      // Ajustar tarifa según el tipo seleccionado
+      if (formData.custodyRateType === 'weekly') {
+        dailyRate = formData.custodyDailyRate / 7;
+      } else if (formData.custodyRateType === 'monthly') {
+        dailyRate = formData.custodyDailyRate / 30;
+      }
+      
+      const subtotal = diffDays * dailyRate;
       const discount = (subtotal * (formData.custodyDiscountPercentage || 0)) / 100;
       const total = subtotal - discount;
       
@@ -249,7 +270,7 @@ export const EnhancedServiceForm = ({
         custodyTotalAmount: total 
       }));
     }
-  }, [formData.custodyStartDate, formData.custodyEndDate, formData.custodyDailyRate, formData.custodyDiscountPercentage, formData.custodyMode]);
+  }, [formData.custodyStartDate, formData.custodyEndDate, formData.custodyDailyRate, formData.custodyRateType, formData.custodyDiscountPercentage, formData.custodyMode]);
 
   // Sync custody total amount with main service value for rental equipment
   useEffect(() => {
@@ -541,6 +562,7 @@ export const EnhancedServiceForm = ({
             custodyMode={formData.custodyMode}
             custodyDays={formData.custodyDays}
             custodyDailyRate={formData.custodyDailyRate}
+            custodyRateType={formData.custodyRateType}
             custodyStartDate={formData.custodyStartDate}
             custodyEndDate={formData.custodyEndDate}
             custodyVehicleType={formData.custodyVehicleType}
@@ -550,6 +572,7 @@ export const EnhancedServiceForm = ({
             onCustodyModeChange={(value) => setFormData(prev => ({ ...prev, custodyMode: value }))}
             onCustodyDaysChange={(value) => setFormData(prev => ({ ...prev, custodyDays: value }))}
             onCustodyDailyRateChange={(value) => setFormData(prev => ({ ...prev, custodyDailyRate: value }))}
+            onCustodyRateTypeChange={(value) => setFormData(prev => ({ ...prev, custodyRateType: value }))}
             onCustodyStartDateChange={(value) => setFormData(prev => ({ ...prev, custodyStartDate: value }))}
             onCustodyEndDateChange={(value) => setFormData(prev => ({ ...prev, custodyEndDate: value }))}
             onCustodyVehicleTypeChange={(value) => setFormData(prev => ({ ...prev, custodyVehicleType: value }))}
