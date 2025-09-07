@@ -5,6 +5,7 @@ import { Cost, CostFormData, PartsExpenseData } from '@/types/costs';
 import { toast } from 'sonner';
 
 const fetchCosts = async (): Promise<Cost[]> => {
+  console.log('🔄 Fetching costs from database...');
   const { data, error } = await supabase
     .from('costs')
     .select(`
@@ -57,6 +58,18 @@ const fetchCosts = async (): Promise<Cost[]> => {
     console.error('Error fetching costs:', error);
     throw new Error(error.message);
   }
+
+  console.log('✅ Costs fetched:', data?.length || 0);
+  
+  // Log comisiones específicamente
+  const commissions = (data as any[])?.filter(cost => 
+    cost.cost_categories?.name === 'Comisión Operador'
+  ) || [];
+  
+  console.log('🎯 Comisiones encontradas:', commissions.length);
+  commissions.forEach(comm => {
+    console.log(`📊 Comisión ${comm.id.substring(0,8)}: date=${comm.date}, payment_date=${comm.payment_date}, subcategory=${comm.subcategory}`);
+  });
 
   return (data as any) || [];
 };
