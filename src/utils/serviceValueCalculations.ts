@@ -45,11 +45,24 @@ export const isCustodyService = (service: any): boolean => {
  */
 export const getCustodyInfo = (service: any) => {
   if (!isCustodyService(service)) return null;
+  
+  const dailyRate = service.custody_daily_rate || service.custodyDailyRate || 0;
+  const rateType = service.custody_rate_type || service.custodyRateType || 'daily';
+  
+  // Calculate original rate based on rate type
+  let originalRate = dailyRate;
+  if (rateType === 'weekly') {
+    originalRate = dailyRate * 7;
+  } else if (rateType === 'monthly') {
+    originalRate = dailyRate * 30;
+  }
+  
   return {
     mode: service.custody_mode || service.custodyMode,
     days: service.custody_days || service.custodyDays,
-    dailyRate: service.custody_daily_rate || service.custodyDailyRate,
-    rateType: service.custody_rate_type || service.custodyRateType || 'daily',
+    dailyRate: dailyRate,
+    originalRate: originalRate, // The original rate configured by user
+    rateType: rateType,
     startDate: service.custody_start_date || service.custodyStartDate,
     endDate: service.custody_end_date || service.custodyEndDate,
     vehicleType: service.custody_vehicle_type || service.custodyVehicleType,

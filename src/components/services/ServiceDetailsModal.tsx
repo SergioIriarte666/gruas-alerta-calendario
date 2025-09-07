@@ -275,7 +275,7 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose }: ServiceDetails
                             custodyInfo.rateType === 'monthly' ? 'Tarifa Mensual' :
                             'Tarifa Diaria'
                           } 
-                          value={formatCurrency(custodyInfo.dailyRate)} 
+                          value={formatCurrency(custodyInfo.originalRate)}
                         />
                         {custodyInfo.discountPercentage > 0 && (
                           <DetailItem icon={DollarSign} label="Descuento" value={`${custodyInfo.discountPercentage}%`} />

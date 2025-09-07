@@ -2463,6 +2463,7 @@ export type Database = {
           custody_end_date: string | null
           custody_mode: string | null
           custody_notes: string | null
+          custody_rate_type: string | null
           custody_start_date: string | null
           custody_total_amount: number | null
           custody_vehicle_type: string | null
@@ -2502,6 +2503,7 @@ export type Database = {
           custody_end_date?: string | null
           custody_mode?: string | null
           custody_notes?: string | null
+          custody_rate_type?: string | null
           custody_start_date?: string | null
           custody_total_amount?: number | null
           custody_vehicle_type?: string | null
@@ -2541,6 +2543,7 @@ export type Database = {
           custody_end_date?: string | null
           custody_mode?: string | null
           custody_notes?: string | null
+          custody_rate_type?: string | null
           custody_start_date?: string | null
           custody_total_amount?: number | null
           custody_vehicle_type?: string | null
