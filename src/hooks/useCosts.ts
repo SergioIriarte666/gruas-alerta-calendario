@@ -30,6 +30,7 @@ const fetchCosts = async (): Promise<Cost[]> => {
         notes
       )
     `)
+    .order('payment_date', { ascending: false, nullsFirst: false })
     .order('date', { ascending: false })
     .order('created_at', { ascending: false });
 

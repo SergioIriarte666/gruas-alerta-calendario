@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { formatForDatabase } from '@/utils/timezoneUtils';
 
 interface UpdateCommissionPaymentDateParams {
   commissionIds: string[];
@@ -21,7 +22,7 @@ export const useCommissionPayments = () => {
 
       const { data, error } = await supabase.rpc('update_commission_payment_date', {
         p_commission_ids: commissionIds,
-        p_payment_date: paymentDate.toISOString().split('T')[0], // YYYY-MM-DD format
+        p_payment_date: formatForDatabase(paymentDate), // Usar utilidad de zona horaria
         p_payment_batch_id: paymentBatchId
       });
 
