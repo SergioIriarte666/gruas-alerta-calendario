@@ -3,6 +3,8 @@ import { Database } from "@/integrations/supabase/types";
 export type CostCategory = Database['public']['Tables']['cost_categories']['Row'];
 
 export type Cost = Database['public']['Tables']['costs']['Row'] & {
+  payment_date?: string | null;  // Agregar explícitamente para claridad
+  payment_batch_id?: string | null;  // Agregar explícitamente para claridad
   cost_categories: CostCategory;
   cranes: Database['public']['Tables']['cranes']['Row'] | null;
   operators: Database['public']['Tables']['operators']['Row'] | null;

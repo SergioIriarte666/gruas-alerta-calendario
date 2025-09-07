@@ -47,13 +47,23 @@ export const CostsTable = ({ costs, onEdit, onViewDetails }: CostsTableProps) =>
     }
 
     const getDisplayDate = (cost: Cost) => {
+        console.log('Cost data:', { 
+            id: cost.id,
+            categoryName: cost.cost_categories?.name, 
+            paymentDate: cost.payment_date, 
+            originalDate: cost.date,
+            subcategory: cost.subcategory
+        });
+        
         // Para comisiones pagadas, mostrar la fecha de pago
         if (cost.cost_categories?.name === 'Comisión Operador' && cost.payment_date) {
+            console.log('Using payment date for commission:', cost.payment_date);
             const paymentDate = parseFromDatabase(cost.payment_date);
             return formatForDisplay(paymentDate);
         }
         
         // Para otros costos, mostrar la fecha original
+        console.log('Using original date:', cost.date);
         const originalDate = parseFromDatabase(cost.date);
         return formatForDisplay(originalDate);
     }
