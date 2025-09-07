@@ -10,6 +10,7 @@ import { CreatePaymentBatchDialog } from '@/components/commissions/CreatePayment
 import { CommissionExportButton } from '@/components/commissions/CommissionExportButton';
 import { CommissionFiltersComponent } from '@/components/commissions/CommissionFilters';
 import { CommissionTable, SortField, SortDirection } from '@/components/commissions/CommissionTable';
+import { EditPaymentDateDialog } from '@/components/commissions/EditPaymentDateDialog';
 import { Commission, CommissionFilters } from '@/types/commissions';
 import { Checkbox } from '@/components/ui/checkbox';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
@@ -439,7 +440,7 @@ const Commissions = () => {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle>Todas las Comisiones</CardTitle>
-              <div className="flex items-center gap-2">
+               <div className="flex items-center gap-2">
                 <CommissionExportButton
                   commissions={filteredCommissions}
                   filters={filters}
@@ -447,16 +448,40 @@ const Commissions = () => {
                   variant="outline"
                 />
                 {selectedCommissions.length > 0 && (
-                  <CreatePaymentBatchDialog
-                    selectedCommissions={selectedCommissions}
-                    commissions={filteredCommissions.filter(c => c.status === 'pending')}
-                    onSuccess={handleCreatePaymentBatch}
-                    trigger={
-                      <Button>
-                        Crear Lote de Pago ({selectedCommissions.length})
-                      </Button>
-                    }
-                  />
+                  <>
+                    {/* Botón para crear lote de pago - solo comisiones pendientes */}
+                    {filteredCommissions.filter(c => 
+                      c.status === 'pending' && selectedCommissions.includes(c.id)
+                    ).length > 0 && (
+                      <CreatePaymentBatchDialog
+                        selectedCommissions={selectedCommissions}
+                        commissions={filteredCommissions.filter(c => c.status === 'pending')}
+                        onSuccess={handleCreatePaymentBatch}
+                        trigger={
+                          <Button>
+                            Crear Lote de Pago ({filteredCommissions.filter(c => 
+                              c.status === 'pending' && selectedCommissions.includes(c.id)
+                            ).length})
+                          </Button>
+                        }
+                      />
+                    )}
+                    
+                    {/* Botón para editar fechas de pago - solo comisiones pagadas */}
+                    {filteredCommissions.filter(c => 
+                      c.status === 'paid' && selectedCommissions.includes(c.id)
+                    ).length > 0 && (
+                      <EditPaymentDateDialog
+                        commissions={filteredCommissions.filter(c => 
+                          c.status === 'paid' && selectedCommissions.includes(c.id)
+                        )}
+                        onSuccess={() => {
+                          queryClient.invalidateQueries({ queryKey: ['commissions'] });
+                          setSelectedCommissions([]);
+                        }}
+                      />
+                    )}
+                  </>
                 )}
               </div>
             </CardHeader>
@@ -473,6 +498,7 @@ const Commissions = () => {
                   sortField={sortField}
                   sortDirection={sortDirection}
                   onSort={handleSort}
+                  onPaymentDateUpdated={() => queryClient.invalidateQueries({ queryKey: ['commissions'] })}
                 />
               )}
             </CardContent>
@@ -558,6 +584,7 @@ const Commissions = () => {
                       sortField={sortField}
                       sortDirection={sortDirection}
                       onSort={handleSort}
+                      onPaymentDateUpdated={() => queryClient.invalidateQueries({ queryKey: ['commissions'] })}
                     />
                   </CardContent>
                 </Card>

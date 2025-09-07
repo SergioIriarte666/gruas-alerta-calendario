@@ -7,6 +7,7 @@ import { Commission } from '@/types/commissions';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
+import { EditPaymentDateDialog } from './EditPaymentDateDialog';
 
 export type SortField = 'status' | 'folio' | 'service_date' | 'client_name' | 'operator_name' | 'service_value' | 'amount' | 'commission_percentage' | 'created_at' | 'payment_date';
 export type SortDirection = 'asc' | 'desc' | null;
@@ -18,6 +19,7 @@ interface CommissionTableProps {
   sortField: SortField | null;
   sortDirection: SortDirection;
   onSort: (field: SortField) => void;
+  onPaymentDateUpdated?: () => void;
 }
 
 export const CommissionTable: React.FC<CommissionTableProps> = ({
@@ -26,7 +28,8 @@ export const CommissionTable: React.FC<CommissionTableProps> = ({
   onToggleCommission,
   sortField,
   sortDirection,
-  onSort
+  onSort,
+  onPaymentDateUpdated
 }) => {
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('es-CL', {
@@ -110,6 +113,7 @@ export const CommissionTable: React.FC<CommissionTableProps> = ({
             <TableHead>
               <SortButton field="payment_date">Fecha Pago</SortButton>
             </TableHead>
+            <TableHead className="w-32">Acciones</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -159,6 +163,14 @@ export const CommissionTable: React.FC<CommissionTableProps> = ({
                   </span>
                 ) : (
                   <span className="text-muted-foreground">-</span>
+                )}
+              </TableCell>
+              <TableCell>
+                {commission.status === 'paid' && (
+                  <EditPaymentDateDialog
+                    commissions={[commission]}
+                    onSuccess={onPaymentDateUpdated}
+                  />
                 )}
               </TableCell>
             </TableRow>
