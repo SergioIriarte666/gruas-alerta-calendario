@@ -227,16 +227,17 @@ export const EnhancedServiceForm = ({
   // Custody calculations - Manual mode
   useEffect(() => {
     if (formData.custodyMode === 'manual' && formData.custodyDays && formData.custodyDailyRate) {
-      let dailyRate = formData.custodyDailyRate;
+      let effectiveDailyRate = formData.custodyDailyRate;
       
-      // Ajustar tarifa según el tipo seleccionado
+      // Calcular tarifa diaria efectiva para el cálculo SOLAMENTE
       if (formData.custodyRateType === 'weekly') {
-        dailyRate = formData.custodyDailyRate / 7;
+        effectiveDailyRate = formData.custodyDailyRate / 7;
       } else if (formData.custodyRateType === 'monthly') {
-        dailyRate = formData.custodyDailyRate / 30;
+        effectiveDailyRate = formData.custodyDailyRate / 30;
       }
+      // Si es 'daily', usar la tarifa tal como está
       
-      const subtotal = formData.custodyDays * dailyRate;
+      const subtotal = formData.custodyDays * effectiveDailyRate;
       const discount = (subtotal * (formData.custodyDiscountPercentage || 0)) / 100;
       const total = subtotal - discount;
       setFormData(prev => ({ ...prev, custodyTotalAmount: total }));
@@ -251,16 +252,17 @@ export const EnhancedServiceForm = ({
       const diffTime = Math.abs(end.getTime() - start.getTime());
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
       
-      let dailyRate = formData.custodyDailyRate;
+      let effectiveDailyRate = formData.custodyDailyRate;
       
-      // Ajustar tarifa según el tipo seleccionado
+      // Calcular tarifa diaria efectiva para el cálculo SOLAMENTE
       if (formData.custodyRateType === 'weekly') {
-        dailyRate = formData.custodyDailyRate / 7;
+        effectiveDailyRate = formData.custodyDailyRate / 7;
       } else if (formData.custodyRateType === 'monthly') {
-        dailyRate = formData.custodyDailyRate / 30;
+        effectiveDailyRate = formData.custodyDailyRate / 30;
       }
+      // Si es 'daily', usar la tarifa tal como está
       
-      const subtotal = diffDays * dailyRate;
+      const subtotal = diffDays * effectiveDailyRate;
       const discount = (subtotal * (formData.custodyDiscountPercentage || 0)) / 100;
       const total = subtotal - discount;
       
