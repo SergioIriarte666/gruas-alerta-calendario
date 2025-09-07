@@ -117,7 +117,14 @@ export const CreatePaymentBatchDialog: React.FC<CreatePaymentBatchDialogProps> =
                 <Calendar
                   mode="single"
                   selected={paymentDate}
-                  onSelect={(date) => date && setPaymentDate(date)}
+                  onSelect={(date) => {
+                    if (date) {
+                      // Usar utilidades de fecha para mantener el día exacto seleccionado
+                      const dateString = formatForInput(date);
+                      const localDate = parseFromInput(dateString);
+                      setPaymentDate(localDate);
+                    }
+                  }}
                   initialFocus
                   className={cn("p-3 pointer-events-auto")}
                 />
