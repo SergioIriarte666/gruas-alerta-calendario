@@ -5,7 +5,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { CalendarIcon } from 'lucide-react';
+import { format } from 'date-fns';
 import { Commission, PAYMENT_METHODS } from '@/types/commissions';
+import { formatForInput, parseFromInput, formatForDisplay, getCurrentChileDate } from '@/utils/timezoneUtils';
+import { cn } from '@/lib/utils';
 
 interface CreatePaymentBatchDialogProps {
   selectedCommissions: string[];
@@ -16,6 +22,7 @@ interface CreatePaymentBatchDialogProps {
     payment_method?: string;
     payment_reference?: string;
     notes?: string;
+    payment_date: Date;
   }) => void;
   trigger: React.ReactNode;
 }
@@ -29,6 +36,7 @@ export const CreatePaymentBatchDialog: React.FC<CreatePaymentBatchDialogProps> =
   const [paymentMethod, setPaymentMethod] = useState<string>('');
   const [paymentReference, setPaymentReference] = useState('');
   const [notes, setNotes] = useState('');
+  const [paymentDate, setPaymentDate] = useState<Date>(getCurrentChileDate());
   const [isOpen, setIsOpen] = useState(false);
 
   const selectedCommissionObjects = commissions.filter(c => selectedCommissions.includes(c.id));
@@ -53,6 +61,7 @@ export const CreatePaymentBatchDialog: React.FC<CreatePaymentBatchDialogProps> =
       payment_method: paymentMethod || undefined,
       payment_reference: paymentReference || undefined,
       notes: notes || undefined,
+      payment_date: paymentDate,
     });
     
     setIsOpen(false);
@@ -61,6 +70,7 @@ export const CreatePaymentBatchDialog: React.FC<CreatePaymentBatchDialogProps> =
     setPaymentMethod('');
     setPaymentReference('');
     setNotes('');
+    setPaymentDate(getCurrentChileDate());
   };
 
   return (
@@ -88,6 +98,33 @@ export const CreatePaymentBatchDialog: React.FC<CreatePaymentBatchDialogProps> =
             <Input value={formatCurrency(totalAmount)} disabled />
           </div>
           
+          <div className="space-y-2">
+            <Label>Fecha de Pago</Label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "w-full justify-start text-left font-normal",
+                    !paymentDate && "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {paymentDate ? formatForDisplay(paymentDate) : "Seleccionar fecha"}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={paymentDate}
+                  onSelect={(date) => date && setPaymentDate(date)}
+                  initialFocus
+                  className={cn("p-3 pointer-events-auto")}
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
+
           <div className="space-y-2">
             <Label htmlFor="payment_method">Método de Pago</Label>
             <Select value={paymentMethod || "none"} onValueChange={(value) => setPaymentMethod(value === "none" ? "" : value)}>

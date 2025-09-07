@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { formatForDatabase } from '@/utils/timezoneUtils';
 
 interface CreatePaymentBatchData {
   operator_id: string;
@@ -7,6 +8,7 @@ interface CreatePaymentBatchData {
   payment_method?: string;
   payment_reference?: string;
   notes?: string;
+  payment_date: Date;
 }
 
 const createPaymentBatch = async (data: CreatePaymentBatchData) => {
@@ -38,16 +40,16 @@ const createPaymentBatch = async (data: CreatePaymentBatchData) => {
     commission_ids: data.commission_ids
   };
   
-  // Marcar comisiones como pagadas según la documentación
-  const currentDate = new Date().toISOString().split('T')[0]; // Fecha actual en formato YYYY-MM-DD
+  // Marcar comisiones como pagadas usando la fecha seleccionada por el usuario
+  const paymentDateFormatted = formatForDatabase(data.payment_date);
   
   const { error: updateError } = await supabase
     .from('costs')
     .update({ 
       subcategory: 'comisiones_pagadas',
-      payment_date: currentDate, // Registrar fecha real de pago
+      payment_date: paymentDateFormatted, // Registrar fecha real de pago seleccionada
       payment_batch_id: batchNumber, // Asociar al lote de pago
-      notes: `Pagado en lote ${batchNumber}. ${data.notes || ''}`.trim()
+      notes: `Pagado en lote ${batchNumber} el ${paymentDateFormatted}. ${data.notes || ''}`.trim()
     })
     .in('id', data.commission_ids);
     
