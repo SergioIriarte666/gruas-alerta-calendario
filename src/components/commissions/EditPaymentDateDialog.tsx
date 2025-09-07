@@ -8,7 +8,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { CalendarIcon, Edit, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { Commission } from '@/types/commissions';
-import { formatForDisplay, getCurrentChileDate, formatForInput, parseFromInput } from '@/utils/timezoneUtils';
+import { formatForDisplay, getCurrentChileDate, createLocalDateFromCalendar } from '@/utils/timezoneUtils';
 import { cn } from '@/lib/utils';
 import { useCommissionPayments } from '@/hooks/commissions/useCommissionPayments';
 import { toast } from 'sonner';
@@ -127,9 +127,8 @@ export const EditPaymentDateDialog: React.FC<EditPaymentDateDialogProps> = ({
                   selected={paymentDate}
                   onSelect={(date) => {
                     if (date) {
-                      // Usar utilidades de fecha para mantener el día exacto seleccionado
-                      const dateString = formatForInput(date);
-                      const localDate = parseFromInput(dateString);
+                      // Crear fecha local manteniendo el día exacto seleccionado
+                      const localDate = createLocalDateFromCalendar(date);
                       setPaymentDate(localDate);
                     }
                   }}

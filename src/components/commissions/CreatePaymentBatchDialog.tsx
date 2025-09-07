@@ -10,7 +10,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { CalendarIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import { Commission, PAYMENT_METHODS } from '@/types/commissions';
-import { formatForInput, parseFromInput, formatForDisplay, getCurrentChileDate } from '@/utils/timezoneUtils';
+import { formatForDisplay, getCurrentChileDate, createLocalDateFromCalendar } from '@/utils/timezoneUtils';
 import { cn } from '@/lib/utils';
 
 interface CreatePaymentBatchDialogProps {
@@ -119,9 +119,8 @@ export const CreatePaymentBatchDialog: React.FC<CreatePaymentBatchDialogProps> =
                   selected={paymentDate}
                   onSelect={(date) => {
                     if (date) {
-                      // Usar utilidades de fecha para mantener el día exacto seleccionado
-                      const dateString = formatForInput(date);
-                      const localDate = parseFromInput(dateString);
+                      // Crear fecha local manteniendo el día exacto seleccionado
+                      const localDate = createLocalDateFromCalendar(date);
                       setPaymentDate(localDate);
                     }
                   }}

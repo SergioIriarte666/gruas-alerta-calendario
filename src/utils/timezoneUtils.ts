@@ -189,6 +189,25 @@ export const getWeekStart = (date?: Date) => {
 
 // ===================== UTILIDADES PARA FORMULARIOS =====================
 
+// Crear fecha local desde calendar component manteniendo día exacto
+export const createLocalDateFromCalendar = (calendarDate: Date): Date => {
+  console.log('[createLocalDateFromCalendar] Input date:', calendarDate);
+  console.log('[createLocalDateFromCalendar] Input components - Year:', calendarDate.getFullYear(), 'Month:', calendarDate.getMonth() + 1, 'Day:', calendarDate.getDate());
+  
+  // Extraer componentes de fecha directamente sin conversiones timezone
+  const year = calendarDate.getFullYear();
+  const month = calendarDate.getMonth();
+  const day = calendarDate.getDate();
+  
+  // Crear nueva fecha local usando mediodía para evitar problemas DST
+  const localDate = new Date(year, month, day, 12, 0, 0);
+  
+  console.log('[createLocalDateFromCalendar] Created local date:', localDate);
+  console.log('[createLocalDateFromCalendar] Result components - Year:', localDate.getFullYear(), 'Month:', localDate.getMonth() + 1, 'Day:', localDate.getDate());
+  
+  return localDate;
+};
+
 // Format date for form input (yyyy-MM-dd) manteniendo fecha exacta
 export const formatForInput = (date: Date | string): string => {
   if (!date) return '';
