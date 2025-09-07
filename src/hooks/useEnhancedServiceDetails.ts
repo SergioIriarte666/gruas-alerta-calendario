@@ -209,6 +209,7 @@ const fetchEnhancedServiceDetails = async (serviceId: string): Promise<EnhancedS
     custodyMode: serviceData.custody_mode as 'manual' | 'calendar' | 'none' | undefined,
     custodyDays: serviceData.custody_days,
     custodyDailyRate: serviceData.custody_daily_rate,
+    custodyRateType: serviceData.custody_rate_type,
     custodyStartDate: serviceData.custody_start_date,
     custodyEndDate: serviceData.custody_end_date,
     custodyVehicleType: serviceData.custody_vehicle_type,
