@@ -14,6 +14,7 @@ import { MoreHorizontal, Edit, Trash2, Eye } from 'lucide-react';
 import { Cost } from '@/types/costs';
 import { useDeleteCost } from '@/hooks/useCosts';
 import { Card, CardContent } from '@/components/ui/card';
+import { formatForDisplay, parseFromDatabase } from '@/utils/timezoneUtils';
 
 interface CostsTableProps {
     costs: Cost[];
@@ -45,6 +46,18 @@ export const CostsTable = ({ costs, onEdit, onViewDetails }: CostsTableProps) =>
         return categoryName;
     }
 
+    const getDisplayDate = (cost: Cost) => {
+        // Para comisiones pagadas, mostrar la fecha de pago
+        if (cost.cost_categories?.name === 'Comisión Operador' && cost.payment_date) {
+            const paymentDate = parseFromDatabase(cost.payment_date);
+            return formatForDisplay(paymentDate);
+        }
+        
+        // Para otros costos, mostrar la fecha original
+        const originalDate = parseFromDatabase(cost.date);
+        return formatForDisplay(originalDate);
+    }
+
     return (
         <Card className="bg-white/10 border-white/20">
             <CardContent className="p-0">
@@ -69,7 +82,7 @@ export const CostsTable = ({ costs, onEdit, onViewDetails }: CostsTableProps) =>
                         ) : (
                             costs.map((cost) => (
                                 <TableRow key={cost.id} className="border-white/20">
-                                    <TableCell className="text-white">{new Date(cost.date + 'T00:00:00').toLocaleDateString()}</TableCell>
+                                    <TableCell className="text-white">{getDisplayDate(cost)}</TableCell>
                                     <TableCell className="text-white font-medium">{cost.description}</TableCell>
                                     <TableCell className="text-gray-300">{getCategoryDisplay(cost)}</TableCell>
                                     <TableCell className="text-white text-right">${Number(cost.amount).toLocaleString('es-CL')}</TableCell>
