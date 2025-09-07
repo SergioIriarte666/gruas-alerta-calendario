@@ -47,10 +47,23 @@ export const CostsTable = ({ costs, onEdit, onViewDetails }: CostsTableProps) =>
     }
 
     const getDisplayDate = (cost: Cost) => {
+        // SOLO para comisiones, mostrar debug
+        if (cost.cost_categories?.name === 'Comisión Operador') {
+            console.log('🔍 COMISIÓN DEBUG:', {
+                id: cost.id.substring(0, 8),
+                originalDate: cost.date,
+                paymentDate: cost.payment_date,
+                subcategory: cost.subcategory,
+                hasPaymentDate: !!cost.payment_date,
+                isPaid: cost.subcategory === 'comisiones_pagadas'
+            });
+        }
+        
         // Para comisiones pagadas con payment_date, mostrar la fecha de pago
         if (cost.cost_categories?.name === 'Comisión Operador' && 
             cost.payment_date && 
             cost.subcategory === 'comisiones_pagadas') {
+            console.log('✅ USANDO FECHA DE PAGO:', cost.payment_date);
             const paymentDate = parseFromDatabase(cost.payment_date);
             return formatForDisplay(paymentDate);
         }
