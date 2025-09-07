@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useServicesPage } from '@/hooks/services/useServicesPage';
 import { useServicesPendingExport } from '@/hooks/services/useServicesPendingExport';
@@ -6,12 +5,18 @@ import { ServicesHeader } from '@/components/services/ServicesHeader';
 import { ServiceFilters } from '@/components/services/ServiceFilters';
 import { ServicesTable } from '@/components/services/ServicesTable';
 import { ServicesMobileView } from '@/components/services/ServicesMobileView';
+import { ServicesPipelineView } from '@/components/services/ServicesPipelineView';
 import { ServicesDialogs } from '@/components/services/ServicesDialogs';
 import { AppPagination } from '@/components/shared/AppPagination';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useState } from 'react';
+
+type ViewMode = 'table' | 'pipeline';
 
 const Services = () => {
+  const [viewMode, setViewMode] = useState<ViewMode>('table');
+  
   const {
     // State
     services,
@@ -91,49 +96,70 @@ const Services = () => {
         onExportPending={handleExportPendingServices}
         isExportingPending={isExportingPending}
         pendingServicesCount={pendingServicesCount}
+        viewMode={viewMode}
+        onViewModeChange={setViewMode}
       />
 
-      <ServiceFilters
-        searchTerm={searchTerm}
-        onSearchChange={setSearchTerm}
-        statusFilter={statusFilter}
-        onStatusChange={setStatusFilter}
-        onAdvancedFiltersChange={handleAdvancedFiltersChange}
-      />
+      {viewMode === 'table' && (
+        <>
+          <ServiceFilters
+            searchTerm={searchTerm}
+            onSearchChange={setSearchTerm}
+            statusFilter={statusFilter}
+            onStatusChange={setStatusFilter}
+            onAdvancedFiltersChange={handleAdvancedFiltersChange}
+          />
 
-      {isMobile ? (
-        <ServicesMobileView
-          services={paginatedServices}
-          hasInitialServices={services.length > 0}
-          onViewDetails={handleViewDetails}
-          onEdit={isAdmin ? handleEdit : undefined}
-          onDelete={isAdmin ? handleDelete : undefined}
-          onCloseService={handleCloseService}
-          onAddNewService={isAdmin ? () => setIsFormOpen(true) : undefined}
-          sortField={sortField}
-          sortDirection={sortDirection}
-          onSort={handleSort}
-        />
-      ) : (
-        <ServicesTable
-          services={paginatedServices}
-          hasInitialServices={services.length > 0}
-          onViewDetails={handleViewDetails}
-          onEdit={isAdmin ? handleEdit : undefined}
-          onDelete={isAdmin ? handleDelete : undefined}
-          onCloseService={handleCloseService}
-          onAddNewService={isAdmin ? () => setIsFormOpen(true) : undefined}
-          sortField={sortField}
-          sortDirection={sortDirection}
-          onSort={handleSort}
-        />
+          {isMobile ? (
+            <ServicesMobileView
+              services={paginatedServices}
+              hasInitialServices={services.length > 0}
+              onViewDetails={handleViewDetails}
+              onEdit={isAdmin ? handleEdit : undefined}
+              onDelete={isAdmin ? (service) => handleDelete(service) : undefined}
+              onCloseService={handleCloseService}
+              onAddNewService={isAdmin ? () => setIsFormOpen(true) : undefined}
+              sortField={sortField}
+              sortDirection={sortDirection}
+              onSort={handleSort}
+            />
+          ) : (
+            <ServicesTable
+              services={paginatedServices}
+              hasInitialServices={services.length > 0}
+              onViewDetails={handleViewDetails}
+              onEdit={isAdmin ? handleEdit : undefined}
+              onDelete={isAdmin ? (service) => handleDelete(service) : undefined}
+              onCloseService={handleCloseService}
+              onAddNewService={isAdmin ? () => setIsFormOpen(true) : undefined}
+              sortField={sortField}
+              sortDirection={sortDirection}
+              onSort={handleSort}
+            />
+          )}
+
+          {totalPages > 1 && (
+            <AppPagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+            />
+          )}
+        </>
       )}
 
-      {totalPages > 1 && (
-        <AppPagination
-          currentPage={currentPage}
-          totalPages={totalPages}
-          onPageChange={setCurrentPage}
+      {viewMode === 'pipeline' && (
+        <ServicesPipelineView
+          services={filteredServices}
+          hasInitialServices={services.length > 0}
+          onViewDetails={handleViewDetails}
+          onEdit={isAdmin ? handleEdit : undefined}
+          onDelete={isAdmin ? (id: string) => {
+            const service = services.find(s => s.id === id);
+            if (service) handleDelete(service);
+          } : undefined}
+          onCloseService={handleCloseService}
+          onAddNewService={isAdmin ? () => setIsFormOpen(true) : undefined}
         />
       )}
 

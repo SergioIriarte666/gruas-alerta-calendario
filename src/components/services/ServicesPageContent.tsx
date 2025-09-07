@@ -16,7 +16,10 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 
+type ViewMode = 'table' | 'pipeline';
+
 export const ServicesPageContent = () => {
+  const [viewMode, setViewMode] = useState<ViewMode>('table');
   const queryClient = useQueryClient();
   const { services = [], loading, createService, updateService, deleteService, refetch } = useServices();
   const { toast } = useToast();
@@ -260,6 +263,8 @@ export const ServicesPageContent = () => {
         onExportPending={handleExportPendingServices}
         isExportingPending={isExportingPending}
         pendingServicesCount={pendingServicesCount}
+        viewMode={viewMode}
+        onViewModeChange={setViewMode}
       />
 
       <ServiceFilters

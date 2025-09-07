@@ -1,6 +1,6 @@
 
 import { Button } from '@/components/ui/button';
-import { Plus, Upload, RefreshCw, FileDown } from 'lucide-react';
+import { Plus, Upload, RefreshCw, FileDown, Table, BarChart3 } from 'lucide-react';
 import { GlobalRefreshButton } from './GlobalRefreshButton';
 import { ServicesMetrics } from './ServicesMetrics';
 import { ServicesDateFilter } from './ServicesDateFilter';
@@ -8,6 +8,8 @@ import { useServicesMetrics } from '@/hooks/services/useServicesMetrics';
 import { useState } from 'react';
 
 type DateFilter = 'today' | 'week' | 'month' | 'all';
+
+type ViewMode = 'table' | 'pipeline';
 
 interface ServicesHeaderProps {
   isAdmin: boolean;
@@ -18,6 +20,8 @@ interface ServicesHeaderProps {
   onExportPending: () => void;
   isExportingPending: boolean;
   pendingServicesCount: number;
+  viewMode: ViewMode;
+  onViewModeChange: (mode: ViewMode) => void;
 }
 
 export const ServicesHeader = ({ 
@@ -28,7 +32,9 @@ export const ServicesHeader = ({
   onNewService,
   onExportPending,
   isExportingPending,
-  pendingServicesCount
+  pendingServicesCount,
+  viewMode,
+  onViewModeChange
 }: ServicesHeaderProps) => {
   const [dateFilter, setDateFilter] = useState<DateFilter>('all');
   const { metrics, loading } = useServicesMetrics(dateFilter);
@@ -43,7 +49,29 @@ export const ServicesHeader = ({
             Administra todos los servicios de grúa del sistema
           </p>
         </div>
-        <div className="flex space-x-2">
+        <div className="flex items-center space-x-2">
+          {/* View Toggle */}
+          <div className="flex items-center bg-gray-100 rounded-lg p-1">
+            <Button
+              variant={viewMode === 'table' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => onViewModeChange('table')}
+              className={viewMode === 'table' ? 'bg-white shadow-sm' : ''}
+            >
+              <Table className="w-4 h-4 mr-1" />
+              Tabla
+            </Button>
+            <Button
+              variant={viewMode === 'pipeline' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => onViewModeChange('pipeline')}
+              className={viewMode === 'pipeline' ? 'bg-white shadow-sm' : ''}
+            >
+              <BarChart3 className="w-4 h-4 mr-1" />
+              Pipeline
+            </Button>
+          </div>
+
           <GlobalRefreshButton />
           {isAdmin && (
             <>
