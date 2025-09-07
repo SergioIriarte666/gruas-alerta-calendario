@@ -69,7 +69,7 @@ const PIPELINE_STATUSES: Array<{
   },
   {
     status: 'pending',
-    title: 'Programados',
+    title: 'Pendientes',
     description: 'Listos para ejecutar',
     color: 'bg-purple-50 border-purple-200 text-purple-800'
   },
