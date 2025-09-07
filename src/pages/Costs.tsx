@@ -33,7 +33,7 @@ const CostsPage = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [viewMode, setViewMode] = useState<'table' | 'cards'>('table');
     const [highlightedCostId, setHighlightedCostId] = useState<string>('');
-    const [dateFilter, setDateFilter] = useState<string>('today');
+    const [dateFilter, setDateFilter] = useState<string>('all');
     const [filters, setFilters] = useState<CostFilters>({
         category: 'all',
         subcategory: 'all',
