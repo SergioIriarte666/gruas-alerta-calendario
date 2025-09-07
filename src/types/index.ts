@@ -32,6 +32,7 @@ export interface Service {
   custodyMode?: 'manual' | 'calendar' | 'none';
   custodyDays?: number;
   custodyDailyRate?: number;
+  custodyRateType?: string;
   custodyStartDate?: string;
   custodyEndDate?: string;
   custodyVehicleType?: string;
@@ -84,6 +85,7 @@ export interface ServiceFormData {
   custodyMode?: 'manual' | 'calendar' | 'none';
   custodyDays?: number;
   custodyDailyRate?: number;
+  custodyRateType?: string;
   custodyStartDate?: string;
   custodyEndDate?: string;
   custodyVehicleType?: string;

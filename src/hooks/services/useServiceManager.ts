@@ -264,6 +264,7 @@ export const useServiceManager = () => {
           custody_mode: serviceData.custodyMode || null,
           custody_days: serviceData.custodyDays || null,
           custody_daily_rate: serviceData.custodyDailyRate || null,
+          custody_rate_type: serviceData.custodyRateType || null,
           custody_start_date: serviceData.custodyStartDate && serviceData.custodyStartDate.trim() !== '' 
             ? serviceData.custodyStartDate 
             : null,
@@ -507,6 +508,9 @@ export const useServiceManager = () => {
           }),
           ...(serviceData.custodyDailyRate !== undefined && {
             custody_daily_rate: serviceData.custodyDailyRate
+          }),
+          ...(serviceData.custodyRateType !== undefined && {
+            custody_rate_type: serviceData.custodyRateType
           }),
           ...(serviceData.custodyStartDate !== undefined && {
             custody_start_date: serviceData.custodyStartDate && serviceData.custodyStartDate.trim() !== '' 

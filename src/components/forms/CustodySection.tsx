@@ -137,7 +137,6 @@ export const CustodySection = ({
             <Select 
               onValueChange={(value) => onCustodyModeChange?.(value)} 
               value={custodyMode}
-              disabled={isEquipmentRental} // Para arriendo siempre debe ser calendar
             >
               <SelectTrigger>
                 <SelectValue placeholder="Seleccionar modo" />
