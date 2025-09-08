@@ -82,13 +82,16 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose }: ServiceDetails
   // Usar el nuevo sistema global para obtener datos completos del servicio
   const { enhancedService, isLoading } = useServiceDetailsForView(service.id);
   
-  // Crear datos combinados inteligentemente
+  // Crear datos combinados inteligentemente con validación robusta
   const serviceData = enhancedService ? {
     ...enhancedService,
     // Preservar datos críticos del service básico si no están en enhanced
     client: {
       ...enhancedService.client,
-      department: enhancedService.client.department || service.client.department
+      // Usar validación explícita para manejar strings vacíos, null y undefined
+      department: (enhancedService.client.department && enhancedService.client.department.trim()) 
+                  ? enhancedService.client.department 
+                  : service.client.department
     }
   } : service;
 
