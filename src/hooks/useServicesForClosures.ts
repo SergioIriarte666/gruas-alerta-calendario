@@ -117,6 +117,18 @@ export const useServicesForClosures = (options: UseServicesForClosuresOptions = 
       // Transform the raw data to match the Service type
       const transformedBillable = transformRawServiceData(availableBillableServices);
       const transformedPending = transformRawServiceData(pendingServices);
+      
+      // Debug logging for service 3027694-3 after transformation
+      const targetService = transformedBillable.find(s => s.folio === '3027694-3') || transformedPending.find(s => s.folio === '3027694-3');
+      if (targetService) {
+        console.log('🔍 USESERVICESFORCLOSURES DEBUG - Service 3027694-3 after transformation:', {
+          folio: targetService.folio,
+          hasExcess: targetService.hasExcess,
+          clientCoveredAmount: targetService.clientCoveredAmount,
+          value: targetService.value,
+          fromAvailable: transformedBillable.find(s => s.folio === '3027694-3') !== undefined
+        });
+      }
 
       setData({
         availableServices: transformedBillable,
@@ -200,9 +212,17 @@ export const useServicesForClosures = (options: UseServicesForClosuresOptions = 
     fetchServicesData();
   }, [dateFrom, dateTo]);
 
-  // Add refetch with debug logging
+  // Add refetch with debug logging and force fresh data
   const refetchWithDebug = async () => {
     console.log('🔄 FORCING DATA REFRESH - Invalidating cache and refetching...');
+    setLoading(true);
+    // Clear current data to force fresh fetch
+    setData({
+      availableServices: [],
+      pendingServices: [],
+      usedServiceIds: new Set(),
+      totalCompleted: 0
+    });
     await fetchServicesData();
   };
 

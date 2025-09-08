@@ -36,6 +36,20 @@ const EnhancedServicesSelector = ({
   const [selectedPendingIds, setSelectedPendingIds] = useState<string[]>([]);
 
   console.log('EnhancedServicesSelector render - services:', services.length, 'pendingServices:', pendingServices.length, 'loading:', loading, 'clientId:', clientId);
+  
+  // Debug logging for specific service 3027694-3
+  const targetService = services.find(s => s.folio === '3027694-3') || pendingServices.find(s => s.folio === '3027694-3');
+  if (targetService) {
+    console.log('🔍 COMPONENT DEBUG - Service 3027694-3 found in EnhancedServicesSelector:', {
+      folio: targetService.folio,
+      hasExcess: targetService.hasExcess,
+      clientCoveredAmount: targetService.clientCoveredAmount,
+      value: targetService.value,
+      custodyMode: targetService.custodyMode,
+      custodyTotalAmount: targetService.custodyTotalAmount,
+      calculatedValue: getServiceValueForClosure(targetService)
+    });
+  }
 
   const filteredServices = services.filter(service => {
     if (!clientId) return true;
