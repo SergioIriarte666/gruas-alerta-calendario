@@ -12,46 +12,46 @@ export const isEquipmentRentalService = (service: any): boolean => {
 
 /**
  * Calculates the value that should be used for closure calculations.
- * Priority: custody_total_amount > client_covered_amount > service.value
+ * 
+ * BUSINESS LOGIC PRIORITY:
+ * 1. custody_total_amount: For custody services, use only the custody total
+ * 2. client_covered_amount: For excess services with client coverage, use the covered amount
+ * 3. service.value: For regular services, use the base service value
+ * 
+ * IMPORTANT: This function handles both camelCase and snake_case field names for compatibility
+ * between different data sources (database vs transformed objects).
+ * 
+ * @param service - Service object (supports both naming conventions)
+ * @returns The calculated value for closure purposes
  */
 export const getServiceValueForClosure = (service: any): number => {
-  // Debug logging for specific service
-  if (service.folio === '3027694-3') {
-    console.log('🔍 CLOSURE CALCULATION DEBUG - Service 3027694-3:', {
-      folio: service.folio,
-      hasExcess: service.hasExcess,
-      clientCoveredAmount: service.clientCoveredAmount,
-      client_covered_amount: service.client_covered_amount,
-      value: service.value,
-      custodyTotal: service.custody_total_amount || service.custodyTotalAmount
-    });
+  // Input validation
+  if (!service) {
+    console.warn('⚠️ getServiceValueForClosure: service is null or undefined');
+    return 0;
   }
 
   // Priority 1: Custody service total amount (support both camelCase and snake_case)
   const custodyTotal = service.custody_total_amount || service.custodyTotalAmount;
-  const baseValue = service.value || 0;
-  
-  // Para cualquier servicio con custodia, usar SOLO el custodyTotal
   if (custodyTotal && custodyTotal > 0) {
-    if (service.folio === '3027694-3') {
-      console.log('🔍 Using custody total:', custodyTotal);
-    }
-    return custodyTotal; // Solo el valor de custodia, sin duplicar con baseValue
+    return custodyTotal;
   }
   
-  // Priority 2: Client covered amount for excess services (check both naming conventions)
-  const clientCovered = service.clientCoveredAmount ?? service.client_covered_amount;
+  // Priority 2: Client covered amount for excess services
+  // Check both naming conventions and ensure null values are preserved
+  const clientCovered = service.clientCoveredAmount !== undefined 
+    ? service.clientCoveredAmount 
+    : service.client_covered_amount;
+    
+  // Only use client covered amount if:
+  // - Service has excess flag enabled
+  // - Client covered amount is not null and greater than 0
   if (service.hasExcess && clientCovered != null && clientCovered > 0) {
-    if (service.folio === '3027694-3') {
-      console.log('🔍 Using client covered amount:', clientCovered);
-    }
     return clientCovered;
   }
   
   // Priority 3: Regular service value
-  if (service.folio === '3027694-3') {
-    console.log('🔍 Using base value:', baseValue);
-  }
+  const baseValue = service.value || 0;
   return baseValue;
 };
 

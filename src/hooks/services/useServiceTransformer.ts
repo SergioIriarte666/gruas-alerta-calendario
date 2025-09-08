@@ -136,18 +136,6 @@ export const useServiceTransformer = () => {
         updatedAt: item.updated_at
       };
       
-      // Debug logging for specific service
-      if (item.folio === '3027694-3') {
-        console.log('🔍 TRANSFORMER DEBUG - Service 3027694-3:', {
-          folio: item.folio,
-          hasExcess: item.has_excess,
-          clientCoveredAmount: item.client_covered_amount,
-          value: item.value,
-          transformedClientCoveredAmount: transformedService.clientCoveredAmount,
-          transformedHasExcess: transformedService.hasExcess
-        });
-      }
-      
       console.log('✅ Service transformed with custody:', {
         folio: transformedService.folio,
         custodyMode: transformedService.custodyMode,

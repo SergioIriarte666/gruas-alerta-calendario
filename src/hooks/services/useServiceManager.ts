@@ -151,7 +151,7 @@ const transformToService = (data: any): Service => {
     status: data.status,
     observations: data.observations || '',
     hasExcess: data.has_excess || false,
-    clientCoveredAmount: data.client_covered_amount || 0,
+    clientCoveredAmount: data.client_covered_amount ?? null, // Preserve null values for proper excess calculation
     excessAmount: data.excess_amount || 0,
     invoiceFolio: data.invoice_folio || undefined,
     invoiceNumeroFiscal: data.invoice_numero_fiscal || undefined,
