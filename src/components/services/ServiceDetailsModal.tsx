@@ -82,8 +82,21 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose }: ServiceDetails
   // Usar el nuevo sistema global para obtener datos completos del servicio
   const { enhancedService, isLoading } = useServiceDetailsForView(service.id);
   
-  // Usar los datos mejorados si están disponibles, sino usar los datos básicos
-  const serviceData = enhancedService || service;
+  // Crear datos combinados inteligentemente
+  const serviceData = enhancedService ? {
+    ...enhancedService,
+    // Preservar datos críticos del service básico si no están en enhanced
+    client: {
+      ...enhancedService.client,
+      department: enhancedService.client.department || service.client.department
+    }
+  } : service;
+
+  // Debug logs para rastrear el department
+  console.log('🔍 [MODAL DEBUG] Enhanced service department:', enhancedService?.client?.department);
+  console.log('🔍 [MODAL DEBUG] Basic service department:', service.client.department);
+  console.log('🔍 [MODAL DEBUG] Final serviceData department:', serviceData.client.department);
+  
   const serviceCosts = enhancedService?.serviceCosts || [];
   const totalCommissions = enhancedService?.totalCommissions || 0;
   const totalServiceCosts = enhancedService?.totalCosts || 0;
