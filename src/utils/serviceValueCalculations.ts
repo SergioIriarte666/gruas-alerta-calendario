@@ -25,7 +25,7 @@ export const getServiceValueForClosure = (service: any): number => {
   }
   
   // Priority 2: Client covered amount for excess services
-  if (service.hasExcess && service.client_covered_amount !== null && service.client_covered_amount !== undefined) {
+  if (service.hasExcess && service.client_covered_amount != null && service.client_covered_amount > 0) {
     return service.client_covered_amount;
   }
   

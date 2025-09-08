@@ -119,7 +119,7 @@ export const useServiceTransformer = () => {
         quoteNumber: item.quote_number || '',
         // Optional excess functionality
         hasExcess: item.has_excess || false,
-        clientCoveredAmount: item.client_covered_amount || 0,
+        clientCoveredAmount: item.client_covered_amount ?? null, // Preserve null values for proper excess calculation
         excessAmount: item.excess_amount || 0,
         // Invoice information
         invoiceFolio: item.invoice_folio || undefined,
