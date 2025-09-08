@@ -15,21 +15,43 @@ export const isEquipmentRentalService = (service: any): boolean => {
  * Priority: custody_total_amount > client_covered_amount > service.value
  */
 export const getServiceValueForClosure = (service: any): number => {
+  // Debug logging for specific service
+  if (service.folio === '3027694-3') {
+    console.log('🔍 CLOSURE CALCULATION DEBUG - Service 3027694-3:', {
+      folio: service.folio,
+      hasExcess: service.hasExcess,
+      clientCoveredAmount: service.clientCoveredAmount,
+      client_covered_amount: service.client_covered_amount,
+      value: service.value,
+      custodyTotal: service.custody_total_amount || service.custodyTotalAmount
+    });
+  }
+
   // Priority 1: Custody service total amount (support both camelCase and snake_case)
   const custodyTotal = service.custody_total_amount || service.custodyTotalAmount;
   const baseValue = service.value || 0;
   
   // Para cualquier servicio con custodia, usar SOLO el custodyTotal
   if (custodyTotal && custodyTotal > 0) {
+    if (service.folio === '3027694-3') {
+      console.log('🔍 Using custody total:', custodyTotal);
+    }
     return custodyTotal; // Solo el valor de custodia, sin duplicar con baseValue
   }
   
-  // Priority 2: Client covered amount for excess services
-  if (service.hasExcess && service.client_covered_amount != null && service.client_covered_amount > 0) {
-    return service.client_covered_amount;
+  // Priority 2: Client covered amount for excess services (check both naming conventions)
+  const clientCovered = service.clientCoveredAmount ?? service.client_covered_amount;
+  if (service.hasExcess && clientCovered != null && clientCovered > 0) {
+    if (service.folio === '3027694-3') {
+      console.log('🔍 Using client covered amount:', clientCovered);
+    }
+    return clientCovered;
   }
   
   // Priority 3: Regular service value
+  if (service.folio === '3027694-3') {
+    console.log('🔍 Using base value:', baseValue);
+  }
   return baseValue;
 };
 

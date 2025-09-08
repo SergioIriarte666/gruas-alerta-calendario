@@ -200,6 +200,12 @@ export const useServicesForClosures = (options: UseServicesForClosuresOptions = 
     fetchServicesData();
   }, [dateFrom, dateTo]);
 
+  // Add refetch with debug logging
+  const refetchWithDebug = async () => {
+    console.log('🔄 FORCING DATA REFRESH - Invalidating cache and refetching...');
+    await fetchServicesData();
+  };
+
   return {
     services: data.availableServices,
     pendingServices: data.pendingServices,
@@ -208,6 +214,6 @@ export const useServicesForClosures = (options: UseServicesForClosuresOptions = 
     loading,
     completeService,
     completeMultipleServices,
-    refetch: fetchServicesData
+    refetch: refetchWithDebug
   };
 };
