@@ -5,6 +5,7 @@ import { useUser } from '@/contexts/UserContext';
 import { PortalRequestServiceSchema } from '@/schemas/portalRequestServiceSchema';
 import { useToast } from '@/components/ui/custom-toast';
 import { useNavigate } from 'react-router-dom';
+import { translateDatabaseError, isRequiredFieldError, extractRequiredField } from '@/utils/errorTranslation';
 
 const createServiceRequest = async ({
   formData,
@@ -49,7 +50,10 @@ const createServiceRequest = async ({
 
   if (error) {
     console.error('Error creating service request:', error);
-    throw new Error(`Error al crear la solicitud: ${error.message}`);
+    
+    // Traducir error técnico a mensaje amigable
+    const userFriendlyMessage = translateDatabaseError(error);
+    throw new Error(userFriendlyMessage);
   }
 
   return data;
@@ -123,10 +127,14 @@ export const useServiceRequest = () => {
     },
     onError: (error: Error) => {
       console.error('Error in service request:', error);
+      
+      // El mensaje ya viene traducido desde createServiceRequest
+      const friendlyMessage = error.message || 'Ocurrió un error inesperado';
+      
       toast({
         type: 'error',
         title: 'Error al enviar la solicitud',
-        description: error.message || 'Ocurrió un error inesperado.',
+        description: friendlyMessage,
       });
     },
   });

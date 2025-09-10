@@ -2,12 +2,19 @@
 import { z } from 'zod';
 
 export const portalRequestServiceSchema = z.object({
-  origin: z.string().min(3, { message: 'El origen es requerido.' }),
-  destination: z.string().min(3, { message: 'El destino es requerido.' }),
+  origin: z.string()
+    .min(1, { message: 'Debe ingresar el lugar de origen para continuar' })
+    .min(3, { message: 'El origen debe tener al menos 3 caracteres' }),
   
-  service_type_id: z.string().min(1, { message: 'El tipo de servicio es requerido.' }),
+  destination: z.string()
+    .min(1, { message: 'Debe ingresar el lugar de destino para continuar' })
+    .min(3, { message: 'El destino debe tener al menos 3 caracteres' }),
   
-  service_date: z.string().min(1, { message: 'La fecha de servicio es requerida.' }),
+  service_type_id: z.string()
+    .min(1, { message: 'Debe seleccionar un tipo de servicio para continuar' }),
+  
+  service_date: z.string()
+    .min(1, { message: 'Debe seleccionar una fecha de servicio para continuar' }),
   
   license_plate: z.string().optional(),
   vehicle_brand: z.string().optional(),
