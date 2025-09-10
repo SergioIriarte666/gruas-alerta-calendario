@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { createInventoryCost } from '@/utils/inventoryCostHelper';
+import { useErrorHandler } from '@/hooks/useErrorHandler';
 
 export interface InventoryItem {
   id: string;
@@ -316,6 +317,7 @@ export const useInventoryStats = () => {
 // Mutation for creating inventory movements
 export const useCreateInventoryMovement = () => {
   const queryClient = useQueryClient();
+  const { createMutationErrorHandler } = useErrorHandler();
 
   return useMutation({
     mutationFn: async (movement: Omit<InventoryMovement, 'id' | 'created_at' | 'status'> & { generateCost?: boolean }) => {
@@ -387,16 +389,17 @@ export const useCreateInventoryMovement = () => {
       queryClient.invalidateQueries({ queryKey: ['low-stock-items'] });
       toast.success('Movimiento de inventario registrado correctamente');
     },
-    onError: (error) => {
-      console.error('Error creating inventory movement:', error);
-      toast.error(`Error: ${error.message || 'Error al registrar el movimiento de inventario'}`);
-    },
+    onError: createMutationErrorHandler({
+      title: 'Error al Registrar Movimiento',
+      context: 'useInventory - createMovement'
+    }),
   });
 };
 
 // Mutation for creating inventory items
 export const useCreateInventoryItem = () => {
   const queryClient = useQueryClient();
+  const { createMutationErrorHandler } = useErrorHandler();
 
   return useMutation({
     mutationFn: async (item: Omit<InventoryItem, 'id' | 'created_at' | 'updated_at'>) => {
@@ -414,16 +417,17 @@ export const useCreateInventoryItem = () => {
       queryClient.invalidateQueries({ queryKey: ['inventory-stats'] });
       toast.success('Producto agregado al inventario correctamente');
     },
-    onError: (error) => {
-      console.error('Error creating inventory item:', error);
-      toast.error('Error al agregar el producto al inventario');
-    },
+    onError: createMutationErrorHandler({
+      title: 'Error al Agregar Producto',
+      context: 'useInventory - createItem'
+    }),
   });
 };
 
 // Mutation for updating inventory items
 export const useUpdateInventoryItem = () => {
   const queryClient = useQueryClient();
+  const { createMutationErrorHandler } = useErrorHandler();
 
   return useMutation({
     mutationFn: async ({ id, updates }: { id: string; updates: Partial<InventoryItem> }) => {
@@ -442,16 +446,17 @@ export const useUpdateInventoryItem = () => {
       queryClient.invalidateQueries({ queryKey: ['inventory-stats'] });
       toast.success('Producto actualizado correctamente');
     },
-    onError: (error) => {
-      console.error('Error updating inventory item:', error);
-      toast.error('Error al actualizar el producto');
-    },
+    onError: createMutationErrorHandler({
+      title: 'Error al Actualizar Producto',
+      context: 'useInventory - updateItem'
+    }),
   });
 };
 
 // Mutation for updating inventory movements
 export const useUpdateInventoryMovement = () => {
   const queryClient = useQueryClient();
+  const { createMutationErrorHandler } = useErrorHandler();
 
   return useMutation({
     mutationFn: async ({ id, updates }: { id: string; updates: Partial<InventoryMovement> }) => {
@@ -472,16 +477,17 @@ export const useUpdateInventoryMovement = () => {
       queryClient.invalidateQueries({ queryKey: ['low-stock-items'] });
       toast.success('Movimiento actualizado correctamente');
     },
-    onError: (error) => {
-      console.error('Error updating inventory movement:', error);
-      toast.error('Error al actualizar el movimiento');
-    },
+    onError: createMutationErrorHandler({
+      title: 'Error al Actualizar Movimiento',
+      context: 'useInventory - updateMovement'
+    }),
   });
 };
 
 // Mutation for cancelling inventory movements
 export const useCancelInventoryMovement = () => {
   const queryClient = useQueryClient();
+  const { createMutationErrorHandler } = useErrorHandler();
 
   return useMutation({
     mutationFn: async (id: string) => {
@@ -499,16 +505,17 @@ export const useCancelInventoryMovement = () => {
       queryClient.invalidateQueries({ queryKey: ['low-stock-items'] });
       toast.success('Movimiento anulado correctamente');
     },
-    onError: (error) => {
-      console.error('Error cancelling inventory movement:', error);
-      toast.error('Error al anular el movimiento');
-    },
+    onError: createMutationErrorHandler({
+      title: 'Error al Anular Movimiento',
+      context: 'useInventory - cancelMovement'
+    }),
   });
 };
 
 // Mutation for deleting inventory items
 export const useDeleteInventoryItem = () => {
   const queryClient = useQueryClient();
+  const { createMutationErrorHandler } = useErrorHandler();
 
   return useMutation({
     mutationFn: async (id: string) => {
@@ -524,9 +531,9 @@ export const useDeleteInventoryItem = () => {
       queryClient.invalidateQueries({ queryKey: ['inventory-stats'] });
       toast.success('Producto desactivado correctamente');
     },
-    onError: (error) => {
-      console.error('Error deleting inventory item:', error);
-      toast.error('Error al desactivar el producto');
-    },
+    onError: createMutationErrorHandler({
+      title: 'Error al Desactivar Producto',
+      context: 'useInventory - deleteItem'
+    }),
   });
 };

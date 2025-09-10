@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Service, ServiceFormData } from '@/types';
 import { toast } from 'sonner';
+import { useErrorHandler } from '@/hooks/useErrorHandler';
 
 // Función helper para detectar comisiones existentes y comparar con nuevas
 const detectExistingCommissions = async (serviceId: string, newOperators: any[]) => {
@@ -172,6 +173,7 @@ const transformToService = (data: any): Service => {
 
 export const useServiceManager = () => {
   const queryClient = useQueryClient();
+  const { createMutationErrorHandler } = useErrorHandler();
 
   // CREAR SERVICIO
   const createServiceMutation = useMutation({
@@ -382,10 +384,10 @@ export const useServiceManager = () => {
     onSuccess: () => {
       toast.success('Servicio creado exitosamente');
     },
-    onError: (error) => {
-      const errorMessage = error instanceof Error ? error.message : 'Error desconocido al crear servicio';
-      toast.error(errorMessage);
-    }
+    onError: createMutationErrorHandler({
+      title: 'Error al Crear Servicio',
+      context: 'useServiceManager - createService'
+    })
   });
 
   // ACTUALIZAR SERVICIO

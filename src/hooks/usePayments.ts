@@ -2,11 +2,13 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Payment, PaymentWithDetails, ManualApplication } from '@/types/payments';
+import { useErrorHandler } from '@/hooks/useErrorHandler';
 
 export const usePayments = () => {
   const [payments, setPayments] = useState<PaymentWithDetails[]>([]);
   const [loading, setLoading] = useState(true);
   const [paymentSystemAvailable, setPaymentSystemAvailable] = useState(false);
+  const { handleError, handleNetworkError } = useErrorHandler();
 
   const checkPaymentSystemAvailability = async () => {
     try {
@@ -46,7 +48,10 @@ export const usePayments = () => {
       setPayments(processedPayments);
     } catch (error) {
       console.error('Error fetching payments:', error);
-      toast.error('Error al cargar los pagos');
+      handleNetworkError(error, {
+        customMessage: 'No se pudieron cargar los pagos. Verifique su conexión e intente nuevamente',
+        showToast: true
+      });
     } finally {
       setLoading(false);
     }
@@ -112,7 +117,10 @@ export const usePayments = () => {
     } catch (error) {
       console.error('🚨 Error creating payment:', error);
       console.error('🚨 Error details:', JSON.stringify(error, null, 2));
-      toast.error(`Error al registrar el pago: ${error.message || 'Error desconocido'}`);
+      handleError(error, {
+        title: 'Error al Registrar Pago',
+        context: 'usePayments - createPayment'
+      });
       throw error;
     }
   };
@@ -131,7 +139,11 @@ export const usePayments = () => {
       return result;
     } catch (error) {
       console.error('Error applying payment:', error);
-      toast.error('Error al aplicar el pago');
+      handleError(error, {
+        customMessage: 'No se pudo aplicar el pago automáticamente',
+        title: 'Error al Aplicar Pago',
+        context: 'usePayments - smartApplyPayment'
+      });
       throw error;
     }
   };
@@ -150,7 +162,11 @@ export const usePayments = () => {
       return result;
     } catch (error) {
       console.error('Error applying payment FIFO:', error);
-      toast.error('Error al aplicar el pago automáticamente');
+      handleError(error, {
+        customMessage: 'No se pudo aplicar el pago automáticamente',
+        title: 'Error en Aplicación Automática',
+        context: 'usePayments - applyPaymentFIFO'
+      });
       throw error;
     }
   };
@@ -180,7 +196,10 @@ export const usePayments = () => {
     } catch (error) {
       console.error('🚨 Error applying payment manually:', error);
       console.error('🚨 Error details:', JSON.stringify(error, null, 2));
-      toast.error(`Error al aplicar el pago manualmente: ${error.message || 'Error desconocido'}`);
+      handleError(error, {
+        title: 'Error en Aplicación Manual',
+        context: 'usePayments - applyPaymentManual'
+      });
       throw error;
     }
   };

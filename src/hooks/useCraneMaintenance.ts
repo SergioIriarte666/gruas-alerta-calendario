@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useCostInvalidation } from './useCostInvalidation';
+import { useErrorHandler } from '@/hooks/useErrorHandler';
 
 export interface MaintenanceRecord {
   id: string;
@@ -55,6 +56,7 @@ export const useCraneMaintenance = (craneId: string) => {
 export const useCreateMaintenance = () => {
   const queryClient = useQueryClient();
   const { invalidateAllCostQueries } = useCostInvalidation();
+  const { createMutationErrorHandler } = useErrorHandler();
 
   return useMutation({
     mutationFn: async (maintenance: Omit<MaintenanceRecord, 'id' | 'createdAt'>) => {
@@ -84,16 +86,17 @@ export const useCreateMaintenance = () => {
       invalidateAllCostQueries(); // Invalidar queries de costos cuando se crea mantenimiento
       toast.success('Registro de mantenimiento creado exitosamente');
     },
-    onError: (error) => {
-      console.error('Error creating maintenance record:', error);
-      toast.error('Error al crear el registro de mantenimiento');
-    }
+    onError: createMutationErrorHandler({
+      title: 'Error al Crear Mantenimiento',
+      context: 'useCraneMaintenance - createMaintenance'
+    })
   });
 };
 
 export const useUpdateMaintenance = () => {
   const queryClient = useQueryClient();
   const { invalidateAllCostQueries } = useCostInvalidation();
+  const { createMutationErrorHandler } = useErrorHandler();
 
   return useMutation({
     mutationFn: async ({ id, updates }: { id: string; updates: Partial<MaintenanceRecord> }) => {
@@ -129,10 +132,10 @@ export const useUpdateMaintenance = () => {
         toast.success('Registro de mantenimiento actualizado exitosamente');
       }
     },
-    onError: (error) => {
-      console.error('Error updating maintenance record:', error);
-      toast.error('Error al actualizar el registro de mantenimiento');
-    }
+    onError: createMutationErrorHandler({
+      title: 'Error al Actualizar Mantenimiento',
+      context: 'useCraneMaintenance - updateMaintenance'
+    })
   });
 };
 
@@ -140,6 +143,7 @@ export const useUpdateMaintenance = () => {
 export const useDeleteMaintenance = () => {
   const queryClient = useQueryClient();
   const { invalidateAllCostQueries } = useCostInvalidation();
+  const { createMutationErrorHandler } = useErrorHandler();
 
   return useMutation({
     mutationFn: async (id: string) => {
@@ -157,8 +161,9 @@ export const useDeleteMaintenance = () => {
       invalidateAllCostQueries(); // Invalidate costs in case there was an associated cost
       toast.success('Registro de mantenimiento eliminado exitosamente');
     },
-    onError: (error: any) => {
-      toast.error(error.message || 'No se pudo eliminar el registro de mantenimiento');
-    },
+    onError: createMutationErrorHandler({
+      title: 'Error al Eliminar Mantenimiento',
+      context: 'useCraneMaintenance - deleteMaintenance'
+    }),
   });
 };
