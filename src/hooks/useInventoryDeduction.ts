@@ -69,7 +69,7 @@ export const useInventoryDeduction = () => {
           .select('current_quantity')
           .eq('item_id', item.productId)
           .eq('location_id', defaultLocationId)
-          .single();
+          .maybeSingle();
 
         if (getStockError) {
           console.warn(`Warning getting current stock for ${item.productId}:`, getStockError);
