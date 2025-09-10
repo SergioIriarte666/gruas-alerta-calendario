@@ -363,16 +363,37 @@ export const EnhancedServiceForm = ({
       if (service) {
         console.log('🔄 Updating existing service...');
         result = await updateService(service.id, finalData);
+        
+        // Process inventory deduction when updating to completed status
+        if (selectedServiceType?.name === 'Venta de Productos' && 
+            finalData.status === 'completed' && 
+            service.status !== 'completed' &&
+            finalData.salesItems?.length > 0) {
+          
+          console.log('🔄 Processing inventory deduction for completed service update...');
+          const deductionResult = await processInventoryDeduction({
+            serviceId: result.id,
+            serviceFolio: result.folio,
+            salesItems: finalData.salesItems.map(item => ({
+              productId: item.productId,
+              quantity: item.quantity,
+              unitPrice: item.unitPrice
+            }))
+          });
+          
+          if (deductionResult.success) {
+            toast.success(deductionResult.message);
+          }
+        }
       } else {
         console.log('🔄 Creating new service...');
         result = await createService(finalData);
         
-        // Process inventory deduction for product sales when service is completed
+        // Process inventory deduction for all product sales (regardless of status)
         if (selectedServiceType?.name === 'Venta de Productos' && 
-            finalData.status === 'completed' && 
             finalData.salesItems?.length > 0) {
           
-          console.log('🔄 Processing inventory deduction for product sales...');
+          console.log('🔄 Processing inventory deduction for new product sale...');
           const deductionResult = await processInventoryDeduction({
             serviceId: result.id,
             serviceFolio: result.folio,

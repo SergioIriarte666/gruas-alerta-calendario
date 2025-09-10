@@ -22,6 +22,23 @@ export const useInventoryDeduction = () => {
     try {
       console.log(`🔄 Processing inventory deduction for service ${serviceFolio}...`);
 
+      // Check if inventory has already been deducted for this service
+      const { data: existingMovements, error: checkError } = await supabase
+        .from('inventory_movements')
+        .select('id')
+        .eq('reference_document', serviceFolio)
+        .eq('movement_type', 'sale');
+
+      if (checkError) throw checkError;
+
+      if (existingMovements && existingMovements.length > 0) {
+        console.log(`⚠️ Inventory already deducted for service ${serviceFolio}`);
+        return { 
+          success: true, 
+          message: 'El inventario ya fue descontado para este servicio' 
+        };
+      }
+
       // Get default location (first available location)
       const { data: locations, error: locationsError } = await supabase
         .from('inventory_locations')
