@@ -7,12 +7,14 @@ import { VehicleSection } from './form/VehicleSection';
 import { EnhancedLocationSection } from './form/EnhancedLocationSection';
 import { MultipleOperatorsSection } from './form/MultipleOperatorsSection';
 import { ServiceCostDetailsSection } from './form/ServiceCostDetailsSection';
+import { ProductSalesSection } from './form/ProductSalesSection';
 import { EnhancedFinancialSection } from './form/EnhancedFinancialSection';
 import { ObservationsSection } from './form/ObservationsSection';
 import { FormActions } from './form/FormActions';
 import { ServiceFormHeader } from './form/ServiceFormHeader';
 import { CustodySection } from '../forms/CustodySection';
 import { useServiceManager } from '@/hooks/services/useServiceManager';
+import { useInventoryDeduction } from '@/hooks/useInventoryDeduction';
 import { useClients } from '@/hooks/useClients';
 import { useCranes } from '@/hooks/useCranes';
 import { useOperatorsData } from '@/hooks/operators/useOperatorsData';
@@ -50,6 +52,7 @@ export const EnhancedServiceForm = ({
   const { serviceTypes, loading: serviceTypesLoading } = useServiceTypes();
   const { user } = useUser();
   const { createService, updateService, isCreating, isUpdating } = useServiceManager();
+  const { processInventoryDeduction } = useInventoryDeduction();
   
   // Cargar datos completos del servicio para edición
   const { enhancedService, isLoading: loadingEnhancedService } = useServiceDetailsForForm(service?.id || null);
@@ -78,6 +81,7 @@ export const EnhancedServiceForm = ({
     }] : [],
     value: service?.value || 0,
     costDetails: [],
+    salesItems: [], // New field for product sales
     hasExcess: service?.hasExcess || false,
     clientCoveredAmount: service?.clientCoveredAmount || 0,
     excessAmount: service?.excessAmount || 0,
@@ -95,6 +99,23 @@ export const EnhancedServiceForm = ({
     custodyTotalAmount: service?.custodyTotalAmount || (service as any)?.custody_total_amount || undefined,
     custodyNotes: service?.custodyNotes || (service as any)?.custody_notes || ''
   });
+
+  // Initialize "Venta de Productos" service type when coming from inventory
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const isFromInventory = urlParams.get('newSale') === 'true';
+    
+    if (isFromInventory && !service && serviceTypes.length > 0) {
+      const productSalesType = serviceTypes.find(st => st.name === 'Venta de Productos');
+      if (productSalesType) {
+        setFormData(prev => ({ 
+          ...prev, 
+          serviceType: productSalesType.id 
+        }));
+        toast.success('Formulario preparado para registro de venta');
+      }
+    }
+  }, [serviceTypes, service]);
 
   // Generar folio automáticamente si es un servicio nuevo
   useEffect(() => {
@@ -191,6 +212,7 @@ export const EnhancedServiceForm = ({
         operators: [], // Vacío hasta que se cargue el enhanced service
         value: service.value,
         costDetails: [], // Vacío hasta que se cargue el enhanced service
+        salesItems: [], // Vacío para el nuevo campo
         hasExcess: service.hasExcess,
         clientCoveredAmount: service.clientCoveredAmount || 0,
         excessAmount: service.excessAmount || 0,
@@ -285,6 +307,17 @@ export const EnhancedServiceForm = ({
     }
   }, [formData.custodyTotalAmount]);
 
+  // Auto-calculate service value for product sales
+  useEffect(() => {
+    if (selectedServiceType?.name === 'Venta de Productos' && formData.salesItems?.length > 0) {
+      const totalSales = formData.salesItems.reduce((total, item) => total + (item.totalPrice || 0), 0);
+      setFormData(prev => ({ 
+        ...prev, 
+        value: totalSales 
+      }));
+    }
+  }, [formData.salesItems, selectedServiceType?.name]);
+
   // Auto-initialize custody mode for "Custodia de Vehículos" service type
   useEffect(() => {
     if (selectedServiceType?.name === 'Custodia de Vehículos ' && formData.custodyMode === 'none') {
@@ -333,6 +366,27 @@ export const EnhancedServiceForm = ({
       } else {
         console.log('🔄 Creating new service...');
         result = await createService(finalData);
+        
+        // Process inventory deduction for product sales when service is completed
+        if (selectedServiceType?.name === 'Venta de Productos' && 
+            finalData.status === 'completed' && 
+            finalData.salesItems?.length > 0) {
+          
+          console.log('🔄 Processing inventory deduction for product sales...');
+          const deductionResult = await processInventoryDeduction({
+            serviceId: result.id,
+            serviceFolio: result.folio,
+            salesItems: finalData.salesItems.map(item => ({
+              productId: item.productId,
+              quantity: item.quantity,
+              unitPrice: item.unitPrice
+            }))
+          });
+          
+          if (deductionResult.success) {
+            toast.success(deductionResult.message);
+          }
+        }
       }
 
       console.log('✅ Service operation completed:', { id: result.id, folio: result.folio });
@@ -534,13 +588,24 @@ export const EnhancedServiceForm = ({
           disabled={false}
         />
 
-        {/* Costos del Servicio */}
-        <ServiceCostDetailsSection
-          costDetails={formData.costDetails || []}
-          onCostDetailsChange={(costs) => setFormData(prev => ({ ...prev, costDetails: costs }))}
-          serviceId={service?.id}
-          disabled={false}
-        />
+        {/* Product Sales Section - Only for "Venta de Productos" service type */}
+        {selectedServiceType?.name === 'Venta de Productos' && (
+          <ProductSalesSection
+            salesItems={formData.salesItems || []}
+            onSalesItemsChange={(items) => setFormData(prev => ({ ...prev, salesItems: items }))}
+            disabled={false}
+          />
+        )}
+
+        {/* Costos del Servicio - Hide for "Venta de Productos" */}
+        {selectedServiceType?.name !== 'Venta de Productos' && (
+          <ServiceCostDetailsSection
+            costDetails={formData.costDetails || []}
+            onCostDetailsChange={(costs) => setFormData(prev => ({ ...prev, costDetails: costs }))}
+            serviceId={service?.id}
+            disabled={false}
+          />
+        )}
 
         {/* Financiero */}
         <EnhancedFinancialSection

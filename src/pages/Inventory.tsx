@@ -38,6 +38,14 @@ const Inventory = () => {
             <Download className="w-4 h-4 mr-2" />
             Exportar
           </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => window.location.href = '/services?newSale=true'}
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Registrar Venta
+          </Button>
           <Dialog open={showExitForm} onOpenChange={setShowExitForm}>
             <DialogTrigger asChild>
               <Button variant="outline" size="sm">
