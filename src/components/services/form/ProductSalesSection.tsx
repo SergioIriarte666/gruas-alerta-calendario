@@ -55,20 +55,27 @@ export const ProductSalesSection = ({
           name,
           unit_cost,
           unit_of_measure,
-          inventory_stock!inner(current_quantity)
+          inventory_stock(current_quantity)
         `)
-        .eq('is_active', true)
-        .gt('inventory_stock.current_quantity', 0);
+        .eq('is_active', true);
 
       if (error) throw error;
 
-      return data.map(item => ({
-        id: item.id,
-        name: item.name,
-        unit_cost: item.unit_cost || 0,
-        unit_of_measure: item.unit_of_measure,
-        current_stock: item.inventory_stock?.[0]?.current_quantity || 0
-      }));
+      return data.map(item => {
+        // Sum stock from all locations for this item
+        const totalStock = item.inventory_stock?.reduce(
+          (sum: number, stock: any) => sum + (stock.current_quantity || 0), 
+          0
+        ) || 0;
+
+        return {
+          id: item.id,
+          name: item.name,
+          unit_cost: item.unit_cost || 0,
+          unit_of_measure: item.unit_of_measure,
+          current_stock: totalStock
+        };
+      });
     }
   });
 
@@ -80,13 +87,18 @@ export const ProductSalesSection = ({
       return;
     }
 
+    if (selectedProduct.current_stock === 0) {
+      toast.error('Este producto no tiene stock disponible');
+      return;
+    }
+
     if (quantity <= 0) {
       toast.error('La cantidad debe ser mayor a 0');
       return;
     }
 
     if (quantity > selectedProduct.current_stock) {
-      toast.error(`Stock insuficiente. Disponible: ${selectedProduct.current_stock}`);
+      toast.error(`Stock insuficiente. Disponible: ${selectedProduct.current_stock} ${selectedProduct.unit_of_measure}`);
       return;
     }
 
@@ -130,7 +142,7 @@ export const ProductSalesSection = ({
     if (!item) return;
 
     if (newQuantity > item.availableStock) {
-      toast.error(`Stock insuficiente. Disponible: ${item.availableStock}`);
+      toast.error(`Stock insuficiente. Disponible: ${item.availableStock} ${item.unitOfMeasure}`);
       return;
     }
 
@@ -187,10 +199,32 @@ export const ProductSalesSection = ({
               </SelectTrigger>
               <SelectContent>
                 {inventoryItems.map((item) => (
-                  <SelectItem key={item.id} value={item.id}>
-                    {item.name} (Disponible: {item.current_stock} {item.unit_of_measure})
+                  <SelectItem 
+                    key={item.id} 
+                    value={item.id}
+                    disabled={item.current_stock === 0}
+                  >
+                    <div className="flex items-center justify-between w-full">
+                      <span className={item.current_stock === 0 ? "text-muted-foreground" : ""}>
+                        {item.name}
+                      </span>
+                      <Badge 
+                        variant={item.current_stock === 0 ? "destructive" : "secondary"}
+                        className="ml-2"
+                      >
+                        {item.current_stock === 0 
+                          ? "Sin stock" 
+                          : `${item.current_stock} ${item.unit_of_measure}`
+                        }
+                      </Badge>
+                    </div>
                   </SelectItem>
                 ))}
+                {inventoryItems.length === 0 && !isLoading && (
+                  <SelectItem value="" disabled>
+                    No hay productos disponibles
+                  </SelectItem>
+                )}
               </SelectContent>
             </Select>
           </div>
@@ -223,7 +257,11 @@ export const ProductSalesSection = ({
           <div className="flex items-end">
             <Button
               onClick={addProduct}
-              disabled={disabled || !selectedProductId}
+              disabled={
+                disabled || 
+                !selectedProductId || 
+                (selectedProduct && selectedProduct.current_stock === 0)
+              }
               className="w-full"
             >
               <Plus className="h-4 w-4 mr-2" />
