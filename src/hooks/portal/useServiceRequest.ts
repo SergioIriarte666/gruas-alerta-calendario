@@ -2,10 +2,10 @@
 import { useMutation } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useUser } from '@/contexts/UserContext';
+import { useErrorHandler } from '@/hooks/useErrorHandler';
 import { PortalRequestServiceSchema } from '@/schemas/portalRequestServiceSchema';
 import { useToast } from '@/components/ui/custom-toast';
 import { useNavigate } from 'react-router-dom';
-import { translateDatabaseError, isRequiredFieldError, extractRequiredField } from '@/utils/errorTranslation';
 
 const createServiceRequest = async ({
   formData,
@@ -51,9 +51,8 @@ const createServiceRequest = async ({
   if (error) {
     console.error('Error creating service request:', error);
     
-    // Traducir error técnico a mensaje amigable
-    const userFriendlyMessage = translateDatabaseError(error);
-    throw new Error(userFriendlyMessage);
+    // Lanzar el error para que lo maneje el createMutationErrorHandler
+    throw error;
   }
 
   return data;
@@ -61,6 +60,7 @@ const createServiceRequest = async ({
 
 export const useServiceRequest = () => {
   const { user: profileUser } = useUser();
+  const { createMutationErrorHandler } = useErrorHandler();
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -125,17 +125,9 @@ export const useServiceRequest = () => {
       
       navigate('/portal/services');
     },
-    onError: (error: Error) => {
-      console.error('Error in service request:', error);
-      
-      // El mensaje ya viene traducido desde createServiceRequest
-      const friendlyMessage = error.message || 'Ocurrió un error inesperado';
-      
-      toast({
-        type: 'error',
-        title: 'Error al enviar la solicitud',
-        description: friendlyMessage,
-      });
-    },
+    onError: createMutationErrorHandler({
+      title: 'Error al enviar la solicitud',
+      context: 'useServiceRequest'
+    }),
   });
 };

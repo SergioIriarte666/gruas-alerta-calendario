@@ -1,6 +1,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useErrorHandler } from '@/hooks/useErrorHandler';
 import { Cost, CostFormData, PartsExpenseData } from '@/types/costs';
 import { toast } from 'sonner';
 
@@ -177,6 +178,7 @@ const addCost = async (costData: CostFormData) => {
 
 export const useAddCost = () => {
   const queryClient = useQueryClient();
+  const { createMutationErrorHandler } = useErrorHandler();
   return useMutation({
     mutationFn: addCost,
     onSuccess: (data) => {
@@ -197,9 +199,10 @@ export const useAddCost = () => {
         queryClient.invalidateQueries({ queryKey: ['service-costs', data[0].service_id] });
       }
     },
-    onError: (error) => {
-      console.error('[useAddCost] Mutation error:', error);
-    }
+    onError: createMutationErrorHandler({
+      title: 'Error al Crear Costo',
+      context: 'useAddCost'
+    }),
   });
 };
 
@@ -280,6 +283,7 @@ const updateCost = async ({ id, ...costData }: { id: string } & any) => {
 
 export const useUpdateCost = () => {
   const queryClient = useQueryClient();
+  const { createMutationErrorHandler } = useErrorHandler();
   return useMutation({
     mutationFn: updateCost,
     onSuccess: (data) => {
@@ -298,9 +302,10 @@ export const useUpdateCost = () => {
         queryClient.invalidateQueries({ queryKey: ['service-costs', data[0].service_id] });
       }
     },
-    onError: (error) => {
-      console.error('[useUpdateCost] Mutation error:', error);
-    }
+    onError: createMutationErrorHandler({
+      title: 'Error al Actualizar Costo',
+      context: 'useUpdateCost'
+    }),
   });
 };
 
@@ -329,6 +334,7 @@ const deleteCost = async (id: string) => {
 
 export const useDeleteCost = () => {
   const queryClient = useQueryClient();
+  const { createMutationErrorHandler } = useErrorHandler();
   return useMutation({
     mutationFn: deleteCost,
     onSuccess: (serviceId) => {
@@ -349,8 +355,9 @@ export const useDeleteCost = () => {
         queryClient.invalidateQueries({ queryKey: ['service-costs', serviceId] });
       }
     },
-    onError: (error) => {
-      console.error('[useDeleteCost] Mutation error:', error);
-    }
+    onError: createMutationErrorHandler({
+      title: 'Error al Eliminar Costo',
+      context: 'useDeleteCost'
+    }),
   });
 };

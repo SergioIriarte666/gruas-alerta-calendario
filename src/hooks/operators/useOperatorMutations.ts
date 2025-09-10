@@ -1,6 +1,8 @@
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useErrorHandler } from '@/hooks/useErrorHandler';
+import type { Database } from '@/integrations/supabase/types';
 import { Operator } from '@/types';
 import { toast } from 'sonner';
 
@@ -9,6 +11,7 @@ type OperatorUpdateData = Partial<OperatorCreationData>;
 
 export const useOperatorMutations = () => {
   const queryClient = useQueryClient();
+  const { createMutationErrorHandler } = useErrorHandler();
 
   const onMutationSuccess = (message: string) => {
     queryClient.invalidateQueries({ queryKey: ['operators'] });
@@ -59,7 +62,10 @@ export const useOperatorMutations = () => {
       return data;
     },
     onSuccess: (data) => onMutationSuccess(`Operador "${data.name}" creado exitosamente.`),
-    onError: (error: Error, variables) => onMutationError(error, 'No se pudo crear el operador.', variables),
+    onError: createMutationErrorHandler({
+      title: 'Error al Crear Operador',
+      context: 'createOperator'
+    }),
   });
 
   const updateOperatorMutation = useMutation({
@@ -83,7 +89,10 @@ export const useOperatorMutations = () => {
         if (error) throw error;
     },
     onSuccess: () => onMutationSuccess('Operador actualizado exitosamente.'),
-    onError: (error: Error) => onMutationError(error, 'No se pudo actualizar el operador.'),
+    onError: createMutationErrorHandler({
+      title: 'Error al Actualizar Operador',
+      context: 'updateOperator'
+    }),
   });
 
   const deleteOperatorMutation = useMutation({
@@ -95,7 +104,10 @@ export const useOperatorMutations = () => {
       if (error) throw error;
     },
     onSuccess: () => onMutationSuccess('Operador eliminado exitosamente.'),
-    onError: (error: Error) => onMutationError(error, 'No se pudo eliminar el operador.'),
+    onError: createMutationErrorHandler({
+      title: 'Error al Eliminar Operador',
+      context: 'deleteOperator'
+    }),
   });
 
   const toggleOperatorStatusMutation = useMutation({
@@ -116,7 +128,10 @@ export const useOperatorMutations = () => {
         const status = operator.isActive ? 'desactivado' : 'activado';
         onMutationSuccess(`Operador "${operator.name}" ${status} exitosamente.`);
     },
-    onError: (error: Error) => onMutationError(error, 'No se pudo cambiar el estado del operador.'),
+    onError: createMutationErrorHandler({
+      title: 'Error al Cambiar Estado',
+      context: 'toggleOperatorStatus'
+    }),
   });
 
   return {
