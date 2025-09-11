@@ -10,6 +10,7 @@ import { toast } from 'sonner';
 import InvoicesHeader from '@/components/invoices/InvoicesHeader';
 import InvoicesStats from '@/components/invoices/InvoicesStats';
 import InvoicesSearch from '@/components/invoices/InvoicesSearch';
+import { InvoicesPipelineView } from '@/components/invoices/InvoicesPipelineView';
 import InvoicesTable from '@/components/invoices/InvoicesTable';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -288,20 +289,23 @@ const Invoices = () => {
   return (
     <div className="space-y-6">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-4 max-w-2xl mx-auto bg-white/10 backdrop-blur-sm border-white/20">
-              <TabsTrigger value="invoices" className="text-white data-[state=active]:bg-white/20">
-                Facturas
-              </TabsTrigger>
-              <TabsTrigger value="alerts" className="text-white data-[state=active]:bg-white/20">
-                Alertas
-              </TabsTrigger>
-              <TabsTrigger value="payments" className="text-white data-[state=active]:bg-white/20">
-                Conciliación
-              </TabsTrigger>
-              <TabsTrigger value="history" className="text-white data-[state=active]:bg-white/20">
-                Historial
-              </TabsTrigger>
-            </TabsList>
+        <TabsList className="grid w-full grid-cols-5 max-w-3xl mx-auto bg-white/10 backdrop-blur-sm border-white/20">
+          <TabsTrigger value="invoices" className="text-white data-[state=active]:bg-white/20">
+            Facturas
+          </TabsTrigger>
+          <TabsTrigger value="pipeline" className="text-white data-[state=active]:bg-white/20">
+            Pipeline
+          </TabsTrigger>
+          <TabsTrigger value="alerts" className="text-white data-[state=active]:bg-white/20">
+            Alertas
+          </TabsTrigger>
+          <TabsTrigger value="payments" className="text-white data-[state=active]:bg-white/20">
+            Conciliación
+          </TabsTrigger>
+          <TabsTrigger value="history" className="text-white data-[state=active]:bg-white/20">
+            Historial
+          </TabsTrigger>
+        </TabsList>
 
         <TabsContent value="invoices" className="space-y-6">
           <InvoicesHeader onCreateInvoice={() => setShowForm(true)} />
@@ -362,6 +366,18 @@ const Invoices = () => {
             currentPage={currentPage}
             totalPages={totalPages}
             onPageChange={setCurrentPage}
+          />
+        </TabsContent>
+
+        <TabsContent value="pipeline" className="space-y-6">
+          <InvoicesPipelineView
+            invoices={invoices}
+            loading={loading}
+            onEdit={handleEditInvoice}
+            onDelete={handleDeleteInvoice}
+            onMarkAsPaid={handleMarkAsPaid}
+            onView={handleEditInvoice}
+            getInvoiceWithDetails={getInvoiceWithDetails}
           />
         </TabsContent>
 
