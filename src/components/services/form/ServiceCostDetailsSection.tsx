@@ -290,9 +290,9 @@ export const ServiceCostDetailsSection = ({
           Costos Detallados del Servicio
         </CardTitle>
         {/* Información sobre comisiones */}
-        <div className="flex items-start gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm">
-          <Info className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
-          <div className="text-blue-800">
+        <div className="flex items-start gap-2 p-3 bg-muted border border-border rounded-lg text-sm">
+          <Info className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+          <div className="text-muted-foreground">
             <strong>Nota:</strong> Las comisiones de operadores se manejan en la sección "Operadores del Servicio" arriba. 
             Esta sección es para otros costos operacionales como combustible, peajes, materiales, etc.
           </div>
@@ -471,13 +471,13 @@ export const ServiceCostDetailsSection = ({
 
         {/* Resumen por categoría */}
         {costDetails.length > 0 && (
-          <div className="mt-4 p-4 bg-blue-50 rounded-lg">
-            <h5 className="font-medium mb-2">Resumen por Categoría:</h5>
+          <div className="mt-4 p-4 bg-muted rounded-lg border border-border">
+            <h5 className="font-medium mb-2 text-foreground">Resumen por Categoría:</h5>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-sm">
               {Object.entries(getCostsByCategory()).map(([category, amount]) => (
                 <div key={category} className="flex justify-between">
-                  <span>{category}:</span>
-                  <span className="font-medium">${amount.toLocaleString('es-CL')}</span>
+                  <span className="text-muted-foreground">{category}:</span>
+                  <span className="font-medium text-foreground">${amount.toLocaleString('es-CL')}</span>
                 </div>
               ))}
             </div>

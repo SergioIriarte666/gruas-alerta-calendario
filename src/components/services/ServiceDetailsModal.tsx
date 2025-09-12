@@ -47,9 +47,9 @@ interface DetailItemProps {
 
 const DetailItem = ({ icon: Icon, label, value, valueClass = '', isFullWidth = false }: DetailItemProps) => (
   <div className={`flex items-start space-x-3 ${isFullWidth ? 'col-span-1 md:col-span-2' : ''}`}>
-    <Icon className="w-4 h-4 text-gray-400 mt-1 flex-shrink-0" />
+    <Icon className="w-4 h-4 text-muted-foreground mt-1 flex-shrink-0" />
     <div className="flex-grow">
-      <p className="text-sm text-gray-400">{label}</p>
+      <p className="text-sm text-muted-foreground">{label}</p>
       <p className={`font-medium ${valueClass}`}>{value || 'N/A'}</p>
     </div>
   </div>
@@ -63,7 +63,7 @@ interface DetailSectionProps {
 
 const DetailSection = ({ title, icon: Icon, children }: DetailSectionProps) => (
   <div>
-    <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
+    <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center">
       <Icon className="w-5 h-5 mr-2 text-tms-green"/>
       {title}
     </h3>
@@ -227,10 +227,10 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose }: ServiceDetails
                       <DetailItem icon={Mail} label="Email" value={serviceData.client.email} />
                       <DetailItem icon={MapPin} label="Dirección" value={serviceData.client.address} isFullWidth={true} />
                   </DetailSection>
-                  <Separator className="bg-gray-700"/>
+                   <Separator className="border-border"/>
                   {shouldShowVehicleInfo(serviceData) && (
                     <>
-                      <Separator className="bg-gray-700"/>
+                       <Separator className="border-border"/>
                       <DetailSection title="Vehículo" icon={Truck}>
                           <DetailItem icon={Wrench} label="Marca y Modelo" value={`${serviceData.vehicleBrand} ${serviceData.vehicleModel}`} />
                           <DetailItem icon={IdCard} label="Patente" value={serviceData.licensePlate} valueClass="text-lg" />
@@ -269,7 +269,7 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose }: ServiceDetails
                   {/* Sección de Custodia/Arriendo */}
                   {isCustody && custodyInfo && (
                     <>
-                      <Separator className="bg-gray-700"/>
+                       <Separator className="border-border"/>
                       <DetailSection 
                         title={isEquipmentRental ? "Información de Arriendo" : "Información de Custodia"} 
                         icon={isEquipmentRental ? Wrench : Shield}
@@ -315,7 +315,7 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose }: ServiceDetails
                     </>
                   )}
                   
-                  <Separator className="bg-gray-700"/>
+                   <Separator className="border-border"/>
                   <DetailSection title="Recursos Asignados" icon={Truck}>
                       <DetailItem 
                           icon={Truck} 
@@ -328,7 +328,7 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose }: ServiceDetails
                            value={primaryOperator ? `${primaryOperator.name} (${primaryOperator.rut})${hasMultipleOperators ? ' (Principal)' : ''}` : 'Sin asignar'} 
                        />
                   </DetailSection>
-                   <Separator className="bg-gray-700"/>
+                    <Separator className="border-border"/>
                    <DetailSection title="Finanzas" icon={DollarSign}>
                        <DetailItem 
                          icon={DollarSign} 
@@ -337,18 +337,18 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose }: ServiceDetails
                          valueClass="text-lg text-tms-green font-bold" 
                        />
                        {serviceData.hasExcess && serviceData.clientCoveredAmount && (
-                         <DetailItem icon={DollarSign} label="Monto Cubierto Cliente" value={formatCurrency(serviceData.clientCoveredAmount)} valueClass="text-sm text-gray-400" />
+                         <DetailItem icon={DollarSign} label="Monto Cubierto Cliente" value={formatCurrency(serviceData.clientCoveredAmount)} valueClass="text-sm text-muted-foreground" />
                        )}
-                       <DetailItem icon={DollarSign} label="Total Costos" value={formatCurrency(totalCosts)} valueClass="text-lg text-red-400 font-bold" />
-                       <DetailItem icon={DollarSign} label="Ganancia Neta" value={formatCurrency(netProfit)} valueClass={`text-lg font-bold ${netProfit >= 0 ? 'text-emerald-400' : 'text-red-400'}`}/>
+                        <DetailItem icon={DollarSign} label="Total Costos" value={formatCurrency(totalCosts)} valueClass="text-lg text-destructive font-bold" />
+                        <DetailItem icon={DollarSign} label="Ganancia Neta" value={formatCurrency(netProfit)} valueClass={`text-lg font-bold ${netProfit >= 0 ? 'text-emerald-400' : 'text-destructive'}`}/>
                    </DetailSection>
 
                   {serviceData.observations && (
                     <>
-                      <Separator className="bg-gray-700"/>
+                      <Separator className="border-border"/>
                        <div className='pt-6'>
                           <DetailSection title="Observaciones" icon={FileText}>
-                             <p className="text-gray-300 whitespace-pre-wrap col-span-2">{serviceData.observations}</p>
+                             <p className="text-muted-foreground whitespace-pre-wrap col-span-2">{serviceData.observations}</p>
                           </DetailSection>
                        </div>
                     </>
@@ -370,7 +370,7 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose }: ServiceDetails
             </TabsContent>
           </Tabs>
 
-          <div className="flex justify-between text-sm text-gray-400 pt-4 mt-6 mb-6 border-t border-gray-700">
+          <div className="flex justify-between text-sm text-muted-foreground pt-4 mt-6 mb-6 border-t border-border">
             <span>Creado: {formatForDisplayWithTime(serviceData.createdAt)}</span>
             <span>Actualizado: {formatForDisplayWithTime(serviceData.updatedAt)}</span>
           </div>

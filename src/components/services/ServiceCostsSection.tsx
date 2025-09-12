@@ -64,7 +64,7 @@ export const ServiceCostsSection = ({ serviceId, enhancedService }: ServiceCosts
   if (error) {
     console.error('[ServiceCostsSection] Error loading costs:', error);
     return (
-      <div className="flex items-center space-x-2 text-red-400">
+      <div className="flex items-center space-x-2 text-destructive">
         <AlertTriangle className="w-4 h-4" />
         <span className="text-sm">Error al cargar los costos del servicio</span>
       </div>
@@ -73,10 +73,10 @@ export const ServiceCostsSection = ({ serviceId, enhancedService }: ServiceCosts
 
   if (!allCosts || (allCosts.length === 0 && operatorsData.length === 0)) {
     return (
-      <div className="text-center py-6 text-gray-400">
+      <div className="text-center py-6 text-muted-foreground">
         <FileText className="w-8 h-8 mx-auto mb-2 opacity-50" />
         <p className="text-sm">No hay costos ni comisiones registrados para este servicio</p>
-        <p className="text-xs text-gray-500 mt-1">
+        <p className="text-xs text-muted-foreground mt-1">
           Los costos se pueden agregar desde el formulario de edición del servicio
         </p>
       </div>
@@ -86,17 +86,17 @@ export const ServiceCostsSection = ({ serviceId, enhancedService }: ServiceCosts
   return (
     <div className="space-y-4">
       {/* Resumen de costos */}
-      <div className="bg-gray-800 rounded-lg p-4">
+      <div className="bg-card rounded-lg p-4 border border-border">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <Calculator className="w-5 h-5 text-red-400" />
-            <span className="font-medium text-white">Total de Costos</span>
+            <Calculator className="w-5 h-5 text-destructive" />
+            <span className="font-medium text-foreground">Total de Costos</span>
           </div>
-          <span className="text-lg font-bold text-red-400">
+          <span className="text-lg font-bold text-destructive">
             {formatCurrency(grandTotal)}
           </span>
         </div>
-        <div className="flex items-center justify-between text-sm text-gray-400 mt-2">
+        <div className="flex items-center justify-between text-sm text-muted-foreground mt-2">
           <span>{allCosts.length + operatorsData.length} costo{(allCosts.length + operatorsData.length) !== 1 ? 's' : ''} registrado{(allCosts.length + operatorsData.length) !== 1 ? 's' : ''}</span>
           <span>{Object.keys(costsByCategory).length + (operatorsData.length > 0 ? 1 : 0)} categoría{(Object.keys(costsByCategory).length + (operatorsData.length > 0 ? 1 : 0)) !== 1 ? 's' : ''}</span>
         </div>
@@ -104,24 +104,24 @@ export const ServiceCostsSection = ({ serviceId, enhancedService }: ServiceCosts
 
       {/* Resumen por categorías */}
       {(Object.keys(costsByCategory).length > 1 || operatorsData.length > 0) && (
-        <div className="bg-gray-800/50 rounded-lg p-4 border border-gray-700">
+        <div className="bg-muted/50 rounded-lg p-4 border border-border">
           <div className="flex items-center space-x-2 mb-3">
-            <TrendingDown className="w-4 h-4 text-blue-400" />
-            <span className="font-medium text-white text-sm">Resumen por Categoría</span>
+            <TrendingDown className="w-4 h-4 text-primary" />
+            <span className="font-medium text-foreground text-sm">Resumen por Categoría</span>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
             {operatorsData.length > 0 && (
               <div className="flex justify-between text-sm">
-                <span className="text-gray-400 truncate">Comisión Operador:</span>
-                <span className="text-red-400 font-medium">{formatCurrency(totalCommissions)}</span>
+                <span className="text-muted-foreground truncate">Comisión Operador:</span>
+                <span className="text-destructive font-medium">{formatCurrency(totalCommissions)}</span>
               </div>
             )}
             {Object.entries(costsByCategory).map(([category, categoryCosts]) => {
               const categoryTotal = categoryCosts.reduce((sum, cost) => sum + Number(cost.amount), 0);
               return (
                 <div key={category} className="flex justify-between text-sm">
-                  <span className="text-gray-400 truncate">{category}:</span>
-                  <span className="text-red-400 font-medium">{formatCurrency(categoryTotal)}</span>
+                  <span className="text-muted-foreground truncate">{category}:</span>
+                  <span className="text-destructive font-medium">{formatCurrency(categoryTotal)}</span>
                 </div>
               );
             })}
@@ -132,22 +132,22 @@ export const ServiceCostsSection = ({ serviceId, enhancedService }: ServiceCosts
       {/* Sección de comisiones de operadores */}
       {operatorsData.length > 0 && (
         <div className="space-y-2">
-          <h4 className="font-medium text-white text-sm border-b border-gray-700 pb-1">
+          <h4 className="font-medium text-foreground text-sm border-b border-border pb-1">
             Comisión Operador ({operatorsData.length} costo{operatorsData.length !== 1 ? 's' : ''})
           </h4>
           
           {operatorsData.map((operatorData) => (
-            <div key={operatorData.id} className="bg-gray-800/50 rounded-lg p-4 border border-gray-700">
+            <div key={operatorData.id} className="bg-card rounded-lg p-4 border border-border">
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <div className="flex items-center space-x-2 mb-2">
-                    <h5 className="font-medium text-white">Comisión operador - Servicio {enhancedService?.folio || serviceId}</h5>
+                    <h5 className="font-medium text-foreground">Comisión operador - Servicio {enhancedService?.folio || serviceId}</h5>
                     <Badge variant="outline" className="text-xs">
                       comisiones
                     </Badge>
                   </div>
                   
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-gray-400">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-muted-foreground">
                     <p>
                       <span className="font-medium">Fecha:</span>{' '}
                       {formatForDisplay(new Date())}
@@ -166,7 +166,7 @@ export const ServiceCostsSection = ({ serviceId, enhancedService }: ServiceCosts
                 </div>
                 
                 <div className="text-right">
-                  <span className="text-lg font-bold text-red-400">
+                  <span className="text-lg font-bold text-destructive">
                     {formatCurrency(operatorData.commission || 0)}
                   </span>
                 </div>
@@ -181,16 +181,16 @@ export const ServiceCostsSection = ({ serviceId, enhancedService }: ServiceCosts
         <div className="space-y-4">
           {Object.entries(costsByCategory).map(([category, categoryCosts]) => (
             <div key={category} className="space-y-2">
-              <h4 className="font-medium text-white text-sm border-b border-gray-700 pb-1">
+              <h4 className="font-medium text-foreground text-sm border-b border-border pb-1">
                 {category} ({categoryCosts.length} costo{categoryCosts.length !== 1 ? 's' : ''})
               </h4>
               
               {categoryCosts.map((cost) => (
-                <div key={cost.id} className="bg-gray-800/50 rounded-lg p-4 border border-gray-700">
+                <div key={cost.id} className="bg-card rounded-lg p-4 border border-border">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <div className="flex items-center space-x-2 mb-2">
-                        <h5 className="font-medium text-white">{cost.description}</h5>
+                        <h5 className="font-medium text-foreground">{cost.description}</h5>
                         {cost.subcategory && (
                           <Badge variant="outline" className="text-xs">
                             {cost.subcategory}
@@ -198,7 +198,7 @@ export const ServiceCostsSection = ({ serviceId, enhancedService }: ServiceCosts
                         )}
                       </div>
                       
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-gray-400">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-muted-foreground">
                         <p>
                           <span className="font-medium">Fecha:</span>{' '}
                           {formatForDisplay(parseFromDatabase(cost.date))}
@@ -227,14 +227,14 @@ export const ServiceCostsSection = ({ serviceId, enhancedService }: ServiceCosts
                       </div>
 
                       {cost.notes && (
-                        <p className="text-sm text-gray-300 mt-2 italic">
+                        <p className="text-sm text-muted-foreground mt-2 italic">
                           {cost.notes}
                         </p>
                       )}
                     </div>
                     
                     <div className="text-right">
-                      <span className="text-lg font-bold text-red-400">
+                      <span className="text-lg font-bold text-destructive">
                         {formatCurrency(Number(cost.amount))}
                       </span>
                     </div>
