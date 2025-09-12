@@ -16,50 +16,50 @@ const PIPELINE_COLUMNS = [
     id: 'quoted' as ServiceStatus,
     title: 'Cotizados',
     description: 'Servicios con cotización enviada',
-    color: 'bg-blue-500/20 border-blue-500/30',
-    textColor: 'text-blue-300'
+    color: 'bg-muted/40 border-border',
+    textColor: 'text-foreground'
   },
   {
     id: 'purchase_order_pending' as ServiceStatus,
     title: 'Esperando O.C.',
     description: 'Aguardando orden de compra del cliente',
-    color: 'bg-amber-500/20 border-amber-500/30',
-    textColor: 'text-amber-300'
+    color: 'bg-muted/40 border-border',
+    textColor: 'text-foreground'
   },
   {
     id: 'with_purchase_order' as ServiceStatus,
     title: 'Con Orden de Compra',
     description: 'Servicios con orden de compra recibida',
-    color: 'bg-teal-500/20 border-teal-500/30',
-    textColor: 'text-teal-300'
+    color: 'bg-muted/40 border-border',
+    textColor: 'text-foreground'
   },
   {
     id: 'pending' as ServiceStatus,
     title: 'Programados',
     description: 'Servicios confirmados y programados',
-    color: 'bg-purple-500/20 border-purple-500/30',
-    textColor: 'text-purple-300'
+    color: 'bg-muted/40 border-border',
+    textColor: 'text-foreground'
   },
   {
     id: 'in_progress' as ServiceStatus,
     title: 'En Progreso',
     description: 'Servicios ejecutándose actualmente',
-    color: 'bg-orange-500/20 border-orange-500/30',
-    textColor: 'text-orange-300'
+    color: 'bg-muted/40 border-border',
+    textColor: 'text-foreground'
   },
   {
     id: 'completed' as ServiceStatus,
     title: 'Completados',
     description: 'Servicios finalizados exitosamente',
-    color: 'bg-green-500/20 border-green-500/30',
-    textColor: 'text-green-300'
+    color: 'bg-muted/40 border-border',
+    textColor: 'text-foreground'
   },
   {
     id: 'invoiced' as ServiceStatus,
     title: 'Facturados',
     description: 'Servicios facturados y cerrados',
-    color: 'bg-gray-500/20 border-gray-500/30',
-    textColor: 'text-gray-300'
+    color: 'bg-muted/40 border-border',
+    textColor: 'text-foreground'
   }
 ];
 

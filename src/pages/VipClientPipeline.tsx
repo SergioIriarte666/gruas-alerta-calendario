@@ -194,16 +194,16 @@ export default function VipClientPipeline() {
           <div>
             <h1 className="text-2xl font-bold text-foreground flex items-center gap-3">
               {client.name}
-              <Badge variant="secondary" className="bg-purple-500/20 text-purple-300 border-purple-500/30">
-                VIP Pipeline
-              </Badge>
+            <Badge variant="secondary">
+              VIP Pipeline
+            </Badge>
             </h1>
             <p className="text-muted-foreground">RUT: {client.rut} • {client.department}</p>
           </div>
         </div>
 
         <div className="flex items-center gap-2">
-          <Badge variant="outline" className="text-green-400 border-green-500/30">
+          <Badge variant="outline">
             <CheckCircle className="w-3 h-3 mr-1" />
             Sistema Activo
           </Badge>

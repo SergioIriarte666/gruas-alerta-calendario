@@ -63,7 +63,7 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({
                 {service.folio}
               </Badge>
               {service.purchaseOrderNumber && (
-                <Badge variant="secondary" className="text-xs px-1.5 py-0.5 bg-tms-green text-primary-foreground font-semibold">
+                <Badge variant="secondary" className="text-xs px-1.5 py-0.5 font-semibold">
                   {service.purchaseOrderNumber}
                 </Badge>
               )}
@@ -77,7 +77,7 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({
               <Button 
                 variant="ghost" 
                 size="sm"
-                className="opacity-0 group-hover:opacity-100 transition-opacity p-1 h-auto text-orange-400 hover:text-orange-300"
+                className="opacity-0 group-hover:opacity-100 transition-opacity p-1 h-auto text-muted-foreground hover:text-foreground"
                 onClick={(e) => {
                   e.stopPropagation();
                   // Trigger purchase order registration
@@ -143,12 +143,12 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({
 
           {/* Value */}
           <div className="flex items-center justify-between pt-1 border-t">
-            <div className="flex items-center gap-2 text-green-400">
-              <DollarSign className="w-3 h-3" />
-              <span className="font-medium">
-                ${service.value.toLocaleString()}
-              </span>
-            </div>
+          <div className="flex items-center gap-2 text-primary">
+            <DollarSign className="w-3 h-3" />
+            <span className="font-medium">
+              ${service.value.toLocaleString()}
+            </span>
+          </div>
             
             {/* Status Badge */}
             <Badge 
@@ -161,7 +161,7 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({
 
           {/* Purchase Order Number (if exists) */}
           {service.purchaseOrder && (
-            <div className="flex items-center gap-2 text-primary-foreground bg-tms-green/80 rounded px-2 py-1">
+            <div className="flex items-center gap-2 bg-secondary text-secondary-foreground rounded px-2 py-1">
               <FileText className="w-3 h-3" />
               <span className="text-xs font-semibold">O.C: {service.purchaseOrder}</span>
             </div>
@@ -169,7 +169,7 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({
 
           {/* Quote Number (if exists) */}
           {service.quoteNumber && (
-            <div className="flex items-center gap-2 text-primary-foreground bg-blue-600 rounded px-2 py-1">
+            <div className="flex items-center gap-2 bg-primary text-primary-foreground rounded px-2 py-1">
               <FileText className="w-3 h-3" />
               <span className="text-xs font-semibold">COT: {service.quoteNumber}</span>
             </div>
@@ -177,7 +177,7 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({
 
           {/* Time indicators for special states */}
           {(service.status === 'quoted' || service.status === 'purchase_order_pending') && (
-            <div className="flex items-center gap-2 text-primary-foreground bg-amber-600 rounded px-2 py-1">
+            <div className="flex items-center gap-2 bg-accent text-accent-foreground rounded px-2 py-1">
               <Clock className="w-3 h-3" />
               <span className="text-xs font-medium">
                 {service.status === 'quoted' ? 'Esperando respuesta' : 'Esperando orden de compra'}
