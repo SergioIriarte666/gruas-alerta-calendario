@@ -71,13 +71,13 @@ const Operators = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="text-white">Cargando operadores...</div>
+        <div className="text-foreground">Cargando operadores...</div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 operators-scope">
       <OperatorsHeader onNewOperator={handleCreate} />
 
       <OperatorsFilters searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
@@ -104,9 +104,9 @@ const Operators = () => {
           setEditingOperator(undefined);
         }
       }}>
-        <DialogContent className="bg-tms-dark border-gray-700 max-w-2xl">
+        <DialogContent className="bg-card border max-w-2xl">
           <DialogHeader>
-            <DialogTitle className="text-white">
+            <DialogTitle className="text-foreground">
               {editingOperator ? 'Editar Operador' : 'Nuevo Operador'}
             </DialogTitle>
           </DialogHeader>

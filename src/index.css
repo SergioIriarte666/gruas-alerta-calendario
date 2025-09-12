@@ -296,6 +296,62 @@ body {
   border-color: hsl(var(--border)) !important;
 }
 
+/* Cranes Module Scope */
+.cranes-scope {
+  color: hsl(var(--foreground));
+}
+
+.cranes-scope .text-white {
+  color: hsl(var(--foreground)) !important;
+}
+
+.cranes-scope .text-gray-300 {
+  color: hsl(var(--muted-foreground)) !important;
+}
+
+.cranes-scope .text-gray-400 {
+  color: hsl(var(--muted-foreground)) !important;
+}
+
+.cranes-scope .border-gray-700,
+.cranes-scope .border-gray-800 {
+  border-color: hsl(var(--border)) !important;
+}
+
+.cranes-scope .bg-white\/5:hover {
+  background-color: hsl(var(--accent)) !important;
+}
+
+.cranes-scope .bg-black {
+  background-color: hsl(var(--card)) !important;
+}
+
+/* Operators Module Scope */
+.operators-scope {
+  color: hsl(var(--foreground));
+}
+
+.operators-scope .text-white {
+  color: hsl(var(--foreground)) !important;
+}
+
+.operators-scope .text-gray-300 {
+  color: hsl(var(--muted-foreground)) !important;
+}
+
+.operators-scope .text-gray-400 {
+  color: hsl(var(--muted-foreground)) !important;
+}
+
+.operators-scope .border-gray-700,
+.operators-scope .border-gray-800 {
+  border-color: hsl(var(--border)) !important;
+}
+
+.operators-scope .bg-white\/5:hover {
+  background-color: hsl(var(--accent)) !important;
+}
+
 /* Media queries para responsive */
 @media (max-width: 768px) {
   .responsive-grid {

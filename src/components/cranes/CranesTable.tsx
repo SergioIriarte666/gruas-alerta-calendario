@@ -49,14 +49,14 @@ export const CranesTable = ({
   // Desktop view (unchanged functionality)
   if (cranes.length === 0 && searchTerm) {
     return (
-      <Card className="glass-card">
+      <Card className="bg-card border-border cranes-scope">
         <CardContent className="p-8 text-center">
-          <Truck className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-          <h3 className="text-lg font-medium text-white mb-2">No se encontraron grúas</h3>
-          <p className="text-gray-400 mb-4">
+          <Truck className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+          <h3 className="text-lg font-medium text-foreground mb-2">No se encontraron grúas</h3>
+          <p className="text-muted-foreground mb-4">
             No hay grúas que coincidan con "{searchTerm}"
           </p>
-          <Button onClick={onNewCrane} className="bg-tms-green hover:bg-tms-green/80 text-black">
+          <Button onClick={onNewCrane} className="bg-primary hover:bg-primary/90 text-primary-foreground">
             <Plus className="w-4 h-4 mr-2" />
             Agregar Grúa
           </Button>
@@ -67,14 +67,14 @@ export const CranesTable = ({
 
   if (cranes.length === 0) {
     return (
-      <Card className="glass-card">
+      <Card className="bg-card border-border cranes-scope">
         <CardContent className="p-8 text-center">
-          <Truck className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-          <h3 className="text-lg font-medium text-white mb-2">No hay grúas registradas</h3>
-          <p className="text-gray-400 mb-4">
+          <Truck className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+          <h3 className="text-lg font-medium text-foreground mb-2">No hay grúas registradas</h3>
+          <p className="text-muted-foreground mb-4">
             Comienza agregando tu primera grúa al sistema
           </p>
-          <Button onClick={onNewCrane} className="bg-tms-green hover:bg-tms-green/80 text-black">
+          <Button onClick={onNewCrane} className="bg-primary hover:bg-primary/90 text-primary-foreground">
             <Plus className="w-4 h-4 mr-2" />
             Agregar Primera Grúa
           </Button>
@@ -84,9 +84,9 @@ export const CranesTable = ({
   }
 
   return (
-    <Card className="glass-card">
+    <Card className="bg-card border-border cranes-scope">
       <CardHeader>
-        <CardTitle className="text-white flex items-center justify-between">
+        <CardTitle className="text-foreground flex items-center justify-between">
           <span>Grúas Registradas ({totalCranes})</span>
         </CardTitle>
       </CardHeader>
@@ -94,38 +94,38 @@ export const CranesTable = ({
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-gray-700">
-                <th className="text-left py-3 px-4 font-medium text-white">Patente</th>
-                <th className="text-left py-3 px-4 font-medium text-white">Marca/Modelo</th>
-                <th className="text-left py-3 px-4 font-medium text-white">Tipo</th>
-                <th className="text-left py-3 px-4 font-medium text-white">Rev. Técnica</th>
-                <th className="text-left py-3 px-4 font-medium text-white">Seguro</th>
-                <th className="text-left py-3 px-4 font-medium text-white">Permiso Circ.</th>
-                <th className="text-left py-3 px-4 font-medium text-white">Estado</th>
-                <th className="text-center py-3 px-4 font-medium text-white">Acciones</th>
+              <tr className="border-b">
+                <th className="text-left py-3 px-4 font-medium text-foreground">Patente</th>
+                <th className="text-left py-3 px-4 font-medium text-foreground">Marca/Modelo</th>
+                <th className="text-left py-3 px-4 font-medium text-foreground">Tipo</th>
+                <th className="text-left py-3 px-4 font-medium text-foreground">Rev. Técnica</th>
+                <th className="text-left py-3 px-4 font-medium text-foreground">Seguro</th>
+                <th className="text-left py-3 px-4 font-medium text-foreground">Permiso Circ.</th>
+                <th className="text-left py-3 px-4 font-medium text-foreground">Estado</th>
+                <th className="text-center py-3 px-4 font-medium text-foreground">Acciones</th>
               </tr>
             </thead>
             <tbody>
               {cranes.map((crane) => (
-                <tr key={crane.id} className="border-b border-gray-800 hover:bg-white/5">
-                  <td className="py-3 px-4 text-white font-medium">{crane.licensePlate}</td>
-                  <td className="py-3 px-4 text-white">{crane.brand} {crane.model}</td>
-                  <td className="py-3 px-4 text-white">{crane.type}</td>
-                  <td className="py-3 px-4 text-white">
+                <tr key={crane.id} className="border-b hover:bg-accent">
+                  <td className="py-3 px-4 text-foreground font-medium">{crane.licensePlate}</td>
+                  <td className="py-3 px-4 text-foreground">{crane.brand} {crane.model}</td>
+                  <td className="py-3 px-4 text-foreground">{crane.type}</td>
+                  <td className="py-3 px-4 text-foreground">
                     {formatForDisplay(crane.technicalReviewExpiry)}
                   </td>
-                  <td className="py-3 px-4 text-white">
+                  <td className="py-3 px-4 text-foreground">
                     {formatForDisplay(crane.insuranceExpiry)}
                   </td>
-                  <td className="py-3 px-4 text-white">
+                  <td className="py-3 px-4 text-foreground">
                     {formatForDisplay(crane.circulationPermitExpiry)}
                   </td>
                   <td className="py-3 px-4">
                     <Badge 
                       variant={crane.isActive ? "default" : "secondary"}
                       className={crane.isActive 
-                        ? "bg-tms-green text-black" 
-                        : "bg-gray-600 text-white"
+                        ? "bg-primary text-primary-foreground" 
+                        : "bg-muted text-muted-foreground"
                       }
                     >
                       {crane.isActive ? 'Activa' : 'Inactiva'}

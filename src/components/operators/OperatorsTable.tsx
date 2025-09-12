@@ -27,14 +27,14 @@ export const OperatorsTable = ({
 }: OperatorsTableProps) => {
   if (operators.length === 0 && searchTerm) {
     return (
-      <Card className="glass-card">
+      <Card className="bg-card border-border operators-scope">
         <CardContent className="p-8 text-center">
-          <Users className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-          <h3 className="text-lg font-medium text-white mb-2">No se encontraron operadores</h3>
-          <p className="text-gray-400 mb-4">
+          <Users className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+          <h3 className="text-lg font-medium text-foreground mb-2">No se encontraron operadores</h3>
+          <p className="text-muted-foreground mb-4">
             No hay operadores que coincidan con "{searchTerm}"
           </p>
-          <Button onClick={onNewOperator} className="bg-tms-green hover:bg-tms-green/80 text-black">
+          <Button onClick={onNewOperator} className="bg-primary hover:bg-primary/90 text-primary-foreground">
             <Plus className="w-4 h-4 mr-2" />
             Agregar Operador
           </Button>
@@ -45,14 +45,14 @@ export const OperatorsTable = ({
 
   if (operators.length === 0) {
     return (
-      <Card className="glass-card">
+      <Card className="bg-card border-border operators-scope">
         <CardContent className="p-8 text-center">
-          <Users className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-          <h3 className="text-lg font-medium text-white mb-2">No hay operadores registrados</h3>
-          <p className="text-gray-400 mb-4">
+          <Users className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+          <h3 className="text-lg font-medium text-foreground mb-2">No hay operadores registrados</h3>
+          <p className="text-muted-foreground mb-4">
             Comienza agregando tu primer operador al sistema
           </p>
-          <Button onClick={onNewOperator} className="bg-tms-green hover:bg-tms-green/80 text-black">
+          <Button onClick={onNewOperator} className="bg-primary hover:bg-primary/90 text-primary-foreground">
             <Plus className="w-4 h-4 mr-2" />
             Agregar Primer Operador
           </Button>
@@ -62,9 +62,9 @@ export const OperatorsTable = ({
   }
 
   return (
-    <Card className="glass-card">
+    <Card className="bg-card border-border operators-scope">
       <CardHeader>
-        <CardTitle className="text-white flex items-center justify-between">
+        <CardTitle className="text-foreground flex items-center justify-between">
           <span>Operadores ({totalOperators})</span>
         </CardTitle>
       </CardHeader>
@@ -72,32 +72,32 @@ export const OperatorsTable = ({
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-gray-700">
-                <th className="text-left py-3 px-4 font-medium text-white">Nombre</th>
-                <th className="text-left py-3 px-4 font-medium text-white">RUT</th>
-                <th className="text-left py-3 px-4 font-medium text-white">Teléfono</th>
-                <th className="text-left py-3 px-4 font-medium text-white">Licencia</th>
-                <th className="text-left py-3 px-4 font-medium text-white">Vencimiento</th>
-                <th className="text-left py-3 px-4 font-medium text-white">Estado</th>
-                <th className="text-center py-3 px-4 font-medium text-white">Acciones</th>
+              <tr className="border-b">
+                <th className="text-left py-3 px-4 font-medium text-foreground">Nombre</th>
+                <th className="text-left py-3 px-4 font-medium text-foreground">RUT</th>
+                <th className="text-left py-3 px-4 font-medium text-foreground">Teléfono</th>
+                <th className="text-left py-3 px-4 font-medium text-foreground">Licencia</th>
+                <th className="text-left py-3 px-4 font-medium text-foreground">Vencimiento</th>
+                <th className="text-left py-3 px-4 font-medium text-foreground">Estado</th>
+                <th className="text-center py-3 px-4 font-medium text-foreground">Acciones</th>
               </tr>
             </thead>
             <tbody>
               {operators.map((operator) => (
-                <tr key={operator.id} className="border-b border-gray-800 hover:bg-white/5">
-                  <td className="py-3 px-4 text-white font-medium">{operator.name}</td>
-                  <td className="py-3 px-4 text-white">{operator.rut}</td>
-                  <td className="py-3 px-4 text-white">{operator.phone}</td>
-                  <td className="py-3 px-4 text-white">{operator.licenseNumber}</td>
-                  <td className="py-3 px-4 text-white">
+                <tr key={operator.id} className="border-b hover:bg-accent">
+                  <td className="py-3 px-4 text-foreground font-medium">{operator.name}</td>
+                  <td className="py-3 px-4 text-foreground">{operator.rut}</td>
+                  <td className="py-3 px-4 text-foreground">{operator.phone}</td>
+                  <td className="py-3 px-4 text-foreground">{operator.licenseNumber}</td>
+                  <td className="py-3 px-4 text-foreground">
                     {formatForDisplay(operator.examExpiry)}
                   </td>
                   <td className="py-3 px-4">
                     <Badge 
                       variant={operator.isActive ? "default" : "secondary"}
                       className={operator.isActive 
-                        ? "bg-tms-green text-black" 
-                        : "bg-gray-600 text-white"
+                        ? "bg-primary text-primary-foreground" 
+                        : "bg-muted text-muted-foreground"
                       }
                     >
                       {operator.isActive ? 'Activo' : 'Inactivo'}

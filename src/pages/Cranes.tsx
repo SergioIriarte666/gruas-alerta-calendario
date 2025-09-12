@@ -86,13 +86,13 @@ const Cranes = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="text-white">Cargando grúas...</div>
+        <div className="text-foreground">Cargando grúas...</div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 cranes-scope">
       <CranesHeader onNewCrane={handleCreate} />
 
       <CranesFilters searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
@@ -127,9 +127,9 @@ const Cranes = () => {
           setEditingCrane(undefined);
         }
       }}>
-        <DialogContent className="bg-black border-tms-green/30 max-w-2xl">
+        <DialogContent className="bg-card border max-w-2xl">
           <DialogHeader>
-            <DialogTitle className="text-white">
+            <DialogTitle className="text-foreground">
               {editingCrane ? 'Editar Grúa' : 'Nueva Grúa'}
             </DialogTitle>
           </DialogHeader>
