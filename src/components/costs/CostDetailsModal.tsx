@@ -39,10 +39,10 @@ interface DetailItemProps {
 
 const DetailItem = ({ icon: Icon, label, value, valueClass = '', isFullWidth = false }: DetailItemProps) => (
   <div className={`flex items-start space-x-3 ${isFullWidth ? 'col-span-1 md:col-span-2' : ''}`}>
-    <Icon className="w-4 h-4 text-gray-400 mt-1 flex-shrink-0" />
+    <Icon className="w-4 h-4 text-muted-foreground mt-1 flex-shrink-0" />
     <div className="flex-grow">
-      <p className="text-sm text-gray-400">{label}</p>
-      <p className={`font-medium ${valueClass}`}>{value || 'N/A'}</p>
+      <p className="text-sm text-muted-foreground">{label}</p>
+      <p className={`font-medium text-foreground ${valueClass}`}>{value || 'N/A'}</p>
     </div>
   </div>
 );
@@ -55,8 +55,8 @@ interface DetailSectionProps {
 
 const DetailSection = ({ title, icon: Icon, children }: DetailSectionProps) => (
   <div>
-    <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
-      <Icon className="w-5 h-5 mr-2 text-tms-green"/>
+    <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center">
+      <Icon className="w-5 h-5 mr-2 text-primary"/>
       {title}
     </h3>
     <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
@@ -107,7 +107,7 @@ export const CostDetailsModal = ({ cost, isOpen, onClose }: CostDetailsModalProp
         <DialogHeader>
           <DialogTitle className="flex items-center justify-between">
             <span>Detalles del Costo - {cost.description}</span>
-            <Badge className="bg-red-500 text-white">
+            <Badge className="bg-destructive text-destructive-foreground">
               {formatCurrency(Number(cost.amount))}
             </Badge>
           </DialogTitle>
@@ -127,7 +127,7 @@ export const CostDetailsModal = ({ cost, isOpen, onClose }: CostDetailsModalProp
                   icon={FileText} 
                   label="Descripción" 
                   value={cost.description} 
-                  valueClass="text-lg text-white" 
+                  valueClass="text-lg" 
                 />
                 <DetailItem 
                   icon={Tag} 
@@ -145,15 +145,15 @@ export const CostDetailsModal = ({ cost, isOpen, onClose }: CostDetailsModalProp
                   icon={DollarSign} 
                   label="Monto" 
                   value={formatCurrency(Number(cost.amount))} 
-                  valueClass="text-lg text-red-400 font-bold" 
+                  valueClass="text-lg text-destructive font-bold" 
                 />
               </DetailSection>
 
-              <Separator className="bg-gray-700"/>
+              <Separator className="border-border"/>
               <DetailSection title="Notas" icon={FileText}>
                 <div className="col-span-1 md:col-span-2">
-                  <div className="bg-gray-800/50 rounded-lg p-4 border border-gray-700">
-                    <p className="text-gray-300 whitespace-pre-wrap min-h-[60px]">
+                  <div className="bg-muted/50 rounded-lg p-4 border">
+                    <p className="text-muted-foreground whitespace-pre-wrap min-h-[60px]">
                       {cost.notes || 'Sin notas adicionales'}
                     </p>
                   </div>
@@ -162,10 +162,10 @@ export const CostDetailsModal = ({ cost, isOpen, onClose }: CostDetailsModalProp
 
               {cost.cost_categories?.description && (
                 <>
-                  <Separator className="bg-gray-700"/>
+                  <Separator className="border-border"/>
                   <DetailSection title="Descripción de Categoría" icon={Tag}>
                     <div className="col-span-1 md:col-span-2">
-                      <p className="text-gray-300">{cost.cost_categories.description}</p>
+                      <p className="text-muted-foreground">{cost.cost_categories.description}</p>
                     </div>
                   </DetailSection>
                 </>
@@ -185,7 +185,7 @@ export const CostDetailsModal = ({ cost, isOpen, onClose }: CostDetailsModalProp
                   />
                 )}
                 {!cost.service_folio && (
-                  <div className="col-span-1 md:col-span-2 text-center py-6 text-gray-400">
+                  <div className="col-span-1 md:col-span-2 text-center py-6 text-muted-foreground">
                     <Building className="w-8 h-8 mx-auto mb-2 opacity-50" />
                     <p className="text-sm">No hay información detallada adicional</p>
                   </div>
@@ -202,17 +202,17 @@ export const CostDetailsModal = ({ cost, isOpen, onClose }: CostDetailsModalProp
                     icon={associatedInfo.icon} 
                     label={associatedInfo.type} 
                     value={associatedInfo.details} 
-                    valueClass="text-lg text-tms-green" 
+                    valueClass="text-lg text-primary" 
                     isFullWidth={true}
                   />
                   
                   {/* Información completa del servicio asociado */}
                   {cost.services && (
                     <>
-                      <Separator className="bg-gray-700 my-4 col-span-1 md:col-span-2"/>
+                      <Separator className="border-border my-4 col-span-1 md:col-span-2"/>
                       <div className="col-span-1 md:col-span-2">
-                        <h4 className="text-md font-semibold text-white mb-3 flex items-center">
-                          <Wrench className="w-4 h-4 mr-2 text-tms-green"/>
+                        <h4 className="text-md font-semibold text-foreground mb-3 flex items-center">
+                          <Wrench className="w-4 h-4 mr-2 text-primary"/>
                           Información del Servicio
                         </h4>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-3">
@@ -228,8 +228,8 @@ export const CostDetailsModal = ({ cost, isOpen, onClose }: CostDetailsModalProp
                       </div>
 
                       <div className="col-span-1 md:col-span-2">
-                        <h4 className="text-md font-semibold text-white mb-3 flex items-center">
-                          <Car className="w-4 h-4 mr-2 text-tms-green"/>
+                        <h4 className="text-md font-semibold text-foreground mb-3 flex items-center">
+                          <Car className="w-4 h-4 mr-2 text-primary"/>
                           Información del Vehículo
                         </h4>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-3">
@@ -240,8 +240,8 @@ export const CostDetailsModal = ({ cost, isOpen, onClose }: CostDetailsModalProp
                       </div>
 
                       <div className="col-span-1 md:col-span-2">
-                        <h4 className="text-md font-semibold text-white mb-3 flex items-center">
-                          <MapPin className="w-4 h-4 mr-2 text-tms-green"/>
+                        <h4 className="text-md font-semibold text-foreground mb-3 flex items-center">
+                          <MapPin className="w-4 h-4 mr-2 text-primary"/>
                           Ubicación del Servicio
                         </h4>
                         <div className="grid grid-cols-1 gap-y-3">
@@ -252,12 +252,12 @@ export const CostDetailsModal = ({ cost, isOpen, onClose }: CostDetailsModalProp
 
                       {cost.services.observations && (
                         <div className="col-span-1 md:col-span-2">
-                          <h4 className="text-md font-semibold text-white mb-3 flex items-center">
-                            <FileText className="w-4 h-4 mr-2 text-tms-green"/>
+                          <h4 className="text-md font-semibold text-foreground mb-3 flex items-center">
+                            <FileText className="w-4 h-4 mr-2 text-primary"/>
                             Observaciones del Servicio
                           </h4>
-                          <div className="bg-gray-800/50 rounded-lg p-4 border border-gray-700">
-                            <p className="text-gray-300 whitespace-pre-wrap">
+                          <div className="bg-muted/50 rounded-lg p-4 border">
+                            <p className="text-muted-foreground whitespace-pre-wrap">
                               {cost.services.observations}
                             </p>
                           </div>
@@ -269,10 +269,10 @@ export const CostDetailsModal = ({ cost, isOpen, onClose }: CostDetailsModalProp
                   {/* Información de grúa si está asociada */}
                   {cost.cranes && (
                     <>
-                      <Separator className="bg-gray-700 my-4 col-span-1 md:col-span-2"/>
+                      <Separator className="border-border my-4 col-span-1 md:col-span-2"/>
                       <div className="col-span-1 md:col-span-2">
-                        <h4 className="text-md font-semibold text-white mb-3 flex items-center">
-                          <Truck className="w-4 h-4 mr-2 text-tms-green"/>
+                        <h4 className="text-md font-semibold text-foreground mb-3 flex items-center">
+                          <Truck className="w-4 h-4 mr-2 text-primary"/>
                           Información de la Grúa
                         </h4>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-3">
@@ -288,10 +288,10 @@ export const CostDetailsModal = ({ cost, isOpen, onClose }: CostDetailsModalProp
                   {/* Información de operador si está asociado */}
                   {cost.operators && (
                     <>
-                      <Separator className="bg-gray-700 my-4 col-span-1 md:col-span-2"/>
+                      <Separator className="border-border my-4 col-span-1 md:col-span-2"/>
                       <div className="col-span-1 md:col-span-2">
-                        <h4 className="text-md font-semibold text-white mb-3 flex items-center">
-                          <User className="w-4 h-4 mr-2 text-tms-green"/>
+                        <h4 className="text-md font-semibold text-foreground mb-3 flex items-center">
+                          <User className="w-4 h-4 mr-2 text-primary"/>
                           Información del Operador
                         </h4>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-3">
@@ -303,7 +303,7 @@ export const CostDetailsModal = ({ cost, isOpen, onClose }: CostDetailsModalProp
                   )}
                 </DetailSection>
               ) : (
-                <div className="text-center py-6 text-gray-400">
+                <div className="text-center py-6 text-muted-foreground">
                   <Building className="w-8 h-8 mx-auto mb-2 opacity-50" />
                   <p className="text-sm">Este costo no está asociado a ningún recurso específico</p>
                 </div>
@@ -312,7 +312,7 @@ export const CostDetailsModal = ({ cost, isOpen, onClose }: CostDetailsModalProp
           </TabsContent>
         </Tabs>
 
-        <div className="flex justify-between text-sm text-gray-400 pt-4 mt-4 border-t border-gray-700">
+        <div className="flex justify-between text-sm text-muted-foreground pt-4 mt-4 border-t">
           <span>Creado: {format(parseFromDatabase(cost.created_at), 'dd/MM/yyyy HH:mm', { locale: es })}</span>
           <span>Actualizado: {format(parseFromDatabase(cost.updated_at), 'dd/MM/yyyy HH:mm', { locale: es })}</span>
         </div>

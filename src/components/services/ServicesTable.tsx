@@ -44,7 +44,7 @@ export const ServicesTable = ({
   const SortableHeader = ({ field, children }: { field: 'folio' | 'date' | 'client' | 'vehicle' | 'crane' | 'operator' | 'value' | 'status'; children: React.ReactNode }) => (
     <Button
       variant="ghost"
-      className="h-auto p-0 font-medium text-white hover:text-tms-green hover:bg-transparent flex items-center gap-1"
+      className="h-auto p-0 font-medium text-foreground hover:text-primary hover:bg-transparent flex items-center gap-1"
       onClick={() => onSort?.(field)}
     >
       {children}
@@ -61,7 +61,7 @@ export const ServicesTable = ({
   // Render mobile view if on mobile device
   if (isMobile) {
     return (
-      <Card className="glass-card tms-text-white">
+      <Card>
         <CardContent className="p-4">
           <ServicesMobileView
             services={services}
@@ -82,23 +82,23 @@ export const ServicesTable = ({
 
   // Desktop view (unchanged functionality)
   return (
-    <Card className="glass-card tms-text-white">
+    <Card>
       <CardHeader>
-        <CardTitle className="flex items-center space-x-2 text-white">
-          <Truck className="w-5 h-5 text-tms-green" />
-          <span className="text-white">Servicios Registrados ({services.length})</span>
+        <CardTitle className="flex items-center space-x-2">
+          <Truck className="w-5 h-5 text-primary" />
+          <span>Servicios Registrados ({services.length})</span>
         </CardTitle>
       </CardHeader>
-      <CardContent className="tms-text-white">
+      <CardContent>
         {services.length === 0 ? (
           <div className="text-center py-12">
-            <div className="w-16 h-16 bg-tms-green/20 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Truck className="w-8 h-8 text-tms-green" />
+            <div className="w-16 h-16 bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Truck className="w-8 h-8 text-primary" />
             </div>
-            <h3 className="text-lg font-medium text-white mb-2">
+            <h3 className="text-lg font-medium text-foreground mb-2">
               {!hasInitialServices ? 'No hay servicios registrados' : 'No hay servicios que coincidan con los filtros'}
             </h3>
-            <p className="text-white mb-6">
+            <p className="text-muted-foreground mb-6">
               {!hasInitialServices
                 ? 'Comienza agregando tu primer servicio de grúa'
                 : 'Intenta ajustar los filtros de búsqueda'
@@ -106,7 +106,7 @@ export const ServicesTable = ({
             </p>
             {!hasInitialServices && onAddNewService && (
               <Button 
-                className="bg-tms-green hover:bg-tms-green-dark text-black"
+                className="bg-primary hover:bg-primary/90 text-primary-foreground"
                 onClick={onAddNewService}
                 title="Crear el primer servicio"
               >
@@ -119,33 +119,33 @@ export const ServicesTable = ({
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
-                <TableRow className="border-gray-700">
-                  <TableHead className="text-white">
+                <TableRow>
+                  <TableHead>
                     <SortableHeader field="folio">Folio</SortableHeader>
                   </TableHead>
-                  <TableHead className="text-white">
+                  <TableHead>
                     <SortableHeader field="date">Fecha Servicio</SortableHeader>
                   </TableHead>
-                  <TableHead className="text-white">
+                  <TableHead>
                     <SortableHeader field="client">Cliente</SortableHeader>
                   </TableHead>
-                  <TableHead className="text-white">
+                  <TableHead>
                     <SortableHeader field="vehicle">Vehículo</SortableHeader>
                   </TableHead>
-                  <TableHead className="text-white">Origen/Destino</TableHead>
-                  <TableHead className="text-white">
+                  <TableHead>Origen/Destino</TableHead>
+                  <TableHead>
                     <SortableHeader field="crane">Grúa</SortableHeader>
                   </TableHead>
-                  <TableHead className="text-white">
+                  <TableHead>
                     <SortableHeader field="operator">Operador</SortableHeader>
                   </TableHead>
-                  <TableHead className="text-white">
+                  <TableHead>
                     <SortableHeader field="value">Valor</SortableHeader>
                   </TableHead>
-                  <TableHead className="text-white">
+                  <TableHead>
                     <SortableHeader field="status">Estado</SortableHeader>
                   </TableHead>
-                  <TableHead className="text-white min-w-[140px]">Acciones</TableHead>
+                  <TableHead className="min-w-[140px]">Acciones</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -153,35 +153,35 @@ export const ServicesTable = ({
                   const isInvoiced = service.status === 'invoiced';
                   
                   return (
-                    <TableRow key={service.id} className="border-gray-700 hover:bg-white/5">
-                      <TableCell className="font-medium text-tms-green">
+                    <TableRow key={service.id} className="hover:bg-muted/50">
+                      <TableCell className="font-medium text-primary">
                         {service.folio}
                       </TableCell>
-                      <TableCell className="text-white">
+                      <TableCell>
                         {formatForDisplay(parseFromDatabase(service.serviceDate))}
                       </TableCell>
-                      <TableCell className="text-white">
-                        <div className="font-medium text-white">{service.client.name}</div>
-                        <div className="text-sm text-white opacity-70">{service.client.department} • {service.client.rut}</div>
+                      <TableCell>
+                        <div className="font-medium">{service.client.name}</div>
+                        <div className="text-sm text-muted-foreground">{service.client.department} • {service.client.rut}</div>
                       </TableCell>
-                      <TableCell className="text-white">
+                      <TableCell>
                         {shouldShowVehicleInfo(service) ? (
                           <span>{formatVehicleInfo(service)}</span>
                         ) : (
-                          <span className="text-sm text-white opacity-70 italic">No aplica</span>
+                          <span className="text-sm text-muted-foreground italic">No aplica</span>
                         )}
                       </TableCell>
-                      <TableCell className="text-white max-w-48">
-                        <div className="truncate text-white">{service.origin}</div>
-                        <div className="text-sm text-white opacity-70 truncate">→ {service.destination}</div>
+                      <TableCell className="max-w-48">
+                        <div className="truncate">{service.origin}</div>
+                        <div className="text-sm text-muted-foreground truncate">→ {service.destination}</div>
                       </TableCell>
-                      <TableCell className="text-white">
+                      <TableCell>
                         {service.crane?.licensePlate || 'Sin asignar'}
                       </TableCell>
-                      <TableCell className="text-white">
+                      <TableCell>
                         {service.operator?.name || 'Sin asignar'}
                       </TableCell>
-                      <TableCell className="text-white font-medium">
+                      <TableCell className="font-medium">
                         {formatCurrency(getServiceValueForClosure(service))}
                       </TableCell>
                       <TableCell>
@@ -204,7 +204,7 @@ export const ServicesTable = ({
                           <Button 
                             variant="outline" 
                             size="sm" 
-                            className="action-button border-tms-green/50 bg-tms-green/10 text-tms-green hover:bg-tms-green/20 hover:border-tms-green"
+                            className="action-button border-primary/50 bg-primary/10 text-primary hover:bg-primary/20 hover:border-primary"
                             onClick={() => onViewDetails(service)}
                             title="Ver detalles del servicio"
                           >

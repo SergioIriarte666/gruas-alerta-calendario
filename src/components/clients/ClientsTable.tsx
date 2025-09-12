@@ -54,14 +54,14 @@ export const ClientsTable = ({
   // Desktop view (unchanged functionality)
   if (clients.length === 0 && searchTerm) {
     return (
-      <Card className="glass-card">
+      <Card>
         <CardContent className="p-8 text-center">
-          <Users className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-          <h3 className="text-lg font-medium text-white mb-2">No se encontraron clientes</h3>
-          <p className="text-gray-400 mb-4">
+          <Users className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+          <h3 className="text-lg font-medium text-foreground mb-2">No se encontraron clientes</h3>
+          <p className="text-muted-foreground mb-4">
             No hay clientes que coincidan con "{searchTerm}"
           </p>
-          <Button onClick={onNewClient} className="bg-tms-green hover:bg-tms-green/80 text-black">
+          <Button onClick={onNewClient} className="bg-primary hover:bg-primary/90 text-primary-foreground">
             <Plus className="w-4 h-4 mr-2" />
             Agregar Cliente
           </Button>
@@ -72,14 +72,14 @@ export const ClientsTable = ({
 
   if (clients.length === 0) {
     return (
-      <Card className="glass-card">
+      <Card>
         <CardContent className="p-8 text-center">
-          <Users className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-          <h3 className="text-lg font-medium text-white mb-2">No hay clientes registrados</h3>
-          <p className="text-gray-400 mb-4">
+          <Users className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+          <h3 className="text-lg font-medium text-foreground mb-2">No hay clientes registrados</h3>
+          <p className="text-muted-foreground mb-4">
             Comienza agregando tu primer cliente al sistema
           </p>
-          <Button onClick={onNewClient} className="bg-tms-green hover:bg-tms-green/80 text-black">
+          <Button onClick={onNewClient} className="bg-primary hover:bg-primary/90 text-primary-foreground">
             <Plus className="w-4 h-4 mr-2" />
             Agregar Primer Cliente
           </Button>
@@ -89,9 +89,9 @@ export const ClientsTable = ({
   }
 
   return (
-    <Card className="glass-card">
+    <Card>
       <CardHeader>
-        <CardTitle className="text-white flex items-center justify-between">
+        <CardTitle className="flex items-center justify-between">
           <span>Clientes ({totalClients})</span>
         </CardTitle>
       </CardHeader>
@@ -99,33 +99,29 @@ export const ClientsTable = ({
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-gray-700">
-                <th className="text-left py-3 px-4 font-medium text-white">Nombre</th>
-                <th className="text-left py-3 px-4 font-medium text-white">RUT</th>
-                <th className="text-left py-3 px-4 font-medium text-white">Departamento</th>
-                <th className="text-left py-3 px-4 font-medium text-white">Contacto</th>
-                <th className="text-left py-3 px-4 font-medium text-white">Email</th>
-                <th className="text-left py-3 px-4 font-medium text-white">Teléfono</th>
-                <th className="text-left py-3 px-4 font-medium text-white">Estado</th>
-                <th className="text-center py-3 px-4 font-medium text-white">Acciones</th>
+              <tr className="border-b">
+                <th className="text-left py-3 px-4 font-medium">Nombre</th>
+                <th className="text-left py-3 px-4 font-medium">RUT</th>
+                <th className="text-left py-3 px-4 font-medium">Departamento</th>
+                <th className="text-left py-3 px-4 font-medium">Contacto</th>
+                <th className="text-left py-3 px-4 font-medium">Email</th>
+                <th className="text-left py-3 px-4 font-medium">Teléfono</th>
+                <th className="text-left py-3 px-4 font-medium">Estado</th>
+                <th className="text-center py-3 px-4 font-medium">Acciones</th>
               </tr>
             </thead>
             <tbody>
               {clients.map((client) => (
-                <tr key={client.id} className="border-b border-gray-800 hover:bg-white/5">
-                  <td className="py-3 px-4 text-white font-medium">{client.name}</td>
-                  <td className="py-3 px-4 text-white">{client.rut}</td>
-                  <td className="py-3 px-4 text-white">{client.department}</td>
-                  <td className="py-3 px-4 text-white">{client.contactName || '-'}</td>
-                  <td className="py-3 px-4 text-white">{client.email}</td>
-                  <td className="py-3 px-4 text-white">{client.phone}</td>
+                <tr key={client.id} className="border-b hover:bg-muted/50">
+                  <td className="py-3 px-4 font-medium">{client.name}</td>
+                  <td className="py-3 px-4">{client.rut}</td>
+                  <td className="py-3 px-4">{client.department}</td>
+                  <td className="py-3 px-4">{client.contactName || '-'}</td>
+                  <td className="py-3 px-4">{client.email}</td>
+                  <td className="py-3 px-4">{client.phone}</td>
                   <td className="py-3 px-4">
                     <Badge 
                       variant={client.isActive ? "default" : "secondary"}
-                      className={client.isActive 
-                        ? "bg-tms-green text-black" 
-                        : "bg-gray-600 text-white"
-                      }
                     >
                       {client.isActive ? 'Activo' : 'Inactivo'}
                     </Badge>
@@ -154,7 +150,7 @@ export const ClientsTable = ({
                         variant="ghost"
                         size="sm"
                         onClick={() => onEdit(client)}
-                        className="text-tms-green hover:text-tms-green/80 hover:bg-tms-green/10 border border-tms-green/50"
+                        className="text-primary hover:text-primary/80 hover:bg-primary/10 border border-primary/50"
                         title="Editar cliente"
                       >
                         <Edit className="w-4 h-4" />
