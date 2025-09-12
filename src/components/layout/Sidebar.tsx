@@ -154,43 +154,66 @@ export const Sidebar = ({
     }
   };
   
-  const SidebarContent = () => <div className="flex flex-col h-full bg-white border-r border-gray-200" style={{ background: '#ffffff', borderColor: '#e5e7eb' }}>
+  const SidebarContent = () => (
+    <div className="flex flex-col h-full bg-background border-r tms-border">
       {/* Header with Company Branding */}
       <div className={cn(
-        "flex items-center justify-between border-b border-gray-200 bg-white",
+        "flex items-center justify-between border-b tms-border bg-background",
         isTablet ? "p-3" : "p-4"
-      )} style={{ background: '#ffffff', borderColor: '#e5e7eb' }}>
-        {!isCollapsed && <div className="flex items-center space-x-3">
-            {companyLogo ? <img src={companyLogo} alt="Logo empresa" className="w-8 h-8 object-contain" /> : <Building2 className="w-8 h-8 text-tms-green" />}
+      )}>
+        {!isCollapsed && (
+          <div className="flex items-center space-x-3">
+            {companyLogo ? (
+              <img src={companyLogo} alt="Logo empresa" className="w-8 h-8 object-contain" />
+            ) : (
+              <Building2 className="w-8 h-8 text-primary" />
+            )}
             <div>
               <h1 className={cn(
-                "font-bold text-black",
+                "font-bold text-foreground",
                 isTablet ? "text-base" : "text-lg"
               )}>{companyName}</h1>
-              <p className="text-xs font-bold text-rose-500">Sistema de Gestión</p>
+              <p className="text-xs font-bold text-destructive">Sistema de Gestión</p>
             </div>
-          </div>}
+          </div>
+        )}
 
-        {isCollapsed && <div className="flex items-center justify-center w-full">
-            {companyLogo ? <img src={companyLogo} alt="Logo empresa" className="w-8 h-8 object-contain" /> : <Building2 className="w-8 h-8 text-tms-green" />}
-          </div>}
+        {isCollapsed && (
+          <div className="flex items-center justify-center w-full">
+            {companyLogo ? (
+              <img src={companyLogo} alt="Logo empresa" className="w-8 h-8 object-contain" />
+            ) : (
+              <Building2 className="w-8 h-8 text-primary" />
+            )}
+          </div>
+        )}
         
         {/* Desktop collapse button */}
-        <Button variant="ghost" size="sm" onClick={() => setIsCollapsed(!isCollapsed)} className="hidden lg:flex text-black bg-transparent hover:bg-tms-green hover:text-black">
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          onClick={() => setIsCollapsed(!isCollapsed)} 
+          className="hidden lg:flex text-foreground hover:bg-primary hover:text-primary-foreground"
+        >
           {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
         </Button>
 
         {/* Mobile close button */}
-        <Button variant="ghost" size="sm" onClick={() => setIsMobileMenuOpen(false)} className="lg:hidden text-black bg-transparent hover:bg-tms-green hover:text-black">
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          onClick={() => setIsMobileMenuOpen(false)} 
+          className="lg:hidden text-foreground hover:bg-primary hover:text-primary-foreground"
+        >
           <X className="w-5 h-5" />
         </Button>
       </div>
 
       {/* Navigation */}
       <nav className={cn(
-        "flex-1 space-y-1 bg-white overflow-y-auto",
+        "flex-1 space-y-1 bg-background overflow-y-auto",
         isTablet ? "p-3" : "p-4"
-      )} style={{ background: '#ffffff' }}>
+      )}>
         {filteredNavigation.map(item => {
           const isActive = location.pathname === item.href;
           return (
@@ -201,8 +224,8 @@ export const Sidebar = ({
                 "flex items-center rounded-lg font-medium transition-colors nav-link",
                 isTablet ? "px-2 py-2 text-sm" : "px-3 py-2 text-sm",
                 isActive 
-                  ? "active bg-tms-green text-black" 
-                  : "text-black hover:bg-tms-green hover:text-black"
+                  ? "active bg-primary text-primary-foreground" 
+                  : "text-muted-foreground hover:bg-accent hover:text-foreground"
               )}
               onClick={() => setIsMobileMenuOpen(false)}
             >
@@ -215,21 +238,31 @@ export const Sidebar = ({
 
       {/* User section */}
       <div className={cn(
-        "border-t border-gray-200 bg-white",
+        "border-t tms-border bg-background",
         isTablet ? "p-3" : "p-4"
-      )} style={{ background: '#ffffff', borderColor: '#e5e7eb' }}>
-        {!isCollapsed && user && <div className="mb-3">
-            <p className="text-sm font-medium text-black">{user.name}</p>
-            <p className="text-xs text-gray-600">{user.email}</p>
-            <p className="text-xs capitalize text-tms-green">{user.role}</p>
-          </div>}
+      )}>
+        {!isCollapsed && user && (
+          <div className="mb-3">
+            <p className="text-sm font-medium text-foreground">{user.name}</p>
+            <p className="text-xs text-muted-foreground">{user.email}</p>
+            <p className="text-xs capitalize text-primary">{user.role}</p>
+          </div>
+        )}
         
-        <Button variant="ghost" onClick={handleLogout} className={cn("w-full text-black bg-transparent hover:bg-tms-green hover:text-black", isCollapsed ? "px-2" : "justify-start")}>
+        <Button 
+          variant="ghost" 
+          onClick={handleLogout} 
+          className={cn(
+            "w-full text-foreground hover:bg-primary hover:text-primary-foreground", 
+            isCollapsed ? "px-2" : "justify-start"
+          )}
+        >
           <LogOut className={cn("w-4 h-4", isCollapsed ? "mx-auto" : "mr-2")} />
           {!isCollapsed && "Cerrar Sesión"}
         </Button>
       </div>
-    </div>;
+    </div>
+  );
 
   return <>
       {/* Mobile backdrop */}

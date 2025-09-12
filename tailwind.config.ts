@@ -53,33 +53,31 @@ export default {
 					DEFAULT: 'hsl(var(--card))',
 					foreground: 'hsl(var(--card-foreground))'
 				},
-				// TMS colors optimized for light theme
+				// TMS colors - Sistema unificado
 				tms: {
-					dark: '#ffffff',
-					darker: '#ffffff',
-					green: '#9cfa24',
-					'green-light': '#9cfa24',
-					'green-dark': '#9cfa24',
+					green: '84 100% 58%',        /* #9cfa24 */
+					'green-light': '84 100% 65%',  /* #a1fb3d */
+					'green-dark': '84 100% 45%',   /* #7ae01b */
 					status: {
-						pending: '#f59e0b',
-						closed: '#3b82f6',
-						invoiced: '#10b981',
-						overdue: '#ef4444'
+						pending: '45 93% 47%',     /* #f59e0b */
+						closed: '217 91% 60%',     /* #3b82f6 */
+						invoiced: '142 76% 36%',   /* #10b981 */
+						overdue: '0 84% 60%'       /* #ef4444 */
 					}
 				},
-				// Light theme grays
-				gray: {
-					50: '#f8fafc',
-					100: '#f1f5f9',
-					200: '#e2e8f0',
-					300: '#cbd5e1',
-					400: '#94a3b8',
-					500: '#64748b',
-					600: '#475569',
-					700: '#334155',
-					800: '#1e293b',
-					900: '#0f172a',
-					950: '#020617'
+				// Color palette - HSL format
+				slate: {
+					50: '210 40% 98%',   /* #f8fafc */
+					100: '210 40% 96%',  /* #f1f5f9 */
+					200: '214 32% 91%',  /* #e2e8f0 */
+					300: '213 27% 84%',  /* #cbd5e1 */
+					400: '215 20% 65%',  /* #94a3b8 */
+					500: '215 16% 47%',  /* #64748b */
+					600: '215 19% 35%',  /* #475569 */
+					700: '215 25% 27%',  /* #334155 */
+					800: '217 33% 17%',  /* #1e293b */
+					900: '222 84% 5%',   /* #0f172a */
+					950: '229 84% 2%'    /* #020617 */
 				}
 			},
 			borderRadius: {
@@ -88,8 +86,10 @@ export default {
 				sm: 'calc(var(--radius) - 4px)'
 			},
 			backgroundImage: {
-				'gradient-tms': 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',
-				'gradient-tms-card': 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',
+				'gradient-primary': 'var(--gradient-primary)',
+				'gradient-secondary': 'var(--gradient-secondary)', 
+				'gradient-card': 'var(--gradient-card)',
+				'gradient-hero': 'linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--primary) / 0.8) 100%)',
 			},
 			keyframes: {
 				'accordion-down': {

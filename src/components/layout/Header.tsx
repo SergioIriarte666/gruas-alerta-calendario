@@ -59,15 +59,15 @@ export const Header = ({
 
   return (
     <header className={cn(
-      "flex items-center justify-between bg-white border-b border-gray-200 transition-colors duration-300",
+      "flex items-center justify-between bg-background border-b tms-border transition-colors duration-300",
       isMobile ? "h-14 px-3" : isTablet ? "h-15 px-4" : "h-16 px-6"
-    )} style={{ background: '#ffffff' }}>
+    )}>
       <div className="flex items-center gap-3">
         <Button 
           variant="ghost" 
           size={isMobile ? "sm" : "icon"} 
           onClick={() => setIsMobileMenuOpen(true)} 
-          className="lg:hidden text-black bg-tms-green/20 border border-tms-green/30 hover:bg-tms-green hover:text-black"
+          className="lg:hidden text-foreground hover:bg-primary hover:text-primary-foreground"
         >
           <Menu className={cn(isMobile ? "h-5 w-5" : "h-6 w-6")} />
           <span className="sr-only">Abrir menú</span>
@@ -81,10 +81,10 @@ export const Header = ({
           )} />}
           <div className={cn(isMobile ? "hidden" : "block")}>
             <h1 className={cn(
-              "font-semibold text-black",
+              "font-semibold text-foreground",
               isMobile ? "text-sm" : isTablet ? "text-base" : "text-lg"
             )}>{companyName}</h1>
-            <p className="text-xs text-gray-600">Sistema de Gestión</p>
+            <p className="text-xs text-muted-foreground">Sistema de Gestión</p>
           </div>
         </div>
         
@@ -105,29 +105,29 @@ export const Header = ({
             <Button 
               variant="ghost" 
               size={isMobile ? "sm" : "icon"} 
-              className="text-black hover:text-black hover:bg-tms-green rounded-full bg-tms-green/20 border border-tms-green/30"
+              className="text-foreground hover:bg-primary hover:text-primary-foreground rounded-full"
             >
               <User className={cn(
-                "text-tms-green",
+                "text-primary",
                 isMobile ? "w-4 h-4" : "w-5 h-5"
               )} />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="bg-white border-gray-200 min-w-[200px] z-50" style={{ background: '#ffffff', color: '#000000', borderColor: '#d1d5db' }}>
-            <DropdownMenuLabel className="text-black font-semibold" style={{ color: '#000000' }}>
+          <DropdownMenuContent align="end" className="bg-popover border tms-shadow-lg min-w-[200px] z-50">
+            <DropdownMenuLabel className="text-foreground font-semibold">
               {user?.name || 'Mi Cuenta'}
             </DropdownMenuLabel>
-            <DropdownMenuSeparator className="bg-gray-200" style={{ backgroundColor: '#e5e7eb' }} />
-            <DropdownMenuItem className="text-black hover:text-black hover:bg-tms-green cursor-pointer focus:bg-tms-green focus:text-black" style={{ color: '#000000' }} onClick={handleProfileClick}>
+            <DropdownMenuSeparator className="bg-border" />
+            <DropdownMenuItem className="text-foreground hover:bg-primary hover:text-primary-foreground cursor-pointer" onClick={handleProfileClick}>
               <User className="w-4 h-4 mr-2" />
               Perfil
             </DropdownMenuItem>
-            {isAdmin && <DropdownMenuItem className="text-black hover:text-black hover:bg-tms-green cursor-pointer focus:bg-tms-green focus:text-black" style={{ color: '#000000' }} onClick={() => navigate('/settings')}>
+            {isAdmin && <DropdownMenuItem className="text-foreground hover:bg-primary hover:text-primary-foreground cursor-pointer" onClick={() => navigate('/settings')}>
                 <Settings className="w-4 h-4 mr-2" />
                 Configuración
               </DropdownMenuItem>}
-            <DropdownMenuSeparator className="bg-gray-200" style={{ backgroundColor: '#e5e7eb' }} />
-            <DropdownMenuItem className="text-red-600 hover:text-red-700 hover:bg-red-50 cursor-pointer focus:bg-red-50 focus:text-red-700" style={{ color: '#dc2626' }} onClick={handleLogout}>
+            <DropdownMenuSeparator className="bg-border" />
+            <DropdownMenuItem className="text-destructive hover:bg-destructive hover:text-destructive-foreground cursor-pointer" onClick={handleLogout}>
               Cerrar Sesión
             </DropdownMenuItem>
           </DropdownMenuContent>
