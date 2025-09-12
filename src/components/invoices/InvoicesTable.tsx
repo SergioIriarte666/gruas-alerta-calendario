@@ -197,7 +197,7 @@ const InvoicesTable = ({
                      </td>
                     <td className="py-3 px-4 text-foreground">
                       {invoice.numeroFiscal ? (
-                        <span className="text-primary font-medium">{invoice.numeroFiscal}</span>
+                        <span className="text-violet-600 font-medium">{invoice.numeroFiscal}</span>
                       ) : (
                         <span className="text-muted-foreground italic">Sin asignar</span>
                       )}
