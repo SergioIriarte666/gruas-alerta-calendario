@@ -37,7 +37,7 @@ export const CostTable = ({ metrics }: CostTableProps) => {
                   <td className="text-right text-violet-600 p-3">
                     {category.percentage.toFixed(1)}%
                   </td>
-                  <td className="text-right text-accent p-3">
+                  <td className="text-right text-foreground p-3">
                     ${metrics.totalServices > 0 ? (category.total / metrics.totalServices).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0.00'}
                   </td>
                 </tr>
