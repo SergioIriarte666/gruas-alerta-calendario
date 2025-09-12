@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
@@ -16,6 +17,7 @@ import { InventoryAlertsPage } from '@/components/inventory/alerts/InventoryAler
 import { format } from 'date-fns';
 
 const Inventory = () => {
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [showMovementForm, setShowMovementForm] = useState(false);
   const [showExitForm, setShowExitForm] = useState(false);
@@ -41,7 +43,7 @@ const Inventory = () => {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => window.location.href = '/services?newSale=true'}
+            onClick={() => navigate('/services?newSale=true')}
           >
             <Plus className="w-4 h-4 mr-2" />
             Registrar Venta
