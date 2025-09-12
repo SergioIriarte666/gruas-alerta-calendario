@@ -155,7 +155,7 @@ export const ServicesTable = ({
                   return (
                     <TableRow key={service.id} className="hover:bg-muted/50">
                       <TableCell className="font-medium">
-                        <Badge variant="tms" className="whitespace-nowrap" title={`Folio: ${service.folio}`}>
+                        <Badge variant="tms" className="whitespace-nowrap text-violet-600" title={`Folio: ${service.folio}`}>
                           {service.folio}
                         </Badge>
                       </TableCell>
