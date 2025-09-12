@@ -158,9 +158,20 @@ export const VehicleHistory = ({ licensePlate, currentServiceId, clientId, clien
                 key={service.id} 
                 className={`border-border ${service.id === currentServiceId ? 'bg-tms-green/10 border-tms-green/30' : ''}`}
               >
-                <TableCell className={`font-medium ${service.id === currentServiceId ? 'text-green-700 font-bold' : 'text-green-700'}`}>
-                  {service.folio}
-                  {service.id === currentServiceId && <span className="ml-2 text-xs">(Actual)</span>}
+                <TableCell className="font-medium">
+                  <div className="flex items-center gap-2 whitespace-nowrap">
+                    <Badge 
+                      variant="default"
+                      title={`Folio del servicio: ${service.folio}`}
+                    >
+                      {service.folio}
+                    </Badge>
+                    {service.id === currentServiceId && (
+                      <Badge variant="outline" className="text-xs">
+                        Actual
+                      </Badge>
+                    )}
+                  </div>
                 </TableCell>
                 <TableCell className="text-foreground">
                   {formatForDisplay(service.serviceDate)}
