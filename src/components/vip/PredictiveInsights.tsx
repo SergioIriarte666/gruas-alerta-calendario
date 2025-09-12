@@ -421,7 +421,7 @@ export const PredictiveInsights: React.FC<PredictiveInsightsProps> = ({
         </CardHeader>
         <CardContent className="space-y-4 text-black">
           <div className="bg-purple-500/10 border border-purple-500/20 rounded-lg p-4">
-            <div className="flex items-start gap-3">
+            <div className="flex items-start gap-3 text-black">
               <div className="p-2 bg-purple-500/20 rounded-lg">
                 <Brain className="w-5 h-5 text-purple-400" />
               </div>
