@@ -652,7 +652,7 @@ export const ExecutiveReports: React.FC<ExecutiveReportsProps> = ({
             Resumen Ejecutivo
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-4 text-black">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-3">
               <h4 className="font-medium text-white">Destacados del Período</h4>
