@@ -419,7 +419,7 @@ export const PredictiveInsights: React.FC<PredictiveInsightsProps> = ({
             Resumen Inteligente
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-4 text-black">
           <div className="bg-purple-500/10 border border-purple-500/20 rounded-lg p-4">
             <div className="flex items-start gap-3">
               <div className="p-2 bg-purple-500/20 rounded-lg">
