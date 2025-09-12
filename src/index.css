@@ -263,37 +263,32 @@ body {
 }
 
 /* VIP Pipeline Module Scope */
-.vip-scope {
-  color: hsl(var(--foreground));
+.vip-pipeline-scope {
+  --vip-primary: hsl(var(--primary));
+  --vip-secondary: hsl(var(--secondary));
+  --vip-accent: hsl(var(--accent));
+  --vip-muted: hsl(var(--muted));
+  --vip-muted-foreground: hsl(var(--muted-foreground));
+  --vip-border: hsl(var(--border));
+  --vip-card: hsl(var(--card));
+  --vip-background: hsl(var(--background));
+  --vip-foreground: hsl(var(--foreground));
 }
 
-.vip-scope .text-white {
-  color: hsl(var(--foreground)) !important;
+.vip-pipeline-scope .bg-card {
+  background-color: var(--vip-card);
 }
 
-.vip-scope .text-gray-300 {
-  color: hsl(var(--muted-foreground)) !important;
+.vip-pipeline-scope .text-foreground {
+  color: var(--vip-foreground);
 }
 
-.vip-scope .text-gray-400 {
-  color: hsl(var(--muted-foreground)) !important;
+.vip-pipeline-scope .text-muted-foreground {
+  color: var(--vip-muted-foreground);
 }
 
-.vip-scope .text-gray-500 {
-  color: hsl(var(--muted-foreground)) !important;
-}
-
-.vip-scope .bg-gray-800 {
-  background-color: hsl(var(--card)) !important;
-}
-
-.vip-scope .bg-gray-800\/50 {
-  background-color: hsl(var(--card)) !important;
-}
-
-.vip-scope .border-gray-700,
-.vip-scope .border-gray-600 {
-  border-color: hsl(var(--border)) !important;
+.vip-pipeline-scope .border {
+  border-color: var(--vip-border);
 }
 
 /* Cranes Module Scope */

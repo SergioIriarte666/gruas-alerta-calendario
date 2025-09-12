@@ -166,11 +166,11 @@ export default function VipClientPipeline() {
             Volver a Clientes
           </Button>
         </div>
-        <Card className="glass-card">
+        <Card className="bg-card border">
           <CardContent className="p-8 text-center">
             <AlertTriangle className="w-12 h-12 text-amber-500 mx-auto mb-4" />
-            <h2 className="text-xl font-semibold text-white mb-2">Cliente no encontrado</h2>
-            <p className="text-gray-400">El cliente solicitado no existe o no tienes permisos para verlo.</p>
+            <h2 className="text-xl font-semibold text-foreground mb-2">Cliente no encontrado</h2>
+            <p className="text-muted-foreground">El cliente solicitado no existe o no tienes permisos para verlo.</p>
           </CardContent>
         </Card>
       </div>
@@ -178,27 +178,27 @@ export default function VipClientPipeline() {
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <div className="container mx-auto p-6 space-y-6 vip-pipeline-scope">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Button 
             variant="ghost" 
             onClick={() => navigate('/clients')}
-            className="text-gray-400 hover:text-white"
+            className="text-muted-foreground hover:text-foreground"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
             Volver a Clientes
           </Button>
-          <div className="h-8 w-px bg-gray-700" />
+          <div className="h-8 w-px bg-border" />
           <div>
-            <h1 className="text-2xl font-bold text-white flex items-center gap-3">
+            <h1 className="text-2xl font-bold text-foreground flex items-center gap-3">
               {client.name}
               <Badge variant="secondary" className="bg-purple-500/20 text-purple-300 border-purple-500/30">
                 VIP Pipeline
               </Badge>
             </h1>
-            <p className="text-gray-400">RUT: {client.rut} • {client.department}</p>
+            <p className="text-muted-foreground">RUT: {client.rut} • {client.department}</p>
           </div>
         </div>
 
@@ -215,17 +215,17 @@ export default function VipClientPipeline() {
 
       {/* Main Content Tabs */}
       <Tabs defaultValue="pipeline" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4 bg-gray-800 border-gray-700">
-          <TabsTrigger value="pipeline" className="data-[state=active]:bg-blue-600">
+        <TabsList className="grid w-full grid-cols-4 bg-card border">
+          <TabsTrigger value="pipeline" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
             Pipeline
           </TabsTrigger>
-          <TabsTrigger value="purchase-orders" className="data-[state=active]:bg-blue-600">
+          <TabsTrigger value="purchase-orders" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
             O.C.
           </TabsTrigger>
-          <TabsTrigger value="analytics" className="data-[state=active]:bg-blue-600">
+          <TabsTrigger value="analytics" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
             Analytics
           </TabsTrigger>
-          <TabsTrigger value="reports" className="data-[state=active]:bg-blue-600">
+          <TabsTrigger value="reports" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
             Reportes
           </TabsTrigger>
         </TabsList>
@@ -276,9 +276,9 @@ export default function VipClientPipeline() {
       </Tabs>
 
       {/* Info Footer */}
-      <Card className="glass-card border-blue-500/20">
+      <Card className="bg-card border-primary/20">
         <CardContent className="p-4">
-          <div className="flex items-center gap-3 text-blue-300">
+          <div className="flex items-center gap-3 text-primary">
             <Clock className="w-4 h-4" />
             <p className="text-sm">
               Este pipeline se actualiza en tiempo real. Los servicios se mueven automáticamente entre estados según su progreso.

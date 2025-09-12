@@ -370,7 +370,7 @@ export const ExecutiveReports: React.FC<ExecutiveReportsProps> = ({
   };
 
   return (
-    <div className="space-y-6 vip-scope">
+    <div className="space-y-6 vip-pipeline-scope">
       {/* Header Controls */}
       <div className="flex items-center justify-between">
         <div>
@@ -452,7 +452,7 @@ export const ExecutiveReports: React.FC<ExecutiveReportsProps> = ({
                 <DollarSign className="w-5 h-5 text-green-400" />
               </div>
               <div>
-                <p className="text-lg font-bold text-white">
+                <p className="text-lg font-bold text-foreground">
                   {formatCurrency(metrics.totalRevenue)}
                 </p>
                 <p className="text-xs text-green-400">Ingresos Total</p>

@@ -56,7 +56,7 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
   ) : 0;
 
   return (
-    <div className={`rounded-lg border ${column.color} p-4 space-y-3 min-h-[400px] vip-scope`}>
+    <div className={`rounded-lg border ${column.color} p-4 space-y-3 min-h-[400px] vip-pipeline-scope`}>
       {/* Column Header */}
       <div className="space-y-2">
         <div className="flex items-center justify-between">

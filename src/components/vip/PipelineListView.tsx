@@ -335,16 +335,16 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
 
   const getSortIcon = (field: SortField) => {
     if (sortField !== field) {
-      return <ChevronsUpDown className="w-4 h-4 text-gray-500" />;
+      return <ChevronsUpDown className="w-4 h-4 text-muted-foreground" />;
     }
     return sortDirection === 'asc' 
-      ? <ChevronUp className="w-4 h-4 text-blue-400" />
-      : <ChevronDown className="w-4 h-4 text-blue-400" />;
+      ? <ChevronUp className="w-4 h-4 text-primary" />
+      : <ChevronDown className="w-4 h-4 text-primary" />;
   };
 
   const SortableHeader = ({ field, children }: { field: SortField; children: React.ReactNode }) => (
     <TableHead 
-      className="text-gray-300 cursor-pointer hover:text-white transition-colors select-none"
+      className="text-muted-foreground cursor-pointer hover:text-foreground transition-colors select-none"
       onClick={() => handleSort(field)}
     >
       <div className="flex items-center gap-1">
@@ -378,9 +378,9 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
   }
 
   return (
-    <div className="space-y-4 vip-scope">
+    <div className="space-y-4 vip-pipeline-scope">
       {/* Header and Search */}
-      <Card className="glass-card">
+      <Card className="bg-card border">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-foreground">
             <BarChart3 className="w-5 h-5" />
@@ -489,7 +489,7 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
       {/* Grouped Services */}
       <div className="space-y-2">
         {serviceGroups.length === 0 ? (
-          <Card className="glass-card">
+          <Card className="bg-card border">
             <CardContent className="p-8 text-center text-muted-foreground">
               <BarChart3 className="w-12 h-12 mx-auto mb-4 opacity-50" />
               <p>No se encontraron servicios en el pipeline</p>
@@ -505,21 +505,20 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
               open={expandedGroups.has(group.status)}
               onOpenChange={() => toggleGroup(group.status)}
             >
-              <Card className="glass-card">
+              <Card className="bg-card border">
                 <CollapsibleTrigger asChild>
                   <CardHeader className="cursor-pointer hover:bg-muted/5 transition-colors">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
                         {expandedGroups.has(group.status) ? (
-                          <ChevronDown className="w-4 h-4 text-white" />
+                          <ChevronDown className="w-4 h-4 text-foreground" />
                         ) : (
-                          <ChevronRight className="w-4 h-4 text-white" />
+                          <ChevronRight className="w-4 h-4 text-foreground" />
                         )}
                         <div className="flex items-center gap-2">
                           <Checkbox
                             checked={group.services.every(s => selectedServices.has(s.id))}
                             onCheckedChange={(checked) => handleSelectAll(group.services, checked as boolean)}
-                            className="border-gray-500"
                           />
                           <div>
                             <div className="flex items-center gap-2">
@@ -543,7 +542,7 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
                         </div>
                       </div>
                       <div className="text-right">
-                        <div className="font-bold text-lg text-white">
+                        <div className="font-bold text-lg text-foreground">
                           ${group.totalValue.toLocaleString()}
                         </div>
                         <div className="text-sm text-muted-foreground">
@@ -559,45 +558,44 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          <TableHead className="text-gray-300 w-12">
+                          <TableHead className="text-muted-foreground w-12">
                             <CheckSquare className="w-4 h-4" />
                           </TableHead>
                            <SortableHeader field="folio">Folio</SortableHeader>
                            <SortableHeader field="serviceType">Tipo de Servicio</SortableHeader>
                            <SortableHeader field="serviceDate">Fecha</SortableHeader>
-                           <TableHead className="text-gray-300">Patente Vehículo</TableHead>
+                           <TableHead className="text-muted-foreground">Patente Vehículo</TableHead>
                            <SortableHeader field="value">Valor</SortableHeader>
                            <SortableHeader field="daysInStatus">Días en Estado</SortableHeader>
                            <SortableHeader field="quoteNumber">Cotización</SortableHeader>
                            <SortableHeader field="purchaseOrder">Orden de Compra</SortableHeader>
-                           <TableHead className="text-gray-300">Acciones</TableHead>
+                           <TableHead className="text-muted-foreground">Acciones</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {group.services.map((service) => {
                           const daysInStatus = differenceInDays(new Date(), parseFromDatabase(service.serviceDate));
                           return (
-                        <TableRow key={service.id} className="border-gray-700">
+                        <TableRow key={service.id} className="border-muted">
                           <TableCell>
                             <Checkbox
                               checked={selectedServices.has(service.id)}
                               onCheckedChange={(checked) => handleServiceSelection(service.id, checked as boolean)}
-                              className="border-gray-500"
                             />
                           </TableCell>
                           <TableCell>
-                            <div className="font-medium text-white">{service.folio}</div>
+                            <div className="font-medium text-foreground">{service.folio}</div>
                           </TableCell>
                           <TableCell>
-                            <div className="text-white">{service.serviceType.name}</div>
+                            <div className="text-foreground">{service.serviceType.name}</div>
                           </TableCell>
                           <TableCell>
-                            <div className="text-sm text-gray-300">
+                            <div className="text-sm text-muted-foreground">
                               {formatForDisplay(parseFromDatabase(service.serviceDate))}
                             </div>
                           </TableCell>
                                <TableCell>
-                                 <div className="flex items-center gap-1 text-gray-300">
+                                 <div className="flex items-center gap-1 text-muted-foreground">
                                    <Car className="w-3 h-3" />
                                    <span className="text-sm">
                                      {service.licensePlate || 'Sin vehículo'}
@@ -605,7 +603,7 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
                                  </div>
                                </TableCell>
                                <TableCell>
-                                 <span className="font-medium text-white">
+                                 <span className="font-medium text-foreground">
                                    ${(service.value || 0).toLocaleString()}
                                  </span>
                                </TableCell>
