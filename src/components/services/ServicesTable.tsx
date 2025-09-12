@@ -154,8 +154,10 @@ export const ServicesTable = ({
                   
                   return (
                     <TableRow key={service.id} className="hover:bg-muted/50">
-                      <TableCell className="font-medium text-primary">
-                        {service.folio}
+                      <TableCell className="font-medium">
+                        <Badge variant="tms" className="whitespace-nowrap" title={`Folio: ${service.folio}`}>
+                          {service.folio}
+                        </Badge>
                       </TableCell>
                       <TableCell>
                         {formatForDisplay(parseFromDatabase(service.serviceDate))}

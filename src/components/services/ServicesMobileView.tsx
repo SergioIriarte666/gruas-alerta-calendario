@@ -84,7 +84,7 @@ export const ServicesMobileView = ({
             <CardContent className="p-4">
               <div className="flex items-start justify-between mb-3">
                 <div className="flex-1">
-                  <h4 className="font-semibold text-tms-green text-lg">#{service.folio}</h4>
+                  <div className="mb-1"><Badge variant="tms" className="whitespace-nowrap" title={`Folio: ${service.folio}`}>#{service.folio}</Badge></div>
                   <p className="text-white font-medium">{service.client.name}</p>
                   <p className="text-white/70 text-sm">{service.client.department} • {service.client.rut}</p>
                 </div>

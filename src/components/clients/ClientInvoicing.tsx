@@ -85,7 +85,7 @@ export const ClientInvoicing = ({ client }: { client: Client }) => {
                 <TableBody>
                   {invoices.map(invoice => (
                     <TableRow key={invoice.id} className="border-gray-700">
-                      <TableCell className="font-medium text-tms-green">{invoice.folio}</TableCell>
+                      <TableCell className="font-medium"><Badge variant="tms" className="whitespace-nowrap">{invoice.folio}</Badge></TableCell>
                       <TableCell className="text-gray-300">{formatForDisplay(parseFromDatabase(invoice.issueDate))}</TableCell>
                       <TableCell className="text-gray-300">{formatForDisplay(parseFromDatabase(invoice.dueDate))}</TableCell>
                       <TableCell className="text-gray-300 font-semibold">{formatCurrency(invoice.total)}</TableCell>
