@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useServiceTypesManagement } from '@/hooks/useServiceTypesManagement';
 import { ServiceTypeConfig } from '@/types/serviceTypes';
 import { ServiceTypesHeader } from '@/components/service-types/ServiceTypesHeader';
@@ -22,6 +22,17 @@ const ServiceTypes = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
 
+  React.useEffect(() => {
+    document.title = 'Tipos de Servicio | Panel';
+    const meta = document.querySelector('meta[name="description"]');
+    const content = 'Gestiona los tipos de servicio y sus configuraciones del sistema.';
+    if (meta) meta.setAttribute('content', content);
+    else { const m = document.createElement('meta'); m.name = 'description'; m.content = content; document.head.appendChild(m); }
+    if (!document.querySelector('link[rel="canonical"]')) {
+      const l = document.createElement('link'); l.rel = 'canonical'; l.href = window.location.href; document.head.appendChild(l);
+    }
+  }, []);
+
   console.log('ServiceTypes: Current user role:', user?.role);
 
   const isAdmin = user?.role === 'admin';
@@ -31,9 +42,9 @@ const ServiceTypes = () => {
     return (
       <div className="flex items-center justify-center min-h-96">
         <div className="text-center">
-          <h2 className="text-xl font-semibold text-white mb-2">Acceso Restringido</h2>
-          <p className="text-gray-400">Solo los administradores pueden gestionar tipos de servicio.</p>
-          <p className="text-gray-500 text-sm mt-2">Tu rol actual: {user?.role || 'No definido'}</p>
+          <h2 className="text-xl font-semibold text-foreground mb-2">Acceso Restringido</h2>
+          <p className="text-muted-foreground">Solo los administradores pueden gestionar tipos de servicio.</p>
+          <p className="text-muted-foreground text-sm mt-2">Tu rol actual: {user?.role || 'No definido'}</p>
         </div>
       </div>
     );
@@ -102,7 +113,7 @@ const ServiceTypes = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-96">
-        <div className="text-white">Cargando tipos de servicio...</div>
+        <div className="text-muted-foreground">Cargando tipos de servicio...</div>
       </div>
     );
   }
@@ -122,16 +133,16 @@ const ServiceTypes = () => {
       />
 
       {/* Search Bar */}
-      <Card className="glass-card">
+      <Card className="bg-card border">
         <CardContent className="p-6">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
             <input
               type="text"
               placeholder="Buscar tipos de servicio..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 bg-white border border-gray-300 rounded-lg text-black placeholder-gray-400 focus:border-tms-green focus:outline-none"
+              className="w-full pl-10 pr-4 py-2 bg-background border rounded-lg text-foreground placeholder-muted-foreground focus:border-primary focus:outline-none"
             />
           </div>
         </CardContent>
@@ -145,9 +156,9 @@ const ServiceTypes = () => {
       />
 
       <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] bg-gray-800 border-gray-700 p-0 gap-0">
+        <DialogContent className="max-w-4xl max-h-[90vh] bg-card border p-0 gap-0">
           <DialogHeader className="p-6 pb-0">
-            <DialogTitle className="text-white text-xl">
+            <DialogTitle className="text-foreground text-xl">
               {editingServiceType ? 'Editar' : 'Crear'} Tipo de Servicio
             </DialogTitle>
           </DialogHeader>

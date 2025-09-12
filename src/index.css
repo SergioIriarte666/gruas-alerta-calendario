@@ -427,7 +427,36 @@ body {
   border-color: var(--report-border);
 }
 
-.reports-scope .bg-muted\/50 {
+/* Service Types Module Scope */
+.service-types-scope {
+  --service-types-primary: hsl(var(--primary));
+  --service-types-secondary: hsl(var(--secondary));
+  --service-types-accent: hsl(var(--accent));
+  --service-types-muted: hsl(var(--muted));
+  --service-types-muted-foreground: hsl(var(--muted-foreground));
+  --service-types-border: hsl(var(--border));
+  --service-types-card: hsl(var(--card));
+  --service-types-background: hsl(var(--background));
+  --service-types-foreground: hsl(var(--foreground));
+}
+
+.service-types-scope .bg-card {
+  background-color: var(--service-types-card);
+}
+
+.service-types-scope .text-foreground {
+  color: var(--service-types-foreground);
+}
+
+.service-types-scope .text-muted-foreground {
+  color: var(--service-types-muted-foreground);
+}
+
+.service-types-scope .border {
+  border-color: var(--service-types-border);
+}
+
+.service-types-scope .bg-muted\/50 {
   background-color: hsl(var(--muted) / 0.5);
 }
 

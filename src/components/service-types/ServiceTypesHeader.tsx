@@ -1,4 +1,3 @@
-
 import { Plus, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -12,8 +11,8 @@ export const ServiceTypesHeader = ({ onNewServiceType, onRefresh, refreshing }: 
   return (
     <div className="flex justify-between items-center">
       <div>
-        <h1 className="text-3xl font-bold text-white">Tipos de Servicio</h1>
-        <p className="text-gray-400 mt-2">Gestiona los tipos de servicio y sus configuraciones</p>
+        <h1 className="text-3xl font-bold text-foreground">Tipos de Servicio</h1>
+        <p className="text-muted-foreground mt-2">Gestiona los tipos de servicio y sus configuraciones</p>
       </div>
       <div className="flex gap-3">
         <Button
@@ -21,7 +20,6 @@ export const ServiceTypesHeader = ({ onNewServiceType, onRefresh, refreshing }: 
           variant="outline"
           size="sm"
           disabled={refreshing}
-          className="bg-gray-800 border-gray-700 text-white hover:bg-gray-700"
         >
           <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
           Actualizar
@@ -29,7 +27,7 @@ export const ServiceTypesHeader = ({ onNewServiceType, onRefresh, refreshing }: 
         <Button 
           onClick={onNewServiceType} 
           size="sm"
-          className="bg-tms-green hover:bg-tms-green/80 text-black font-medium"
+          className="bg-primary hover:bg-primary/90 text-primary-foreground font-medium"
         >
           <Plus className="h-4 w-4 mr-2" />
           Nuevo Tipo
