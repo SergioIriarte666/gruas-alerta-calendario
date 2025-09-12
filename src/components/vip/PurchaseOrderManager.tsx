@@ -261,7 +261,7 @@ export const PurchaseOrderManager: React.FC<PurchaseOrderManagerProps> = ({
                         </Badge>
 
                         {(service.purchaseOrderNumber || service.purchaseOrder) && (
-                          <Badge variant="secondary" className="bg-green-500/20 text-green-300 border-green-500/30">
+                          <Badge variant="secondary" className="bg-green-500/20 text-black border-green-500/30">
                             <CheckCircle className="w-3 h-3 mr-1" />
                             Con O.C: {service.purchaseOrderNumber || service.purchaseOrder}
                           </Badge>
