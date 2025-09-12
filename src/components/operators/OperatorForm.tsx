@@ -188,18 +188,17 @@ export const OperatorForm = ({ operator, onSubmit, onCancel }: OperatorFormProps
           </div>
         </div>
 
-        <div className="flex justify-end space-x-3 pt-4 border-t border-gray-700">
+        <div className="flex justify-end space-x-3 pt-4 border-t border">
           <Button
             type="button"
             variant="outline"
             onClick={onCancel}
-            className="border-gray-600 text-gray-300 hover:bg-white/5"
           >
             Cancelar
           </Button>
           <Button
             type="submit"
-            className="bg-tms-green hover:bg-tms-green/90 text-white"
+            variant="default"
           >
             {operator ? 'Actualizar' : 'Crear'} Operador
           </Button>
