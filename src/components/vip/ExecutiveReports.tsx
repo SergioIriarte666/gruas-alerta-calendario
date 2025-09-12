@@ -514,7 +514,7 @@ export const ExecutiveReports: React.FC<ExecutiveReportsProps> = ({
             {performanceIndicators.map((indicator, index) => (
               <div key={index} className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-400">{indicator.title}</span>
+                  <span className="text-sm text-black">{indicator.title}</span>
                   {indicator.trend === 'up' ? (
                     <TrendingUp className="w-4 h-4 text-green-400" />
                   ) : (
