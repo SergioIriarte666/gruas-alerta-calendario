@@ -158,7 +158,7 @@ export const VehicleHistory = ({ licensePlate, currentServiceId, clientId, clien
                 key={service.id} 
                 className={`border-border ${service.id === currentServiceId ? 'bg-tms-green/10 border-tms-green/30' : ''}`}
               >
-                <TableCell className={`font-medium ${service.id === currentServiceId ? 'text-tms-green font-bold' : 'text-tms-green'}`}>
+                <TableCell className={`font-medium ${service.id === currentServiceId ? 'text-green-700 font-bold' : 'text-green-700'}`}>
                   {service.folio}
                   {service.id === currentServiceId && <span className="ml-2 text-xs">(Actual)</span>}
                 </TableCell>
