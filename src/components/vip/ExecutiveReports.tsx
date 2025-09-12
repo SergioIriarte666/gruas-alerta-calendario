@@ -370,22 +370,22 @@ export const ExecutiveReports: React.FC<ExecutiveReportsProps> = ({
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 vip-scope">
       {/* Header Controls */}
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+          <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
             <FileText className="w-5 h-5 text-purple-400" />
             Reportes Ejecutivos - {clientName}
           </h3>
-          <p className="text-sm text-gray-400">
+          <p className="text-sm text-muted-foreground">
             Análisis avanzado y métricas de rendimiento
           </p>
         </div>
 
         <div className="flex gap-3">
           <Select value={selectedPeriod} onValueChange={(value: any) => setSelectedPeriod(value)}>
-            <SelectTrigger className="w-32 bg-gray-800 border-gray-600">
+            <SelectTrigger className="w-32 bg-card border-border">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -397,7 +397,7 @@ export const ExecutiveReports: React.FC<ExecutiveReportsProps> = ({
           </Select>
 
           <Select value={reportType} onValueChange={(value: any) => setReportType(value)}>
-            <SelectTrigger className="w-40 bg-gray-800 border-gray-600">
+            <SelectTrigger className="w-40 bg-card border-border">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -430,22 +430,22 @@ export const ExecutiveReports: React.FC<ExecutiveReportsProps> = ({
 
       {/* Key Metrics Dashboard */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="glass-card border-blue-500/20">
+        <Card className="bg-card border-blue-500/20">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-blue-500/20 rounded-lg">
                 <Target className="w-5 h-5 text-blue-400" />
               </div>
               <div>
-                <p className="text-lg font-bold text-white">{metrics.totalServices}</p>
+                <p className="text-lg font-bold text-foreground">{metrics.totalServices}</p>
                 <p className="text-xs text-blue-400">Servicios Total</p>
-                <p className="text-xs text-gray-500">{selectedPeriod} días</p>
+                <p className="text-xs text-muted-foreground">{selectedPeriod} días</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="glass-card border-green-500/20">
+        <Card className="bg-card border-green-500/20">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-green-500/20 rounded-lg">

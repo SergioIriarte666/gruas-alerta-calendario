@@ -378,11 +378,11 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 vip-scope">
       {/* Header and Search */}
       <Card className="glass-card">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-white">
+          <CardTitle className="flex items-center gap-2 text-foreground">
             <BarChart3 className="w-5 h-5" />
             Pipeline de Servicios por Estado
           </CardTitle>
@@ -393,7 +393,7 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
                 placeholder="Buscar por folio, tipo, cotización, orden de compra..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 bg-gray-800 border-gray-700 text-white"
+                className="pl-10 bg-card border-border text-foreground"
               />
             </div>
             <div className="flex gap-2">
@@ -450,7 +450,7 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
             <div className="flex items-center gap-2">
               <FileText className="w-4 h-4 text-primary" />
               <div>
-                <div className="text-2xl font-bold text-white">{services.length}</div>
+                <div className="text-2xl font-bold text-foreground">{services.length}</div>
                 <div className="text-sm text-muted-foreground">Total servicios</div>
               </div>
             </div>
@@ -462,7 +462,7 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
             <div className="flex items-center gap-2">
               <TrendingUp className="w-4 h-4 text-green-600" />
               <div>
-                <div className="text-2xl font-bold text-white">
+                <div className="text-2xl font-bold text-foreground">
                   {serviceGroups.length}
                 </div>
                 <div className="text-sm text-muted-foreground">Estados activos</div>
@@ -476,7 +476,7 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
             <div className="flex items-center gap-2">
               <DollarSign className="w-4 h-4 text-blue-600" />
               <div>
-                <div className="text-2xl font-bold text-white">
+                <div className="text-2xl font-bold text-foreground">
                   ${serviceGroups.reduce((sum, g) => sum + g.totalValue, 0).toLocaleString()}
                 </div>
                 <div className="text-sm text-muted-foreground">Valor total pipeline</div>

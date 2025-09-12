@@ -95,11 +95,11 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 vip-scope">
       {/* Board Header */}
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-semibold text-white">Pipeline de Servicios</h2>
-        <div className="text-sm text-gray-400">
+        <h2 className="text-xl font-semibold text-foreground">Pipeline de Servicios</h2>
+        <div className="text-sm text-muted-foreground">
           Total: {services.length} servicios
         </div>
       </div>
@@ -127,7 +127,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
               className={`p-2 rounded border ${column.color} text-center`}
             >
               <div className={`font-medium ${column.textColor}`}>{count}</div>
-              <div className="text-gray-400 truncate">{column.title}</div>
+              <div className="text-muted-foreground truncate">{column.title}</div>
             </div>
           );
         })}

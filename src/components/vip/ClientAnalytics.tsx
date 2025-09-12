@@ -304,22 +304,22 @@ export const ClientAnalytics: React.FC<ClientAnalyticsProps> = ({
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 vip-scope">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+          <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
             <Activity className="w-5 h-5 text-blue-400" />
             Analytics Avanzados - {clientName}
           </h3>
-          <p className="text-sm text-gray-400">
+          <p className="text-sm text-muted-foreground">
             Análisis detallado de patrones y tendencias
           </p>
         </div>
 
         <div className="flex gap-3">
           <Select value={timeRange} onValueChange={(value: any) => setTimeRange(value)}>
-            <SelectTrigger className="w-24 bg-gray-800 border-gray-600">
+            <SelectTrigger className="w-24 bg-card border-border">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -331,7 +331,7 @@ export const ClientAnalytics: React.FC<ClientAnalyticsProps> = ({
           </Select>
 
           <Select value={metric} onValueChange={(value: any) => setMetric(value)}>
-            <SelectTrigger className="w-32 bg-gray-800 border-gray-600">
+            <SelectTrigger className="w-32 bg-card border-border">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -341,7 +341,7 @@ export const ClientAnalytics: React.FC<ClientAnalyticsProps> = ({
             </SelectContent>
           </Select>
 
-          <div className="flex border border-gray-600 rounded-lg">
+          <div className="flex border rounded-lg">
             <Button
               variant={chartType === 'line' ? 'default' : 'ghost'}
               size="sm"
@@ -354,7 +354,7 @@ export const ClientAnalytics: React.FC<ClientAnalyticsProps> = ({
               variant={chartType === 'area' ? 'default' : 'ghost'}
               size="sm"
               onClick={() => setChartType('area')}
-              className="rounded-none border-x border-gray-600"
+              className="rounded-none border-x"
             >
               <BarChart3 className="w-4 h-4" />
             </Button>
@@ -372,11 +372,11 @@ export const ClientAnalytics: React.FC<ClientAnalyticsProps> = ({
 
       {/* Key Performance Indicators */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card className="glass-card border-blue-500/20">
+        <Card className="bg-card border-blue-500/20">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-2xl font-bold text-white">{services.length}</p>
+                <p className="text-2xl font-bold text-foreground">{services.length}</p>
                 <p className="text-xs text-blue-400">Total Servicios</p>
               </div>
               <Target className="w-5 h-5 text-blue-400" />
@@ -390,12 +390,12 @@ export const ClientAnalytics: React.FC<ClientAnalyticsProps> = ({
               <span className={`text-xs ${percentageChange >= 0 ? 'text-green-400' : 'text-red-400'}`}>
                 {Math.abs(percentageChange).toFixed(1)}%
               </span>
-              <span className="text-xs text-gray-400">vs período anterior</span>
+              <span className="text-xs text-muted-foreground">vs período anterior</span>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="glass-card border-green-500/20">
+        <Card className="bg-card border-green-500/20">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>

@@ -262,6 +262,40 @@ body {
   border-color: hsl(var(--border)) !important;
 }
 
+/* VIP Pipeline Module Scope */
+.vip-scope {
+  color: hsl(var(--foreground));
+}
+
+.vip-scope .text-white {
+  color: hsl(var(--foreground)) !important;
+}
+
+.vip-scope .text-gray-300 {
+  color: hsl(var(--muted-foreground)) !important;
+}
+
+.vip-scope .text-gray-400 {
+  color: hsl(var(--muted-foreground)) !important;
+}
+
+.vip-scope .text-gray-500 {
+  color: hsl(var(--muted-foreground)) !important;
+}
+
+.vip-scope .bg-gray-800 {
+  background-color: hsl(var(--card)) !important;
+}
+
+.vip-scope .bg-gray-800\/50 {
+  background-color: hsl(var(--card)) !important;
+}
+
+.vip-scope .border-gray-700,
+.vip-scope .border-gray-600 {
+  border-color: hsl(var(--border)) !important;
+}
+
 /* Media queries para responsive */
 @media (max-width: 768px) {
   .responsive-grid {

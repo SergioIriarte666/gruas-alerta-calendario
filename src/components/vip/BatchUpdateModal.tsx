@@ -269,7 +269,7 @@ export const BatchUpdateModal: React.FC<BatchUpdateModalProps> = ({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent 
-        className="max-w-4xl h-[75vh] glass-card select-none flex flex-col p-0"
+        className="max-w-4xl h-[75vh] bg-card border select-none flex flex-col p-0 vip-scope"
         style={{ 
           position: 'fixed',
           top: '50%',
@@ -283,12 +283,12 @@ export const BatchUpdateModal: React.FC<BatchUpdateModalProps> = ({
         draggable={false}>
         
         {/* Header fijo */}
-        <DialogHeader className="flex-shrink-0 p-6 border-b border-gray-700">
-          <DialogTitle className="text-white flex items-center gap-2">
+        <DialogHeader className="flex-shrink-0 p-6 border-b">
+          <DialogTitle className="text-foreground flex items-center gap-2">
             <Hash className="w-5 h-5" />
             Registro por Lotes - {clientName}
           </DialogTitle>
-          <DialogDescription className="text-gray-400">
+          <DialogDescription className="text-muted-foreground">
             Actualice números de cotización o órdenes de compra para múltiples servicios
           </DialogDescription>
         </DialogHeader>
@@ -309,7 +309,7 @@ export const BatchUpdateModal: React.FC<BatchUpdateModalProps> = ({
                 </Badge>
               </div>
               
-              <div className="h-20 overflow-y-auto space-y-2 border border-gray-700 bg-gray-800/50 p-3 rounded-md">
+              <div className="h-20 overflow-y-auto space-y-2 border bg-card p-3 rounded-md">
                 <div className="space-y-2">
                   {selectedServices.map((service, index) => (
                     <div key={service.id} className="flex items-center justify-between text-sm">
@@ -317,11 +317,11 @@ export const BatchUpdateModal: React.FC<BatchUpdateModalProps> = ({
                         <span className="w-6 h-6 bg-blue-500/20 text-blue-300 rounded-full flex items-center justify-center text-xs">
                           {index + 1}
                         </span>
-                        <span className="text-white">{service.folio}</span>
-                        <span className="text-gray-400">•</span>
-                        <span className="text-gray-300">{service.serviceType.name}</span>
+                        <span className="text-foreground">{service.folio}</span>
+                        <span className="text-muted-foreground">•</span>
+                        <span className="text-muted-foreground">{service.serviceType.name}</span>
                       </div>
-                      <div className="text-gray-400 text-xs">
+                      <div className="text-muted-foreground text-xs">
                         {format(new Date(service.serviceDate), 'dd/MM/yyyy')}
                       </div>
                     </div>
@@ -337,7 +337,7 @@ export const BatchUpdateModal: React.FC<BatchUpdateModalProps> = ({
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <FileText className="w-5 h-5 text-blue-400" />
-                    <h3 className="text-lg font-medium text-white">Cotizaciones</h3>
+                    <h3 className="text-lg font-medium text-foreground">Cotizaciones</h3>
                   </div>
                   <Switch
                     checked={enableQuote}

@@ -144,12 +144,12 @@ export const PipelineMetrics: React.FC<PipelineMetricsProps> = ({
   ];
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 vip-scope">
       {/* Overview Card */}
-      <Card className="glass-card border-purple-500/20">
+      <Card className="bg-card border-purple-500/20">
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-lg text-white flex items-center gap-2">
+            <CardTitle className="text-lg text-foreground flex items-center gap-2">
               <TrendingUp className="w-5 h-5 text-purple-400" />
               Resumen del Pipeline
             </CardTitle>
@@ -161,22 +161,22 @@ export const PipelineMetrics: React.FC<PipelineMetricsProps> = ({
         <CardContent className="pt-0">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
             <div className="text-center">
-              <div className="text-2xl font-bold text-white">{metrics.total}</div>
-              <div className="text-gray-400">Total Servicios</div>
+              <div className="text-2xl font-bold text-foreground">{metrics.total}</div>
+              <div className="text-muted-foreground">Total Servicios</div>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-green-400">
                 ${metrics.totalValue.toLocaleString()}
               </div>
-              <div className="text-gray-400">Valor Total</div>
+              <div className="text-muted-foreground">Valor Total</div>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-blue-400">{metrics.inPipeline}</div>
-              <div className="text-gray-400">En Proceso</div>
+              <div className="text-muted-foreground">En Proceso</div>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-purple-400">{metrics.avgProcessingTime}d</div>
-              <div className="text-gray-400">Tiempo Prom.</div>
+              <div className="text-muted-foreground">Tiempo Prom.</div>
             </div>
           </div>
         </CardContent>
@@ -187,7 +187,7 @@ export const PipelineMetrics: React.FC<PipelineMetricsProps> = ({
         {metricCards.map((metric, index) => (
           <Card 
             key={index} 
-            className={`glass-card border ${metric.bgColor} ${metric.urgent ? 'animate-pulse' : ''}`}
+            className={`bg-card border ${metric.bgColor} ${metric.urgent ? 'animate-pulse' : ''}`}
           >
             <CardContent className="p-4">
               <div className="flex items-center justify-between mb-2">
@@ -204,10 +204,10 @@ export const PipelineMetrics: React.FC<PipelineMetricsProps> = ({
                 <div className={`text-xl font-bold ${metric.color}`}>
                   {metric.value}
                 </div>
-                <div className="text-xs text-gray-400 font-medium">
+                <div className="text-xs text-muted-foreground font-medium">
                   {metric.title}
                 </div>
-                <div className="text-xs text-gray-500">
+                <div className="text-xs text-muted-foreground">
                   {metric.subtitle}
                 </div>
               </div>
