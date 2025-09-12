@@ -527,7 +527,7 @@ export const PaymentList: React.FC = () => {
                             {formatForDisplay(parseFromDatabase(payment.due_date))}
                           </div>
                           {payment.paid_date && (
-                            <div className="text-sm text-primary">
+                            <div className="text-sm text-violet-600">
                               Pagado: {formatForDisplay(parseFromDatabase(payment.paid_date))}
                             </div>
                           )}
