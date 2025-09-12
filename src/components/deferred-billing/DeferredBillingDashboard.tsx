@@ -223,7 +223,7 @@ export const DeferredBillingDashboard: React.FC = () => {
                         </div>
                       </div>
                       <div className="flex items-center gap-4">
-                        <span className="font-bold text-primary">
+                        <span className="font-bold text-violet-600">
                           {formatCurrency(event.totalAmount)}
                         </span>
                         {event.isOverdue && (
