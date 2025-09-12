@@ -619,7 +619,7 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
                                </TableCell>
                                <TableCell>
                                  {(service.purchaseOrderNumber || service.purchaseOrder) ? (
-                                   <code className="text-xs bg-muted px-1 rounded text-teal-300">
+                                   <code className="text-xs bg-muted px-1 rounded text-blue-600 font-bold">
                                      {service.purchaseOrderNumber || service.purchaseOrder}
                                    </code>
                                  ) : (
