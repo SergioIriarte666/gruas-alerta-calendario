@@ -9,7 +9,7 @@ const InvoiceSummary = ({ subtotal, vat, total }: InvoiceSummaryProps) => {
   return (
     <div className="bg-white/10 p-4 rounded-lg border border-gray-700">
       <h4 className="font-medium text-white mb-3">Resumen de Facturación</h4>
-      <div className="space-y-2">
+      <div className="space-y-2 text-black">
         <div className="flex justify-between text-gray-300">
           <span>Subtotal:</span>
           <span>${Math.round(subtotal).toLocaleString()}</span>
