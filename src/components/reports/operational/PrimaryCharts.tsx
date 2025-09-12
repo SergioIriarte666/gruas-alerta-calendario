@@ -12,9 +12,9 @@ interface PrimaryChartsProps {
 
 export const PrimaryCharts = ({ metrics, servicesByMonthConfig, revenueByMonthConfig }: PrimaryChartsProps) => (
   <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-    <Card className="bg-white/10 border-white/20">
+    <Card className="bg-card border">
       <CardHeader>
-        <CardTitle className="text-white">Servicios por Mes</CardTitle>
+        <CardTitle className="text-foreground">Servicios por Mes</CardTitle>
       </CardHeader>
       <CardContent>
         <ChartContainer config={servicesByMonthConfig} className="w-full h-[300px]">
@@ -29,9 +29,9 @@ export const PrimaryCharts = ({ metrics, servicesByMonthConfig, revenueByMonthCo
       </CardContent>
     </Card>
 
-    <Card className="bg-white/10 border-white/20">
+    <Card className="bg-card border">
       <CardHeader>
-        <CardTitle className="text-white">Ingresos por Mes</CardTitle>
+        <CardTitle className="text-foreground">Ingresos por Mes</CardTitle>
       </CardHeader>
       <CardContent>
         <ChartContainer config={revenueByMonthConfig} className="w-full h-[300px]">

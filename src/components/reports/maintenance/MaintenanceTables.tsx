@@ -50,7 +50,7 @@ export const MaintenanceTables = ({ data }: MaintenanceTablesProps) => {
       <TabsContent value="cranes" className="space-y-4">
         <Card className="bg-card/50 border-border">
           <CardHeader>
-            <CardTitle className="text-white">Análisis Detallado por Grúa</CardTitle>
+            <CardTitle className="text-foreground">Análisis Detallado por Grúa</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="overflow-x-auto">
@@ -71,19 +71,19 @@ export const MaintenanceTables = ({ data }: MaintenanceTablesProps) => {
                     .sort((a, b) => (b.totalMaintenanceCost + b.totalPartsCost) - (a.totalMaintenanceCost + a.totalPartsCost))
                     .map((crane) => (
                     <TableRow key={crane.craneId} className="border-border">
-                      <TableCell className="text-white font-medium">
+                      <TableCell className="text-foreground font-medium">
                         {crane.licensePlate}
                       </TableCell>
-                      <TableCell className="text-black">
+                      <TableCell className="text-foreground">
                         {crane.brand} {crane.model}
                       </TableCell>
-                      <TableCell className="text-white">
+                      <TableCell className="text-foreground">
                         {formatCurrency(crane.totalMaintenanceCost)}
                       </TableCell>
-                      <TableCell className="text-white">
+                      <TableCell className="text-foreground">
                         {formatCurrency(crane.totalPartsCost)}
                       </TableCell>
-                      <TableCell className="text-white">
+                      <TableCell className="text-foreground">
                         {crane.interventionCount}
                       </TableCell>
                       <TableCell className="text-black">
@@ -104,7 +104,7 @@ export const MaintenanceTables = ({ data }: MaintenanceTablesProps) => {
       <TabsContent value="providers" className="space-y-4">
         <Card className="bg-card/50 border-border">
           <CardHeader>
-            <CardTitle className="text-white">Top Proveedores por Volumen</CardTitle>
+            <CardTitle className="text-foreground">Top Proveedores por Volumen</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="overflow-x-auto">
@@ -120,16 +120,16 @@ export const MaintenanceTables = ({ data }: MaintenanceTablesProps) => {
                 <TableBody>
                   {data.topProviders.map((provider, index) => (
                     <TableRow key={provider.provider} className="border-border">
-                      <TableCell className="text-white font-medium">
+                      <TableCell className="text-foreground font-medium">
                         #{index + 1} {provider.provider}
                       </TableCell>
-                      <TableCell className="text-white">
+                      <TableCell className="text-foreground">
                         {formatCurrency(provider.totalCost)}
                       </TableCell>
-                      <TableCell className="text-white">
+                      <TableCell className="text-foreground">
                         {provider.interventionCount}
                       </TableCell>
-                      <TableCell className="text-gray-300">
+                      <TableCell className="text-foreground">
                         {formatCurrency(provider.totalCost / provider.interventionCount)}
                       </TableCell>
                     </TableRow>
@@ -144,19 +144,19 @@ export const MaintenanceTables = ({ data }: MaintenanceTablesProps) => {
       <TabsContent value="parts" className="space-y-4">
         <Card className="bg-card/50 border-border">
           <CardHeader>
-            <CardTitle className="text-white">Análisis de Partes y Repuestos</CardTitle>
+            <CardTitle className="text-foreground">Análisis de Partes y Repuestos</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow className="border-border">
-                    <TableHead className="text-gray-300">Parte</TableHead>
-                    <TableHead className="text-gray-300">Proveedor</TableHead>
-                    <TableHead className="text-gray-300">Cantidad Total</TableHead>
-                    <TableHead className="text-gray-300">Costo Total</TableHead>
-                    <TableHead className="text-gray-300">Grúas Afectadas</TableHead>
-                    <TableHead className="text-gray-300">Costo Unitario Promedio</TableHead>
+                    <TableHead className="text-foreground">Parte</TableHead>
+                    <TableHead className="text-foreground">Proveedor</TableHead>
+                    <TableHead className="text-foreground">Cantidad Total</TableHead>
+                    <TableHead className="text-foreground">Costo Total</TableHead>
+                    <TableHead className="text-foreground">Grúas Afectadas</TableHead>
+                    <TableHead className="text-foreground">Costo Unitario Promedio</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -166,29 +166,29 @@ export const MaintenanceTables = ({ data }: MaintenanceTablesProps) => {
                       .slice(0, 20)
                       .map((part, index) => (
                       <TableRow key={`${part.partName}-${part.supplier}`} className="border-border">
-                        <TableCell className="text-white font-medium">
+                        <TableCell className="text-foreground font-medium">
                           {part.partName}
                         </TableCell>
-                        <TableCell className="text-gray-300">
+                        <TableCell className="text-foreground">
                           {part.supplier}
                         </TableCell>
-                        <TableCell className="text-white">
+                        <TableCell className="text-foreground">
                           {part.quantity}
                         </TableCell>
-                        <TableCell className="text-white">
+                        <TableCell className="text-foreground">
                           {formatCurrency(part.totalCost)}
                         </TableCell>
-                        <TableCell className="text-white">
+                        <TableCell className="text-foreground">
                           {part.craneCount}
                         </TableCell>
-                        <TableCell className="text-gray-300">
+                        <TableCell className="text-foreground">
                           {formatCurrency(part.totalCost / part.quantity)}
                         </TableCell>
                       </TableRow>
                     ))
                   ) : (
                     <TableRow className="border-border">
-                      <TableCell colSpan={6} className="text-center text-gray-400 py-8">
+                      <TableCell colSpan={6} className="text-center text-foreground py-8">
                         <div className="flex flex-col items-center space-y-2">
                           <p className="text-lg">No hay datos de partes disponibles</p>
                           <p className="text-sm">
@@ -210,25 +210,25 @@ export const MaintenanceTables = ({ data }: MaintenanceTablesProps) => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <Card className="bg-card/50 border-border">
             <CardHeader>
-              <CardTitle className="text-white">Grúas con Mayor Costo</CardTitle>
+              <CardTitle className="text-foreground">Grúas con Mayor Costo</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow className="border-border">
-                      <TableHead className="text-gray-300">Grúa</TableHead>
-                      <TableHead className="text-gray-300">Costo Total</TableHead>
-                      <TableHead className="text-gray-300">Tendencia</TableHead>
+                    <TableHead className="text-foreground">Grúa</TableHead>
+                    <TableHead className="text-foreground">Costo Total</TableHead>
+                    <TableHead className="text-foreground">Tendencia</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {data.predictiveInsights.highCostCranes.map((crane) => (
                       <TableRow key={crane.craneId} className="border-border">
-                        <TableCell className="text-white font-medium">
+                        <TableCell className="text-foreground font-medium">
                           {crane.licensePlate}
                         </TableCell>
-                        <TableCell className="text-white">
+                        <TableCell className="text-foreground">
                           {formatCurrency(crane.totalCost)}
                         </TableCell>
                         <TableCell>
@@ -246,28 +246,28 @@ export const MaintenanceTables = ({ data }: MaintenanceTablesProps) => {
 
           <Card className="bg-card/50 border-border">
             <CardHeader>
-              <CardTitle className="text-white">Problemas Más Frecuentes</CardTitle>
+              <CardTitle className="text-foreground">Problemas Más Frecuentes</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow className="border-border">
-                      <TableHead className="text-gray-300">Problema</TableHead>
-                      <TableHead className="text-gray-300">Frecuencia</TableHead>
-                      <TableHead className="text-gray-300">Costo Promedio</TableHead>
+                      <TableHead className="text-foreground">Problema</TableHead>
+                      <TableHead className="text-foreground">Frecuencia</TableHead>
+                      <TableHead className="text-foreground">Costo Promedio</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {data.predictiveInsights.frequentIssues.map((issue, index) => (
                       <TableRow key={index} className="border-border">
-                        <TableCell className="text-white font-medium max-w-xs truncate">
+                        <TableCell className="text-foreground font-medium max-w-xs truncate">
                           {issue.issue}
                         </TableCell>
-                        <TableCell className="text-white">
+                        <TableCell className="text-foreground">
                           {issue.frequency}
                         </TableCell>
-                        <TableCell className="text-white">
+                        <TableCell className="text-foreground">
                           {formatCurrency(issue.avgCost)}
                         </TableCell>
                       </TableRow>

@@ -12,9 +12,9 @@ interface DistributionChartsProps {
 
 export const DistributionCharts = ({ metrics, servicesByStatusConfig, craneUtilizationConfig }: DistributionChartsProps) => (
   <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-    <Card className="bg-white/10 border-white/20">
+    <Card className="bg-card border">
       <CardHeader>
-        <CardTitle className="text-white">Distribución por Estado</CardTitle>
+        <CardTitle className="text-foreground">Distribución por Estado</CardTitle>
       </CardHeader>
       <CardContent>
         <ChartContainer config={servicesByStatusConfig} className="w-full h-[300px]">
@@ -38,9 +38,9 @@ export const DistributionCharts = ({ metrics, servicesByStatusConfig, craneUtili
       </CardContent>
     </Card>
 
-    <Card className="bg-white/10 border-white/20">
+    <Card className="bg-card border">
       <CardHeader>
-        <CardTitle className="text-white">Utilización de Grúas</CardTitle>
+        <CardTitle className="text-foreground">Utilización de Grúas</CardTitle>
       </CardHeader>
       <CardContent>
         <ChartContainer config={craneUtilizationConfig} className="w-full h-[300px]">

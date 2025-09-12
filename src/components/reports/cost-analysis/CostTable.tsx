@@ -12,32 +12,32 @@ export const CostTable = ({ metrics }: CostTableProps) => {
   }
 
   return (
-    <Card className="bg-white/10 border-white/20">
+    <Card className="bg-card border">
       <CardHeader>
-        <CardTitle className="text-white">Detalle de Costos por Categoría</CardTitle>
+        <CardTitle className="text-foreground">Detalle de Costos por Categoría</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-white/20">
-                <th className="text-left text-white font-medium p-3">Categoría</th>
-                <th className="text-right text-white font-medium p-3">Total</th>
-                <th className="text-right text-white font-medium p-3">Porcentaje</th>
-                <th className="text-right text-white font-medium p-3">Promedio por Servicio</th>
+              <tr className="border-b border-muted">
+                <th className="text-left text-foreground font-medium p-3">Categoría</th>
+                <th className="text-right text-foreground font-medium p-3">Total</th>
+                <th className="text-right text-foreground font-medium p-3">Porcentaje</th>
+                <th className="text-right text-foreground font-medium p-3">Promedio por Servicio</th>
               </tr>
             </thead>
             <tbody>
               {metrics.costsByCategory.map((category) => (
-                <tr key={category.categoryId} className="border-b border-white/10 hover:bg-white/5">
-                  <td className="text-white p-3">{category.categoryName}</td>
-                  <td className="text-right text-green-400 p-3 font-medium">
+                <tr key={category.categoryId} className="border-b border-muted hover:bg-muted/50">
+                  <td className="text-foreground p-3">{category.categoryName}</td>
+                  <td className="text-right text-primary p-3 font-medium">
                     ${category.total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </td>
-                  <td className="text-right text-blue-400 p-3">
+                  <td className="text-right text-secondary p-3">
                     {category.percentage.toFixed(1)}%
                   </td>
-                  <td className="text-right text-purple-400 p-3">
+                  <td className="text-right text-accent p-3">
                     ${metrics.totalServices > 0 ? (category.total / metrics.totalServices).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0.00'}
                   </td>
                 </tr>

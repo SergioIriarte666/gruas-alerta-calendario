@@ -78,12 +78,7 @@ export const ReportFilters = ({
                             type="date"
                             value={filters.dateRange.from}
                             onChange={(e) => onDateChange('from', e.target.value)}
-                            className="bg-black border-tms-green/30 text-white"
-                            style={{
-                                backgroundColor: '#000000',
-                                borderColor: 'rgba(156, 250, 36, 0.3)',
-                                color: '#ffffff'
-                            }}
+                            className="bg-background border-input text-foreground"
                         />
                     </div>
                     <div>
@@ -93,12 +88,7 @@ export const ReportFilters = ({
                             type="date"
                             value={filters.dateRange.to}
                             onChange={(e) => onDateChange('to', e.target.value)}
-                            className="bg-black border-tms-green/30 text-white"
-                            style={{
-                                backgroundColor: '#000000',
-                                borderColor: 'rgba(156, 250, 36, 0.3)',
-                                color: '#ffffff'
-                            }}
+                            className="bg-background border-input text-foreground"
                         />
                     </div>
                     
@@ -107,28 +97,16 @@ export const ReportFilters = ({
                         <Select value={filters.clientId} onValueChange={(v) => onFilterChange('clientId', v)} disabled={clientsLoading}>
                             <SelectTrigger 
                                 id="client-filter" 
-                                className="bg-black border-tms-green/30 text-white"
-                                style={{
-                                    backgroundColor: '#000000',
-                                    borderColor: 'rgba(156, 250, 36, 0.3)',
-                                    color: '#ffffff'
-                                }}
+                                className="bg-background border-input text-foreground"
                             >
                                 <SelectValue placeholder="Todos" />
                             </SelectTrigger>
                             <SelectContent 
-                                className="bg-black border-tms-green text-white z-50"
-                                style={{
-                                    backgroundColor: '#000000',
-                                    borderColor: '#9cfa24',
-                                    color: '#ffffff',
-                                    zIndex: 50
-                                }}
+                                className="bg-popover border-input text-foreground z-50"
                             >
                                 <SelectItem 
                                     value="all" 
-                                    className="text-white hover:bg-tms-green/20 focus:bg-tms-green/20"
-                                    style={{ color: '#ffffff' }}
+                                    className="text-foreground hover:bg-muted/50 focus:bg-muted/50"
                                 >
                                     Todos los clientes
                                 </SelectItem>
@@ -136,8 +114,7 @@ export const ReportFilters = ({
                                     <SelectItem 
                                         key={client.id} 
                                         value={client.id}
-                                        className="text-white hover:bg-tms-green/20 focus:bg-tms-green/20"
-                                        style={{ color: '#ffffff' }}
+                                    className="text-foreground hover:bg-muted/50 focus:bg-muted/50"
                                     >
                                         {client.name}
                                     </SelectItem>
@@ -151,28 +128,16 @@ export const ReportFilters = ({
                         <Select value={filters.department} onValueChange={(v) => onFilterChange('department', v)} disabled={clientsLoading}>
                             <SelectTrigger 
                                 id="department-filter" 
-                                className="bg-black border-tms-green/30 text-white"
-                                style={{
-                                    backgroundColor: '#000000',
-                                    borderColor: 'rgba(156, 250, 36, 0.3)',
-                                    color: '#ffffff'
-                                }}
+                                className="bg-background border-input text-foreground"
                             >
                                 <SelectValue placeholder="Todos" />
                             </SelectTrigger>
                             <SelectContent 
-                                className="bg-black border-tms-green text-white z-50"
-                                style={{
-                                    backgroundColor: '#000000',
-                                    borderColor: '#9cfa24',
-                                    color: '#ffffff',
-                                    zIndex: 50
-                                }}
+                                className="bg-popover border-input text-foreground z-50"
                             >
                                 <SelectItem 
                                     value="all"
-                                    className="text-white hover:bg-tms-green/20 focus:bg-tms-green/20"
-                                    style={{ color: '#ffffff' }}
+                                    className="text-foreground hover:bg-muted/50 focus:bg-muted/50"
                                 >
                                     Todos los departamentos
                                 </SelectItem>
@@ -180,8 +145,7 @@ export const ReportFilters = ({
                                     <SelectItem 
                                         key={dep} 
                                         value={dep}
-                                        className="text-white hover:bg-tms-green/20 focus:bg-tms-green/20"
-                                        style={{ color: '#ffffff' }}
+                                        className="text-foreground hover:bg-muted/50 focus:bg-muted/50"
                                     >
                                         {dep}
                                     </SelectItem>
@@ -195,28 +159,16 @@ export const ReportFilters = ({
                         <Select value={filters.craneId} onValueChange={(v) => onFilterChange('craneId', v)} disabled={cranesLoading}>
                             <SelectTrigger 
                                 id="crane-filter" 
-                                className="bg-black border-tms-green/30 text-white"
-                                style={{
-                                    backgroundColor: '#000000',
-                                    borderColor: 'rgba(156, 250, 36, 0.3)',
-                                    color: '#ffffff'
-                                }}
+                                className="bg-background border-input text-foreground"
                             >
                                 <SelectValue placeholder="Todas" />
                             </SelectTrigger>
                             <SelectContent 
-                                className="bg-black border-tms-green text-white z-50"
-                                style={{
-                                    backgroundColor: '#000000',
-                                    borderColor: '#9cfa24',
-                                    color: '#ffffff',
-                                    zIndex: 50
-                                }}
+                                className="bg-popover border-input text-foreground z-50"
                             >
                                 <SelectItem 
                                     value="all"
-                                    className="text-white hover:bg-tms-green/20 focus:bg-tms-green/20"
-                                    style={{ color: '#ffffff' }}
+                                    className="text-foreground hover:bg-muted/50 focus:bg-muted/50"
                                 >
                                     Todas las grúas
                                 </SelectItem>
@@ -224,8 +176,7 @@ export const ReportFilters = ({
                                     <SelectItem 
                                         key={crane.id} 
                                         value={crane.id}
-                                        className="text-white hover:bg-tms-green/20 focus:bg-tms-green/20"
-                                        style={{ color: '#ffffff' }}
+                                        className="text-foreground hover:bg-muted/50 focus:bg-muted/50"
                                     >
                                         {`${crane.brand} ${crane.model} (${crane.licensePlate})`}
                                     </SelectItem>
@@ -239,28 +190,16 @@ export const ReportFilters = ({
                         <Select value={filters.operatorId} onValueChange={(v) => onFilterChange('operatorId', v)} disabled={operatorsLoading}>
                             <SelectTrigger 
                                 id="operator-filter" 
-                                className="bg-black border-tms-green/30 text-white"
-                                style={{
-                                    backgroundColor: '#000000',
-                                    borderColor: 'rgba(156, 250, 36, 0.3)',
-                                    color: '#ffffff'
-                                }}
+                                className="bg-background border-input text-foreground"
                             >
                                 <SelectValue placeholder="Todos" />
                             </SelectTrigger>
                             <SelectContent 
-                                className="bg-black border-tms-green text-white z-50"
-                                style={{
-                                    backgroundColor: '#000000',
-                                    borderColor: '#9cfa24',
-                                    color: '#ffffff',
-                                    zIndex: 50
-                                }}
+                                className="bg-popover border-input text-foreground z-50"
                             >
                                 <SelectItem 
                                     value="all"
-                                    className="text-white hover:bg-tms-green/20 focus:bg-tms-green/20"
-                                    style={{ color: '#ffffff' }}
+                                    className="text-foreground hover:bg-muted/50 focus:bg-muted/50"
                                 >
                                     Todos los operadores
                                 </SelectItem>
@@ -268,8 +207,7 @@ export const ReportFilters = ({
                                     <SelectItem 
                                         key={operator.id} 
                                         value={operator.id}
-                                        className="text-white hover:bg-tms-green/20 focus:bg-tms-green/20"
-                                        style={{ color: '#ffffff' }}
+                                        className="text-foreground hover:bg-muted/50 focus:bg-muted/50"
                                     >
                                         {operator.name}
                                     </SelectItem>
@@ -283,28 +221,16 @@ export const ReportFilters = ({
                         <Select value={filters.costCategoryId} onValueChange={(v) => onFilterChange('costCategoryId', v)} disabled={costCategoriesLoading}>
                             <SelectTrigger 
                                 id="cost-category-filter" 
-                                className="bg-black border-tms-green/30 text-white"
-                                style={{
-                                    backgroundColor: '#000000',
-                                    borderColor: 'rgba(156, 250, 36, 0.3)',
-                                    color: '#ffffff'
-                                }}
+                                className="bg-background border-input text-foreground"
                             >
                                 <SelectValue placeholder="Todas" />
                             </SelectTrigger>
                             <SelectContent 
-                                className="bg-black border-tms-green text-white z-50"
-                                style={{
-                                    backgroundColor: '#000000',
-                                    borderColor: '#9cfa24',
-                                    color: '#ffffff',
-                                    zIndex: 50
-                                }}
+                                className="bg-popover border-input text-foreground z-50"
                             >
                                 <SelectItem 
                                     value="all"
-                                    className="text-white hover:bg-tms-green/20 focus:bg-tms-green/20"
-                                    style={{ color: '#ffffff' }}
+                                    className="text-foreground hover:bg-muted/50 focus:bg-muted/50"
                                 >
                                     Todas las categorías
                                 </SelectItem>
@@ -312,8 +238,7 @@ export const ReportFilters = ({
                                     <SelectItem 
                                         key={category.id} 
                                         value={category.id}
-                                        className="text-white hover:bg-tms-green/20 focus:bg-tms-green/20"
-                                        style={{ color: '#ffffff' }}
+                                        className="text-foreground hover:bg-muted/50 focus:bg-muted/50"
                                     >
                                         {category.name}
                                     </SelectItem>
@@ -365,12 +290,7 @@ export const ReportFilters = ({
                             type="date"
                             value={serviceReportFilters.dateRange.from}
                             onChange={(e) => onServiceReportDateChange('from', e.target.value)}
-                            className="bg-black border-tms-green/30 text-white"
-                            style={{
-                                backgroundColor: '#000000',
-                                borderColor: 'rgba(156, 250, 36, 0.3)',
-                                color: '#ffffff'
-                            }}
+                            className="bg-background border-input text-foreground"
                         />
                     </div>
                     <div>
@@ -380,12 +300,7 @@ export const ReportFilters = ({
                             type="date"
                             value={serviceReportFilters.dateRange.to}
                             onChange={(e) => onServiceReportDateChange('to', e.target.value)}
-                            className="bg-black border-tms-green/30 text-white"
-                            style={{
-                                backgroundColor: '#000000',
-                                borderColor: 'rgba(156, 250, 36, 0.3)',
-                                color: '#ffffff'
-                            }}
+                            className="bg-background border-input text-foreground"
                         />
                     </div>
                     <div>
@@ -393,28 +308,16 @@ export const ReportFilters = ({
                         <Select value={serviceReportFilters.clientId} onValueChange={(v) => onServiceReportFilterChange('clientId', v)} disabled={clientsLoading}>
                             <SelectTrigger 
                                 id="sr-client-filter" 
-                                className="bg-black border-tms-green/30 text-white"
-                                style={{
-                                    backgroundColor: '#000000',
-                                    borderColor: 'rgba(156, 250, 36, 0.3)',
-                                    color: '#ffffff'
-                                }}
+                                className="bg-background border-input text-foreground"
                             >
                                 <SelectValue placeholder="Todos" />
                             </SelectTrigger>
                             <SelectContent 
-                                className="bg-black border-tms-green text-white z-50"
-                                style={{
-                                    backgroundColor: '#000000',
-                                    borderColor: '#9cfa24',
-                                    color: '#ffffff',
-                                    zIndex: 50
-                                }}
+                                className="bg-popover border-input text-foreground z-50"
                             >
                                 <SelectItem 
                                     value="all"
-                                    className="text-white hover:bg-tms-green/20 focus:bg-tms-green/20"
-                                    style={{ color: '#ffffff' }}
+                                    className="text-foreground hover:bg-muted/50 focus:bg-muted/50"
                                 >
                                     Todos los clientes
                                 </SelectItem>
@@ -422,8 +325,7 @@ export const ReportFilters = ({
                                     <SelectItem 
                                         key={client.id} 
                                         value={client.id}
-                                        className="text-white hover:bg-tms-green/20 focus:bg-tms-green/20"
-                                        style={{ color: '#ffffff' }}
+                                        className="text-foreground hover:bg-muted/50 focus:bg-muted/50"
                                     >
                                         {client.name}
                                     </SelectItem>
@@ -451,12 +353,7 @@ export const ReportFilters = ({
                             type="date"
                             value={costReportFilters.dateRange.from}
                             onChange={(e) => onCostReportDateChange('from', e.target.value)}
-                            className="bg-black border-tms-green/30 text-white"
-                            style={{
-                                backgroundColor: '#000000',
-                                borderColor: 'rgba(156, 250, 36, 0.3)',
-                                color: '#ffffff'
-                            }}
+                            className="bg-background border-input text-foreground"
                         />
                     </div>
                     <div>
@@ -466,12 +363,7 @@ export const ReportFilters = ({
                             type="date"
                             value={costReportFilters.dateRange.to}
                             onChange={(e) => onCostReportDateChange('to', e.target.value)}
-                            className="bg-black border-tms-green/30 text-white"
-                            style={{
-                                backgroundColor: '#000000',
-                                borderColor: 'rgba(156, 250, 36, 0.3)',
-                                color: '#ffffff'
-                            }}
+                            className="bg-background border-input text-foreground"
                         />
                     </div>
                     <div>
@@ -479,28 +371,16 @@ export const ReportFilters = ({
                         <Select value={costReportFilters.categoryId} onValueChange={(v) => onCostReportFilterChange('categoryId', v)} disabled={costCategoriesLoading}>
                             <SelectTrigger 
                                 id="cr-category-filter" 
-                                className="bg-black border-tms-green/30 text-white"
-                                style={{
-                                    backgroundColor: '#000000',
-                                    borderColor: 'rgba(156, 250, 36, 0.3)',
-                                    color: '#ffffff'
-                                }}
+                                className="bg-background border-input text-foreground"
                             >
                                 <SelectValue placeholder="Todas" />
                             </SelectTrigger>
                             <SelectContent 
-                                className="bg-black border-tms-green text-white z-50"
-                                style={{
-                                    backgroundColor: '#000000',
-                                    borderColor: '#9cfa24',
-                                    color: '#ffffff',
-                                    zIndex: 50
-                                }}
+                                className="bg-popover border-input text-foreground z-50"
                             >
                                 <SelectItem 
                                     value="all"
-                                    className="text-white hover:bg-tms-green/20 focus:bg-tms-green/20"
-                                    style={{ color: '#ffffff' }}
+                                    className="text-foreground hover:bg-muted/50 focus:bg-muted/50"
                                 >
                                     Todas las categorías
                                 </SelectItem>
@@ -522,28 +402,16 @@ export const ReportFilters = ({
                         <Select value={costReportFilters.craneId} onValueChange={(v) => onCostReportFilterChange('craneId', v)} disabled={cranesLoading}>
                             <SelectTrigger 
                                 id="cr-crane-filter" 
-                                className="bg-black border-tms-green/30 text-white"
-                                style={{
-                                    backgroundColor: '#000000',
-                                    borderColor: 'rgba(156, 250, 36, 0.3)',
-                                    color: '#ffffff'
-                                }}
+                                className="bg-background border-input text-foreground"
                             >
                                 <SelectValue placeholder="Todas" />
                             </SelectTrigger>
                             <SelectContent 
-                                className="bg-black border-tms-green text-white z-50"
-                                style={{
-                                    backgroundColor: '#000000',
-                                    borderColor: '#9cfa24',
-                                    color: '#ffffff',
-                                    zIndex: 50
-                                }}
+                                className="bg-popover border-input text-foreground z-50"
                             >
                                 <SelectItem 
                                     value="all"
-                                    className="text-white hover:bg-tms-green/20 focus:bg-tms-green/20"
-                                    style={{ color: '#ffffff' }}
+                                    className="text-foreground hover:bg-muted/50 focus:bg-muted/50"
                                 >
                                     Todas las grúas
                                 </SelectItem>
@@ -551,8 +419,7 @@ export const ReportFilters = ({
                                     <SelectItem 
                                         key={crane.id} 
                                         value={crane.id}
-                                        className="text-white hover:bg-tms-green/20 focus:bg-tms-green/20"
-                                        style={{ color: '#ffffff' }}
+                                        className="text-foreground hover:bg-muted/50 focus:bg-muted/50"
                                     >
                                         {`${crane.brand} ${crane.model} (${crane.licensePlate})`}
                                     </SelectItem>
@@ -565,28 +432,16 @@ export const ReportFilters = ({
                         <Select value={costReportFilters.operatorId} onValueChange={(v) => onCostReportFilterChange('operatorId', v)} disabled={operatorsLoading}>
                             <SelectTrigger 
                                 id="cr-operator-filter" 
-                                className="bg-black border-tms-green/30 text-white"
-                                style={{
-                                    backgroundColor: '#000000',
-                                    borderColor: 'rgba(156, 250, 36, 0.3)',
-                                    color: '#ffffff'
-                                }}
+                                className="bg-background border-input text-foreground"
                             >
                                 <SelectValue placeholder="Todos" />
                             </SelectTrigger>
                             <SelectContent 
-                                className="bg-black border-tms-green text-white z-50"
-                                style={{
-                                    backgroundColor: '#000000',
-                                    borderColor: '#9cfa24',
-                                    color: '#ffffff',
-                                    zIndex: 50
-                                }}
+                                className="bg-popover border-input text-foreground z-50"
                             >
                                 <SelectItem 
                                     value="all"
-                                    className="text-white hover:bg-tms-green/20 focus:bg-tms-green/20"
-                                    style={{ color: '#ffffff' }}
+                                    className="text-foreground hover:bg-muted/50 focus:bg-muted/50"
                                 >
                                     Todos los operadores
                                 </SelectItem>
@@ -594,8 +449,7 @@ export const ReportFilters = ({
                                     <SelectItem 
                                         key={operator.id} 
                                         value={operator.id}
-                                        className="text-white hover:bg-tms-green/20 focus:bg-tms-green/20"
-                                        style={{ color: '#ffffff' }}
+                                        className="text-foreground hover:bg-muted/50 focus:bg-muted/50"
                                     >
                                         {operator.name}
                                     </SelectItem>
