@@ -49,6 +49,19 @@ export const useServicesPage = () => {
     }
   }, [location.state]);
 
+  // Handle newSale parameter from inventory module
+  useEffect(() => {
+    const newSaleParam = params.get('newSale');
+    if (newSaleParam === 'true') {
+      console.log('🛒 Detected newSale parameter, opening form for sale');
+      setIsFormOpen(true);
+      // Clear the newSale parameter from URL to prevent re-opening on refresh
+      const newUrl = new URL(window.location.href);
+      newUrl.searchParams.delete('newSale');
+      window.history.replaceState({}, '', newUrl.toString());
+    }
+  }, [params]);
+
   const handleAdvancedFiltersChange = (hasFilters: boolean, filterFunction: (services: Service[]) => Service[]) => {
     setHasAdvancedFilters(hasFilters);
     setAdvancedFilterFunction(() => filterFunction);
