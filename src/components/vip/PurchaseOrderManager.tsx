@@ -270,18 +270,18 @@ export const PurchaseOrderManager: React.FC<PurchaseOrderManagerProps> = ({
 
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                         <div className="space-y-1">
-                          <div className="flex items-center gap-2 text-gray-300">
+                          <div className="flex items-center gap-2 text-muted-foreground">
                             <Calendar className="w-3 h-3" />
                             <span>{formatForDisplay(parseFromDatabase(service.serviceDate))}</span>
                           </div>
-                          <div className="flex items-center gap-2 text-gray-300">
+                          <div className="flex items-center gap-2 text-muted-foreground">
                             <Building2 className="w-3 h-3" />
                             <span>{service.serviceType.name}</span>
                           </div>
                         </div>
 
                         <div className="space-y-1">
-                          <div className="flex items-center gap-2 text-gray-300">
+                          <div className="flex items-center gap-2 text-muted-foreground">
                             <MapPin className="w-3 h-3" />
                             <div className="truncate">
                               {service.origin}
@@ -293,7 +293,7 @@ export const PurchaseOrderManager: React.FC<PurchaseOrderManagerProps> = ({
                         </div>
 
                         <div className="space-y-1">
-                          <div className="flex items-center gap-2 text-green-400">
+                          <div className="flex items-center gap-2 text-foreground">
                             <DollarSign className="w-3 h-3" />
                             <span className="font-medium">{formatCurrency(service.value)}</span>
                           </div>
