@@ -73,63 +73,63 @@ export const SupplierPaymentCalendar: React.FC = () => {
   }, [paymentsInMonth]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 suppliers-scope">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-white">Calendario de Pagos</h2>
-          <p className="text-gray-400">Visualiza los pagos programados por mes</p>
+          <h2 className="text-2xl font-bold text-foreground">Calendario de Pagos</h2>
+          <p className="text-muted-foreground">Visualiza los pagos programados por mes</p>
         </div>
       </div>
 
       {/* Month Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card className="bg-gray-800 border-gray-700">
+        <Card className="bg-card border">
           <CardContent className="p-4">
             <div className="flex items-center space-x-3">
-              <Calendar className="h-6 w-6 text-blue-400" />
+              <Calendar className="h-6 w-6 text-primary" />
               <div>
-                <p className="text-sm text-gray-400">Total Pagos</p>
-                <p className="text-xl font-bold text-white">{monthStats.total}</p>
+                <p className="text-sm text-muted-foreground">Total Pagos</p>
+                <p className="text-xl font-bold text-foreground">{monthStats.total}</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="bg-gray-800 border-gray-700">
+        <Card className="bg-card border">
           <CardContent className="p-4">
             <div className="flex items-center space-x-3">
-              <Clock className="h-6 w-6 text-yellow-400" />
+              <Clock className="h-6 w-6 text-yellow-600" />
               <div>
-                <p className="text-sm text-gray-400">Pendientes</p>
-                <p className="text-xl font-bold text-white">{monthStats.pending}</p>
-                <p className="text-xs text-yellow-400">{formatCurrency(monthStats.pendingAmount)}</p>
+                <p className="text-sm text-muted-foreground">Pendientes</p>
+                <p className="text-xl font-bold text-foreground">{monthStats.pending}</p>
+                <p className="text-xs text-yellow-600">{formatCurrency(monthStats.pendingAmount)}</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="bg-gray-800 border-gray-700">
+        <Card className="bg-card border">
           <CardContent className="p-4">
             <div className="flex items-center space-x-3">
-              <AlertTriangle className="h-6 w-6 text-red-400" />
+              <AlertTriangle className="h-6 w-6 text-destructive" />
               <div>
-                <p className="text-sm text-gray-400">Vencidos</p>
-                <p className="text-xl font-bold text-white">{monthStats.overdue}</p>
-                <p className="text-xs text-red-400">{formatCurrency(monthStats.overdueAmount)}</p>
+                <p className="text-sm text-muted-foreground">Vencidos</p>
+                <p className="text-xl font-bold text-foreground">{monthStats.overdue}</p>
+                <p className="text-xs text-destructive">{formatCurrency(monthStats.overdueAmount)}</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="bg-gray-800 border-gray-700">
+        <Card className="bg-card border">
           <CardContent className="p-4">
             <div className="flex items-center space-x-3">
-              <CheckCircle className="h-6 w-6 text-green-400" />
+              <CheckCircle className="h-6 w-6 text-primary" />
               <div>
-                <p className="text-sm text-gray-400">Pagados</p>
-                <p className="text-xl font-bold text-white">{monthStats.paid}</p>
-                <p className="text-xs text-green-400">{formatCurrency(monthStats.paidAmount)}</p>
+                <p className="text-sm text-muted-foreground">Pagados</p>
+                <p className="text-xl font-bold text-foreground">{monthStats.paid}</p>
+                <p className="text-xs text-primary">{formatCurrency(monthStats.paidAmount)}</p>
               </div>
             </div>
           </CardContent>
@@ -137,10 +137,10 @@ export const SupplierPaymentCalendar: React.FC = () => {
       </div>
 
       {/* Calendar */}
-      <Card className="bg-gray-800 border-gray-700">
+      <Card className="bg-card border">
         <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle className="text-white">
+            <CardTitle className="text-foreground">
               {format(currentDate, 'MMMM yyyy', { locale: es })}
             </CardTitle>
             <div className="flex space-x-2">
@@ -148,7 +148,6 @@ export const SupplierPaymentCalendar: React.FC = () => {
                 variant="outline"
                 size="sm"
                 onClick={() => navigateMonth('prev')}
-                className="border-gray-600 text-gray-300 hover:text-white"
               >
                 <ChevronLeft className="h-4 w-4" />
               </Button>
@@ -156,7 +155,6 @@ export const SupplierPaymentCalendar: React.FC = () => {
                 variant="outline"
                 size="sm"
                 onClick={() => setCurrentDate(getCurrentChileDate())}
-                className="border-gray-600 text-gray-300 hover:text-white"
               >
                 Hoy
               </Button>
@@ -164,7 +162,6 @@ export const SupplierPaymentCalendar: React.FC = () => {
                 variant="outline"
                 size="sm"
                 onClick={() => navigateMonth('next')}
-                className="border-gray-600 text-gray-300 hover:text-white"
               >
                 <ChevronRight className="h-4 w-4" />
               </Button>
@@ -176,7 +173,7 @@ export const SupplierPaymentCalendar: React.FC = () => {
           <div className="grid grid-cols-7 gap-2">
             {/* Day Headers */}
             {['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'].map((day) => (
-              <div key={day} className="p-2 text-center text-sm font-medium text-gray-400">
+              <div key={day} className="p-2 text-center text-sm font-medium text-muted-foreground">
                 {day}
               </div>
             ))}
@@ -196,13 +193,12 @@ export const SupplierPaymentCalendar: React.FC = () => {
                 <div
                   key={date.toString()}
                   className={`
-                    p-2 min-h-[80px] border border-gray-700 rounded-lg
-                    ${isCurrentDay ? 'bg-blue-600/20 border-blue-500' : 'bg-gray-900'}
-                    hover:bg-gray-700 transition-colors
+                    p-2 min-h-[80px] border rounded-lg transition-colors
+                    ${isCurrentDay ? 'bg-primary/10 border-primary' : 'bg-muted/50 border hover:bg-muted'}
                   `}
                 >
                   <div className="flex justify-between items-start mb-1">
-                    <span className={`text-sm font-medium ${isCurrentDay ? 'text-blue-300' : 'text-white'}`}>
+                    <span className={`text-sm font-medium ${isCurrentDay ? 'text-primary' : 'text-foreground'}`}>
                       {format(date, 'd')}
                     </span>
                     {dayPayments.length > 0 && (
@@ -222,16 +218,16 @@ export const SupplierPaymentCalendar: React.FC = () => {
                         <Badge className={`${getStatusColor(payment.status)} text-xs py-0 px-1`}>
                           {getStatusLabel(payment.status)}
                         </Badge>
-                        <div className="text-gray-300 mt-1 truncate">
+                        <div className="text-foreground mt-1 truncate">
                           {getSupplierName(payment.supplier_id)}
                         </div>
-                        <div className="text-gray-400 font-medium">
+                        <div className="text-muted-foreground font-medium">
                           {formatCurrency(payment.amount)}
                         </div>
                       </div>
                     ))}
                     {dayPayments.length > 2 && (
-                      <div className="text-xs text-gray-400 text-center">
+                      <div className="text-xs text-muted-foreground text-center">
                         +{dayPayments.length - 2} más
                       </div>
                     )}
@@ -245,9 +241,9 @@ export const SupplierPaymentCalendar: React.FC = () => {
 
       {/* Payment Details for Selected Month */}
       {paymentsInMonth.length > 0 && (
-        <Card className="bg-gray-800 border-gray-700">
+        <Card className="bg-card border">
           <CardHeader>
-            <CardTitle className="text-white">
+            <CardTitle className="text-foreground">
               Detalle de Pagos - {format(currentDate, 'MMMM yyyy', { locale: es })}
             </CardTitle>
           </CardHeader>
@@ -256,25 +252,25 @@ export const SupplierPaymentCalendar: React.FC = () => {
               {paymentsInMonth
                 .sort((a, b) => parseFromDatabase(a.due_date).getTime() - parseFromDatabase(b.due_date).getTime())
                 .map((payment) => (
-                  <div key={payment.id} className="flex items-center justify-between p-3 bg-gray-900 rounded-lg">
+                  <div key={payment.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
                     <div className="flex-1">
                       <div className="flex items-center space-x-3">
                         <Badge className={getStatusColor(payment.status)}>
                           {getStatusLabel(payment.status)}
                         </Badge>
-                        <span className="text-white font-medium">
+                        <span className="text-foreground font-medium">
                           {getSupplierName(payment.supplier_id)}
                         </span>
                       </div>
-                      <div className="text-sm text-gray-400 mt-1">
+                      <div className="text-sm text-muted-foreground mt-1">
                         {payment.description}
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className="text-white font-medium">
+                      <div className="text-foreground font-medium">
                         {formatCurrency(payment.amount)}
                       </div>
-                      <div className="text-sm text-gray-400">
+                      <div className="text-sm text-muted-foreground">
                         {formatForDisplay(parseFromDatabase(payment.due_date))}
                       </div>
                     </div>
