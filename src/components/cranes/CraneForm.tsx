@@ -77,12 +77,12 @@ export const CraneForm = ({ crane, onSubmit, onCancel }: CraneFormProps) => {
   ];
 
   return (
-    <DialogContent className="sm:max-w-[600px] bg-tms-dark border-gray-700">
+    <DialogContent className="sm:max-w-[600px] bg-card border">
       <DialogHeader>
-        <DialogTitle className="text-white">
+        <DialogTitle className="text-foreground">
           {crane ? 'Editar Grúa' : 'Nueva Grúa'}
         </DialogTitle>
-        <DialogDescription className="text-gray-400">
+        <DialogDescription className="text-muted-foreground">
           {crane ? 'Modifica los datos de la grúa' : 'Ingresa los datos de la nueva grúa'}
         </DialogDescription>
       </DialogHeader>
@@ -90,26 +90,25 @@ export const CraneForm = ({ crane, onSubmit, onCancel }: CraneFormProps) => {
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label htmlFor="licensePlate" className="text-gray-300">Patente *</Label>
+            <Label htmlFor="licensePlate" className="text-foreground">Patente *</Label>
             <Input
               id="licensePlate"
               value={formData.licensePlate}
               onChange={(e) => handleChange('licensePlate', e.target.value.toUpperCase())}
               placeholder="GRUA-01"
-              className="bg-white/5 border-gray-700 text-white"
               required
             />
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="type" className="text-gray-300">Tipo *</Label>
+            <Label htmlFor="type" className="text-foreground">Tipo *</Label>
             <Select value={formData.type} onValueChange={(value) => handleChange('type', value as CraneType)}>
-              <SelectTrigger className="bg-white/5 border-gray-700 text-white">
+              <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent className="bg-tms-dark border-gray-700">
+              <SelectContent>
                 {craneTypes.map((type) => (
-                  <SelectItem key={type.value} value={type.value} className="text-white hover:bg-white/10">
+                  <SelectItem key={type.value} value={type.value}>
                     {type.label}
                   </SelectItem>
                 ))}
@@ -120,23 +119,21 @@ export const CraneForm = ({ crane, onSubmit, onCancel }: CraneFormProps) => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label htmlFor="brand" className="text-gray-300">Marca *</Label>
+            <Label htmlFor="brand" className="text-foreground">Marca *</Label>
             <Input
               id="brand"
               value={formData.brand}
               onChange={(e) => handleChange('brand', e.target.value)}
-              className="bg-white/5 border-gray-700 text-white"
               required
             />
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="model" className="text-gray-300">Modelo *</Label>
+            <Label htmlFor="model" className="text-foreground">Modelo *</Label>
             <Input
               id="model"
               value={formData.model}
               onChange={(e) => handleChange('model', e.target.value)}
-              className="bg-white/5 border-gray-700 text-white"
               required
             />
           </div>
@@ -144,35 +141,32 @@ export const CraneForm = ({ crane, onSubmit, onCancel }: CraneFormProps) => {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="space-y-2">
-            <Label htmlFor="circulationPermitExpiry" className="text-gray-300">Venc. Permiso Circulación</Label>
+            <Label htmlFor="circulationPermitExpiry" className="text-foreground">Venc. Permiso Circulación</Label>
             <Input
               id="circulationPermitExpiry"
               type="date"
               value={formData.circulationPermitExpiry}
               onChange={(e) => handleChange('circulationPermitExpiry', e.target.value)}
-              className="bg-white/5 border-gray-700 text-white"
             />
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="insuranceExpiry" className="text-gray-300">Venc. Seguro</Label>
+            <Label htmlFor="insuranceExpiry" className="text-foreground">Venc. Seguro</Label>
             <Input
               id="insuranceExpiry"
               type="date"
               value={formData.insuranceExpiry}
               onChange={(e) => handleChange('insuranceExpiry', e.target.value)}
-              className="bg-white/5 border-gray-700 text-white"
             />
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="technicalReviewExpiry" className="text-gray-300">Venc. Revisión Técnica</Label>
+            <Label htmlFor="technicalReviewExpiry" className="text-foreground">Venc. Revisión Técnica</Label>
             <Input
               id="technicalReviewExpiry"
               type="date"
               value={formData.technicalReviewExpiry}
               onChange={(e) => handleChange('technicalReviewExpiry', e.target.value)}
-              className="bg-white/5 border-gray-700 text-white"
             />
           </div>
         </div>
@@ -183,7 +177,7 @@ export const CraneForm = ({ crane, onSubmit, onCancel }: CraneFormProps) => {
             checked={formData.isActive}
             onCheckedChange={(checked) => handleChange('isActive', checked)}
           />
-          <Label htmlFor="isActive" className="text-gray-300">
+          <Label htmlFor="isActive" className="text-foreground">
             Grúa Activa
           </Label>
         </div>
@@ -193,13 +187,12 @@ export const CraneForm = ({ crane, onSubmit, onCancel }: CraneFormProps) => {
             type="button"
             variant="outline"
             onClick={onCancel}
-            className="border-gray-700 text-gray-300 hover:text-white"
           >
             Cancelar
           </Button>
           <Button
             type="submit"
-            className="bg-tms-green hover:bg-tms-green-dark text-white"
+            className="bg-primary hover:bg-primary/90 text-primary-foreground"
           >
             {crane ? 'Actualizar' : 'Crear'} Grúa
           </Button>
