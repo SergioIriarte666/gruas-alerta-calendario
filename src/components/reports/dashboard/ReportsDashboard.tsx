@@ -80,7 +80,7 @@ export const ReportsDashboard = ({ metrics }: ReportsDashboardProps) => {
                     <div className="font-medium text-foreground">{client.clientName}{client.department ? ` — ${client.department}` : ''}</div>
                     <div className="text-sm text-muted-foreground">{client.services} servicios</div>
                   </div>
-                  <div className="text-primary font-medium">
+                  <div className="text-violet-600 font-medium">
                     ${client.revenue.toLocaleString()}
                   </div>
                 </div>
