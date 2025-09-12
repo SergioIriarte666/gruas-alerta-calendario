@@ -230,7 +230,7 @@ export const SupplierList: React.FC = () => {
                             </div>
                           )}
                           {supplier.contact_name && (
-                            <div className="text-sm text-muted-foreground">
+                            <div className="text-sm text-foreground font-medium">
                               {supplier.contact_name}
                             </div>
                           )}
