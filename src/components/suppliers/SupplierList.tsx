@@ -259,7 +259,7 @@ export const SupplierList: React.FC = () => {
                           className="p-0 h-auto"
                         >
                           {supplier.is_active ? (
-                            <div className="flex items-center text-primary">
+                            <div className="flex items-center text-green-800">
                               <ToggleRight className="h-4 w-4 mr-1" />
                               Activo
                             </div>
