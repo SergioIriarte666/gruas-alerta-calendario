@@ -56,7 +56,7 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
   ) : 0;
 
   return (
-    <div className={`rounded-lg border ${column.color} p-4 space-y-3 min-h-[400px]`}>
+    <div className={`rounded-lg border ${column.color} p-4 space-y-3 min-h-[400px] vip-scope`}>
       {/* Column Header */}
       <div className="space-y-2">
         <div className="flex items-center justify-between">
@@ -73,21 +73,21 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
           </Badge>
         </div>
         
-        <p className="text-xs text-gray-400 leading-relaxed">
+        <p className="text-xs text-muted-foreground leading-relaxed">
           {column.description}
         </p>
 
         {/* Column Metrics */}
         {services.length > 0 && (
           <div className="grid grid-cols-2 gap-2 text-xs">
-            <div className="bg-black/20 rounded p-2">
-              <div className="text-gray-400">Total</div>
+            <div className="bg-card rounded p-2">
+              <div className="text-muted-foreground">Total</div>
               <div className={`font-medium ${column.textColor}`}>
                 ${totalValue.toLocaleString()}
               </div>
             </div>
-            <div className="bg-black/20 rounded p-2">
-              <div className="text-gray-400">Prom. días</div>
+            <div className="bg-card rounded p-2">
+              <div className="text-muted-foreground">Prom. días</div>
               <div className={`font-medium ${column.textColor}`}>
                 {avgDays}d
               </div>
@@ -99,7 +99,7 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
       {/* Service Cards */}
       <div className="space-y-2 flex-1">
         {services.length === 0 ? (
-          <div className="flex items-center justify-center py-8 text-gray-500">
+          <div className="flex items-center justify-center py-8 text-muted-foreground">
             <div className="text-center">
               <Package className="w-8 h-8 mx-auto mb-2 opacity-50" />
               <p className="text-sm">Sin servicios</p>
