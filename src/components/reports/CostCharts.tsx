@@ -19,9 +19,9 @@ export const CostCharts = ({ metrics, costsByCategoryConfig }: CostChartsProps) 
   
   return (
     <div className="grid grid-cols-1 gap-6">
-      <Card className="bg-white/10 border-white/20">
+      <Card className="bg-card border">
         <CardHeader>
-          <CardTitle className="text-white">Distribución de Costos por Categoría</CardTitle>
+          <CardTitle className="text-foreground">Distribución de Costos por Categoría</CardTitle>
         </CardHeader>
         <CardContent>
           <ChartContainer config={costsByCategoryConfig} className="w-full h-[350px]">

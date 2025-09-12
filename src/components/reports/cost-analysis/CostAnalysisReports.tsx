@@ -18,7 +18,7 @@ export const CostAnalysisReports = ({ metrics, costsByCategoryConfig }: CostAnal
   if (!costMetrics) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="text-white">Cargando métricas de costos...</div>
+        <div className="text-muted-foreground">Cargando métricas de costos...</div>
       </div>
     );
   }
@@ -26,8 +26,8 @@ export const CostAnalysisReports = ({ metrics, costsByCategoryConfig }: CostAnal
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold text-white mb-2">Análisis de Costos</h2>
-        <p className="text-gray-300">Análisis detallado de gastos, categorías y control de costos</p>
+        <h2 className="text-2xl font-bold text-foreground mb-2">Análisis de Costos</h2>
+        <p className="text-muted-foreground">Análisis detallado de gastos, categorías y control de costos</p>
       </div>
 
       <CostMetricsComponent metrics={costMetrics} />

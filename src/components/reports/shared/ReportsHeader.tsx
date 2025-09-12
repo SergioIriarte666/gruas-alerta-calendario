@@ -20,11 +20,11 @@ interface ReportsHeaderProps {
 export const ReportsHeader = ({ onExport, onExportServiceReport, onExportCostReport, onRefresh, isLoading, lastUpdate }: ReportsHeaderProps) => (
   <div className="flex flex-col md:flex-row justify-between md:items-center gap-4">
     <div>
-      <h1 className="text-3xl font-bold text-white">Reportes</h1>
-      <p className="text-gray-300 mt-1">
+      <h1 className="text-3xl font-bold text-foreground">Reportes</h1>
+      <p className="text-muted-foreground mt-1">
         Análisis detallado y métricas de rendimiento del negocio.
         {lastUpdate && (
-          <span className="block text-sm text-gray-400 mt-1">
+          <span className="block text-sm text-muted-foreground mt-1">
             Última actualización: {lastUpdate.toLocaleTimeString()}
           </span>
         )}

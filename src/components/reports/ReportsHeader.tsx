@@ -1,4 +1,3 @@
-
 import * as React from 'react';
 import { Button } from '@/components/ui/button';
 import { Download, FileText, FileSpreadsheet, RefreshCw } from 'lucide-react';
@@ -21,11 +20,11 @@ interface ReportsHeaderProps {
 export const ReportsHeader = ({ onExport, onExportServiceReport, onExportCostReport, onRefresh, isLoading, lastUpdate }: ReportsHeaderProps) => (
   <div className="flex flex-col md:flex-row justify-between md:items-center gap-4">
     <div>
-      <h1 className="text-3xl font-bold text-white">Reportes</h1>
-      <p className="text-gray-300 mt-1">
+      <h1 className="text-3xl font-bold text-foreground">Reportes</h1>
+      <p className="text-muted-foreground mt-1">
         Análisis detallado y métricas de rendimiento del negocio.
         {lastUpdate && (
-          <span className="block text-sm text-gray-400 mt-1">
+          <span className="block text-sm text-muted-foreground mt-1">
             Última actualización: {lastUpdate.toLocaleTimeString()}
           </span>
         )}
@@ -37,7 +36,7 @@ export const ReportsHeader = ({ onExport, onExportServiceReport, onExportCostRep
           variant="outline" 
           onClick={onRefresh}
           disabled={isLoading}
-          className="border-white/20 text-white hover:bg-white/10"
+          className="border hover:bg-muted/10"
         >
           <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
           Actualizar
@@ -45,7 +44,7 @@ export const ReportsHeader = ({ onExport, onExportServiceReport, onExportCostRep
       )}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button className="bg-tms-green hover:bg-tms-green/90">
+          <Button className="bg-primary hover:bg-primary/90">
             <Download className="w-4 h-4 mr-2" />
             Exportar Métricas
           </Button>
@@ -64,7 +63,7 @@ export const ReportsHeader = ({ onExport, onExportServiceReport, onExportCostRep
 
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button className="bg-blue-600 hover:bg-blue-700 text-white">
+          <Button className="bg-secondary hover:bg-secondary/90 text-foreground">
             <Download className="w-4 h-4 mr-2" />
             Informe de Servicios
           </Button>
@@ -83,7 +82,7 @@ export const ReportsHeader = ({ onExport, onExportServiceReport, onExportCostRep
 
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button className="bg-red-600 hover:bg-red-700 text-white">
+          <Button className="bg-accent hover:bg-accent/90 text-foreground">
             <Download className="w-4 h-4 mr-2" />
             Informe de Costos
           </Button>

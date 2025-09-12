@@ -1,4 +1,3 @@
-
 import * as React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, PieChart, Pie, Cell } from 'recharts';
@@ -13,9 +12,9 @@ interface DistributionChartsProps {
 
 export const DistributionCharts = ({ metrics, servicesByStatusConfig, craneUtilizationConfig }: DistributionChartsProps) => (
   <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-    <Card className="bg-white/10 border-white/20">
+    <Card className="bg-card border">
       <CardHeader>
-        <CardTitle className="text-white">Distribución por Estado</CardTitle>
+        <CardTitle className="text-foreground">Distribución por Estado</CardTitle>
       </CardHeader>
       <CardContent>
         <ChartContainer config={servicesByStatusConfig} className="w-full h-[300px]">
@@ -39,19 +38,19 @@ export const DistributionCharts = ({ metrics, servicesByStatusConfig, craneUtili
       </CardContent>
     </Card>
 
-    <Card className="bg-white/10 border-white/20">
+    <Card className="bg-card border">
       <CardHeader>
-        <CardTitle className="text-white">Utilización de Grúas</CardTitle>
+        <CardTitle className="text-foreground">Utilización de Grúas</CardTitle>
       </CardHeader>
       <CardContent>
         <ChartContainer config={craneUtilizationConfig} className="w-full h-[300px]">
            <BarChart data={metrics.craneUtilization} layout="vertical">
-            <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-            <XAxis type="number" stroke="#9CA3AF" />
+            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+            <XAxis type="number" stroke="hsl(var(--muted-foreground))" />
             <YAxis 
               dataKey="craneName" 
               type="category" 
-              stroke="#9CA3AF" 
+              stroke="hsl(var(--muted-foreground))" 
               width={120}
               fontSize={12}
             />

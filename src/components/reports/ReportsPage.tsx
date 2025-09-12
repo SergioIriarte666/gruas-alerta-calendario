@@ -56,7 +56,7 @@ const ReportsPage = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="text-white">Generando reportes...</div>
+        <div className="text-muted-foreground">Generando reportes...</div>
       </div>
     );
   }
@@ -73,7 +73,7 @@ const ReportsPage = () => {
       />
       
       <Tabs defaultValue="dashboard" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="bg-muted/50 rounded-md p-1 grid w-full grid-cols-4">
           <TabsTrigger value="dashboard" className="flex items-center gap-2">
             <BarChart3 className="w-4 h-4" />
             Dashboard

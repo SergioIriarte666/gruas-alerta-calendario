@@ -28,7 +28,7 @@ export const MaintenanceReport = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="text-white">Generando reporte de mantenimiento...</div>
+        <div className="text-muted-foreground">Generando reporte de mantenimiento...</div>
       </div>
     );
   }
@@ -118,8 +118,8 @@ export const MaintenanceReport = () => {
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between md:items-center gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-white">Reporte de Mantenimiento y Partes</h2>
-          <p className="text-gray-300 mt-1">
+          <h2 className="text-2xl font-bold text-foreground">Reporte de Mantenimiento y Partes</h2>
+          <p className="text-muted-foreground mt-1">
             Análisis detallado de costos de mantenimiento y gestión de partes.
           </p>
         </div>

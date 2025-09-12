@@ -398,6 +398,39 @@ body {
   background-color: hsl(var(--accent)) !important;
 }
 
+/* Reports Module Scope */
+.reports-scope {
+  --report-primary: hsl(var(--primary));
+  --report-secondary: hsl(var(--secondary));
+  --report-accent: hsl(var(--accent));
+  --report-muted: hsl(var(--muted));
+  --report-muted-foreground: hsl(var(--muted-foreground));
+  --report-border: hsl(var(--border));
+  --report-card: hsl(var(--card));
+  --report-background: hsl(var(--background));
+  --report-foreground: hsl(var(--foreground));
+}
+
+.reports-scope .bg-card {
+  background-color: var(--report-card);
+}
+
+.reports-scope .text-foreground {
+  color: var(--report-foreground);
+}
+
+.reports-scope .text-muted-foreground {
+  color: var(--report-muted-foreground);
+}
+
+.reports-scope .border {
+  border-color: var(--report-border);
+}
+
+.reports-scope .bg-muted\\/50 {
+  background-color: hsl(var(--muted) / 0.5);
+}
+
 /* Media queries para responsive */
 @media (max-width: 768px) {
   .responsive-grid {

@@ -56,7 +56,7 @@ export const MaintenanceCharts = ({ data }: MaintenanceChartsProps) => {
       {/* Monthly Trends */}
       <Card className="bg-card/50 border-border lg:col-span-2">
         <CardHeader>
-          <CardTitle className="text-white">Tendencias Mensuales</CardTitle>
+          <CardTitle className="text-foreground">Tendencias Mensuales</CardTitle>
         </CardHeader>
         <CardContent>
           <ChartContainer config={monthlyTrendsConfig} className="h-80 w-full">
@@ -102,7 +102,7 @@ export const MaintenanceCharts = ({ data }: MaintenanceChartsProps) => {
       {/* Top 10 Cranes by Cost */}
       <Card className="bg-card/50 border-border">
         <CardHeader>
-          <CardTitle className="text-white">Top 10 Grúas por Costo</CardTitle>
+          <CardTitle className="text-foreground">Top 10 Grúas por Costo</CardTitle>
         </CardHeader>
         <CardContent>
           <ChartContainer config={monthlyTrendsConfig} className="h-80 w-full">
@@ -135,7 +135,7 @@ export const MaintenanceCharts = ({ data }: MaintenanceChartsProps) => {
       {/* Maintenance by Type */}
       <Card className="bg-card/50 border-border">
         <CardHeader>
-          <CardTitle className="text-white">Mantenimiento por Tipo</CardTitle>
+          <CardTitle className="text-foreground">Mantenimiento por Tipo</CardTitle>
         </CardHeader>
         <CardContent>
           <ChartContainer config={maintenanceTypeConfig} className="h-80 w-full">

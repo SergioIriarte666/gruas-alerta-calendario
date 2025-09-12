@@ -60,9 +60,9 @@ export const ReportFilters = ({
     return (
       <>
         {sections.includes('metrics') && (
-        <Card className="bg-white/10 border-white/20">
+        <Card className="bg-card border">
             <CardHeader>
-                <CardTitle className="text-white flex items-center">
+                <CardTitle className="text-foreground flex items-center">
                     <Calendar className="w-5 h-5 mr-2" />
                     Filtros de Métricas
                 </CardTitle>
@@ -70,73 +70,36 @@ export const ReportFilters = ({
             <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
                     <div>
-                        <Label htmlFor="from-date" className="text-white">Fecha Inicio</Label>
+                        <Label htmlFor="from-date" className="text-foreground">Fecha Inicio</Label>
                         <Input
                             id="from-date"
                             type="date"
                             value={filters.dateRange.from}
                             onChange={(e) => onDateChange('from', e.target.value)}
-                            className="bg-black border-tms-green/30 text-white"
-                            style={{
-                                backgroundColor: '#000000',
-                                borderColor: 'rgba(156, 250, 36, 0.3)',
-                                color: '#ffffff'
-                            }}
                         />
                     </div>
                     <div>
-                        <Label htmlFor="to-date" className="text-white">Fecha Fin</Label>
+                        <Label htmlFor="to-date" className="text-foreground">Fecha Fin</Label>
                         <Input
                             id="to-date"
                             type="date"
                             value={filters.dateRange.to}
                             onChange={(e) => onDateChange('to', e.target.value)}
-                            className="bg-black border-tms-green/30 text-white"
-                            style={{
-                                backgroundColor: '#000000',
-                                borderColor: 'rgba(156, 250, 36, 0.3)',
-                                color: '#ffffff'
-                            }}
                         />
                     </div>
                     
                     <div>
-                        <Label htmlFor="client-filter" className="text-white">Cliente</Label>
+                        <Label htmlFor="client-filter" className="text-foreground">Cliente</Label>
                         <Select value={filters.clientId} onValueChange={(v) => onFilterChange('clientId', v)} disabled={clientsLoading}>
-                            <SelectTrigger 
-                                id="client-filter" 
-                                className="bg-black border-tms-green/30 text-white"
-                                style={{
-                                    backgroundColor: '#000000',
-                                    borderColor: 'rgba(156, 250, 36, 0.3)',
-                                    color: '#ffffff'
-                                }}
-                            >
+                            <SelectTrigger id="client-filter">
                                 <SelectValue placeholder="Todos" />
                             </SelectTrigger>
-                            <SelectContent 
-                                className="bg-black border-tms-green text-white z-50"
-                                style={{
-                                    backgroundColor: '#000000',
-                                    borderColor: '#9cfa24',
-                                    color: '#ffffff',
-                                    zIndex: 50
-                                }}
-                            >
-                                <SelectItem 
-                                    value="all" 
-                                    className="text-white hover:bg-tms-green/20 focus:bg-tms-green/20"
-                                    style={{ color: '#ffffff' }}
-                                >
+                            <SelectContent>
+                                <SelectItem value="all">
                                     Todos los clientes
                                 </SelectItem>
                                 {clients.map(client => (
-                                    <SelectItem 
-                                        key={client.id} 
-                                        value={client.id}
-                                        className="text-white hover:bg-tms-green/20 focus:bg-tms-green/20"
-                                        style={{ color: '#ffffff' }}
-                                    >
+                                    <SelectItem key={client.id} value={client.id}>
                                         {client.name}{client.department ? ` — ${client.department}` : ''}
                                     </SelectItem>
                                 ))}
@@ -145,42 +108,17 @@ export const ReportFilters = ({
                     </div>
 
                     <div>
-                        <Label htmlFor="crane-filter" className="text-white">Grúa</Label>
+                        <Label htmlFor="crane-filter" className="text-foreground">Grúa</Label>
                         <Select value={filters.craneId} onValueChange={(v) => onFilterChange('craneId', v)} disabled={cranesLoading}>
-                            <SelectTrigger 
-                                id="crane-filter" 
-                                className="bg-black border-tms-green/30 text-white"
-                                style={{
-                                    backgroundColor: '#000000',
-                                    borderColor: 'rgba(156, 250, 36, 0.3)',
-                                    color: '#ffffff'
-                                }}
-                            >
+                            <SelectTrigger id="crane-filter">
                                 <SelectValue placeholder="Todas" />
                             </SelectTrigger>
-                            <SelectContent 
-                                className="bg-black border-tms-green text-white z-50"
-                                style={{
-                                    backgroundColor: '#000000',
-                                    borderColor: '#9cfa24',
-                                    color: '#ffffff',
-                                    zIndex: 50
-                                }}
-                            >
-                                <SelectItem 
-                                    value="all"
-                                    className="text-white hover:bg-tms-green/20 focus:bg-tms-green/20"
-                                    style={{ color: '#ffffff' }}
-                                >
+                            <SelectContent>
+                                <SelectItem value="all">
                                     Todas las grúas
                                 </SelectItem>
                                 {cranes.map(crane => (
-                                    <SelectItem 
-                                        key={crane.id} 
-                                        value={crane.id}
-                                        className="text-white hover:bg-tms-green/20 focus:bg-tms-green/20"
-                                        style={{ color: '#ffffff' }}
-                                    >
+                                    <SelectItem key={crane.id} value={crane.id}>
                                         {`${crane.brand} ${crane.model} (${crane.licensePlate})`}
                                     </SelectItem>
                                 ))}
@@ -189,42 +127,17 @@ export const ReportFilters = ({
                     </div>
                     
                     <div>
-                        <Label htmlFor="operator-filter" className="text-white">Operador</Label>
+                        <Label htmlFor="operator-filter" className="text-foreground">Operador</Label>
                         <Select value={filters.operatorId} onValueChange={(v) => onFilterChange('operatorId', v)} disabled={operatorsLoading}>
-                            <SelectTrigger 
-                                id="operator-filter" 
-                                className="bg-black border-tms-green/30 text-white"
-                                style={{
-                                    backgroundColor: '#000000',
-                                    borderColor: 'rgba(156, 250, 36, 0.3)',
-                                    color: '#ffffff'
-                                }}
-                            >
+                            <SelectTrigger id="operator-filter">
                                 <SelectValue placeholder="Todos" />
                             </SelectTrigger>
-                            <SelectContent 
-                                className="bg-black border-tms-green text-white z-50"
-                                style={{
-                                    backgroundColor: '#000000',
-                                    borderColor: '#9cfa24',
-                                    color: '#ffffff',
-                                    zIndex: 50
-                                }}
-                            >
-                                <SelectItem 
-                                    value="all"
-                                    className="text-white hover:bg-tms-green/20 focus:bg-tms-green/20"
-                                    style={{ color: '#ffffff' }}
-                                >
+                            <SelectContent>
+                                <SelectItem value="all">
                                     Todos los operadores
                                 </SelectItem>
                                 {operators.map(operator => (
-                                    <SelectItem 
-                                        key={operator.id} 
-                                        value={operator.id}
-                                        className="text-white hover:bg-tms-green/20 focus:bg-tms-green/20"
-                                        style={{ color: '#ffffff' }}
-                                    >
+                                    <SelectItem key={operator.id} value={operator.id}>
                                         {operator.name}
                                     </SelectItem>
                                 ))}
@@ -236,22 +149,14 @@ export const ReportFilters = ({
                     <div className="flex gap-2 md:col-start-2 lg:col-start-3">
                         <Button 
                             onClick={onUpdate} 
-                            className="bg-tms-green hover:bg-tms-green/90 text-black flex-1"
-                            style={{
-                                backgroundColor: '#9cfa24',
-                                color: '#000000'
-                            }}
+                            className="flex-1"
                         >
                             Actualizar
                         </Button>
                         <Button 
                             onClick={onClear} 
                             variant="outline" 
-                            className="text-white border-white/30 hover:bg-white/10 hover:text-white px-3"
-                            style={{
-                                color: '#ffffff',
-                                borderColor: 'rgba(255, 255, 255, 0.3)'
-                            }}
+                            className="px-3"
                         >
                             <FilterX className="w-4 h-4" />
                         </Button>
@@ -262,9 +167,9 @@ export const ReportFilters = ({
         )}
 
         {sections.includes('services') && (
-        <Card className="bg-white/10 border-white/20 mt-6">
+        <Card className="bg-card border mt-6">
             <CardHeader>
-                <CardTitle className="text-white flex items-center">
+                <CardTitle className="text-foreground flex items-center">
                     <FileText className="w-5 h-5 mr-2" />
                     Filtros para Informe de Servicios
                 </CardTitle>
@@ -272,72 +177,35 @@ export const ReportFilters = ({
             <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-end">
                     <div>
-                        <Label htmlFor="sr-from-date" className="text-white">Fecha Inicio</Label>
+                        <Label htmlFor="sr-from-date" className="text-foreground">Fecha Inicio</Label>
                         <Input
                             id="sr-from-date"
                             type="date"
                             value={serviceReportFilters.dateRange.from}
                             onChange={(e) => onServiceReportDateChange('from', e.target.value)}
-                            className="bg-black border-tms-green/30 text-white"
-                            style={{
-                                backgroundColor: '#000000',
-                                borderColor: 'rgba(156, 250, 36, 0.3)',
-                                color: '#ffffff'
-                            }}
                         />
                     </div>
                     <div>
-                        <Label htmlFor="sr-to-date" className="text-white">Fecha Fin</Label>
+                        <Label htmlFor="sr-to-date" className="text-foreground">Fecha Fin</Label>
                         <Input
                             id="sr-to-date"
                             type="date"
                             value={serviceReportFilters.dateRange.to}
                             onChange={(e) => onServiceReportDateChange('to', e.target.value)}
-                            className="bg-black border-tms-green/30 text-white"
-                            style={{
-                                backgroundColor: '#000000',
-                                borderColor: 'rgba(156, 250, 36, 0.3)',
-                                color: '#ffffff'
-                            }}
                         />
                     </div>
                     <div>
-                        <Label htmlFor="sr-client-filter" className="text-white">Cliente</Label>
+                        <Label htmlFor="sr-client-filter" className="text-foreground">Cliente</Label>
                         <Select value={serviceReportFilters.clientId} onValueChange={(v) => onServiceReportFilterChange('clientId', v)} disabled={clientsLoading}>
-                            <SelectTrigger 
-                                id="sr-client-filter" 
-                                className="bg-black border-tms-green/30 text-white"
-                                style={{
-                                    backgroundColor: '#000000',
-                                    borderColor: 'rgba(156, 250, 36, 0.3)',
-                                    color: '#ffffff'
-                                }}
-                            >
+                            <SelectTrigger id="sr-client-filter">
                                 <SelectValue placeholder="Todos" />
                             </SelectTrigger>
-                            <SelectContent 
-                                className="bg-black border-tms-green text-white z-50"
-                                style={{
-                                    backgroundColor: '#000000',
-                                    borderColor: '#9cfa24',
-                                    color: '#ffffff',
-                                    zIndex: 50
-                                }}
-                            >
-                                <SelectItem 
-                                    value="all" 
-                                    className="text-white hover:bg-tms-green/20 focus:bg-tms-green/20"
-                                    style={{ color: '#ffffff' }}
-                                >
+                            <SelectContent>
+                                <SelectItem value="all">
                                     Todos los clientes
                                 </SelectItem>
                                 {clients.map(client => (
-                                    <SelectItem 
-                                        key={client.id} 
-                                        value={client.id}
-                                        className="text-white hover:bg-tms-green/20 focus:bg-tms-green/20"
-                                        style={{ color: '#ffffff' }}
-                                    >
+                                    <SelectItem key={client.id} value={client.id}>
                                         {client.name}{client.department ? ` — ${client.department}` : ''}
                                     </SelectItem>
                                 ))}
@@ -350,9 +218,9 @@ export const ReportFilters = ({
         )}
 
         {sections.includes('costs') && (
-        <Card className="bg-white/10 border-white/20 mt-6">
+        <Card className="bg-card border mt-6">
             <CardHeader>
-                <CardTitle className="text-white flex items-center">
+                <CardTitle className="text-foreground flex items-center">
                     <FileText className="w-5 h-5 mr-2" />
                     Filtros para Informe de Costos
                 </CardTitle>
@@ -360,72 +228,35 @@ export const ReportFilters = ({
             <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
                     <div>
-                        <Label htmlFor="cr-from-date" className="text-white">Fecha Inicio</Label>
+                        <Label htmlFor="cr-from-date" className="text-foreground">Fecha Inicio</Label>
                         <Input
                             id="cr-from-date"
                             type="date"
                             value={costReportFilters.dateRange.from}
                             onChange={(e) => onCostReportDateChange('from', e.target.value)}
-                            className="bg-black border-tms-green/30 text-white"
-                            style={{
-                                backgroundColor: '#000000',
-                                borderColor: 'rgba(156, 250, 36, 0.3)',
-                                color: '#ffffff'
-                            }}
                         />
                     </div>
                     <div>
-                        <Label htmlFor="cr-to-date" className="text-white">Fecha Fin</Label>
+                        <Label htmlFor="cr-to-date" className="text-foreground">Fecha Fin</Label>
                         <Input
                             id="cr-to-date"
                             type="date"
                             value={costReportFilters.dateRange.to}
                             onChange={(e) => onCostReportDateChange('to', e.target.value)}
-                            className="bg-black border-tms-green/30 text-white"
-                            style={{
-                                backgroundColor: '#000000',
-                                borderColor: 'rgba(156, 250, 36, 0.3)',
-                                color: '#ffffff'
-                            }}
                         />
                     </div>
                     <div>
-                        <Label htmlFor="cr-category-filter" className="text-white">Categoría</Label>
+                        <Label htmlFor="cr-category-filter" className="text-foreground">Categoría</Label>
                         <Select value={costReportFilters.categoryId} onValueChange={(v) => onCostReportFilterChange('categoryId', v)} disabled={costCategoriesLoading}>
-                            <SelectTrigger 
-                                id="cr-category-filter" 
-                                className="bg-black border-tms-green/30 text-white"
-                                style={{
-                                    backgroundColor: '#000000',
-                                    borderColor: 'rgba(156, 250, 36, 0.3)',
-                                    color: '#ffffff'
-                                }}
-                            >
+                            <SelectTrigger id="cr-category-filter">
                                 <SelectValue placeholder="Todas" />
                             </SelectTrigger>
-                            <SelectContent 
-                                className="bg-black border-tms-green text-white z-50"
-                                style={{
-                                    backgroundColor: '#000000',
-                                    borderColor: '#9cfa24',
-                                    color: '#ffffff',
-                                    zIndex: 50
-                                }}
-                            >
-                                <SelectItem 
-                                    value="all"
-                                    className="text-white hover:bg-tms-green/20 focus:bg-tms-green/20"
-                                    style={{ color: '#ffffff' }}
-                                >
+                            <SelectContent>
+                                <SelectItem value="all">
                                     Todas las categorías
                                 </SelectItem>
                                 {costCategories.map(category => (
-                                    <SelectItem 
-                                        key={category.id} 
-                                        value={category.id}
-                                        className="text-white hover:bg-tms-green/20 focus:bg-tms-green/20"
-                                        style={{ color: '#ffffff' }}
-                                    >
+                                    <SelectItem key={category.id} value={category.id}>
                                         {category.name}
                                     </SelectItem>
                                 ))}
@@ -433,42 +264,17 @@ export const ReportFilters = ({
                         </Select>
                     </div>
                     <div>
-                        <Label htmlFor="cr-crane-filter" className="text-white">Grúa</Label>
+                        <Label htmlFor="cr-crane-filter" className="text-foreground">Grúa</Label>
                         <Select value={costReportFilters.craneId} onValueChange={(v) => onCostReportFilterChange('craneId', v)} disabled={cranesLoading}>
-                            <SelectTrigger 
-                                id="cr-crane-filter" 
-                                className="bg-black border-tms-green/30 text-white"
-                                style={{
-                                    backgroundColor: '#000000',
-                                    borderColor: 'rgba(156, 250, 36, 0.3)',
-                                    color: '#ffffff'
-                                }}
-                            >
+                            <SelectTrigger id="cr-crane-filter">
                                 <SelectValue placeholder="Todas" />
                             </SelectTrigger>
-                            <SelectContent 
-                                className="bg-black border-tms-green text-white z-50"
-                                style={{
-                                    backgroundColor: '#000000',
-                                    borderColor: '#9cfa24',
-                                    color: '#ffffff',
-                                    zIndex: 50
-                                }}
-                            >
-                                <SelectItem 
-                                    value="all"
-                                    className="text-white hover:bg-tms-green/20 focus:bg-tms-green/20"
-                                    style={{ color: '#ffffff' }}
-                                >
+                            <SelectContent>
+                                <SelectItem value="all">
                                     Todas las grúas
                                 </SelectItem>
                                 {cranes.map(crane => (
-                                    <SelectItem 
-                                        key={crane.id} 
-                                        value={crane.id}
-                                        className="text-white hover:bg-tms-green/20 focus:bg-tms-green/20"
-                                        style={{ color: '#ffffff' }}
-                                    >
+                                    <SelectItem key={crane.id} value={crane.id}>
                                         {`${crane.brand} ${crane.model} (${crane.licensePlate})`}
                                     </SelectItem>
                                 ))}
@@ -476,42 +282,17 @@ export const ReportFilters = ({
                         </Select>
                     </div>
                     <div>
-                        <Label htmlFor="cr-operator-filter" className="text-white">Operador</Label>
+                        <Label htmlFor="cr-operator-filter" className="text-foreground">Operador</Label>
                         <Select value={costReportFilters.operatorId} onValueChange={(v) => onCostReportFilterChange('operatorId', v)} disabled={operatorsLoading}>
-                            <SelectTrigger 
-                                id="cr-operator-filter" 
-                                className="bg-black border-tms-green/30 text-white"
-                                style={{
-                                    backgroundColor: '#000000',
-                                    borderColor: 'rgba(156, 250, 36, 0.3)',
-                                    color: '#ffffff'
-                                }}
-                            >
+                            <SelectTrigger id="cr-operator-filter">
                                 <SelectValue placeholder="Todos" />
                             </SelectTrigger>
-                            <SelectContent 
-                                className="bg-black border-tms-green text-white z-50"
-                                style={{
-                                    backgroundColor: '#000000',
-                                    borderColor: '#9cfa24',
-                                    color: '#ffffff',
-                                    zIndex: 50
-                                }}
-                            >
-                                <SelectItem 
-                                    value="all"
-                                    className="text-white hover:bg-tms-green/20 focus:bg-tms-green/20"
-                                    style={{ color: '#ffffff' }}
-                                >
+                            <SelectContent>
+                                <SelectItem value="all">
                                     Todos los operadores
                                 </SelectItem>
                                 {operators.map(operator => (
-                                    <SelectItem 
-                                        key={operator.id} 
-                                        value={operator.id}
-                                        className="text-white hover:bg-tms-green/20 focus:bg-tms-green/20"
-                                        style={{ color: '#ffffff' }}
-                                    >
+                                    <SelectItem key={operator.id} value={operator.id}>
                                         {operator.name}
                                     </SelectItem>
                                 ))}

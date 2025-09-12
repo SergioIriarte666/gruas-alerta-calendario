@@ -41,9 +41,9 @@ export const CostAnalysis = ({ metrics }: CostAnalysisProps) => {
       </div>
       
       {metrics.costsByMonth.length > 0 && (
-        <Card className="bg-white/10 border-white/20">
+        <Card className="bg-card border">
           <CardHeader>
-            <CardTitle className="text-white">Tendencia de Costos Mensuales</CardTitle>
+            <CardTitle className="text-foreground">Tendencia de Costos Mensuales</CardTitle>
           </CardHeader>
           <CardContent>
             <ChartContainer config={costsByMonthConfig} className="w-full h-[300px]">

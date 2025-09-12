@@ -12,8 +12,8 @@ export const ReportsDashboard = ({ metrics }: ReportsDashboardProps) => {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold text-white mb-2">Dashboard Ejecutivo</h2>
-        <p className="text-gray-300">Resumen de métricas clave y indicadores de rendimiento</p>
+        <h2 className="text-2xl font-bold text-foreground mb-2">Dashboard Ejecutivo</h2>
+        <p className="text-muted-foreground">Resumen de métricas clave y indicadores de rendimiento</p>
       </div>
 
       {/* KPIs Principales */}
@@ -49,17 +49,17 @@ export const ReportsDashboard = ({ metrics }: ReportsDashboardProps) => {
       </div>
 
       {/* Resumen por Estado */}
-      <Card className="bg-white/10 border-white/20">
+      <Card className="bg-card border">
         <CardHeader>
-          <CardTitle className="text-white">Distribución de Servicios</CardTitle>
+          <CardTitle className="text-foreground">Distribución de Servicios</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {metrics.servicesByStatus.map((status) => (
-              <div key={status.status} className="text-center p-4 bg-white/5 rounded-lg">
-                <div className="text-2xl font-bold text-white">{status.count}</div>
-                <div className="text-sm text-gray-400 capitalize">{status.status}</div>
-                <div className="text-xs text-gray-500">{status.percentage.toFixed(1)}%</div>
+              <div key={status.status} className="text-center p-4 bg-muted/50 rounded-lg">
+                <div className="text-2xl font-bold text-foreground">{status.count}</div>
+                <div className="text-sm text-muted-foreground capitalize">{status.status}</div>
+                <div className="text-xs text-muted-foreground">{status.percentage.toFixed(1)}%</div>
               </div>
             ))}
           </div>
@@ -68,19 +68,19 @@ export const ReportsDashboard = ({ metrics }: ReportsDashboardProps) => {
 
       {/* Top Recursos */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="bg-white/10 border-white/20">
+        <Card className="bg-card border">
           <CardHeader>
-            <CardTitle className="text-white">Top 5 Clientes</CardTitle>
+            <CardTitle className="text-foreground">Top 5 Clientes</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
               {metrics.topClients.slice(0, 5).map((client, index) => (
-                <div key={client.clientId} className="flex items-center justify-between p-2 bg-white/5 rounded">
+                <div key={client.clientId} className="flex items-center justify-between p-2 bg-muted/50 rounded">
                   <div>
-                    <div className="font-medium text-white">{client.clientName}{client.department ? ` — ${client.department}` : ''}</div>
-                    <div className="text-sm text-gray-400">{client.services} servicios</div>
+                    <div className="font-medium text-foreground">{client.clientName}{client.department ? ` — ${client.department}` : ''}</div>
+                    <div className="text-sm text-muted-foreground">{client.services} servicios</div>
                   </div>
-                  <div className="text-green-400 font-medium">
+                  <div className="text-primary font-medium">
                     ${client.revenue.toLocaleString()}
                   </div>
                 </div>
@@ -89,19 +89,19 @@ export const ReportsDashboard = ({ metrics }: ReportsDashboardProps) => {
           </CardContent>
         </Card>
 
-        <Card className="bg-white/10 border-white/20">
+        <Card className="bg-card border">
           <CardHeader>
-            <CardTitle className="text-white">Utilización de Grúas</CardTitle>
+            <CardTitle className="text-foreground">Utilización de Grúas</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
               {metrics.craneUtilization.slice(0, 5).map((crane) => (
-                <div key={crane.craneId} className="flex items-center justify-between p-2 bg-white/5 rounded">
+                <div key={crane.craneId} className="flex items-center justify-between p-2 bg-muted/50 rounded">
                   <div>
-                    <div className="font-medium text-white">{crane.craneName}</div>
-                    <div className="text-sm text-gray-400">{crane.services} servicios</div>
+                    <div className="font-medium text-foreground">{crane.craneName}</div>
+                    <div className="text-sm text-muted-foreground">{crane.services} servicios</div>
                   </div>
-                  <div className="text-blue-400 font-medium">
+                  <div className="text-secondary font-medium">
                     {crane.utilization.toFixed(1)}%
                   </div>
                 </div>
