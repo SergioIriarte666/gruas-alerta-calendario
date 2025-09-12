@@ -108,7 +108,7 @@ export const Header = ({
               className="text-foreground hover:bg-primary hover:text-primary-foreground rounded-full"
             >
               <User className={cn(
-                "text-primary",
+                "text-violet-600",
                 isMobile ? "w-4 h-4" : "w-5 h-5"
               )} />
             </Button>
