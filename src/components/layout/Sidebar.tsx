@@ -225,7 +225,7 @@ export const Sidebar = ({
                 isTablet ? "px-2 py-2 text-sm" : "px-3 py-2 text-sm",
                 isActive 
                   ? "active bg-primary text-primary-foreground" 
-                  : "text-muted-foreground hover:bg-accent hover:text-foreground"
+                  : "text-foreground hover:bg-accent hover:text-foreground"
               )}
               onClick={() => setIsMobileMenuOpen(false)}
             >
@@ -249,7 +249,7 @@ export const Sidebar = ({
         {!isCollapsed && user && (
           <div className="mb-3">
             <p className="text-sm font-medium text-foreground">{user.name}</p>
-            <p className="text-xs text-muted-foreground">{user.email}</p>
+            <p className="text-xs text-foreground">{user.email}</p>
             <p className="text-xs capitalize text-primary">{user.role}</p>
           </div>
         )}
