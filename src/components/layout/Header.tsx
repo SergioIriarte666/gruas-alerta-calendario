@@ -13,7 +13,6 @@ import { cn } from '@/lib/utils';
 import { NotificationsDropdown } from './NotificationsDropdown';
 import { GlobalSearch } from './GlobalSearch';
 import PWAInstallButton from '@/components/PWAInstallButton';
-import { ThemeToggle } from '@/components/ui/theme-toggle';
 
 interface HeaderProps {
   setIsMobileMenuOpen: (open: boolean) => void;
@@ -99,7 +98,6 @@ export const Header = ({
         isMobile ? "space-x-1" : isTablet ? "space-x-2" : "space-x-4"
       )}>
         {!isMobile && <PWAInstallButton />}
-        <ThemeToggle size={isMobile ? 'sm' : 'default'} />
         <NotificationsDropdown />
 
         <DropdownMenu>
