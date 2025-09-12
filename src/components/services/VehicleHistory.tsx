@@ -63,7 +63,7 @@ export const VehicleHistory = ({ licensePlate, currentServiceId, clientId, clien
           ) : (
             <User className="w-5 h-5 text-tms-green" />
           )}
-          <h3 className="text-lg font-semibold text-white">
+          <h3 className="text-lg font-semibold text-foreground">
             {isVehicleSpecific 
               ? `Historial de Servicios - Patente ${licensePlate}`
               : `Historial del Cliente${clientName ? ` - ${clientName}` : ''}`
@@ -79,10 +79,10 @@ export const VehicleHistory = ({ licensePlate, currentServiceId, clientId, clien
 
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center p-8 text-center bg-red-900/20 rounded-lg mt-4">
-        <AlertCircle className="w-12 h-12 text-red-500 mb-4" />
-        <h3 className="text-lg font-semibold text-white">Error al cargar el historial</h3>
-        <p className="text-red-400">No se pudo obtener el historial de servicios para este vehículo.</p>
+      <div className="flex flex-col items-center justify-center p-8 text-center bg-destructive/10 rounded-lg mt-4">
+        <AlertCircle className="w-12 h-12 text-destructive mb-4" />
+        <h3 className="text-lg font-semibold text-foreground">Error al cargar el historial</h3>
+        <p className="text-destructive">No se pudo obtener el historial de servicios para este vehículo.</p>
       </div>
     );
   }
@@ -96,17 +96,17 @@ export const VehicleHistory = ({ licensePlate, currentServiceId, clientId, clien
           ) : (
             <User className="w-5 h-5 text-tms-green" />
           )}
-          <h3 className="text-lg font-semibold text-white">
+          <h3 className="text-lg font-semibold text-foreground">
             {isVehicleSpecific 
               ? `Historial de Servicios - Patente ${licensePlate}`
               : `Historial del Cliente${clientName ? ` - ${clientName}` : ''}`
             }
           </h3>
         </div>
-        <div className="flex flex-col items-center justify-center p-8 text-center bg-gray-800/50 rounded-lg">
-          <History className="w-12 h-12 text-gray-400 mb-4" />
-          <h3 className="text-lg font-semibold text-white">Sin historial previo</h3>
-          <p className="text-gray-400">
+        <div className="flex flex-col items-center justify-center p-8 text-center bg-muted/50 rounded-lg">
+          <History className="w-12 h-12 text-muted-foreground mb-4" />
+          <h3 className="text-lg font-semibold text-foreground">Sin historial previo</h3>
+          <p className="text-muted-foreground">
             {isVehicleSpecific 
               ? `No se encontraron servicios previos para la patente ${licensePlate}.`
               : `No se encontraron servicios previos para este cliente.`
@@ -126,7 +126,7 @@ export const VehicleHistory = ({ licensePlate, currentServiceId, clientId, clien
           ) : (
             <User className="w-5 h-5 text-tms-green" />
           )}
-          <h3 className="text-lg font-semibold text-white">
+          <h3 className="text-lg font-semibold text-foreground">
             {isVehicleSpecific 
               ? `Historial de Servicios - Patente ${licensePlate}`
               : `Historial del Cliente${clientName ? ` - ${clientName}` : ''}`
@@ -141,47 +141,47 @@ export const VehicleHistory = ({ licensePlate, currentServiceId, clientId, clien
       <div className="overflow-x-auto">
         <Table>
           <TableHeader>
-            <TableRow className="border-gray-700">
-              <TableHead className="text-gray-300">Folio</TableHead>
-              <TableHead className="text-gray-300">Fecha</TableHead>
-              {isVehicleSpecific && <TableHead className="text-gray-300">Cliente</TableHead>}
-              {!isVehicleSpecific && <TableHead className="text-gray-300">Patente</TableHead>}
-              <TableHead className="text-gray-300">Tipo Servicio</TableHead>
-              <TableHead className="text-gray-300">Ruta</TableHead>
-              <TableHead className="text-gray-300">Valor</TableHead>
-              <TableHead className="text-gray-300">Estado</TableHead>
+            <TableRow className="border-border">
+              <TableHead className="text-foreground">Folio</TableHead>
+              <TableHead className="text-foreground">Fecha</TableHead>
+              {isVehicleSpecific && <TableHead className="text-foreground">Cliente</TableHead>}
+              {!isVehicleSpecific && <TableHead className="text-foreground">Patente</TableHead>}
+              <TableHead className="text-foreground">Tipo Servicio</TableHead>
+              <TableHead className="text-foreground">Ruta</TableHead>
+              <TableHead className="text-foreground">Valor</TableHead>
+              <TableHead className="text-foreground">Estado</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {history.map((service: VehicleHistoryEntry | ClientHistoryEntry) => (
               <TableRow 
                 key={service.id} 
-                className={`border-gray-700 ${service.id === currentServiceId ? 'bg-tms-green/10 border-tms-green/30' : ''}`}
+                className={`border-border ${service.id === currentServiceId ? 'bg-tms-green/10 border-tms-green/30' : ''}`}
               >
                 <TableCell className={`font-medium ${service.id === currentServiceId ? 'text-tms-green font-bold' : 'text-tms-green'}`}>
                   {service.folio}
                   {service.id === currentServiceId && <span className="ml-2 text-xs">(Actual)</span>}
                 </TableCell>
-                <TableCell className="text-gray-300">
+                <TableCell className="text-foreground">
                   {formatForDisplay(service.serviceDate)}
                 </TableCell>
                 {isVehicleSpecific && (
-                  <TableCell className="text-gray-300">
+                  <TableCell className="text-foreground">
                     {'client' in service ? service.client.name : 'N/A'}
                   </TableCell>
                 )}
                 {!isVehicleSpecific && (
-                  <TableCell className="text-gray-300">
+                  <TableCell className="text-foreground">
                     {'licensePlate' in service ? service.licensePlate : 'N/A'}
                   </TableCell>
                 )}
-                <TableCell className="text-gray-300">{service.serviceType.name}</TableCell>
-                <TableCell className="text-gray-300 max-w-xs">
+                <TableCell className="text-foreground">{service.serviceType.name}</TableCell>
+                <TableCell className="text-foreground max-w-xs">
                   <div className="truncate" title={`${service.origin} → ${service.destination}`}>
                     {service.origin} → {service.destination}
                   </div>
                 </TableCell>
-                <TableCell className="text-gray-300 font-semibold">{formatUserCurrency(service.value)}</TableCell>
+                <TableCell className="text-foreground font-semibold">{formatUserCurrency(service.value)}</TableCell>
                 <TableCell>{getStatusBadge(service.status)}</TableCell>
               </TableRow>
             ))}
