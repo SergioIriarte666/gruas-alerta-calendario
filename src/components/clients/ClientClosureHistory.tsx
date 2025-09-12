@@ -19,7 +19,7 @@ const MetricCard = ({ icon: Icon, title, value }: MetricCardProps) => (
           <Icon className="h-5 w-5 text-tms-green" />
         </div>
         <div>
-          <p className="text-sm text-gray-300">{title}</p>
+          <p className="text-sm text-white/80">{title}</p>
           <p className="text-lg font-semibold text-white">{value}</p>
         </div>
       </div>
@@ -96,7 +96,7 @@ export const ClientClosureHistory = ({ client }: { client: Client }) => {
         </CardHeader>
         <CardContent>
           {closures.length === 0 ? (
-            <div className="text-center py-8 text-gray-300">
+            <div className="text-center py-8 text-white/80">
               No hay cierres registrados para este cliente.
             </div>
           ) : (
@@ -109,13 +109,13 @@ export const ClientClosureHistory = ({ client }: { client: Client }) => {
                   <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div className="space-y-2">
                       <div className="flex items-center gap-2">
-                        <span className="font-medium text-white">{closure.folio}</span>
+                        <Badge variant="tms" className="whitespace-nowrap">{closure.folio}</Badge>
                         {getStatusBadge(closure.status)}
                       </div>
-                      <div className="text-sm text-gray-300">
+                      <div className="text-sm text-white/80">
                         Período: {formatForDisplay(parseFromDatabase(closure.dateRange.from))} - {formatForDisplay(parseFromDatabase(closure.dateRange.to))}
                       </div>
-                      <div className="text-sm text-gray-300">
+                      <div className="text-sm text-white/80">
                         Servicios incluidos: {closure.serviceIds.length}
                       </div>
                     </div>
@@ -123,7 +123,7 @@ export const ClientClosureHistory = ({ client }: { client: Client }) => {
                       <div className="text-lg font-semibold text-white">
                         {formatCurrency(closure.total)}
                       </div>
-                      <div className="text-sm text-gray-300">
+                      <div className="text-sm text-white/80">
                         {formatForDisplay(parseFromDatabase(closure.createdAt))}
                       </div>
                     </div>

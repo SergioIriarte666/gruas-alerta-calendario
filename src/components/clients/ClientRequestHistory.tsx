@@ -20,7 +20,7 @@ const MetricCard = ({ icon: Icon, title, value }: MetricCardProps) => (
           <Icon className="h-5 w-5 text-tms-green" />
         </div>
         <div>
-          <p className="text-sm text-gray-300">{title}</p>
+          <p className="text-sm text-white/80">{title}</p>
           <p className="text-lg font-semibold text-white">{value}</p>
         </div>
       </div>
@@ -99,7 +99,7 @@ export const ClientRequestHistory = ({ client }: { client: Client }) => {
         </CardHeader>
         <CardContent>
           {requests.length === 0 ? (
-            <div className="text-center py-8 text-gray-300">
+            <div className="text-center py-8 text-white/80">
               No hay solicitudes pendientes o canceladas para este cliente.
             </div>
           ) : (
@@ -112,10 +112,10 @@ export const ClientRequestHistory = ({ client }: { client: Client }) => {
                   <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                     <div className="space-y-2">
                       <div className="flex items-center gap-2">
-                        <span className="font-medium text-white">{request.folio}</span>
+                        <Badge variant="tms" className="whitespace-nowrap">{request.folio}</Badge>
                         {getStatusBadge(request.status)}
                       </div>
-                      <div className="text-sm text-gray-300">
+                      <div className="text-sm text-white/80">
                         <div>Tipo: {request.serviceType.name}</div>
                         {shouldShowVehicleInfo(request) && (
                           <div>Vehículo: {formatVehicleInfo(request)}</div>
@@ -131,20 +131,20 @@ export const ClientRequestHistory = ({ client }: { client: Client }) => {
                       <div className="text-lg font-semibold text-white">
                         {formatCurrency(request.value)}
                       </div>
-                      <div className="text-sm text-gray-300">
+                      <div className="text-sm text-white/80">
                         Solicitud: {formatForDisplay(parseFromDatabase(request.requestDate))}
                       </div>
-                      <div className="text-sm text-gray-300">
+                      <div className="text-sm text-white/80">
                         Servicio: {formatForDisplay(parseFromDatabase(request.serviceDate))}
                       </div>
-                      <div className="text-xs text-gray-400">
+                      <div className="text-xs text-white/70">
                         Grúa: {request.crane.licensePlate}
                       </div>
                     </div>
                   </div>
                   {request.observations && (
                     <div className="mt-3 pt-3 border-t border-tms-green/30">
-                      <p className="text-sm text-gray-300">
+                      <p className="text-sm text-white/80">
                         <span className="font-medium">Observaciones:</span> {request.observations}
                       </p>
                     </div>

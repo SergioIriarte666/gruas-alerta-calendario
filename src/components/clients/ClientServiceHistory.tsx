@@ -22,7 +22,7 @@ const MetricCard = ({ icon: Icon, title, value }: MetricCardProps) => (
           <Icon className="h-5 w-5 text-tms-green" />
         </div>
         <div>
-          <p className="text-sm text-gray-300">{title}</p>
+          <p className="text-sm text-white/80">{title}</p>
           <p className="text-lg font-semibold text-white">{value}</p>
         </div>
       </div>
@@ -50,28 +50,28 @@ export const ClientServiceHistory = ({ client }: { client: Client }) => {
         </CardHeader>
         <CardContent>
           {services.length === 0 ? (
-            <div className="text-center py-8 text-gray-400">No hay servicios para este cliente.</div>
+            <div className="text-center py-8 text-white/80">No hay servicios para este cliente.</div>
           ) : (
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow className="border-gray-700 hover:bg-transparent">
-                    <TableHead className="text-gray-300">Folio</TableHead>
-                    <TableHead className="text-gray-300">Fecha</TableHead>
-                    <TableHead className="text-gray-300">Vehículo</TableHead>
-                    <TableHead className="text-gray-300">Ruta</TableHead>
-                    <TableHead className="text-gray-300">Valor</TableHead>
-                    <TableHead className="text-gray-300">Estado</TableHead>
+                  <TableHead className="text-white/80">Folio</TableHead>
+                  <TableHead className="text-white/80">Fecha</TableHead>
+                  <TableHead className="text-white/80">Vehículo</TableHead>
+                  <TableHead className="text-white/80">Ruta</TableHead>
+                  <TableHead className="text-white/80">Valor</TableHead>
+                  <TableHead className="text-white/80">Estado</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {services.map(service => (
                     <TableRow key={service.id} className="border-gray-700">
                       <TableCell className="font-medium"><Badge variant="tms" className="whitespace-nowrap">{service.folio}</Badge></TableCell>
-                      <TableCell className="text-gray-300">{formatForDisplay(parseFromDatabase(service.serviceDate))}</TableCell>
-                      <TableCell className="text-gray-300">{formatVehicleInfo(service)}</TableCell>
-                      <TableCell className="text-gray-300 max-w-xs truncate">{service.origin} → {service.destination}</TableCell>
-                      <TableCell className="text-gray-300 font-semibold">{formatCurrency(service.value)}</TableCell>
+                      <TableCell className="text-white/80">{formatForDisplay(parseFromDatabase(service.serviceDate))}</TableCell>
+                      <TableCell className="text-white/80">{formatVehicleInfo(service)}</TableCell>
+                      <TableCell className="text-white/80 max-w-xs truncate">{service.origin} → {service.destination}</TableCell>
+                      <TableCell className="text-white/80 font-semibold">{formatCurrency(service.value)}</TableCell>
                       <TableCell>
                         {getServiceStatusBadge(service.status)}
                       </TableCell>

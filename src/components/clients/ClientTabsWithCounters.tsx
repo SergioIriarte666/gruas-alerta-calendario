@@ -84,7 +84,7 @@ export const ClientTabsWithCounters = ({ client }: ClientTabsWithCountersProps) 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="space-y-4">
                         <div>
-                          <label className="block text-sm font-medium text-gray-300 mb-1">
+                          <label className="block text-sm font-medium text-white/90 mb-1">
                             Nombre/Razón Social
                           </label>
                           <p className="text-white bg-white/5 border border-tms-green/30 rounded px-3 py-2">
@@ -93,7 +93,7 @@ export const ClientTabsWithCounters = ({ client }: ClientTabsWithCountersProps) 
                         </div>
                         
                         <div>
-                          <label className="block text-sm font-medium text-gray-300 mb-1">
+                          <label className="block text-sm font-medium text-white/90 mb-1">
                             RUT
                           </label>
                           <p className="text-white bg-white/5 border border-tms-green/30 rounded px-3 py-2">
@@ -102,7 +102,7 @@ export const ClientTabsWithCounters = ({ client }: ClientTabsWithCountersProps) 
                         </div>
                         
                         <div>
-                          <label className="block text-sm font-medium text-gray-300 mb-1">
+                          <label className="block text-sm font-medium text-white/90 mb-1">
                             Email
                           </label>
                           <p className="text-white bg-white/5 border border-tms-green/30 rounded px-3 py-2">
@@ -111,7 +111,7 @@ export const ClientTabsWithCounters = ({ client }: ClientTabsWithCountersProps) 
                         </div>
                         
                         <div>
-                          <label className="block text-sm font-medium text-gray-300 mb-1">
+                          <label className="block text-sm font-medium text-white/90 mb-1">
                             Departamento
                           </label>
                           <p className="text-white bg-white/5 border border-tms-green/30 rounded px-3 py-2">
@@ -122,7 +122,7 @@ export const ClientTabsWithCounters = ({ client }: ClientTabsWithCountersProps) 
                       
                       <div className="space-y-4">
                         <div>
-                          <label className="block text-sm font-medium text-gray-300 mb-1">
+                          <label className="block text-sm font-medium text-white/90 mb-1">
                             Teléfono
                           </label>
                           <p className="text-white bg-white/5 border border-tms-green/30 rounded px-3 py-2">
@@ -131,7 +131,7 @@ export const ClientTabsWithCounters = ({ client }: ClientTabsWithCountersProps) 
                         </div>
                         
                         <div>
-                          <label className="block text-sm font-medium text-gray-300 mb-1">
+                          <label className="block text-sm font-medium text-white/90 mb-1">
                             Dirección
                           </label>
                           <p className="text-white bg-white/5 border border-tms-green/30 rounded px-3 py-2">
@@ -140,7 +140,7 @@ export const ClientTabsWithCounters = ({ client }: ClientTabsWithCountersProps) 
                         </div>
                         
                         <div>
-                          <label className="block text-sm font-medium text-gray-300 mb-1">
+                          <label className="block text-sm font-medium text-white/90 mb-1">
                             Estado
                           </label>
                           <p className={`inline-flex px-2 py-1 rounded text-sm font-medium ${
@@ -153,7 +153,7 @@ export const ClientTabsWithCounters = ({ client }: ClientTabsWithCountersProps) 
                         </div>
                         
                         <div>
-                          <label className="block text-sm font-medium text-gray-300 mb-1">
+                          <label className="block text-sm font-medium text-white/90 mb-1">
                             Fecha de Registro
                           </label>
                           <p className="text-white bg-white/5 border border-tms-green/30 rounded px-3 py-2">

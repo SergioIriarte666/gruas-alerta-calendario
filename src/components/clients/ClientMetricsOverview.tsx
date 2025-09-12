@@ -31,7 +31,7 @@ const MetricCard = ({ icon: Icon, title, value, description, trend }: MetricCard
         </div>
         <div className="flex-1">
           <div className="flex items-center gap-2">
-            <p className="text-sm text-gray-300">{title}</p>
+            <p className="text-sm text-white/80">{title}</p>
             {trend && (
               <TrendingUp 
                 className={`h-3 w-3 ${
@@ -44,7 +44,7 @@ const MetricCard = ({ icon: Icon, title, value, description, trend }: MetricCard
           </div>
           <p className="text-lg font-semibold text-white">{value}</p>
           {description && (
-            <p className="text-xs text-gray-300">{description}</p>
+            <p className="text-xs text-white/80">{description}</p>
           )}
         </div>
       </div>
@@ -128,20 +128,20 @@ export const ClientMetricsOverview = ({ client }: { client: Client }) => {
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
-              <p className="text-sm text-gray-300">Total Facturado</p>
+              <p className="text-sm text-white/80">Total Facturado</p>
               <p className="text-2xl font-bold text-tms-green">
                 {formatCurrency(metrics.totalInvoiced)}
               </p>
             </div>
             <div className="space-y-2">
-              <p className="text-sm text-gray-300">Total Pagado</p>
+              <p className="text-sm text-white/80">Total Pagado</p>
               <p className="text-2xl font-bold text-white">
                 {formatCurrency(metrics.totalPaid)}
               </p>
             </div>
             <div className="space-y-2">
               <div className="flex items-center gap-2">
-                <p className="text-sm text-gray-300">Pendiente de Pago</p>
+                <p className="text-sm text-white/80">Pendiente de Pago</p>
                 {metrics.pendingAmount > 0 && (
                   <AlertTriangle className="h-4 w-4 text-yellow-500" />
                 )}
@@ -156,8 +156,8 @@ export const ClientMetricsOverview = ({ client }: { client: Client }) => {
           {metrics.avgPaymentTime > 0 && (
             <div className="mt-4 pt-4 border-t">
               <div className="flex items-center gap-2">
-                <Clock className="h-4 w-4 text-gray-300" />
-                <span className="text-sm text-gray-300">
+                <Clock className="h-4 w-4 text-white/80" />
+                <span className="text-sm text-white/80">
                   Tiempo promedio de pago: {metrics.avgPaymentTime} días
                 </span>
                 <Badge variant={metrics.avgPaymentTime <= 30 ? "default" : "destructive"}>
@@ -203,7 +203,7 @@ export const ClientMetricsOverview = ({ client }: { client: Client }) => {
           <div className="space-y-4">
             {metrics.lastServiceDate && (
               <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-300">Último servicio</span>
+                <span className="text-sm text-white/80">Último servicio</span>
                 <span className="text-sm font-medium text-white">
                   {formatForDisplay(new Date(metrics.lastServiceDate))}
                 </span>
@@ -211,7 +211,7 @@ export const ClientMetricsOverview = ({ client }: { client: Client }) => {
             )}
             {metrics.lastInvoiceDate && (
               <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-300">Última factura</span>
+                <span className="text-sm text-white/80">Última factura</span>
                 <span className="text-sm font-medium text-white">
                   {formatForDisplay(new Date(metrics.lastInvoiceDate))}
                 </span>
@@ -231,7 +231,7 @@ export const ClientMetricsOverview = ({ client }: { client: Client }) => {
             <div className="space-y-2">
               {metrics.monthlyTrend.map((month) => (
                 <div key={month.month} className="flex items-center justify-between">
-                  <span className="text-sm text-gray-300">
+                  <span className="text-sm text-white/80">
                     {new Date(month.month + '-01').toLocaleDateString('es-CL', { 
                       year: 'numeric', 
                       month: 'long' 
