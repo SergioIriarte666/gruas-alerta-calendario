@@ -20,39 +20,39 @@ const InvoicesStats = ({ invoices }: InvoicesStatsProps) => {
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-      <Card className="glass-card">
+      <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-sm font-medium text-gray-300">Total Facturas</CardTitle>
+          <CardTitle className="text-sm font-medium text-muted-foreground">Total Facturas</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold text-white">{totalInvoices}</div>
+          <div className="text-2xl font-bold text-foreground">{totalInvoices}</div>
         </CardContent>
       </Card>
       
-      <Card className="glass-card">
+      <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-sm font-medium text-gray-300">Pendientes</CardTitle>
+          <CardTitle className="text-sm font-medium text-muted-foreground">Pendientes</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold text-yellow-400">${pendingAmount.toLocaleString()}</div>
+          <div className="text-2xl font-bold text-yellow-600">${pendingAmount.toLocaleString()}</div>
         </CardContent>
       </Card>
       
-      <Card className="glass-card">
+      <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-sm font-medium text-gray-300">Vencidas</CardTitle>
+          <CardTitle className="text-sm font-medium text-muted-foreground">Vencidas</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold text-red-400">${overdueAmount.toLocaleString()}</div>
+          <div className="text-2xl font-bold text-red-600">${overdueAmount.toLocaleString()}</div>
         </CardContent>
       </Card>
       
-      <Card className="glass-card">
+      <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-sm font-medium text-gray-300">Cobradas</CardTitle>
+          <CardTitle className="text-sm font-medium text-muted-foreground">Cobradas</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold text-green-400">${paidAmount.toLocaleString()}</div>
+          <div className="text-2xl font-bold text-green-600">${paidAmount.toLocaleString()}</div>
         </CardContent>
       </Card>
     </div>

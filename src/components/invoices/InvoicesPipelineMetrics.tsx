@@ -149,10 +149,10 @@ export const InvoicesPipelineMetrics: React.FC<InvoicesPipelineMetricsProps> = (
   return (
     <div className="space-y-6">
       {/* Overview Cards */}
-      <Card className="bg-white/10 backdrop-blur-sm border-white/20">
+      <Card className="bg-card border-border">
         <CardContent className="p-6">
           <div className="flex items-center justify-between mb-6">
-            <h3 className="text-lg font-semibold text-white">Resumen General del Pipeline</h3>
+            <h3 className="text-lg font-semibold text-foreground">Resumen General del Pipeline</h3>
             {metrics.urgentCount > 0 && (
               <Badge variant="destructive" className="flex items-center space-x-1">
                 <AlertTriangle className="w-3 h-3" />
@@ -172,13 +172,13 @@ export const InvoicesPipelineMetrics: React.FC<InvoicesPipelineMetricsProps> = (
                     card.bgColor
                   )}
                 >
-                  <div className={cn("p-2 rounded-lg bg-white/10", card.bgColor)}>
+                  <div className={cn("p-2 rounded-lg bg-muted", card.bgColor)}>
                     <Icon className={cn("w-5 h-5", card.color)} />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-300">{card.title}</p>
-                    <p className="text-lg font-bold text-white truncate">{card.value}</p>
-                    <p className="text-xs text-gray-400">{card.subtitle}</p>
+                    <p className="text-sm font-medium text-muted-foreground">{card.title}</p>
+                    <p className="text-lg font-bold text-foreground truncate">{card.value}</p>
+                    <p className="text-xs text-muted-foreground">{card.subtitle}</p>
                   </div>
                 </div>
               );
@@ -193,7 +193,7 @@ export const InvoicesPipelineMetrics: React.FC<InvoicesPipelineMetricsProps> = (
           <Card
             key={index}
             className={cn(
-              "bg-white/10 backdrop-blur-sm border-white/20 transition-all duration-200 hover:bg-white/15",
+              "bg-card border-border transition-all duration-200 hover:bg-muted",
               card.urgent && "ring-2 ring-red-400/50 animate-pulse"
             )}
           >
@@ -205,8 +205,8 @@ export const InvoicesPipelineMetrics: React.FC<InvoicesPipelineMetricsProps> = (
               
               <div className="space-y-1">
                 <p className={cn("text-2xl font-bold", card.color)}>{card.count}</p>
-                <p className="text-sm text-white">${card.amount.toLocaleString('es-CL')}</p>
-                <p className="text-xs text-gray-400">{card.description}</p>
+                <p className="text-sm text-foreground">${card.amount.toLocaleString('es-CL')}</p>
+                <p className="text-xs text-muted-foreground">{card.description}</p>
               </div>
             </CardContent>
           </Card>

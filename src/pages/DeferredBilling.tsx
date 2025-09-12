@@ -5,10 +5,10 @@ const DeferredBilling: React.FC = () => {
   return (
     <div className="container mx-auto p-6">
       <div className="mb-6">
-        <h1 className="text-3xl font-bold text-white mb-2">
+        <h1 className="text-3xl font-bold text-foreground mb-2">
           Facturación Diferida
         </h1>
-        <p className="text-white/70">
+        <p className="text-muted-foreground">
           Gestiona la facturación de clientes con períodos de diferimiento personalizados.
         </p>
       </div>

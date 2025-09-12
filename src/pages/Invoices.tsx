@@ -281,7 +281,7 @@ const Invoices = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="text-white">Cargando facturas...</div>
+        <div className="text-foreground">Cargando facturas...</div>
       </div>
     );
   }
@@ -289,20 +289,20 @@ const Invoices = () => {
   return (
     <div className="space-y-6">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-5 max-w-3xl mx-auto bg-white/10 backdrop-blur-sm border-white/20">
-          <TabsTrigger value="invoices" className="text-white data-[state=active]:bg-white/20">
+        <TabsList className="grid w-full grid-cols-5 max-w-3xl mx-auto bg-card border-border">
+          <TabsTrigger value="invoices" className="text-foreground data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
             Facturas
           </TabsTrigger>
-          <TabsTrigger value="pipeline" className="text-white data-[state=active]:bg-white/20">
+          <TabsTrigger value="pipeline" className="text-foreground data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
             Pipeline
           </TabsTrigger>
-          <TabsTrigger value="alerts" className="text-white data-[state=active]:bg-white/20">
+          <TabsTrigger value="alerts" className="text-foreground data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
             Alertas
           </TabsTrigger>
-          <TabsTrigger value="payments" className="text-white data-[state=active]:bg-white/20">
+          <TabsTrigger value="payments" className="text-foreground data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
             Conciliación
           </TabsTrigger>
-          <TabsTrigger value="history" className="text-white data-[state=active]:bg-white/20">
+          <TabsTrigger value="history" className="text-foreground data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
             Historial
           </TabsTrigger>
         </TabsList>

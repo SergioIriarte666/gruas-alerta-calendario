@@ -194,7 +194,7 @@ export const InvoicesPipelineView: React.FC<InvoicesPipelineViewProps> = ({
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="text-white">Cargando pipeline de facturas...</div>
+        <div className="text-foreground">Cargando pipeline de facturas...</div>
       </div>
     );
   }
@@ -205,7 +205,7 @@ export const InvoicesPipelineView: React.FC<InvoicesPipelineViewProps> = ({
     return (
       <div className="text-center py-12">
         <FileText className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-        <h3 className="text-xl font-semibold text-white mb-2">No hay facturas</h3>
+        <h3 className="text-xl font-semibold text-foreground mb-2">No hay facturas</h3>
         <p className="text-gray-400">Crea tu primera factura para comenzar</p>
       </div>
     );
@@ -224,7 +224,7 @@ export const InvoicesPipelineView: React.FC<InvoicesPipelineViewProps> = ({
             placeholder="Buscar por folio o cliente..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10 bg-white/10 border-white/20 text-white placeholder-gray-400"
+            className="pl-10 bg-background border-border text-foreground placeholder:text-muted-foreground"
           />
         </div>
       </div>
@@ -240,14 +240,14 @@ export const InvoicesPipelineView: React.FC<InvoicesPipelineViewProps> = ({
             <Card
               key={status.key}
               className={cn(
-                "bg-white/10 backdrop-blur-sm border-white/20 transition-all duration-200",
+                "bg-card border-border transition-all duration-200",
                 status.urgent && group.stats.count > 0 && "ring-2 ring-red-400/50"
               )}
             >
-              <CardHeader
-                className="cursor-pointer hover:bg-white/5 transition-colors"
-                onClick={() => toggleGroup(status.key)}
-              >
+                <CardHeader
+                  className="cursor-pointer hover:bg-muted transition-colors"
+                  onClick={() => toggleGroup(status.key)}
+                >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
                     <div className={cn("p-2 rounded-lg", status.bgColor)}>
@@ -262,14 +262,14 @@ export const InvoicesPipelineView: React.FC<InvoicesPipelineViewProps> = ({
                           </Badge>
                         )}
                       </CardTitle>
-                      <p className="text-sm text-gray-400">{status.description}</p>
+                      <p className="text-sm text-muted-foreground">{status.description}</p>
                     </div>
                   </div>
                   
                   <div className="flex items-center space-x-4">
                     <div className="text-right">
-                      <p className="text-lg font-bold text-white">{group.stats.count}</p>
-                      <p className="text-sm text-gray-400">
+                      <p className="text-lg font-bold text-foreground">{group.stats.count}</p>
+                      <p className="text-sm text-muted-foreground">
                         {formatCurrency(group.stats.totalValue)}
                       </p>
                       {group.stats.avgDays > 0 && (
@@ -301,7 +301,7 @@ export const InvoicesPipelineView: React.FC<InvoicesPipelineViewProps> = ({
                         <Card
                           key={invoice.id}
                           className={cn(
-                            "bg-white/5 border-white/10 hover:bg-white/10 transition-all duration-200",
+                            "bg-muted/50 border-border hover:bg-muted transition-all duration-200",
                             isUrgent && "ring-1 ring-red-400/30"
                           )}
                         >
@@ -309,7 +309,7 @@ export const InvoicesPipelineView: React.FC<InvoicesPipelineViewProps> = ({
                             <div className="flex items-center justify-between">
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-center space-x-2 mb-2">
-                                  <h4 className="font-semibold text-white truncate">
+                                  <h4 className="font-semibold text-foreground truncate">
                                     {invoice.folio}
                                   </h4>
                                   {isUrgent && (
@@ -319,7 +319,7 @@ export const InvoicesPipelineView: React.FC<InvoicesPipelineViewProps> = ({
                                   )}
                                 </div>
                                 
-                                <div className="flex items-center space-x-4 text-sm text-gray-400">
+                                <div className="flex items-center space-x-4 text-sm text-muted-foreground">
                                   <div className="flex items-center space-x-1">
                                     <User className="w-3 h-3" />
                                     <span className="truncate">
@@ -332,7 +332,7 @@ export const InvoicesPipelineView: React.FC<InvoicesPipelineViewProps> = ({
                                   </div>
                                   <div className="flex items-center space-x-1">
                                     <DollarSign className="w-3 h-3" />
-                                    <span className="font-medium text-white">
+                                    <span className="font-medium text-foreground">
                                       {formatCurrency(invoice.total)}
                                     </span>
                                   </div>
@@ -355,7 +355,7 @@ export const InvoicesPipelineView: React.FC<InvoicesPipelineViewProps> = ({
                                   variant="ghost"
                                   size="sm"
                                   onClick={() => onView(invoice)}
-                                  className="text-gray-400 hover:text-white hover:bg-white/10"
+                                  className="text-muted-foreground hover:text-foreground hover:bg-muted"
                                 >
                                   <Eye className="w-4 h-4" />
                                 </Button>

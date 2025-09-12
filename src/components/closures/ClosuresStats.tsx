@@ -17,26 +17,26 @@ const ClosuresStats = ({ closures }: ClosuresStatsProps) => {
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-      <Card className="glass-card">
+      <Card>
         <CardContent className="p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-gray-400 text-sm">Cierres Abiertos</p>
-              <p className="text-2xl font-bold text-white">
+              <p className="text-muted-foreground text-sm">Cierres Abiertos</p>
+              <p className="text-2xl font-bold text-foreground">
                 {closures.filter(c => c.status === 'open').length}
               </p>
             </div>
-            <FileText className="w-8 h-8 text-tms-green" />
+            <FileText className="w-8 h-8 text-primary" />
           </div>
         </CardContent>
       </Card>
 
-      <Card className="glass-card">
+      <Card>
         <CardContent className="p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-gray-400 text-sm">Cierres Cerrados</p>
-              <p className="text-2xl font-bold text-white">
+              <p className="text-muted-foreground text-sm">Cierres Cerrados</p>
+              <p className="text-2xl font-bold text-foreground">
                 {closures.filter(c => c.status === 'closed').length}
               </p>
             </div>
@@ -45,12 +45,12 @@ const ClosuresStats = ({ closures }: ClosuresStatsProps) => {
         </CardContent>
       </Card>
 
-      <Card className="glass-card">
+      <Card>
         <CardContent className="p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-gray-400 text-sm">Total Facturado</p>
-              <p className="text-2xl font-bold text-white">
+              <p className="text-muted-foreground text-sm">Total Facturado</p>
+              <p className="text-2xl font-bold text-foreground">
                 {formatCurrency(closures.filter(c => c.status === 'invoiced').reduce((sum, c) => sum + c.total, 0))}
               </p>
             </div>

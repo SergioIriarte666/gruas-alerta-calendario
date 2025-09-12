@@ -13,35 +13,35 @@ interface ClosuresSearchProps {
 
 const ClosuresSearch = ({ searchTerm, onSearchChange, statusFilter, onStatusFilterChange }: ClosuresSearchProps) => {
   return (
-    <Card className="glass-card">
+    <Card>
       <CardContent className="p-4">
         <div className="flex flex-col sm:flex-row gap-4">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
             <Input
               placeholder="Buscar por folio o estado..."
               value={searchTerm}
               onChange={(e) => onSearchChange(e.target.value)}
-              className="pl-10 bg-white/5 border-gray-700 text-white placeholder-gray-400"
+              className="pl-10 bg-background border-border text-foreground placeholder:text-muted-foreground"
             />
           </div>
           <div className="relative min-w-[200px]">
-            <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 z-10" />
+            <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4 z-10" />
             <Select value={statusFilter} onValueChange={onStatusFilterChange}>
-              <SelectTrigger className="pl-10 bg-white/5 border-gray-700 text-white">
+              <SelectTrigger className="pl-10 bg-background border-border text-foreground">
                 <SelectValue placeholder="Filtrar por estado" />
               </SelectTrigger>
-              <SelectContent className="bg-gray-800 border-gray-700">
-                <SelectItem value="all" className="text-white hover:bg-gray-700">
+              <SelectContent className="bg-background border-border">
+                <SelectItem value="all" className="text-foreground hover:bg-muted">
                   Todos los estados
                 </SelectItem>
-                <SelectItem value="open" className="text-white hover:bg-gray-700">
+                <SelectItem value="open" className="text-foreground hover:bg-muted">
                   Abiertos
                 </SelectItem>
-                <SelectItem value="closed" className="text-white hover:bg-gray-700">
+                <SelectItem value="closed" className="text-foreground hover:bg-muted">
                   Cerrados
                 </SelectItem>
-                <SelectItem value="invoiced" className="text-white hover:bg-gray-700">
+                <SelectItem value="invoiced" className="text-foreground hover:bg-muted">
                   Facturados
                 </SelectItem>
               </SelectContent>

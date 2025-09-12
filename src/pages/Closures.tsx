@@ -139,7 +139,7 @@ const Closures = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="text-white">Cargando cierres...</div>
+        <div className="text-foreground">Cargando cierres...</div>
       </div>
     );
   }
@@ -182,15 +182,15 @@ const Closures = () => {
 
       {closures.length === 0 && !loading && (
         <div className="text-center py-8">
-          <p className="text-gray-400">No hay cierres disponibles. Crea tu primer cierre para comenzar.</p>
+          <p className="text-muted-foreground">No hay cierres disponibles. Crea tu primer cierre para comenzar.</p>
         </div>
       )}
 
       <Sheet open={showReportSheet} onOpenChange={setShowReportSheet}>
-        <SheetContent className="bg-gray-900 border-gray-800 text-white w-full sm:w-3/4 md:w-1/2 lg:w-1/3">
+        <SheetContent className="bg-background border-border text-foreground w-full sm:w-3/4 md:w-1/2 lg:w-1/3">
           <SheetHeader>
             <SheetTitle>Generar Informe de Servicios</SheetTitle>
-            <SheetDescription className="text-gray-400">
+            <SheetDescription className="text-muted-foreground">
               Selecciona el rango de fechas y un cliente para generar el informe.
             </SheetDescription>
           </SheetHeader>

@@ -10,8 +10,8 @@ const InvoicesHeader = ({ onCreateInvoice }: InvoicesHeaderProps) => {
   return (
     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
       <div>
-        <h1 className="text-3xl font-bold text-white">Facturas</h1>
-        <p className="text-gray-400 mt-1">Gestión de facturación y pagos</p>
+        <h1 className="text-3xl font-bold text-foreground">Facturas</h1>
+        <p className="text-muted-foreground mt-1">Gestión de facturación y pagos</p>
       </div>
       <Button
         onClick={onCreateInvoice}

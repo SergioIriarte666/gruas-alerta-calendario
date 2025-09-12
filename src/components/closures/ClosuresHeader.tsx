@@ -11,14 +11,14 @@ const ClosuresHeader = ({ onCreateClosure, onGenerateReport }: ClosuresHeaderPro
   return (
     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
       <div>
-        <h1 className="text-3xl font-bold text-white">Cierres de Servicios</h1>
-        <p className="text-gray-400 mt-1">Gestión de cierres por períodos</p>
+        <h1 className="text-3xl font-bold text-foreground">Cierres de Servicios</h1>
+        <p className="text-muted-foreground mt-1">Gestión de cierres por períodos</p>
       </div>
       <div className="flex items-center gap-2">
         <Button
           onClick={onGenerateReport}
           variant="outline"
-          className="border-gray-600 text-white hover:bg-gray-800 hover:text-white"
+          className="border-border text-foreground hover:bg-muted"
           title="Generar informe de servicios"
         >
           <FileText className="w-4 h-4 mr-2" />
@@ -26,7 +26,7 @@ const ClosuresHeader = ({ onCreateClosure, onGenerateReport }: ClosuresHeaderPro
         </Button>
         <Button
           onClick={onCreateClosure}
-          className="bg-tms-green hover:bg-tms-green/90 text-white"
+          className="bg-primary hover:bg-primary/90 text-primary-foreground"
           title="Crear un nuevo cierre de servicios"
         >
           <Plus className="w-4 h-4 mr-2" />
