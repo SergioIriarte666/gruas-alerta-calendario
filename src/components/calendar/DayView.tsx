@@ -53,29 +53,29 @@ export const DayView = ({
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 calendar-scope">
       <div className="text-center">
-        <h3 className="text-xl font-semibold text-white mb-2">
+        <h3 className="text-xl font-semibold text-foreground mb-2">
           {formatForDisplayLong(selectedDate)}
         </h3>
       </div>
       
       {dayEvents.length === 0 ? (
         <div className="text-center py-12">
-          <Clock className="w-16 h-16 mx-auto mb-4 text-gray-400" />
-          <p className="text-gray-400 mb-4">No hay eventos programados para este día</p>
+          <Clock className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
+          <p className="text-muted-foreground mb-4">No hay eventos programados para este día</p>
           <EventModal onCreateEvent={createEvent} selectedDate={selectedDate} />
         </div>
       ) : (
         <div className="space-y-3">
           {dayEvents.map(event => (
-            <div key={event.id} className="p-4 rounded-lg bg-white/5 border border-gray-700 hover:bg-white/10 transition-colors group">
+            <div key={event.id} className="p-4 rounded-lg bg-card border hover:bg-accent transition-colors group">
               <div className="flex items-start justify-between mb-3">
                 <div className="flex-1">
-                  <h4 className="font-medium text-white text-lg">{event.title}</h4>
+                  <h4 className="font-medium text-foreground text-lg">{event.title}</h4>
                   <div className="flex items-center space-x-2 mt-1">
-                    <Clock className="w-4 h-4 text-gray-400" />
-                    <span className="text-gray-400 text-sm">{event.startTime} - {event.endTime}</span>
+                    <Clock className="w-4 h-4 text-muted-foreground" />
+                    <span className="text-muted-foreground text-sm">{event.startTime} - {event.endTime}</span>
                   </div>
                 </div>
                 <div className="flex items-center space-x-2">
@@ -98,7 +98,7 @@ export const DayView = ({
                     variant="ghost"
                     size="icon"
                     onClick={() => handleDeleteEvent(event.id, event.title)}
-                    className="h-8 w-8 text-gray-400 hover:text-red-400 hover:bg-red-500/10 opacity-0 group-hover:opacity-100 transition-all duration-200"
+                    className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10 opacity-0 group-hover:opacity-100 transition-all duration-200"
                     title="Eliminar evento"
                   >
                     <Trash2 className="h-4 w-4" />
@@ -106,7 +106,7 @@ export const DayView = ({
                 </div>
               </div>
               {event.description && (
-                <p className="text-gray-300 text-sm">{event.description}</p>
+                <p className="text-muted-foreground text-sm">{event.description}</p>
               )}
             </div>
           ))}

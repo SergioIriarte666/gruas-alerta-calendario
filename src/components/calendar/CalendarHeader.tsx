@@ -12,10 +12,10 @@ interface CalendarHeaderProps {
 
 export const CalendarHeader = ({ onCreateEvent, selectedDate }: CalendarHeaderProps) => {
   return (
-    <div className="flex items-center justify-between">
+    <div className="flex items-center justify-between calendar-scope">
       <div>
-        <h1 className="text-3xl font-bold text-white">Calendario Centralizado</h1>
-        <p className="text-gray-400 mt-2">
+        <h1 className="text-3xl font-bold text-foreground">Calendario Centralizado</h1>
+        <p className="text-muted-foreground mt-2">
           Vista integrada de servicios, vencimientos y eventos importantes
         </p>
       </div>

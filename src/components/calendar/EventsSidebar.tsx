@@ -80,15 +80,15 @@ export const EventsSidebar: React.FC<EventsSidebarProps> = ({
   };
 
   return (
-    <div className="space-y-4">
-      <Card className="glass-card">
+    <div className="space-y-4 calendar-scope">
+      <Card className="bg-card border-border">
         <CardHeader>
-          <CardTitle className="flex items-center justify-between text-white">
+          <CardTitle className="flex items-center justify-between text-foreground">
             <span>Eventos - {formatForDisplayLong(selectedDate)}</span>
             <Button
               size="sm"
               onClick={() => setShowForm(!showForm)}
-              className="bg-green-500 hover:bg-green-600 text-white"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground"
             >
               <Plus className="w-4 h-4" />
             </Button>
@@ -96,22 +96,22 @@ export const EventsSidebar: React.FC<EventsSidebarProps> = ({
         </CardHeader>
         <CardContent>
           {showForm && (
-            <div className="space-y-4 mb-4 p-4 bg-gray-800 rounded-lg">
+            <div className="space-y-4 mb-4 p-4 bg-card rounded-lg border">
               <div>
-                <Label htmlFor="title" className="text-white">Título</Label>
+                <Label htmlFor="title" className="text-foreground">Título</Label>
                 <Input
                   id="title"
                   value={newEvent.title}
                   onChange={(e) => setNewEvent({...newEvent, title: e.target.value})}
                   placeholder="Título del evento"
-                  className="bg-gray-700 border-gray-600 text-white"
+                  className="bg-card border-border text-foreground"
                 />
               </div>
               
               <div>
-                <Label htmlFor="type" className="text-white">Tipo</Label>
+                <Label htmlFor="type" className="text-foreground">Tipo</Label>
                 <Select value={newEvent.type} onValueChange={(value: CalendarEvent['type']) => setNewEvent({...newEvent, type: value})}>
-                  <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
+                  <SelectTrigger className="bg-card border-border text-foreground">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -126,43 +126,43 @@ export const EventsSidebar: React.FC<EventsSidebarProps> = ({
 
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <Label htmlFor="startTime" className="text-white">Hora inicio</Label>
+                  <Label htmlFor="startTime" className="text-foreground">Hora inicio</Label>
                   <Input
                     id="startTime"
                     type="time"
                     value={newEvent.startTime}
                     onChange={(e) => setNewEvent({...newEvent, startTime: e.target.value})}
-                    className="bg-gray-700 border-gray-600 text-white"
+                    className="bg-card border-border text-foreground"
                   />
                 </div>
                 <div>
-                  <Label htmlFor="endTime" className="text-white">Hora fin</Label>
+                  <Label htmlFor="endTime" className="text-foreground">Hora fin</Label>
                   <Input
                     id="endTime"
                     type="time"
                     value={newEvent.endTime}
                     onChange={(e) => setNewEvent({...newEvent, endTime: e.target.value})}
-                    className="bg-gray-700 border-gray-600 text-white"
+                    className="bg-card border-border text-foreground"
                   />
                 </div>
               </div>
 
               <div>
-                <Label htmlFor="description" className="text-white">Descripción</Label>
+                <Label htmlFor="description" className="text-foreground">Descripción</Label>
                 <Textarea
                   id="description"
                   value={newEvent.description}
                   onChange={(e) => setNewEvent({...newEvent, description: e.target.value})}
                   placeholder="Descripción del evento"
-                  className="bg-gray-700 border-gray-600 text-white"
+                  className="bg-card border-border text-foreground"
                 />
               </div>
 
               <div className="flex gap-2">
-                <Button onClick={handleCreateEvent} className="bg-green-500 hover:bg-green-600 text-white">
+                <Button onClick={handleCreateEvent} className="bg-primary hover:bg-primary/90 text-primary-foreground">
                   Crear Evento
                 </Button>
-                <Button onClick={() => setShowForm(false)} variant="outline" className="border-gray-600 text-gray-300">
+                <Button onClick={() => setShowForm(false)} variant="outline">
                   Cancelar
                 </Button>
               </div>
@@ -171,7 +171,7 @@ export const EventsSidebar: React.FC<EventsSidebarProps> = ({
 
           <div className="space-y-2">
             {events.length === 0 ? (
-              <p className="text-gray-400 text-center py-4">No hay eventos para esta fecha</p>
+              <p className="text-muted-foreground text-center py-4">No hay eventos para esta fecha</p>
             ) : (
               events.map((event) => (
                 <div
@@ -180,16 +180,16 @@ export const EventsSidebar: React.FC<EventsSidebarProps> = ({
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
-                      <h4 className="font-medium text-white">{event.title}</h4>
-                      <p className="text-sm text-gray-300 flex items-center mt-1">
+                      <h4 className="font-medium text-foreground">{event.title}</h4>
+                      <p className="text-sm text-muted-foreground flex items-center mt-1">
                         <Clock className="w-3 h-3 mr-1" />
                         {event.startTime} - {event.endTime}
                       </p>
-                      <p className="text-xs text-gray-400 mt-1">
+                      <p className="text-xs text-muted-foreground mt-1">
                         {getEventTypeLabel(event.type)}
                       </p>
                       {event.description && (
-                        <p className="text-sm text-gray-300 mt-2">{event.description}</p>
+                        <p className="text-sm text-muted-foreground mt-2">{event.description}</p>
                       )}
                     </div>
                     <div className="flex items-center space-x-2">

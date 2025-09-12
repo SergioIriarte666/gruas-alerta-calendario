@@ -72,27 +72,27 @@ export const EventModal = ({ onCreateEvent, selectedDate }: EventModalProps) => 
           Nuevo Evento
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[600px] bg-gray-900 border-gray-700">
+      <DialogContent className="sm:max-w-[600px] calendar-scope">
         <DialogHeader>
-          <DialogTitle className="text-white">Crear Nuevo Evento</DialogTitle>
+          <DialogTitle className="text-foreground">Crear Nuevo Evento</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="title" className="text-gray-300">Título *</Label>
+              <Label htmlFor="title" className="text-muted-foreground">Título *</Label>
               <Input
                 id="title"
                 value={formData.title}
                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                 required
-                className="bg-gray-800 border-gray-700 text-white"
+                className="bg-card border-border text-foreground"
                 placeholder="Título del evento"
               />
             </div>
             <div>
-              <Label htmlFor="type" className="text-gray-300">Tipo de Evento</Label>
+              <Label htmlFor="type" className="text-muted-foreground">Tipo de Evento</Label>
               <Select value={formData.type} onValueChange={(value: CalendarEvent['type']) => setFormData({ ...formData, type: value })}>
-                <SelectTrigger className="bg-gray-800 border-gray-700 text-white">
+                <SelectTrigger className="bg-card border-border text-foreground">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="bg-gray-800 border-gray-700">
@@ -107,57 +107,57 @@ export const EventModal = ({ onCreateEvent, selectedDate }: EventModalProps) => 
           </div>
 
           <div>
-            <Label htmlFor="description" className="text-gray-300">Descripción</Label>
+            <Label htmlFor="description" className="text-muted-foreground">Descripción</Label>
             <Textarea
               id="description"
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              className="bg-gray-800 border-gray-700 text-white"
+              className="bg-card border-border text-foreground"
               placeholder="Descripción del evento (opcional)"
             />
           </div>
 
           <div className="grid grid-cols-3 gap-4">
             <div>
-              <Label htmlFor="date" className="text-gray-300">Fecha *</Label>
+              <Label htmlFor="date" className="text-muted-foreground">Fecha *</Label>
               <Input
                 id="date"
                 type="date"
                 value={formData.date}
                 onChange={(e) => setFormData({ ...formData, date: e.target.value })}
                 required
-                className="bg-gray-800 border-gray-700 text-white"
+                className="bg-card border-border text-foreground"
               />
             </div>
             <div>
-              <Label htmlFor="startTime" className="text-gray-300">Hora Inicio *</Label>
+              <Label htmlFor="startTime" className="text-muted-foreground">Hora Inicio *</Label>
               <Input
                 id="startTime"
                 type="time"
                 value={formData.startTime}
                 onChange={(e) => setFormData({ ...formData, startTime: e.target.value })}
                 required
-                className="bg-gray-800 border-gray-700 text-white"
+                className="bg-card border-border text-foreground"
               />
             </div>
             <div>
-              <Label htmlFor="endTime" className="text-gray-300">Hora Fin *</Label>
+              <Label htmlFor="endTime" className="text-muted-foreground">Hora Fin *</Label>
               <Input
                 id="endTime"
                 type="time"
                 value={formData.endTime}
                 onChange={(e) => setFormData({ ...formData, endTime: e.target.value })}
                 required
-                className="bg-gray-800 border-gray-700 text-white"
+                className="bg-card border-border text-foreground"
               />
             </div>
           </div>
 
           <div className="flex justify-end space-x-3 pt-4">
-            <Button type="button" variant="outline" onClick={() => setOpen(false)} className="border-gray-700 text-gray-300">
+            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
               Cancelar
             </Button>
-            <Button type="submit" className="bg-green-500 hover:bg-green-600 text-white">
+            <Button type="submit" className="bg-primary hover:bg-primary/90 text-primary-foreground">
               Crear Evento
             </Button>
           </div>

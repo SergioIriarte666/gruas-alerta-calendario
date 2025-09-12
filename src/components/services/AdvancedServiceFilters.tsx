@@ -54,17 +54,17 @@ export const AdvancedServiceFilters: React.FC<AdvancedServiceFiltersProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-black text-white border-tms-green">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto services-scope">
         <DialogHeader>
-          <DialogTitle className="text-white">Filtros Avanzados</DialogTitle>
+          <DialogTitle className="text-foreground">Filtros Avanzados</DialogTitle>
         </DialogHeader>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label className="text-white">Tipo de Servicio</Label>
+              <Label className="text-foreground">Tipo de Servicio</Label>
               <Select value={filters.serviceTypeId || 'all'} onValueChange={(value) => handleSelectChange('serviceTypeId', value)}>
-                <SelectTrigger className="bg-black border-tms-green/30 text-white">
+                <SelectTrigger className="bg-card border-border text-foreground">
                   <SelectValue placeholder="Seleccionar tipo" />
                 </SelectTrigger>
                 <SelectContent className="bg-white text-black">
@@ -79,54 +79,53 @@ export const AdvancedServiceFilters: React.FC<AdvancedServiceFiltersProps> = ({
             </div>
 
             <div className="space-y-2">
-              <Label className="text-white">Patente</Label>
+              <Label className="text-foreground">Patente</Label>
               <Input
                 placeholder="Filtrar por patente"
                 value={filters.licensePlate || ''}
                 onChange={(e) => handleInputChange('licensePlate', e.target.value)}
-                className="bg-black border-tms-green/30 text-white placeholder-gray-400"
+                className="bg-card border-border text-foreground"
               />
             </div>
 
             <div className="space-y-2">
-              <Label className="text-white">Número Fiscal</Label>
+              <Label className="text-foreground">Número Fiscal</Label>
               <Input
                 placeholder="Filtrar por número fiscal"
                 value={filters.numeroFiscal || ''}
                 onChange={(e) => handleInputChange('numeroFiscal', e.target.value)}
-                className="bg-black border-tms-green/30 text-white placeholder-gray-400"
+                className="bg-card border-border text-foreground"
               />
             </div>
           </div>
 
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label className="text-white">Número de Cotización</Label>
+              <Label className="text-foreground">Número de Cotización</Label>
               <Input
                 placeholder="Filtrar por cotización"
                 value={filters.quoteNumber || ''}
                 onChange={(e) => handleInputChange('quoteNumber', e.target.value)}
-                className="bg-black border-tms-green/30 text-white placeholder-gray-400"
+                className="bg-card border-border text-foreground"
               />
             </div>
 
             <div className="space-y-2">
-              <Label className="text-white">Orden de Compra</Label>
+              <Label className="text-foreground">Orden de Compra</Label>
               <Input
                 placeholder="Filtrar por O.C."
                 value={filters.purchaseOrderNumber || ''}
                 onChange={(e) => handleInputChange('purchaseOrderNumber', e.target.value)}
-                className="bg-black border-tms-green/30 text-white placeholder-gray-400"
+                className="bg-card border-border text-foreground"
               />
             </div>
           </div>
         </div>
 
-        <div className="flex justify-end space-x-4 mt-6 pt-6 border-t border-gray-700">
+        <div className="flex justify-end space-x-4 mt-6 pt-6 border-t">
           <Button
             variant="outline"
             onClick={onClose}
-            className="border-gray-600 text-gray-300 hover:bg-gray-800"
           >
             Cancelar
           </Button>
