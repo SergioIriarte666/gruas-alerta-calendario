@@ -23,15 +23,15 @@ interface MetricCardProps {
 }
 
 const MetricCard = ({ icon: Icon, title, value, description, trend }: MetricCardProps) => (
-  <Card className="bg-white/5 border-tms-green/30">
+  <Card className="bg-card border-border">
     <CardContent className="p-4">
       <div className="flex items-center space-x-3">
-        <div className="p-2 bg-tms-green/10 rounded-lg">
-          <Icon className="h-5 w-5 text-tms-green" />
+        <div className="p-2 bg-primary/10 rounded-lg">
+          <Icon className="h-5 w-5 text-primary" />
         </div>
         <div className="flex-1">
           <div className="flex items-center gap-2">
-            <p className="text-sm text-white/80">{title}</p>
+            <p className="text-sm text-muted-foreground">{title}</p>
             {trend && (
               <TrendingUp 
                 className={`h-3 w-3 ${
@@ -42,9 +42,9 @@ const MetricCard = ({ icon: Icon, title, value, description, trend }: MetricCard
               />
             )}
           </div>
-          <p className="text-lg font-semibold text-white">{value}</p>
+          <p className="text-lg font-semibold text-foreground">{value}</p>
           {description && (
-            <p className="text-xs text-white/80">{description}</p>
+            <p className="text-xs text-muted-foreground">{description}</p>
           )}
         </div>
       </div>
@@ -118,9 +118,9 @@ export const ClientMetricsOverview = ({ client }: { client: Client }) => {
       </div>
 
       {/* Estado Financiero */}
-      <Card className="bg-white/5 border-tms-green/30">
+      <Card className="bg-card border-border">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-white">
+          <CardTitle className="flex items-center gap-2 text-foreground">
             <CreditCard className="h-5 w-5" />
             Estado Financiero
           </CardTitle>
@@ -128,36 +128,36 @@ export const ClientMetricsOverview = ({ client }: { client: Client }) => {
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
-              <p className="text-sm text-white/80">Total Facturado</p>
-              <p className="text-2xl font-bold text-tms-green">
+              <p className="text-sm text-muted-foreground">Total Facturado</p>
+              <p className="text-2xl font-bold text-primary">
                 {formatCurrency(metrics.totalInvoiced)}
               </p>
             </div>
             <div className="space-y-2">
-              <p className="text-sm text-white/80">Total Pagado</p>
-              <p className="text-2xl font-bold text-white">
+              <p className="text-sm text-muted-foreground">Total Pagado</p>
+              <p className="text-2xl font-bold text-foreground">
                 {formatCurrency(metrics.totalPaid)}
               </p>
             </div>
             <div className="space-y-2">
               <div className="flex items-center gap-2">
-                <p className="text-sm text-white/80">Pendiente de Pago</p>
+                <p className="text-sm text-muted-foreground">Pendiente de Pago</p>
                 {metrics.pendingAmount > 0 && (
                   <AlertTriangle className="h-4 w-4 text-yellow-500" />
                 )}
               </div>
               <p className={`text-2xl font-bold ${
-                metrics.pendingAmount > 0 ? 'text-yellow-400' : 'text-gray-400'
+                metrics.pendingAmount > 0 ? 'text-yellow-600' : 'text-muted-foreground'
               }`}>
                 {formatCurrency(metrics.pendingAmount)}
               </p>
             </div>
           </div>
           {metrics.avgPaymentTime > 0 && (
-            <div className="mt-4 pt-4 border-t">
+            <div className="mt-4 pt-4 border-t border-border">
               <div className="flex items-center gap-2">
-                <Clock className="h-4 w-4 text-white/80" />
-                <span className="text-sm text-white/80">
+                <Clock className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm text-muted-foreground">
                   Tiempo promedio de pago: {metrics.avgPaymentTime} días
                 </span>
                 <Badge variant={metrics.avgPaymentTime <= 30 ? "default" : "destructive"}>
@@ -192,9 +192,9 @@ export const ClientMetricsOverview = ({ client }: { client: Client }) => {
       </div>
 
       {/* Actividad Reciente */}
-      <Card className="bg-white/5 border-tms-green/30">
+      <Card className="bg-card border-border">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-white">
+          <CardTitle className="flex items-center gap-2 text-foreground">
             <Activity className="h-5 w-5" />
             Actividad Reciente
           </CardTitle>
@@ -203,16 +203,16 @@ export const ClientMetricsOverview = ({ client }: { client: Client }) => {
           <div className="space-y-4">
             {metrics.lastServiceDate && (
               <div className="flex items-center justify-between">
-                <span className="text-sm text-white/80">Último servicio</span>
-                <span className="text-sm font-medium text-white">
+                <span className="text-sm text-muted-foreground">Último servicio</span>
+                <span className="text-sm font-medium text-foreground">
                   {formatForDisplay(new Date(metrics.lastServiceDate))}
                 </span>
               </div>
             )}
             {metrics.lastInvoiceDate && (
               <div className="flex items-center justify-between">
-                <span className="text-sm text-white/80">Última factura</span>
-                <span className="text-sm font-medium text-white">
+                <span className="text-sm text-muted-foreground">Última factura</span>
+                <span className="text-sm font-medium text-foreground">
                   {formatForDisplay(new Date(metrics.lastInvoiceDate))}
                 </span>
               </div>
@@ -223,21 +223,21 @@ export const ClientMetricsOverview = ({ client }: { client: Client }) => {
 
       {/* Tendencia Mensual (si hay datos) */}
       {metrics.monthlyTrend.length > 0 && (
-        <Card className="bg-white/5 border-tms-green/30">
+        <Card className="bg-card border-border">
           <CardHeader>
-            <CardTitle className="text-white">Tendencia de Facturación (6 meses)</CardTitle>
+            <CardTitle className="text-foreground">Tendencia de Facturación (6 meses)</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
               {metrics.monthlyTrend.map((month) => (
                 <div key={month.month} className="flex items-center justify-between">
-                  <span className="text-sm text-white/80">
+                  <span className="text-sm text-muted-foreground">
                     {new Date(month.month + '-01').toLocaleDateString('es-CL', { 
                       year: 'numeric', 
                       month: 'long' 
                     })}
                   </span>
-                  <span className="text-sm font-medium text-white">
+                  <span className="text-sm font-medium text-foreground">
                     {formatCurrency(month.value)}
                   </span>
                 </div>

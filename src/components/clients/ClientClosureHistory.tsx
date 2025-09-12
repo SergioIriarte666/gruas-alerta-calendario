@@ -12,15 +12,15 @@ interface MetricCardProps {
 }
 
 const MetricCard = ({ icon: Icon, title, value }: MetricCardProps) => (
-  <Card className="bg-white/5 border-tms-green/30">
+  <Card className="bg-card border-border">
     <CardContent className="p-4">
       <div className="flex items-center space-x-3">
-        <div className="p-2 bg-tms-green/10 rounded-lg">
-          <Icon className="h-5 w-5 text-tms-green" />
+        <div className="p-2 bg-primary/10 rounded-lg">
+          <Icon className="h-5 w-5 text-primary" />
         </div>
         <div>
-          <p className="text-sm text-white/80">{title}</p>
-          <p className="text-lg font-semibold text-white">{value}</p>
+          <p className="text-sm text-muted-foreground">{title}</p>
+          <p className="text-lg font-semibold text-foreground">{value}</p>
         </div>
       </div>
     </CardContent>
@@ -90,13 +90,13 @@ export const ClientClosureHistory = ({ client }: { client: Client }) => {
       </div>
 
       {/* Lista de Cierres */}
-      <Card className="bg-white/5 border-tms-green/30">
+      <Card className="bg-card border-border">
         <CardHeader>
-          <CardTitle className="text-white">Historial de Cierres</CardTitle>
+          <CardTitle className="text-foreground">Historial de Cierres</CardTitle>
         </CardHeader>
         <CardContent>
           {closures.length === 0 ? (
-            <div className="text-center py-8 text-white/80">
+            <div className="text-center py-8 text-muted-foreground">
               No hay cierres registrados para este cliente.
             </div>
           ) : (
@@ -104,7 +104,7 @@ export const ClientClosureHistory = ({ client }: { client: Client }) => {
               {closures.map((closure) => (
                 <div
                   key={closure.id}
-                  className="border border-tms-green/30 rounded-lg p-4 hover:bg-white/5 transition-colors"
+                  className="border border-border rounded-lg p-4 hover:bg-muted/50 transition-colors"
                 >
                   <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div className="space-y-2">
@@ -112,18 +112,18 @@ export const ClientClosureHistory = ({ client }: { client: Client }) => {
                         <Badge variant="tms" className="whitespace-nowrap">{closure.folio}</Badge>
                         {getStatusBadge(closure.status)}
                       </div>
-                      <div className="text-sm text-white/80">
+                      <div className="text-sm text-muted-foreground">
                         Período: {formatForDisplay(parseFromDatabase(closure.dateRange.from))} - {formatForDisplay(parseFromDatabase(closure.dateRange.to))}
                       </div>
-                      <div className="text-sm text-white/80">
+                      <div className="text-sm text-muted-foreground">
                         Servicios incluidos: {closure.serviceIds.length}
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className="text-lg font-semibold text-white">
+                      <div className="text-lg font-semibold text-foreground">
                         {formatCurrency(closure.total)}
                       </div>
-                      <div className="text-sm text-white/80">
+                      <div className="text-sm text-muted-foreground">
                         {formatForDisplay(parseFromDatabase(closure.createdAt))}
                       </div>
                     </div>

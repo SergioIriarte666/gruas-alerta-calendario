@@ -30,40 +30,40 @@ export const ClientTabsWithCounters = ({ client }: ClientTabsWithCountersProps) 
   return (
     <div className="h-full flex flex-col">
       <Tabs defaultValue="overview" className="h-full flex flex-col">
-        <TabsList className="flex-shrink-0 grid w-full grid-cols-6 bg-white/5 border border-tms-green/30">
+        <TabsList className="flex-shrink-0 grid w-full grid-cols-6 bg-card border-border">
           <TabsTrigger 
             value="overview" 
-            className="text-white data-[state=active]:bg-tms-green data-[state=active]:text-black text-xs"
+            className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-muted-foreground hover:text-foreground"
           >
             Resumen
           </TabsTrigger>
           <TabsTrigger 
             value="info" 
-            className="text-white data-[state=active]:bg-tms-green data-[state=active]:text-black text-xs"
+            className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-muted-foreground hover:text-foreground"
           >
             Información
           </TabsTrigger>
           <TabsTrigger 
             value="services" 
-            className="text-white data-[state=active]:bg-tms-green data-[state=active]:text-black text-xs"
+            className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-muted-foreground hover:text-foreground"
           >
             {getTabLabel('Servicios', services.length, servicesLoading)}
           </TabsTrigger>
           <TabsTrigger 
             value="invoices" 
-            className="text-white data-[state=active]:bg-tms-green data-[state=active]:text-black text-xs"
+            className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-muted-foreground hover:text-foreground"
           >
             {getTabLabel('Facturas', invoices.length, invoicesLoading)}
           </TabsTrigger>
           <TabsTrigger 
             value="closures" 
-            className="text-white data-[state=active]:bg-tms-green data-[state=active]:text-black text-xs"
+            className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-muted-foreground hover:text-foreground"
           >
             {getTabLabel('Cierres', closures.length, closuresLoading)}
           </TabsTrigger>
           <TabsTrigger 
             value="requests" 
-            className="text-white data-[state=active]:bg-tms-green data-[state=active]:text-black text-xs"
+            className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-muted-foreground hover:text-foreground"
           >
             {getTabLabel('Solicitudes', requests.length, requestsLoading)}
           </TabsTrigger>
@@ -76,45 +76,45 @@ export const ClientTabsWithCounters = ({ client }: ClientTabsWithCountersProps) 
               </TabsContent>
 
               <TabsContent value="info" className="m-0">
-                <Card className="bg-white/5 border-tms-green/30">
+                <Card className="bg-card border-border">
                   <CardHeader>
-                    <CardTitle className="text-white">Información General</CardTitle>
+                    <CardTitle className="text-foreground">Información General</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="space-y-4">
                         <div>
-                          <label className="block text-sm font-medium text-white/90 mb-1">
+                          <label className="block text-sm font-medium text-muted-foreground mb-1">
                             Nombre/Razón Social
                           </label>
-                          <p className="text-white bg-white/5 border border-tms-green/30 rounded px-3 py-2">
+                          <p className="text-foreground bg-card border-border rounded px-3 py-2">
                             {client.name}
                           </p>
                         </div>
                         
                         <div>
-                          <label className="block text-sm font-medium text-white/90 mb-1">
+                          <label className="block text-sm font-medium text-muted-foreground mb-1">
                             RUT
                           </label>
-                          <p className="text-white bg-white/5 border border-tms-green/30 rounded px-3 py-2">
+                          <p className="text-foreground bg-card border-border rounded px-3 py-2">
                             {client.rut}
                           </p>
                         </div>
                         
                         <div>
-                          <label className="block text-sm font-medium text-white/90 mb-1">
+                          <label className="block text-sm font-medium text-muted-foreground mb-1">
                             Email
                           </label>
-                          <p className="text-white bg-white/5 border border-tms-green/30 rounded px-3 py-2">
+                          <p className="text-foreground bg-card border-border rounded px-3 py-2">
                             {client.email || 'No especificado'}
                           </p>
                         </div>
                         
                         <div>
-                          <label className="block text-sm font-medium text-white/90 mb-1">
+                          <label className="block text-sm font-medium text-muted-foreground mb-1">
                             Departamento
                           </label>
-                          <p className="text-white bg-white/5 border border-tms-green/30 rounded px-3 py-2">
+                          <p className="text-foreground bg-card border-border rounded px-3 py-2">
                             {client.department}
                           </p>
                         </div>
@@ -122,41 +122,41 @@ export const ClientTabsWithCounters = ({ client }: ClientTabsWithCountersProps) 
                       
                       <div className="space-y-4">
                         <div>
-                          <label className="block text-sm font-medium text-white/90 mb-1">
+                          <label className="block text-sm font-medium text-muted-foreground mb-1">
                             Teléfono
                           </label>
-                          <p className="text-white bg-white/5 border border-tms-green/30 rounded px-3 py-2">
+                          <p className="text-foreground bg-card border-border rounded px-3 py-2">
                             {client.phone || 'No especificado'}
                           </p>
                         </div>
                         
                         <div>
-                          <label className="block text-sm font-medium text-white/90 mb-1">
+                          <label className="block text-sm font-medium text-muted-foreground mb-1">
                             Dirección
                           </label>
-                          <p className="text-white bg-white/5 border border-tms-green/30 rounded px-3 py-2">
+                          <p className="text-foreground bg-card border-border rounded px-3 py-2">
                             {client.address || 'No especificada'}
                           </p>
                         </div>
                         
                         <div>
-                          <label className="block text-sm font-medium text-white/90 mb-1">
+                          <label className="block text-sm font-medium text-muted-foreground mb-1">
                             Estado
                           </label>
                           <p className={`inline-flex px-2 py-1 rounded text-sm font-medium ${
                             client.isActive 
-                              ? 'bg-tms-green/20 text-tms-green border border-tms-green/30' 
-                              : 'bg-red-500/20 text-red-400 border border-red-500/30'
+                              ? 'bg-primary/10 text-primary border border-primary/20' 
+                              : 'bg-destructive/10 text-destructive border border-destructive/20'
                           }`}>
                             {client.isActive ? 'Activo' : 'Inactivo'}
                           </p>
                         </div>
                         
                         <div>
-                          <label className="block text-sm font-medium text-white/90 mb-1">
+                          <label className="block text-sm font-medium text-muted-foreground mb-1">
                             Fecha de Registro
                           </label>
-                          <p className="text-white bg-white/5 border border-tms-green/30 rounded px-3 py-2">
+                          <p className="text-foreground bg-card border-border rounded px-3 py-2">
                             {client.createdAt ? new Date(client.createdAt).toLocaleDateString('es-CL') : 'No disponible'}
                           </p>
                         </div>

@@ -33,7 +33,7 @@ export const ClientDetailsModal = ({ client, isOpen, onClose }: ClientDetailsMod
         </DialogHeader>
         
         {/* Contenido con Scroll */}
-        <div className="flex-1 min-h-0">
+        <div className="flex-1 min-h-0 client-scope">
           <ClientTabsWithCounters client={client} />
         </div>
         

@@ -175,10 +175,30 @@ body {
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
 }
 
-/* Focus visible mejorado */
+/* Focus Ring Utility */
 .focus-ring {
-  outline: 2px solid hsl(var(--ring));
-  outline-offset: 2px;
+  @apply ring-2 ring-primary/20 ring-offset-2 ring-offset-background;
+}
+
+/* Client Module Contrast Fix */
+.client-scope {
+  color: hsl(var(--foreground));
+}
+
+.client-scope .text-white {
+  color: hsl(var(--foreground)) !important;
+}
+
+.client-scope .text-white\/90 {
+  color: hsl(var(--foreground)) !important;
+}
+
+.client-scope .text-white\/80 {
+  color: hsl(var(--muted-foreground)) !important;
+}
+
+.client-scope .text-white\/70 {
+  color: hsl(var(--muted-foreground)) !important;
 }
 
 /* Media queries para responsive */

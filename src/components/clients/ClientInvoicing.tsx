@@ -14,15 +14,15 @@ interface MetricCardProps {
 }
 
 const MetricCard = ({ icon: Icon, title, value }: MetricCardProps) => (
-  <Card className="bg-white/5 border-tms-green/30">
+  <Card className="bg-card border-border">
     <CardContent className="p-4">
       <div className="flex items-center space-x-3">
-        <div className="p-2 bg-tms-green/10 rounded-lg">
-          <Icon className="h-5 w-5 text-tms-green" />
+        <div className="p-2 bg-primary/10 rounded-lg">
+          <Icon className="h-5 w-5 text-primary" />
         </div>
         <div>
-          <p className="text-sm text-white/80">{title}</p>
-          <p className="text-lg font-semibold text-white">{value}</p>
+          <p className="text-sm text-muted-foreground">{title}</p>
+          <p className="text-lg font-semibold text-foreground">{value}</p>
         </div>
       </div>
     </CardContent>
@@ -52,7 +52,7 @@ const getStatusBadge = (status: InvoiceType['status']) => {
 export const ClientInvoicing = ({ client }: { client: Client }) => {
   const { invoices, loading, metrics } = useClientInvoices(client.id);
 
-  if (loading) return <div className="text-center p-8 text-white">Cargando facturación...</div>;
+  if (loading) return <div className="text-center p-8 text-muted-foreground">Cargando facturación...</div>;
 
   return (
     <div className="space-y-6">
@@ -63,32 +63,32 @@ export const ClientInvoicing = ({ client }: { client: Client }) => {
         <MetricCard icon={FileWarning} title="Facturas Vencidas" value={metrics.overdueInvoices} />
       </div>
 
-      <Card className="bg-white/5 border-tms-green/30">
+      <Card className="bg-card border-border">
         <CardHeader>
-          <CardTitle className="text-white">Facturas</CardTitle>
+          <CardTitle className="text-foreground">Facturas</CardTitle>
         </CardHeader>
         <CardContent>
           {invoices.length === 0 ? (
-            <div className="text-center py-8 text-white/80">No hay facturas para este cliente.</div>
+            <div className="text-center py-8 text-muted-foreground">No hay facturas para este cliente.</div>
           ) : (
              <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
-                  <TableRow className="border-gray-700 hover:bg-transparent">
-                    <TableHead className="text-white/80">Folio</TableHead>
-                    <TableHead className="text-white/80">F. Emisión</TableHead>
-                    <TableHead className="text-white/80">F. Venc.</TableHead>
-                    <TableHead className="text-white/80">Total</TableHead>
-                    <TableHead className="text-white/80">Estado</TableHead>
+                  <TableRow className="border-border hover:bg-transparent">
+                    <TableHead className="text-muted-foreground">Folio</TableHead>
+                    <TableHead className="text-muted-foreground">F. Emisión</TableHead>
+                    <TableHead className="text-muted-foreground">F. Venc.</TableHead>
+                    <TableHead className="text-muted-foreground">Total</TableHead>
+                    <TableHead className="text-muted-foreground">Estado</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {invoices.map(invoice => (
-                    <TableRow key={invoice.id} className="border-gray-700">
+                    <TableRow key={invoice.id} className="border-border">
                       <TableCell className="font-medium"><Badge variant="tms" className="whitespace-nowrap">{invoice.folio}</Badge></TableCell>
-                      <TableCell className="text-white/80">{formatForDisplay(parseFromDatabase(invoice.issueDate))}</TableCell>
-                      <TableCell className="text-white/80">{formatForDisplay(parseFromDatabase(invoice.dueDate))}</TableCell>
-                      <TableCell className="text-white/80 font-semibold">{formatCurrency(invoice.total)}</TableCell>
+                      <TableCell className="text-foreground">{formatForDisplay(parseFromDatabase(invoice.issueDate))}</TableCell>
+                      <TableCell className="text-foreground">{formatForDisplay(parseFromDatabase(invoice.dueDate))}</TableCell>
+                      <TableCell className="text-foreground font-semibold">{formatCurrency(invoice.total)}</TableCell>
                       <TableCell>{getStatusBadge(invoice.status)}</TableCell>
                     </TableRow>
                   ))}

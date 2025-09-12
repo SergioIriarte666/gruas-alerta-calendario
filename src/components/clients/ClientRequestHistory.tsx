@@ -13,15 +13,15 @@ interface MetricCardProps {
 }
 
 const MetricCard = ({ icon: Icon, title, value }: MetricCardProps) => (
-  <Card className="bg-white/5 border-tms-green/30">
+  <Card className="bg-card border-border">
     <CardContent className="p-4">
       <div className="flex items-center space-x-3">
-        <div className="p-2 bg-tms-green/10 rounded-lg">
-          <Icon className="h-5 w-5 text-tms-green" />
+        <div className="p-2 bg-primary/10 rounded-lg">
+          <Icon className="h-5 w-5 text-primary" />
         </div>
         <div>
-          <p className="text-sm text-white/80">{title}</p>
-          <p className="text-lg font-semibold text-white">{value}</p>
+          <p className="text-sm text-muted-foreground">{title}</p>
+          <p className="text-lg font-semibold text-foreground">{value}</p>
         </div>
       </div>
     </CardContent>
@@ -93,13 +93,13 @@ export const ClientRequestHistory = ({ client }: { client: Client }) => {
       </div>
 
       {/* Lista de Solicitudes */}
-      <Card className="bg-white/5 border-tms-green/30">
+      <Card className="bg-card border-border">
         <CardHeader>
-          <CardTitle className="text-white">Historial de Solicitudes</CardTitle>
+          <CardTitle className="text-foreground">Historial de Solicitudes</CardTitle>
         </CardHeader>
         <CardContent>
           {requests.length === 0 ? (
-            <div className="text-center py-8 text-white/80">
+            <div className="text-center py-8 text-muted-foreground">
               No hay solicitudes pendientes o canceladas para este cliente.
             </div>
           ) : (
@@ -107,7 +107,7 @@ export const ClientRequestHistory = ({ client }: { client: Client }) => {
               {requests.map((request) => (
                 <div
                   key={request.id}
-                  className="border border-tms-green/30 rounded-lg p-4 hover:bg-white/5 transition-colors"
+                  className="border border-border rounded-lg p-4 hover:bg-muted/50 transition-colors"
                 >
                   <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                     <div className="space-y-2">
@@ -115,7 +115,7 @@ export const ClientRequestHistory = ({ client }: { client: Client }) => {
                         <Badge variant="tms" className="whitespace-nowrap">{request.folio}</Badge>
                         {getStatusBadge(request.status)}
                       </div>
-                      <div className="text-sm text-white/80">
+                      <div className="text-sm text-muted-foreground">
                         <div>Tipo: {request.serviceType.name}</div>
                         {shouldShowVehicleInfo(request) && (
                           <div>Vehículo: {formatVehicleInfo(request)}</div>
@@ -128,23 +128,23 @@ export const ClientRequestHistory = ({ client }: { client: Client }) => {
                       </div>
                     </div>
                     <div className="text-right space-y-1">
-                      <div className="text-lg font-semibold text-white">
+                      <div className="text-lg font-semibold text-foreground">
                         {formatCurrency(request.value)}
                       </div>
-                      <div className="text-sm text-white/80">
+                      <div className="text-sm text-muted-foreground">
                         Solicitud: {formatForDisplay(parseFromDatabase(request.requestDate))}
                       </div>
-                      <div className="text-sm text-white/80">
+                      <div className="text-sm text-muted-foreground">
                         Servicio: {formatForDisplay(parseFromDatabase(request.serviceDate))}
                       </div>
-                      <div className="text-xs text-white/70">
+                      <div className="text-xs text-muted-foreground">
                         Grúa: {request.crane.licensePlate}
                       </div>
                     </div>
                   </div>
                   {request.observations && (
-                    <div className="mt-3 pt-3 border-t border-tms-green/30">
-                      <p className="text-sm text-white/80">
+                    <div className="mt-3 pt-3 border-t border-border">
+                      <p className="text-sm text-muted-foreground">
                         <span className="font-medium">Observaciones:</span> {request.observations}
                       </p>
                     </div>
