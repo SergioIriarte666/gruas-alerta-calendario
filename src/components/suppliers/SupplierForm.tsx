@@ -90,77 +90,73 @@ export const SupplierForm: React.FC<SupplierFormProps> = ({
   const isSubmitting = isCreating || isUpdating;
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <Card className="w-full max-w-2xl max-h-[90vh] overflow-auto bg-gray-800 border-gray-700">
-        <CardHeader className="flex flex-row items-center justify-between bg-gray-700">
-          <CardTitle className="text-white">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 suppliers-scope">
+      <Card className="w-full max-w-2xl max-h-[90vh] overflow-auto bg-card border">
+        <CardHeader className="flex flex-row items-center justify-between border-b border">
+          <CardTitle className="text-foreground">
             {supplier ? 'Editar Proveedor' : 'Nuevo Proveedor'}
           </CardTitle>
           <Button 
             variant="ghost" 
             size="sm" 
             onClick={onClose}
-            className="text-white hover:bg-gray-600"
+            className="text-muted-foreground hover:text-foreground"
           >
             <X className="h-4 w-4" />
           </Button>
         </CardHeader>
         
-        <CardContent className="p-6 bg-gray-800">
+        <CardContent className="p-6">
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label className="text-white">Nombre *</Label>
+                <Label className="text-foreground">Nombre *</Label>
                 <Input
                   {...form.register('name')}
                   placeholder="Nombre del proveedor"
-                  className="bg-gray-700 border-gray-600 text-white"
                 />
                 {form.formState.errors.name && (
-                  <p className="text-red-400 text-sm mt-1">
+                  <p className="text-destructive text-sm mt-1">
                     {form.formState.errors.name.message}
                   </p>
                 )}
               </div>
 
               <div>
-                <Label className="text-white">RUT *</Label>
+                <Label className="text-foreground">RUT *</Label>
                 <Input
                   {...form.register('rut')}
                   placeholder="12.345.678-9"
-                  className="bg-gray-700 border-gray-600 text-white"
                 />
                 {form.formState.errors.rut && (
-                  <p className="text-red-400 text-sm mt-1">
+                  <p className="text-destructive text-sm mt-1">
                     {form.formState.errors.rut.message}
                   </p>
                 )}
               </div>
 
               <div>
-                <Label className="text-white">Email</Label>
+                <Label className="text-foreground">Email</Label>
                 <Input
                   {...form.register('email')}
                   type="email"
                   placeholder="email@ejemplo.com"
-                  className="bg-gray-700 border-gray-600 text-white"
                 />
                 {form.formState.errors.email && (
-                  <p className="text-red-400 text-sm mt-1">
+                  <p className="text-destructive text-sm mt-1">
                     {form.formState.errors.email.message}
                   </p>
                 )}
               </div>
 
               <div>
-                <Label className="text-white">Teléfono *</Label>
+                <Label className="text-foreground">Teléfono *</Label>
                 <Input
                   {...form.register('phone')}
                   placeholder="+56 9 1234 5678"
-                  className="bg-gray-700 border-gray-600 text-white"
                 />
                 {form.formState.errors.phone && (
-                  <p className="text-red-400 text-sm mt-1">
+                  <p className="text-destructive text-sm mt-1">
                     {form.formState.errors.phone.message}
                   </p>
                 )}
@@ -168,43 +164,41 @@ export const SupplierForm: React.FC<SupplierFormProps> = ({
             </div>
 
             <div>
-              <Label className="text-white">Dirección *</Label>
+              <Label className="text-foreground">Dirección *</Label>
               <Input
                 {...form.register('address')}
                 placeholder="Dirección completa"
-                className="bg-gray-700 border-gray-600 text-white"
               />
               {form.formState.errors.address && (
-                <p className="text-red-400 text-sm mt-1">
+                <p className="text-destructive text-sm mt-1">
                   {form.formState.errors.address.message}
                 </p>
               )}
             </div>
 
             <div>
-              <Label className="text-white">Persona de Contacto *</Label>
+              <Label className="text-foreground">Persona de Contacto *</Label>
               <Input
                 {...form.register('contact_name')}
                 placeholder="Nombre del contacto principal"
-                className="bg-gray-700 border-gray-600 text-white"
               />
               {form.formState.errors.contact_name && (
-                <p className="text-red-400 text-sm mt-1">
+                <p className="text-destructive text-sm mt-1">
                   {form.formState.errors.contact_name.message}
                 </p>
               )}
             </div>
 
             <div>
-              <Label className="text-white">Categoría *</Label>
+              <Label className="text-foreground">Categoría *</Label>
               <Select
                 value={form.watch('category')}
                 onValueChange={(value) => form.setValue('category', value)}
               >
-                <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
+                <SelectTrigger>
                   <SelectValue placeholder="Seleccionar categoría" />
                 </SelectTrigger>
-                <SelectContent className="bg-gray-700 border-gray-600">
+                <SelectContent>
                   {categoriesLoading ? (
                     <SelectItem value="loading" disabled>Cargando categorías...</SelectItem>
                   ) : (
@@ -212,7 +206,6 @@ export const SupplierForm: React.FC<SupplierFormProps> = ({
                       <SelectItem 
                         key={category.id} 
                         value={category.id}
-                        className="text-white hover:bg-gray-600"
                       >
                         {category.label}
                       </SelectItem>
@@ -221,18 +214,17 @@ export const SupplierForm: React.FC<SupplierFormProps> = ({
                 </SelectContent>
               </Select>
               {form.formState.errors.category && (
-                <p className="text-red-400 text-sm mt-1">
+                <p className="text-destructive text-sm mt-1">
                   {form.formState.errors.category.message}
                 </p>
               )}
             </div>
 
             <div>
-              <Label className="text-white">Notas</Label>
+              <Label className="text-foreground">Notas</Label>
               <Textarea
                 {...form.register('notes')}
                 placeholder="Información adicional sobre el proveedor..."
-                className="bg-gray-700 border-gray-600 text-white"
                 rows={3}
               />
             </div>
@@ -241,25 +233,23 @@ export const SupplierForm: React.FC<SupplierFormProps> = ({
               <Switch
                 checked={form.watch('is_active')}
                 onCheckedChange={(checked) => form.setValue('is_active', checked)}
-                className="data-[state=checked]:bg-blue-600"
               />
-              <Label className="text-white">Activo</Label>
+              <Label className="text-foreground">Activo</Label>
             </div>
 
-            <div className="flex justify-end space-x-2 pt-4">
+            <div className="flex justify-end space-x-2 pt-4 border-t border">
               <Button
                 type="button"
                 variant="outline"
                 onClick={onClose}
                 disabled={isSubmitting}
-                className="bg-gray-700 border-gray-600 text-white hover:bg-gray-600"
               >
                 Cancelar
               </Button>
               <Button
                 type="submit"
                 disabled={isSubmitting}
-                className="bg-blue-600 hover:bg-blue-700"
+                variant="default"
               >
                 {isSubmitting ? (
                   <>

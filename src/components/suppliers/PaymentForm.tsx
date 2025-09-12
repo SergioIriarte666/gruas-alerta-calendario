@@ -98,10 +98,10 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
     activeCategories.find(cat => cat.id === selectedCategory)?.name === 'mantenimiento';
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <Card className="w-full max-w-4xl max-h-[90vh] overflow-auto bg-gray-800 border-gray-700">
-        <CardHeader className="flex flex-row items-center justify-between bg-gray-700">
-          <CardTitle className="text-white flex items-center gap-2">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 suppliers-scope">
+      <Card className="w-full max-w-4xl max-h-[90vh] overflow-auto bg-card border">
+        <CardHeader className="flex flex-row items-center justify-between border-b border">
+          <CardTitle className="text-foreground flex items-center gap-2">
             <DollarSign className="h-5 w-5" />
             {payment ? 'Editar Pago a Proveedor' : 'Nuevo Pago a Proveedor'}
           </CardTitle>
@@ -109,31 +109,30 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
             variant="ghost" 
             size="sm" 
             onClick={onClose}
-            className="text-white hover:bg-gray-600"
+            className="text-muted-foreground hover:text-foreground"
           >
             <X className="h-4 w-4" />
           </Button>
         </CardHeader>
         
-        <CardContent className="p-6 bg-gray-800">
+        <CardContent className="p-6">
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             {/* Información básica del pago */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label className="text-white">Proveedor *</Label>
+                <Label className="text-foreground">Proveedor *</Label>
                 <Select
                   value={form.watch('supplier_id')}
                   onValueChange={(value) => form.setValue('supplier_id', value)}
                 >
-                  <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
+                  <SelectTrigger>
                     <SelectValue placeholder="Seleccionar proveedor" />
                   </SelectTrigger>
-                  <SelectContent className="bg-gray-700 border-gray-600">
+                  <SelectContent>
                     {suppliers.map((supplier) => (
                       <SelectItem 
                         key={supplier.id} 
                         value={supplier.id}
-                        className="text-white hover:bg-gray-600"
                       >
                         {supplier.name}
                       </SelectItem>
@@ -141,61 +140,58 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
                   </SelectContent>
                 </Select>
                 {form.formState.errors.supplier_id && (
-                  <p className="text-red-400 text-sm mt-1">
+                  <p className="text-destructive text-sm mt-1">
                     {form.formState.errors.supplier_id.message}
                   </p>
                 )}
               </div>
 
               <div>
-                <Label className="text-white">Monto *</Label>
+                <Label className="text-foreground">Monto *</Label>
                 <Input
                   {...form.register('amount', { valueAsNumber: true })}
                   type="number"
                   step="0.01"
                   min="0"
                   placeholder="0.00"
-                  className="bg-gray-700 border-gray-600 text-white"
                 />
                 {form.formState.errors.amount && (
-                  <p className="text-red-400 text-sm mt-1">
+                  <p className="text-destructive text-sm mt-1">
                     {form.formState.errors.amount.message}
                   </p>
                 )}
               </div>
 
               <div>
-                <Label className="text-white flex items-center gap-2">
+                <Label className="text-foreground flex items-center gap-2">
                   <Calendar className="h-4 w-4" />
                   Fecha de Vencimiento *
                 </Label>
                 <Input
                   {...form.register('due_date')}
                   type="date"
-                  className="bg-gray-700 border-gray-600 text-white"
                 />
                 {form.formState.errors.due_date && (
-                  <p className="text-red-400 text-sm mt-1">
+                  <p className="text-destructive text-sm mt-1">
                     {form.formState.errors.due_date.message}
                   </p>
                 )}
               </div>
 
               <div>
-                <Label className="text-white">Estado *</Label>
+                <Label className="text-foreground">Estado *</Label>
                 <Select
                   value={form.watch('status')}
                   onValueChange={(value) => form.setValue('status', value as SupplierPaymentStatus)}
                 >
-                  <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
+                  <SelectTrigger>
                     <SelectValue placeholder="Seleccionar estado" />
                   </SelectTrigger>
-                  <SelectContent className="bg-gray-700 border-gray-600">
+                  <SelectContent>
                     {statusOptions.map((status) => (
                       <SelectItem 
                         key={status} 
                         value={status}
-                        className="text-white hover:bg-gray-600"
                       >
                         {getStatusLabel(status)}
                       </SelectItem>
@@ -203,7 +199,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
                   </SelectContent>
                 </Select>
                 {form.formState.errors.status && (
-                  <p className="text-red-400 text-sm mt-1">
+                  <p className="text-destructive text-sm mt-1">
                     {form.formState.errors.status.message}
                   </p>
                 )}
@@ -211,15 +207,15 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
             </div>
 
             <div>
-              <Label className="text-white">Categoría *</Label>
+              <Label className="text-foreground">Categoría *</Label>
               <Select
                 value={form.watch('category')}
                 onValueChange={(value) => form.setValue('category', value)}
               >
-                <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
+                <SelectTrigger>
                   <SelectValue placeholder="Seleccionar categoría" />
                 </SelectTrigger>
-                <SelectContent className="bg-gray-700 border-gray-600">
+                <SelectContent>
                   {categoriesLoading ? (
                     <SelectItem value="loading" disabled>Cargando categorías...</SelectItem>
                   ) : (
@@ -227,7 +223,6 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
                       <SelectItem 
                         key={category.id} 
                         value={category.id}
-                        className="text-white hover:bg-gray-600"
                       >
                         {category.label}
                       </SelectItem>
@@ -236,21 +231,20 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
                 </SelectContent>
               </Select>
               {form.formState.errors.category && (
-                <p className="text-red-400 text-sm mt-1">
+                <p className="text-destructive text-sm mt-1">
                   {form.formState.errors.category.message}
                 </p>
               )}
             </div>
 
             <div>
-              <Label className="text-white">Descripción *</Label>
+              <Label className="text-foreground">Descripción *</Label>
               <Input
                 {...form.register('description')}
                 placeholder="Descripción del pago o servicio"
-                className="bg-gray-700 border-gray-600 text-white"
               />
               {form.formState.errors.description && (
-                <p className="text-red-400 text-sm mt-1">
+                <p className="text-destructive text-sm mt-1">
                   {form.formState.errors.description.message}
                 </p>
               )}
@@ -258,58 +252,54 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label className="text-white">Número de Referencia</Label>
+                <Label className="text-foreground">Número de Referencia</Label>
                 <Input
                   {...form.register('reference_number')}
                   placeholder="Factura, OC, etc."
-                  className="bg-gray-700 border-gray-600 text-white"
                 />
               </div>
             </div>
 
             {/* Sección de Piezas y Repuestos - Solo para categoría mantenimiento */}
             {isPiezasCategory && (
-              <div className="border-t border-gray-600 pt-6">
+              <div className="border-t border pt-6">
                 <div className="flex items-center gap-2 mb-4">
-                  <Package className="h-5 w-5 text-blue-400" />
-                  <h3 className="text-lg font-semibold text-white">Detalles de Piezas y Repuestos</h3>
+                  <Package className="h-5 w-5 text-primary" />
+                  <h3 className="text-lg font-semibold text-foreground">Detalles de Piezas y Repuestos</h3>
                 </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                   <div>
-                    <Label className="text-white">Nombre de la Pieza</Label>
+                    <Label className="text-foreground">Nombre de la Pieza</Label>
                     <Input
                       {...form.register('part_name')}
                       placeholder="ej: Filtro de aceite"
-                      className="bg-gray-700 border-gray-600 text-white"
                     />
                   </div>
 
                   <div>
-                    <Label className="text-white">Cantidad</Label>
+                    <Label className="text-foreground">Cantidad</Label>
                     <Input
                       {...form.register('part_quantity', { valueAsNumber: true })}
                       type="number"
                       min="1"
                       placeholder="1"
-                      className="bg-gray-700 border-gray-600 text-white"
                     />
                   </div>
 
                   <div>
-                    <Label className="text-white">Precio Unitario</Label>
+                    <Label className="text-foreground">Precio Unitario</Label>
                     <Input
                       {...form.register('part_unit_price', { valueAsNumber: true })}
                       type="number"
                       step="0.01"
                       min="0"
                       placeholder="0.00"
-                      className="bg-gray-700 border-gray-600 text-white"
                     />
                   </div>
 
                   <div>
-                    <Label className="text-white flex items-center gap-2">
+                    <Label className="text-foreground flex items-center gap-2">
                       <Wrench className="h-4 w-4" />
                       Grúa Asociada
                     </Label>
@@ -317,16 +307,15 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
                       value={form.watch('crane_id') || ''}
                       onValueChange={(value) => form.setValue('crane_id', value)}
                     >
-                      <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
+                      <SelectTrigger>
                         <SelectValue placeholder="Seleccionar grúa" />
                       </SelectTrigger>
-                      <SelectContent className="bg-gray-700 border-gray-600">
+                      <SelectContent>
                         <SelectItem value="none">Sin grúa específica</SelectItem>
                         {cranes.map((crane) => (
                           <SelectItem 
                             key={crane.id} 
                             value={crane.id}
-                            className="text-white hover:bg-gray-600"
                           >
                             {crane.licensePlate} - {crane.brand} {crane.model}
                           </SelectItem>
@@ -339,29 +328,27 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
             )}
 
             <div>
-              <Label className="text-white">Notas</Label>
+              <Label className="text-foreground">Notas</Label>
               <Textarea
                 {...form.register('notes')}
                 placeholder="Información adicional sobre el pago..."
-                className="bg-gray-700 border-gray-600 text-white"
                 rows={3}
               />
             </div>
 
-            <div className="flex justify-end space-x-2 pt-4">
+            <div className="flex justify-end space-x-2 pt-4 border-t border">
               <Button
                 type="button"
                 variant="outline"
                 onClick={onClose}
                 disabled={isSubmitting}
-                className="bg-gray-700 border-gray-600 text-white hover:bg-gray-600"
               >
                 Cancelar
               </Button>
               <Button
                 type="submit"
                 disabled={isSubmitting}
-                className="bg-blue-600 hover:bg-blue-700"
+                variant="default"
               >
                 {isSubmitting ? (
                   <>

@@ -370,6 +370,34 @@ body {
   border-color: hsl(var(--border)) !important;
 }
 
+/* Suppliers Module Scope */
+.suppliers-scope {
+  color: hsl(var(--foreground));
+}
+
+.suppliers-scope .text-white {
+  color: hsl(var(--foreground)) !important;
+}
+
+.suppliers-scope .text-gray-300,
+.suppliers-scope .text-gray-400 {
+  color: hsl(var(--muted-foreground)) !important;
+}
+
+.suppliers-scope .bg-gray-800,
+.suppliers-scope .bg-gray-700 {
+  background-color: hsl(var(--card)) !important;
+}
+
+.suppliers-scope .border-gray-700,
+.suppliers-scope .border-gray-600 {
+  border-color: hsl(var(--border)) !important;
+}
+
+.suppliers-scope .hover\\:bg-gray-600:hover {
+  background-color: hsl(var(--accent)) !important;
+}
+
 /* Media queries para responsive */
 @media (max-width: 768px) {
   .responsive-grid {

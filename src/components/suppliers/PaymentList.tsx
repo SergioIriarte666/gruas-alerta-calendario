@@ -190,12 +190,12 @@ export const PaymentList: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 suppliers-scope">
       {/* Header and Actions */}
       <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-white">Pagos a Proveedores</h2>
-          <p className="text-gray-400">Gestiona los pagos pendientes y realizados</p>
+          <h2 className="text-2xl font-bold text-foreground">Pagos a Proveedores</h2>
+          <p className="text-muted-foreground">Gestiona los pagos pendientes y realizados</p>
         </div>
 
         <div className="flex gap-2">
@@ -216,14 +216,13 @@ export const PaymentList: React.FC = () => {
           <Button
             onClick={() => updateOverduePayments()}
             variant="outline"
-            className="border-yellow-500/30 text-yellow-300 hover:bg-yellow-500/20"
           >
             <Clock className="h-4 w-4 mr-2" />
             Actualizar Vencidos
           </Button>
           <Button
             onClick={() => setShowForm(true)}
-            className="bg-blue-600 hover:bg-blue-700"
+            variant="default"
           >
             <Plus className="h-4 w-4 mr-2" />
             Nuevo Pago
@@ -232,37 +231,36 @@ export const PaymentList: React.FC = () => {
       </div>
 
       {/* Filters */}
-      <Card className="bg-gray-800 border-gray-700">
+      <Card className="bg-card border">
         <CardContent className="p-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
-              <label className="text-sm text-gray-300">Buscar</label>
+              <label className="text-sm text-foreground">Buscar</label>
               <div className="relative">
-                <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                 <Input
                   placeholder="Buscar por descripción, proveedor..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 bg-gray-700 border-gray-600 text-white"
+                  className="pl-10"
                 />
               </div>
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm text-gray-300">Estado</label>
+              <label className="text-sm text-foreground">Estado</label>
               <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-                <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
+                <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-gray-700 border-gray-600">
-                  <SelectItem value="all" className="text-white hover:bg-gray-600">
+                <SelectContent>
+                  <SelectItem value="all">
                     Todos los estados
                   </SelectItem>
                   {statusOptions.map((status) => (
                     <SelectItem 
                       key={status} 
                       value={status}
-                      className="text-white hover:bg-gray-600"
                     >
                       {getStatusLabel(status)}
                     </SelectItem>
@@ -272,20 +270,19 @@ export const PaymentList: React.FC = () => {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm text-gray-300">Proveedor</label>
+              <label className="text-sm text-foreground">Proveedor</label>
               <Select value={selectedSupplier} onValueChange={setSelectedSupplier}>
-                <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
+                <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-gray-700 border-gray-600">
-                  <SelectItem value="all" className="text-white hover:bg-gray-600">
+                <SelectContent>
+                  <SelectItem value="all">
                     Todos los proveedores
                   </SelectItem>
                   {suppliers.map((supplier) => (
                     <SelectItem 
                       key={supplier.id} 
                       value={supplier.id}
-                      className="text-white hover:bg-gray-600"
                     >
                       {supplier.name}
                     </SelectItem>
@@ -298,17 +295,17 @@ export const PaymentList: React.FC = () => {
       </Card>
 
       {/* Date Filters */}
-      <Card className="bg-gray-800 border-gray-700">
+      <Card className="bg-card border">
         <CardContent className="p-4">
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-medium text-gray-300">Filtros por Fecha</h3>
+              <h3 className="text-sm font-medium text-foreground">Filtros por Fecha</h3>
               {(dateFrom || dateTo) && (
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={clearDateFilters}
-                  className="text-gray-400 hover:text-gray-300"
+                  className="text-muted-foreground hover:text-foreground"
                 >
                   <X className="h-4 w-4 mr-1" />
                   Limpiar
@@ -318,19 +315,19 @@ export const PaymentList: React.FC = () => {
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-2">
-                <label className="text-sm text-gray-300">Tipo de Fecha</label>
+                <label className="text-sm text-foreground">Tipo de Fecha</label>
                 <Select value={dateType} onValueChange={(value: 'due_date' | 'created_at' | 'paid_date') => setDateType(value)}>
-                  <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
+                  <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="bg-gray-700 border-gray-600">
-                    <SelectItem value="due_date" className="text-white hover:bg-gray-600">
+                  <SelectContent>
+                    <SelectItem value="due_date">
                       Fecha de Vencimiento
                     </SelectItem>
-                    <SelectItem value="created_at" className="text-white hover:bg-gray-600">
+                    <SelectItem value="created_at">
                       Fecha de Creación
                     </SelectItem>
-                    <SelectItem value="paid_date" className="text-white hover:bg-gray-600">
+                    <SelectItem value="paid_date">
                       Fecha de Pago
                     </SelectItem>
                   </SelectContent>
@@ -338,13 +335,13 @@ export const PaymentList: React.FC = () => {
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm text-gray-300">Fecha Desde</label>
+                <label className="text-sm text-foreground">Fecha Desde</label>
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button
                       variant="outline"
                       className={cn(
-                        "w-full justify-start text-left font-normal bg-gray-700 border-gray-600 text-white hover:bg-gray-600",
+                        "w-full justify-start text-left font-normal",
                         !dateFrom && "text-muted-foreground"
                       )}
                     >
@@ -365,13 +362,13 @@ export const PaymentList: React.FC = () => {
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm text-gray-300">Fecha Hasta</label>
+                <label className="text-sm text-foreground">Fecha Hasta</label>
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button
                       variant="outline"
                       className={cn(
-                        "w-full justify-start text-left font-normal bg-gray-700 border-gray-600 text-white hover:bg-gray-600",
+                        "w-full justify-start text-left font-normal",
                         !dateTo && "text-muted-foreground"
                       )}
                     >
@@ -403,7 +400,7 @@ export const PaymentList: React.FC = () => {
                   setDateFrom(new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0));
                   setDateTo(new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59));
                 }}
-                className="text-xs text-gray-400 hover:text-gray-300"
+                className="text-xs text-muted-foreground hover:text-foreground"
               >
                 Hoy
               </Button>
@@ -415,7 +412,7 @@ export const PaymentList: React.FC = () => {
                   setDateFrom(start);
                   setDateTo(end);
                 }}
-                className="text-xs text-gray-400 hover:text-gray-300"
+                className="text-xs text-muted-foreground hover:text-foreground"
               >
                 Esta Semana
               </Button>
@@ -427,7 +424,7 @@ export const PaymentList: React.FC = () => {
                   setDateFrom(new Date(start.getFullYear(), start.getMonth(), start.getDate(), 0, 0, 0));
                   setDateTo(new Date(end.getFullYear(), end.getMonth(), end.getDate(), 23, 59, 59));
                 }}
-                className="text-xs text-gray-400 hover:text-gray-300"
+                className="text-xs text-muted-foreground hover:text-foreground"
               >
                 Este Mes
               </Button>
@@ -443,7 +440,7 @@ export const PaymentList: React.FC = () => {
                   setDateFrom(thirtyDaysAgo);
                   setDateTo(today);
                 }}
-                className="text-xs text-gray-400 hover:text-gray-300"
+                className="text-xs text-muted-foreground hover:text-foreground"
               >
                 Últimos 30 días
               </Button>
@@ -453,20 +450,20 @@ export const PaymentList: React.FC = () => {
       </Card>
 
       {/* Results */}
-      <Card className="bg-gray-800 border-gray-700">
+      <Card className="bg-card border">
         <CardHeader>
-          <CardTitle className="text-white">
+          <CardTitle className="text-foreground">
             Pagos ({filteredPayments.length})
           </CardTitle>
         </CardHeader>
         <CardContent>
           {filteredPayments.length === 0 ? (
             <div className="text-center py-8">
-              <CreditCard className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-white mb-2">
+              <CreditCard className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-foreground mb-2">
                 No se encontraron pagos
               </h3>
-              <p className="text-gray-400">
+              <p className="text-muted-foreground">
                 {searchTerm || selectedStatus !== 'all' || selectedSupplier !== 'all'
                   ? 'Intenta ajustar los filtros de búsqueda'
                   : 'Comienza agregando tu primer pago'
@@ -477,25 +474,25 @@ export const PaymentList: React.FC = () => {
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
-                  <TableRow className="border-gray-700">
-                    <TableHead className="text-gray-300">Proveedor</TableHead>
-                    <TableHead className="text-gray-300">Descripción</TableHead>
-                    <TableHead className="text-gray-300">Monto</TableHead>
-                    <TableHead className="text-gray-300">Vencimiento</TableHead>
-                    <TableHead className="text-gray-300">Estado</TableHead>
-                    <TableHead className="text-gray-300">Acciones</TableHead>
+                  <TableRow className="border">
+                    <TableHead className="text-muted-foreground">Proveedor</TableHead>
+                    <TableHead className="text-muted-foreground">Descripción</TableHead>
+                    <TableHead className="text-muted-foreground">Monto</TableHead>
+                    <TableHead className="text-muted-foreground">Vencimiento</TableHead>
+                    <TableHead className="text-muted-foreground">Estado</TableHead>
+                    <TableHead className="text-muted-foreground">Acciones</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredPayments.map((payment) => (
-                    <TableRow key={payment.id} className="border-gray-700">
+                    <TableRow key={payment.id} className="border">
                       <TableCell>
                          <div className="space-y-1">
-                           <div className="font-medium text-white">
+                           <div className="font-medium text-foreground">
                              {suppliers.find(s => s.id === payment.supplier_id)?.name || 'Proveedor no encontrado'}
                            </div>
                            {payment.reference_number && (
-                             <div className="text-sm text-gray-400">
+                             <div className="text-sm text-muted-foreground">
                                Ref: {payment.reference_number}
                              </div>
                            )}
@@ -504,8 +501,8 @@ export const PaymentList: React.FC = () => {
                       
                       <TableCell>
                         <div className="space-y-1">
-                          <div className="text-white">{payment.description}</div>
-                          <Badge variant="outline" className="border-blue-500/30 text-blue-300">
+                          <div className="text-foreground">{payment.description}</div>
+                          <Badge variant="outline">
                             {getCategoryLabel(activeCategories, payment.category)}
                           </Badge>
                         </div>
@@ -513,11 +510,11 @@ export const PaymentList: React.FC = () => {
 
                       <TableCell>
                         <div className="space-y-1">
-                          <div className="font-medium text-white">
+                          <div className="font-medium text-foreground">
                             {formatCurrency(payment.amount)}
                           </div>
                           {payment.paid_amount && payment.paid_amount !== payment.amount && (
-                            <div className="text-sm text-green-400">
+                            <div className="text-sm text-primary">
                               Pagado: {formatCurrency(payment.paid_amount)}
                             </div>
                           )}
@@ -526,11 +523,11 @@ export const PaymentList: React.FC = () => {
 
                       <TableCell>
                         <div className="space-y-1">
-                          <div className="text-white">
+                          <div className="text-foreground">
                             {formatForDisplay(parseFromDatabase(payment.due_date))}
                           </div>
                           {payment.paid_date && (
-                            <div className="text-sm text-green-400">
+                            <div className="text-sm text-primary">
                               Pagado: {formatForDisplay(parseFromDatabase(payment.paid_date))}
                             </div>
                           )}
@@ -550,7 +547,7 @@ export const PaymentList: React.FC = () => {
                               variant="ghost"
                               size="sm"
                               onClick={() => handleMarkAsPaid(payment)}
-                              className="text-green-400 hover:text-green-300"
+                              className="text-primary hover:text-primary/80"
                               title="Marcar como pagado"
                             >
                               <CheckCircle className="h-4 w-4" />
@@ -561,7 +558,7 @@ export const PaymentList: React.FC = () => {
                             variant="ghost"
                             size="sm"
                             onClick={() => handleEdit(payment)}
-                            className="text-blue-400 hover:text-blue-300"
+                            className="text-primary hover:text-primary/80"
                           >
                             <Edit2 className="h-4 w-4" />
                           </Button>
@@ -571,28 +568,28 @@ export const PaymentList: React.FC = () => {
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                className="text-red-400 hover:text-red-300"
+                                className="text-destructive hover:text-destructive/80"
                               >
                                 <Trash2 className="h-4 w-4" />
                               </Button>
                             </AlertDialogTrigger>
-                            <AlertDialogContent className="bg-gray-800 border-gray-700">
+                            <AlertDialogContent className="bg-card border">
                               <AlertDialogHeader>
-                                <AlertDialogTitle className="text-white">
+                                <AlertDialogTitle className="text-foreground">
                                   ¿Eliminar pago?
                                 </AlertDialogTitle>
-                                <AlertDialogDescription className="text-gray-300">
+                                <AlertDialogDescription className="text-muted-foreground">
                                   Esta acción no se puede deshacer. Se eliminará permanentemente
                                   el pago "{payment.description}".
                                 </AlertDialogDescription>
                               </AlertDialogHeader>
                               <AlertDialogFooter>
-                                <AlertDialogCancel className="border-gray-600 text-gray-300">
+                                <AlertDialogCancel className="border text-muted-foreground">
                                   Cancelar
                                 </AlertDialogCancel>
                                 <AlertDialogAction
                                   onClick={() => handleDelete(payment.id)}
-                                  className="bg-red-600 hover:bg-red-700"
+                                  className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
                                 >
                                   Eliminar
                                 </AlertDialogAction>

@@ -86,17 +86,17 @@ export const SupplierList: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 suppliers-scope">
       {/* Header and Filters */}
       <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-white">Proveedores</h2>
-          <p className="text-gray-400">Gestiona los proveedores del sistema</p>
+          <h2 className="text-2xl font-bold text-foreground">Proveedores</h2>
+          <p className="text-muted-foreground">Gestiona los proveedores del sistema</p>
         </div>
 
         <Button
           onClick={() => setShowForm(true)}
-          className="bg-blue-600 hover:bg-blue-700"
+          variant="default"
         >
           <Plus className="h-4 w-4 mr-2" />
           Nuevo Proveedor
@@ -104,34 +104,34 @@ export const SupplierList: React.FC = () => {
       </div>
 
       {/* Filters */}
-      <Card className="bg-gray-800 border-gray-700">
+      <Card className="bg-card border">
         <CardContent className="p-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
-              <label className="text-sm text-gray-300">Buscar</label>
+              <label className="text-sm text-foreground">Buscar</label>
               <div className="relative">
-                <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                 <Input
                   placeholder="Buscar por nombre, RUT o email..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 bg-gray-700 border-gray-600 text-white"
+                  className="pl-10"
                 />
               </div>
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm text-gray-300">Categoría</label>
+              <label className="text-sm text-foreground">Categoría</label>
               <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
+                <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-gray-700 border-gray-600">
-                  <SelectItem value="all" className="text-white hover:bg-gray-600">
+                <SelectContent>
+                  <SelectItem value="all">
                     Todas las categorías
                   </SelectItem>
                   {categoriesLoading ? (
-                    <SelectItem value="loading" disabled className="text-gray-400">
+                    <SelectItem value="loading" disabled>
                       Cargando categorías...
                     </SelectItem>
                   ) : (
@@ -139,7 +139,6 @@ export const SupplierList: React.FC = () => {
                       <SelectItem 
                         key={category.id} 
                         value={category.name}
-                        className="text-white hover:bg-gray-600"
                       >
                         {category.label}
                       </SelectItem>
@@ -150,19 +149,19 @@ export const SupplierList: React.FC = () => {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm text-gray-300">Estado</label>
+              <label className="text-sm text-foreground">Estado</label>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
+                <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-gray-700 border-gray-600">
-                  <SelectItem value="all" className="text-white hover:bg-gray-600">
+                <SelectContent>
+                  <SelectItem value="all">
                     Todos
                   </SelectItem>
-                  <SelectItem value="active" className="text-white hover:bg-gray-600">
+                  <SelectItem value="active">
                     Activos
                   </SelectItem>
-                  <SelectItem value="inactive" className="text-white hover:bg-gray-600">
+                  <SelectItem value="inactive">
                     Inactivos
                   </SelectItem>
                 </SelectContent>
@@ -173,20 +172,20 @@ export const SupplierList: React.FC = () => {
       </Card>
 
       {/* Results */}
-      <Card className="bg-gray-800 border-gray-700">
+      <Card className="bg-card border">
         <CardHeader>
-          <CardTitle className="text-white">
+          <CardTitle className="text-foreground">
             Proveedores ({filteredSuppliers.length})
           </CardTitle>
         </CardHeader>
         <CardContent>
           {filteredSuppliers.length === 0 ? (
             <div className="text-center py-8">
-              <Building2 className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-white mb-2">
+              <Building2 className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-foreground mb-2">
                 No se encontraron proveedores
               </h3>
-              <p className="text-gray-400">
+              <p className="text-muted-foreground">
                 {searchTerm || selectedCategory !== 'all' || statusFilter !== 'all'
                   ? 'Intenta ajustar los filtros de búsqueda'
                   : 'Comienza agregando tu primer proveedor'
@@ -197,41 +196,41 @@ export const SupplierList: React.FC = () => {
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
-                  <TableRow className="border-gray-700">
-                    <TableHead className="text-gray-300">Proveedor</TableHead>
-                    <TableHead className="text-gray-300">Contacto</TableHead>
-                    <TableHead className="text-gray-300">Categoría</TableHead>
-                    <TableHead className="text-gray-300">Pagos</TableHead>
-                    <TableHead className="text-gray-300">Estado</TableHead>
-                    <TableHead className="text-gray-300">Acciones</TableHead>
+                  <TableRow className="border">
+                    <TableHead className="text-muted-foreground">Proveedor</TableHead>
+                    <TableHead className="text-muted-foreground">Contacto</TableHead>
+                    <TableHead className="text-muted-foreground">Categoría</TableHead>
+                    <TableHead className="text-muted-foreground">Pagos</TableHead>
+                    <TableHead className="text-muted-foreground">Estado</TableHead>
+                    <TableHead className="text-muted-foreground">Acciones</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredSuppliers.map((supplier) => (
-                    <TableRow key={supplier.id} className="border-gray-700">
+                    <TableRow key={supplier.id} className="border">
                       <TableCell>
                         <div className="space-y-1">
-                          <div className="font-medium text-white">{supplier.name}</div>
-                          <div className="text-sm text-gray-400">{supplier.rut}</div>
+                          <div className="font-medium text-foreground">{supplier.name}</div>
+                          <div className="text-sm text-muted-foreground">{supplier.rut}</div>
                         </div>
                       </TableCell>
                       
                       <TableCell>
                         <div className="space-y-1">
                           {supplier.email && (
-                            <div className="flex items-center text-sm text-gray-300">
+                            <div className="flex items-center text-sm text-foreground">
                               <Mail className="h-3 w-3 mr-1" />
                               {supplier.email}
                             </div>
                           )}
                           {supplier.phone && (
-                            <div className="flex items-center text-sm text-gray-300">
+                            <div className="flex items-center text-sm text-foreground">
                               <Phone className="h-3 w-3 mr-1" />
                               {supplier.phone}
                             </div>
                           )}
                           {supplier.contact_name && (
-                            <div className="text-sm text-gray-400">
+                            <div className="text-sm text-muted-foreground">
                               {supplier.contact_name}
                             </div>
                           )}
@@ -239,14 +238,14 @@ export const SupplierList: React.FC = () => {
                       </TableCell>
 
                       <TableCell>
-                        <Badge variant="outline" className="border-blue-500/30 text-blue-300">
+                        <Badge variant="outline">
                           {getCategoryLabel(activeCategories || [], supplier.category)}
                         </Badge>
                       </TableCell>
 
                       <TableCell>
                         <div className="space-y-1">
-                          <div className="text-sm text-white">
+                          <div className="text-sm text-foreground">
                             0 pagos
                           </div>
                         </div>
@@ -260,12 +259,12 @@ export const SupplierList: React.FC = () => {
                           className="p-0 h-auto"
                         >
                           {supplier.is_active ? (
-                            <div className="flex items-center text-green-400">
+                            <div className="flex items-center text-primary">
                               <ToggleRight className="h-4 w-4 mr-1" />
                               Activo
                             </div>
                           ) : (
-                            <div className="flex items-center text-gray-400">
+                            <div className="flex items-center text-muted-foreground">
                               <ToggleLeft className="h-4 w-4 mr-1" />
                               Inactivo
                             </div>
