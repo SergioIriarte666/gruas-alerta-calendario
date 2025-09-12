@@ -229,11 +229,12 @@ export const Sidebar = ({
               )}
               onClick={() => setIsMobileMenuOpen(false)}
             >
-              <item.icon className={cn(
-                "w-5 h-5", 
-                isCollapsed ? "mx-auto" : "mr-3",
-                isActive ? "text-primary-foreground" : "text-foreground"
-              )} strokeWidth={2.25} />
+              <div className={cn(
+                "flex items-center justify-center rounded-lg bg-primary/20",
+                isCollapsed ? "w-8 h-8" : "w-8 h-8 mr-3"
+              )}>
+                <item.icon className="w-4 h-4 text-foreground" strokeWidth={2.25} />
+              </div>
               {!isCollapsed && <span>{item.name}</span>}
             </Link>
           );
@@ -261,7 +262,12 @@ export const Sidebar = ({
             isCollapsed ? "px-2" : "justify-start"
           )}
         >
-          <LogOut className={cn("w-4 h-4 text-foreground", isCollapsed ? "mx-auto" : "mr-2")} strokeWidth={2.25} />
+          <div className={cn(
+            "flex items-center justify-center rounded-lg bg-primary/20",
+            isCollapsed ? "w-8 h-8" : "w-8 h-8 mr-2"
+          )}>
+            <LogOut className="w-4 h-4 text-foreground" strokeWidth={2.25} />
+          </div>
           {!isCollapsed && "Cerrar Sesión"}
         </Button>
       </div>
