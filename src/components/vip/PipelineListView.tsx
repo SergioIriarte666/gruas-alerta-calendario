@@ -610,7 +610,7 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
                                </TableCell>
                                <TableCell>
                                  {service.quoteNumber ? (
-                                   <code className="text-xs bg-muted px-1 rounded text-blue-300">
+                                   <code className="text-xs bg-muted px-1 rounded text-violet-600 font-bold">
                                      {service.quoteNumber}
                                    </code>
                                  ) : (
