@@ -270,7 +270,7 @@ const EnhancedServicesSelector = ({
                   <label htmlFor={service.id} className="text-sm text-foreground flex-1 cursor-pointer">
                     <div className="flex justify-between items-center">
                       <span>{service.folio} - {service.client.name}</span>
-                      <span className="font-medium text-primary">${getServiceValueForClosure(service).toLocaleString()}</span>
+                      <span className="font-medium text-violet-600">${getServiceValueForClosure(service).toLocaleString()}</span>
                     </div>
                     <div className="text-xs text-muted-foreground">
                       {service.serviceDate} • {service.licensePlate} • Status: {service.status}
