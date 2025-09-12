@@ -427,7 +427,7 @@ body {
   border-color: var(--report-border);
 }
 
-.reports-scope .bg-muted\\/50 {
+.reports-scope .bg-muted\/50 {
   background-color: hsl(var(--muted) / 0.5);
 }
 
