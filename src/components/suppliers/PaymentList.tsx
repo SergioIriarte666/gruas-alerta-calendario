@@ -535,7 +535,7 @@ export const PaymentList: React.FC = () => {
                       </TableCell>
 
                       <TableCell>
-                        <Badge className={getStatusColor(payment.status)}>
+                        <Badge className={`${getStatusColor(payment.status)} text-black`}>
                           {getStatusLabel(payment.status)}
                         </Badge>
                       </TableCell>
