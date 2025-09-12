@@ -38,13 +38,13 @@ const DateRangePicker = ({ dateFrom, dateTo, onDateFromChange, onDateToChange }:
   return (
     <div className="grid grid-cols-2 gap-4">
       <div className="space-y-2">
-        <Label className="text-gray-300">Fecha Desde</Label>
+        <Label className="text-foreground">Fecha Desde</Label>
         <Popover>
           <PopoverTrigger asChild>
             <Button
               variant="outline"
               className={cn(
-                "w-full justify-start text-left font-normal bg-white/5 border-gray-700 text-white",
+                "w-full justify-start text-left font-normal",
                 !dateFrom && "text-muted-foreground"
               )}
             >
@@ -65,13 +65,13 @@ const DateRangePicker = ({ dateFrom, dateTo, onDateFromChange, onDateToChange }:
       </div>
 
       <div className="space-y-2">
-        <Label className="text-gray-300">Fecha Hasta</Label>
+        <Label className="text-foreground">Fecha Hasta</Label>
         <Popover>
           <PopoverTrigger asChild>
             <Button
               variant="outline"
               className={cn(
-                "w-full justify-start text-left font-normal bg-white/5 border-gray-700 text-white",
+                "w-full justify-start text-left font-normal",
                 !dateTo && "text-muted-foreground"
               )}
             >

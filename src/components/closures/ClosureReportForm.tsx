@@ -68,9 +68,9 @@ const ClosureReportForm = ({ onClose }: ClosureReportFormProps) => {
         clientId={clientId}
         onClientChange={setClientId}
       />
-      <div className="flex justify-end space-x-2 pt-4 border-t border-gray-700">
-        <Button variant="ghost" onClick={onClose} disabled={isGenerating}>Cancelar</Button>
-        <Button onClick={() => handleGenerate('excel')} disabled={isGenerating} className="bg-tms-green text-white hover:bg-tms-green/90">
+      <div className="flex justify-end space-x-2 pt-4 border-t">
+        <Button variant="outline" onClick={onClose} disabled={isGenerating}>Cancelar</Button>
+        <Button onClick={() => handleGenerate('excel')} disabled={isGenerating} className="bg-primary text-primary-foreground hover:bg-primary/90">
           {isGenerating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           Excel
         </Button>

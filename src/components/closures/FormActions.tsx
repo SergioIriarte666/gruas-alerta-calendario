@@ -16,7 +16,6 @@ const FormActions = ({ loading, isFormValid, hasSelectedServices, selectedServic
         type="button"
         variant="outline"
         onClick={onCancel}
-        className="border-gray-700 text-gray-300 hover:text-white"
         title="Cancelar la creación del cierre"
       >
         Cancelar
@@ -24,7 +23,7 @@ const FormActions = ({ loading, isFormValid, hasSelectedServices, selectedServic
       <Button
         type="submit"
         disabled={loading || !isFormValid}
-        className="bg-tms-green hover:bg-tms-green/90 disabled:opacity-50"
+        className="bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
         title={!hasSelectedServices 
           ? "Selecciona al menos un servicio para crear el cierre" 
           : `Crear cierre con ${selectedServicesCount} servicio${selectedServicesCount !== 1 ? 's' : ''}`

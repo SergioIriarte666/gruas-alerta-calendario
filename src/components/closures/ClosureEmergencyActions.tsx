@@ -103,23 +103,23 @@ const ClosureEmergencyActions: React.FC<ClosureEmergencyActionsProps> = ({
     <AlertDialog>
       <AlertDialogTrigger asChild>
         <Button
-          variant="ghost"
+          variant="outline"
           size="sm"
-          className="text-orange-400 hover:text-orange-300 hover:bg-orange-400/10 border border-orange-400/50"
+          className="text-destructive border-destructive/40 hover:bg-destructive/10"
           title="Liberar cierre (Solo Admin)"
         >
           <Unlock className="w-4 h-4" />
         </Button>
       </AlertDialogTrigger>
-      <AlertDialogContent className="bg-gray-900 border-orange-500/50">
+      <AlertDialogContent className="bg-card border">
         <AlertDialogHeader>
-          <AlertDialogTitle className="text-orange-400 flex items-center gap-2">
+          <AlertDialogTitle className="text-destructive flex items-center gap-2">
             <AlertTriangle className="w-5 h-5" />
             LIBERACIÓN DE EMERGENCIA
           </AlertDialogTitle>
-          <AlertDialogDescription className="text-gray-300">
+          <AlertDialogDescription className="text-foreground">
             <div className="space-y-3">
-              <p className="font-medium text-orange-300">
+              <p className="font-medium text-destructive">
                 ATENCIÓN: Esta acción liberará completamente el cierre {closureFolio} y:
               </p>
               <ul className="list-disc list-inside space-y-1 text-sm">
@@ -128,7 +128,7 @@ const ClosureEmergencyActions: React.FC<ClosureEmergencyActionsProps> = ({
                 <li>Cambiará el estado de los servicios a 'completado'</li>
                 <li>Los servicios quedarán disponibles para un nuevo cierre</li>
               </ul>
-              <p className="text-xs text-gray-400 mt-3">
+              <p className="text-xs text-muted-foreground mt-3">
                 Esta acción NO se puede deshacer. Úsala solo cuando un cierre esté bloqueado.
               </p>
             </div>
@@ -136,26 +136,26 @@ const ClosureEmergencyActions: React.FC<ClosureEmergencyActionsProps> = ({
         </AlertDialogHeader>
         
         <div className="my-4">
-          <Label htmlFor="confirmation" className="text-gray-300">
-            Para confirmar, escribe exactamente: <span className="font-mono font-bold text-orange-300">{expectedText}</span>
+          <Label htmlFor="confirmation" className="text-foreground">
+            Para confirmar, escribe exactamente: <span className="font-mono font-bold text-destructive">{expectedText}</span>
           </Label>
           <Input
             id="confirmation"
             value={confirmationText}
             onChange={(e) => setConfirmationText(e.target.value)}
-            className="mt-2 bg-gray-800 border-orange-500/50 text-white"
+            className="mt-2"
             placeholder={expectedText}
           />
         </div>
 
         <AlertDialogFooter>
-          <AlertDialogCancel className="border-gray-700 text-gray-300">
+          <AlertDialogCancel>
             Cancelar
           </AlertDialogCancel>
           <AlertDialogAction
             onClick={handleFreeClosure}
             disabled={confirmationText !== expectedText || isFreeing}
-            className="bg-orange-600 hover:bg-orange-700 text-white"
+            className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
           >
             {isFreeing ? 'Liberando...' : 'LIBERAR CIERRE'}
           </AlertDialogAction>

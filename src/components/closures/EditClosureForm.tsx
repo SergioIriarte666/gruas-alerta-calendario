@@ -116,9 +116,9 @@ export const EditClosureForm: React.FC<EditClosureFormProps> = ({
   const activeClients = clients.filter(c => c.isActive);
 
   return (
-    <Card className="glass-card">
+    <Card className="bg-card border">
       <CardHeader>
-        <CardTitle className="text-white">
+        <CardTitle className="text-foreground">
           Editar Cierre {closure.folio}
         </CardTitle>
       </CardHeader>
@@ -126,39 +126,39 @@ export const EditClosureForm: React.FC<EditClosureFormProps> = ({
         <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="dateFrom" className="text-gray-300">Fecha de Inicio</Label>
+              <Label htmlFor="dateFrom" className="text-foreground">Fecha de Inicio</Label>
               <Input
                 id="dateFrom"
                 type="date"
                 {...register('dateFrom')}
-                className="mt-1 bg-white/5 border-gray-700 text-white"
+                className="mt-1"
               />
               {errors.dateFrom && (
-                <p className="text-sm text-red-400 mt-1">{errors.dateFrom.message}</p>
+                <p className="text-sm text-destructive mt-1">{errors.dateFrom.message}</p>
               )}
             </div>
 
             <div>
-              <Label htmlFor="dateTo" className="text-gray-300">Fecha de Fin</Label>
+              <Label htmlFor="dateTo" className="text-foreground">Fecha de Fin</Label>
               <Input
                 id="dateTo"
                 type="date"
                 {...register('dateTo')}
-                className="mt-1 bg-white/5 border-gray-700 text-white"
+                className="mt-1"
               />
               {errors.dateTo && (
-                <p className="text-sm text-red-400 mt-1">{errors.dateTo.message}</p>
+                <p className="text-sm text-destructive mt-1">{errors.dateTo.message}</p>
               )}
             </div>
 
             {/* SELECT DE CLIENTE - TOTALMENTE CORREGIDO */}
             <div>
-              <Label htmlFor="clientId" className="text-gray-300">Cliente</Label>
+              <Label htmlFor="clientId" className="text-foreground">Cliente</Label>
               <Select 
                 value={getClientDisplayValue()} 
                 onValueChange={handleClientChange}
               >
-                <SelectTrigger className="bg-white/5 border-gray-700 text-white">
+                <SelectTrigger>
                   <SelectValue placeholder="Seleccionar cliente (opcional)" />
                 </SelectTrigger>
                 <SelectContent>
@@ -174,9 +174,9 @@ export const EditClosureForm: React.FC<EditClosureFormProps> = ({
             </div>
 
             <div>
-              <Label htmlFor="status" className="text-gray-300">Estado</Label>
+              <Label htmlFor="status" className="text-foreground">Estado</Label>
               <Select onValueChange={(value) => setValue('status', value as any)}>
-                <SelectTrigger className="bg-white/5 border-gray-700 text-white">
+                <SelectTrigger>
                   <SelectValue placeholder="Seleccionar estado" />
                 </SelectTrigger>
                 <SelectContent>
@@ -186,7 +186,7 @@ export const EditClosureForm: React.FC<EditClosureFormProps> = ({
                 </SelectContent>
               </Select>
               {errors.status && (
-                <p className="text-sm text-red-400 mt-1">{errors.status.message}</p>
+                <p className="text-sm text-destructive mt-1">{errors.status.message}</p>
               )}
             </div>
           </div>
@@ -197,21 +197,21 @@ export const EditClosureForm: React.FC<EditClosureFormProps> = ({
           {currentServices.length > 0 && (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <Label className="text-gray-300">Servicios Actuales en el Cierre</Label>
-                <div className="text-sm text-gray-400">
+                <Label className="text-foreground">Servicios Actuales en el Cierre</Label>
+                <div className="text-sm text-muted-foreground">
                   {currentServices.length} servicio{currentServices.length !== 1 ? 's' : ''} • Total: ${localClosure.total.toLocaleString()}
                 </div>
               </div>
-              <div className="max-h-32 overflow-y-auto border border-gray-700 rounded-md p-2 bg-white/5">
+              <div className="max-h-32 overflow-y-auto border rounded-md p-2 bg-muted">
                 <div className="space-y-1">
                   {currentServices.map(service => (
-                    <div key={service.id} className="flex items-center justify-between py-2 px-2 rounded bg-tms-green/10 border border-tms-green/30">
+                    <div key={service.id} className="flex items-center justify-between py-2 px-2 rounded bg-primary/10 border border-primary/30">
                       <div className="flex-1">
                         <div className="flex justify-between items-center">
-                          <span className="text-sm text-gray-300">{service.folio} - {service.client.name}</span>
-                          <span className="font-medium text-tms-green">${getServiceValueForClosure(service).toLocaleString()}</span>
+                          <span className="text-sm text-foreground">{service.folio} - {service.client.name}</span>
+                          <span className="font-medium text-primary">${getServiceValueForClosure(service).toLocaleString()}</span>
                         </div>
-                        <div className="text-xs text-gray-500">
+                        <div className="text-xs text-muted-foreground">
                           {service.serviceDate} • {service.licensePlate}
                         </div>
                       </div>
@@ -220,7 +220,7 @@ export const EditClosureForm: React.FC<EditClosureFormProps> = ({
                         variant="outline"
                         size="sm"
                         onClick={() => handleRemoveCurrentService(service.id)}
-                        className="ml-2 text-xs border-red-500/50 text-red-400 hover:bg-red-500/10"
+                        className="ml-2 text-xs text-destructive border-destructive/40 hover:bg-destructive/10"
                       >
                         Remover
                       </Button>
@@ -233,7 +233,7 @@ export const EditClosureForm: React.FC<EditClosureFormProps> = ({
 
           {/* Services Selector for Adding New Services */}
           <div className="space-y-4">
-            <Label className="text-gray-300">Agregar Servicios al Cierre</Label>
+            <Label className="text-foreground">Agregar Servicios al Cierre</Label>
             <EnhancedServicesSelector 
               services={availableServices} 
               pendingServices={pendingServices}
@@ -249,10 +249,10 @@ export const EditClosureForm: React.FC<EditClosureFormProps> = ({
           </div>
 
           <div className="flex justify-end gap-4">
-            <Button type="button" variant="outline" onClick={onCancel} className="border-gray-700 text-gray-300 hover:text-white">
+            <Button type="button" variant="outline" onClick={onCancel}>
               Cancelar
             </Button>
-            <Button type="submit" className="bg-tms-green hover:bg-tms-green/90">
+            <Button type="submit" className="bg-primary hover:bg-primary/90 text-primary-foreground">
               Actualizar Cierre
             </Button>
           </div>

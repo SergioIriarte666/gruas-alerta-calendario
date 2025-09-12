@@ -65,12 +65,12 @@ const EnhancedServicesSelector = ({
   if (loading) {
     return (
       <div className="space-y-2">
-        <Label className="text-gray-300">Servicios</Label>
-        <div className="max-h-40 overflow-y-auto border border-gray-700 rounded-md p-2 bg-white/5">
+        <Label className="text-foreground">Servicios</Label>
+        <div className="max-h-40 overflow-y-auto border rounded-md p-2 bg-muted">
           <div className="space-y-2">
-            <div className="h-4 bg-gray-700 rounded animate-pulse"></div>
-            <div className="h-4 bg-gray-700 rounded animate-pulse w-3/4"></div>
-            <div className="h-4 bg-gray-700 rounded animate-pulse w-1/2"></div>
+            <div className="h-4 bg-muted-foreground/20 rounded animate-pulse"></div>
+            <div className="h-4 bg-muted-foreground/20 rounded animate-pulse w-3/4"></div>
+            <div className="h-4 bg-muted-foreground/20 rounded animate-pulse w-1/2"></div>
           </div>
         </div>
       </div>
@@ -122,9 +122,9 @@ const EnhancedServicesSelector = ({
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <Label className="text-gray-300">Servicios para Cierre</Label>
+        <Label className="text-foreground">Servicios para Cierre</Label>
         {selectedServiceIds.length > 0 && (
-          <div className="flex items-center gap-1 text-sm text-tms-green">
+          <div className="flex items-center gap-1 text-sm text-primary">
             <CheckCircle className="h-4 w-4" />
             <span>{selectedServiceIds.length} seleccionado{selectedServiceIds.length !== 1 ? 's' : ''}</span>
           </div>
@@ -133,21 +133,21 @@ const EnhancedServicesSelector = ({
 
       {/* Status Message */}
       {statusMessage && (
-        <Alert className={`border-${statusMessage.type === 'warning' ? 'yellow' : statusMessage.type === 'success' ? 'green' : 'blue'}-500/50 bg-${statusMessage.type === 'warning' ? 'yellow' : statusMessage.type === 'success' ? 'green' : 'blue'}-500/10`}>
+        <Alert className="border">
           <div className="flex items-start gap-2">
             {statusMessage.type === 'warning' ? (
-              <AlertTriangle className="h-4 w-4 text-yellow-400 mt-0.5" />
+              <AlertTriangle className="h-4 w-4 text-destructive mt-0.5" />
             ) : statusMessage.type === 'success' ? (
-              <CheckCircle className="h-4 w-4 text-green-400 mt-0.5" />
+              <CheckCircle className="h-4 w-4 text-primary mt-0.5" />
             ) : (
-              <InfoIcon className="h-4 w-4 text-blue-400 mt-0.5" />
+              <InfoIcon className="h-4 w-4 text-muted-foreground mt-0.5" />
             )}
             <div className="flex-1">
-              <AlertDescription className={`text-${statusMessage.type === 'warning' ? 'yellow' : statusMessage.type === 'success' ? 'green' : 'blue'}-200`}>
+              <AlertDescription className="text-foreground">
                 <div className="font-medium">{statusMessage.title}</div>
-                <div className="text-sm mt-1">{statusMessage.description}</div>
+                <div className="text-sm mt-1 text-muted-foreground">{statusMessage.description}</div>
                 {statusMessage.suggestions.length > 0 && (
-                  <ul className="text-xs mt-2 space-y-1">
+                  <ul className="text-xs mt-2 space-y-1 text-muted-foreground">
                     {statusMessage.suggestions.map((suggestion, index) => (
                       <li key={index} className="flex items-center gap-1">
                         <span className="w-1 h-1 bg-current rounded-full"></span>
@@ -167,9 +167,9 @@ const EnhancedServicesSelector = ({
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Clock className="h-4 w-4 text-yellow-400" />
-              <Label className="text-gray-300">Servicios Pendientes</Label>
-              <Badge variant="outline" className="border-yellow-400 text-yellow-400">
+              <Clock className="h-4 w-4 text-secondary-foreground" />
+              <Label className="text-foreground">Servicios Pendientes</Label>
+              <Badge variant="secondary">
                 {filteredPendingServices.length}
               </Badge>
             </div>
@@ -178,7 +178,7 @@ const EnhancedServicesSelector = ({
               variant="outline"
               size="sm"
               onClick={() => setShowPending(!showPending)}
-              className="text-xs border-yellow-500/50 text-yellow-400 hover:bg-yellow-500/10"
+              className="text-xs"
             >
               {showPending ? 'Ocultar' : 'Mostrar'}
             </Button>
@@ -186,23 +186,23 @@ const EnhancedServicesSelector = ({
 
           {showPending && (
             <div className="space-y-2">
-              <div className="max-h-32 overflow-y-auto border border-yellow-500/30 rounded-md p-2 bg-yellow-500/5">
+              <div className="max-h-32 overflow-y-auto border rounded-md p-2 bg-muted">
                 <div className="space-y-1">
                   {filteredPendingServices.map(service => (
-                    <div key={service.id} className="flex items-center space-x-2 py-1 px-1 rounded hover:bg-yellow-500/10">
+                    <div key={service.id} className="flex items-center space-x-2 py-1 px-1 rounded hover:bg-background">
                       <input
                         type="checkbox"
                         id={`pending-${service.id}`}
                         checked={selectedPendingIds.includes(service.id)}
                         onChange={(e) => handlePendingToggle(service.id, e.target.checked)}
-                        className="text-yellow-500 rounded"
+                        className="text-secondary rounded"
                       />
-                      <label htmlFor={`pending-${service.id}`} className="text-sm text-gray-300 flex-1 cursor-pointer">
+                      <label htmlFor={`pending-${service.id}`} className="text-sm text-foreground flex-1 cursor-pointer">
                      <div className="flex justify-between items-center">
                           <span>{service.folio} - {service.client.name}</span>
-                          <span className="font-medium text-yellow-400">${getServiceValueForClosure(service).toLocaleString()}</span>
+                          <span className="font-medium text-secondary-foreground">${getServiceValueForClosure(service).toLocaleString()}</span>
                         </div>
-                        <div className="text-xs text-gray-500">
+                        <div className="text-xs text-muted-foreground">
                           {service.serviceDate} • {service.licensePlate}
                         </div>
                       </label>
@@ -216,7 +216,7 @@ const EnhancedServicesSelector = ({
                   type="button"
                   onClick={handleCompleteSelected}
                   size="sm"
-                  className="w-full bg-yellow-600 hover:bg-yellow-700 text-white"
+                  className="w-full bg-secondary hover:bg-secondary/90 text-secondary-foreground"
                 >
                   <Zap className="h-4 w-4 mr-2" />
                   Completar {selectedPendingIds.length} servicio{selectedPendingIds.length !== 1 ? 's' : ''}
@@ -229,21 +229,21 @@ const EnhancedServicesSelector = ({
 
       {/* Available Services Section */}
       <div className="space-y-2">
-        <Label className="text-gray-300">Servicios Completados Disponibles</Label>
-        <div className="max-h-40 overflow-y-auto border border-gray-700 rounded-md p-2 bg-white/5">
+        <Label className="text-foreground">Servicios Completados Disponibles</Label>
+        <div className="max-h-40 overflow-y-auto border rounded-md p-2 bg-muted">
           {filteredServices.length === 0 ? (
             <div className="text-center py-4">
-              <p className="text-gray-400 text-sm">
+              <p className="text-muted-foreground text-sm">
                 {clientId ? 
                   `No hay servicios completados disponibles para este cliente` : 
                   'No hay servicios completados disponibles para cierre'
                 }
               </p>
               {services.length > 0 && clientId && (
-                <p className="text-yellow-400 text-xs mt-1">
+                <p className="text-secondary-foreground text-xs mt-1">
                   Hay {services.length} servicio(s) disponible(s) para otros clientes.
                   <br />
-                  <span className="text-blue-400 cursor-pointer underline">
+                  <span className="text-primary cursor-pointer underline">
                     Selecciona "Todos los clientes" para incluirlos.
                   </span>
                 </p>
@@ -256,8 +256,8 @@ const EnhancedServicesSelector = ({
                   key={service.id}
                   className={`flex items-center space-x-2 py-2 px-1 rounded transition-colors ${
                     selectedServiceIds.includes(service.id) 
-                      ? 'bg-tms-green/10 border border-tms-green/30' 
-                      : 'hover:bg-white/5'
+                      ? 'bg-primary/10 border border-primary/30' 
+                      : 'hover:bg-background'
                   }`}
                 >
                   <input
@@ -265,14 +265,14 @@ const EnhancedServicesSelector = ({
                     id={service.id}
                     checked={selectedServiceIds.includes(service.id)}
                     onChange={(e) => onServiceToggle(service.id, e.target.checked)}
-                    className="text-tms-green rounded"
+                    className="text-primary rounded"
                   />
-                  <label htmlFor={service.id} className="text-sm text-gray-300 flex-1 cursor-pointer">
+                  <label htmlFor={service.id} className="text-sm text-foreground flex-1 cursor-pointer">
                     <div className="flex justify-between items-center">
                       <span>{service.folio} - {service.client.name}</span>
-                      <span className="font-medium text-tms-green">${getServiceValueForClosure(service).toLocaleString()}</span>
+                      <span className="font-medium text-primary">${getServiceValueForClosure(service).toLocaleString()}</span>
                     </div>
-                    <div className="text-xs text-gray-500">
+                    <div className="text-xs text-muted-foreground">
                       {service.serviceDate} • {service.licensePlate} • Status: {service.status}
                     </div>
                   </label>

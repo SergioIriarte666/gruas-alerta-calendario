@@ -352,6 +352,24 @@ body {
   background-color: hsl(var(--accent)) !important;
 }
 
+/* Closures Module Scope */
+.closures-scope {
+  color: hsl(var(--foreground));
+}
+
+.closures-scope .text-white {
+  color: hsl(var(--foreground)) !important;
+}
+
+.closures-scope .text-gray-300,
+.closures-scope .text-gray-400 {
+  color: hsl(var(--muted-foreground)) !important;
+}
+
+.closures-scope .border-gray-700 {
+  border-color: hsl(var(--border)) !important;
+}
+
 /* Media queries para responsive */
 @media (max-width: 768px) {
   .responsive-grid {
