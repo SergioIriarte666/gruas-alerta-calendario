@@ -87,53 +87,53 @@ export const ClientBillingSettings: React.FC = () => {
     <div className="space-y-6">
       {/* Header con estadísticas */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="glass-card border-primary/20">
+        <Card className="bg-card border">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-white/90 flex items-center gap-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
               <Users className="w-4 h-4" />
               Total Clientes
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-white">{clients.length}</div>
+            <div className="text-2xl font-bold text-foreground">{clients.length}</div>
           </CardContent>
         </Card>
 
-        <Card className="glass-card border-primary/20">
+        <Card className="bg-card border">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-white/90 flex items-center gap-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
               <Calendar className="w-4 h-4" />
               Facturación Diferida
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-orange-300">{deferredClients.length}</div>
+            <div className="text-2xl font-bold text-foreground">{deferredClients.length}</div>
           </CardContent>
         </Card>
 
-        <Card className="glass-card border-primary/20">
+        <Card className="bg-card border">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-white/90 flex items-center gap-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
               <Clock className="w-4 h-4" />
               Facturación Inmediata
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-300">{immediateClients.length}</div>
+            <div className="text-2xl font-bold text-foreground">{immediateClients.length}</div>
           </CardContent>
         </Card>
       </div>
 
       {/* Buscador */}
-      <Card className="glass-card border-primary/20">
+      <Card className="bg-card border">
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle className="text-white flex items-center gap-2">
+              <CardTitle className="text-foreground flex items-center gap-2">
                 <Settings className="w-5 h-5" />
                 Configuración de Facturación por Cliente
               </CardTitle>
-              <CardDescription className="text-white/70">
+              <CardDescription className="text-muted-foreground">
                 Configura el tipo de facturación para cada cliente
               </CardDescription>
             </div>
@@ -141,12 +141,12 @@ export const ClientBillingSettings: React.FC = () => {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/50 w-4 h-4" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
             <Input
               placeholder="Buscar cliente por nombre, RUT o departamento..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="glass-input pl-10"
+              className="pl-10"
             />
           </div>
 
@@ -154,22 +154,22 @@ export const ClientBillingSettings: React.FC = () => {
             {filteredClients.map((client) => (
               <div
                 key={client.id}
-                className="flex items-center justify-between p-4 rounded-lg border border-primary/20 bg-white/5 hover:bg-white/10 transition-colors"
+                className="flex items-center justify-between p-4 rounded-lg border bg-muted/50 hover:bg-muted transition-colors"
               >
                 <div className="flex-1 space-y-1">
                   <div className="flex items-center gap-2">
-                    <span className="font-medium text-white">{client.name}</span>
+                    <span className="font-medium text-foreground">{client.name}</span>
                     <Badge variant="outline" className="text-xs">
                       {client.department}
                     </Badge>
-                    <Badge className={`text-xs ${getBillingTypeColor(client.billingCycleType || 'immediate')}`}>
+                    <Badge variant="secondary" className="text-xs">
                       {getBillingTypeText(client.billingCycleType || 'immediate')}
                     </Badge>
                     {client.autoInvoiceGeneration && (
                       <Badge variant="secondary" className="text-xs">Auto</Badge>
                     )}
                   </div>
-                  <div className="text-sm text-white/70">
+                  <div className="text-sm text-muted-foreground">
                     RUT: {client.rut}
                     {client.billingCycleType === 'deferred' && (
                       <span className="ml-4">
@@ -200,7 +200,7 @@ export const ClientBillingSettings: React.FC = () => {
             ))}
 
             {filteredClients.length === 0 && (
-              <div className="text-center py-8 text-white/70">
+              <div className="text-center py-8 text-muted-foreground">
                 {searchTerm ? 'No se encontraron clientes con ese criterio' : 'No hay clientes registrados'}
               </div>
             )}
@@ -211,7 +211,7 @@ export const ClientBillingSettings: React.FC = () => {
       {/* Modal de configuración detallada */}
       <Dialog open={configModalOpen} onOpenChange={setConfigModalOpen}>
         <DialogContent 
-          className="max-w-2xl max-h-[85vh] glass-card select-none overflow-hidden"
+          className="max-w-2xl max-h-[85vh] bg-card select-none overflow-hidden"
           style={{ 
             position: 'fixed',
             top: '50%',
@@ -226,7 +226,7 @@ export const ClientBillingSettings: React.FC = () => {
           draggable={false}
         >
           <DialogHeader>
-            <DialogTitle className="text-white">
+            <DialogTitle className="text-foreground">
               Configurar Facturación: {selectedClient?.name}
             </DialogTitle>
           </DialogHeader>

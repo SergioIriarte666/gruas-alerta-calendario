@@ -54,13 +54,13 @@ export const ClientBillingConfigComponent: React.FC<ClientBillingConfigProps> = 
 
   return (
     <div className="max-h-[60vh] overflow-y-auto pr-2 space-y-6">
-      <Card className="glass-card border-primary/20">
+      <Card className="bg-card border">
         <CardHeader>
-          <CardTitle className="text-white flex items-center gap-2">
+          <CardTitle className="text-foreground flex items-center gap-2">
             <Settings className="w-5 h-5" />
             Configuración de Facturación
           </CardTitle>
-          <CardDescription className="text-white/70">
+          <CardDescription className="text-muted-foreground">
             Configura el período y tipo de facturación para este cliente.
           </CardDescription>
         </CardHeader>
@@ -72,7 +72,7 @@ export const ClientBillingConfigComponent: React.FC<ClientBillingConfigProps> = 
             value={config.billingCycleType} 
             onValueChange={(value: 'immediate' | 'deferred') => updateConfig({ billingCycleType: value })}
           >
-            <SelectTrigger className="glass-input">
+            <SelectTrigger>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -94,8 +94,8 @@ export const ClientBillingConfigComponent: React.FC<ClientBillingConfigProps> = 
 
         {/* Configuración de Facturación Diferida */}
         {config.billingCycleType === 'deferred' && (
-          <div className="space-y-4 p-4 rounded-lg border border-primary/20 bg-white/5">
-            <h4 className="text-white font-medium flex items-center gap-2">
+          <div className="space-y-4 p-4 rounded-lg border bg-muted/50">
+            <h4 className="text-foreground font-medium flex items-center gap-2">
               <Calendar className="w-4 h-4" />
               Configuración de Período Diferido
             </h4>
@@ -109,10 +109,9 @@ export const ClientBillingConfigComponent: React.FC<ClientBillingConfigProps> = 
                 max="365"
                 value={config.billingDelayDays}
                 onChange={(e) => updateConfig({ billingDelayDays: parseInt(e.target.value) || 0 })}
-                className="glass-input"
                 placeholder="Ej: 30 para facturar al mes siguiente"
               />
-              <div className="text-xs text-white/60">
+              <div className="text-xs text-muted-foreground">
                 Los servicios se facturarán después de este número de días desde la fecha del servicio.
               </div>
             </div>
@@ -124,7 +123,7 @@ export const ClientBillingConfigComponent: React.FC<ClientBillingConfigProps> = 
                 value={config.billingCycleDay?.toString() || 'none'} 
                 onValueChange={(value) => updateConfig({ billingCycleDay: value === 'none' ? undefined : parseInt(value) })}
               >
-                <SelectTrigger className="glass-input">
+                <SelectTrigger>
                   <SelectValue placeholder="Seleccionar día específico del mes" />
                 </SelectTrigger>
                 <SelectContent>
@@ -136,7 +135,7 @@ export const ClientBillingConfigComponent: React.FC<ClientBillingConfigProps> = 
                   ))}
                 </SelectContent>
               </Select>
-              <div className="text-xs text-white/60">
+              <div className="text-xs text-muted-foreground">
                 Si se especifica, las facturas se generarán en este día del mes correspondiente.
               </div>
             </div>
@@ -144,8 +143,8 @@ export const ClientBillingConfigComponent: React.FC<ClientBillingConfigProps> = 
             {/* Generación Automática */}
             <div className="flex items-center justify-between">
               <div className="space-y-1">
-                <Label className="text-white">Generación Automática de Facturas</Label>
-                <div className="text-xs text-white/60">
+                <Label className="text-foreground">Generación Automática de Facturas</Label>
+                <div className="text-xs text-muted-foreground">
                   Generar facturas automáticamente cuando se cumple el período de diferimiento.
                 </div>
               </div>
@@ -163,7 +162,6 @@ export const ClientBillingConfigComponent: React.FC<ClientBillingConfigProps> = 
           <Textarea
             value={config.billingNotes || ''}
             onChange={(e) => updateConfig({ billingNotes: e.target.value })}
-            className="glass-input"
             placeholder="Notas adicionales sobre el proceso de facturación..."
             rows={3}
           />
@@ -171,27 +169,27 @@ export const ClientBillingConfigComponent: React.FC<ClientBillingConfigProps> = 
 
         {/* Vista Previa */}
         <div className="p-4 rounded-lg border border-primary/20 bg-primary/10">
-          <h4 className="text-white font-medium mb-2 flex items-center gap-2">
+          <h4 className="text-foreground font-medium mb-2 flex items-center gap-2">
             <DollarSign className="w-4 h-4" />
             Vista Previa de Facturación
           </h4>
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
-              <span className="text-white/70">Ejemplo servicio realizado:</span>
-              <span className="text-white">
+              <span className="text-muted-foreground">Ejemplo servicio realizado:</span>
+              <span className="text-foreground">
                 {new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toLocaleDateString('es-CL')}
               </span>
             </div>
             <div className="flex justify-between">
-              <span className="text-white/70">Fecha de facturación:</span>
+              <span className="text-muted-foreground">Fecha de facturación:</span>
               <Badge variant="outline">
                 {new Date(previewDate).toLocaleDateString('es-CL')}
               </Badge>
             </div>
             {config.billingCycleType === 'deferred' && (
               <div className="flex justify-between">
-                <span className="text-white/70">Diferimiento:</span>
-                <span className="text-white">
+                <span className="text-muted-foreground">Diferimiento:</span>
+                <span className="text-foreground">
                   {config.billingDelayDays} día{config.billingDelayDays !== 1 ? 's' : ''}
                   {config.billingCycleDay && ` (día ${config.billingCycleDay} del mes)`}
                 </span>

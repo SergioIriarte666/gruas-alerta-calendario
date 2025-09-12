@@ -55,15 +55,15 @@ export const ClientDetailModal: React.FC<ClientDetailModalProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] glass-card">
+      <DialogContent className="max-w-4xl max-h-[90vh] bg-card">
         <DialogHeader>
-          <DialogTitle className="text-white">
+          <DialogTitle className="text-foreground">
             Configuración del Cliente: {client.name}
           </DialogTitle>
         </DialogHeader>
 
         <Tabs defaultValue="billing" className="space-y-4">
-          <TabsList className="glass-card">
+          <TabsList className="bg-muted/50 rounded-md p-1">
             <TabsTrigger value="billing">Facturación</TabsTrigger>
             <TabsTrigger value="general">General</TabsTrigger>
             <TabsTrigger value="history">Historial</TabsTrigger>
@@ -79,13 +79,13 @@ export const ClientDetailModal: React.FC<ClientDetailModalProps> = ({
           </TabsContent>
 
           <TabsContent value="general" className="space-y-4">
-            <div className="text-center py-8 text-white/70">
+            <div className="text-center py-8 text-muted-foreground">
               Información general del cliente - Próximamente
             </div>
           </TabsContent>
 
           <TabsContent value="history" className="space-y-4">
-            <div className="text-center py-8 text-white/70">
+            <div className="text-center py-8 text-muted-foreground">
               Historial de servicios y facturas - Próximamente
             </div>
           </TabsContent>
