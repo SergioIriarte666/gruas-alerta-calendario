@@ -34,7 +34,7 @@ export const CostTable = ({ metrics }: CostTableProps) => {
                   <td className="text-right text-primary p-3 font-medium">
                     ${category.total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </td>
-                  <td className="text-right text-secondary p-3">
+                  <td className="text-right text-violet-600 p-3">
                     {category.percentage.toFixed(1)}%
                   </td>
                   <td className="text-right text-accent p-3">
