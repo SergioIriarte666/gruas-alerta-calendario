@@ -23,11 +23,11 @@ export const DetailTables = ({ metrics }: DetailTablesProps) => (
             <div key={client.clientId} className="flex items-center justify-between p-3 bg-white/5 rounded-lg">
               <div>
                 <p className="font-medium text-white">{client.clientName}{client.department ? ` — ${client.department}` : ''}</p>
-                <p className="text-sm text-gray-400">{client.services} servicios</p>
+                <p className="text-sm text-black">{client.services} servicios</p>
               </div>
               <div className="text-right">
                 <p className="font-medium text-green-400">${client.revenue.toLocaleString()}</p>
-                <p className="text-xs text-gray-400">#{index + 1}</p>
+                <p className="text-xs text-black">#{index + 1}</p>
               </div>
             </div>
           ))}
