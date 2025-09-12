@@ -1,6 +1,6 @@
 
-import { useState, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useState, useEffect, useRef } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useServices } from '@/hooks/useServices';
 import { useServiceManager } from './useServiceManager';
 import { useUser } from '@/contexts/UserContext';
@@ -14,10 +14,10 @@ export const useServicesPage = () => {
   const { createService, updateService, deleteService } = useServiceManager();
   const { user } = useUser();
   const location = useLocation();
+  const navigate = useNavigate();
   const params = new URLSearchParams(location.search);
   const statusParam = params.get('status');
   const futureParam = params.get('future');
-  
   const [selectedService, setSelectedService] = useState<Service | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
@@ -33,6 +33,8 @@ export const useServicesPage = () => {
   const [fromCalendarEvent, setFromCalendarEvent] = useState(false);
   const [sortField, setSortField] = useState<'folio' | 'date' | 'client' | 'vehicle' | 'crane' | 'operator' | 'value' | 'status' | null>(null);
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+
+  const newSaleHandledRef = useRef(false);
 
   const isAdmin = user?.role === 'admin';
   const ITEMS_PER_PAGE = 10;
@@ -51,16 +53,17 @@ export const useServicesPage = () => {
 
   // Handle newSale parameter from inventory module
   useEffect(() => {
-    const newSaleParam = params.get('newSale');
-    if (newSaleParam === 'true') {
+    const search = new URLSearchParams(location.search);
+    if (search.get('newSale') === 'true' && !newSaleHandledRef.current) {
+      newSaleHandledRef.current = true;
       console.log('🛒 Detected newSale parameter, opening form for sale');
       setIsFormOpen(true);
       // Clear the newSale parameter from URL to prevent re-opening on refresh
-      const newUrl = new URL(window.location.href);
-      newUrl.searchParams.delete('newSale');
-      window.history.replaceState({}, '', newUrl.toString());
+      const newSearch = new URLSearchParams(location.search);
+      newSearch.delete('newSale');
+      navigate({ pathname: location.pathname, search: newSearch.toString() ? `?${newSearch.toString()}` : '' }, { replace: true });
     }
-  }, [params]);
+  }, [location.search, navigate]);
 
   const handleAdvancedFiltersChange = (hasFilters: boolean, filterFunction: (services: Service[]) => Service[]) => {
     setHasAdvancedFilters(hasFilters);
