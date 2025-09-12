@@ -21,10 +21,10 @@ export const ReportsHeader = ({ onExport, onExportServiceReport, onExportCostRep
   <div className="flex flex-col md:flex-row justify-between md:items-center gap-4">
     <div>
       <h1 className="text-3xl font-bold text-foreground">Reportes</h1>
-      <p className="text-muted-foreground mt-1">
+      <p className="text-foreground mt-1">
         Análisis detallado y métricas de rendimiento del negocio.
         {lastUpdate && (
-          <span className="block text-sm text-muted-foreground mt-1">
+          <span className="block text-sm text-foreground mt-1">
             Última actualización: {lastUpdate.toLocaleTimeString()}
           </span>
         )}
@@ -36,7 +36,7 @@ export const ReportsHeader = ({ onExport, onExportServiceReport, onExportCostRep
           variant="outline" 
           onClick={onRefresh}
           disabled={isLoading}
-          className="border-white/20 text-white hover:bg-white/10"
+          className="border-input text-foreground hover:bg-muted/50"
         >
           <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
           Actualizar

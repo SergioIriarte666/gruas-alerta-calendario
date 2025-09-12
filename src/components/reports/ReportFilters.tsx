@@ -62,9 +62,9 @@ export const ReportFilters = ({
 
     return (
       <>
-        <Card className="bg-white/10 border-white/20">
+        <Card className="bg-card border">
             <CardHeader>
-                <CardTitle className="text-white flex items-center">
+                <CardTitle className="text-foreground flex items-center">
                     <Calendar className="w-5 h-5 mr-2" />
                     Filtros de Métricas
                 </CardTitle>
@@ -336,7 +336,7 @@ export const ReportFilters = ({
                         <Button 
                             onClick={onClear} 
                             variant="outline" 
-                            className="text-white border-white/30 hover:bg-white/10 hover:text-white px-3"
+                            className="text-foreground border-input hover:bg-muted/50 hover:text-foreground px-3"
                             style={{
                                 color: '#ffffff',
                                 borderColor: 'rgba(255, 255, 255, 0.3)'
@@ -349,9 +349,9 @@ export const ReportFilters = ({
             </CardContent>
         </Card>
 
-        <Card className="bg-white/10 border-white/20 mt-6">
+        <Card className="bg-card border mt-6">
             <CardHeader>
-                <CardTitle className="text-white flex items-center">
+                <CardTitle className="text-foreground flex items-center">
                     <FileText className="w-5 h-5 mr-2" />
                     Filtros para Informe de Servicios
                 </CardTitle>
@@ -435,9 +435,9 @@ export const ReportFilters = ({
             </CardContent>
         </Card>
 
-        <Card className="bg-white/10 border-white/20 mt-6">
+        <Card className="bg-card border mt-6">
             <CardHeader>
-                <CardTitle className="text-white flex items-center">
+                <CardTitle className="text-foreground flex items-center">
                     <FileText className="w-5 h-5 mr-2" />
                     Filtros para Informe de Costos
                 </CardTitle>

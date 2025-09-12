@@ -27,7 +27,7 @@ export const OperationalReports = ({
   if (!operationalMetrics) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="text-muted-foreground">Cargando métricas operacionales...</div>
+        <div className="text-foreground">Cargando métricas operacionales...</div>
       </div>
     );
   }
@@ -36,7 +36,7 @@ export const OperationalReports = ({
     <div className="space-y-6">
       <div>
         <h2 className="text-2xl font-bold text-foreground mb-2">Reportes Operacionales</h2>
-        <p className="text-muted-foreground">Análisis de servicios, ingresos, recursos y operaciones</p>
+        <p className="text-foreground">Análisis de servicios, ingresos, recursos y operaciones</p>
       </div>
 
       <OperationalMetricsComponent metrics={operationalMetrics} />

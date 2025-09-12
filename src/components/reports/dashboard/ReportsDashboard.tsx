@@ -13,7 +13,7 @@ export const ReportsDashboard = ({ metrics }: ReportsDashboardProps) => {
     <div className="space-y-6">
       <div>
         <h2 className="text-2xl font-bold text-foreground mb-2">Dashboard Ejecutivo</h2>
-        <p className="text-black">Resumen de métricas clave y indicadores de rendimiento</p>
+        <p className="text-foreground">Resumen de métricas clave y indicadores de rendimiento</p>
       </div>
 
       {/* KPIs Principales */}
@@ -58,8 +58,8 @@ export const ReportsDashboard = ({ metrics }: ReportsDashboardProps) => {
             {metrics.servicesByStatus.map((status) => (
               <div key={status.status} className="text-center p-4 bg-muted/50 rounded-lg">
                 <div className="text-2xl font-bold text-foreground">{status.count}</div>
-                <div className="text-sm text-black capitalize">{status.status}</div>
-                <div className="text-xs text-black">{status.percentage.toFixed(1)}%</div>
+                <div className="text-sm text-foreground capitalize">{status.status}</div>
+                <div className="text-xs text-foreground">{status.percentage.toFixed(1)}%</div>
               </div>
             ))}
           </div>
@@ -78,7 +78,7 @@ export const ReportsDashboard = ({ metrics }: ReportsDashboardProps) => {
                 <div key={client.clientId} className="flex items-center justify-between p-2 bg-muted/50 rounded">
                   <div>
                     <div className="font-medium text-foreground">{client.clientName}{client.department ? ` — ${client.department}` : ''}</div>
-                    <div className="text-sm text-black">{client.services} servicios</div>
+                    <div className="text-sm text-foreground">{client.services} servicios</div>
                   </div>
                   <div className="text-violet-600 font-medium">
                     ${client.revenue.toLocaleString()}
@@ -99,7 +99,7 @@ export const ReportsDashboard = ({ metrics }: ReportsDashboardProps) => {
                 <div key={crane.craneId} className="flex items-center justify-between p-2 bg-muted/50 rounded">
                   <div>
                     <div className="font-medium text-foreground">{crane.craneName}</div>
-                    <div className="text-sm text-black">{crane.services} servicios</div>
+                    <div className="text-sm text-foreground">{crane.services} servicios</div>
                   </div>
                   <div className="text-secondary font-medium">
                     {crane.utilization.toFixed(1)}%
