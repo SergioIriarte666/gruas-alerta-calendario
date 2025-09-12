@@ -427,7 +427,7 @@ export const PredictiveInsights: React.FC<PredictiveInsightsProps> = ({
               </div>
               <div className="space-y-2">
                 <h4 className="font-medium text-white">Análisis Principal</h4>
-                <p className="text-sm text-gray-300">
+                <p className="text-sm text-black">
                   Basado en los patrones de servicio de {clientName}, se detecta una tendencia positiva 
                   con oportunidades de optimización en el proceso de órdenes de compra. 
                   La demanda muestra estabilidad con picos estacionales predecibles.
