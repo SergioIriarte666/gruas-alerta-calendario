@@ -155,15 +155,15 @@ const ClosureForm = ({
   // Updated validation: require dates AND at least one service selected
   const isFormValid = formData.dateFrom && formData.dateTo && formData.serviceIds.length > 0;
   return <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="text-white">Nuevo Cierre de Servicios</DialogTitle>
+      <DialogContent className="bg-card border max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader className="border-b">
+          <DialogTitle className="text-foreground">Nuevo Cierre de Servicios</DialogTitle>
         </DialogHeader>
         
         <form onSubmit={handleSubmit} className="space-y-4">
-          <Alert className="border-blue-500/50 bg-blue-500/10">
-            <AlertCircle className="h-4 w-4 text-blue-400" />
-            <AlertDescription className="text-blue-200">
+          <Alert className="border border-border bg-muted">
+            <AlertCircle className="h-4 w-4 text-muted-foreground" />
+            <AlertDescription className="text-muted-foreground">
               Solo se pueden incluir servicios completados del rango de fechas seleccionado que no hayan sido facturados previamente.
               Una vez incluido en un cierre, el servicio no estará disponible para futuros cierres.
             </AlertDescription>
@@ -191,10 +191,10 @@ const ClosureForm = ({
 
           {/* Purchase Order */}
           <div className="space-y-2">
-            <Label className="text-gray-300">
+            <Label className="text-foreground">
               Orden de Compra 
               {formData.serviceIds.length > 0 && (
-                <span className="text-xs text-blue-400 ml-2">
+                <span className="text-xs text-muted-foreground ml-2">
                   (Auto-detectada de servicios seleccionados)
                 </span>
               )}
@@ -207,10 +207,10 @@ const ClosureForm = ({
                 ...prev,
                 purchaseOrder: e.target.value
               }))} 
-              className="bg-white/5 border-gray-700 text-white placeholder:text-gray-500" 
+              className="placeholder:text-muted-foreground" 
             />
             {formData.serviceIds.length > 0 && formData.purchaseOrder && (
-              <div className="text-xs text-gray-400">
+              <div className="text-xs text-muted-foreground">
                 {getPurchaseOrderSummary(services.filter(s => formData.serviceIds.includes(s.id)))}
               </div>
             )}
@@ -218,21 +218,21 @@ const ClosureForm = ({
 
           {/* Total */}
           <div className="space-y-2">
-            <Label className="text-gray-300">Total</Label>
+            <Label className="text-foreground">Total</Label>
             <Input type="number" value={formData.total} onChange={e => setFormData(prev => ({
             ...prev,
             total: Number(e.target.value)
-          }))} className="bg-white/5 border-gray-700 text-white" readOnly />
+          }))} className="" readOnly />
           </div>
 
           {/* Status */}
           <div className="space-y-2">
-            <Label className="text-gray-300">Estado</Label>
+            <Label className="text-foreground">Estado</Label>
             <Select value={formData.status} onValueChange={(value: ClosureStatus) => setFormData(prev => ({
               ...prev,
               status: value
             }))}>
-              <SelectTrigger className="bg-white/5 border-gray-700 text-white">
+              <SelectTrigger className="">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>

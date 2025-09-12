@@ -319,7 +319,7 @@ const Invoices = () => {
                 onSearchChange={setSearchTerm}
               />
             </div>
-            <div className="flex items-center space-x-1 bg-white/5 p-1 rounded-lg">
+            <div className="flex items-center space-x-1 bg-muted p-1 rounded-lg">
               {Object.entries(INVOICE_STATUS_MAP).map(([statusKey, statusValue]) => (
                 <Button
                   key={statusKey}
@@ -327,8 +327,8 @@ const Invoices = () => {
                   size="sm"
                   onClick={() => setStatusFilter(statusKey)}
                   className={cn(
-                    'capitalize text-gray-300 hover:text-white px-3 py-1 text-sm',
-                    statusFilter === statusKey && 'bg-tms-green text-white hover:bg-tms-green-dark'
+                    'capitalize text-muted-foreground hover:text-foreground px-3 py-1 text-sm',
+                    statusFilter === statusKey && 'bg-primary text-primary-foreground'
                   )}
                 >
                   {statusValue}

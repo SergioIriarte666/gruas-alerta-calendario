@@ -58,10 +58,10 @@ const EnhancedClosureSelector: React.FC<EnhancedClosureSelectorProps> = ({
 
   return (
     <div className="space-y-2">
-      <Label className="text-gray-300">
+      <Label className="text-foreground">
         Cierre
         {isEditing && (
-          <span className="text-xs text-orange-400 ml-2">
+          <span className="text-xs text-primary ml-2">
             (Modo edición - incluye cierres facturados)
           </span>
         )}
@@ -74,33 +74,33 @@ const EnhancedClosureSelector: React.FC<EnhancedClosureSelectorProps> = ({
             role="combobox"
             aria-expanded={open}
             disabled={disabled}
-            className="w-full justify-between bg-white/5 border-gray-700 text-white hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed min-h-[60px] p-3"
+            className="w-full justify-between bg-background border-input text-foreground hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed min-h-[60px] p-3"
           >
             {selectedClosure ? (
               <div className="flex flex-col items-start text-left w-full">
-                <div className="flex items-center gap-2 text-tms-green font-medium">
+                <div className="flex items-center gap-2 text-primary font-medium">
                   <FileText className="w-4 h-4" />
                   {selectedClosure.folio}
                 </div>
-                <div className="text-xs text-gray-400 mt-1">
+                <div className="text-xs text-muted-foreground mt-1">
                   {formatDateRange(selectedClosure.dateRange)} • {getClientName(selectedClosure.clientId)} • ${Math.round(selectedClosure.total).toLocaleString()}
                 </div>
               </div>
             ) : (
-              <span className="text-gray-400">Seleccionar cierre...</span>
+              <span className="text-muted-foreground">Seleccionar cierre...</span>
             )}
             <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
         
-        <PopoverContent className="w-[600px] p-0 bg-gray-800 border-gray-700" align="start">
-          <Command className="bg-gray-800">
+        <PopoverContent className="w-[600px] p-0 bg-card border" align="start">
+          <Command className="bg-card">
             <CommandInput 
               placeholder="Buscar por folio, cliente o fecha..." 
-              className="text-white placeholder:text-gray-400"
+              className="text-foreground placeholder:text-muted-foreground"
             />
             <CommandList className="max-h-[400px]">
-              <CommandEmpty className="text-gray-400 text-center py-6">
+              <CommandEmpty className="text-muted-foreground text-center py-6">
                 No se encontraron cierres.
               </CommandEmpty>
               <CommandGroup>
@@ -114,36 +114,36 @@ const EnhancedClosureSelector: React.FC<EnhancedClosureSelectorProps> = ({
                     }}
                     className="p-0 cursor-pointer"
                   >
-                    <div className="flex items-start justify-between w-full p-4 hover:bg-gray-700/50 rounded-md">
-                      <div className="flex-1 space-y-2">
-                        {/* Folio */}
-                        <div className="flex items-center gap-2">
-                          <FileText className="w-4 h-4 text-tms-green" />
-                          <span className="font-medium text-tms-green">{closure.folio}</span>
-                          {selectedClosureId === closure.id && (
-                            <Check className="w-4 h-4 text-tms-green ml-auto" />
-                          )}
-                        </div>
+                  <div className="flex items-start justify-between w-full p-4 hover:bg-muted rounded-md">
+                    <div className="flex-1 space-y-2">
+                      {/* Folio */}
+                      <div className="flex items-center gap-2">
+                        <FileText className="w-4 h-4 text-primary" />
+                        <span className="font-medium text-primary">{closure.folio}</span>
+                        {selectedClosureId === closure.id && (
+                          <Check className="w-4 h-4 text-primary ml-auto" />
+                        )}
+                      </div>
                         
-                        {/* Fechas */}
-                        <div className="flex items-center gap-2 text-sm text-gray-300">
-                          <Calendar className="w-4 h-4 text-gray-400" />
-                          <span>{formatDateRange(closure.dateRange)}</span>
-                        </div>
-                        
-                        {/* Cliente */}
-                        <div className="flex items-center gap-2 text-sm text-gray-300">
-                          <User className="w-4 h-4 text-gray-400" />
-                          <span className="truncate">{getClientName(closure.clientId)}</span>
-                        </div>
-                        
-                        {/* Monto */}
-                        <div className="flex items-center gap-2 text-sm">
-                          <DollarSign className="w-4 h-4 text-gray-400" />
-                          <span className="font-medium text-tms-green">
-                            ${Math.round(closure.total).toLocaleString()}
-                          </span>
-                        </div>
+                      {/* Fechas */}
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Calendar className="w-4 h-4 text-muted-foreground" />
+                        <span>{formatDateRange(closure.dateRange)}</span>
+                      </div>
+                      
+                      {/* Cliente */}
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <User className="w-4 h-4 text-muted-foreground" />
+                        <span className="truncate">{getClientName(closure.clientId)}</span>
+                      </div>
+                      
+                      {/* Monto */}
+                      <div className="flex items-center gap-2 text-sm">
+                        <DollarSign className="w-4 h-4 text-muted-foreground" />
+                        <span className="font-medium text-primary">
+                          ${Math.round(closure.total).toLocaleString()}
+                        </span>
+                      </div>
                       </div>
                     </div>
                   </CommandItem>

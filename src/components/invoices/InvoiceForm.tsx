@@ -282,12 +282,12 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
   }, [setValue, trigger]);
 
   return (
-    <Card className="glass-card">
+    <Card className="bg-card border">
       <CardHeader>
-        <CardTitle className="text-white">
+        <CardTitle className="text-foreground">
           {isEditing ? 'Editar Factura' : 'Nueva Factura'}
           {preselectedClosureId && (
-            <span className="text-sm font-normal text-tms-green ml-2">
+            <span className="text-sm font-normal text-primary ml-2">
               (Cierre preseleccionado)
             </span>
           )}
@@ -295,20 +295,20 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
       </CardHeader>
       <CardContent>
         {editableFields.message && (
-          <div className="mb-4 p-3 bg-blue-600/30 border border-blue-500/40 rounded-lg">
-            <p className="text-base text-white font-medium">{editableFields.message}</p>
+          <div className="mb-4 p-3 bg-muted border rounded-lg">
+            <p className="text-base text-foreground font-medium">{editableFields.message}</p>
           </div>
         )}
         <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="status" className="text-gray-300">Estado</Label>
+              <Label htmlFor="status" className="text-foreground">Estado</Label>
               <Select 
                 onValueChange={handleStatusChange}
                 value={watch('status')}
                 disabled={!editableFields.canEditStatus}
               >
-                <SelectTrigger className="bg-white/5 border-gray-700 text-white disabled:opacity-50 disabled:cursor-not-allowed">
+                <SelectTrigger className="disabled:opacity-50 disabled:cursor-not-allowed">
                   <SelectValue placeholder="Seleccionar estado" />
                 </SelectTrigger>
                 <SelectContent>
@@ -320,74 +320,74 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
                 </SelectContent>
               </Select>
               {errors.status && (
-                <p className="text-sm text-red-400 mt-1">{errors.status.message}</p>
+                <p className="text-sm text-destructive mt-1">{errors.status.message}</p>
               )}
             </div>
 
             <div>
-              <Label htmlFor="numeroFiscal" className="text-gray-300">Número Fiscal (Opcional)</Label>
+              <Label htmlFor="numeroFiscal" className="text-foreground">Número Fiscal (Opcional)</Label>
               <Input
                 id="numeroFiscal"
                 type="text"
                 placeholder="Ej: 123456789"
                 {...register('numeroFiscal')}
                 disabled={!editableFields.canEditNumeroFiscal}
-                className="mt-1 bg-white/5 border-gray-700 text-white placeholder:text-gray-400 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="mt-1 placeholder:text-muted-foreground disabled:opacity-50 disabled:cursor-not-allowed"
               />
               {errors.numeroFiscal && (
-                <p className="text-sm text-red-400 mt-1">{errors.numeroFiscal.message}</p>
+                <p className="text-sm text-destructive mt-1">{errors.numeroFiscal.message}</p>
               )}
-              <p className="text-xs text-gray-400 mt-1">
+              <p className="text-xs text-muted-foreground mt-1">
                 Número fiscal para registro SII (opcional)
               </p>
             </div>
 
-            {watch('status') === 'paid' && (
-              <div>
-                <Label htmlFor="paymentDate" className="text-gray-300">Fecha de Pago</Label>
-                <Input
-                  id="paymentDate"
-                  type="date"
-                  {...register('paymentDate')}
-                  disabled={!editableFields.canEditPaymentDate}
-                  className="mt-1 bg-white/5 border-gray-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
-                />
-                {errors.paymentDate && (
-                  <p className="text-sm text-red-400 mt-1">{errors.paymentDate.message}</p>
-                )}
-                <p className="text-xs text-gray-400 mt-1">
-                  Fecha en que se recibió el pago
-                </p>
-              </div>
+          {watch('status') === 'paid' && (
+            <div>
+              <Label htmlFor="paymentDate" className="text-foreground">Fecha de Pago</Label>
+              <Input
+                id="paymentDate"
+                type="date"
+                {...register('paymentDate')}
+                disabled={!editableFields.canEditPaymentDate}
+                className="mt-1 disabled:opacity-50 disabled:cursor-not-allowed"
+              />
+              {errors.paymentDate && (
+                <p className="text-sm text-destructive mt-1">{errors.paymentDate.message}</p>
+              )}
+              <p className="text-xs text-muted-foreground mt-1">
+                Fecha en que se recibió el pago
+              </p>
+            </div>
+          )}
+
+          <div>
+            <Label htmlFor="issueDate" className="text-foreground">Fecha de Emisión</Label>
+            <Input
+              id="issueDate"
+              type="date"
+              {...register('issueDate')}
+              disabled={!editableFields.canEditDates}
+              className="mt-1 disabled:opacity-50 disabled:cursor-not-allowed"
+            />
+            {errors.issueDate && (
+              <p className="text-sm text-destructive mt-1">{errors.issueDate.message}</p>
             )}
+          </div>
 
-            <div>
-              <Label htmlFor="issueDate" className="text-gray-300">Fecha de Emisión</Label>
-              <Input
-                id="issueDate"
-                type="date"
-                {...register('issueDate')}
-                disabled={!editableFields.canEditDates}
-                className="mt-1 bg-white/5 border-gray-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
-              />
-              {errors.issueDate && (
-                <p className="text-sm text-red-400 mt-1">{errors.issueDate.message}</p>
-              )}
-            </div>
-
-            <div>
-              <Label htmlFor="dueDate" className="text-gray-300">Fecha de Vencimiento</Label>
-              <Input
-                id="dueDate"
-                type="date"
-                {...register('dueDate')}
-                disabled={!editableFields.canEditDates}
-                className="mt-1 bg-white/5 border-gray-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
-              />
-              {errors.dueDate && (
-                <p className="text-sm text-red-400 mt-1">{errors.dueDate.message}</p>
-              )}
-            </div>
+          <div>
+            <Label htmlFor="dueDate" className="text-foreground">Fecha de Vencimiento</Label>
+            <Input
+              id="dueDate"
+              type="date"
+              {...register('dueDate')}
+              disabled={!editableFields.canEditDates}
+              className="mt-1 disabled:opacity-50 disabled:cursor-not-allowed"
+            />
+            {errors.dueDate && (
+              <p className="text-sm text-destructive mt-1">{errors.dueDate.message}</p>
+            )}
+          </div>
           </div>
 
           <EnhancedClosureSelector
@@ -414,14 +414,13 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
             <Button 
               type="button" 
               variant="outline" 
-              onClick={onCancel} 
-              className="border-gray-700 text-gray-300 hover:text-white"
+              onClick={onCancel}
             >
               Cancelar
             </Button>
             <Button 
               type="submit" 
-              className="bg-tms-green hover:bg-tms-green/90" 
+              className="bg-primary text-primary-foreground hover:bg-primary/90" 
               disabled={!selectedClosure || isSubmitting || isLoading}
             >
               {isSubmitting || isLoading ? (
@@ -434,7 +433,7 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
               )}
             </Button>
             {!selectedClosure && (
-              <p className="text-sm text-red-400 mt-2">
+              <p className="text-sm text-destructive mt-2">
                 Debe seleccionar un cierre para continuar
               </p>
             )}

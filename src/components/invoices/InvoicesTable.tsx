@@ -57,11 +57,11 @@ const formatSafeAmount = (amount: any): string => {
 // Sort icon component
 const SortIcon = ({ field, sortField, sortDirection }: { field: string; sortField?: string; sortDirection?: 'asc' | 'desc' }) => {
   if (sortField !== field) {
-    return <ArrowUpDown className="w-4 h-4 text-gray-500" />;
+    return <ArrowUpDown className="w-4 h-4 text-muted-foreground" />;
   }
   return sortDirection === 'asc' 
-    ? <ArrowUp className="w-4 h-4 text-tms-green" />
-    : <ArrowDown className="w-4 h-4 text-tms-green" />;
+    ? <ArrowUp className="w-4 h-4 text-primary" />
+    : <ArrowDown className="w-4 h-4 text-primary" />;
 };
 
 // Sortable header component
@@ -79,10 +79,10 @@ const SortableHeader = ({
   onSort?: (field: string) => void; 
 }) => {
   return (
-    <th className="text-left py-3 px-4 font-medium text-white">
+    <th className="text-left py-3 px-4 font-medium text-foreground">
       <button
         onClick={() => onSort?.(field)}
-        className="flex items-center gap-2 hover:text-tms-green transition-colors"
+        className="flex items-center gap-2 hover:text-primary transition-colors"
       >
         {label}
         <SortIcon field={field} sortField={sortField} sortDirection={sortDirection} />
@@ -94,11 +94,11 @@ const SortableHeader = ({
 // Enhanced status badge with validation
 const getStatusBadge = (status: string) => {
   const statusConfig = {
-    draft: { label: 'Borrador', className: 'bg-gray-600 text-white' },
-    sent: { label: 'Enviada', className: 'bg-blue-600 text-white' },
-    paid: { label: 'Pagada', className: 'bg-tms-green text-black' },
-    overdue: { label: 'Vencida', className: 'bg-red-600 text-white' },
-    cancelled: { label: 'Anulada', className: 'bg-gray-800 text-gray-300' },
+    draft: { label: 'Borrador', className: 'bg-muted text-foreground' },
+    sent: { label: 'Enviada', className: 'bg-secondary text-secondary-foreground' },
+    paid: { label: 'Pagada', className: 'bg-primary text-primary-foreground' },
+    overdue: { label: 'Vencida', className: 'bg-destructive text-destructive-foreground' },
+    cancelled: { label: 'Anulada', className: 'bg-muted text-muted-foreground' },
   };
   
   // Validate status and provide fallback
@@ -133,11 +133,11 @@ const InvoicesTable = ({
 
   if (invoices.length === 0) {
     return (
-      <Card className="glass-card">
+      <Card className="bg-card border">
         <CardContent className="p-8 text-center">
-          <FileText className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-          <h3 className="text-lg font-medium text-white mb-2">No hay facturas</h3>
-          <p className="text-gray-400">
+          <FileText className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+          <h3 className="text-lg font-medium text-foreground mb-2">No hay facturas</h3>
+          <p className="text-muted-foreground">
             No se encontraron facturas que coincidan con los filtros aplicados
           </p>
         </CardContent>
@@ -146,12 +146,12 @@ const InvoicesTable = ({
   }
 
   return (
-    <Card className="glass-card">
+    <Card className="bg-card border">
       <CardHeader>
-        <CardTitle className="flex items-center justify-between text-white">
+        <CardTitle className="flex items-center justify-between text-foreground">
           <span>Facturas ({invoices.length})</span>
           {selectedInvoiceIds.length > 0 && (
-            <span className="text-sm bg-tms-green/20 text-tms-green px-3 py-1 rounded-full">
+            <span className="text-sm bg-primary/15 text-primary px-3 py-1 rounded-full">
               {selectedInvoiceIds.length} seleccionadas
             </span>
           )}
@@ -161,7 +161,7 @@ const InvoicesTable = ({
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-gray-700">
+              <tr className="border-b border-border">
                 <SortableHeader field="folio" label="Folio" sortField={sortField} sortDirection={sortDirection} onSort={onSort} />
                 <SortableHeader field="numeroFiscal" label="N° Fiscal" sortField={sortField} sortDirection={sortDirection} onSort={onSort} />
                 <SortableHeader field="client" label="Cliente" sortField={sortField} sortDirection={sortDirection} onSort={onSort} />
@@ -169,7 +169,7 @@ const InvoicesTable = ({
                 <SortableHeader field="dueDate" label="Fecha Vencimiento" sortField={sortField} sortDirection={sortDirection} onSort={onSort} />
                 <SortableHeader field="total" label="Total" sortField={sortField} sortDirection={sortDirection} onSort={onSort} />
                 <SortableHeader field="status" label="Estado" sortField={sortField} sortDirection={sortDirection} onSort={onSort} />
-                <th className="text-center py-3 px-4 font-medium text-white">Acciones</th>
+                <th className="text-center py-3 px-4 font-medium text-foreground">Acciones</th>
               </tr>
             </thead>
             <tbody>
@@ -187,33 +187,33 @@ const InvoicesTable = ({
                 return (
                   <tr 
                     key={invoice.id} 
-                    className={`border-b border-gray-800 hover:bg-white/5 cursor-pointer transition-colors ${
-                      isSelected ? 'bg-tms-green/10 border-tms-green/30' : ''
+                    className={`border-b border-border hover:bg-muted cursor-pointer transition-colors ${
+                      isSelected ? 'bg-primary/10 border-primary/30' : ''
                     }`}
                     onClick={() => onInvoiceToggle(invoice.id, !isSelected)}
                    >
-                     <td className="py-3 px-4 text-white font-medium">
+                     <td className="py-3 px-4 text-foreground font-medium">
                        {invoice.folio || 'Sin folio'}
                      </td>
-                    <td className="py-3 px-4 text-white">
+                    <td className="py-3 px-4 text-foreground">
                       {invoice.numeroFiscal ? (
-                        <span className="text-tms-green font-medium">{invoice.numeroFiscal}</span>
+                        <span className="text-primary font-medium">{invoice.numeroFiscal}</span>
                       ) : (
-                        <span className="text-gray-500 italic">Sin asignar</span>
+                        <span className="text-muted-foreground italic">Sin asignar</span>
                       )}
                     </td>
-                    <td className="py-3 px-4 text-white">
+                    <td className="py-3 px-4 text-foreground">
                       {invoiceWithDetails?.client?.name || (
-                        <span className="text-red-400 italic">Cliente no encontrado</span>
+                        <span className="text-destructive italic">Cliente no encontrado</span>
                       )}
                     </td>
-                    <td className="py-3 px-4 text-white">
+                    <td className="py-3 px-4 text-foreground">
                       {formatSafeDate(invoice.issueDate)}
                     </td>
-                    <td className="py-3 px-4 text-white">
+                    <td className="py-3 px-4 text-foreground">
                       {formatSafeDate(invoice.dueDate)}
                     </td>
-                    <td className="py-3 px-4 text-white font-medium">
+                    <td className="py-3 px-4 text-foreground font-medium">
                       {formatSafeAmount(invoice.total)}
                     </td>
                     <td className="py-3 px-4">
@@ -221,10 +221,10 @@ const InvoicesTable = ({
                         {getStatusBadge(invoice.status)}
                         {invoice.status === 'draft' && (
                           <Button
-                            variant="ghost"
+                            variant="outline"
                             size="sm"
                             onClick={() => onEdit(invoice)}
-                            className="text-orange-400 hover:text-orange-300 hover:bg-orange-400/10 border border-orange-400/50 text-xs px-2 py-1"
+                            className="text-xs px-2 py-1"
                             title="Cambiar a Enviada"
                           >
                             → Enviada
@@ -233,67 +233,67 @@ const InvoicesTable = ({
                       </div>
                     </td>
                     <td className="py-3 px-4" onClick={(e) => e.stopPropagation()}>
-                      <div className="flex items-center justify-center space-x-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            if (!invoice.id) {
-                              console.error('Cannot edit invoice: missing ID');
-                              return;
-                            }
-                            console.log('Editing invoice:', invoice.id, invoice);
-                            onEdit(invoice);
-                          }}
-                          className="text-tms-green hover:text-tms-green/80 hover:bg-tms-green/10 border border-tms-green/50"
-                          title="Editar factura"
-                          disabled={!invoice.id}
-                        >
-                          <Edit className="w-4 h-4" />
-                        </Button>
-                        {invoice.status !== 'paid' && (
+                        <div className="flex items-center justify-center space-x-2">
                           <Button
-                            variant="ghost"
+                            variant="outline"
                             size="sm"
                             onClick={() => {
                               if (!invoice.id) {
-                                console.error('Cannot mark as paid: missing invoice ID');
+                                console.error('Cannot edit invoice: missing ID');
                                 return;
                               }
-                              console.log('Marking as paid:', invoice.id);
-                              onMarkAsPaid(invoice.id);
+                              console.log('Editing invoice:', invoice.id, invoice);
+                              onEdit(invoice);
                             }}
-                            className="text-blue-400 hover:text-blue-300 hover:bg-blue-400/10 border border-blue-400/50"
-                            title="Marcar como pagada"
+                            className=""
+                            title="Editar factura"
                             disabled={!invoice.id}
                           >
-                            <CheckCircle className="w-4 h-4" />
+                            <Edit className="w-4 h-4" />
                           </Button>
-                        )}
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            if (!invoice.id) {
-                              console.error('Cannot delete invoice: missing ID');
-                              return;
-                            }
-                            onDelete(invoice.id);
-                          }}
-                          className="text-red-400 hover:text-red-300 hover:bg-red-400/10 border border-red-400/50"
-                          title="Eliminar factura"
-                          disabled={!invoice.id}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                        {invoice.id && invoice.folio && (
-                          <InvoiceEmergencyActions
-                            invoiceId={invoice.id}
-                            invoiceFolio={invoice.folio}
-                            onInvoiceDeleted={handleInvoiceDeleted}
-                          />
-                        )}
-                      </div>
+                          {invoice.status !== 'paid' && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                if (!invoice.id) {
+                                  console.error('Cannot mark as paid: missing invoice ID');
+                                  return;
+                                }
+                                console.log('Marking as paid:', invoice.id);
+                                onMarkAsPaid(invoice.id);
+                              }}
+                              className=""
+                              title="Marcar como pagada"
+                              disabled={!invoice.id}
+                            >
+                              <CheckCircle className="w-4 h-4" />
+                            </Button>
+                          )}
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              if (!invoice.id) {
+                                console.error('Cannot delete invoice: missing ID');
+                                return;
+                              }
+                              onDelete(invoice.id);
+                            }}
+                            className="text-destructive border-destructive/40 hover:bg-destructive/10"
+                            title="Eliminar factura"
+                            disabled={!invoice.id}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                          {invoice.id && invoice.folio && (
+                            <InvoiceEmergencyActions
+                              invoiceId={invoice.id}
+                              invoiceFolio={invoice.folio}
+                              onInvoiceDeleted={handleInvoiceDeleted}
+                            />
+                          )}
+                        </div>
                     </td>
                   </tr>
                 );

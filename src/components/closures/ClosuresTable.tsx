@@ -52,41 +52,41 @@ const ClosuresTable = ({ closures, clients, onEdit, onDelete, onClose }: Closure
   };
 
   return (
-    <Card className="glass-card">
+    <Card className="bg-card border">
       <CardHeader>
-        <CardTitle className="text-white">
+        <CardTitle className="text-foreground">
           Lista de Cierres ({closures.length})
         </CardTitle>
       </CardHeader>
       <CardContent>
         <Table>
           <TableHeader>
-            <TableRow className="border-gray-700">
-              <TableHead className="text-gray-300">Folio</TableHead>
-              <TableHead className="text-gray-300">Período</TableHead>
-              <TableHead className="text-gray-300">Cliente</TableHead>
-              <TableHead className="text-gray-300">Servicios</TableHead>
-              <TableHead className="text-gray-300">Total</TableHead>
-              <TableHead className="text-gray-300">Estado</TableHead>
-              <TableHead className="text-gray-300 text-right">Acciones</TableHead>
+            <TableRow className="border-border">
+              <TableHead className="text-foreground">Folio</TableHead>
+              <TableHead className="text-foreground">Período</TableHead>
+              <TableHead className="text-foreground">Cliente</TableHead>
+              <TableHead className="text-foreground">Servicios</TableHead>
+              <TableHead className="text-foreground">Total</TableHead>
+              <TableHead className="text-foreground">Estado</TableHead>
+              <TableHead className="text-foreground text-right">Acciones</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {closures.map((closure) => (
-              <TableRow key={closure.id} className="border-gray-700 hover:bg-white/5">
-                <TableCell className="text-white font-medium">
+              <TableRow key={closure.id} className="border-border hover:bg-muted">
+                <TableCell className="text-foreground font-medium">
                   {closure.folio}
                 </TableCell>
-                <TableCell className="text-gray-300">
+                <TableCell className="text-muted-foreground">
                   {formatDateRange(closure.dateRange)}
                 </TableCell>
-                <TableCell className="text-gray-300">
+                <TableCell className="text-muted-foreground">
                   {getClientName(closure.clientId)}
                 </TableCell>
-                <TableCell className="text-gray-300">
+                <TableCell className="text-muted-foreground">
                   {closure.serviceIds.length} servicios
                 </TableCell>
-                <TableCell className="text-gray-300 font-medium">
+                <TableCell className="text-foreground font-medium">
                   {formatCurrency(closure.total)}
                 </TableCell>
                 <TableCell>
@@ -96,29 +96,29 @@ const ClosuresTable = ({ closures, clients, onEdit, onDelete, onClose }: Closure
                   <div className="flex justify-end space-x-2">
                     {closure.status === 'open' && (
                       <Button
-                        variant="ghost"
+                        variant="outline"
                         size="sm"
                         onClick={() => onClose(closure.id, closure.folio)}
-                        className="text-blue-400 hover:text-blue-300"
+                        className=""
                         title="Cerrar periodo"
                       >
                         <FileText className="w-4 h-4" />
                       </Button>
                     )}
                     <Button
-                      variant="ghost"
+                      variant="outline"
                       size="sm"
                       onClick={() => onEdit(closure)}
-                      className="text-gray-400 hover:text-white"
+                      className=""
                       title="Editar cierre"
                     >
                       <Edit className="w-4 h-4" />
                     </Button>
                     <Button
-                      variant="ghost"
+                      variant="outline"
                       size="sm"
                       onClick={() => onDelete(closure.id, closure.folio)}
-                      className="text-red-400 hover:text-red-300"
+                      className="text-destructive border-destructive/40 hover:bg-destructive/10"
                       title="Eliminar cierre"
                     >
                       <Trash2 className="w-4 h-4" />

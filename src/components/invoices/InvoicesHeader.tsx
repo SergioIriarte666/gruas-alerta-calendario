@@ -15,11 +15,8 @@ const InvoicesHeader = ({ onCreateInvoice }: InvoicesHeaderProps) => {
       </div>
       <Button
         onClick={onCreateInvoice}
-        className="bg-tms-green hover:bg-tms-green/80 text-black font-medium"
-        style={{
-          backgroundColor: '#9cfa24',
-          color: '#000000'
-        }}
+        className="bg-primary hover:bg-primary/90 text-primary-foreground"
+        title="Crear nueva factura"
       >
         <Plus className="w-4 h-4 mr-2" />
         Nueva Factura
