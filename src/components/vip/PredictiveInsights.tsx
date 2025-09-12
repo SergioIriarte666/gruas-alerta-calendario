@@ -449,7 +449,7 @@ export const PredictiveInsights: React.FC<PredictiveInsightsProps> = ({
           </div>
 
           <div className="text-xs text-gray-400 bg-gray-800/30 p-3 rounded-lg">
-            <p>
+            <p className="text-black">
               💡 <strong>Consejo del Sistema:</strong> Implementar automatización en el seguimiento de órdenes de compra 
               podría reducir tiempos de respuesta en un 25% y mejorar la satisfacción del cliente.
             </p>
