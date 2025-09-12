@@ -29,7 +29,7 @@ export const CostCharts = ({ metrics, costsByCategoryConfig }: CostChartsProps) 
                   formatter={(value, name) => (
                     <div className="flex flex-col gap-0.5">
                       <span className="font-medium text-foreground">{name}</span>
-                      <span className="text-muted-foreground">{`$${Number(value).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`}</span>
+                      <span className="text-black">{`$${Number(value).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`}</span>
                     </div>
                   )}
                 />}

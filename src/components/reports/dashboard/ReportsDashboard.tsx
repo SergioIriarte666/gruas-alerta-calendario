@@ -13,7 +13,7 @@ export const ReportsDashboard = ({ metrics }: ReportsDashboardProps) => {
     <div className="space-y-6">
       <div>
         <h2 className="text-2xl font-bold text-foreground mb-2">Dashboard Ejecutivo</h2>
-        <p className="text-muted-foreground">Resumen de métricas clave y indicadores de rendimiento</p>
+        <p className="text-black">Resumen de métricas clave y indicadores de rendimiento</p>
       </div>
 
       {/* KPIs Principales */}
@@ -30,7 +30,7 @@ export const ReportsDashboard = ({ metrics }: ReportsDashboardProps) => {
           title="Beneficio Neto"
           value={`$${metrics.netProfit.toLocaleString()}`}
           description={`Margen: ${metrics.profitMargin.toFixed(1)}%`}
-          valueClassName={metrics.netProfit >= 0 ? 'text-green-400' : 'text-red-400'}
+          valueClassName={metrics.netProfit >= 0 ? 'text-green-600' : 'text-red-600'}
         />
         <ReportMetricCard
           icon={CheckCircle}

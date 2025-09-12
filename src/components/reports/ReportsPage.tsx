@@ -56,7 +56,7 @@ const ReportsPage = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="text-muted-foreground">Generando reportes...</div>
+        <div className="text-black">Generando reportes...</div>
       </div>
     );
   }

@@ -28,7 +28,7 @@ export const MaintenanceReport = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="text-muted-foreground">Generando reporte de mantenimiento...</div>
+        <div className="text-black">Generando reporte de mantenimiento...</div>
       </div>
     );
   }
@@ -47,7 +47,7 @@ export const MaintenanceReport = () => {
     return (
       <Card className="bg-card/50 border-border">
         <CardContent className="p-6">
-          <div className="text-muted-foreground">No hay datos disponibles para el período seleccionado.</div>
+          <div className="text-black">No hay datos disponibles para el período seleccionado.</div>
         </CardContent>
       </Card>
     );
@@ -119,7 +119,7 @@ export const MaintenanceReport = () => {
       <div className="flex flex-col md:flex-row justify-between md:items-center gap-4">
         <div>
           <h2 className="text-2xl font-bold text-foreground">Reporte de Mantenimiento y Partes</h2>
-          <p className="text-muted-foreground mt-1">
+          <p className="text-black mt-1">
             Análisis detallado de costos de mantenimiento y gestión de partes.
           </p>
         </div>

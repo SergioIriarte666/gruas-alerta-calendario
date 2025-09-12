@@ -53,7 +53,7 @@ export const MaintenanceFilters = ({ filters, onFiltersChange }: MaintenanceFilt
           {/* Filtros de fecha - Primera fila */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="dateFrom" className="text-sm text-muted-foreground">
+              <Label htmlFor="dateFrom" className="text-sm text-black">
                 Fecha Desde
               </Label>
               <Input
@@ -66,7 +66,7 @@ export const MaintenanceFilters = ({ filters, onFiltersChange }: MaintenanceFilt
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="dateTo" className="text-sm text-muted-foreground">
+              <Label htmlFor="dateTo" className="text-sm text-black">
                 Fecha Hasta
               </Label>
               <Input
@@ -82,7 +82,7 @@ export const MaintenanceFilters = ({ filters, onFiltersChange }: MaintenanceFilt
           {/* Filtros de selección - Segunda fila */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <div className="space-y-2">
-              <Label className="text-sm text-muted-foreground">Grúa</Label>
+              <Label className="text-sm text-black">Grúa</Label>
               <Select value={filters.craneId || 'all'} onValueChange={(value) => handleFilterChange('craneId', value)}>
                 <SelectTrigger className="h-10 bg-background/50 border-border">
                   <SelectValue placeholder="Todas las grúas" />
@@ -99,7 +99,7 @@ export const MaintenanceFilters = ({ filters, onFiltersChange }: MaintenanceFilt
             </div>
 
             <div className="space-y-2">
-              <Label className="text-sm text-muted-foreground">Tipo de Mantenimiento</Label>
+              <Label className="text-sm text-black">Tipo de Mantenimiento</Label>
               <Select value={filters.maintenanceType || 'all'} onValueChange={(value) => handleFilterChange('maintenanceType', value)}>
                 <SelectTrigger className="h-10 bg-background/50 border-border">
                   <SelectValue placeholder="Todos los tipos" />
@@ -116,7 +116,7 @@ export const MaintenanceFilters = ({ filters, onFiltersChange }: MaintenanceFilt
             </div>
 
             <div className="space-y-2">
-              <Label className="text-sm text-muted-foreground">Estado</Label>
+              <Label className="text-sm text-black">Estado</Label>
               <Select value={filters.status || 'all'} onValueChange={(value) => handleFilterChange('status', value)}>
                 <SelectTrigger className="h-10 bg-background/50 border-border">
                   <SelectValue placeholder="Todos los estados" />
@@ -136,7 +136,7 @@ export const MaintenanceFilters = ({ filters, onFiltersChange }: MaintenanceFilt
           {/* Filtro de proveedor y botón de limpiar - Tercera fila */}
           <div className="flex flex-col sm:flex-row gap-4 items-end">
             <div className="space-y-2 flex-1 max-w-sm">
-              <Label htmlFor="provider" className="text-sm text-muted-foreground">
+              <Label htmlFor="provider" className="text-sm text-black">
                 Proveedor
               </Label>
               <Input
@@ -145,7 +145,7 @@ export const MaintenanceFilters = ({ filters, onFiltersChange }: MaintenanceFilt
                 placeholder="Buscar proveedor..."
                 value={filters.provider || ''}
                 onChange={(e) => handleFilterChange('provider', e.target.value)}
-                className="h-10 bg-background/50 border-border placeholder:text-muted-foreground"
+                className="h-10 bg-background/50 border-border placeholder:text-black"
               />
             </div>
 

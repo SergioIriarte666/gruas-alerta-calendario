@@ -57,13 +57,13 @@ export const MaintenanceTables = ({ data }: MaintenanceTablesProps) => {
               <Table>
                 <TableHeader>
                   <TableRow className="border-border">
-                    <TableHead className="text-gray-300">Grúa</TableHead>
-                    <TableHead className="text-gray-300">Marca/Modelo</TableHead>
-                    <TableHead className="text-gray-300">Costo Mantenimiento</TableHead>
-                    <TableHead className="text-gray-300">Costo Partes</TableHead>
-                    <TableHead className="text-gray-300">Total Intervenciones</TableHead>
-                    <TableHead className="text-gray-300">Último Mantenimiento</TableHead>
-                    <TableHead className="text-gray-300">Próximo Mantenimiento</TableHead>
+                    <TableHead className="text-black">Grúa</TableHead>
+                    <TableHead className="text-black">Marca/Modelo</TableHead>
+                    <TableHead className="text-black">Costo Mantenimiento</TableHead>
+                    <TableHead className="text-black">Costo Partes</TableHead>
+                    <TableHead className="text-black">Total Intervenciones</TableHead>
+                    <TableHead className="text-black">Último Mantenimiento</TableHead>
+                    <TableHead className="text-black">Próximo Mantenimiento</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -74,7 +74,7 @@ export const MaintenanceTables = ({ data }: MaintenanceTablesProps) => {
                       <TableCell className="text-white font-medium">
                         {crane.licensePlate}
                       </TableCell>
-                      <TableCell className="text-gray-300">
+                      <TableCell className="text-black">
                         {crane.brand} {crane.model}
                       </TableCell>
                       <TableCell className="text-white">
@@ -86,10 +86,10 @@ export const MaintenanceTables = ({ data }: MaintenanceTablesProps) => {
                       <TableCell className="text-white">
                         {crane.interventionCount}
                       </TableCell>
-                      <TableCell className="text-gray-300">
+                      <TableCell className="text-black">
                         {formatDate(crane.lastMaintenance)}
                       </TableCell>
-                      <TableCell className="text-gray-300">
+                      <TableCell className="text-black">
                         {formatDate(crane.nextMaintenance)}
                       </TableCell>
                     </TableRow>
@@ -111,10 +111,10 @@ export const MaintenanceTables = ({ data }: MaintenanceTablesProps) => {
               <Table>
                 <TableHeader>
                   <TableRow className="border-border">
-                    <TableHead className="text-gray-300">Proveedor</TableHead>
-                    <TableHead className="text-gray-300">Costo Total</TableHead>
-                    <TableHead className="text-gray-300">Número de Intervenciones</TableHead>
-                    <TableHead className="text-gray-300">Costo Promedio</TableHead>
+                    <TableHead className="text-black">Proveedor</TableHead>
+                    <TableHead className="text-black">Costo Total</TableHead>
+                    <TableHead className="text-black">Número de Intervenciones</TableHead>
+                    <TableHead className="text-black">Costo Promedio</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
