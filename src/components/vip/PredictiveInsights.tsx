@@ -305,13 +305,13 @@ export const PredictiveInsights: React.FC<PredictiveInsightsProps> = ({
         <CardContent>
           <div className="space-y-4">
             {forecastData.map((data, index) => (
-              <div key={index} className="flex items-center gap-4 p-3 bg-gray-800/30 rounded-lg">
-                <div className="w-16 text-sm text-gray-300">{data.period}</div>
+              <div key={index} className="flex items-center gap-4 p-3 bg-gray-800/30 rounded-lg text-black">
+                <div className="w-16 text-sm text-black">{data.period}</div>
                 
                 <div className="flex-1">
                   <div className="flex items-center justify-between mb-1">
-                    <span className="text-sm text-white">{data.predicted} servicios</span>
-                    <span className="text-xs text-gray-400">{data.confidence}% confianza</span>
+                    <span className="text-sm text-black">{data.predicted} servicios</span>
+                    <span className="text-xs text-black">{data.confidence}% confianza</span>
                   </div>
                   <Progress value={data.confidence} className="h-2" />
                 </div>
