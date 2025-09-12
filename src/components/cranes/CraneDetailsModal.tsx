@@ -20,31 +20,33 @@ export const CraneDetailsModal = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="bg-black border-tms-green/30 max-w-6xl h-[90vh] flex flex-col p-0">
-        <DialogHeader className="flex-shrink-0 p-6 pb-0">
-          <div className="flex items-center justify-between">
+      <DialogContent className="bg-card border max-w-7xl max-h-[90vh] overflow-y-auto p-0">
+        <DialogHeader className="p-6 pb-4 border-b">
+          <div className="flex items-start justify-between gap-4">
             <div>
-              <DialogTitle className="text-2xl font-bold text-white">
+              <DialogTitle className="text-2xl font-bold text-foreground">
                 Grúa {crane.licensePlate}
               </DialogTitle>
-              <DialogDescription className="text-gray-300 mt-1">
+              <DialogDescription className="text-muted-foreground mt-1">
                 {crane.brand} {crane.model} • {crane.type}
               </DialogDescription>
             </div>
             <div className="flex items-center gap-2">
-              <Button
-                onClick={() => onEdit(crane)}
-                variant="outline"
-                className="border-tms-green/50 text-tms-green hover:bg-tms-green/10"
-              >
+              <Button onClick={() => onEdit(crane)} variant="outline">
                 Editar Grúa
               </Button>
             </div>
           </div>
         </DialogHeader>
 
-        <div className="flex-1 px-6 pb-6 overflow-hidden">
+        <div className="flex-1 min-h-0 px-6 pb-6 cranes-scope">
           <CraneTabsWithCounters crane={crane} />
+        </div>
+
+        <div className="flex justify-end px-6 py-4 border-t">
+          <Button onClick={onClose} variant="outline">
+            Cerrar
+          </Button>
         </div>
       </DialogContent>
     </Dialog>
