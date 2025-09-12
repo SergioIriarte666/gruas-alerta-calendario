@@ -60,31 +60,31 @@ export const PurchaseOrderManager: React.FC<PurchaseOrderManagerProps> = ({
       case 'quoted':
         return {
           label: 'Cotizado',
-          color: 'bg-amber-500/20 text-amber-300 border-amber-500/30',
+          color: 'bg-secondary text-secondary-foreground',
           icon: Clock
         };
       case 'purchase_order_pending':
         return {
           label: 'Esperando O.C.',
-          color: 'bg-orange-500/20 text-orange-300 border-orange-500/30',
+          color: 'bg-secondary text-secondary-foreground',
           icon: AlertTriangle
         };
       case 'with_purchase_order':
         return {
           label: 'Con Orden de Compra',
-          color: 'bg-teal-500/20 text-teal-300 border-teal-500/30',
+          color: 'bg-secondary text-secondary-foreground',
           icon: CheckCircle
         };
       case 'pending':
         return {
           label: 'Pendiente',
-          color: 'bg-blue-500/20 text-blue-300 border-blue-500/30',
+          color: 'bg-secondary text-secondary-foreground',
           icon: Clock
         };
       default:
         return {
           label: status,
-          color: 'bg-gray-500/20 text-gray-300 border-gray-500/30',
+          color: 'bg-secondary text-secondary-foreground',
           icon: FileText
         };
     }
@@ -111,57 +111,57 @@ export const PurchaseOrderManager: React.FC<PurchaseOrderManagerProps> = ({
     <div className="space-y-6">
       {/* Header & Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card className="glass-card border-amber-500/20">
+        <Card className="bg-card border">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-amber-500/20 rounded-lg">
-                <Clock className="w-4 h-4 text-amber-400" />
+              <div className="p-2 bg-muted rounded-lg">
+                <Clock className="w-4 h-4 text-muted-foreground" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-white">{stats.quoted}</p>
-                <p className="text-xs text-amber-400">Cotizados</p>
+                <p className="text-2xl font-bold text-foreground">{stats.quoted}</p>
+                <p className="text-xs text-muted-foreground">Cotizados</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="glass-card border-orange-500/20">
+        <Card className="bg-card border">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-orange-500/20 rounded-lg">
-                <AlertTriangle className="w-4 h-4 text-orange-400" />
+              <div className="p-2 bg-muted rounded-lg">
+                <AlertTriangle className="w-4 h-4 text-muted-foreground" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-white">{stats.pending_po}</p>
-                <p className="text-xs text-orange-400">Esperando O.C.</p>
+                <p className="text-2xl font-bold text-foreground">{stats.pending_po}</p>
+                <p className="text-xs text-muted-foreground">Esperando O.C.</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="glass-card border-green-500/20">
+        <Card className="bg-card border">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-green-500/20 rounded-lg">
-                <CheckCircle className="w-4 h-4 text-green-400" />
+              <div className="p-2 bg-muted rounded-lg">
+                <CheckCircle className="w-4 h-4 text-muted-foreground" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-white">{stats.with_purchase_order}</p>
-                <p className="text-xs text-green-400">Con O.C.</p>
+                <p className="text-2xl font-bold text-foreground">{stats.with_purchase_order}</p>
+                <p className="text-xs text-muted-foreground">Con O.C.</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="glass-card border-blue-500/20">
+        <Card className="bg-card border">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-blue-500/20 rounded-lg">
-                <DollarSign className="w-4 h-4 text-blue-400" />
+              <div className="p-2 bg-muted rounded-lg">
+                <DollarSign className="w-4 h-4 text-muted-foreground" />
               </div>
               <div>
-                <p className="text-lg font-bold text-white">{formatCurrency(stats.total_value)}</p>
-                <p className="text-xs text-blue-400">Valor Total</p>
+                <p className="text-lg font-bold text-foreground">{formatCurrency(stats.total_value)}</p>
+                <p className="text-xs text-muted-foreground">Valor Total</p>
               </div>
             </div>
           </CardContent>
@@ -169,9 +169,9 @@ export const PurchaseOrderManager: React.FC<PurchaseOrderManagerProps> = ({
       </div>
 
       {/* Filters */}
-      <Card className="glass-card">
+      <Card className="bg-card border">
         <CardHeader>
-          <CardTitle className="text-white flex items-center gap-2">
+          <CardTitle className="text-foreground flex items-center gap-2">
             <FileText className="w-5 h-5" />
             Gestión de Órdenes de Compra
           </CardTitle>
@@ -180,12 +180,12 @@ export const PurchaseOrderManager: React.FC<PurchaseOrderManagerProps> = ({
           <div className="flex flex-col md:flex-row gap-4">
             <div className="flex-1">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
                   placeholder="Buscar por folio, tipo de servicio o número O.C..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 bg-gray-800 border-gray-600 text-white"
+                  className="pl-10 bg-card border text-foreground"
                 />
               </div>
             </div>
@@ -202,7 +202,6 @@ export const PurchaseOrderManager: React.FC<PurchaseOrderManagerProps> = ({
                 variant={statusFilter === 'quoted' ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => setStatusFilter('quoted')}
-                className="text-amber-400 border-amber-500/30"
               >
                 Cotizados
               </Button>
@@ -210,7 +209,6 @@ export const PurchaseOrderManager: React.FC<PurchaseOrderManagerProps> = ({
                 variant={statusFilter === 'purchase_order_pending' ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => setStatusFilter('purchase_order_pending')}
-                className="text-orange-400 border-orange-500/30"
               >
                 Esperando O.C.
               </Button>
@@ -218,7 +216,6 @@ export const PurchaseOrderManager: React.FC<PurchaseOrderManagerProps> = ({
                 variant={statusFilter === 'with_purchase_order' ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => setStatusFilter('with_purchase_order')}
-                className="text-teal-400 border-teal-500/30"
               >
                 Con Orden de Compra
               </Button>

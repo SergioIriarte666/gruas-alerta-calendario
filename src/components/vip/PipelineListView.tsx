@@ -63,56 +63,56 @@ interface PipelineListViewProps {
 type SortField = 'folio' | 'serviceType' | 'serviceDate' | 'value' | 'daysInStatus' | 'quoteNumber' | 'purchaseOrder';
 type SortDirection = 'asc' | 'desc';
 
-// Definir los estados del pipeline con sus colores
+// Definir los estados del pipeline con estilos neutros del sistema de diseño
 const PIPELINE_STATUSES = [
   {
     id: 'quoted' as ServiceStatus,
     title: 'Cotizados',
     description: 'Servicios con cotización enviada',
-    color: 'bg-blue-500/20 border-blue-500/30',
-    textColor: 'text-blue-300'
+    color: 'bg-secondary text-secondary-foreground',
+    textColor: 'text-foreground'
   },
   {
     id: 'purchase_order_pending' as ServiceStatus,
     title: 'Esperando O.C.',
     description: 'Aguardando orden de compra del cliente',
-    color: 'bg-amber-500/20 border-amber-500/30',
-    textColor: 'text-amber-300'
+    color: 'bg-secondary text-secondary-foreground',
+    textColor: 'text-foreground'
   },
   {
     id: 'with_purchase_order' as ServiceStatus,
     title: 'Con Orden de Compra',
     description: 'Servicios con orden de compra recibida',
-    color: 'bg-teal-500/20 border-teal-500/30',
-    textColor: 'text-teal-300'
+    color: 'bg-secondary text-secondary-foreground',
+    textColor: 'text-foreground'
   },
   {
     id: 'pending' as ServiceStatus,
     title: 'Programados',
     description: 'Servicios confirmados y programados',
-    color: 'bg-purple-500/20 border-purple-500/30',
-    textColor: 'text-purple-300'
+    color: 'bg-secondary text-secondary-foreground',
+    textColor: 'text-foreground'
   },
   {
     id: 'in_progress' as ServiceStatus,
     title: 'En Progreso',
     description: 'Servicios ejecutándose actualmente',
-    color: 'bg-orange-500/20 border-orange-500/30',
-    textColor: 'text-orange-300'
+    color: 'bg-secondary text-secondary-foreground',
+    textColor: 'text-foreground'
   },
   {
     id: 'completed' as ServiceStatus,
     title: 'Completados',
     description: 'Servicios finalizados exitosamente',
-    color: 'bg-green-500/20 border-green-500/30',
-    textColor: 'text-green-300'
+    color: 'bg-secondary text-secondary-foreground',
+    textColor: 'text-foreground'
   },
   {
     id: 'invoiced' as ServiceStatus,
     title: 'Facturados',
     description: 'Servicios facturados y cerrados',
-    color: 'bg-gray-500/20 border-gray-500/30',
-    textColor: 'text-gray-300'
+    color: 'bg-secondary text-secondary-foreground',
+    textColor: 'text-foreground'
   }
 ];
 
@@ -359,7 +359,7 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
     if (!statusConfig) return null;
     
     return (
-      <Badge className={`${statusConfig.color} ${statusConfig.textColor} border-0`}>
+      <Badge variant="secondary">
         {statusConfig.title}
       </Badge>
     );
@@ -401,14 +401,12 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
                 variant="outline" 
                 size="sm" 
                 onClick={() => setIsAdvancedFiltersOpen(true)}
-                className={`border-gray-600 text-gray-300 hover:bg-gray-700 relative ${
-                  hasActiveFilters ? 'border-blue-500/50 bg-blue-500/10 text-blue-300' : ''
-                }`}
+                className="relative"
               >
                 <Filter className="w-4 h-4 mr-2" />
                 Más Filtros
                 {hasActiveFilters && (
-                  <span className="absolute -top-1 -right-1 w-2 h-2 bg-blue-400 rounded-full"></span>
+                  <span className="absolute -top-1 -right-1 w-2 h-2 bg-primary rounded-full"></span>
                 )}
               </Button>
               {hasActiveFilters && (
@@ -416,7 +414,6 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
                   variant="ghost" 
                   size="sm"
                   onClick={handleClearAdvancedFilters}
-                  className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
                 >
                   <X className="w-4 h-4" />
                 </Button>
@@ -432,7 +429,6 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
                   variant="outline" 
                   size="sm" 
                   onClick={() => setShowBatchModal(true)}
-                  className="border-blue-500/30 text-blue-300 hover:bg-blue-500/10"
                 >
                   <Hash className="w-4 h-4 mr-2" />
                   Actualizar por Lotes ({selectedServices.size})
@@ -445,7 +441,7 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
 
       {/* Summary Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="glass-card">
+        <Card className="bg-card border">
           <CardContent className="p-4">
             <div className="flex items-center gap-2">
               <FileText className="w-4 h-4 text-primary" />
@@ -457,10 +453,10 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
           </CardContent>
         </Card>
 
-        <Card className="glass-card">
+        <Card className="bg-card border">
           <CardContent className="p-4">
             <div className="flex items-center gap-2">
-              <TrendingUp className="w-4 h-4 text-green-600" />
+              <TrendingUp className="w-4 h-4 text-primary" />
               <div>
                 <div className="text-2xl font-bold text-foreground">
                   {serviceGroups.length}
@@ -471,10 +467,10 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
           </CardContent>
         </Card>
 
-        <Card className="glass-card">
+        <Card className="bg-card border">
           <CardContent className="p-4">
             <div className="flex items-center gap-2">
-              <DollarSign className="w-4 h-4 text-blue-600" />
+              <DollarSign className="w-4 h-4 text-primary" />
               <div>
                 <div className="text-2xl font-bold text-foreground">
                   ${serviceGroups.reduce((sum, g) => sum + g.totalValue, 0).toLocaleString()}
