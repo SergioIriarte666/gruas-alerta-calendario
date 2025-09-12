@@ -88,7 +88,7 @@ export const MetricCard = ({
           )}
         </div>
         <div className={cn(
-          "flex-shrink-0 bg-primary/10 rounded-lg",
+          "flex-shrink-0 bg-primary/30 rounded-lg",
           isMobile ? "p-1.5" : isTablet ? "p-2" : "p-3"
         )}>
           <Icon className={cn(
