@@ -238,16 +238,16 @@ export const PredictiveInsights: React.FC<PredictiveInsightsProps> = ({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-lg font-semibold text-white flex items-center gap-2">
-            <Brain className="w-5 h-5 text-purple-400" />
+          <h3 className="text-lg font-semibold text-black flex items-center gap-2">
+            <Brain className="w-5 h-5 text-black" />
             Insights Predictivos - {clientName}
           </h3>
-          <p className="text-sm text-gray-400">
+          <p className="text-sm text-black">
             Análisis inteligente y predicciones basadas en IA
           </p>
         </div>
 
-        <Badge variant="outline" className="bg-purple-500/20 text-purple-300 border-purple-500/30">
+        <Badge variant="outline" className="text-black">
           <Activity className="w-3 h-3 mr-1" />
           Análisis en Tiempo Real
         </Badge>
@@ -257,39 +257,39 @@ export const PredictiveInsights: React.FC<PredictiveInsightsProps> = ({
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card className="glass-card border-purple-500/20">
           <CardContent className="p-4 text-center">
-            <Brain className="w-6 h-6 text-purple-400 mx-auto mb-2" />
-            <p className="text-2xl font-bold text-white">{predictions.length}</p>
-            <p className="text-xs text-purple-400">Insights Activos</p>
+            <Brain className="w-6 h-6 text-black mx-auto mb-2" />
+            <p className="text-2xl font-bold text-black">{predictions.length}</p>
+            <p className="text-xs text-black">Insights Activos</p>
           </CardContent>
         </Card>
 
         <Card className="glass-card border-green-500/20">
           <CardContent className="p-4 text-center">
-            <Target className="w-6 h-6 text-green-400 mx-auto mb-2" />
-            <p className="text-2xl font-bold text-white">
+            <Target className="w-6 h-6 text-black mx-auto mb-2" />
+            <p className="text-2xl font-bold text-black">
               {Math.round(predictions.reduce((sum, p) => sum + p.confidence, 0) / predictions.length)}%
             </p>
-            <p className="text-xs text-green-400">Confianza Promedio</p>
+            <p className="text-xs text-black">Confianza Promedio</p>
           </CardContent>
         </Card>
 
         <Card className="glass-card border-red-500/20">
           <CardContent className="p-4 text-center">
-            <AlertTriangle className="w-6 h-6 text-red-400 mx-auto mb-2" />
-            <p className="text-2xl font-bold text-white">
+            <AlertTriangle className="w-6 h-6 text-black mx-auto mb-2" />
+            <p className="text-2xl font-bold text-black">
               {predictions.filter(p => p.impact === 'high').length}
             </p>
-            <p className="text-xs text-red-400">Alto Impacto</p>
+            <p className="text-xs text-black">Alto Impacto</p>
           </CardContent>
         </Card>
 
         <Card className="glass-card border-blue-500/20">
           <CardContent className="p-4 text-center">
-            <CheckCircle2 className="w-6 h-6 text-blue-400 mx-auto mb-2" />
-            <p className="text-2xl font-bold text-white">
+            <CheckCircle2 className="w-6 h-6 text-black mx-auto mb-2" />
+            <p className="text-2xl font-bold text-black">
               {predictions.filter(p => p.actionable).length}
             </p>
-            <p className="text-xs text-blue-400">Accionables</p>
+            <p className="text-xs text-black">Accionables</p>
           </CardContent>
         </Card>
       </div>
@@ -297,8 +297,8 @@ export const PredictiveInsights: React.FC<PredictiveInsightsProps> = ({
       {/* Forecast Chart */}
       <Card className="glass-card">
         <CardHeader>
-          <CardTitle className="text-white flex items-center gap-2">
-            <TrendingUp className="w-5 h-5 text-blue-400" />
+          <CardTitle className="text-black flex items-center gap-2">
+            <TrendingUp className="w-5 h-5 text-black" />
             Predicción de Demanda - Próximas 6 Semanas
           </CardTitle>
         </CardHeader>
@@ -318,13 +318,13 @@ export const PredictiveInsights: React.FC<PredictiveInsightsProps> = ({
 
                 <div className="flex items-center gap-2">
                   {data.historical && (
-                    <div className="text-xs text-gray-400">
+                    <div className="text-xs text-black">
                       Real: {data.historical}
                     </div>
                   )}
                   <Badge
                     variant="outline"
-                    className={data.predicted >= 4 ? 'text-green-400 border-green-500/30' : 'text-amber-400 border-amber-500/30'}
+                    className="text-black"
                   >
                     {data.predicted >= 4 ? 'Alta' : 'Normal'}
                   </Badge>
@@ -349,31 +349,31 @@ export const PredictiveInsights: React.FC<PredictiveInsightsProps> = ({
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-2">
                     {getTypeIcon(prediction.type)}
-                    <h4 className="font-medium text-white">{prediction.title}</h4>
+                    <h4 className="font-medium text-black">{prediction.title}</h4>
                   </div>
                   
                   <div className="flex items-center gap-2">
-                    <Badge variant="outline" className={`text-xs ${getImpactColor(prediction.impact)}`}>
+                    <Badge variant="outline" className="text-xs text-black">
                       {prediction.impact.toUpperCase()}
                     </Badge>
-                    <Badge variant="outline" className="text-xs">
+                    <Badge variant="outline" className="text-xs text-black">
                       {prediction.confidence}%
                     </Badge>
                   </div>
                 </div>
 
                 {/* Description */}
-                <p className="text-sm text-gray-300">{prediction.description}</p>
+                <p className="text-sm text-black">{prediction.description}</p>
 
                 {/* Metadata */}
-                <div className="flex items-center justify-between text-xs text-gray-400">
+                <div className="flex items-center justify-between text-xs text-black">
                   <div className="flex items-center gap-2">
                     <Calendar className="w-3 h-3" />
                     <span>{prediction.timeframe}</span>
                   </div>
                   
                   {prediction.actionable && (
-                    <div className="flex items-center gap-1 text-green-400">
+                    <div className="flex items-center gap-1 text-black">
                       <Zap className="w-3 h-3" />
                       <span>Accionable</span>
                     </div>
@@ -384,11 +384,11 @@ export const PredictiveInsights: React.FC<PredictiveInsightsProps> = ({
                 {selectedInsight === prediction.id && (
                   <div className="border-t border-gray-700 pt-3 space-y-3">
                     <div>
-                      <h5 className="text-sm font-medium text-white mb-2">Recomendaciones:</h5>
+                      <h5 className="text-sm font-medium text-black mb-2">Recomendaciones:</h5>
                       <ul className="space-y-1">
                         {prediction.recommendations.map((rec, index) => (
-                          <li key={index} className="flex items-start gap-2 text-sm text-gray-300">
-                            <CheckCircle2 className="w-3 h-3 text-green-400 mt-0.5 flex-shrink-0" />
+                          <li key={index} className="flex items-start gap-2 text-sm text-black">
+                            <CheckCircle2 className="w-3 h-3 text-black mt-0.5 flex-shrink-0" />
                             <span>{rec}</span>
                           </li>
                         ))}
