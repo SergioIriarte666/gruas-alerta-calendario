@@ -13,6 +13,7 @@ const badgeVariants = cva(
         secondary: "border-transparent font-medium",
         destructive: "border-transparent bg-destructive text-destructive-foreground hover:bg-destructive/80",
         outline: "text-foreground",
+        tms: "border-transparent bg-tms-green text-black hover:bg-tms-green/90"
       },
     },
     defaultVariants: {
@@ -26,17 +27,11 @@ export interface BadgeProps
     VariantProps<typeof badgeVariants> {}
 
 function Badge({ className, variant, style, ...props }: BadgeProps) {
-  // Apply TMS styling for default variant
-  const tmsStyle = variant === 'default' ? {
-    backgroundColor: '#9cfa24',
-    color: '#000000',
-    ...style
-  } : style;
 
   return (
     <div 
       className={cn(badgeVariants({ variant }), className)} 
-      style={tmsStyle}
+      style={style}
       {...props} 
     />
   )

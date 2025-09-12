@@ -161,13 +161,13 @@ export const VehicleHistory = ({ licensePlate, currentServiceId, clientId, clien
                 <TableCell className="font-medium">
                   <div className="flex items-center gap-2 whitespace-nowrap">
                     <Badge 
-                      variant="default"
+                      variant="tms"
                       title={`Folio del servicio: ${service.folio}`}
                     >
                       {service.folio}
                     </Badge>
                     {service.id === currentServiceId && (
-                      <Badge variant="outline" className="text-xs">
+                      <Badge variant="outline" className="text-xs border-tms-green text-tms-green">
                         Actual
                       </Badge>
                     )}
