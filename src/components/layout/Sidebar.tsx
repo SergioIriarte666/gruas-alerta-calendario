@@ -205,7 +205,7 @@ export const Sidebar = ({
           onClick={() => setIsMobileMenuOpen(false)} 
           className="lg:hidden text-foreground hover:bg-primary hover:text-primary-foreground"
         >
-          <X className="w-5 h-5" />
+          <X className="w-5 h-5 text-foreground" />
         </Button>
       </div>
 
@@ -229,7 +229,7 @@ export const Sidebar = ({
               )}
               onClick={() => setIsMobileMenuOpen(false)}
             >
-              <item.icon className={cn("w-5 h-5", isCollapsed ? "mx-auto" : "mr-3")} />
+              <item.icon className={cn("w-5 h-5 text-foreground", isCollapsed ? "mx-auto" : "mr-3")} />
               {!isCollapsed && <span>{item.name}</span>}
             </Link>
           );
@@ -257,7 +257,7 @@ export const Sidebar = ({
             isCollapsed ? "px-2" : "justify-start"
           )}
         >
-          <LogOut className={cn("w-4 h-4", isCollapsed ? "mx-auto" : "mr-2")} />
+          <LogOut className={cn("w-4 h-4 text-foreground", isCollapsed ? "mx-auto" : "mr-2")} />
           {!isCollapsed && "Cerrar Sesión"}
         </Button>
       </div>
