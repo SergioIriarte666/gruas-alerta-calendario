@@ -215,7 +215,7 @@ export const SupplierPaymentCalendar: React.FC = () => {
                         className="text-xs p-1 rounded truncate"
                         title={`${getSupplierName(payment.supplier_id)}: ${payment.description} - ${formatCurrency(payment.amount)}`}
                       >
-                        <Badge className={`${getStatusColor(payment.status)} text-xs py-0 px-1`}>
+                        <Badge className={`${getStatusColor(payment.status)} text-xs py-0 px-1 text-black`}>
                           {getStatusLabel(payment.status)}
                         </Badge>
                         <div className="text-foreground mt-1 truncate">
