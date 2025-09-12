@@ -66,49 +66,49 @@ const Settings = () => {
 
   if (loading || systemLoading || !settings) {
     return (
-      <div className="flex items-center justify-center min-h-96 bg-white text-black">
-        <div className="text-black">Cargando configuración...</div>
+      <div className="flex items-center justify-center min-h-96 bg-background text-foreground">
+        <div className="text-foreground">Cargando configuración...</div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6 animate-fade-in bg-white min-h-screen p-6">
+    <div className="space-y-6 animate-fade-in bg-background min-h-screen p-6 settings-scope">
       <SettingsHeader onReset={resetSettings} />
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2 md:grid-cols-3 lg:grid-cols-5 bg-white border border-gray-200 h-auto p-1 gap-1">
+        <TabsList className="grid w-full grid-cols-2 md:grid-cols-3 lg:grid-cols-5 bg-card border h-auto p-1 gap-1">
           <TabsTrigger 
             value="company" 
-            className="flex flex-col md:flex-row items-center justify-center space-y-1 md:space-y-0 md:space-x-2 text-black data-[state=active]:text-black data-[state=active]:bg-tms-green hover:bg-gray-50 p-2 md:p-3 h-auto min-h-[60px] text-xs md:text-sm"
+            className="flex flex-col md:flex-row items-center justify-center space-y-1 md:space-y-0 md:space-x-2 text-foreground data-[state=active]:text-primary-foreground data-[state=active]:bg-primary hover:bg-muted p-2 md:p-3 h-auto min-h-[60px] text-xs md:text-sm"
           >
             <Building2 className="w-4 h-4 flex-shrink-0" />
             <span className="text-center">Empresa</span>
           </TabsTrigger>
           <TabsTrigger 
             value="timezone" 
-            className="flex flex-col md:flex-row items-center justify-center space-y-1 md:space-y-0 md:space-x-2 text-black data-[state=active]:text-black data-[state=active]:bg-tms-green hover:bg-gray-50 p-2 md:p-3 h-auto min-h-[60px] text-xs md:text-sm"
+            className="flex flex-col md:flex-row items-center justify-center space-y-1 md:space-y-0 md:space-x-2 text-foreground data-[state=active]:text-primary-foreground data-[state=active]:bg-primary hover:bg-muted p-2 md:p-3 h-auto min-h-[60px] text-xs md:text-sm"
           >
             <Globe className="w-4 h-4 flex-shrink-0" />
             <span className="text-center">Zona Horaria</span>
           </TabsTrigger>
           <TabsTrigger 
             value="system" 
-            className="flex flex-col md:flex-row items-center justify-center space-y-1 md:space-y-0 md:space-x-2 text-black data-[state=active]:text-black data-[state=active]:bg-tms-green hover:bg-gray-50 p-2 md:p-3 h-auto min-h-[60px] text-xs md:text-sm"
+            className="flex flex-col md:flex-row items-center justify-center space-y-1 md:space-y-0 md:space-x-2 text-foreground data-[state=active]:text-primary-foreground data-[state=active]:bg-primary hover:bg-muted p-2 md:p-3 h-auto min-h-[60px] text-xs md:text-sm"
           >
             <SettingsIcon className="w-4 h-4 flex-shrink-0" />
             <span className="text-center">Sistema</span>
           </TabsTrigger>
           <TabsTrigger 
             value="notifications" 
-            className="flex flex-col md:flex-row items-center justify-center space-y-1 md:space-y-0 md:space-x-2 text-black data-[state=active]:text-black data-[state=active]:bg-tms-green hover:bg-gray-50 p-2 md:p-3 h-auto min-h-[60px] text-xs md:text-sm"
+            className="flex flex-col md:flex-row items-center justify-center space-y-1 md:space-y-0 md:space-x-2 text-foreground data-[state=active]:text-primary-foreground data-[state=active]:bg-primary hover:bg-muted p-2 md:p-3 h-auto min-h-[60px] text-xs md:text-sm"
           >
             <Bell className="w-4 h-4 flex-shrink-0" />
             <span className="text-center">Notificaciones</span>
           </TabsTrigger>
           <TabsTrigger 
             value="users" 
-            className="flex flex-col md:flex-row items-center justify-center space-y-1 md:space-y-0 md:space-x-2 text-black data-[state=active]:text-black data-[state=active]:bg-tms-green hover:bg-gray-50 p-2 md:p-3 h-auto min-h-[60px] text-xs md:text-sm"
+            className="flex flex-col md:flex-row items-center justify-center space-y-1 md:space-y-0 md:space-x-2 text-foreground data-[state=active]:text-primary-foreground data-[state=active]:bg-primary hover:bg-muted p-2 md:p-3 h-auto min-h-[60px] text-xs md:text-sm"
           >
             <Users className="w-4 h-4 flex-shrink-0" />
             <span className="text-center">Usuarios</span>

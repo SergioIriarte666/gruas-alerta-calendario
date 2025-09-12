@@ -87,53 +87,53 @@ export const TimezoneSettingsTab: React.FC = () => {
 
   if (loading) {
     return (
-      <Card className="glass-card">
+      <Card className="bg-card border">
         <CardContent className="flex items-center justify-center py-8">
-          <Loader2 className="w-6 h-6 animate-spin text-tms-green" />
-          <span className="ml-2 text-white">Cargando configuraciones...</span>
+          <Loader2 className="w-6 h-6 animate-spin text-primary" />
+          <span className="ml-2 text-foreground">Cargando configuraciones...</span>
         </CardContent>
       </Card>
     );
   }
 
   return (
-    <Card className="glass-card">
+    <Card className="bg-card border">
       <CardHeader>
-        <CardTitle className="flex items-center space-x-2">
-          <Globe className="w-5 h-5 text-tms-green" />
-          <span className="text-white">Configuración de Zona Horaria</span>
+        <CardTitle className="flex items-center space-x-2 text-foreground">
+          <Globe className="w-5 h-5 text-primary" />
+          <span>Configuración de Zona Horaria</span>
         </CardTitle>
-        <CardDescription className="text-white/70">
+        <CardDescription className="text-muted-foreground">
           Configura la zona horaria y formato de fecha para tu aplicación
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Información actual */}
-        <div className="bg-tms-green/10 border border-tms-green/30 rounded-lg p-4">
-          <h3 className="text-white font-medium mb-2 flex items-center">
-            <Clock className="w-4 h-4 mr-2 text-tms-green" />
+        <div className="bg-muted/50 border rounded-lg p-4">
+          <h3 className="text-foreground font-medium mb-2 flex items-center">
+            <Clock className="w-4 h-4 mr-2 text-primary" />
             Configuración Actual
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
             <div>
-              <span className="text-white/70">Zona horaria:</span>
+              <span className="text-muted-foreground">Zona horaria:</span>
               <br />
-              <span className="text-white font-medium">{getCurrentTimezone()}</span>
+              <span className="text-foreground font-medium">{getCurrentTimezone()}</span>
             </div>
             <div>
-              <span className="text-white/70">Offset:</span>
+              <span className="text-muted-foreground">Offset:</span>
               <br />
-              <span className="text-white font-medium">{getCurrentOffset()}</span>
+              <span className="text-foreground font-medium">{getCurrentOffset()}</span>
             </div>
             <div>
-              <span className="text-white/70">Fecha actual:</span>
+              <span className="text-muted-foreground">Fecha actual:</span>
               <br />
-              <span className="text-white font-medium">{datePreview}</span>
+              <span className="text-foreground font-medium">{datePreview}</span>
             </div>
             <div>
-              <span className="text-white/70">Formato:</span>
+              <span className="text-muted-foreground">Formato:</span>
               <br />
-              <span className="text-white font-medium">{userSettings.dateFormat}</span>
+              <span className="text-foreground font-medium">{userSettings.dateFormat}</span>
             </div>
           </div>
         </div>
@@ -142,8 +142,8 @@ export const TimezoneSettingsTab: React.FC = () => {
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <Label className="text-white">Usar zona horaria del sistema</Label>
-              <p className="text-sm text-white/70">
+              <Label className="text-foreground">Usar zona horaria del sistema</Label>
+              <p className="text-sm text-muted-foreground">
                 Usar automáticamente la zona horaria detectada del navegador
               </p>
             </div>
@@ -156,14 +156,14 @@ export const TimezoneSettingsTab: React.FC = () => {
 
           {!userSettings.useSystemTimezone && (
             <div className="space-y-2">
-              <Label className="text-white">Zona Horaria Manual</Label>
+              <Label className="text-foreground">Zona Horaria Manual</Label>
               <Select 
                 value={userSettings.timezone} 
                 onValueChange={handleTimezoneChange}
                 disabled={saving}
               >
-                <SelectTrigger className="bg-black border-tms-green/30 text-white">
-                  <SelectValue className="text-white" />
+                <SelectTrigger className="bg-background border">
+                  <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   {TIMEZONES.map((tz) => (
@@ -177,8 +177,8 @@ export const TimezoneSettingsTab: React.FC = () => {
           )}
 
           {userSettings.useSystemTimezone && (
-            <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-3">
-              <p className="text-blue-400 text-sm">
+            <div className="bg-accent/50 border rounded-lg p-3">
+              <p className="text-accent-foreground text-sm">
                 <Clock className="w-4 h-4 inline mr-1" />
                 Zona horaria del sistema detectada: <strong>{systemTimezone}</strong>
               </p>
@@ -186,18 +186,18 @@ export const TimezoneSettingsTab: React.FC = () => {
           )}
         </div>
 
-        <Separator className="bg-tms-green/30" />
+        <Separator />
 
         {/* Configuración de formato de fecha */}
         <div className="space-y-2">
-          <Label className="text-white">Formato de Fecha</Label>
+          <Label className="text-foreground">Formato de Fecha</Label>
           <Select 
             value={userSettings.dateFormat} 
             onValueChange={handleDateFormatChange}
             disabled={saving}
           >
-            <SelectTrigger className="bg-black border-tms-green/30 text-white">
-              <SelectValue className="text-white" />
+            <SelectTrigger className="bg-background border">
+              <SelectValue />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="DD/MM/YYYY">
@@ -229,23 +229,23 @@ export const TimezoneSettingsTab: React.FC = () => {
         </div>
 
         {/* Vista previa */}
-        <div className="bg-tms-green/5 border border-tms-green/20 rounded-lg p-4">
-          <h4 className="text-white font-medium mb-2 flex items-center">
-            <Calendar className="w-4 h-4 mr-2 text-tms-green" />
+        <div className="bg-muted/30 border rounded-lg p-4">
+          <h4 className="text-foreground font-medium mb-2 flex items-center">
+            <Calendar className="w-4 h-4 mr-2 text-primary" />
             Vista Previa
           </h4>
-          <p className="text-white/70 text-sm mb-1">
+          <p className="text-muted-foreground text-sm mb-1">
             Así se verán las fechas en la aplicación:
           </p>
-          <p className="text-white font-mono bg-black/30 px-3 py-2 rounded">
+          <p className="text-foreground font-mono bg-muted/50 px-3 py-2 rounded">
             {datePreview}
           </p>
         </div>
 
         {saving && (
           <div className="flex items-center justify-center py-2">
-            <Loader2 className="w-4 h-4 animate-spin text-tms-green mr-2" />
-            <span className="text-white text-sm">Guardando configuraciones...</span>
+            <Loader2 className="w-4 h-4 animate-spin text-primary mr-2" />
+            <span className="text-foreground text-sm">Guardando configuraciones...</span>
           </div>
         )}
       </CardContent>

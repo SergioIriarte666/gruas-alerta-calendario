@@ -30,13 +30,13 @@ export const InvoiceAlertSettings = () => {
   };
 
   return (
-    <Card>
+    <Card className="bg-card border">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
+        <CardTitle className="flex items-center gap-2 text-foreground">
           <Bell className="h-5 w-5" />
           Configuración de Alertas de Facturas
         </CardTitle>
-        <CardDescription>
+        <CardDescription className="text-muted-foreground">
           Configura cómo y cuándo recibir notificaciones sobre facturas vencidas
         </CardDescription>
       </CardHeader>

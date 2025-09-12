@@ -456,6 +456,35 @@ body {
   border-color: var(--service-types-border);
 }
 
+/* Settings Module Scope */
+.settings-scope {
+  --settings-primary: hsl(var(--primary));
+  --settings-secondary: hsl(var(--secondary));
+  --settings-accent: hsl(var(--accent));
+  --settings-muted: hsl(var(--muted));
+  --settings-muted-foreground: hsl(var(--muted-foreground));
+  --settings-border: hsl(var(--border));
+  --settings-card: hsl(var(--card));
+  --settings-background: hsl(var(--background));
+  --settings-foreground: hsl(var(--foreground));
+}
+
+.settings-scope .bg-card {
+  background-color: var(--settings-card);
+}
+
+.settings-scope .text-foreground {
+  color: var(--settings-foreground);
+}
+
+.settings-scope .text-muted-foreground {
+  color: var(--settings-muted-foreground);
+}
+
+.settings-scope .border {
+  border-color: var(--settings-border);
+}
+
 .service-types-scope .bg-muted\/50 {
   background-color: hsl(var(--muted) / 0.5);
 }

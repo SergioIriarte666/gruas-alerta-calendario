@@ -37,15 +37,15 @@ export const PushNotificationManager: React.FC = () => {
 
     return (
       <div className="space-y-4">
-        <div className="flex items-center gap-3 p-4 bg-slate-900 rounded-lg border border-slate-700">
+        <div className="flex items-center gap-3 p-4 bg-card border rounded-lg">
           <AlertCircle className="w-5 h-5 text-amber-500" />
           <div>
-            <h3 className="font-medium text-white">Notificaciones Push No Disponibles</h3>
-            <p className="text-sm text-slate-400">
+            <h3 className="font-medium text-foreground">Notificaciones Push No Disponibles</h3>
+            <p className="text-sm text-muted-foreground">
               {getUnsupportedReason()}
             </p>
             {window.location.protocol !== 'https:' && window.location.hostname !== 'localhost' && (
-              <p className="text-xs text-slate-500 mt-1">
+              <p className="text-xs text-muted-foreground mt-1">
                 Las notificaciones push requieren HTTPS en producción.
               </p>
             )}
@@ -134,9 +134,9 @@ export const PushNotificationManager: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Estado de las Notificaciones */}
-      <Card className="bg-slate-900 border-slate-700">
+      <Card className="bg-card border">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-white">
+          <CardTitle className="flex items-center gap-2 text-foreground">
             <Smartphone className="w-5 h-5" />
             Estado de Notificaciones Push
           </CardTitle>
@@ -146,12 +146,12 @@ export const PushNotificationManager: React.FC = () => {
             <div className="flex items-center gap-3">
               <PermissionIcon className={`w-5 h-5 ${permissionStatus.color}`} />
               <div>
-                <p className="font-medium text-white">Estado: {permissionStatus.text}</p>
-                <p className="text-sm text-slate-400">
+                <p className="font-medium text-foreground">Estado: {permissionStatus.text}</p>
+                <p className="text-sm text-muted-foreground">
                   {isSubscribed ? 'Suscrito y recibiendo notificaciones' : 'No suscrito'}
                 </p>
                 {error && (
-                  <p className="text-xs text-red-400 mt-1">
+                  <p className="text-xs text-destructive mt-1">
                     Error: {error.substring(0, 100)}{error.length > 100 ? '...' : ''}
                   </p>
                 )}
@@ -162,7 +162,7 @@ export const PushNotificationManager: React.FC = () => {
               <Button
                 onClick={requestPermission}
                 disabled={isLoading}
-                className="bg-tms-green hover:bg-tms-green-dark"
+                className="bg-primary hover:bg-primary/90"
               >
                 Solicitar Permisos
               </Button>
@@ -172,7 +172,7 @@ export const PushNotificationManager: React.FC = () => {
               <Button
                 onClick={handleSubscribe}
                 disabled={isLoading}
-                className="bg-tms-green hover:bg-tms-green-dark"
+                className="bg-primary hover:bg-primary/90"
               >
                 {isLoading ? 'Habilitando...' : 'Habilitar'}
               </Button>
@@ -183,7 +183,6 @@ export const PushNotificationManager: React.FC = () => {
                 onClick={handleUnsubscribe}
                 disabled={isLoading}
                 variant="outline"
-                className="border-slate-600 text-slate-300 hover:bg-slate-700"
               >
                 {isLoading ? 'Deshabilitando...' : 'Deshabilitar'}
               </Button>
@@ -195,7 +194,7 @@ export const PushNotificationManager: React.FC = () => {
                 disabled={isLoading}
                 variant="outline"
                 size="sm"
-                className="border-amber-600 text-amber-300 hover:bg-amber-900/20"
+                className="border-amber-600 text-amber-600 hover:bg-amber-50"
               >
                 <RefreshCw className="w-4 h-4 mr-1" />
                 Reintentar
@@ -207,14 +206,14 @@ export const PushNotificationManager: React.FC = () => {
 
       {/* Preferencias de Notificación */}
       {isSubscribed && (
-        <Card className="bg-slate-900 border-slate-700">
+        <Card className="bg-card border">
           <CardHeader>
-            <CardTitle className="text-white">Preferencias de Notificación</CardTitle>
+            <CardTitle className="text-foreground">Preferencias de Notificación</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <Label htmlFor="newServices" className="text-slate-300">
+                <Label htmlFor="newServices" className="text-foreground">
                   Nuevos Servicios Asignados
                 </Label>
                 <Switch
@@ -225,7 +224,7 @@ export const PushNotificationManager: React.FC = () => {
               </div>
               
               <div className="flex items-center justify-between">
-                <Label htmlFor="serviceUpdates" className="text-slate-300">
+                <Label htmlFor="serviceUpdates" className="text-foreground">
                   Actualizaciones de Servicios
                 </Label>
                 <Switch
@@ -236,7 +235,7 @@ export const PushNotificationManager: React.FC = () => {
               </div>
               
               <div className="flex items-center justify-between">
-                <Label htmlFor="inspectionCompleted" className="text-slate-300">
+                <Label htmlFor="inspectionCompleted" className="text-foreground">
                   Inspecciones Completadas
                 </Label>
                 <Switch
@@ -247,7 +246,7 @@ export const PushNotificationManager: React.FC = () => {
               </div>
               
               <div className="flex items-center justify-between">
-                <Label htmlFor="invoiceGenerated" className="text-slate-300">
+                <Label htmlFor="invoiceGenerated" className="text-foreground">
                   Facturas Generadas
                 </Label>
                 <Switch
@@ -258,7 +257,7 @@ export const PushNotificationManager: React.FC = () => {
               </div>
               
               <div className="flex items-center justify-between">
-                <Label htmlFor="systemAlerts" className="text-slate-300">
+                <Label htmlFor="systemAlerts" className="text-foreground">
                   Alertas del Sistema
                 </Label>
                 <Switch
@@ -273,12 +272,12 @@ export const PushNotificationManager: React.FC = () => {
       )}
 
       {permission === 'denied' && (
-        <div className="p-4 bg-red-950 border border-red-800 rounded-lg">
-          <h3 className="font-medium text-red-200 mb-2">Notificaciones Bloqueadas</h3>
-          <p className="text-sm text-red-300 mb-3">
+        <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-lg">
+          <h3 className="font-medium text-destructive mb-2">Notificaciones Bloqueadas</h3>
+          <p className="text-sm text-muted-foreground mb-3">
             Has bloqueado las notificaciones para este sitio. Para habilitarlas:
           </p>
-          <ol className="text-sm text-red-300 space-y-1 ml-4">
+          <ol className="text-sm text-muted-foreground space-y-1 ml-4">
             <li>1. Haz clic en el ícono de candado en la barra de direcciones</li>
             <li>2. Cambia "Notificaciones" a "Permitir"</li>
             <li>3. Recarga la página</li>
