@@ -233,9 +233,9 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
   return <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto bg-gray-800 border-gray-700">
+      <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto bg-card border suppliers-scope">
         <DialogHeader>
-          <DialogTitle className="text-white flex items-center gap-2">
+          <DialogTitle className="text-foreground flex items-center gap-2">
             <FileSpreadsheet className="h-5 w-5" />
             Importar Documentos XML
           </DialogTitle>
@@ -244,16 +244,16 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
 
         <div className="space-y-6">
           {/* Upload Area */}
-          {!selectedFile && <div {...getRootProps()} className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${isDragActive ? 'border-blue-400 bg-blue-500/10' : 'border-gray-600 hover:border-gray-500'}`}>
+          {!selectedFile && <div {...getRootProps()} className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${isDragActive ? 'border-primary bg-primary/10' : 'border-muted hover:border-border'}`}>
               <input {...getInputProps()} />
-              <Upload className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-              <h3 className="text-lg font-medium text-white mb-2">
+              <Upload className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+              <h3 className="text-lg font-medium text-foreground mb-2">
                 {isDragActive ? 'Suelta el archivo aquí' : 'Arrastra un archivo XML aquí'}
               </h3>
-              <p className="text-gray-400 mb-4">
+              <p className="text-muted-foreground mb-4">
                 o haz clic para seleccionar un archivo
               </p>
-              <Button variant="outline" className="border-gray-600 text-gray-300 hover:text-white" onClick={() => {
+              <Button variant="outline" onClick={() => {
             const input = document.createElement('input');
             input.type = 'file';
             input.accept = '.xml';
@@ -265,24 +265,24 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
             </div>}
 
           {/* File Info */}
-          {selectedFile && !parseResult && <Card className="bg-gray-700 border-gray-600">
+          {selectedFile && !parseResult && <Card className="bg-card border">
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
-                    <FileText className="h-8 w-8 text-blue-400" />
+                    <FileText className="h-8 w-8 text-primary" />
                     <div>
-                      <p className="text-white font-medium">{selectedFile.name}</p>
-                      <p className="text-sm text-gray-400">
+                      <p className="text-foreground font-medium">{selectedFile.name}</p>
+                      <p className="text-sm text-muted-foreground">
                         {formatFileSize(selectedFile.size)}
                       </p>
                     </div>
                   </div>
                   <div className="flex space-x-2">
-                    <Button onClick={handleAnalyzeFile} disabled={isAnalyzing} className="bg-blue-600 hover:bg-blue-700">
+                    <Button onClick={handleAnalyzeFile} disabled={isAnalyzing} variant="default">
                       {isAnalyzing ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <FileText className="h-4 w-4 mr-2" />}
                       Analizar XML
                     </Button>
-                    <Button variant="outline" onClick={reset} className="border-gray-600 text-gray-300 hover:text-white">
+                    <Button variant="outline" onClick={reset}>
                       <X className="h-4 w-4 mr-2" />
                       Quitar
                     </Button>
@@ -292,10 +292,10 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
             </Card>}
 
           {/* Upload Progress */}
-          {isUploading && <Card className="bg-gray-700 border-gray-600">
+          {isUploading && <Card className="bg-card border">
               <CardContent className="p-4">
                 <div className="space-y-2">
-                  <div className="flex justify-between text-sm text-gray-300">
+                  <div className="flex justify-between text-sm text-foreground">
                     <span>Subiendo datos...</span>
                     <span>{Math.round(uploadProgress)}%</span>
                   </div>
@@ -308,13 +308,13 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
           {parseResult && <div className="space-y-6">
               {/* Summary Stats */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <Card className="bg-gray-700 border-gray-600">
+                <Card className="bg-card border">
                   <CardContent className="p-4">
                     <div className="flex items-center space-x-2">
-                      <Users className="h-5 w-5 text-blue-400" />
+                      <Users className="h-5 w-5 text-primary" />
                       <div>
-                        <p className="text-sm text-gray-400">Proveedores</p>
-                        <p className="text-xl font-bold text-white">
+                        <p className="text-sm text-muted-foreground">Proveedores</p>
+                        <p className="text-xl font-bold text-foreground">
                           {parseResult.validSuppliers}/{parseResult.totalSuppliers}
                         </p>
                       </div>
@@ -322,13 +322,13 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
                   </CardContent>
                 </Card>
 
-                <Card className="bg-gray-700 border-gray-600">
+                <Card className="bg-card border">
                   <CardContent className="p-4">
                     <div className="flex items-center space-x-2">
-                      <Receipt className="h-5 w-5 text-green-400" />
+                      <Receipt className="h-5 w-5 text-primary" />
                       <div>
-                        <p className="text-sm text-gray-400">Documentos</p>
-                        <p className="text-xl font-bold text-white">
+                        <p className="text-sm text-muted-foreground">Documentos</p>
+                        <p className="text-xl font-bold text-foreground">
                           {parseResult.validDocuments}/{parseResult.totalDocuments}
                         </p>
                       </div>
@@ -336,13 +336,13 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
                   </CardContent>
                 </Card>
 
-                <Card className="bg-gray-700 border-gray-600">
+                <Card className="bg-card border">
                   <CardContent className="p-4">
                     <div className="flex items-center space-x-2">
-                      <AlertCircle className="h-5 w-5 text-red-400" />
+                      <AlertCircle className="h-5 w-5 text-destructive" />
                       <div>
-                        <p className="text-sm text-gray-400">Errores</p>
-                        <p className="text-xl font-bold text-white">
+                        <p className="text-sm text-muted-foreground">Errores</p>
+                        <p className="text-xl font-bold text-foreground">
                           {parseResult.errors.length}
                         </p>
                       </div>
@@ -350,13 +350,13 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
                   </CardContent>
                 </Card>
 
-                <Card className="bg-gray-700 border-gray-600">
+                <Card className="bg-card border">
                   <CardContent className="p-4">
                     <div className="flex items-center space-x-2">
-                      <DollarSign className="h-5 w-5 text-yellow-400" />
+                      <DollarSign className="h-5 w-5 text-yellow-600" />
                       <div>
-                        <p className="text-sm text-gray-400">Total Montos</p>
-                        <p className="text-xl font-bold text-white">
+                        <p className="text-sm text-muted-foreground">Total Montos</p>
+                        <p className="text-xl font-bold text-foreground">
                           ${parseResult.documents.filter(d => selectedDocuments.has(d.folio)).reduce((sum, d) => sum + d.total_amount, 0).toLocaleString()}
                         </p>
                       </div>
@@ -366,14 +366,14 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
               </div>
 
               {/* Options */}
-              <Card className="bg-gray-700 border-gray-600">
+              <Card className="bg-card border">
                 <CardHeader>
-                  <CardTitle className="text-white">Opciones de Importación</CardTitle>
+                  <CardTitle className="text-foreground">Opciones de Importación</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="flex items-center space-x-2">
                     <Checkbox id="create-payments" checked={createPayments} onCheckedChange={checked => setCreatePayments(checked === true)} />
-                    <label htmlFor="create-payments" className="text-white">
+                    <label htmlFor="create-payments" className="text-foreground">
                       Crear pagos automáticamente desde los documentos
                     </label>
                   </div>
@@ -382,9 +382,9 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
 
               {/* Errors and Warnings */}
               {(parseResult.errors.length > 0 || parseResult.warnings.length > 0) && <div className="space-y-2">
-                  {parseResult.errors.length > 0 && <Alert className="border-red-500 bg-red-500/10">
-                      <AlertCircle className="h-4 w-4 text-red-400" />
-                      <AlertDescription className="text-red-300">
+                  {parseResult.errors.length > 0 && <Alert className="border-destructive bg-destructive/10">
+                      <AlertCircle className="h-4 w-4 text-destructive" />
+                      <AlertDescription className="text-destructive">
                         <strong>Errores encontrados:</strong>
                         <ul className="mt-2 list-disc list-inside space-y-1">
                           {parseResult.errors.slice(0, 5).map((error, index) => <li key={index} className="text-sm">{error}</li>)}
@@ -393,9 +393,9 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
                       </AlertDescription>
                     </Alert>}
 
-                  {parseResult.warnings.length > 0 && <Alert className="border-yellow-500 bg-yellow-500/10">
-                      <AlertCircle className="h-4 w-4 text-yellow-400" />
-                      <AlertDescription className="text-yellow-300">
+                  {parseResult.warnings.length > 0 && <Alert className="border-yellow-600 bg-yellow-600/10">
+                      <AlertCircle className="h-4 w-4 text-yellow-600" />
+                      <AlertDescription className="text-yellow-600">
                         <strong>Advertencias:</strong>
                         <ul className="mt-2 list-disc list-inside space-y-1">
                           {parseResult.warnings.slice(0, 3).map((warning, index) => <li key={index} className="text-sm">{warning}</li>)}
@@ -406,16 +406,16 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
                 </div>}
 
               {/* Suppliers Preview */}
-              {parseResult.suppliers.length > 0 && <Card className="bg-gray-700 border-gray-600">
+              {parseResult.suppliers.length > 0 && <Card className="bg-card border">
                   <CardHeader>
-                    <CardTitle className="text-white flex items-center gap-2">
+                    <CardTitle className="text-foreground flex items-center gap-2">
                       <Building className="h-5 w-5" />
                       Proveedores Encontrados ({parseResult.suppliers.length})
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-3 max-h-60 overflow-y-auto">
-                      {parseResult.suppliers.map((supplier, index) => <div key={index} className="flex items-center justify-between p-3 bg-gray-800 rounded">
+                      {parseResult.suppliers.map((supplier, index) => <div key={index} className="flex items-center justify-between p-3 bg-muted/50 rounded">
                           <div className="flex items-center space-x-3">
                             <Checkbox checked={selectedSuppliers.has(supplier.rut)} onCheckedChange={checked => {
                       if (checked === true) {
@@ -425,16 +425,16 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
                       }
                     }} />
                             <div className="min-w-0 flex-1">
-                              <p className="text-white font-medium truncate">{supplier.name}</p>
-                              <p className="text-sm text-gray-400">{supplier.rut}</p>
+                              <p className="text-foreground font-medium truncate">{supplier.name}</p>
+                              <p className="text-sm text-muted-foreground">{supplier.rut}</p>
                             </div>
                           </div>
                           <div className="flex items-center space-x-2">
                             <Select value={supplierCategoryMapping[supplier.rut] || supplier.category} onValueChange={value => handleCategoryChange(supplier.rut, value)}>
-                              <SelectTrigger className="w-40 bg-gray-600 border-gray-500">
+                              <SelectTrigger className="w-40">
                                 <SelectValue />
                               </SelectTrigger>
-                              <SelectContent className="bg-gray-700 border-gray-600">
+                              <SelectContent>
                                 {activeCategories?.map(category => <SelectItem key={category.id} value={category.name}>
                                     {getCategoryLabel(activeCategories, category.name)}
                                   </SelectItem>)}
@@ -447,16 +447,16 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
                 </Card>}
 
               {/* Documents Preview */}
-              {parseResult.documents.length > 0 && <Card className="bg-gray-700 border-gray-600">
+              {parseResult.documents.length > 0 && <Card className="bg-card border">
                   <CardHeader>
-                    <CardTitle className="text-white flex items-center gap-2">
+                    <CardTitle className="text-foreground flex items-center gap-2">
                       <Receipt className="h-5 w-5" />
                       Documentos Encontrados ({parseResult.documents.length})
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-3 max-h-60 overflow-y-auto">
-                      {parseResult.documents.map((document, index) => <div key={index} className="flex items-center justify-between p-3 bg-gray-800 rounded">
+                      {parseResult.documents.map((document, index) => <div key={index} className="flex items-center justify-between p-3 bg-muted/50 rounded">
                           <div className="flex items-center space-x-3">
                             <Checkbox checked={selectedDocuments.has(document.folio)} onCheckedChange={checked => {
                       if (checked === true) {
@@ -466,8 +466,8 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
                       }
                     }} />
                             <div className="min-w-0 flex-1">
-                              <p className="text-white font-medium">{document.description}</p>
-                              <div className="flex items-center space-x-4 text-sm text-gray-400">
+                              <p className="text-foreground font-medium">{document.description}</p>
+                              <div className="flex items-center space-x-4 text-sm text-muted-foreground">
                                 <span>Folio: {document.folio}</span>
                                 <span>Total: ${document.total_amount.toLocaleString()}</span>
                                 {document.due_date && <span className="flex items-center gap-1">
@@ -477,7 +477,7 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
                               </div>
                             </div>
                           </div>
-                          <Badge variant="outline" className="border-gray-500 text-gray-300">
+                          <Badge variant="outline">
                             {document.document_type}
                           </Badge>
                         </div>)}
@@ -487,10 +487,10 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
 
               {/* Actions */}
               <div className="flex justify-end space-x-2">
-                <Button variant="outline" onClick={reset} disabled={isUploading} className="border-gray-600 text-gray-300 hover:text-white">
+                <Button variant="outline" onClick={reset} disabled={isUploading}>
                   Cancelar
                 </Button>
-                <Button onClick={handleUploadData} disabled={isUploading || selectedSuppliers.size === 0} className="bg-green-600 hover:bg-green-700">
+                <Button onClick={handleUploadData} disabled={isUploading || selectedSuppliers.size === 0} variant="default">
                   {isUploading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <CheckCircle className="h-4 w-4 mr-2" />}
                   Importar {selectedSuppliers.size} Proveedores
                   {createPayments && selectedDocuments.size > 0 && ` y ${selectedDocuments.size} Pagos`}
