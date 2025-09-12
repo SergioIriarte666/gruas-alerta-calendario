@@ -56,19 +56,19 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
   ) : 0;
 
   return (
-    <div className={`rounded-lg border ${column.color} p-4 space-y-3 min-h-[400px] vip-pipeline-scope`}>
+    <div className="rounded-lg border bg-card p-4 space-y-3 min-h-[400px] vip-pipeline-scope">
       {/* Column Header */}
       <div className="space-y-2">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className={column.textColor}>
+            <div className="text-foreground">
               {getColumnIcon()}
             </div>
-            <h3 className={`font-medium ${column.textColor}`}>
+            <h3 className="font-medium text-foreground">
               {column.title}
             </h3>
           </div>
-          <Badge variant="outline" className={`${column.textColor} border-current`}>
+          <Badge variant="outline">
             {services.length}
           </Badge>
         </div>
@@ -82,13 +82,13 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
           <div className="grid grid-cols-2 gap-2 text-xs">
             <div className="bg-card rounded p-2">
               <div className="text-muted-foreground">Total</div>
-              <div className={`font-medium ${column.textColor}`}>
+              <div className="font-medium text-foreground">
                 ${totalValue.toLocaleString()}
               </div>
             </div>
             <div className="bg-card rounded p-2">
               <div className="text-muted-foreground">Prom. días</div>
-              <div className={`font-medium ${column.textColor}`}>
+              <div className="font-medium text-foreground">
                 {avgDays}d
               </div>
             </div>
@@ -112,7 +112,6 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
               <ServiceCard
                 key={service.id}
                 service={service}
-                columnColor={column.color}
                 onUpdate={onServiceUpdate}
               />
             ))

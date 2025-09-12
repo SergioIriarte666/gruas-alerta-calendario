@@ -276,10 +276,10 @@ export default function VipClientPipeline() {
       </Tabs>
 
       {/* Info Footer */}
-      <Card className="bg-card border-primary/20">
+      <Card className="bg-card border">
         <CardContent className="p-4">
-          <div className="flex items-center gap-3 text-primary">
-            <Clock className="w-4 h-4" />
+          <div className="flex items-center gap-3 text-muted-foreground">
+            <Clock className="w-4 h-4 text-primary" />
             <p className="text-sm">
               Este pipeline se actualiza en tiempo real. Los servicios se mueven automáticamente entre estados según su progreso.
             </p>

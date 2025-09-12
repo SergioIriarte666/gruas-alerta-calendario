@@ -18,13 +18,11 @@ import { es } from 'date-fns/locale';
 
 interface ServiceCardProps {
   service: Service;
-  columnColor: string;
   onUpdate: () => void;
 }
 
 export const ServiceCard: React.FC<ServiceCardProps> = ({
   service,
-  columnColor,
   onUpdate
 }) => {
   // Calcular días desde la fecha del servicio
@@ -33,10 +31,10 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({
   
   // Determinar color de urgencia
   const getUrgencyColor = () => {
-    if (service.status === 'invoiced' || service.status === 'completed') return 'text-gray-400';
-    if (daysSince > 7) return 'text-red-400';
-    if (daysSince > 3) return 'text-amber-400';
-    return 'text-green-400';
+    if (service.status === 'invoiced' || service.status === 'completed') return 'text-muted-foreground';
+    if (daysSince > 7) return 'text-destructive';
+    if (daysSince > 3) return 'text-foreground';
+    return 'text-foreground';
   };
 
   const getStatusLabel = () => {
@@ -53,7 +51,7 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({
   };
 
   return (
-    <Card className={`${columnColor} border-opacity-50 hover:border-opacity-75 transition-all duration-200 cursor-pointer group vip-pipeline-scope`}>
+    <Card className="bg-card border hover:border-foreground/20 transition-all duration-200 cursor-pointer group vip-pipeline-scope">
       <CardContent className="p-3 space-y-3">
         {/* Header */}
         <div className="flex items-start justify-between">
@@ -143,7 +141,7 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({
 
           {/* Value */}
           <div className="flex items-center justify-between pt-1 border-t">
-          <div className="flex items-center gap-2 text-primary">
+          <div className="flex items-center gap-2 text-foreground">
             <DollarSign className="w-3 h-3" />
             <span className="font-medium">
               ${service.value.toLocaleString()}
@@ -152,8 +150,8 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({
             
             {/* Status Badge */}
             <Badge 
-              variant="outline" 
-              className="text-xs px-1.5 py-0.5 border-current opacity-70"
+              variant="secondary" 
+              className="text-xs px-1.5 py-0.5 opacity-70"
             >
               {getStatusLabel()}
             </Badge>

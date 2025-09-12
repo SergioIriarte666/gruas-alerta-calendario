@@ -86,7 +86,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <div className="flex items-center gap-3 text-gray-400">
+        <div className="flex items-center gap-3 text-muted-foreground">
           <Loader2 className="w-6 h-6 animate-spin" />
           <p>Cargando pipeline del cliente...</p>
         </div>
@@ -124,9 +124,9 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
           return (
             <div 
               key={`stat-${column.id}`}
-              className={`p-2 rounded border ${column.color} text-center`}
+              className="p-2 rounded border bg-card text-center"
             >
-              <div className={`font-medium ${column.textColor}`}>{count}</div>
+              <div className="font-medium text-foreground">{count}</div>
               <div className="text-muted-foreground truncate">{column.title}</div>
             </div>
           );
