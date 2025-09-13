@@ -498,7 +498,7 @@ export const BatchUpdateModal: React.FC<BatchUpdateModalProps> = ({
                     ) : enablePurchaseOrder ? (
                       <div className="flex items-center gap-2">
                         <span>Los servicios cambiarán automáticamente a</span>
-                        <Badge className="bg-green-500/20 text-green-300 border-green-500/30">
+                        <Badge className="bg-green-500/20 text-foreground border-green-500/30">
                           Con Orden de Compra
                         </Badge>
                       </div>
