@@ -480,7 +480,7 @@ export const EnhancedCSVUploadServices = ({ onClose, onSuccess }: EnhancedCSVUpl
                 <Button
                   onClick={handleUpload}
                   disabled={isUploading}
-                  className="bg-tms-green hover:bg-tms-green-dark text-white px-8"
+                  className="bg-tms-green hover:bg-tms-green-dark text-foreground px-8"
                   size="lg"
                 >
                   {isUploading ? (
