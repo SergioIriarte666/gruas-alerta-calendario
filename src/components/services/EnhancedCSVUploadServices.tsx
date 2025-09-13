@@ -174,11 +174,11 @@ export const EnhancedCSVUploadServices = ({ onClose, onSuccess }: EnhancedCSVUpl
       {/* Header with improved design */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-white flex items-center gap-2">
+          <h2 className="text-2xl font-bold text-foreground flex items-center gap-2">
             <Upload className="w-6 h-6 text-tms-green" />
             Carga Masiva Inteligente
           </h2>
-          <p className="text-gray-400 mt-1">
+          <p className="text-muted-foreground mt-1">
             Sistema avanzado de importación con validación automática y mapeo inteligente
           </p>
         </div>
@@ -212,12 +212,12 @@ export const EnhancedCSVUploadServices = ({ onClose, onSuccess }: EnhancedCSVUpl
               ) : (
                 <Loader2 className="w-5 h-5 text-yellow-500 animate-spin" />
               )}
-              <span className={`text-sm ${isInitialized ? 'text-green-400' : 'text-yellow-400'}`}>
+              <span className={`text-sm ${isInitialized ? 'text-green-600' : 'text-yellow-600'}`}>
                 {isInitialized ? 'Sistema listo' : 'Inicializando sistema...'}
               </span>
             </div>
             <Separator orientation="vertical" className="h-6" />
-            <div className="text-sm text-gray-400">
+            <div className="text-sm text-muted-foreground">
               Validación automática • Mapeo inteligente • Corrección de datos
             </div>
           </div>
@@ -227,19 +227,19 @@ export const EnhancedCSVUploadServices = ({ onClose, onSuccess }: EnhancedCSVUpl
       {/* File Upload Area */}
       <Card className="glass-card">
         <CardHeader>
-          <CardTitle className="flex items-center space-x-2 text-white">
+          <CardTitle className="flex items-center space-x-2 text-foreground">
             <FileText className="w-5 h-5 text-tms-green" />
             <span>Seleccionar Archivo</span>
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div
-            className="border-2 border-dashed border-gray-600 rounded-lg p-8 text-center hover:border-tms-green transition-colors"
+            className="border-2 border-dashed border rounded-lg p-8 text-center hover:border-tms-green transition-colors"
             onDrop={handleDrop}
             onDragOver={handleDragOver}
           >
-            <Upload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-300 mb-4">
+            <Upload className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+            <p className="text-foreground mb-4">
               Arrastra tu archivo CSV o Excel aquí o haz clic para seleccionar
             </p>
             <input
@@ -257,13 +257,13 @@ export const EnhancedCSVUploadServices = ({ onClose, onSuccess }: EnhancedCSVUpl
           </div>
 
           {file && (
-            <div className="mt-4 p-4 bg-gray-800 rounded-lg">
+            <div className="mt-4 p-4 bg-muted/50 rounded-lg">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
                   <FileText className="w-5 h-5 text-tms-green" />
                   <div>
-                    <p className="text-white font-medium">{file.name}</p>
-                    <p className="text-gray-400 text-sm">{formatFileSize(file.size)}</p>
+                    <p className="text-foreground font-medium">{file.name}</p>
+                    <p className="text-muted-foreground text-sm">{formatFileSize(file.size)}</p>
                   </div>
                 </div>
                 <div className="flex space-x-2">
@@ -300,14 +300,14 @@ export const EnhancedCSVUploadServices = ({ onClose, onSuccess }: EnhancedCSVUpl
       {uploadProgress && (
         <Card className="glass-card">
           <CardHeader>
-            <CardTitle className="text-white flex items-center gap-2">
+            <CardTitle className="text-foreground flex items-center gap-2">
               <BarChart3 className="w-5 h-5" />
               {getProgressStageText(uploadProgress.stage)}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <div className="flex justify-between text-sm text-gray-300 mb-2">
+              <div className="flex justify-between text-sm text-foreground mb-2">
                 <span>{uploadProgress.stage === 'uploading' ? `Lote ${uploadProgress.currentBatch} de ${uploadProgress.totalBatches}` : 'Progreso'}</span>
                 <span>{uploadProgress.processed} de {uploadProgress.total}</span>
               </div>
@@ -321,7 +321,7 @@ export const EnhancedCSVUploadServices = ({ onClose, onSuccess }: EnhancedCSVUpl
       {validationResult && (
         <Card className="glass-card">
           <CardHeader>
-            <CardTitle className="flex items-center space-x-2 text-white">
+            <CardTitle className="flex items-center space-x-2 text-foreground">
               {validationResult.isValid ? (
                 <CheckCircle className="w-5 h-5 text-green-500" />
               ) : (
@@ -335,19 +335,19 @@ export const EnhancedCSVUploadServices = ({ onClose, onSuccess }: EnhancedCSVUpl
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div className="bg-blue-500/20 p-4 rounded-lg">
                 <p className="text-blue-300 text-sm">Total de Filas</p>
-                <p className="text-2xl font-bold text-white">{validationResult.totalRows}</p>
+                <p className="text-2xl font-bold text-foreground">{validationResult.totalRows}</p>
               </div>
               <div className="bg-green-500/20 p-4 rounded-lg">
-                <p className="text-green-300 text-sm">Válidas</p>
-                <p className="text-2xl font-bold text-white">{validationResult.validCount}</p>
+                <p className="text-green-600 text-sm">Válidas</p>
+                <p className="text-2xl font-bold text-foreground">{validationResult.validCount}</p>
               </div>
               <div className="bg-red-500/20 p-4 rounded-lg">
-                <p className="text-red-300 text-sm">Errores</p>
-                <p className="text-2xl font-bold text-white">{validationResult.errorCount}</p>
+                <p className="text-red-600 text-sm">Errores</p>
+                <p className="text-2xl font-bold text-foreground">{validationResult.errorCount}</p>
               </div>
               <div className="bg-yellow-500/20 p-4 rounded-lg">
-                <p className="text-yellow-300 text-sm">Advertencias</p>
-                <p className="text-2xl font-bold text-white">{validationResult.warningCount}</p>
+                <p className="text-yellow-600 text-sm">Advertencias</p>
+                <p className="text-2xl font-bold text-foreground">{validationResult.warningCount}</p>
               </div>
             </div>
 
@@ -359,11 +359,11 @@ export const EnhancedCSVUploadServices = ({ onClose, onSuccess }: EnhancedCSVUpl
                 ) : (
                   <AlertTriangle className="w-5 h-5 text-orange-400" />
                 )}
-                <h4 className={`font-medium ${validationResult.isValid ? 'text-green-300' : 'text-orange-300'}`}>
+                <h4 className={`font-medium ${validationResult.isValid ? 'text-green-600' : 'text-orange-600'}`}>
                   {validationResult.isValid ? 'Validación Exitosa' : 'Validación con Observaciones'}
                 </h4>
               </div>
-              <p className="text-gray-300 text-sm">
+              <p className="text-foreground text-sm">
                 {validationResult.isValid 
                   ? `Todos los ${validationResult.validCount} servicios están listos para cargar.`
                   : `${validationResult.validCount} servicios válidos de ${validationResult.totalRows} total. Revisa los errores antes de continuar.`
@@ -374,11 +374,11 @@ export const EnhancedCSVUploadServices = ({ onClose, onSuccess }: EnhancedCSVUpl
             {/* Errors and Warnings Summary */}
             {validationResult.errors.length > 0 && (
               <div className="space-y-2">
-                <h4 className="text-white font-medium flex items-center gap-2">
+                <h4 className="text-foreground font-medium flex items-center gap-2">
                   <AlertTriangle className="w-4 h-4" />
                   Detalles de Validación
                 </h4>
-                <div className="space-y-2 max-h-60 overflow-y-auto bg-gray-800/50 rounded-lg p-4">
+                <div className="space-y-2 max-h-60 overflow-y-auto bg-muted/50 rounded-lg p-4">
                   {Object.entries(groupErrorsByType(validationResult.errors)).map(([key, errors]) => {
                     const isError = key.startsWith('error_');
                     const field = key.replace(/^(error_|warning_)/, '');
@@ -388,22 +388,22 @@ export const EnhancedCSVUploadServices = ({ onClose, onSuccess }: EnhancedCSVUpl
                         <div className="flex items-center gap-2 mb-1">
                           <Badge 
                             variant={isError ? "destructive" : "secondary"}
-                            className={isError ? "bg-red-500/20 text-red-300" : "bg-yellow-500/20 text-yellow-300"}
+                            className={isError ? "bg-red-500/20 text-red-600" : "bg-yellow-500/20 text-yellow-600"}
                           >
                             {field}
                           </Badge>
-                          <span className="text-gray-300">
+                          <span className="text-foreground">
                             {errors.length} {isError ? 'error(es)' : 'advertencia(s)'}
                           </span>
                         </div>
                         <div className="ml-4 space-y-1">
                           {errors.slice(0, 3).map((error, idx) => (
-                            <div key={idx} className="text-gray-400 text-xs">
+                            <div key={idx} className="text-muted-foreground text-xs">
                               {error.row >= 0 ? `Fila ${error.row + 1}: ` : ''}{error.message}
                             </div>
                           ))}
                           {errors.length > 3 && (
-                            <div className="text-gray-500 text-xs">
+                            <div className="text-muted-foreground text-xs">
                               ... y {errors.length - 3} más
                             </div>
                           )}
@@ -418,18 +418,18 @@ export const EnhancedCSVUploadServices = ({ onClose, onSuccess }: EnhancedCSVUpl
             {/* Preview Table */}
             {csvData.length > 0 && (
               <div>
-                <h4 className="text-white font-medium mb-2">Vista Previa (primeras 5 filas)</h4>
-                <div className="overflow-x-auto bg-gray-800/50 rounded-lg">
+                <h4 className="text-foreground font-medium mb-2">Vista Previa (primeras 5 filas)</h4>
+                <div className="overflow-x-auto bg-muted/50 rounded-lg">
                   <Table>
                     <TableHeader>
-                      <TableRow className="border-gray-700">
-                        <TableHead className="text-gray-300">Folio</TableHead>
-                        <TableHead className="text-gray-300">Fecha</TableHead>
-                        <TableHead className="text-gray-300">Cliente</TableHead>
-                        <TableHead className="text-gray-300">Vehículo</TableHead>
-                        <TableHead className="text-gray-300">Patente</TableHead>
-                        <TableHead className="text-gray-300">Valor</TableHead>
-                        <TableHead className="text-gray-300">Estado</TableHead>
+                      <TableRow className="border">
+                        <TableHead className="text-muted-foreground">Folio</TableHead>
+                        <TableHead className="text-muted-foreground">Fecha</TableHead>
+                        <TableHead className="text-muted-foreground">Cliente</TableHead>
+                        <TableHead className="text-muted-foreground">Vehículo</TableHead>
+                        <TableHead className="text-muted-foreground">Patente</TableHead>
+                        <TableHead className="text-muted-foreground">Valor</TableHead>
+                        <TableHead className="text-muted-foreground">Estado</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -442,27 +442,27 @@ export const EnhancedCSVUploadServices = ({ onClose, onSuccess }: EnhancedCSVUpl
                         );
 
                         return (
-                          <TableRow key={index} className="border-gray-700">
-                            <TableCell className="text-gray-300">{row.Folio || row.folio}</TableCell>
-                            <TableCell className="text-gray-300">{row['Fecha Servicio'] || row.serviceDate}</TableCell>
-                            <TableCell className="text-gray-300">{row['Cliente Nombre'] || row.clientName}</TableCell>
-                            <TableCell className="text-gray-300">
+                          <TableRow key={index} className="border">
+                            <TableCell className="text-foreground">{row.Folio || row.folio}</TableCell>
+                            <TableCell className="text-foreground">{row['Fecha Servicio'] || row.serviceDate}</TableCell>
+                            <TableCell className="text-foreground">{row['Cliente Nombre'] || row.clientName}</TableCell>
+                            <TableCell className="text-foreground">
                               {shouldShowVehicleInfo(row) ? 
                                 `${(row['Vehículo Marca'] || row.vehicleBrand)} ${(row['Vehículo Modelo'] || row.vehicleModel)}` : 
                                 'No aplica'
                               }
                             </TableCell>
-                            <TableCell className="text-gray-300">
+                            <TableCell className="text-foreground">
                               {shouldShowVehicleInfo(row) ? (row.Patente || row.licensePlate) : 'No aplica'}
                             </TableCell>
-                            <TableCell className="text-gray-300">${row.Valor || row.value}</TableCell>
+                            <TableCell className="text-foreground">${row.Valor || row.value}</TableCell>
                             <TableCell>
                               {hasError ? (
-                                <Badge variant="destructive" className="bg-red-500/20 text-red-300">Error</Badge>
+                                <Badge variant="destructive" className="bg-red-500/20 text-red-600">Error</Badge>
                               ) : hasWarning ? (
-                                <Badge variant="secondary" className="bg-yellow-500/20 text-yellow-300">Advertencia</Badge>
+                                <Badge variant="secondary" className="bg-yellow-500/20 text-yellow-600">Advertencia</Badge>
                               ) : (
-                                <Badge variant="secondary" className="bg-green-500/20 text-green-300">Válido</Badge>
+                                <Badge variant="secondary" className="bg-green-500/20 text-green-600">Válido</Badge>
                               )}
                             </TableCell>
                           </TableRow>
@@ -500,7 +500,7 @@ export const EnhancedCSVUploadServices = ({ onClose, onSuccess }: EnhancedCSVUpl
       {uploadResult && (
         <Card className="glass-card">
           <CardHeader>
-            <CardTitle className="flex items-center space-x-2 text-white">
+            <CardTitle className="flex items-center space-x-2 text-foreground">
               {uploadResult.success ? (
                 <CheckCircle className="w-5 h-5 text-green-500" />
               ) : (
@@ -512,28 +512,28 @@ export const EnhancedCSVUploadServices = ({ onClose, onSuccess }: EnhancedCSVUpl
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
               <div className="bg-green-500/20 p-4 rounded-lg">
-                <p className="text-green-300 text-sm">Servicios Procesados</p>
-                <p className="text-2xl font-bold text-white">{uploadResult.processed}</p>
+                <p className="text-green-600 text-sm">Servicios Procesados</p>
+                <p className="text-2xl font-bold text-foreground">{uploadResult.processed}</p>
               </div>
               <div className="bg-red-500/20 p-4 rounded-lg">
-                <p className="text-red-300 text-sm">Errores</p>
-                <p className="text-2xl font-bold text-white">{uploadResult.errors}</p>
+                <p className="text-red-600 text-sm">Errores</p>
+                <p className="text-2xl font-bold text-foreground">{uploadResult.errors}</p>
               </div>
             </div>
-            <p className="text-gray-300 mb-4">{uploadResult.message}</p>
+            <p className="text-foreground mb-4">{uploadResult.message}</p>
             
             {/* Error details */}
             {uploadResult.errorDetails && uploadResult.errorDetails.length > 0 && (
               <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4 mb-4">
-                <h4 className="text-red-300 font-medium mb-2">Detalles de Errores</h4>
+                <h4 className="text-red-600 font-medium mb-2">Detalles de Errores</h4>
                 <div className="space-y-1 max-h-40 overflow-y-auto">
                   {uploadResult.errorDetails.slice(0, 10).map((error, idx) => (
-                    <div key={idx} className="text-sm text-gray-300">
+                    <div key={idx} className="text-sm text-foreground">
                       Fila {error.row + 1}: {error.message}
                     </div>
                   ))}
                   {uploadResult.errorDetails.length > 10 && (
-                    <div className="text-sm text-gray-400">
+                    <div className="text-sm text-muted-foreground">
                       ... y {uploadResult.errorDetails.length - 10} errores más
                     </div>
                   )}
