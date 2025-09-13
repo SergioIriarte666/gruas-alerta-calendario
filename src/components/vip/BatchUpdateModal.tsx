@@ -415,18 +415,18 @@ export const BatchUpdateModal: React.FC<BatchUpdateModalProps> = ({
                   <div className="p-3 bg-green-500/10 border border-green-500/20 rounded-lg">
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <Label htmlFor="po-prefix" className="text-gray-300">Prefijo</Label>
+                        <Label htmlFor="po-prefix" className="text-foreground">Prefijo</Label>
                         <Input
                           id="po-prefix"
                           value={batchData.purchase_order.prefix}
                           onChange={(e) => updateData('purchase_order', 'prefix', e.target.value)}
                           placeholder="OC-"
-                          className="bg-gray-800 border-gray-700 text-white"
+                          className="bg-background border"
                         />
                       </div>
                       
                       <div>
-                        <Label htmlFor="po-base" className="text-gray-300">Número base (mismo para todos)</Label>
+                        <Label htmlFor="po-base" className="text-foreground">Número base (mismo para todos)</Label>
                         <Input
                           id="po-base"
                           value={batchData.purchase_order.baseNumber}
@@ -435,12 +435,12 @@ export const BatchUpdateModal: React.FC<BatchUpdateModalProps> = ({
                             if (e.target.value) updateData('purchase_order', 'startingNumber', '');
                           }}
                           placeholder="2024001"
-                          className="bg-gray-800 border-gray-700 text-white"
+                          className="bg-background border"
                         />
                       </div>
                       
                       <div className="col-span-2">
-                        <Label htmlFor="po-start" className="text-gray-300">Número inicial (secuencial)</Label>
+                        <Label htmlFor="po-start" className="text-foreground">Número inicial (secuencial)</Label>
                         <Input
                           id="po-start"
                           type="number"
@@ -450,11 +450,11 @@ export const BatchUpdateModal: React.FC<BatchUpdateModalProps> = ({
                             if (e.target.value) updateData('purchase_order', 'baseNumber', '');
                           }}
                           placeholder="1001"
-                          className="bg-gray-800 border-gray-700 text-white"
+                          className="bg-background border"
                           disabled={!!batchData.purchase_order.baseNumber}
                         />
                         {batchData.purchase_order.startingNumber && (
-                          <p className="text-xs text-gray-400 mt-1">
+                          <p className="text-xs text-muted-foreground mt-1">
                             Se numerarán del {batchData.purchase_order.prefix}{batchData.purchase_order.startingNumber} al {batchData.purchase_order.prefix}{parseInt(batchData.purchase_order.startingNumber) + selectedServices.length - 1}
                           </p>
                         )}
@@ -467,12 +467,12 @@ export const BatchUpdateModal: React.FC<BatchUpdateModalProps> = ({
 
             {/* Gestión Automática de Estado */}
             <div className="space-y-4">
-              <Separator className="bg-gray-700" />
+              <Separator className="border" />
               
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <RefreshCw className="w-5 h-5 text-purple-400" />
-                  <h3 className="text-lg font-medium text-white">Gestión Automática de Estado</h3>
+                  <h3 className="text-lg font-medium text-foreground">Gestión Automática de Estado</h3>
                 </div>
                 <Switch
                   checked={autoUpdateStatus}
@@ -486,7 +486,7 @@ export const BatchUpdateModal: React.FC<BatchUpdateModalProps> = ({
                     <AlertCircle className="w-4 h-4 text-purple-400" />
                     <span className="text-purple-300 font-medium">Estado Resultante</span>
                   </div>
-                  <div className="text-sm text-gray-300">
+                  <div className="text-sm text-foreground">
                     {enablePurchaseOrder && enableQuote ? (
                       <div className="flex items-center gap-2">
                         <span>Los servicios cambiarán automáticamente a</span>
@@ -517,16 +517,16 @@ export const BatchUpdateModal: React.FC<BatchUpdateModalProps> = ({
 
             {/* Preview */}
             {preview.length > 0 && (
-              <div className="p-4 bg-gray-800/50 border border-gray-700 rounded-lg">
-                <h4 className="text-white font-medium mb-3 flex items-center gap-2">
+              <div className="p-4 bg-muted/50 border rounded-lg">
+                <h4 className="text-foreground font-medium mb-3 flex items-center gap-2">
                   <AlertCircle className="w-4 h-4 text-blue-400" />
                   Vista Previa
                 </h4>
                 <div className="space-y-2">
                   {preview.map((item, index) => (
-                    <div key={index} className="bg-gray-900/50 p-3 rounded border border-gray-700">
+                    <div key={index} className="bg-card p-3 rounded border">
                       <div className="flex items-center justify-between mb-2">
-                        <span className="text-gray-300 font-medium">{item.folio}</span>
+                        <span className="text-foreground font-medium">{item.folio}</span>
                         <div className="flex items-center gap-2">
                           {item.quote && (
                             <Badge variant="outline" className="bg-blue-500/20 text-blue-300 border-blue-500/30">
@@ -543,7 +543,7 @@ export const BatchUpdateModal: React.FC<BatchUpdateModalProps> = ({
                       
                       {autoUpdateStatus && item.targetStatus && (
                         <div className="flex items-center gap-2 text-xs">
-                          <Badge variant="secondary" className="bg-gray-700 text-gray-300">
+                          <Badge variant="secondary" className="bg-muted text-muted-foreground">
                             {item.currentStatus === 'new' ? 'Nuevo' : 
                              item.currentStatus === 'quoted' ? 'Cotizado' : 
                              item.currentStatus === 'with_purchase_order' ? 'Con O.C.' : 
@@ -558,7 +558,7 @@ export const BatchUpdateModal: React.FC<BatchUpdateModalProps> = ({
                     </div>
                   ))}
                   {selectedServices.length > 3 && (
-                    <div className="text-center text-gray-400 text-sm">
+                    <div className="text-center text-muted-foreground text-sm">
                       ... y {selectedServices.length - 3} servicios más
                     </div>
                   )}
@@ -568,7 +568,7 @@ export const BatchUpdateModal: React.FC<BatchUpdateModalProps> = ({
 
             {/* Notas */}
             <div>
-              <Label htmlFor="notes" className="text-gray-300">Notas (opcional)</Label>
+              <Label htmlFor="notes" className="text-foreground">Notas (opcional)</Label>
               <Textarea
                 id="notes"
                 value={enableQuote ? batchData.quote.notes : batchData.purchase_order.notes}
@@ -577,7 +577,7 @@ export const BatchUpdateModal: React.FC<BatchUpdateModalProps> = ({
                   if (enablePurchaseOrder) updateData('purchase_order', 'notes', e.target.value);
                 }}
                 placeholder="Notas adicionales sobre esta actualización por lotes..."
-                className="bg-gray-800 border-gray-700 text-white"
+                className="bg-background border"
                 rows={3}
               />
             </div>
@@ -585,13 +585,12 @@ export const BatchUpdateModal: React.FC<BatchUpdateModalProps> = ({
         </div>
 
         {/* Footer fijo */}
-        <DialogFooter className="flex-shrink-0 p-6 border-t border-gray-700">
+        <DialogFooter className="flex-shrink-0 p-6 border-t">
           <div className="flex justify-end gap-3 w-full">
             <Button
               variant="outline"
               onClick={() => onOpenChange(false)}
               disabled={isLoading}
-              className="border-gray-600 text-gray-300 hover:bg-gray-800"
             >
               <X className="w-4 h-4 mr-2" />
               Cancelar
@@ -599,7 +598,6 @@ export const BatchUpdateModal: React.FC<BatchUpdateModalProps> = ({
             <Button
               onClick={handleSubmit}
               disabled={isLoading || (!enableQuote && !enablePurchaseOrder)}
-              className="bg-blue-600 hover:bg-blue-700 text-white"
             >
               <Check className="w-4 h-4 mr-2" />
               {isLoading ? 'Actualizando...' : 'Actualizar Servicios'}
