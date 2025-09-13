@@ -136,7 +136,7 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
 
   if (!paymentSystemAvailable) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-indigo-900 p-6">
+      <div className="min-h-screen bg-background p-6">
         <Alert className="max-w-2xl mx-auto">
           <AlertTriangle className="h-4 w-4" />
           <AlertDescription>
@@ -155,13 +155,13 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
   const totalPendingAmount = pendingPayments.reduce((sum, p) => sum + p.amount, 0);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-indigo-900 p-6">
+    <div className="min-h-screen bg-background p-6">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex justify-between items-center">
           <div>
-            <h2 className="text-2xl font-bold text-white">Conciliación de Pagos</h2>
-            <p className="text-gray-300">Registra y aplica pagos recibidos a facturas pendientes</p>
+            <h2 className="text-2xl font-bold text-foreground">Conciliación de Pagos</h2>
+            <p className="text-muted-foreground">Registra y aplica pagos recibidos a facturas pendientes</p>
           </div>
           {onClose && (
             <Button variant="outline" onClick={onClose}>
@@ -172,47 +172,47 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
 
         {/* Summary Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <Card className="bg-white/10 backdrop-blur-sm border-white/20">
+          <Card className="bg-card border">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-white">Pagos Pendientes</CardTitle>
+              <CardTitle className="text-sm font-medium text-foreground">Pagos Pendientes</CardTitle>
               <DollarSign className="h-4 w-4 text-yellow-400" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-white">{reconciliationStats?.pending_payments || 0}</div>
-              <p className="text-xs text-gray-300">{formatCurrency(reconciliationStats?.total_pending_amount || 0)}</p>
+              <div className="text-2xl font-bold text-foreground">{reconciliationStats?.pending_payments || 0}</div>
+              <p className="text-xs text-muted-foreground">{formatCurrency(reconciliationStats?.total_pending_amount || 0)}</p>
             </CardContent>
           </Card>
 
-          <Card className="bg-white/10 backdrop-blur-sm border-white/20">
+          <Card className="bg-card border">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-white">Pagos Aplicados</CardTitle>
+              <CardTitle className="text-sm font-medium text-foreground">Pagos Aplicados</CardTitle>
               <DollarSign className="h-4 w-4 text-green-400" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-white">{reconciliationStats?.applied_payments || 0}</div>
-              <p className="text-xs text-gray-300">Pagos completamente procesados</p>
+              <div className="text-2xl font-bold text-foreground">{reconciliationStats?.applied_payments || 0}</div>
+              <p className="text-xs text-muted-foreground">Pagos completamente procesados</p>
             </CardContent>
           </Card>
 
-          <Card className="bg-white/10 backdrop-blur-sm border-white/20">
+          <Card className="bg-card border">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-white">Facturas sin Pago</CardTitle>
+              <CardTitle className="text-sm font-medium text-foreground">Facturas sin Pago</CardTitle>
               <AlertTriangle className="h-4 w-4 text-red-400" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-white">{reconciliationStats?.invoices_without_payments || 0}</div>
-              <p className="text-xs text-gray-300">Facturas marcadas como pagadas sin registro</p>
+              <div className="text-2xl font-bold text-foreground">{reconciliationStats?.invoices_without_payments || 0}</div>
+              <p className="text-xs text-muted-foreground">Facturas marcadas como pagadas sin registro</p>
             </CardContent>
           </Card>
 
-          <Card className="bg-white/10 backdrop-blur-sm border-white/20">
+          <Card className="bg-card border">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-white">Pagos sin Aplicar</CardTitle>
+              <CardTitle className="text-sm font-medium text-foreground">Pagos sin Aplicar</CardTitle>
               <AlertTriangle className="h-4 w-4 text-orange-400" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-white">{reconciliationStats?.payments_without_applications || 0}</div>
-              <p className="text-xs text-gray-300">Pagos registrados pendientes de aplicar</p>
+              <div className="text-2xl font-bold text-foreground">{reconciliationStats?.payments_without_applications || 0}</div>
+              <p className="text-xs text-muted-foreground">Pagos registrados pendientes de aplicar</p>
             </CardContent>
           </Card>
         </div>
@@ -220,10 +220,10 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
         {/* Controls - Simplificados */}
         <div className="flex flex-col sm:flex-row gap-4">
           <Select value={selectedClient} onValueChange={setSelectedClient}>
-            <SelectTrigger className="w-full sm:w-64 bg-white/10 border-white/20 text-white">
+            <SelectTrigger className="w-full sm:w-64">
               <SelectValue placeholder="Filtrar por cliente" />
             </SelectTrigger>
-            <SelectContent className="bg-white border border-gray-200 shadow-lg z-50">
+            <SelectContent>
               <SelectItem value="all">Todos los clientes</SelectItem>
               {clients.map(client => (
                 <SelectItem key={client.id} value={client.id}>{client.name}</SelectItem>
@@ -257,39 +257,39 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
         </div>
 
         {/* Payments Table */}
-        <Card className="bg-white/10 backdrop-blur-sm border-white/20">
+        <Card className="bg-card border">
           <CardHeader>
-            <CardTitle className="text-white">Pagos Registrados</CardTitle>
+            <CardTitle className="text-foreground">Pagos Registrados</CardTitle>
           </CardHeader>
           <CardContent>
             <Table>
               <TableHeader>
-                <TableRow className="border-white/20">
-                  <TableHead className="text-gray-300">Cliente</TableHead>
-                  <TableHead className="text-gray-300">N° Fiscal</TableHead>
-                  <TableHead className="text-gray-300">Monto</TableHead>
-                  <TableHead className="text-gray-300">Fecha</TableHead>
-                  <TableHead className="text-gray-300">Estado</TableHead>
-                  <TableHead className="text-gray-300">Aplicado</TableHead>
-                  <TableHead className="text-gray-300">Pendiente</TableHead>
-                  <TableHead className="text-gray-300">Acciones</TableHead>
+                <TableRow>
+                  <TableHead className="text-muted-foreground">Cliente</TableHead>
+                  <TableHead className="text-muted-foreground">N° Fiscal</TableHead>
+                  <TableHead className="text-muted-foreground">Monto</TableHead>
+                  <TableHead className="text-muted-foreground">Fecha</TableHead>
+                  <TableHead className="text-muted-foreground">Estado</TableHead>
+                  <TableHead className="text-muted-foreground">Aplicado</TableHead>
+                  <TableHead className="text-muted-foreground">Pendiente</TableHead>
+                  <TableHead className="text-muted-foreground">Acciones</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredPayments.map(payment => (
-                  <TableRow key={payment.id} className="border-white/20">
-                    <TableCell className="text-white">{payment.client?.name}</TableCell>
-                    <TableCell className="text-white">
+                  <TableRow key={payment.id}>
+                    <TableCell className="text-foreground">{payment.client?.name}</TableCell>
+                    <TableCell className="text-foreground">
                       {payment.fiscal_numbers && payment.fiscal_numbers.length > 0 
                         ? payment.fiscal_numbers.join(', ') 
                         : '-'
                       }
                     </TableCell>
-                    <TableCell className="text-white">{formatCurrency(payment.amount)}</TableCell>
-                    <TableCell className="text-white">{new Date(payment.payment_date).toLocaleDateString()}</TableCell>
+                    <TableCell className="text-foreground">{formatCurrency(payment.amount)}</TableCell>
+                    <TableCell className="text-foreground">{new Date(payment.payment_date).toLocaleDateString()}</TableCell>
                     <TableCell>{getStatusBadge(payment.status)}</TableCell>
-                    <TableCell className="text-white">{formatCurrency(payment.applied_amount)}</TableCell>
-                    <TableCell className="text-white">{formatCurrency(payment.remaining_amount)}</TableCell>
+                    <TableCell className="text-foreground">{formatCurrency(payment.applied_amount)}</TableCell>
+                    <TableCell className="text-foreground">{formatCurrency(payment.remaining_amount)}</TableCell>
                     <TableCell>
                       <div className="flex gap-2">
                         {payment.remaining_amount > 0 && (

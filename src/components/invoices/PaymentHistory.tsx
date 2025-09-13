@@ -99,7 +99,7 @@ export const PaymentHistory: React.FC<PaymentHistoryProps> = ({ onClose }) => {
 
   if (!paymentSystemAvailable) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-indigo-900 p-6">
+      <div className="min-h-screen bg-background p-6">
         <Alert className="max-w-2xl mx-auto">
           <AlertTriangle className="h-4 w-4" />
           <AlertDescription>
@@ -111,16 +111,16 @@ export const PaymentHistory: React.FC<PaymentHistoryProps> = ({ onClose }) => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-indigo-900 p-6">
+    <div className="min-h-screen bg-background p-6">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex justify-between items-center">
           <div>
-            <h2 className="text-2xl font-bold text-white flex items-center gap-2">
+            <h2 className="text-2xl font-bold text-foreground flex items-center gap-2">
               <History className="h-6 w-6" />
               Historial de Pagos y Facturas
             </h2>
-            <p className="text-gray-300">Consulta el historial completo de pagos y facturas por cliente</p>
+            <p className="text-muted-foreground">Consulta el historial completo de pagos y facturas por cliente</p>
           </div>
           {onClose && (
             <Button variant="outline" onClick={onClose}>
@@ -132,10 +132,10 @@ export const PaymentHistory: React.FC<PaymentHistoryProps> = ({ onClose }) => {
         {/* Controls */}
         <div className="flex flex-col sm:flex-row gap-4">
           <Select value={selectedClient} onValueChange={setSelectedClient}>
-            <SelectTrigger className="w-full sm:w-64 bg-white/10 border-white/20 text-white">
+            <SelectTrigger className="w-full sm:w-64">
               <SelectValue placeholder="Seleccionar cliente" />
             </SelectTrigger>
-            <SelectContent className="bg-white border border-gray-200 shadow-lg z-50">
+            <SelectContent>
               {clients.map(client => (
                 <SelectItem key={client.id} value={client.id}>{client.name}</SelectItem>
               ))}
@@ -155,51 +155,51 @@ export const PaymentHistory: React.FC<PaymentHistoryProps> = ({ onClose }) => {
         {/* Summary Cards */}
         {historyData && (
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            <Card className="bg-white/10 backdrop-blur-sm border-white/20">
+            <Card className="bg-card border">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-white">Total Facturas</CardTitle>
+                <CardTitle className="text-sm font-medium text-foreground">Total Facturas</CardTitle>
                 <FileText className="h-4 w-4 text-blue-400" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-white">{historyData.summary.total_invoices}</div>
-                <p className="text-xs text-gray-300">{formatCurrency(historyData.summary.total_invoiced)}</p>
+                <div className="text-2xl font-bold text-foreground">{historyData.summary.total_invoices}</div>
+                <p className="text-xs text-muted-foreground">{formatCurrency(historyData.summary.total_invoiced)}</p>
               </CardContent>
             </Card>
 
-            <Card className="bg-white/10 backdrop-blur-sm border-white/20">
+            <Card className="bg-card border">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-white">Total Pagado</CardTitle>
+                <CardTitle className="text-sm font-medium text-foreground">Total Pagado</CardTitle>
                 <CheckCircle className="h-4 w-4 text-green-400" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-white">{historyData.summary.paid_invoices_count}</div>
-                <p className="text-xs text-gray-300">{formatCurrency(historyData.summary.total_paid)}</p>
+                <div className="text-2xl font-bold text-foreground">{historyData.summary.paid_invoices_count}</div>
+                <p className="text-xs text-muted-foreground">{formatCurrency(historyData.summary.total_paid)}</p>
               </CardContent>
             </Card>
 
-            <Card className="bg-white/10 backdrop-blur-sm border-white/20">
+            <Card className="bg-card border">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-white">Pendiente</CardTitle>
+                <CardTitle className="text-sm font-medium text-foreground">Pendiente</CardTitle>
                 <Clock className="h-4 w-4 text-yellow-400" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-white">{historyData.summary.pending_invoices_count}</div>
-                <p className="text-xs text-gray-300">{formatCurrency(historyData.summary.total_pending)}</p>
+                <div className="text-2xl font-bold text-foreground">{historyData.summary.pending_invoices_count}</div>
+                <p className="text-xs text-muted-foreground">{formatCurrency(historyData.summary.total_pending)}</p>
               </CardContent>
             </Card>
 
-            <Card className="bg-white/10 backdrop-blur-sm border-white/20">
+            <Card className="bg-card border">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-white">% Pagado</CardTitle>
+                <CardTitle className="text-sm font-medium text-foreground">% Pagado</CardTitle>
                 <TrendingUp className="h-4 w-4 text-purple-400" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-white">
+                <div className="text-2xl font-bold text-foreground">
                   {historyData.summary.total_invoiced > 0 
                     ? Math.round((historyData.summary.total_paid / historyData.summary.total_invoiced) * 100)
                     : 0}%
                 </div>
-                <p className="text-xs text-gray-300">Efectividad de cobro</p>
+                <p className="text-xs text-muted-foreground">Efectividad de cobro</p>
               </CardContent>
             </Card>
           </div>
@@ -208,41 +208,41 @@ export const PaymentHistory: React.FC<PaymentHistoryProps> = ({ onClose }) => {
         {/* History Tables */}
         {historyData && (
           <Tabs defaultValue="invoices" className="space-y-4">
-            <TabsList className="grid w-full grid-cols-2 bg-white/10">
-              <TabsTrigger value="invoices" className="text-white">Facturas</TabsTrigger>
-              <TabsTrigger value="payments" className="text-white">Pagos</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="invoices">Facturas</TabsTrigger>
+              <TabsTrigger value="payments">Pagos</TabsTrigger>
             </TabsList>
 
             <TabsContent value="invoices">
-              <Card className="bg-white/10 backdrop-blur-sm border-white/20">
+              <Card className="bg-card border">
                 <CardHeader>
-                  <CardTitle className="text-white">Historial de Facturas</CardTitle>
+                  <CardTitle className="text-foreground">Historial de Facturas</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <Table>
                     <TableHeader>
-                      <TableRow className="border-white/20">
-                        <TableHead className="text-gray-300">Folio</TableHead>
-                        <TableHead className="text-gray-300">Fecha Emisión</TableHead>
-                        <TableHead className="text-gray-300">Fecha Venc.</TableHead>
-                        <TableHead className="text-gray-300">Total</TableHead>
-                        <TableHead className="text-gray-300">Pagado</TableHead>
-                        <TableHead className="text-gray-300">Pendiente</TableHead>
-                        <TableHead className="text-gray-300">Estado</TableHead>
-                        <TableHead className="text-gray-300">Fecha Pago</TableHead>
+                      <TableRow>
+                        <TableHead className="text-muted-foreground">Folio</TableHead>
+                        <TableHead className="text-muted-foreground">Fecha Emisión</TableHead>
+                        <TableHead className="text-muted-foreground">Fecha Venc.</TableHead>
+                        <TableHead className="text-muted-foreground">Total</TableHead>
+                        <TableHead className="text-muted-foreground">Pagado</TableHead>
+                        <TableHead className="text-muted-foreground">Pendiente</TableHead>
+                        <TableHead className="text-muted-foreground">Estado</TableHead>
+                        <TableHead className="text-muted-foreground">Fecha Pago</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {historyData.invoices.map((invoice: any) => (
-                        <TableRow key={invoice.id} className="border-white/20">
-                          <TableCell className="text-white font-medium">{invoice.folio}</TableCell>
-                          <TableCell className="text-white">{new Date(invoice.issue_date).toLocaleDateString()}</TableCell>
-                          <TableCell className="text-white">{new Date(invoice.due_date).toLocaleDateString()}</TableCell>
-                          <TableCell className="text-white">{formatCurrency(invoice.total)}</TableCell>
-                          <TableCell className="text-white">{formatCurrency(invoice.paid_amount)}</TableCell>
-                          <TableCell className="text-white">{formatCurrency(invoice.remaining_amount)}</TableCell>
+                        <TableRow key={invoice.id}>
+                          <TableCell className="text-foreground font-medium">{invoice.folio}</TableCell>
+                          <TableCell className="text-foreground">{new Date(invoice.issue_date).toLocaleDateString()}</TableCell>
+                          <TableCell className="text-foreground">{new Date(invoice.due_date).toLocaleDateString()}</TableCell>
+                          <TableCell className="text-foreground">{formatCurrency(invoice.total)}</TableCell>
+                          <TableCell className="text-foreground">{formatCurrency(invoice.paid_amount)}</TableCell>
+                          <TableCell className="text-foreground">{formatCurrency(invoice.remaining_amount)}</TableCell>
                           <TableCell>{getStatusBadge(invoice.status)}</TableCell>
-                          <TableCell className="text-white">
+                          <TableCell className="text-foreground">
                             {invoice.payment_date ? new Date(invoice.payment_date).toLocaleDateString() : '-'}
                           </TableCell>
                         </TableRow>
@@ -254,35 +254,35 @@ export const PaymentHistory: React.FC<PaymentHistoryProps> = ({ onClose }) => {
             </TabsContent>
 
             <TabsContent value="payments">
-              <Card className="bg-white/10 backdrop-blur-sm border-white/20">
+              <Card className="bg-card border">
                 <CardHeader>
-                  <CardTitle className="text-white">Historial de Pagos</CardTitle>
+                  <CardTitle className="text-foreground">Historial de Pagos</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <Table>
                     <TableHeader>
-                      <TableRow className="border-white/20">
-                        <TableHead className="text-gray-300">Fecha Pago</TableHead>
-                        <TableHead className="text-gray-300">Monto</TableHead>
-                        <TableHead className="text-gray-300">Método</TableHead>
-                        <TableHead className="text-gray-300">Aplicado</TableHead>
-                        <TableHead className="text-gray-300">Pendiente</TableHead>
-                        <TableHead className="text-gray-300">Estado</TableHead>
-                        <TableHead className="text-gray-300">Referencia</TableHead>
-                        <TableHead className="text-gray-300">Facturas</TableHead>
+                      <TableRow>
+                        <TableHead className="text-muted-foreground">Fecha Pago</TableHead>
+                        <TableHead className="text-muted-foreground">Monto</TableHead>
+                        <TableHead className="text-muted-foreground">Método</TableHead>
+                        <TableHead className="text-muted-foreground">Aplicado</TableHead>
+                        <TableHead className="text-muted-foreground">Pendiente</TableHead>
+                        <TableHead className="text-muted-foreground">Estado</TableHead>
+                        <TableHead className="text-muted-foreground">Referencia</TableHead>
+                        <TableHead className="text-muted-foreground">Facturas</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {historyData.payments.map((payment: any) => (
-                        <TableRow key={payment.id} className="border-white/20">
-                          <TableCell className="text-white">{new Date(payment.payment_date).toLocaleDateString()}</TableCell>
-                          <TableCell className="text-white">{formatCurrency(payment.amount)}</TableCell>
-                          <TableCell className="text-white">{payment.payment_method}</TableCell>
-                          <TableCell className="text-white">{formatCurrency(payment.applied_amount)}</TableCell>
-                          <TableCell className="text-white">{formatCurrency(payment.remaining_amount)}</TableCell>
+                        <TableRow key={payment.id}>
+                          <TableCell className="text-foreground">{new Date(payment.payment_date).toLocaleDateString()}</TableCell>
+                          <TableCell className="text-foreground">{formatCurrency(payment.amount)}</TableCell>
+                          <TableCell className="text-foreground">{payment.payment_method}</TableCell>
+                          <TableCell className="text-foreground">{formatCurrency(payment.applied_amount)}</TableCell>
+                          <TableCell className="text-foreground">{formatCurrency(payment.remaining_amount)}</TableCell>
                           <TableCell>{getStatusBadge(payment.status)}</TableCell>
-                          <TableCell className="text-white text-xs">{payment.bank_reference || '-'}</TableCell>
-                          <TableCell className="text-white text-xs">
+                          <TableCell className="text-foreground text-xs">{payment.bank_reference || '-'}</TableCell>
+                          <TableCell className="text-foreground text-xs">
                             {payment.applications?.map((app: any) => app.invoice_folio).join(', ') || '-'}
                           </TableCell>
                         </TableRow>
@@ -298,17 +298,17 @@ export const PaymentHistory: React.FC<PaymentHistoryProps> = ({ onClose }) => {
         {/* Loading State */}
         {loading && (
           <div className="flex items-center justify-center h-64">
-            <div className="text-white">Cargando historial...</div>
+            <div className="text-foreground">Cargando historial...</div>
           </div>
         )}
 
         {/* Empty State */}
         {!selectedClient && (
-          <Card className="bg-white/10 backdrop-blur-sm border-white/20">
+          <Card className="bg-card border">
             <CardContent className="flex flex-col items-center justify-center h-64">
               <History className="h-12 w-12 text-gray-400 mb-4" />
-              <p className="text-white text-lg mb-2">Selecciona un cliente</p>
-              <p className="text-gray-300 text-center">
+              <p className="text-foreground text-lg mb-2">Selecciona un cliente</p>
+              <p className="text-muted-foreground text-center">
                 Elige un cliente para ver su historial completo de pagos y facturas
               </p>
             </CardContent>
