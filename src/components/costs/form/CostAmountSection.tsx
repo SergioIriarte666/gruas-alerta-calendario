@@ -30,7 +30,7 @@ export const CostAmountSection = ({
     <div className="space-y-4">
       <FormField name="amount" control={form.control} render={({ field }) => (
         <FormItem>
-          <Label className="flex items-center gap-2 text-base font-medium">
+          <Label className="flex items-center gap-2 text-base font-medium text-foreground">
             <Receipt className="w-4 h-4" />
             Monto Total
           </Label>
@@ -42,15 +42,15 @@ export const CostAmountSection = ({
                 min="0"
                 {...field} 
                 disabled={isServiceExpense && showServiceButton}
-                className={`bg-white/10 text-lg h-12 pr-16 ${
+                className={`text-lg h-12 pr-16 ${
                   isServiceExpense && showServiceButton 
-                    ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-300 dark:border-blue-600' 
+                    ? 'bg-blue-50 border-blue-300' 
                     : ''
                 }`}
                 placeholder="0.00"
               />
             </FormControl>
-            <div className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-gray-500">
+            <div className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
               CLP
             </div>
           </div>
@@ -60,18 +60,18 @@ export const CostAmountSection = ({
 
       {/* Sección especial para Gastos de Servicios */}
       {isServiceExpense && showServiceButton && (
-        <Card className="bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-600">
+        <Card className="bg-blue-50 border-blue-200">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div className="flex-1">
-                <h4 className="font-medium text-blue-800 dark:text-blue-200 mb-1">
+                <h4 className="font-medium text-blue-800 mb-1">
                   Gastos de Servicios
                 </h4>
-                <p className="text-sm text-blue-600 dark:text-blue-300">
+                <p className="text-sm text-blue-600">
                   Desglosa los gastos en combustible, peajes y otros conceptos
                 </p>
                 {calculatedTotal > 0 && (
-                  <p className="text-sm font-medium text-blue-800 dark:text-blue-200 mt-2">
+                  <p className="text-sm font-medium text-blue-800 mt-2">
                     Total calculado: <span className="text-lg">${calculatedTotal.toLocaleString()}</span>
                   </p>
                 )}
@@ -92,8 +92,8 @@ export const CostAmountSection = ({
 
       {/* Mensaje informativo cuando el monto está calculado */}
       {isServiceExpense && amount > 0 && !showServiceButton && (
-        <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-3">
-          <p className="text-sm text-green-700 dark:text-green-300">
+        <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+          <p className="text-sm text-green-700">
             ✅ Monto calculado desde el desglose de gastos de servicios
           </p>
         </div>

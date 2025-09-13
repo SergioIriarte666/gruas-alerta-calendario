@@ -68,9 +68,9 @@ export const CostFormInputs = ({
     return (
         <div className="space-y-6">
             {/* Sección Principal - Información Básica */}
-            <Card className="bg-gray-800 border-gray-700">
+            <Card className="bg-card border">
                 <CardHeader className="pb-4">
-                    <CardTitle className="flex items-center gap-2 text-lg">
+                    <CardTitle className="flex items-center gap-2 text-lg text-foreground">
                         <FileText className="w-5 h-5" />
                         Información Básica
                     </CardTitle>
@@ -79,12 +79,12 @@ export const CostFormInputs = ({
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <FormField name="date" control={form.control} render={({ field }) => (
                             <FormItem>
-                                <Label className="flex items-center gap-2">
+                                <Label className="flex items-center gap-2 text-foreground">
                                     <Calendar className="w-4 h-4" />
                                     Fecha
                                 </Label>
                                 <FormControl>
-                                    <Input type="date" {...field} className="bg-white/10" />
+                                    <Input type="date" {...field} />
                                 </FormControl>
                                 <FormMessage />
                             </FormItem>
@@ -92,7 +92,7 @@ export const CostFormInputs = ({
 
                         <FormField name="category_id" control={form.control} render={({ field }) => (
                             <FormItem>
-                                <Label className="flex items-center gap-2">
+                                <Label className="flex items-center gap-2 text-foreground">
                                     <Tag className="w-4 h-4" />
                                     Categoría *
                                 </Label>
@@ -111,7 +111,7 @@ export const CostFormInputs = ({
                                     disabled={isLoadingCategories}
                                 >
                                     <FormControl>
-                                        <SelectTrigger className="bg-white/10">
+                                        <SelectTrigger>
                                             <SelectValue placeholder="Seleccione una categoría" />
                                         </SelectTrigger>
                                     </FormControl>
@@ -130,12 +130,12 @@ export const CostFormInputs = ({
 
                     <FormField name="description" control={form.control} render={({ field }) => (
                         <FormItem>
-                            <Label className="flex items-center gap-2">
+                            <Label className="flex items-center gap-2 text-foreground">
                                 <FileText className="w-4 h-4" />
                                 Descripción *
                             </Label>
                             <FormControl>
-                                <Input {...field} className="bg-white/10" placeholder="Describe el costo o gasto..." />
+                                <Input {...field} placeholder="Describe el costo o gasto..." />
                             </FormControl>
                             <FormMessage />
                         </FormItem>
@@ -144,9 +144,9 @@ export const CostFormInputs = ({
             </Card>
 
             {/* Sección de Monto - Usando el nuevo componente */}
-            <Card className="bg-gray-800 border-gray-700">
+            <Card className="bg-card border">
                 <CardHeader className="pb-4">
-                    <CardTitle className="flex items-center gap-2 text-lg">
+                    <CardTitle className="flex items-center gap-2 text-lg text-foreground">
                         <DollarSign className="w-5 h-5" />
                         Monto
                     </CardTitle>
@@ -164,9 +164,9 @@ export const CostFormInputs = ({
 
             {/* Subcategorías */}
             {(isGastosDeServicios || isMantenimiento) && (
-                <Card className="bg-gray-800 border-gray-700">
+                <Card className="bg-card border">
                     <CardHeader className="pb-4">
-                        <CardTitle className="flex items-center gap-2 text-lg">
+                        <CardTitle className="flex items-center gap-2 text-lg text-foreground">
                             <Tag className="w-5 h-5" />
                             Subcategoría
                         </CardTitle>
@@ -175,10 +175,10 @@ export const CostFormInputs = ({
                         {isGastosDeServicios && (
                             <FormField name="subcategory" control={form.control} render={({ field }) => (
                                 <FormItem>
-                                    <Label>Tipo de Gasto</Label>
+                                    <Label className="text-foreground">Tipo de Gasto</Label>
                                     <Select onValueChange={field.onChange} value={field.value || ''}>
                                         <FormControl>
-                                            <SelectTrigger className="bg-white/10">
+                                            <SelectTrigger>
                                                 <SelectValue placeholder="Seleccione tipo de gasto" />
                                             </SelectTrigger>
                                         </FormControl>
@@ -196,10 +196,10 @@ export const CostFormInputs = ({
                         {isMantenimiento && (
                             <FormField name="subcategory" control={form.control} render={({ field }) => (
                                 <FormItem>
-                                    <Label>Tipo de Mantenimiento</Label>
+                                    <Label className="text-foreground">Tipo de Mantenimiento</Label>
                                     <Select onValueChange={field.onChange} value={field.value || ''}>
                                         <FormControl>
-                                            <SelectTrigger className="bg-white/10">
+                                            <SelectTrigger>
                                                 <SelectValue placeholder="Seleccione tipo de mantenimiento" />
                                             </SelectTrigger>
                                         </FormControl>
@@ -241,7 +241,6 @@ export const CostFormInputs = ({
                                         <Input 
                                             {...field} 
                                             value={field.value || ''} 
-                                            className="bg-white/10" 
                                             placeholder="Ej: Filtro de aceite, Pastillas de freno..."
                                         />
                                     </FormControl>
@@ -259,7 +258,6 @@ export const CostFormInputs = ({
                                         <Input 
                                             {...field} 
                                             value={field.value || ''} 
-                                            className="bg-white/10" 
                                             placeholder="Nombre del proveedor"
                                         />
                                     </FormControl>
@@ -277,7 +275,6 @@ export const CostFormInputs = ({
                                         <Input 
                                             {...field} 
                                             value={field.value || ''} 
-                                            className="bg-white/10" 
                                             placeholder="Ej: +56 9 1234 5678"
                                         />
                                     </FormControl>
@@ -297,7 +294,6 @@ export const CostFormInputs = ({
                                             min="1" 
                                             {...field} 
                                             value={field.value || ''} 
-                                            className="bg-white/10" 
                                             placeholder="1"
                                         />
                                     </FormControl>
@@ -318,7 +314,6 @@ export const CostFormInputs = ({
                                             min="0" 
                                             {...field} 
                                             value={field.value || ''} 
-                                            className="bg-white/10" 
                                             placeholder="0.00"
                                         />
                                     </FormControl>
@@ -338,7 +333,6 @@ export const CostFormInputs = ({
                                             min="0" 
                                             {...field} 
                                             value={field.value || ''} 
-                                            className="bg-white/10" 
                                             placeholder="Ej: 50000"
                                         />
                                     </FormControl>
@@ -351,13 +345,13 @@ export const CostFormInputs = ({
             )}
             
             {/* Asociaciones - Grúa, Operador, Servicio */}
-            <Card className="bg-gray-800 border-gray-700">
+            <Card className="bg-card border">
                 <CardHeader className="pb-4">
-                    <CardTitle className="flex items-center gap-2 text-lg">
+                    <CardTitle className="flex items-center gap-2 text-lg text-foreground">
                         <Building2 className="w-5 h-5" />
                         Asociaciones (Opcional)
                     </CardTitle>
-                    <p className="text-sm text-gray-400">
+                    <p className="text-sm text-muted-foreground">
                         Asocia este costo con grúas, operadores o servicios específicos
                     </p>
                 </CardHeader>
@@ -365,14 +359,14 @@ export const CostFormInputs = ({
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <FormField name="crane_id" control={form.control} render={({ field }) => (
                             <FormItem>
-                                <Label>Grúa</Label>
+                                <Label className="text-foreground">Grúa</Label>
                                 <Select
                                     onValueChange={field.onChange}
                                     value={field.value ?? 'none'}
                                     disabled={isLoadingCranes}
                                 >
                                     <FormControl>
-                                        <SelectTrigger className="bg-white/10">
+                                        <SelectTrigger>
                                             <SelectValue placeholder="Sin asociar" />
                                         </SelectTrigger>
                                     </FormControl>
@@ -388,14 +382,14 @@ export const CostFormInputs = ({
 
                         <FormField name="operator_id" control={form.control} render={({ field }) => (
                             <FormItem>
-                                <Label>Operador</Label>
+                                <Label className="text-foreground">Operador</Label>
                                 <Select
                                     onValueChange={field.onChange}
                                     value={field.value ?? 'none'}
                                     disabled={isLoadingOperators}
                                 >
                                     <FormControl>
-                                        <SelectTrigger className="bg-white/10">
+                                        <SelectTrigger>
                                             <SelectValue placeholder="Sin asociar" />
                                         </SelectTrigger>
                                     </FormControl>
@@ -413,7 +407,7 @@ export const CostFormInputs = ({
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <FormField name="service_id" control={form.control} render={({ field }) => (
                             <FormItem>
-                                <Label>Servicio</Label>
+                                <Label className="text-foreground">Servicio</Label>
                                 <ServiceSelector
                                     services={services}
                                     value={field.value ?? 'none'}
@@ -426,12 +420,11 @@ export const CostFormInputs = ({
 
                         <FormField name="service_folio" control={form.control} render={({ field }) => (
                             <FormItem>
-                                <Label>Folio de Servicio</Label>
+                                <Label className="text-foreground">Folio de Servicio</Label>
                                 <FormControl>
                                     <Input 
                                         {...field} 
                                         value={field.value ?? ''} 
-                                        className="bg-white/10" 
                                         placeholder="Ej: F-1234" 
                                     />
                                 </FormControl>
@@ -442,14 +435,14 @@ export const CostFormInputs = ({
 
                     <FormField name="cost_center_id" control={form.control} render={({ field }) => (
                         <FormItem>
-                            <Label>Centro de Costo</Label>
+                            <Label className="text-foreground">Centro de Costo</Label>
                             <Select 
                                 onValueChange={field.onChange} 
                                 value={field.value || 'none'} 
                                 disabled={!costCenters.length}
                             >
                                 <FormControl>
-                                    <SelectTrigger className="bg-white/10">
+                                    <SelectTrigger>
                                         <SelectValue placeholder="Sin centro de costo" />
                                     </SelectTrigger>
                                 </FormControl>
@@ -471,9 +464,9 @@ export const CostFormInputs = ({
             </Card>
 
             {/* Notas adicionales */}
-            <Card className="bg-gray-800 border-gray-700">
+            <Card className="bg-card border">
                 <CardHeader className="pb-4">
-                    <CardTitle className="flex items-center gap-2 text-lg">
+                    <CardTitle className="flex items-center gap-2 text-lg text-foreground">
                         <FileText className="w-5 h-5" />
                         Información Adicional
                     </CardTitle>
@@ -481,12 +474,12 @@ export const CostFormInputs = ({
                 <CardContent>
                     <FormField name="notes" control={form.control} render={({ field }) => (
                         <FormItem>
-                            <Label>Notas y Observaciones</Label>
+                            <Label className="text-foreground">Notas y Observaciones</Label>
                             <FormControl>
                                 <Textarea 
                                     {...field} 
                                     value={field.value ?? ''} 
-                                    className="bg-white/10 min-h-[80px]" 
+                                    className="min-h-[80px]" 
                                     placeholder="Agrega notas adicionales, observaciones o detalles importantes..."
                                 />
                             </FormControl>
