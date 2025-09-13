@@ -221,10 +221,10 @@ export const ServiceExpenseModals = ({ isOpen, onClose, onComplete, baseData }: 
 
   return (
     <Dialog open={isOpen} onOpenChange={handleCancel}>
-      <DialogContent className="bg-tms-dark text-white border-gray-700 max-w-6xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="bg-card border max-w-6xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-bold">Desglosar Gastos de Servicios</DialogTitle>
-          <p className="text-gray-400">
+          <DialogTitle className="text-2xl font-bold text-foreground">Desglosar Gastos de Servicios</DialogTitle>
+          <p className="text-muted-foreground">
             Ingrese los montos específicos para cada tipo de gasto
           </p>
         </DialogHeader>
@@ -248,16 +248,16 @@ export const ServiceExpenseModals = ({ isOpen, onClose, onComplete, baseData }: 
         
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 py-4">
           {Object.keys(sectionData).map((section) => (
-            <Card key={section} className="bg-gray-800 border-gray-700">
+            <Card key={section} className="bg-card border">
               <CardHeader className="pb-3">
-                <CardTitle className="flex items-center gap-2 text-lg">
+                <CardTitle className="flex items-center gap-2 text-lg text-foreground">
                   {getSectionIcon(section)}
                   {getSectionTitle(section)}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
-                  <Label className="text-sm font-medium text-gray-300">Monto</Label>
+                  <Label className="text-sm font-medium text-foreground">Monto</Label>
                   <div className="relative">
                     <Input
                       type="number"
@@ -265,10 +265,10 @@ export const ServiceExpenseModals = ({ isOpen, onClose, onComplete, baseData }: 
                       min="0"
                       value={sectionData[section as keyof typeof sectionData].amount}
                       onChange={(e) => updateSectionData(section as keyof typeof sectionData, e.target.value)}
-                      className="bg-white/10 border-gray-600 text-white mt-1 pr-12"
+                      className="mt-1 pr-12"
                       placeholder="0.00"
                     />
-                    <div className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-500">
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
                       CLP
                     </div>
                   </div>
@@ -278,19 +278,18 @@ export const ServiceExpenseModals = ({ isOpen, onClose, onComplete, baseData }: 
           ))}
         </div>
 
-        <div className="flex justify-between items-center pt-4 border-t border-gray-700">
+        <div className="flex justify-between items-center pt-4 border-t border">
           <Button
             variant="outline"
             onClick={handleCancel}
-            className="border-gray-600 text-gray-300 hover:bg-gray-700"
           >
             {onComplete ? 'Cancelar Desglose' : 'Cancelar'}
           </Button>
           
           <div className="flex items-center gap-3">
             {currentTotal > 0 && (
-              <span className="text-gray-300">
-                Total: <span className="font-bold text-white">${currentTotal.toLocaleString()}</span>
+              <span className="text-muted-foreground">
+                Total: <span className="font-bold text-foreground">${currentTotal.toLocaleString()}</span>
               </span>
             )}
             <Button

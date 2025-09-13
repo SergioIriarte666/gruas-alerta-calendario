@@ -259,12 +259,12 @@ export const CostForm = ({ isOpen, onClose, cost }: CostFormProps) => {
     return (
         <>
             <Dialog open={isOpen && !showServiceExpenseModals} onOpenChange={onClose}>
-                <DialogContent className="bg-tms-dark text-white border-gray-700 max-w-5xl max-h-[90vh] overflow-y-auto">
+                <DialogContent className="bg-card border max-w-5xl max-h-[90vh] overflow-y-auto">
                     <DialogHeader>
-                        <DialogTitle className="text-2xl font-bold">
+                        <DialogTitle className="text-2xl font-bold text-foreground">
                             {cost ? 'Editar Costo' : 'Registrar Nuevo Costo'}
                         </DialogTitle>
-                        <p className="text-gray-400">
+                        <p className="text-muted-foreground">
                             {cost ? 'Modifica los datos del costo existente' : 'Completa la información del nuevo costo'}
                         </p>
                     </DialogHeader>
