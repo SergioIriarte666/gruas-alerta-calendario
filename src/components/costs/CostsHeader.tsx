@@ -84,7 +84,7 @@ export const CostsHeader = ({
         <div className="flex gap-2">
           <Button 
             onClick={onAddCost}
-            className="bg-tms-green hover:bg-tms-green/80 text-white hover-scale"
+            className="bg-tms-green hover:bg-tms-green/80 text-black hover-scale"
           >
             <Plus className="w-4 h-4 mr-2" />
             Nuevo Costo
