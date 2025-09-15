@@ -7,13 +7,9 @@ import { toast } from 'sonner';
 
 interface FixResult {
   success: boolean;
-  cleanup_phase: {
-    costs_cleaned: number;
-    total_duplicates_found: number;
-  };
-  recalculation_phase: {
-    updated_parts: number;
-  };
+  deleted_costs: number;
+  updated_crane_parts: number;
+  materiales_unit_cost: number;
   message: string;
 }
 
@@ -25,30 +21,23 @@ export function InventoryFixPanel() {
     setIsExecuting(true);
     
     try {
-      // Paso 1: Corregir el costo unitario del catálogo
-      const { data: catalogResult, error: catalogError } = await supabase.rpc('fix_materiales_electricos_unit_cost');
+      // Ejecutar limpieza global definitiva
+      const { data: result, error } = await supabase.rpc('global_inventory_cleanup');
       
-      if (catalogError) {
-        throw catalogError;
+      if (error) {
+        throw error;
       }
 
-      // Paso 2: Ejecutar limpieza de duplicados y recálculo
-      const { data: fixResult, error: fixError } = await supabase.rpc('fix_inventory_cost_issues');
+      const cleanupResult = result as unknown as FixResult;
+      setLastResult(cleanupResult);
       
-      if (fixError) {
-        throw fixError;
-      }
-
-      const result = fixResult as unknown as FixResult;
-      setLastResult(result);
-      
-      toast.success('Corrección completada exitosamente', {
-        description: `Catálogo corregido. Eliminados ${result.cleanup_phase?.costs_cleaned || 0} costos duplicados, actualizados ${result.recalculation_phase?.updated_parts || 0} registros`
+      toast.success('Limpieza global completada exitosamente', {
+        description: `Eliminados ${cleanupResult.deleted_costs || 0} costos duplicados, actualizados ${cleanupResult.updated_crane_parts || 0} registros`
       });
       
     } catch (error: any) {
-      console.error('Error ejecutando corrección:', error);
-      toast.error('Error al ejecutar corrección', {
+      console.error('Error ejecutando limpieza global:', error);
+      toast.error('Error al ejecutar limpieza global', {
         description: error.message || 'Error desconocido'
       });
     } finally {
@@ -103,14 +92,14 @@ export function InventoryFixPanel() {
                 <div>
                   <div className="font-medium text-muted-foreground">Costos Duplicados</div>
                   <div className="text-2xl font-bold text-destructive">
-                    {lastResult.cleanup_phase?.costs_cleaned || 0}
+                    {lastResult.deleted_costs || 0}
                   </div>
                   <div className="text-xs text-muted-foreground">eliminados</div>
                 </div>
                 <div>
                   <div className="font-medium text-muted-foreground">Registros Actualizados</div>
                   <div className="text-2xl font-bold text-success">
-                    {lastResult.recalculation_phase?.updated_parts || 0}
+                    {lastResult.updated_crane_parts || 0}
                   </div>
                   <div className="text-xs text-muted-foreground">crane_parts corregidos</div>
                 </div>

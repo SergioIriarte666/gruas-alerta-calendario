@@ -3491,6 +3491,10 @@ export type Database = {
         Args: { user_id?: string }
         Returns: Database["public"]["Enums"]["app_role"]
       }
+      global_inventory_cleanup: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
       insert_notification_if_not_exists: {
         Args: {
           p_body: string
