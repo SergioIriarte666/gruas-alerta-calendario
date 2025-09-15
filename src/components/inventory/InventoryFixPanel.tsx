@@ -25,17 +25,25 @@ export function InventoryFixPanel() {
     setIsExecuting(true);
     
     try {
-      const { data, error } = await supabase.rpc('fix_inventory_cost_issues');
+      // Paso 1: Corregir el costo unitario del catálogo
+      const { data: catalogResult, error: catalogError } = await supabase.rpc('fix_materiales_electricos_unit_cost');
       
-      if (error) {
-        throw error;
+      if (catalogError) {
+        throw catalogError;
       }
 
-      const result = data as unknown as FixResult;
+      // Paso 2: Ejecutar limpieza de duplicados y recálculo
+      const { data: fixResult, error: fixError } = await supabase.rpc('fix_inventory_cost_issues');
+      
+      if (fixError) {
+        throw fixError;
+      }
+
+      const result = fixResult as unknown as FixResult;
       setLastResult(result);
       
       toast.success('Corrección completada exitosamente', {
-        description: `Eliminados ${result.cleanup_phase?.costs_cleaned || 0} costos duplicados, actualizados ${result.recalculation_phase?.updated_parts || 0} registros`
+        description: `Catálogo corregido. Eliminados ${result.cleanup_phase?.costs_cleaned || 0} costos duplicados, actualizados ${result.recalculation_phase?.updated_parts || 0} registros`
       });
       
     } catch (error: any) {
@@ -58,6 +66,7 @@ export function InventoryFixPanel() {
         <CardDescription>
           Ejecuta la corrección automática para resolver problemas de:
           <ul className="mt-2 list-disc list-inside space-y-1 text-sm">
+            <li>Costos unitarios incorrectos en el catálogo (ej: $0.00)</li>
             <li>Costos de salida incorrectos ($0.01)</li>
             <li>Costos duplicados de "Consumo de Inventario"</li>
             <li>Recálculo de costos reales en crane_parts</li>
@@ -117,7 +126,7 @@ export function InventoryFixPanel() {
         )}
 
         <div className="text-xs text-muted-foreground space-y-1">
-          <p><strong>Nota:</strong> Esta operación es segura y solo afecta registros duplicados o incorrectos.</p>
+          <p><strong>Nota:</strong> Esta operación corrige primero el catálogo de productos y luego limpia duplicados históricos.</p>
           <p>Se mantendrá la trazabilidad completa de todos los movimientos de inventario.</p>
         </div>
       </CardContent>

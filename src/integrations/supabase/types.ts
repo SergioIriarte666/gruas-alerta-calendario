@@ -3266,6 +3266,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: Json
       }
+      fix_materiales_electricos_unit_cost: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
       fix_negative_remaining_amounts: {
         Args: Record<PropertyKey, never>
         Returns: Json

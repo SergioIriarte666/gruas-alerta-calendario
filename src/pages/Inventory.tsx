@@ -14,6 +14,7 @@ import { MovementsHistoryTable } from '@/components/inventory/MovementsHistoryTa
 import { PurchaseGroupingView } from '@/components/inventory/PurchaseGroupingView';
 import { InventoryReportsPage } from '@/components/inventory/reports/InventoryReportsPage';
 import { InventoryAlertsPage } from '@/components/inventory/alerts/InventoryAlertsPage';
+import { InventoryFixPanel } from '@/components/inventory/InventoryFixPanel';
 import { format } from 'date-fns';
 
 const Inventory = () => {
@@ -149,13 +150,14 @@ const Inventory = () => {
 
       {/* Main Content Tabs */}
       <Tabs defaultValue="dashboard" className="space-y-4">
-              <TabsList className="grid w-full grid-cols-6">
+              <TabsList className="grid w-full grid-cols-7">
                 <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
                 <TabsTrigger value="catalog">Catálogo</TabsTrigger>
                 <TabsTrigger value="movements">Movimientos</TabsTrigger>
                 <TabsTrigger value="purchases">Compras</TabsTrigger>
                 <TabsTrigger value="reports">Reportes</TabsTrigger>
                 <TabsTrigger value="alerts">Alertas</TabsTrigger>
+                <TabsTrigger value="maintenance">Mantenimiento</TabsTrigger>
               </TabsList>
 
         <TabsContent value="dashboard" className="space-y-6">
@@ -261,6 +263,12 @@ const Inventory = () => {
             
             <TabsContent value="alerts" className="space-y-4">
               <InventoryAlertsPage />
+            </TabsContent>
+            
+            <TabsContent value="maintenance" className="space-y-4">
+              <div className="max-w-4xl mx-auto">
+                <InventoryFixPanel />
+              </div>
             </TabsContent>
       </Tabs>
     </div>
