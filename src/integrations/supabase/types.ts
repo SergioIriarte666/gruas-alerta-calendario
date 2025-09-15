@@ -3124,6 +3124,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: Json
       }
+      cleanup_duplicate_inventory_costs: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
       cleanup_duplicate_payments: {
         Args: Record<PropertyKey, never>
         Returns: Json
@@ -3249,6 +3253,10 @@ export type Database = {
       fix_existing_overdue_invoices: {
         Args: Record<PropertyKey, never>
         Returns: string
+      }
+      fix_inventory_cost_issues: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
       }
       fix_invoice_payment_inconsistencies: {
         Args: Record<PropertyKey, never>
@@ -3574,6 +3582,10 @@ export type Database = {
       preview_next_invoice_folio: {
         Args: Record<PropertyKey, never>
         Returns: string
+      }
+      recalculate_crane_parts_costs: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
       }
       recalculate_payment_balances: {
         Args: Record<PropertyKey, never>
