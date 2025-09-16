@@ -72,6 +72,35 @@ export const getCustodyInfo = (service: any) => {
 };
 
 /**
+ * Calculates the display value that should be shown in modals and reports.
+ * Always returns the real/total service value, not adjusted for closure calculations.
+ * 
+ * DISPLAY LOGIC PRIORITY:
+ * 1. custody_total_amount: For custody services, use the custody total
+ * 2. service.value: For all other services (including excess), use the base service value
+ * 
+ * @param service - Service object (supports both naming conventions)
+ * @returns The total service value for display purposes
+ */
+export const getDisplayServiceValue = (service: any): number => {
+  // Input validation
+  if (!service) {
+    console.warn('⚠️ getDisplayServiceValue: service is null or undefined');
+    return 0;
+  }
+
+  // Priority 1: Custody service total amount (support both camelCase and snake_case)
+  const custodyTotal = service.custody_total_amount || service.custodyTotalAmount;
+  if (custodyTotal && custodyTotal > 0) {
+    return custodyTotal;
+  }
+  
+  // Priority 2: Regular service value (for all non-custody services, including excess)
+  const baseValue = service.value || 0;
+  return baseValue;
+};
+
+/**
  * Calculates the total value for an array of services for closure purposes.
  */
 export const calculateClosureTotal = (services: Service[]): number => {

@@ -28,7 +28,7 @@ import { useServiceDetailsForView } from '@/hooks/useServiceDetailsGlobal';
 import { shouldShowVehicleInfo, formatVehicleInfo, getServiceStatusBadge, formatCurrency } from '@/utils/statusHelpers';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { getServiceValueForClosure, isCustodyService, getCustodyInfo, isEquipmentRentalService } from '@/utils/serviceValueCalculations';
+import { getServiceValueForClosure, getDisplayServiceValue, isCustodyService, getCustodyInfo, isEquipmentRentalService } from '@/utils/serviceValueCalculations';
 import { formatForDisplay, formatForDisplayWithTime } from '@/utils/timezoneUtils';
 
 interface ServiceDetailsModalProps {
@@ -192,11 +192,12 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose }: ServiceDetails
   // Calcular totales usando datos mejorados si están disponibles
   const totalCosts = totalServiceCosts + totalCommissions;
   
-  // Usar getServiceValueForClosure para obtener el valor correcto del servicio
-  const displayServiceValue = getServiceValueForClosure(serviceData);
+  // Usar getDisplayServiceValue para mostrar el valor total real del servicio
+  const displayServiceValue = getDisplayServiceValue(serviceData);
   
-  // Calcular ganancia neta basada en el valor correcto del servicio
-  const netProfit = displayServiceValue - totalCosts;
+  // Para cálculos de ganancia neta, usar getServiceValueForClosure (valor facturable)
+  const closureValue = getServiceValueForClosure(serviceData);
+  const netProfit = closureValue - totalCosts;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -329,19 +330,32 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose }: ServiceDetails
                        />
                   </DetailSection>
                     <Separator className="border-border"/>
-                   <DetailSection title="Finanzas" icon={DollarSign}>
-                       <DetailItem 
-                         icon={DollarSign} 
-                         label={isCustody ? "Valor Total Servicio" : "Valor del Servicio"} 
-                         value={formatCurrency(displayServiceValue)} 
-                         valueClass="text-lg text-tms-green font-bold" 
-                       />
-                       {serviceData.hasExcess && serviceData.clientCoveredAmount && (
-                         <DetailItem icon={DollarSign} label="Monto Cubierto Cliente" value={formatCurrency(serviceData.clientCoveredAmount)} valueClass="text-sm text-muted-foreground" />
-                       )}
-                        <DetailItem icon={DollarSign} label="Total Costos" value={formatCurrency(totalCosts)} valueClass="text-lg text-destructive font-bold" />
-                        <DetailItem icon={DollarSign} label="Ganancia Neta" value={formatCurrency(netProfit)} valueClass={`text-lg font-bold ${netProfit >= 0 ? 'text-emerald-400' : 'text-destructive'}`}/>
-                   </DetailSection>
+                    <DetailSection title="Finanzas" icon={DollarSign}>
+                        <DetailItem 
+                          icon={DollarSign} 
+                          label={isCustody ? "Valor Total Servicio" : serviceData.hasExcess ? "Valor Total del Servicio" : "Valor del Servicio"} 
+                          value={formatCurrency(displayServiceValue)} 
+                          valueClass="text-lg text-tms-green font-bold" 
+                        />
+                        {serviceData.hasExcess && serviceData.clientCoveredAmount && (
+                          <>
+                            <DetailItem 
+                              icon={DollarSign} 
+                              label="Monto Cubierto Cliente" 
+                              value={formatCurrency(serviceData.clientCoveredAmount)} 
+                              valueClass="text-md text-blue-600 font-medium" 
+                            />
+                            <DetailItem 
+                              icon={DollarSign} 
+                              label="Excedente" 
+                              value={formatCurrency(displayServiceValue - (serviceData.clientCoveredAmount || 0))} 
+                              valueClass="text-md text-orange-600 font-medium" 
+                            />
+                          </>
+                        )}
+                         <DetailItem icon={DollarSign} label="Total Costos" value={formatCurrency(totalCosts)} valueClass="text-lg text-destructive font-bold" />
+                         <DetailItem icon={DollarSign} label="Ganancia Neta" value={formatCurrency(netProfit)} valueClass={`text-lg font-bold ${netProfit >= 0 ? 'text-emerald-400' : 'text-destructive'}`}/>
+                    </DetailSection>
 
                   {serviceData.observations && (
                     <>
