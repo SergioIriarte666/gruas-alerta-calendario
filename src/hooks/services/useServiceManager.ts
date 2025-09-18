@@ -578,6 +578,9 @@ export const useServiceManager = () => {
           ...(serviceData.excessAmount !== undefined && {
             excess_amount: serviceData.excessAmount || null
           }),
+          ...(serviceData.thirdPartyClientId !== undefined && {
+            third_party_client_id: serviceData.thirdPartyClientId
+          }),
           // Transform custody fields from camelCase to snake_case con validación SOLO si están presentes
           ...(serviceData.custodyMode !== undefined && {
             custody_mode: serviceData.custodyMode
