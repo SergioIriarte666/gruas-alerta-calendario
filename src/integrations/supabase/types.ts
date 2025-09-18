@@ -2606,6 +2606,7 @@ export type Database = {
           service_relationship_type: string | null
           service_type_id: string
           status: Database["public"]["Enums"]["service_status"] | null
+          third_party_client_id: string | null
           updated_at: string | null
           value: number
           vehicle_brand: string | null
@@ -2648,6 +2649,7 @@ export type Database = {
           service_relationship_type?: string | null
           service_type_id: string
           status?: Database["public"]["Enums"]["service_status"] | null
+          third_party_client_id?: string | null
           updated_at?: string | null
           value: number
           vehicle_brand?: string | null
@@ -2690,6 +2692,7 @@ export type Database = {
           service_relationship_type?: string | null
           service_type_id?: string
           status?: Database["public"]["Enums"]["service_status"] | null
+          third_party_client_id?: string | null
           updated_at?: string | null
           value?: number
           vehicle_brand?: string | null
@@ -2750,6 +2753,13 @@ export type Database = {
             columns: ["service_type_id"]
             isOneToOne: false
             referencedRelation: "service_types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "services_third_party_client_id_fkey"
+            columns: ["third_party_client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
             referencedColumns: ["id"]
           },
         ]
