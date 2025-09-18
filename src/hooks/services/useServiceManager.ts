@@ -175,7 +175,7 @@ export const useServiceManager = () => {
   const queryClient = useQueryClient();
   const { createMutationErrorHandler } = useErrorHandler();
 
-  // CREAR SERVICIO
+  // Helper function to create excess service
   const createExcessService = async (
     mainServiceData: ServiceFormData,
     mainServiceId: string,
@@ -208,11 +208,11 @@ export const useServiceManager = () => {
         client_id: thirdPartyClientId,
         service_type_id: excessServiceType.id,
         value: excessAmount,
-        status: 'pending',
+        status: 'pending' as const,
         observations: `Excedente del servicio ${mainServiceData.folio}`,
-        // Inherit some data from main service
-        crane_id: mainServiceData.craneId || null,
-        operator_id: mainServiceData.operatorId || null,
+        // Inherit some data from main service  
+        crane_id: mainServiceData.crane || null,
+        operator_id: null, // Will be set separately
         operator_commission: 0,
         origin: mainServiceData.origin || null,
         destination: mainServiceData.destination || null,
@@ -222,7 +222,7 @@ export const useServiceManager = () => {
         // Relationship fields
         related_service_id: mainServiceId,
         service_relationship_type: 'excess',
-        created_by: auth.uid(),
+        created_by: (await supabase.auth.getUser()).data.user?.id,
       };
 
       const { data: excessService, error: createError } = await supabase
@@ -240,6 +240,9 @@ export const useServiceManager = () => {
       throw error;
     }
   };
+
+  // CREAR SERVICIO  
+  const createServiceMutation = useMutation({
     mutationFn: async (serviceData: ServiceFormData): Promise<Service> => {
       try {
         console.log('🔄 Creating service with data:', { 
