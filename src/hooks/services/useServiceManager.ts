@@ -176,7 +176,70 @@ export const useServiceManager = () => {
   const { createMutationErrorHandler } = useErrorHandler();
 
   // CREAR SERVICIO
-  const createServiceMutation = useMutation({
+  const createExcessService = async (
+    mainServiceData: ServiceFormData,
+    mainServiceId: string,
+    excessAmount: number,
+    thirdPartyClientId: string
+  ) => {
+    try {
+      console.log('🔄 Creating excess service...');
+      
+      // Generate excess folio
+      const { data: excessFolio, error: folioError } = await supabase
+        .rpc('generate_excess_folio');
+      
+      if (folioError) throw folioError;
+
+      // Get "Excedente" service type
+      const { data: excessServiceType, error: typeError } = await supabase
+        .from('service_types')
+        .select('id')
+        .eq('name', 'Excedente')
+        .single();
+
+      if (typeError) throw typeError;
+
+      // Create excess service
+      const excessServiceData = {
+        folio: excessFolio,
+        request_date: mainServiceData.requestDate,
+        service_date: mainServiceData.serviceDate,
+        client_id: thirdPartyClientId,
+        service_type_id: excessServiceType.id,
+        value: excessAmount,
+        status: 'pending',
+        observations: `Excedente del servicio ${mainServiceData.folio}`,
+        // Inherit some data from main service
+        crane_id: mainServiceData.craneId || null,
+        operator_id: mainServiceData.operatorId || null,
+        operator_commission: 0,
+        origin: mainServiceData.origin || null,
+        destination: mainServiceData.destination || null,
+        vehicle_brand: mainServiceData.vehicleBrand || null,
+        vehicle_model: mainServiceData.vehicleModel || null,
+        license_plate: mainServiceData.licensePlate || null,
+        // Relationship fields
+        related_service_id: mainServiceId,
+        service_relationship_type: 'excess',
+        created_by: auth.uid(),
+      };
+
+      const { data: excessService, error: createError } = await supabase
+        .from('services')
+        .insert(excessServiceData)
+        .select()
+        .single();
+
+      if (createError) throw createError;
+
+      console.log('✅ Excess service created:', excessService);
+      return excessService;
+    } catch (error) {
+      console.error('❌ Error creating excess service:', error);
+      throw error;
+    }
+  };
     mutationFn: async (serviceData: ServiceFormData): Promise<Service> => {
       try {
         console.log('🔄 Creating service with data:', { 

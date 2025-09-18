@@ -173,6 +173,20 @@ export type Database = {
             referencedRelation: "services"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "calendar_events_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services_with_excess_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "calendar_events_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services_with_excess_summary"
+            referencedColumns: ["related_service_id_actual"]
+          },
         ]
       }
       clients: {
@@ -277,6 +291,20 @@ export type Database = {
             referencedRelation: "services"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "closure_services_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services_with_excess_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "closure_services_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services_with_excess_summary"
+            referencedColumns: ["related_service_id_actual"]
+          },
         ]
       }
       company_data: {
@@ -286,11 +314,13 @@ export type Database = {
           business_name: string
           created_at: string | null
           email: string
+          excess_folio_format: string | null
           folio_format: string | null
           id: string
           invoice_due_days: number | null
           legal_texts: string | null
           logo_url: string | null
+          next_excess_folio_number: number | null
           next_invoice_folio_number: number | null
           next_service_folio_number: number
           phone: string
@@ -305,11 +335,13 @@ export type Database = {
           business_name: string
           created_at?: string | null
           email: string
+          excess_folio_format?: string | null
           folio_format?: string | null
           id?: string
           invoice_due_days?: number | null
           legal_texts?: string | null
           logo_url?: string | null
+          next_excess_folio_number?: number | null
           next_invoice_folio_number?: number | null
           next_service_folio_number?: number
           phone: string
@@ -324,11 +356,13 @@ export type Database = {
           business_name?: string
           created_at?: string | null
           email?: string
+          excess_folio_format?: string | null
           folio_format?: string | null
           id?: string
           invoice_due_days?: number | null
           legal_texts?: string | null
           logo_url?: string | null
+          next_excess_folio_number?: number | null
           next_invoice_folio_number?: number | null
           next_service_folio_number?: number
           phone?: string
@@ -585,6 +619,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "services"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "costs_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services_with_excess_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "costs_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services_with_excess_summary"
+            referencedColumns: ["related_service_id_actual"]
           },
         ]
       }
@@ -957,6 +1005,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "services"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inspections_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services_with_excess_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inspections_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services_with_excess_summary"
+            referencedColumns: ["related_service_id_actual"]
           },
         ]
       }
@@ -1628,6 +1690,20 @@ export type Database = {
             referencedRelation: "services"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "invoice_services_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services_with_excess_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoice_services_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services_with_excess_summary"
+            referencedColumns: ["related_service_id_actual"]
+          },
         ]
       }
       invoices: {
@@ -2271,6 +2347,20 @@ export type Database = {
             referencedRelation: "services"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "service_costs_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services_with_excess_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_costs_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services_with_excess_summary"
+            referencedColumns: ["related_service_id_actual"]
+          },
         ]
       }
       service_resources: {
@@ -2338,6 +2428,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "services"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_resources_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services_with_excess_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_resources_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services_with_excess_summary"
+            referencedColumns: ["related_service_id_actual"]
           },
         ]
       }
@@ -2448,6 +2552,20 @@ export type Database = {
             referencedRelation: "services"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "service_update_error_logs_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services_with_excess_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_update_error_logs_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services_with_excess_summary"
+            referencedColumns: ["related_service_id_actual"]
+          },
         ]
       }
       services: {
@@ -2482,8 +2600,10 @@ export type Database = {
           purchase_order: string | null
           purchase_order_number: string | null
           quote_number: string | null
+          related_service_id: string | null
           request_date: string
           service_date: string
+          service_relationship_type: string | null
           service_type_id: string
           status: Database["public"]["Enums"]["service_status"] | null
           updated_at: string | null
@@ -2522,8 +2642,10 @@ export type Database = {
           purchase_order?: string | null
           purchase_order_number?: string | null
           quote_number?: string | null
+          related_service_id?: string | null
           request_date: string
           service_date: string
+          service_relationship_type?: string | null
           service_type_id: string
           status?: Database["public"]["Enums"]["service_status"] | null
           updated_at?: string | null
@@ -2562,8 +2684,10 @@ export type Database = {
           purchase_order?: string | null
           purchase_order_number?: string | null
           quote_number?: string | null
+          related_service_id?: string | null
           request_date?: string
           service_date?: string
+          service_relationship_type?: string | null
           service_type_id?: string
           status?: Database["public"]["Enums"]["service_status"] | null
           updated_at?: string | null
@@ -2599,6 +2723,27 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "operators"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "services_related_service_id_fkey"
+            columns: ["related_service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "services_related_service_id_fkey"
+            columns: ["related_service_id"]
+            isOneToOne: false
+            referencedRelation: "services_with_excess_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "services_related_service_id_fkey"
+            columns: ["related_service_id"]
+            isOneToOne: false
+            referencedRelation: "services_with_excess_summary"
+            referencedColumns: ["related_service_id_actual"]
           },
           {
             foreignKeyName: "services_service_type_id_fkey"
@@ -3043,6 +3188,63 @@ export type Database = {
           },
         ]
       }
+      services_with_excess_summary: {
+        Row: {
+          calculated_excess_amount: number | null
+          client_covered_amount: number | null
+          client_id: string | null
+          client_name: string | null
+          folio: string | null
+          has_excess: boolean | null
+          id: string | null
+          related_client_id: string | null
+          related_client_name: string | null
+          related_service_folio: string | null
+          related_service_id: string | null
+          related_service_id_actual: string | null
+          related_service_value: number | null
+          service_date: string | null
+          service_relationship_type: string | null
+          value: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "services_client_id_fkey"
+            columns: ["related_client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "services_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "services_related_service_id_fkey"
+            columns: ["related_service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "services_related_service_id_fkey"
+            columns: ["related_service_id"]
+            isOneToOne: false
+            referencedRelation: "services_with_excess_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "services_related_service_id_fkey"
+            columns: ["related_service_id"]
+            isOneToOne: false
+            referencedRelation: "services_with_excess_summary"
+            referencedColumns: ["related_service_id_actual"]
+          },
+        ]
+      }
     }
     Functions: {
       admin_create_user: {
@@ -3311,6 +3513,10 @@ export type Database = {
         Returns: Json
       }
       generate_database_backup: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      generate_excess_folio: {
         Args: Record<PropertyKey, never>
         Returns: string
       }
