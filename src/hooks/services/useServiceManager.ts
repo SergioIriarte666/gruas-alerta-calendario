@@ -437,6 +437,17 @@ export const useServiceManager = () => {
           await Promise.all(costPromises);
         }
 
+        // Check if excess service needs to be created
+        if (serviceData.hasExcess && serviceData.excessAmount && serviceData.excessAmount > 0 && serviceData.thirdPartyClientId) {
+          try {
+            await createExcessService(serviceData, newService.id, serviceData.excessAmount, serviceData.thirdPartyClientId);
+            console.log('✅ Excess service created successfully');
+          } catch (excessError) {
+            console.error('⚠️ Failed to create excess service, but main service was created:', excessError);
+            // Continue without failing the main service creation
+          }
+        }
+
         await queryClient.invalidateQueries({ queryKey: ['services'] });
         
         const transformedService = transformToService(newService);

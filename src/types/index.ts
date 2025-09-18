@@ -79,6 +79,7 @@ export interface ServiceFormData {
   hasExcess?: boolean;
   clientCoveredAmount?: number;
   excessAmount?: number;
+  thirdPartyClientId?: string;
   status: ServiceStatus;
   observations?: string;
   // Custody fields
