@@ -78,7 +78,7 @@ const fetchDailyReportData = async (selectedDate: string): Promise<DailyReportDa
     // Servicios - incluir semana actual y próxima
     supabase.from('services').select(`
       id, folio, service_date, status, value,
-      client:clients(id, name),
+      client:clients!client_id(id, name),
       operator:operators(id, name),
       crane:cranes(id, brand, model),
       service_type:service_types(name)
@@ -88,7 +88,7 @@ const fetchDailyReportData = async (selectedDate: string): Promise<DailyReportDa
     // Eventos del calendario - incluir semana actual y próxima para mejor visibilidad
     supabase.from('calendar_events').select(`
       id, title, date, start_time, end_time, type, status, description,
-      client:clients(name),
+      client:clients!client_id(name),
       operator:operators(name),
       crane:cranes(brand, model)
     `).gte('date', formatForDatabase(currentWeekStart))
@@ -97,7 +97,7 @@ const fetchDailyReportData = async (selectedDate: string): Promise<DailyReportDa
     // Facturas - próximas 30 días y vencidas
     supabase.from('invoices').select(`
       id, folio, due_date, total, status, paid_amount,
-      client:clients(name)
+      client:clients!client_id(name)
     `).lte('due_date', formatForDatabase(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)))
       .eq('status', 'sent'),
 
@@ -218,7 +218,7 @@ const fetchDailyReportData = async (selectedDate: string): Promise<DailyReportDa
   // Get services ready for invoicing
   const invoicesToIssueRes = await supabase.from('services').select(`
     id, folio, value, service_date,
-    client:clients(name)
+    client:clients!client_id(name)
   `).eq('status', 'completed').is('invoice_id', null).lte('service_date', dateForDB);
 
   // Process cranes and generate detailed alerts

@@ -15,7 +15,7 @@ export const useClientServices = (clientId: string | null) => {
                 .from('services')
                 .select(`
                     *,
-                    clients!inner(id, name, rut, phone, email, address, department, is_active),
+                    clients!client_id!inner(id, name, rut, phone, email, address, department, is_active),
                     cranes(id, license_plate, brand, model, type, is_active),
                     operators(id, name, rut, phone, license_number, is_active),
                     service_types(id, name, description, base_price, is_active, vehicle_info_optional, purchase_order_required, origin_required, destination_required, crane_required, operator_required, vehicle_brand_required, vehicle_model_required, license_plate_required, created_at, updated_at)
