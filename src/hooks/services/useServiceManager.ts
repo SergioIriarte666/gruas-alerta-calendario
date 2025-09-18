@@ -365,7 +365,8 @@ export const useServiceManager = () => {
           .insert(transformedData)
           .select(`
             *,
-            client:clients(*),
+            client:clients!client_id(*),
+            third_party_client:clients!third_party_client_id(*),
             crane:cranes(*),
             operator:operators(*),
             serviceType:service_types(*),
@@ -836,7 +837,8 @@ export const useServiceManager = () => {
         .eq('id', id)
         .select(`
           *,
-          client:clients(*),
+          client:clients!client_id(*),
+          third_party_client:clients!third_party_client_id(*),
           crane:cranes(*),
           operator:operators(*),
           serviceType:service_types(*),

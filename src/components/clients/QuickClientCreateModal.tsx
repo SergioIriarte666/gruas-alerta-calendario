@@ -69,7 +69,13 @@ export function QuickClientCreateModal({
       form.reset();
     } catch (error: any) {
       console.error('Error creating client:', error);
-      toast.error('Error al crear cliente: ' + error.message);
+      
+      // Handle duplicate key error specifically
+      if (error.code === '23505' && error.message.includes('clients_rut_department_unique')) {
+        toast.error('Ya existe un cliente con este RUT en el mismo departamento. Por favor, verifique los datos.');
+      } else {
+        toast.error('Error al crear cliente: ' + error.message);
+      }
     } finally {
       setLoading(false);
     }

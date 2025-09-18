@@ -67,7 +67,8 @@ export const useServiceQueries = () => {
           .from('services')
           .select(`
             *,
-            client:clients(*),
+            client:clients!client_id(*),
+            third_party_client:clients!third_party_client_id(*),
             crane:cranes(*),
             operator:operators(*),
             serviceType:service_types(*),
@@ -109,7 +110,7 @@ export const useServiceQueries = () => {
           .from('services')
           .select(`
             *,
-            client:clients(*),
+            client:clients!client_id(*),
             crane:cranes(*),
             operator:operators(*),
             serviceType:service_types(*),
@@ -153,7 +154,7 @@ export const useServiceQueries = () => {
           .from('services')
           .select(`
             *,
-            client:clients(*),
+            client:clients!client_id(*),
             crane:cranes(*),
             operator:operators(*),
             serviceType:service_types(*)
