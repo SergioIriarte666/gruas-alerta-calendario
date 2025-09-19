@@ -39,7 +39,7 @@ const fetchVehicleHistory = async (licensePlate: string): Promise<VehicleHistory
       has_excess,
       client_covered_amount,
       service_types(name),
-      clients(name)
+      clients!services_client_id_fkey(name)
     `)
     .eq('license_plate', licensePlate)
     .order('service_date', { ascending: false });
