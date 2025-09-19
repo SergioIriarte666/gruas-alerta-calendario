@@ -465,24 +465,33 @@ export const useServiceManager = () => {
         }
 
         // Check if excess service needs to be created
-        console.log('🔍 [EXCESS DEBUG] Checking excess service creation:', {
-          hasExcess: serviceData.hasExcess,
-          excessAmount: serviceData.excessAmount,
-          thirdPartyClientId: serviceData.thirdPartyClientId,
-          shouldCreate: serviceData.hasExcess && serviceData.excessAmount && serviceData.excessAmount > 0 && serviceData.thirdPartyClientId
-        });
-        
         if (serviceData.hasExcess && serviceData.excessAmount && serviceData.excessAmount > 0 && serviceData.thirdPartyClientId) {
           try {
-            console.log('🔄 [EXCESS] Creating excess service...');
+            console.log('🔄 [EXCESS] Starting excess service creation with:', {
+              hasExcess: serviceData.hasExcess,
+              excessAmount: serviceData.excessAmount, 
+              thirdPartyClientId: serviceData.thirdPartyClientId,
+              mainServiceFolio: newService.folio
+            });
+            
             await createExcessService(serviceData, newService.id, serviceData.excessAmount, serviceData.thirdPartyClientId);
-            console.log('✅ Excess service created successfully');
+            console.log('✅ [EXCESS] Service created successfully');
+            
+            // Invalidate queries again to show the excess service
+            queryClient.invalidateQueries({ queryKey: ['services'] });
+            
+            // Invalidate queries to refresh the service list
+            queryClient.invalidateQueries({ queryKey: ['services'] });
           } catch (excessError) {
-            console.error('⚠️ Failed to create excess service, but main service was created:', excessError);
+            console.error('⚠️ [EXCESS] Failed to create excess service:', excessError);
             // Continue without failing the main service creation
           }
         } else {
-          console.log('❌ [EXCESS] Not creating excess service - conditions not met');
+          console.log('❌ [EXCESS] Not creating excess service. Conditions:', {
+            hasExcess: serviceData.hasExcess,
+            excessAmount: serviceData.excessAmount,
+            thirdPartyClientId: serviceData.thirdPartyClientId
+          });
         }
 
         await queryClient.invalidateQueries({ queryKey: ['services'] });
