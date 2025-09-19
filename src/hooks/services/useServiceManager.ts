@@ -183,13 +183,23 @@ export const useServiceManager = () => {
     thirdPartyClientId: string
   ) => {
     try {
-      console.log('🔄 Creating excess service...');
+      console.log('🔄 [EXCESS] Creating excess service with data:', {
+        mainServiceId,
+        excessAmount,
+        thirdPartyClientId,
+        mainServiceFolio: mainServiceData.folio
+      });
       
       // Generate excess folio
       const { data: excessFolio, error: folioError } = await supabase
         .rpc('generate_excess_folio');
       
-      if (folioError) throw folioError;
+      if (folioError) {
+        console.error('❌ [EXCESS] Error generating folio:', folioError);
+        throw folioError;
+      }
+      
+      console.log('✅ [EXCESS] Generated folio:', excessFolio);
 
       // Get "Excedente" service type
       const { data: excessServiceType, error: typeError } = await supabase
@@ -198,7 +208,12 @@ export const useServiceManager = () => {
         .eq('name', 'Excedente')
         .single();
 
-      if (typeError) throw typeError;
+      if (typeError) {
+        console.error('❌ [EXCESS] Error getting service type:', typeError);
+        throw typeError;
+      }
+      
+      console.log('✅ [EXCESS] Found service type:', excessServiceType);
 
       // Create excess service
       const excessServiceData = {
@@ -224,6 +239,8 @@ export const useServiceManager = () => {
         service_relationship_type: 'excess',
         created_by: (await supabase.auth.getUser()).data.user?.id,
       };
+      
+      console.log('🔄 [EXCESS] Inserting service data:', excessServiceData);
 
       const { data: excessService, error: createError } = await supabase
         .from('services')
@@ -231,12 +248,15 @@ export const useServiceManager = () => {
         .select()
         .single();
 
-      if (createError) throw createError;
+      if (createError) {
+        console.error('❌ [EXCESS] Error creating service:', createError);
+        throw createError;
+      }
 
-      console.log('✅ Excess service created:', excessService);
+      console.log('✅ [EXCESS] Service created successfully:', excessService);
       return excessService;
     } catch (error) {
-      console.error('❌ Error creating excess service:', error);
+      console.error('❌ [EXCESS] Error creating excess service:', error);
       throw error;
     }
   };

@@ -4,6 +4,15 @@ import { Service } from '@/types';
 
 // Función para transformar datos de Supabase a Service
 const transformToService = (data: any): Service => {
+  console.log('🔄 [TRANSFORM] Transforming service data:', {
+    folio: data.folio,
+    crane_id: data.crane_id,
+    operator_id: data.operator_id,
+    crane: data.crane?.license_plate || 'No crane data',
+    operator: data.operator?.name || 'No operator data',
+    service_resources_count: data.service_resources?.length || 0
+  });
+  
   // Buscar operador principal en service_resources
   let primaryOperator = data.operator; // Legacy fallback
   
@@ -13,6 +22,7 @@ const transformToService = (data: any): Service => {
     );
     
     if (primaryResource && primaryResource.operator) {
+      console.log('✅ [TRANSFORM] Found primary operator from service_resources:', primaryResource.operator.name);
       primaryOperator = primaryResource.operator;
     } else {
       // Si no hay operador principal marcado, tomar el primero
@@ -20,9 +30,22 @@ const transformToService = (data: any): Service => {
         (resource: any) => resource.resource_type === 'operator'
       );
       if (firstOperatorResource && firstOperatorResource.operator) {
+        console.log('✅ [TRANSFORM] Found first operator from service_resources:', firstOperatorResource.operator.name);
         primaryOperator = firstOperatorResource.operator;
       }
     }
+  }
+  
+  if (!primaryOperator && data.operator) {
+    console.log('✅ [TRANSFORM] Using legacy operator:', data.operator.name);
+  }
+  
+  if (!primaryOperator) {
+    console.log('⚠️ [TRANSFORM] No operator found for service:', data.folio);
+  }
+  
+  if (!data.crane) {
+    console.log('⚠️ [TRANSFORM] No crane found for service:', data.folio);
   }
 
   return {
@@ -111,6 +134,7 @@ export const useServiceQueries = () => {
           .select(`
             *,
             client:clients!client_id(*),
+            third_party_client:clients!third_party_client_id(*),
             crane:cranes(*),
             operator:operators(*),
             serviceType:service_types(*),
