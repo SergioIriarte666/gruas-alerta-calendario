@@ -249,7 +249,12 @@ export const useServiceManager = () => {
           folio: serviceData.folio, 
           serviceType: serviceData.serviceType,
           hasOperators: !!serviceData.operators?.length,
-          hasCrane: !!serviceData.crane
+          hasCrane: !!serviceData.crane,
+          // EXCESS DEBUG DATA
+          hasExcess: serviceData.hasExcess,
+          excessAmount: serviceData.excessAmount,
+          thirdPartyClientId: serviceData.thirdPartyClientId,
+          clientCoveredAmount: serviceData.clientCoveredAmount
         });
 
         // Obtener configuración del tipo de servicio para validaciones condicionales
@@ -328,6 +333,7 @@ export const useServiceManager = () => {
           has_excess: serviceData.hasExcess || false,
           client_covered_amount: serviceData.clientCoveredAmount || null,
           excess_amount: serviceData.excessAmount || null,
+          third_party_client_id: serviceData.thirdPartyClientId || null,
           // Transform custody fields from camelCase to snake_case con validación
           custody_mode: serviceData.custodyMode || null,
           custody_days: serviceData.custodyDays || null,
@@ -439,14 +445,24 @@ export const useServiceManager = () => {
         }
 
         // Check if excess service needs to be created
+        console.log('🔍 [EXCESS DEBUG] Checking excess service creation:', {
+          hasExcess: serviceData.hasExcess,
+          excessAmount: serviceData.excessAmount,
+          thirdPartyClientId: serviceData.thirdPartyClientId,
+          shouldCreate: serviceData.hasExcess && serviceData.excessAmount && serviceData.excessAmount > 0 && serviceData.thirdPartyClientId
+        });
+        
         if (serviceData.hasExcess && serviceData.excessAmount && serviceData.excessAmount > 0 && serviceData.thirdPartyClientId) {
           try {
+            console.log('🔄 [EXCESS] Creating excess service...');
             await createExcessService(serviceData, newService.id, serviceData.excessAmount, serviceData.thirdPartyClientId);
             console.log('✅ Excess service created successfully');
           } catch (excessError) {
             console.error('⚠️ Failed to create excess service, but main service was created:', excessError);
             // Continue without failing the main service creation
           }
+        } else {
+          console.log('❌ [EXCESS] Not creating excess service - conditions not met');
         }
 
         await queryClient.invalidateQueries({ queryKey: ['services'] });
