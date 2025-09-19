@@ -35,7 +35,7 @@ export const useServiceRequestAlerts = () => {
                 origin,
                 destination,
                 service_date,
-                client:clients!client_id(name),
+                client:clients(name),
                 service_type:service_types(name)
               `)
               .eq('id', payload.new.id)

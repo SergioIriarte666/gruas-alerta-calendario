@@ -85,7 +85,6 @@ export const EnhancedServiceForm = ({
     hasExcess: service?.hasExcess || false,
     clientCoveredAmount: service?.clientCoveredAmount || 0,
     excessAmount: service?.excessAmount || 0,
-    thirdPartyClientId: (service as any)?.thirdPartyClientId || null,
     status: service?.status || 'pending' as const,
     observations: service?.observations || '',
     // Custody fields - support both camelCase and snake_case
@@ -217,7 +216,6 @@ export const EnhancedServiceForm = ({
         hasExcess: service.hasExcess,
         clientCoveredAmount: service.clientCoveredAmount || 0,
         excessAmount: service.excessAmount || 0,
-        thirdPartyClientId: (service as any)?.thirdPartyClientId || null,
         status: service.status,
         observations: service.observations || '',
         // Custody fields - support both camelCase and snake_case
@@ -642,10 +640,7 @@ export const EnhancedServiceForm = ({
           onClientCoveredAmountChange={(value) => setFormData(prev => ({ ...prev, clientCoveredAmount: value }))}
           excessAmount={formData.excessAmount}
           onExcessAmountChange={(value) => setFormData(prev => ({ ...prev, excessAmount: value }))}
-          thirdPartyClientId={formData.thirdPartyClientId}
-          onThirdPartyClientIdChange={(value) => setFormData(prev => ({ ...prev, thirdPartyClientId: value }))}
           disabled={false}
-          currentClientId={formData.client}
         />
 
         {/* Custodia/Arriendo de Equipos */}

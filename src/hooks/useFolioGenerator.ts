@@ -167,39 +167,8 @@ export const useFolioGenerator = () => {
     }
   }, []);
 
-  const generateExcessFolio = useCallback(async (): Promise<string> => {
-    setLoading(true);
-    try {
-      console.log('🔄 Generating new excess folio...');
-      
-      const { data, error } = await supabase
-        .rpc('generate_excess_folio');
-
-      if (error) {
-        console.error('❌ Error generating excess folio:', error);
-        throw error;
-      }
-
-      console.log('✅ Generated excess folio:', data);
-      return data;
-    } catch (error: any) {
-      console.error('❌ Error generating excess folio:', error);
-      toast.error("Error", {
-        description: "No se pudo generar el folio de excedente automáticamente.",
-      });
-      // Fallback folio
-      const timestamp = Date.now();
-      const fallbackFolio = `EXE-${String(timestamp).slice(-4)}`;
-      console.log('🔧 Using fallback excess folio:', fallbackFolio);
-      return fallbackFolio;
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
   return {
     generateNextFolio,
-    generateExcessFolio,
     validateFolioUniqueness,
     syncFolioCounter,
     loading

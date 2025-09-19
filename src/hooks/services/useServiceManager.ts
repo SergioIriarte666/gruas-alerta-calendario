@@ -175,93 +175,7 @@ export const useServiceManager = () => {
   const queryClient = useQueryClient();
   const { createMutationErrorHandler } = useErrorHandler();
 
-  // Helper function to create excess service
-  const createExcessService = async (
-    mainServiceData: ServiceFormData,
-    mainServiceId: string,
-    excessAmount: number,
-    thirdPartyClientId: string
-  ) => {
-    try {
-      console.log('🔄 [EXCESS] Creating excess service with data:', {
-        mainServiceId,
-        excessAmount,
-        thirdPartyClientId,
-        mainServiceFolio: mainServiceData.folio
-      });
-      
-      // Generate excess folio
-      const { data: excessFolio, error: folioError } = await supabase
-        .rpc('generate_excess_folio');
-      
-      if (folioError) {
-        console.error('❌ [EXCESS] Error generating folio:', folioError);
-        throw folioError;
-      }
-      
-      console.log('✅ [EXCESS] Generated folio:', excessFolio);
-
-      // Get "Excedente" service type
-      const { data: excessServiceType, error: typeError } = await supabase
-        .from('service_types')
-        .select('id')
-        .eq('name', 'Excedente')
-        .single();
-
-      if (typeError) {
-        console.error('❌ [EXCESS] Error getting service type:', typeError);
-        throw typeError;
-      }
-      
-      console.log('✅ [EXCESS] Found service type:', excessServiceType);
-
-      // Create excess service
-      const excessServiceData = {
-        folio: excessFolio,
-        request_date: mainServiceData.requestDate,
-        service_date: mainServiceData.serviceDate,
-        client_id: thirdPartyClientId,
-        service_type_id: excessServiceType.id,
-        value: excessAmount,
-        status: 'pending' as const,
-        observations: `Excedente del servicio ${mainServiceData.folio}`,
-        // Inherit some data from main service  
-        crane_id: mainServiceData.crane || null,
-        operator_id: null, // Will be set separately
-        operator_commission: 0,
-        origin: mainServiceData.origin || null,
-        destination: mainServiceData.destination || null,
-        vehicle_brand: mainServiceData.vehicleBrand || null,
-        vehicle_model: mainServiceData.vehicleModel || null,
-        license_plate: mainServiceData.licensePlate || null,
-        // Relationship fields
-        related_service_id: mainServiceId,
-        service_relationship_type: 'excess',
-        created_by: (await supabase.auth.getUser()).data.user?.id,
-      };
-      
-      console.log('🔄 [EXCESS] Inserting service data:', excessServiceData);
-
-      const { data: excessService, error: createError } = await supabase
-        .from('services')
-        .insert(excessServiceData)
-        .select()
-        .single();
-
-      if (createError) {
-        console.error('❌ [EXCESS] Error creating service:', createError);
-        throw createError;
-      }
-
-      console.log('✅ [EXCESS] Service created successfully:', excessService);
-      return excessService;
-    } catch (error) {
-      console.error('❌ [EXCESS] Error creating excess service:', error);
-      throw error;
-    }
-  };
-
-  // CREAR SERVICIO  
+  // CREAR SERVICIO
   const createServiceMutation = useMutation({
     mutationFn: async (serviceData: ServiceFormData): Promise<Service> => {
       try {
@@ -269,12 +183,7 @@ export const useServiceManager = () => {
           folio: serviceData.folio, 
           serviceType: serviceData.serviceType,
           hasOperators: !!serviceData.operators?.length,
-          hasCrane: !!serviceData.crane,
-          // EXCESS DEBUG DATA
-          hasExcess: serviceData.hasExcess,
-          excessAmount: serviceData.excessAmount,
-          thirdPartyClientId: serviceData.thirdPartyClientId,
-          clientCoveredAmount: serviceData.clientCoveredAmount
+          hasCrane: !!serviceData.crane
         });
 
         // Obtener configuración del tipo de servicio para validaciones condicionales
@@ -353,7 +262,6 @@ export const useServiceManager = () => {
           has_excess: serviceData.hasExcess || false,
           client_covered_amount: serviceData.clientCoveredAmount || null,
           excess_amount: serviceData.excessAmount || null,
-          third_party_client_id: serviceData.thirdPartyClientId || null,
           // Transform custody fields from camelCase to snake_case con validación
           custody_mode: serviceData.custodyMode || null,
           custody_days: serviceData.custodyDays || null,
@@ -391,8 +299,7 @@ export const useServiceManager = () => {
           .insert(transformedData)
           .select(`
             *,
-            client:clients!client_id(*),
-            third_party_client:clients!third_party_client_id(*),
+            client:clients(*),
             crane:cranes(*),
             operator:operators(*),
             serviceType:service_types(*),
@@ -462,36 +369,6 @@ export const useServiceManager = () => {
           });
           
           await Promise.all(costPromises);
-        }
-
-        // Check if excess service needs to be created
-        if (serviceData.hasExcess && serviceData.excessAmount && serviceData.excessAmount > 0 && serviceData.thirdPartyClientId) {
-          try {
-            console.log('🔄 [EXCESS] Starting excess service creation with:', {
-              hasExcess: serviceData.hasExcess,
-              excessAmount: serviceData.excessAmount, 
-              thirdPartyClientId: serviceData.thirdPartyClientId,
-              mainServiceFolio: newService.folio
-            });
-            
-            await createExcessService(serviceData, newService.id, serviceData.excessAmount, serviceData.thirdPartyClientId);
-            console.log('✅ [EXCESS] Service created successfully');
-            
-            // Invalidate queries again to show the excess service
-            queryClient.invalidateQueries({ queryKey: ['services'] });
-            
-            // Invalidate queries to refresh the service list
-            queryClient.invalidateQueries({ queryKey: ['services'] });
-          } catch (excessError) {
-            console.error('⚠️ [EXCESS] Failed to create excess service:', excessError);
-            // Continue without failing the main service creation
-          }
-        } else {
-          console.log('❌ [EXCESS] Not creating excess service. Conditions:', {
-            hasExcess: serviceData.hasExcess,
-            excessAmount: serviceData.excessAmount,
-            thirdPartyClientId: serviceData.thirdPartyClientId
-          });
         }
 
         await queryClient.invalidateQueries({ queryKey: ['services'] });
@@ -623,9 +500,6 @@ export const useServiceManager = () => {
           }),
           ...(serviceData.excessAmount !== undefined && {
             excess_amount: serviceData.excessAmount || null
-          }),
-          ...(serviceData.thirdPartyClientId !== undefined && {
-            third_party_client_id: serviceData.thirdPartyClientId
           }),
           // Transform custody fields from camelCase to snake_case con validación SOLO si están presentes
           ...(serviceData.custodyMode !== undefined && {
@@ -882,8 +756,7 @@ export const useServiceManager = () => {
         .eq('id', id)
         .select(`
           *,
-          client:clients!client_id(*),
-          third_party_client:clients!third_party_client_id(*),
+          client:clients(*),
           crane:cranes(*),
           operator:operators(*),
           serviceType:service_types(*),

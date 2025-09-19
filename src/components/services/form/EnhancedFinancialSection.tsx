@@ -1,15 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { DollarSign, TrendingUp, AlertCircle, Shield, Plus } from 'lucide-react';
+import { DollarSign, TrendingUp, AlertCircle, Shield } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { QuickClientCreateModal } from '@/components/clients/QuickClientCreateModal';
-import { supabase } from '@/integrations/supabase/client';
-import { formatCurrency } from '@/utils/statusHelpers';
 
 interface EnhancedFinancialSectionProps {
   value: number;
@@ -22,12 +17,9 @@ interface EnhancedFinancialSectionProps {
   onClientCoveredAmountChange?: (value: number) => void;
   excessAmount?: number;
   onExcessAmountChange?: (value: number) => void;
-  thirdPartyClientId?: string | null;
-  onThirdPartyClientIdChange?: (value: string | null) => void;
   disabled?: boolean;
   isCustodyService?: boolean;
   custodyTotalAmount?: number;
-  currentClientId?: string;
 }
 
 export const EnhancedFinancialSection = ({
@@ -41,50 +33,10 @@ export const EnhancedFinancialSection = ({
   onClientCoveredAmountChange,
   excessAmount = 0,
   onExcessAmountChange,
-  thirdPartyClientId,
-  onThirdPartyClientIdChange,
   disabled = false,
   isCustodyService = false,
-  custodyTotalAmount = 0,
-  currentClientId
+  custodyTotalAmount = 0
 }: EnhancedFinancialSectionProps) => {
-  
-  const [clients, setClients] = useState<Array<{ id: string; name: string; rut: string }>>([]);
-  const [showQuickCreate, setShowQuickCreate] = useState(false);
-  const [loadingClients, setLoadingClients] = useState(false);
-
-  // Load clients when excess is enabled
-  useEffect(() => {
-    if (hasExcess) {
-      loadClients();
-    }
-  }, [hasExcess]);
-
-  const loadClients = async () => {
-    setLoadingClients(true);
-    try {
-      const { data, error } = await supabase
-        .from('clients')
-        .select('id, name, rut')
-        .eq('is_active', true)
-        .order('name');
-      
-      if (error) throw error;
-      
-      // Exclude current client from the list
-      const filteredClients = data.filter(client => client.id !== currentClientId);
-      setClients(filteredClients);
-    } catch (error) {
-      console.error('Error loading clients:', error);
-    } finally {
-      setLoadingClients(false);
-    }
-  };
-
-  const handleClientCreated = (newClient: { id: string; name: string; rut: string }) => {
-    setClients(prev => [...prev, newClient]);
-    onThirdPartyClientIdChange?.(newClient.id);
-  };
   
   // Calculate excess amount automatically
   useEffect(() => {
@@ -93,13 +45,6 @@ export const EnhancedFinancialSection = ({
       onExcessAmountChange(Math.max(0, calculatedExcess));
     }
   }, [hasExcess, value, clientCoveredAmount, onExcessAmountChange]);
-
-  // Reset third-party client when excess is disabled
-  useEffect(() => {
-    if (!hasExcess && onThirdPartyClientIdChange) {
-      onThirdPartyClientIdChange(null);
-    }
-  }, [hasExcess, onThirdPartyClientIdChange]);
 
   // Calcular margen de ganancia
   const calculateProfit = () => {
@@ -271,80 +216,16 @@ export const EnhancedFinancialSection = ({
               </Label>
               <Input
                 id="excessAmount"
-                type="text"
-                value={formatCurrency(excessAmount)}
+                type="number"
+                value={excessAmount}
                 readOnly
                 disabled
                 className="bg-muted text-muted-foreground font-semibold"
               />
             </div>
-
-            {/* Third-party client selector */}
-            {excessAmount > 0 && (
-              <div className="col-span-full space-y-2">
-                <Label className="text-sm font-medium">
-                  Cliente para Servicio de Excedente *
-                </Label>
-                <div className="flex gap-2">
-                  <Select
-                    value={thirdPartyClientId || ""}
-                    onValueChange={(value) => {
-                      if (value === "create-new") {
-                        setShowQuickCreate(true);
-                      } else {
-                        onThirdPartyClientIdChange?.(value);
-                      }
-                    }}
-                  >
-                    <SelectTrigger className="flex-1">
-                      <SelectValue placeholder={loadingClients ? "Cargando clientes..." : "Seleccionar cliente"} />
-                    </SelectTrigger>
-                    <SelectContent className="bg-background z-50 pointer-events-auto">
-                      {clients.map((client) => (
-                        <SelectItem key={client.id} value={client.id}>
-                          {client.name} - {client.rut}
-                        </SelectItem>
-                      ))}
-                      <SelectItem value="create-new" className="font-medium text-primary">
-                        <div className="flex items-center gap-2">
-                          <Plus className="h-4 w-4" />
-                          Crear nuevo cliente
-                        </div>
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="icon"
-                    onClick={() => setShowQuickCreate(true)}
-                    title="Crear nuevo cliente"
-                    disabled={disabled}
-                  >
-                    <Plus className="h-4 w-4" />
-                  </Button>
-                </div>
-                
-                {thirdPartyClientId && (
-                  <div className="p-3 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-800">
-                    <p className="text-sm text-blue-700 dark:text-blue-300">
-                      <strong>Servicio de Excedente:</strong> Se creará automáticamente un servicio EXE-0000 
-                      por {formatCurrency(excessAmount)} para el cliente seleccionado.
-                    </p>
-                  </div>
-                )}
-              </div>
-            )}
           </div>
         )}
       </CardContent>
-
-      {/* Quick Client Create Modal */}
-      <QuickClientCreateModal
-        open={showQuickCreate}
-        onOpenChange={setShowQuickCreate}
-        onClientCreated={handleClientCreated}
-      />
     </Card>
   );
 };

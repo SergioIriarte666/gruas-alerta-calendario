@@ -4,31 +4,25 @@ import { Service } from '@/types';
 
 // Función para transformar datos de Supabase a Service
 const transformToService = (data: any): Service => {
-  // Buscar operador principal - priorizar service_resources luego legacy
-  let primaryOperator = null;
+  // Buscar operador principal en service_resources
+  let primaryOperator = data.operator; // Legacy fallback
   
-  // 1. Buscar en service_resources primero
   if (data.service_resources && data.service_resources.length > 0) {
     const primaryResource = data.service_resources.find(
       (resource: any) => resource.resource_type === 'operator' && resource.is_primary
     );
     
-    if (primaryResource?.operator) {
+    if (primaryResource && primaryResource.operator) {
       primaryOperator = primaryResource.operator;
     } else {
       // Si no hay operador principal marcado, tomar el primero
       const firstOperatorResource = data.service_resources.find(
-        (resource: any) => resource.resource_type === 'operator' && resource.operator
+        (resource: any) => resource.resource_type === 'operator'
       );
-      if (firstOperatorResource?.operator) {
+      if (firstOperatorResource && firstOperatorResource.operator) {
         primaryOperator = firstOperatorResource.operator;
       }
     }
-  }
-  
-  // 2. Fallback a datos legacy si no se encontró en service_resources
-  if (!primaryOperator && data.operator) {
-    primaryOperator = data.operator;
   }
 
   return {
@@ -45,8 +39,8 @@ const transformToService = (data: any): Service => {
     destination: data.destination,
     serviceType: data.serviceType,
     value: data.value,
-    crane: data.crane, // Esta información debe venir de la query JOIN
-    operator: primaryOperator, // Usar el operador encontrado
+    crane: data.crane,
+    operator: primaryOperator,
     operatorCommission: data.operator_commission,
     status: data.status,
     observations: data.observations,
@@ -73,8 +67,7 @@ export const useServiceQueries = () => {
           .from('services')
           .select(`
             *,
-            client:clients!client_id(*),
-            third_party_client:clients!third_party_client_id(*),
+            client:clients(*),
             crane:cranes(*),
             operator:operators(*),
             serviceType:service_types(*),
@@ -96,17 +89,10 @@ export const useServiceQueries = () => {
         }
 
         console.log('✅ [QUERY] Servicios obtenidos:', data?.length || 0);
-        const transformedServices = data?.map(transformToService) || [];
-        
-        // Debug: Log services that have crane/operator info
-        const servicesWithCrane = transformedServices.filter(s => s.crane);
-        const servicesWithOperator = transformedServices.filter(s => s.operator);
-        console.log(`📊 [QUERY] Services with crane: ${servicesWithCrane.length}, with operator: ${servicesWithOperator.length}`);
-        
-        return transformedServices;
+        return data?.map(transformToService) || [];
       },
-      staleTime: 0, // Force refresh
-      refetchOnWindowFocus: true,
+      staleTime: 30000, // 30 segundos
+      refetchOnWindowFocus: false,
     });
   };
 
@@ -123,8 +109,7 @@ export const useServiceQueries = () => {
           .from('services')
           .select(`
             *,
-            client:clients!client_id(*),
-            third_party_client:clients!third_party_client_id(*),
+            client:clients(*),
             crane:cranes(*),
             operator:operators(*),
             serviceType:service_types(*),
@@ -168,7 +153,7 @@ export const useServiceQueries = () => {
           .from('services')
           .select(`
             *,
-            client:clients!client_id(*),
+            client:clients(*),
             crane:cranes(*),
             operator:operators(*),
             serviceType:service_types(*)

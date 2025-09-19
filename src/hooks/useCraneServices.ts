@@ -28,7 +28,7 @@ export const useCraneServices = (craneId: string) => {
           destination,
           value,
           status,
-          clients!client_id!inner(name, rut),
+          clients!inner(name, rut),
           operators!inner(name)
         `)
         .eq('crane_id', craneId)
