@@ -3,8 +3,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { DollarSign, TrendingUp, AlertCircle, Shield } from 'lucide-react';
+import { DollarSign, TrendingUp, AlertCircle, Shield, Calculator } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { getServiceValueBreakdown, getCompleteServiceValue } from '@/utils/serviceValueCalculations';
 
 interface EnhancedFinancialSectionProps {
   value: number;
@@ -37,37 +38,33 @@ export const EnhancedFinancialSection = ({
   isCustodyService = false,
   custodyTotalAmount = 0
 }: EnhancedFinancialSectionProps) => {
+  // Get service value breakdown for display
+  const serviceBreakdown = getServiceValueBreakdown({
+    value,
+    custody_total_amount: custodyTotalAmount,
+    custodyTotalAmount
+  });
   
   // Calculate excess amount automatically
   useEffect(() => {
     if (hasExcess && clientCoveredAmount !== undefined && onExcessAmountChange) {
-      const calculatedExcess = value - clientCoveredAmount;
+      const calculatedExcess = serviceBreakdown.totalValue - clientCoveredAmount;
       onExcessAmountChange(Math.max(0, calculatedExcess));
     }
-  }, [hasExcess, value, clientCoveredAmount, onExcessAmountChange]);
+  }, [hasExcess, serviceBreakdown.totalValue, clientCoveredAmount, onExcessAmountChange]);
 
-  // Calcular margen de ganancia
+  // Calcular margen de ganancia usando el valor total del servicio
   const calculateProfit = () => {
-    // Para servicios de custodia, usar custodyTotalAmount si value es 0
-    const effectiveValue = isCustodyService && value === 0 && custodyTotalAmount > 0 
-      ? custodyTotalAmount 
-      : value;
-    return effectiveValue - totalCommissions - totalCosts;
+    return serviceBreakdown.totalValue - totalCommissions - totalCosts;
   };
 
   const calculateProfitMargin = () => {
-    const effectiveValue = isCustodyService && value === 0 && custodyTotalAmount > 0 
-      ? custodyTotalAmount 
-      : value;
-    if (effectiveValue === 0) return 0;
-    return ((calculateProfit() / effectiveValue) * 100);
+    if (serviceBreakdown.totalValue === 0) return 0;
+    return ((calculateProfit() / serviceBreakdown.totalValue) * 100);
   };
 
   const profit = calculateProfit();
   const profitMargin = calculateProfitMargin();
-  const effectiveValue = isCustodyService && value === 0 && custodyTotalAmount > 0 
-    ? custodyTotalAmount 
-    : value;
 
   return (
     <Card>
@@ -79,34 +76,84 @@ export const EnhancedFinancialSection = ({
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
-        {/* Valor del Servicio - Condicional para custodia */}
-        <div className="space-y-2">
-          <Label htmlFor="value">
-            Valor del Servicio (CLP) 
-            {!isCustodyService && <span className="text-red-500"> *</span>}
-            {isCustodyService && (
-              <span className="text-muted-foreground text-sm"> (Opcional para custodia)</span>
-            )}
-          </Label>
-          <Input
-            id="value"
-            type="number"
-            value={value}
-            onChange={(e) => onValueChange(Number(e.target.value))}
-            placeholder={isCustodyService ? "0 (opcional)" : "150000"}
-            required={!isCustodyService}
-            disabled={disabled}
-            className="text-lg font-semibold"
-          />
-          {isCustodyService && custodyTotalAmount > 0 && (
-            <div className="flex items-center gap-2 p-2 bg-blue-50 rounded-md">
-              <Shield className="h-4 w-4 text-blue-600" />
-              <p className="text-sm text-blue-700">
-                Valor de custodia: <span className="font-semibold">${custodyTotalAmount.toLocaleString('es-CL')}</span>
-              </p>
+        {/* Valor total del servicio - Mostrar desglose cuando hay ambos valores */}
+        {serviceBreakdown.hasBothValues ? (
+          <div className="space-y-4">
+            {/* Valor base del servicio */}
+            <div className="space-y-2">
+              <Label htmlFor="value">
+                Valor Base del Servicio (CLP) <span className="text-red-500">*</span>
+              </Label>
+              <Input
+                id="value"
+                type="number"
+                value={value}
+                onChange={(e) => onValueChange(Number(e.target.value))}
+                placeholder="25000"
+                required
+                disabled={disabled}
+                className="text-lg font-semibold"
+              />
             </div>
-          )}
-        </div>
+
+            {/* Mostrar desglose de valores */}
+            <div className="p-4 bg-gradient-to-r from-blue-50 to-green-50 border border-blue-200 rounded-lg">
+              <div className="flex items-center gap-2 mb-3">
+                <Calculator className="h-5 w-5 text-blue-600" />
+                <Label className="text-lg font-semibold text-blue-800">Desglose del Valor Total</Label>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
+                <div className="p-3 bg-white rounded-md border">
+                  <Label className="text-sm text-muted-foreground block mb-1">Valor Base</Label>
+                  <div className="text-xl font-bold text-blue-600">
+                    ${serviceBreakdown.baseValue.toLocaleString('es-CL')}
+                  </div>
+                </div>
+                <div className="p-3 bg-white rounded-md border">
+                  <Label className="text-sm text-muted-foreground block mb-1">Custodia</Label>
+                  <div className="text-xl font-bold text-green-600">
+                    ${serviceBreakdown.custodyValue.toLocaleString('es-CL')}
+                  </div>
+                </div>
+                <div className="p-3 bg-gradient-to-r from-blue-100 to-green-100 rounded-md border-2 border-primary">
+                  <Label className="text-sm text-primary font-medium block mb-1">TOTAL</Label>
+                  <div className="text-2xl font-bold text-primary">
+                    ${serviceBreakdown.totalValue.toLocaleString('es-CL')}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : (
+          /* Valor único del servicio - mostrar input normal */
+          <div className="space-y-2">
+            <Label htmlFor="value">
+              Valor del Servicio (CLP) 
+              {!isCustodyService && <span className="text-red-500"> *</span>}
+              {isCustodyService && (
+                <span className="text-muted-foreground text-sm"> (Opcional para custodia)</span>
+              )}
+            </Label>
+            <Input
+              id="value"
+              type="number"
+              value={value}
+              onChange={(e) => onValueChange(Number(e.target.value))}
+              placeholder={isCustodyService ? "0 (opcional)" : "150000"}
+              required={!isCustodyService}
+              disabled={disabled}
+              className="text-lg font-semibold"
+            />
+            {isCustodyService && custodyTotalAmount > 0 && (
+              <div className="flex items-center gap-2 p-2 bg-blue-50 rounded-md">
+                <Shield className="h-4 w-4 text-blue-600" />
+                <p className="text-sm text-blue-700">
+                  Valor de custodia: <span className="font-semibold">${custodyTotalAmount.toLocaleString('es-CL')}</span>
+                </p>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Resumen de costos */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-gray-50 rounded-lg">
@@ -130,22 +177,6 @@ export const EnhancedFinancialSection = ({
           </div>
         </div>
 
-        {/* Valor efectivo para custodia */}
-        {isCustodyService && custodyTotalAmount > 0 && value !== custodyTotalAmount && (
-          <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
-            <div className="flex items-center gap-2 mb-2">
-              <Shield className="h-4 w-4 text-blue-600" />
-              <Label className="text-sm font-medium text-blue-800">Valor Efectivo del Servicio</Label>
-            </div>
-            <div className="text-xl font-bold text-blue-700">
-              ${effectiveValue.toLocaleString('es-CL')}
-            </div>
-            <p className="text-xs text-blue-600 mt-1">
-              {value === 0 ? 'Usando valor de custodia' : 'Valor del servicio + custodia'}
-            </p>
-          </div>
-        )}
-
         {/* Margen de ganancia */}
         <div className="flex items-center gap-4 p-3 bg-blue-50 rounded-lg">
           <TrendingUp className="h-5 w-5 text-blue-600" />
@@ -155,10 +186,16 @@ export const EnhancedFinancialSection = ({
               {profitMargin.toFixed(1)}%
             </div>
           </div>
+          <div className="ml-auto text-right">
+            <Label className="text-sm text-muted-foreground">Valor Total Servicio</Label>
+            <div className="text-lg font-bold text-primary">
+              ${serviceBreakdown.totalValue.toLocaleString('es-CL')}
+            </div>
+          </div>
         </div>
 
         {/* Alerta de margen bajo */}
-        {profitMargin < 10 && effectiveValue > 0 && (
+        {profitMargin < 10 && serviceBreakdown.totalValue > 0 && (
           <Alert className="border-yellow-500 bg-yellow-50">
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>
@@ -173,8 +210,12 @@ export const EnhancedFinancialSection = ({
           <Alert className="border-blue-500 bg-blue-50">
             <Shield className="h-4 w-4" />
             <AlertDescription>
-              <strong>Servicio de Custodia:</strong> Los cálculos financieros consideran el valor de custodia 
-              {value > 0 ? ' además del valor base del servicio' : ' como valor principal'}.
+              <strong>Servicio de Custodia:</strong> {serviceBreakdown.hasBothValues 
+                ? 'Los cálculos financieros consideran el valor total (base + custodia).'
+                : value > 0 
+                  ? 'Los cálculos consideran el valor base del servicio más el valor de custodia.'
+                  : 'Los cálculos consideran únicamente el valor de custodia.'
+              }
             </AlertDescription>
           </Alert>
         )}
@@ -204,7 +245,7 @@ export const EnhancedFinancialSection = ({
                 value={clientCoveredAmount}
                 onChange={(e) => onClientCoveredAmountChange?.(Number(e.target.value))}
                 placeholder="100000"
-                max={effectiveValue}
+                max={serviceBreakdown.totalValue}
                 disabled={disabled}
               />
             </div>

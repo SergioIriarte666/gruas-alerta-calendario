@@ -28,7 +28,7 @@ import { useServiceDetailsForView } from '@/hooks/useServiceDetailsGlobal';
 import { shouldShowVehicleInfo, formatVehicleInfo, getServiceStatusBadge, formatCurrency } from '@/utils/statusHelpers';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { getServiceValueForClosure, getDisplayServiceValue, isCustodyService, getCustodyInfo, isEquipmentRentalService } from '@/utils/serviceValueCalculations';
+import { getServiceValueForClosure, getDisplayServiceValue, getServiceValueBreakdown, isCustodyService, getCustodyInfo, isEquipmentRentalService } from '@/utils/serviceValueCalculations';
 import { formatForDisplay, formatForDisplayWithTime } from '@/utils/timezoneUtils';
 
 interface ServiceDetailsModalProps {
@@ -195,6 +195,9 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose }: ServiceDetails
   // Usar getDisplayServiceValue para mostrar el valor total real del servicio
   const displayServiceValue = getDisplayServiceValue(serviceData);
   
+  // Obtener desglose de valores
+  const serviceBreakdown = getServiceValueBreakdown(serviceData);
+  
   // Para cálculos de ganancia neta, usar getServiceValueForClosure (valor facturable)
   const closureValue = getServiceValueForClosure(serviceData);
   const netProfit = closureValue - totalCosts;
@@ -331,12 +334,36 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose }: ServiceDetails
                   </DetailSection>
                     <Separator className="border-border"/>
                     <DetailSection title="Finanzas" icon={DollarSign}>
-                        <DetailItem 
-                          icon={DollarSign} 
-                          label={isCustody ? "Valor Total Servicio" : serviceData.hasExcess ? "Valor Total del Servicio" : "Valor del Servicio"} 
-                          value={formatCurrency(displayServiceValue)} 
-                          valueClass="text-lg text-tms-green font-bold" 
-                        />
+                        {/* Mostrar desglose si hay tanto valor base como custodia */}
+                        {serviceBreakdown.hasBothValues ? (
+                          <>
+                            <DetailItem 
+                              icon={DollarSign} 
+                              label="Valor Base del Servicio" 
+                              value={formatCurrency(serviceBreakdown.baseValue)} 
+                              valueClass="text-md text-blue-600 font-medium" 
+                            />
+                            <DetailItem 
+                              icon={Shield} 
+                              label="Valor de Custodia" 
+                              value={formatCurrency(serviceBreakdown.custodyValue)} 
+                              valueClass="text-md text-green-600 font-medium" 
+                            />
+                            <DetailItem 
+                              icon={DollarSign} 
+                              label="Valor Total del Servicio" 
+                              value={formatCurrency(displayServiceValue)} 
+                              valueClass="text-lg text-tms-green font-bold border-t border-border pt-2" 
+                            />
+                          </>
+                        ) : (
+                          <DetailItem 
+                            icon={DollarSign} 
+                            label={isCustody ? "Valor Total Servicio" : serviceData.hasExcess ? "Valor Total del Servicio" : "Valor del Servicio"} 
+                            value={formatCurrency(displayServiceValue)} 
+                            valueClass="text-lg text-tms-green font-bold" 
+                          />
+                        )}
                         {serviceData.hasExcess && serviceData.clientCoveredAmount && (
                           <>
                             <DetailItem 

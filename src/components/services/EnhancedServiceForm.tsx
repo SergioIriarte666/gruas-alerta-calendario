@@ -29,6 +29,7 @@ import { Truck, FileText, Shield } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { getCurrentChileDateString } from '@/utils/timezoneUtils';
+import { isCustodyService } from '@/utils/serviceValueCalculations';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -298,16 +299,9 @@ export const EnhancedServiceForm = ({
     }
   }, [formData.custodyStartDate, formData.custodyEndDate, formData.custodyDailyRate, formData.custodyRateType, formData.custodyDiscountPercentage, formData.custodyMode]);
 
-  // Sync custody total amount with main service value for rental equipment
-  useEffect(() => {
-    if (formData.custodyTotalAmount && formData.custodyTotalAmount > 0) {
-      // Update main service value to match custody total for rental services
-      setFormData(prev => ({ 
-        ...prev, 
-        value: formData.custodyTotalAmount 
-      }));
-    }
-  }, [formData.custodyTotalAmount]);
+  // Note: We keep custody total separate from base service value
+  // The total service value is calculated in utils/serviceValueCalculations.ts
+  // by summing base value + custody when both exist
 
   // Auto-calculate service value for product sales
   useEffect(() => {
@@ -653,6 +647,8 @@ export const EnhancedServiceForm = ({
           excessAmount={formData.excessAmount}
           onExcessAmountChange={(value) => setFormData(prev => ({ ...prev, excessAmount: value }))}
           disabled={false}
+          isCustodyService={isCustodyService(formData)}
+          custodyTotalAmount={formData.custodyTotalAmount || 0}
         />
 
         {/* Toggle para habilitar Custodia/Arriendo */}

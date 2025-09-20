@@ -11,12 +11,55 @@ export const isEquipmentRentalService = (service: any): boolean => {
 };
 
 /**
+ * Gets the base service value (excluding custody calculations)
+ * @param service - Service object (supports both naming conventions)
+ * @returns The base service value
+ */
+export const getBaseServiceValue = (service: any): number => {
+  if (!service) return 0;
+  return service.value || 0;
+};
+
+/**
+ * Gets the custody total amount
+ * @param service - Service object (supports both naming conventions) 
+ * @returns The custody total amount
+ */
+export const getCustodyTotalAmount = (service: any): number => {
+  if (!service) return 0;
+  return service.custody_total_amount || service.custodyTotalAmount || 0;
+};
+
+/**
+ * Calculates the complete service value (base + custody when both exist)
+ * This is the TOTAL value of the service including all components.
+ * 
+ * @param service - Service object (supports both naming conventions)
+ * @returns The complete service value (base + custody)
+ */
+export const getCompleteServiceValue = (service: any): number => {
+  if (!service) {
+    console.warn('⚠️ getCompleteServiceValue: service is null or undefined');
+    return 0;
+  }
+
+  const baseValue = getBaseServiceValue(service);
+  const custodyValue = getCustodyTotalAmount(service);
+  
+  // If both exist, sum them. Otherwise return whichever exists.
+  if (baseValue > 0 && custodyValue > 0) {
+    return baseValue + custodyValue;
+  }
+  
+  return baseValue || custodyValue;
+};
+
+/**
  * Calculates the value that should be used for closure calculations.
  * 
  * BUSINESS LOGIC PRIORITY:
- * 1. custody_total_amount: For custody services, use only the custody total
- * 2. client_covered_amount: For excess services with client coverage, use the covered amount
- * 3. service.value: For regular services, use the base service value
+ * 1. client_covered_amount: For excess services with client coverage, use the covered amount
+ * 2. Complete service value: For regular services, use base + custody total
  * 
  * IMPORTANT: This function handles both camelCase and snake_case field names for compatibility
  * between different data sources (database vs transformed objects).
@@ -30,14 +73,8 @@ export const getServiceValueForClosure = (service: any): number => {
     console.warn('⚠️ getServiceValueForClosure: service is null or undefined');
     return 0;
   }
-
-  // Priority 1: Custody service total amount (support both camelCase and snake_case)
-  const custodyTotal = service.custody_total_amount || service.custodyTotalAmount;
-  if (custodyTotal && custodyTotal > 0) {
-    return custodyTotal;
-  }
   
-  // Priority 2: Client covered amount for excess services
+  // Priority 1: Client covered amount for excess services
   // Check both naming conventions and ensure null values are preserved
   const clientCovered = service.clientCoveredAmount !== undefined 
     ? service.clientCoveredAmount 
@@ -50,9 +87,8 @@ export const getServiceValueForClosure = (service: any): number => {
     return clientCovered;
   }
   
-  // Priority 3: Regular service value
-  const baseValue = service.value || 0;
-  return baseValue;
+  // Priority 2: Complete service value (base + custody)
+  return getCompleteServiceValue(service);
 };
 
 /**
@@ -73,31 +109,13 @@ export const getCustodyInfo = (service: any) => {
 
 /**
  * Calculates the display value that should be shown in modals and reports.
- * Always returns the real/total service value, not adjusted for closure calculations.
- * 
- * DISPLAY LOGIC PRIORITY:
- * 1. custody_total_amount: For custody services, use the custody total
- * 2. service.value: For all other services (including excess), use the base service value
+ * Always returns the complete/total service value (base + custody).
  * 
  * @param service - Service object (supports both naming conventions)
  * @returns The total service value for display purposes
  */
 export const getDisplayServiceValue = (service: any): number => {
-  // Input validation
-  if (!service) {
-    console.warn('⚠️ getDisplayServiceValue: service is null or undefined');
-    return 0;
-  }
-
-  // Priority 1: Custody service total amount (support both camelCase and snake_case)
-  const custodyTotal = service.custody_total_amount || service.custodyTotalAmount;
-  if (custodyTotal && custodyTotal > 0) {
-    return custodyTotal;
-  }
-  
-  // Priority 2: Regular service value (for all non-custody services, including excess)
-  const baseValue = service.value || 0;
-  return baseValue;
+  return getCompleteServiceValue(service);
 };
 
 /**
@@ -114,4 +132,26 @@ export const calculateClosureTotal = (services: Service[]): number => {
     }
     return sum + getServiceValueForClosure(service);
   }, 0);
+};
+
+/**
+ * Gets a breakdown of service values for display purposes
+ * @param service - Service object
+ * @returns Object with base, custody, and total values
+ */
+export const getServiceValueBreakdown = (service: any) => {
+  if (!service) {
+    return { baseValue: 0, custodyValue: 0, totalValue: 0 };
+  }
+
+  const baseValue = getBaseServiceValue(service);
+  const custodyValue = getCustodyTotalAmount(service);
+  const totalValue = getCompleteServiceValue(service);
+
+  return {
+    baseValue,
+    custodyValue,
+    totalValue,
+    hasBothValues: baseValue > 0 && custodyValue > 0
+  };
 };
