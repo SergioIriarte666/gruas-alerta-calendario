@@ -216,24 +216,21 @@ const fetchDailyReportData = async (selectedDate: string): Promise<DailyReportDa
   console.log('- Total due week:', supplierTotalDueWeek);
   
   // Get services ready for invoicing (services completed but not yet invoiced)
+  console.log('Fetching services ready for invoicing...');
   const invoicesToIssueRes = await supabase
     .from('services')
     .select(`
-      id, folio, value, service_date,
-      client:clients!services_client_id_fkey(name)
+      id, folio, value, service_date, client_id,
+      clients!inner(id, name)
     `)
     .eq('status', 'completed')
     .lte('service_date', dateForDB);
 
-  // Filter out services that are already in invoices
-  const servicesToInvoice = (invoicesToIssueRes.data || []).filter(async service => {
-    const { data: existsInInvoice } = await supabase
-      .from('invoice_services')
-      .select('service_id')
-      .eq('service_id', service.id)
-      .single();
-    return !existsInInvoice;
-  });
+  console.log('Services query result:', invoicesToIssueRes.data?.length, 'services found');
+
+  if (invoicesToIssueRes.error) {
+    console.error('Error fetching services for invoicing:', invoicesToIssueRes.error);
+  }
 
   // Wait for all async filters to complete
   const filteredServices = [];
@@ -244,9 +241,19 @@ const fetchDailyReportData = async (selectedDate: string): Promise<DailyReportDa
       .eq('service_id', service.id)
       .maybeSingle();
     if (!existsInInvoice) {
-      filteredServices.push(service);
+      // Ensure client data is properly structured
+      const serviceWithClient = {
+        ...service,
+        client: service.clients ? {
+          id: service.clients.id,
+          name: service.clients.name
+        } : null
+      };
+      filteredServices.push(serviceWithClient);
     }
   }
+
+  console.log('Final filtered services with client data:', filteredServices.length, filteredServices);
 
   // Process cranes and generate detailed alerts
   const cranes = cranesRes.data || [];
