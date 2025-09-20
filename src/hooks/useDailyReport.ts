@@ -215,11 +215,38 @@ const fetchDailyReportData = async (selectedDate: string): Promise<DailyReportDa
   console.log('- Total overdue:', supplierTotalOverdue);
   console.log('- Total due week:', supplierTotalDueWeek);
   
-  // Get services ready for invoicing
-  const invoicesToIssueRes = await supabase.from('services').select(`
-    id, folio, value, service_date,
-    client:clients!services_client_id_fkey(name)
-  `).eq('status', 'completed').is('invoice_id', null).lte('service_date', dateForDB);
+  // Get services ready for invoicing (services completed but not yet invoiced)
+  const invoicesToIssueRes = await supabase
+    .from('services')
+    .select(`
+      id, folio, value, service_date,
+      client:clients!services_client_id_fkey(name)
+    `)
+    .eq('status', 'completed')
+    .lte('service_date', dateForDB);
+
+  // Filter out services that are already in invoices
+  const servicesToInvoice = (invoicesToIssueRes.data || []).filter(async service => {
+    const { data: existsInInvoice } = await supabase
+      .from('invoice_services')
+      .select('service_id')
+      .eq('service_id', service.id)
+      .single();
+    return !existsInInvoice;
+  });
+
+  // Wait for all async filters to complete
+  const filteredServices = [];
+  for (const service of invoicesToIssueRes.data || []) {
+    const { data: existsInInvoice } = await supabase
+      .from('invoice_services')
+      .select('service_id')
+      .eq('service_id', service.id)
+      .maybeSingle();
+    if (!existsInInvoice) {
+      filteredServices.push(service);
+    }
+  }
 
   // Process cranes and generate detailed alerts
   const cranes = cranesRes.data || [];
@@ -303,7 +330,7 @@ const fetchDailyReportData = async (selectedDate: string): Promise<DailyReportDa
       paymentsToMake: paymentsToday,
       paymentsWeek: paymentsWeek,
       paymentsPending: payments.filter(p => p.status === 'pending'),
-      invoicesToIssue: invoicesToIssueRes.data || [],
+      invoicesToIssue: filteredServices,
       supplierPayments: {
         dueToday: supplierPaymentsDueToday,
         overdue: supplierPaymentsOverdue,
