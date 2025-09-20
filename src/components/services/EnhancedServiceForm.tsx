@@ -355,11 +355,7 @@ export const EnhancedServiceForm = ({
         ...formData,
         folio,
         operators: formData.operators || [],
-        costDetails: formData.costDetails || [],
-        // Ensure value is set from custodyTotalAmount for rental services
-        value: formData.custodyTotalAmount && formData.custodyTotalAmount > 0 
-          ? formData.custodyTotalAmount 
-          : formData.value
+        costDetails: formData.costDetails || []
       };
 
       console.log('📤 Final data prepared:', finalData);
