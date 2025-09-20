@@ -4,16 +4,25 @@ import { Service } from '@/types';
 
 // Función para transformar datos de Supabase a Service
 const transformToService = (data: any): Service => {
-  // Buscar operador principal en service_resources
-  let primaryOperator = data.operator; // Legacy fallback
+  console.log('🔄 [TRANSFORM] Transforming service data:', {
+    folio: data.folio,
+    crane: data.crane,
+    operator: data.operator,
+    service_resources: data.service_resources
+  });
+
+  // Buscar operador principal en service_resources primero
+  let primaryOperator = null;
+  let primaryCrane = null;
   
   if (data.service_resources && data.service_resources.length > 0) {
-    const primaryResource = data.service_resources.find(
+    // Buscar operador principal
+    const primaryOperatorResource = data.service_resources.find(
       (resource: any) => resource.resource_type === 'operator' && resource.is_primary
     );
     
-    if (primaryResource && primaryResource.operator) {
-      primaryOperator = primaryResource.operator;
+    if (primaryOperatorResource && primaryOperatorResource.operator) {
+      primaryOperator = primaryOperatorResource.operator;
     } else {
       // Si no hay operador principal marcado, tomar el primero
       const firstOperatorResource = data.service_resources.find(
@@ -23,7 +32,34 @@ const transformToService = (data: any): Service => {
         primaryOperator = firstOperatorResource.operator;
       }
     }
+
+    // Buscar grúa principal
+    const primaryCraneResource = data.service_resources.find(
+      (resource: any) => resource.resource_type === 'crane' && resource.is_primary
+    );
+    
+    if (primaryCraneResource && primaryCraneResource.crane) {
+      primaryCrane = primaryCraneResource.crane;
+    } else {
+      // Si no hay grúa principal marcada, tomar la primera
+      const firstCraneResource = data.service_resources.find(
+        (resource: any) => resource.resource_type === 'crane'
+      );
+      if (firstCraneResource && firstCraneResource.crane) {
+        primaryCrane = firstCraneResource.crane;
+      }
+    }
   }
+
+  // Fallback a los campos legacy si no se encontró en service_resources
+  const finalOperator = primaryOperator || data.operator;
+  const finalCrane = primaryCrane || data.crane;
+
+  console.log('✅ [TRANSFORM] Final values:', {
+    folio: data.folio,
+    finalCrane: finalCrane?.licensePlate,
+    finalOperator: finalOperator?.name
+  });
 
   return {
     id: data.id,
@@ -39,8 +75,8 @@ const transformToService = (data: any): Service => {
     destination: data.destination,
     serviceType: data.serviceType,
     value: data.value,
-    crane: data.crane,
-    operator: primaryOperator,
+    crane: finalCrane,
+    operator: finalOperator,
     operatorCommission: data.operator_commission,
     status: data.status,
     observations: data.observations,
@@ -67,7 +103,8 @@ export const useServiceQueries = () => {
           .from('services')
           .select(`
             *,
-            client:clients(*),
+            client:clients!services_client_id_fkey(*),
+            third_party_client:clients!services_third_party_client_id_fkey(*),
             crane:cranes(*),
             operator:operators(*),
             serviceType:service_types(*),
@@ -78,7 +115,8 @@ export const useServiceQueries = () => {
               crane_id,
               is_primary,
               commission_amount,
-              operator:operators(*)
+              operator:operators(*),
+              crane:cranes(*)
             )
           `)
           .order('created_at', { ascending: false });
@@ -109,7 +147,8 @@ export const useServiceQueries = () => {
           .from('services')
           .select(`
             *,
-            client:clients(*),
+            client:clients!services_client_id_fkey(*),
+            third_party_client:clients!services_third_party_client_id_fkey(*),
             crane:cranes(*),
             operator:operators(*),
             serviceType:service_types(*),
@@ -120,7 +159,8 @@ export const useServiceQueries = () => {
               crane_id,
               is_primary,
               commission_amount,
-              operator:operators(*)
+              operator:operators(*),
+              crane:cranes(*)
             )
           `)
           .eq('id', id)
@@ -153,7 +193,8 @@ export const useServiceQueries = () => {
           .from('services')
           .select(`
             *,
-            client:clients(*),
+            client:clients!services_client_id_fkey(*),
+            third_party_client:clients!services_third_party_client_id_fkey(*),
             crane:cranes(*),
             operator:operators(*),
             serviceType:service_types(*)
