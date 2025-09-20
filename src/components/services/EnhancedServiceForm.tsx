@@ -24,6 +24,7 @@ import { useUser } from '@/contexts/UserContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
 import { Truck, FileText, Shield } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -59,6 +60,7 @@ export const EnhancedServiceForm = ({
 
   const [folio, setFolio] = useState(service?.folio || '');
   const [isManualFolio, setIsManualFolio] = useState(false);
+  const [enableCustody, setEnableCustody] = useState(false);
   const [formData, setFormData] = useState({
     requestDate: service?.requestDate || getCurrentChileDateString(),
     serviceDate: service?.serviceDate || getCurrentChileDateString(),
@@ -327,6 +329,16 @@ export const EnhancedServiceForm = ({
       }));
     }
   }, [selectedServiceType?.name, formData.custodyMode]);
+
+  // Auto-enable custody toggle for specific service types and existing services
+  useEffect(() => {
+    const shouldEnableCustody = 
+      selectedServiceType?.name === 'Arriendo de Equipos' || 
+      selectedServiceType?.name === 'Custodia de Vehículos ' ||
+      (service && formData.custodyMode !== 'none'); // Enable for existing services with custody
+    
+    setEnableCustody(shouldEnableCustody);
+  }, [selectedServiceType?.name, service, formData.custodyMode]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -643,8 +655,42 @@ export const EnhancedServiceForm = ({
           disabled={false}
         />
 
+        {/* Toggle para habilitar Custodia/Arriendo */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Shield className="h-5 w-5" />
+              Configuración Adicional
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label className="text-base">
+                  Habilitar Custodia/Arriendo
+                </Label>
+                <div className="text-sm text-muted-foreground">
+                  Activar para incluir servicios de custodia o arriendo de equipos
+                </div>
+              </div>
+              <Switch
+                checked={enableCustody || selectedServiceType?.name === 'Arriendo de Equipos' || selectedServiceType?.name === 'Custodia de Vehículos '}
+                onCheckedChange={(checked) => {
+                  setEnableCustody(checked);
+                  if (checked && formData.custodyMode === 'none') {
+                    setFormData(prev => ({ ...prev, custodyMode: 'manual' }));
+                  } else if (!checked && formData.custodyMode !== 'none' && selectedServiceType?.name !== 'Arriendo de Equipos' && selectedServiceType?.name !== 'Custodia de Vehículos ') {
+                    setFormData(prev => ({ ...prev, custodyMode: 'none' }));
+                  }
+                }}
+                disabled={selectedServiceType?.name === 'Arriendo de Equipos' || selectedServiceType?.name === 'Custodia de Vehículos '}
+              />
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Custodia/Arriendo de Equipos */}
-        {(formData.custodyMode !== 'none' || selectedServiceType?.name === 'Arriendo de Equipos' || selectedServiceType?.name === 'Custodia de Vehículos ') && (
+        {(enableCustody || formData.custodyMode !== 'none' || selectedServiceType?.name === 'Arriendo de Equipos' || selectedServiceType?.name === 'Custodia de Vehículos ') && (
           <CustodySection 
             serviceTypeName={selectedServiceType?.name}
             custodyMode={formData.custodyMode}
