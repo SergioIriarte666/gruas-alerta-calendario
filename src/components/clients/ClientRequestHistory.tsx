@@ -137,9 +137,16 @@ export const ClientRequestHistory = ({ client }: { client: Client }) => {
                       <div className="text-sm text-muted-foreground">
                         Servicio: {formatForDisplay(parseFromDatabase(request.serviceDate))}
                       </div>
-                      <div className="text-xs text-muted-foreground">
-                        Grúa: {request.crane.licensePlate}
-                      </div>
+                      {request.crane && (
+                        <div className="text-xs text-muted-foreground">
+                          Grúa: {request.crane.licensePlate}
+                        </div>
+                      )}
+                      {request.operator && (
+                        <div className="text-xs text-muted-foreground">
+                          Operador: {request.operator.name}
+                        </div>
+                      )}
                     </div>
                   </div>
                   {request.observations && (

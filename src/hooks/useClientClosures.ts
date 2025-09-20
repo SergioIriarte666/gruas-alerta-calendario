@@ -10,6 +10,8 @@ export const useClientClosures = (clientId: string | null) => {
   const fetchClosuresByClient = useCallback(async (id: string) => {
     setLoading(true);
     try {
+      console.log('Fetching closures for client ID:', id);
+      
       const { data, error } = await supabase
         .from('service_closures')
         .select(`
@@ -24,9 +26,14 @@ export const useClientClosures = (clientId: string | null) => {
         .eq('client_id', id)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error fetching client closures:', error);
+        throw new Error(`Error en consulta: ${error.message}`);
+      }
+
+      console.log('Client closures fetched:', data?.length || 0, 'for client:', id);
       
-      const formattedClosures: ServiceClosure[] = data.map(closure => ({
+      const formattedClosures: ServiceClosure[] = (data || []).map(closure => ({
         id: closure.id,
         folio: closure.folio,
         serviceIds: closure.closure_services?.map((cs: any) => cs.service_id) || [],

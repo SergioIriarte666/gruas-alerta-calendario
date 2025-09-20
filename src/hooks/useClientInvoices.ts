@@ -11,15 +11,22 @@ export const useClientInvoices = (clientId: string | null) => {
     const fetchInvoicesByClient = useCallback(async (id: string) => {
         setLoading(true);
         try {
+            console.log('Fetching invoices for client ID:', id);
+            
             const { data, error } = await supabase
                 .from('invoices')
                 .select(`*, invoice_services(service_id)`)
                 .eq('client_id', id)
                 .order('issue_date', { ascending: false });
 
-            if (error) throw error;
+            if (error) {
+                console.error('Supabase error fetching client invoices:', error);
+                throw new Error(`Error en consulta: ${error.message}`);
+            }
+
+            console.log('Client invoices fetched:', data?.length || 0, 'for client:', id);
             
-            const formattedInvoices = data.map(formatInvoiceData);
+            const formattedInvoices = (data || []).map(formatInvoiceData);
             setInvoices(formattedInvoices);
         } catch (error: any) {
             console.error('Error fetching client invoices:', error);
