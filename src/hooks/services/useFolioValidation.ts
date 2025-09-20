@@ -45,7 +45,7 @@ export const useFolioValidation = () => {
           id,
           folio,
           created_at,
-          clients!inner(name)
+          clients!services_client_id_fkey(name)
         `)
         .eq('folio', folio);
 
