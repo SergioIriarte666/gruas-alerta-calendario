@@ -17,7 +17,7 @@ const fetchDashboardData = async () => {
       id,
       folio,
       service_date,
-      client:clients(id, name),
+      client:clients!services_client_id_fkey(id, name),
       vehicle_brand,
       vehicle_model,
       license_plate,

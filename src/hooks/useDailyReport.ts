@@ -78,7 +78,7 @@ const fetchDailyReportData = async (selectedDate: string): Promise<DailyReportDa
     // Servicios - incluir semana actual y próxima
     supabase.from('services').select(`
       id, folio, service_date, status, value,
-      client:clients(id, name),
+      client:clients!services_client_id_fkey(id, name),
       operator:operators(id, name),
       crane:cranes(id, brand, model),
       service_type:service_types(name)
@@ -218,7 +218,7 @@ const fetchDailyReportData = async (selectedDate: string): Promise<DailyReportDa
   // Get services ready for invoicing
   const invoicesToIssueRes = await supabase.from('services').select(`
     id, folio, value, service_date,
-    client:clients(name)
+    client:clients!services_client_id_fkey(name)
   `).eq('status', 'completed').is('invoice_id', null).lte('service_date', dateForDB);
 
   // Process cranes and generate detailed alerts

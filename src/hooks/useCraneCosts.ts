@@ -13,7 +13,7 @@ export const useCraneCosts = (craneId: string) => {
           *,
           cost_categories (*),
           operators (*),
-          services (*, clients(*))
+          services (*, clients!services_client_id_fkey(*))
         `)
         .eq('crane_id', craneId)
         .order('date', { ascending: false });

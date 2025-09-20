@@ -13,7 +13,7 @@ const fetchCosts = async (): Promise<Cost[]> => {
       cost_categories (*),
       cranes (*),
       operators (*),
-      services (*, clients(*)),
+      services (*, clients!services_client_id_fkey(*)),
       crane_parts (
         part_name,
         supplier,
