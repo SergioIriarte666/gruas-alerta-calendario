@@ -191,10 +191,23 @@ const fetchDailyReportData = async (selectedDate: string): Promise<DailyReportDa
   const supplierPayments = supplierPaymentsRes.data || [];
   
   console.log('🔍 SUPPLIER PAYMENTS DEBUG:');
-  console.log('- Raw supplier payments:', supplierPayments);
+  console.log('- Raw supplier payments:', JSON.stringify(supplierPayments, null, 2));
+  console.log('- Supplier payments error:', supplierPaymentsRes.error);
   console.log('- Selected date (dateForDB):', dateForDB);
   console.log('- Current date:', currentDate);
   console.log('- Supplier payments length:', supplierPayments.length);
+  
+  // Log each supplier payment individually
+  supplierPayments.forEach((sp, index) => {
+    console.log(`Payment ${index}:`, {
+      id: sp.id,
+      supplier_id: sp.supplier_id,
+      suppliers: sp.suppliers,
+      description: sp.description,
+      amount: sp.amount,
+      due_date: sp.due_date
+    });
+  });
   
   const supplierPaymentsDueToday = supplierPayments.filter(sp => sp.due_date === dateForDB);
   const supplierPaymentsOverdue = supplierPayments.filter(sp => new Date(sp.due_date) < currentDate);

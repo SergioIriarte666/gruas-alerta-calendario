@@ -106,7 +106,7 @@ const PaymentCard: React.FC<{
             </div>
             <div className="flex items-center gap-1">
               <DollarSign className="w-4 h-4" />
-              {payment.category}
+              {payment.category && payment.category.length < 50 && !payment.category.includes('-') ? payment.category : 'Sin categoría'}
             </div>
           </div>
         </div>
