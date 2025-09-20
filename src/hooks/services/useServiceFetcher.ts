@@ -100,16 +100,16 @@ export const useServiceFetcher = () => {
 
   const enrichServicesData = async (services: any[]) => {
     try {
-      const clientIds = [...new Set(services.map(s => s.client_id))];
-      const craneIds = [...new Set(services.map(s => s.crane_id))];
-      const operatorIds = [...new Set(services.map(s => s.operator_id))];
-      const serviceTypeIds = [...new Set(services.map(s => s.service_type_id))];
+      const clientIds = [...new Set(services.map(s => s.client_id).filter(id => id !== null))];
+      const craneIds = [...new Set(services.map(s => s.crane_id).filter(id => id !== null))];
+      const operatorIds = [...new Set(services.map(s => s.operator_id).filter(id => id !== null))];
+      const serviceTypeIds = [...new Set(services.map(s => s.service_type_id).filter(id => id !== null))];
 
       const [clientsResult, cranesResult, operatorsResult, serviceTypesResult] = await Promise.all([
-        supabase.from('clients').select('id, name, rut, phone, email, address, department, is_active, created_at, updated_at').in('id', clientIds),
-        supabase.from('cranes').select('*').in('id', craneIds),
-        supabase.from('operators').select('*').in('id', operatorIds),
-        supabase.from('service_types').select('*').in('id', serviceTypeIds)
+        clientIds.length > 0 ? supabase.from('clients').select('id, name, rut, phone, email, address, department, is_active, created_at, updated_at').in('id', clientIds) : { data: [] },
+        craneIds.length > 0 ? supabase.from('cranes').select('*').in('id', craneIds) : { data: [] },
+        operatorIds.length > 0 ? supabase.from('operators').select('*').in('id', operatorIds) : { data: [] },
+        serviceTypeIds.length > 0 ? supabase.from('service_types').select('*').in('id', serviceTypeIds) : { data: [] }
       ]);
 
       return services.map(service => ({
