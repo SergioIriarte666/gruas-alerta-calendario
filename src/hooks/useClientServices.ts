@@ -11,11 +11,13 @@ export const useClientServices = (clientId: string | null) => {
     const fetchServicesByClient = useCallback(async (id: string) => {
         setLoading(true);
         try {
+            console.log('Fetching services for client ID:', id);
+            
+            // First, get basic service data
             const { data, error } = await supabase
                 .from('services')
                 .select(`
                     *,
-                    clients!inner(id, name, rut, phone, email, address, department, is_active),
                     cranes(id, license_plate, brand, model, type, is_active),
                     operators(id, name, rut, phone, license_number, is_active),
                     service_types(id, name, description, base_price, is_active, vehicle_info_optional, purchase_order_required, origin_required, destination_required, crane_required, operator_required, vehicle_brand_required, vehicle_model_required, license_plate_required, created_at, updated_at)
@@ -23,22 +25,56 @@ export const useClientServices = (clientId: string | null) => {
                 .eq('client_id', id)
                 .order('service_date', { ascending: false });
 
-            if (error) throw error;
+            if (error) {
+                console.error('Supabase query error:', error);
+                throw new Error(`Error en consulta: ${error.message}`);
+            }
+
+            if (!data) {
+                console.log('No services found for client:', id);
+                setServices([]);
+                return;
+            }
+
+            console.log('Services fetched:', data.length);
+
+            // Get client data separately for more robust error handling
+            const { data: clientData, error: clientError } = await supabase
+                .from('clients')
+                .select('id, name, rut, phone, email, address, department, is_active')
+                .eq('id', id)
+                .single();
+
+            if (clientError) {
+                console.error('Client fetch error:', clientError);
+                // Continue without client data rather than failing completely
+            }
             
             const formattedServices: Service[] = data.map(service => ({
                 id: service.id,
                 folio: service.folio,
                 requestDate: service.request_date,
                 serviceDate: service.service_date,
-                client: {
-                  id: service.clients.id,
-                  name: service.clients.name,
-                  rut: service.clients.rut,
-                  phone: service.clients.phone || '',
-                  email: service.clients.email || '',
-                  address: service.clients.address || '',
-                  department: service.clients.department || 'General',
-                  isActive: service.clients.is_active,
+                client: clientData ? {
+                  id: clientData.id,
+                  name: clientData.name,
+                  rut: clientData.rut,
+                  phone: clientData.phone || '',
+                  email: clientData.email || '',
+                  address: clientData.address || '',
+                  department: clientData.department || 'General',
+                  isActive: clientData.is_active,
+                  createdAt: '',
+                  updatedAt: ''
+                } : {
+                  id: id,
+                  name: 'Cliente no encontrado',
+                  rut: '',
+                  phone: '',
+                  email: '',
+                  address: '',
+                  department: 'General',
+                  isActive: false,
                   createdAt: '',
                   updatedAt: ''
                 },
