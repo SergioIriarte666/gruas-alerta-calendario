@@ -117,7 +117,7 @@ export const EnhancedFinancialSection = ({
                 </div>
                 <div className="p-3 bg-gradient-to-r from-blue-100 to-green-100 rounded-md border-2 border-primary">
                   <Label className="text-sm text-primary font-medium block mb-1">TOTAL</Label>
-                  <div className="text-2xl font-bold text-primary">
+                  <div className="text-2xl font-bold text-violet-600">
                     ${serviceBreakdown.totalValue.toLocaleString('es-CL')}
                   </div>
                 </div>
