@@ -19,6 +19,8 @@ import {
 import { Crane } from '@/types';
 import { formatForDisplay } from '@/utils/timezoneUtils';
 import { useCraneCosts } from '@/hooks/useCraneCosts';
+import { ServiceDetailsModal } from '@/components/services/ServiceDetailsModal';
+import { useServiceDetails } from '@/hooks/useServiceDetails';
 
 interface CraneCostsProps {
   crane: Crane;
@@ -28,6 +30,11 @@ export const CraneCosts = ({ crane }: CraneCostsProps) => {
   const { data: costs = [], isLoading } = useCraneCosts(crane.id);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState<string>('all');
+  const [selectedServiceId, setSelectedServiceId] = useState<string | null>(null);
+  const [isServiceModalOpen, setIsServiceModalOpen] = useState(false);
+  
+  // Obtener detalles completos del servicio
+  const { data: serviceDetails } = useServiceDetails(selectedServiceId);
 
   const getCategoryBadge = (subcategory: string | null) => {
     switch (subcategory) {
@@ -41,6 +48,13 @@ export const CraneCosts = ({ crane }: CraneCostsProps) => {
         return <Badge className="bg-purple-500/20 text-purple-400"><Building className="w-3 h-3 mr-1" />Servicios</Badge>;
       default:
         return <Badge variant="secondary">{subcategory || 'General'}</Badge>;
+    }
+  };
+
+  const handleServiceClick = (cost: any) => {
+    if (cost.services) {
+      setSelectedServiceId(cost.services.id);
+      setIsServiceModalOpen(true);
     }
   };
 
@@ -206,7 +220,12 @@ export const CraneCosts = ({ crane }: CraneCostsProps) => {
                           )}
                           {cost.services && (
                             <div className="text-gray-300">
-                              Servicio: {cost.services.folio}
+                              Servicio: <button
+                                onClick={() => handleServiceClick(cost)}
+                                className="text-blue-400 hover:text-blue-300 underline cursor-pointer"
+                              >
+                                {cost.services.folio}
+                              </button>
                             </div>
                           )}
                         </div>
@@ -234,6 +253,18 @@ export const CraneCosts = ({ crane }: CraneCostsProps) => {
           )}
         </CardContent>
       </Card>
+
+      {/* Modal de detalles del servicio */}
+      {selectedServiceId && serviceDetails && (
+        <ServiceDetailsModal
+          service={serviceDetails}
+          isOpen={isServiceModalOpen}
+          onClose={() => {
+            setIsServiceModalOpen(false);
+            setSelectedServiceId(null);
+          }}
+        />
+      )}
     </div>
   );
 };
