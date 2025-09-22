@@ -42,6 +42,7 @@ export const ObservationsSection = ({
               <SelectItem value="in_progress">En Progreso</SelectItem>
               <SelectItem value="inspection_completed">Inspección Completada</SelectItem>
               <SelectItem value="completed">Completado</SelectItem>
+              <SelectItem value="failed">Fallido</SelectItem>
               <SelectItem value="cancelled">Cancelado</SelectItem>
               <SelectItem value="invoiced">Facturado</SelectItem>
               <SelectItem value="quoted">Cotizado</SelectItem>
