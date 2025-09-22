@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { Invoice } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { formatInvoiceData } from '@/utils/invoiceUtils';
+import { formatInvoiceData, updateOverdueInvoices } from '@/utils/invoiceUtils';
 
 export const useInvoiceData = () => {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
@@ -28,14 +28,29 @@ export const useInvoiceData = () => {
 
       if (closuresError) throw closuresError;
 
-      // Format invoices with closure relationships
-      const formattedInvoices: Invoice[] = invoicesData.map(invoice => {
+      // Format invoices with closure relationships and detect overdue invoices
+      const formattedInvoices: Invoice[] = [];
+      const overdueInvoiceIds: string[] = [];
+
+      invoicesData.forEach(invoice => {
         const closureRelation = closuresData.find(rel => rel.invoice_id === invoice.id);
-        return formatInvoiceData({
+        const formattedInvoice = formatInvoiceData({
           ...invoice,
           invoice_closures: closureRelation ? [{ closure_id: closureRelation.closure_id }] : []
         });
+        
+        // Track invoices that were updated to overdue status
+        if (invoice.status === 'sent' && formattedInvoice.status === 'overdue') {
+          overdueInvoiceIds.push(invoice.id);
+        }
+        
+        formattedInvoices.push(formattedInvoice);
       });
+
+      // Update overdue invoices in database if any were detected
+      if (overdueInvoiceIds.length > 0) {
+        await updateOverdueInvoices(overdueInvoiceIds);
+      }
 
       setInvoices(formattedInvoices);
     } catch (error: any) {

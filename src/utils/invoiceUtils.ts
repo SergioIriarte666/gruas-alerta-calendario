@@ -24,6 +24,38 @@ const safeDate = (value: any): string | null => {
   }
 };
 
+// Check if an invoice should be marked as overdue
+const shouldBeOverdue = (status: string, dueDate: string): boolean => {
+  if (status !== 'sent') return false;
+  
+  const today = new Date();
+  const due = new Date(dueDate);
+  today.setHours(0, 0, 0, 0);
+  due.setHours(0, 0, 0, 0);
+  
+  return due < today;
+};
+
+// Update overdue invoices in database
+export const updateOverdueInvoices = async (invoiceIds: string[]): Promise<void> => {
+  if (invoiceIds.length === 0) return;
+  
+  try {
+    const { error } = await supabase
+      .from('invoices')
+      .update({ status: 'overdue' })
+      .in('id', invoiceIds);
+      
+    if (error) {
+      console.error('Error updating overdue invoices:', error);
+    } else {
+      console.log(`Updated ${invoiceIds.length} invoices to overdue status`);
+    }
+  } catch (error) {
+    console.error('Error updating overdue invoices:', error);
+  }
+};
+
 export const formatInvoiceData = (data: any): Invoice => {
   // Validate required data
   if (!data || typeof data !== 'object') {
@@ -35,19 +67,29 @@ export const formatInvoiceData = (data: any): Invoice => {
   if (!data.folio) throw new Error('Folio de factura es requerido');
   if (!data.client_id) throw new Error('ID de cliente es requerido');
 
+  const dueDate = safeDate(data.due_date) || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+  
+  // Determine correct status, checking for overdue
+  let status = (['draft', 'sent', 'paid', 'overdue', 'cancelled'].includes(data.status) 
+    ? data.status 
+    : 'draft') as 'draft' | 'sent' | 'paid' | 'overdue' | 'cancelled';
+    
+  // Override status to overdue if conditions are met
+  if (shouldBeOverdue(status, dueDate)) {
+    status = 'overdue';
+  }
+
   return {
     id: safeString(data.id),
     folio: safeString(data.folio),
     closureId: data.invoice_closures?.[0]?.closure_id || '',
     clientId: safeString(data.client_id),
     issueDate: safeDate(data.issue_date) || new Date().toISOString().split('T')[0],
-    dueDate: safeDate(data.due_date) || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+    dueDate,
     subtotal: safeNumber(data.subtotal),
     vat: safeNumber(data.vat),
     total: safeNumber(data.total),
-    status: (['draft', 'sent', 'paid', 'overdue', 'cancelled'].includes(data.status) 
-      ? data.status 
-      : 'draft') as 'draft' | 'sent' | 'paid' | 'overdue' | 'cancelled',
+    status,
     paymentDate: safeDate(data.payment_date),
     numeroFiscal: safeString(data.numero_fiscal) || null,
     createdAt: safeString(data.created_at),

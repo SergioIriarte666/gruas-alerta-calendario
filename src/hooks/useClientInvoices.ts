@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Invoice } from '@/types';
 import { toast } from 'sonner';
-import { formatInvoiceData } from '@/utils/invoiceUtils';
+import { formatInvoiceData, updateOverdueInvoices } from '@/utils/invoiceUtils';
 
 export const useClientInvoices = (clientId: string | null) => {
     const [invoices, setInvoices] = useState<Invoice[]>([]);
@@ -26,7 +26,26 @@ export const useClientInvoices = (clientId: string | null) => {
 
             console.log('Client invoices fetched:', data?.length || 0, 'for client:', id);
             
-            const formattedInvoices = (data || []).map(formatInvoiceData);
+            // Format invoices and detect overdue ones
+            const formattedInvoices: Invoice[] = [];
+            const overdueInvoiceIds: string[] = [];
+
+            (data || []).forEach(invoice => {
+                const formattedInvoice = formatInvoiceData(invoice);
+                
+                // Track invoices that were updated to overdue status
+                if (invoice.status === 'sent' && formattedInvoice.status === 'overdue') {
+                    overdueInvoiceIds.push(invoice.id);
+                }
+                
+                formattedInvoices.push(formattedInvoice);
+            });
+
+            // Update overdue invoices in database if any were detected
+            if (overdueInvoiceIds.length > 0) {
+                await updateOverdueInvoices(overdueInvoiceIds);
+            }
+
             setInvoices(formattedInvoices);
         } catch (error: any) {
             console.error('Error fetching client invoices:', error);
