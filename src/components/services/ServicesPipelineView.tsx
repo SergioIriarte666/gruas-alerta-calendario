@@ -86,6 +86,12 @@ const PIPELINE_STATUSES: Array<{
     color: 'bg-teal-50 border-teal-200 text-teal-800'
   },
   {
+    status: 'failed',
+    title: 'Fallidos',
+    description: 'Servicios fallidos por cliente',
+    color: 'bg-orange-50 border-orange-200 text-orange-800'
+  },
+  {
     status: 'invoiced',
     title: 'Facturados',
     description: 'Servicios facturados',

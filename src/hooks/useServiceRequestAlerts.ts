@@ -35,16 +35,22 @@ export const useServiceRequestAlerts = () => {
                 origin,
                 destination,
                 service_date,
-                client:clients(name),
-                service_type:service_types(name)
+                client_id,
+                service_type_id
               `)
               .eq('id', payload.new.id)
               .single();
 
             if (serviceData) {
+              // Get client and service type separately
+              const [clientRes, serviceTypeRes] = await Promise.all([
+                supabase.from('clients').select('name').eq('id', serviceData.client_id).single(),
+                supabase.from('service_types').select('name').eq('id', serviceData.service_type_id).single()
+              ]);
+
               addNotification({
                 title: 'Nueva Solicitud de Servicio',
-                message: `Cliente ${serviceData.client?.name} ha solicitado servicio ${serviceData.service_type?.name} - Folio: ${serviceData.folio}`,
+                message: `Cliente ${clientRes.data?.name || 'N/A'} ha solicitado servicio ${serviceTypeRes.data?.name || 'N/A'} - Folio: ${serviceData.folio}`,
                 type: 'info',
                 actionType: 'navigate',
                 actionUrl: '/services',

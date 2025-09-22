@@ -43,7 +43,7 @@ export const useServicesForClosures = (options: UseServicesForClosuresOptions = 
           operators!left(id, name, rut, phone, license_number, is_active),
           service_types!inner(id, name, description, is_active)
         `)
-        .in('status', ['completed', 'with_purchase_order'])
+        .in('status', ['completed', 'with_purchase_order', 'failed'])
         .order('folio', { ascending: true });
 
       // Build the query for pending services
@@ -87,7 +87,7 @@ export const useServicesForClosures = (options: UseServicesForClosuresOptions = 
       const billableServices = billableResult.data || [];
       const pendingServices = pendingResult.data || [];
 
-      console.log('Billable services found (completed + with purchase order):', billableServices.length);
+      console.log('Billable services found (completed + with purchase order + failed):', billableServices.length);
       console.log('Pending services found:', pendingServices.length);
 
       // Get all service IDs that are already included in closures

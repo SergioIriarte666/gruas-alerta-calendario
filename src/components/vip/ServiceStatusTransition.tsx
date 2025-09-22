@@ -58,9 +58,9 @@ export const ServiceStatusTransition: React.FC<ServiceStatusTransitionProps> = (
         color: 'bg-gray-500/20 text-gray-300 border-gray-500/30',
         icon: Receipt
       },
-      'cancelled': {
-        label: 'Cancelado',
-        color: 'bg-red-500/20 text-red-300 border-red-500/30',
+      'failed': {
+        label: 'Fallido',
+        color: 'bg-orange-600/20 text-orange-300 border-orange-600/30',
         icon: X
       }
     };
@@ -73,7 +73,8 @@ export const ServiceStatusTransition: React.FC<ServiceStatusTransitionProps> = (
       'purchase_order_pending': 'pending',
       'pending': 'in_progress',
       'in_progress': 'completed',
-      'completed': 'invoiced'
+      'completed': 'invoiced',
+      'failed': 'invoiced' // Failed services can also be invoiced
     };
     return transitions[currentStatus] as ServiceStatus || null;
   };
@@ -92,7 +93,8 @@ export const ServiceStatusTransition: React.FC<ServiceStatusTransitionProps> = (
       'purchase_order_pending': 'Confirmar O.C.',
       'pending': 'Iniciar Servicio',
       'in_progress': 'Completar',
-      'completed': 'Facturar'
+      'completed': 'Facturar',
+      'failed': 'Facturar'
     };
     return labels[currentStatus] || 'Siguiente';
   };

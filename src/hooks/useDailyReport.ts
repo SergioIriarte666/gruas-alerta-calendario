@@ -228,21 +228,35 @@ const fetchDailyReportData = async (selectedDate: string): Promise<DailyReportDa
   console.log('- Total overdue:', supplierTotalOverdue);
   console.log('- Total due week:', supplierTotalDueWeek);
   
-  // Get services ready for invoicing (services completed but not yet invoiced)
+  // Get services ready for invoicing including failed services
   console.log('Fetching services ready for invoicing...');
   const invoicesToIssueRes = await supabase
     .from('services')
     .select(`
-      id, folio, value, service_date, client_id,
-      clients!inner(id, name)
+      id, folio, value, service_date, client_id
     `)
-    .eq('status', 'completed')
+    .in('status', ['completed', 'failed'])
     .lte('service_date', dateForDB);
 
   console.log('Services query result:', invoicesToIssueRes.data?.length, 'services found');
 
   if (invoicesToIssueRes.error) {
     console.error('Error fetching services for invoicing:', invoicesToIssueRes.error);
+  }
+
+  // Get unique client IDs and fetch clients separately
+  const serviceClientIds = [...new Set(invoicesToIssueRes.data?.map(s => s.client_id).filter(Boolean) || [])];
+  const clientsRes = serviceClientIds.length > 0 
+    ? await supabase.from('clients').select('id, name').in('id', serviceClientIds)
+    : { data: [] };
+  
+  const clientsMap = new Map<string, any>();
+  
+  // Populate clients map
+  if (clientsRes.data) {
+    for (const client of clientsRes.data) {
+      clientsMap.set(client.id, client);
+    }
   }
 
   // Wait for all async filters to complete
@@ -257,9 +271,9 @@ const fetchDailyReportData = async (selectedDate: string): Promise<DailyReportDa
       // Ensure client data is properly structured
       const serviceWithClient = {
         ...service,
-        client: service.clients ? {
-          id: service.clients.id,
-          name: service.clients.name
+        client: clientsMap.get(service.client_id) ? {
+          id: clientsMap.get(service.client_id).id,
+          name: clientsMap.get(service.client_id).name
         } : null
       };
       filteredServices.push(serviceWithClient);

@@ -216,7 +216,7 @@ export interface ServiceClosure {
 }
 
 // Updated to match database enums - Added new states for special client workflow (Fase 1)
-export type ServiceStatus = 'pending' | 'in_progress' | 'inspection_completed' | 'completed' | 'cancelled' | 'invoiced' | 'quoted' | 'purchase_order_pending' | 'with_purchase_order';
+export type ServiceStatus = 'pending' | 'in_progress' | 'inspection_completed' | 'completed' | 'cancelled' | 'invoiced' | 'quoted' | 'purchase_order_pending' | 'with_purchase_order' | 'failed';
 export type InvoiceStatus = 'draft' | 'sent' | 'paid' | 'overdue' | 'cancelled';
 export type CraneType = 'light' | 'medium' | 'heavy' | 'taxi' | 'other' | 'horquilla';
 

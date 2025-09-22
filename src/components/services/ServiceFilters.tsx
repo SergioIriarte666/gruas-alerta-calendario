@@ -125,6 +125,12 @@ export const ServiceFilters = ({
                   >
                     Con Orden de Compra
                   </SelectItem>
+                  <SelectItem 
+                    value="failed" 
+                    className="text-black hover:bg-gray-100 focus:bg-gray-100"
+                  >
+                    Fallidos
+                  </SelectItem>
                 </SelectContent>
               </Select>
               <Button 

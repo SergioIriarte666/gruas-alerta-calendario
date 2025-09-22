@@ -1,7 +1,7 @@
 import React from 'react';
 import { Badge } from '@/components/ui/badge';
 
-export type ServiceStatus = 'pending' | 'in_progress' | 'inspection_completed' | 'completed' | 'cancelled' | 'invoiced' | 'quoted' | 'purchase_order_pending' | 'with_purchase_order';
+export type ServiceStatus = 'pending' | 'in_progress' | 'inspection_completed' | 'completed' | 'cancelled' | 'invoiced' | 'quoted' | 'purchase_order_pending' | 'with_purchase_order' | 'failed';
 
 interface StatusConfig {
   label: string;
@@ -17,7 +17,8 @@ const STATUS_CONFIG: Record<ServiceStatus, StatusConfig> = {
   invoiced: { label: 'Facturado', className: 'bg-purple-500/80 text-white' },
   quoted: { label: 'Cotizado', className: 'bg-cyan-500/80 text-white' },
   purchase_order_pending: { label: 'Esperando O.C.', className: 'bg-amber-500/80 text-white' },
-  with_purchase_order: { label: 'Con Orden de Compra', className: 'bg-teal-500/80 text-white' }
+  with_purchase_order: { label: 'Con Orden de Compra', className: 'bg-teal-500/80 text-white' },
+  failed: { label: 'Fallido', className: 'bg-orange-600/80 text-white' }
 };
 
 export const getServiceStatusBadge = (status: string) => {
