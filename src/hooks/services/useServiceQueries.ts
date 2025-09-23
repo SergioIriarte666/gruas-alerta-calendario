@@ -66,7 +66,7 @@ const transformToService = (data: any): Service => {
     folio: data.folio,
     requestDate: data.request_date,
     serviceDate: data.service_date,
-    client: data.client,
+    client: data.client || data.third_party_client || null,
     purchaseOrder: data.purchase_order,
     vehicleBrand: data.vehicle_brand,
     vehicleModel: data.vehicle_model,
