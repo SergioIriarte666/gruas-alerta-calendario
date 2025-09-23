@@ -159,7 +159,7 @@ export const AssignedServiceCard = ({
     return <Link to={`/operator/service/${service.id}/inspection`} className="block">
         <Card className="bg-card border-border text-foreground hover:bg-card/70 transition-colors cursor-pointer">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-lg font-bold text-primary">Folio: {service.folio}</CardTitle>
+            <CardTitle className="text-lg font-bold text-foreground">Folio: {service.folio}</CardTitle>
             <div className="flex items-center gap-2">
               {getStatusChip(service.status)}
               <ChevronRight className="w-5 h-5 text-muted-foreground" />
