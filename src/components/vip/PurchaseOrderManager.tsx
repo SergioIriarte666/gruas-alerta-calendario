@@ -17,6 +17,7 @@ import {
   Filter
 } from 'lucide-react';
 import { formatForDisplay, parseFromDatabase } from '@/utils/timezoneUtils';
+import { getDisplayServiceValue } from '@/utils/serviceValueCalculations';
 
 interface PurchaseOrderManagerProps {
   services: Service[];
@@ -295,7 +296,7 @@ export const PurchaseOrderManager: React.FC<PurchaseOrderManagerProps> = ({
                         <div className="space-y-1">
                           <div className="flex items-center gap-2 text-foreground">
                             <DollarSign className="w-3 h-3" />
-                            <span className="font-medium">{formatCurrency(service.value)}</span>
+                            <span className="font-medium">{formatCurrency(getDisplayServiceValue(service))}</span>
                           </div>
                         </div>
                       </div>

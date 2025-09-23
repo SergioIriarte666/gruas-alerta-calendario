@@ -18,6 +18,7 @@ import {
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useState } from 'react';
+import { getDisplayServiceValue } from '@/utils/serviceValueCalculations';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -142,7 +143,7 @@ export const PurchaseOrderDialog: React.FC<PurchaseOrderDialogProps> = ({
 
                 <div className="flex items-center gap-2 text-green-400">
                   <DollarSign className="w-4 h-4" />
-                  <span className="font-medium">{formatCurrency(service.value)}</span>
+                  <span className="font-medium">{formatCurrency(getDisplayServiceValue(service))}</span>
                 </div>
               </div>
             </div>

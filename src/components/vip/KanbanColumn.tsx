@@ -3,6 +3,7 @@ import { Service, ServiceStatus } from '@/types';
 import { ServiceCard } from './ServiceCard';
 import { Badge } from '@/components/ui/badge';
 import { Clock, Package, AlertCircle } from 'lucide-react';
+import { getDisplayServiceValue } from '@/utils/serviceValueCalculations';
 
 interface ColumnConfig {
   id: ServiceStatus;
@@ -45,7 +46,7 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
   };
 
   // Calcular métricas de la columna
-  const totalValue = services.reduce((sum, service) => sum + service.value, 0);
+  const totalValue = services.reduce((sum, service) => sum + getDisplayServiceValue(service), 0);
   const avgDays = services.length > 0 ? Math.round(
     services.reduce((sum, service) => {
       const daysDiff = Math.floor(

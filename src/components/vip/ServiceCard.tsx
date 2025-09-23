@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { format, formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { getDisplayServiceValue } from '@/utils/serviceValueCalculations';
 
 interface ServiceCardProps {
   service: Service;
@@ -144,7 +145,7 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({
           <div className="flex items-center gap-2 text-foreground">
             <DollarSign className="w-3 h-3" />
             <span className="font-medium">
-              ${service.value.toLocaleString()}
+              ${getDisplayServiceValue(service).toLocaleString()}
             </span>
           </div>
             

@@ -42,6 +42,7 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
 import { Service } from '@/types';
+import { getDisplayServiceValue } from '@/utils/serviceValueCalculations';
 
 interface ExecutiveReportsProps {
   services: Service[];
@@ -337,7 +338,7 @@ export const ExecutiveReports: React.FC<ExecutiveReportsProps> = ({
       'Fecha': format(new Date(service.serviceDate), 'dd/MM/yyyy'),
       'Estado': service.status,
       'Tipo de Servicio': service.serviceType.name,
-      'Valor': service.value,
+      'Valor': getDisplayServiceValue(service),
       'Cliente': service.client.name,
       'Operador': service.operator?.name || 'Sin asignar',
       'Grúa': service.crane?.licensePlate || 'Sin asignar',
