@@ -1,5 +1,6 @@
 
 import React from 'react';
+import authBackground from '@/assets/auth-background.jpg';
 
 interface AuthBackgroundProps {
   children: React.ReactNode;
@@ -12,7 +13,7 @@ export const AuthBackground: React.FC<AuthBackgroundProps> = ({ children }) => {
       <div 
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
         style={{
-          backgroundImage: 'url(/lovable-uploads/34884c4b-2118-47b1-a1c9-9225c0edcd48.png)',
+          backgroundImage: `url(${authBackground})`,
         }}
       />
       {/* Overlay */}
