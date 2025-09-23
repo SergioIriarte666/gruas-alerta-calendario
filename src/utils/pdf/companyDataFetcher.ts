@@ -41,11 +41,11 @@ export const fetchCompanyData = async (): Promise<CompanyData> => {
     });
     
     const companyData = {
-      businessName: data.business_name || 'TMS - Transport Management System',
-      rut: data.rut || '12.345.678-9',
-      address: data.address || 'Av. Principal 123, Santiago',
-      phone: data.phone || '+56 9 1234 5678',
-      email: data.email || 'contacto@tms.cl',
+      businessName: data.business_name || 'Grúas 5 Norte',
+      rut: data.rut || '76.769.841-0',
+      address: data.address || 'Panamericana Norte Km. 841, Copiapó',
+      phone: data.phone || '+56 9 62380627',
+      email: data.email || 'asistencia@gruas5norte.cl',
       logoUrl: data.logo_url
     };
 
@@ -60,10 +60,10 @@ export const fetchCompanyData = async (): Promise<CompanyData> => {
 const getDefaultCompanyData = (): CompanyData => {
   console.log('Usando datos de empresa por defecto');
   return {
-    businessName: 'TMS - Transport Management System',
-    rut: '12.345.678-9',
-    address: 'Av. Principal 123, Santiago',
-    phone: '+56 9 1234 5678',
-    email: 'contacto@tms.cl'
+    businessName: 'Grúas 5 Norte',
+    rut: '76.769.841-0',
+    address: 'Panamericana Norte Km. 841, Copiapó',
+    phone: '+56 9 62380627',
+    email: 'asistencia@gruas5norte.cl'
   };
 };
