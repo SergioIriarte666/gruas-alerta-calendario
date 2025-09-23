@@ -23,15 +23,15 @@ export const LoginForm: React.FC<LoginFormProps> = ({
   onSubmit
 }) => {
   return (
-    <Card className="bg-white/95 backdrop-blur-sm border border-white/30 shadow-xl">
+    <Card className="bg-white/15 backdrop-blur-md border border-white/20 shadow-2xl">
       <CardHeader>
-        <CardTitle className="text-black">Iniciar Sesión</CardTitle>
-        <CardDescription className="text-gray-600">Ingresa tus credenciales para acceder a tu cuenta.</CardDescription>
+        <CardTitle className="text-white">Iniciar Sesión</CardTitle>
+        <CardDescription className="text-white/80">Ingresa tus credenciales para acceder a tu cuenta.</CardDescription>
       </CardHeader>
       <CardContent className="bg-transparent">
         <form onSubmit={onSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="email-login" className="text-black">Email</Label>
+            <Label htmlFor="email-login" className="text-white">Email</Label>
             <Input
               id="email-login"
               type="email"
@@ -39,18 +39,18 @@ export const LoginForm: React.FC<LoginFormProps> = ({
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="bg-white/90 border-gray-300 text-black placeholder-gray-500 focus:bg-white"
+              className="bg-white/20 border-white/30 text-white placeholder-white/60 focus:bg-white/30 focus:border-white/50"
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="password-login" className="text-black">Contraseña</Label>
+            <Label htmlFor="password-login" className="text-white">Contraseña</Label>
             <Input
               id="password-login"
               type="password"
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="bg-white/90 border-gray-300 text-black focus:bg-white"
+              className="bg-white/20 border-white/30 text-white focus:bg-white/30 focus:border-white/50"
             />
           </div>
           <Button

@@ -23,15 +23,15 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
   onSubmit
 }) => {
   return (
-    <Card className="bg-white/95 backdrop-blur-sm border border-white/30 shadow-xl">
+    <Card className="bg-white/15 backdrop-blur-md border border-white/20 shadow-2xl">
       <CardHeader>
-        <CardTitle className="text-black">Registrarse</CardTitle>
-        <CardDescription className="text-gray-600">Crea una nueva cuenta para empezar.</CardDescription>
+        <CardTitle className="text-white">Registrarse</CardTitle>
+        <CardDescription className="text-white/80">Crea una nueva cuenta para empezar.</CardDescription>
       </CardHeader>
       <CardContent className="bg-transparent">
         <form onSubmit={onSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="email-register" className="text-black">Email</Label>
+            <Label htmlFor="email-register" className="text-white">Email</Label>
             <Input
               id="email-register"
               type="email"
@@ -39,18 +39,18 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="bg-white/90 border-gray-300 text-black placeholder-gray-500 focus:bg-white"
+              className="bg-white/20 border-white/30 text-white placeholder-white/60 focus:bg-white/30 focus:border-white/50"
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="password-register" className="text-black">Contraseña</Label>
+            <Label htmlFor="password-register" className="text-white">Contraseña</Label>
             <Input
               id="password-register"
               type="password"
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="bg-white/90 border-gray-300 text-black focus:bg-white"
+              className="bg-white/20 border-white/30 text-white focus:bg-white/30 focus:border-white/50"
             />
           </div>
           <Button

@@ -8,13 +8,13 @@ interface AuthTabsProps {
 
 export const AuthTabs: React.FC<AuthTabsProps> = ({ activeTab, setActiveTab }) => {
   return (
-    <div className="flex w-full bg-white/20 backdrop-blur-sm rounded-lg p-1 mb-4 border border-white/30">
+    <div className="flex w-full bg-white/10 backdrop-blur-md rounded-lg p-1 mb-4 border border-white/20">
       <button
         onClick={() => setActiveTab('login')}
         className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
           activeTab === 'login'
-            ? 'bg-white text-black shadow-sm'
-            : 'text-white hover:text-gray-200 hover:bg-white/10'
+            ? 'bg-white/30 text-white shadow-sm backdrop-blur-sm'
+            : 'text-white/80 hover:text-white hover:bg-white/15'
         }`}
       >
         Iniciar Sesión
@@ -23,8 +23,8 @@ export const AuthTabs: React.FC<AuthTabsProps> = ({ activeTab, setActiveTab }) =
         onClick={() => setActiveTab('register')}
         className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
           activeTab === 'register'
-            ? 'bg-white text-black shadow-sm'
-            : 'text-white hover:text-gray-200 hover:bg-white/10'
+            ? 'bg-white/30 text-white shadow-sm backdrop-blur-sm'
+            : 'text-white/80 hover:text-white hover:bg-white/15'
         }`}
       >
         Registrarse
