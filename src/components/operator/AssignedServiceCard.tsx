@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Service } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -6,17 +5,18 @@ import { Truck, Calendar, MapPin, User, ChevronRight, CheckCircle, Play, Package
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Link } from 'react-router-dom';
-
 interface AssignedServiceCardProps {
   service: Service;
   showDeliveryAction?: boolean;
 }
-
-export const AssignedServiceCard = ({ service, showDeliveryAction = false }: AssignedServiceCardProps) => {
+export const AssignedServiceCard = ({
+  service,
+  showDeliveryAction = false
+}: AssignedServiceCardProps) => {
   const getStatusChip = (status: Service['status']) => {
-    switch(status) {
+    switch (status) {
       case 'pending':
-        return <span className="px-2 py-1 text-xs font-semibold rounded-full bg-yellow-500/20 text-yellow-300">Pendiente</span>;
+        return <span className="px-2 py-1 text-xs font-semibold rounded-full bg-yellow-500/20 text-zinc-950">Pendiente</span>;
       case 'in_progress':
         return <span className="px-2 py-1 text-xs font-semibold rounded-full bg-blue-500/20 text-blue-300">En Progreso</span>;
       case 'inspection_completed':
@@ -26,8 +26,7 @@ export const AssignedServiceCard = ({ service, showDeliveryAction = false }: Ass
       default:
         return null;
     }
-  }
-
+  };
   const isCompleted = service.status === 'completed';
   const isActive = service.status === 'in_progress';
   const isPending = service.status === 'pending';
@@ -35,8 +34,7 @@ export const AssignedServiceCard = ({ service, showDeliveryAction = false }: Ass
 
   // Si el servicio está completado, renderizar sin enlace
   if (isCompleted) {
-    return (
-      <Card className="bg-card/60 border-border text-foreground opacity-80">
+    return <Card className="bg-card/60 border-border text-foreground opacity-80">
         <CardHeader className="flex flex-row items-center justify-between pb-2">
           <CardTitle className="text-lg font-bold text-primary">Folio: {service.folio}</CardTitle>
           <div className="flex items-center gap-2">
@@ -55,7 +53,9 @@ export const AssignedServiceCard = ({ service, showDeliveryAction = false }: Ass
           </div>
           <div className="flex items-center gap-3">
             <Calendar className="w-4 h-4 text-muted-foreground" />
-            <span>{format(new Date(service.serviceDate), "eeee, dd 'de' MMMM", { locale: es })}</span>
+            <span>{format(new Date(service.serviceDate), "eeee, dd 'de' MMMM", {
+              locale: es
+            })}</span>
           </div>
           <div className="flex items-center gap-3">
             <MapPin className="w-4 h-4 text-muted-foreground" />
@@ -69,14 +69,12 @@ export const AssignedServiceCard = ({ service, showDeliveryAction = false }: Ass
             Servicio finalizado
           </div>
         </CardContent>
-      </Card>
-    );
+      </Card>;
   }
 
   // Si el servicio está activo (en progreso), renderizar sin enlace
   if (isActive) {
-    return (
-      <Card className="bg-card/80 border-border text-foreground">
+    return <Card className="bg-card/80 border-border text-foreground">
         <CardHeader className="flex flex-row items-center justify-between pb-2">
           <CardTitle className="text-lg font-bold text-primary">Folio: {service.folio}</CardTitle>
           <div className="flex items-center gap-2">
@@ -95,7 +93,9 @@ export const AssignedServiceCard = ({ service, showDeliveryAction = false }: Ass
           </div>
           <div className="flex items-center gap-3">
             <Calendar className="w-4 h-4 text-gray-400" />
-            <span>{format(new Date(service.serviceDate), "eeee, dd 'de' MMMM", { locale: es })}</span>
+            <span>{format(new Date(service.serviceDate), "eeee, dd 'de' MMMM", {
+              locale: es
+            })}</span>
           </div>
           <div className="flex items-center gap-3">
             <MapPin className="w-4 h-4 text-gray-400" />
@@ -109,14 +109,12 @@ export const AssignedServiceCard = ({ service, showDeliveryAction = false }: Ass
             Servicio en progreso
           </div>
         </CardContent>
-      </Card>
-    );
+      </Card>;
   }
 
   // Para servicios listos para entrega
   if (isReadyForDelivery && showDeliveryAction) {
-    return (
-      <Link to={`/operator/service/${service.id}/inspection`} className="block">
+    return <Link to={`/operator/service/${service.id}/inspection`} className="block">
         <Card className="bg-card border-accent/30 text-foreground hover:bg-card/70 transition-colors cursor-pointer">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-lg font-bold text-primary">Folio: {service.folio}</CardTitle>
@@ -136,7 +134,9 @@ export const AssignedServiceCard = ({ service, showDeliveryAction = false }: Ass
             </div>
             <div className="flex items-center gap-3">
               <Calendar className="w-4 h-4 text-gray-400" />
-              <span>{format(new Date(service.serviceDate), "eeee, dd 'de' MMMM", { locale: es })}</span>
+              <span>{format(new Date(service.serviceDate), "eeee, dd 'de' MMMM", {
+                locale: es
+              })}</span>
             </div>
             <div className="flex items-center gap-3">
               <MapPin className="w-4 h-4 text-gray-400" />
@@ -151,14 +151,12 @@ export const AssignedServiceCard = ({ service, showDeliveryAction = false }: Ass
             </div>
           </CardContent>
         </Card>
-      </Link>
-    );
+      </Link>;
   }
 
   // Solo para servicios pendientes, mostrar el enlace a inspección
   if (isPending) {
-    return (
-      <Link to={`/operator/service/${service.id}/inspection`} className="block">
+    return <Link to={`/operator/service/${service.id}/inspection`} className="block">
         <Card className="bg-card border-border text-foreground hover:bg-card/70 transition-colors cursor-pointer">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-lg font-bold text-primary">Folio: {service.folio}</CardTitle>
@@ -178,7 +176,9 @@ export const AssignedServiceCard = ({ service, showDeliveryAction = false }: Ass
             </div>
             <div className="flex items-center gap-3">
               <Calendar className="w-4 h-4 text-muted-foreground" />
-              <span>{format(new Date(service.serviceDate), "eeee, dd 'de' MMMM", { locale: es })}</span>
+              <span>{format(new Date(service.serviceDate), "eeee, dd 'de' MMMM", {
+                locale: es
+              })}</span>
             </div>
             <div className="flex items-center gap-3">
               <MapPin className="w-4 h-4 text-muted-foreground" />
@@ -189,13 +189,11 @@ export const AssignedServiceCard = ({ service, showDeliveryAction = false }: Ass
             </div>
           </CardContent>
         </Card>
-      </Link>
-    );
+      </Link>;
   }
 
   // Fallback para cualquier otro estado (no debería ocurrir)
-  return (
-    <Card className="bg-card border-border text-foreground">
+  return <Card className="bg-card border-border text-foreground">
       <CardHeader className="flex flex-row items-center justify-between pb-2">
         <CardTitle className="text-lg font-bold text-primary">Folio: {service.folio}</CardTitle>
         <div className="flex items-center gap-2">
@@ -213,7 +211,9 @@ export const AssignedServiceCard = ({ service, showDeliveryAction = false }: Ass
         </div>
         <div className="flex items-center gap-3">
           <Calendar className="w-4 h-4 text-muted-foreground" />
-          <span>{format(new Date(service.serviceDate), "eeee, dd 'de' MMMM", { locale: es })}</span>
+          <span>{format(new Date(service.serviceDate), "eeee, dd 'de' MMMM", {
+            locale: es
+          })}</span>
         </div>
         <div className="flex items-center gap-3">
           <MapPin className="w-4 h-4 text-muted-foreground" />
@@ -223,6 +223,5 @@ export const AssignedServiceCard = ({ service, showDeliveryAction = false }: Ass
           </div>
         </div>
       </CardContent>
-    </Card>
-  );
+    </Card>;
 };
