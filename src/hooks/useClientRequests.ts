@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Service } from '@/types';
 import { toast } from 'sonner';
+import { getDisplayServiceValue } from '@/utils/serviceValueCalculations';
 
 export const useClientRequests = (clientId: string | null) => {
   const [requests, setRequests] = useState<Service[]>([]);
@@ -116,6 +117,8 @@ export const useClientRequests = (clientId: string | null) => {
           updatedAt: ''
         },
         value: Number(service.value),
+        custodyTotalAmount: service.custody_total_amount || 0,
+        custodyMode: (service.custody_mode as "manual" | "none" | "calendar") || 'none',
         crane: service.cranes ? {
           id: service.cranes.id,
           licensePlate: service.cranes.license_plate,
@@ -171,7 +174,7 @@ export const useClientRequests = (clientId: string | null) => {
     totalRequests: requests.length,
     pendingRequests: requests.filter(r => r.status === 'pending').length,
     cancelledRequests: requests.filter(r => r.status === 'cancelled').length,
-    totalRequestedValue: requests.reduce((sum, r) => sum + r.value, 0),
+    totalRequestedValue: requests.reduce((sum, r) => sum + getDisplayServiceValue(r), 0),
   };
 
   return { 

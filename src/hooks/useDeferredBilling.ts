@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { DeferredBillingSummary, ServiceReadyForBilling, DeferredBillingCalendarEvent } from '@/types/deferredBilling';
+import { getDisplayServiceValue } from '@/utils/serviceValueCalculations';
 
 export const useDeferredBilling = () => {
   const [summary, setSummary] = useState<DeferredBillingSummary | null>(null);
@@ -112,7 +113,7 @@ export const useDeferredBilling = () => {
         if (eventMap.has(eventKey)) {
           const existing = eventMap.get(eventKey)!;
           existing.serviceCount++;
-          existing.totalAmount += service.value;
+          existing.totalAmount += getDisplayServiceValue(service);
         } else {
           const monthNames = [
             'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
@@ -125,7 +126,7 @@ export const useDeferredBilling = () => {
             clientId: client.id,
             clientName: `${client.name} - Servicios de ${monthName} ${serviceDate.getFullYear()}`,
             serviceCount: 1,
-            totalAmount: service.value,
+            totalAmount: getDisplayServiceValue(service),
             billingDate,
             isOverdue: new Date(billingDate) < new Date(),
             autoGeneration: client.auto_invoice_generation,

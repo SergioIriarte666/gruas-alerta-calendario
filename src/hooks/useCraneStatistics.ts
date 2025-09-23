@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { getDisplayServiceValue } from '@/utils/serviceValueCalculations';
 
 export interface CraneStatistics {
   totalServices: number;
@@ -60,7 +61,7 @@ export const useCraneStatistics = (craneId: string) => {
 
       // Calcular totales
       const totalServices = currentServices.length;
-      const totalRevenue = completedServices.reduce((sum, service) => sum + (service.value || 0), 0);
+      const totalRevenue = completedServices.reduce((sum, service) => sum + getDisplayServiceValue(service), 0);
       const averageServiceValue = completedServices.length > 0 ? totalRevenue / completedServices.length : 0;
 
       // Calcular estadísticas mensuales
@@ -69,7 +70,7 @@ export const useCraneStatistics = (craneId: string) => {
           new Date(service.service_date).getMonth() === month
         );
         const monthCompletedServices = monthServices.filter(s => s.status === 'completed');
-        const monthRevenue = monthCompletedServices.reduce((sum, service) => sum + (service.value || 0), 0);
+        const monthRevenue = monthCompletedServices.reduce((sum, service) => sum + getDisplayServiceValue(service), 0);
         
         return {
           services: monthServices.length,

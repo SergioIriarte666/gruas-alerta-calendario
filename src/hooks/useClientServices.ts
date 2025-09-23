@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Service } from '@/types';
 import { toast } from 'sonner';
+import { getDisplayServiceValue } from '@/utils/serviceValueCalculations';
 
 export const useClientServices = (clientId: string | null) => {
     const [services, setServices] = useState<Service[]>([]);
@@ -105,6 +106,8 @@ export const useClientServices = (clientId: string | null) => {
                   updatedAt: service.service_types.updated_at || ''
                 },
                 value: Number(service.value),
+                custodyTotalAmount: service.custody_total_amount || 0,
+                custodyMode: (service.custody_mode as "manual" | "none" | "calendar") || 'none',
                 crane: service.cranes ? {
                   id: service.cranes.id,
                   licensePlate: service.cranes.license_plate,
@@ -158,8 +161,8 @@ export const useClientServices = (clientId: string | null) => {
 
     const serviceMetrics = {
         totalServices: services.length,
-        totalBilled: services.reduce((acc, s) => acc + s.value, 0),
-        averageTicket: services.length > 0 ? services.reduce((acc, s) => acc + s.value, 0) / services.length : 0,
+        totalBilled: services.reduce((acc, s) => acc + getDisplayServiceValue(s), 0),
+        averageTicket: services.length > 0 ? services.reduce((acc, s) => acc + getDisplayServiceValue(s), 0) / services.length : 0,
     };
 
     return { services, loading, metrics: serviceMetrics, refetch: () => clientId && fetchServicesByClient(clientId) };
