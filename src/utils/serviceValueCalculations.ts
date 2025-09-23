@@ -17,6 +17,9 @@ export const isEquipmentRentalService = (service: any): boolean => {
  */
 export const getBaseServiceValue = (service: any): number => {
   if (!service) return 0;
+  
+  // Si el servicio tiene custodia, el valor base es service.value
+  // Si no tiene custodia, también es service.value
   return service.value || 0;
 };
 
@@ -141,12 +144,23 @@ export const calculateClosureTotal = (services: Service[]): number => {
  */
 export const getServiceValueBreakdown = (service: any) => {
   if (!service) {
-    return { baseValue: 0, custodyValue: 0, totalValue: 0 };
+    return { baseValue: 0, custodyValue: 0, totalValue: 0, hasBothValues: false };
   }
 
-  const baseValue = getBaseServiceValue(service);
   const custodyValue = getCustodyTotalAmount(service);
-  const totalValue = getCompleteServiceValue(service);
+  
+  // Para servicios con custodia:
+  // - service.value debería contener solo el valor base del servicio
+  // - custody_total_amount contiene el valor de la custodia
+  // - El total es service.value + custody_total_amount
+  
+  let baseValue = service.value || 0;
+  let totalValue = baseValue;
+  
+  // Si hay custodia, sumar al total
+  if (custodyValue > 0) {
+    totalValue = baseValue + custodyValue;
+  }
 
   return {
     baseValue,
