@@ -20,7 +20,7 @@ export const AuthBackground: React.FC<AuthBackgroundProps> = ({ children }) => {
       <div className="absolute inset-0 bg-black/30" />
       
       {/* Content */}
-      <div className="relative z-10 flex items-start justify-end min-h-screen p-8 md:p-12">
+      <div className="relative z-10 flex items-start justify-start min-h-screen p-8 md:p-12">
         <div className="w-full max-w-md mt-16 md:mt-20">
           {children}
         </div>
