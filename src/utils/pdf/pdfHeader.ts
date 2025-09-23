@@ -67,14 +67,19 @@ export const addPDFHeader = async (doc: jsPDF, data: InspectionPDFData): Promise
     if (data.companyData?.logoUrl) {
       try {
         console.log('🖼️ [PDF-HEADER] Intentando cargar logo:', data.companyData.logoUrl);
-        const logoBase64 = await loadImageAsBase64(data.companyData.logoUrl);
+        
+        // Limpiar la URL del logo para evitar parámetros que puedan causar problemas
+        const cleanLogoUrl = data.companyData.logoUrl.split('?')[0];
+        console.log('🖼️ [PDF-HEADER] URL limpia del logo:', cleanLogoUrl);
+        
+        const logoBase64 = await loadImageAsBase64(cleanLogoUrl);
         
         if (logoBase64) {
-          console.log('Logo cargado exitosamente, calculando dimensiones...');
+          console.log('✅ [PDF-HEADER] Logo cargado exitosamente, calculando dimensiones...');
           
           // Obtener dimensiones originales de la imagen
           const { width: originalWidth, height: originalHeight } = await getImageDimensions(logoBase64);
-          console.log('Dimensiones originales:', { originalWidth, originalHeight });
+          console.log('📏 [PDF-HEADER] Dimensiones originales:', { originalWidth, originalHeight });
           
           // Calcular dimensiones manteniendo proporciones (máximo 50x30)
           const { width: logoWidth, height: logoHeight } = calculateLogoDimensions(
@@ -84,19 +89,22 @@ export const addPDFHeader = async (doc: jsPDF, data: InspectionPDFData): Promise
             30  // Alto máximo
           );
           
-          console.log('Dimensiones calculadas para PDF:', { logoWidth, logoHeight });
+          console.log('📐 [PDF-HEADER] Dimensiones calculadas para PDF:', { logoWidth, logoHeight });
           
           // Agregar logo en la esquina superior izquierda con proporciones correctas
           doc.addImage(logoBase64, 'PNG', 20, yPosition, logoWidth, logoHeight);
           
           // Ajustar posición del texto para dar espacio al logo
           yPosition += Math.max(logoHeight + 5, 25);
+          console.log('✅ [PDF-HEADER] Logo agregado exitosamente al PDF');
         } else {
-          console.warn('No se pudo cargar el logo, continuando sin él');
+          console.warn('⚠️ [PDF-HEADER] No se pudo cargar el logo como base64, continuando sin él');
         }
       } catch (error) {
-        console.warn('Error al procesar logo:', error);
+        console.error('❌ [PDF-HEADER] Error al procesar logo:', error);
       }
+    } else {
+      console.log('⚠️ [PDF-HEADER] No hay URL de logo disponible');
     }
 
     // Header principal mejorado
