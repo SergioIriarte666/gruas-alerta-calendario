@@ -23,17 +23,28 @@ export const useServiceTransformer = () => {
         folio: item.folio,
         requestDate: item.request_date,
         serviceDate: item.service_date,
-        client: item.clients ? {
-          id: item.clients.id,
-          name: item.clients.name,
-          rut: item.clients.rut || '',
-          phone: item.clients.phone || '',
-          email: item.clients.email || '',
-          address: item.clients.address || '',
-          department: item.clients.department || '',
-          isActive: item.clients.is_active ?? true,
-          createdAt: item.clients.created_at || new Date().toISOString(),
-          updatedAt: item.clients.updated_at || new Date().toISOString()
+        client: item.client ? {
+          id: item.client.id,
+          name: item.client.name,
+          rut: item.client.rut || '',
+          phone: item.client.phone || '',
+          email: item.client.email || '',
+          address: item.client.address || '',
+          department: item.client.department || '',
+          isActive: item.client.is_active ?? true,
+          createdAt: item.client.created_at || new Date().toISOString(),
+          updatedAt: item.client.updated_at || new Date().toISOString()
+        } : item.third_party_client ? {
+          id: item.third_party_client.id,
+          name: item.third_party_client.name,
+          rut: item.third_party_client.rut || '',
+          phone: item.third_party_client.phone || '',
+          email: item.third_party_client.email || '',
+          address: item.third_party_client.address || '',
+          department: item.third_party_client.department || '',
+          isActive: item.third_party_client.is_active ?? true,
+          createdAt: item.third_party_client.created_at || new Date().toISOString(),
+          updatedAt: item.third_party_client.updated_at || new Date().toISOString()
         } : {
           id: item.client_id || '',
           name: 'Cliente no disponible',
