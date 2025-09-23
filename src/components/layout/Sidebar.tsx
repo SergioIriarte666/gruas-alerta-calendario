@@ -173,7 +173,7 @@ export const Sidebar = ({
                 "font-bold text-foreground",
                 isTablet ? "text-base" : "text-lg"
               )}>{companyName}</h1>
-              <p className="text-xs font-bold text-destructive">Sistema de Gestión</p>
+              <p className="text-xs font-bold text-violet-600">Sistema de Gestión</p>
             </div>
           </div>
         )}
