@@ -505,7 +505,7 @@ export const BatchUpdateModal: React.FC<BatchUpdateModalProps> = ({
                     ) : enableQuote ? (
                       <div className="flex items-center gap-2">
                         <span>Los servicios cambiarán automáticamente a</span>
-                        <Badge className="bg-blue-500/20 text-blue-300 border-blue-500/30">
+                        <Badge className="bg-blue-500/20 text-foreground border-blue-500/30">
                           Cotizado
                         </Badge>
                       </div>
