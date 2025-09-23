@@ -17,9 +17,7 @@ export const fetchCompanyData = async (): Promise<CompanyData> => {
     const { data, error } = await supabase
       .from('company_data')
       .select('*')
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .maybeSingle();
+      .single();
     
     if (error) {
       console.error('❌ [COMPANY] Error fetching company data:', error);
