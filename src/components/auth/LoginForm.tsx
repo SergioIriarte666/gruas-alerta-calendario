@@ -21,7 +21,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
 }) => {
   return <Card className="bg-transparent">
       <CardHeader>
-        <CardTitle className="text-white">Iniciar Sesión</CardTitle>
+        <CardTitle className="text-white text-center">Iniciar Sesión</CardTitle>
         <CardDescription className="text-white/80">Ingresa tus credenciales para acceder a tu cuenta.</CardDescription>
       </CardHeader>
       <CardContent className="bg-transparent">
