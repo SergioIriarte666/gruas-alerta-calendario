@@ -63,15 +63,15 @@ export const SignaturePad = forwardRef<SignaturePadRef, SignaturePadProps>(
     return (
       <div className="space-y-4">
         <div className="text-center">
-          <h4 className="text-lg font-semibold text-white">{label}</h4>
+          <h4 className="text-lg font-semibold text-foreground">{label}</h4>
           {personName && (
-            <p className="text-sm text-gray-300 mt-1">
-              Nombre: <span className="text-tms-green font-medium">{personName}</span>
+            <p className="text-sm text-muted-foreground mt-1">
+              Nombre: <span className="text-primary font-medium">{personName}</span>
             </p>
           )}
         </div>
         
-        <div className="border-2 border-slate-600 rounded-lg bg-white relative">
+        <div className="border-2 border-border rounded-lg bg-background relative">
           <SignatureCanvas
             ref={sigCanvasRef}
             canvasProps={{
@@ -85,11 +85,11 @@ export const SignaturePad = forwardRef<SignaturePadRef, SignaturePadProps>(
           
           {signature && (
             <div className="absolute top-2 right-2">
-              <Check className="w-5 h-5 text-green-500" />
+              <Check className="w-5 h-5 text-emerald-500" />
             </div>
           )}
           
-          <div className="absolute bottom-2 left-2 text-xs text-gray-400">
+          <div className="absolute bottom-2 left-2 text-xs text-muted-foreground">
             Firme aquí con su dedo o stylus
           </div>
         </div>
@@ -100,7 +100,6 @@ export const SignaturePad = forwardRef<SignaturePadRef, SignaturePadProps>(
             onClick={handleClear}
             variant="outline"
             size="sm"
-            className="border-slate-600 text-gray-300 hover:bg-slate-700"
           >
             <RotateCcw className="w-4 h-4 mr-2" />
             Limpiar Firma

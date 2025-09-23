@@ -13,7 +13,7 @@ export const InspectionHeader = ({ onBack }: InspectionHeaderProps) => {
       <Button variant="ghost" size="icon" onClick={onBack}>
         <ArrowLeft />
       </Button>
-      <h1 className="text-2xl font-bold">Inspección Pre-Servicio</h1>
+      <h1 className="text-2xl font-bold text-foreground">Inspección Pre-Servicio</h1>
     </div>
   );
 };

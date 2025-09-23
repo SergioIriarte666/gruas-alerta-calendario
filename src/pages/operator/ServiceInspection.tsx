@@ -49,17 +49,17 @@ const ServiceInspection = () => {
       <div className="space-y-6">
         <InspectionHeader onBack={() => navigate('/operator')} />
         
-        <div className="text-center p-8 bg-red-50 rounded-lg border border-red-200">
-          <AlertTriangle className="w-16 h-16 mx-auto mb-4 text-red-500" />
-          <h2 className="text-xl font-semibold mb-2 text-red-800">URL inválida</h2>
-          <p className="text-red-600 mb-4">
+        <div className="text-center p-8 bg-destructive/10 rounded-lg border border-destructive/30">
+          <AlertTriangle className="w-16 h-16 mx-auto mb-4 text-destructive" />
+          <h2 className="text-xl font-semibold mb-2 text-destructive">URL inválida</h2>
+          <p className="text-muted-foreground mb-4">
             No se pudo obtener el ID del servicio desde la URL.
           </p>
-          <div className="bg-red-100 p-3 rounded mb-6">
-            <p className="text-sm text-red-700 font-mono">
+          <div className="bg-muted p-3 rounded mb-6">
+            <p className="text-sm text-muted-foreground font-mono">
               URL actual: {window.location.pathname}
             </p>
-            <p className="text-sm text-red-700 font-mono">
+            <p className="text-sm text-muted-foreground font-mono">
               Formato esperado: /operator/service/[ID]/inspection
             </p>
           </div>
