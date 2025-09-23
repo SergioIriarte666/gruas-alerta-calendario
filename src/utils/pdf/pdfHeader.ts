@@ -105,24 +105,22 @@ export const addPDFHeader = async (doc: jsPDF, data: InspectionPDFData): Promise
     doc.text('REPORTE DE INSPECCION PRE-SERVICIO', pageWidth / 2, yPosition, { align: 'center' });
     yPosition += 12;
 
-    // Información de la empresa
-    if (data.companyData) {
-      doc.setFontSize(14);
-      doc.setTextColor(0, 0, 0);
-      doc.text(data.companyData.businessName, pageWidth / 2, yPosition, { align: 'center' });
-      yPosition += 8;
-      
-      doc.setFontSize(10);
-      doc.setTextColor(60, 60, 60);
-      doc.text(`RUT: ${data.companyData.rut}`, pageWidth / 2, yPosition, { align: 'center' });
-      yPosition += 6;
-      
-      doc.text(`${data.companyData.address}`, pageWidth / 2, yPosition, { align: 'center' });
-      yPosition += 5;
-      
-      doc.text(`Tel: ${data.companyData.phone} | Email: ${data.companyData.email}`, pageWidth / 2, yPosition, { align: 'center' });
-      yPosition += 15;
-    }
+    // Información de la empresa - USAR DATOS REALES
+    doc.setFontSize(14);
+    doc.setTextColor(0, 0, 0);
+    doc.text(data.companyData?.businessName || 'Grúas 5 Norte', pageWidth / 2, yPosition, { align: 'center' });
+    yPosition += 8;
+    
+    doc.setFontSize(10);
+    doc.setTextColor(60, 60, 60);
+    doc.text(`RUT: ${data.companyData?.rut || '76.769.841-0'}`, pageWidth / 2, yPosition, { align: 'center' });
+    yPosition += 6;
+    
+    doc.text(data.companyData?.address || 'Panamericana Norte Km. 841, Copiapó', pageWidth / 2, yPosition, { align: 'center' });
+    yPosition += 5;
+    
+    doc.text(`Tel: ${data.companyData?.phone || '+56 9 62380627'} | Email: ${data.companyData?.email || 'asistencia@gruas5norte.cl'}`, pageWidth / 2, yPosition, { align: 'center' });
+    yPosition += 15;
 
     // Línea separadora
     doc.setDrawColor(0, 150, 136);
