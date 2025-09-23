@@ -17,7 +17,8 @@ const fetchOperatorService = async (serviceId: string): Promise<Service | null> 
       .from('services')
       .select(`
         *,
-        clients (*),
+        client:clients!services_client_id_fkey (*),
+        third_party_client:clients!services_third_party_client_id_fkey (*),
         cranes (*),
         operators (*),
         service_types (*)
