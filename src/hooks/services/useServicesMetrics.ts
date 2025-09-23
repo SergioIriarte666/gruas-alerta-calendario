@@ -8,6 +8,7 @@ import {
   getCurrentWeekRange,
   formatForDatabase
 } from '@/utils/timezoneUtils';
+import { getDisplayServiceValue } from '@/utils/serviceValueCalculations';
 
 export interface ServicesMetrics {
   totalServices: number;
@@ -132,7 +133,7 @@ export const useServicesMetrics = (dateFilter: DateFilter = 'all') => {
 
   const metrics = useMemo((): ServicesMetrics => {
     const totalServices = services.length;
-    const totalRevenue = services.reduce((sum, service) => sum + (service.value || 0), 0);
+    const totalRevenue = services.reduce((sum, service) => sum + getDisplayServiceValue(service), 0);
     const totalCosts = costs.reduce((sum, cost) => sum + (cost.amount || 0), 0);
     const netProfit = totalRevenue - totalCosts;
     const profitMargin = totalRevenue > 0 ? (netProfit / totalRevenue) * 100 : 0;

@@ -2,6 +2,7 @@
 import React from 'react';
 import { formatForDisplay, parseFromDatabase } from '@/utils/timezoneUtils';
 import { getServiceStatusBadge, formatCurrency, shouldShowVehicleInfo, formatVehicleInfo } from '@/utils/statusHelpers';
+import { getDisplayServiceValue } from '@/utils/serviceValueCalculations';
 
 interface PortalServiceCardProps {
   service: any;
@@ -55,7 +56,7 @@ export const PortalServiceCard: React.FC<PortalServiceCardProps> = ({ service })
         
         <div className="flex justify-between">
           <span className="text-gray-400">Valor:</span>
-          <span className="text-white font-semibold">{formatCurrency(service.value)}</span>
+          <span className="text-white font-semibold">{formatCurrency(getDisplayServiceValue(service))}</span>
         </div>
       </div>
     </div>

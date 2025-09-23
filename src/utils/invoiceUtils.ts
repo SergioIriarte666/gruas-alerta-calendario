@@ -1,6 +1,7 @@
 
 import { Invoice } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
+import { getDisplayServiceValue } from '@/utils/serviceValueCalculations';
 
 // Safe number conversion with fallback
 const safeNumber = (value: any, fallback: number = 0): number => {
@@ -146,13 +147,13 @@ export const getBillableAmount = (service: any): number => {
       const clientAmount = safeNumber(service.client_covered_amount);
       if (clientAmount < 0) {
         console.warn('Negative client covered amount detected, using service value instead');
-        return safeNumber(service.value);
+        return getDisplayServiceValue(service);
       }
       return clientAmount;
     }
     
     // Return standard service value
-    return safeNumber(service.value);
+    return getDisplayServiceValue(service);
   } catch (error) {
     console.error('Error calculating billable amount:', error);
     return 0;

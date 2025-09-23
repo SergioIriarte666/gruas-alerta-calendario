@@ -21,6 +21,7 @@ import {
   CheckCircle
 } from 'lucide-react';
 import { formatForDisplay } from '@/utils/timezoneUtils';
+import { getDisplayServiceValue } from '@/utils/serviceValueCalculations';
 import { ServicesPipelineMetrics } from './ServicesPipelineMetrics';
 
 interface ServiceGroup {
@@ -124,7 +125,7 @@ export const ServicesPipelineView: React.FC<ServicesPipelineViewProps> = ({
     return PIPELINE_STATUSES.map(statusConfig => {
       const statusServices = filteredServices.filter(service => service.status === statusConfig.status);
       
-      const totalValue = statusServices.reduce((sum, service) => sum + service.value, 0);
+      const totalValue = statusServices.reduce((sum, service) => sum + getDisplayServiceValue(service), 0);
       
       // Calcular promedio de días desde la fecha de servicio
       const avgDays = statusServices.length > 0 ? Math.round(
@@ -286,7 +287,7 @@ export const ServicesPipelineView: React.FC<ServicesPipelineViewProps> = ({
                             <div>
                               <div className="font-semibold text-gray-900 flex items-center">
                                 <DollarSign className="w-3 h-3 mr-1" />
-                                ${service.value.toLocaleString()}
+                                ${getDisplayServiceValue(service).toLocaleString()}
                               </div>
                               <div className="text-gray-600">
                                 {service.serviceType.name}

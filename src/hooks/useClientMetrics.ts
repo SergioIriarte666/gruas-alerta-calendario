@@ -3,6 +3,7 @@ import { useClientServices } from './useClientServices';
 import { useClientInvoices } from './useClientInvoices';
 import { useClientClosures } from './useClientClosures';
 import { useClientRequests } from './useClientRequests';
+import { getDisplayServiceValue } from '@/utils/serviceValueCalculations';
 
 export const useClientMetrics = (clientId: string | null) => {
   const { services, loading: servicesLoading, metrics: serviceMetrics } = useClientServices(clientId);
@@ -18,7 +19,7 @@ export const useClientMetrics = (clientId: string | null) => {
     // Calcular métricas de rendimiento del cliente
     const completedServices = services.filter(s => s.status === 'completed');
     const avgServiceValue = completedServices.length > 0 
-      ? completedServices.reduce((sum, s) => sum + s.value, 0) / completedServices.length 
+      ? completedServices.reduce((sum, s) => sum + getDisplayServiceValue(s), 0) / completedServices.length 
       : 0;
 
     // Calcular tendencias mensuales (últimos 6 meses)
@@ -31,7 +32,7 @@ export const useClientMetrics = (clientId: string | null) => {
     
     const monthlyTrend = recentServices.reduce((acc: Record<string, number>, service) => {
       const month = new Date(service.serviceDate).toISOString().slice(0, 7); // YYYY-MM
-      acc[month] = (acc[month] || 0) + service.value;
+      acc[month] = (acc[month] || 0) + getDisplayServiceValue(service);
       return acc;
     }, {});
 
