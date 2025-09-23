@@ -56,11 +56,17 @@ export const addPDFHeader = async (doc: jsPDF, data: InspectionPDFData): Promise
   const pageWidth = doc.internal.pageSize.width;
   let yPosition = 20;
 
+  console.log('📄 [PDF-HEADER] Iniciando generación de header con datos:', {
+    companyName: data.companyData?.businessName,
+    hasLogo: !!data.companyData?.logoUrl,
+    logoUrl: data.companyData?.logoUrl
+  });
+
   try {
     // Intentar cargar y agregar logo si está disponible
     if (data.companyData?.logoUrl) {
       try {
-        console.log('Intentando cargar logo:', data.companyData.logoUrl);
+        console.log('🖼️ [PDF-HEADER] Intentando cargar logo:', data.companyData.logoUrl);
         const logoBase64 = await loadImageAsBase64(data.companyData.logoUrl);
         
         if (logoBase64) {
