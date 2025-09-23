@@ -66,7 +66,7 @@ export const VehicleEquipmentChecklist = ({ form }: VehicleEquipmentChecklistPro
                           onClick={() => handleItemToggle(item.id)}
                           className="flex items-center justify-between p-3 border border-slate-600 rounded-lg cursor-pointer hover:bg-slate-700/50 transition-colors"
                         >
-                          <span className="text-gray-300 text-sm font-medium flex-1">
+                          <span className="text-foreground text-sm font-medium flex-1">
                             {item.name}
                           </span>
                           <div className="ml-3 flex-shrink-0">
