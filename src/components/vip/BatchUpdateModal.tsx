@@ -550,7 +550,7 @@ export const BatchUpdateModal: React.FC<BatchUpdateModalProps> = ({
                              item.currentStatus}
                           </Badge>
                           <ArrowRight className="w-3 h-3 text-purple-400" />
-                          <Badge className="bg-purple-500/20 text-purple-300 border-purple-500/30">
+                          <Badge className="bg-purple-500/20 text-foreground border-purple-500/30">
                             {item.targetStatus === 'quoted' ? 'Cotizado' : 'Con Orden de Compra'}
                           </Badge>
                         </div>
