@@ -23,7 +23,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
   onSubmit
 }) => {
   return (
-    <Card className="bg-white/15 backdrop-blur-md border border-white/20 shadow-2xl">
+    <Card className="bg-transparent">
       <CardHeader>
         <CardTitle className="text-white">Registrarse</CardTitle>
         <CardDescription className="text-white/80">Crea una nueva cuenta para empezar.</CardDescription>
@@ -39,7 +39,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="bg-white/20 border-white/30 text-white placeholder-white/60 focus:bg-white/30 focus:border-white/50"
+              className="bg-transparent border-white/50 text-white placeholder-white/60 focus:border-white"
             />
           </div>
           <div className="space-y-2">
@@ -50,12 +50,12 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="bg-white/20 border-white/30 text-white focus:bg-white/30 focus:border-white/50"
+              className="bg-transparent border-white/50 text-white focus:border-white"
             />
           </div>
           <Button
             type="submit"
-            className="w-full bg-tms-green hover:bg-tms-green-dark text-black font-semibold shadow-lg"
+            className="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold"
             disabled={loading}
           >
             {loading ? 'Registrando...' : 'Registrar'}
