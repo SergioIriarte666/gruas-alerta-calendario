@@ -252,7 +252,7 @@ export const BatchUpdateModal: React.FC<BatchUpdateModalProps> = ({
             {/* Servicios seleccionados */}
             <div>
               <div className="flex items-center gap-2 mb-3">
-                <Badge variant="outline" className="text-blue-300 border-blue-500/30 bg-slate-50">
+                <Badge variant="outline" className="text-blue-300 border-blue-500/30 bg-inherit">
                   {selectedServices.length} servicios seleccionados
                 </Badge>
               </div>
