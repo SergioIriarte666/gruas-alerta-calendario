@@ -36,9 +36,9 @@ export const AssignedServiceCard = ({ service, showDeliveryAction = false }: Ass
   // Si el servicio está completado, renderizar sin enlace
   if (isCompleted) {
     return (
-      <Card className="bg-slate-800/60 border-slate-700 text-white opacity-80">
+      <Card className="bg-card/60 border-border text-foreground opacity-80">
         <CardHeader className="flex flex-row items-center justify-between pb-2">
-          <CardTitle className="text-lg font-bold text-tms-green">Folio: {service.folio}</CardTitle>
+          <CardTitle className="text-lg font-bold text-primary">Folio: {service.folio}</CardTitle>
           <div className="flex items-center gap-2">
             {getStatusChip(service.status)}
             <CheckCircle className="w-5 h-5 text-green-400" />
@@ -46,25 +46,25 @@ export const AssignedServiceCard = ({ service, showDeliveryAction = false }: Ass
         </CardHeader>
         <CardContent className="space-y-3 pt-2">
           <div className="flex items-center gap-3">
-            <Truck className="w-4 h-4 text-gray-400" />
+            <Truck className="w-4 h-4 text-muted-foreground" />
             <span>{service.serviceType?.name ?? 'Tipo de servicio no especificado'}</span>
           </div>
           <div className="flex items-center gap-3">
-            <User className="w-4 h-4 text-gray-400" />
+            <User className="w-4 h-4 text-muted-foreground" />
             <span>{service.client?.name ?? 'Cliente no especificado'}</span>
           </div>
           <div className="flex items-center gap-3">
-            <Calendar className="w-4 h-4 text-gray-400" />
+            <Calendar className="w-4 h-4 text-muted-foreground" />
             <span>{format(new Date(service.serviceDate), "eeee, dd 'de' MMMM", { locale: es })}</span>
           </div>
           <div className="flex items-center gap-3">
-            <MapPin className="w-4 h-4 text-gray-400" />
+            <MapPin className="w-4 h-4 text-muted-foreground" />
             <div className="text-sm">
               <p><span className="font-semibold">Origen:</span> {service.origin}</p>
               <p><span className="font-semibold">Destino:</span> {service.destination}</p>
             </div>
           </div>
-          <div className="text-center text-sm text-green-400 font-medium mt-4">
+          <div className="text-center text-sm text-emerald-500 font-medium mt-4">
             <CheckCircle className="w-4 h-4 inline mr-2" />
             Servicio finalizado
           </div>
@@ -76,9 +76,9 @@ export const AssignedServiceCard = ({ service, showDeliveryAction = false }: Ass
   // Si el servicio está activo (en progreso), renderizar sin enlace
   if (isActive) {
     return (
-      <Card className="bg-slate-800/80 border-slate-700 text-white">
+      <Card className="bg-card/80 border-border text-foreground">
         <CardHeader className="flex flex-row items-center justify-between pb-2">
-          <CardTitle className="text-lg font-bold text-tms-green">Folio: {service.folio}</CardTitle>
+          <CardTitle className="text-lg font-bold text-primary">Folio: {service.folio}</CardTitle>
           <div className="flex items-center gap-2">
             {getStatusChip(service.status)}
             <Play className="w-5 h-5 text-blue-400" />
@@ -104,7 +104,7 @@ export const AssignedServiceCard = ({ service, showDeliveryAction = false }: Ass
               <p><span className="font-semibold">Destino:</span> {service.destination}</p>
             </div>
           </div>
-          <div className="text-center text-sm text-blue-400 font-medium mt-4">
+          <div className="text-center text-sm text-blue-500 font-medium mt-4">
             <Play className="w-4 h-4 inline mr-2" />
             Servicio en progreso
           </div>
@@ -117,9 +117,9 @@ export const AssignedServiceCard = ({ service, showDeliveryAction = false }: Ass
   if (isReadyForDelivery && showDeliveryAction) {
     return (
       <Link to={`/operator/service/${service.id}/inspection`} className="block">
-        <Card className="bg-slate-800 border-orange-500/30 text-white hover:bg-slate-700/50 transition-colors cursor-pointer">
+        <Card className="bg-card border-accent/30 text-foreground hover:bg-card/70 transition-colors cursor-pointer">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-lg font-bold text-tms-green">Folio: {service.folio}</CardTitle>
+            <CardTitle className="text-lg font-bold text-primary">Folio: {service.folio}</CardTitle>
             <div className="flex items-center gap-2">
               {getStatusChip(service.status)}
               <Package className="w-5 h-5 text-orange-400" />
@@ -145,7 +145,7 @@ export const AssignedServiceCard = ({ service, showDeliveryAction = false }: Ass
                 <p><span className="font-semibold">Destino:</span> {service.destination}</p>
               </div>
             </div>
-            <div className="text-center text-sm text-orange-400 font-medium mt-4 p-2 bg-orange-500/10 rounded">
+            <div className="text-center text-sm text-accent font-medium mt-4 p-2 bg-accent/10 rounded">
               <Package className="w-4 h-4 inline mr-2" />
               Hacer clic para completar entrega
             </div>
@@ -159,29 +159,29 @@ export const AssignedServiceCard = ({ service, showDeliveryAction = false }: Ass
   if (isPending) {
     return (
       <Link to={`/operator/service/${service.id}/inspection`} className="block">
-        <Card className="bg-slate-800 border-slate-700 text-white hover:bg-slate-700/50 transition-colors cursor-pointer">
+        <Card className="bg-card border-border text-foreground hover:bg-card/70 transition-colors cursor-pointer">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-lg font-bold text-tms-green">Folio: {service.folio}</CardTitle>
+            <CardTitle className="text-lg font-bold text-primary">Folio: {service.folio}</CardTitle>
             <div className="flex items-center gap-2">
               {getStatusChip(service.status)}
-              <ChevronRight className="w-5 h-5 text-gray-400" />
+              <ChevronRight className="w-5 h-5 text-muted-foreground" />
             </div>
           </CardHeader>
           <CardContent className="space-y-3 pt-2">
             <div className="flex items-center gap-3">
-              <Truck className="w-4 h-4 text-gray-400" />
+              <Truck className="w-4 h-4 text-muted-foreground" />
               <span>{service.serviceType?.name ?? 'Tipo de servicio no especificado'}</span>
             </div>
             <div className="flex items-center gap-3">
-              <User className="w-4 h-4 text-gray-400" />
+              <User className="w-4 h-4 text-muted-foreground" />
               <span>{service.client?.name ?? 'Cliente no especificado'}</span>
             </div>
             <div className="flex items-center gap-3">
-              <Calendar className="w-4 h-4 text-gray-400" />
+              <Calendar className="w-4 h-4 text-muted-foreground" />
               <span>{format(new Date(service.serviceDate), "eeee, dd 'de' MMMM", { locale: es })}</span>
             </div>
             <div className="flex items-center gap-3">
-              <MapPin className="w-4 h-4 text-gray-400" />
+              <MapPin className="w-4 h-4 text-muted-foreground" />
               <div className="text-sm">
                 <p><span className="font-semibold">Origen:</span> {service.origin}</p>
                 <p><span className="font-semibold">Destino:</span> {service.destination}</p>
@@ -195,28 +195,28 @@ export const AssignedServiceCard = ({ service, showDeliveryAction = false }: Ass
 
   // Fallback para cualquier otro estado (no debería ocurrir)
   return (
-    <Card className="bg-slate-800 border-slate-700 text-white">
+    <Card className="bg-card border-border text-foreground">
       <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle className="text-lg font-bold text-tms-green">Folio: {service.folio}</CardTitle>
+        <CardTitle className="text-lg font-bold text-primary">Folio: {service.folio}</CardTitle>
         <div className="flex items-center gap-2">
           {getStatusChip(service.status)}
         </div>
       </CardHeader>
       <CardContent className="space-y-3 pt-2">
         <div className="flex items-center gap-3">
-          <Truck className="w-4 h-4 text-gray-400" />
+          <Truck className="w-4 h-4 text-muted-foreground" />
           <span>{service.serviceType?.name ?? 'Tipo de servicio no especificado'}</span>
         </div>
         <div className="flex items-center gap-3">
-          <User className="w-4 h-4 text-gray-400" />
+          <User className="w-4 h-4 text-muted-foreground" />
           <span>{service.client?.name ?? 'Cliente no especificado'}</span>
         </div>
         <div className="flex items-center gap-3">
-          <Calendar className="w-4 h-4 text-gray-400" />
+          <Calendar className="w-4 h-4 text-muted-foreground" />
           <span>{format(new Date(service.serviceDate), "eeee, dd 'de' MMMM", { locale: es })}</span>
         </div>
         <div className="flex items-center gap-3">
-          <MapPin className="w-4 h-4 text-gray-400" />
+          <MapPin className="w-4 h-4 text-muted-foreground" />
           <div className="text-sm">
             <p><span className="font-semibold">Origen:</span> {service.origin}</p>
             <p><span className="font-semibold">Destino:</span> {service.destination}</p>

@@ -30,22 +30,22 @@ export const OperatorLayout = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-tms">
+    <div className="min-h-screen bg-gradient-to-br from-background via-muted/50 to-background">
       {/* Header */}
-      <header className="bg-black/20 backdrop-blur-lg border-b border-gray-800 px-4 py-3">
+      <header className="bg-card/20 backdrop-blur-lg border-b border-border px-4 py-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 bg-tms-green rounded-lg flex items-center justify-center">
-              <Truck className="w-5 h-5 text-white" />
+            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+              <Truck className="w-5 h-5 text-primary-foreground" />
             </div>
             <div>
-              <h1 className="text-lg font-bold text-white">Gruas 5 Norte</h1>
-              <p className="text-xs text-gray-400">Panel del Operador</p>
+              <h1 className="text-lg font-bold text-foreground">Gruas 5 Norte</h1>
+              <p className="text-xs text-muted-foreground">Panel del Operador</p>
             </div>
           </div>
           
           <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-2 text-white">
+            <div className="flex items-center space-x-2 text-foreground">
               <User className="w-4 h-4" />
               <span className="text-sm">{user?.name}</span>
             </div>
@@ -53,7 +53,7 @@ export const OperatorLayout = () => {
               variant="ghost"
               size="sm"
               onClick={handleLogout}
-              className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
+              className="text-destructive hover:text-destructive/90 hover:bg-destructive/10"
             >
               Salir
             </Button>

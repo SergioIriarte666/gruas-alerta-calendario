@@ -40,8 +40,8 @@ const OperatorDashboard = () => {
     console.log('⏳ Rendering loading state');
     return (
       <div className="space-y-4">
-        <Skeleton className="h-44 w-full bg-slate-700 rounded-lg" />
-        <Skeleton className="h-44 w-full bg-slate-700 rounded-lg" />
+        <Skeleton className="h-44 w-full bg-muted rounded-lg" />
+        <Skeleton className="h-44 w-full bg-muted rounded-lg" />
       </div>
     );
   }
@@ -52,12 +52,12 @@ const OperatorDashboard = () => {
     const isNoOperatorError = error.message.includes('No se encontró operador') || error.message.includes('operador');
     
     return (
-      <div className="text-center bg-red-900/20 border border-red-500/30 p-8 rounded-lg">
-        <AlertCircle className="w-16 h-16 mx-auto mb-4 text-red-400" />
-        <h2 className="text-xl font-semibold mb-2 text-red-400">
+      <div className="text-center bg-destructive/10 border border-destructive/30 p-8 rounded-lg">
+        <AlertCircle className="w-16 h-16 mx-auto mb-4 text-destructive" />
+        <h2 className="text-xl font-semibold mb-2 text-destructive">
           {isNoOperatorError ? 'Usuario no asignado como operador' : 'Error al cargar servicios'}
         </h2>
-        <p className="text-gray-400 max-w-md mx-auto mb-4">
+        <p className="text-muted-foreground max-w-md mx-auto mb-4">
           {isNoOperatorError 
             ? 'Tu usuario no está configurado como operador. Contacta al administrador para que te asigne como operador en el sistema.'
             : (error.message || 'Hubo un problema al cargar tus servicios asignados.')
@@ -66,7 +66,7 @@ const OperatorDashboard = () => {
         <Button 
           onClick={handleRefresh} 
           variant="outline" 
-          className="border-red-500 text-red-400 hover:bg-red-500/10"
+          className="border-destructive text-destructive hover:bg-destructive/10"
           disabled={isRefreshing}
         >
           <RefreshCw className={`w-4 h-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
@@ -81,20 +81,20 @@ const OperatorDashboard = () => {
   if (totalServices === 0) {
     console.log('📭 Rendering no services state');
     return (
-      <div className="text-center bg-slate-800 p-8 rounded-lg border border-slate-700">
-        <h2 className="text-xl font-semibold mb-2 text-white">No hay servicios</h2>
-        <p className="text-gray-400 max-w-md mx-auto mb-4">
+      <div className="text-center bg-card p-8 rounded-lg border border-border">
+        <h2 className="text-xl font-semibold mb-2 text-foreground">No hay servicios</h2>
+        <p className="text-muted-foreground max-w-md mx-auto mb-4">
           En este momento, no tienes ningún servicio de grúa asignado. Los nuevos servicios asignados aparecerán aquí.
         </p>
-        <div className="mt-4 p-4 bg-slate-700/50 rounded-lg">
-          <p className="text-sm text-gray-400">
-            Operador: <span className="text-white">{user?.name || user?.email}</span>
+        <div className="mt-4 p-4 bg-muted/50 rounded-lg">
+          <p className="text-sm text-muted-foreground">
+            Operador: <span className="text-foreground">{user?.name || user?.email}</span>
           </p>
-          <p className="text-sm text-gray-400">
-            <span className="text-tms-green">Email:</span> {user?.email}
+          <p className="text-sm text-muted-foreground">
+            <span className="text-primary">Email:</span> {user?.email}
           </p>
-          <p className="text-sm text-gray-400">
-            <span className="text-tms-green">Estado:</span> <span className="text-tms-green">Activo y listo para servicios</span>
+          <p className="text-sm text-muted-foreground">
+            <span className="text-primary">Estado:</span> <span className="text-primary">Activo y listo para servicios</span>
           </p>
         </div>
         <Button 
@@ -114,15 +114,15 @@ const OperatorDashboard = () => {
   
   return (
     <div className="space-y-8 animate-fade-in">
-      <header className="flex justify-between items-center pb-4 border-b border-slate-700">
+      <header className="flex justify-between items-center pb-4 border-b border-border">
         <div>
-          <h1 className="text-2xl font-bold text-tms-green">Portal del Operador</h1>
+          <h1 className="text-2xl font-bold text-primary">Portal del Operador</h1>
           <div className="flex items-center gap-2 mt-1">
-            <span className="text-gray-400">
+            <span className="text-muted-foreground">
               Bienvenido, {user?.name || user?.email}
             </span>
             {user?.role && (
-              <Badge className="bg-blue-500/20 text-blue-300 border border-blue-500/30">
+              <Badge variant="secondary">
                 {user.role}
               </Badge>
             )}
@@ -132,7 +132,7 @@ const OperatorDashboard = () => {
           onClick={handleRefresh} 
           variant="ghost" 
           size="sm"
-          className="text-gray-400 hover:text-white"
+          className="text-muted-foreground hover:text-foreground"
           disabled={isRefreshing}
         >
           <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
@@ -141,51 +141,51 @@ const OperatorDashboard = () => {
       
       <div className="space-y-4">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-4 bg-slate-800 border border-slate-700">
+          <TabsList className="grid w-full grid-cols-4 bg-muted border border-border">
             <TabsTrigger 
               value="asignados" 
-              className="data-[state=active]:bg-tms-green data-[state=active]:text-black text-gray-300 hover:text-white"
+              className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-muted-foreground hover:text-foreground"
             >
               <Clock className="w-4 h-4 mr-2" />
               Asignados
               {serviceTabs.asignados.length > 0 && (
-                <Badge className="ml-2 bg-yellow-500/20 text-yellow-300 border border-yellow-500/30">
+                <Badge variant="secondary" className="ml-2">
                   {serviceTabs.asignados.length}
                 </Badge>
               )}
             </TabsTrigger>
             <TabsTrigger 
               value="pendientes_entrega" 
-              className="data-[state=active]:bg-tms-green data-[state=active]:text-black text-gray-300 hover:text-white"
+              className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-muted-foreground hover:text-foreground"
             >
               <Package className="w-4 h-4 mr-2" />
               Por Entregar
               {serviceTabs.pendientes_entrega.length > 0 && (
-                <Badge className="ml-2 bg-orange-500/20 text-orange-300 border border-orange-500/30">
+                <Badge variant="secondary" className="ml-2">
                   {serviceTabs.pendientes_entrega.length}
                 </Badge>
               )}
             </TabsTrigger>
             <TabsTrigger 
               value="activos" 
-              className="data-[state=active]:bg-tms-green data-[state=active]:text-black text-gray-300 hover:text-white"
+              className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-muted-foreground hover:text-foreground"
             >
               <Play className="w-4 h-4 mr-2" />
               Activos
               {serviceTabs.activos.length > 0 && (
-                <Badge className="ml-2 bg-blue-500/20 text-blue-300 border border-blue-500/30">
+                <Badge variant="secondary" className="ml-2">
                   {serviceTabs.activos.length}
                 </Badge>
               )}
             </TabsTrigger>
             <TabsTrigger 
               value="completados" 
-              className="data-[state=active]:bg-tms-green data-[state=active]:text-black text-gray-300 hover:text-white"
+              className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-muted-foreground hover:text-foreground"
             >
               <CheckCircle className="w-4 h-4 mr-2" />
               Completados
               {serviceTabs.completados.length > 0 && (
-                <Badge className="ml-2 bg-green-500/20 text-green-300 border border-green-500/30">
+                <Badge variant="secondary" className="ml-2">
                   {serviceTabs.completados.length}
                 </Badge>
               )}
@@ -194,13 +194,13 @@ const OperatorDashboard = () => {
 
           <TabsContent value="asignados" className="space-y-4">
             <div className="flex items-center justify-between">
-              <h2 className="text-xl font-semibold text-white">Servicios Asignados</h2>
-              <Badge className="bg-yellow-500/20 text-yellow-300 border border-yellow-500/30">
+              <h2 className="text-xl font-semibold text-foreground">Servicios Asignados</h2>
+              <Badge variant="secondary">
                 {serviceTabs.asignados.length} servicio{serviceTabs.asignados.length !== 1 ? 's' : ''}
               </Badge>
             </div>
             {serviceTabs.asignados.length === 0 ? (
-              <div className="text-center py-8 text-gray-400">
+              <div className="text-center py-8 text-muted-foreground">
                 <Clock className="w-12 h-12 mx-auto mb-4 opacity-50" />
                 <p>No hay servicios asignados pendientes</p>
               </div>
@@ -213,13 +213,13 @@ const OperatorDashboard = () => {
 
           <TabsContent value="activos" className="space-y-4">
             <div className="flex items-center justify-between">
-              <h2 className="text-xl font-semibold text-white">Servicios Activos</h2>
-              <Badge className="bg-blue-500/20 text-blue-300 border border-blue-500/30">
+              <h2 className="text-xl font-semibold text-foreground">Servicios Activos</h2>
+              <Badge variant="secondary">
                 {serviceTabs.activos.length} servicio{serviceTabs.activos.length !== 1 ? 's' : ''}
               </Badge>
             </div>
             {serviceTabs.activos.length === 0 ? (
-              <div className="text-center py-8 text-gray-400">
+              <div className="text-center py-8 text-muted-foreground">
                 <Play className="w-12 h-12 mx-auto mb-4 opacity-50" />
                 <p>No hay servicios en progreso</p>
               </div>
@@ -231,12 +231,12 @@ const OperatorDashboard = () => {
           </TabsContent>
 
           <TabsContent value="pendientes_entrega" className="space-y-4">
-            <h2 className="text-xl font-semibold text-orange-400 flex items-center gap-2">
+            <h2 className="text-xl font-semibold text-accent flex items-center gap-2">
               <Package className="w-5 h-5" />
               Servicios Listos para Entrega ({serviceTabs.pendientes_entrega.length})
             </h2>
             {serviceTabs.pendientes_entrega.length === 0 ? (
-              <div className="text-center py-8 text-gray-400">
+              <div className="text-center py-8 text-muted-foreground">
                 <Package className="w-12 h-12 mx-auto mb-4 opacity-50" />
                 <p>No hay servicios pendientes de entrega</p>
               </div>
@@ -255,13 +255,13 @@ const OperatorDashboard = () => {
 
           <TabsContent value="completados" className="space-y-4">
             <div className="flex items-center justify-between">
-              <h2 className="text-xl font-semibold text-white">Servicios Completados</h2>
-              <Badge className="bg-green-500/20 text-green-300 border border-green-500/30">
+              <h2 className="text-xl font-semibold text-foreground">Servicios Completados</h2>
+              <Badge variant="secondary">
                 {serviceTabs.completados.length} servicio{serviceTabs.completados.length !== 1 ? 's' : ''}
               </Badge>
             </div>
             {serviceTabs.completados.length === 0 ? (
-              <div className="text-center py-8 text-gray-400">
+              <div className="text-center py-8 text-muted-foreground">
                 <CheckCircle className="w-12 h-12 mx-auto mb-4 opacity-50" />
                 <p>No hay servicios completados</p>
               </div>
@@ -274,7 +274,7 @@ const OperatorDashboard = () => {
         </Tabs>
       </div>
 
-      <footer className="text-center text-gray-500 text-sm pt-4">
+      <footer className="text-center text-muted-foreground text-sm pt-4">
         <p>Gruas 5 Norte &copy; {new Date().getFullYear()}</p>
         <p className="text-xs mt-1">
           {user?.id ? '✅ Usuario identificado correctamente' : '❌ Error de identificación de usuario'}
