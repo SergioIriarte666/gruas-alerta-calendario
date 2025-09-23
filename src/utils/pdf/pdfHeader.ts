@@ -63,48 +63,37 @@ export const addPDFHeader = async (doc: jsPDF, data: InspectionPDFData): Promise
   });
 
   try {
-    // Intentar cargar y agregar logo si está disponible
-    if (data.companyData?.logoUrl) {
-      try {
-        console.log('🖼️ [PDF-HEADER] Intentando cargar logo:', data.companyData.logoUrl);
+    // Agregar logo local
+    try {
+      console.log('🖼️ [PDF-HEADER] Cargando logo local...');
+      const logoUrl = '/logo-gruas-5-norte.png';
+      const logoBase64 = await loadImageAsBase64(logoUrl);
+      
+      if (logoBase64) {
+        console.log('✅ [PDF-HEADER] Logo local cargado exitosamente');
         
-        // Limpiar la URL del logo para evitar parámetros que puedan causar problemas
-        const cleanLogoUrl = data.companyData.logoUrl.split('?')[0];
-        console.log('🖼️ [PDF-HEADER] URL limpia del logo:', cleanLogoUrl);
+        // Obtener dimensiones originales de la imagen
+        const { width: originalWidth, height: originalHeight } = await getImageDimensions(logoBase64);
         
-        const logoBase64 = await loadImageAsBase64(cleanLogoUrl);
+        // Calcular dimensiones manteniendo proporciones (máximo 50x30)
+        const { width: logoWidth, height: logoHeight } = calculateLogoDimensions(
+          originalWidth, 
+          originalHeight, 
+          50, // Ancho máximo
+          30  // Alto máximo
+        );
         
-        if (logoBase64) {
-          console.log('✅ [PDF-HEADER] Logo cargado exitosamente, calculando dimensiones...');
-          
-          // Obtener dimensiones originales de la imagen
-          const { width: originalWidth, height: originalHeight } = await getImageDimensions(logoBase64);
-          console.log('📏 [PDF-HEADER] Dimensiones originales:', { originalWidth, originalHeight });
-          
-          // Calcular dimensiones manteniendo proporciones (máximo 50x30)
-          const { width: logoWidth, height: logoHeight } = calculateLogoDimensions(
-            originalWidth, 
-            originalHeight, 
-            50, // Ancho máximo
-            30  // Alto máximo
-          );
-          
-          console.log('📐 [PDF-HEADER] Dimensiones calculadas para PDF:', { logoWidth, logoHeight });
-          
-          // Agregar logo en la esquina superior izquierda con proporciones correctas
-          doc.addImage(logoBase64, 'PNG', 20, yPosition, logoWidth, logoHeight);
-          
-          // Ajustar posición del texto para dar espacio al logo
-          yPosition += Math.max(logoHeight + 5, 25);
-          console.log('✅ [PDF-HEADER] Logo agregado exitosamente al PDF');
-        } else {
-          console.warn('⚠️ [PDF-HEADER] No se pudo cargar el logo como base64, continuando sin él');
-        }
-      } catch (error) {
-        console.error('❌ [PDF-HEADER] Error al procesar logo:', error);
+        // Agregar logo en la esquina superior izquierda
+        doc.addImage(logoBase64, 'PNG', 20, yPosition, logoWidth, logoHeight);
+        
+        // Ajustar posición del texto para dar espacio al logo
+        yPosition += Math.max(logoHeight + 5, 25);
+        console.log('✅ [PDF-HEADER] Logo agregado exitosamente al PDF');
+      } else {
+        console.warn('⚠️ [PDF-HEADER] No se pudo cargar el logo local');
       }
-    } else {
-      console.log('⚠️ [PDF-HEADER] No hay URL de logo disponible');
+    } catch (error) {
+      console.error('❌ [PDF-HEADER] Error al cargar logo local:', error);
     }
 
     // Header principal mejorado
