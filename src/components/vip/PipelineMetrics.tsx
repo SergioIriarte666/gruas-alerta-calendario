@@ -12,6 +12,7 @@ import {
   Timer
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { getDisplayServiceValue } from '@/utils/serviceValueCalculations';
 
 interface PipelineMetricsProps {
   services: Service[];
@@ -31,7 +32,7 @@ export const PipelineMetrics: React.FC<PipelineMetricsProps> = ({
 
     // Calcular valores totales por estado
     const statusValues = services.reduce((acc, service) => {
-      acc[service.status] = (acc[service.status] || 0) + service.value;
+      acc[service.status] = (acc[service.status] || 0) + getDisplayServiceValue(service);
       return acc;
     }, {} as Record<string, number>);
 
@@ -76,7 +77,7 @@ export const PipelineMetrics: React.FC<PipelineMetricsProps> = ({
 
     return {
       total: services.length,
-      totalValue: services.reduce((sum, service) => sum + service.value, 0),
+      totalValue: services.reduce((sum, service) => sum + getDisplayServiceValue(service), 0),
       pendingOC,
       pendingOCValue,
       inPipeline,

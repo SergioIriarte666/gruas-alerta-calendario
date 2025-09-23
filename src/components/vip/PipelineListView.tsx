@@ -36,6 +36,7 @@ import { differenceInDays } from 'date-fns';
 import { formatForDisplay, parseFromDatabase } from '@/utils/timezoneUtils';
 import { BatchUpdateModal, BatchUpdateData } from './BatchUpdateModal';
 import { toast } from 'sonner';
+import { getDisplayServiceValue } from '@/utils/serviceValueCalculations';
 
 interface ServiceGroup {
   status: ServiceStatus;
@@ -206,7 +207,7 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
     return PIPELINE_STATUSES
       .map(statusConfig => {
         const statusServices = groupedServices[statusConfig.id] || [];
-        const totalValue = statusServices.reduce((sum, s) => sum + (s.value || 0), 0);
+        const totalValue = statusServices.reduce((sum, s) => sum + getDisplayServiceValue(s), 0);
         const averageDays = statusServices.length > 0 
           ? statusServices.reduce((sum, s) => {
               const days = differenceInDays(new Date(), parseFromDatabase(s.serviceDate));
@@ -473,7 +474,7 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
               <DollarSign className="w-4 h-4 text-primary" />
               <div>
                 <div className="text-2xl font-bold text-foreground">
-                  ${serviceGroups.reduce((sum, g) => sum + g.totalValue, 0).toLocaleString()}
+                  ${services.reduce((sum, s) => sum + getDisplayServiceValue(s), 0).toLocaleString()}
                 </div>
                 <div className="text-sm text-muted-foreground">Valor total pipeline</div>
               </div>
@@ -598,11 +599,11 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
                                    </span>
                                  </div>
                                </TableCell>
-                               <TableCell>
-                                 <span className="font-medium text-foreground">
-                                   ${(service.value || 0).toLocaleString()}
-                                 </span>
-                               </TableCell>
+                                <TableCell>
+                                  <span className="font-medium text-foreground">
+                                    ${getDisplayServiceValue(service).toLocaleString()}
+                                  </span>
+                                </TableCell>
                                <TableCell>
                                  <Badge variant="outline" className="text-xs">
                                    {daysInStatus} días
