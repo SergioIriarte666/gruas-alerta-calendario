@@ -1,10 +1,8 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-
 interface LoginFormProps {
   email: string;
   password: string;
@@ -13,7 +11,6 @@ interface LoginFormProps {
   setPassword: (password: string) => void;
   onSubmit: (e: React.FormEvent) => void;
 }
-
 export const LoginForm: React.FC<LoginFormProps> = ({
   email,
   password,
@@ -22,8 +19,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
   setPassword,
   onSubmit
 }) => {
-  return (
-    <Card className="bg-transparent">
+  return <Card className="bg-transparent">
       <CardHeader>
         <CardTitle className="text-white">Iniciar Sesión</CardTitle>
         <CardDescription className="text-white/80">Ingresa tus credenciales para acceder a tu cuenta.</CardDescription>
@@ -32,36 +28,16 @@ export const LoginForm: React.FC<LoginFormProps> = ({
         <form onSubmit={onSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="email-login" className="text-white">Email</Label>
-            <Input
-              id="email-login"
-              type="email"
-              placeholder="m@example.com"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="bg-transparent border-white/50 text-white placeholder-white/60 focus:border-white"
-            />
+            <Input id="email-login" type="email" placeholder="m@example.com" required value={email} onChange={e => setEmail(e.target.value)} className="bg-transparent border-white/50 text-white placeholder-white/60 focus:border-white" />
           </div>
           <div className="space-y-2">
             <Label htmlFor="password-login" className="text-white">Contraseña</Label>
-            <Input
-              id="password-login"
-              type="password"
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="bg-transparent border-white/50 text-white focus:border-white"
-            />
+            <Input id="password-login" type="password" required value={password} onChange={e => setPassword(e.target.value)} className="bg-transparent border-white/50 text-white focus:border-white" />
           </div>
-          <Button
-            type="submit"
-            className="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold"
-            disabled={loading}
-          >
+          <Button type="submit" disabled={loading} className="w-full text-white font-semibold bg-transparent">
             {loading ? 'Ingresando...' : 'Ingresar'}
           </Button>
         </form>
       </CardContent>
-    </Card>
-  );
+    </Card>;
 };
