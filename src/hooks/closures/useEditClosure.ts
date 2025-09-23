@@ -31,7 +31,7 @@ export const useEditClosure = ({ closure, onUpdate }: UseEditClosureProps) => {
           service_id,
           services!inner(
             *,
-            clients!inner(id, name, rut, phone, email, address, is_active),
+            clients!services_client_id_fkey(id, name, rut, phone, email, address, is_active),
             cranes!inner(id, license_plate, brand, model, type, is_active),
             operators!inner(id, name, rut, phone, license_number, is_active),
             service_types!inner(id, name, description, is_active)
@@ -49,7 +49,7 @@ export const useEditClosure = ({ closure, onUpdate }: UseEditClosureProps) => {
         .from('services')
         .select(`
           *,
-          clients!inner(id, name, rut, phone, email, address, is_active),
+          clients!services_client_id_fkey(id, name, rut, phone, email, address, is_active),
           cranes!inner(id, license_plate, brand, model, type, is_active),
           operators!inner(id, name, rut, phone, license_number, is_active),
           service_types!inner(id, name, description, is_active)
@@ -76,7 +76,7 @@ export const useEditClosure = ({ closure, onUpdate }: UseEditClosureProps) => {
         .from('services')
         .select(`
           *,
-          clients!inner(id, name, rut, phone, email, address, is_active),
+          clients!services_client_id_fkey(id, name, rut, phone, email, address, is_active),
           cranes!inner(id, license_plate, brand, model, type, is_active),
           operators!inner(id, name, rut, phone, license_number, is_active),
           service_types!inner(id, name, description, is_active)

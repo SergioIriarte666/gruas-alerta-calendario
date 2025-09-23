@@ -35,7 +35,7 @@ const fetchServicesForReport = async (filters: GenerateReportArgs['filters']): P
       vehicle_model,
       license_plate,
       observations,
-      client:clients!inner(
+      client:clients!services_client_id_fkey(
         id,
         name,
         rut

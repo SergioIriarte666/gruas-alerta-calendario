@@ -69,7 +69,7 @@ export const useDeferredBilling = () => {
           service_date,
           value,
           client_id,
-          clients!inner (
+          clients!services_client_id_fkey (
             id,
             name,
             billing_cycle_type,

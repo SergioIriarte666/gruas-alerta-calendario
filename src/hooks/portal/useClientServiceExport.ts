@@ -51,7 +51,7 @@ const fetchClientServicesForExport = async (clientId: string): Promise<ClientSer
       service_types!inner (
         name
       ),
-      clients!inner (
+      clients!services_client_id_fkey (
         name
       )
     `)
