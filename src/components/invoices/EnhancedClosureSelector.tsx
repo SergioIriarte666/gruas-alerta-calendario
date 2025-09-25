@@ -68,7 +68,7 @@ const EnhancedClosureSelector: React.FC<EnhancedClosureSelectorProps> = ({
         <PopoverTrigger asChild>
           <Button variant="outline" role="combobox" aria-expanded={open} disabled={disabled} className="w-full justify-between bg-background border-input text-foreground hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed min-h-[60px] p-3">
             {selectedClosure ? <div className="flex flex-col items-start text-left w-full">
-                <div className="flex items-center gap-2 text-primary font-medium">
+                <div className="flex items-center gap-2 text-violet-600 font-medium">
                   <FileText className="w-4 h-4" />
                   {selectedClosure.folio}
                 </div>
