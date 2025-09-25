@@ -61,7 +61,7 @@ const EnhancedClosureSelector: React.FC<EnhancedClosureSelectorProps> = ({
   return <div className="space-y-2">
       <Label className="text-foreground">
         Cierre
-        {isEditing && <span className="text-xs text-primary ml-2">(Modo edición - incluye cierres texto facturados)</span>}
+        {isEditing && <span className="text-xs text-violet-600 ml-2">(Modo edición - incluye cierres texto facturados)</span>}
       </Label>
       
       <Popover open={open} onOpenChange={setOpen}>
