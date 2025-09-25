@@ -38,7 +38,8 @@ export const useServicesForClosures = (options: UseServicesForClosuresOptions = 
         .from('services')
         .select(`
           *,
-          clients!services_client_id_fkey(id, name, rut, phone, email, address, is_active),
+          client:clients!services_client_id_fkey(id, name, rut, phone, email, address, is_active),
+          third_party_client:clients!services_third_party_client_id_fkey(id, name, rut, phone, email, address, is_active),
           cranes!left(id, license_plate, brand, model, type, is_active),
           operators!left(id, name, rut, phone, license_number, is_active),
           service_types!inner(id, name, description, is_active)
@@ -51,7 +52,8 @@ export const useServicesForClosures = (options: UseServicesForClosuresOptions = 
         .from('services')
         .select(`
           *,
-          clients!services_client_id_fkey(id, name, rut, phone, email, address, is_active),
+          client:clients!services_client_id_fkey(id, name, rut, phone, email, address, is_active),
+          third_party_client:clients!services_third_party_client_id_fkey(id, name, rut, phone, email, address, is_active),
           cranes!left(id, license_plate, brand, model, type, is_active),
           operators!left(id, name, rut, phone, license_number, is_active),
           service_types!inner(id, name, description, is_active)
