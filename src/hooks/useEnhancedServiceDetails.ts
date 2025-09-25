@@ -25,7 +25,8 @@ const fetchEnhancedServiceDetails = async (serviceId: string): Promise<EnhancedS
     .from('services')
     .select(`
       *, quote_number,
-      clients!services_client_id_fkey(id, name, rut, phone, email, address, department, is_active, created_at, updated_at),
+      client:clients!services_client_id_fkey(id, name, rut, phone, email, address, department, is_active, created_at, updated_at),
+      third_party_client:clients!services_third_party_client_id_fkey(id, name, rut, phone, email, address, department, is_active, created_at, updated_at),
       cranes(id, license_plate, brand, model, type, is_active, circulation_permit_expiry, insurance_expiry, technical_review_expiry, created_at, updated_at),
       operators(id, name, rut, phone, license_number, is_active, exam_expiry, created_at, updated_at),
       service_types!inner(id, name, description, is_active, base_price, vehicle_info_optional, purchase_order_required, origin_required, destination_required, crane_required, operator_required, vehicle_brand_required, vehicle_model_required, license_plate_required, created_at, updated_at)
@@ -145,19 +146,19 @@ const fetchEnhancedServiceDetails = async (serviceId: string): Promise<EnhancedS
     folio: serviceData.folio,
     requestDate: serviceData.request_date,
     serviceDate: serviceData.service_date,
-    client: {
-      id: serviceData.clients.id,
-      name: serviceData.clients.name,
-      rut: serviceData.clients.rut,
-      phone: serviceData.clients.phone,
-      email: serviceData.clients.email,
-      address: serviceData.clients.address,
-      department: serviceData.clients.department || '',
+    client: (serviceData.client || serviceData.third_party_client) ? {
+      id: (serviceData.client || serviceData.third_party_client).id,
+      name: (serviceData.client || serviceData.third_party_client).name,
+      rut: (serviceData.client || serviceData.third_party_client).rut,
+      phone: (serviceData.client || serviceData.third_party_client).phone,
+      email: (serviceData.client || serviceData.third_party_client).email,
+      address: (serviceData.client || serviceData.third_party_client).address,
+      department: (serviceData.client || serviceData.third_party_client).department || '',
       contactName: undefined,
-      isActive: serviceData.clients.is_active,
-      createdAt: serviceData.clients.created_at,
-      updatedAt: serviceData.clients.updated_at
-    },
+      isActive: (serviceData.client || serviceData.third_party_client).is_active,
+      createdAt: (serviceData.client || serviceData.third_party_client).created_at,
+      updatedAt: (serviceData.client || serviceData.third_party_client).updated_at
+    } : null,
     purchaseOrder: serviceData.purchase_order,
     purchaseOrderNumber: serviceData.purchase_order_number || '',
     quoteNumber: serviceData.quote_number || '',

@@ -39,7 +39,8 @@ const fetchVehicleHistory = async (licensePlate: string): Promise<VehicleHistory
       has_excess,
       client_covered_amount,
       service_types(name),
-      clients!services_client_id_fkey(name)
+      client:clients!services_client_id_fkey(name),
+      third_party_client:clients!services_third_party_client_id_fkey(name)
     `)
     .eq('license_plate', licensePlate)
     .order('service_date', { ascending: false });
@@ -57,7 +58,7 @@ const fetchVehicleHistory = async (licensePlate: string): Promise<VehicleHistory
     serviceDate: item.service_date,
     status: item.status,
     serviceType: item.service_types || { name: 'Desconocido' },
-    client: item.clients || { name: 'Desconocido' },
+    client: (item.client || item.third_party_client) || { name: 'Desconocido' },
     value: Number(item.value || 0),
     origin: item.origin || '',
     destination: item.destination || '',

@@ -30,7 +30,8 @@ export const useServiceFetcher = () => {
         .from('services')
         .select(`
           *,
-          clients!services_client_id_fkey(id, name, rut, phone, email, address, department, is_active, created_at, updated_at),
+          client:clients!services_client_id_fkey(id, name, rut, phone, email, address, department, is_active, created_at, updated_at),
+          third_party_client:clients!services_third_party_client_id_fkey(id, name, rut, phone, email, address, department, is_active, created_at, updated_at),
           cranes(id, license_plate, brand, model, type, is_active, circulation_permit_expiry, insurance_expiry, technical_review_expiry, created_at, updated_at),
           operators(id, name, rut, phone, license_number, is_active, exam_expiry, created_at, updated_at),
           service_types!inner(id, name, description, is_active, base_price, vehicle_info_optional, purchase_order_required, origin_required, destination_required, crane_required, operator_required, vehicle_brand_required, vehicle_model_required, license_plate_required, created_at, updated_at)
@@ -100,7 +101,7 @@ export const useServiceFetcher = () => {
 
   const enrichServicesData = async (services: any[]) => {
     try {
-      const clientIds = [...new Set(services.map(s => s.client_id).filter(id => id !== null))];
+      const clientIds = [...new Set([...services.map(s => s.client_id).filter(id => id !== null), ...services.map(s => s.third_party_client_id).filter(id => id !== null)])];
       const craneIds = [...new Set(services.map(s => s.crane_id).filter(id => id !== null))];
       const operatorIds = [...new Set(services.map(s => s.operator_id).filter(id => id !== null))];
       const serviceTypeIds = [...new Set(services.map(s => s.service_type_id).filter(id => id !== null))];
@@ -114,7 +115,8 @@ export const useServiceFetcher = () => {
 
       return services.map(service => ({
         ...service,
-        clients: Array.isArray(clientsResult.data) ? clientsResult.data.find((c: any) => c.id === service.client_id) || null : null,
+        client: Array.isArray(clientsResult.data) ? clientsResult.data.find((c: any) => c.id === service.client_id) || null : null,
+        third_party_client: Array.isArray(clientsResult.data) ? clientsResult.data.find((c: any) => c.id === service.third_party_client_id) || null : null,
         cranes: Array.isArray(cranesResult.data) ? cranesResult.data.find((c: any) => c.id === service.crane_id) || null : null,
         operators: Array.isArray(operatorsResult.data) ? operatorsResult.data.find((o: any) => o.id === service.operator_id) || null : null,
         service_types: Array.isArray(serviceTypesResult.data) ? serviceTypesResult.data.find((st: any) => st.id === service.service_type_id) || null : null

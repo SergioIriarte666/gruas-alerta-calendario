@@ -69,7 +69,15 @@ export const useDeferredBilling = () => {
           service_date,
           value,
           client_id,
-          clients!services_client_id_fkey (
+          client:clients!services_client_id_fkey (
+            id,
+            name,
+            billing_cycle_type,
+            billing_delay_days,
+            billing_cycle_day,
+            auto_invoice_generation
+          ),
+          third_party_client:clients!services_third_party_client_id_fkey (
             id,
             name,
             billing_cycle_type,
@@ -78,7 +86,7 @@ export const useDeferredBilling = () => {
             auto_invoice_generation
           )
         `)
-        .eq('clients.billing_cycle_type', 'deferred')
+        .or('client.billing_cycle_type.eq.deferred,third_party_client.billing_cycle_type.eq.deferred')
         .eq('status', 'completed');
       
       if (servicesError) throw servicesError;
@@ -97,7 +105,7 @@ export const useDeferredBilling = () => {
         // Omitir servicios ya facturados
         if (invoicedServiceIds.has(service.id)) return;
         
-        const client = service.clients;
+        const client = service.client || service.third_party_client;
         const serviceDate = new Date(service.service_date);
         const serviceMonth = `${serviceDate.getFullYear()}-${String(serviceDate.getMonth() + 1).padStart(2, '0')}`;
         
