@@ -3504,6 +3504,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: Json
       }
+      fix_specific_payment_issue: {
+        Args: { p_payment_id?: string }
+        Returns: Json
+      }
       fix_unlinked_maintenance_costs: {
         Args: Record<PropertyKey, never>
         Returns: Json
