@@ -74,7 +74,10 @@ export const usePayments = () => {
     }
   };
 
-  const createPayment = async (payment: Omit<Payment, 'id' | 'applied_amount' | 'remaining_amount' | 'created_at' | 'updated_at'>) => {
+  const createPayment = async (
+    payment: Omit<Payment, 'id' | 'applied_amount' | 'remaining_amount' | 'created_at' | 'updated_at'>,
+    autoApply: boolean = true
+  ) => {
     try {
       console.log('🔍 Creating payment:', payment);
       
@@ -111,7 +114,26 @@ export const usePayments = () => {
       }
       
       console.log('✅ Payment created successfully:', data);
-      toast.success('Pago registrado exitosamente');
+      
+      // Aplicar automáticamente el pago si está habilitado
+      if (autoApply && data?.id) {
+        try {
+          console.log('🔄 Auto-applying payment via FIFO:', data.id);
+          const applyResult = await applyPaymentFIFO(data.id, payment.client_id);
+          
+          if (applyResult?.success && applyResult.total_applied > 0) {
+            toast.success(`Pago registrado y aplicado automáticamente: $${applyResult.total_applied.toLocaleString()}`);
+          } else {
+            toast.success('Pago registrado. No se encontraron facturas pendientes para aplicar automáticamente.');
+          }
+        } catch (applyError) {
+          console.warn('⚠️ Auto-application failed, but payment was created:', applyError);
+          toast.success('Pago registrado exitosamente. Podrás aplicarlo manualmente desde el módulo de conciliación.');
+        }
+      } else {
+        toast.success('Pago registrado exitosamente');
+      }
+      
       await fetchPayments();
       return data;
     } catch (error) {
