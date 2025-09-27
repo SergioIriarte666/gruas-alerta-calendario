@@ -3267,7 +3267,7 @@ export type Database = {
         Returns: string
       }
       apply_payment_fifo: {
-        Args: { p_client_id: string; p_payment_id: string }
+        Args: { p_client_id?: string; p_payment_id: string }
         Returns: Json
       }
       apply_payment_manual: {
@@ -3436,6 +3436,10 @@ export type Database = {
       }
       diagnose_mixed_payment_invoices: {
         Args: Record<PropertyKey, never>
+        Returns: Json
+      }
+      diagnose_payment_application_conflicts: {
+        Args: { p_payment_id?: string }
         Returns: Json
       }
       diagnose_service_update_issues: {
@@ -3825,6 +3829,10 @@ export type Database = {
       }
       resolve_commission_conflicts: {
         Args: { p_service_id: string }
+        Returns: Json
+      }
+      resolve_payment_application_conflicts: {
+        Args: { p_payment_id?: string }
         Returns: Json
       }
       safe_update_service: {

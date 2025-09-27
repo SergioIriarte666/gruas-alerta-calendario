@@ -148,20 +148,50 @@ export const usePayments = () => {
     }
   };
 
-  const applyPaymentFIFO = async (paymentId: string, clientId?: string) => {
+  const applyPaymentFIFO = async (paymentId: string, clientId?: string): Promise<any> => {
     try {
+      console.log('🔍 Applying payment FIFO:', { paymentId, clientId });
+      
       const { data, error } = await supabase.rpc('apply_payment_fifo', {
         p_payment_id: paymentId,
-        p_client_id: clientId
+        p_client_id: clientId || null
       });
 
       if (error) throw error;
+
       const result = data as any;
-      toast.success(`Pago aplicado automáticamente. ${result.applications_made} facturas procesadas.`);
-      await fetchPayments();
-      return result;
-    } catch (error) {
+      console.log('🔍 FIFO Result:', result);
+
+      if (result?.success) {
+        // Handle different success scenarios
+        if (result.total_applied === 0 && result.message?.includes('duplicadas')) {
+          toast.warning(result.message || 'El pago ya tiene aplicaciones existentes');
+          return {
+            ...result,
+            warning: true
+          };
+        } else if (result.total_applied > 0) {
+          toast.success(result.message || `Aplicados $${result.total_applied} mediante FIFO`);
+        } else {
+          toast.info(result.message || 'No se encontraron facturas pendientes para aplicar');
+        }
+        
+        await fetchPayments();
+        return result;
+      } else {
+        throw new Error(result?.error || result?.message || 'Error applying payment');
+      }
+    } catch (error: any) {
       console.error('Error applying payment FIFO:', error);
+      
+      // Enhanced error handling for common issues
+      const errorMessage = error.message || '';
+      if (errorMessage.includes('duplicate key') || errorMessage.includes('payment_applications_payment_id_invoice_id_key')) {
+        const customMessage = 'Este pago ya tiene aplicaciones registradas. Use la aplicación manual para modificar los pagos existentes.';
+        toast.error(customMessage);
+        throw new Error(customMessage);
+      }
+      
       handleError(error, {
         customMessage: 'No se pudo aplicar el pago automáticamente',
         title: 'Error en Aplicación Automática',
@@ -604,14 +634,12 @@ export const usePayments = () => {
     }
   };
 
-  // Función de diagnóstico completo
-  const getComprehensiveDiagnosis = async () => {
+  // Enhanced diagnostics and cleanup
+  const getComprehensiveDiagnosis = async (): Promise<any> => {
     try {
       const { data, error } = await supabase.rpc('comprehensive_payment_diagnosis');
-      
       if (error) throw error;
-      
-      return (data as any) || { system_health: 'UNKNOWN', issues: {}, total_issues: 0 };
+      return data || { system_health: 'UNKNOWN', issues: {}, total_issues: 0 };
     } catch (error: any) {
       console.error('Error en diagnóstico:', error);
       return { 
@@ -619,6 +647,41 @@ export const usePayments = () => {
         issues: { error: error.message }, 
         total_issues: 1 
       };
+    }
+  };
+
+  const diagnosePaymentConflicts = async (paymentId?: string): Promise<any> => {
+    try {
+      const { data, error } = await supabase.rpc('diagnose_payment_application_conflicts', {
+        p_payment_id: paymentId || null
+      });
+      if (error) throw error;
+      return data;
+    } catch (error) {
+      console.error('Error diagnosing payment conflicts:', error);
+      throw error;
+    }
+  };
+
+  const resolvePaymentConflicts = async (paymentId?: string): Promise<any> => {
+    try {
+      const { data, error } = await supabase.rpc('resolve_payment_application_conflicts', {
+        p_payment_id: paymentId || null
+      });
+      if (error) throw error;
+      
+      const result = data as any;
+      if (result?.success) {
+        toast.success(result.message || `Resueltos conflictos en ${result.resolved_payments} pagos`);
+        await fetchPayments();
+        return result;
+      } else {
+        throw new Error(result?.error || 'Error resolving conflicts');
+      }
+    } catch (error) {
+      console.error('Error resolving payment conflicts:', error);
+      toast.error('Error al resolver conflictos de pagos');
+      throw error;
     }
   };
 
@@ -690,7 +753,11 @@ export const usePayments = () => {
     performBackgroundMaintenance,
     fixSystemInconsistencies,
     removeDuplicateApplications,
+    silentFixInconsistencies,
+    silentSystemValidation,
     getComprehensiveDiagnosis,
+    diagnosePaymentConflicts,
+    resolvePaymentConflicts,
     diagnoseMixedPaymentInvoices,
     getInvoicePaymentStatus,
     refetch: fetchPayments
