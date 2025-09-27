@@ -5,7 +5,7 @@ import { PaymentWithDetails } from '@/types/payments';
 import { PaymentApplicationModal } from './PaymentApplicationModal';
 import { SmartPaymentForm } from './SmartPaymentForm';
 import { PaymentHistory } from './PaymentHistory';
-import { PaymentCorrectionModal } from './PaymentCorrectionModal';
+import { SelectivePaymentModal } from './SelectivePaymentModal';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -36,7 +36,7 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
     fixSystemInconsistencies,
     removeDuplicateApplications,
     getComprehensiveDiagnosis,
-    fixPaymentApplicationConflicts
+    applyPaymentToSpecificInvoices,
   } = usePayments();
   
   const [selectedClient, setSelectedClient] = useState<string>('all');
@@ -50,8 +50,8 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
   const [systemDiagnosis, setSystemDiagnosis] = useState<any>(null);
   const [diagnosisLoading, setDiagnosisLoading] = useState(false);
   const [showMaintenancePanel, setShowMaintenancePanel] = useState(false);
-  const [showCorrectionModal, setShowCorrectionModal] = useState(false);
-  const [paymentToCorrect, setPaymentToCorrect] = useState<PaymentWithDetails | null>(null);
+  const [showSelectiveModal, setShowSelectiveModal] = useState(false);
+  const [paymentForSelective, setPaymentForSelective] = useState<PaymentWithDetails | null>(null);
 
   const { clients } = useClients();
 
@@ -139,9 +139,9 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
     }
   };
 
-  const handlePaymentCorrection = (payment: PaymentWithDetails) => {
-    setPaymentToCorrect(payment);
-    setShowCorrectionModal(true);
+  const handleSelectiveApplication = (payment: PaymentWithDetails) => {
+    setPaymentForSelective(payment);
+    setShowSelectiveModal(true);
   };
 
   const getStatusBadge = (status: string) => {
@@ -336,25 +336,14 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
                             <Button
                               size="sm"
                               variant="outline"
-                              onClick={() => handleManualApplication(payment)}
+                              onClick={() => handleSelectiveApplication(payment)}
                               disabled={isProcessing}
+                              className="border-blue-500 text-blue-600 hover:bg-blue-500 hover:text-white"
                             >
                               <Edit className="h-3 w-3 mr-1" />
-                              Manual
+                              Específicas
                             </Button>
                           </>
-                        )}
-                        {payment.applied_amount > 0 && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handlePaymentCorrection(payment)}
-                            disabled={isProcessing}
-                            className="border-orange-500 text-orange-600 hover:bg-orange-500 hover:text-white"
-                          >
-                            <AlertTriangle className="h-3 w-3 mr-1" />
-                            Corregir
-                          </Button>
                         )}
                       </div>
                     </TableCell>
@@ -388,13 +377,19 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
           <PaymentHistory onClose={() => setShowHistory(false)} />
         )}
 
-        {showCorrectionModal && paymentToCorrect && (
-          <PaymentCorrectionModal
-            payment={paymentToCorrect}
-            isOpen={showCorrectionModal}
+        {showSelectiveModal && paymentForSelective && (
+          <SelectivePaymentModal
+            payment={paymentForSelective}
+            isOpen={showSelectiveModal}
             onClose={() => {
-              setShowCorrectionModal(false);
-              setPaymentToCorrect(null);
+              setShowSelectiveModal(false);
+              setPaymentForSelective(null);
+            }}
+            onApply={async (fiscalNumbers) => {
+              await applyPaymentToSpecificInvoices(paymentForSelective.id, fiscalNumbers);
+              await loadReconciliationStats();
+              setShowSelectiveModal(false);
+              setPaymentForSelective(null);
             }}
           />
         )}
