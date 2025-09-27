@@ -109,6 +109,13 @@ const PIPELINE_STATUSES = [
     textColor: 'text-foreground'
   },
   {
+    id: 'failed' as ServiceStatus,
+    title: 'Fallidos',
+    description: 'Servicios que no pudieron completarse',
+    color: 'bg-secondary text-secondary-foreground',
+    textColor: 'text-foreground'
+  },
+  {
     id: 'invoiced' as ServiceStatus,
     title: 'Facturados',
     description: 'Servicios facturados y cerrados',
@@ -229,7 +236,8 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
               sortingDateLabel = 'Próximo';
               break;
             case 'completed':
-              // Para completados: mostrar la fecha más reciente
+            case 'failed':
+              // Para completados y fallidos: mostrar la fecha más reciente
               sortingDate = statusServices
                 .map(s => parseFromDatabase(s.serviceDate))
                 .sort((a, b) => b.getTime() - a.getTime())[0];
