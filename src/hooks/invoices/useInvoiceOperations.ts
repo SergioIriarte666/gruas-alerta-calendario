@@ -414,6 +414,61 @@ export const useInvoiceOperations = () => {
 
   const deleteInvoice = async (id: string) => {
     try {
+      console.log('Iniciando eliminación de factura con reversión de estados:', id);
+
+      // 1. Obtener relaciones invoice_closures
+      const { data: invoiceClosures, error: closureError } = await supabase
+        .from('invoice_closures')
+        .select('closure_id')
+        .eq('invoice_id', id);
+
+      if (closureError) throw closureError;
+
+      // 2. Obtener servicios de los cierres para revertir su estado
+      const closureIds = invoiceClosures?.map(ic => ic.closure_id) || [];
+      
+      if (closureIds.length > 0) {
+        const { data: closureServices, error: servicesError } = await supabase
+          .from('closure_services')
+          .select('service_id')
+          .in('closure_id', closureIds);
+
+        if (servicesError) throw servicesError;
+
+        const serviceIds = closureServices?.map(cs => cs.service_id) || [];
+
+        // 3. Revertir estado de servicios de 'invoiced' a 'completed'
+        if (serviceIds.length > 0) {
+          const { error: revertError } = await supabase
+            .from('services')
+            .update({ status: 'completed', updated_at: new Date().toISOString() })
+            .in('id', serviceIds)
+            .eq('status', 'invoiced');
+
+          if (revertError) throw revertError;
+          console.log('Revertidos', serviceIds.length, 'servicios a estado completed');
+        }
+
+        // 4. Revertir estado de cierres de 'invoiced' a 'closed'
+        const { error: closureRevertError } = await supabase
+          .from('service_closures')
+          .update({ status: 'closed', updated_at: new Date().toISOString() })
+          .in('id', closureIds)
+          .eq('status', 'invoiced');
+
+        if (closureRevertError) throw closureRevertError;
+        console.log('Revertidos', closureIds.length, 'cierres a estado closed');
+      }
+
+      // 5. Eliminar relaciones invoice_closures
+      const { error: relationError } = await supabase
+        .from('invoice_closures')
+        .delete()
+        .eq('invoice_id', id);
+
+      if (relationError) throw relationError;
+
+      // 6. Finalmente eliminar la factura
       const { error } = await supabase
         .from('invoices')
         .delete()
@@ -427,16 +482,23 @@ export const useInvoiceOperations = () => {
         }
         throw error;
       }
+
+      // 7. Invalidar queries para actualizar UI
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['invoices'] }),
+        queryClient.invalidateQueries({ queryKey: ['services'] }),
+        queryClient.invalidateQueries({ queryKey: ['closures'] })
+      ]);
       
-      toast.success("Factura eliminada", {
-        description: "La factura ha sido eliminada exitosamente.",
+      toast.success("Factura anulada", {
+        description: "La factura ha sido anulada y los servicios están disponibles para nueva facturación.",
       });
     } catch (error: any) {
-      console.error('Error deleting invoice:', error);
+      console.error('Error al anular factura:', error);
       
       if (!error.message?.includes('permission denied')) {
-        toast.error("Error al eliminar factura", {
-          description: error.message || "No se pudo eliminar la factura.",
+        toast.error("Error al anular factura", {
+          description: error.message || "No se pudo anular la factura.",
         });
       }
       throw error;
