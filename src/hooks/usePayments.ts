@@ -730,6 +730,36 @@ export const usePayments = () => {
     }
   };
 
+  // Nueva función para corregir conflictos de aplicación de pagos
+  const fixPaymentApplicationConflicts = async () => {
+    try {
+      setLoading(true);
+      
+      // Primero diagnosticar conflictos
+      const diagnosis = await diagnosePaymentConflicts();
+      
+      if (diagnosis.conflicts_found === 0) {
+        toast.success('No se encontraron conflictos de aplicación de pagos');
+        return diagnosis;
+      }
+
+      // Mostrar detalles del diagnóstico en consola
+      console.log('Diagnóstico de conflictos:', diagnosis);
+      
+      // Resolver conflictos
+      const resolution = await resolvePaymentConflicts();
+      
+      toast.success(`Corregidos ${resolution.resolved_payments} conflictos de aplicación de pagos`);
+      return { diagnosis, resolution };
+    } catch (error) {
+      console.error('Error fixing payment application conflicts:', error);
+      toast.error('Error al corregir conflictos de aplicación de pagos');
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return {
     payments,
     loading,
@@ -758,6 +788,7 @@ export const usePayments = () => {
     getComprehensiveDiagnosis,
     diagnosePaymentConflicts,
     resolvePaymentConflicts,
+    fixPaymentApplicationConflicts,
     diagnoseMixedPaymentInvoices,
     getInvoicePaymentStatus,
     refetch: fetchPayments

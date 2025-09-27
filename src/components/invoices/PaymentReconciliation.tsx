@@ -34,7 +34,8 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
     performBackgroundMaintenance,
     fixSystemInconsistencies,
     removeDuplicateApplications,
-    getComprehensiveDiagnosis
+    getComprehensiveDiagnosis,
+    fixPaymentApplicationConflicts
   } = usePayments();
   
   const [selectedClient, setSelectedClient] = useState<string>('all');
@@ -119,6 +120,17 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
     setIsProcessing(true);
     try {
       await performAutomaticMaintenance();
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleFixPaymentConflicts = async () => {
+    setIsProcessing(true);
+    try {
+      await fixPaymentApplicationConflicts();
+      await loadReconciliationStats();
+      await loadSystemDiagnosis();
     } finally {
       setIsProcessing(false);
     }
@@ -239,6 +251,16 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
           >
             <RefreshCw className={`h-4 w-4 mr-2 ${isProcessing ? 'animate-spin' : ''}`} />
             Actualizar
+          </Button>
+
+          <Button 
+            onClick={handleFixPaymentConflicts}
+            variant="outline"
+            disabled={paymentsLoading || isProcessing}
+            className="border-red-500 text-red-400 hover:bg-red-500 hover:text-white"
+          >
+            <AlertTriangle className="h-4 w-4 mr-2" />
+            Corregir Conflictos
           </Button>
 
           <Button onClick={() => setShowPaymentForm(true)} className="bg-blue-600 hover:bg-blue-700">
