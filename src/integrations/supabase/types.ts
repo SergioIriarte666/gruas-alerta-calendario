@@ -3274,6 +3274,10 @@ export type Database = {
         Args: { p_applications: Json; p_payment_id: string }
         Returns: Json
       }
+      apply_payment_selective: {
+        Args: { p_fiscal_numbers?: string[]; p_payment_id: string }
+        Returns: Json
+      }
       apply_pending_payments_to_invoices: {
         Args: Record<PropertyKey, never>
         Returns: Json

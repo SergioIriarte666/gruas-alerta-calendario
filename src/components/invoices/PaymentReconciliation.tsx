@@ -14,6 +14,8 @@ import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Plus, Zap, Edit, DollarSign, AlertTriangle, History, RefreshCw } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
+import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 interface PaymentReconciliationProps {
   onClose?: () => void;
@@ -36,6 +38,7 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
     fixSystemInconsistencies,
     removeDuplicateApplications,
     getComprehensiveDiagnosis,
+    fixPaymentApplicationConflicts,
     applyPaymentToSpecificInvoices,
   } = usePayments();
   
@@ -128,6 +131,11 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
     }
   };
 
+  const handleSelectiveApplication = (payment: PaymentWithDetails) => {
+    setPaymentForSelective(payment);
+    setShowSelectiveModal(true);
+  };
+
   const handleFixPaymentConflicts = async () => {
     setIsProcessing(true);
     try {
@@ -139,9 +147,33 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
     }
   };
 
-  const handleSelectiveApplication = (payment: PaymentWithDetails) => {
-    setPaymentForSelective(payment);
-    setShowSelectiveModal(true);
+  // Función para aplicar pago selectivo usando la nueva función RPC
+  const applyPaymentSelective = async (paymentId: string, fiscalNumbers?: string[]) => {
+    try {
+      setIsProcessing(true);
+      
+      const { data, error } = await supabase.rpc('apply_payment_selective', {
+        p_payment_id: paymentId,
+        p_fiscal_numbers: fiscalNumbers || null
+      });
+
+      if (error) throw error;
+
+      const result = data as any;
+      if (result?.success) {
+        toast.success(result.message || `Pago aplicado exitosamente a ${result.applied_invoices} facturas`);
+        await loadReconciliationStats();
+        return result;
+      } else {
+        throw new Error(result?.error || 'Error al aplicar pago');
+      }
+    } catch (error) {
+      console.error('Error applying payment selectively:', error);
+      toast.error(error instanceof Error ? error.message : 'Error al aplicar pago a facturas específicas');
+      throw error;
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   const getStatusBadge = (status: string) => {
@@ -386,8 +418,7 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
               setPaymentForSelective(null);
             }}
             onApply={async (fiscalNumbers) => {
-              await applyPaymentToSpecificInvoices(paymentForSelective.id, fiscalNumbers);
-              await loadReconciliationStats();
+              await applyPaymentSelective(paymentForSelective.id, fiscalNumbers);
               setShowSelectiveModal(false);
               setPaymentForSelective(null);
             }}
