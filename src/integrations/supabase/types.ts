@@ -3480,6 +3480,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: Json
       }
+      fix_duplicate_fact_4011_application: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
       fix_existing_overdue_invoices: {
         Args: Record<PropertyKey, never>
         Returns: string
