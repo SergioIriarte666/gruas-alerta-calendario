@@ -3275,7 +3275,13 @@ export type Database = {
         Returns: Json
       }
       apply_payment_selective: {
-        Args: { p_fiscal_numbers?: string[]; p_payment_id: string }
+        Args:
+          | {
+              p_apply_only_to_specified?: boolean
+              p_fiscal_numbers: string[]
+              p_payment_id: string
+            }
+          | { p_fiscal_numbers?: string[]; p_payment_id: string }
         Returns: Json
       }
       apply_pending_payments_to_invoices: {

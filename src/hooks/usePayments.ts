@@ -125,6 +125,37 @@ export const usePayments = () => {
     }
   };
 
+  // Apply payment selectively to specific fiscal numbers with optional restriction
+  const applyPaymentSelective = async (paymentId: string, fiscalNumbers: string[], applyOnlyToSpecified: boolean = true) => {
+    try {
+      const { data, error } = await supabase.rpc('apply_payment_selective', {
+        p_payment_id: paymentId,
+        p_fiscal_numbers: fiscalNumbers,
+        p_apply_only_to_specified: applyOnlyToSpecified
+      });
+
+      if (error) throw error;
+      
+      // Type guard to check if data has success property
+      if (data && typeof data === 'object' && 'success' in data) {
+        const result = data as { success: boolean; error?: string };
+        if (!result.success) {
+          throw new Error(result.error || 'Error aplicando pago selectivo');
+        }
+      }
+
+      toast.success('Pago aplicado exitosamente a las facturas especificadas');
+      await fetchPayments();
+      return data;
+    } catch (error) {
+      console.error('Error applying selective payment:', error);
+      handleError(error, {
+        title: 'Error al aplicar pago selectivo'
+      });
+      throw error;
+    }
+  };
+
   const smartApplyPayment = async (paymentId: string, autoApply: boolean = true) => {
     try {
       const { data, error } = await supabase.rpc('smart_apply_payment', {
@@ -971,7 +1002,7 @@ export const usePayments = () => {
     resolvePaymentConflicts,
     fixPaymentApplicationConflicts,
     revertPaymentApplications,
-    applyPaymentToSpecificInvoices,
+    applyPaymentSelective,
     getPaymentApplicationDetails,
     diagnoseMixedPaymentInvoices,
     getInvoicePaymentStatus,

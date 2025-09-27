@@ -15,7 +15,6 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Plus, Zap, Edit, DollarSign, AlertTriangle, History, RefreshCw } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 import { toast } from 'sonner';
-import { supabase } from '@/integrations/supabase/client';
 
 interface PaymentReconciliationProps {
   onClose?: () => void;
@@ -27,6 +26,7 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
     loading: paymentsLoading, 
     paymentSystemAvailable,
     applyPaymentFIFO,
+    applyPaymentSelective,
     getUnpaidInvoicesForClient,
     checkPaymentSystemAvailability,
     cleanupDuplicatePayments,
@@ -38,8 +38,7 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
     fixSystemInconsistencies,
     removeDuplicateApplications,
     getComprehensiveDiagnosis,
-    fixPaymentApplicationConflicts,
-    applyPaymentToSpecificInvoices,
+    refetch,
   } = usePayments();
   
   const [selectedClient, setSelectedClient] = useState<string>('all');
@@ -48,31 +47,59 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
   const [selectedPayment, setSelectedPayment] = useState<PaymentWithDetails | null>(null);
   const [availableInvoices, setAvailableInvoices] = useState<any[]>([]);
   const [showHistory, setShowHistory] = useState(false);
+  const [selectivePaymentModalOpen, setSelectivePaymentModalOpen] = useState(false);
   const [reconciliationStats, setReconciliationStats] = useState<any>(null);
-  const [isProcessing, setIsProcessing] = useState(false);
   const [systemDiagnosis, setSystemDiagnosis] = useState<any>(null);
-  const [diagnosisLoading, setDiagnosisLoading] = useState(false);
-  const [showMaintenancePanel, setShowMaintenancePanel] = useState(false);
-  const [showSelectiveModal, setShowSelectiveModal] = useState(false);
-  const [paymentForSelective, setPaymentForSelective] = useState<PaymentWithDetails | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const { clients } = useClients();
 
   useEffect(() => {
-    checkPaymentSystemAvailability();
     loadReconciliationStats();
     loadSystemDiagnosis();
-    // Ejecutar correcciones automáticas en segundo plano
-    performAutomaticMaintenance();
   }, []);
 
-  const performAutomaticMaintenance = async () => {
+  const handleAutoApply = async (payment: PaymentWithDetails) => {
     try {
-      await performBackgroundMaintenance();
+      await applyPaymentFIFO(payment.id, payment.client_id);
+      toast.success('Pago aplicado automáticamente');
+    } catch (error) {
+      console.error('Error auto-applying payment:', error);
+    }
+  };
+
+  const handleManualApplication = async (payment: PaymentWithDetails) => {
+    try {
+      const invoices = await getUnpaidInvoicesForClient(payment.client_id);
+      setAvailableInvoices(invoices);
+      setSelectedPayment(payment);
+      setShowApplicationModal(true);
+    } catch (error) {
+      console.error('Error loading invoices:', error);
+      toast.error('Error al cargar facturas pendientes');
+    }
+  };
+
+  const handleSelectiveApplication = async (fiscalNumbers: string[], applyOnlyToSpecified: boolean = true) => {
+    if (!selectedPayment) return;
+    
+    try {
+      await applyPaymentSelective(selectedPayment.id, fiscalNumbers, applyOnlyToSpecified);
+      setSelectivePaymentModalOpen(false);
+      setSelectedPayment(null);
+      await refetch();
+    } catch (error) {
+      console.error('Error in selective application:', error);
+    }
+  };
+
+  const performAutomaticMaintenance = async () => {
+    setIsProcessing(true);
+    try {
       await loadReconciliationStats();
       await loadSystemDiagnosis();
-    } catch (error) {
-      console.error('Error in automatic maintenance:', error);
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -86,296 +113,232 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
   };
 
   const loadSystemDiagnosis = async () => {
-    setDiagnosisLoading(true);
     try {
       const diagnosis = await getComprehensiveDiagnosis();
       setSystemDiagnosis(diagnosis);
-      
-      // Si hay problemas y el panel de mantenimiento no está abierto, abrirlo automáticamente
-      if (diagnosis.system_health === 'NEEDS_REPAIR' && !showMaintenancePanel) {
-        setShowMaintenancePanel(true);
-      }
     } catch (error) {
       console.error('Error loading system diagnosis:', error);
-    } finally {
-      setDiagnosisLoading(false);
     }
   };
 
-
-  const handleAutoApply = async (payment: PaymentWithDetails) => {
-    try {
-      setIsProcessing(true);
-      await applyPaymentFIFO(payment.id, payment.client_id);
-      await loadReconciliationStats();
-    } catch (error) {
-      console.error('Error applying payment:', error);
-    } finally {
-      setIsProcessing(false);
+  const getStatusBadgeVariant = (status: string) => {
+    switch (status) {
+      case 'applied': return 'default';
+      case 'partial': return 'secondary';
+      case 'pending': return 'outline';
+      default: return 'outline';
     }
   };
 
-  const handleManualApplication = async (payment: PaymentWithDetails) => {
-    const invoices = await getUnpaidInvoicesForClient(payment.client_id);
-    setAvailableInvoices(invoices);
-    setSelectedPayment(payment);
-    setShowApplicationModal(true);
-  };
-
-  const handleRefresh = async () => {
-    setIsProcessing(true);
-    try {
-      await performAutomaticMaintenance();
-    } finally {
-      setIsProcessing(false);
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case 'applied': return 'Aplicado';
+      case 'partial': return 'Parcial';
+      case 'pending': return 'Pendiente';
+      default: return status;
     }
   };
 
-  const handleSelectiveApplication = (payment: PaymentWithDetails) => {
-    setPaymentForSelective(payment);
-    setShowSelectiveModal(true);
-  };
-
-  const handleFixPaymentConflicts = async () => {
-    setIsProcessing(true);
-    try {
-      await fixPaymentApplicationConflicts();
-      await loadReconciliationStats();
-      await loadSystemDiagnosis();
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
-  // Función para aplicar pago selectivo usando la nueva función RPC
-  const applyPaymentSelective = async (paymentId: string, fiscalNumbers?: string[]) => {
-    try {
-      setIsProcessing(true);
-      
-      const { data, error } = await supabase.rpc('apply_payment_selective', {
-        p_payment_id: paymentId,
-        p_fiscal_numbers: fiscalNumbers || null
-      });
-
-      if (error) throw error;
-
-      const result = data as any;
-      if (result?.success) {
-        toast.success(result.message || `Pago aplicado exitosamente a ${result.applied_invoices} facturas`);
-        await loadReconciliationStats();
-        return result;
-      } else {
-        throw new Error(result?.error || 'Error al aplicar pago');
-      }
-    } catch (error) {
-      console.error('Error applying payment selectively:', error);
-      toast.error(error instanceof Error ? error.message : 'Error al aplicar pago a facturas específicas');
-      throw error;
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
-  const getStatusBadge = (status: string) => {
-    const variants = {
-      pending: 'bg-yellow-500',
-      applied: 'bg-green-500',
-      partial: 'bg-blue-500',
-      cancelled: 'bg-red-500'
-    };
-    return <Badge className={variants[status as keyof typeof variants] || 'bg-gray-500'}>{status}</Badge>;
-  };
+  const filteredPayments = selectedClient === 'all' 
+    ? payments 
+    : payments.filter(payment => payment.client_id === selectedClient);
 
   if (!paymentSystemAvailable) {
     return (
-      <div className="min-h-screen bg-background p-6">
-        <Alert className="max-w-2xl mx-auto">
-          <AlertTriangle className="h-4 w-4" />
-          <AlertDescription>
-            El sistema de conciliación de pagos no está disponible. Contacte al administrador.
-          </AlertDescription>
-        </Alert>
-      </div>
+      <Alert className="m-4">
+        <AlertTriangle className="h-4 w-4" />
+        <AlertDescription>
+          Sistema de pagos no disponible. Por favor, contacte al administrador.
+        </AlertDescription>
+      </Alert>
     );
   }
 
-  const filteredPayments = selectedClient && selectedClient !== 'all'
-    ? payments.filter(p => p.client_id === selectedClient)
-    : payments;
-
-  const pendingPayments = payments.filter(p => p.status === 'pending');
-  const totalPendingAmount = pendingPayments.reduce((sum, p) => sum + p.amount, 0);
-
   return (
-    <div className="min-h-screen bg-background p-6">
-      <div className="max-w-7xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="flex justify-between items-center">
-          <div>
-            <h2 className="text-2xl font-bold text-foreground">Conciliación de Pagos</h2>
-            <p className="text-muted-foreground">Registra y aplica pagos recibidos a facturas pendientes</p>
-          </div>
-          {onClose && (
-            <Button variant="outline" onClick={onClose}>
-              Volver a Facturas
-            </Button>
-          )}
-        </div>
-
-        {/* Summary Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <Card className="bg-card border">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-foreground">Pagos Pendientes</CardTitle>
-              <DollarSign className="h-4 w-4 text-yellow-400" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-foreground">{reconciliationStats?.pending_payments || 0}</div>
-              <p className="text-xs text-muted-foreground">{formatCurrency(reconciliationStats?.total_pending_amount || 0)}</p>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-card border">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-foreground">Pagos Aplicados</CardTitle>
-              <DollarSign className="h-4 w-4 text-green-400" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-foreground">{reconciliationStats?.applied_payments || 0}</div>
-              <p className="text-xs text-muted-foreground">Pagos completamente procesados</p>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-card border">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-foreground">Facturas sin Pago</CardTitle>
-              <AlertTriangle className="h-4 w-4 text-red-400" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-foreground">{reconciliationStats?.invoices_without_payments || 0}</div>
-              <p className="text-xs text-muted-foreground">Facturas marcadas como pagadas sin registro</p>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-card border">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-foreground">Pagos sin Aplicar</CardTitle>
-              <AlertTriangle className="h-4 w-4 text-orange-400" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-foreground">{reconciliationStats?.payments_without_applications || 0}</div>
-              <p className="text-xs text-muted-foreground">Pagos registrados pendientes de aplicar</p>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Controls - Simplificados */}
-        <div className="flex flex-col sm:flex-row gap-4">
-          <Select value={selectedClient} onValueChange={setSelectedClient}>
-            <SelectTrigger className="w-full sm:w-64">
-              <SelectValue placeholder="Filtrar por cliente" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos los clientes</SelectItem>
-              {clients.map(client => (
-                <SelectItem key={client.id} value={client.id}>{client.name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          
-          <Button 
-            onClick={handleRefresh}
+    <div className="p-6 space-y-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-bold">Conciliación de Pagos</h2>
+        <div className="flex gap-2">
+          <Button
+            onClick={() => refetch()}
             variant="outline"
-            disabled={paymentsLoading || isProcessing}
-            className="border-blue-500 text-blue-400 hover:bg-blue-500 hover:text-white"
+            size="sm"
+            disabled={paymentsLoading}
           >
-            <RefreshCw className={`h-4 w-4 mr-2 ${isProcessing ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`h-4 w-4 mr-2 ${paymentsLoading ? 'animate-spin' : ''}`} />
             Actualizar
           </Button>
-
-          <Button 
-            onClick={handleFixPaymentConflicts}
-            variant="outline"
-            disabled={paymentsLoading || isProcessing}
-            className="border-red-500 text-red-400 hover:bg-red-500 hover:text-white"
+          <Button
+            onClick={() => setShowPaymentForm(true)}
+            size="sm"
           >
-            <AlertTriangle className="h-4 w-4 mr-2" />
-            Corregir Conflictos
-          </Button>
-
-          <Button onClick={() => setShowPaymentForm(true)} className="bg-blue-600 hover:bg-blue-700">
             <Plus className="h-4 w-4 mr-2" />
             Registrar Pago
           </Button>
-          
-          <Button 
-            onClick={() => setShowHistory(true)} 
+          <Button
+            onClick={() => setShowHistory(true)}
             variant="outline"
-            className="border-purple-500 text-purple-400 hover:bg-purple-500 hover:text-white"
+            size="sm"
           >
             <History className="h-4 w-4 mr-2" />
-            Ver Historial
+            Historial
           </Button>
         </div>
+      </div>
 
-        {/* Payments Table */}
-        <Card className="bg-card border">
-          <CardHeader>
-            <CardTitle className="text-foreground">Pagos Registrados</CardTitle>
-          </CardHeader>
-          <CardContent>
+      {/* Estadísticas */}
+      {reconciliationStats && (
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Pendientes</p>
+                  <p className="text-2xl font-bold">{reconciliationStats.pending_payments || 0}</p>
+                </div>
+                <DollarSign className="h-8 w-8 text-blue-500" />
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Aplicados</p>
+                  <p className="text-2xl font-bold">{reconciliationStats.applied_payments || 0}</p>
+                </div>
+                <DollarSign className="h-8 w-8 text-green-500" />
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Parciales</p>
+                  <p className="text-2xl font-bold">{reconciliationStats.partial_payments || 0}</p>
+                </div>
+                <DollarSign className="h-8 w-8 text-amber-500" />
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Total Monto</p>
+                  <p className="text-2xl font-bold">{formatCurrency(reconciliationStats.total_amount || 0)}</p>
+                </div>
+                <DollarSign className="h-8 w-8 text-purple-500" />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Filtros */}
+      <div className="flex gap-4 items-center">
+        <Select value={selectedClient} onValueChange={setSelectedClient}>
+          <SelectTrigger className="w-[300px]">
+            <SelectValue placeholder="Filtrar por cliente" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos los clientes</SelectItem>
+            {clients.map((client) => (
+              <SelectItem key={client.id} value={client.id}>
+                {client.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Tabla de pagos */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Pagos Registrados</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {paymentsLoading ? (
+            <div className="text-center py-8">Cargando pagos...</div>
+          ) : filteredPayments.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              No hay pagos registrados
+            </div>
+          ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="text-muted-foreground">Cliente</TableHead>
-                  <TableHead className="text-muted-foreground">N° Fiscal</TableHead>
-                  <TableHead className="text-muted-foreground">Monto</TableHead>
-                  <TableHead className="text-muted-foreground">Fecha</TableHead>
-                  <TableHead className="text-muted-foreground">Estado</TableHead>
-                  <TableHead className="text-muted-foreground">Aplicado</TableHead>
-                  <TableHead className="text-muted-foreground">Pendiente</TableHead>
-                  <TableHead className="text-muted-foreground">Acciones</TableHead>
+                  <TableHead>Cliente</TableHead>
+                  <TableHead>Monto</TableHead>
+                  <TableHead>Fecha</TableHead>
+                  <TableHead>Estado</TableHead>
+                  <TableHead>Aplicado</TableHead>
+                  <TableHead>Pendiente</TableHead>
+                  <TableHead>Acciones</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredPayments.map(payment => (
+                {filteredPayments.map((payment) => (
                   <TableRow key={payment.id}>
-                    <TableCell className="text-foreground">{payment.client?.name}</TableCell>
-                    <TableCell className="text-foreground">
-                      {payment.fiscal_numbers && payment.fiscal_numbers.length > 0 
-                        ? payment.fiscal_numbers.join(', ') 
-                        : '-'
-                      }
+                    <TableCell>
+                      <div>
+                        <div className="font-medium">{payment.client?.name}</div>
+                        <div className="text-sm text-muted-foreground">
+                          {payment.bank_reference}
+                        </div>
+                      </div>
                     </TableCell>
-                    <TableCell className="text-foreground">{formatCurrency(payment.amount)}</TableCell>
-                    <TableCell className="text-foreground">{new Date(payment.payment_date).toLocaleDateString()}</TableCell>
-                    <TableCell>{getStatusBadge(payment.status)}</TableCell>
-                    <TableCell className="text-foreground">{formatCurrency(payment.applied_amount)}</TableCell>
-                    <TableCell className="text-foreground">{formatCurrency(payment.remaining_amount)}</TableCell>
+                    <TableCell className="font-medium">
+                      {formatCurrency(payment.amount)}
+                    </TableCell>
+                    <TableCell>
+                      {new Date(payment.payment_date).toLocaleDateString()}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={getStatusBadgeVariant(payment.status)}>
+                        {getStatusLabel(payment.status)}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>{formatCurrency(payment.applied_amount)}</TableCell>
+                    <TableCell>{formatCurrency(payment.remaining_amount)}</TableCell>
                     <TableCell>
                       <div className="flex gap-2">
-                        {payment.remaining_amount > 0 && (
+                        {payment.status === 'pending' || payment.remaining_amount > 0 ? (
                           <>
                             <Button
-                              size="sm"
                               onClick={() => handleAutoApply(payment)}
-                              disabled={isProcessing}
-                              className="bg-green-600 hover:bg-green-700"
-                            >
-                              <Zap className="h-3 w-3 mr-1" />
-                              Aplicar
-                            </Button>
-                            <Button
                               size="sm"
                               variant="outline"
-                              onClick={() => handleSelectiveApplication(payment)}
-                              disabled={isProcessing}
-                              className="border-blue-500 text-blue-600 hover:bg-blue-500 hover:text-white"
                             >
-                              <Edit className="h-3 w-3 mr-1" />
+                              <Zap className="h-4 w-4" />
+                              Auto
+                            </Button>
+                            <Button
+                              onClick={() => handleManualApplication(payment)}
+                              size="sm"
+                              variant="outline"
+                            >
+                              <Edit className="h-4 w-4" />
+                              Manual
+                            </Button>
+                            <Button
+                              onClick={() => {
+                                setSelectedPayment(payment);
+                                setSelectivePaymentModalOpen(true);
+                              }}
+                              size="sm"
+                              variant="outline"
+                              className="text-purple-600 border-purple-300 hover:bg-purple-50"
+                            >
                               Específicas
                             </Button>
                           </>
+                        ) : (
+                          <span className="text-sm text-muted-foreground">Aplicado</span>
                         )}
                       </div>
                     </TableCell>
@@ -383,48 +346,48 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
                 ))}
               </TableBody>
             </Table>
-          </CardContent>
-        </Card>
+          )}
+        </CardContent>
+      </Card>
 
-        {/* Modals */}
-        {showPaymentForm && (
-          <SmartPaymentForm
-            onClose={() => setShowPaymentForm(false)}
-            preselectedClientId={selectedClient === 'all' ? undefined : selectedClient}
-          />
-        )}
+      {/* Modales */}
+      {showPaymentForm && (
+        <SmartPaymentForm
+          onClose={() => {
+            setShowPaymentForm(false);
+            refetch();
+          }}
+        />
+      )}
 
-        {showApplicationModal && selectedPayment && (
-          <PaymentApplicationModal
-            payment={selectedPayment}
-            availableInvoices={availableInvoices}
-            onClose={() => {
-              setShowApplicationModal(false);
-              setSelectedPayment(null);
-            }}
-          />
-        )}
+      {showApplicationModal && selectedPayment && (
+        <PaymentApplicationModal
+          payment={selectedPayment}
+          availableInvoices={availableInvoices}
+          onClose={() => {
+            setShowApplicationModal(false);
+            refetch();
+          }}
+        />
+      )}
 
-        {showHistory && (
-          <PaymentHistory onClose={() => setShowHistory(false)} />
-        )}
+      {showHistory && (
+        <PaymentHistory
+          onClose={() => setShowHistory(false)}
+        />
+      )}
 
-        {showSelectiveModal && paymentForSelective && (
-          <SelectivePaymentModal
-            payment={paymentForSelective}
-            isOpen={showSelectiveModal}
-            onClose={() => {
-              setShowSelectiveModal(false);
-              setPaymentForSelective(null);
-            }}
-            onApply={async (fiscalNumbers) => {
-              await applyPaymentSelective(paymentForSelective.id, fiscalNumbers);
-              setShowSelectiveModal(false);
-              setPaymentForSelective(null);
-            }}
-          />
-        )}
-      </div>
+      {selectivePaymentModalOpen && selectedPayment && (
+        <SelectivePaymentModal
+          payment={selectedPayment}
+          isOpen={selectivePaymentModalOpen}
+          onClose={() => {
+            setSelectivePaymentModalOpen(false);
+            setSelectedPayment(null);
+          }}
+          onApply={handleSelectiveApplication}
+        />
+      )}
     </div>
   );
 };

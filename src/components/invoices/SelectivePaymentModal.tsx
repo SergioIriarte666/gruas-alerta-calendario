@@ -4,7 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
-import { Search, X, DollarSign, Receipt } from 'lucide-react';
+import { Search, X, DollarSign, Receipt, Target } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
 import { PaymentWithDetails } from '@/types/payments';
 import { formatCurrency } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
@@ -14,7 +15,7 @@ interface SelectivePaymentModalProps {
   payment: PaymentWithDetails;
   isOpen: boolean;
   onClose: () => void;
-  onApply: (fiscalNumbers: string[]) => Promise<void>;
+  onApply: (fiscalNumbers: string[], applyOnlyToSpecified?: boolean) => Promise<void>;
 }
 
 interface Invoice {
@@ -38,6 +39,7 @@ export const SelectivePaymentModal: React.FC<SelectivePaymentModalProps> = ({
   const [availableInvoices, setAvailableInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(false);
   const [isApplying, setIsApplying] = useState(false);
+  const [applyOnlyToSpecified, setApplyOnlyToSpecified] = useState(true);
 
   useEffect(() => {
     if (isOpen && payment) {
@@ -92,7 +94,7 @@ export const SelectivePaymentModal: React.FC<SelectivePaymentModalProps> = ({
 
     setIsApplying(true);
     try {
-      await onApply(selectedFiscalNumbers);
+      await onApply(selectedFiscalNumbers, applyOnlyToSpecified);
       toast.success('Pago aplicado exitosamente a las facturas seleccionadas');
       onClose();
     } catch (error) {
@@ -204,6 +206,29 @@ export const SelectivePaymentModal: React.FC<SelectivePaymentModalProps> = ({
               ))}
             </div>
           )}
+        </div>
+
+        {/* Opciones de aplicación */}
+        <div className="mt-4 p-4 border rounded-lg bg-amber-50 border-amber-200">
+          <div className="flex items-center space-x-2">
+            <Checkbox 
+              id="apply-only-specified"
+              checked={applyOnlyToSpecified}
+              onCheckedChange={(checked) => setApplyOnlyToSpecified(checked === true)}
+            />
+            <label 
+              htmlFor="apply-only-specified" 
+              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+            >
+              Solo aplicar a facturas especificadas (no continuar con FIFO automático)
+            </label>
+          </div>
+          <p className="text-xs text-amber-700 mt-2">
+            {applyOnlyToSpecified 
+              ? "El pago se aplicará únicamente a las facturas seleccionadas. El saldo restante quedará pendiente."
+              : "Después de aplicar a las facturas seleccionadas, el saldo restante se aplicará automáticamente a otras facturas pendientes (FIFO)."
+            }
+          </p>
         </div>
 
         {/* Facturas seleccionadas */}
