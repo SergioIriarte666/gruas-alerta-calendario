@@ -437,19 +437,30 @@ export const useInvoiceOperations = () => {
 
         const serviceIds = closureServices?.map(cs => cs.service_id) || [];
 
-        // 3. Revertir estado de servicios de 'invoiced' a 'completed'
+        // 3. PRIMERO revertir estado de servicios de 'invoiced' a 'completed'
         if (serviceIds.length > 0) {
-          const { error: revertError } = await supabase
+          const { data: servicesToRevert, error: checkError } = await supabase
             .from('services')
-            .update({ status: 'completed', updated_at: new Date().toISOString() })
+            .select('id, folio, status')
             .in('id', serviceIds)
             .eq('status', 'invoiced');
 
-          if (revertError) throw revertError;
-          console.log('Revertidos', serviceIds.length, 'servicios a estado completed');
+          if (checkError) throw checkError;
+          
+          console.log('Servicios encontrados para revertir:', servicesToRevert?.length || 0);
+
+          if (servicesToRevert && servicesToRevert.length > 0) {
+            const { error: revertError } = await supabase
+              .from('services')
+              .update({ status: 'completed', updated_at: new Date().toISOString() })
+              .in('id', servicesToRevert.map(s => s.id));
+
+            if (revertError) throw revertError;
+            console.log('Revertidos', servicesToRevert.length, 'servicios a estado completed');
+          }
         }
 
-        // 4. Revertir estado de cierres de 'invoiced' a 'closed'
+        // 4. DESPUÉS revertir estado de cierres de 'invoiced' a 'closed'
         const { error: closureRevertError } = await supabase
           .from('service_closures')
           .update({ status: 'closed', updated_at: new Date().toISOString() })
