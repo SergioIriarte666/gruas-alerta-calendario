@@ -3476,6 +3476,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: Json
       }
+      fix_amphos_payment_applications: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
       fix_existing_overdue_invoices: {
         Args: Record<PropertyKey, never>
         Returns: string
