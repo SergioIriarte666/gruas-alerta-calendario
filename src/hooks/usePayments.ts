@@ -760,6 +760,187 @@ export const usePayments = () => {
     }
   };
 
+  // Revertir aplicaciones específicas de un pago
+  const revertPaymentApplications = async (paymentId: string, applicationIds?: string[]) => {
+    try {
+      setLoading(true);
+
+      if (applicationIds && applicationIds.length > 0) {
+        // Revertir aplicaciones específicas
+        for (const appId of applicationIds) {
+          const { error } = await supabase
+            .from('payment_applications')
+            .delete()
+            .eq('id', appId);
+          
+          if (error) throw error;
+        }
+      } else {
+        // Revertir todas las aplicaciones del pago
+        const { error } = await supabase
+          .from('payment_applications')
+          .delete()
+          .eq('payment_id', paymentId);
+        
+        if (error) throw error;
+      }
+
+      // Recalcular el estado del pago
+      const { data: applications } = await supabase
+        .from('payment_applications')
+        .select('applied_amount')
+        .eq('payment_id', paymentId);
+
+      const totalApplied = applications?.reduce((sum, app) => sum + Number(app.applied_amount), 0) || 0;
+
+      const { error: updateError } = await supabase
+        .from('payments')
+        .update({
+          applied_amount: totalApplied,
+          status: totalApplied === 0 ? 'pending' : 'partial'
+        })
+        .eq('id', paymentId);
+
+      if (updateError) throw updateError;
+
+      await fetchPayments();
+      toast.success('Aplicaciones revertidas exitosamente');
+    } catch (error) {
+      console.error('Error reverting payment applications:', error);
+      toast.error('Error al revertir aplicaciones de pago');
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Aplicar pago a facturas específicas por número fiscal
+  const applyPaymentToSpecificInvoices = async (
+    paymentId: string, 
+    fiscalNumbers: string[], 
+    amounts?: number[]
+  ) => {
+    try {
+      setLoading(true);
+
+      // Obtener el pago
+      const { data: payment, error: paymentError } = await supabase
+        .from('payments')
+        .select('*')
+        .eq('id', paymentId)
+        .single();
+
+      if (paymentError || !payment) {
+        throw new Error('Pago no encontrado');
+      }
+
+      // Obtener facturas por números fiscales
+      const { data: invoices, error: invoicesError } = await supabase
+        .from('invoices')
+        .select('id, folio, numero_fiscal, total, paid_amount, status')
+        .in('numero_fiscal', fiscalNumbers)
+        .eq('client_id', payment.client_id);
+
+      if (invoicesError) throw invoicesError;
+
+      const missingFiscalNumbers = fiscalNumbers.filter(
+        fn => !invoices?.find(inv => inv.numero_fiscal === fn)
+      );
+
+      if (missingFiscalNumbers.length > 0) {
+        throw new Error(`Facturas no encontradas con números fiscales: ${missingFiscalNumbers.join(', ')}`);
+      }
+
+      // Aplicar a cada factura
+      let remainingAmount = payment.amount - payment.applied_amount;
+      const applications = [];
+      const currentUser = await supabase.auth.getUser();
+
+      for (let i = 0; i < invoices!.length; i++) {
+        const invoice = invoices![i];
+        const pendingAmount = invoice.total - (invoice.paid_amount || 0);
+        
+        if (pendingAmount <= 0) continue;
+
+        let applicationAmount;
+        if (amounts && amounts[i]) {
+          applicationAmount = Math.min(amounts[i], pendingAmount, remainingAmount);
+        } else {
+          applicationAmount = Math.min(pendingAmount, remainingAmount);
+        }
+
+        if (applicationAmount > 0) {
+          applications.push({
+            payment_id: paymentId,
+            invoice_id: invoice.id,
+            applied_amount: applicationAmount,
+            application_method: 'manual',
+            created_by: currentUser.data.user?.id
+          });
+
+          remainingAmount -= applicationAmount;
+        }
+
+        if (remainingAmount <= 0) break;
+      }
+
+      // Insertar aplicaciones
+      if (applications.length > 0) {
+        const { error: insertError } = await supabase
+          .from('payment_applications')
+          .insert(applications);
+
+        if (insertError) throw insertError;
+      }
+
+      await fetchPayments();
+      toast.success(`Pago aplicado exitosamente a ${applications.length} facturas`);
+      
+      if (remainingAmount > 0) {
+        toast.info(`Saldo restante del pago: $${remainingAmount.toLocaleString()}`);
+      }
+
+      return { applications, remainingAmount };
+    } catch (error) {
+      console.error('Error applying payment to specific invoices:', error);
+      toast.error(error instanceof Error ? error.message : 'Error al aplicar pago a facturas específicas');
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Obtener detalles de aplicación de un pago
+  const getPaymentApplicationDetails = async (paymentId: string) => {
+    try {
+      const { data: applications, error } = await supabase
+        .from('payment_applications')
+        .select(`
+          id,
+          applied_amount,
+          application_method,
+          created_at,
+          invoices (
+            id,
+            folio,
+            numero_fiscal,
+            total,
+            paid_amount,
+            status
+          )
+        `)
+        .eq('payment_id', paymentId)
+        .order('created_at', { ascending: true });
+
+      if (error) throw error;
+
+      return applications || [];
+    } catch (error) {
+      console.error('Error getting payment application details:', error);
+      throw error;
+    }
+  };
+
   return {
     payments,
     loading,
@@ -789,6 +970,9 @@ export const usePayments = () => {
     diagnosePaymentConflicts,
     resolvePaymentConflicts,
     fixPaymentApplicationConflicts,
+    revertPaymentApplications,
+    applyPaymentToSpecificInvoices,
+    getPaymentApplicationDetails,
     diagnoseMixedPaymentInvoices,
     getInvoicePaymentStatus,
     refetch: fetchPayments

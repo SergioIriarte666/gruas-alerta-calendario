@@ -5,6 +5,7 @@ import { PaymentWithDetails } from '@/types/payments';
 import { PaymentApplicationModal } from './PaymentApplicationModal';
 import { SmartPaymentForm } from './SmartPaymentForm';
 import { PaymentHistory } from './PaymentHistory';
+import { PaymentCorrectionModal } from './PaymentCorrectionModal';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -49,6 +50,8 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
   const [systemDiagnosis, setSystemDiagnosis] = useState<any>(null);
   const [diagnosisLoading, setDiagnosisLoading] = useState(false);
   const [showMaintenancePanel, setShowMaintenancePanel] = useState(false);
+  const [showCorrectionModal, setShowCorrectionModal] = useState(false);
+  const [paymentToCorrect, setPaymentToCorrect] = useState<PaymentWithDetails | null>(null);
 
   const { clients } = useClients();
 
@@ -134,6 +137,11 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
     } finally {
       setIsProcessing(false);
     }
+  };
+
+  const handlePaymentCorrection = (payment: PaymentWithDetails) => {
+    setPaymentToCorrect(payment);
+    setShowCorrectionModal(true);
   };
 
   const getStatusBadge = (status: string) => {
@@ -336,6 +344,18 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
                             </Button>
                           </>
                         )}
+                        {payment.applied_amount > 0 && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handlePaymentCorrection(payment)}
+                            disabled={isProcessing}
+                            className="border-orange-500 text-orange-600 hover:bg-orange-500 hover:text-white"
+                          >
+                            <AlertTriangle className="h-3 w-3 mr-1" />
+                            Corregir
+                          </Button>
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>
@@ -366,6 +386,17 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
 
         {showHistory && (
           <PaymentHistory onClose={() => setShowHistory(false)} />
+        )}
+
+        {showCorrectionModal && paymentToCorrect && (
+          <PaymentCorrectionModal
+            payment={paymentToCorrect}
+            isOpen={showCorrectionModal}
+            onClose={() => {
+              setShowCorrectionModal(false);
+              setPaymentToCorrect(null);
+            }}
+          />
         )}
       </div>
     </div>
