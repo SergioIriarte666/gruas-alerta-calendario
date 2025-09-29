@@ -169,7 +169,6 @@ const Closures = () => {
     <div className="space-y-6 closures-scope">
       <ClosuresHeader 
         onCreateClosure={handleShowCreateModal}
-        onGenerateReport={handleShowReportSheet}
       />
       
       {/* Automation Button */}

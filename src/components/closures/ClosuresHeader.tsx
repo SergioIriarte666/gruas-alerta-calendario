@@ -1,13 +1,12 @@
 
-import { Plus, FileText } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface ClosuresHeaderProps {
   onCreateClosure: () => void;
-  onGenerateReport: () => void;
 }
 
-const ClosuresHeader = ({ onCreateClosure, onGenerateReport }: ClosuresHeaderProps) => {
+const ClosuresHeader = ({ onCreateClosure }: ClosuresHeaderProps) => {
   return (
     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
       <div>
@@ -15,15 +14,6 @@ const ClosuresHeader = ({ onCreateClosure, onGenerateReport }: ClosuresHeaderPro
         <p className="text-muted-foreground mt-1">Gestión de cierres por períodos</p>
       </div>
       <div className="flex items-center gap-2">
-        <Button
-          onClick={onGenerateReport}
-          variant="outline"
-          className="border-border text-foreground hover:bg-muted"
-          title="Generar informe de servicios"
-        >
-          <FileText className="w-4 h-4 mr-2" />
-          Generar Informe
-        </Button>
         <Button
           onClick={onCreateClosure}
           className="bg-primary hover:bg-primary/90 text-primary-foreground"
