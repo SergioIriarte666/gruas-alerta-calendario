@@ -94,13 +94,13 @@ export const EnhancedCSVUploadServices = ({ onClose, onSuccess }: EnhancedCSVUpl
     try {
       console.log('🚀 Starting preview process...');
       
-      // Parse the file first
+      // Parse the file first and get the data directly
       console.log('📁 Parsing file...');
-      await parseFile();
+      const parsedData = await parseFile();
       console.log('✅ File parsed successfully');
       
-      // Then validate the parsed data
-      if (csvData && csvData.length > 0) {
+      // Then validate the parsed data using the returned value
+      if (parsedData && parsedData.length > 0) {
         console.log('🔍 Validating parsed data...');
         await validateData();
         console.log('✅ Validation completed successfully');
