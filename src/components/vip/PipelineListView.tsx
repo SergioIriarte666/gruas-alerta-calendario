@@ -27,7 +27,8 @@ import {
   ChevronUp,
   ChevronsUpDown,
   Filter,
-  X
+  X,
+  Download
 } from 'lucide-react';
 import { AdvancedServiceFilters } from '@/components/services/AdvancedServiceFilters';
 import { useAdvancedFilters } from '@/hooks/useAdvancedFilters';
@@ -35,6 +36,8 @@ import { Service, ServiceStatus } from '@/types';
 import { differenceInDays } from 'date-fns';
 import { formatForDisplay, parseFromDatabase } from '@/utils/timezoneUtils';
 import { BatchUpdateModal, BatchUpdateData } from './BatchUpdateModal';
+import { PipelineExportModal } from './PipelineExportModal';
+import { usePipelineServiceExport } from '@/hooks/vip/usePipelineServiceExport';
 import { toast } from 'sonner';
 import { getDisplayServiceValue } from '@/utils/serviceValueCalculations';
 
@@ -138,6 +141,7 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
   const [expandedGroups, setExpandedGroups] = useState<Set<ServiceStatus>>(new Set());
   const [selectedServices, setSelectedServices] = useState<Set<string>>(new Set());
   const [showBatchModal, setShowBatchModal] = useState(false);
+  const [showExportModal, setShowExportModal] = useState(false);
   const [sortField, setSortField] = useState<SortField>('serviceDate');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
 
@@ -151,6 +155,13 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
     clearFilters: clearAdvancedFilters,
     updateFilters: updateAdvancedFilters
   } = useAdvancedFilters();
+
+  // Hook para exportación del pipeline
+  const { exportToPDF, exportToExcel } = usePipelineServiceExport(
+    services,
+    clientName,
+    clientId
+  );
 
   // Función para ordenar servicios
   const sortServices = (services: Service[]): Service[] => {
@@ -331,6 +342,14 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
     setIsAdvancedFiltersOpen(false);
   };
 
+  const handleExport = (format: 'pdf' | 'excel', options: { includeStatuses?: ServiceStatus[]; includeAllStatuses?: boolean }) => {
+    if (format === 'pdf') {
+      exportToPDF(options);
+    } else {
+      exportToExcel(options);
+    }
+  };
+
   const selectedServicesArray = services.filter(s => selectedServices.has(s.id));
 
   const handleSort = (field: SortField) => {
@@ -432,6 +451,15 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
               </Button>
               <Button variant="outline" size="sm" onClick={collapseAll}>
                 Contraer Todo
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => setShowExportModal(true)}
+                className="bg-primary/5 border-primary/20 hover:bg-primary/10"
+              >
+                <Download className="w-4 h-4 mr-2" />
+                Exportar
               </Button>
               {selectedServices.size > 0 && (
                 <Button 
@@ -687,6 +715,20 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
         onFiltersChange={updateAdvancedFilters}
         onApply={handleApplyAdvancedFilters}
         onClear={handleClearAdvancedFilters}
+      />
+
+      {/* Modal de Exportación */}
+      <PipelineExportModal
+        isOpen={showExportModal}
+        onClose={() => setShowExportModal(false)}
+        onExport={handleExport}
+        availableStatuses={serviceGroups.map(group => ({
+          status: group.status,
+          title: group.title,
+          count: group.services.length,
+          totalValue: group.totalValue
+        }))}
+        totalServices={services.length}
       />
     </div>
   );
