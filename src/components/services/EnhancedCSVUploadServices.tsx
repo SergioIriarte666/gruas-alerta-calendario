@@ -250,7 +250,7 @@ export const EnhancedCSVUploadServices = ({ onClose, onSuccess }: EnhancedCSVUpl
               id="csv-upload"
             />
             <label htmlFor="csv-upload">
-              <Button className="bg-tms-green hover:bg-tms-green-dark text-white" asChild>
+              <Button className="bg-tms-green hover:bg-tms-green-dark text-black" asChild>
                 <span>Seleccionar Archivo</span>
               </Button>
             </label>
