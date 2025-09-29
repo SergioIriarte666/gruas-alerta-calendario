@@ -50,8 +50,10 @@ export const useEnhancedCSVUpload = () => {
     }
   }, [file, uploader, initializeUploader]);
 
-  const validateData = useCallback(async () => {
-    if (csvData.length === 0) {
+  const validateData = useCallback(async (dataToValidate?: any[]) => {
+    const dataToUse = dataToValidate || csvData;
+    
+    if (dataToUse.length === 0) {
       toast.error('No hay datos para validar');
       return;
     }
@@ -66,7 +68,7 @@ export const useEnhancedCSVUpload = () => {
       const existingFolios = services.map(service => service.folio);
 
       const result = await uploader.validateAndMapData(
-        csvData,
+        dataToUse,
         existingFolios,
         setUploadProgress
       );

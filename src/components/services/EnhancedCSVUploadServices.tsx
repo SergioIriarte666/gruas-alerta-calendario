@@ -102,7 +102,7 @@ export const EnhancedCSVUploadServices = ({ onClose, onSuccess }: EnhancedCSVUpl
       // Then validate the parsed data using the returned value
       if (parsedData && parsedData.length > 0) {
         console.log('🔍 Validating parsed data...');
-        await validateData();
+        await validateData(parsedData);
         console.log('✅ Validation completed successfully');
       } else {
         console.warn('⚠️ No data found in file');
