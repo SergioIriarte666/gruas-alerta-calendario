@@ -11,6 +11,9 @@ import ClosuresStats from '@/components/closures/ClosuresStats';
 import ClosuresSearch from '@/components/closures/ClosuresSearch';
 import ClosuresTable from '@/components/closures/ClosuresTable';
 import InvoiceConfirmationDialog from '@/components/closures/InvoiceConfirmationDialog';
+import AutomatedClosureWorkflow from '@/components/closures/automation/AutomatedClosureWorkflow';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import {
   Sheet,
   SheetContent,
@@ -19,6 +22,7 @@ import {
   SheetDescription,
 } from "@/components/ui/sheet";
 import ClosureReportForm from '@/components/closures/ClosureReportForm';
+import { Bot, Zap } from 'lucide-react';
 
 const Closures = () => {
   const { closures, loading, createClosure, updateClosure, deleteClosure, closeClosure } = useServiceClosures();
@@ -31,6 +35,7 @@ const Closures = () => {
   const [editingClosure, setEditingClosure] = useState<ServiceClosure | null>(null);
   const [showInvoiceDialog, setShowInvoiceDialog] = useState(false);
   const [createdClosure, setCreatedClosure] = useState<ServiceClosure | null>(null);
+  const [showAutomation, setShowAutomation] = useState(false);
 
   console.log('Closures page render - closures:', closures.length, 'loading:', loading, 'showCreateModal:', showCreateModal);
 
@@ -156,12 +161,40 @@ const Closures = () => {
     );
   }
 
+  if (showAutomation) {
+    return <AutomatedClosureWorkflow onBack={() => setShowAutomation(false)} />;
+  }
+
   return (
     <div className="space-y-6 closures-scope">
       <ClosuresHeader 
         onCreateClosure={handleShowCreateModal}
         onGenerateReport={handleShowReportSheet}
       />
+      
+      {/* Automation Button */}
+      <Card className="bg-gradient-to-r from-blue-500/10 to-blue-600/5 border-blue-500/20">
+        <CardContent className="py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Bot className="h-6 w-6 text-blue-600" />
+              <div>
+                <h3 className="font-semibold text-foreground">Asistente de Automatización</h3>
+                <p className="text-sm text-muted-foreground">
+                  Automatiza el proceso de cierre por cliente y período
+                </p>
+              </div>
+            </div>
+            <Button
+              onClick={() => setShowAutomation(true)}
+              className="bg-blue-600 hover:bg-blue-700 text-white"
+            >
+              <Zap className="h-4 w-4 mr-2" />
+              Automatizar Cierres
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
       
       <ClosuresStats closures={closures} />
       
