@@ -99,12 +99,13 @@ export const useClosureAutomation = () => {
   const fetchClientsForMonth = useCallback(async (month: Date) => {
     try {
       setLoading(true);
-      console.log('Fetching clients data for month:', month);
+      console.log('🔄 Fetching clients data for month:', month);
 
       const monthStart = startOfMonth(month);
       const monthEnd = endOfMonth(month);
 
       // Fetch services for the selected month
+      // FIXED: Changed service_types!inner to service_types!left to include services without service type
       const { data: servicesData, error: servicesError } = await supabase
         .from('services')
         .select(`
@@ -113,7 +114,7 @@ export const useClosureAutomation = () => {
           third_party_client:clients!services_third_party_client_id_fkey(id, name, rut, phone, email, address, department, is_active),
           cranes!left(id, license_plate, brand, model, type, is_active),
           operators!left(id, name, rut, phone, license_number, is_active),
-          service_types!inner(id, name, description, is_active)
+          service_types!left(id, name, description, is_active)
         `)
         .gte('service_date', monthStart.toISOString().split('T')[0])
         .lte('service_date', monthEnd.toISOString().split('T')[0])
@@ -126,7 +127,14 @@ export const useClosureAutomation = () => {
       }
 
       const services = transformRawServiceData(servicesData || []);
+      console.log('🔄 Transforming', (servicesData || []).length, 'services');
       console.log('Services found for month:', services.length);
+      console.log('Raw services sample:', (servicesData || []).slice(0, 2).map(s => ({ 
+        id: s.id, 
+        folio: s.folio, 
+        client_name: s.client?.name || s.third_party_client?.name || 'NO CLIENT',
+        service_type: s.service_types?.name || 'NO TYPE'
+      })));
 
       // Get services already in closures to exclude them
       const { data: closureServices, error: closureError } = await supabase
@@ -205,6 +213,12 @@ export const useClosureAutomation = () => {
 
       setClientsData(clientsClosureData);
       console.log('Clients closure data prepared:', clientsClosureData.length);
+      console.log('Clients summary:', clientsClosureData.map(c => ({ 
+        name: c.client.name, 
+        services: c.services.length,
+        completed: c.completedServices,
+        total: c.totalAmount
+      })));
     } catch (error: any) {
       console.error('Error fetching clients for month:', error);
       toast({
