@@ -31,9 +31,10 @@ export const useServicesForClosures = (options: UseServicesForClosuresOptions = 
   const fetchServicesData = async () => {
     try {
       setLoading(true);
-      console.log('Fetching services data for closures with date filter:', { dateFrom, dateTo });
+      console.log('🔍 Fetching services data for closures with date filter:', { dateFrom, dateTo });
       
       // Build the query for billable services (completed and with purchase order)
+      // SIMPLIFIED QUERY: Remove inner join that was filtering out services
       let billableQuery = supabase
         .from('services')
         .select(`
@@ -42,7 +43,7 @@ export const useServicesForClosures = (options: UseServicesForClosuresOptions = 
           third_party_client:clients!services_third_party_client_id_fkey(id, name, rut, phone, email, address, is_active),
           cranes!left(id, license_plate, brand, model, type, is_active),
           operators!left(id, name, rut, phone, license_number, is_active),
-          service_types!inner(id, name, description, is_active)
+          service_types!left(id, name, description, is_active)
         `)
         .in('status', ['completed', 'with_purchase_order', 'failed'])
         .order('folio', { ascending: true });
@@ -56,7 +57,7 @@ export const useServicesForClosures = (options: UseServicesForClosuresOptions = 
           third_party_client:clients!services_third_party_client_id_fkey(id, name, rut, phone, email, address, is_active),
           cranes!left(id, license_plate, brand, model, type, is_active),
           operators!left(id, name, rut, phone, license_number, is_active),
-          service_types!inner(id, name, description, is_active)
+          service_types!left(id, name, description, is_active)
         `)
         .eq('status', 'pending')
         .order('folio', { ascending: true });
@@ -89,8 +90,10 @@ export const useServicesForClosures = (options: UseServicesForClosuresOptions = 
       const billableServices = billableResult.data || [];
       const pendingServices = pendingResult.data || [];
 
-      console.log('Billable services found (completed + with purchase order + failed):', billableServices.length);
-      console.log('Pending services found:', pendingServices.length);
+      console.log('🔍 Billable services found (completed + with purchase order + failed):', billableServices.length);
+      console.log('🔍 Raw billable services sample:', billableServices.slice(0, 2));
+      console.log('🔍 Pending services found:', pendingServices.length);
+      console.log('🔍 Raw pending services sample:', pendingServices.slice(0, 2));
 
       // Get all service IDs that are already included in closures
       const { data: closureServices, error: closureError } = await supabase
