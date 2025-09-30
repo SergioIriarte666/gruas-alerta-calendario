@@ -3882,6 +3882,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: Json
       }
+      sync_crane_part_to_inventory: {
+        Args: { p_inventory_item_id?: string; p_part_name: string }
+        Returns: Json
+      }
       sync_existing_paid_invoices: {
         Args: Record<PropertyKey, never>
         Returns: Json
