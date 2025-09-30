@@ -1,8 +1,9 @@
 import React, { useState, useMemo } from 'react';
-import { Plus, Edit, Trash2, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
+import { Plus, Edit, Trash2, ArrowUpDown, ArrowUp, ArrowDown, LayoutList, LayoutGrid } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import {
   Select,
   SelectContent,
@@ -41,6 +42,7 @@ import { useVehicleBrands } from '@/hooks/useVehicleBrands';
 import { useVehicleModels } from '@/hooks/useVehicleModels';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { VehicleFilters } from './VehicleFilters';
+import { VehicleModelsPipelineView } from './VehicleModelsPipelineView';
 
 type SortField = 'name' | 'created_at' | 'brand';
 type SortDirection = 'asc' | 'desc';
@@ -59,6 +61,7 @@ export const VehicleModelsManager: React.FC<VehicleModelsManagerProps> = ({ sear
   const [formData, setFormData] = useState({ name: '', brand_id: '' });
   const [sortField, setSortField] = useState<SortField | null>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
+  const [viewMode, setViewMode] = useState<'table' | 'grouped'>('grouped');
 
   const handleCreate = () => {
     if (!formData.name.trim() || !formData.brand_id) return;
@@ -171,7 +174,18 @@ export const VehicleModelsManager: React.FC<VehicleModelsManagerProps> = ({ sear
       
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-semibold">Modelos de Vehículos</h2>
-        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+        <div className="flex items-center gap-3">
+          <ToggleGroup type="single" value={viewMode} onValueChange={(value) => value && setViewMode(value as 'table' | 'grouped')}>
+            <ToggleGroupItem value="grouped" aria-label="Vista agrupada">
+              <LayoutGrid className="h-4 w-4 mr-2" />
+              Agrupada
+            </ToggleGroupItem>
+            <ToggleGroupItem value="table" aria-label="Vista lista">
+              <LayoutList className="h-4 w-4 mr-2" />
+              Lista
+            </ToggleGroupItem>
+          </ToggleGroup>
+          <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
           <DialogTrigger asChild>
             <Button>
               <Plus className="w-4 h-4 mr-2" />
@@ -227,9 +241,19 @@ export const VehicleModelsManager: React.FC<VehicleModelsManagerProps> = ({ sear
             </div>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
 
-      <div className="border rounded-lg">
+      {viewMode === 'grouped' ? (
+        <VehicleModelsPipelineView
+          models={sortedModels}
+          searchTerm={searchTerm}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+          isDeleting={isDeleting}
+        />
+      ) : (
+        <div className="border rounded-lg">
         <Table>
           <TableHeader>
             <TableRow>
@@ -321,7 +345,8 @@ export const VehicleModelsManager: React.FC<VehicleModelsManagerProps> = ({ sear
             )}
           </TableBody>
         </Table>
-      </div>
+        </div>
+      )}
 
       {/* Edit Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
