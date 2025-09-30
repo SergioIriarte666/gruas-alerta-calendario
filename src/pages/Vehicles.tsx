@@ -5,6 +5,7 @@ import { VehicleModelsManager } from '@/components/vehicles/VehicleModelsManager
 
 const Vehicles: React.FC = () => {
   const [activeTab, setActiveTab] = useState('brands');
+  const [searchTerm, setSearchTerm] = useState('');
 
   return (
     <div className="space-y-6">
@@ -22,11 +23,11 @@ const Vehicles: React.FC = () => {
         </TabsList>
         
         <TabsContent value="brands" className="space-y-4">
-          <VehicleBrandsManager />
+          <VehicleBrandsManager searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
         </TabsContent>
         
         <TabsContent value="models" className="space-y-4">
-          <VehicleModelsManager />
+          <VehicleModelsManager searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
         </TabsContent>
       </Tabs>
     </div>

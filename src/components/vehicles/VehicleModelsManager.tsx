@@ -40,11 +40,17 @@ import {
 import { useVehicleBrands } from '@/hooks/useVehicleBrands';
 import { useVehicleModels } from '@/hooks/useVehicleModels';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { VehicleFilters } from './VehicleFilters';
 
 type SortField = 'name' | 'created_at' | 'brand';
 type SortDirection = 'asc' | 'desc';
 
-export const VehicleModelsManager: React.FC = () => {
+interface VehicleModelsManagerProps {
+  searchTerm: string;
+  setSearchTerm: (value: string) => void;
+}
+
+export const VehicleModelsManager: React.FC<VehicleModelsManagerProps> = ({ searchTerm, setSearchTerm }) => {
   const { brands } = useVehicleBrands();
   const { models, loading, createModel, updateModel, deleteModel, isCreating, isUpdating, isDeleting } = useVehicleModels();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -113,9 +119,20 @@ export const VehicleModelsManager: React.FC = () => {
   };
 
   const sortedModels = useMemo(() => {
-    if (!sortField) return models;
+    let filtered = models;
     
-    return [...models].sort((a, b) => {
+    // Apply search filter
+    if (searchTerm.trim()) {
+      filtered = models.filter(model => 
+        model.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        model.vehicle_brands?.name.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+    
+    // Apply sorting
+    if (!sortField) return filtered;
+    
+    return [...filtered].sort((a, b) => {
       let aValue, bValue;
       switch (sortField) {
         case 'name':
@@ -138,7 +155,7 @@ export const VehicleModelsManager: React.FC = () => {
       if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
       return 0;
     });
-  }, [models, sortField, sortDirection]);
+  }, [models, sortField, sortDirection, searchTerm]);
 
   if (loading) {
     return <LoadingSpinner />;
@@ -146,6 +163,12 @@ export const VehicleModelsManager: React.FC = () => {
 
   return (
     <div className="space-y-4">
+      <VehicleFilters 
+        searchTerm={searchTerm}
+        setSearchTerm={setSearchTerm}
+        placeholder="Buscar por marca o modelo..."
+      />
+      
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-semibold">Modelos de Vehículos</h2>
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
@@ -292,7 +315,7 @@ export const VehicleModelsManager: React.FC = () => {
             {sortedModels.length === 0 && (
               <TableRow>
                 <TableCell colSpan={4} className="text-center text-muted-foreground">
-                  No hay modelos registrados
+                  {searchTerm.trim() ? 'No se encontraron resultados para tu búsqueda' : 'No hay modelos registrados'}
                 </TableCell>
               </TableRow>
             )}
