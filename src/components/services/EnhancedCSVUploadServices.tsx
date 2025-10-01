@@ -1,8 +1,7 @@
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Separator } from '@/components/ui/separator';
 import { 
@@ -15,11 +14,16 @@ import {
   FileText,
   Loader2,
   BarChart3,
-  AlertCircle
+  AlertCircle,
+  Sparkles
 } from 'lucide-react';
 import { useEnhancedCSVUpload } from '@/hooks/useEnhancedCSVUpload';
 import { ValidationError } from '@/utils/enhancedCsvUpload';
 import { shouldShowVehicleInfo, formatVehicleInfo } from '@/utils/statusHelpers';
+import { BatchUploadAnimations } from './BatchUploadAnimations';
+import { AnimatedProgress } from './AnimatedProgress';
+import { AnimatedStatCard } from './AnimatedStatCard';
+import { cn } from '@/lib/utils';
 
 interface EnhancedCSVUploadServicesProps {
   onClose?: () => void;
@@ -46,6 +50,11 @@ export const EnhancedCSVUploadServices = ({ onClose, onSuccess }: EnhancedCSVUpl
     initializeUploader
   } = useEnhancedCSVUpload();
 
+  const uploadButtonRef = useRef<HTMLButtonElement>(null);
+  const progressBarRef = useRef<HTMLDivElement>(null);
+  const [showConfetti, setShowConfetti] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+
   useEffect(() => {
     initializeUploader();
   }, [initializeUploader]);
@@ -67,6 +76,7 @@ export const EnhancedCSVUploadServices = ({ onClose, onSuccess }: EnhancedCSVUpl
 
   const handleDrop = useCallback((event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
+    setIsDragging(false);
     const droppedFile = event.dataTransfer.files[0];
     const allowedTypes = [
       'text/csv', 
@@ -83,6 +93,12 @@ export const EnhancedCSVUploadServices = ({ onClose, onSuccess }: EnhancedCSVUpl
 
   const handleDragOver = useCallback((event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
+    setIsDragging(true);
+  }, []);
+
+  const handleDragLeave = useCallback((event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setIsDragging(false);
   }, []);
 
   const handlePreview = async () => {
@@ -117,9 +133,18 @@ export const EnhancedCSVUploadServices = ({ onClose, onSuccess }: EnhancedCSVUpl
   const handleUpload = async () => {
     const result = await uploadServices();
     if (result?.success && onSuccess) {
+      setShowConfetti(true);
+      setTimeout(() => setShowConfetti(false), 3000);
       onSuccess(result.processed);
     }
   };
+
+  useEffect(() => {
+    if (uploadProgress?.percentage === 100) {
+      setShowConfetti(true);
+      setTimeout(() => setShowConfetti(false), 3000);
+    }
+  }, [uploadProgress?.percentage]);
 
   const handleDownloadExcelTemplate = () => {
     try {
@@ -171,12 +196,24 @@ export const EnhancedCSVUploadServices = ({ onClose, onSuccess }: EnhancedCSVUpl
 
   return (
     <div className="space-y-6">
+      {/* Particle Animation System */}
+      <BatchUploadAnimations
+        isActive={isUploading}
+        onComplete={showConfetti}
+        sourceRef={uploadButtonRef}
+        targetRef={progressBarRef}
+      />
+
       {/* Header with improved design */}
       <div className="flex items-center justify-between">
-        <div>
+        <div className="animate-fade-in">
           <h2 className="text-2xl font-bold text-foreground flex items-center gap-2">
-            <Upload className="w-6 h-6 text-tms-green" />
+            <Upload className={cn(
+              "w-6 h-6",
+              isUploading ? "animate-bounce-in text-primary" : "text-primary"
+            )} />
             Carga Masiva Inteligente
+            {isUploading && <Sparkles className="w-5 h-5 text-primary animate-pulse-glow" />}
           </h2>
           <p className="text-muted-foreground mt-1">
             Sistema avanzado de importación con validación automática y mapeo inteligente
@@ -234,11 +271,21 @@ export const EnhancedCSVUploadServices = ({ onClose, onSuccess }: EnhancedCSVUpl
         </CardHeader>
         <CardContent>
           <div
-            className="border-2 border-dashed border rounded-lg p-8 text-center hover:border-tms-green transition-colors"
+            className={cn(
+              "border-2 border-dashed rounded-lg p-8 text-center transition-all duration-300",
+              isDragging 
+                ? "border-primary bg-primary/5 scale-[1.02] shadow-[0_0_30px_rgba(156,250,36,0.3)]" 
+                : "border-border hover:border-primary",
+              !file && "animate-breathe"
+            )}
             onDrop={handleDrop}
             onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
           >
-            <Upload className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+            <Upload className={cn(
+              "w-12 h-12 mx-auto mb-4 transition-all duration-300",
+              isDragging ? "text-primary scale-110 animate-bounce-in" : "text-muted-foreground"
+            )} />
             <p className="text-foreground mb-4">
               Arrastra tu archivo CSV o Excel aquí o haz clic para seleccionar
             </p>
@@ -250,14 +297,20 @@ export const EnhancedCSVUploadServices = ({ onClose, onSuccess }: EnhancedCSVUpl
               id="csv-upload"
             />
             <label htmlFor="csv-upload">
-              <Button className="bg-tms-green hover:bg-tms-green-dark text-black" asChild>
+              <Button 
+                className={cn(
+                  "bg-primary hover:bg-primary/90 text-primary-foreground transition-all duration-300",
+                  isDragging && "animate-scale-pulse"
+                )} 
+                asChild
+              >
                 <span>Seleccionar Archivo</span>
               </Button>
             </label>
           </div>
 
           {file && (
-            <div className="mt-4 p-4 bg-muted/50 rounded-lg">
+            <div className="mt-4 p-4 bg-muted/50 rounded-lg animate-slide-up">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
                   <FileText className="w-5 h-5 text-tms-green" />
@@ -272,7 +325,10 @@ export const EnhancedCSVUploadServices = ({ onClose, onSuccess }: EnhancedCSVUpl
                     size="sm"
                     onClick={handlePreview}
                     disabled={isValidating || !isInitialized}
-                    className="border-blue-500 text-blue-400 hover:bg-blue-500 hover:text-white"
+                    className={cn(
+                      "border-blue-500 text-blue-600 hover:bg-blue-500 hover:text-white transition-all duration-300",
+                      isValidating && "animate-pulse-glow"
+                    )}
                   >
                     {isValidating ? (
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -298,20 +354,31 @@ export const EnhancedCSVUploadServices = ({ onClose, onSuccess }: EnhancedCSVUpl
 
       {/* Progress indicator */}
       {uploadProgress && (
-        <Card className="glass-card">
+        <Card className="glass-card animate-slide-up">
           <CardHeader>
             <CardTitle className="text-foreground flex items-center gap-2">
-              <BarChart3 className="w-5 h-5" />
+              <BarChart3 className={cn(
+                "w-5 h-5",
+                uploadProgress.stage === 'uploading' && "animate-rotate-slow"
+              )} />
               {getProgressStageText(uploadProgress.stage)}
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-4" ref={progressBarRef}>
             <div>
               <div className="flex justify-between text-sm text-foreground mb-2">
-                <span>{uploadProgress.stage === 'uploading' ? `Lote ${uploadProgress.currentBatch} de ${uploadProgress.totalBatches}` : 'Progreso'}</span>
-                <span>{uploadProgress.processed} de {uploadProgress.total}</span>
+                <span className="animate-fade-in">
+                  {uploadProgress.stage === 'uploading' ? `Lote ${uploadProgress.currentBatch} de ${uploadProgress.totalBatches}` : 'Progreso'}
+                </span>
+                <span className="font-mono font-semibold animate-fade-in">
+                  {uploadProgress.processed} de {uploadProgress.total}
+                </span>
               </div>
-              <Progress value={uploadProgress.percentage} className="w-full" />
+              <AnimatedProgress 
+                value={uploadProgress.percentage} 
+                className="w-full" 
+                showPulse={true}
+              />
             </div>
           </CardContent>
         </Card>
@@ -319,13 +386,13 @@ export const EnhancedCSVUploadServices = ({ onClose, onSuccess }: EnhancedCSVUpl
 
       {/* Validation Results */}
       {validationResult && (
-        <Card className="glass-card">
+        <Card className="glass-card animate-slide-up">
           <CardHeader>
             <CardTitle className="flex items-center space-x-2 text-foreground">
               {validationResult.isValid ? (
-                <CheckCircle className="w-5 h-5 text-green-500" />
+                <CheckCircle className="w-5 h-5 text-green-500 animate-bounce-in" />
               ) : (
-                <AlertCircle className="w-5 h-5 text-orange-500" />
+                <AlertCircle className="w-5 h-5 text-orange-500 animate-bounce-in" />
               )}
               <span>Resultado del Análisis Inteligente</span>
             </CardTitle>
@@ -333,33 +400,50 @@ export const EnhancedCSVUploadServices = ({ onClose, onSuccess }: EnhancedCSVUpl
           <CardContent className="space-y-4">
             {/* Statistics Grid */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="bg-blue-500/20 p-4 rounded-lg">
-                <p className="text-blue-300 text-sm">Total de Filas</p>
-                <p className="text-2xl font-bold text-foreground">{validationResult.totalRows}</p>
-              </div>
-              <div className="bg-green-500/20 p-4 rounded-lg">
-                <p className="text-green-600 text-sm">Válidas</p>
-                <p className="text-2xl font-bold text-foreground">{validationResult.validCount}</p>
-              </div>
-              <div className="bg-red-500/20 p-4 rounded-lg">
-                <p className="text-red-600 text-sm">Errores</p>
-                <p className="text-2xl font-bold text-foreground">{validationResult.errorCount}</p>
-              </div>
-              <div className="bg-yellow-500/20 p-4 rounded-lg">
-                <p className="text-yellow-600 text-sm">Advertencias</p>
-                <p className="text-2xl font-bold text-foreground">{validationResult.warningCount}</p>
-              </div>
+              <AnimatedStatCard
+                label="Total de Filas"
+                value={validationResult.totalRows}
+                variant="total"
+                isAnimating={isValidating}
+              />
+              <AnimatedStatCard
+                label="Válidas"
+                value={validationResult.validCount}
+                variant="valid"
+                isAnimating={isValidating}
+              />
+              <AnimatedStatCard
+                label="Errores"
+                value={validationResult.errorCount}
+                variant="error"
+                isAnimating={validationResult.errorCount > 0}
+              />
+              <AnimatedStatCard
+                label="Advertencias"
+                value={validationResult.warningCount}
+                variant="warning"
+                isAnimating={validationResult.warningCount > 0}
+              />
             </div>
 
             {/* Validation Status */}
-            <div className={`p-4 rounded-lg border ${validationResult.isValid ? 'bg-green-500/10 border-green-500/30' : 'bg-orange-500/10 border-orange-500/30'}`}>
+            <div className={cn(
+              "p-4 rounded-lg border transition-all duration-500 animate-slide-up",
+              validationResult.isValid 
+                ? 'bg-green-500/10 border-green-500/30' 
+                : 'bg-orange-500/10 border-orange-500/30',
+              validationResult.isValid && "shadow-[0_0_20px_rgba(34,197,94,0.2)]"
+            )}>
               <div className="flex items-center gap-2 mb-2">
                 {validationResult.isValid ? (
-                  <CheckCircle className="w-5 h-5 text-green-400" />
+                  <CheckCircle className="w-5 h-5 text-green-400 animate-bounce-in" />
                 ) : (
-                  <AlertTriangle className="w-5 h-5 text-orange-400" />
+                  <AlertTriangle className="w-5 h-5 text-orange-400 animate-scale-pulse" />
                 )}
-                <h4 className={`font-medium ${validationResult.isValid ? 'text-green-600' : 'text-orange-600'}`}>
+                <h4 className={cn(
+                  "font-medium",
+                  validationResult.isValid ? 'text-green-600' : 'text-orange-600'
+                )}>
                   {validationResult.isValid ? 'Validación Exitosa' : 'Validación con Observaciones'}
                 </h4>
               </div>
@@ -478,17 +562,26 @@ export const EnhancedCSVUploadServices = ({ onClose, onSuccess }: EnhancedCSVUpl
             {validationResult.validCount > 0 && (
               <div className="flex justify-center pt-4">
                 <Button
+                  ref={uploadButtonRef}
                   onClick={handleUpload}
                   disabled={isUploading}
-                  className="bg-tms-green hover:bg-tms-green-dark text-foreground px-8"
+                  className={cn(
+                    "bg-primary hover:bg-primary/90 text-primary-foreground px-8 transition-all duration-500",
+                    isUploading && "animate-pulse-glow scale-105"
+                  )}
                   size="lg"
                 >
                   {isUploading ? (
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Cargando...
+                    </>
                   ) : (
-                    <Upload className="w-4 h-4 mr-2" />
+                    <>
+                      <Upload className="w-4 h-4 mr-2" />
+                      Cargar {validationResult.validCount} Servicios
+                    </>
                   )}
-                  Cargar {validationResult.validCount} Servicios
                 </Button>
               </div>
             )}
@@ -498,42 +591,53 @@ export const EnhancedCSVUploadServices = ({ onClose, onSuccess }: EnhancedCSVUpl
 
       {/* Upload Result */}
       {uploadResult && (
-        <Card className="glass-card">
+        <Card className={cn(
+          "glass-card animate-slide-up transition-all duration-500",
+          uploadResult.success && "shadow-[0_0_40px_rgba(34,197,94,0.3)]"
+        )}>
           <CardHeader>
             <CardTitle className="flex items-center space-x-2 text-foreground">
               {uploadResult.success ? (
-                <CheckCircle className="w-5 h-5 text-green-500" />
+                <CheckCircle className="w-5 h-5 text-green-500 animate-bounce-in" />
               ) : (
-                <XCircle className="w-5 h-5 text-red-500" />
+                <XCircle className="w-5 h-5 text-red-500 animate-scale-pulse" />
               )}
               <span>Resultado de la Carga</span>
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-              <div className="bg-green-500/20 p-4 rounded-lg">
-                <p className="text-green-600 text-sm">Servicios Procesados</p>
-                <p className="text-2xl font-bold text-foreground">{uploadResult.processed}</p>
-              </div>
-              <div className="bg-red-500/20 p-4 rounded-lg">
-                <p className="text-red-600 text-sm">Errores</p>
-                <p className="text-2xl font-bold text-foreground">{uploadResult.errors}</p>
-              </div>
+              <AnimatedStatCard
+                label="Servicios Procesados"
+                value={uploadResult.processed}
+                variant="valid"
+                isAnimating={uploadResult.success}
+              />
+              <AnimatedStatCard
+                label="Errores"
+                value={uploadResult.errors}
+                variant="error"
+                isAnimating={uploadResult.errors > 0}
+              />
             </div>
-            <p className="text-foreground mb-4">{uploadResult.message}</p>
+            <p className="text-foreground mb-4 animate-fade-in">{uploadResult.message}</p>
             
             {/* Error details */}
             {uploadResult.errorDetails && uploadResult.errorDetails.length > 0 && (
-              <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4 mb-4">
+              <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4 mb-4 animate-slide-up">
                 <h4 className="text-red-600 font-medium mb-2">Detalles de Errores</h4>
                 <div className="space-y-1 max-h-40 overflow-y-auto">
                   {uploadResult.errorDetails.slice(0, 10).map((error, idx) => (
-                    <div key={idx} className="text-sm text-foreground">
+                    <div 
+                      key={idx} 
+                      className="text-sm text-foreground animate-fade-in"
+                      style={{ animationDelay: `${idx * 50}ms` }}
+                    >
                       Fila {error.row + 1}: {error.message}
                     </div>
                   ))}
                   {uploadResult.errorDetails.length > 10 && (
-                    <div className="text-sm text-muted-foreground">
+                    <div className="text-sm text-muted-foreground animate-fade-in">
                       ... y {uploadResult.errorDetails.length - 10} errores más
                     </div>
                   )}
@@ -544,7 +648,7 @@ export const EnhancedCSVUploadServices = ({ onClose, onSuccess }: EnhancedCSVUpl
             {uploadResult.success && onClose && (
               <Button
                 onClick={onClose}
-                className="bg-tms-green hover:bg-tms-green-dark text-white"
+                className="bg-primary hover:bg-primary/90 text-primary-foreground animate-bounce-in"
               >
                 Cerrar y Ver Servicios
               </Button>
