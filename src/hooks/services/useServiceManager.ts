@@ -402,6 +402,13 @@ export const useServiceManager = () => {
       console.log('🔧 Datos de servicio recibidos en useServiceManager:', {
         id: id,
         keys: Object.keys(serviceData),
+        folio: serviceData.folio,
+        vehicleModel: serviceData.vehicleModel,
+        vehicleBrand: serviceData.vehicleBrand,
+        licensePlate: serviceData.licensePlate,
+        client: serviceData.client,
+        serviceType: serviceData.serviceType,
+        crane: serviceData.crane,
         quoteNumber: serviceData.quoteNumber,
         purchaseOrder: serviceData.purchaseOrder
       });
