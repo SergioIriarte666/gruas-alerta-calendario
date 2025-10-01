@@ -115,6 +115,7 @@ export const useServiceQueries = () => {
               crane_id,
               is_primary,
               commission_amount,
+              role,
               operator:operators(*),
               crane:cranes(*)
             )
@@ -159,6 +160,7 @@ export const useServiceQueries = () => {
               crane_id,
               is_primary,
               commission_amount,
+              role,
               operator:operators(*),
               crane:cranes(*)
             )

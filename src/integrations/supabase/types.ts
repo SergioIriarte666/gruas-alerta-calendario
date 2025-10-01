@@ -2373,6 +2373,7 @@ export type Database = {
           is_primary: boolean | null
           operator_id: string | null
           resource_type: string
+          role: string | null
           service_id: string
           updated_at: string
         }
@@ -2385,6 +2386,7 @@ export type Database = {
           is_primary?: boolean | null
           operator_id?: string | null
           resource_type: string
+          role?: string | null
           service_id: string
           updated_at?: string
         }
@@ -2397,6 +2399,7 @@ export type Database = {
           is_primary?: boolean | null
           operator_id?: string | null
           resource_type?: string
+          role?: string | null
           service_id?: string
           updated_at?: string
         }

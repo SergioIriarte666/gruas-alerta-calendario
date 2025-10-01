@@ -311,6 +311,7 @@ export const useServiceManager = () => {
               crane_id,
               is_primary,
               commission_amount,
+              role,
               operator:operators(*),
               crane:cranes(*)
             )
@@ -329,7 +330,8 @@ export const useServiceManager = () => {
               resource_type: 'operator',
               operator_id: op.operatorId,
               is_primary: index === 0,
-              commission_amount: op.commission
+              commission_amount: op.commission,
+              role: op.role || 'Principal'
             };
             
             const { error: operatorError } = await supabase
@@ -763,6 +765,89 @@ export const useServiceManager = () => {
         }
         
         console.log('🎉 [SMART SYNC] Intelligent commission sync completed successfully');
+        
+        // 6. SINCRONIZAR service_resources - Actualizar/crear/eliminar registros de operadores
+        console.log('🔄 [SERVICE_RESOURCES] Starting sync for operators');
+        
+        // Obtener registros actuales de service_resources para este servicio
+        const { data: currentResources } = await supabase
+          .from('service_resources')
+          .select('id, operator_id, role, commission_amount')
+          .eq('service_id', id)
+          .eq('resource_type', 'operator');
+        
+        console.log('📋 [SERVICE_RESOURCES] Current resources:', currentResources);
+        
+        // Crear un set de operator_ids de los operadores nuevos
+        const newOperatorIds = new Set(serviceData.operators.map(op => op.operatorId).filter(Boolean));
+        
+        // Eliminar registros de operadores que ya no existen
+        if (currentResources && currentResources.length > 0) {
+          const resourcesToDelete = currentResources.filter(
+            resource => !newOperatorIds.has(resource.operator_id)
+          );
+          
+          if (resourcesToDelete.length > 0) {
+            const { error: deleteResourcesError } = await supabase
+              .from('service_resources')
+              .delete()
+              .in('id', resourcesToDelete.map(r => r.id));
+            
+            if (deleteResourcesError) {
+              console.error('[SERVICE_RESOURCES] Error deleting obsolete resources:', deleteResourcesError);
+            } else {
+              console.log('✅ [SERVICE_RESOURCES] Deleted obsolete operator resources:', resourcesToDelete.length);
+            }
+          }
+        }
+        
+        // Actualizar o crear registros de operadores
+        for (const [index, operator] of serviceData.operators.entries()) {
+          if (!operator.operatorId || operator.operatorId.trim() === '') continue;
+          
+          const existingResource = currentResources?.find(
+            r => r.operator_id === operator.operatorId
+          );
+          
+          if (existingResource) {
+            // Actualizar registro existente
+            const { error: updateResourceError } = await supabase
+              .from('service_resources')
+              .update({
+                is_primary: index === 0,
+                commission_amount: operator.commission || 0,
+                role: operator.role || 'Principal',
+                updated_at: new Date().toISOString()
+              })
+              .eq('id', existingResource.id);
+            
+            if (updateResourceError) {
+              console.error('[SERVICE_RESOURCES] Error updating resource:', updateResourceError);
+            } else {
+              console.log('✅ [SERVICE_RESOURCES] Updated operator resource:', operator.operatorId);
+            }
+          } else {
+            // Crear nuevo registro
+            const { error: createResourceError } = await supabase
+              .from('service_resources')
+              .insert({
+                service_id: id,
+                resource_type: 'operator',
+                operator_id: operator.operatorId,
+                is_primary: index === 0,
+                commission_amount: operator.commission || 0,
+                role: operator.role || 'Principal'
+              });
+            
+            if (createResourceError) {
+              console.error('[SERVICE_RESOURCES] Error creating resource:', createResourceError);
+            } else {
+              console.log('✅ [SERVICE_RESOURCES] Created new operator resource:', operator.operatorId);
+            }
+          }
+        }
+        
+        console.log('🎉 [SERVICE_RESOURCES] Operator sync completed successfully');
       }
 
       // Remove costDetails and operators after processing
@@ -803,6 +888,7 @@ export const useServiceManager = () => {
             crane_id,
             is_primary,
             commission_amount,
+            role,
             operator:operators(*),
             crane:cranes(*)
           )
