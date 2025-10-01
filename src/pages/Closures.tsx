@@ -186,7 +186,7 @@ const Closures = () => {
             </div>
             <Button
               onClick={() => setShowAutomation(true)}
-              className="bg-violet-600 hover:bg-violet-700 text-white"
+              className="bg-violet-400 hover:bg-violet-500 text-white"
             >
               <Zap className="h-4 w-4 mr-2" />
               Automatizar Cierres
