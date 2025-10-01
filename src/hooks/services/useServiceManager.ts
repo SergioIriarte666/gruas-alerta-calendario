@@ -436,7 +436,22 @@ export const useServiceManager = () => {
         // ✅ ACTUALIZACIÓN COMPLETA - Procesar todos los campos con validación
         console.log('🔄 Processing FULL update - all fields with validation');
         
+        // Extraer operador principal para operator_id y operator_commission
+        let primaryOperatorId = null;
+        let primaryOperatorCommission = 0;
+        
+        if (serviceData.operators && Array.isArray(serviceData.operators) && serviceData.operators.length > 0) {
+          const primaryOperator = serviceData.operators[0];
+          primaryOperatorId = primaryOperator.operatorId || null;
+          primaryOperatorCommission = primaryOperator.commission || 0;
+          console.log('✅ Extracted primary operator:', { primaryOperatorId, primaryOperatorCommission });
+        }
+        
         transformedData = {
+          // ✅ CRÍTICO: Agregar folio
+          ...(serviceData.folio !== undefined && {
+            folio: serviceData.folio
+          }),
           // Validar fechas - convertir cadenas vacías a null SOLO si están presentes
           ...(serviceData.requestDate !== undefined && {
             request_date: serviceData.requestDate && serviceData.requestDate.trim() !== '' 
@@ -454,6 +469,9 @@ export const useServiceManager = () => {
               ? serviceData.client 
               : null
           }),
+          ...(serviceData.purchaseOrderNumber !== undefined && {
+            purchase_order_number: serviceData.purchaseOrderNumber
+          }),
           ...(serviceData.purchaseOrder !== undefined && {
             purchase_order: serviceData.purchaseOrder
           }),
@@ -470,6 +488,7 @@ export const useServiceManager = () => {
               ? serviceData.crane 
               : null
           }),
+          // ✅ CRÍTICO: Mantener campos de vehículo (NO eliminar)
           ...(serviceData.vehicleBrand !== undefined && {
             vehicle_brand: serviceData.vehicleBrand
           }),
@@ -494,6 +513,7 @@ export const useServiceManager = () => {
           ...(serviceData.observations !== undefined && {
             observations: serviceData.observations
           }),
+          // ✅ CRÍTICO: Mantener campos de exceso (NO eliminar)
           ...(serviceData.hasExcess !== undefined && {
             has_excess: serviceData.hasExcess
           }),
@@ -502,6 +522,11 @@ export const useServiceManager = () => {
           }),
           ...(serviceData.excessAmount !== undefined && {
             excess_amount: serviceData.excessAmount || null
+          }),
+          // ✅ CRÍTICO: Agregar operator_id y operator_commission
+          ...(primaryOperatorId !== null && {
+            operator_id: primaryOperatorId,
+            operator_commission: primaryOperatorCommission
           }),
           // Transform custody fields from camelCase to snake_case con validación SOLO si están presentes
           ...(serviceData.custodyMode !== undefined && {
@@ -541,30 +566,15 @@ export const useServiceManager = () => {
         };
       }
 
-      // Remover campos que no van en la tabla services
+      // ✅ CRÍTICO: Solo remover campos que NO pertenecen a la tabla services
+      // Estos son campos auxiliares del form que no se mapean directamente
       delete transformedData.client;
-      delete transformedData.purchaseOrder;
-      delete transformedData.quoteNumber;
       delete transformedData.serviceType;
       delete transformedData.crane;
-      delete transformedData.vehicleBrand;
-      delete transformedData.vehicleModel;
-      delete transformedData.licensePlate;
-      delete transformedData.hasExcess;
-      delete transformedData.clientCoveredAmount;
-      delete transformedData.excessAmount;
-      delete transformedData.requestDate;
-      delete transformedData.serviceDate;
-      // Remove custody camelCase fields after transformation
-      delete transformedData.custodyMode;
-      delete transformedData.custodyDays;
-      delete transformedData.custodyDailyRate;
-      delete transformedData.custodyStartDate;
-      delete transformedData.custodyEndDate;
-      delete transformedData.custodyVehicleType;
-      delete transformedData.custodyDiscountPercentage;
-      delete transformedData.custodyTotalAmount;
-      delete transformedData.custodyNotes;
+      delete transformedData.costDetails;
+      delete transformedData.operators;
+      
+      console.log('✅ Final transformedData being sent to database:', transformedData);
 
       // ✅ MODIFICADO: Handle service costs (gastos) update con prevención de duplicación
       if (serviceData.costDetails && Array.isArray(serviceData.costDetails)) {
