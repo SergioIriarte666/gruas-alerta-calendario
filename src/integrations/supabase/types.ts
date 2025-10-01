@@ -3902,6 +3902,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
+      sync_missing_commissions: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
       sync_paid_invoices_with_payments: {
         Args: Record<PropertyKey, never>
         Returns: Json
