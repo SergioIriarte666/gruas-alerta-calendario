@@ -183,7 +183,8 @@ const CostsPage = () => {
                     cost.notes?.toLowerCase().includes(searchLower) ||
                     cost.cost_categories?.name.toLowerCase().includes(searchLower) ||
                     cost.subcategory?.toLowerCase().includes(searchLower) ||
-                    (cost.service_folio && cost.service_folio.toLowerCase().includes(searchLower));
+                    (cost.service_folio && cost.service_folio.toLowerCase().includes(searchLower)) ||
+                    (cost.services?.folio && cost.services.folio.toLowerCase().includes(searchLower));
                 
                 // Search in linked maintenance description if exists
                 const matchesMaintenance = cost.crane_maintenance?.description?.toLowerCase().includes(searchLower) ||
