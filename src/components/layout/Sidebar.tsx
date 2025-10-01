@@ -1,12 +1,17 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useUser } from '@/contexts/UserContext';
 import { useSettings } from '@/hooks/useSettings';
 import { useDeviceType } from '@/hooks/useDeviceType';
 import { cn } from '@/lib/utils';
-import { LayoutDashboard, Calendar, Truck, Users, Building2, Wrench, DollarSign, Target, FileText, Receipt, BarChart3, Settings, Menu, X, LogOut, ChevronLeft, ChevronRight, Tags, Car, Package, Zap, Percent, Bot, ClipboardList } from 'lucide-react';
+import { 
+  LayoutDashboard, Calendar, Truck, Users, Building2, DollarSign, Target, 
+  FileText, Receipt, BarChart3, Settings, X, LogOut, ChevronLeft, ChevronRight, 
+  Tags, Car, Package, Zap, Percent, ClipboardList, ChevronDown, ChevronUp,
+  Briefcase, Warehouse, TrendingUp, Cog
+} from 'lucide-react';
 
 interface SidebarProps {
   isCollapsed: boolean;
@@ -35,116 +40,98 @@ export const Sidebar = ({
   const companyName = settings?.company?.name || 'TMS Grúas';
   const companyLogo = settings?.company?.logo;
   
-  const navigationItems = [{
-    name: 'Dashboard',
-    href: '/dashboard',
-    icon: LayoutDashboard,
-    adminOnly: false
-  }, {
-    name: 'Informe Diario',
-    href: '/daily-report',
-    icon: ClipboardList,
-    adminOnly: false
-  }, {
-    name: 'Servicios',
-    href: '/services',
-    icon: Truck,
-    adminOnly: false
-  }, {
-    name: 'Clientes',
-    href: '/clients',
-    icon: Users,
-    adminOnly: false
-  }, {
-    name: 'Grúas',
-    href: '/cranes',
-    icon: Building2,
-    adminOnly: false
-  }, {
-    name: 'Operadores',
-    href: '/operators',
-    icon: Users,
-    adminOnly: false
-  }, {
-    name: 'Calendario',
-    href: '/calendar',
-    icon: Calendar,
-    adminOnly: false
-  }, {
-    name: 'Bodega',
-    href: '/inventory',
-    icon: Package,
-    adminOnly: false
-  }, {
-    name: 'Proveedores',
-    href: '/suppliers',
-    icon: Building2,
-    adminOnly: false
-  }, {
-    name: 'Costos',
-    href: '/costs',
-    icon: DollarSign,
-    adminOnly: false
-  }, {
-    name: 'Comisiones',
-    href: '/commissions',
-    icon: Percent,
-    adminOnly: true
-  }, {
-    name: 'Facturación Diferida',
-    href: '/deferred-billing',
-    icon: Calendar,
-    adminOnly: false
-  }, {
-    name: 'Facturas',
-    href: '/invoices',
-    icon: Receipt,
-    adminOnly: false
-  }, {
-    name: 'Cierres',
-    href: '/closures',
-    icon: FileText,
-    adminOnly: false
-  }, {
-    name: 'Reportes',
-    href: '/reports',
-    icon: BarChart3,
-    adminOnly: false
-  }, {
-    name: 'Tipos de Servicio',
-    href: '/service-types',
-    icon: Tags,
-    adminOnly: false
-  }, {
-    name: 'Centros de Costo',
-    href: '/cost-centers',
-    icon: Target,
-    adminOnly: false
-  }, {
-    name: 'Vehículos',
-    href: '/vehicles',
-    icon: Car,
-    adminOnly: false
-  }, {
-    name: 'Registros Rápidos',
-    href: '/quick-entries',
-    icon: Zap,
-    adminOnly: true
-  }, {
-    name: 'Configuración',
-    href: '/settings',
-    icon: Settings,
-    adminOnly: true
-  }];
+  // Estado para grupos expandidos
+  const [expandedGroups, setExpandedGroups] = useState<string[]>(['principal']);
 
-  // Filter navigation items based on user role
-  const filteredNavigation = navigationItems.filter(item => {
-    console.log(`Filtering item: ${item.name}, adminOnly: ${item.adminOnly}, user role: ${user?.role}`);
-    if (!item.adminOnly) return true;
-    return user && user.role === 'admin';
-  });
-  
-  console.log('Filtered navigation items:', filteredNavigation.map(item => item.name));
+  const toggleGroup = (groupName: string) => {
+    setExpandedGroups(prev => 
+      prev.includes(groupName) 
+        ? prev.filter(g => g !== groupName)
+        : [...prev, groupName]
+    );
+  };
+
+  // Navegación organizada en dos niveles
+  const navigationGroups = [
+    {
+      id: 'principal',
+      name: 'Principal',
+      icon: LayoutDashboard,
+      alwaysExpanded: true,
+      items: [
+        { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, adminOnly: false },
+        { name: 'Informe Diario', href: '/daily-report', icon: ClipboardList, adminOnly: false },
+        { name: 'Servicios', href: '/services', icon: Truck, adminOnly: false },
+      ]
+    },
+    {
+      id: 'operaciones',
+      name: 'Operaciones',
+      icon: Briefcase,
+      items: [
+        { name: 'Clientes', href: '/clients', icon: Users, adminOnly: false },
+        { name: 'Calendario', href: '/calendar', icon: Calendar, adminOnly: false },
+        { name: 'Facturación Diferida', href: '/deferred-billing', icon: Calendar, adminOnly: false },
+        { name: 'Facturas', href: '/invoices', icon: Receipt, adminOnly: false },
+      ]
+    },
+    {
+      id: 'recursos',
+      name: 'Recursos',
+      icon: Building2,
+      items: [
+        { name: 'Grúas', href: '/cranes', icon: Building2, adminOnly: false },
+        { name: 'Operadores', href: '/operators', icon: Users, adminOnly: false },
+        { name: 'Vehículos', href: '/vehicles', icon: Car, adminOnly: false },
+      ]
+    },
+    {
+      id: 'inventario',
+      name: 'Inventario',
+      icon: Warehouse,
+      items: [
+        { name: 'Bodega', href: '/inventory', icon: Package, adminOnly: false },
+        { name: 'Proveedores', href: '/suppliers', icon: Building2, adminOnly: false },
+      ]
+    },
+    {
+      id: 'finanzas',
+      name: 'Finanzas',
+      icon: TrendingUp,
+      items: [
+        { name: 'Costos', href: '/costs', icon: DollarSign, adminOnly: false },
+        { name: 'Comisiones', href: '/commissions', icon: Percent, adminOnly: true },
+        { name: 'Cierres', href: '/closures', icon: FileText, adminOnly: false },
+      ]
+    },
+    {
+      id: 'analisis',
+      name: 'Análisis',
+      icon: BarChart3,
+      items: [
+        { name: 'Reportes', href: '/reports', icon: BarChart3, adminOnly: false },
+      ]
+    },
+    {
+      id: 'configuracion',
+      name: 'Configuración',
+      icon: Cog,
+      items: [
+        { name: 'Tipos de Servicio', href: '/service-types', icon: Tags, adminOnly: false },
+        { name: 'Centros de Costo', href: '/cost-centers', icon: Target, adminOnly: false },
+        { name: 'Registros Rápidos', href: '/quick-entries', icon: Zap, adminOnly: true },
+        { name: 'Configuración', href: '/settings', icon: Settings, adminOnly: true },
+      ]
+    }
+  ];
+
+  // Filtrar items según permisos
+  const filterItems = (items: typeof navigationGroups[0]['items']) => {
+    return items.filter(item => {
+      if (!item.adminOnly) return true;
+      return user && user.role === 'admin';
+    });
+  };
   
   const handleLogout = async () => {
     try {
@@ -209,34 +196,72 @@ export const Sidebar = ({
         </Button>
       </div>
 
-      {/* Navigation */}
+      {/* Navigation con grupos */}
       <nav className={cn(
         "flex-1 space-y-1 bg-background overflow-y-auto",
-        isTablet ? "p-3" : "p-4"
+        isTablet ? "p-2" : "p-3"
       )}>
-        {filteredNavigation.map(item => {
-          const isActive = location.pathname === item.href;
+        {navigationGroups.map(group => {
+          const filteredItems = filterItems(group.items);
+          if (filteredItems.length === 0) return null;
+          
+          const isExpanded = expandedGroups.includes(group.id) || group.alwaysExpanded;
+          const hasActiveItem = filteredItems.some(item => location.pathname === item.href);
+          
           return (
-            <Link 
-              key={item.name} 
-              to={item.href} 
-              className={cn(
-                "flex items-center rounded-lg font-medium transition-colors nav-link",
-                isTablet ? "px-2 py-2 text-sm" : "px-3 py-2 text-sm",
-                isActive 
-                  ? "active bg-primary text-primary-foreground" 
-                  : "text-foreground hover:bg-accent hover:text-foreground"
+            <div key={group.id} className="space-y-1">
+              {/* Group Header */}
+              {!isCollapsed && (
+                <button
+                  onClick={() => !group.alwaysExpanded && toggleGroup(group.id)}
+                  className={cn(
+                    "w-full flex items-center justify-between px-3 py-2 text-xs font-semibold uppercase tracking-wider transition-colors rounded-lg",
+                    hasActiveItem ? "text-primary" : "text-muted-foreground hover:text-foreground",
+                    group.alwaysExpanded ? "cursor-default" : "cursor-pointer"
+                  )}
+                >
+                  <div className="flex items-center gap-2">
+                    <group.icon className="w-4 h-4" />
+                    <span>{group.name}</span>
+                  </div>
+                  {!group.alwaysExpanded && (
+                    isExpanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />
+                  )}
+                </button>
               )}
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
-              <div className={cn(
-                "flex items-center justify-center rounded-lg bg-primary/20",
-                isCollapsed ? "w-8 h-8" : "w-8 h-8 mr-3"
-              )}>
-                <item.icon className="w-4 h-4 text-foreground" strokeWidth={2.25} />
-              </div>
-              {!isCollapsed && <span>{item.name}</span>}
-            </Link>
+
+              {/* Group Items */}
+              {(isExpanded || isCollapsed) && (
+                <div className={cn("space-y-0.5", !isCollapsed && "ml-2")}>
+                  {filteredItems.map(item => {
+                    const isActive = location.pathname === item.href;
+                    return (
+                      <Link 
+                        key={item.name} 
+                        to={item.href} 
+                        className={cn(
+                          "flex items-center rounded-lg font-medium transition-colors nav-link",
+                          isTablet ? "px-2 py-1.5 text-sm" : "px-2 py-1.5 text-sm",
+                          isActive 
+                            ? "active bg-primary text-primary-foreground" 
+                            : "text-foreground hover:bg-accent hover:text-foreground"
+                        )}
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        title={isCollapsed ? item.name : undefined}
+                      >
+                        <div className={cn(
+                          "flex items-center justify-center rounded-lg",
+                          isCollapsed ? "w-8 h-8" : "w-7 h-7 mr-2"
+                        )}>
+                          <item.icon className="w-4 h-4" strokeWidth={2} />
+                        </div>
+                        {!isCollapsed && <span className="truncate">{item.name}</span>}
+                      </Link>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
           );
         })}
       </nav>
