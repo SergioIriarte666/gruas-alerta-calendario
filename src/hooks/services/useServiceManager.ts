@@ -769,6 +769,22 @@ export const useServiceManager = () => {
       delete (transformedData as any).costDetails;
       delete (transformedData as any).operators;
 
+      // 🔍 LOGGING EXHAUSTIVO - Parte 1: Antes de la actualización
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      console.log('🚀 INICIO ACTUALIZACIÓN DE SERVICIO');
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      console.log('📋 Service ID:', id);
+      console.log('📦 Transformed Data being sent to Supabase:', JSON.stringify(transformedData, null, 2));
+      console.log('🔑 Critical Fields:', {
+        folio: transformedData.folio,
+        vehicle_brand: transformedData.vehicle_brand,
+        vehicle_model: transformedData.vehicle_model,
+        license_plate: transformedData.license_plate,
+        operator_id: transformedData.operator_id,
+        crane_id: transformedData.crane_id,
+        status: transformedData.status
+      });
+
       const { data: updatedService, error } = await supabase
         .from('services')
         .update(transformedData)
@@ -793,9 +809,89 @@ export const useServiceManager = () => {
         `)
         .single();
 
-      if (error) {
-        throw error;
+      // 🔍 LOGGING EXHAUSTIVO - Parte 2: Después de la actualización
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      console.log('📥 RESPUESTA DE SUPABASE');
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      console.log('❓ Error:', error ? JSON.stringify(error, null, 2) : 'No error');
+      console.log('✅ Data returned:', updatedService ? 'YES' : 'NO');
+      
+      if (updatedService) {
+        console.log('📋 Updated Service - Critical Fields:', {
+          id: updatedService.id,
+          folio: updatedService.folio,
+          vehicle_brand: updatedService.vehicle_brand,
+          vehicle_model: updatedService.vehicle_model,
+          license_plate: updatedService.license_plate,
+          operator_id: updatedService.operator_id,
+          crane_id: updatedService.crane_id,
+          status: updatedService.status
+        });
       }
+
+      if (error) {
+        console.error('❌ ERROR CRÍTICO EN ACTUALIZACIÓN:', {
+          code: error.code,
+          message: error.message,
+          details: error.details,
+          hint: error.hint
+        });
+        throw new Error(`Error al actualizar servicio: ${error.message || 'Error desconocido'}`);
+      }
+
+      if (!updatedService) {
+        console.error('❌ ERROR: No se retornó data después de la actualización');
+        throw new Error('No se recibió confirmación de la actualización del servicio');
+      }
+
+      // ✅ VERIFICACIÓN POST-ACTUALIZACIÓN - Confirmar que los cambios se guardaron
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      console.log('🔍 VERIFICACIÓN POST-ACTUALIZACIÓN');
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      
+      const { data: verifiedService, error: verifyError } = await supabase
+        .from('services')
+        .select('id, folio, vehicle_brand, vehicle_model, license_plate, operator_id, crane_id, status')
+        .eq('id', id)
+        .single();
+
+      if (verifyError) {
+        console.error('⚠️ Error en verificación post-actualización:', verifyError);
+      } else if (verifiedService) {
+        console.log('✅ Datos verificados en BD:', verifiedService);
+        
+        // Comparar campos críticos enviados vs guardados
+        const criticalFields = ['folio', 'vehicle_brand', 'vehicle_model', 'license_plate', 'operator_id', 'crane_id', 'status'];
+        const mismatches = [];
+        
+        for (const field of criticalFields) {
+          const sent = transformedData[field];
+          const saved = verifiedService[field];
+          
+          if (sent !== undefined && sent !== saved) {
+            mismatches.push({
+              field,
+              sent,
+              saved,
+              match: false
+            });
+            console.warn(`⚠️ MISMATCH en campo ${field}:`, { sent, saved });
+          } else if (sent !== undefined) {
+            console.log(`✅ Campo ${field} verificado:`, { sent, saved, match: true });
+          }
+        }
+        
+        if (mismatches.length > 0) {
+          console.error('❌ CAMPOS NO SE GUARDARON CORRECTAMENTE:', mismatches);
+          toast.error(`Advertencia: Algunos campos no se guardaron correctamente. Revisa: ${mismatches.map(m => m.field).join(', ')}`);
+        } else {
+          console.log('✅ TODOS LOS CAMPOS VERIFICADOS CORRECTAMENTE');
+        }
+      }
+
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      console.log('🎉 FIN ACTUALIZACIÓN DE SERVICIO');
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
       // Invalidar todas las queries relacionadas para asegurar datos actualizados
       await Promise.all([
@@ -811,8 +907,39 @@ export const useServiceManager = () => {
     onSuccess: () => {
       toast.success('Servicio actualizado exitosamente');
     },
-    onError: (error) => {
-      console.error('Error actualizando servicio:', error);
+    onError: (error: any) => {
+      console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      console.error('❌ ERROR EN MUTACIÓN DE ACTUALIZACIÓN');
+      console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      console.error('Error completo:', error);
+      console.error('Error tipo:', typeof error);
+      console.error('Error keys:', Object.keys(error || {}));
+      
+      let errorMessage = 'Error al actualizar servicio';
+      
+      // Detectar tipo específico de error
+      if (error?.message) {
+        if (error.message.includes('violates row-level security')) {
+          errorMessage = 'Error de permisos: No tienes autorización para actualizar este servicio';
+        } else if (error.message.includes('violates foreign key constraint')) {
+          errorMessage = 'Error de datos: Una de las referencias (cliente, grúa, operador) no es válida';
+        } else if (error.message.includes('violates check constraint')) {
+          errorMessage = 'Error de validación: Los datos no cumplen con las restricciones de la base de datos';
+        } else if (error.message.includes('duplicate key')) {
+          errorMessage = 'Error: Ya existe un registro con estos datos';
+        } else if (error.message.includes('not-null constraint')) {
+          errorMessage = 'Error: Faltan campos obligatorios';
+        } else {
+          errorMessage = `Error: ${error.message}`;
+        }
+      } else if (error?.code) {
+        errorMessage = `Error (${error.code}): ${error.details || error.hint || 'Error desconocido'}`;
+      }
+      
+      console.error('📝 Mensaje de error procesado:', errorMessage);
+      console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      
+      toast.error(errorMessage);
     }
   });
 
