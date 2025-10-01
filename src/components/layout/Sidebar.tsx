@@ -72,7 +72,6 @@ export const Sidebar = ({
         { name: 'Clientes', href: '/clients', icon: Users, adminOnly: false },
         { name: 'Calendario', href: '/calendar', icon: Calendar, adminOnly: false },
         { name: 'Facturación Diferida', href: '/deferred-billing', icon: Calendar, adminOnly: false },
-        { name: 'Facturas', href: '/invoices', icon: Receipt, adminOnly: false },
       ]
     },
     {
@@ -102,6 +101,7 @@ export const Sidebar = ({
         { name: 'Costos', href: '/costs', icon: DollarSign, adminOnly: false },
         { name: 'Comisiones', href: '/commissions', icon: Percent, adminOnly: true },
         { name: 'Cierres', href: '/closures', icon: FileText, adminOnly: false },
+        { name: 'Facturas', href: '/invoices', icon: Receipt, adminOnly: false },
       ]
     },
     {
