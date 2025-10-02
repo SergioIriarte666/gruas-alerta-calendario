@@ -13,6 +13,7 @@ import { Crane, Operator, Service } from '@/types';
 import { ServiceSelector } from './ServiceSelector';
 import { CostAmountSection } from './CostAmountSection';
 import { useCostCenters } from '@/hooks/useCostCenters';
+import { CostCombobox } from './CostCombobox';
 import { Package, User, Phone, Hash, DollarSign, Gauge, Calendar, FileText, Tag, Building2 } from 'lucide-react';
 
 interface CostFormInputsProps {
@@ -135,7 +136,12 @@ export const CostFormInputs = ({
                                 Descripción *
                             </Label>
                             <FormControl>
-                                <Input {...field} placeholder="Describe el costo o gasto..." />
+                                <CostCombobox
+                                    value={field.value || ''}
+                                    onValueChange={field.onChange}
+                                    placeholder="Describe el costo o gasto..."
+                                    type="description"
+                                />
                             </FormControl>
                             <FormMessage />
                         </FormItem>
@@ -238,10 +244,11 @@ export const CostFormInputs = ({
                                         Nombre de la Pieza *
                                     </Label>
                                     <FormControl>
-                                        <Input 
-                                            {...field} 
-                                            value={field.value || ''} 
+                                        <CostCombobox
+                                            value={field.value || ''}
+                                            onValueChange={field.onChange}
                                             placeholder="Ej: Filtro de aceite, Pastillas de freno..."
+                                            type="part_name"
                                         />
                                     </FormControl>
                                     <FormMessage />
@@ -255,10 +262,11 @@ export const CostFormInputs = ({
                                         Proveedor *
                                     </Label>
                                     <FormControl>
-                                        <Input 
-                                            {...field} 
-                                            value={field.value || ''} 
+                                        <CostCombobox
+                                            value={field.value || ''}
+                                            onValueChange={field.onChange}
                                             placeholder="Nombre del proveedor"
+                                            type="supplier"
                                         />
                                     </FormControl>
                                     <FormMessage />
