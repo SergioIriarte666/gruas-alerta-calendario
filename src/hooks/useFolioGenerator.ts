@@ -167,10 +167,90 @@ export const useFolioGenerator = () => {
     }
   }, []);
 
+  const syncAllFoliosAfterBulkUpload = useCallback(async (folios: string[]): Promise<void> => {
+    try {
+      console.log('🔄 Syncing folio counter after bulk upload with', folios.length, 'folios');
+      
+      if (folios.length === 0) {
+        console.log('📝 No folios to sync');
+        return;
+      }
+
+      // Extraer números de todos los folios que siguen el formato estándar
+      const folioNumbers: number[] = [];
+      const folioFormat = settings.company?.folioFormat || 'SRV-{number}';
+      const prefix = folioFormat.split('{number}')[0];
+      
+      for (const folio of folios) {
+        if (folio.startsWith(prefix)) {
+          const match = folio.match(/^[A-Z]+-(\d+)$/);
+          if (match) {
+            folioNumbers.push(parseInt(match[1]));
+          }
+        }
+      }
+
+      if (folioNumbers.length === 0) {
+        console.log('📝 No standard format folios found, skipping sync');
+        return;
+      }
+
+      // Encontrar el número máximo
+      const maxNumber = Math.max(...folioNumbers);
+      console.log('🔢 Maximum folio number found:', maxNumber);
+
+      // Obtener datos actuales de la empresa
+      const { data: companyData, error: fetchError } = await supabase
+        .from('company_data')
+        .select('id, next_service_folio_number')
+        .limit(1)
+        .maybeSingle();
+
+      if (fetchError || !companyData) {
+        console.error('❌ Error fetching company data for bulk sync:', fetchError);
+        return;
+      }
+
+      const currentNumber = companyData.next_service_folio_number || 1000;
+      
+      // Si el número máximo es mayor o igual al contador actual, actualizar
+      if (maxNumber >= currentNumber) {
+        const newNextNumber = maxNumber + 1;
+        console.log('📈 Updating counter from', currentNumber, 'to', newNextNumber);
+
+        const { error: updateError } = await supabase
+          .from('company_data')
+          .update({ 
+            next_service_folio_number: newNextNumber,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', companyData.id);
+
+        if (updateError) {
+          console.error('❌ Error syncing folio counter after bulk upload:', updateError);
+        } else {
+          console.log('✅ Folio counter synced successfully to', newNextNumber);
+          toast.success('Contador de folios actualizado', {
+            description: `Próximo folio disponible: ${folioFormat.replace('{number}', String(newNextNumber).padStart(4, '0'))}`
+          });
+          // Disparar evento para actualizar la configuración en memoria
+          setTimeout(() => {
+            window.dispatchEvent(new Event('settings-updated'));
+          }, 100);
+        }
+      } else {
+        console.log('📊 Maximum folio number is lower than current counter, no sync needed');
+      }
+    } catch (error: any) {
+      console.error('❌ Error syncing folio counter after bulk upload:', error);
+    }
+  }, [settings.company]);
+
   return {
     generateNextFolio,
     validateFolioUniqueness,
     syncFolioCounter,
+    syncAllFoliosAfterBulkUpload,
     loading
   };
 };

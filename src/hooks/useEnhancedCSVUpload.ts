@@ -3,10 +3,12 @@ import { useState, useCallback } from 'react';
 import { EnhancedCSVUploader, ValidationResult, UploadProgress, UploadResult } from '@/utils/enhancedCsvUpload';
 import { MappedServiceData } from '@/utils/dataMapper';
 import { useServices } from '@/hooks/useServices';
+import { useFolioGenerator } from '@/hooks/useFolioGenerator';
 import { toast } from 'sonner';
 
 export const useEnhancedCSVUpload = () => {
-  const { createService,services } = useServices();
+  const { createService, services } = useServices();
+  const { syncAllFoliosAfterBulkUpload } = useFolioGenerator();
   const [uploader] = useState(() => new EnhancedCSVUploader());
   const [file, setFile] = useState<File | null>(null);
   const [csvData, setCsvData] = useState<any[]>([]);
@@ -121,6 +123,12 @@ export const useEnhancedCSVUpload = () => {
         toast.success(`Carga exitosa: ${result.processed} servicios creados`);
       } else {
         toast.error(`Carga parcial: ${result.processed} exitosos, ${result.errors} errores`);
+      }
+
+      // Sincronizar el contador de folios después de la carga masiva
+      if (result.insertedFolios && result.insertedFolios.length > 0) {
+        console.log('🔄 Syncing folio counter after bulk upload...');
+        await syncAllFoliosAfterBulkUpload(result.insertedFolios);
       }
 
       return result;

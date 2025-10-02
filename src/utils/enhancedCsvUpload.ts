@@ -36,6 +36,7 @@ export interface UploadResult {
   message: string;
   failedRows?: number[];
   errorDetails?: ValidationError[];
+  insertedFolios?: string[];
 }
 
 export class EnhancedCSVUploader {
@@ -427,6 +428,7 @@ export class EnhancedCSVUploader {
     let errors = 0;
     const failedRows: number[] = [];
     const errorDetails: ValidationError[] = [];
+    const insertedFolios: string[] = [];
 
     console.log('🚀 Starting service upload:', {
       total,
@@ -493,6 +495,7 @@ export class EnhancedCSVUploader {
 
             await createService(serviceData);
             processed++;
+            insertedFolios.push(service.folio);
             console.log(`✅ Service ${globalIndex + 1} created successfully`);
           } catch (error) {
             console.error(`❌ Error creating service at row ${globalIndex}:`, error);
@@ -536,7 +539,8 @@ export class EnhancedCSVUploader {
           ? `${processed} servicios cargados exitosamente`
           : `${processed} servicios cargados, ${errors} errores`,
         failedRows: failedRows.length > 0 ? failedRows : undefined,
-        errorDetails: errorDetails.length > 0 ? errorDetails : undefined
+        errorDetails: errorDetails.length > 0 ? errorDetails : undefined,
+        insertedFolios: insertedFolios.length > 0 ? insertedFolios : undefined
       };
 
       console.log('📊 Upload completed:', result);
