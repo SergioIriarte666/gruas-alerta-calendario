@@ -209,7 +209,7 @@ export const EditClosureForm: React.FC<EditClosureFormProps> = ({
                       <div className="flex-1">
                         <div className="flex justify-between items-center">
                           <span className="text-sm text-foreground">{service.folio} - {service.client.name}</span>
-                          <span className="font-medium text-primary">${getServiceValueForClosure(service).toLocaleString()}</span>
+                          <span className="font-medium text-purple-600">${getServiceValueForClosure(service).toLocaleString()}</span>
                         </div>
                         <div className="text-xs text-muted-foreground">
                           {service.serviceDate} • {service.licensePlate}
