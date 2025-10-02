@@ -30,6 +30,7 @@ interface AutomatedClosureWorkflowProps {
 const AutomatedClosureWorkflow = ({ onBack }: AutomatedClosureWorkflowProps) => {
   const [currentView, setCurrentView] = useState<'calendar' | 'dashboard' | 'review'>('calendar');
   const [selectedClient, setSelectedClient] = useState<ClientClosureData | null>(null);
+  const [createdClosure, setCreatedClosure] = useState<ServiceClosure | null>(null);
   
   const {
     selectedMonth,
@@ -106,7 +107,8 @@ const AutomatedClosureWorkflow = ({ onBack }: AutomatedClosureWorkflowProps) => 
           } 
         });
       } else {
-        // Refresh data and return to dashboard
+        // Refresh data, save created closure, and return to dashboard
+        setCreatedClosure(newClosure);
         await refetch();
         setCurrentView('dashboard');
         setSelectedClient(null);
@@ -246,6 +248,58 @@ const AutomatedClosureWorkflow = ({ onBack }: AutomatedClosureWorkflowProps) => 
                 className="bg-primary hover:bg-primary/90"
               >
                 Ver Dashboard de Clientes
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Created Closure Summary */}
+      {createdClosure && currentView === 'dashboard' && (
+        <Card className="bg-gradient-to-r from-green-500/10 to-green-500/5 border-green-500/20">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg text-foreground flex items-center gap-2">
+              ✓ Cierre Creado Exitosamente
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-2 gap-4 text-sm">
+              <div>
+                <span className="text-muted-foreground">Folio:</span>
+                <p className="font-semibold text-foreground">{createdClosure.folio}</p>
+              </div>
+              <div>
+                <span className="text-muted-foreground">Total:</span>
+                <p className="font-semibold text-foreground">
+                  ${createdClosure.total.toLocaleString('es-CL')} CLP
+                </p>
+              </div>
+              <div>
+                <span className="text-muted-foreground">Período:</span>
+                <p className="font-semibold text-foreground">
+                  {new Date(createdClosure.dateRange.from).toLocaleDateString('es-CL')} - {new Date(createdClosure.dateRange.to).toLocaleDateString('es-CL')}
+                </p>
+              </div>
+              <div>
+                <span className="text-muted-foreground">Estado:</span>
+                <p className="font-semibold text-foreground">Abierto</p>
+              </div>
+            </div>
+            <div className="flex gap-2 pt-2">
+              <Button
+                onClick={() => {
+                  setCreatedClosure(null);
+                  navigate('/closures');
+                }}
+                className="bg-primary hover:bg-primary/90"
+              >
+                Ver en Lista de Cierres
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => setCreatedClosure(null)}
+              >
+                Continuar Creando Cierres
               </Button>
             </div>
           </CardContent>
