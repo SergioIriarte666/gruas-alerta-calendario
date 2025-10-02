@@ -64,6 +64,7 @@ export const EnhancedServiceForm = ({
   const [folio, setFolio] = useState(service?.folio || '');
   const [isManualFolio, setIsManualFolio] = useState(false);
   const [enableCustody, setEnableCustody] = useState(false);
+  const [hasFolioBeenGenerated, setHasFolioBeenGenerated] = useState(false);
   const [formData, setFormData] = useState({
     requestDate: service?.requestDate || getCurrentChileDateString(),
     serviceDate: service?.serviceDate || getCurrentChileDateString(),
@@ -122,25 +123,27 @@ export const EnhancedServiceForm = ({
     }
   }, [serviceTypes, service]);
 
-  // Generar folio automáticamente si es un servicio nuevo
+  // Generar folio automáticamente si es un servicio nuevo (SOLO UNA VEZ)
   useEffect(() => {
-    if (!service) {
+    if (!service && !hasFolioBeenGenerated) {
       const generateAndSetFolio = async () => {
         try {
           const newFolio = await generateUniqueValidFolio();
           setFolio(newFolio);
           setIsManualFolio(false);
+          setHasFolioBeenGenerated(true);
         } catch (error) {
           console.error('Error generando folio:', error);
           const fallbackFolio = 'SRV-TEMP-' + Date.now();
           setFolio(fallbackFolio);
           setIsManualFolio(true);
+          setHasFolioBeenGenerated(true);
         }
       };
       
       generateAndSetFolio();
     }
-  }, [service, generateUniqueValidFolio]);
+  }, [service, hasFolioBeenGenerated, generateUniqueValidFolio]);
 
   // Cargar datos completos del servicio desde el hook mejorado
   useEffect(() => {
