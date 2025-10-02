@@ -20,6 +20,7 @@ import { useCranes } from '@/hooks/useCranes';
 import { useOperatorsData } from '@/hooks/operators/useOperatorsData';
 import { useServiceTypes } from '@/hooks/useServiceTypes';
 import { useServiceDetailsForForm } from '@/hooks/useServiceDetailsGlobal';
+import { useEnhancedFolioGeneration } from '@/hooks/services/useEnhancedFolioGeneration';
 import { useUser } from '@/contexts/UserContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -55,6 +56,7 @@ export const EnhancedServiceForm = ({
   const { user } = useUser();
   const { createService, updateService, isCreating, isUpdating } = useServiceManager();
   const { processInventoryDeduction } = useInventoryDeduction();
+  const { generateUniqueValidFolio } = useEnhancedFolioGeneration();
   
   // Cargar datos completos del servicio para edición
   const { enhancedService, isLoading: loadingEnhancedService } = useServiceDetailsForForm(service?.id || null);
@@ -125,8 +127,7 @@ export const EnhancedServiceForm = ({
     if (!service) {
       const generateAndSetFolio = async () => {
         try {
-          const { data: newFolio, error } = await supabase.rpc('generate_service_folio');
-          if (error) throw error;
+          const newFolio = await generateUniqueValidFolio();
           setFolio(newFolio);
           setIsManualFolio(false);
         } catch (error) {
@@ -139,7 +140,7 @@ export const EnhancedServiceForm = ({
       
       generateAndSetFolio();
     }
-  }, [service]);
+  }, [service, generateUniqueValidFolio]);
 
   // Cargar datos completos del servicio desde el hook mejorado
   useEffect(() => {
@@ -485,9 +486,8 @@ export const EnhancedServiceForm = ({
               onManualFolioChange={setIsManualFolio}
               onGenerateNewFolio={async () => {
                 try {
-                  const { data, error } = await supabase.rpc('generate_service_folio');
-                  if (error) throw error;
-                  setFolio(data);
+                  const newFolio = await generateUniqueValidFolio();
+                  setFolio(newFolio);
                 } catch (error) {
                   console.error('Error generando folio:', error);
                   toast.error('Error generando folio');
