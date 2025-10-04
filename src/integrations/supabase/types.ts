@@ -3279,7 +3279,7 @@ export type Database = {
         Returns: string
       }
       apply_payment_fifo: {
-        Args: { p_client_id?: string; p_payment_id: string }
+        Args: { p_client_id: string; p_payment_id: string }
         Returns: Json
       }
       apply_payment_manual: {
