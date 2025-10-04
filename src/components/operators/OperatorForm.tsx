@@ -115,12 +115,12 @@ export const OperatorForm = ({ operator, onSubmit, onCancel }: OperatorFormProps
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Tipo de Personal */}
           <div className="space-y-2 col-span-2">
-            <Label htmlFor="operatorType" className="text-white">Tipo de Personal</Label>
+            <Label htmlFor="operatorType">Tipo de Personal</Label>
             <Select
               value={formData.operatorType}
               onValueChange={(value) => handleChange('operatorType', value)}
             >
-              <SelectTrigger className="bg-white/5 border-gray-700 text-white">
+              <SelectTrigger>
                 <SelectValue placeholder="Seleccione tipo" />
               </SelectTrigger>
               <SelectContent>
@@ -131,39 +131,36 @@ export const OperatorForm = ({ operator, onSubmit, onCancel }: OperatorFormProps
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="name" className="text-white">Nombre Completo</Label>
+            <Label htmlFor="name">Nombre Completo</Label>
             <Input
               id="name"
               type="text"
               value={formData.name}
               onChange={(e) => handleChange('name', e.target.value)}
-              className="bg-white/5 border-gray-700 text-white"
               placeholder="Ingrese nombre completo"
               required
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="rut" className="text-white">RUT</Label>
+            <Label htmlFor="rut">RUT</Label>
             <Input
               id="rut"
               type="text"
               value={formData.rut}
               onChange={(e) => handleChange('rut', e.target.value)}
-              className="bg-white/5 border-gray-700 text-white"
               placeholder="12.345.678-9"
               required
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="phone" className="text-white">Teléfono</Label>
+            <Label htmlFor="phone">Teléfono</Label>
             <Input
               id="phone"
               type="tel"
               value={formData.phone}
               onChange={(e) => handleChange('phone', e.target.value)}
-              className="bg-white/5 border-gray-700 text-white"
               placeholder="+56 9 1234 5678"
               required
             />
@@ -173,25 +170,23 @@ export const OperatorForm = ({ operator, onSubmit, onCancel }: OperatorFormProps
           {formData.operatorType === 'administrative' && (
             <>
               <div className="space-y-2">
-                <Label htmlFor="department" className="text-white">Departamento</Label>
+                <Label htmlFor="department">Departamento</Label>
                 <Input
                   id="department"
                   type="text"
                   value={formData.department}
                   onChange={(e) => handleChange('department', e.target.value)}
-                  className="bg-white/5 border-gray-700 text-white"
                   placeholder="Ej: Contabilidad, RRHH"
                 />
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="position" className="text-white">Cargo</Label>
+                <Label htmlFor="position">Cargo</Label>
                 <Input
                   id="position"
                   type="text"
                   value={formData.position}
                   onChange={(e) => handleChange('position', e.target.value)}
-                  className="bg-white/5 border-gray-700 text-white"
                   placeholder="Ej: Contador, Gerente"
                 />
               </div>
@@ -202,26 +197,24 @@ export const OperatorForm = ({ operator, onSubmit, onCancel }: OperatorFormProps
           {formData.operatorType === 'crane_operator' && (
             <>
               <div className="space-y-2">
-                <Label htmlFor="licenseNumber" className="text-white">Número de Licencia</Label>
+                <Label htmlFor="licenseNumber">Número de Licencia</Label>
                 <Input
                   id="licenseNumber"
                   type="text"
                   value={formData.licenseNumber}
                   onChange={(e) => handleChange('licenseNumber', e.target.value)}
-                  className="bg-white/5 border-gray-700 text-white"
                   placeholder="A-123456"
                   required
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="examExpiry" className="text-white">Vencimiento Examen</Label>
+                <Label htmlFor="examExpiry">Vencimiento Examen</Label>
                 <Input
                   id="examExpiry"
                   type="date"
                   value={formData.examExpiry}
                   onChange={(e) => handleChange('examExpiry', e.target.value)}
-                  className="bg-white/5 border-gray-700 text-white"
                   required
                 />
               </div>
@@ -229,14 +222,14 @@ export const OperatorForm = ({ operator, onSubmit, onCancel }: OperatorFormProps
           )}
 
           <div className="space-y-2">
-            <Label htmlFor="isActive" className="text-white">Estado</Label>
+            <Label htmlFor="isActive">Estado</Label>
             <div className="flex items-center space-x-2">
               <Switch
                 id="isActive"
                 checked={formData.isActive}
                 onCheckedChange={(checked) => handleChange('isActive', checked)}
               />
-              <span className="text-sm text-gray-300">
+              <span className="text-sm text-muted-foreground">
                 {formData.isActive ? 'Activo' : 'Inactivo'}
               </span>
             </div>
