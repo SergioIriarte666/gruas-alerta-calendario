@@ -20,14 +20,20 @@ const Operators = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingOperator, setEditingOperator] = useState<Operator | undefined>();
   const [currentPage, setCurrentPage] = useState(1);
+  const [typeFilter, setTypeFilter] = useState<'all' | 'crane_operator' | 'administrative'>('all');
   const ITEMS_PER_PAGE = 10;
 
-  const filteredOperators = operators.filter(operator =>
-    operator.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    operator.rut.includes(searchTerm) ||
-    operator.phone.includes(searchTerm) ||
-    operator.licenseNumber.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredOperators = operators.filter(operator => {
+    const matchesSearch = 
+      operator.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      operator.rut.includes(searchTerm) ||
+      operator.phone.includes(searchTerm) ||
+      (operator.licenseNumber && operator.licenseNumber.toLowerCase().includes(searchTerm.toLowerCase()));
+    
+    const matchesType = typeFilter === 'all' || operator.operatorType === typeFilter;
+    
+    return matchesSearch && matchesType;
+  });
 
   const totalPages = Math.ceil(filteredOperators.length / ITEMS_PER_PAGE);
   const paginatedOperators = filteredOperators.slice(
@@ -80,7 +86,12 @@ const Operators = () => {
     <div className="space-y-6 operators-scope">
       <OperatorsHeader onNewOperator={handleCreate} />
 
-      <OperatorsFilters searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
+      <OperatorsFilters 
+        searchTerm={searchTerm} 
+        setSearchTerm={setSearchTerm}
+        typeFilter={typeFilter}
+        setTypeFilter={setTypeFilter}
+      />
 
       <OperatorsTable
         operators={paginatedOperators}

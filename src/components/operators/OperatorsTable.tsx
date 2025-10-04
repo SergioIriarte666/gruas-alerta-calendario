@@ -65,7 +65,7 @@ export const OperatorsTable = ({
     <Card className="bg-card border-border operators-scope">
       <CardHeader>
         <CardTitle className="text-foreground flex items-center justify-between">
-          <span>Operadores ({totalOperators})</span>
+          <span>Personal ({totalOperators})</span>
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -73,11 +73,12 @@ export const OperatorsTable = ({
           <table className="w-full">
             <thead>
               <tr className="border-b">
+                <th className="text-left py-3 px-4 font-medium text-foreground">Tipo</th>
                 <th className="text-left py-3 px-4 font-medium text-foreground">Nombre</th>
                 <th className="text-left py-3 px-4 font-medium text-foreground">RUT</th>
                 <th className="text-left py-3 px-4 font-medium text-foreground">Teléfono</th>
-                <th className="text-left py-3 px-4 font-medium text-foreground">Licencia</th>
-                <th className="text-left py-3 px-4 font-medium text-foreground">Vencimiento</th>
+                <th className="text-left py-3 px-4 font-medium text-foreground">Licencia/Dpto</th>
+                <th className="text-left py-3 px-4 font-medium text-foreground">Vencimiento/Cargo</th>
                 <th className="text-left py-3 px-4 font-medium text-foreground">Estado</th>
                 <th className="text-center py-3 px-4 font-medium text-foreground">Acciones</th>
               </tr>
@@ -85,12 +86,26 @@ export const OperatorsTable = ({
             <tbody>
               {operators.map((operator) => (
                 <tr key={operator.id} className="border-b hover:bg-accent">
+                  <td className="py-3 px-4">
+                    <Badge 
+                      variant={operator.operatorType === 'crane_operator' ? 'default' : 'secondary'}
+                      className="text-xs"
+                    >
+                      {operator.operatorType === 'crane_operator' ? '🏗️ Operador' : '📋 Administrativo'}
+                    </Badge>
+                  </td>
                   <td className="py-3 px-4 text-foreground font-medium">{operator.name}</td>
                   <td className="py-3 px-4 text-foreground">{operator.rut}</td>
                   <td className="py-3 px-4 text-foreground">{operator.phone}</td>
-                  <td className="py-3 px-4 text-foreground">{operator.licenseNumber}</td>
                   <td className="py-3 px-4 text-foreground">
-                    {formatForDisplay(operator.examExpiry)}
+                    {operator.operatorType === 'crane_operator' 
+                      ? operator.licenseNumber || '-' 
+                      : operator.department || '-'}
+                  </td>
+                  <td className="py-3 px-4 text-foreground">
+                    {operator.operatorType === 'crane_operator'
+                      ? formatForDisplay(operator.examExpiry || '')
+                      : operator.position || '-'}
                   </td>
                   <td className="py-3 px-4">
                     <Badge 
@@ -110,7 +125,7 @@ export const OperatorsTable = ({
                         size="sm"
                         onClick={() => onEdit(operator)}
                         className="text-tms-green hover:text-tms-green/80 hover:bg-tms-green/10 border border-tms-green/50"
-                        title="Editar operador"
+                        title="Editar"
                       >
                         <Edit className="w-4 h-4" />
                       </Button>
@@ -123,7 +138,7 @@ export const OperatorsTable = ({
                             ? 'text-red-400 hover:text-red-300 hover:bg-red-400/10 border-red-400/50' 
                             : 'text-green-400 hover:text-green-300 hover:bg-green-400/10 border-green-400/50'
                         }`}
-                        title={operator.isActive ? 'Desactivar operador' : 'Activar operador'}
+                        title={operator.isActive ? 'Desactivar' : 'Activar'}
                       >
                         {operator.isActive ? <UserX className="w-4 h-4" /> : <UserCheck className="w-4 h-4" />}
                       </Button>
@@ -132,7 +147,7 @@ export const OperatorsTable = ({
                         size="sm"
                         onClick={() => onDelete(operator.id, operator.name)}
                         className="text-red-400 hover:text-red-300 hover:bg-red-400/10 border border-red-400/50"
-                        title="Eliminar operador"
+                        title="Eliminar"
                       >
                         <Trash2 className="w-4 h-4" />
                       </Button>

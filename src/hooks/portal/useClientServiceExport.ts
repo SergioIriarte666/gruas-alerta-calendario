@@ -179,6 +179,7 @@ export const useClientServiceExport = (filteredServices?: any[], dateFrom?: Date
         name: service.operator_name,
         rut: '',
         phone: '',
+        operatorType: 'crane_operator' as const,
         licenseNumber: '',
         examExpiry: '',
         isActive: true,

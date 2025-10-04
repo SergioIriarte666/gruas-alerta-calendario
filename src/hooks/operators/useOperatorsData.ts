@@ -18,8 +18,11 @@ const fetchOperators = async (): Promise<Operator[]> => {
     name: operator.name,
     rut: operator.rut,
     phone: operator.phone || '',
-    licenseNumber: operator.license_number,
-    examExpiry: operator.exam_expiry,
+    operatorType: (operator.operator_type as 'crane_operator' | 'administrative') || 'crane_operator',
+    department: operator.department || '',
+    position: operator.position || '',
+    licenseNumber: operator.license_number || '',
+    examExpiry: operator.exam_expiry || '',
     isActive: operator.is_active || false,
     createdAt: operator.created_at,
     updatedAt: operator.updated_at

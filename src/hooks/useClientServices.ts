@@ -126,6 +126,7 @@ export const useClientServices = (clientId: string | null) => {
                   name: service.operators.name,
                   rut: service.operators.rut,
                   phone: service.operators.phone || '',
+                  operatorType: 'crane_operator' as const,
                   licenseNumber: service.operators.license_number,
                   isActive: service.operators.is_active,
                   createdAt: '',

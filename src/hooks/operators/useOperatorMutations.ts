@@ -51,9 +51,11 @@ export const useOperatorMutations = () => {
           name: operatorData.name,
           rut: operatorData.rut,
           phone: operatorData.phone,
-          email: operatorData.email || null,
-          license_number: operatorData.licenseNumber,
-          exam_expiry: operatorData.examExpiry,
+          operator_type: operatorData.operatorType || 'crane_operator',
+          department: operatorData.department || null,
+          position: operatorData.position || null,
+          license_number: operatorData.licenseNumber || null,
+          exam_expiry: operatorData.examExpiry || null,
           is_active: operatorData.isActive
         })
         .select()
@@ -74,9 +76,11 @@ export const useOperatorMutations = () => {
         if (operatorData.name !== undefined) updateData.name = operatorData.name;
         if (operatorData.rut !== undefined) updateData.rut = operatorData.rut;
         if (operatorData.phone !== undefined) updateData.phone = operatorData.phone;
-        if (operatorData.email !== undefined) updateData.email = operatorData.email || null;
-        if (operatorData.licenseNumber !== undefined) updateData.license_number = operatorData.licenseNumber;
-        if (operatorData.examExpiry !== undefined) updateData.exam_expiry = operatorData.examExpiry;
+        if (operatorData.operatorType !== undefined) updateData.operator_type = operatorData.operatorType;
+        if (operatorData.department !== undefined) updateData.department = operatorData.department || null;
+        if (operatorData.position !== undefined) updateData.position = operatorData.position || null;
+        if (operatorData.licenseNumber !== undefined) updateData.license_number = operatorData.licenseNumber || null;
+        if (operatorData.examExpiry !== undefined) updateData.exam_expiry = operatorData.examExpiry || null;
         if (operatorData.isActive !== undefined) updateData.is_active = operatorData.isActive;
 
         if (Object.keys(updateData).length === 0) return;

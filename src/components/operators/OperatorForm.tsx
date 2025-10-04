@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Save } from 'lucide-react';
 import { useGenericFormPersistence } from '@/hooks/useGenericFormPersistence';
@@ -24,6 +25,9 @@ export const OperatorForm = ({ operator, onSubmit, onCancel }: OperatorFormProps
     name: operator?.name || '',
     rut: operator?.rut || '',
     phone: operator?.phone || '',
+    operatorType: (operator?.operatorType || 'crane_operator') as 'crane_operator' | 'administrative',
+    department: operator?.department || '',
+    position: operator?.position || '',
     licenseNumber: operator?.licenseNumber || '',
     examExpiry: operator?.examExpiry || '',
     isActive: operator?.isActive ?? true
@@ -109,6 +113,23 @@ export const OperatorForm = ({ operator, onSubmit, onCancel }: OperatorFormProps
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Tipo de Personal */}
+          <div className="space-y-2 col-span-2">
+            <Label htmlFor="operatorType" className="text-white">Tipo de Personal</Label>
+            <Select
+              value={formData.operatorType}
+              onValueChange={(value) => handleChange('operatorType', value)}
+            >
+              <SelectTrigger className="bg-white/5 border-gray-700 text-white">
+                <SelectValue placeholder="Seleccione tipo" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="crane_operator">🏗️ Operador de Grúa</SelectItem>
+                <SelectItem value="administrative">📋 Personal Administrativo</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
           <div className="space-y-2">
             <Label htmlFor="name" className="text-white">Nombre Completo</Label>
             <Input
@@ -148,30 +169,64 @@ export const OperatorForm = ({ operator, onSubmit, onCancel }: OperatorFormProps
             />
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="licenseNumber" className="text-white">Número de Licencia</Label>
-            <Input
-              id="licenseNumber"
-              type="text"
-              value={formData.licenseNumber}
-              onChange={(e) => handleChange('licenseNumber', e.target.value)}
-              className="bg-white/5 border-gray-700 text-white"
-              placeholder="A-123456"
-              required
-            />
-          </div>
+          {/* Campos específicos de Personal Administrativo */}
+          {formData.operatorType === 'administrative' && (
+            <>
+              <div className="space-y-2">
+                <Label htmlFor="department" className="text-white">Departamento</Label>
+                <Input
+                  id="department"
+                  type="text"
+                  value={formData.department}
+                  onChange={(e) => handleChange('department', e.target.value)}
+                  className="bg-white/5 border-gray-700 text-white"
+                  placeholder="Ej: Contabilidad, RRHH"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="position" className="text-white">Cargo</Label>
+                <Input
+                  id="position"
+                  type="text"
+                  value={formData.position}
+                  onChange={(e) => handleChange('position', e.target.value)}
+                  className="bg-white/5 border-gray-700 text-white"
+                  placeholder="Ej: Contador, Gerente"
+                />
+              </div>
+            </>
+          )}
 
-          <div className="space-y-2">
-            <Label htmlFor="examExpiry" className="text-white">Vencimiento Examen</Label>
-            <Input
-              id="examExpiry"
-              type="date"
-              value={formData.examExpiry}
-              onChange={(e) => handleChange('examExpiry', e.target.value)}
-              className="bg-white/5 border-gray-700 text-white"
-              required
-            />
-          </div>
+          {/* Campos específicos de Operador de Grúa */}
+          {formData.operatorType === 'crane_operator' && (
+            <>
+              <div className="space-y-2">
+                <Label htmlFor="licenseNumber" className="text-white">Número de Licencia</Label>
+                <Input
+                  id="licenseNumber"
+                  type="text"
+                  value={formData.licenseNumber}
+                  onChange={(e) => handleChange('licenseNumber', e.target.value)}
+                  className="bg-white/5 border-gray-700 text-white"
+                  placeholder="A-123456"
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="examExpiry" className="text-white">Vencimiento Examen</Label>
+                <Input
+                  id="examExpiry"
+                  type="date"
+                  value={formData.examExpiry}
+                  onChange={(e) => handleChange('examExpiry', e.target.value)}
+                  className="bg-white/5 border-gray-700 text-white"
+                  required
+                />
+              </div>
+            </>
+          )}
 
           <div className="space-y-2">
             <Label htmlFor="isActive" className="text-white">Estado</Label>
@@ -200,7 +255,7 @@ export const OperatorForm = ({ operator, onSubmit, onCancel }: OperatorFormProps
             type="submit"
             variant="default"
           >
-            {operator ? 'Actualizar' : 'Crear'} Operador
+            {operator ? 'Actualizar' : 'Crear'} {formData.operatorType === 'administrative' ? 'Personal' : 'Operador'}
           </Button>
         </div>
       </form>

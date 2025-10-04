@@ -133,9 +133,11 @@ export interface Operator {
   name: string;
   rut: string;
   phone: string;
-  email?: string;
-  licenseNumber: string;
-  examExpiry: string;
+  operatorType: 'crane_operator' | 'administrative';
+  department?: string;
+  position?: string;
+  licenseNumber?: string;
+  examExpiry?: string;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;

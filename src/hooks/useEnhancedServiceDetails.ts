@@ -28,7 +28,7 @@ const fetchEnhancedServiceDetails = async (serviceId: string): Promise<EnhancedS
       client:clients!services_client_id_fkey(id, name, rut, phone, email, address, department, is_active, created_at, updated_at),
       third_party_client:clients!services_third_party_client_id_fkey(id, name, rut, phone, email, address, department, is_active, created_at, updated_at),
       cranes(id, license_plate, brand, model, type, is_active, circulation_permit_expiry, insurance_expiry, technical_review_expiry, created_at, updated_at),
-      operators(id, name, rut, phone, license_number, is_active, exam_expiry, created_at, updated_at),
+      operators(id, name, rut, phone, license_number, is_active, exam_expiry, operator_type, department, position, created_at, updated_at),
       service_types!inner(id, name, description, is_active, base_price, vehicle_info_optional, purchase_order_required, origin_required, destination_required, crane_required, operator_required, vehicle_brand_required, vehicle_model_required, license_plate_required, created_at, updated_at)
     `)
     .eq('id', serviceId)
@@ -92,7 +92,9 @@ const fetchEnhancedServiceDetails = async (serviceId: string): Promise<EnhancedS
         name: serviceData.operators.name,
         rut: serviceData.operators.rut,
         phone: serviceData.operators.phone,
-        email: undefined,
+        operatorType: (serviceData.operators.operator_type as 'crane_operator' | 'administrative') || 'crane_operator',
+        department: serviceData.operators.department,
+        position: serviceData.operators.position,
         licenseNumber: serviceData.operators.license_number,
         examExpiry: serviceData.operators.exam_expiry,
         isActive: serviceData.operators.is_active,
@@ -118,13 +120,13 @@ const fetchEnhancedServiceDetails = async (serviceId: string): Promise<EnhancedS
           id: cost.operators.id,
           name: cost.operators.name,
           rut: cost.operators.rut,
-          phone: '', // No disponible en la query de costos
-          email: undefined,
-          licenseNumber: '', // No disponible en la query de costos
-          examExpiry: '', // No disponible en la query de costos
-          isActive: true, // Asumimos que está activo
-          createdAt: '', // No disponible en la query de costos
-          updatedAt: '' // No disponible en la query de costos
+          phone: '',
+          operatorType: 'crane_operator',
+          licenseNumber: '',
+          examExpiry: '',
+          isActive: true,
+          createdAt: '',
+          updatedAt: ''
         },
         commission: cost.amount || 0,
         role: 'Adicional',

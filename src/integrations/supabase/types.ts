@@ -1865,12 +1865,15 @@ export type Database = {
         Row: {
           created_at: string | null
           created_by: string | null
-          exam_expiry: string
+          department: string | null
+          exam_expiry: string | null
           id: string
           is_active: boolean | null
-          license_number: string
+          license_number: string | null
           name: string
+          operator_type: string | null
           phone: string | null
+          position: string | null
           rut: string
           updated_at: string | null
           user_id: string | null
@@ -1878,12 +1881,15 @@ export type Database = {
         Insert: {
           created_at?: string | null
           created_by?: string | null
-          exam_expiry: string
+          department?: string | null
+          exam_expiry?: string | null
           id?: string
           is_active?: boolean | null
-          license_number: string
+          license_number?: string | null
           name: string
+          operator_type?: string | null
           phone?: string | null
+          position?: string | null
           rut: string
           updated_at?: string | null
           user_id?: string | null
@@ -1891,12 +1897,15 @@ export type Database = {
         Update: {
           created_at?: string | null
           created_by?: string | null
-          exam_expiry?: string
+          department?: string | null
+          exam_expiry?: string | null
           id?: string
           is_active?: boolean | null
-          license_number?: string
+          license_number?: string | null
           name?: string
+          operator_type?: string | null
           phone?: string | null
+          position?: string | null
           rut?: string
           updated_at?: string | null
           user_id?: string | null

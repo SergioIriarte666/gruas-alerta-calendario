@@ -72,7 +72,9 @@ export class DataLoaders {
         name: operator.name,
         rut: operator.rut,
         phone: operator.phone || '',
-        email: '', // Email not in operators table
+        operatorType: (operator.operator_type as 'crane_operator' | 'administrative') || 'crane_operator',
+        department: operator.department,
+        position: operator.position,
         licenseNumber: operator.license_number,
         examExpiry: operator.exam_expiry,
         isActive: operator.is_active ?? true,

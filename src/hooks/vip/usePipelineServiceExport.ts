@@ -79,6 +79,7 @@ export const usePipelineServiceExport = (
         name: service.operator?.name || '',
         rut: service.operator?.rut || '',
         phone: service.operator?.phone || '',
+        operatorType: (service.operator?.operatorType as 'crane_operator' | 'administrative') || 'crane_operator',
         licenseNumber: service.operator?.licenseNumber || '',
         examExpiry: service.operator?.examExpiry || '',
         isActive: true,
