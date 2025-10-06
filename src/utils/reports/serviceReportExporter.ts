@@ -6,22 +6,23 @@ import { format as formatDate } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { ExportServiceReportArgs } from './reportTypes';
 import { createExportFileName, addCompanyHeader } from './reportUtils';
+import { getDisplayServiceValue } from '../serviceValueCalculations';
 
 export const exportServiceReport = async ({ format, services, settings, appliedFilters, customFileName }: ExportServiceReportArgs & { customFileName?: string }) => {
   const { company } = settings;
   const exportFileDefaultName = customFileName || createExportFileName('informe-servicios', appliedFilters.dateRange.from, appliedFilters.dateRange.to);
   
   const totalValue = services.reduce((acc, service) => {
-    const serviceValue = service.hasExcess && service.clientCoveredAmount 
-      ? service.clientCoveredAmount 
-      : service.value || 0;
-    return acc + serviceValue;
+    return acc + getDisplayServiceValue(service);
   }, 0);
 
   if (format === 'pdf') {
-    const doc = new jsPDF('landscape', 'mm', 'a4');
-    const pageWidth = doc.internal.pageSize.width;
-    let startY = await addCompanyHeader(doc, company, 15);
+    try {
+      console.log('📄 [PDF Export] Iniciando generación de PDF con', services.length, 'servicios');
+      
+      const doc = new jsPDF('landscape', 'mm', 'a4');
+      const pageWidth = doc.internal.pageSize.width;
+      let startY = await addCompanyHeader(doc, company, 15);
 
     doc.setFontSize(14);
     doc.text('Informe de Servicios', 14, startY);
@@ -59,7 +60,7 @@ export const exportServiceReport = async ({ format, services, settings, appliedF
         s.origin.length > 15 ? s.origin.substring(0, 15) + '...' : s.origin,
         s.destination.length > 15 ? s.destination.substring(0, 15) + '...' : s.destination,
         s.status,
-        `$${(s.hasExcess && s.clientCoveredAmount ? s.clientCoveredAmount : s.value || 0).toLocaleString('es-CL')}`
+        `$${getDisplayServiceValue(s).toLocaleString('es-CL')}`
       ]),
       startY: lastY + 10,
       headStyles: { fillColor: [41, 128, 185], fontSize: 8 },
@@ -80,7 +81,12 @@ export const exportServiceReport = async ({ format, services, settings, appliedF
       }
     });
     
-    doc.save(`${exportFileDefaultName}.pdf`);
+      console.log('✅ [PDF Export] PDF generado exitosamente');
+      doc.save(`${exportFileDefaultName}.pdf`);
+    } catch (error) {
+      console.error('❌ [PDF Export] Error generando PDF:', error);
+      throw new Error(`Error al generar PDF: ${error instanceof Error ? error.message : 'Error desconocido'}`);
+    }
 
   } else if (format === 'excel') {
     const wb = XLSX.utils.book_new();
@@ -99,7 +105,7 @@ export const exportServiceReport = async ({ format, services, settings, appliedF
       'Destino': s.destination,
       'Patente Grúa': s.crane.licensePlate || 'N/A',
       'Estado': s.status,
-      'Valor': s.hasExcess && s.clientCoveredAmount ? s.clientCoveredAmount : s.value,
+      'Valor': getDisplayServiceValue(s),
       'Observaciones': s.observations,
     }));
     const services_ws = XLSX.utils.json_to_sheet(services_data);

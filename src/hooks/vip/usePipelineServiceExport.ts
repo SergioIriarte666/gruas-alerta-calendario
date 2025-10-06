@@ -60,7 +60,7 @@ export const usePipelineServiceExport = (
         createdAt: '',
         updatedAt: '',
       },
-      value: service.value,
+      value: getDisplayServiceValue(service),
       crane: {
         id: service.crane?.id || '',
         licensePlate: service.crane?.licensePlate || '',
