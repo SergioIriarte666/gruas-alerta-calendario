@@ -42,8 +42,8 @@ export const usePipelineServiceExport = (
       vehicleBrand: service.vehicleBrand || '',
       vehicleModel: service.vehicleModel || '',
       licensePlate: service.licensePlate || '',
-      origin: service.origin,
-      destination: service.destination,
+      origin: service.origin || '',
+      destination: service.destination || '',
       serviceType: {
         id: service.serviceType.id,
         name: service.serviceType.name,
