@@ -55,7 +55,12 @@ const formatSafeAmount = (amount: any): string => {
 };
 
 // Calculate days until due date
-const calculateDaysUntilDue = (dueDate: any): JSX.Element => {
+const calculateDaysUntilDue = (dueDate: any, status: string): JSX.Element => {
+  // Si ya está pagada, no mostrar días de atraso
+  if (status === 'paid') {
+    return <Badge className="bg-green-500 text-white">✓ Pagada</Badge>;
+  }
+
   if (!dueDate) return <Badge className="bg-muted text-foreground">Sin fecha</Badge>;
   
   try {
@@ -246,7 +251,7 @@ const InvoicesTable = ({
                       {formatSafeDate(invoice.dueDate)}
                     </td>
                     <td className="py-3 px-4 text-center">
-                      {calculateDaysUntilDue(invoice.dueDate)}
+                      {calculateDaysUntilDue(invoice.dueDate, invoice.status)}
                     </td>
                     <td className="py-3 px-4 text-foreground font-medium">
                       {formatSafeAmount(invoice.total)}

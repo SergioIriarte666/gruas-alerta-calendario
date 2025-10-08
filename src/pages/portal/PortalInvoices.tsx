@@ -30,7 +30,12 @@ const getStatusBadge = (status: string) => {
   return <Badge className={`${config.className} text-white`}>{config.label}</Badge>;
 };
 
-const calculateDaysUntilDue = (dueDate: string | null): JSX.Element => {
+const calculateDaysUntilDue = (dueDate: string | null, status: string): JSX.Element => {
+  // Si ya está pagada, no mostrar días de atraso
+  if (status === 'paid') {
+    return <Badge className="bg-green-500 text-white">✓ Pagada</Badge>;
+  }
+
   if (!dueDate) return <Badge className="bg-gray-500 text-white">Sin fecha</Badge>;
   
   try {
@@ -127,7 +132,7 @@ const PortalInvoices = () => {
                   {formatForDisplay(invoice.due_date)}
                 </TableCell>
                 <TableCell className="text-center">
-                  {calculateDaysUntilDue(invoice.due_date)}
+                  {calculateDaysUntilDue(invoice.due_date, invoice.status)}
                 </TableCell>
                 <TableCell className="text-gray-300 font-semibold text-right">
                   {formatCurrency(invoice.total)}
