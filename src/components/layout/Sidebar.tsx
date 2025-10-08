@@ -51,12 +51,13 @@ export const Sidebar = ({
     );
   };
 
-  // Navegación organizada en dos niveles
+  // Navegación organizada en dos niveles con colores
   const navigationGroups = [
     {
       id: 'principal',
       name: 'Principal',
       icon: LayoutDashboard,
+      color: 'principal',
       alwaysExpanded: true,
       items: [
         { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, adminOnly: false },
@@ -68,6 +69,7 @@ export const Sidebar = ({
       id: 'operaciones',
       name: 'Operaciones',
       icon: Briefcase,
+      color: 'operaciones',
       items: [
         { name: 'Clientes', href: '/clients', icon: Users, adminOnly: false },
         { name: 'Calendario', href: '/calendar', icon: Calendar, adminOnly: false },
@@ -78,6 +80,7 @@ export const Sidebar = ({
       id: 'recursos',
       name: 'Recursos',
       icon: Building2,
+      color: 'recursos',
       items: [
         { name: 'Grúas', href: '/cranes', icon: Building2, adminOnly: false },
         { name: 'Operadores', href: '/operators', icon: Users, adminOnly: false },
@@ -88,6 +91,7 @@ export const Sidebar = ({
       id: 'inventario',
       name: 'Inventario',
       icon: Warehouse,
+      color: 'inventario',
       items: [
         { name: 'Bodega', href: '/inventory', icon: Package, adminOnly: false },
         { name: 'Proveedores', href: '/suppliers', icon: Building2, adminOnly: false },
@@ -97,6 +101,7 @@ export const Sidebar = ({
       id: 'finanzas',
       name: 'Finanzas',
       icon: TrendingUp,
+      color: 'finanzas',
       items: [
         { name: 'Costos', href: '/costs', icon: DollarSign, adminOnly: false },
         { name: 'Comisiones', href: '/commissions', icon: Percent, adminOnly: true },
@@ -108,6 +113,7 @@ export const Sidebar = ({
       id: 'analisis',
       name: 'Análisis',
       icon: BarChart3,
+      color: 'analisis',
       items: [
         { name: 'Reportes', href: '/reports', icon: BarChart3, adminOnly: false },
       ]
@@ -116,6 +122,7 @@ export const Sidebar = ({
       id: 'configuracion',
       name: 'Configuración',
       icon: Cog,
+      color: 'configuracion',
       items: [
         { name: 'Tipos de Servicio', href: '/service-types', icon: Tags, adminOnly: false },
         { name: 'Centros de Costo', href: '/cost-centers', icon: Target, adminOnly: false },
@@ -215,9 +222,10 @@ export const Sidebar = ({
                 <button
                   onClick={() => !group.alwaysExpanded && toggleGroup(group.id)}
                   className={cn(
-                    "w-full flex items-center justify-between px-3 py-2 text-xs font-semibold uppercase tracking-wider transition-colors rounded-lg",
-                    hasActiveItem ? "text-primary" : "text-muted-foreground hover:text-foreground",
-                    group.alwaysExpanded ? "cursor-default" : "cursor-pointer"
+                    "w-full flex items-center justify-between px-3 py-2.5 text-xs font-bold uppercase tracking-wider transition-all rounded-lg mb-1",
+                    `sidebar-group-${group.color}`,
+                    hasActiveItem && "shadow-sm",
+                    group.alwaysExpanded ? "cursor-default" : "cursor-pointer hover:shadow-md"
                   )}
                 >
                   <div className="flex items-center gap-2">
@@ -229,10 +237,19 @@ export const Sidebar = ({
                   )}
                 </button>
               )}
+              
+              {/* Collapsed Group Indicator */}
+              {isCollapsed && (
+                <div className={cn(
+                  "w-full h-1 rounded-full mb-2 transition-all",
+                  `bg-sidebar-${group.color}`,
+                  hasActiveItem && "h-1.5 shadow-sm"
+                )} />
+              )}
 
               {/* Group Items */}
               {(isExpanded || isCollapsed) && (
-                <div className={cn("space-y-0.5", !isCollapsed && "ml-2")}>
+                <div className={cn("space-y-1", !isCollapsed && "ml-2")}>
                   {filteredItems.map(item => {
                     const isActive = location.pathname === item.href;
                     return (
@@ -240,22 +257,30 @@ export const Sidebar = ({
                         key={item.name} 
                         to={item.href} 
                         className={cn(
-                          "flex items-center rounded-lg font-medium transition-colors nav-link",
-                          isTablet ? "px-2 py-1.5 text-sm" : "px-2 py-1.5 text-sm",
-                          isActive 
-                            ? "active bg-primary text-primary-foreground" 
-                            : "text-foreground hover:bg-accent hover:text-foreground"
+                          "relative flex items-center rounded-lg font-medium transition-all duration-200",
+                          `sidebar-item-${group.color}`,
+                          isTablet ? "px-3 py-2 text-sm" : "px-3 py-2 text-sm",
+                          isActive && "active shadow-sm",
+                          !isActive && "hover:shadow-sm"
                         )}
                         onClick={() => setIsMobileMenuOpen(false)}
                         title={isCollapsed ? item.name : undefined}
                       >
                         <div className={cn(
                           "flex items-center justify-center rounded-lg",
-                          isCollapsed ? "w-8 h-8" : "w-7 h-7 mr-2"
+                          isCollapsed ? "w-8 h-8" : "w-7 h-7 mr-3"
                         )}>
-                          <item.icon className="w-4 h-4" strokeWidth={2} />
+                          <item.icon className="w-4 h-4" strokeWidth={2.5} />
                         </div>
                         {!isCollapsed && <span className="truncate">{item.name}</span>}
+                        
+                        {/* Collapsed mode color indicator */}
+                        {isCollapsed && isActive && (
+                          <div className={cn(
+                            "sidebar-indicator",
+                            `sidebar-indicator-${group.color}`
+                          )} />
+                        )}
                       </Link>
                     );
                   })}

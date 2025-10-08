@@ -65,6 +65,16 @@ export default {
 						overdue: '0 84% 60%'       /* #ef4444 */
 					}
 				},
+				// Sidebar colors - Colores para grupos de navegación
+				sidebar: {
+					principal: '84 100% 58%',      /* Verde lima - Principal */
+					operaciones: '217 91% 60%',    /* Azul - Operaciones */
+					recursos: '25 95% 53%',        /* Naranja - Recursos */
+					inventario: '271 81% 56%',     /* Púrpura - Inventario */
+					finanzas: '142 76% 36%',       /* Verde esmeralda - Finanzas */
+					analisis: '330 81% 60%',       /* Rosa - Análisis */
+					configuracion: '215 16% 47%'   /* Gris - Configuración */
+				},
 				// Color palette - HSL format
 				slate: {
 					50: '210 40% 98%',   /* #f8fafc */

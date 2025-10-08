@@ -180,6 +180,125 @@ body {
   @apply ring-2 ring-primary/20 ring-offset-2 ring-offset-background;
 }
 
+/* Sidebar Group Styles */
+.sidebar-group-principal {
+  @apply bg-[hsl(84_100%_58%_/_0.05)] border-l-2 border-[hsl(84_100%_58%)];
+}
+
+.sidebar-group-operaciones {
+  @apply bg-[hsl(217_91%_60%_/_0.05)] border-l-2 border-[hsl(217_91%_60%)];
+}
+
+.sidebar-group-recursos {
+  @apply bg-[hsl(25_95%_53%_/_0.05)] border-l-2 border-[hsl(25_95%_53%)];
+}
+
+.sidebar-group-inventario {
+  @apply bg-[hsl(271_81%_56%_/_0.05)] border-l-2 border-[hsl(271_81%_56%)];
+}
+
+.sidebar-group-finanzas {
+  @apply bg-[hsl(142_76%_36%_/_0.05)] border-l-2 border-[hsl(142_76%_36%)];
+}
+
+.sidebar-group-analisis {
+  @apply bg-[hsl(330_81%_60%_/_0.05)] border-l-2 border-[hsl(330_81%_60%)];
+}
+
+.sidebar-group-configuracion {
+  @apply bg-[hsl(215_16%_47%_/_0.05)] border-l-2 border-[hsl(215_16%_47%)];
+}
+
+/* Sidebar Item Styles */
+.sidebar-item-principal {
+  @apply hover:bg-[hsl(84_100%_58%_/_0.1)] border-l-4 border-transparent hover:border-[hsl(84_100%_58%)];
+}
+
+.sidebar-item-principal.active {
+  @apply bg-[hsl(84_100%_58%_/_0.2)] border-[hsl(84_100%_58%)] text-foreground;
+}
+
+.sidebar-item-operaciones {
+  @apply hover:bg-[hsl(217_91%_60%_/_0.1)] border-l-4 border-transparent hover:border-[hsl(217_91%_60%)];
+}
+
+.sidebar-item-operaciones.active {
+  @apply bg-[hsl(217_91%_60%_/_0.2)] border-[hsl(217_91%_60%)] text-foreground;
+}
+
+.sidebar-item-recursos {
+  @apply hover:bg-[hsl(25_95%_53%_/_0.1)] border-l-4 border-transparent hover:border-[hsl(25_95%_53%)];
+}
+
+.sidebar-item-recursos.active {
+  @apply bg-[hsl(25_95%_53%_/_0.2)] border-[hsl(25_95%_53%)] text-foreground;
+}
+
+.sidebar-item-inventario {
+  @apply hover:bg-[hsl(271_81%_56%_/_0.1)] border-l-4 border-transparent hover:border-[hsl(271_81%_56%)];
+}
+
+.sidebar-item-inventario.active {
+  @apply bg-[hsl(271_81%_56%_/_0.2)] border-[hsl(271_81%_56%)] text-foreground;
+}
+
+.sidebar-item-finanzas {
+  @apply hover:bg-[hsl(142_76%_36%_/_0.1)] border-l-4 border-transparent hover:border-[hsl(142_76%_36%)];
+}
+
+.sidebar-item-finanzas.active {
+  @apply bg-[hsl(142_76%_36%_/_0.2)] border-[hsl(142_76%_36%)] text-foreground;
+}
+
+.sidebar-item-analisis {
+  @apply hover:bg-[hsl(330_81%_60%_/_0.1)] border-l-4 border-transparent hover:border-[hsl(330_81%_60%)];
+}
+
+.sidebar-item-analisis.active {
+  @apply bg-[hsl(330_81%_60%_/_0.2)] border-[hsl(330_81%_60%)] text-foreground;
+}
+
+.sidebar-item-configuracion {
+  @apply hover:bg-[hsl(215_16%_47%_/_0.1)] border-l-4 border-transparent hover:border-[hsl(215_16%_47%)];
+}
+
+.sidebar-item-configuracion.active {
+  @apply bg-[hsl(215_16%_47%_/_0.2)] border-[hsl(215_16%_47%)] text-foreground;
+}
+
+/* Collapsed Sidebar Indicators */
+.sidebar-indicator {
+  @apply absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 rounded-r transition-all;
+}
+
+.sidebar-indicator-principal {
+  @apply bg-[hsl(84_100%_58%)];
+}
+
+.sidebar-indicator-operaciones {
+  @apply bg-[hsl(217_91%_60%)];
+}
+
+.sidebar-indicator-recursos {
+  @apply bg-[hsl(25_95%_53%)];
+}
+
+.sidebar-indicator-inventario {
+  @apply bg-[hsl(271_81%_56%)];
+}
+
+.sidebar-indicator-finanzas {
+  @apply bg-[hsl(142_76%_36%)];
+}
+
+.sidebar-indicator-analisis {
+  @apply bg-[hsl(330_81%_60%)];
+}
+
+.sidebar-indicator-configuracion {
+  @apply bg-[hsl(215_16%_47%)];
+}
+
 /* Global Module Contrast Fixes */
 
 /* Client Module Scope */
