@@ -46,7 +46,7 @@ export const ServicesMetrics = ({ metrics }: ServicesMetricsProps) => {
         title="Balance"
         value={formatCurrency(metrics.netProfit)}
         description={`Margen: ${metrics.profitMargin.toFixed(1)}%`}
-        valueClassName={metrics.netProfit >= 0 ? 'text-green-400' : 'text-red-400'}
+        valueClassName="text-violet-600"
       />
     </div>
   );

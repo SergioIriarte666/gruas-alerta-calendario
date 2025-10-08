@@ -17,7 +17,7 @@ export const ReportMetricCard = ({ icon: Icon, title, value, description, valueC
       <Icon className="h-4 w-4 text-foreground" />
     </CardHeader>
     <CardContent>
-      <div className={`text-2xl font-bold text-violet-600 ${valueClassName}`}>{value}</div>
+      <div className={`text-2xl font-bold text-foreground ${valueClassName}`}>{value}</div>
       <p className="text-xs text-foreground">{description}</p>
     </CardContent>
   </Card>
