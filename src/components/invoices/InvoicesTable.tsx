@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Edit, Trash2, DollarSign, FileText, CheckCircle, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import { Invoice } from '@/types';
-import { format, isValid, parseISO } from 'date-fns';
+import { format, isValid, parseISO, differenceInDays } from 'date-fns';
 import { es } from 'date-fns/locale';
 import InvoiceEmergencyActions from './InvoiceEmergencyActions';
 
@@ -52,6 +52,37 @@ const formatSafeAmount = (amount: any): string => {
     return '$0';
   }
   return `$${numAmount.toLocaleString('es-CL')}`;
+};
+
+// Calculate days until due date
+const calculateDaysUntilDue = (dueDate: any): JSX.Element => {
+  if (!dueDate) return <Badge className="bg-muted text-foreground">Sin fecha</Badge>;
+  
+  try {
+    const due = typeof dueDate === 'string' ? parseISO(dueDate) : new Date(dueDate);
+    if (!isValid(due)) {
+      return <Badge className="bg-muted text-foreground">Fecha inválida</Badge>;
+    }
+    
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    due.setHours(0, 0, 0, 0);
+    
+    const days = differenceInDays(due, today);
+    
+    if (days > 7) {
+      return <Badge className="bg-green-500 text-white">+{days} días</Badge>;
+    } else if (days >= 1 && days <= 7) {
+      return <Badge className="bg-yellow-500 text-white">+{days} días</Badge>;
+    } else if (days === 0) {
+      return <Badge className="bg-orange-500 text-white">Hoy</Badge>;
+    } else {
+      return <Badge className="bg-red-500 text-white">{days} días</Badge>;
+    }
+  } catch (error) {
+    console.error('Error calculating days until due:', error);
+    return <Badge className="bg-muted text-foreground">Error</Badge>;
+  }
 };
 
 // Sort icon component
@@ -167,6 +198,7 @@ const InvoicesTable = ({
                 <SortableHeader field="client" label="Cliente" sortField={sortField} sortDirection={sortDirection} onSort={onSort} />
                 <SortableHeader field="issueDate" label="Fecha Emisión" sortField={sortField} sortDirection={sortDirection} onSort={onSort} />
                 <SortableHeader field="dueDate" label="Fecha Vencimiento" sortField={sortField} sortDirection={sortDirection} onSort={onSort} />
+                <SortableHeader field="daysUntilDue" label="Días para Vencimiento" sortField={sortField} sortDirection={sortDirection} onSort={onSort} />
                 <SortableHeader field="total" label="Total" sortField={sortField} sortDirection={sortDirection} onSort={onSort} />
                 <SortableHeader field="status" label="Estado" sortField={sortField} sortDirection={sortDirection} onSort={onSort} />
                 <th className="text-center py-3 px-4 font-medium text-foreground">Acciones</th>
@@ -212,6 +244,9 @@ const InvoicesTable = ({
                     </td>
                     <td className="py-3 px-4 text-foreground">
                       {formatSafeDate(invoice.dueDate)}
+                    </td>
+                    <td className="py-3 px-4 text-center">
+                      {calculateDaysUntilDue(invoice.dueDate)}
                     </td>
                     <td className="py-3 px-4 text-foreground font-medium">
                       {formatSafeAmount(invoice.total)}

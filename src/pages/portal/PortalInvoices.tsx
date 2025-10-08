@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { AlertTriangle, FileText, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { formatForDisplay } from '@/utils/timezoneUtils';
+import { differenceInDays, parseISO, isValid } from 'date-fns';
 
 
 const formatCurrency = (amount: number) => {
@@ -27,6 +28,36 @@ const getStatusBadge = (status: string) => {
 
   const config = statusConfig[status] || { label: status, className: 'bg-gray-500' };
   return <Badge className={`${config.className} text-white`}>{config.label}</Badge>;
+};
+
+const calculateDaysUntilDue = (dueDate: string | null): JSX.Element => {
+  if (!dueDate) return <Badge className="bg-gray-500 text-white">Sin fecha</Badge>;
+  
+  try {
+    const due = parseISO(dueDate);
+    if (!isValid(due)) {
+      return <Badge className="bg-gray-500 text-white">Fecha inválida</Badge>;
+    }
+    
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    due.setHours(0, 0, 0, 0);
+    
+    const days = differenceInDays(due, today);
+    
+    if (days > 7) {
+      return <Badge className="bg-green-500 text-white">+{days} días</Badge>;
+    } else if (days >= 1 && days <= 7) {
+      return <Badge className="bg-yellow-500 text-white">+{days} días</Badge>;
+    } else if (days === 0) {
+      return <Badge className="bg-orange-500 text-white">Hoy</Badge>;
+    } else {
+      return <Badge className="bg-red-500 text-white">{days} días</Badge>;
+    }
+  } catch (error) {
+    console.error('Error calculating days until due:', error);
+    return <Badge className="bg-gray-500 text-white">Error</Badge>;
+  }
 };
 
 const PortalInvoices = () => {
@@ -72,6 +103,7 @@ const PortalInvoices = () => {
               <TableHead className="text-gray-300">N° Fiscal</TableHead>
               <TableHead className="text-gray-300">Fecha Emisión</TableHead>
               <TableHead className="text-gray-300">Fecha Vencimiento</TableHead>
+              <TableHead className="text-gray-300 text-center">Días para Vencimiento</TableHead>
               <TableHead className="text-gray-300 text-right">Total</TableHead>
               <TableHead className="text-gray-300 text-center">Estado</TableHead>
               <TableHead className="text-gray-300 text-center">Acciones</TableHead>
@@ -93,6 +125,9 @@ const PortalInvoices = () => {
                 </TableCell>
                 <TableCell className="text-gray-300">
                   {formatForDisplay(invoice.due_date)}
+                </TableCell>
+                <TableCell className="text-center">
+                  {calculateDaysUntilDue(invoice.due_date)}
                 </TableCell>
                 <TableCell className="text-gray-300 font-semibold text-right">
                   {formatCurrency(invoice.total)}

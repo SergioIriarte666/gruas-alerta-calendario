@@ -113,6 +113,16 @@ const Invoices = () => {
         aValue = new Date(a.dueDate || 0);
         bValue = new Date(b.dueDate || 0);
         break;
+      case 'daysUntilDue':
+        const aDue = new Date(a.dueDate || 0);
+        const bDue = new Date(b.dueDate || 0);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        aDue.setHours(0, 0, 0, 0);
+        bDue.setHours(0, 0, 0, 0);
+        aValue = Math.floor((aDue.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+        bValue = Math.floor((bDue.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+        break;
       case 'total':
         aValue = Number(a.total) || 0;
         bValue = Number(b.total) || 0;
