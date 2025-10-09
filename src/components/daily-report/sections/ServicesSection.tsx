@@ -17,6 +17,7 @@ interface ServicesSectionProps {
     scheduled: any[];
     pending: any[];
     overdue: any[];
+    overdueWithoutPO: any[];
     nextWeek: any[];
     total: number;
   } | null;
@@ -107,18 +108,76 @@ export const ServicesSection = ({ data, onViewService }: ServicesSectionProps) =
         </CardContent>
       </Card>
 
-      {/* Servicios Completados Pendientes de Facturación */}
-      {data.overdue.length > 0 && (
-        <Card className="border-red-200">
+      {/* Servicios Completados SIN Orden de Compra (CRÍTICO) */}
+      {data.overdueWithoutPO && data.overdueWithoutPO.length > 0 && (
+        <Card className="border-amber-500 bg-amber-50">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-red-600">
+            <CardTitle className="flex items-center gap-2 text-amber-700">
               <AlertTriangle className="w-5 h-5" />
-              Servicios Completados Pendientes de Facturación
-              <Badge variant="destructive">{data.overdue.length}</Badge>
+              ⚠️ Servicios Completados SIN Orden de Compra
+              <Badge variant="destructive" className="bg-amber-500">
+                {data.overdueWithoutPO.length}
+              </Badge>
             </CardTitle>
           </CardHeader>
-          <div className="px-6 pb-2 text-sm text-muted-foreground">
-            Servicios con estado "completado" que aún no han sido incluidos en ninguna factura
+          <div className="px-6 pb-2 text-sm text-amber-700 font-medium">
+            ⚠️ Estos servicios NO pueden facturarse hasta obtener la Orden de Compra del cliente
+          </div>
+          <CardContent>
+            <div className="space-y-3">
+              {data.overdueWithoutPO.map((service) => (
+                <Card key={service.id} className="border-amber-300 bg-white">
+                  <CardContent className="p-4">
+                    <div className="flex items-start justify-between">
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                          <Truck className="w-4 h-4 text-amber-600" />
+                          <span className="font-medium">{service.folio}</span>
+                          {getStatusBadge(service.status)}
+                          <Badge variant="outline" className="bg-amber-100 text-amber-700 border-amber-300">
+                            Sin O.C.
+                          </Badge>
+                        </div>
+                        
+                        <div className="text-sm text-muted-foreground space-y-1">
+                          <p><strong>Cliente:</strong> {service.client?.name || 'N/A'}</p>
+                          <p><strong>Fecha:</strong> {service.service_date}</p>
+                          {service.operator && <p><strong>Operador:</strong> {service.operator.name}</p>}
+                          {service.crane && <p><strong>Grúa:</strong> {service.crane.brand} {service.crane.model}</p>}
+                          {service.service_type && <p><strong>Tipo:</strong> {service.service_type.name}</p>}
+                          <p><strong>Valor:</strong> {formatCurrency(service.value)}</p>
+                          <div className="mt-2 p-2 bg-amber-50 rounded border border-amber-200">
+                            <p className="text-xs text-amber-700 font-medium">
+                              ⚠️ Acción requerida: Solicitar O.C. al cliente
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <Button variant="ghost" size="sm" onClick={() => onViewService?.(service)}>
+                        <Eye className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Servicios Listos para Facturar (Con O.C.) */}
+      {data.overdue && data.overdue.length > 0 && (
+        <Card className="border-green-200">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-green-600">
+              <CheckCircle className="w-5 h-5" />
+              ✅ Servicios Listos para Facturar (Con O.C.)
+              <Badge variant="default" className="bg-green-500">{data.overdue.length}</Badge>
+            </CardTitle>
+          </CardHeader>
+          <div className="px-6 pb-2 text-sm text-green-700">
+            ✅ Servicios completados con Orden de Compra, listos para incluir en factura
           </div>
           <CardContent>
             <div className="space-y-3">

@@ -9,6 +9,7 @@ export interface DailyReportData {
     scheduled: any[];
     pending: any[];
     overdue: any[];
+    overdueWithoutPO: any[];
     nextWeek: any[];
     completed: any[];
     total: number;
@@ -77,7 +78,7 @@ const fetchDailyReportData = async (selectedDate: string): Promise<DailyReportDa
   const [servicesRes, calendarRes, invoicesRes, paymentsRes, supplierPaymentsRes, cranesRes, operatorsRes] = await Promise.all([
     // Servicios - incluir semana actual y próxima
     supabase.from('services').select(`
-      id, folio, service_date, status, value,
+      id, folio, service_date, status, value, purchase_order_number,
       client:clients!services_client_id_fkey(id, name),
       operator:operators(id, name),
       crane:cranes(id, brand, model),
@@ -140,8 +141,9 @@ const fetchDailyReportData = async (selectedDate: string): Promise<DailyReportDa
   );
   const pending = allServices.filter(s => s.status === 'pending');
   
-  // Crear array para servicios completados pendientes de facturación
-  const pendingInvoicing: any[] = [];
+  // Separar servicios completados pendientes de facturación en dos categorías
+  const pendingInvoicingWithPO: any[] = [];
+  const pendingInvoicingWithoutPO: any[] = [];
   
   // Filtrar servicios completados que NO estén facturados
   for (const service of allServices) {
@@ -153,7 +155,12 @@ const fetchDailyReportData = async (selectedDate: string): Promise<DailyReportDa
         .maybeSingle();
       
       if (!existsInInvoice) {
-        pendingInvoicing.push(service);
+        // Separar según tengan o no Orden de Compra
+        if (service.purchase_order_number) {
+          pendingInvoicingWithPO.push(service);
+        } else {
+          pendingInvoicingWithoutPO.push(service);
+        }
       }
     }
   }
@@ -350,8 +357,8 @@ const fetchDailyReportData = async (selectedDate: string): Promise<DailyReportDa
   const assigned = assignedOperators.length;
   const available = operators.length - assigned;
 
-  // Calculate improved summary metrics
-  const criticalTasks = pendingInvoicing.length + invoicesOverdue.length + supplierPaymentsOverdue.length + documentAlerts.filter(a => a.priority === 'VENCIDO' || a.priority === 'CRÍTICO').length;
+  // Calculate improved summary metrics (priorizar servicios sin O.C.)
+  const criticalTasks = pendingInvoicingWithoutPO.length + invoicesOverdue.length + supplierPaymentsOverdue.length + documentAlerts.filter(a => a.priority === 'VENCIDO' || a.priority === 'CRÍTICO').length;
   const completedToday = completed.length;
   const totalTasksToday = scheduled.length + todayEvents.length + invoicesDueToday.length + paymentsToday.length;
   const totalTasksWeek = allServices.length + events.length + invoices.length + payments.length;
@@ -366,7 +373,8 @@ const fetchDailyReportData = async (selectedDate: string): Promise<DailyReportDa
     services: {
       scheduled,
       pending,
-      overdue: pendingInvoicing,
+      overdue: pendingInvoicingWithPO,
+      overdueWithoutPO: pendingInvoicingWithoutPO,
       nextWeek,
       completed,
       total: scheduled.length + pending.length + completed.length
