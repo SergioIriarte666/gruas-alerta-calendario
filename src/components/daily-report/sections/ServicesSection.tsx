@@ -107,16 +107,19 @@ export const ServicesSection = ({ data, onViewService }: ServicesSectionProps) =
         </CardContent>
       </Card>
 
-      {/* Servicios Atrasados */}
+      {/* Servicios Completados Pendientes de Facturación */}
       {data.overdue.length > 0 && (
         <Card className="border-red-200">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-red-600">
               <AlertTriangle className="w-5 h-5" />
-              Servicios Pendientes de Facturación
+              Servicios Completados Pendientes de Facturación
               <Badge variant="destructive">{data.overdue.length}</Badge>
             </CardTitle>
           </CardHeader>
+          <div className="px-6 pb-2 text-sm text-muted-foreground">
+            Servicios con estado "completado" que aún no han sido incluidos en ninguna factura
+          </div>
           <CardContent>
             <div className="space-y-3">
               {data.overdue.map((service) => (

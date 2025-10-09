@@ -139,9 +139,24 @@ const fetchDailyReportData = async (selectedDate: string): Promise<DailyReportDa
     s.service_date === dateForDB && s.status === 'completed'
   );
   const pending = allServices.filter(s => s.status === 'pending');
-  const overdue = allServices.filter(s => 
-    new Date(s.service_date) < selectedDateObj && !['completed', 'cancelled'].includes(s.status)
-  );
+  
+  // Crear array para servicios completados pendientes de facturación
+  const pendingInvoicing: any[] = [];
+  
+  // Filtrar servicios completados que NO estén facturados
+  for (const service of allServices) {
+    if (service.status === 'completed') {
+      const { data: existsInInvoice } = await supabase
+        .from('invoice_services')
+        .select('service_id')
+        .eq('service_id', service.id)
+        .maybeSingle();
+      
+      if (!existsInInvoice) {
+        pendingInvoicing.push(service);
+      }
+    }
+  }
   const nextWeek = allServices.filter(s => {
     const serviceDate = new Date(s.service_date);
     const nextWeekStart = new Date(selectedDateObj);
@@ -336,7 +351,7 @@ const fetchDailyReportData = async (selectedDate: string): Promise<DailyReportDa
   const available = operators.length - assigned;
 
   // Calculate improved summary metrics
-  const criticalTasks = overdue.length + invoicesOverdue.length + supplierPaymentsOverdue.length + documentAlerts.filter(a => a.priority === 'VENCIDO' || a.priority === 'CRÍTICO').length;
+  const criticalTasks = pendingInvoicing.length + invoicesOverdue.length + supplierPaymentsOverdue.length + documentAlerts.filter(a => a.priority === 'VENCIDO' || a.priority === 'CRÍTICO').length;
   const completedToday = completed.length;
   const totalTasksToday = scheduled.length + todayEvents.length + invoicesDueToday.length + paymentsToday.length;
   const totalTasksWeek = allServices.length + events.length + invoices.length + payments.length;
@@ -351,7 +366,7 @@ const fetchDailyReportData = async (selectedDate: string): Promise<DailyReportDa
     services: {
       scheduled,
       pending,
-      overdue,
+      overdue: pendingInvoicing,
       nextWeek,
       completed,
       total: scheduled.length + pending.length + completed.length
