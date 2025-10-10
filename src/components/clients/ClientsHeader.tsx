@@ -76,7 +76,6 @@ export const ClientsHeader = ({
           <div 
             className="relative bg-white border border-gray-200 rounded-lg shadow-lg max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
-            style={{ background: '#ffffff', color: '#000000' }}
           >
             <button
               onClick={handleCloseModal}
