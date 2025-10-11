@@ -3279,7 +3279,9 @@ export type Database = {
         Returns: string
       }
       apply_payment_fifo: {
-        Args: { p_client_id: string; p_payment_id: string }
+        Args:
+          | { p_client_id: string; p_payment_id: string }
+          | { p_payment_id: string }
         Returns: Json
       }
       apply_payment_manual: {
@@ -4003,6 +4005,14 @@ export type Database = {
           payment_id: string
           remaining_amount: number
         }[]
+      }
+      validate_payment_application_amount: {
+        Args: {
+          p_excluding_application_id?: string
+          p_invoice_id: string
+          p_new_amount: number
+        }
+        Returns: boolean
       }
       validate_payment_system_integrity: {
         Args: Record<PropertyKey, never>
