@@ -3500,6 +3500,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: Json
       }
+      fix_duplicate_paid_amounts: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
       fix_existing_overdue_invoices: {
         Args: Record<PropertyKey, never>
         Returns: string
