@@ -35,7 +35,10 @@ const generatePDF = async (payments: any[], suppliers: any[], categories: any[],
   // Helper function to get category label
   const getCategoryLabel = (categoryId: string | null) => {
     if (!categoryId) return 'Sin categoría';
+    console.log('getCategoryLabel - categoryId:', categoryId);
+    console.log('getCategoryLabel - categories:', categories);
     const category = categories.find(c => c.id === categoryId);
+    console.log('getCategoryLabel - found category:', category);
     return category?.label || 'N/A';
   };
   
@@ -216,7 +219,10 @@ const generateExcel = async (payments: any[], suppliers: any[], categories: any[
   // Helper function to get category label
   const getCategoryLabel = (categoryId: string | null) => {
     if (!categoryId) return 'Sin categoría';
+    console.log('Excel getCategoryLabel - categoryId:', categoryId);
+    console.log('Excel getCategoryLabel - categories:', categories);
     const category = categories.find(c => c.id === categoryId);
+    console.log('Excel getCategoryLabel - found category:', category);
     return category?.label || 'N/A';
   };
   
