@@ -175,6 +175,9 @@ export const SimpleEntryForm: React.FC<SimpleEntryFormProps> = ({ onSuccess }) =
               step="0.01"
               {...register('unit_cost', { valueAsNumber: true })}
             />
+            <p className="text-xs text-muted-foreground">
+              💡 Este costo se usará automáticamente en los próximos consumos (FIFO)
+            </p>
             {errors.unit_cost && (
               <p className="text-sm text-destructive">{errors.unit_cost.message}</p>
             )}

@@ -17,6 +17,8 @@ import { es } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 
 const exitSchema = z.object({
   item_id: z.string().min(1, 'Selecciona un producto'),
@@ -66,6 +68,37 @@ export const SimpleExitForm: React.FC<SimpleExitFormProps> = ({ onSuccess }) => 
   );
   const availableStock = stockData[0]?.available_quantity || 0;
 
+  // Query recent entries to get real cost (FIFO)
+  const { data: recentEntries = [] } = useQuery({
+    queryKey: ['recent-entries', watchedValues.item_id, watchedValues.location_id],
+    queryFn: async () => {
+      if (!watchedValues.item_id || !watchedValues.location_id) return [];
+      
+      const { data, error } = await supabase
+        .from('inventory_movements')
+        .select('id, unit_cost, quantity, movement_date')
+        .eq('item_id', watchedValues.item_id)
+        .eq('location_id', watchedValues.location_id)
+        .eq('movement_type', 'entry')
+        .order('movement_date', { ascending: false })
+        .limit(5);
+      
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!watchedValues.item_id && !!watchedValues.location_id,
+  });
+
+  // Calculate real cost using FIFO (most recent entry)
+  const calculateRealCost = () => {
+    if (!recentEntries || recentEntries.length === 0) {
+      return selectedItem?.unit_cost || 0;
+    }
+    return recentEntries[0].unit_cost;
+  };
+
+  const realUnitCost = calculateRealCost();
+
   const onSubmit = async (data: ExitFormData) => {
     // Validate stock
     if (data.quantity > availableStock) {
@@ -89,11 +122,9 @@ export const SimpleExitForm: React.FC<SimpleExitFormProps> = ({ onSuccess }) => 
         movementData.crane_id = data.crane_id;
       }
 
-      // Add cost information if available
-      if (selectedItem?.unit_cost) {
-        movementData.unit_cost = selectedItem.unit_cost;
-        movementData.total_cost = selectedItem.unit_cost * data.quantity;
-      }
+      // Use real cost from FIFO
+      movementData.unit_cost = realUnitCost;
+      movementData.total_cost = realUnitCost * data.quantity;
 
       await createMovement.mutateAsync(movementData);
 
@@ -171,6 +202,26 @@ export const SimpleExitForm: React.FC<SimpleExitFormProps> = ({ onSuccess }) => 
                   {availableStock === 0 && ' - No hay stock disponible'}
                 </AlertDescription>
               </Alert>
+            </div>
+          )}
+
+          {/* Real Cost Display (FIFO) */}
+          {watchedValues.item_id && watchedValues.location_id && realUnitCost > 0 && (
+            <div className="md:col-span-2 p-3 bg-muted rounded-md">
+              <div className="text-sm text-muted-foreground">Costo unitario a registrar:</div>
+              <div className="text-lg font-semibold text-primary">
+                ${realUnitCost.toLocaleString('es-CL')}
+              </div>
+              {recentEntries[0] && (
+                <div className="text-xs text-muted-foreground mt-1">
+                  Basado en última compra: {format(new Date(recentEntries[0].movement_date), 'dd/MM/yyyy', { locale: es })}
+                </div>
+              )}
+              {!recentEntries[0] && (
+                <div className="text-xs text-muted-foreground mt-1">
+                  Basado en costo de catálogo (sin compras recientes)
+                </div>
+              )}
             </div>
           )}
 
