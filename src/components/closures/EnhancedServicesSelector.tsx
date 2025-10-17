@@ -3,9 +3,10 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Service } from '@/types';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { InfoIcon, CheckCircle, Clock, AlertTriangle, Zap } from 'lucide-react';
+import { InfoIcon, CheckCircle, Clock, AlertTriangle, Zap, Search, X } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Input } from '@/components/ui/input';
 import { getServiceValueForClosure } from '@/utils/serviceValueCalculations';
 
 interface EnhancedServicesSelectorProps {
@@ -35,18 +36,58 @@ const EnhancedServicesSelector = ({
 }: EnhancedServicesSelectorProps) => {
   const [showPending, setShowPending] = useState(false);
   const [selectedPendingIds, setSelectedPendingIds] = useState<string[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
 
   console.log('EnhancedServicesSelector render - services:', services.length, 'pendingServices:', pendingServices.length, 'loading:', loading, 'clientId:', clientId);
 
-  const filteredServices = services.filter(service => {
-    if (!clientId) return true;
-    return service.client.id === clientId;
-  });
+  // Function to filter services by search term
+  const filterServicesBySearch = (serviceList: Service[]) => {
+    if (!searchTerm.trim()) return serviceList;
+    
+    const searchLower = searchTerm.toLowerCase().trim();
+    
+    return serviceList.filter(service => {
+      // Search in quote number
+      if (service.quoteNumber?.toLowerCase().includes(searchLower)) return true;
+      
+      // Search in purchase order
+      if (service.purchaseOrder?.toLowerCase().includes(searchLower)) return true;
+      if (service.purchaseOrderNumber?.toLowerCase().includes(searchLower)) return true;
+      
+      // Search in license plate
+      if (service.licensePlate?.toLowerCase().includes(searchLower)) return true;
+      
+      // Search in folio
+      if (service.folio?.toLowerCase().includes(searchLower)) return true;
+      
+      // Search in client name
+      if (service.client?.name?.toLowerCase().includes(searchLower)) return true;
+      
+      // Search in vehicle brand and model
+      if (service.vehicleBrand?.toLowerCase().includes(searchLower)) return true;
+      if (service.vehicleModel?.toLowerCase().includes(searchLower)) return true;
+      
+      // Search in origin and destination
+      if (service.origin?.toLowerCase().includes(searchLower)) return true;
+      if (service.destination?.toLowerCase().includes(searchLower)) return true;
+      
+      return false;
+    });
+  };
 
-  const filteredPendingServices = pendingServices.filter(service => {
-    if (!clientId) return true;
-    return service.client.id === clientId;
-  });
+  const filteredServices = filterServicesBySearch(
+    services.filter(service => {
+      if (!clientId) return true;
+      return service.client.id === clientId;
+    })
+  );
+
+  const filteredPendingServices = filterServicesBySearch(
+    pendingServices.filter(service => {
+      if (!clientId) return true;
+      return service.client.id === clientId;
+    })
+  );
 
   const handlePendingToggle = (serviceId: string, checked: boolean) => {
     setSelectedPendingIds(prev => 
@@ -116,16 +157,28 @@ const EnhancedServicesSelector = ({
   }
 
   const getStatusMessage = () => {
+    const hasActiveSearch = searchTerm.trim().length > 0;
+    
     if (filteredServices.length === 0 && filteredPendingServices.length === 0) {
       return {
         type: 'info' as const,
-        title: 'No hay servicios en el rango de fechas',
-        description: 'No se encontraron servicios completados ni pendientes para el período seleccionado.',
-        suggestions: [
-          'Amplía el rango de fechas',
-          'Verifica que existan servicios en el sistema',
-          'Selecciona "Todos los clientes" si buscas servicios de otros clientes'
-        ]
+        title: hasActiveSearch 
+          ? 'No se encontraron servicios con ese criterio'
+          : 'No hay servicios en el rango de fechas',
+        description: hasActiveSearch
+          ? `No se encontraron servicios que coincidan con "${searchTerm}". Intenta con otros términos de búsqueda.`
+          : 'No se encontraron servicios completados ni pendientes para el período seleccionado.',
+        suggestions: hasActiveSearch
+          ? [
+              'Verifica la ortografía del término de búsqueda',
+              'Intenta buscar por otro campo (patente, folio, orden de compra)',
+              'Limpia la búsqueda para ver todos los servicios del rango'
+            ]
+          : [
+              'Amplía el rango de fechas',
+              'Verifica que existan servicios en el sistema',
+              'Selecciona "Todos los clientes" si buscas servicios de otros clientes'
+            ]
       };
     }
 
@@ -160,13 +213,44 @@ const EnhancedServicesSelector = ({
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <Label className="text-foreground">Servicios para Cierre</Label>
+        <div className="flex items-center gap-2">
+          <Label className="text-foreground">Servicios para Cierre</Label>
+          {searchTerm && (
+            <Badge variant="secondary" className="text-xs">
+              {filteredServices.length + filteredPendingServices.length} resultado(s)
+            </Badge>
+          )}
+        </div>
         {selectedServiceIds.length > 0 && (
           <div className="flex items-center gap-1 text-sm text-primary">
             <CheckCircle className="h-4 w-4" />
             <span>{selectedServiceIds.length} seleccionado{selectedServiceIds.length !== 1 ? 's' : ''}</span>
           </div>
         )}
+      </div>
+
+      {/* Search Input */}
+      <div className="space-y-2">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            type="text"
+            placeholder="Buscar por cotización, orden de compra, patente, folio, cliente..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10 pr-10"
+          />
+          {searchTerm && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="absolute right-1 top-1/2 transform -translate-y-1/2 h-7 w-7 p-0"
+              onClick={() => setSearchTerm('')}
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Status Message */}
@@ -253,8 +337,26 @@ const EnhancedServicesSelector = ({
                           <span>{service.folio} - {service.client.name}</span>
                           <span className="font-medium text-secondary-foreground">${getServiceValueForClosure(service).toLocaleString()}</span>
                         </div>
-                        <div className="text-xs text-muted-foreground">
-                          {service.serviceDate} • {service.licensePlate}
+                        <div className="text-xs text-muted-foreground flex flex-wrap gap-1 items-center">
+                          <span>{service.serviceDate}</span>
+                          <span>•</span>
+                          <span>{service.licensePlate}</span>
+                          {service.quoteNumber && (
+                            <>
+                              <span>•</span>
+                              <Badge variant="outline" className="text-[10px] h-4 px-1">
+                                COT: {service.quoteNumber}
+                              </Badge>
+                            </>
+                          )}
+                          {(service.purchaseOrder || service.purchaseOrderNumber) && (
+                            <>
+                              <span>•</span>
+                              <Badge variant="outline" className="text-[10px] h-4 px-1">
+                                OC: {service.purchaseOrder || service.purchaseOrderNumber}
+                              </Badge>
+                            </>
+                          )}
                         </div>
                       </label>
                     </div>
@@ -347,8 +449,26 @@ const EnhancedServicesSelector = ({
                       <span>{service.folio} - {service.client.name}</span>
                       <span className="font-medium text-violet-600">${getServiceValueForClosure(service).toLocaleString()}</span>
                     </div>
-                    <div className="text-xs text-muted-foreground">
-                      {service.serviceDate} • {service.licensePlate} • Status: {service.status}
+                    <div className="text-xs text-muted-foreground flex flex-wrap gap-1 items-center">
+                      <span>{service.serviceDate}</span>
+                      <span>•</span>
+                      <span>{service.licensePlate}</span>
+                      {service.quoteNumber && (
+                        <>
+                          <span>•</span>
+                          <Badge variant="outline" className="text-[10px] h-4 px-1">
+                            COT: {service.quoteNumber}
+                          </Badge>
+                        </>
+                      )}
+                      {(service.purchaseOrder || service.purchaseOrderNumber) && (
+                        <>
+                          <span>•</span>
+                          <Badge variant="outline" className="text-[10px] h-4 px-1">
+                            OC: {service.purchaseOrder || service.purchaseOrderNumber}
+                          </Badge>
+                        </>
+                      )}
                     </div>
                   </label>
                 </div>
