@@ -19,13 +19,16 @@ import {
   IdCard,
   UserCheck,
   Wrench,
-  Shield
+  Shield,
+  Download
 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { VehicleHistory } from './VehicleHistory';
 import { ServiceCostsSection } from './ServiceCostsSection';
 import { useServiceDetailsForView } from '@/hooks/useServiceDetailsGlobal';
 import { shouldShowVehicleInfo, formatVehicleInfo, getServiceStatusBadge, formatCurrency } from '@/utils/statusHelpers';
+import { useServiceDetailsPDF } from '@/hooks/useServiceDetailsPDF';
+import { Button } from '@/components/ui/button';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { getServiceValueForClosure, getDisplayServiceValue, getServiceValueBreakdown, isCustodyService, getCustodyInfo, isEquipmentRentalService } from '@/utils/serviceValueCalculations';
@@ -81,6 +84,9 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose }: ServiceDetails
   
   // Usar el nuevo sistema global para obtener datos completos del servicio
   const { enhancedService, isLoading } = useServiceDetailsForView(service.id);
+  
+  // Hook para generar PDF
+  const { generatePDF, isGenerating } = useServiceDetailsPDF();
   
   // Crear datos combinados inteligentemente con validación robusta
   const serviceData = enhancedService ? {
@@ -201,15 +207,32 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose }: ServiceDetails
   // Para cálculos de ganancia neta, usar getServiceValueForClosure (valor facturable)
   const closureValue = getServiceValueForClosure(serviceData);
   const netProfit = closureValue - totalCosts;
+  
+  // Handler para descargar PDF
+  const handleDownloadPDF = () => {
+    generatePDF(serviceData, totalCosts, totalCommissions, netProfit);
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl h-[90vh] flex flex-col p-0">
         <DialogHeader className="px-6 pt-6 pb-2 border-b border-border flex-shrink-0">
-          <DialogTitle className="flex items-center justify-between">
-            <span>Detalles del Servicio - {serviceData.folio}</span>
-            {getServiceStatusBadge(serviceData.status)}
-          </DialogTitle>
+          <div className="flex items-center justify-between">
+            <DialogTitle className="flex items-center gap-3">
+              <span>Detalles del Servicio - {serviceData.folio}</span>
+              {getServiceStatusBadge(serviceData.status)}
+            </DialogTitle>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleDownloadPDF}
+              disabled={isGenerating}
+              className="flex items-center gap-2"
+            >
+              <Download className="h-4 w-4" />
+              {isGenerating ? 'Generando...' : 'Descargar PDF'}
+            </Button>
+          </div>
         </DialogHeader>
 
         <ScrollArea className="flex-1 px-6">
