@@ -48,7 +48,7 @@ export const SmartPaymentForm: React.FC<SmartPaymentFormProps> = ({
 
   const [loading, setLoading] = useState(false);
   const [clientInvoices, setClientInvoices] = useState<InvoiceSummary[]>([]);
-  const [paymentMode, setPaymentMode] = useState<'auto' | 'manual'>('auto');
+  const [paymentMode, setPaymentMode] = useState<'manual' | 'register-only'>('manual');
   const [duplicateWarning, setDuplicateWarning] = useState<string>('');
   const [showAllInvoices, setShowAllInvoices] = useState(false);
   const [selectedInvoiceIds, setSelectedInvoiceIds] = useState<string[]>([]);
@@ -239,15 +239,14 @@ export const SmartPaymentForm: React.FC<SmartPaymentFormProps> = ({
         status: 'pending'
       });
 
-      // Aplicar pago usando la nueva función smart
-      if (paymentMode === 'auto') {
-        await supabase.rpc('smart_apply_payment', {
-          p_payment_id: payment.id,
-          p_auto_apply: true
-        });
+      // Solo registrar el pago, no aplicar automáticamente
+      if (paymentMode === 'manual') {
+        // Redirigir al modal de aplicación manual
+        toast.success('Pago registrado. Seleccione las facturas a aplicar en el módulo de Conciliación de Pagos.');
+      } else {
+        toast.success('Pago registrado exitosamente. Podrá aplicarlo desde el módulo de Conciliación de Pagos.');
       }
-
-      toast.success('Pago registrado exitosamente');
+      
       onClose();
     } catch (error: any) {
       console.error('Error creating payment:', error);
@@ -377,31 +376,36 @@ export const SmartPaymentForm: React.FC<SmartPaymentFormProps> = ({
 
             {/* Modo de aplicación */}
             <div>
-              <Label>Modo de Aplicación</Label>
+              <Label>¿Cómo desea procesar este pago?</Label>
               <div className="flex gap-4 mt-2">
-                <label className="flex items-center space-x-2">
-                  <input
-                    type="radio"
-                    name="paymentMode"
-                    value="auto"
-                    checked={paymentMode === 'auto'}
-                    onChange={(e) => setPaymentMode(e.target.value as 'auto' | 'manual')}
-                    className="text-blue-600"
-                  />
-                  <span>Automático (FIFO)</span>
-                </label>
-                <label className="flex items-center space-x-2">
+                <label className="flex items-center space-x-2 cursor-pointer">
                   <input
                     type="radio"
                     name="paymentMode"
                     value="manual"
                     checked={paymentMode === 'manual'}
-                    onChange={(e) => setPaymentMode(e.target.value as 'auto' | 'manual')}
+                    onChange={(e) => setPaymentMode(e.target.value as 'manual' | 'register-only')}
                     className="text-blue-600"
                   />
-                  <span>Solo registrar</span>
+                  <span>Aplicar manualmente ahora</span>
+                </label>
+                <label className="flex items-center space-x-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="paymentMode"
+                    value="register-only"
+                    checked={paymentMode === 'register-only'}
+                    onChange={(e) => setPaymentMode(e.target.value as 'manual' | 'register-only')}
+                    className="text-blue-600"
+                  />
+                  <span>Solo registrar (aplicar después)</span>
                 </label>
               </div>
+              {paymentMode === 'manual' && (
+                <p className="text-xs text-gray-500 mt-2">
+                  Se abrirá un modal para seleccionar las facturas específicas a pagar
+                </p>
+              )}
             </div>
 
             {/* Monto */}
@@ -518,7 +522,7 @@ export const SmartPaymentForm: React.FC<SmartPaymentFormProps> = ({
                 className="flex-1 bg-blue-600 hover:bg-blue-700"
               >
                 {loading ? 'Procesando...' : 
-                 paymentMode === 'auto' ? 'Registrar y Aplicar' : 'Solo Registrar'
+                 paymentMode === 'manual' ? 'Registrar Pago' : 'Solo Registrar'
                 }
               </Button>
               <Button type="button" variant="outline" onClick={onClose}>

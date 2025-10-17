@@ -310,20 +310,13 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
                         {payment.status === 'pending' || payment.remaining_amount > 0 ? (
                           <>
                             <Button
-                              onClick={() => handleAutoApply(payment)}
-                              size="sm"
-                              variant="outline"
-                            >
-                              <Zap className="h-4 w-4" />
-                              Auto
-                            </Button>
-                            <Button
                               onClick={() => handleManualApplication(payment)}
                               size="sm"
-                              variant="outline"
+                              variant="default"
+                              className="bg-blue-600 hover:bg-blue-700"
                             >
-                              <Edit className="h-4 w-4" />
-                              Manual
+                              <Edit className="h-4 w-4 mr-1" />
+                              Aplicar Manualmente
                             </Button>
                             <Button
                               onClick={() => {
@@ -334,7 +327,7 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
                               variant="outline"
                               className="text-purple-600 border-purple-300 hover:bg-purple-50"
                             >
-                              Específicas
+                              Selectivo
                             </Button>
                           </>
                         ) : (

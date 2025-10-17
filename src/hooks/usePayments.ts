@@ -76,7 +76,7 @@ export const usePayments = () => {
 
   const createPayment = async (
     payment: Omit<Payment, 'id' | 'applied_amount' | 'remaining_amount' | 'created_at' | 'updated_at'>,
-    autoApply: boolean = true
+    autoApply: boolean = false // CAMBIO: FIFO automático deshabilitado por defecto
   ) => {
     try {
       console.log('🔍 Creating payment:', payment);
@@ -115,24 +115,15 @@ export const usePayments = () => {
       
       console.log('✅ Payment created successfully:', data);
       
-      // Aplicar automáticamente el pago si está habilitado
+      // ADVERTENCIA: FIFO automático deprecado
       if (autoApply && data?.id) {
-        try {
-          console.log('🔄 Auto-applying payment via FIFO:', data.id);
-          const applyResult = await applyPaymentFIFO(data.id, payment.client_id);
-          
-          if (applyResult?.success && applyResult.total_applied > 0) {
-            toast.success(`Pago registrado y aplicado automáticamente: $${applyResult.total_applied.toLocaleString()}`);
-          } else {
-            toast.success('Pago registrado. No se encontraron facturas pendientes para aplicar automáticamente.');
-          }
-        } catch (applyError) {
-          console.warn('⚠️ Auto-application failed, but payment was created:', applyError);
-          toast.success('Pago registrado exitosamente. Podrás aplicarlo manualmente desde el módulo de conciliación.');
-        }
-      } else {
-        toast.success('Pago registrado exitosamente');
+        console.warn('⚠️ ADVERTENCIA: La aplicación automática FIFO está deprecada.');
+        console.warn('⚠️ Se recomienda usar aplicación manual desde el módulo de Conciliación de Pagos.');
+        toast.warning('ADVERTENCIA: La aplicación automática FIFO está deprecada. Use aplicación manual.');
       }
+      
+      // Siempre registrar sin aplicar automáticamente
+      toast.success('Pago registrado exitosamente. Aplíquelo manualmente desde Conciliación de Pagos.');
       
       await fetchPayments();
       return data;
