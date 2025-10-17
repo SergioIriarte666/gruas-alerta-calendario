@@ -18,6 +18,14 @@ export interface CraneInventoryMetrics {
   totalValue: number;
   lastMovementDate: string | null;
   recentPurchases: number;
+  
+  // SINCRONIZACIÓN ESPECÍFICA DE ESTA GRÚA
+  syncStatus: {
+    totalParts: number;
+    syncedParts: number;
+    unsyncedParts: number;
+    syncPercentage: number;
+  };
 }
 
 export const useCraneInventoryMetrics = (craneId: string) => {
@@ -71,6 +79,17 @@ export const useCraneInventoryMetrics = (craneId: string) => {
       const lastMovementDate = consumptionData?.[0]?.movement_date || null;
       const pendingMaintenanceAlerts = maintenanceData?.length || 0;
 
+      // 4. Calcular estado de sincronización ESPECÍFICO de esta grúa
+      const { data: allCraneParts } = await supabase
+        .from('crane_parts')
+        .select('id, inventory_movement_id')
+        .eq('crane_id', craneId);
+
+      const totalParts = allCraneParts?.length || 0;
+      const syncedParts = allCraneParts?.filter(p => p.inventory_movement_id !== null).length || 0;
+      const unsyncedParts = totalParts - syncedParts;
+      const syncPercentage = totalParts > 0 ? Math.round((syncedParts / totalParts) * 100) : 100;
+
       return {
         // Piezas instaladas
         totalPartsInstalled,
@@ -86,7 +105,15 @@ export const useCraneInventoryMetrics = (craneId: string) => {
         // Métricas unificadas
         totalValue: installedPartsValue + consumptionValue,
         lastMovementDate,
-        recentPurchases
+        recentPurchases,
+        
+        // Sincronización específica
+        syncStatus: {
+          totalParts,
+          syncedParts,
+          unsyncedParts,
+          syncPercentage
+        }
       };
     },
     enabled: !!craneId

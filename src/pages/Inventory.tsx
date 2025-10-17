@@ -8,6 +8,7 @@ import { Package, AlertTriangle, TrendingUp, BarChart3, Plus, Search, Filter, Do
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useInventoryStats, useInventoryMovements, useLowStockItems } from '@/hooks/useInventory';
+import { useInventorySyncWatcher } from '@/hooks/useInventorySyncWatcher';
 import { InventoryMovementForm } from '@/components/inventory/InventoryMovementForm';
 import { ProductCatalogTable } from '@/components/inventory/ProductCatalogTable';
 import { MovementsHistoryTable } from '@/components/inventory/MovementsHistoryTable';
@@ -18,6 +19,9 @@ import { InventoryFixPanel } from '@/components/inventory/InventoryFixPanel';
 import { format } from 'date-fns';
 
 const Inventory = () => {
+  // Activar watcher de sincronización global (todas las grúas)
+  useInventorySyncWatcher();
+  
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [showMovementForm, setShowMovementForm] = useState(false);
