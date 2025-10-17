@@ -143,10 +143,10 @@ export const PartsForm = ({ isOpen, onClose, craneId, editingPart }: PartsFormPr
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="bg-black border-tms-green/30 max-w-2xl">
+      <DialogContent className="bg-white border-border max-w-2xl">
         <DialogHeader>
-          <DialogTitle className="text-white flex items-center gap-2">
-            <Package className="w-5 h-5 text-tms-green" />
+          <DialogTitle className="text-foreground flex items-center gap-2">
+            <Package className="w-5 h-5 text-primary" />
             {editingPart ? 'Editar Pieza' : 'Agregar Nueva Pieza'}
           </DialogTitle>
         </DialogHeader>
@@ -154,7 +154,7 @@ export const PartsForm = ({ isOpen, onClose, craneId, editingPart }: PartsFormPr
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           {/* Date Selection */}
           <div className="space-y-2">
-            <Label htmlFor="date" className="text-white flex items-center gap-2">
+            <Label htmlFor="date" className="text-foreground flex items-center gap-2">
               <CalendarIcon className="w-4 h-4" />
               Fecha de Compra
             </Label>
@@ -162,13 +162,13 @@ export const PartsForm = ({ isOpen, onClose, craneId, editingPart }: PartsFormPr
               <PopoverTrigger asChild>
                 <Button
                   variant="outline"
-                  className="w-full justify-start text-left font-normal border-tms-green/30 hover:bg-tms-green/10"
+                  className="w-full justify-start text-left font-normal"
                 >
                   <CalendarIcon className="mr-2 h-4 w-4" />
                   {selectedDate ? format(selectedDate, 'PPP', { locale: es }) : 'Seleccionar fecha'}
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-auto p-0 bg-black border-tms-green/30">
+              <PopoverContent className="w-auto p-0 bg-popover border-border">
                 <Calendar
                   mode="single"
                   selected={selectedDate}
@@ -181,7 +181,7 @@ export const PartsForm = ({ isOpen, onClose, craneId, editingPart }: PartsFormPr
 
           {/* Kilometraje */}
           <div className="space-y-2">
-            <Label htmlFor="kilometraje" className="text-white flex items-center gap-2">
+            <Label htmlFor="kilometraje" className="text-foreground flex items-center gap-2">
               <Gauge className="w-4 h-4" />
               Kilometraje (Opcional)
             </Label>
@@ -193,60 +193,60 @@ export const PartsForm = ({ isOpen, onClose, craneId, editingPart }: PartsFormPr
                 valueAsNumber: true,
                 min: { value: 0, message: 'El kilometraje debe ser mayor o igual a 0' }
               })}
-              className="bg-white/5 border-tms-green/30 text-white"
+              className="bg-background border-border text-foreground"
               placeholder="Ej: 50000"
             />
             {errors.kilometraje && (
-              <span className="text-red-400 text-sm">{(errors as any).kilometraje.message}</span>
+              <span className="text-destructive text-sm">{(errors as any).kilometraje.message}</span>
             )}
           </div>
 
           {/* Supplier Information */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="supplier" className="text-white flex items-center gap-2">
+              <Label htmlFor="supplier" className="text-foreground flex items-center gap-2">
                 <User className="w-4 h-4" />
                 Proveedor
               </Label>
               <Input
                 id="supplier"
                 {...register('supplier', { required: 'El proveedor es requerido' })}
-                className="bg-white/5 border-tms-green/30 text-white"
+                className="bg-background border-border text-foreground"
                 placeholder="Nombre del proveedor"
               />
               {errors.supplier && (
-                <span className="text-red-400 text-sm">{errors.supplier.message}</span>
+                <span className="text-destructive text-sm">{errors.supplier.message}</span>
               )}
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="phone" className="text-white flex items-center gap-2">
+              <Label htmlFor="phone" className="text-foreground flex items-center gap-2">
                 <Phone className="w-4 h-4" />
-                Teléfono
+                Teléfono del proveedor
               </Label>
               <Input
                 id="phone"
                 {...register('phone')}
-                className="bg-white/5 border-tms-green/30 text-white"
+                className="bg-background border-border text-foreground"
                 placeholder="Teléfono del proveedor"
               />
             </div>
           </div>
 
            {/* Part Information */}
-          <div className="space-y-2">
-            <Label htmlFor="part_name" className="text-white flex items-center gap-2">
+           <div className="space-y-2">
+            <Label htmlFor="part_name" className="text-foreground flex items-center gap-2">
               <Package className="w-4 h-4" />
               Nombre de la Pieza
             </Label>
             <Input
               id="part_name"
               {...register('part_name', { required: 'El nombre de la pieza es requerido' })}
-              className="bg-white/5 border-tms-green/30 text-white"
+              className="bg-background border-border text-foreground"
               placeholder="Ej: Filtro de aceite, Pastillas de freno..."
             />
             {errors.part_name && (
-              <span className="text-red-400 text-sm">{errors.part_name.message}</span>
+              <span className="text-destructive text-sm">{errors.part_name.message}</span>
             )}
             
             {/* Debug info */}
@@ -278,7 +278,7 @@ export const PartsForm = ({ isOpen, onClose, craneId, editingPart }: PartsFormPr
           {/* Quantity and Price */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="quantity" className="text-white flex items-center gap-2">
+              <Label htmlFor="quantity" className="text-foreground flex items-center gap-2">
                 <Hash className="w-4 h-4" />
                 Cantidad
               </Label>
@@ -290,15 +290,15 @@ export const PartsForm = ({ isOpen, onClose, craneId, editingPart }: PartsFormPr
                   required: 'La cantidad es requerida',
                   min: { value: 1, message: 'Debe ser al menos 1' }
                 })}
-                className="bg-white/5 border-tms-green/30 text-white"
+                className="bg-background border-border text-foreground"
               />
               {errors.quantity && (
-                <span className="text-red-400 text-sm">{errors.quantity.message}</span>
+                <span className="text-destructive text-sm">{errors.quantity.message}</span>
               )}
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="unit_price" className="text-white flex items-center gap-2">
+              <Label htmlFor="unit_price" className="text-foreground flex items-center gap-2">
                 <DollarSign className="w-4 h-4" />
                 Valor Unitario
               </Label>
@@ -311,19 +311,19 @@ export const PartsForm = ({ isOpen, onClose, craneId, editingPart }: PartsFormPr
                   required: 'El valor unitario es requerido',
                   min: { value: 0.01, message: 'Debe ser mayor a 0' }
                 })}
-                className="bg-white/5 border-tms-green/30 text-white"
+                className="bg-background border-border text-foreground"
               />
               {errors.unit_price && (
-                <span className="text-red-400 text-sm">{errors.unit_price.message}</span>
+                <span className="text-destructive text-sm">{errors.unit_price.message}</span>
               )}
             </div>
 
             <div className="space-y-2">
-              <Label className="text-white flex items-center gap-2">
+              <Label className="text-foreground flex items-center gap-2">
                 <DollarSign className="w-4 h-4" />
                 Valor Total
               </Label>
-              <div className="bg-tms-green/10 border border-tms-green/30 rounded-md px-3 py-2 text-tms-green font-semibold">
+              <div className="bg-primary/10 border border-primary/30 rounded-md px-3 py-2 text-primary font-semibold">
                 ${totalValue.toLocaleString('es-CL')}
               </div>
             </div>
@@ -331,14 +331,14 @@ export const PartsForm = ({ isOpen, onClose, craneId, editingPart }: PartsFormPr
 
           {/* Notes */}
           <div className="space-y-2">
-            <Label htmlFor="notes" className="text-white flex items-center gap-2">
+            <Label htmlFor="notes" className="text-foreground flex items-center gap-2">
               <FileText className="w-4 h-4" />
               Notas (Opcional)
             </Label>
             <Textarea
               id="notes"
               {...register('notes')}
-              className="bg-white/5 border-tms-green/30 text-white"
+              className="bg-background border-border text-foreground"
               placeholder="Información adicional sobre la compra..."
               rows={3}
             />
@@ -350,14 +350,13 @@ export const PartsForm = ({ isOpen, onClose, craneId, editingPart }: PartsFormPr
               type="button"
               variant="outline"
               onClick={handleClose}
-              className="border-gray-600 text-gray-300 hover:bg-gray-700"
             >
               Cancelar
             </Button>
             <Button
               type="submit"
               disabled={createMutation.isPending || updateMutation.isPending}
-              className="bg-tms-green hover:bg-tms-green/80 text-black font-semibold"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold"
             >
               {createMutation.isPending || updateMutation.isPending ? 'Guardando...' : editingPart ? 'Actualizar' : 'Agregar'}
             </Button>
