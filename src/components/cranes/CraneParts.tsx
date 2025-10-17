@@ -297,8 +297,8 @@ export const CraneParts = ({ crane }: CranePartsProps) => {
                             variant="secondary" 
                             className={`${
                               part.origin === 'consumption' 
-                                ? 'bg-red-500/20 text-red-300 border-red-500/30' 
-                                : 'bg-green-500/20 text-green-300 border-green-500/30'
+                                ? 'bg-red-500/20 text-black border-red-500/30' 
+                                : 'bg-green-500/20 text-black border-green-500/30'
                             }`}
                           >
                             {part.origin === 'consumption' ? '-' : '+'}${part.total_value.toLocaleString('es-CL')}
