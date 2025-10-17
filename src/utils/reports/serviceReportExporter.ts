@@ -48,17 +48,21 @@ export const exportServiceReport = async ({ format, services, settings, appliedF
     // Tabla optimizada - SIN operador, con origen-destino más claro
     const availableWidth = pageWidth - 28; // Márgenes izquierdo y derecho
     autoTable(doc, {
-      head: [['Fecha', 'Folio', 'Cliente', 'Tipo Servicio', 'Marca Veh.', 'Modelo Veh.', 'Patente Veh.', 'Origen', 'Destino', 'Estado', 'Valor']],
+      head: [['Fecha', 'Folio', 'Cliente', 'Cotización', 'OC', 'Factura', 'Tipo Servicio', 'Marca Veh.', 'Modelo Veh.', 'Patente Veh.', 'Origen', 'Destino', 'Patente Grúa', 'Estado', 'Valor']],
       body: services.map(s => [
         formatDate(new Date(s.serviceDate + 'T00:00:00'), 'dd/MM/yy'),
         s.folio,
         s.client.name.length > 12 ? s.client.name.substring(0, 12) + '...' : s.client.name,
+        (s.quoteNumber || '-').length > 10 ? (s.quoteNumber || '-').substring(0, 10) + '...' : (s.quoteNumber || '-'),
+        (s.purchaseOrder || '-').length > 12 ? (s.purchaseOrder || '-').substring(0, 12) + '...' : (s.purchaseOrder || '-'),
+        (s.invoiceFolio || '-').length > 10 ? (s.invoiceFolio || '-').substring(0, 10) + '...' : (s.invoiceFolio || '-'),
         s.serviceType.name.length > 10 ? s.serviceType.name.substring(0, 10) + '...' : s.serviceType.name,
         s.vehicleBrand || 'N/A',
         s.vehicleModel || 'N/A',
         s.licensePlate || 'N/A',
         (s.origin || 'N/A').length > 15 ? (s.origin || 'N/A').substring(0, 15) + '...' : (s.origin || 'N/A'),
         (s.destination || 'N/A').length > 15 ? (s.destination || 'N/A').substring(0, 15) + '...' : (s.destination || 'N/A'),
+        s.crane.licensePlate || 'N/A',
         s.status,
         `$${getDisplayServiceValue(s).toLocaleString('es-CL')}`
       ]),
@@ -67,17 +71,21 @@ export const exportServiceReport = async ({ format, services, settings, appliedF
       styles: { fontSize: 7, cellPadding: 1.5 },
       tableWidth: availableWidth,
       columnStyles: {
-        0: { cellWidth: availableWidth * 0.07 }, // Fecha - 7%
-        1: { cellWidth: availableWidth * 0.07 }, // Folio - 7%
-        2: { cellWidth: availableWidth * 0.12 }, // Cliente - 12%
-        3: { cellWidth: availableWidth * 0.10 }, // Tipo Servicio - 10%
-        4: { cellWidth: availableWidth * 0.08 }, // Marca Veh. - 8%
-        5: { cellWidth: availableWidth * 0.08 }, // Modelo Veh. - 8%
-        6: { cellWidth: availableWidth * 0.08 }, // Patente Veh. - 8%
-        7: { cellWidth: availableWidth * 0.15 }, // Origen - 15%
-        8: { cellWidth: availableWidth * 0.15 }, // Destino - 15%
-        9: { cellWidth: availableWidth * 0.06 }, // Estado - 6%
-        10: { cellWidth: availableWidth * 0.09 }  // Valor - 9%
+        0: { cellWidth: availableWidth * 0.06 },  // Fecha - 6%
+        1: { cellWidth: availableWidth * 0.06 },  // Folio - 6%
+        2: { cellWidth: availableWidth * 0.10 },  // Cliente - 10%
+        3: { cellWidth: availableWidth * 0.07 },  // Cotización - 7%
+        4: { cellWidth: availableWidth * 0.08 },  // OC - 8%
+        5: { cellWidth: availableWidth * 0.07 },  // Factura - 7%
+        6: { cellWidth: availableWidth * 0.08 },  // Tipo Servicio - 8%
+        7: { cellWidth: availableWidth * 0.07 },  // Marca Veh. - 7%
+        8: { cellWidth: availableWidth * 0.07 },  // Modelo Veh. - 7%
+        9: { cellWidth: availableWidth * 0.07 },  // Patente Veh. - 7%
+        10: { cellWidth: availableWidth * 0.10 }, // Origen - 10%
+        11: { cellWidth: availableWidth * 0.10 }, // Destino - 10%
+        12: { cellWidth: availableWidth * 0.06 }, // Patente Grúa - 6%
+        13: { cellWidth: availableWidth * 0.05 }, // Estado - 5%
+        14: { cellWidth: availableWidth * 0.06 }  // Valor - 6%
       }
     });
     
@@ -97,6 +105,10 @@ export const exportServiceReport = async ({ format, services, settings, appliedF
       'Folio': s.folio,
       'Cliente': s.client.name,
       'RUT Cliente': s.client.rut,
+      'Cotización': s.quoteNumber || '-',
+      'Orden de Compra': s.purchaseOrder || '-',
+      'Factura': s.invoiceFolio || '-',
+      'Número Fiscal': s.invoiceNumeroFiscal || '-',
       'Tipo de Servicio': s.serviceType.name,
       'Marca Vehículo': s.vehicleBrand || 'N/A',
       'Modelo Vehículo': s.vehicleModel || 'N/A',

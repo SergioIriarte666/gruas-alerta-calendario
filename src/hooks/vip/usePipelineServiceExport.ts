@@ -90,10 +90,12 @@ export const usePipelineServiceExport = (
       status: service.status,
       createdAt: service.createdAt,
       updatedAt: service.updatedAt,
-      // Campos adicionales específicos del pipeline
-      quoteNumber: service.quoteNumber || '',
-      purchaseOrder: service.purchaseOrderNumber || service.purchaseOrder || '',
-      observations: service.observations || '',
+        // Campos adicionales específicos del pipeline
+        quoteNumber: service.quoteNumber || '',
+        purchaseOrder: service.purchaseOrderNumber || service.purchaseOrder || '',
+        invoiceFolio: service.invoiceFolio || '',
+        invoiceNumeroFiscal: service.invoiceNumeroFiscal || '',
+        observations: service.observations || '',
       daysInStatus: differenceInDays(new Date(), parseFromDatabase(service.serviceDate)),
       hasExcess: service.hasExcess || false,
       clientCoveredAmount: service.clientCoveredAmount,
