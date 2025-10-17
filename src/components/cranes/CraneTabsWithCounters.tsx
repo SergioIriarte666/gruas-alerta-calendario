@@ -69,7 +69,7 @@ export const CraneTabsWithCounters = ({ crane }: CraneTabsWithCountersProps) => 
   });
 
   const CounterBadge = ({ count }: { count: number }) => (
-    <Badge variant="secondary" className="ml-2 bg-primary/20 text-primary border-primary/50">
+    <Badge variant="secondary" className="ml-2 bg-primary/20 text-black border-primary/50">
       {count}
     </Badge>
   );
