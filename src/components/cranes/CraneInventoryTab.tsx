@@ -216,16 +216,22 @@ export const CraneInventoryTab = ({ crane }: CraneInventoryTabProps) => {
         </CardContent>
       </Card>
 
-      {/* Movimientos Recientes de Inventario */}
+      {/* Consumos de Inventario de esta Grúa */}
       {craneMovements.length > 0 && (
         <Card className="bg-white/5 border-tms-green/30">
           <CardHeader>
             <CardTitle className="text-white flex items-center gap-2">
               <ArrowUpDown className="w-5 h-5 text-tms-green" />
-              Movimientos Recientes de Inventario
+              Consumos de Inventario de esta Grúa
             </CardTitle>
           </CardHeader>
           <CardContent>
+            <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-3 mb-4">
+              <p className="text-sm text-blue-300">
+                <strong>Nota:</strong> Esta sección muestra únicamente los consumos (salidas) de materiales específicos de esta grúa. 
+                Las compras generales de inventario se gestionan en el módulo de <strong>Inventario</strong>.
+              </p>
+            </div>
             <div className="space-y-4">
               {craneMovements.slice(0, 5).map((movement) => (
                 <div key={movement.id} className="flex items-center justify-between p-3 bg-white/5 rounded-lg">
@@ -267,22 +273,42 @@ export const CraneInventoryTab = ({ crane }: CraneInventoryTabProps) => {
         </Card>
       )}
 
-      {/* Estado del Último Movimiento */}
+      {/* Estado del Último Consumo */}
       {metrics?.lastMovementDate && (
         <Card className="bg-white/5 border-tms-green/30">
           <CardHeader>
             <CardTitle className="text-white flex items-center gap-2">
               <Calendar className="w-5 h-5 text-tms-green" />
-              Último Movimiento
+              Último Consumo
             </CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-gray-300">
-              Último movimiento de inventario registrado el{' '}
+              Último consumo de inventario registrado el{' '}
               <span className="text-tms-green font-medium">
                 {format(new Date(metrics.lastMovementDate), 'dd/MM/yyyy HH:mm', { locale: es })}
               </span>
             </p>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Mensaje si no hay consumos */}
+      {craneMovements.length === 0 && (
+        <Card className="bg-white/5 border-tms-green/30">
+          <CardContent className="p-6">
+            <div className="text-center">
+              <ArrowUpDown className="w-12 h-12 text-gray-500 mx-auto mb-3" />
+              <h3 className="text-lg font-semibold text-white mb-2">Sin consumos registrados</h3>
+              <p className="text-gray-400 text-sm mb-4">
+                Esta grúa aún no tiene consumos de inventario registrados.
+              </p>
+              <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-3 max-w-md mx-auto">
+                <p className="text-sm text-blue-300">
+                  Para registrar consumos, dirígete al módulo de <strong>Inventario</strong> y registra una salida asignándola a esta grúa.
+                </p>
+              </div>
+            </div>
           </CardContent>
         </Card>
       )}
