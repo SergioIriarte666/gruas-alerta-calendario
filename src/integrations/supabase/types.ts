@@ -3755,6 +3755,10 @@ export type Database = {
         Args: { user_id?: string }
         Returns: Database["public"]["Enums"]["app_role"]
       }
+      get_weighted_average_cost: {
+        Args: { p_item_id: string }
+        Returns: number
+      }
       global_inventory_cleanup: {
         Args: Record<PropertyKey, never>
         Returns: Json
