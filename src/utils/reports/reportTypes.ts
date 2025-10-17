@@ -91,6 +91,7 @@ export interface ExportSupplierPaymentReportArgs {
   format: 'pdf' | 'excel';
   payments: any[];
   suppliers: any[];
+  categories: any[];
   settings: Settings;
   appliedFilters: AppliedSupplierPaymentFilters;
 }

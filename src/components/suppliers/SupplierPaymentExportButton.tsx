@@ -14,6 +14,7 @@ import { useSupplierPaymentExport } from '@/hooks/suppliers/useSupplierPaymentEx
 interface SupplierPaymentExportButtonProps {
   payments: SupplierPaymentWithDetails[];
   suppliers: any[];
+  categories: any[];
   filters: SupplierPaymentReportFilters;
   size?: 'default' | 'sm' | 'lg';
   variant?: 'default' | 'outline' | 'ghost';
@@ -23,6 +24,7 @@ interface SupplierPaymentExportButtonProps {
 export const SupplierPaymentExportButton: React.FC<SupplierPaymentExportButtonProps> = ({
   payments,
   suppliers,
+  categories,
   filters,
   size = 'default',
   variant = 'outline',
@@ -31,7 +33,7 @@ export const SupplierPaymentExportButton: React.FC<SupplierPaymentExportButtonPr
   const { exportPayments, isExporting } = useSupplierPaymentExport();
 
   const handleExport = (format: 'pdf' | 'excel', reportType: 'current' | 'future') => {
-    exportPayments(payments, suppliers, { ...filters, reportType }, format);
+    exportPayments(payments, suppliers, categories, { ...filters, reportType }, format);
   };
 
   const isDisabled = isExporting || payments.length === 0;

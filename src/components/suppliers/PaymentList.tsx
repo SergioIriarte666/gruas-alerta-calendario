@@ -272,6 +272,7 @@ export const PaymentList: React.FC = () => {
           <SupplierPaymentExportButton 
             payments={filteredAndSortedPayments}
             suppliers={suppliers}
+            categories={activeCategories || []}
             filters={{
               searchTerm,
               status: selectedStatus,

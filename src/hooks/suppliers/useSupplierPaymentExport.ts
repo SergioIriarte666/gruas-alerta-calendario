@@ -13,6 +13,7 @@ export const useSupplierPaymentExport = () => {
   const exportPayments = async (
     payments: SupplierPaymentWithDetails[],
     suppliers: any[],
+    categories: any[],
     filters: SupplierPaymentReportFilters,
     format: 'pdf' | 'excel'
   ) => {
@@ -65,6 +66,7 @@ export const useSupplierPaymentExport = () => {
         format,
         payments: filteredPayments,
         suppliers,
+        categories,
         settings,
         appliedFilters,
       });

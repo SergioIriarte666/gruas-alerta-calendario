@@ -11,17 +11,18 @@ export const exportSupplierPaymentReport = async ({
   format,
   payments,
   suppliers,
+  categories,
   settings,
   appliedFilters,
 }: ExportSupplierPaymentReportArgs) => {
   if (format === 'pdf') {
-    await generatePDF(payments, suppliers, settings, appliedFilters);
+    await generatePDF(payments, suppliers, categories, settings, appliedFilters);
   } else {
-    await generateExcel(payments, suppliers, settings, appliedFilters);
+    await generateExcel(payments, suppliers, categories, settings, appliedFilters);
   }
 };
 
-const generatePDF = async (payments: any[], suppliers: any[], settings: any, filters: any) => {
+const generatePDF = async (payments: any[], suppliers: any[], categories: any[], settings: any, filters: any) => {
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.width;
   const today = format(new Date(), 'dd/MM/yyyy', { locale: es });
@@ -29,6 +30,13 @@ const generatePDF = async (payments: any[], suppliers: any[], settings: any, fil
   // Helper function to get supplier name
   const getSupplierName = (supplierId: string) => {
     return suppliers.find(s => s.id === supplierId)?.name || 'N/A';
+  };
+  
+  // Helper function to get category label
+  const getCategoryLabel = (categoryId: string | null) => {
+    if (!categoryId) return 'Sin categoría';
+    const category = categories.find(c => c.id === categoryId);
+    return category?.label || 'N/A';
   };
   
   // Obtener datos de empresa
@@ -159,7 +167,7 @@ const generatePDF = async (payments: any[], suppliers: any[], settings: any, fil
   const tableData = payments.map(payment => [
     getSupplierName(payment.supplier_id),
     payment.description,
-    payment.category || 'N/A',
+    getCategoryLabel(payment.category),
     `$${payment.amount.toLocaleString()}`,
     format(new Date(payment.due_date), 'dd/MM/yyyy', { locale: es }),
     getStatusLabel(payment.status),
@@ -193,7 +201,7 @@ const generatePDF = async (payments: any[], suppliers: any[], settings: any, fil
   doc.save(filename);
 };
 
-const generateExcel = async (payments: any[], suppliers: any[], settings: any, filters: any) => {
+const generateExcel = async (payments: any[], suppliers: any[], categories: any[], settings: any, filters: any) => {
   const workbook = XLSX.utils.book_new();
   const metrics = calculateMetrics(payments, filters);
   
@@ -203,6 +211,13 @@ const generateExcel = async (payments: any[], suppliers: any[], settings: any, f
   // Helper function to get supplier name
   const getSupplierName = (supplierId: string) => {
     return suppliers.find(s => s.id === supplierId)?.name || 'N/A';
+  };
+  
+  // Helper function to get category label
+  const getCategoryLabel = (categoryId: string | null) => {
+    if (!categoryId) return 'Sin categoría';
+    const category = categories.find(c => c.id === categoryId);
+    return category?.label || 'N/A';
   };
   
   const getDateTypeLabel = (type: string) => {
@@ -269,7 +284,7 @@ const generateExcel = async (payments: any[], suppliers: any[], settings: any, f
     detailData.push([
       getSupplierName(payment.supplier_id),
       payment.description,
-      payment.category || 'N/A',
+      getCategoryLabel(payment.category),
       payment.amount,
       format(new Date(payment.due_date), 'dd/MM/yyyy', { locale: es }),
       getStatusLabel(payment.status),
