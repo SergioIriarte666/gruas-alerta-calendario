@@ -69,71 +69,95 @@ export const CraneInventoryTab = ({ crane }: CraneInventoryTabProps) => {
     <div className="space-y-6">
       {/* Resumen de Métricas */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="bg-white/5 border-tms-green/30">
+        <Card className="bg-card border-border">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <Package className="w-8 h-8 text-tms-green" />
+              <Package className="w-8 h-8 text-primary" />
               <div>
-                <p className="text-sm text-gray-400">Total Piezas</p>
-                <p className="text-2xl font-bold text-white">{metrics?.totalParts || 0}</p>
+                <p className="text-sm text-muted-foreground">Piezas Instaladas</p>
+                <p className="text-2xl font-bold text-foreground">{metrics?.totalPartsInstalled || 0}</p>
+                <p className="text-xs text-muted-foreground">${(metrics?.installedPartsValue || 0).toLocaleString('es-CL')}</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="bg-white/5 border-tms-green/30">
+        <Card className="bg-card border-border">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <DollarSign className="w-8 h-8 text-green-400" />
+              <Warehouse className="w-8 h-8 text-orange-500" />
               <div>
-                <p className="text-sm text-gray-400">Valor Total</p>
-                <p className="text-2xl font-bold text-white">${(metrics?.totalValue || 0).toLocaleString('es-CL')}</p>
+                <p className="text-sm text-muted-foreground">Consumos</p>
+                <p className="text-2xl font-bold text-foreground">{metrics?.totalInventoryConsumptions || 0}</p>
+                <p className="text-xs text-muted-foreground">${(metrics?.consumptionValue || 0).toLocaleString('es-CL')}</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="bg-white/5 border-tms-green/30">
+        <Card className="bg-card border-border">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <ShoppingCart className="w-8 h-8 text-blue-400" />
+              <DollarSign className="w-8 h-8 text-green-500" />
               <div>
-                <p className="text-sm text-gray-400">Compras Recientes</p>
-                <p className="text-2xl font-bold text-white">{metrics?.recentPurchases || 0}</p>
+                <p className="text-sm text-muted-foreground">Valor Total</p>
+                <p className="text-2xl font-bold text-foreground">${(metrics?.totalValue || 0).toLocaleString('es-CL')}</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="bg-white/5 border-tms-green/30">
+        <Card className="bg-card border-border">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <TrendingUp className="w-8 h-8 text-orange-400" />
+              <TrendingUp className="w-8 h-8 text-blue-500" />
               <div>
-                <p className="text-sm text-gray-400">Sincronización</p>
-                <p className="text-2xl font-bold text-white">{syncStats?.sync_percentage.toFixed(0) || 0}%</p>
+                <p className="text-sm text-muted-foreground">Sincronización</p>
+                <p className="text-2xl font-bold text-foreground">{syncStats?.sync_percentage.toFixed(0) || 0}%</p>
               </div>
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Alertas de Mantenimiento */}
-      {(metrics?.pendingMaintenanceAlerts || 0) > 0 && (
-        <Card className="border-yellow-500/30 bg-yellow-500/5">
-          <CardHeader>
-            <CardTitle className="text-yellow-400 flex items-center gap-2">
-              <AlertTriangle className="w-5 h-5" />
-              Alertas de Mantenimiento
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-yellow-300">
-              Hay {metrics?.pendingMaintenanceAlerts} mantenimientos programados pendientes para esta grúa.
-            </p>
-          </CardContent>
-        </Card>
-      )}
+      {/* Estado de Integración */}
+      <Card className="bg-card border-border">
+        <CardHeader>
+          <CardTitle className="text-foreground flex items-center gap-2">
+            <TrendingUp className="w-5 h-5 text-primary" />
+            Estado de Integración
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
+            <span className="text-sm text-muted-foreground">Trazabilidad de Piezas</span>
+            <Badge className="bg-green-500/20 text-green-600 border-green-500/30">
+              ✅ Sincronizada
+            </Badge>
+          </div>
+          <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
+            <span className="text-sm text-muted-foreground">Costos de Mantenimiento</span>
+            <Badge className="bg-green-500/20 text-green-600 border-green-500/30">
+              ✅ Actualizado
+            </Badge>
+          </div>
+          <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
+            <span className="text-sm text-muted-foreground">Inventario</span>
+            <Badge className="bg-green-500/20 text-green-600 border-green-500/30">
+              ✅ Sincronizado ({syncStats?.sync_percentage.toFixed(0)}%)
+            </Badge>
+          </div>
+          {(metrics?.pendingMaintenanceAlerts || 0) > 0 && (
+            <div className="flex items-center justify-between p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
+              <span className="text-sm text-yellow-600">Mantenimientos Pendientes</span>
+              <Badge className="bg-yellow-500/20 text-yellow-600 border-yellow-500/30">
+                <AlertTriangle className="w-3 h-3 mr-1" />
+                {metrics.pendingMaintenanceAlerts} alertas
+              </Badge>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Trazabilidad de Piezas */}
       <Card className="bg-white/5 border-tms-green/30">

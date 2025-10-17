@@ -16,55 +16,87 @@ interface CraneTabsWithCountersProps {
 }
 
 export const CraneTabsWithCounters = ({ crane }: CraneTabsWithCountersProps) => {
-  // Consulta para obtener contadores
+  // Consulta para obtener contadores PRECISOS
   const { data: counters } = useQuery({
     queryKey: ['crane-counters', crane.id],
     queryFn: async () => {
-      const [servicesData, costsData, partsData, maintenanceData] = await Promise.all([
-        supabase.from('services').select('id', { count: 'exact' }).eq('crane_id', crane.id),
-        supabase.from('costs').select('id', { count: 'exact' }).eq('crane_id', crane.id),
-        supabase.from('crane_parts').select('id', { count: 'exact' }).eq('crane_id', crane.id),
-        supabase.from('crane_maintenance').select('id', { count: 'exact' }).eq('crane_id', crane.id)
+      // 1. Total servicios
+      const { count: servicesCount } = await supabase
+        .from('services')
+        .select('id', { count: 'exact' })
+        .eq('crane_id', crane.id);
+
+      // 2. Costos operativos (excluyendo comisiones)
+      const { data: commissionCategory } = await supabase
+        .from('cost_categories')
+        .select('id')
+        .eq('name', 'Comisión Operador')
+        .single();
+
+      const { count: operationalCostsCount } = await supabase
+        .from('costs')
+        .select('id', { count: 'exact' })
+        .eq('crane_id', crane.id)
+        .neq('category_id', commissionCategory?.id || '00000000-0000-0000-0000-000000000000');
+
+      // 3. Piezas (directas + consumos)
+      const [{ count: directPartsCount }, { count: consumptionsCount }] = await Promise.all([
+        supabase
+          .from('crane_parts')
+          .select('id', { count: 'exact' })
+          .eq('crane_id', crane.id),
+        supabase
+          .from('inventory_movements')
+          .select('id', { count: 'exact' })
+          .eq('crane_id', crane.id)
+          .eq('movement_type', 'exit')
+          .eq('status', 'active')
       ]);
 
+      // 4. Mantenimientos
+      const { count: maintenanceCount } = await supabase
+        .from('crane_maintenance')
+        .select('id', { count: 'exact' })
+        .eq('crane_id', crane.id);
+
       return {
-        services: servicesData.count || 0,
-        costs: costsData.count || 0,
-        parts: partsData.count || 0,
-        maintenance: maintenanceData.count || 0
+        services: servicesCount || 0,
+        costs: operationalCostsCount || 0,
+        parts: (directPartsCount || 0) + (consumptionsCount || 0),
+        maintenance: maintenanceCount || 0
       };
     }
   });
 
   const CounterBadge = ({ count }: { count: number }) => (
-    <Badge variant="secondary" className="ml-2 bg-tms-green/20 text-tms-green border-tms-green/50">
+    <Badge variant="secondary" className="ml-2 bg-primary/20 text-primary border-primary/50">
       {count}
     </Badge>
   );
 
   return (
     <Tabs defaultValue="overview" className="w-full h-full flex flex-col">
-      <TabsList className="grid w-full grid-cols-5 lg:grid-cols-6 bg-black/50 border-b border-tms-green/30">
-        <TabsTrigger value="overview" className="data-[state=active]:bg-tms-green/20 data-[state=active]:text-tms-green">
+      <TabsList className="grid w-full grid-cols-5 lg:grid-cols-6 bg-muted border-b border-border">
+        <TabsTrigger value="overview" className="data-[state=active]:bg-primary/20 data-[state=active]:text-primary">
           Resumen
         </TabsTrigger>
-        <TabsTrigger value="services" className="data-[state=active]:bg-tms-green/20 data-[state=active]:text-tms-green">
+        <TabsTrigger value="services" className="data-[state=active]:bg-primary/20 data-[state=active]:text-primary">
           Servicios
           <CounterBadge count={counters?.services || 0} />
         </TabsTrigger>
-        <TabsTrigger value="costs" className="data-[state=active]:bg-tms-green/20 data-[state=active]:text-tms-green">
-          Costos
+        <TabsTrigger value="costs" className="data-[state=active]:bg-primary/20 data-[state=active]:text-primary">
+          Costos Operativos
           <CounterBadge count={counters?.costs || 0} />
         </TabsTrigger>
-        <TabsTrigger value="parts" className="data-[state=active]:bg-tms-green/20 data-[state=active]:text-tms-green">
+        <TabsTrigger value="parts" className="data-[state=active]:bg-primary/20 data-[state=active]:text-primary">
           Piezas
           <CounterBadge count={counters?.parts || 0} />
         </TabsTrigger>
-        <TabsTrigger value="maintenance" className="data-[state=active]:bg-tms-green/20 data-[state=active]:text-tms-green">
+        <TabsTrigger value="maintenance" className="data-[state=active]:bg-primary/20 data-[state=active]:text-primary">
           Mantenimiento
           <CounterBadge count={counters?.maintenance || 0} />
         </TabsTrigger>
-        <TabsTrigger value="inventory" className="data-[state=active]:bg-tms-green/20 data-[state=active]:text-tms-green hidden lg:flex">
+        <TabsTrigger value="inventory" className="data-[state=active]:bg-primary/20 data-[state=active]:text-primary hidden lg:flex">
           Inventario
         </TabsTrigger>
       </TabsList>

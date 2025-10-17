@@ -178,10 +178,10 @@ export const CraneMetricsOverview = ({ crane }: CraneMetricsOverviewProps) => {
         <h4 className="text-lg font-medium text-white mb-4">Inventario y Costos</h4>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <MetricCard
-            title="Piezas Registradas"
-            value={inventoryMetrics?.totalParts || 0}
+            title="Piezas Instaladas"
+            value={inventoryMetrics?.totalPartsInstalled || 0}
             icon={Package}
-            trend="Total histórico"
+            trend="Directas + Consumos"
             status="info"
           />
           <MetricCard

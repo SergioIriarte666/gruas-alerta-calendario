@@ -149,49 +149,49 @@ export const CraneParts = ({ crane }: CranePartsProps) => {
       {/* Statistics Cards */}
       {stats && (
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card className="bg-white/5 border-tms-green/30">
+          <Card className="bg-card border-border">
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
-                <Package className="w-8 h-8 text-tms-green" />
+                <Package className="w-8 h-8 text-primary" />
                 <div>
-                  <p className="text-sm text-gray-400">Total Registros</p>
-                  <p className="text-2xl font-bold text-white">{stats.totalParts}</p>
+                  <p className="text-sm text-muted-foreground">Total Registros</p>
+                  <p className="text-2xl font-bold text-foreground">{stats.totalParts}</p>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="bg-white/5 border-tms-green/30">
+          <Card className="bg-card border-border">
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
-                <DollarSign className="w-8 h-8 text-green-400" />
+                <DollarSign className="w-8 h-8 text-green-500" />
                 <div>
-                  <p className="text-sm text-gray-400">Valor Total</p>
-                  <p className="text-2xl font-bold text-white">${stats.totalValue.toLocaleString('es-CL')}</p>
+                  <p className="text-sm text-muted-foreground">Valor Total</p>
+                  <p className="text-2xl font-bold text-foreground">${stats.totalValue.toLocaleString('es-CL')}</p>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="bg-white/5 border-tms-green/30">
+          <Card className="bg-card border-border">
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
-                <Users className="w-8 h-8 text-blue-400" />
+                <Users className="w-8 h-8 text-blue-500" />
                 <div>
-                  <p className="text-sm text-gray-400">Fuentes</p>
-                  <p className="text-2xl font-bold text-white">{stats.uniqueSuppliers}</p>
+                  <p className="text-sm text-muted-foreground">Fuentes</p>
+                  <p className="text-2xl font-bold text-foreground">{stats.uniqueSuppliers}</p>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="bg-white/5 border-tms-green/30">
+          <Card className="bg-card border-border">
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
-                <Clock className="w-8 h-8 text-orange-400" />
+                <Clock className="w-8 h-8 text-orange-500" />
                 <div>
-                  <p className="text-sm text-gray-400">Últimos 30 días</p>
-                  <p className="text-2xl font-bold text-white">{stats.recentParts}</p>
+                  <p className="text-sm text-muted-foreground">Últimos 30 días</p>
+                  <p className="text-2xl font-bold text-foreground">{stats.recentParts}</p>
                 </div>
               </div>
             </CardContent>

@@ -36,7 +36,7 @@ const CraneInventoryIndicators = ({ crane }: { crane: Crane }) => {
     <div className="grid grid-cols-2 gap-2 mt-3">
       <div className="flex items-center gap-1 text-xs">
         <Package className="w-3 h-3 text-tms-green" />
-        <span className="text-white">{metrics.totalParts} piezas</span>
+        <span className="text-white">{metrics.totalPartsInstalled || 0} piezas</span>
       </div>
       
       <div className="flex items-center gap-1 text-xs">

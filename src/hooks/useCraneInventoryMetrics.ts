@@ -3,28 +3,48 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
 export interface CraneInventoryMetrics {
-  totalParts: number;
-  totalValue: number;
-  recentPurchases: number;
-  lowStockAlerts: number;
-  lastMovementDate: string | null;
-  monthlySpending: number;
+  // PIEZAS INSTALADAS (desde crane_parts directos)
+  totalPartsInstalled: number;
+  installedPartsValue: number;
+  
+  // CONSUMOS DE INVENTARIO (desde inventory_movements)
+  totalInventoryConsumptions: number;
+  consumptionValue: number;
+  
+  // MANTENIMIENTOS
   pendingMaintenanceAlerts: number;
+  
+  // MÉTRICAS UNIFICADAS
+  totalValue: number;
+  lastMovementDate: string | null;
+  recentPurchases: number;
 }
 
 export const useCraneInventoryMetrics = (craneId: string) => {
   return useQuery({
     queryKey: ['crane-inventory-metrics', craneId],
     queryFn: async (): Promise<CraneInventoryMetrics> => {
-      // Obtener total de piezas registradas para la grúa
-      const { data: partsData, error: partsError } = await supabase
+      // 1. Obtener piezas instaladas directamente (crane_parts)
+      const { data: installedPartsData, error: partsError } = await supabase
         .from('crane_parts')
         .select('total_value, date')
-        .eq('crane_id', craneId);
+        .eq('crane_id', craneId)
+        .is('inventory_movement_id', null); // Solo piezas directas
 
       if (partsError) throw partsError;
 
-      // Obtener alertas de mantenimiento pendientes
+      // 2. Obtener consumos de inventario (movimientos de salida)
+      const { data: consumptionData, error: consumptionError } = await supabase
+        .from('inventory_movements')
+        .select('movement_date, total_cost, quantity')
+        .eq('crane_id', craneId)
+        .eq('movement_type', 'exit')
+        .eq('status', 'active')
+        .order('movement_date', { ascending: false });
+
+      if (consumptionError) throw consumptionError;
+
+      // 3. Obtener alertas de mantenimiento pendientes
       const { data: maintenanceData, error: maintenanceError } = await supabase
         .from('crane_maintenance')
         .select('id')
@@ -34,43 +54,39 @@ export const useCraneInventoryMetrics = (craneId: string) => {
 
       if (maintenanceError) throw maintenanceError;
 
-      // Obtener movimientos de inventario relacionados con la grúa
-      const { data: movementsData, error: movementsError } = await supabase
-        .from('inventory_movements')
-        .select('movement_date, total_cost, movement_type')
-        .eq('crane_id', craneId)
-        .eq('status', 'active')
-        .order('movement_date', { ascending: false });
+      // CALCULAR MÉTRICAS SEPARADAS
+      const totalPartsInstalled = installedPartsData?.length || 0;
+      const installedPartsValue = installedPartsData?.reduce((sum, part) => sum + (part.total_value || 0), 0) || 0;
 
-      if (movementsError) throw movementsError;
+      const totalInventoryConsumptions = consumptionData?.length || 0;
+      const consumptionValue = consumptionData?.reduce((sum, consumption) => sum + (consumption.total_cost || 0), 0) || 0;
 
-      // Calcular métricas
-      const totalParts = partsData?.length || 0;
-      const totalValue = partsData?.reduce((sum, part) => sum + (part.total_value || 0), 0) || 0;
-      
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-      
-      const recentPurchases = partsData?.filter(part => 
+
+      const recentPurchases = installedPartsData?.filter(part => 
         new Date(part.date) >= thirtyDaysAgo
       ).length || 0;
 
-      const monthlySpending = movementsData?.filter(movement => 
-        movement.movement_type === 'entry' && 
-        new Date(movement.movement_date) >= thirtyDaysAgo
-      ).reduce((sum, movement) => sum + (movement.total_cost || 0), 0) || 0;
-
-      const lastMovementDate = movementsData?.[0]?.movement_date || null;
+      const lastMovementDate = consumptionData?.[0]?.movement_date || null;
       const pendingMaintenanceAlerts = maintenanceData?.length || 0;
 
       return {
-        totalParts,
-        totalValue,
-        recentPurchases,
-        lowStockAlerts: 0, // Esta se puede implementar más adelante con alertas específicas
+        // Piezas instaladas
+        totalPartsInstalled,
+        installedPartsValue,
+        
+        // Consumos de inventario
+        totalInventoryConsumptions,
+        consumptionValue,
+        
+        // Mantenimientos
+        pendingMaintenanceAlerts,
+        
+        // Métricas unificadas
+        totalValue: installedPartsValue + consumptionValue,
         lastMovementDate,
-        monthlySpending,
-        pendingMaintenanceAlerts
+        recentPurchases
       };
     },
     enabled: !!craneId
