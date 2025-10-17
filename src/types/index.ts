@@ -245,4 +245,9 @@ export interface DashboardMetrics {
     cancelled: number;
   };
   upcomingExpirations: number;
+  // Métricas del mes anterior para comparación
+  previousMonthServices: number;
+  previousMonthRevenue: number;
+  servicesChange: number; // % de cambio
+  revenueChange: number; // % de cambio
 }

@@ -100,20 +100,20 @@ const Dashboard: React.FC = () => {
           <MetricCard
             title="Ingresos del Mes"
             value={formatCurrency(metrics.monthlyRevenue)}
-            change="+8%"
-            changeType="positive"
+            change={metrics.revenueChange !== 0 ? `${metrics.revenueChange > 0 ? '+' : ''}${metrics.revenueChange.toFixed(1)}%` : undefined}
+            changeType={metrics.revenueChange > 0 ? "positive" : metrics.revenueChange < 0 ? "negative" : "neutral"}
             icon={DollarSign}
-            description="Facturación del mes actual"
+            description={`Facturación del mes actual • Mes anterior: ${formatCurrency(metrics.previousMonthRevenue)}`}
             linkTo="/invoices"
           />
           
           <MetricCard
             title="Servicios del Mes"
             value={metrics.monthlyServices}
-            change="+12%"
-            changeType="positive"
+            change={metrics.servicesChange !== 0 ? `${metrics.servicesChange > 0 ? '+' : ''}${metrics.servicesChange.toFixed(1)}%` : undefined}
+            changeType={metrics.servicesChange > 0 ? "positive" : metrics.servicesChange < 0 ? "negative" : "neutral"}
             icon={Truck}
-            description="Servicios completados este mes"
+            description={`Servicios completados este mes • Mes anterior: ${metrics.previousMonthServices}`}
             linkTo="/services"
           />
           

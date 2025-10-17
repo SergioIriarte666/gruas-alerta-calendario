@@ -4,6 +4,15 @@ import { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { DashboardMetrics, Service, CalendarEvent } from '@/types';
 import { getCurrentMonthRange, isFutureDate, isCurrentMonth, parseFromDatabase } from '@/utils/timezoneUtils';
+import { subMonths, startOfMonth, endOfMonth } from 'date-fns';
+
+const getPreviousMonthRange = () => {
+  const now = new Date();
+  const previousMonth = subMonths(now, 1);
+  const start = startOfMonth(previousMonth);
+  const end = endOfMonth(previousMonth);
+  return { start, end };
+};
 
 const fetchDashboardData = async () => {
   const { start: startDate, end: endDate } = getCurrentMonthRange();
@@ -49,6 +58,24 @@ const fetchDashboardData = async () => {
   
   // Calcular servicios futuros usando utilidad centralizada
   const futureServices = services.filter(s => isFutureDate(s.serviceDate)).length;
+
+  // Calcular métricas del mes anterior
+  const { start: prevStart, end: prevEnd } = getPreviousMonthRange();
+  const servicesPreviousMonth = services.filter(s => {
+    const serviceDate = new Date(s.serviceDate);
+    return serviceDate >= prevStart && serviceDate <= prevEnd;
+  });
+  const previousMonthServices = servicesPreviousMonth.length;
+  const previousMonthRevenue = servicesPreviousMonth.reduce((sum, s) => sum + s.value, 0);
+
+  // Calcular porcentajes de cambio
+  const servicesChange = previousMonthServices > 0 
+    ? ((monthlyServices - previousMonthServices) / previousMonthServices) * 100
+    : monthlyServices > 0 ? 100 : 0;
+  
+  const revenueChange = previousMonthRevenue > 0
+    ? ((monthlyRevenue - previousMonthRevenue) / previousMonthRevenue) * 100
+    : monthlyRevenue > 0 ? 100 : 0;
   
   const overdueInvoices = invoicesRes.data?.length ?? 0;
 
@@ -73,6 +100,10 @@ const fetchDashboardData = async () => {
     overdueInvoices,
     servicesByStatus,
     upcomingExpirations: 0,
+    previousMonthServices,
+    previousMonthRevenue,
+    servicesChange,
+    revenueChange,
   };
 
   const upcomingEvents: CalendarEvent[] = [];
