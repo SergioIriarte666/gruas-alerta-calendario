@@ -5,6 +5,7 @@ import { Service } from '@/types';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { InfoIcon, CheckCircle, Clock, AlertTriangle, Zap } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
 import { getServiceValueForClosure } from '@/utils/serviceValueCalculations';
 
 interface EnhancedServicesSelectorProps {
@@ -58,6 +59,43 @@ const EnhancedServicesSelector = ({
   const handleCompleteSelected = () => {
     if (selectedPendingIds.length > 0) {
       onCompleteMultipleServices(selectedPendingIds);
+      setSelectedPendingIds([]);
+    }
+  };
+
+  // Estado del checkbox maestro para servicios completados
+  const allServicesSelected = filteredServices.length > 0 && 
+    filteredServices.every(service => selectedServiceIds.includes(service.id));
+
+  const someServicesSelected = filteredServices.some(service => 
+    selectedServiceIds.includes(service.id)
+  ) && !allServicesSelected;
+
+  // Handler para seleccionar/deseleccionar todos los servicios completados
+  const handleSelectAllServices = (checked: boolean) => {
+    filteredServices.forEach(service => {
+      const isCurrentlySelected = selectedServiceIds.includes(service.id);
+      if (checked && !isCurrentlySelected) {
+        onServiceToggle(service.id, true);
+      } else if (!checked && isCurrentlySelected) {
+        onServiceToggle(service.id, false);
+      }
+    });
+  };
+
+  // Estado del checkbox maestro para servicios pendientes
+  const allPendingSelected = filteredPendingServices.length > 0 && 
+    filteredPendingServices.every(service => selectedPendingIds.includes(service.id));
+
+  const somePendingSelected = filteredPendingServices.some(service => 
+    selectedPendingIds.includes(service.id)
+  ) && !allPendingSelected;
+
+  // Handler para seleccionar/deseleccionar todos los servicios pendientes
+  const handleSelectAllPending = (checked: boolean) => {
+    if (checked) {
+      setSelectedPendingIds(filteredPendingServices.map(s => s.id));
+    } else {
       setSelectedPendingIds([]);
     }
   };
@@ -166,9 +204,22 @@ const EnhancedServicesSelector = ({
       {filteredPendingServices.length > 0 && (
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
+            <Checkbox
+              id="select-all-pending"
+              checked={allPendingSelected}
+              ref={(el) => {
+                if (el) {
+                  (el as any).indeterminate = somePendingSelected;
+                }
+              }}
+              onCheckedChange={handleSelectAllPending}
+              disabled={filteredPendingServices.length === 0}
+            />
               <Clock className="h-4 w-4 text-secondary-foreground" />
-              <Label className="text-foreground">Servicios Pendientes</Label>
+              <Label htmlFor="select-all-pending" className="text-foreground cursor-pointer">
+                Servicios Pendientes
+              </Label>
               <Badge variant="secondary">
                 {filteredPendingServices.length}
               </Badge>
@@ -229,7 +280,31 @@ const EnhancedServicesSelector = ({
 
       {/* Available Services Section */}
       <div className="space-y-2">
-        <Label className="text-foreground">Servicios Completados Disponibles</Label>
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-3">
+            <Checkbox
+              id="select-all-services"
+              checked={allServicesSelected}
+              ref={(el) => {
+                if (el) {
+                  (el as any).indeterminate = someServicesSelected;
+                }
+              }}
+              onCheckedChange={handleSelectAllServices}
+              disabled={filteredServices.length === 0}
+            />
+            <Label htmlFor="select-all-services" className="text-foreground cursor-pointer">
+              Servicios Completados Disponibles
+            </Label>
+          </div>
+          {filteredServices.length > 0 && (
+            <div className="text-sm text-muted-foreground">
+              {selectedServiceIds.filter(id => 
+                filteredServices.some(s => s.id === id)
+              ).length} de {filteredServices.length} seleccionados
+            </div>
+          )}
+        </div>
         <div className="max-h-40 overflow-y-auto border rounded-md p-2 bg-muted">
           {filteredServices.length === 0 ? (
             <div className="text-center py-4">
