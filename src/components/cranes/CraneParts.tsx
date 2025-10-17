@@ -14,6 +14,7 @@ import {
   Phone,
   Calendar,
   TrendingUp,
+  TrendingDown,
   Users,
   Clock,
   Receipt,
@@ -164,10 +165,10 @@ export const CraneParts = ({ crane }: CranePartsProps) => {
           <Card className="bg-card border-border">
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
-                <DollarSign className="w-8 h-8 text-green-500" />
+                <TrendingUp className="w-8 h-8 text-green-500" />
                 <div>
-                  <p className="text-sm text-muted-foreground">Valor Total</p>
-                  <p className="text-2xl font-bold text-foreground">${stats.totalValue.toLocaleString('es-CL')}</p>
+                  <p className="text-sm text-muted-foreground">Total Comprado</p>
+                  <p className="text-2xl font-bold text-green-400">+${stats.totalValue.toLocaleString('es-CL')}</p>
                 </div>
               </div>
             </CardContent>
@@ -176,10 +177,22 @@ export const CraneParts = ({ crane }: CranePartsProps) => {
           <Card className="bg-card border-border">
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
-                <Users className="w-8 h-8 text-blue-500" />
+                <TrendingDown className="w-8 h-8 text-red-500" />
                 <div>
-                  <p className="text-sm text-muted-foreground">Fuentes</p>
-                  <p className="text-2xl font-bold text-foreground">{stats.uniqueSuppliers}</p>
+                  <p className="text-sm text-muted-foreground">Total Consumido</p>
+                  <p className="text-2xl font-bold text-red-400">-${stats.totalConsumed?.toLocaleString('es-CL') || 0}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-card border-border">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <DollarSign className="w-8 h-8 text-blue-500" />
+                <div>
+                  <p className="text-sm text-muted-foreground">Balance Neto</p>
+                  <p className="text-2xl font-bold text-blue-400">${stats.netValue?.toLocaleString('es-CL') || 0}</p>
                 </div>
               </div>
             </CardContent>
@@ -270,24 +283,25 @@ export const CraneParts = ({ crane }: CranePartsProps) => {
                         )}
                         
                         <div className="flex items-center gap-4">
-                          <span className="text-sm text-gray-400">
-                            Cantidad: {Math.abs(part.quantity)} {part.origin === 'consumption' ? '(consumido)' : ''}
+                          <span className={`text-sm font-medium ${
+                            part.origin === 'consumption' ? 'text-red-400' : 'text-green-400'
+                          }`}>
+                            {part.origin === 'consumption' ? '-' : '+'}{part.quantity} {part.origin === 'consumption' ? '(consumido)' : '(instalado)'}
                           </span>
                           {part.unit_price > 0 && (
                             <span className="text-sm text-gray-400">
-                              Unitario: ${Math.abs(part.unit_price).toLocaleString('es-CL')}
+                              Unitario: ${part.unit_price.toLocaleString('es-CL')}
                             </span>
                           )}
                           <Badge 
                             variant="secondary" 
                             className={`${
                               part.origin === 'consumption' 
-                                ? 'bg-orange-500/20 text-orange-300' 
-                                : 'bg-tms-green/20 text-tms-green'
+                                ? 'bg-red-500/20 text-red-300 border-red-500/30' 
+                                : 'bg-green-500/20 text-green-300 border-green-500/30'
                             }`}
                           >
-                            {part.origin === 'consumption' ? 'Consumo: ' : 'Total: '}
-                            ${Math.abs(part.total_value || 0).toLocaleString('es-CL')}
+                            {part.origin === 'consumption' ? '-' : '+'}${part.total_value.toLocaleString('es-CL')}
                           </Badge>
                         </div>
                       </div>

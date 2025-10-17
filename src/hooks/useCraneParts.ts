@@ -122,9 +122,9 @@ export const useCraneParts = (craneId: string) => {
         part_name: (consumption.inventory_items as any)?.name || 'Producto de inventario',
         supplier: 'Consumo de inventario',
         phone: null,
-        quantity: -consumption.quantity, // Negativo para indicar consumo
+        quantity: consumption.quantity, // ✅ Positivo tal como está en BD
         unit_price: consumption.unit_cost || 0,
-        total_value: -(consumption.total_cost || consumption.unit_cost || 0),
+        total_value: consumption.total_cost || (consumption.unit_cost * consumption.quantity) || 0, // ✅ Positivo
         date: consumption.movement_date.split('T')[0], // Convertir timestamp a date
         notes: consumption.observations,
         kilometraje: null,
@@ -310,9 +310,16 @@ export const useCranePartsStats = (craneId: string) => {
 
       const recentParts = recentDirectParts.length + recentCostParts.length + recentConsumptions.length;
 
+      // Separar compras y consumos para balance correcto
+      const totalPurchases = directPartsValue + costPartsValue; // Solo entradas
+      const totalConsumed = consumptionsValue; // Total consumido
+      const netValue = totalPurchases - totalConsumed; // Balance neto
+
       return {
         totalParts,
-        totalValue,
+        totalValue: totalPurchases, // Solo compras
+        totalConsumed, // Consumos
+        netValue, // Balance neto
         uniqueSuppliers,
         recentParts
       };

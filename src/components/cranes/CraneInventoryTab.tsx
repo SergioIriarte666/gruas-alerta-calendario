@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { 
   Package, 
   TrendingUp, 
+  TrendingDown,
   AlertTriangle, 
   DollarSign,
   Calendar,
@@ -72,11 +73,13 @@ export const CraneInventoryTab = ({ crane }: CraneInventoryTabProps) => {
         <Card className="bg-card border-border">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <Package className="w-8 h-8 text-primary" />
+              <TrendingUp className="w-8 h-8 text-green-500" />
               <div>
-                <p className="text-sm text-muted-foreground">Piezas Instaladas</p>
-                <p className="text-2xl font-bold text-foreground">{metrics?.totalPartsInstalled || 0}</p>
-                <p className="text-xs text-muted-foreground">${(metrics?.installedPartsValue || 0).toLocaleString('es-CL')}</p>
+                <p className="text-sm text-muted-foreground">Valor Instalado</p>
+                <p className="text-2xl font-bold text-green-400">
+                  +${(metrics?.installedPartsValue || 0).toLocaleString('es-CL')}
+                </p>
+                <p className="text-xs text-muted-foreground">{metrics?.totalPartsInstalled || 0} piezas</p>
               </div>
             </div>
           </CardContent>
@@ -85,11 +88,13 @@ export const CraneInventoryTab = ({ crane }: CraneInventoryTabProps) => {
         <Card className="bg-card border-border">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <Warehouse className="w-8 h-8 text-orange-500" />
+              <TrendingDown className="w-8 h-8 text-red-500" />
               <div>
-                <p className="text-sm text-muted-foreground">Consumos</p>
-                <p className="text-2xl font-bold text-foreground">{metrics?.totalInventoryConsumptions || 0}</p>
-                <p className="text-xs text-muted-foreground">${(metrics?.consumptionValue || 0).toLocaleString('es-CL')}</p>
+                <p className="text-sm text-muted-foreground">Valor Consumido</p>
+                <p className="text-2xl font-bold text-red-400">
+                  -${(metrics?.consumptionValue || 0).toLocaleString('es-CL')}
+                </p>
+                <p className="text-xs text-muted-foreground">{metrics?.totalInventoryConsumptions || 0} consumos</p>
               </div>
             </div>
           </CardContent>
@@ -98,10 +103,12 @@ export const CraneInventoryTab = ({ crane }: CraneInventoryTabProps) => {
         <Card className="bg-card border-border">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <DollarSign className="w-8 h-8 text-green-500" />
+              <DollarSign className="w-8 h-8 text-blue-500" />
               <div>
-                <p className="text-sm text-muted-foreground">Valor Total</p>
-                <p className="text-2xl font-bold text-foreground">${(metrics?.totalValue || 0).toLocaleString('es-CL')}</p>
+                <p className="text-sm text-muted-foreground">Balance Neto</p>
+                <p className="text-2xl font-bold text-blue-400">
+                  ${((metrics?.installedPartsValue || 0) - (metrics?.consumptionValue || 0)).toLocaleString('es-CL')}
+                </p>
               </div>
             </div>
           </CardContent>
