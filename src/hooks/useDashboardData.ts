@@ -8,9 +8,11 @@ import { subMonths, startOfMonth, endOfMonth } from 'date-fns';
 
 const getPreviousMonthRange = () => {
   const now = new Date();
+  const currentDayOfMonth = now.getDate(); // Día actual del mes (ej: 17)
   const previousMonth = subMonths(now, 1);
   const start = startOfMonth(previousMonth);
-  const end = endOfMonth(previousMonth);
+  // Comparar hasta el mismo día del mes anterior (comparación día a día)
+  const end = new Date(previousMonth.getFullYear(), previousMonth.getMonth(), currentDayOfMonth);
   return { start, end };
 };
 
