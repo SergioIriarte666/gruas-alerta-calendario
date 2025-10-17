@@ -33,11 +33,17 @@ export const PaymentApplicationModal: React.FC<PaymentApplicationModalProps> = (
         const paymentRemaining = payment.remaining_amount ?? (payment.amount - (payment.applied_amount ?? 0));
         const maxAmount = Math.min(invoiceRemaining, paymentRemaining - getTotalSelected());
         
-        if (maxAmount > 0) {
-          setApplications([...applications, { invoice_id: invoiceId, amount: maxAmount }]);
-        } else {
+        if (maxAmount <= 0) {
           toast.error('No hay monto disponible para aplicar a esta factura');
+          return;
         }
+        
+        // Si el monto coincide exactamente con la factura, mostrar confirmación
+        if (maxAmount === invoiceRemaining && invoiceRemaining > 100000) {
+          toast.info(`Se aplicará el monto completo de ${formatCurrency(maxAmount)} a esta factura`);
+        }
+        
+        setApplications([...applications, { invoice_id: invoiceId, amount: maxAmount }]);
       }
     } else {
       setApplications(applications.filter(app => app.invoice_id !== invoiceId));
@@ -77,19 +83,29 @@ export const PaymentApplicationModal: React.FC<PaymentApplicationModalProps> = (
     const total = getTotalSelected();
     const available = payment.remaining_amount || 0;
     
-    if (total <= 0 || total > available) {
+    if (total <= 0) {
+      toast.error('El monto total a aplicar debe ser mayor a 0');
+      return;
+    }
+    
+    if (total > available) {
       toast.error(`Monto inválido. Disponible: ${formatCurrency(available)}, Seleccionado: ${formatCurrency(total)}`);
       return;
     }
 
-    if (!isValidApplication()) {
-      toast.error('El monto total excede el disponible del pago');
-      return;
+    // Confirmación para montos grandes
+    if (total > 500000) {
+      const confirmed = window.confirm(
+        `¿Está seguro de aplicar ${formatCurrency(total)} a ${applications.length} factura(s)?\n\n` +
+        `Esta acción no se puede deshacer fácilmente.`
+      );
+      if (!confirmed) return;
     }
 
     setLoading(true);
     try {
       await applyPaymentManual(payment.id, applications);
+      toast.success(`Pago aplicado exitosamente a ${applications.length} factura(s)`);
       onClose();
     } catch (error) {
       console.error('Error applying payment:', error);
@@ -114,15 +130,34 @@ export const PaymentApplicationModal: React.FC<PaymentApplicationModalProps> = (
           </Button>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="bg-blue-50 p-4 rounded-lg">
-            <div className="flex items-center gap-2 mb-2">
+          <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+            <div className="flex items-center gap-2 mb-3">
               <Calculator className="h-4 w-4 text-blue-600" />
-              <span className="font-medium">Resumen de Aplicación</span>
+              <span className="font-medium text-blue-900">Resumen de Aplicación</span>
             </div>
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <div>Total seleccionado: {formatCurrency(getTotalSelected())}</div>
-              <div>Restante: {formatCurrency((payment.remaining_amount ?? (payment.amount - (payment.applied_amount ?? 0))) - getTotalSelected())}</div>
+            <div className="grid grid-cols-3 gap-4 text-sm">
+              <div>
+                <p className="text-gray-600">Total seleccionado:</p>
+                <p className="font-semibold text-blue-900">{formatCurrency(getTotalSelected())}</p>
+              </div>
+              <div>
+                <p className="text-gray-600">Restante del pago:</p>
+                <p className="font-semibold text-blue-900">
+                  {formatCurrency((payment.remaining_amount ?? (payment.amount - (payment.applied_amount ?? 0))) - getTotalSelected())}
+                </p>
+              </div>
+              <div>
+                <p className="text-gray-600">Facturas seleccionadas:</p>
+                <p className="font-semibold text-blue-900">{applications.length}</p>
+              </div>
             </div>
+            {getTotalSelected() > 0 && (
+              <div className="mt-3 pt-3 border-t border-blue-200">
+                <p className="text-xs text-blue-700">
+                  ✓ Las facturas seleccionadas se marcarán como pagadas automáticamente
+                </p>
+              </div>
+            )}
           </div>
 
           <Table>
