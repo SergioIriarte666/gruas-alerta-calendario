@@ -142,6 +142,13 @@ export const usePipelineServiceExport = (
       return;
     }
 
+    // Ordenar servicios por fecha (más recientes primero)
+    servicesToExport = [...servicesToExport].sort((a, b) => {
+      const dateA = parseFromDatabase(a.serviceDate).getTime();
+      const dateB = parseFromDatabase(b.serviceDate).getTime();
+      return dateB - dateA;
+    });
+
     try {
       toast({
         title: "Generando PDF...",
@@ -208,6 +215,13 @@ export const usePipelineServiceExport = (
       });
       return;
     }
+
+    // Ordenar servicios por fecha (más recientes primero)
+    servicesToExport = [...servicesToExport].sort((a, b) => {
+      const dateA = parseFromDatabase(a.serviceDate).getTime();
+      const dateB = parseFromDatabase(b.serviceDate).getTime();
+      return dateB - dateA;
+    });
 
     try {
       toast({
