@@ -324,19 +324,27 @@ body {
 
 /* Services Module Scope */
 .services-scope {
-  color: hsl(var(--foreground));
+  color: hsl(210 40% 15%);
+}
+
+.services-scope .text-foreground {
+  color: hsl(210 40% 15%) !important;
+}
+
+.services-scope .text-muted-foreground {
+  color: hsl(215 14% 45%) !important;
 }
 
 .services-scope .text-white {
-  color: hsl(var(--foreground)) !important;
+  color: hsl(210 40% 15%) !important;
 }
 
 .services-scope .text-gray-300 {
-  color: hsl(var(--muted-foreground)) !important;
+  color: hsl(215 14% 45%) !important;
 }
 
 .services-scope .text-gray-400 {
-  color: hsl(var(--muted-foreground)) !important;
+  color: hsl(215 14% 45%) !important;
 }
 
 .services-scope .bg-black {
