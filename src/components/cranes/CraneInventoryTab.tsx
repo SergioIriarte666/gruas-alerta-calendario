@@ -1,6 +1,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { 
   Package, 
   TrendingUp, 
@@ -10,12 +11,16 @@ import {
   Calendar,
   ArrowUpDown,
   Warehouse,
-  ShoppingCart
+  ShoppingCart,
+  RefreshCw,
+  Loader2,
+  Activity
 } from 'lucide-react';
 import { Crane } from '@/types';
 import { useCraneInventoryMetrics } from '@/hooks/useCraneInventoryMetrics';
 import { useInventoryMovements } from '@/hooks/useInventory';
-import { usePartsTraceability, useInventorySyncStats } from '@/hooks/useUnifiedParts';
+import { usePartsTraceability, useInventorySyncStats, useMigrateUnsyncParts } from '@/hooks/useUnifiedParts';
+import { useInventorySyncWatcher } from '@/hooks/useInventorySyncWatcher';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
@@ -24,10 +29,14 @@ interface CraneInventoryTabProps {
 }
 
 export const CraneInventoryTab = ({ crane }: CraneInventoryTabProps) => {
+  // Activar watcher de sincronización en tiempo real
+  useInventorySyncWatcher(crane.id);
+  
   const { data: metrics, isLoading: metricsLoading } = useCraneInventoryMetrics(crane.id);
   const { data: movements, isLoading: movementsLoading } = useInventoryMovements(10);
   const { data: traceabilityData, isLoading: traceabilityLoading } = usePartsTraceability(crane.id);
   const { data: syncStats } = useInventorySyncStats();
+  const migrateMutation = useMigrateUnsyncParts();
 
   // Filtrar movimientos relacionados con esta grúa
   const craneMovements = movements?.filter(movement => movement.crane_id === crane.id) || [];
@@ -116,12 +125,34 @@ export const CraneInventoryTab = ({ crane }: CraneInventoryTabProps) => {
 
         <Card className="bg-card border-border">
           <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <TrendingUp className="w-8 h-8 text-blue-500" />
-              <div>
-                <p className="text-sm text-muted-foreground">Sincronización</p>
-                <p className="text-2xl font-bold text-foreground">{syncStats?.sync_percentage.toFixed(0) || 0}%</p>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Activity className="w-8 h-8 text-blue-500" />
+                <div>
+                  <p className="text-sm text-muted-foreground">Sincronización</p>
+                  <p className="text-2xl font-bold text-foreground">
+                    {metrics?.syncStatus?.syncPercentage || 0}%
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {metrics?.syncStatus?.syncedParts}/{metrics?.syncStatus?.totalParts} piezas
+                  </p>
+                </div>
               </div>
+              {(metrics?.syncStatus?.unsyncedParts || 0) > 0 && (
+                <Button
+                  onClick={() => migrateMutation.mutate()}
+                  disabled={migrateMutation.isPending}
+                  size="sm"
+                  variant="outline"
+                  className="ml-2"
+                >
+                  {migrateMutation.isPending ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <RefreshCw className="h-4 w-4" />
+                  )}
+                </Button>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -150,8 +181,15 @@ export const CraneInventoryTab = ({ crane }: CraneInventoryTabProps) => {
           </div>
           <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
             <span className="text-sm text-muted-foreground">Inventario</span>
-            <Badge className="bg-green-500/20 text-green-600 border-green-500/30">
-              ✅ Sincronizado ({syncStats?.sync_percentage.toFixed(0)}%)
+            <Badge className={
+              metrics?.syncStatus?.syncPercentage === 100 
+                ? "bg-green-500/20 text-green-600 border-green-500/30"
+                : "bg-yellow-500/20 text-yellow-600 border-yellow-500/30"
+            }>
+              {metrics?.syncStatus?.syncPercentage === 100 
+                ? `✅ Sincronizado (100%)` 
+                : `⚠️ Parcial (${metrics?.syncStatus?.syncPercentage}%)`
+              }
             </Badge>
           </div>
           {(metrics?.pendingMaintenanceAlerts || 0) > 0 && (
