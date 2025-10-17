@@ -17,7 +17,10 @@ import {
   MapPin,
   ToggleLeft,
   ToggleRight,
-  Loader2
+  Loader2,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown
 } from 'lucide-react';
 import { useSuppliers } from '@/hooks/useSuppliers';
 import { useSupplierCategoryManager } from '@/hooks/useSupplierCategoryManager';
@@ -25,6 +28,22 @@ import { SupplierForm } from './SupplierForm';
 import { SupplierWithStats } from '@/types/suppliers';
 import { formatCurrency } from '@/lib/utils';
 import { getCategoryLabel } from '@/utils/categoryUtils';
+
+type SupplierSortField = 'name' | 'rut' | 'contactName' | 'category' | 'email' | 'phone' | 'isActive';
+type SortDirection = 'asc' | 'desc';
+
+const SortIcon = ({ field, currentSortField, sortDirection }: { 
+  field: SupplierSortField; 
+  currentSortField?: SupplierSortField; 
+  sortDirection?: SortDirection 
+}) => {
+  if (currentSortField !== field) {
+    return <ArrowUpDown className="ml-2 h-4 w-4 text-muted-foreground" />;
+  }
+  return sortDirection === 'asc' ? 
+    <ArrowUp className="ml-2 h-4 w-4 text-primary" /> : 
+    <ArrowDown className="ml-2 h-4 w-4 text-primary" />;
+};
 
 export const SupplierList: React.FC = () => {
   const { 
@@ -42,9 +61,20 @@ export const SupplierList: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [showForm, setShowForm] = useState(false);
   const [editingSupplier, setEditingSupplier] = useState<SupplierWithStats | null>(null);
+  const [sortField, setSortField] = useState<SupplierSortField>('name');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
 
-  const filteredSuppliers = useMemo(() => {
-    return suppliers.filter(supplier => {
+  const handleSort = (field: SupplierSortField) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
+    }
+  };
+
+  const filteredAndSortedSuppliers = useMemo(() => {
+    const filtered = suppliers.filter(supplier => {
       const matchesSearch = supplier.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                           supplier.rut.toLowerCase().includes(searchTerm.toLowerCase()) ||
                           (supplier.email && supplier.email.toLowerCase().includes(searchTerm.toLowerCase()));
@@ -57,7 +87,45 @@ export const SupplierList: React.FC = () => {
 
       return matchesSearch && matchesCategory && matchesStatus;
     });
-  }, [suppliers, searchTerm, selectedCategory, statusFilter]);
+
+    return [...filtered].sort((a, b) => {
+      let comparison = 0;
+      
+      switch (sortField) {
+        case 'name':
+          comparison = a.name.localeCompare(b.name);
+          break;
+        case 'rut':
+          comparison = a.rut.localeCompare(b.rut);
+          break;
+        case 'contactName':
+          const contactA = a.contact_name || '';
+          const contactB = b.contact_name || '';
+          comparison = contactA.localeCompare(contactB);
+          break;
+        case 'category':
+          const catA = getCategoryLabel(activeCategories || [], a.category);
+          const catB = getCategoryLabel(activeCategories || [], b.category);
+          comparison = catA.localeCompare(catB);
+          break;
+        case 'email':
+          const emailA = a.email || '';
+          const emailB = b.email || '';
+          comparison = emailA.localeCompare(emailB);
+          break;
+        case 'phone':
+          const phoneA = a.phone || '';
+          const phoneB = b.phone || '';
+          comparison = phoneA.localeCompare(phoneB);
+          break;
+        case 'isActive':
+          comparison = (b.is_active ? 1 : 0) - (a.is_active ? 1 : 0);
+          break;
+      }
+      
+      return sortDirection === 'asc' ? comparison : -comparison;
+    });
+  }, [suppliers, searchTerm, selectedCategory, statusFilter, sortField, sortDirection, activeCategories]);
 
   const handleEdit = (supplier: SupplierWithStats) => {
     setEditingSupplier(supplier);
@@ -175,11 +243,11 @@ export const SupplierList: React.FC = () => {
       <Card className="bg-card border">
         <CardHeader>
           <CardTitle className="text-foreground">
-            Proveedores ({filteredSuppliers.length})
+            Proveedores ({filteredAndSortedSuppliers.length})
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {filteredSuppliers.length === 0 ? (
+          {filteredAndSortedSuppliers.length === 0 ? (
             <div className="text-center py-8">
               <Building2 className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
               <h3 className="text-lg font-medium text-foreground mb-2">
@@ -197,16 +265,48 @@ export const SupplierList: React.FC = () => {
               <Table>
                 <TableHeader>
                   <TableRow className="border">
-                    <TableHead className="text-muted-foreground">Proveedor</TableHead>
-                    <TableHead className="text-muted-foreground">Contacto</TableHead>
-                    <TableHead className="text-muted-foreground">Categoría</TableHead>
+                    <TableHead 
+                      className="text-muted-foreground cursor-pointer hover:text-primary transition-colors" 
+                      onClick={() => handleSort('name')}
+                    >
+                      <div className="flex items-center">
+                        Proveedor
+                        <SortIcon field="name" currentSortField={sortField} sortDirection={sortDirection} />
+                      </div>
+                    </TableHead>
+                    <TableHead 
+                      className="text-muted-foreground cursor-pointer hover:text-primary transition-colors" 
+                      onClick={() => handleSort('contactName')}
+                    >
+                      <div className="flex items-center">
+                        Contacto
+                        <SortIcon field="contactName" currentSortField={sortField} sortDirection={sortDirection} />
+                      </div>
+                    </TableHead>
+                    <TableHead 
+                      className="text-muted-foreground cursor-pointer hover:text-primary transition-colors" 
+                      onClick={() => handleSort('category')}
+                    >
+                      <div className="flex items-center">
+                        Categoría
+                        <SortIcon field="category" currentSortField={sortField} sortDirection={sortDirection} />
+                      </div>
+                    </TableHead>
                     <TableHead className="text-muted-foreground">Pagos</TableHead>
-                    <TableHead className="text-muted-foreground">Estado</TableHead>
+                    <TableHead 
+                      className="text-muted-foreground cursor-pointer hover:text-primary transition-colors" 
+                      onClick={() => handleSort('isActive')}
+                    >
+                      <div className="flex items-center">
+                        Estado
+                        <SortIcon field="isActive" currentSortField={sortField} sortDirection={sortDirection} />
+                      </div>
+                    </TableHead>
                     <TableHead className="text-muted-foreground">Acciones</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredSuppliers.map((supplier) => (
+                  {filteredAndSortedSuppliers.map((supplier) => (
                     <TableRow key={supplier.id} className="border">
                       <TableCell>
                         <div className="space-y-1">

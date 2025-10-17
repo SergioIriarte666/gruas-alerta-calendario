@@ -19,7 +19,10 @@ import {
   Clock,
   AlertTriangle,
   X,
-  Loader2
+  Loader2,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown
 } from 'lucide-react';
 import { useSupplierPayments, getStatusLabel, getStatusColor } from '@/hooks/useSupplierPayments';
 import { useSuppliers } from '@/hooks/useSuppliers';
@@ -39,6 +42,22 @@ import {
   getCurrentMonthRange,
   getCurrentWeekRange
 } from '@/utils/timezoneUtils';
+
+type PaymentSortField = 'supplier' | 'description' | 'referenceNumber' | 'amount' | 'dueDate' | 'createdAt' | 'paidDate' | 'status';
+type SortDirection = 'asc' | 'desc';
+
+const SortIcon = ({ field, currentSortField, sortDirection }: { 
+  field: PaymentSortField; 
+  currentSortField?: PaymentSortField; 
+  sortDirection?: SortDirection 
+}) => {
+  if (currentSortField !== field) {
+    return <ArrowUpDown className="ml-2 h-4 w-4 text-muted-foreground" />;
+  }
+  return sortDirection === 'asc' ? 
+    <ArrowUp className="ml-2 h-4 w-4 text-primary" /> : 
+    <ArrowDown className="ml-2 h-4 w-4 text-primary" />;
+};
 
 export const PaymentList: React.FC = () => {
   const { 
@@ -61,11 +80,22 @@ export const PaymentList: React.FC = () => {
   const [dateType, setDateType] = useState<'due_date' | 'created_at' | 'paid_date'>('due_date');
   const [showForm, setShowForm] = useState(false);
   const [editingPayment, setEditingPayment] = useState<SupplierPayment | null>(null);
+  const [sortField, setSortField] = useState<PaymentSortField>('dueDate');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
 
   const statusOptions: SupplierPaymentStatus[] = ['pending', 'paid', 'overdue', 'cancelled'];
 
-  const filteredPayments = useMemo(() => {
-    return payments.filter(payment => {
+  const handleSort = (field: PaymentSortField) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
+    }
+  };
+
+  const filteredAndSortedPayments = useMemo(() => {
+    const filtered = payments.filter(payment => {
       const supplier = suppliers.find(s => s.id === payment.supplier_id);
       const supplierName = supplier?.name || '';
       
@@ -117,7 +147,47 @@ export const PaymentList: React.FC = () => {
 
       return matchesSearch && matchesStatus && matchesSupplier && matchesDateRange;
     });
-  }, [payments, suppliers, searchTerm, selectedStatus, selectedSupplier, dateFrom, dateTo, dateType]);
+
+    return [...filtered].sort((a, b) => {
+      let comparison = 0;
+      
+      switch (sortField) {
+        case 'supplier':
+          const supplierA = suppliers.find(s => s.id === a.supplier_id)?.name || '';
+          const supplierB = suppliers.find(s => s.id === b.supplier_id)?.name || '';
+          comparison = supplierA.localeCompare(supplierB);
+          break;
+        case 'description':
+          comparison = a.description.localeCompare(b.description);
+          break;
+        case 'referenceNumber':
+          const refA = a.reference_number || '';
+          const refB = b.reference_number || '';
+          comparison = refA.localeCompare(refB);
+          break;
+        case 'amount':
+          comparison = a.amount - b.amount;
+          break;
+        case 'dueDate':
+          comparison = parseFromDatabase(a.due_date).getTime() - parseFromDatabase(b.due_date).getTime();
+          break;
+        case 'createdAt':
+          comparison = parseFromDatabase(a.created_at).getTime() - parseFromDatabase(b.created_at).getTime();
+          break;
+        case 'paidDate':
+          const paidA = a.paid_date ? parseFromDatabase(a.paid_date).getTime() : 0;
+          const paidB = b.paid_date ? parseFromDatabase(b.paid_date).getTime() : 0;
+          comparison = paidA - paidB;
+          break;
+        case 'status':
+          const statusOrder = { overdue: 0, pending: 1, paid: 2, cancelled: 3 };
+          comparison = statusOrder[a.status] - statusOrder[b.status];
+          break;
+      }
+      
+      return sortDirection === 'asc' ? comparison : -comparison;
+    });
+  }, [payments, suppliers, searchTerm, selectedStatus, selectedSupplier, dateFrom, dateTo, dateType, sortField, sortDirection]);
 
   const handleEdit = (payment: SupplierPayment) => {
     setEditingPayment(payment);
@@ -200,7 +270,7 @@ export const PaymentList: React.FC = () => {
 
         <div className="flex gap-2">
           <SupplierPaymentExportButton 
-            payments={filteredPayments}
+            payments={filteredAndSortedPayments}
             suppliers={suppliers}
             filters={{
               searchTerm,
@@ -453,11 +523,11 @@ export const PaymentList: React.FC = () => {
       <Card className="bg-card border">
         <CardHeader>
           <CardTitle className="text-foreground">
-            Pagos ({filteredPayments.length})
+            Pagos ({filteredAndSortedPayments.length})
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {filteredPayments.length === 0 ? (
+          {filteredAndSortedPayments.length === 0 ? (
             <div className="text-center py-8">
               <CreditCard className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
               <h3 className="text-lg font-medium text-foreground mb-2">
@@ -475,16 +545,56 @@ export const PaymentList: React.FC = () => {
               <Table>
                 <TableHeader>
                   <TableRow className="border">
-                    <TableHead className="text-muted-foreground">Proveedor</TableHead>
-                    <TableHead className="text-muted-foreground">Descripción</TableHead>
-                    <TableHead className="text-muted-foreground">Monto</TableHead>
-                    <TableHead className="text-muted-foreground">Vencimiento</TableHead>
-                    <TableHead className="text-muted-foreground">Estado</TableHead>
+                    <TableHead 
+                      className="text-muted-foreground cursor-pointer hover:text-primary transition-colors" 
+                      onClick={() => handleSort('supplier')}
+                    >
+                      <div className="flex items-center">
+                        Proveedor
+                        <SortIcon field="supplier" currentSortField={sortField} sortDirection={sortDirection} />
+                      </div>
+                    </TableHead>
+                    <TableHead 
+                      className="text-muted-foreground cursor-pointer hover:text-primary transition-colors" 
+                      onClick={() => handleSort('description')}
+                    >
+                      <div className="flex items-center">
+                        Descripción
+                        <SortIcon field="description" currentSortField={sortField} sortDirection={sortDirection} />
+                      </div>
+                    </TableHead>
+                    <TableHead 
+                      className="text-muted-foreground cursor-pointer hover:text-primary transition-colors" 
+                      onClick={() => handleSort('amount')}
+                    >
+                      <div className="flex items-center">
+                        Monto
+                        <SortIcon field="amount" currentSortField={sortField} sortDirection={sortDirection} />
+                      </div>
+                    </TableHead>
+                    <TableHead 
+                      className="text-muted-foreground cursor-pointer hover:text-primary transition-colors" 
+                      onClick={() => handleSort('dueDate')}
+                    >
+                      <div className="flex items-center">
+                        Vencimiento
+                        <SortIcon field="dueDate" currentSortField={sortField} sortDirection={sortDirection} />
+                      </div>
+                    </TableHead>
+                    <TableHead 
+                      className="text-muted-foreground cursor-pointer hover:text-primary transition-colors" 
+                      onClick={() => handleSort('status')}
+                    >
+                      <div className="flex items-center">
+                        Estado
+                        <SortIcon field="status" currentSortField={sortField} sortDirection={sortDirection} />
+                      </div>
+                    </TableHead>
                     <TableHead className="text-muted-foreground">Acciones</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredPayments.map((payment) => (
+                  {filteredAndSortedPayments.map((payment) => (
                     <TableRow key={payment.id} className="border">
                       <TableCell>
                          <div className="space-y-1">

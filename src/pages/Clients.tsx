@@ -7,7 +7,7 @@ import { ClientDetailsModal } from '@/components/clients/ClientDetailsModal';
 import { AppPagination } from '@/components/shared/AppPagination';
 import { ClientsHeader } from '@/components/clients/ClientsHeader';
 import { ClientsFilters } from '@/components/clients/ClientsFilters';
-import { ClientsTable } from '@/components/clients/ClientsTable';
+import { ClientsTable, ClientSortField, SortDirection } from '@/components/clients/ClientsTable';
 
 const Clients = () => {
   const { clients, loading, createClient, updateClient, deleteClient, toggleClientStatus } = useClients();
@@ -17,22 +17,65 @@ const Clients = () => {
   const [isDetailsModalOpen, setIsDetailsModalOpen] = React.useState(false);
   const [selectedClientForDetails, setSelectedClientForDetails] = React.useState<Client | null>(null);
   const [currentPage, setCurrentPage] = React.useState(1);
+  const [sortField, setSortField] = React.useState<ClientSortField>('name');
+  const [sortDirection, setSortDirection] = React.useState<SortDirection>('asc');
   const ITEMS_PER_PAGE = 10;
 
-  const filteredClients = React.useMemo(() => 
-    clients.filter(client =>
+  const handleSort = React.useCallback((field: ClientSortField) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
+    }
+  }, [sortField, sortDirection]);
+
+  const filteredAndSortedClients = React.useMemo(() => {
+    const filtered = clients.filter(client =>
       client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       client.rut.includes(searchTerm) ||
       client.email.toLowerCase().includes(searchTerm.toLowerCase())
-    ), [clients, searchTerm]
-  );
+    );
 
-  const totalPages = Math.ceil(filteredClients.length / ITEMS_PER_PAGE);
+    return [...filtered].sort((a, b) => {
+      let comparison = 0;
+      
+      switch (sortField) {
+        case 'name':
+          comparison = a.name.localeCompare(b.name);
+          break;
+        case 'rut':
+          comparison = a.rut.localeCompare(b.rut);
+          break;
+        case 'department':
+          comparison = a.department.localeCompare(b.department);
+          break;
+        case 'contactName':
+          const contactA = a.contactName || '';
+          const contactB = b.contactName || '';
+          comparison = contactA.localeCompare(contactB);
+          break;
+        case 'email':
+          comparison = a.email.localeCompare(b.email);
+          break;
+        case 'phone':
+          comparison = a.phone.localeCompare(b.phone);
+          break;
+        case 'isActive':
+          comparison = (b.isActive ? 1 : 0) - (a.isActive ? 1 : 0);
+          break;
+      }
+      
+      return sortDirection === 'asc' ? comparison : -comparison;
+    });
+  }, [clients, searchTerm, sortField, sortDirection]);
+
+  const totalPages = Math.ceil(filteredAndSortedClients.length / ITEMS_PER_PAGE);
   const paginatedClients = React.useMemo(() => 
-    filteredClients.slice(
+    filteredAndSortedClients.slice(
       (currentPage - 1) * ITEMS_PER_PAGE,
       currentPage * ITEMS_PER_PAGE
-    ), [filteredClients, currentPage, ITEMS_PER_PAGE]
+    ), [filteredAndSortedClients, currentPage, ITEMS_PER_PAGE]
   );
 
   const handleCreateClient = React.useCallback((clientData: Omit<Client, 'id' | 'createdAt' | 'updatedAt'>) => {
@@ -114,13 +157,16 @@ const Clients = () => {
 
       <ClientsTable
         clients={paginatedClients}
-        totalClients={filteredClients.length}
+        totalClients={filteredAndSortedClients.length}
         onEdit={handleEditClient}
         onDelete={handleDeleteClient}
         onToggleStatus={handleToggleStatus}
         onViewDetails={handleViewDetails}
         onNewClient={handleNewClient}
         searchTerm={searchTerm}
+        sortField={sortField}
+        sortDirection={sortDirection}
+        onSort={handleSort}
       />
       
       <AppPagination 

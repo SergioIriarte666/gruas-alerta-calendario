@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useServiceClosures } from '@/hooks/useServiceClosures';
 import { useClients } from '@/hooks/useClients';
@@ -9,11 +9,12 @@ import { EditClosureForm } from '@/components/closures/EditClosureForm';
 import ClosuresHeader from '@/components/closures/ClosuresHeader';
 import ClosuresStats from '@/components/closures/ClosuresStats';
 import ClosuresSearch from '@/components/closures/ClosuresSearch';
-import ClosuresTable from '@/components/closures/ClosuresTable';
+import ClosuresTable, { ClosureSortField, SortDirection } from '@/components/closures/ClosuresTable';
 import InvoiceConfirmationDialog from '@/components/closures/InvoiceConfirmationDialog';
 import AutomatedClosureWorkflow from '@/components/closures/automation/AutomatedClosureWorkflow';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { parseFromDatabase } from '@/utils/timezoneUtils';
 import {
   Sheet,
   SheetContent,
@@ -36,16 +37,65 @@ const Closures = () => {
   const [showInvoiceDialog, setShowInvoiceDialog] = useState(false);
   const [createdClosure, setCreatedClosure] = useState<ServiceClosure | null>(null);
   const [showAutomation, setShowAutomation] = useState(false);
+  const [sortField, setSortField] = useState<ClosureSortField>('dateFrom');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
 
   console.log('Closures page render - closures:', closures.length, 'loading:', loading, 'showCreateModal:', showCreateModal);
 
-  // Filter closures by search term and status
-  const filteredClosures = closures.filter(closure => {
-    const matchesSearch = closure.folio.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         closure.status.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || closure.status === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
+  const handleSort = (field: ClosureSortField) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
+    }
+  };
+
+  const getClientName = (clientId?: string) => {
+    if (!clientId) return 'Todos los clientes';
+    const client = clients.find(c => c.id === clientId);
+    return client?.name || 'Cliente desconocido';
+  };
+
+  // Filter and sort closures
+  const filteredAndSortedClosures = useMemo(() => {
+    const filtered = closures.filter(closure => {
+      const matchesSearch = closure.folio.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           closure.status.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesStatus = statusFilter === 'all' || closure.status === statusFilter;
+      return matchesSearch && matchesStatus;
+    });
+
+    return [...filtered].sort((a, b) => {
+      let comparison = 0;
+      
+      switch (sortField) {
+        case 'folio':
+          comparison = a.folio.localeCompare(b.folio);
+          break;
+        case 'dateFrom':
+          comparison = parseFromDatabase(a.dateRange.from).getTime() - parseFromDatabase(b.dateRange.from).getTime();
+          break;
+        case 'clientId':
+          const clientA = getClientName(a.clientId);
+          const clientB = getClientName(b.clientId);
+          comparison = clientA.localeCompare(clientB);
+          break;
+        case 'serviceCount':
+          comparison = a.serviceIds.length - b.serviceIds.length;
+          break;
+        case 'total':
+          comparison = a.total - b.total;
+          break;
+        case 'status':
+          const statusOrder = { open: 0, closed: 1, invoiced: 2 };
+          comparison = statusOrder[a.status] - statusOrder[b.status];
+          break;
+      }
+      
+      return sortDirection === 'asc' ? comparison : -comparison;
+    });
+  }, [closures, searchTerm, statusFilter, sortField, sortDirection, clients]);
 
   const handleDelete = (id: string, folio: string) => {
     if (window.confirm(`¿Está seguro de eliminar el cierre "${folio}"?`)) {
@@ -205,11 +255,14 @@ const Closures = () => {
       />
       
       <ClosuresTable
-        closures={filteredClosures}
+        closures={filteredAndSortedClosures}
         clients={clients}
         onEdit={handleEdit}
         onDelete={handleDelete}
         onClose={handleClose}
+        sortField={sortField}
+        sortDirection={sortDirection}
+        onSort={handleSort}
       />
 
       {closures.length === 0 && !loading && (

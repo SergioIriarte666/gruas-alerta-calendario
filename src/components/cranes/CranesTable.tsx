@@ -2,11 +2,14 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Edit, Trash2, Eye, Plus, Truck } from 'lucide-react';
+import { Edit, Trash2, Eye, Plus, Truck, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import { Crane } from '@/types';
 import { formatForDisplay } from '@/utils/timezoneUtils';
 import { useDeviceType } from '@/hooks/useDeviceType';
 import { CranesMobileView } from './CranesMobileView';
+
+export type CraneSortField = 'licensePlate' | 'brand' | 'type' | 'technicalReviewExpiry' | 'insuranceExpiry' | 'circulationPermitExpiry' | 'isActive';
+export type SortDirection = 'asc' | 'desc';
 
 interface CranesTableProps {
   cranes: Crane[];
@@ -17,7 +20,23 @@ interface CranesTableProps {
   onViewDetails: (crane: Crane) => void;
   onNewCrane: () => void;
   searchTerm: string;
+  sortField?: CraneSortField;
+  sortDirection?: SortDirection;
+  onSort?: (field: CraneSortField) => void;
 }
+
+const SortIcon = ({ field, currentSortField, sortDirection }: { 
+  field: CraneSortField; 
+  currentSortField?: CraneSortField; 
+  sortDirection?: SortDirection 
+}) => {
+  if (currentSortField !== field) {
+    return <ArrowUpDown className="ml-2 h-4 w-4 text-muted-foreground" />;
+  }
+  return sortDirection === 'asc' ? 
+    <ArrowUp className="ml-2 h-4 w-4 text-primary" /> : 
+    <ArrowDown className="ml-2 h-4 w-4 text-primary" />;
+};
 
 export const CranesTable = ({
   cranes,
@@ -28,6 +47,9 @@ export const CranesTable = ({
   onViewDetails,
   onNewCrane,
   searchTerm,
+  sortField,
+  sortDirection,
+  onSort,
 }: CranesTableProps) => {
   const { isMobile } = useDeviceType();
 
@@ -95,13 +117,69 @@ export const CranesTable = ({
           <table className="w-full">
             <thead>
               <tr className="border-b">
-                <th className="text-left py-3 px-4 font-medium text-foreground">Patente</th>
-                <th className="text-left py-3 px-4 font-medium text-foreground">Marca/Modelo</th>
-                <th className="text-left py-3 px-4 font-medium text-foreground">Tipo</th>
-                <th className="text-left py-3 px-4 font-medium text-foreground">Rev. Técnica</th>
-                <th className="text-left py-3 px-4 font-medium text-foreground">Seguro</th>
-                <th className="text-left py-3 px-4 font-medium text-foreground">Permiso Circ.</th>
-                <th className="text-left py-3 px-4 font-medium text-foreground">Estado</th>
+                <th 
+                  className="text-left py-3 px-4 font-medium text-foreground cursor-pointer hover:text-primary transition-colors" 
+                  onClick={() => onSort?.('licensePlate')}
+                >
+                  <div className="flex items-center">
+                    Patente
+                    <SortIcon field="licensePlate" currentSortField={sortField} sortDirection={sortDirection} />
+                  </div>
+                </th>
+                <th 
+                  className="text-left py-3 px-4 font-medium text-foreground cursor-pointer hover:text-primary transition-colors" 
+                  onClick={() => onSort?.('brand')}
+                >
+                  <div className="flex items-center">
+                    Marca/Modelo
+                    <SortIcon field="brand" currentSortField={sortField} sortDirection={sortDirection} />
+                  </div>
+                </th>
+                <th 
+                  className="text-left py-3 px-4 font-medium text-foreground cursor-pointer hover:text-primary transition-colors" 
+                  onClick={() => onSort?.('type')}
+                >
+                  <div className="flex items-center">
+                    Tipo
+                    <SortIcon field="type" currentSortField={sortField} sortDirection={sortDirection} />
+                  </div>
+                </th>
+                <th 
+                  className="text-left py-3 px-4 font-medium text-foreground cursor-pointer hover:text-primary transition-colors" 
+                  onClick={() => onSort?.('technicalReviewExpiry')}
+                >
+                  <div className="flex items-center">
+                    Rev. Técnica
+                    <SortIcon field="technicalReviewExpiry" currentSortField={sortField} sortDirection={sortDirection} />
+                  </div>
+                </th>
+                <th 
+                  className="text-left py-3 px-4 font-medium text-foreground cursor-pointer hover:text-primary transition-colors" 
+                  onClick={() => onSort?.('insuranceExpiry')}
+                >
+                  <div className="flex items-center">
+                    Seguro
+                    <SortIcon field="insuranceExpiry" currentSortField={sortField} sortDirection={sortDirection} />
+                  </div>
+                </th>
+                <th 
+                  className="text-left py-3 px-4 font-medium text-foreground cursor-pointer hover:text-primary transition-colors" 
+                  onClick={() => onSort?.('circulationPermitExpiry')}
+                >
+                  <div className="flex items-center">
+                    Permiso Circ.
+                    <SortIcon field="circulationPermitExpiry" currentSortField={sortField} sortDirection={sortDirection} />
+                  </div>
+                </th>
+                <th 
+                  className="text-left py-3 px-4 font-medium text-foreground cursor-pointer hover:text-primary transition-colors" 
+                  onClick={() => onSort?.('isActive')}
+                >
+                  <div className="flex items-center">
+                    Estado
+                    <SortIcon field="isActive" currentSortField={sortField} sortDirection={sortDirection} />
+                  </div>
+                </th>
                 <th className="text-center py-3 px-4 font-medium text-foreground">Acciones</th>
               </tr>
             </thead>

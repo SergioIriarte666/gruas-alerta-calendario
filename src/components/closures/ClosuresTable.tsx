@@ -1,5 +1,5 @@
 
-import { Edit, Trash2, FileText } from 'lucide-react';
+import { Edit, Trash2, FileText, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -8,15 +8,34 @@ import { ServiceClosure } from '@/types';
 import { Client } from '@/types';
 import { formatForDisplay } from '@/utils/timezoneUtils';
 
+export type ClosureSortField = 'folio' | 'dateFrom' | 'clientId' | 'serviceCount' | 'total' | 'status';
+export type SortDirection = 'asc' | 'desc';
+
 interface ClosuresTableProps {
   closures: ServiceClosure[];
   clients: Client[];
   onEdit: (closure: ServiceClosure) => void;
   onDelete: (id: string, folio: string) => void;
   onClose: (id: string, folio: string) => void;
+  sortField?: ClosureSortField;
+  sortDirection?: SortDirection;
+  onSort?: (field: ClosureSortField) => void;
 }
 
-const ClosuresTable = ({ closures, clients, onEdit, onDelete, onClose }: ClosuresTableProps) => {
+const SortIcon = ({ field, currentSortField, sortDirection }: { 
+  field: ClosureSortField; 
+  currentSortField?: ClosureSortField; 
+  sortDirection?: SortDirection 
+}) => {
+  if (currentSortField !== field) {
+    return <ArrowUpDown className="ml-2 h-4 w-4 text-muted-foreground" />;
+  }
+  return sortDirection === 'asc' ? 
+    <ArrowUp className="ml-2 h-4 w-4 text-primary" /> : 
+    <ArrowDown className="ml-2 h-4 w-4 text-primary" />;
+};
+
+const ClosuresTable = ({ closures, clients, onEdit, onDelete, onClose, sortField, sortDirection, onSort }: ClosuresTableProps) => {
   const getClientName = (clientId?: string) => {
     if (!clientId) return 'Todos los clientes';
     const client = clients.find(c => c.id === clientId);
@@ -62,12 +81,60 @@ const ClosuresTable = ({ closures, clients, onEdit, onDelete, onClose }: Closure
         <Table>
           <TableHeader>
             <TableRow className="border-border">
-              <TableHead className="text-foreground">Folio</TableHead>
-              <TableHead className="text-foreground">Período</TableHead>
-              <TableHead className="text-foreground">Cliente</TableHead>
-              <TableHead className="text-foreground">Servicios</TableHead>
-              <TableHead className="text-foreground">Total</TableHead>
-              <TableHead className="text-foreground">Estado</TableHead>
+              <TableHead 
+                className="text-foreground cursor-pointer hover:text-primary transition-colors" 
+                onClick={() => onSort?.('folio')}
+              >
+                <div className="flex items-center">
+                  Folio
+                  <SortIcon field="folio" currentSortField={sortField} sortDirection={sortDirection} />
+                </div>
+              </TableHead>
+              <TableHead 
+                className="text-foreground cursor-pointer hover:text-primary transition-colors" 
+                onClick={() => onSort?.('dateFrom')}
+              >
+                <div className="flex items-center">
+                  Período
+                  <SortIcon field="dateFrom" currentSortField={sortField} sortDirection={sortDirection} />
+                </div>
+              </TableHead>
+              <TableHead 
+                className="text-foreground cursor-pointer hover:text-primary transition-colors" 
+                onClick={() => onSort?.('clientId')}
+              >
+                <div className="flex items-center">
+                  Cliente
+                  <SortIcon field="clientId" currentSortField={sortField} sortDirection={sortDirection} />
+                </div>
+              </TableHead>
+              <TableHead 
+                className="text-foreground cursor-pointer hover:text-primary transition-colors" 
+                onClick={() => onSort?.('serviceCount')}
+              >
+                <div className="flex items-center">
+                  Servicios
+                  <SortIcon field="serviceCount" currentSortField={sortField} sortDirection={sortDirection} />
+                </div>
+              </TableHead>
+              <TableHead 
+                className="text-foreground cursor-pointer hover:text-primary transition-colors" 
+                onClick={() => onSort?.('total')}
+              >
+                <div className="flex items-center">
+                  Total
+                  <SortIcon field="total" currentSortField={sortField} sortDirection={sortDirection} />
+                </div>
+              </TableHead>
+              <TableHead 
+                className="text-foreground cursor-pointer hover:text-primary transition-colors" 
+                onClick={() => onSort?.('status')}
+              >
+                <div className="flex items-center">
+                  Estado
+                  <SortIcon field="status" currentSortField={sortField} sortDirection={sortDirection} />
+                </div>
+              </TableHead>
               <TableHead className="text-foreground text-right">Acciones</TableHead>
             </TableRow>
           </TableHeader>

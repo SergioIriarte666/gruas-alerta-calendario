@@ -2,9 +2,12 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Edit, Trash2, UserCheck, UserX, Plus, Users } from 'lucide-react';
+import { Edit, Trash2, UserCheck, UserX, Plus, Users, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import { Operator } from '@/types';
 import { formatForDisplay } from '@/utils/timezoneUtils';
+
+export type OperatorSortField = 'operatorType' | 'name' | 'rut' | 'phone' | 'license' | 'examExpiry' | 'isActive';
+export type SortDirection = 'asc' | 'desc';
 
 interface OperatorsTableProps {
   operators: Operator[];
@@ -14,7 +17,23 @@ interface OperatorsTableProps {
   onToggleStatus: (id: string, currentStatus: boolean, name: string) => void;
   onNewOperator: () => void;
   searchTerm: string;
+  sortField?: OperatorSortField;
+  sortDirection?: SortDirection;
+  onSort?: (field: OperatorSortField) => void;
 }
+
+const SortIcon = ({ field, currentSortField, sortDirection }: { 
+  field: OperatorSortField; 
+  currentSortField?: OperatorSortField; 
+  sortDirection?: SortDirection 
+}) => {
+  if (currentSortField !== field) {
+    return <ArrowUpDown className="ml-2 h-4 w-4 text-muted-foreground" />;
+  }
+  return sortDirection === 'asc' ? 
+    <ArrowUp className="ml-2 h-4 w-4 text-primary" /> : 
+    <ArrowDown className="ml-2 h-4 w-4 text-primary" />;
+};
 
 export const OperatorsTable = ({
   operators,
@@ -24,6 +43,9 @@ export const OperatorsTable = ({
   onToggleStatus,
   onNewOperator,
   searchTerm,
+  sortField,
+  sortDirection,
+  onSort,
 }: OperatorsTableProps) => {
   if (operators.length === 0 && searchTerm) {
     return (
@@ -73,13 +95,69 @@ export const OperatorsTable = ({
           <table className="w-full">
             <thead>
               <tr className="border-b">
-                <th className="text-left py-3 px-4 font-medium text-foreground">Tipo</th>
-                <th className="text-left py-3 px-4 font-medium text-foreground">Nombre</th>
-                <th className="text-left py-3 px-4 font-medium text-foreground">RUT</th>
-                <th className="text-left py-3 px-4 font-medium text-foreground">Teléfono</th>
-                <th className="text-left py-3 px-4 font-medium text-foreground">Licencia/Dpto</th>
-                <th className="text-left py-3 px-4 font-medium text-foreground">Vencimiento/Cargo</th>
-                <th className="text-left py-3 px-4 font-medium text-foreground">Estado</th>
+                <th 
+                  className="text-left py-3 px-4 font-medium text-foreground cursor-pointer hover:text-primary transition-colors" 
+                  onClick={() => onSort?.('operatorType')}
+                >
+                  <div className="flex items-center">
+                    Tipo
+                    <SortIcon field="operatorType" currentSortField={sortField} sortDirection={sortDirection} />
+                  </div>
+                </th>
+                <th 
+                  className="text-left py-3 px-4 font-medium text-foreground cursor-pointer hover:text-primary transition-colors" 
+                  onClick={() => onSort?.('name')}
+                >
+                  <div className="flex items-center">
+                    Nombre
+                    <SortIcon field="name" currentSortField={sortField} sortDirection={sortDirection} />
+                  </div>
+                </th>
+                <th 
+                  className="text-left py-3 px-4 font-medium text-foreground cursor-pointer hover:text-primary transition-colors" 
+                  onClick={() => onSort?.('rut')}
+                >
+                  <div className="flex items-center">
+                    RUT
+                    <SortIcon field="rut" currentSortField={sortField} sortDirection={sortDirection} />
+                  </div>
+                </th>
+                <th 
+                  className="text-left py-3 px-4 font-medium text-foreground cursor-pointer hover:text-primary transition-colors" 
+                  onClick={() => onSort?.('phone')}
+                >
+                  <div className="flex items-center">
+                    Teléfono
+                    <SortIcon field="phone" currentSortField={sortField} sortDirection={sortDirection} />
+                  </div>
+                </th>
+                <th 
+                  className="text-left py-3 px-4 font-medium text-foreground cursor-pointer hover:text-primary transition-colors" 
+                  onClick={() => onSort?.('license')}
+                >
+                  <div className="flex items-center">
+                    Licencia/Dpto
+                    <SortIcon field="license" currentSortField={sortField} sortDirection={sortDirection} />
+                  </div>
+                </th>
+                <th 
+                  className="text-left py-3 px-4 font-medium text-foreground cursor-pointer hover:text-primary transition-colors" 
+                  onClick={() => onSort?.('examExpiry')}
+                >
+                  <div className="flex items-center">
+                    Vencimiento/Cargo
+                    <SortIcon field="examExpiry" currentSortField={sortField} sortDirection={sortDirection} />
+                  </div>
+                </th>
+                <th 
+                  className="text-left py-3 px-4 font-medium text-foreground cursor-pointer hover:text-primary transition-colors" 
+                  onClick={() => onSort?.('isActive')}
+                >
+                  <div className="flex items-center">
+                    Estado
+                    <SortIcon field="isActive" currentSortField={sortField} sortDirection={sortDirection} />
+                  </div>
+                </th>
                 <th className="text-center py-3 px-4 font-medium text-foreground">Acciones</th>
               </tr>
             </thead>

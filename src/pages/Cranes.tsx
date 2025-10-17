@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { CraneForm } from '@/components/cranes/CraneForm';
 import { CraneDetailsModal } from '@/components/cranes/CraneDetailsModal';
@@ -8,7 +8,8 @@ import { Crane } from '@/types';
 import { AppPagination } from '@/components/shared/AppPagination';
 import { CranesHeader } from '@/components/cranes/CranesHeader';
 import { CranesFilters } from '@/components/cranes/CranesFilters';
-import { CranesTable } from '@/components/cranes/CranesTable';
+import { CranesTable, CraneSortField, SortDirection } from '@/components/cranes/CranesTable';
+import { parseFromDatabase } from '@/utils/timezoneUtils';
 
 
 const Cranes = () => {
@@ -20,16 +21,61 @@ const Cranes = () => {
   const [editingCrane, setEditingCrane] = useState<Crane | undefined>();
   const [selectedCrane, setSelectedCrane] = useState<Crane | undefined>();
   const [currentPage, setCurrentPage] = useState(1);
+  const [sortField, setSortField] = useState<CraneSortField>('licensePlate');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
   const ITEMS_PER_PAGE = 10;
 
-  const filteredCranes = cranes.filter(crane =>
-    (crane.licensePlate || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-    crane.brand.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    crane.model.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const handleSort = (field: CraneSortField) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
+    }
+  };
 
-  const totalPages = Math.ceil(filteredCranes.length / ITEMS_PER_PAGE);
-  const paginatedCranes = filteredCranes.slice(
+  const filteredAndSortedCranes = useMemo(() => {
+    const filtered = cranes.filter(crane =>
+      (crane.licensePlate || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      crane.brand.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      crane.model.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    return [...filtered].sort((a, b) => {
+      let comparison = 0;
+      
+      switch (sortField) {
+        case 'licensePlate':
+          comparison = (a.licensePlate || '').localeCompare(b.licensePlate || '');
+          break;
+        case 'brand':
+          const brandA = `${a.brand} ${a.model}`;
+          const brandB = `${b.brand} ${b.model}`;
+          comparison = brandA.localeCompare(brandB);
+          break;
+        case 'type':
+          comparison = a.type.localeCompare(b.type);
+          break;
+        case 'technicalReviewExpiry':
+          comparison = parseFromDatabase(a.technicalReviewExpiry).getTime() - parseFromDatabase(b.technicalReviewExpiry).getTime();
+          break;
+        case 'insuranceExpiry':
+          comparison = parseFromDatabase(a.insuranceExpiry).getTime() - parseFromDatabase(b.insuranceExpiry).getTime();
+          break;
+        case 'circulationPermitExpiry':
+          comparison = parseFromDatabase(a.circulationPermitExpiry).getTime() - parseFromDatabase(b.circulationPermitExpiry).getTime();
+          break;
+        case 'isActive':
+          comparison = (b.isActive ? 1 : 0) - (a.isActive ? 1 : 0);
+          break;
+      }
+      
+      return sortDirection === 'asc' ? comparison : -comparison;
+    });
+  }, [cranes, searchTerm, sortField, sortDirection]);
+
+  const totalPages = Math.ceil(filteredAndSortedCranes.length / ITEMS_PER_PAGE);
+  const paginatedCranes = filteredAndSortedCranes.slice(
     (currentPage - 1) * ITEMS_PER_PAGE,
     currentPage * ITEMS_PER_PAGE
   );
@@ -99,13 +145,16 @@ const Cranes = () => {
 
       <CranesTable
         cranes={paginatedCranes}
-        totalCranes={filteredCranes.length}
+        totalCranes={filteredAndSortedCranes.length}
         onEdit={handleEdit}
         onDelete={handleDelete}
         onToggleStatus={handleToggleStatus}
         onViewDetails={handleViewDetails}
         onNewCrane={handleCreate}
         searchTerm={searchTerm}
+        sortField={sortField}
+        sortDirection={sortDirection}
+        onSort={handleSort}
       />
 
       <AppPagination

@@ -1,13 +1,29 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Edit, Trash2, Plus, Power, PowerOff } from 'lucide-react';
+import { Edit, Trash2, Plus, Power, PowerOff, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import { useSupplierCategoryManager, SupplierCategory } from '@/hooks/useSupplierCategoryManager';
 import { SupplierCategoryForm } from './SupplierCategoryForm';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+
+type CategorySortField = 'name' | 'label' | 'description' | 'isActive';
+type SortDirection = 'asc' | 'desc';
+
+const SortIcon = ({ field, currentSortField, sortDirection }: { 
+  field: CategorySortField; 
+  currentSortField?: CategorySortField; 
+  sortDirection?: SortDirection 
+}) => {
+  if (currentSortField !== field) {
+    return <ArrowUpDown className="ml-2 h-4 w-4 text-muted-foreground" />;
+  }
+  return sortDirection === 'asc' ? 
+    <ArrowUp className="ml-2 h-4 w-4 text-primary" /> : 
+    <ArrowDown className="ml-2 h-4 w-4 text-primary" />;
+};
 
 export const SupplierCategoryList = () => {
   const {
@@ -21,6 +37,42 @@ export const SupplierCategoryList = () => {
 
   const [showForm, setShowForm] = useState(false);
   const [editingCategory, setEditingCategory] = useState<SupplierCategory | null>(null);
+  const [sortField, setSortField] = useState<CategorySortField>('name');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
+
+  const handleSort = (field: CategorySortField) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
+    }
+  };
+
+  const sortedCategories = useMemo(() => {
+    return [...categories].sort((a, b) => {
+      let comparison = 0;
+      
+      switch (sortField) {
+        case 'name':
+          comparison = a.name.localeCompare(b.name);
+          break;
+        case 'label':
+          comparison = a.label.localeCompare(b.label);
+          break;
+        case 'description':
+          const descA = a.description || '';
+          const descB = b.description || '';
+          comparison = descA.localeCompare(descB);
+          break;
+        case 'isActive':
+          comparison = (b.is_active ? 1 : 0) - (a.is_active ? 1 : 0);
+          break;
+      }
+      
+      return sortDirection === 'asc' ? comparison : -comparison;
+    });
+  }, [categories, sortField, sortDirection]);
 
   const handleEdit = (category: SupplierCategory) => {
     setEditingCategory(category);
@@ -72,15 +124,47 @@ export const SupplierCategoryList = () => {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Nombre</TableHead>
-                  <TableHead>Etiqueta</TableHead>
-                  <TableHead>Descripción</TableHead>
-                  <TableHead>Estado</TableHead>
+                  <TableHead 
+                    className="cursor-pointer hover:text-primary transition-colors" 
+                    onClick={() => handleSort('name')}
+                  >
+                    <div className="flex items-center">
+                      Nombre
+                      <SortIcon field="name" currentSortField={sortField} sortDirection={sortDirection} />
+                    </div>
+                  </TableHead>
+                  <TableHead 
+                    className="cursor-pointer hover:text-primary transition-colors" 
+                    onClick={() => handleSort('label')}
+                  >
+                    <div className="flex items-center">
+                      Etiqueta
+                      <SortIcon field="label" currentSortField={sortField} sortDirection={sortDirection} />
+                    </div>
+                  </TableHead>
+                  <TableHead 
+                    className="cursor-pointer hover:text-primary transition-colors" 
+                    onClick={() => handleSort('description')}
+                  >
+                    <div className="flex items-center">
+                      Descripción
+                      <SortIcon field="description" currentSortField={sortField} sortDirection={sortDirection} />
+                    </div>
+                  </TableHead>
+                  <TableHead 
+                    className="cursor-pointer hover:text-primary transition-colors" 
+                    onClick={() => handleSort('isActive')}
+                  >
+                    <div className="flex items-center">
+                      Estado
+                      <SortIcon field="isActive" currentSortField={sortField} sortDirection={sortDirection} />
+                    </div>
+                  </TableHead>
                   <TableHead className="text-right">Acciones</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {categories.map((category) => (
+                {sortedCategories.map((category) => (
                   <TableRow key={category.id}>
                     <TableCell className="font-medium">
                       {category.name}
