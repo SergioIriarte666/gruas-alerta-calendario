@@ -12,11 +12,11 @@ export const exportServiceReport = async ({ format, services, settings, appliedF
   const { company } = settings;
   const exportFileDefaultName = customFileName || createExportFileName('informe-servicios', appliedFilters.dateRange.from, appliedFilters.dateRange.to);
   
-  // Ordenar servicios por fecha (más recientes primero)
+  // Ordenar servicios por fecha (más antiguas primero)
   const sortedServices = [...services].sort((a, b) => {
     const dateA = new Date(a.serviceDate + 'T00:00:00').getTime();
     const dateB = new Date(b.serviceDate + 'T00:00:00').getTime();
-    return dateB - dateA;
+    return dateA - dateB;
   });
   
   const totalValue = sortedServices.reduce((acc, service) => {
