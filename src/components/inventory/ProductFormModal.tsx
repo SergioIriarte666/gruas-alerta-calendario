@@ -11,11 +11,6 @@ import { Switch } from '@/components/ui/switch';
 import { useInventoryCategories, useCreateInventoryItem, useUpdateInventoryItem, type InventoryItem } from '@/hooks/useInventory';
 import { toast } from 'sonner';
 import { isDuplicateError, extractDuplicateField, getDuplicateErrorMessage } from '@/utils/validationUtils';
-import { supabase } from '@/integrations/supabase/client';
-import { useSimilarItemsSearch } from '@/utils/inventoryHelper';
-import { SimilarProductAlert } from '@/components/cranes/forms/SimilarProductAlert';
-import { ProductDetailsModal } from '@/components/inventory/ProductDetailsModal';
-import { PurchaseModal } from '@/components/inventory/PurchaseModal';
 
 const productSchema = z.object({
   name: z.string().min(1, 'El nombre es requerido'),
@@ -51,13 +46,6 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({ product, onS
   const { data: categories = [] } = useInventoryCategories();
   const createProduct = useCreateInventoryItem();
   const updateProduct = useUpdateInventoryItem();
-  
-  // Estados para el sistema de alertas de similitud
-  const [confirmCreateNew, setConfirmCreateNew] = useState(false);
-  const [detailsModalOpen, setDetailsModalOpen] = useState(false);
-  const [selectedSimilarProduct, setSelectedSimilarProduct] = useState(null);
-  const [purchaseModalOpen, setPurchaseModalOpen] = useState(false);
-  const [selectedItemForPurchase, setSelectedItemForPurchase] = useState<any>(null);
 
   const {
     register,
@@ -85,58 +73,8 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({ product, onS
   });
 
   const watchedValues = watch();
-  
-  // Hook para detectar productos similares (solo para productos nuevos)
-  const { similarItems, shouldAlert, alertMessage, isLoading } = useSimilarItemsSearch(
-    watchedValues.name || '', 
-    !product // Solo buscar similitudes cuando no estamos editando
-  );
-
-  // Handlers para el sistema de alertas
-  const handleUseExisting = async (similarProduct) => {
-    try {
-      // Buscar el producto completo en la base de datos
-      const { data: fullProduct, error } = await supabase
-        .from('inventory_items')
-        .select('*')
-        .eq('id', similarProduct.id)
-        .single();
-
-      if (error) throw error;
-
-      // Abrir modal de compra en lugar de llenar formulario
-      setSelectedItemForPurchase(fullProduct);
-      setPurchaseModalOpen(true);
-      
-      toast.success('Abriendo registro de compra para producto existente');
-    } catch (error) {
-      console.error('Error fetching product details:', error);
-      toast.error('Error al obtener detalles del producto');
-    }
-  };
-
-  const handleViewDetails = (similarProduct) => {
-    setSelectedSimilarProduct(similarProduct);
-    setDetailsModalOpen(true);
-  };
-
-  const handleCreateNew = () => {
-    // Mostrar advertencia más fuerte para crear duplicados
-    const similarItemsNames = similarItems.map(item => `"${item.name}"`).join(', ');
-    const warningMessage = `¿Estás seguro de crear un nuevo producto cuando ya existe: ${similarItemsNames}? Solo hazlo si hay diferencias significativas (marca, especificación, etc.)`;
-    
-    if (window.confirm(warningMessage)) {
-      setConfirmCreateNew(true);
-      toast.success('Confirmado: Se creará un nuevo producto');
-    }
-  };
 
   const onSubmit = async (data: ProductFormData) => {
-    // Si hay productos similares y no hemos confirmado, bloquear envío
-    if (!product && shouldAlert && !confirmCreateNew) {
-      toast.warning('Hay productos similares. Usa "Usar Existente" para registrar una compra o confirma la creación de un nuevo producto.');
-      return;
-    }
     
     try {
       const productData = {
@@ -212,21 +150,6 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({ product, onS
               <p className="text-sm text-destructive mt-1">{errors.name.message}</p>
             )}
           </div>
-
-          {/* Alerta de productos similares - Solo para productos nuevos */}
-          {!product && shouldAlert && (
-            <SimilarProductAlert
-              similarityResult={{
-                exactMatch: similarItems.find(item => item.match_type === 'exact') || null,
-                similarItems: similarItems,
-                alertMessage: alertMessage,
-                shouldAlert: shouldAlert
-              }}
-              onUseExisting={handleUseExisting}
-              onCreateNew={handleCreateNew}
-              onViewDetails={handleViewDetails}
-            />
-          )}
 
           <div>
             <Label htmlFor="sku">SKU</Label>
@@ -402,28 +325,6 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({ product, onS
           {isSubmitting ? 'Guardando...' : product ? 'Actualizar' : 'Crear Producto'}
         </Button>
       </div>
-
-      {/* Modal de detalles del producto */}
-      <ProductDetailsModal
-        isOpen={detailsModalOpen}
-        onClose={() => setDetailsModalOpen(false)}
-        product={selectedSimilarProduct}
-      />
-
-      {/* Modal de compra para producto existente */}
-      <PurchaseModal
-        isOpen={purchaseModalOpen}
-        onClose={() => {
-          setPurchaseModalOpen(false);
-          setSelectedItemForPurchase(null);
-        }}
-        item={selectedItemForPurchase}
-        onSuccess={() => {
-          onSuccess?.();
-          // Cerrar también el modal principal después de una compra exitosa
-          onClose?.();
-        }}
-      />
     </form>
   );
 };
