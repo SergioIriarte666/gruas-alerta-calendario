@@ -35,7 +35,8 @@ export const generateServiceDetailsPDF = async (data: ServiceDetailsPDFData): Pr
     companyData,
     service: service,
     inspection: {} as any,
-    isFinal: true
+    isFinal: true,
+    title: 'DETALLES DEL SERVICIO'
   });
   
   // 3. Título del documento

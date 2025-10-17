@@ -99,7 +99,8 @@ export const addPDFHeader = async (doc: jsPDF, data: InspectionPDFData): Promise
     // Header principal mejorado
     doc.setFontSize(18);
     doc.setTextColor(0, 150, 136); // tms-green
-    doc.text('REPORTE DE INSPECCION PRE-SERVICIO', pageWidth / 2, yPosition, { align: 'center' });
+    const documentTitle = data.title || 'REPORTE DE INSPECCION PRE-SERVICIO';
+    doc.text(documentTitle, pageWidth / 2, yPosition, { align: 'center' });
     yPosition += 12;
 
     // Información de la empresa - USAR DATOS REALES

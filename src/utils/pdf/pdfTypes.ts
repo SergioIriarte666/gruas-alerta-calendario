@@ -30,4 +30,5 @@ export interface InspectionPDFData {
     logoUrl?: string;
   };
   isFinal?: boolean;
+  title?: string;
 }
