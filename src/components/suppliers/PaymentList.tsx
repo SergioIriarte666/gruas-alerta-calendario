@@ -583,6 +583,15 @@ export const PaymentList: React.FC = () => {
                     </TableHead>
                     <TableHead 
                       className="text-muted-foreground cursor-pointer hover:text-primary transition-colors" 
+                      onClick={() => handleSort('paidDate')}
+                    >
+                      <div className="flex items-center">
+                        Fecha de Pago
+                        <SortIcon field="paidDate" currentSortField={sortField} sortDirection={sortDirection} />
+                      </div>
+                    </TableHead>
+                    <TableHead 
+                      className="text-muted-foreground cursor-pointer hover:text-primary transition-colors" 
                       onClick={() => handleSort('status')}
                     >
                       <div className="flex items-center">
@@ -632,16 +641,19 @@ export const PaymentList: React.FC = () => {
                       </TableCell>
 
                       <TableCell>
-                        <div className="space-y-1">
-                          <div className="text-foreground">
-                            {formatForDisplay(parseFromDatabase(payment.due_date))}
-                          </div>
-                          {payment.paid_date && (
-                            <div className="text-sm text-violet-600">
-                              Pagado: {formatForDisplay(parseFromDatabase(payment.paid_date))}
-                            </div>
-                          )}
+                        <div className="text-foreground">
+                          {formatForDisplay(parseFromDatabase(payment.due_date))}
                         </div>
+                      </TableCell>
+
+                      <TableCell>
+                        {payment.paid_date ? (
+                          <div className="text-violet-600">
+                            {formatForDisplay(parseFromDatabase(payment.paid_date))}
+                          </div>
+                        ) : (
+                          <span className="text-muted-foreground">-</span>
+                        )}
                       </TableCell>
 
                       <TableCell>
