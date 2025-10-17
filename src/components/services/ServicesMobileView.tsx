@@ -41,14 +41,14 @@ export const ServicesMobileView = ({
 
   if (services.length === 0) {
     return (
-      <div className="text-center py-12">
+      <div className="services-scope text-center py-12">
         <div className="w-16 h-16 bg-tms-green/20 rounded-full flex items-center justify-center mx-auto mb-4">
           <Truck className="w-8 h-8 text-tms-green" />
         </div>
-        <h3 className="text-lg font-medium text-white mb-2">
+        <h3 className="text-lg font-medium text-foreground mb-2">
           {!hasInitialServices ? 'No hay servicios registrados' : 'No hay servicios que coincidan con los filtros'}
         </h3>
-        <p className="text-white mb-6">
+        <p className="text-muted-foreground mb-6">
           {!hasInitialServices
             ? 'Comienza agregando tu primer servicio de grúa'
             : 'Intenta ajustar los filtros de búsqueda'
@@ -69,9 +69,9 @@ export const ServicesMobileView = ({
   }
 
   return (
-    <div className="space-y-4">
+    <div className="services-scope space-y-4">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-white flex items-center">
+        <h3 className="text-lg font-semibold text-foreground flex items-center">
           <Truck className="w-5 h-5 text-tms-green mr-2" />
           Servicios ({services.length})
         </h3>
@@ -84,37 +84,37 @@ export const ServicesMobileView = ({
           <Card key={service.id} className="glass-card">
             <CardContent className="p-4">
               <div className="flex items-start justify-between mb-3">
-                <div className="flex-1">
-                  <div className="mb-1"><Badge variant="tms" className="whitespace-nowrap" title={`Folio: ${service.folio}`}>#{service.folio}</Badge></div>
-                  <p className="text-white font-medium">{service.client.name}</p>
-                  <p className="text-white/70 text-sm">{service.client.department} • {service.client.rut}</p>
+              <div className="flex-1">
+                <div className="mb-1"><Badge variant="tms" className="whitespace-nowrap" title={`Folio: ${service.folio}`}>#{service.folio}</Badge></div>
+                <p className="text-foreground font-medium">{service.client.name}</p>
+                <p className="text-muted-foreground text-sm">{service.client.department} • {service.client.rut}</p>
                 </div>
                 {getServiceStatusBadge(service.status)}
               </div>
 
               <div className="space-y-2 mb-4">
-                <div className="flex items-center text-white text-sm">
-                  <Calendar className="w-4 h-4 mr-2 text-gray-400 flex-shrink-0" />
+                <div className="flex items-center text-foreground text-sm">
+                  <Calendar className="w-4 h-4 mr-2 text-muted-foreground flex-shrink-0" />
                   <span>{formatForDisplay(parseFromDatabase(service.serviceDate))}</span>
                 </div>
 
                 {shouldShowVehicleInfo(service) && (
-                  <div className="flex items-center text-white text-sm">
-                    <Truck className="w-4 h-4 mr-2 text-gray-400 flex-shrink-0" />
+                  <div className="flex items-center text-foreground text-sm">
+                    <Truck className="w-4 h-4 mr-2 text-muted-foreground flex-shrink-0" />
                     <span>{formatVehicleInfo(service)}</span>
                   </div>
                 )}
 
-                <div className="flex items-start text-white text-sm">
-                  <MapPin className="w-4 h-4 mr-2 text-gray-400 flex-shrink-0 mt-0.5" />
+                <div className="flex items-start text-foreground text-sm">
+                  <MapPin className="w-4 h-4 mr-2 text-muted-foreground flex-shrink-0 mt-0.5" />
                   <div className="flex-1">
                     <div className="truncate">{service.origin}</div>
-                    <div className="text-white/70 text-xs">→ {service.destination}</div>
+                    <div className="text-muted-foreground text-xs">→ {service.destination}</div>
                   </div>
                 </div>
 
-                <div className="flex items-center text-white text-sm">
-                  <User className="w-4 h-4 mr-2 text-gray-400 flex-shrink-0" />
+                <div className="flex items-center text-foreground text-sm">
+                  <User className="w-4 h-4 mr-2 text-muted-foreground flex-shrink-0" />
                   <span>{service.operator?.name || 'Sin asignar'} • {service.crane?.licensePlate || 'Sin grúa'}</span>
                 </div>
 

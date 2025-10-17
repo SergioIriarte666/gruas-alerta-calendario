@@ -86,7 +86,7 @@ const Services = () => {
   }
 
   return (
-    <div className="container mx-auto py-6 space-y-6 bg-white min-h-screen">
+    <div className="services-scope container mx-auto py-6 space-y-6 bg-white min-h-screen">
       <ServicesHeader 
         isAdmin={isAdmin}
         refreshing={refreshing}
