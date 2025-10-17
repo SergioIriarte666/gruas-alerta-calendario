@@ -12,7 +12,14 @@ export const exportServiceReport = async ({ format, services, settings, appliedF
   const { company } = settings;
   const exportFileDefaultName = customFileName || createExportFileName('informe-servicios', appliedFilters.dateRange.from, appliedFilters.dateRange.to);
   
-  const totalValue = services.reduce((acc, service) => {
+  // Ordenar servicios por fecha (más recientes primero)
+  const sortedServices = [...services].sort((a, b) => {
+    const dateA = new Date(a.serviceDate + 'T00:00:00').getTime();
+    const dateB = new Date(b.serviceDate + 'T00:00:00').getTime();
+    return dateB - dateA;
+  });
+  
+  const totalValue = sortedServices.reduce((acc, service) => {
     return acc + getDisplayServiceValue(service);
   }, 0);
 
@@ -38,7 +45,7 @@ export const exportServiceReport = async ({ format, services, settings, appliedF
     let lastY = (doc as any).lastAutoTable.finalY;
 
     const summaryData = [
-      ['Total Servicios', services.length.toString()],
+      ['Total Servicios', sortedServices.length.toString()],
       ['Valor Total', `$${totalValue.toLocaleString('es-CL')}`]
     ];
     doc.setFontSize(11);
@@ -49,7 +56,7 @@ export const exportServiceReport = async ({ format, services, settings, appliedF
     const availableWidth = pageWidth - 28; // Márgenes izquierdo y derecho
     autoTable(doc, {
       head: [['Fecha', 'Folio', 'Cliente', 'Cotización', 'OC', 'Factura', 'Tipo Servicio', 'Marca Veh.', 'Modelo Veh.', 'Patente Veh.', 'Origen', 'Destino', 'Estado', 'Valor']],
-      body: services.map(s => [
+      body: sortedServices.map(s => [
         formatDate(new Date(s.serviceDate + 'T00:00:00'), 'dd/MM/yy'),
         s.folio,
         s.client.name.length > 10 ? s.client.name.substring(0, 10) + '...' : s.client.name,
@@ -98,7 +105,7 @@ export const exportServiceReport = async ({ format, services, settings, appliedF
     const wb = XLSX.utils.book_new();
 
     // Hoja principal: Detalle completo de servicios - SIN operador
-    const services_data = services.map(s => ({
+    const services_data = sortedServices.map(s => ({
       'Fecha Servicio': formatDate(new Date(s.serviceDate + 'T00:00:00'), 'yyyy-MM-dd'),
       'Folio': s.folio,
       'Cliente': s.client.name,
@@ -130,7 +137,7 @@ export const exportServiceReport = async ({ format, services, settings, appliedF
       ['Cliente', appliedFilters.client], [],
       ['Resumen'],
       ['Métrica', 'Valor'],
-      ['Total Servicios', services.length],
+      ['Total Servicios', sortedServices.length],
       ['Valor Total', totalValue],
     ];
     const summary_ws = XLSX.utils.aoa_to_sheet(summary_ws_data);
