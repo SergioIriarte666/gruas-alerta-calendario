@@ -409,7 +409,7 @@ export const IncomeForm = ({ isOpen, onClose, income }: IncomeFormProps) => {
                               <SelectValue placeholder="Seleccionar factura" />
                             </SelectTrigger>
                           </FormControl>
-                          <SelectContent className="max-h-[300px] min-w-[500px]">
+                          <SelectContent className="max-h-[300px] min-w-[550px] bg-background border">
                             {clientInvoices.length === 0 ? (
                               <div className="p-2 text-sm text-muted-foreground">
                                 No hay facturas pendientes
@@ -417,31 +417,44 @@ export const IncomeForm = ({ isOpen, onClose, income }: IncomeFormProps) => {
                             ) : (
                               clientInvoices.map((invoice) => (
                                 <SelectItem key={invoice.id} value={invoice.id}>
-                                  <div className="flex flex-col py-2 gap-1.5">
-                                    <div className="flex items-center gap-2">
-                                      <span className="font-medium">
+                                  <div className="flex flex-col w-full space-y-1.5 py-1">
+                                    {/* Línea 1: Folio + Badge */}
+                                    <div className="flex items-center justify-between w-full gap-2">
+                                      <span className="font-semibold text-sm">
                                         {invoice.numero_fiscal || invoice.folio}
                                       </span>
                                       <Badge 
                                         variant={invoice.status === 'overdue' ? 'destructive' : 'secondary'}
-                                        className="text-xs"
+                                        className="text-xs shrink-0"
                                       >
                                         {invoice.status === 'sent' ? 'Enviada' : invoice.status === 'partial' ? 'Parcial' : 'Vencida'}
                                       </Badge>
                                     </div>
-                                    <div className="text-xs text-muted-foreground flex items-center gap-2">
+                                    
+                                    {/* Línea 2: Fechas */}
+                                    <div className="flex items-center gap-3 text-xs text-muted-foreground">
                                       <span>
                                         Emisión: {format(new Date(invoice.issue_date), 'dd/MM/yyyy', { locale: es })}
                                       </span>
-                                      <span className="text-muted-foreground/50">•</span>
+                                      <span className="text-muted-foreground/30">•</span>
                                       <span className={invoice.status === 'overdue' ? 'text-destructive font-medium' : ''}>
                                         Vence: {format(new Date(invoice.due_date), 'dd/MM/yyyy', { locale: es })}
                                       </span>
                                     </div>
-                                    <div className="text-xs text-muted-foreground">
-                                      Total: ${invoice.total.toLocaleString('es-CL')} 
-                                      {invoice.remaining_amount !== undefined && invoice.remaining_amount !== invoice.total && (
-                                        <span className="font-medium text-foreground"> | Pendiente: ${invoice.remaining_amount.toLocaleString('es-CL')}</span>
+                                    
+                                    {/* Línea 3: Montos */}
+                                    <div className="flex items-center gap-2 text-xs flex-wrap">
+                                      <span className="text-muted-foreground">
+                                        Total: ${invoice.total.toLocaleString('es-CL')}
+                                      </span>
+                                      {invoice.remaining_amount !== undefined && 
+                                       invoice.remaining_amount !== invoice.total && (
+                                        <>
+                                          <span className="text-muted-foreground/30">|</span>
+                                          <span className="font-semibold text-foreground">
+                                            Pendiente: ${invoice.remaining_amount.toLocaleString('es-CL')}
+                                          </span>
+                                        </>
                                       )}
                                     </div>
                                   </div>
