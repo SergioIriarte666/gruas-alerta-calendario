@@ -409,7 +409,7 @@ export const IncomeForm = ({ isOpen, onClose, income }: IncomeFormProps) => {
                               <SelectValue placeholder="Seleccionar factura" />
                             </SelectTrigger>
                           </FormControl>
-                          <SelectContent className="max-h-[300px]">
+                          <SelectContent className="max-h-[300px] min-w-[500px]">
                             {clientInvoices.length === 0 ? (
                               <div className="p-2 text-sm text-muted-foreground">
                                 No hay facturas pendientes
@@ -417,7 +417,7 @@ export const IncomeForm = ({ isOpen, onClose, income }: IncomeFormProps) => {
                             ) : (
                               clientInvoices.map((invoice) => (
                                 <SelectItem key={invoice.id} value={invoice.id}>
-                                  <div className="flex flex-col py-1 gap-1">
+                                  <div className="flex flex-col py-2 gap-1.5">
                                     <div className="flex items-center gap-2">
                                       <span className="font-medium">
                                         {invoice.numero_fiscal || invoice.folio}
@@ -429,7 +429,7 @@ export const IncomeForm = ({ isOpen, onClose, income }: IncomeFormProps) => {
                                         {invoice.status === 'sent' ? 'Enviada' : invoice.status === 'partial' ? 'Parcial' : 'Vencida'}
                                       </Badge>
                                     </div>
-                                    <div className="text-xs text-muted-foreground flex items-center gap-3">
+                                    <div className="text-xs text-muted-foreground flex items-center gap-2">
                                       <span>
                                         Emisión: {format(new Date(invoice.issue_date), 'dd/MM/yyyy', { locale: es })}
                                       </span>
