@@ -8,6 +8,8 @@ import { useIncomeCategories } from '@/hooks/incomes/useIncomeCategories';
 import { useClientInvoices } from '@/hooks/incomes/useClientInvoices';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { format } from 'date-fns';
+import { es } from 'date-fns/locale';
 import {
   Dialog,
   DialogContent,
@@ -415,7 +417,7 @@ export const IncomeForm = ({ isOpen, onClose, income }: IncomeFormProps) => {
                             ) : (
                               clientInvoices.map((invoice) => (
                                 <SelectItem key={invoice.id} value={invoice.id}>
-                                  <div className="flex flex-col py-1">
+                                  <div className="flex flex-col py-1 gap-1">
                                     <div className="flex items-center gap-2">
                                       <span className="font-medium">
                                         {invoice.numero_fiscal || invoice.folio}
@@ -427,10 +429,19 @@ export const IncomeForm = ({ isOpen, onClose, income }: IncomeFormProps) => {
                                         {invoice.status === 'sent' ? 'Enviada' : invoice.status === 'partial' ? 'Parcial' : 'Vencida'}
                                       </Badge>
                                     </div>
+                                    <div className="text-xs text-muted-foreground flex items-center gap-3">
+                                      <span>
+                                        Emisión: {format(new Date(invoice.issue_date), 'dd/MM/yyyy', { locale: es })}
+                                      </span>
+                                      <span className="text-muted-foreground/50">•</span>
+                                      <span className={invoice.status === 'overdue' ? 'text-destructive font-medium' : ''}>
+                                        Vence: {format(new Date(invoice.due_date), 'dd/MM/yyyy', { locale: es })}
+                                      </span>
+                                    </div>
                                     <div className="text-xs text-muted-foreground">
-                                      Total: ${invoice.total.toLocaleString()} 
+                                      Total: ${invoice.total.toLocaleString('es-CL')} 
                                       {invoice.remaining_amount !== undefined && invoice.remaining_amount !== invoice.total && (
-                                        <span> | Pendiente: ${invoice.remaining_amount.toLocaleString()}</span>
+                                        <span className="font-medium text-foreground"> | Pendiente: ${invoice.remaining_amount.toLocaleString('es-CL')}</span>
                                       )}
                                     </div>
                                   </div>
