@@ -2,12 +2,10 @@ import { useMemo, useState } from 'react';
 import { IncomeWithDetails } from '@/types/incomes';
 import { IncomesPipelineMetrics } from './IncomesPipelineMetrics';
 import { IncomePipelineCard } from './IncomePipelineCard';
-import { useIncomeCategories } from '@/hooks/incomes/useIncomeCategories';
-import { Search, ChevronDown, ChevronRight } from 'lucide-react';
+import { Search, ChevronDown, ChevronRight, User } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { getIconComponent } from '@/utils/iconMapper';
 
 interface IncomesPipelineViewProps {
   incomes: IncomeWithDetails[];
@@ -17,10 +15,8 @@ interface IncomesPipelineViewProps {
 }
 
 interface IncomeGroup {
-  categoryId: string;
-  categoryName: string;
-  categoryColor: string;
-  categoryIcon: string;
+  clientId: string;
+  clientName: string;
   incomes: IncomeWithDetails[];
   totalAmount: number;
   count: number;
@@ -34,7 +30,6 @@ export const IncomesPipelineView = ({
 }: IncomesPipelineViewProps) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set(['all']));
-  const { data: categories = [] } = useIncomeCategories();
 
   // Filtrar ingresos por búsqueda
   const filteredIncomes = useMemo(() => {
@@ -49,49 +44,47 @@ export const IncomesPipelineView = ({
     );
   }, [incomes, searchTerm]);
 
-  // Agrupar ingresos por categoría
+  // Agrupar ingresos por cliente
   const incomeGroups = useMemo(() => {
-    const groups: IncomeGroup[] = [];
+    const groupsMap = new Map<string, IncomeGroup>();
 
-    // Agrupar por cada categoría activa
-    categories.forEach(category => {
-      const categoryIncomes = filteredIncomes.filter(
-        income => income.category_id === category.id
-      );
+    filteredIncomes.forEach((income) => {
+      let clientId: string;
+      let clientName: string;
 
-      if (categoryIncomes.length > 0) {
-        groups.push({
-          categoryId: category.id,
-          categoryName: category.name,
-          categoryColor: category.color,
-          categoryIcon: category.icon,
-          incomes: categoryIncomes,
-          totalAmount: categoryIncomes.reduce((sum, inc) => sum + inc.amount, 0),
-          count: categoryIncomes.length,
+      if (income.client_id && income.client) {
+        // Cliente registrado en el sistema
+        clientId = income.client.id;
+        clientName = income.client.name;
+      } else if (income.occasional_client_name) {
+        // Cliente ocasional
+        clientId = `occasional_${income.occasional_client_name.toLowerCase().replace(/\s+/g, '_')}`;
+        clientName = income.occasional_client_name;
+      } else {
+        // Sin cliente
+        clientId = 'no_client';
+        clientName = 'Sin Cliente';
+      }
+
+      if (!groupsMap.has(clientId)) {
+        groupsMap.set(clientId, {
+          clientId,
+          clientName,
+          incomes: [],
+          totalAmount: 0,
+          count: 0,
         });
       }
+
+      const group = groupsMap.get(clientId)!;
+      group.incomes.push(income);
+      group.totalAmount += income.amount;
+      group.count += 1;
     });
 
-    // Grupo para ingresos sin categoría
-    const uncategorizedIncomes = filteredIncomes.filter(
-      income => !income.category_id
-    );
-
-    if (uncategorizedIncomes.length > 0) {
-      groups.push({
-        categoryId: 'uncategorized',
-        categoryName: 'Sin Categoría',
-        categoryColor: '#9ca3af',
-        categoryIcon: 'help-circle',
-        incomes: uncategorizedIncomes,
-        totalAmount: uncategorizedIncomes.reduce((sum, inc) => sum + inc.amount, 0),
-        count: uncategorizedIncomes.length,
-      });
-    }
-
-    // Ordenar por monto total descendente
-    return groups.sort((a, b) => b.totalAmount - a.totalAmount);
-  }, [filteredIncomes, categories]);
+    // Convertir Map a array y ordenar por monto total descendente
+    return Array.from(groupsMap.values()).sort((a, b) => b.totalAmount - a.totalAmount);
+  }, [filteredIncomes]);
 
   const toggleGroup = (groupId: string) => {
     setExpandedGroups(prev => {
@@ -106,7 +99,7 @@ export const IncomesPipelineView = ({
   };
 
   const expandAll = () => {
-    setExpandedGroups(new Set(['all', ...incomeGroups.map(g => g.categoryId)]));
+    setExpandedGroups(new Set(['all', ...incomeGroups.map(g => g.clientId)]));
   };
 
   const collapseAll = () => {
@@ -157,48 +150,72 @@ export const IncomesPipelineView = ({
         </span>
       </div>
 
-      {/* Columnas por categoría */}
+      {/* Columnas por cliente */}
       <div className="space-y-4">
         {incomeGroups.map((group) => {
-          const IconComponent = getIconComponent(group.categoryIcon);
-          const isExpanded = expandedGroups.has(group.categoryId);
+          const isExpanded = expandedGroups.has(group.clientId);
+          
+          // Generar color dinámico para el cliente basado en hash del nombre
+          const getClientColor = (name: string) => {
+            const colors = [
+              '#10b981', // green
+              '#3b82f6', // blue  
+              '#8b5cf6', // purple
+              '#f59e0b', // amber
+              '#ef4444', // red
+              '#06b6d4', // cyan
+              '#ec4899', // pink
+              '#84cc16', // lime
+            ];
+            
+            // Hash simple del nombre para asignar color consistente
+            let hash = 0;
+            for (let i = 0; i < name.length; i++) {
+              hash = name.charCodeAt(i) + ((hash << 5) - hash);
+            }
+            return colors[Math.abs(hash) % colors.length];
+          };
+          
+          const clientColor = group.clientId === 'no_client' 
+            ? '#9ca3af' // gris para "Sin Cliente"
+            : getClientColor(group.clientName);
 
           return (
             <Collapsible
-              key={group.categoryId}
+              key={group.clientId}
               open={isExpanded}
-              onOpenChange={() => toggleGroup(group.categoryId)}
+              onOpenChange={() => toggleGroup(group.clientId)}
             >
               <div 
                 className="bg-card border rounded-lg overflow-hidden"
                 style={{
                   borderTopWidth: '3px',
-                  borderTopColor: group.categoryColor,
+                  borderTopColor: clientColor,
                 }}
               >
-                {/* Header de la categoría */}
+                {/* Header del cliente */}
                 <CollapsibleTrigger asChild>
                   <div className="flex items-center justify-between p-4 cursor-pointer hover:bg-accent/50 transition-colors">
                     <div className="flex items-center gap-3">
                       <div
                         className="p-2 rounded-lg"
                         style={{
-                          backgroundColor: `${group.categoryColor}20`,
+                          backgroundColor: `${clientColor}20`,
                         }}
                       >
-                        <IconComponent
+                        <User
                           className="h-5 w-5"
-                          style={{ color: group.categoryColor }}
+                          style={{ color: clientColor }}
                         />
                       </div>
                       <div>
                         <div className="flex items-center gap-2">
-                          <h3 className="font-semibold text-foreground">{group.categoryName}</h3>
+                          <h3 className="font-semibold text-foreground">{group.clientName}</h3>
                           <span 
                             className="text-xs px-2 py-0.5 rounded-full font-medium"
                             style={{
-                              backgroundColor: `${group.categoryColor}20`,
-                              color: group.categoryColor,
+                              backgroundColor: `${clientColor}20`,
+                              color: clientColor,
                             }}
                           >
                             {group.count}
