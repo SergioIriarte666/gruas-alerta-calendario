@@ -8,7 +8,7 @@ import { ExportServiceReportArgs } from './reportTypes';
 import { createExportFileName, addCompanyHeader } from './reportUtils';
 import { getDisplayServiceValue } from '../serviceValueCalculations';
 
-export const exportServiceReport = async ({ format, services, settings, appliedFilters, customFileName }: ExportServiceReportArgs & { customFileName?: string }) => {
+export const exportServiceReport = async ({ format, services, settings, appliedFilters, logoUrl, customFileName }: ExportServiceReportArgs & { customFileName?: string }) => {
   const { company } = settings;
   const exportFileDefaultName = customFileName || createExportFileName('informe-servicios', appliedFilters.dateRange.from, appliedFilters.dateRange.to);
   
@@ -26,10 +26,11 @@ export const exportServiceReport = async ({ format, services, settings, appliedF
   if (format === 'pdf') {
     try {
       console.log('📄 [PDF Export] Iniciando generación de PDF con', services.length, 'servicios');
+      console.log('📄 [PDF-EXPORT] Generando PDF con logo:', logoUrl);
       
       const doc = new jsPDF('landscape', 'mm', 'a4');
       const pageWidth = doc.internal.pageSize.width;
-      let startY = await addCompanyHeader(doc, company, 15);
+      let startY = await addCompanyHeader(doc, company, 15, logoUrl);
 
     doc.setFontSize(14);
     doc.text('Informe de Servicios', 14, startY);

@@ -28,6 +28,7 @@ export interface ExportServiceReportArgs {
   services: Service[];
   settings: Settings;
   appliedFilters: AppliedServiceFilters;
+  logoUrl?: string;
 }
 
 export interface AppliedCostFilters {

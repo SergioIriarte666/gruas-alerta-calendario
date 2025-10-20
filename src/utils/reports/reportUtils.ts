@@ -5,17 +5,19 @@ export const createExportFileName = (prefix: string, dateFrom: string, dateTo: s
   return `${prefix}-${dateFrom}-a-${dateTo}`;
 };
 
-export const addCompanyHeader = async (doc: any, company: Settings['company'], startY: number): Promise<number> => {
+export const addCompanyHeader = async (doc: any, company: Settings['company'], startY: number, logoUrl?: string): Promise<number> => {
   const pageWidth = doc.internal.pageSize.width;
   let yPosition = startY;
 
   // Logo de la empresa
   try {
-    // Usar el logo desde company.logo si existe, sino usar un logo por defecto
-    const logoUrl = company.logo || '/lovable-uploads/78862b77-e5f2-481b-a598-e35d7aca2690.png';
+    // Usar el logo proporcionado o el logo por defecto
+    const finalLogoUrl = logoUrl || company.logo || '/logo-gruas-5-norte.png';
+    console.log('📄 [REPORT-HEADER] Usando logo:', finalLogoUrl);
+    
     const img = new Image();
     img.crossOrigin = 'Anonymous';
-    img.src = logoUrl;
+    img.src = finalLogoUrl;
     await new Promise((resolve, reject) => {
       img.onload = () => {
         const logoWidth = 35;
