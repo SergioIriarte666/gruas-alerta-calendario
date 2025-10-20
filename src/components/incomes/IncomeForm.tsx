@@ -54,7 +54,7 @@ export const IncomeForm = ({ isOpen, onClose, income }: IncomeFormProps) => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('clients')
-        .select('id, name')
+        .select('id, name, rut')
         .eq('is_active', true)
         .order('name');
       
@@ -343,11 +343,15 @@ export const IncomeForm = ({ isOpen, onClose, income }: IncomeFormProps) => {
                         </FormControl>
                         <SelectContent>
                           <SelectItem value="none">Sin cliente</SelectItem>
-                          {clients.map((client) => (
-                            <SelectItem key={client.id} value={client.id}>
-                              {client.name}
-                            </SelectItem>
-                          ))}
+                            {clients.map((client) => (
+                              <SelectItem key={client.id} value={client.id}>
+                                <div className="flex items-center gap-2">
+                                  <span className="font-medium">{client.name}</span>
+                                  <span className="text-muted-foreground/30">•</span>
+                                  <span className="text-xs text-muted-foreground">{client.rut}</span>
+                                </div>
+                              </SelectItem>
+                            ))}
                         </SelectContent>
                       </Select>
                       <FormMessage />
