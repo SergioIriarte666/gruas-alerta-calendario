@@ -103,6 +103,7 @@ export const Sidebar = ({
       icon: TrendingUp,
       color: 'finanzas',
       items: [
+        { name: 'Ingresos', href: '/incomes', icon: DollarSign, adminOnly: false },
         { name: 'Costos', href: '/costs', icon: DollarSign, adminOnly: false },
         { name: 'Comisiones', href: '/commissions', icon: Percent, adminOnly: true },
         { name: 'Cierres', href: '/closures', icon: FileText, adminOnly: false },

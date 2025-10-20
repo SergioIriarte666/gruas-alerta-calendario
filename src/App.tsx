@@ -42,6 +42,7 @@ import VipClientPipeline from '@/pages/VipClientPipeline';
 import DeferredBilling from '@/pages/DeferredBilling';
 import NotFound from '@/pages/NotFound';
 import DailyReport from '@/pages/DailyReport';
+import Incomes from '@/pages/Incomes';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -149,6 +150,14 @@ function AppContent() {
           </ProtectedRoute>
         }>
           <Route index element={<Costs />} />
+        </Route>
+
+        <Route path="/incomes" element={
+          <ProtectedRoute allowedRoles={['admin', 'viewer']}>
+            <Layout />
+          </ProtectedRoute>
+        }>
+          <Route index element={<Incomes />} />
         </Route>
 
         <Route path="/commissions" element={

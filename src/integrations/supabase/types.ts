@@ -948,6 +948,102 @@ export type Database = {
           },
         ]
       }
+      income_categories: {
+        Row: {
+          color: string | null
+          created_at: string | null
+          description: string | null
+          icon: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string | null
+          description?: string | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          color?: string | null
+          created_at?: string | null
+          description?: string | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      incomes: {
+        Row: {
+          amount: number
+          bank_reference: string | null
+          category_id: string | null
+          client_id: string | null
+          created_at: string | null
+          created_by: string | null
+          description: string
+          id: string
+          income_date: string
+          notes: string | null
+          payment_method: string
+          subcategory: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          amount: number
+          bank_reference?: string | null
+          category_id?: string | null
+          client_id?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description: string
+          id?: string
+          income_date: string
+          notes?: string | null
+          payment_method: string
+          subcategory?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          amount?: number
+          bank_reference?: string | null
+          category_id?: string | null
+          client_id?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string
+          id?: string
+          income_date?: string
+          notes?: string | null
+          payment_method?: string
+          subcategory?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "incomes_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "income_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "incomes_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       inspections: {
         Row: {
           client_name: string | null
