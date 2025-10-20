@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { incomeSchema, IncomeFormValues } from '@/schemas/incomeSchema';
@@ -33,6 +33,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface IncomeFormProps {
   isOpen: boolean;
@@ -41,6 +42,7 @@ interface IncomeFormProps {
 }
 
 export const IncomeForm = ({ isOpen, onClose, income }: IncomeFormProps) => {
+  const [isOccasionalClient, setIsOccasionalClient] = useState(false);
   const { data: categories = [] } = useIncomeCategories();
   const { data: clients = [] } = useQuery({
     queryKey: ['clients-active'],
@@ -70,12 +72,16 @@ export const IncomeForm = ({ isOpen, onClose, income }: IncomeFormProps) => {
       payment_method: 'transferencia',
       bank_reference: '',
       client_id: 'none',
+      occasional_client_name: '',
       notes: '',
     },
   });
 
   useEffect(() => {
     if (income) {
+      const hasOccasionalClient = !!income.occasional_client_name;
+      setIsOccasionalClient(hasOccasionalClient);
+      
       form.reset({
         income_date: income.income_date,
         amount: income.amount,
@@ -85,9 +91,11 @@ export const IncomeForm = ({ isOpen, onClose, income }: IncomeFormProps) => {
         payment_method: income.payment_method,
         bank_reference: income.bank_reference || '',
         client_id: income.client_id || 'none',
+        occasional_client_name: income.occasional_client_name || '',
         notes: income.notes || '',
       });
     } else {
+      setIsOccasionalClient(false);
       form.reset({
         income_date: new Date().toISOString().split('T')[0],
         amount: 0,
@@ -97,6 +105,7 @@ export const IncomeForm = ({ isOpen, onClose, income }: IncomeFormProps) => {
         payment_method: 'transferencia',
         bank_reference: '',
         client_id: 'none',
+        occasional_client_name: '',
         notes: '',
       });
     }
@@ -108,6 +117,7 @@ export const IncomeForm = ({ isOpen, onClose, income }: IncomeFormProps) => {
       const cleanData = {
         ...data,
         client_id: data.client_id === 'none' ? undefined : data.client_id,
+        occasional_client_name: data.occasional_client_name || undefined,
         bank_reference: data.bank_reference || undefined,
         subcategory: data.subcategory || undefined,
         notes: data.notes || undefined,
@@ -270,31 +280,74 @@ export const IncomeForm = ({ isOpen, onClose, income }: IncomeFormProps) => {
               />
             </div>
 
-            <FormField
-              control={form.control}
-              name="client_id"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Cliente Asociado (opcional)</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Sin cliente asociado" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="none">Sin cliente asociado</SelectItem>
-                      {clients.map((client) => (
-                        <SelectItem key={client.id} value={client.id}>
-                          {client.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
+            <div className="space-y-3">
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="occasional-client"
+                  checked={isOccasionalClient}
+                  onCheckedChange={(checked) => {
+                    setIsOccasionalClient(checked as boolean);
+                    if (checked) {
+                      form.setValue('client_id', 'none');
+                    } else {
+                      form.setValue('occasional_client_name', '');
+                    }
+                  }}
+                />
+                <label
+                  htmlFor="occasional-client"
+                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                >
+                  Cliente ocasional (no registrado)
+                </label>
+              </div>
+
+              {!isOccasionalClient ? (
+                <FormField
+                  control={form.control}
+                  name="client_id"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Cliente Asociado</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Seleccionar cliente" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="none">Sin cliente</SelectItem>
+                          {clients.map((client) => (
+                            <SelectItem key={client.id} value={client.id}>
+                              {client.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              ) : (
+                <FormField
+                  control={form.control}
+                  name="occasional_client_name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Nombre del Cliente Ocasional</FormLabel>
+                      <FormControl>
+                        <Input 
+                          {...field} 
+                          placeholder="Ej: Juan Pérez - Servicio único" 
+                          maxLength={200}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               )}
-            />
+            </div>
 
             <FormField
               control={form.control}

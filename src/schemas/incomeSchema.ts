@@ -19,7 +19,19 @@ export const incomeSchema = z.object({
   client_id: z.string()
     .transform(val => val === 'none' ? undefined : val)
     .optional(),
+  occasional_client_name: z.string()
+    .max(200, 'El nombre no puede exceder 200 caracteres')
+    .optional(),
   notes: z.string().max(1000).optional(),
+}).refine(data => {
+  // Si hay occasional_client_name, client_id debe ser 'none' o undefined
+  if (data.occasional_client_name && data.client_id && data.client_id !== 'none') {
+    return false;
+  }
+  return true;
+}, {
+  message: "No puedes seleccionar un cliente registrado y un cliente ocasional al mismo tiempo",
+  path: ["occasional_client_name"]
 });
 
 export type IncomeFormValues = z.infer<typeof incomeSchema>;

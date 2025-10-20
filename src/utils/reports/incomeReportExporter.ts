@@ -71,7 +71,7 @@ export const exportIncomeReport = async ({
         formatDate(new Date(income.income_date), 'dd/MM/yyyy', { locale: es }),
         income.description,
         income.category?.name || '-',
-        income.client?.name || '-',
+        income.occasional_client_name || income.client?.name || '-',
         income.payment_method,
         income.bank_reference || '-',
         `$${income.amount.toLocaleString('es-CL', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`
@@ -105,7 +105,7 @@ export const exportIncomeReport = async ({
       'Descripción': income.description,
       'Categoría': income.category?.name || '-',
       'Subcategoría': income.subcategory || '-',
-      'Cliente': income.client?.name || '-',
+      'Cliente': income.occasional_client_name || income.client?.name || '-',
       'Método de Pago': income.payment_method,
       'Referencia Bancaria': income.bank_reference || '-',
       'Monto': income.amount,

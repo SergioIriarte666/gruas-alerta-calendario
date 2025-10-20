@@ -137,7 +137,18 @@ export const IncomesTable = ({ incomes, onEdit, onDelete, isLoading }: IncomesTa
                     </Badge>
                   )}
                 </TableCell>
-                <TableCell>{income.client?.name || '-'}</TableCell>
+                <TableCell>
+                  {income.occasional_client_name ? (
+                    <div className="flex items-center gap-1">
+                      <span className="text-muted-foreground text-xs">(Ocasional)</span>
+                      <span>{income.occasional_client_name}</span>
+                    </div>
+                  ) : income.client?.name ? (
+                    <span>{income.client.name}</span>
+                  ) : (
+                    <span className="text-muted-foreground">-</span>
+                  )}
+                </TableCell>
                 <TableCell className="capitalize">{income.payment_method.replace('_', ' ')}</TableCell>
                 <TableCell>{income.bank_reference || '-'}</TableCell>
                 <TableCell className="text-right font-semibold text-green-600">

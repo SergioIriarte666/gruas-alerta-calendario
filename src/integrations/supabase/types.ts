@@ -993,6 +993,7 @@ export type Database = {
           id: string
           income_date: string
           notes: string | null
+          occasional_client_name: string | null
           payment_method: string
           subcategory: string | null
           updated_at: string | null
@@ -1008,6 +1009,7 @@ export type Database = {
           id?: string
           income_date: string
           notes?: string | null
+          occasional_client_name?: string | null
           payment_method: string
           subcategory?: string | null
           updated_at?: string | null
@@ -1023,6 +1025,7 @@ export type Database = {
           id?: string
           income_date?: string
           notes?: string | null
+          occasional_client_name?: string | null
           payment_method?: string
           subcategory?: string | null
           updated_at?: string | null

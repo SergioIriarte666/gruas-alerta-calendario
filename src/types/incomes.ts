@@ -8,6 +8,7 @@ export interface Income {
   payment_method: PaymentMethod;
   bank_reference?: string;
   client_id?: string;
+  occasional_client_name?: string;
   notes?: string;
   created_by?: string;
   created_at: string;
@@ -48,6 +49,7 @@ export interface IncomeFormData {
   payment_method: PaymentMethod;
   bank_reference?: string;
   client_id?: string;
+  occasional_client_name?: string;
   notes?: string;
 }
 
