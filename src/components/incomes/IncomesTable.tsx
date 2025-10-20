@@ -11,8 +11,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from '@/components/ui/badge';
 import { IncomeWithDetails } from '@/types/incomes';
-import { format } from 'date-fns';
-import { es } from 'date-fns/locale';
+import { formatForDisplay, parseFromDatabase } from '@/utils/timezoneUtils';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -126,7 +125,7 @@ export const IncomesTable = ({ incomes, onEdit, onDelete, isLoading }: IncomesTa
             {sortedIncomes.map((income) => (
               <TableRow key={income.id} className="hover:bg-muted/50">
                 <TableCell className="font-medium">
-                  {format(new Date(income.income_date), 'dd/MM/yyyy', { locale: es })}
+                  {formatForDisplay(parseFromDatabase(income.income_date))}
                 </TableCell>
                 <TableCell className="max-w-xs truncate">
                   {income.description}

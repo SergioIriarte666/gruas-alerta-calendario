@@ -8,6 +8,7 @@ import { useIncomeCategories } from '@/hooks/incomes/useIncomeCategories';
 import { useClientInvoices } from '@/hooks/incomes/useClientInvoices';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { getCurrentChileDateString, formatForInput, parseFromInput, formatForDatabase } from '@/utils/timezoneUtils';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import {
@@ -69,7 +70,7 @@ export const IncomeForm = ({ isOpen, onClose, income }: IncomeFormProps) => {
   const form = useForm<IncomeFormValues>({
     resolver: zodResolver(incomeSchema),
     defaultValues: {
-      income_date: new Date().toISOString().split('T')[0],
+      income_date: getCurrentChileDateString(),
       amount: 0,
       description: '',
       category_id: '',
@@ -94,7 +95,7 @@ export const IncomeForm = ({ isOpen, onClose, income }: IncomeFormProps) => {
       setIsInvoiceAssociation(hasInvoice);
       
       form.reset({
-        income_date: income.income_date,
+        income_date: formatForInput(income.income_date),
         amount: income.amount,
         description: income.description,
         category_id: income.category_id || '',
@@ -110,7 +111,7 @@ export const IncomeForm = ({ isOpen, onClose, income }: IncomeFormProps) => {
       setIsOccasionalClient(false);
       setIsInvoiceAssociation(false);
       form.reset({
-        income_date: new Date().toISOString().split('T')[0],
+        income_date: getCurrentChileDateString(),
         amount: 0,
         description: '',
         category_id: '',
@@ -127,9 +128,10 @@ export const IncomeForm = ({ isOpen, onClose, income }: IncomeFormProps) => {
 
   const onSubmit = async (data: IncomeFormValues) => {
     try {
-      // Remove empty optional fields
+      // Remove empty optional fields and convert date
       const cleanData = {
         ...data,
+        income_date: formatForDatabase(parseFromInput(data.income_date)),
         client_id: data.client_id === 'none' ? undefined : data.client_id,
         occasional_client_name: data.occasional_client_name || undefined,
         invoice_id: data.invoice_id || undefined,
