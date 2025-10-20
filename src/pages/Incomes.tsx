@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import { IncomesHeader } from '@/components/incomes/IncomesHeader';
 import { IncomeForm } from '@/components/incomes/IncomeForm';
 import { IncomesTable } from '@/components/incomes/IncomesTable';
+import { IncomesPipelineView } from '@/components/incomes/IncomesPipelineView';
 import { IncomeFilters } from '@/components/incomes/IncomeFilters';
 import { useIncomes, useDeleteIncome } from '@/hooks/incomes/useIncomes';
 import { IncomeWithDetails, IncomeFilters as IIncomeFilters } from '@/types/incomes';
@@ -14,6 +15,7 @@ const IncomesPage = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedIncome, setSelectedIncome] = useState<IncomeWithDetails | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [viewMode, setViewMode] = useState<'table' | 'pipeline'>('table');
   const [filters, setFilters] = useState<IIncomeFilters>({
     category: 'all',
     dateFrom: null,
@@ -125,6 +127,8 @@ const IncomesPage = () => {
         onExport={handleExport}
         totalAmount={totalAmount}
         totalCount={filteredIncomes.length}
+        viewMode={viewMode}
+        onViewModeChange={setViewMode}
       />
 
       <IncomeFilters 
@@ -134,15 +138,27 @@ const IncomesPage = () => {
         searchTerm={searchTerm}
       />
 
-      <IncomesTable 
-        incomes={filteredIncomes}
-        onEdit={(income) => {
-          setSelectedIncome(income);
-          setIsFormOpen(true);
-        }}
-        onDelete={deleteIncome}
-        isLoading={isLoading}
-      />
+      {viewMode === 'table' ? (
+        <IncomesTable 
+          incomes={filteredIncomes}
+          onEdit={(income) => {
+            setSelectedIncome(income);
+            setIsFormOpen(true);
+          }}
+          onDelete={deleteIncome}
+          isLoading={isLoading}
+        />
+      ) : (
+        <IncomesPipelineView
+          incomes={filteredIncomes}
+          onEdit={(income) => {
+            setSelectedIncome(income);
+            setIsFormOpen(true);
+          }}
+          onDelete={deleteIncome}
+          isLoading={isLoading}
+        />
+      )}
 
       <IncomeForm 
         isOpen={isFormOpen}

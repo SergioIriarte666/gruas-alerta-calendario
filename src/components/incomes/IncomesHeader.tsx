@@ -1,4 +1,4 @@
-import { Plus, FileDown, DollarSign, Hash } from 'lucide-react';
+import { Plus, FileDown, DollarSign, Hash, LayoutList, Kanban } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ReportMetricCard } from '@/components/reports/shared/ReportMetricCard';
 import {
@@ -13,9 +13,11 @@ interface IncomesHeaderProps {
   onExport: (format: 'pdf' | 'excel') => void;
   totalAmount: number;
   totalCount: number;
+  viewMode: 'table' | 'pipeline';
+  onViewModeChange: (mode: 'table' | 'pipeline') => void;
 }
 
-export const IncomesHeader = ({ onAddIncome, onExport, totalAmount, totalCount }: IncomesHeaderProps) => {
+export const IncomesHeader = ({ onAddIncome, onExport, totalAmount, totalCount, viewMode, onViewModeChange }: IncomesHeaderProps) => {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -27,6 +29,26 @@ export const IncomesHeader = ({ onAddIncome, onExport, totalAmount, totalCount }
         </div>
         
         <div className="flex gap-2">
+          {/* Toggle Vista */}
+          <div className="flex items-center gap-1 border rounded-lg p-1">
+            <Button
+              variant={viewMode === 'table' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => onViewModeChange('table')}
+              className="h-8 px-3"
+            >
+              <LayoutList className="h-4 w-4" />
+            </Button>
+            <Button
+              variant={viewMode === 'pipeline' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => onViewModeChange('pipeline')}
+              className="h-8 px-3"
+            >
+              <Kanban className="h-4 w-4" />
+            </Button>
+          </div>
+
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm">
