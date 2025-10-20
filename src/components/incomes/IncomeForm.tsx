@@ -418,11 +418,16 @@ export const IncomeForm = ({ isOpen, onClose, income }: IncomeFormProps) => {
                               clientInvoices.map((invoice) => (
                                 <SelectItem key={invoice.id} value={invoice.id}>
                                   <div className="flex flex-col w-full space-y-1.5 py-1">
-                                    {/* Línea 1: Folio + Badge */}
-                                    <div className="flex items-center justify-between w-full gap-2">
-                                      <span className="font-semibold text-sm">
+                                    {/* Línea 1: Folio • Total • Badge */}
+                                    <div className="flex items-center gap-2 w-full">
+                                      <span className="font-semibold text-sm shrink-0">
                                         {invoice.numero_fiscal || invoice.folio}
                                       </span>
+                                      <span className="text-muted-foreground/30">•</span>
+                                      <span className="text-xs text-muted-foreground shrink-0">
+                                        Total: ${invoice.total.toLocaleString('es-CL')}
+                                      </span>
+                                      <div className="flex-1 min-w-[8px]" />
                                       <Badge 
                                         variant={invoice.status === 'overdue' ? 'destructive' : 'secondary'}
                                         className="text-xs shrink-0"
@@ -431,8 +436,8 @@ export const IncomeForm = ({ isOpen, onClose, income }: IncomeFormProps) => {
                                       </Badge>
                                     </div>
                                     
-                                    {/* Línea 2: Fechas */}
-                                    <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                                    {/* Línea 2: Fechas • Pendiente */}
+                                    <div className="flex items-center gap-2 text-xs text-muted-foreground flex-wrap">
                                       <span>
                                         Emisión: {format(new Date(invoice.issue_date), 'dd/MM/yyyy', { locale: es })}
                                       </span>
@@ -440,17 +445,9 @@ export const IncomeForm = ({ isOpen, onClose, income }: IncomeFormProps) => {
                                       <span className={invoice.status === 'overdue' ? 'text-destructive font-medium' : ''}>
                                         Vence: {format(new Date(invoice.due_date), 'dd/MM/yyyy', { locale: es })}
                                       </span>
-                                    </div>
-                                    
-                                    {/* Línea 3: Montos */}
-                                    <div className="flex items-center gap-2 text-xs flex-wrap">
-                                      <span className="text-muted-foreground">
-                                        Total: ${invoice.total.toLocaleString('es-CL')}
-                                      </span>
-                                      {invoice.remaining_amount !== undefined && 
-                                       invoice.remaining_amount !== invoice.total && (
+                                      {invoice.remaining_amount !== undefined && invoice.remaining_amount !== invoice.total && (
                                         <>
-                                          <span className="text-muted-foreground/30">|</span>
+                                          <span className="text-muted-foreground/30">•</span>
                                           <span className="font-semibold text-foreground">
                                             Pendiente: ${invoice.remaining_amount.toLocaleString('es-CL')}
                                           </span>
