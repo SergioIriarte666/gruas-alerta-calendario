@@ -4,7 +4,6 @@ import { exportServiceReport } from './reportExporter';
 import { Service } from '@/types';
 import { Settings } from '@/types/settings';
 import { format as formatDate } from 'date-fns';
-import { fetchCompanyData } from './pdf/companyDataFetcher';
 
 interface GenerateReportArgs {
   format: 'pdf' | 'excel';
@@ -172,20 +171,18 @@ export const generateServiceReport = async ({ format, filters }: GenerateReportA
     const services = await fetchServicesForReport(filters);
     const settings = await fetchSettings();
     
-    // Obtener logo de la base de datos
-    const companyData = await fetchCompanyData();
-    console.log('📄 [SERVICE-REPORT] Logo URL de BD:', companyData.logoUrl);
-    
     let clientName: string | undefined;
     if (filters.clientId) {
         clientName = await fetchClientName(filters.clientId);
     }
 
+    console.log('📄 [SERVICE-REPORT] Logo URL de settings:', settings.company.logo);
+
     await exportServiceReport({
       format,
       services,
       settings,
-      logoUrl: companyData.logoUrl,
+      logoUrl: settings.company.logo,
       appliedFilters: {
         dateRange: {
           from: filters.dateFrom,
