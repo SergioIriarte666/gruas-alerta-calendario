@@ -22,7 +22,9 @@ export const incomeSchema = z.object({
   occasional_client_name: z.string()
     .max(200, 'El nombre no puede exceder 200 caracteres')
     .optional(),
-  invoice_id: z.string().uuid().optional(),
+  invoice_id: z.string()
+    .transform(val => val === '' ? undefined : val)
+    .pipe(z.string().uuid().optional()),
   notes: z.string().max(1000).optional(),
 }).refine(data => {
   // Si hay occasional_client_name, client_id debe ser 'none' o undefined
