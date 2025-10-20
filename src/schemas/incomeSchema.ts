@@ -16,7 +16,9 @@ export const incomeSchema = z.object({
     'otro'
   ]),
   bank_reference: z.string().max(100).optional(),
-  client_id: z.string().optional(),
+  client_id: z.string()
+    .transform(val => val === 'none' ? undefined : val)
+    .optional(),
   notes: z.string().max(1000).optional(),
 });
 

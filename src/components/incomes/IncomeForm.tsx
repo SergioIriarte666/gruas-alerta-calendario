@@ -69,7 +69,7 @@ export const IncomeForm = ({ isOpen, onClose, income }: IncomeFormProps) => {
       subcategory: '',
       payment_method: 'transferencia',
       bank_reference: '',
-      client_id: '',
+      client_id: 'none',
       notes: '',
     },
   });
@@ -84,7 +84,7 @@ export const IncomeForm = ({ isOpen, onClose, income }: IncomeFormProps) => {
         subcategory: income.subcategory || '',
         payment_method: income.payment_method,
         bank_reference: income.bank_reference || '',
-        client_id: income.client_id || '',
+        client_id: income.client_id || 'none',
         notes: income.notes || '',
       });
     } else {
@@ -96,7 +96,7 @@ export const IncomeForm = ({ isOpen, onClose, income }: IncomeFormProps) => {
         subcategory: '',
         payment_method: 'transferencia',
         bank_reference: '',
-        client_id: '',
+        client_id: 'none',
         notes: '',
       });
     }
@@ -107,7 +107,7 @@ export const IncomeForm = ({ isOpen, onClose, income }: IncomeFormProps) => {
       // Remove empty optional fields
       const cleanData = {
         ...data,
-        client_id: data.client_id || undefined,
+        client_id: data.client_id === 'none' ? undefined : data.client_id,
         bank_reference: data.bank_reference || undefined,
         subcategory: data.subcategory || undefined,
         notes: data.notes || undefined,
@@ -283,7 +283,7 @@ export const IncomeForm = ({ isOpen, onClose, income }: IncomeFormProps) => {
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="">Sin cliente asociado</SelectItem>
+                      <SelectItem value="none">Sin cliente asociado</SelectItem>
                       {clients.map((client) => (
                         <SelectItem key={client.id} value={client.id}>
                           {client.name}
