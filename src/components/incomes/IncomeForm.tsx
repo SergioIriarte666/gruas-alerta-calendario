@@ -5,6 +5,7 @@ import { incomeSchema, IncomeFormValues } from '@/schemas/incomeSchema';
 import { IncomeWithDetails } from '@/types/incomes';
 import { useCreateIncome, useUpdateIncome } from '@/hooks/incomes/useIncomes';
 import { useIncomeCategories } from '@/hooks/incomes/useIncomeCategories';
+import { useClientInvoices } from '@/hooks/incomes/useClientInvoices';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import {
@@ -34,6 +35,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Badge } from "@/components/ui/badge";
 
 interface IncomeFormProps {
   isOpen: boolean;
@@ -43,6 +45,7 @@ interface IncomeFormProps {
 
 export const IncomeForm = ({ isOpen, onClose, income }: IncomeFormProps) => {
   const [isOccasionalClient, setIsOccasionalClient] = useState(false);
+  const [isInvoiceAssociation, setIsInvoiceAssociation] = useState(false);
   const { data: categories = [] } = useIncomeCategories();
   const { data: clients = [] } = useQuery({
     queryKey: ['clients-active'],
@@ -73,14 +76,20 @@ export const IncomeForm = ({ isOpen, onClose, income }: IncomeFormProps) => {
       bank_reference: '',
       client_id: 'none',
       occasional_client_name: '',
+      invoice_id: '',
       notes: '',
     },
   });
 
+  const clientId = form.watch('client_id');
+  const { data: clientInvoices = [] } = useClientInvoices(clientId !== 'none' ? clientId : undefined);
+
   useEffect(() => {
     if (income) {
       const hasOccasionalClient = !!income.occasional_client_name;
+      const hasInvoice = !!income.invoice_id;
       setIsOccasionalClient(hasOccasionalClient);
+      setIsInvoiceAssociation(hasInvoice);
       
       form.reset({
         income_date: income.income_date,
@@ -92,10 +101,12 @@ export const IncomeForm = ({ isOpen, onClose, income }: IncomeFormProps) => {
         bank_reference: income.bank_reference || '',
         client_id: income.client_id || 'none',
         occasional_client_name: income.occasional_client_name || '',
+        invoice_id: income.invoice_id || '',
         notes: income.notes || '',
       });
     } else {
       setIsOccasionalClient(false);
+      setIsInvoiceAssociation(false);
       form.reset({
         income_date: new Date().toISOString().split('T')[0],
         amount: 0,
@@ -106,6 +117,7 @@ export const IncomeForm = ({ isOpen, onClose, income }: IncomeFormProps) => {
         bank_reference: '',
         client_id: 'none',
         occasional_client_name: '',
+        invoice_id: '',
         notes: '',
       });
     }
@@ -118,6 +130,7 @@ export const IncomeForm = ({ isOpen, onClose, income }: IncomeFormProps) => {
         ...data,
         client_id: data.client_id === 'none' ? undefined : data.client_id,
         occasional_client_name: data.occasional_client_name || undefined,
+        invoice_id: data.invoice_id || undefined,
         bank_reference: data.bank_reference || undefined,
         subcategory: data.subcategory || undefined,
         notes: data.notes || undefined,
@@ -289,6 +302,8 @@ export const IncomeForm = ({ isOpen, onClose, income }: IncomeFormProps) => {
                     setIsOccasionalClient(checked as boolean);
                     if (checked) {
                       form.setValue('client_id', 'none');
+                      form.setValue('invoice_id', '');
+                      setIsInvoiceAssociation(false);
                     } else {
                       form.setValue('occasional_client_name', '');
                     }
@@ -309,7 +324,16 @@ export const IncomeForm = ({ isOpen, onClose, income }: IncomeFormProps) => {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Cliente Asociado</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
+                      <Select 
+                        onValueChange={(value) => {
+                          field.onChange(value);
+                          if (value !== clientId) {
+                            form.setValue('invoice_id', '');
+                            setIsInvoiceAssociation(false);
+                          }
+                        }} 
+                        value={field.value}
+                      >
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Seleccionar cliente" />
@@ -348,6 +372,85 @@ export const IncomeForm = ({ isOpen, onClose, income }: IncomeFormProps) => {
                 />
               )}
             </div>
+
+            {!isOccasionalClient && clientId && clientId !== 'none' && (
+              <div className="space-y-3 border-t pt-4">
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="invoice-association"
+                    checked={isInvoiceAssociation}
+                    onCheckedChange={(checked) => {
+                      setIsInvoiceAssociation(checked as boolean);
+                      if (!checked) {
+                        form.setValue('invoice_id', '');
+                      }
+                    }}
+                  />
+                  <label
+                    htmlFor="invoice-association"
+                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                  >
+                    Asociar a factura existente
+                  </label>
+                </div>
+
+                {isInvoiceAssociation && (
+                  <FormField
+                    control={form.control}
+                    name="invoice_id"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Factura</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Seleccionar factura" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent className="max-h-[300px]">
+                            {clientInvoices.length === 0 ? (
+                              <div className="p-2 text-sm text-muted-foreground">
+                                No hay facturas pendientes
+                              </div>
+                            ) : (
+                              clientInvoices.map((invoice) => (
+                                <SelectItem key={invoice.id} value={invoice.id}>
+                                  <div className="flex flex-col py-1">
+                                    <div className="flex items-center gap-2">
+                                      <span className="font-medium">
+                                        {invoice.numero_fiscal || invoice.folio}
+                                      </span>
+                                      <Badge 
+                                        variant={invoice.status === 'overdue' ? 'destructive' : 'secondary'}
+                                        className="text-xs"
+                                      >
+                                        {invoice.status === 'sent' ? 'Enviada' : invoice.status === 'partial' ? 'Parcial' : 'Vencida'}
+                                      </Badge>
+                                    </div>
+                                    <div className="text-xs text-muted-foreground">
+                                      Total: ${invoice.total.toLocaleString()} 
+                                      {invoice.remaining_amount !== undefined && invoice.remaining_amount !== invoice.total && (
+                                        <span> | Pendiente: ${invoice.remaining_amount.toLocaleString()}</span>
+                                      )}
+                                    </div>
+                                  </div>
+                                </SelectItem>
+                              ))
+                            )}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                        {field.value && (
+                          <p className="text-xs text-muted-foreground">
+                            Este ingreso quedará asociado a la factura seleccionada
+                          </p>
+                        )}
+                      </FormItem>
+                    )}
+                  />
+                )}
+              </div>
+            )}
 
             <FormField
               control={form.control}

@@ -7,14 +7,15 @@ export const useIncomes = () => {
   return useQuery({
     queryKey: ['incomes'],
     queryFn: async (): Promise<IncomeWithDetails[]> => {
-      const { data, error } = await supabase
-        .from('incomes')
-        .select(`
-          *,
-          category:income_categories(*),
-          client:clients(id, name)
-        `)
-        .order('income_date', { ascending: false });
+    const { data, error } = await supabase
+      .from('incomes')
+      .select(`
+        *,
+        category:income_categories(*),
+        client:clients(id, name),
+        invoice:invoices(id, folio, numero_fiscal, total, remaining_amount, status)
+      `)
+      .order('income_date', { ascending: false });
 
       if (error) throw error;
       return (data || []) as IncomeWithDetails[];

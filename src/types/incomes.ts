@@ -9,6 +9,7 @@ export interface Income {
   bank_reference?: string;
   client_id?: string;
   occasional_client_name?: string;
+  invoice_id?: string;
   notes?: string;
   created_by?: string;
   created_at: string;
@@ -18,6 +19,14 @@ export interface Income {
 export interface IncomeWithDetails extends Income {
   category?: IncomeCategory;
   client?: { id: string; name: string; };
+  invoice?: {
+    id: string;
+    folio: string;
+    numero_fiscal?: string;
+    total: number;
+    remaining_amount?: number;
+    status: string;
+  };
 }
 
 export interface IncomeCategory {
@@ -50,6 +59,7 @@ export interface IncomeFormData {
   bank_reference?: string;
   client_id?: string;
   occasional_client_name?: string;
+  invoice_id?: string;
   notes?: string;
 }
 

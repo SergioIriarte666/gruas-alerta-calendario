@@ -66,12 +66,13 @@ export const exportIncomeReport = async ({
     // Tabla de ingresos
     autoTable(doc, {
       startY: yPosition,
-      head: [['Fecha', 'Descripción', 'Categoría', 'Cliente', 'Método', 'Referencia', 'Monto']],
+      head: [['Fecha', 'Descripción', 'Categoría', 'Cliente', 'Factura', 'Método', 'Referencia', 'Monto']],
       body: incomes.map(income => [
         formatDate(new Date(income.income_date), 'dd/MM/yyyy', { locale: es }),
         income.description,
         income.category?.name || '-',
         income.occasional_client_name || income.client?.name || '-',
+        income.invoice ? (income.invoice.numero_fiscal || income.invoice.folio) : '-',
         income.payment_method,
         income.bank_reference || '-',
         `$${income.amount.toLocaleString('es-CL', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`
@@ -88,12 +89,12 @@ export const exportIncomeReport = async ({
     autoTable(doc, {
       startY: finalY + 5,
       body: [
-        ['TOTAL GENERAL', '', '', '', '', '', `$${totalAmount.toLocaleString('es-CL', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`]
+        ['TOTAL GENERAL', '', '', '', '', '', '', `$${totalAmount.toLocaleString('es-CL', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`]
       ],
       theme: 'grid',
       styles: { fontStyle: 'bold', fontSize: 10, fillColor: [220, 252, 231] },
       columnStyles: {
-        6: { halign: 'right' }
+        7: { halign: 'right' }
       }
     });
 
@@ -106,6 +107,7 @@ export const exportIncomeReport = async ({
       'Categoría': income.category?.name || '-',
       'Subcategoría': income.subcategory || '-',
       'Cliente': income.occasional_client_name || income.client?.name || '-',
+      'Factura': income.invoice ? (income.invoice.numero_fiscal || income.invoice.folio) : '-',
       'Método de Pago': income.payment_method,
       'Referencia Bancaria': income.bank_reference || '-',
       'Monto': income.amount,
@@ -117,7 +119,7 @@ export const exportIncomeReport = async ({
     // Formato de columna de monto
     const range = XLSX.utils.decode_range(ws['!ref'] || 'A1');
     for (let R = range.s.r + 1; R <= range.e.r; ++R) {
-      const cellAddress = XLSX.utils.encode_cell({ r: R, c: 7 }); // Columna H (Monto)
+      const cellAddress = XLSX.utils.encode_cell({ r: R, c: 8 }); // Columna I (Monto)
       if (ws[cellAddress]) {
         ws[cellAddress].z = '#,##0';
       }

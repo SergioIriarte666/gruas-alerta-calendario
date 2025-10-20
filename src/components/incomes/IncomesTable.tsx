@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Edit2, Trash2, ArrowUpDown } from 'lucide-react';
+import { Edit2, Trash2, ArrowUpDown, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Table,
@@ -110,6 +110,7 @@ export const IncomesTable = ({ incomes, onEdit, onDelete, isLoading }: IncomesTa
                   <ArrowUpDown className="h-3 w-3" />
                 </Button>
               </TableHead>
+              <TableHead>Factura</TableHead>
               <TableHead>Método</TableHead>
               <TableHead>Referencia</TableHead>
               <TableHead className="text-right">
@@ -147,6 +148,23 @@ export const IncomesTable = ({ incomes, onEdit, onDelete, isLoading }: IncomesTa
                     <span>{income.client.name}</span>
                   ) : (
                     <span className="text-muted-foreground">-</span>
+                  )}
+                </TableCell>
+                <TableCell>
+                  {income.invoice ? (
+                    <div className="flex items-center gap-2">
+                      <FileText className="h-4 w-4 text-muted-foreground" />
+                      <div className="flex flex-col">
+                        <span className="font-medium text-sm">
+                          {income.invoice.numero_fiscal || income.invoice.folio}
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          ${income.invoice.total.toLocaleString()}
+                        </span>
+                      </div>
+                    </div>
+                  ) : (
+                    <span className="text-muted-foreground text-sm">-</span>
                   )}
                 </TableCell>
                 <TableCell className="capitalize">{income.payment_method.replace('_', ' ')}</TableCell>
