@@ -330,9 +330,9 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
                               Selectivo
                             </Button>
                           </>
-                        ) : (
+                        ) : payment.status === 'applied' && payment.applied_amount > 0 ? (
                           <span className="text-sm text-muted-foreground">Aplicado</span>
-                        )}
+                        ) : null}
                       </div>
                     </TableCell>
                   </TableRow>

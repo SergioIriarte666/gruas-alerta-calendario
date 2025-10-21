@@ -129,7 +129,10 @@ export const IncomeForm = ({ isOpen, onClose, income }: IncomeFormProps) => {
   }, [income, form]);
 
   const createPaymentFromIncome = async (incomeData: any) => {
+    let paymentId: string | null = null;
+    
     try {
+      // 1. Crear el payment con status pending
       const { data: paymentData, error: paymentError } = await supabase
         .from('payments')
         .insert({
@@ -139,30 +142,48 @@ export const IncomeForm = ({ isOpen, onClose, income }: IncomeFormProps) => {
           payment_method: incomeData.payment_method,
           bank_reference: incomeData.bank_reference,
           notes: `Creado desde ingreso: ${incomeData.description}`,
-          status: 'pending'
+          status: 'pending', // Importante: pending hasta que se aplique
+          applied_amount: 0,
+          remaining_amount: incomeData.amount
         })
         .select()
         .single();
 
-      if (paymentError) throw paymentError;
+      if (paymentError) throw new Error(`Error creando payment: ${paymentError.message}`);
+      paymentId = paymentData.id;
 
-      // Aplicar automáticamente a la factura asociada
-      if (incomeData.invoice_id && paymentData) {
-        const { error: applyError } = await supabase.rpc('apply_payment_manual', {
-          p_payment_id: paymentData.id,
-          p_applications: [{
-            invoice_id: incomeData.invoice_id,
-            amount: incomeData.amount
-          }]
-        });
+      // 2. Aplicar a la factura usando apply_payment_manual
+      const { data: applyResult, error: applyError } = await supabase.rpc('apply_payment_manual', {
+        p_payment_id: paymentId,
+        p_applications: [{
+          invoice_id: incomeData.invoice_id,
+          amount: incomeData.amount
+        }]
+      });
 
-        if (applyError) throw applyError;
+      if (applyError) throw new Error(`Error aplicando pago: ${applyError.message}`);
+      
+      // 3. Verificar resultado
+      const result = applyResult as any;
+      if (!result?.success) {
+        throw new Error(result?.error || 'Error desconocido al aplicar pago');
       }
 
-      toast.success('Ingreso y pago creados y aplicados exitosamente');
-    } catch (error) {
-      console.error('Error creating payment from income:', error);
-      toast.error('El ingreso se creó pero hubo un error al crear el pago en Conciliación');
+      toast.success('✅ Ingreso y pago creados y aplicados exitosamente');
+      
+    } catch (error: any) {
+      console.error('Error in createPaymentFromIncome:', error);
+      
+      // Rollback: eliminar payment si se creó pero falló la aplicación
+      if (paymentId) {
+        await supabase.from('payments').delete().eq('id', paymentId);
+      }
+      
+      toast.error('Error al crear pago en Conciliación', {
+        description: error.message || 'El ingreso se guardó pero no se pudo crear el pago'
+      });
+      
+      throw error;
     }
   };
 

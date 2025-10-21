@@ -4032,6 +4032,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: Json
       }
+      repair_payment_application: {
+        Args: { p_invoice_id: string; p_payment_id: string }
+        Returns: Json
+      }
       resolve_commission_conflicts: {
         Args: { p_service_id: string }
         Returns: Json
