@@ -4089,6 +4089,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: Json
       }
+      sync_specific_income_to_payment: {
+        Args: { p_income_id: string }
+        Returns: Json
+      }
       test_invoice_creation: {
         Args: Record<PropertyKey, never>
         Returns: string

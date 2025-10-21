@@ -467,7 +467,8 @@ export const IncomeForm = ({ isOpen, onClose, income }: IncomeFormProps) => {
                     <div className="text-xs text-muted-foreground px-3">
                       Al marcar esta opción, se creará automáticamente un pago en el módulo de Conciliación y se aplicará a la factura seleccionada.
                     </div>
-                  <FormField
+                    
+                    <FormField
                     control={form.control}
                     name="invoice_id"
                     render={({ field }) => (
@@ -539,6 +540,7 @@ export const IncomeForm = ({ isOpen, onClose, income }: IncomeFormProps) => {
                       </FormItem>
                     )}
                   />
+                  </>
                 )}
               </div>
             )}
