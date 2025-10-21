@@ -39,6 +39,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
+import { toast } from 'sonner';
 
 interface IncomeFormProps {
   isOpen: boolean;
@@ -49,6 +50,7 @@ interface IncomeFormProps {
 export const IncomeForm = ({ isOpen, onClose, income }: IncomeFormProps) => {
   const [isOccasionalClient, setIsOccasionalClient] = useState(false);
   const [isInvoiceAssociation, setIsInvoiceAssociation] = useState(false);
+  const [createPaymentRecord, setCreatePaymentRecord] = useState(false);
   const { data: categories = [] } = useIncomeCategories();
   const { data: clients = [] } = useQuery({
     queryKey: ['clients-active'],
@@ -126,6 +128,44 @@ export const IncomeForm = ({ isOpen, onClose, income }: IncomeFormProps) => {
     }
   }, [income, form]);
 
+  const createPaymentFromIncome = async (incomeData: any) => {
+    try {
+      const { data: paymentData, error: paymentError } = await supabase
+        .from('payments')
+        .insert({
+          client_id: incomeData.client_id,
+          amount: incomeData.amount,
+          payment_date: incomeData.income_date,
+          payment_method: incomeData.payment_method,
+          bank_reference: incomeData.bank_reference,
+          notes: `Creado desde ingreso: ${incomeData.description}`,
+          status: 'pending'
+        })
+        .select()
+        .single();
+
+      if (paymentError) throw paymentError;
+
+      // Aplicar automáticamente a la factura asociada
+      if (incomeData.invoice_id && paymentData) {
+        const { error: applyError } = await supabase.rpc('apply_payment_manual', {
+          p_payment_id: paymentData.id,
+          p_applications: [{
+            invoice_id: incomeData.invoice_id,
+            amount: incomeData.amount
+          }]
+        });
+
+        if (applyError) throw applyError;
+      }
+
+      toast.success('Ingreso y pago creados y aplicados exitosamente');
+    } catch (error) {
+      console.error('Error creating payment from income:', error);
+      toast.error('El ingreso se creó pero hubo un error al crear el pago en Conciliación');
+    }
+  };
+
   const onSubmit = async (data: IncomeFormValues) => {
     try {
       // Remove empty optional fields and convert date
@@ -144,6 +184,11 @@ export const IncomeForm = ({ isOpen, onClose, income }: IncomeFormProps) => {
         await updateIncome.mutateAsync({ ...cleanData, id: income.id } as any);
       } else {
         await createIncome.mutateAsync(cleanData as any);
+        
+        // Crear payment si el usuario lo solicitó
+        if (createPaymentRecord && cleanData.invoice_id && cleanData.client_id) {
+          await createPaymentFromIncome(cleanData);
+        }
       }
       onClose();
       form.reset();
@@ -391,6 +436,7 @@ export const IncomeForm = ({ isOpen, onClose, income }: IncomeFormProps) => {
                       setIsInvoiceAssociation(checked as boolean);
                       if (!checked) {
                         form.setValue('invoice_id', '');
+                        setCreatePaymentRecord(false);
                       }
                     }}
                   />
@@ -403,6 +449,24 @@ export const IncomeForm = ({ isOpen, onClose, income }: IncomeFormProps) => {
                 </div>
 
                 {isInvoiceAssociation && (
+                  <>
+                    <div className="flex items-center space-x-2 bg-blue-50 dark:bg-blue-950/20 p-3 rounded-md border border-blue-200 dark:border-blue-900">
+                      <Checkbox
+                        id="create-payment-record"
+                        checked={createPaymentRecord}
+                        onCheckedChange={(checked) => setCreatePaymentRecord(checked as boolean)}
+                      />
+                      <label
+                        htmlFor="create-payment-record"
+                        className="text-sm font-medium leading-none cursor-pointer"
+                      >
+                        🔗 Crear registro de pago en Conciliación
+                      </label>
+                    </div>
+                    
+                    <div className="text-xs text-muted-foreground px-3">
+                      Al marcar esta opción, se creará automáticamente un pago en el módulo de Conciliación y se aplicará a la factura seleccionada.
+                    </div>
                   <FormField
                     control={form.control}
                     name="invoice_id"
