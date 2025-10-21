@@ -507,6 +507,7 @@ export type Database = {
           date: string
           description: string
           id: string
+          immediate_consumption: boolean | null
           inventory_movement_id: string | null
           maintenance_id: string | null
           notes: string | null
@@ -531,6 +532,7 @@ export type Database = {
           date: string
           description: string
           id?: string
+          immediate_consumption?: boolean | null
           inventory_movement_id?: string | null
           maintenance_id?: string | null
           notes?: string | null
@@ -555,6 +557,7 @@ export type Database = {
           date?: string
           description?: string
           id?: string
+          immediate_consumption?: boolean | null
           inventory_movement_id?: string | null
           maintenance_id?: string | null
           notes?: string | null
