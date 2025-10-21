@@ -3570,6 +3570,10 @@ export type Database = {
           invoice_id: string
         }[]
       }
+      create_payment_from_existing_income: {
+        Args: { p_income_id: string }
+        Returns: Json
+      }
       current_user_role: {
         Args: Record<PropertyKey, never>
         Returns: string
