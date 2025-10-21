@@ -789,6 +789,7 @@ export type Database = {
           phone: string | null
           quantity: number
           supplier: string
+          supplier_id: string | null
           total_value: number | null
           unit_price: number
           updated_at: string
@@ -807,6 +808,7 @@ export type Database = {
           phone?: string | null
           quantity: number
           supplier: string
+          supplier_id?: string | null
           total_value?: number | null
           unit_price: number
           updated_at?: string
@@ -825,6 +827,7 @@ export type Database = {
           phone?: string | null
           quantity?: number
           supplier?: string
+          supplier_id?: string | null
           total_value?: number | null
           unit_price?: number
           updated_at?: string
@@ -849,6 +852,13 @@ export type Database = {
             columns: ["inventory_movement_id"]
             isOneToOne: false
             referencedRelation: "inventory_movements"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crane_parts_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
             referencedColumns: ["id"]
           },
           {
@@ -1579,7 +1589,7 @@ export type Database = {
             foreignKeyName: "inventory_movements_supplier_id_fkey"
             columns: ["supplier_id"]
             isOneToOne: false
-            referencedRelation: "inventory_suppliers"
+            referencedRelation: "suppliers"
             referencedColumns: ["id"]
           },
         ]
@@ -3596,6 +3606,18 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: Json
       }
+      find_duplicate_suppliers: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          id_1: string
+          id_2: string
+          proveedor_1: string
+          proveedor_2: string
+          rut_1: string
+          rut_2: string
+          similitud: number
+        }[]
+      }
       fix_all_invoice_statuses: {
         Args: Record<PropertyKey, never>
         Returns: Json
@@ -3855,6 +3877,10 @@ export type Database = {
           total_pending: number
         }[]
       }
+      get_supplier_traceability_stats: {
+        Args: { p_supplier_id: string }
+        Returns: Json
+      }
       get_table_structure: {
         Args: { table_name: string }
         Returns: {
@@ -3952,6 +3978,10 @@ export type Database = {
       mark_supplier_payment_as_paid: {
         Args: { p_paid_date?: string; p_payment_id: string }
         Returns: boolean
+      }
+      merge_suppliers: {
+        Args: { p_keep_id: string; p_remove_id: string }
+        Returns: Json
       }
       migrate_existing_consumption_movements: {
         Args: Record<PropertyKey, never>
