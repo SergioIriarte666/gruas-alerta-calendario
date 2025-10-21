@@ -99,6 +99,7 @@ export const useCraneParts = (craneId: string) => {
         cost_id: cost.id,
         part_name: cost.description || 'Pieza sin nombre',
         supplier: 'Ver costo de mantenimiento',
+        supplier_id: null,
         phone: null,
         quantity: 1,
         unit_price: cost.amount,
@@ -121,6 +122,7 @@ export const useCraneParts = (craneId: string) => {
         cost_id: null,
         part_name: (consumption.inventory_items as any)?.name || 'Producto de inventario',
         supplier: 'Consumo de inventario',
+        supplier_id: null,
         phone: null,
         quantity: consumption.quantity, // ✅ Positivo tal como está en BD
         unit_price: consumption.unit_cost || 0,
