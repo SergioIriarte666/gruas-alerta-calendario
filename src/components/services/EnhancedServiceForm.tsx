@@ -68,6 +68,9 @@ export const EnhancedServiceForm = ({
   const [formData, setFormData] = useState({
     requestDate: service?.requestDate || getCurrentChileDateString(),
     serviceDate: service?.serviceDate || getCurrentChileDateString(),
+    startTime: service?.startTime,
+    endTime: service?.endTime,
+    craneMileage: service?.craneMileage,
     client: service?.client?.id || '',
     purchaseOrder: (service as any)?.purchaseOrderNumber || service?.purchaseOrder || '',
     quoteNumber: service?.quoteNumber || '',
@@ -175,6 +178,9 @@ export const EnhancedServiceForm = ({
         ...prev,
         operators: enhancedService.operators || [],
         costDetails,
+        startTime: enhancedService.startTime,
+        endTime: enhancedService.endTime,
+        craneMileage: enhancedService.craneMileage,
         // Update custody fields from enhanced service if available
         custodyMode: enhancedService.custodyMode || enhancedService.custody_mode || prev.custodyMode,
         custodyDays: enhancedService.custodyDays || enhancedService.custody_days || prev.custodyDays,
@@ -206,6 +212,9 @@ export const EnhancedServiceForm = ({
       setFormData({
         requestDate: service.requestDate,
         serviceDate: service.serviceDate,
+        startTime: service.startTime,
+        endTime: service.endTime,
+        craneMileage: service.craneMileage,
         client: service.client?.id || '',
         purchaseOrder: (service as any)?.purchaseOrderNumber || service.purchaseOrder || '',
         quoteNumber: service.quoteNumber || '',
@@ -506,8 +515,14 @@ export const EnhancedServiceForm = ({
             <DateSection
               requestDate={formData.requestDate}
               serviceDate={formData.serviceDate}
+              startTime={formData.startTime}
+              endTime={formData.endTime}
+              craneMileage={formData.craneMileage}
               onRequestDateChange={(date) => setFormData(prev => ({ ...prev, requestDate: date }))}
               onServiceDateChange={(date) => setFormData(prev => ({ ...prev, serviceDate: date }))}
+              onStartTimeChange={(time) => setFormData(prev => ({ ...prev, startTime: time }))}
+              onEndTimeChange={(time) => setFormData(prev => ({ ...prev, endTime: time }))}
+              onCraneMileageChange={(mileage) => setFormData(prev => ({ ...prev, craneMileage: mileage }))}
               disabled={false}
             />
 

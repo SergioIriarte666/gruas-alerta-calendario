@@ -2713,6 +2713,7 @@ export type Database = {
           client_covered_amount: number | null
           client_id: string
           crane_id: string | null
+          crane_mileage: number | null
           created_at: string | null
           created_by: string | null
           custody_daily_rate: number | null
@@ -2726,6 +2727,7 @@ export type Database = {
           custody_total_amount: number | null
           custody_vehicle_type: string | null
           destination: string | null
+          end_time: string | null
           excess_amount: number | null
           folio: string
           has_excess: boolean
@@ -2745,6 +2747,7 @@ export type Database = {
           service_date: string
           service_relationship_type: string | null
           service_type_id: string
+          start_time: string | null
           status: Database["public"]["Enums"]["service_status"] | null
           third_party_client_id: string | null
           updated_at: string | null
@@ -2756,6 +2759,7 @@ export type Database = {
           client_covered_amount?: number | null
           client_id: string
           crane_id?: string | null
+          crane_mileage?: number | null
           created_at?: string | null
           created_by?: string | null
           custody_daily_rate?: number | null
@@ -2769,6 +2773,7 @@ export type Database = {
           custody_total_amount?: number | null
           custody_vehicle_type?: string | null
           destination?: string | null
+          end_time?: string | null
           excess_amount?: number | null
           folio: string
           has_excess?: boolean
@@ -2788,6 +2793,7 @@ export type Database = {
           service_date: string
           service_relationship_type?: string | null
           service_type_id: string
+          start_time?: string | null
           status?: Database["public"]["Enums"]["service_status"] | null
           third_party_client_id?: string | null
           updated_at?: string | null
@@ -2799,6 +2805,7 @@ export type Database = {
           client_covered_amount?: number | null
           client_id?: string
           crane_id?: string | null
+          crane_mileage?: number | null
           created_at?: string | null
           created_by?: string | null
           custody_daily_rate?: number | null
@@ -2812,6 +2819,7 @@ export type Database = {
           custody_total_amount?: number | null
           custody_vehicle_type?: string | null
           destination?: string | null
+          end_time?: string | null
           excess_amount?: number | null
           folio?: string
           has_excess?: boolean
@@ -2831,6 +2839,7 @@ export type Database = {
           service_date?: string
           service_relationship_type?: string | null
           service_type_id?: string
+          start_time?: string | null
           status?: Database["public"]["Enums"]["service_status"] | null
           third_party_client_id?: string | null
           updated_at?: string | null

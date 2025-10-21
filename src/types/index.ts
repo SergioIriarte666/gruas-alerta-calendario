@@ -5,6 +5,9 @@ export interface Service {
   folio: string;
   requestDate: string;
   serviceDate: string;
+  startTime?: string;
+  endTime?: string;
+  craneMileage?: number;
   client: Client;
   purchaseOrder?: string;
   purchaseOrderNumber?: string; // Añadido para flujo especial cliente (Fase 1)
@@ -47,6 +50,9 @@ export interface ServiceFormData {
   folio?: string;
   requestDate: string;
   serviceDate: string;
+  startTime?: string;
+  endTime?: string;
+  craneMileage?: number;
   client: string;
   purchaseOrder?: string;
   quoteNumber?: string;

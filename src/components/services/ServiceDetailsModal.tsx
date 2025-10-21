@@ -20,7 +20,9 @@ import {
   UserCheck,
   Wrench,
   Shield,
-  Download
+  Download,
+  Timer,
+  Gauge
 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { VehicleHistory } from './VehicleHistory';
@@ -57,6 +59,31 @@ const DetailItem = ({ icon: Icon, label, value, valueClass = '', isFullWidth = f
     </div>
   </div>
 );
+
+const calculateDuration = (startTime: string, endTime: string): string => {
+  const [startHours, startMinutes] = startTime.split(':').map(Number);
+  const [endHours, endMinutes] = endTime.split(':').map(Number);
+  
+  const startTotalMinutes = startHours * 60 + startMinutes;
+  const endTotalMinutes = endHours * 60 + endMinutes;
+  
+  const durationMinutes = endTotalMinutes - startTotalMinutes;
+  
+  if (durationMinutes < 0) {
+    return 'Hora de término anterior a inicio';
+  }
+  
+  const hours = Math.floor(durationMinutes / 60);
+  const minutes = durationMinutes % 60;
+  
+  if (hours === 0) {
+    return `${minutes} minutos`;
+  } else if (minutes === 0) {
+    return `${hours} ${hours === 1 ? 'hora' : 'horas'}`;
+  } else {
+    return `${hours}h ${minutes}min`;
+  }
+};
 
 interface DetailSectionProps {
   title: string;
@@ -289,6 +316,26 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose }: ServiceDetails
                       )}
                       <DetailItem icon={Calendar} label="Fecha de Solicitud" value={formatForDisplay(serviceData.requestDate)} />
                       <DetailItem icon={Clock} label="Fecha y Hora de Servicio" value={formatForDisplayWithTime(serviceData.serviceDate)} />
+                      {serviceData.startTime && (
+                        <DetailItem icon={Clock} label="Hora de Inicio" value={serviceData.startTime} />
+                      )}
+                      {serviceData.endTime && (
+                        <DetailItem icon={Timer} label="Hora de Término" value={serviceData.endTime} />
+                      )}
+                      {serviceData.startTime && serviceData.endTime && (
+                        <DetailItem 
+                          icon={Clock} 
+                          label="Duración del Servicio" 
+                          value={calculateDuration(serviceData.startTime, serviceData.endTime)} 
+                        />
+                      )}
+                      {serviceData.craneMileage && (
+                        <DetailItem 
+                          icon={Gauge} 
+                          label="Kilometraje Grúa" 
+                          value={`${serviceData.craneMileage.toLocaleString('es-CL')} km`} 
+                        />
+                      )}
                       <DetailItem icon={MapPin} label="Origen" value={serviceData.origin} isFullWidth={true} />
                       <DetailItem icon={MapPin} label="Destino" value={serviceData.destination} isFullWidth={true} />
                   </DetailSection>
