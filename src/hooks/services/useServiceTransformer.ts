@@ -122,6 +122,10 @@ export const useServiceTransformer = () => {
         vehicleBrand: item.vehicle_brand || '',
         vehicleModel: item.vehicle_model || '',
         licensePlate: item.license_plate || '',
+        // Optional service timing and mileage fields
+        startTime: item.start_time || undefined,
+        endTime: item.end_time || undefined,
+        craneMileage: item.crane_mileage || undefined,
         origin: item.origin || '',
         destination: item.destination || '',
         value: parseFloat(item.value) || 0,
