@@ -186,10 +186,10 @@ export const DateSection = ({
                 className="flex items-center gap-2 cursor-pointer font-medium text-foreground"
               >
                 <Gauge className="w-4 h-4 text-green-500" />
-                Kilometraje de la Grúa
+                Kilómetros recorridos en servicio
               </Label>
               <p className="text-sm text-muted-foreground mt-1">
-                Registra el kilometraje del vehículo grúa al momento del servicio
+                Registra los kilómetros recorridos durante el servicio
               </p>
             </div>
           </div>
@@ -197,7 +197,7 @@ export const DateSection = ({
           {enableCraneMileage && (
             <div className="ml-7 space-y-2">
               <Label htmlFor="craneMileage" className="text-sm">
-                Kilometraje (km)
+                Kilómetros recorridos (km)
               </Label>
               <Input
                 id="craneMileage"
