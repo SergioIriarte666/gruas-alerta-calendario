@@ -72,20 +72,29 @@ export const useServicesPage = () => {
   };
 
   const filteredAndSortedServices = (() => {
+    // Función de normalización para búsqueda flexible
+    const normalizeSearchTerm = (text: string): string => {
+      return text.toLowerCase().replace(/[-\s_]/g, '').trim();
+    };
+
     let filtered = [];
     
     if (hasAdvancedFilters && advancedFilterFunction) {
       filtered = advancedFilterFunction(services);
     } else {
+      // Normalizar el término de búsqueda una sola vez
+      const normalizedSearchTerm = normalizeSearchTerm(searchTerm);
+      
       filtered = services.filter(service => {
-        const matchesSearch = 
-          (service.folio || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-          (service.client?.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-          (service.licensePlate || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-          (service.vehicleBrand || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-          (service.quoteNumber || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-          (service.purchaseOrder || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-          (service.purchaseOrderNumber || '').toLowerCase().includes(searchTerm.toLowerCase());
+        const matchesSearch = normalizedSearchTerm === '' || (
+          normalizeSearchTerm(service.folio || '').includes(normalizedSearchTerm) ||
+          normalizeSearchTerm(service.client?.name || '').includes(normalizedSearchTerm) ||
+          normalizeSearchTerm(service.licensePlate || '').includes(normalizedSearchTerm) ||
+          normalizeSearchTerm(service.vehicleBrand || '').includes(normalizedSearchTerm) ||
+          normalizeSearchTerm(service.quoteNumber || '').includes(normalizedSearchTerm) ||
+          normalizeSearchTerm(service.purchaseOrder || '').includes(normalizedSearchTerm) ||
+          normalizeSearchTerm(service.purchaseOrderNumber || '').includes(normalizedSearchTerm)
+        );
         
         const statusesToFilter = statusFilter === 'all' ? [] : statusFilter.split(',');
         let matchesStatus = false;
