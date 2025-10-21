@@ -53,6 +53,10 @@ export const costSchema = z.object({
     quantity: z.coerce.number().positive().nullable().optional(),
     unit_price: z.coerce.number().nonnegative().nullable().optional(),
     kilometraje: z.coerce.number().nonnegative().nullable().optional(),
+    
+    // Campos para compras de inventario (FASE 2)
+    purchase_quantity: z.coerce.number().positive().nullable().optional(),
+    purchase_unit_cost: z.coerce.number().nonnegative().nullable().optional(),
 }).refine((data) => {
     // Si la subcategoría es "Piezas y Repuestos", validar campos requeridos
     if (data.subcategory === 'Piezas y Repuestos') {

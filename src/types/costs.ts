@@ -37,6 +37,9 @@ export type CostFormData = Omit<Database['public']['Tables']['costs']['Insert'],
   quantity?: number | null;
   unit_price?: number | null;
   kilometraje?: number | null;
+  // FASE 2: Campos para sincronización con inventario
+  purchase_quantity?: number | null;
+  purchase_unit_cost?: number | null;
 };
 
 // Constantes para las categorías de servicios

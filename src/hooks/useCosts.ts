@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useErrorHandler } from '@/hooks/useErrorHandler';
 import { Cost, CostFormData, PartsExpenseData } from '@/types/costs';
 import { toast } from 'sonner';
+import { useUniversalSync } from './useUniversalSync';
 
 const fetchCosts = async (): Promise<Cost[]> => {
   const { data, error } = await supabase
@@ -93,6 +94,9 @@ const addCost = async (costData: CostFormData) => {
       subcategory: costData.subcategory,
       service_folio: costData.service_folio,
       cost_center_id: costData.cost_center_id,
+      // FASE 2: Campos para sincronización con inventario
+      purchase_quantity: costData.purchase_quantity,
+      purchase_unit_cost: costData.purchase_unit_cost,
     };
     
     console.log('[useCosts - addCost] Validated cost data (only costs fields):', validCostFields);
@@ -179,22 +183,15 @@ const addCost = async (costData: CostFormData) => {
 export const useAddCost = () => {
   const queryClient = useQueryClient();
   const { createMutationErrorHandler } = useErrorHandler();
+  const { invalidateAll } = useUniversalSync();
+  
   return useMutation({
     mutationFn: addCost,
     onSuccess: (data) => {
       console.log('[useAddCost] Mutation success with data:', data);
-      queryClient.invalidateQueries({ queryKey: ['costs'] });
-      queryClient.invalidateQueries({ queryKey: ['cost-centers-stats'] });
-      queryClient.invalidateQueries({ queryKey: ['crane-parts'] });
-      queryClient.invalidateQueries({ queryKey: ['crane-parts-stats'] });
-      // Invalidate reports queries to update metrics
-      queryClient.refetchQueries({ queryKey: ['reports'] });
+      invalidateAll();
+      toast.success('Costo registrado correctamente');
       
-      // AGREGAR ESTAS LÍNEAS EN CADA onSuccess:
-      queryClient.invalidateQueries({ queryKey: ['services'] });
-      queryClient.invalidateQueries({ queryKey: ['service-costs'] });
-      
-      // Y SI HAY service_id:
       if (data?.[0]?.service_id) {
         queryClient.invalidateQueries({ queryKey: ['service-costs', data[0].service_id] });
       }
@@ -284,19 +281,15 @@ const updateCost = async ({ id, ...costData }: { id: string } & any) => {
 export const useUpdateCost = () => {
   const queryClient = useQueryClient();
   const { createMutationErrorHandler } = useErrorHandler();
+  const { invalidateAll } = useUniversalSync();  // FASE 5: Sincronización universal
+  
   return useMutation({
     mutationFn: updateCost,
     onSuccess: (data) => {
       console.log('[useUpdateCost] Mutation success with data:', data);
-      // Forzar refetch inmediato de costs para actualizar la vista
-      queryClient.refetchQueries({ queryKey: ['costs'] });
-      queryClient.invalidateQueries({ queryKey: ['cost-centers-stats'] });
-      queryClient.invalidateQueries({ queryKey: ['crane-parts'] });
-      queryClient.invalidateQueries({ queryKey: ['crane-metrics'] });
-      queryClient.refetchQueries({ queryKey: ['reports'] });
       
-      queryClient.invalidateQueries({ queryKey: ['services'] });
-      queryClient.invalidateQueries({ queryKey: ['service-costs'] });
+      // FASE 5: Invalidar todas las queries relacionadas
+      invalidateAll();
       
       if (data?.[0]?.service_id) {
         queryClient.invalidateQueries({ queryKey: ['service-costs', data[0].service_id] });

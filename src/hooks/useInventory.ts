@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { createInventoryCost } from '@/utils/inventoryCostHelper';
 import { useErrorHandler } from '@/hooks/useErrorHandler';
+import { useUniversalSync } from './useUniversalSync';  // FASE 5
 
 export interface InventoryItem {
   id: string;
@@ -318,6 +319,7 @@ export const useInventoryStats = () => {
 export const useCreateInventoryMovement = () => {
   const queryClient = useQueryClient();
   const { createMutationErrorHandler } = useErrorHandler();
+  const { invalidateAll } = useUniversalSync();  // FASE 5: Sincronización universal
 
   return useMutation({
     mutationFn: async (movement: Omit<InventoryMovement, 'id' | 'created_at' | 'status'> & { generateCost?: boolean }) => {
@@ -356,7 +358,7 @@ export const useCreateInventoryMovement = () => {
           const cost = await createInventoryCost({
             amount: totalCost,
             description: `Compra de inventario: ${itemData.name}`,
-            date: movement.movement_date.split('T')[0], // Convert to date format
+            date: movement.movement_date.split('T')[0],
             item_name: itemData.name,
             supplier_name: movement.supplier_name,
             quantity: movement.quantity,
@@ -383,10 +385,8 @@ export const useCreateInventoryMovement = () => {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['inventory-movements'] });
-      queryClient.invalidateQueries({ queryKey: ['inventory-stock'] });
-      queryClient.invalidateQueries({ queryKey: ['inventory-stats'] });
-      queryClient.invalidateQueries({ queryKey: ['low-stock-items'] });
+      // FASE 5: Invalidar todas las queries relacionadas
+      invalidateAll();
       toast.success('Movimiento de inventario registrado correctamente');
     },
     onError: createMutationErrorHandler({

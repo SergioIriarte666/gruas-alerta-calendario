@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { UseFormReturn } from 'react-hook-form';
 import { FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
@@ -14,6 +13,7 @@ import { ServiceSelector } from './ServiceSelector';
 import { CostAmountSection } from './CostAmountSection';
 import { useCostCenters } from '@/hooks/useCostCenters';
 import { CostCombobox } from './CostCombobox';
+import { InventoryPurchaseFields } from './InventoryPurchaseFields';  // FASE 3
 import { Package, User, Phone, Hash, DollarSign, Gauge, Calendar, FileText, Tag, Building2 } from 'lucide-react';
 
 interface CostFormInputsProps {
@@ -52,6 +52,7 @@ export const CostFormInputs = ({
     const isGastosDeServicios = selectedCategory?.name === 'Gastos de Servicios';
     const isMantenimiento = selectedCategory?.name === 'Mantenimiento';
     const isPiezasYRepuestos = isMantenimiento && selectedSubcategory === 'Piezas y Repuestos';
+    const isInventario = selectedCategory?.name === 'Inventario';  // FASE 3: Detectar categoría Inventario
 
     
 
@@ -167,6 +168,11 @@ export const CostFormInputs = ({
                     />
                 </CardContent>
             </Card>
+
+            {/* FASE 3: Campos específicos para compras de Inventario */}
+            {isInventario && (
+                <InventoryPurchaseFields form={form} />
+            )}
 
             {/* Subcategorías */}
             {(isGastosDeServicios || isMantenimiento) && (
