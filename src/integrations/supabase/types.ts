@@ -513,6 +513,8 @@ export type Database = {
           operator_id: string | null
           payment_batch_id: string | null
           payment_date: string | null
+          purchase_quantity: number | null
+          purchase_unit_cost: number | null
           service_folio: string | null
           service_id: string | null
           subcategory: string | null
@@ -535,6 +537,8 @@ export type Database = {
           operator_id?: string | null
           payment_batch_id?: string | null
           payment_date?: string | null
+          purchase_quantity?: number | null
+          purchase_unit_cost?: number | null
           service_folio?: string | null
           service_id?: string | null
           subcategory?: string | null
@@ -557,6 +561,8 @@ export type Database = {
           operator_id?: string | null
           payment_batch_id?: string | null
           payment_date?: string | null
+          purchase_quantity?: number | null
+          purchase_unit_cost?: number | null
           service_folio?: string | null
           service_id?: string | null
           subcategory?: string | null
