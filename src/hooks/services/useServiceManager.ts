@@ -205,8 +205,11 @@ export const useServiceManager = () => {
           service_date: serviceData.serviceDate && serviceData.serviceDate.trim() !== '' 
             ? serviceData.serviceDate 
             : null,
+          start_time: serviceData.startTime || null,
+          end_time: serviceData.endTime || null,
+          crane_mileage: serviceData.craneMileage || null,
           // ✅ FIX: Validar UUID fields - convertir cadenas vacías a null
-          client_id: serviceData.client && serviceData.client.trim() !== '' 
+          client_id: serviceData.client && serviceData.client.trim() !== ''
             ? serviceData.client 
             : null,
           purchase_order: serviceData.purchaseOrder || null,
@@ -471,6 +474,15 @@ export const useServiceManager = () => {
             service_date: serviceData.serviceDate && serviceData.serviceDate.trim() !== '' 
               ? serviceData.serviceDate 
               : null
+          }),
+          ...(serviceData.startTime !== undefined && {
+            start_time: serviceData.startTime || null
+          }),
+          ...(serviceData.endTime !== undefined && {
+            end_time: serviceData.endTime || null
+          }),
+          ...(serviceData.craneMileage !== undefined && {
+            crane_mileage: serviceData.craneMileage || null
           }),
           // ✅ FIX: Validar UUID fields - convertir cadenas vacías a null SOLO si están presentes
           ...(serviceData.client !== undefined && {
