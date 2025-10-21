@@ -108,6 +108,9 @@ export const exportServiceReport = async ({ format, services, settings, appliedF
     // Hoja principal: Detalle completo de servicios - SIN operador
     const services_data = sortedServices.map(s => ({
       'Fecha Servicio': formatDate(new Date(s.serviceDate + 'T00:00:00'), 'yyyy-MM-dd'),
+      'Hora Inicio': s.startTime || '-',
+      'Hora Término': s.endTime || '-',
+      'Kilómetros Recorridos': s.craneMileage || '-',
       'Folio': s.folio,
       'Cliente': s.client.name,
       'RUT Cliente': s.client.rut,
