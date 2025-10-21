@@ -40,6 +40,8 @@ export type CostFormData = Omit<Database['public']['Tables']['costs']['Insert'],
   // FASE 2: Campos para sincronización con inventario
   purchase_quantity?: number | null;
   purchase_unit_cost?: number | null;
+  // Campo para consumo inmediato
+  immediate_consumption?: boolean;
 };
 
 // Constantes para las categorías de servicios

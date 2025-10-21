@@ -57,6 +57,9 @@ export const costSchema = z.object({
     // Campos para compras de inventario (FASE 2)
     purchase_quantity: z.coerce.number().positive().nullable().optional(),
     purchase_unit_cost: z.coerce.number().nonnegative().nullable().optional(),
+    
+    // Campo para consumo inmediato
+    immediate_consumption: z.boolean().optional().default(false),
 }).refine((data) => {
     // Si la subcategoría es "Piezas y Repuestos", validar campos requeridos
     if (data.subcategory === 'Piezas y Repuestos') {
@@ -66,6 +69,15 @@ export const costSchema = z.object({
 }, {
     message: "Los campos de pieza, proveedor, cantidad y precio unitario son requeridos para piezas y repuestos",
     path: ["part_name"],
+}).refine((data) => {
+    // Si es consumo inmediato, debe tener grúa seleccionada
+    if (data.immediate_consumption && !data.crane_id) {
+        return false;
+    }
+    return true;
+}, {
+    message: "Debes seleccionar una grúa para consumo inmediato",
+    path: ["crane_id"],
 });
 
 export type CostFormValues = z.infer<typeof costSchema>;

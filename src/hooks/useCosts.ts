@@ -97,6 +97,7 @@ const addCost = async (costData: CostFormData) => {
       // FASE 2: Campos para sincronización con inventario
       purchase_quantity: costData.purchase_quantity,
       purchase_unit_cost: costData.purchase_unit_cost,
+      immediate_consumption: costData.immediate_consumption || false,
     };
     
     console.log('[useCosts - addCost] Validated cost data (only costs fields):', validCostFields);

@@ -12,8 +12,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { CostFormValues } from '@/schemas/costSchema';
-import { Package, Hash, DollarSign, Info } from 'lucide-react';
+import { Package, Hash, DollarSign, Info, Zap } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Checkbox } from '@/components/ui/checkbox';
 
 interface InventoryPurchaseFieldsProps {
   form: UseFormReturn<CostFormValues>;
@@ -22,6 +23,8 @@ interface InventoryPurchaseFieldsProps {
 export const InventoryPurchaseFields = ({ form }: InventoryPurchaseFieldsProps) => {
   const quantity = form.watch('purchase_quantity') as number | undefined;
   const unitCost = form.watch('purchase_unit_cost') as number | undefined;
+  const immediateConsumption = form.watch('immediate_consumption');
+  const craneId = form.watch('crane_id');
   
   // Calcular automáticamente el monto total
   React.useEffect(() => {
@@ -135,6 +138,56 @@ export const InventoryPurchaseFields = ({ form }: InventoryPurchaseFieldsProps) 
             </p>
           </div>
         )}
+
+        {/* Checkbox de consumo inmediato */}
+        <div className="space-y-3 p-4 border-2 border-dashed border-border rounded-lg bg-background/50">
+          <div className="flex items-start gap-3">
+            <FormField
+              control={form.control}
+              name="immediate_consumption"
+              render={({ field }) => (
+                <FormItem className="flex items-center gap-2 space-y-0 pt-1">
+                  <FormControl>
+                    <Checkbox
+                      checked={field.value || false}
+                      onCheckedChange={field.onChange}
+                      id="immediate_consumption"
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+            <div className="flex-1">
+              <Label 
+                htmlFor="immediate_consumption" 
+                className="flex items-center gap-2 cursor-pointer font-medium text-foreground"
+              >
+                <Zap className="w-4 h-4 text-orange-500" />
+                Consumo Inmediato
+              </Label>
+              <p className="text-sm text-muted-foreground mt-1">
+                Esta compra se consumirá inmediatamente en la grúa seleccionada. 
+                El stock neto en bodega quedará en 0 (se registra entrada y salida automática).
+              </p>
+            </div>
+          </div>
+
+          {immediateConsumption && (
+            <Alert className="bg-orange-50 dark:bg-orange-950/30 border-orange-200 dark:border-orange-800">
+              <Zap className="h-4 w-4 text-orange-600 dark:text-orange-500" />
+              <AlertDescription className="text-sm text-orange-800 dark:text-orange-200">
+                <strong>Consumo inmediato activado:</strong> Se registrará automáticamente 
+                la entrada a bodega y la salida inmediata {craneId ? (
+                  <span className="font-semibold">a la grúa seleccionada</span>
+                ) : (
+                  <span className="font-semibold text-orange-600 dark:text-orange-400">
+                    (debes seleccionar una grúa)
+                  </span>
+                )}. El stock final en bodega será 0.
+              </AlertDescription>
+            </Alert>
+          )}
+        </div>
       </CardContent>
     </Card>
   );
