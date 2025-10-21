@@ -167,6 +167,9 @@ const fetchEnhancedServiceDetails = async (serviceId: string): Promise<EnhancedS
     vehicleBrand: serviceData.vehicle_brand,
     vehicleModel: serviceData.vehicle_model,
     licensePlate: serviceData.license_plate,
+    startTime: serviceData.start_time || undefined,
+    endTime: serviceData.end_time || undefined,
+    craneMileage: serviceData.crane_mileage || undefined,
     origin: serviceData.origin,
     destination: serviceData.destination,
     serviceType: {
