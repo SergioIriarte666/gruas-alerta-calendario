@@ -202,3 +202,88 @@ La función `create_cost_from_supplier_payment()` ahora:
 - ✅ **Prevención de duplicados** - Check de existencia activo
 - ✅ **Arquitectura clara** - Separación de responsabilidades
 - ✅ **Retrocompatible** - No afecta registros existentes
+
+---
+
+## Corrección de Cast TEXT → UUID (Octubre 2025)
+
+### Problema Detectado
+El trigger fallaba con error `operator does not exist: uuid = text` al marcar pagos como pagados:
+
+**Causa raíz:**
+- Columna `supplier_payments.category` es de tipo **TEXT**
+- Tabla `supplier_categories.id` es de tipo **UUID**
+- El trigger intentaba comparar directamente `uuid = text` sin cast explícito
+- **Datos mixtos**: registros antiguos tienen strings ("mantenimiento", "otros"), registros nuevos tienen UUIDs válidos
+
+**Error observado:**
+```
+ERROR: operator does not exist: uuid = text
+HINT: No operator matches the given name and argument types. You might need to add explicit type casts.
+```
+
+### Solución Implementada
+
+✅ **Bloque BEGIN/EXCEPTION para manejo robusto de tipos**
+```sql
+BEGIN
+  -- Intentar como UUID primero (para registros nuevos)
+  SELECT name INTO v_category_name
+  FROM supplier_categories
+  WHERE id = NEW.category::uuid;
+EXCEPTION
+  WHEN invalid_text_representation THEN
+    -- Si falla el cast a UUID, usar el valor de texto directamente (registros antiguos)
+    v_category_name := NEW.category;
+  WHEN OTHERS THEN
+    v_category_name := NULL;
+END;
+```
+
+✅ **Retrocompatibilidad total**
+- Registros con `category` como UUID válido → Busca en `supplier_categories`
+- Registros con `category` como texto ("mantenimiento") → Usa el texto directamente
+- Cualquier otro error → Establece `v_category_name` como NULL
+
+✅ **Sin migración de datos requerida**
+- No es necesario modificar registros existentes
+- Funciona con datos antiguos y nuevos simultáneamente
+- No hay riesgo de pérdida de información
+
+### Beneficios
+- ✅ **Resuelve el error actual** - Maneja conversión TEXT → UUID con excepciones
+- ✅ **Robusto** - Manejo de casos edge y errores inesperados
+- ✅ **Retrocompatible** - Funciona con todos los registros históricos
+- ✅ **Sin downtime** - No requiere limpieza de datos previa
+- ✅ **Prevención de futuros errores** - Cast explícito documentado
+
+### Flujo de Ejecución del Trigger
+```
+1. Usuario marca pago como 'paid'
+   ↓
+2. Trigger verifica si ya existe costo (anti-duplicados)
+   ↓
+3. Intenta obtener nombre de categoría:
+   a) Intenta cast a UUID → Busca en supplier_categories
+   b) Si falla (EXCEPTION) → Usa valor TEXT directamente
+   c) Si error diferente → v_category_name = NULL
+   ↓
+4. Crea costo con información obtenida
+   ↓
+5. ✅ Sin errores, sin duplicados, retrocompatible
+```
+
+### Alternativa Descartada
+
+**Migrar todos los valores TEXT a UUID:**
+- ❌ Requiere script complejo de migración de datos
+- ❌ Riesgo de pérdida de datos si hay categorías no mapeadas
+- ❌ Requiere mantenimiento de base de datos
+- ❌ Mayor tiempo de implementación
+- ❌ Potencial downtime durante migración
+
+**Por qué la solución actual es mejor:**
+- ✅ Implementación inmediata sin cambios de datos
+- ✅ Cero riesgo de pérdida de información
+- ✅ Funciona con cualquier valor en `category`
+- ✅ Más simple y mantenible
