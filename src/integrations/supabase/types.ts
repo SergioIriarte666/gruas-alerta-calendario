@@ -3415,38 +3415,29 @@ export type Database = {
         }
         Returns: string
       }
-      apply_payment_fifo: {
-        Args:
-          | { p_client_id: string; p_payment_id: string }
-          | { p_payment_id: string }
-        Returns: Json
-      }
+      apply_payment_fifo:
+        | { Args: { p_payment_id: string }; Returns: Json }
+        | { Args: { p_client_id: string; p_payment_id: string }; Returns: Json }
       apply_payment_manual: {
         Args: { p_applications: Json; p_payment_id: string }
         Returns: Json
       }
-      apply_payment_selective: {
-        Args:
-          | {
+      apply_payment_selective:
+        | {
+            Args: {
               p_apply_only_to_specified?: boolean
               p_fiscal_numbers: string[]
               p_payment_id: string
             }
-          | { p_fiscal_numbers?: string[]; p_payment_id: string }
-        Returns: Json
-      }
-      apply_pending_payments_to_invoices: {
-        Args: Record<PropertyKey, never>
-        Returns: Json
-      }
-      audit_commission_system: {
-        Args: Record<PropertyKey, never>
-        Returns: Json
-      }
-      backfill_maintenance_costs: {
-        Args: Record<PropertyKey, never>
-        Returns: Json
-      }
+            Returns: Json
+          }
+        | {
+            Args: { p_fiscal_numbers?: string[]; p_payment_id: string }
+            Returns: Json
+          }
+      apply_pending_payments_to_invoices: { Args: never; Returns: Json }
+      audit_commission_system: { Args: never; Returns: Json }
+      backfill_maintenance_costs: { Args: never; Returns: Json }
       calculate_billing_date: {
         Args: {
           billing_cycle_day?: number
@@ -3456,22 +3447,13 @@ export type Database = {
         }
         Returns: string
       }
-      can_access_client_sensitive_data: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
-      }
+      can_access_client_sensitive_data: { Args: never; Returns: boolean }
       can_view_notification: {
         Args: { target_user_id: string }
         Returns: boolean
       }
-      check_auth_health: {
-        Args: Record<PropertyKey, never>
-        Returns: Json
-      }
-      check_bidirectional_sync_status: {
-        Args: Record<PropertyKey, never>
-        Returns: Json
-      }
+      check_auth_health: { Args: never; Returns: Json }
+      check_bidirectional_sync_status: { Args: never; Returns: Json }
       check_for_duplicate_payment: {
         Args: {
           p_amount: number
@@ -3481,50 +3463,20 @@ export type Database = {
         }
         Returns: Json
       }
-      check_inventory_sync_status: {
-        Args: Record<PropertyKey, never>
-        Returns: Json
-      }
-      check_security_compliance: {
-        Args: Record<PropertyKey, never>
-        Returns: Json
-      }
-      check_security_status: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
-      check_service_invoice_consistency: {
-        Args: Record<PropertyKey, never>
-        Returns: Json
-      }
-      cleanup_duplicate_inventory_costs: {
-        Args: Record<PropertyKey, never>
-        Returns: Json
-      }
-      cleanup_duplicate_payments: {
-        Args: Record<PropertyKey, never>
-        Returns: Json
-      }
-      cleanup_duplicate_profiles: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
-      cleanup_orphaned_supplier_costs: {
-        Args: Record<PropertyKey, never>
-        Returns: number
-      }
-      cleanup_payment_duplicates: {
-        Args: Record<PropertyKey, never>
-        Returns: Json
-      }
+      check_inventory_sync_status: { Args: never; Returns: Json }
+      check_security_compliance: { Args: never; Returns: Json }
+      check_security_status: { Args: never; Returns: string }
+      check_service_invoice_consistency: { Args: never; Returns: Json }
+      cleanup_duplicate_inventory_costs: { Args: never; Returns: Json }
+      cleanup_duplicate_payments: { Args: never; Returns: Json }
+      cleanup_duplicate_profiles: { Args: never; Returns: undefined }
+      cleanup_orphaned_supplier_costs: { Args: never; Returns: number }
+      cleanup_payment_duplicates: { Args: never; Returns: Json }
       close_service_status_only: {
         Args: { p_service_id: string }
         Returns: Json
       }
-      comprehensive_payment_diagnosis: {
-        Args: Record<PropertyKey, never>
-        Returns: Json
-      }
+      comprehensive_payment_diagnosis: { Args: never; Returns: Json }
       create_automatic_payment_for_invoice: {
         Args: { p_invoice_id: string }
         Returns: Json
@@ -3542,9 +3494,9 @@ export type Database = {
         }
         Returns: Json
       }
-      create_inventory_consumption_movement: {
-        Args:
-          | {
+      create_inventory_consumption_movement:
+        | {
+            Args: {
               p_crane_id: string
               p_inventory_item_id: string
               p_observations?: string
@@ -3552,7 +3504,10 @@ export type Database = {
               p_quantity: number
               p_reference_document?: string
             }
-          | {
+            Returns: string
+          }
+        | {
+            Args: {
               p_crane_id: string
               p_inventory_item_id: string
               p_observations?: string
@@ -3561,8 +3516,8 @@ export type Database = {
               p_reference_document?: string
               p_unit_cost?: number
             }
-        Returns: string
-      }
+            Returns: string
+          }
       create_invoice_transaction: {
         Args: { p_invoice_data: Json; p_service_ids: string[] }
         Returns: {
@@ -3574,12 +3529,9 @@ export type Database = {
         Args: { p_income_id: string }
         Returns: Json
       }
-      current_user_role: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
+      current_user_role: { Args: never; Returns: string }
       debug_service_states: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           current_status: Database["public"]["Enums"]["service_status"]
           invoice_folio: string
@@ -3595,14 +3547,8 @@ export type Database = {
         Args: { p_crane_id?: string }
         Returns: Json
       }
-      diagnose_maintenance_cost_integration: {
-        Args: Record<PropertyKey, never>
-        Returns: Json
-      }
-      diagnose_mixed_payment_invoices: {
-        Args: Record<PropertyKey, never>
-        Returns: Json
-      }
+      diagnose_maintenance_cost_integration: { Args: never; Returns: Json }
+      diagnose_mixed_payment_invoices: { Args: never; Returns: Json }
       diagnose_payment_application_conflicts: {
         Args: { p_payment_id?: string }
         Returns: Json
@@ -3611,16 +3557,10 @@ export type Database = {
         Args: { service_id_param?: string }
         Returns: Json
       }
-      emergency_close_service: {
-        Args: { p_service_id: string }
-        Returns: Json
-      }
-      final_security_check: {
-        Args: Record<PropertyKey, never>
-        Returns: Json
-      }
+      emergency_close_service: { Args: { p_service_id: string }; Returns: Json }
+      final_security_check: { Args: never; Returns: Json }
       find_duplicate_suppliers: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           id_1: string
           id_2: string
@@ -3631,70 +3571,25 @@ export type Database = {
           similitud: number
         }[]
       }
-      fix_all_invoice_statuses: {
-        Args: Record<PropertyKey, never>
-        Returns: Json
-      }
-      fix_all_invoiced_services_status: {
-        Args: Record<PropertyKey, never>
-        Returns: Json
-      }
-      fix_all_maintenance_cost_descriptions: {
-        Args: Record<PropertyKey, never>
-        Returns: Json
-      }
-      fix_amphos_payment_applications: {
-        Args: Record<PropertyKey, never>
-        Returns: Json
-      }
-      fix_applied_amount_duplications: {
-        Args: Record<PropertyKey, never>
-        Returns: Json
-      }
-      fix_duplicate_fact_4011_application: {
-        Args: Record<PropertyKey, never>
-        Returns: Json
-      }
-      fix_duplicate_paid_amounts: {
-        Args: Record<PropertyKey, never>
-        Returns: Json
-      }
-      fix_existing_overdue_invoices: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
-      fix_inventory_cost_issues: {
-        Args: Record<PropertyKey, never>
-        Returns: Json
-      }
-      fix_invoice_payment_inconsistencies: {
-        Args: Record<PropertyKey, never>
-        Returns: Json
-      }
-      fix_maintenance_status_inconsistencies: {
-        Args: Record<PropertyKey, never>
-        Returns: Json
-      }
-      fix_materiales_electricos_unit_cost: {
-        Args: Record<PropertyKey, never>
-        Returns: Json
-      }
-      fix_negative_remaining_amounts: {
-        Args: Record<PropertyKey, never>
-        Returns: Json
-      }
-      fix_payment_system_inconsistencies: {
-        Args: Record<PropertyKey, never>
-        Returns: Json
-      }
+      fix_all_invoice_statuses: { Args: never; Returns: Json }
+      fix_all_invoiced_services_status: { Args: never; Returns: Json }
+      fix_all_maintenance_cost_descriptions: { Args: never; Returns: Json }
+      fix_amphos_payment_applications: { Args: never; Returns: Json }
+      fix_applied_amount_duplications: { Args: never; Returns: Json }
+      fix_duplicate_fact_4011_application: { Args: never; Returns: Json }
+      fix_duplicate_paid_amounts: { Args: never; Returns: Json }
+      fix_existing_overdue_invoices: { Args: never; Returns: string }
+      fix_inventory_cost_issues: { Args: never; Returns: Json }
+      fix_invoice_payment_inconsistencies: { Args: never; Returns: Json }
+      fix_maintenance_status_inconsistencies: { Args: never; Returns: Json }
+      fix_materiales_electricos_unit_cost: { Args: never; Returns: Json }
+      fix_negative_remaining_amounts: { Args: never; Returns: Json }
+      fix_payment_system_inconsistencies: { Args: never; Returns: Json }
       fix_specific_payment_issue: {
         Args: { p_payment_id?: string }
         Returns: Json
       }
-      fix_unlinked_maintenance_costs: {
-        Args: Record<PropertyKey, never>
-        Returns: Json
-      }
+      fix_unlinked_maintenance_costs: { Args: never; Returns: Json }
       force_close_service_bypass_triggers: {
         Args: { p_service_id: string }
         Returns: Json
@@ -3703,14 +3598,8 @@ export type Database = {
         Args: { p_service_id: string }
         Returns: Json
       }
-      force_frontend_cache_refresh: {
-        Args: Record<PropertyKey, never>
-        Returns: Json
-      }
-      force_resync_crane_part: {
-        Args: { part_id: string }
-        Returns: Json
-      }
+      force_frontend_cache_refresh: { Args: never; Returns: Json }
+      force_resync_crane_part: { Args: { part_id: string }; Returns: Json }
       force_update_service_to_invoiced: {
         Args: {
           p_invoice_folio: string
@@ -3719,32 +3608,14 @@ export type Database = {
         }
         Returns: Json
       }
-      full_payment_cleanup_and_sync: {
-        Args: Record<PropertyKey, never>
-        Returns: Json
-      }
-      generate_database_backup: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
-      generate_excess_folio: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
-      generate_quick_backup: {
-        Args: Record<PropertyKey, never>
-        Returns: Json
-      }
-      generate_service_folio: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
-      generate_simple_invoice_folio: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
+      full_payment_cleanup_and_sync: { Args: never; Returns: Json }
+      generate_database_backup: { Args: never; Returns: string }
+      generate_excess_folio: { Args: never; Returns: string }
+      generate_quick_backup: { Args: never; Returns: Json }
+      generate_service_folio: { Args: never; Returns: string }
+      generate_simple_invoice_folio: { Args: never; Returns: string }
       get_all_users: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           client_id: string
           client_name: string
@@ -3757,16 +3628,13 @@ export type Database = {
           updated_at: string
         }[]
       }
-      get_client_id_for_user: {
-        Args: { user_id: string }
-        Returns: string
-      }
+      get_client_id_for_user: { Args: { user_id: string }; Returns: string }
       get_client_payment_history: {
         Args: { p_client_id: string }
         Returns: Json
       }
       get_commissions_with_details: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           amount: number
           client_name: string
@@ -3788,24 +3656,18 @@ export type Database = {
           updated_at: string
         }[]
       }
-      get_crane_metrics: {
-        Args: { p_crane_id: string }
-        Returns: Json
-      }
+      get_crane_metrics: { Args: { p_crane_id: string }; Returns: Json }
       get_current_user_role: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: Database["public"]["Enums"]["app_role"]
       }
       get_current_user_role_safe: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: Database["public"]["Enums"]["app_role"]
       }
-      get_deferred_services_summary: {
-        Args: Record<PropertyKey, never>
-        Returns: Json
-      }
+      get_deferred_services_summary: { Args: never; Returns: Json }
       get_document_expiry_alerts: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           crane_id: string
           crane_license_plate: string
@@ -3814,10 +3676,7 @@ export type Database = {
           expiry_date: string
         }[]
       }
-      get_invoice_overdue_stats: {
-        Args: Record<PropertyKey, never>
-        Returns: Json
-      }
+      get_invoice_overdue_stats: { Args: never; Returns: Json }
       get_invoice_payment_status: {
         Args: { p_invoice_id: string }
         Returns: Json
@@ -3847,12 +3706,9 @@ export type Database = {
           maintenance_status: string
         }[]
       }
-      get_operator_id_by_user: {
-        Args: { p_user_id: string }
-        Returns: string
-      }
+      get_operator_id_by_user: { Args: { p_user_id: string }; Returns: string }
       get_overdue_invoices_for_alerts: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           client_name: string
           days_overdue: number
@@ -3900,14 +3756,8 @@ export type Database = {
           create_statement: string
         }[]
       }
-      get_user_client_id: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
-      get_user_client_id_safe: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
+      get_user_client_id: { Args: never; Returns: string }
+      get_user_client_id_safe: { Args: never; Returns: string }
       get_user_role: {
         Args: { user_id?: string }
         Returns: Database["public"]["Enums"]["app_role"]
@@ -3916,10 +3766,7 @@ export type Database = {
         Args: { p_item_id: string }
         Returns: number
       }
-      global_inventory_cleanup: {
-        Args: Record<PropertyKey, never>
-        Returns: Json
-      }
+      global_inventory_cleanup: { Args: never; Returns: Json }
       insert_notification_if_not_exists: {
         Args: {
           p_body: string
@@ -3930,46 +3777,16 @@ export type Database = {
         }
         Returns: undefined
       }
-      is_admin_user: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
-      }
-      is_admin_user_safe: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
-      }
-      is_authenticated_admin: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
-      }
-      is_authenticated_operator: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
-      }
-      is_authenticated_user: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
-      }
-      is_authenticated_user_safe: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
-      }
-      is_client_user: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
-      }
-      is_client_user_safe: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
-      }
-      is_operator_user: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
-      }
-      is_operator_user_safe: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
-      }
+      is_admin_user: { Args: never; Returns: boolean }
+      is_admin_user_safe: { Args: never; Returns: boolean }
+      is_authenticated_admin: { Args: never; Returns: boolean }
+      is_authenticated_operator: { Args: never; Returns: boolean }
+      is_authenticated_user: { Args: never; Returns: boolean }
+      is_authenticated_user_safe: { Args: never; Returns: boolean }
+      is_client_user: { Args: never; Returns: boolean }
+      is_client_user_safe: { Args: never; Returns: boolean }
+      is_operator_user: { Args: never; Returns: boolean }
+      is_operator_user_safe: { Args: never; Returns: boolean }
       log_security_event: {
         Args: {
           additional_data?: Json
@@ -3996,46 +3813,19 @@ export type Database = {
         Args: { p_keep_id: string; p_remove_id: string }
         Returns: Json
       }
-      migrate_existing_consumption_movements: {
-        Args: Record<PropertyKey, never>
-        Returns: Json
-      }
-      migrate_existing_operator_commissions: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
+      migrate_existing_consumption_movements: { Args: never; Returns: Json }
+      migrate_existing_operator_commissions: { Args: never; Returns: undefined }
       migrate_legacy_crane_parts_data: {
         Args: { p_crane_id?: string }
         Returns: Json
       }
-      migrate_unsync_crane_parts: {
-        Args: Record<PropertyKey, never>
-        Returns: Json
-      }
-      migrate_unsynced_crane_parts_to_inventory: {
-        Args: Record<PropertyKey, never>
-        Returns: Json
-      }
-      preview_next_invoice_folio: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
-      recalculate_crane_parts_costs: {
-        Args: Record<PropertyKey, never>
-        Returns: Json
-      }
-      recalculate_payment_balances: {
-        Args: Record<PropertyKey, never>
-        Returns: Json
-      }
-      remove_duplicate_payment_applications: {
-        Args: Record<PropertyKey, never>
-        Returns: Json
-      }
-      repair_commission_system: {
-        Args: Record<PropertyKey, never>
-        Returns: Json
-      }
+      migrate_unsync_crane_parts: { Args: never; Returns: Json }
+      migrate_unsynced_crane_parts_to_inventory: { Args: never; Returns: Json }
+      preview_next_invoice_folio: { Args: never; Returns: string }
+      recalculate_crane_parts_costs: { Args: never; Returns: Json }
+      recalculate_payment_balances: { Args: never; Returns: Json }
+      remove_duplicate_payment_applications: { Args: never; Returns: Json }
+      repair_commission_system: { Args: never; Returns: Json }
       repair_payment_application: {
         Args: { p_invoice_id: string; p_payment_id: string }
         Returns: Json
@@ -4061,58 +3851,28 @@ export type Database = {
           success: boolean
         }[]
       }
-      smart_link_maintenance_costs: {
-        Args: Record<PropertyKey, never>
-        Returns: Json
-      }
-      sync_closure_invoice_status: {
-        Args: Record<PropertyKey, never>
-        Returns: Json
-      }
+      smart_link_maintenance_costs: { Args: never; Returns: Json }
+      sync_closure_invoice_status: { Args: never; Returns: Json }
       sync_crane_part_to_inventory: {
         Args: { p_inventory_item_id?: string; p_part_name: string }
         Returns: Json
       }
-      sync_existing_paid_invoices: {
-        Args: Record<PropertyKey, never>
-        Returns: Json
-      }
-      sync_existing_services_to_resources: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
-      sync_existing_supplier_payments_to_costs: {
-        Args: Record<PropertyKey, never>
-        Returns: Json
-      }
-      sync_maintenance_costs: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
-      sync_missing_commissions: {
-        Args: Record<PropertyKey, never>
-        Returns: Json
-      }
-      sync_paid_invoices_with_payments: {
-        Args: Record<PropertyKey, never>
-        Returns: Json
-      }
+      sync_existing_paid_invoices: { Args: never; Returns: Json }
+      sync_existing_services_to_resources: { Args: never; Returns: undefined }
+      sync_existing_supplier_payments_to_costs: { Args: never; Returns: Json }
+      sync_maintenance_costs: { Args: never; Returns: string }
+      sync_missing_commissions: { Args: never; Returns: Json }
+      sync_paid_invoices_with_payments: { Args: never; Returns: Json }
       sync_specific_income_to_payment: {
         Args: { p_income_id: string }
         Returns: Json
       }
-      test_invoice_creation: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
+      test_invoice_creation: { Args: never; Returns: string }
       toggle_user_status: {
         Args: { new_status: boolean; user_id: string }
         Returns: undefined
       }
-      trigger_global_data_refresh: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
+      trigger_global_data_refresh: { Args: never; Returns: undefined }
       update_closure_status_on_invoice: {
         Args: { p_closure_id: string }
         Returns: undefined
@@ -4125,14 +3885,8 @@ export type Database = {
         }
         Returns: Json
       }
-      update_overdue_invoices: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
-      update_overdue_supplier_payments: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
+      update_overdue_invoices: { Args: never; Returns: undefined }
+      update_overdue_supplier_payments: { Args: never; Returns: undefined }
       update_service_comprehensive: {
         Args: { p_service_data: Json; p_service_id: string }
         Returns: Json
@@ -4159,16 +3913,10 @@ export type Database = {
         }
         Returns: undefined
       }
-      validate_all_warnings_eliminated: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
-      validate_email: {
-        Args: { email: string }
-        Returns: boolean
-      }
+      validate_all_warnings_eliminated: { Args: never; Returns: undefined }
+      validate_email: { Args: { email: string }; Returns: boolean }
       validate_payment_amounts: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           amount: number
           applied_amount: number
@@ -4187,26 +3935,14 @@ export type Database = {
         }
         Returns: boolean
       }
-      validate_payment_system_integrity: {
-        Args: Record<PropertyKey, never>
-        Returns: Json
-      }
-      validate_rls_policies: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
+      validate_payment_system_integrity: { Args: never; Returns: Json }
+      validate_rls_policies: { Args: never; Returns: undefined }
       validate_service_update_data: {
         Args: { p_service_data: Json; p_service_id: string }
         Returns: Json
       }
-      verify_auth_system: {
-        Args: Record<PropertyKey, never>
-        Returns: Json
-      }
-      verify_security_compliance: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
+      verify_auth_system: { Args: never; Returns: Json }
+      verify_security_compliance: { Args: never; Returns: string }
     }
     Enums: {
       app_role: "admin" | "operator" | "viewer" | "client"

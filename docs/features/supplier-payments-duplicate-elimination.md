@@ -138,3 +138,67 @@ Los siguientes campos están disponibles cuando la categoría es "Mantenimiento"
 - **Con piezas**: "Pago marcado como pagado - Se registró automáticamente en costos y piezas"
 
 Esta implementación asegura un flujo de trabajo más eficiente y preciso para la gestión de pagos a proveedores con detalles de piezas.
+
+## Corrección Final del Trigger (Octubre 2025)
+
+### Problema Detectado
+El trigger `create_cost_from_supplier_payment()` contenía referencias a columnas que no existen en la tabla `supplier_payments`:
+- ❌ `part_name`
+- ❌ `part_quantity`
+- ❌ `part_unit_price`
+- ❌ `crane_id`
+
+**Causa:** Estas columnas fueron parte de una implementación anterior que fue refactorizada. El trigger no se actualizó correctamente, causando errores al marcar pagos como pagados desde la UI.
+
+**Error observado:**
+```
+ERROR: column "part_name" does not exist
+```
+
+### Solución Implementada
+
+✅ **Eliminada lógica de `crane_parts` del trigger**
+- El trigger ahora solo crea el costo base automáticamente
+- No intenta acceder a columnas inexistentes
+
+✅ **Creación de `crane_parts` permanece en `useSupplierPayments.ts`**
+- Hook maneja la creación de registros de piezas cuando hay `partDetails` (líneas 132-177)
+- Arquitectura clara: trigger = costo, hook = crane_parts
+
+✅ **Protección anti-duplicados mantenida**
+- Verificación `EXISTS` antes de crear costo
+- Previene duplicados si el hook ya creó un costo
+
+### Flujo Correcto Actual
+
+```
+1. Usuario marca pago como pagado (con o sin detalles de piezas)
+   ↓
+2. Hook actualiza supplier_payments.status = 'paid'
+   ↓
+3. Trigger detecta cambio y verifica si ya existe costo
+   ↓
+4. Si NO existe costo → Trigger crea costo base automáticamente
+   ↓
+5. Si hay partDetails → Hook crea registro en crane_parts
+   ↓
+6. ✅ Sin errores, sin duplicados
+```
+
+### Trigger Corregido
+
+La función `create_cost_from_supplier_payment()` ahora:
+
+1. ✅ Solo verifica `NEW.status = 'paid'`
+2. ✅ Comprueba duplicados antes de crear
+3. ✅ Crea costo con información del proveedor y categoría
+4. ✅ NO intenta leer columnas de piezas
+5. ✅ Registra mensajes NOTICE para debugging
+
+### Resultado Final
+
+- ✅ **Error eliminado** - Trigger no accede a columnas inexistentes
+- ✅ **Funcionalidad mantenida** - Creación automática de costos funciona
+- ✅ **Prevención de duplicados** - Check de existencia activo
+- ✅ **Arquitectura clara** - Separación de responsabilidades
+- ✅ **Retrocompatible** - No afecta registros existentes
