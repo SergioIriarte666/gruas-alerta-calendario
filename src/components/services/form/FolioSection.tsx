@@ -58,6 +58,7 @@ export const FolioSection: React.FC<FolioSectionProps> = ({
             serviceId={serviceId}
             disabled={disabled}
             onValidationChange={onValidationChange}
+            isManualFolio={isManualFolio}
           />
         </div>
         

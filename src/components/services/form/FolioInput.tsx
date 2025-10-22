@@ -14,6 +14,7 @@ interface FolioInputProps {
   serviceId?: string;
   disabled?: boolean;
   onValidationChange?: (isValid: boolean) => void;
+  isManualFolio?: boolean;
 }
 
 export const FolioInput: React.FC<FolioInputProps> = ({
@@ -22,7 +23,8 @@ export const FolioInput: React.FC<FolioInputProps> = ({
   isEditing = false,
   serviceId,
   disabled = false,
-  onValidationChange
+  onValidationChange,
+  isManualFolio = false
 }) => {
   const { validateFolio, getValidationResult, hasValidationResult, clearValidation } = useFolioValidation();
   const [hasValidated, setHasValidated] = useState(false);
@@ -72,6 +74,11 @@ export const FolioInput: React.FC<FolioInputProps> = ({
   };
 
   const getValidationMessage = () => {
+    // Mostrar mensaje de generación automática si no hay folio y no es manual
+    if (!folio.trim() && !isManualFolio && !isEditing) {
+      return <span className="text-sm text-blue-600">ℹ️ El folio se generará automáticamente al guardar</span>;
+    }
+    
     if (!hasValidated || !folio.trim()) return null;
     
     if (validation.isValidating) {
@@ -112,7 +119,7 @@ export const FolioInput: React.FC<FolioInputProps> = ({
           type="text"
           value={folio}
           onChange={(e) => onFolioChange(e.target.value)}
-          placeholder="Ej: SRV-1001"
+          placeholder={!isManualFolio && !isEditing ? "(Se generará automáticamente)" : "Ej: SRV-1001"}
           disabled={disabled}
           className={`pr-10 ${
             hasValidated && folio.trim()

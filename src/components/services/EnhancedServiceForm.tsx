@@ -64,7 +64,6 @@ export const EnhancedServiceForm = ({
   const [folio, setFolio] = useState(service?.folio || '');
   const [isManualFolio, setIsManualFolio] = useState(false);
   const [enableCustody, setEnableCustody] = useState(false);
-  const [hasFolioBeenGenerated, setHasFolioBeenGenerated] = useState(false);
   const [formData, setFormData] = useState({
     requestDate: service?.requestDate || getCurrentChileDateString(),
     serviceDate: service?.serviceDate || getCurrentChileDateString(),
@@ -126,27 +125,7 @@ export const EnhancedServiceForm = ({
     }
   }, [serviceTypes, service]);
 
-  // Generar folio automáticamente si es un servicio nuevo (SOLO UNA VEZ)
-  useEffect(() => {
-    if (!service && !hasFolioBeenGenerated) {
-      const generateAndSetFolio = async () => {
-        try {
-          const newFolio = await generateUniqueValidFolio();
-          setFolio(newFolio);
-          setIsManualFolio(false);
-          setHasFolioBeenGenerated(true);
-        } catch (error) {
-          console.error('Error generando folio:', error);
-          const fallbackFolio = 'SRV-TEMP-' + Date.now();
-          setFolio(fallbackFolio);
-          setIsManualFolio(true);
-          setHasFolioBeenGenerated(true);
-        }
-      };
-      
-      generateAndSetFolio();
-    }
-  }, [service, hasFolioBeenGenerated, generateUniqueValidFolio]);
+  // FOLIO LAZY GENERATION: No generar automáticamente, solo al guardar
 
   // Cargar datos completos del servicio desde el hook mejorado
   useEffect(() => {
@@ -349,24 +328,40 @@ export const EnhancedServiceForm = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Validación básica
-    if (!folio || folio.trim() === '') {
-      toast.error('Error: El folio no puede estar vacío');
-      return;
-    }
 
     if (isCreating || isUpdating) {
       return;
     }
 
     try {
-      console.log('🔄 Form submission started:', { folio, serviceType: formData.serviceType });
+      // GENERACIÓN TARDÍA DEL FOLIO: Solo generar si es nuevo servicio y no es manual
+      let finalFolio = folio;
+      
+      if (!service && !isManualFolio && (!folio || folio.trim() === '')) {
+        console.log('🔄 Generating folio at submission time...');
+        try {
+          finalFolio = await generateUniqueValidFolio();
+          setFolio(finalFolio);
+          console.log('✅ Folio generated successfully:', finalFolio);
+        } catch (error) {
+          console.error('❌ Error generating folio:', error);
+          toast.error('Error al generar el folio. Por favor, intenta nuevamente.');
+          return;
+        }
+      }
+      
+      // Validación básica
+      if (!finalFolio || finalFolio.trim() === '') {
+        toast.error('Error: El folio no puede estar vacío');
+        return;
+      }
+
+      console.log('🔄 Form submission started:', { folio: finalFolio, serviceType: formData.serviceType });
       
       // Preparar datos finales
       const finalData = {
         ...formData,
-        folio,
+        folio: finalFolio,
         operators: formData.operators || [],
         costDetails: formData.costDetails || []
       };
