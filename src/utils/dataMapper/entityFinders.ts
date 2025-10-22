@@ -23,15 +23,17 @@ export class EntityFinders {
     const cleanDepartment = department.toLowerCase().trim();
     return this.clients.find(client => 
       client.rut.replace(/[.\s-]/g, '') === cleanRut &&
-      client.department.toLowerCase().trim() === cleanDepartment
+      client.department && client.department.toLowerCase().trim() === cleanDepartment
     ) || null;
   }
 
   findClientByName(name: string): Client | null {
     const cleanName = name.toLowerCase().trim();
     return this.clients.find(client => 
-      client.name.toLowerCase().includes(cleanName) || 
-      cleanName.includes(client.name.toLowerCase())
+      client.name && (
+        client.name.toLowerCase().includes(cleanName) || 
+        cleanName.includes(client.name.toLowerCase())
+      )
     ) || null;
   }
 
@@ -52,8 +54,10 @@ export class EntityFinders {
   findServiceTypeByName(name: string): ServiceType | null {
     const cleanName = name.toLowerCase().trim();
     return this.serviceTypes.find(serviceType => 
-      serviceType.name.toLowerCase().includes(cleanName) ||
-      cleanName.includes(serviceType.name.toLowerCase())
+      serviceType.name && (
+        serviceType.name.toLowerCase().includes(cleanName) ||
+        cleanName.includes(serviceType.name.toLowerCase())
+      )
     ) || null;
   }
 }
