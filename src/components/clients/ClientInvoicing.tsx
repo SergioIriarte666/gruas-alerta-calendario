@@ -6,6 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { FileText, DollarSign, FileWarning, FileCheck2 } from 'lucide-react';
 import { formatForDisplay, parseFromDatabase } from '@/utils/timezoneUtils';
+import { InvoiceReportExport } from './InvoiceReportExport';
 
 interface MetricCardProps {
   icon: React.ElementType;
@@ -61,6 +62,15 @@ export const ClientInvoicing = ({ client }: { client: Client }) => {
         <MetricCard icon={FileCheck2} title="Total Pagado" value={formatCurrency(metrics.totalPaid)} />
         <MetricCard icon={DollarSign} title="Monto Pendiente" value={formatCurrency(metrics.pendingAmount)} />
         <MetricCard icon={FileWarning} title="Facturas Vencidas" value={metrics.overdueInvoices} />
+      </div>
+
+      <div className="flex justify-end mb-4">
+        <InvoiceReportExport 
+          clientId={client.id}
+          clientName={client.name}
+          invoices={invoices}
+          metrics={metrics}
+        />
       </div>
 
       <Card className="bg-card border-border">

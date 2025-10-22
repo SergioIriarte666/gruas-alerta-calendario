@@ -6,6 +6,7 @@ export { exportCostReport } from './reports/costReportExporter';
 export { exportMaintenanceReport } from './reports/maintenanceReportExporter';
 export { exportCommissionReport } from './reports/commissionReportExporter';
 export { exportDailyReport } from './reports/dailyReportExporter';
+export { exportInvoiceReport } from './reports/invoiceReportExporter';
 export type { 
   ExportReportArgs, 
   ExportServiceReportArgs, 
@@ -13,8 +14,10 @@ export type {
   ExportMaintenanceReportArgs,
   ExportCommissionReportArgs,
   ExportDailyReportArgs,
+  ExportInvoiceReportArgs,
   AppliedServiceFilters, 
   AppliedCostFilters,
   AppliedCommissionFilters,
-  AppliedDailyReportFilters
+  AppliedDailyReportFilters,
+  AppliedInvoiceFilters
 } from './reports/reportTypes';

@@ -107,3 +107,25 @@ export interface ExportDailyReportArgs {
   settings: Settings;
   appliedFilters: AppliedDailyReportFilters;
 }
+
+export interface AppliedInvoiceFilters {
+  clientId?: string;
+  clientName?: string;
+  status?: string;
+  dateFrom?: string;
+  dateTo?: string;
+  includePaymentHistory?: boolean;
+}
+
+export interface ExportInvoiceReportArgs {
+  format: 'pdf' | 'excel';
+  invoices: any[];
+  settings: Settings;
+  appliedFilters: AppliedInvoiceFilters;
+  metrics?: {
+    totalInvoiced: number;
+    totalPaid: number;
+    pendingAmount: number;
+    overdueInvoices: number;
+  };
+}
