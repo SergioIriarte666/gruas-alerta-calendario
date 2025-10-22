@@ -43,7 +43,7 @@ export const VehicleSection = ({
   // Find brand ID from brand name when component loads
   useEffect(() => {
     if (vehicleBrand && brands.length > 0) {
-      const brand = brands.find(b => b.name.toLowerCase() === vehicleBrand.toLowerCase());
+      const brand = brands.find(b => b.name && b.name.toLowerCase() === vehicleBrand.toLowerCase());
       if (brand) {
         setSelectedBrandId(brand.id);
       }
@@ -104,7 +104,7 @@ export const VehicleSection = ({
           <p className="text-xs text-gray-400">Opcional para este tipo de servicio</p>
         )}
         <Select 
-          value={models.find(m => m.name.toLowerCase() === vehicleModel.toLowerCase())?.id || ''}
+          value={vehicleModel ? models.find(m => m.name.toLowerCase() === vehicleModel.toLowerCase())?.id || '' : ''}
           onValueChange={handleModelChange}
           disabled={disabled || !selectedBrandId || modelsLoading}
         >
