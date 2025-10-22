@@ -485,10 +485,22 @@ export const useServiceManager = () => {
             crane_mileage: serviceData.craneMileage || null
           }),
           // ✅ FIX: Validar UUID fields - convertir cadenas vacías a null SOLO si están presentes
+          // Normalizar client: puede ser string (ID) u objeto completo
           ...(serviceData.client !== undefined && {
-            client_id: serviceData.client && serviceData.client.trim() !== '' 
-              ? serviceData.client 
-              : null
+            client_id: (() => {
+              const clientValue = serviceData.client;
+              // Null o undefined
+              if (!clientValue) return null;
+              // Si es un objeto, extraer el ID
+              if (typeof clientValue === 'object') {
+                return (clientValue as any).id || null;
+              }
+              // Si es un string, validar que no esté vacío
+              if (typeof clientValue === 'string') {
+                return clientValue.trim() !== '' ? clientValue : null;
+              }
+              return null;
+            })()
           }),
           ...(serviceData.purchaseOrderNumber !== undefined && {
             purchase_order_number: serviceData.purchaseOrderNumber
@@ -499,15 +511,33 @@ export const useServiceManager = () => {
           ...(serviceData.quoteNumber !== undefined && {
             quote_number: serviceData.quoteNumber
           }),
+          // Normalizar serviceType: puede ser string (ID) u objeto completo
           ...(serviceData.serviceType !== undefined && {
-            service_type_id: serviceData.serviceType && serviceData.serviceType.trim() !== '' 
-              ? serviceData.serviceType 
-              : null
+            service_type_id: (() => {
+              const typeValue = serviceData.serviceType;
+              if (!typeValue) return null;
+              if (typeof typeValue === 'object') {
+                return (typeValue as any).id || null;
+              }
+              if (typeof typeValue === 'string') {
+                return typeValue.trim() !== '' ? typeValue : null;
+              }
+              return null;
+            })()
           }),
+          // Normalizar crane: puede ser string (ID) u objeto completo
           ...(serviceData.crane !== undefined && {
-            crane_id: serviceData.crane && serviceData.crane.trim() !== '' 
-              ? serviceData.crane 
-              : null
+            crane_id: (() => {
+              const craneValue = serviceData.crane;
+              if (!craneValue) return null;
+              if (typeof craneValue === 'object') {
+                return (craneValue as any).id || null;
+              }
+              if (typeof craneValue === 'string') {
+                return craneValue.trim() !== '' ? craneValue : null;
+              }
+              return null;
+            })()
           }),
           // ✅ CRÍTICO: Mantener campos de vehículo (NO eliminar)
           ...(serviceData.vehicleBrand !== undefined && {
