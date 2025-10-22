@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useInvoices } from '@/hooks/useInvoices';
 import { InvoiceForm } from '@/components/invoices/InvoiceForm';
@@ -17,6 +17,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
 import { AppPagination } from '@/components/shared/AppPagination';
 import InvoiceBatchActions from '@/components/invoices/InvoiceBatchActions';
+import { useInvoiceReport } from '@/hooks/reports/useInvoiceReport';
 
 const INVOICE_STATUS_MAP: { [key: string]: string } = {
   all: 'Todas',
@@ -271,6 +272,45 @@ const Invoices = () => {
 
   const selectedInvoices = invoices.filter(inv => selectedInvoiceIds.includes(inv.id));
 
+  // Calculate metrics for export
+  const metrics = useMemo(() => {
+    const totalInvoiced = filteredInvoices.reduce((sum, inv) => sum + Number(inv.total || 0), 0);
+    const totalPaid = filteredInvoices.reduce((sum, inv) => {
+      if (inv.status === 'paid') {
+        return sum + Number(inv.total || 0);
+      }
+      return sum;
+    }, 0);
+    const pendingAmount = totalInvoiced - totalPaid;
+    const overdueInvoices = filteredInvoices.filter(inv => {
+      if (inv.status === 'paid' || !inv.dueDate) return false;
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const dueDate = new Date(inv.dueDate);
+      dueDate.setHours(0, 0, 0, 0);
+      return dueDate < today;
+    }).length;
+
+    return {
+      totalInvoiced,
+      totalPaid,
+      pendingAmount,
+      overdueInvoices
+    };
+  }, [filteredInvoices]);
+
+  const { handleExportInvoiceReport } = useInvoiceReport({ 
+    invoices: filteredInvoices, 
+    metrics 
+  });
+
+  const handleExport = (format: 'pdf' | 'excel', includePaymentHistory?: boolean) => {
+    handleExportInvoiceReport(format, {
+      status: statusFilter !== 'all' ? statusFilter : undefined,
+      includePaymentHistory
+    });
+  };
+
   if (showForm) {
     return (
       <div className="space-y-6">
@@ -318,7 +358,10 @@ const Invoices = () => {
         </TabsList>
 
         <TabsContent value="invoices" className="space-y-6">
-          <InvoicesHeader onCreateInvoice={() => setShowForm(true)} />
+          <InvoicesHeader 
+            onCreateInvoice={() => setShowForm(true)} 
+            onExport={handleExport}
+          />
           
           <InvoicesStats invoices={invoices} />
           
