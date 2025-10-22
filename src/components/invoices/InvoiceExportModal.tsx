@@ -54,18 +54,18 @@ const InvoiceExportModal = ({
 
     if (filters.dateFrom) {
       filtered = filtered.filter(inv => 
-        inv.issue_date && new Date(inv.issue_date) >= filters.dateFrom!
+        inv.issueDate && new Date(inv.issueDate) >= filters.dateFrom!
       );
     }
 
     if (filters.dateTo) {
       filtered = filtered.filter(inv => 
-        inv.issue_date && new Date(inv.issue_date) <= filters.dateTo!
+        inv.issueDate && new Date(inv.issueDate) <= filters.dateTo!
       );
     }
 
-    if (filters.clientId) {
-      filtered = filtered.filter(inv => inv.client_id === filters.clientId);
+    if (filters.clientId && filters.clientId !== '') {
+      filtered = filtered.filter(inv => inv.clientId === filters.clientId);
     }
 
     if (filters.status && filters.status !== 'all') {
@@ -77,11 +77,21 @@ const InvoiceExportModal = ({
 
   // Calculate metrics
   const metrics = useMemo(() => {
+    const totalInvoiced = filteredInvoices.reduce((sum, inv) => sum + Number(inv.total || 0), 0);
+    const totalPaid = filteredInvoices.reduce((sum, inv) => {
+      if (inv.status === 'paid') {
+        return sum + Number(inv.total || 0);
+      }
+      return sum;
+    }, 0);
+    const pendingAmount = totalInvoiced - totalPaid;
+    const overdueInvoices = filteredInvoices.filter(inv => inv.status === 'overdue').length;
+    
     return {
-      totalInvoiced: filteredInvoices.reduce((sum, inv) => sum + Number(inv.total || 0), 0),
-      totalPaid: filteredInvoices.reduce((sum, inv) => sum + Number(inv.paid_amount || 0), 0),
-      pendingAmount: filteredInvoices.reduce((sum, inv) => sum + Number(inv.remaining_amount || 0), 0),
-      overdueInvoices: filteredInvoices.filter(inv => inv.status === 'overdue').length
+      totalInvoiced,
+      totalPaid,
+      pendingAmount,
+      overdueInvoices
     };
   }, [filteredInvoices]);
 
