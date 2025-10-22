@@ -34,6 +34,30 @@ export const DateSection = ({
   const [enableStartTime, setEnableStartTime] = useState(!!startTime);
   const [enableEndTime, setEnableEndTime] = useState(!!endTime);
   const [enableCraneMileage, setEnableCraneMileage] = useState(!!craneMileage);
+  const [startTimeError, setStartTimeError] = useState<string | undefined>();
+  const [endTimeError, setEndTimeError] = useState<string | undefined>();
+
+  const validateTimeFormat = (time: string): boolean => {
+    const timeRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
+    return timeRegex.test(time);
+  };
+
+  const formatTimeInput = (value: string): string => {
+    // Eliminar caracteres no numéricos excepto ":"
+    let cleaned = value.replace(/[^\d:]/g, '');
+    
+    // Auto-agregar ":" después de 2 dígitos
+    if (cleaned.length === 2 && !cleaned.includes(':')) {
+      cleaned += ':';
+    }
+    
+    // Limitar a formato HH:MM
+    if (cleaned.length > 5) {
+      cleaned = cleaned.substring(0, 5);
+    }
+    
+    return cleaned;
+  };
 
   return (
     <div className="space-y-6">
@@ -107,13 +131,31 @@ export const DateSection = ({
               </Label>
               <Input
                 id="startTime"
-                type="time"
+                type="text"
                 value={startTime || ''}
-                onChange={(e) => onStartTimeChange(e.target.value || undefined)}
+                onChange={(e) => {
+                  const formatted = formatTimeInput(e.target.value);
+                  if (formatted === '' || validateTimeFormat(formatted) || formatted.length < 5) {
+                    onStartTimeChange(formatted || undefined);
+                    setStartTimeError(undefined);
+                  } else {
+                    setStartTimeError('Formato inválido. Use HH:MM (ejemplo: 08:00, 14:30)');
+                  }
+                }}
+                onBlur={(e) => {
+                  const value = e.target.value;
+                  if (value && !validateTimeFormat(value)) {
+                    setStartTimeError('Formato inválido. Use HH:MM en formato 24 horas');
+                  }
+                }}
                 disabled={disabled}
-                className="w-full max-w-xs"
-                placeholder="09:00"
+                className={`w-full max-w-xs ${startTimeError ? 'border-destructive' : ''}`}
+                placeholder="08:00"
+                maxLength={5}
               />
+              {startTimeError && (
+                <p className="text-xs text-destructive mt-1">{startTimeError}</p>
+              )}
             </div>
           )}
         </div>
@@ -154,13 +196,31 @@ export const DateSection = ({
               </Label>
               <Input
                 id="endTime"
-                type="time"
+                type="text"
                 value={endTime || ''}
-                onChange={(e) => onEndTimeChange(e.target.value || undefined)}
+                onChange={(e) => {
+                  const formatted = formatTimeInput(e.target.value);
+                  if (formatted === '' || validateTimeFormat(formatted) || formatted.length < 5) {
+                    onEndTimeChange(formatted || undefined);
+                    setEndTimeError(undefined);
+                  } else {
+                    setEndTimeError('Formato inválido. Use HH:MM (ejemplo: 14:30, 23:45)');
+                  }
+                }}
+                onBlur={(e) => {
+                  const value = e.target.value;
+                  if (value && !validateTimeFormat(value)) {
+                    setEndTimeError('Formato inválido. Use HH:MM en formato 24 horas');
+                  }
+                }}
                 disabled={disabled}
-                className="w-full max-w-xs"
+                className={`w-full max-w-xs ${endTimeError ? 'border-destructive' : ''}`}
                 placeholder="14:30"
+                maxLength={5}
               />
+              {endTimeError && (
+                <p className="text-xs text-destructive mt-1">{endTimeError}</p>
+              )}
             </div>
           )}
         </div>
