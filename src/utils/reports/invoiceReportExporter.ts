@@ -92,8 +92,12 @@ export const exportInvoiceReport = async ({
     const tableData = invoices.map(invoice => [
       invoice.folio || 'N/A',
       invoice.numero_fiscal || 'N/A',
-      formatDate(new Date(invoice.issue_date), 'dd/MM/yy', { locale: es }),
-      formatDate(new Date(invoice.due_date), 'dd/MM/yy', { locale: es }),
+      invoice.issue_date 
+        ? formatDate(new Date(invoice.issue_date), 'dd/MM/yy', { locale: es })
+        : '-',
+      invoice.due_date 
+        ? formatDate(new Date(invoice.due_date), 'dd/MM/yy', { locale: es })
+        : '-',
       invoice.payment_date 
         ? formatDate(new Date(invoice.payment_date), 'dd/MM/yy', { locale: es })
         : '-',
@@ -114,16 +118,16 @@ export const exportInvoiceReport = async ({
       tableWidth: availableWidth,
       columnStyles: {
         0: { cellWidth: availableWidth * 0.08 },
-        1: { cellWidth: availableWidth * 0.10 },
+        1: { cellWidth: availableWidth * 0.09 },
         2: { cellWidth: availableWidth * 0.08 },
         3: { cellWidth: availableWidth * 0.08 },
         4: { cellWidth: availableWidth * 0.08 },
-        5: { cellWidth: availableWidth * 0.10, halign: 'right' },
+        5: { cellWidth: availableWidth * 0.09, halign: 'right' },
         6: { cellWidth: availableWidth * 0.08, halign: 'right' },
         7: { cellWidth: availableWidth * 0.10, halign: 'right' },
         8: { cellWidth: availableWidth * 0.10, halign: 'right' },
         9: { cellWidth: availableWidth * 0.10, halign: 'right' },
-        10: { cellWidth: availableWidth * 0.10 }
+        10: { cellWidth: availableWidth * 0.12 }
       }
     });
     
