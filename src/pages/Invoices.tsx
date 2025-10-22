@@ -17,7 +17,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
 import { AppPagination } from '@/components/shared/AppPagination';
 import InvoiceBatchActions from '@/components/invoices/InvoiceBatchActions';
-import { useInvoiceReport } from '@/hooks/reports/useInvoiceReport';
+import InvoiceExportModal from '@/components/invoices/InvoiceExportModal';
 
 const INVOICE_STATUS_MAP: { [key: string]: string } = {
   all: 'Todas',
@@ -45,6 +45,7 @@ const Invoices = () => {
   const [sortField, setSortField] = useState<string>('issueDate');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const [selectedInvoiceIds, setSelectedInvoiceIds] = useState<string[]>([]);
+  const [exportModalOpen, setExportModalOpen] = useState(false);
   const ITEMS_PER_PAGE = 10;
 
   // Check for preselected closure from navigation state
@@ -299,18 +300,6 @@ const Invoices = () => {
     };
   }, [filteredInvoices]);
 
-  const { handleExportInvoiceReport } = useInvoiceReport({ 
-    invoices: filteredInvoices, 
-    metrics 
-  });
-
-  const handleExport = (format: 'pdf' | 'excel', includePaymentHistory?: boolean) => {
-    handleExportInvoiceReport(format, {
-      status: statusFilter !== 'all' ? statusFilter : undefined,
-      includePaymentHistory
-    });
-  };
-
   if (showForm) {
     return (
       <div className="space-y-6">
@@ -360,7 +349,7 @@ const Invoices = () => {
         <TabsContent value="invoices" className="space-y-6">
           <InvoicesHeader 
             onCreateInvoice={() => setShowForm(true)} 
-            onExport={handleExport}
+            onOpenExportModal={() => setExportModalOpen(true)}
           />
           
           <InvoicesStats invoices={invoices} />
@@ -446,6 +435,12 @@ const Invoices = () => {
           <PaymentHistory />
         </TabsContent>
       </Tabs>
+
+      <InvoiceExportModal 
+        open={exportModalOpen}
+        onOpenChange={setExportModalOpen}
+        initialInvoices={filteredInvoices}
+      />
     </div>
   );
 };
