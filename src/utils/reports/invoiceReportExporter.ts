@@ -23,8 +23,8 @@ export const exportInvoiceReport = async ({
   // Calcular métricas si no se proporcionaron
   const calculatedMetrics = metrics || {
     totalInvoiced: invoices.reduce((sum, inv) => sum + Number(inv.total || 0), 0),
-    totalPaid: invoices.reduce((sum, inv) => sum + Number(inv.paid_amount || 0), 0),
-    pendingAmount: invoices.reduce((sum, inv) => sum + Number(inv.remaining_amount || 0), 0),
+    totalPaid: invoices.reduce((sum, inv) => sum + Number(inv.paidAmount || 0), 0),
+    pendingAmount: invoices.reduce((sum, inv) => sum + Number(inv.remainingAmount || 0), 0),
     overdueInvoices: invoices.filter(inv => inv.status === 'overdue').length
   };
 
@@ -90,44 +90,46 @@ export const exportInvoiceReport = async ({
     
     const availableWidth = pageWidth - 28;
     const tableData = invoices.map(invoice => [
+      invoice.client?.name || 'N/A',
       invoice.folio || 'N/A',
-      invoice.numero_fiscal || 'N/A',
-      invoice.issue_date 
-        ? formatDate(new Date(invoice.issue_date), 'dd/MM/yy', { locale: es })
+      invoice.numeroFiscal || 'N/A',
+      invoice.issueDate 
+        ? formatDate(new Date(invoice.issueDate), 'dd/MM/yy', { locale: es })
         : '-',
-      invoice.due_date 
-        ? formatDate(new Date(invoice.due_date), 'dd/MM/yy', { locale: es })
+      invoice.dueDate 
+        ? formatDate(new Date(invoice.dueDate), 'dd/MM/yy', { locale: es })
         : '-',
-      invoice.payment_date 
-        ? formatDate(new Date(invoice.payment_date), 'dd/MM/yy', { locale: es })
+      invoice.paymentDate 
+        ? formatDate(new Date(invoice.paymentDate), 'dd/MM/yy', { locale: es })
         : '-',
       formatCurrency(invoice.subtotal || 0),
       formatCurrency(invoice.vat || 0),
       formatCurrency(invoice.total || 0),
-      formatCurrency(invoice.paid_amount || 0),
-      formatCurrency(invoice.remaining_amount || 0),
+      formatCurrency(invoice.paidAmount || 0),
+      formatCurrency(invoice.remainingAmount || 0),
       getStatusLabel(invoice.status)
     ]);
 
     autoTable(doc, {
-      head: [['Folio', 'N° Fiscal', 'F. Emisión', 'F. Venc.', 'F. Pago', 'Subtotal', 'IVA', 'Total', 'Pagado', 'Saldo', 'Estado']],
+      head: [['Cliente', 'Folio', 'N° Fiscal', 'F. Emisión', 'F. Venc.', 'F. Pago', 'Subtotal', 'IVA', 'Total', 'Pagado', 'Saldo', 'Estado']],
       body: tableData,
       startY: startY + 4,
       headStyles: { fillColor: [220, 53, 69], fontSize: 7 },
       styles: { fontSize: 6, cellPadding: 1.5 },
       tableWidth: availableWidth,
       columnStyles: {
-        0: { cellWidth: availableWidth * 0.08 },
-        1: { cellWidth: availableWidth * 0.09 },
+        0: { cellWidth: availableWidth * 0.12 },
+        1: { cellWidth: availableWidth * 0.07 },
         2: { cellWidth: availableWidth * 0.08 },
-        3: { cellWidth: availableWidth * 0.08 },
-        4: { cellWidth: availableWidth * 0.08 },
-        5: { cellWidth: availableWidth * 0.09, halign: 'right' },
+        3: { cellWidth: availableWidth * 0.07 },
+        4: { cellWidth: availableWidth * 0.07 },
+        5: { cellWidth: availableWidth * 0.07 },
         6: { cellWidth: availableWidth * 0.08, halign: 'right' },
-        7: { cellWidth: availableWidth * 0.10, halign: 'right' },
-        8: { cellWidth: availableWidth * 0.10, halign: 'right' },
-        9: { cellWidth: availableWidth * 0.10, halign: 'right' },
-        10: { cellWidth: availableWidth * 0.12 }
+        7: { cellWidth: availableWidth * 0.07, halign: 'right' },
+        8: { cellWidth: availableWidth * 0.09, halign: 'right' },
+        9: { cellWidth: availableWidth * 0.09, halign: 'right' },
+        10: { cellWidth: availableWidth * 0.09, halign: 'right' },
+        11: { cellWidth: availableWidth * 0.10 }
       }
     });
     
@@ -169,16 +171,17 @@ export const exportInvoiceReport = async ({
 
     // Hoja de detalle de facturas
     const detailData = invoices.map(invoice => ({
+      'Cliente': invoice.client?.name || '',
       'Folio': invoice.folio || '',
-      'Número Fiscal': invoice.numero_fiscal || '',
-      'Fecha Emisión': invoice.issue_date,
-      'Fecha Vencimiento': invoice.due_date,
-      'Fecha Pago': invoice.payment_date || '',
+      'Número Fiscal': invoice.numeroFiscal || '',
+      'Fecha Emisión': invoice.issueDate,
+      'Fecha Vencimiento': invoice.dueDate,
+      'Fecha Pago': invoice.paymentDate || '',
       'Subtotal': Number(invoice.subtotal || 0),
       'IVA': Number(invoice.vat || 0),
       'Total': Number(invoice.total || 0),
-      'Monto Pagado': Number(invoice.paid_amount || 0),
-      'Saldo Pendiente': Number(invoice.remaining_amount || 0),
+      'Monto Pagado': Number(invoice.paidAmount || 0),
+      'Saldo Pendiente': Number(invoice.remainingAmount || 0),
       'Estado': getStatusLabel(invoice.status),
       'Notas': invoice.notes || ''
     }));
@@ -320,8 +323,8 @@ const createStatusAnalysisData = (invoices: any[]): any[] => {
     }
     acc[status].count++;
     acc[status].totalAmount += Number(invoice.total || 0);
-    acc[status].paidAmount += Number(invoice.paid_amount || 0);
-    acc[status].pendingAmount += Number(invoice.remaining_amount || 0);
+    acc[status].paidAmount += Number(invoice.paidAmount || 0);
+    acc[status].pendingAmount += Number(invoice.remainingAmount || 0);
     return acc;
   }, {} as Record<string, any>);
 
