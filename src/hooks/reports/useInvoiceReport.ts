@@ -40,24 +40,15 @@ export const useInvoiceReport = ({ invoices, metrics }: UseInvoiceReportProps) =
     });
 
     try {
-      // Filtrar facturas si se proporcionaron filtros adicionales
-      let filteredInvoices = [...invoices];
+      // Las facturas ya vienen filtradas desde el modal
+      const filteredInvoices = invoices;
       
-      if (filters.status && filters.status !== 'all') {
-        filteredInvoices = filteredInvoices.filter(inv => inv.status === filters.status);
-      }
-      
-      if (filters.dateFrom) {
-        filteredInvoices = filteredInvoices.filter(
-          inv => new Date(inv.issue_date) >= new Date(filters.dateFrom!)
-        );
-      }
-      
-      if (filters.dateTo) {
-        filteredInvoices = filteredInvoices.filter(
-          inv => new Date(inv.issue_date) <= new Date(filters.dateTo!)
-        );
-      }
+      console.log('🔍 Exportando facturas:', {
+        totalInvoices: invoices.length,
+        firstInvoice: invoices[0],
+        filters,
+        metrics
+      });
 
       await exportInvoiceReport({
         format,
@@ -73,8 +64,8 @@ export const useInvoiceReport = ({ invoices, metrics }: UseInvoiceReportProps) =
         },
         metrics: metrics || {
           totalInvoiced: filteredInvoices.reduce((sum, inv) => sum + Number(inv.total || 0), 0),
-          totalPaid: filteredInvoices.reduce((sum, inv) => sum + Number(inv.paid_amount || 0), 0),
-          pendingAmount: filteredInvoices.reduce((sum, inv) => sum + Number(inv.remaining_amount || 0), 0),
+          totalPaid: filteredInvoices.reduce((sum, inv) => sum + Number(inv.paidAmount || 0), 0),
+          pendingAmount: filteredInvoices.reduce((sum, inv) => sum + Number(inv.remainingAmount || 0), 0),
           overdueInvoices: filteredInvoices.filter(inv => inv.status === 'overdue').length
         }
       });
