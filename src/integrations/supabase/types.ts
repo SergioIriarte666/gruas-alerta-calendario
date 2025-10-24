@@ -3415,9 +3415,10 @@ export type Database = {
         }
         Returns: string
       }
-      apply_payment_fifo:
-        | { Args: { p_payment_id: string }; Returns: Json }
-        | { Args: { p_client_id: string; p_payment_id: string }; Returns: Json }
+      apply_payment_fifo: {
+        Args: { p_client_id?: string; p_payment_id: string }
+        Returns: Json
+      }
       apply_payment_manual: {
         Args: { p_applications: Json; p_payment_id: string }
         Returns: Json
