@@ -3204,6 +3204,27 @@ export type Database = {
           },
         ]
       }
+      user_roles: {
+        Row: {
+          assigned_at: string | null
+          assigned_by: string | null
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          assigned_at?: string | null
+          assigned_by?: string | null
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          assigned_at?: string | null
+          assigned_by?: string | null
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_settings: {
         Row: {
           created_at: string
@@ -3763,11 +3784,22 @@ export type Database = {
         Args: { user_id?: string }
         Returns: Database["public"]["Enums"]["app_role"]
       }
+      get_user_role_from_table: {
+        Args: { _user_id: string }
+        Returns: Database["public"]["Enums"]["app_role"]
+      }
       get_weighted_average_cost: {
         Args: { p_item_id: string }
         Returns: number
       }
       global_inventory_cleanup: { Args: never; Returns: Json }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
       insert_notification_if_not_exists: {
         Args: {
           p_body: string
@@ -3788,6 +3820,15 @@ export type Database = {
       is_client_user_safe: { Args: never; Returns: boolean }
       is_operator_user: { Args: never; Returns: boolean }
       is_operator_user_safe: { Args: never; Returns: boolean }
+      log_audit_entry: {
+        Args: {
+          p_new_data?: Json
+          p_old_data?: Json
+          p_operation: string
+          p_table_name: string
+        }
+        Returns: undefined
+      }
       log_security_event: {
         Args: {
           additional_data?: Json
@@ -3903,7 +3944,7 @@ export type Database = {
       update_user_role: {
         Args: {
           new_role: Database["public"]["Enums"]["app_role"]
-          user_id: string
+          target_user_id: string
         }
         Returns: undefined
       }
