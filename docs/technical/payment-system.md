@@ -6,8 +6,22 @@
 - Corrección automática de inconsistencias
 - Triggers para mantener consistencia en tiempo real
 
+## Triggers Activos Críticos
+
+### 1. `maintain_payment_consistency_trigger`
+- **Tabla**: `payment_applications`
+- **Eventos**: INSERT, UPDATE, DELETE
+- **Función**: Actualiza automáticamente el estado y montos del pago cuando se crea/modifica/elimina una aplicación
+- **Campos actualizados**: `applied_amount`, `status`, `updated_at`
+
+### 2. `payment_applications_auto_update_invoice_status`
+- **Tabla**: `payment_applications`
+- **Eventos**: INSERT, UPDATE, DELETE
+- **Función**: Actualiza automáticamente el estado y monto pagado de la factura
+- **Campos actualizados**: `paid_amount`, `status`, `updated_at`
+
 ## Funciones de Administrador
-- **Corregir Inconsistencias**: Recalcula montos pagados y actualiza estados
+- **Corregir Inconsistencias**: `fix_existing_payment_inconsistencies()` y `fix_existing_invoice_inconsistencies()` recalculan montos y estados
 - **Validar Sistema**: Detecta y reporta problemas de integridad
 - **Pagos Automáticos**: Genera pagos para facturas según reglas de negocio
 

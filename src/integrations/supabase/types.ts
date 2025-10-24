@@ -3600,7 +3600,27 @@ export type Database = {
       fix_applied_amount_duplications: { Args: never; Returns: Json }
       fix_duplicate_fact_4011_application: { Args: never; Returns: Json }
       fix_duplicate_paid_amounts: { Args: never; Returns: Json }
+      fix_existing_invoice_inconsistencies: {
+        Args: never
+        Returns: {
+          invoice_id: string
+          new_paid_amount: number
+          new_status: Database["public"]["Enums"]["invoice_status"]
+          old_paid_amount: number
+          old_status: Database["public"]["Enums"]["invoice_status"]
+        }[]
+      }
       fix_existing_overdue_invoices: { Args: never; Returns: string }
+      fix_existing_payment_inconsistencies: {
+        Args: never
+        Returns: {
+          new_applied_amount: number
+          new_status: Database["public"]["Enums"]["payment_status"]
+          old_applied_amount: number
+          old_status: Database["public"]["Enums"]["payment_status"]
+          payment_id: string
+        }[]
+      }
       fix_inventory_cost_issues: { Args: never; Returns: Json }
       fix_invoice_payment_inconsistencies: { Args: never; Returns: Json }
       fix_maintenance_status_inconsistencies: { Args: never; Returns: Json }
