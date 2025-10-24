@@ -9,6 +9,7 @@ import { AuthBackground } from '@/components/auth/AuthBackground';
 import { AuthTabs } from '@/components/auth/AuthTabs';
 import { LoginForm } from '@/components/auth/LoginForm';
 import { RegisterForm } from '@/components/auth/RegisterForm';
+import { validatePassword } from '@/utils/passwordValidation';
 
 const Auth = () => {
   const [searchParams] = useSearchParams();
@@ -88,15 +89,12 @@ const Auth = () => {
       if (error) {
         console.error('🚨 Auth: Login error:', error);
         
-        // Specific error handling
-        let errorMessage = 'Error al iniciar sesión';
-        if (error.message.includes('Invalid login')) {
-          errorMessage = 'Email o contraseña incorrectos';
-        } else if (error.message.includes('Email not confirmed')) {
-          errorMessage = 'Por favor confirma tu email antes de iniciar sesión';
-        } else if (error.message.includes('Too many requests')) {
+        // Generic error messages to prevent account enumeration
+        let errorMessage = 'Credenciales inválidas';
+        
+        if (error.message.includes('Too many requests')) {
           errorMessage = 'Demasiados intentos. Espera unos minutos.';
-        } else if (error.message.includes('fetch')) {
+        } else if (error.message.includes('fetch') || error.message.includes('network')) {
           errorMessage = 'Error de conexión. Verifica tu internet.';
         }
         
@@ -134,8 +132,10 @@ const Auth = () => {
         return;
       }
 
-      if (password.length < 6) {
-        toast.error('La contraseña debe tener al menos 6 caracteres');
+      // Validate password strength
+      const validation = validatePassword(password);
+      if (!validation.valid) {
+        toast.error(validation.error);
         return;
       }
       

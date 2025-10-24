@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { PasswordStrengthIndicator } from './PasswordStrengthIndicator';
 interface RegisterFormProps {
   email: string;
   password: string;
@@ -33,6 +34,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
           <div className="space-y-2">
             <Label htmlFor="password-register" className="text-white">Contraseña</Label>
             <Input id="password-register" type="password" required value={password} onChange={e => setPassword(e.target.value)} className="bg-transparent border-white/50 text-white focus:border-white" />
+            <PasswordStrengthIndicator password={password} />
           </div>
           <Button type="submit" disabled={loading} className="w-full text-white font-semibold bg-transparent">
             {loading ? 'Registrando...' : 'Registrar'}
