@@ -252,7 +252,9 @@ const createFilterLabels = (filters: ExportInvoiceReportArgs['appliedFilters']):
   }
   
   if (filters.dateFrom && filters.dateTo) {
-    labels.push(['Período:', `${filters.dateFrom} - ${filters.dateTo}`]);
+    const formattedFrom = formatDate(new Date(filters.dateFrom), 'dd/MM/yyyy', { locale: es });
+    const formattedTo = formatDate(new Date(filters.dateTo), 'dd/MM/yyyy', { locale: es });
+    labels.push(['Período:', `${formattedFrom} - ${formattedTo}`]);
   }
   
   if (filters.status && filters.status !== 'all') {
