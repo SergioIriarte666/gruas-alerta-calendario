@@ -82,6 +82,8 @@ export const useClientServices = (clientId: string | null) => {
                 purchaseOrder: service.purchase_order,
                 purchaseOrderNumber: service.purchase_order_number || '',
                 quoteNumber: service.quote_number || '',
+                invoiceFolio: service.invoice_folio || undefined,
+                invoiceNumeroFiscal: service.invoice_numero_fiscal || undefined,
                 vehicleBrand: service.vehicle_brand,
                 vehicleModel: service.vehicle_model,
                 licensePlate: service.license_plate,
