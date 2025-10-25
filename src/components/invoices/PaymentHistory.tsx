@@ -142,7 +142,9 @@ export const PaymentHistory: React.FC<PaymentHistoryProps> = ({ onClose }) => {
             </SelectTrigger>
             <SelectContent>
               {clients.map(client => (
-                <SelectItem key={client.id} value={client.id}>{client.name}</SelectItem>
+                <SelectItem key={client.id} value={client.id}>
+                  {client.name}{client.department ? ` - ${client.department}` : ''}
+                </SelectItem>
               ))}
             </SelectContent>
           </Select>

@@ -289,7 +289,9 @@ export const SmartPaymentForm: React.FC<SmartPaymentFormProps> = ({
                 </SelectTrigger>
                 <SelectContent className="bg-white border border-gray-200 shadow-lg z-50">
                   {clients.map(client => (
-                    <SelectItem key={client.id} value={client.id}>{client.name}</SelectItem>
+                    <SelectItem key={client.id} value={client.id}>
+                      {client.name}{client.department ? ` - ${client.department}` : ''}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>

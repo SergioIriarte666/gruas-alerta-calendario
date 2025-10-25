@@ -402,7 +402,9 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
           <SelectContent>
             <SelectItem value="all">Todos los clientes</SelectItem>
             {clients.map(client => (
-              <SelectItem key={client.id} value={client.id}>{client.name}</SelectItem>
+              <SelectItem key={client.id} value={client.id}>
+                {client.name}{client.department ? ` - ${client.department}` : ''}
+              </SelectItem>
             ))}
           </SelectContent>
         </Select>
