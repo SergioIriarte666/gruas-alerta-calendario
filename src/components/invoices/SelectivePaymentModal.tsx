@@ -52,9 +52,10 @@ export const SelectivePaymentModal: React.FC<SelectivePaymentModalProps> = ({
     try {
       const { data, error } = await supabase
         .from('invoices')
-        .select('id, folio, numero_fiscal, total, paid_amount, status, due_date')
+        .select('id, folio, numero_fiscal, total, paid_amount, status, due_date, remaining_amount')
         .eq('client_id', payment.client_id)
         .in('status', ['sent', 'overdue', 'partial'])
+        .gt('remaining_amount', 0)
         .order('due_date', { ascending: true });
 
       if (error) throw error;
