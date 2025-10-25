@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Invoice, InvoiceStatus } from '@/types';
 import { useClosuresForInvoices } from '@/hooks/useClosuresForInvoices';
 import { useInvoiceFormData } from '@/hooks/invoices/useInvoiceFormData';
+import { usePaymentTerms } from '@/hooks/usePaymentTerms';
 import EnhancedClosureSelector from './EnhancedClosureSelector';
 import InvoiceSummary from './InvoiceSummary';
 
@@ -29,6 +30,7 @@ const invoiceSchema = z.object({
       return !isNaN(d.getTime());
     }, 'Fecha de vencimiento inválida'),
   status: z.enum(['draft', 'sent', 'paid', 'overdue', 'cancelled'] as const),
+  paymentTermId: z.string().optional(),
   paymentDate: z.string()
     .optional()
     .refine((date) => {
@@ -89,6 +91,7 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
   const isEditing = !!invoice;
   const { formData, shouldReset } = useInvoiceFormData({ invoice, preselectedClosureId });
   const { closures } = useClosuresForInvoices({ includeInvoiced: isEditing });
+  const { paymentTerms, loading: loadingTerms } = usePaymentTerms();
   
   const {
     register,
@@ -279,7 +282,23 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
   const handleStatusChange = useCallback(async (value: string) => {
     setValue('status', value as InvoiceStatus);
     await trigger('status');
+    await trigger('paymentDate'); // Also validate payment date as it depends on status
   }, [setValue, trigger]);
+
+  // Auto-calculate due date based on payment term
+  useEffect(() => {
+    const termId = watch('paymentTermId');
+    const issueDate = watch('issueDate');
+    
+    if (termId && issueDate && !isEditing) {
+      const term = paymentTerms.find(t => t.id === termId);
+      if (term && term.days > 0) {
+        const dueDate = new Date(issueDate);
+        dueDate.setDate(dueDate.getDate() + term.days);
+        setValue('dueDate', dueDate.toISOString().split('T')[0]);
+      }
+    }
+  }, [watch('paymentTermId'), watch('issueDate'), paymentTerms, setValue, isEditing]);
 
   return (
     <Card className="bg-card border">
@@ -339,6 +358,34 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
               )}
               <p className="text-xs text-muted-foreground mt-1">
                 Número fiscal para registro SII (opcional)
+              </p>
+            </div>
+
+            <div>
+              <Label htmlFor="paymentTermId" className="text-foreground">Condición de Pago (Opcional)</Label>
+              <Select 
+                onValueChange={(value) => setValue('paymentTermId', value || undefined)}
+                value={watch('paymentTermId') || ''}
+                disabled={!editableFields.canEditDates || loadingTerms}
+              >
+                <SelectTrigger className="disabled:opacity-50 disabled:cursor-not-allowed mt-1">
+                  <SelectValue placeholder="Seleccionar condición" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">Sin especificar</SelectItem>
+                  {paymentTerms.map((term) => (
+                    <SelectItem key={term.id} value={term.id}>
+                      {term.name}
+                      {term.days > 0 && ` (${term.days} días)`}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {errors.paymentTermId && (
+                <p className="text-sm text-destructive mt-1">{errors.paymentTermId.message}</p>
+              )}
+              <p className="text-xs text-muted-foreground mt-1">
+                Auto-calcula fecha de vencimiento según los días
               </p>
             </div>
 

@@ -118,6 +118,7 @@ export interface Client {
   billingCycleDay?: number;
   autoInvoiceGeneration?: boolean;
   billingNotes?: string;
+  defaultPaymentTermId?: string;
 }
 
 export interface Crane {
@@ -200,8 +201,21 @@ export interface Invoice {
   status: InvoiceStatus;
   paymentDate?: string;
   numeroFiscal?: string;
+  paymentTermId?: string;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface PaymentTerm {
+  id: string;
+  name: string;
+  code: string;
+  days: number;
+  description?: string;
+  is_active: boolean;
+  display_order: number;
+  created_at: string;
+  created_by?: string;
 }
 
 // Define closure status type for consistency (Fase 1)

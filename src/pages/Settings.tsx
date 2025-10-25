@@ -12,7 +12,8 @@ import { SystemSettingsTab } from '@/components/settings/SystemSettingsTab';
 import { NotificationSettingsTab } from '@/components/settings/NotificationSettingsTab';
 import { InvoiceAlertSettings } from '@/components/invoices/InvoiceAlertSettings';
 import { UserManagementTab } from '@/components/settings/UserManagementTab';
-import { Building2, User, Settings as SettingsIcon, Bell, Users, Globe } from 'lucide-react';
+import { PaymentTermsSettings } from '@/components/settings/PaymentTermsSettings';
+import { Building2, User, Settings as SettingsIcon, Bell, Users, Globe, CreditCard } from 'lucide-react';
 import { TimezoneSettingsTab } from '@/components/settings/TimezoneSettingsTab';
 
 const Settings = () => {
@@ -77,7 +78,7 @@ const Settings = () => {
       <SettingsHeader onReset={resetSettings} />
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2 md:grid-cols-3 lg:grid-cols-5 bg-card border h-auto p-1 gap-1">
+        <TabsList className="grid w-full grid-cols-2 md:grid-cols-3 lg:grid-cols-6 bg-card border h-auto p-1 gap-1">
           <TabsTrigger 
             value="company" 
             className="flex flex-col md:flex-row items-center justify-center space-y-1 md:space-y-0 md:space-x-2 text-foreground data-[state=active]:text-primary-foreground data-[state=active]:bg-primary hover:bg-muted p-2 md:p-3 h-auto min-h-[60px] text-xs md:text-sm"
@@ -98,6 +99,13 @@ const Settings = () => {
           >
             <SettingsIcon className="w-4 h-4 flex-shrink-0" />
             <span className="text-center">Sistema</span>
+          </TabsTrigger>
+          <TabsTrigger 
+            value="payment-terms" 
+            className="flex flex-col md:flex-row items-center justify-center space-y-1 md:space-y-0 md:space-x-2 text-foreground data-[state=active]:text-primary-foreground data-[state=active]:bg-primary hover:bg-muted p-2 md:p-3 h-auto min-h-[60px] text-xs md:text-sm"
+          >
+            <CreditCard className="w-4 h-4 flex-shrink-0" />
+            <span className="text-center">Condiciones Pago</span>
           </TabsTrigger>
           <TabsTrigger 
             value="notifications" 
@@ -130,6 +138,10 @@ const Settings = () => {
             onSave={handleSystemSave} 
             onUpdateSettings={updateSystemSettings} 
           />
+        </TabsContent>
+
+        <TabsContent value="payment-terms">
+          <PaymentTermsSettings />
         </TabsContent>
 
         <TabsContent value="notifications">

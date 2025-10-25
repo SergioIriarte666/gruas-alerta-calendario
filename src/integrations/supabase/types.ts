@@ -200,6 +200,7 @@ export type Database = {
           contact_name: string | null
           created_at: string | null
           created_by: string | null
+          default_payment_term_id: string | null
           department: string
           email: string | null
           id: string
@@ -220,6 +221,7 @@ export type Database = {
           contact_name?: string | null
           created_at?: string | null
           created_by?: string | null
+          default_payment_term_id?: string | null
           department: string
           email?: string | null
           id?: string
@@ -240,6 +242,7 @@ export type Database = {
           contact_name?: string | null
           created_at?: string | null
           created_by?: string | null
+          default_payment_term_id?: string | null
           department?: string
           email?: string | null
           id?: string
@@ -256,6 +259,13 @@ export type Database = {
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "clients_default_payment_term_id_fkey"
+            columns: ["default_payment_term_id"]
+            isOneToOne: false
+            referencedRelation: "payment_terms"
             referencedColumns: ["id"]
           },
         ]
@@ -1847,6 +1857,7 @@ export type Database = {
           numero_fiscal: string | null
           paid_amount: number | null
           payment_date: string | null
+          payment_term_id: string | null
           remaining_amount: number | null
           status: Database["public"]["Enums"]["invoice_status"] | null
           subtotal: number
@@ -1866,6 +1877,7 @@ export type Database = {
           numero_fiscal?: string | null
           paid_amount?: number | null
           payment_date?: string | null
+          payment_term_id?: string | null
           remaining_amount?: number | null
           status?: Database["public"]["Enums"]["invoice_status"] | null
           subtotal: number
@@ -1885,6 +1897,7 @@ export type Database = {
           numero_fiscal?: string | null
           paid_amount?: number | null
           payment_date?: string | null
+          payment_term_id?: string | null
           remaining_amount?: number | null
           status?: Database["public"]["Enums"]["invoice_status"] | null
           subtotal?: number
@@ -1905,6 +1918,13 @@ export type Database = {
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_payment_term_id_fkey"
+            columns: ["payment_term_id"]
+            isOneToOne: false
+            referencedRelation: "payment_terms"
             referencedColumns: ["id"]
           },
         ]
@@ -2115,6 +2135,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      payment_terms: {
+        Row: {
+          code: string
+          created_at: string | null
+          created_by: string | null
+          days: number | null
+          description: string | null
+          display_order: number | null
+          id: string
+          is_active: boolean | null
+          name: string
+        }
+        Insert: {
+          code: string
+          created_at?: string | null
+          created_by?: string | null
+          days?: number | null
+          description?: string | null
+          display_order?: number | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+        }
+        Update: {
+          code?: string
+          created_at?: string | null
+          created_by?: string | null
+          days?: number | null
+          description?: string | null
+          display_order?: number | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+        }
+        Relationships: []
       }
       payments: {
         Row: {
