@@ -85,14 +85,24 @@ export const formatInvoiceData = (data: any): Invoice => {
     folio: safeString(data.folio),
     closureId: data.invoice_closures?.[0]?.closure_id || '',
     clientId: safeString(data.client_id),
+    client: data.client ? {
+      id: data.client.id,
+      name: data.client.name,
+      rut: data.client.rut,
+      email: data.client.email,
+      phone: data.client.phone
+    } : undefined,
     issueDate: safeDate(data.issue_date) || new Date().toISOString().split('T')[0],
     dueDate,
     subtotal: safeNumber(data.subtotal),
     vat: safeNumber(data.vat),
     total: safeNumber(data.total),
     status,
+    paidAmount: safeNumber(data.paid_amount),
+    remainingAmount: safeNumber(data.remaining_amount),
     paymentDate: safeDate(data.payment_date),
     numeroFiscal: safeString(data.numero_fiscal) || null,
+    notes: safeString(data.notes) || undefined,
     createdAt: safeString(data.created_at),
     updatedAt: safeString(data.updated_at)
   };
