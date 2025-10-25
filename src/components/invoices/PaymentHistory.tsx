@@ -18,10 +18,13 @@ import {
   TrendingUp,
   CheckCircle,
   Clock,
-  AlertTriangle
+  AlertTriangle,
+  Eye
 } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 import { toast } from 'sonner';
+import { PaymentApplicationsDetailModal } from './PaymentApplicationsDetailModal';
+import { PaymentWithDetails } from '@/types/payments';
 
 interface PaymentHistoryProps {
   onClose?: () => void;
@@ -39,6 +42,8 @@ export const PaymentHistory: React.FC<PaymentHistoryProps> = ({ onClose }) => {
   const [historyData, setHistoryData] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [syncing, setSyncing] = useState(false);
+  const [showPaymentDetail, setShowPaymentDetail] = useState(false);
+  const [selectedPaymentForDetail, setSelectedPaymentForDetail] = useState<PaymentWithDetails | null>(null);
 
   const handleSyncPaidInvoices = async () => {
     setSyncing(true);
@@ -283,7 +288,24 @@ export const PaymentHistory: React.FC<PaymentHistoryProps> = ({ onClose }) => {
                           <TableCell>{getStatusBadge(payment.status)}</TableCell>
                           <TableCell className="text-foreground text-xs">{payment.bank_reference || '-'}</TableCell>
                           <TableCell className="text-foreground text-xs">
-                            {payment.applications?.map((app: any) => app.invoice_folio).join(', ') || '-'}
+                            {payment.applications && payment.applications.length > 0 ? (
+                              <div className="flex items-center gap-2">
+                                <span>{payment.applications.length} factura(s)</span>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="h-6 px-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-950"
+                                  onClick={() => {
+                                    setSelectedPaymentForDetail(payment);
+                                    setShowPaymentDetail(true);
+                                  }}
+                                >
+                                  <Eye className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            ) : (
+                              '-'
+                            )}
                           </TableCell>
                         </TableRow>
                       ))}
@@ -315,6 +337,18 @@ export const PaymentHistory: React.FC<PaymentHistoryProps> = ({ onClose }) => {
           </Card>
         )}
       </div>
+
+      {/* Modal de Detalle de Aplicaciones de Pago */}
+      {showPaymentDetail && selectedPaymentForDetail && (
+        <PaymentApplicationsDetailModal
+          payment={selectedPaymentForDetail}
+          isOpen={showPaymentDetail}
+          onClose={() => {
+            setShowPaymentDetail(false);
+            setSelectedPaymentForDetail(null);
+          }}
+        />
+      )}
     </div>
   );
 };

@@ -12,9 +12,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Plus, Zap, Edit, DollarSign, AlertTriangle, History, RefreshCw } from 'lucide-react';
+import { Plus, Zap, Edit, DollarSign, AlertTriangle, History, RefreshCw, Eye } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 import { toast } from 'sonner';
+import { PaymentApplicationsDetailModal } from './PaymentApplicationsDetailModal';
 
 interface PaymentReconciliationProps {
   onClose?: () => void;
@@ -51,6 +52,8 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
   const [reconciliationStats, setReconciliationStats] = useState<any>(null);
   const [systemDiagnosis, setSystemDiagnosis] = useState<any>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [showPaymentDetail, setShowPaymentDetail] = useState(false);
+  const [selectedPaymentForDetail, setSelectedPaymentForDetail] = useState<PaymentWithDetails | null>(null);
 
   const { clients } = useClients();
 
@@ -333,6 +336,22 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
                         ) : payment.status === 'applied' && payment.applied_amount > 0 ? (
                           <span className="text-sm text-muted-foreground">Aplicado</span>
                         ) : null}
+                        
+                        {/* Botón Ver Detalle */}
+                        {payment.applied_amount > 0 && (
+                          <Button
+                            onClick={() => {
+                              setSelectedPaymentForDetail(payment);
+                              setShowPaymentDetail(true);
+                            }}
+                            size="sm"
+                            variant="ghost"
+                            className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-950"
+                          >
+                            <Eye className="h-4 w-4 mr-1" />
+                            Ver Detalle
+                          </Button>
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>
@@ -387,6 +406,18 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
             setSelectedPayment(null);
           }}
           onApply={handleSelectiveApplication}
+        />
+      )}
+
+      {/* Modal de Detalle de Aplicaciones de Pago */}
+      {showPaymentDetail && selectedPaymentForDetail && (
+        <PaymentApplicationsDetailModal
+          payment={selectedPaymentForDetail}
+          isOpen={showPaymentDetail}
+          onClose={() => {
+            setShowPaymentDetail(false);
+            setSelectedPaymentForDetail(null);
+          }}
         />
       )}
     </div>
