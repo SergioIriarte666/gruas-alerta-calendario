@@ -108,6 +108,7 @@ export const Sidebar = ({
         { name: 'Comisiones', href: '/commissions', icon: Percent, adminOnly: true },
         { name: 'Cierres', href: '/closures', icon: FileText, adminOnly: false },
         { name: 'Facturas', href: '/invoices', icon: Receipt, adminOnly: false },
+        { name: 'Proyección de Ingresos', href: '/income-projections', icon: TrendingUp, adminOnly: false },
       ]
     },
     {

@@ -22,6 +22,7 @@ import ServiceTypes from '@/pages/ServiceTypes';
 import Vehicles from '@/pages/Vehicles';
 import Closures from '@/pages/Closures';
 import Invoices from '@/pages/Invoices';
+import IncomeProjections from '@/pages/IncomeProjections';
 import Costs from '@/pages/Costs';
 import CostCenters from '@/pages/CostCenters';
 import Inventory from '@/pages/Inventory';
@@ -142,6 +143,14 @@ function AppContent() {
           </ProtectedRoute>
         }>
           <Route index element={<Invoices />} />
+        </Route>
+
+        <Route path="/income-projections" element={
+          <ProtectedRoute allowedRoles={['admin', 'viewer']}>
+            <Layout />
+          </ProtectedRoute>
+        }>
+          <Route index element={<IncomeProjections />} />
         </Route>
 
         <Route path="/costs" element={
