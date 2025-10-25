@@ -365,14 +365,13 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
               <Label htmlFor="paymentTermId" className="text-foreground">Condición de Pago (Opcional)</Label>
               <Select 
                 onValueChange={(value) => setValue('paymentTermId', value || undefined)}
-                value={watch('paymentTermId') || ''}
+                value={watch('paymentTermId') || undefined}
                 disabled={!editableFields.canEditDates || loadingTerms}
               >
                 <SelectTrigger className="disabled:opacity-50 disabled:cursor-not-allowed mt-1">
-                  <SelectValue placeholder="Seleccionar condición" />
+                  <SelectValue placeholder="Sin especificar" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Sin especificar</SelectItem>
                   {paymentTerms.map((term) => (
                     <SelectItem key={term.id} value={term.id}>
                       {term.name}
