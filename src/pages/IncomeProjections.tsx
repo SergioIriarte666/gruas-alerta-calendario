@@ -4,6 +4,7 @@ import { ProjectionHeader } from "@/components/projections/ProjectionHeader";
 import { ProjectionFilters } from "@/components/projections/ProjectionFilters";
 import { PendingInvoicesTable } from "@/components/projections/PendingInvoicesTable";
 import { CashFlowChart } from "@/components/projections/CashFlowChart";
+import { AgingReport } from "@/components/projections/AgingReport";
 import { useIncomeProjections } from "@/hooks/projections/useIncomeProjections";
 import { TrendingUp } from "lucide-react";
 
@@ -66,6 +67,9 @@ export default function IncomeProjections() {
 
       {/* Cash Flow Chart */}
       <CashFlowChart invoices={invoices} dateRange={dateRange} />
+
+      {/* Aging Report */}
+      <AgingReport invoices={invoices} />
 
       {/* Pending Invoices Table */}
       <Card>
