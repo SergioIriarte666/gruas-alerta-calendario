@@ -425,7 +425,7 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
                 <TableHead>Estado</TableHead>
                 <TableHead>Aplicado</TableHead>
                 <TableHead>Pendiente</TableHead>
-                <TableHead>Acciones</TableHead>
+                <TableHead>Estado Aplicación</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -451,31 +451,11 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
                     <TableCell>{formatCurrency(payment.applied_amount)}</TableCell>
                     <TableCell>{formatCurrency(payment.remaining_amount)}</TableCell>
                     <TableCell>
-                      <div className="flex gap-2">
-                        {payment.remaining_amount > 0 && (
-                          <>
-                            <Button
-                              type="button"
-                              size="sm"
-                              onClick={() => handleAutoApply(payment)}
-                              disabled={isProcessing}
-                            >
-                              <Zap className="h-3 w-3 mr-1" />
-                              Auto
-                            </Button>
-                            <Button
-                              type="button"
-                              size="sm"
-                              variant="outline"
-                              onClick={() => handleManualApplication(payment)}
-                              disabled={isProcessing}
-                            >
-                              <Edit className="h-3 w-3 mr-1" />
-                              Manual
-                            </Button>
-                          </>
-                        )}
-                      </div>
+                      {payment.remaining_amount > 0 && (
+                        <Badge variant="secondary" className="text-xs">
+                          Pendiente
+                        </Badge>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))

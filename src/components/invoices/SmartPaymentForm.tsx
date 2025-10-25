@@ -38,7 +38,8 @@ export const SmartPaymentForm: React.FC<SmartPaymentFormProps> = ({
   } = useClients();
   const {
     createPayment,
-    getInvoicePaymentStatus
+    getInvoicePaymentStatus,
+    applyPaymentManual
   } = usePayments();
   const [formData, setFormData] = useState({
     client_id: preselectedClientId && preselectedClientId !== 'all' ? preselectedClientId : '',
@@ -127,7 +128,7 @@ export const SmartPaymentForm: React.FC<SmartPaymentFormProps> = ({
       const {
         data,
         error
-      } = await supabase.from('invoices').select('id, folio, numero_fiscal, total, remaining_amount, due_date, status').eq('client_id', formData.client_id).in('status', ['sent', 'overdue', 'partial']).gt('remaining_amount', 0).order('due_date', {
+      } = await supabase.from('invoices').select('id, folio, numero_fiscal, total, remaining_amount, due_date, status').eq('client_id', formData.client_id).in('status', ['draft', 'sent', 'overdue']).gt('remaining_amount', 0).order('due_date', {
         ascending: true
       });
       if (error) throw error;
@@ -219,8 +220,19 @@ export const SmartPaymentForm: React.FC<SmartPaymentFormProps> = ({
         status: 'pending'
       });
 
-      // Pago registrado exitosamente
-      toast.success('Pago registrado exitosamente');
+      // Si hay facturas seleccionadas, aplicar el pago automáticamente
+      if (selectedInvoiceIds.length > 0) {
+        const applications = selectedInvoiceIds.map(invoiceId => {
+          const invoice = clientInvoices.find(inv => inv.id === invoiceId);
+          const amount = invoice?.remaining_amount || 0;
+          return { invoice_id: invoiceId, amount };
+        });
+        
+        await applyPaymentManual(payment.id, applications);
+        toast.success(`Pago registrado y aplicado a ${selectedInvoiceIds.length} factura(s)`);
+      } else {
+        toast.success('Pago registrado exitosamente');
+      }
 
       // Llamar callback si existe para redirigir a Conciliación
       if (onPaymentCreated) {
