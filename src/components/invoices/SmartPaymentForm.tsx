@@ -127,10 +127,9 @@ export const SmartPaymentForm: React.FC<SmartPaymentFormProps> = ({
         .from('invoices')
         .select('id, folio, numero_fiscal, total, remaining_amount, due_date, status')
         .eq('client_id', formData.client_id)
-        .in('status', ['sent', 'overdue'])
+        .in('status', ['sent', 'overdue', 'partial'])
         .gt('remaining_amount', 0)
-        .order('numero_fiscal', { ascending: false })
-        .limit(20);
+        .order('due_date', { ascending: true });
 
       if (error) throw error;
       setClientInvoices(data || []);
