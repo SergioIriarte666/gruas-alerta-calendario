@@ -64,7 +64,7 @@ interface PipelineListViewProps {
   onBatchUpdate?: (updates: BatchUpdateData) => Promise<void>;
 }
 
-type SortField = 'folio' | 'serviceType' | 'serviceDate' | 'value' | 'daysInStatus' | 'quoteNumber' | 'purchaseOrder';
+type SortField = 'folio' | 'serviceType' | 'serviceDate' | 'value' | 'daysInStatus' | 'quoteNumber' | 'purchaseOrder' | 'invoiceNumeroFiscal';
 type SortDirection = 'asc' | 'desc';
 
 // Definir los estados del pipeline con estilos neutros del sistema de diseño
@@ -197,6 +197,10 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
         case 'purchaseOrder':
           aValue = a.purchaseOrderNumber || a.purchaseOrder || '';
           bValue = b.purchaseOrderNumber || b.purchaseOrder || '';
+          break;
+        case 'invoiceNumeroFiscal':
+          aValue = a.invoiceNumeroFiscal || '';
+          bValue = b.invoiceNumeroFiscal || '';
           break;
         default:
           return 0;
@@ -418,7 +422,7 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
             <div className="relative flex-1 max-w-md">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
               <Input
-                placeholder="Buscar por folio, tipo, cotización, orden de compra..."
+                placeholder="Buscar por folio, tipo, cotización, orden de compra, N° fiscal..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10 bg-card border-border text-foreground"
@@ -602,6 +606,7 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
                            <SortableHeader field="daysInStatus">Días en Estado</SortableHeader>
                            <SortableHeader field="quoteNumber">Cotización</SortableHeader>
                            <SortableHeader field="purchaseOrder">Orden de Compra</SortableHeader>
+                           <SortableHeader field="invoiceNumeroFiscal">N° Fiscal</SortableHeader>
                            <TableHead className="text-muted-foreground">Acciones</TableHead>
                         </TableRow>
                       </TableHeader>
@@ -658,6 +663,15 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
                                  {(service.purchaseOrderNumber || service.purchaseOrder) ? (
                                    <code className="text-xs bg-muted px-1 rounded text-blue-600 font-bold">
                                      {service.purchaseOrderNumber || service.purchaseOrder}
+                                   </code>
+                                 ) : (
+                                   <span className="text-muted-foreground">-</span>
+                                 )}
+                               </TableCell>
+                               <TableCell>
+                                 {service.invoiceNumeroFiscal ? (
+                                   <code className="text-xs bg-muted px-1 rounded text-emerald-600 font-bold">
+                                     {service.invoiceNumeroFiscal}
                                    </code>
                                  ) : (
                                    <span className="text-muted-foreground">-</span>
