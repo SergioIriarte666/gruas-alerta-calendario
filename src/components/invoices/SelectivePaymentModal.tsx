@@ -60,12 +60,8 @@ export const SelectivePaymentModal: React.FC<SelectivePaymentModalProps> = ({
 
       if (error) throw error;
 
-      const processedInvoices = (data || []).map(invoice => ({
-        ...invoice,
-        remaining_amount: invoice.total - (invoice.paid_amount || 0)
-      })).filter(invoice => invoice.remaining_amount > 0);
-
-      setAvailableInvoices(processedInvoices);
+      // Usar remaining_amount directamente de la DB (calculado por trigger)
+      setAvailableInvoices(data || []);
     } catch (error) {
       console.error('Error loading invoices:', error);
       toast.error('Error al cargar facturas disponibles');
