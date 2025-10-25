@@ -309,7 +309,7 @@ export const SmartPaymentForm: React.FC<SmartPaymentFormProps> = ({
                                 <span>{formatCurrency(invoice.remaining_amount || invoice.total)}</span>
                               </div>;
                   })}
-                        {clientInvoices.length > 3 && <button onClick={() => setShowAllInvoices(!showAllInvoices)} className="text-xs text-blue-600 hover:text-blue-800 text-center w-full py-1 rounded hover:bg-blue-50 transition-colors">
+                        {clientInvoices.length > 3 && <button type="button" onClick={() => setShowAllInvoices(!showAllInvoices)} className="text-xs text-blue-600 hover:text-blue-800 text-center w-full py-1 rounded hover:bg-blue-50 transition-colors">
                             {showAllInvoices ? 'Mostrar menos' : `+${clientInvoices.length - 3} facturas más`}
                           </button>}
                       </div>
