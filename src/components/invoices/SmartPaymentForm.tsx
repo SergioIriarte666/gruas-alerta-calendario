@@ -128,7 +128,7 @@ export const SmartPaymentForm: React.FC<SmartPaymentFormProps> = ({
         .eq('client_id', formData.client_id)
         .in('status', ['sent', 'overdue'])
         .gt('remaining_amount', 0)
-        .order('due_date', { ascending: true })
+        .order('numero_fiscal', { ascending: false })
         .limit(20);
 
       if (error) throw error;
