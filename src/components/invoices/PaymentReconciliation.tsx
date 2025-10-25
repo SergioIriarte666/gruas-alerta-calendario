@@ -350,6 +350,14 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
             setShowPaymentForm(false);
             refetch();
           }}
+          onPaymentCreated={(paymentId, clientId) => {
+            setShowPaymentForm(false);
+            setSelectedClient(clientId);
+            refetch();
+            toast.success('Pago registrado. Ahora puede aplicarlo manualmente desde esta vista.', {
+              duration: 5000,
+            });
+          }}
         />
       )}
 

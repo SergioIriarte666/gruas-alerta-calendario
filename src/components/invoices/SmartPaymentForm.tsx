@@ -18,6 +18,7 @@ import { formatCurrency } from '@/lib/utils';
 interface SmartPaymentFormProps {
   onClose: () => void;
   preselectedClientId?: string;
+  onPaymentCreated?: (paymentId: string, clientId: string) => void;
 }
 
 interface InvoiceSummary {
@@ -32,7 +33,8 @@ interface InvoiceSummary {
 
 export const SmartPaymentForm: React.FC<SmartPaymentFormProps> = ({ 
   onClose, 
-  preselectedClientId 
+  preselectedClientId,
+  onPaymentCreated
 }) => {
   const { clients } = useClients();
   const { createPayment, getInvoicePaymentStatus } = usePayments();
@@ -48,7 +50,6 @@ export const SmartPaymentForm: React.FC<SmartPaymentFormProps> = ({
 
   const [loading, setLoading] = useState(false);
   const [clientInvoices, setClientInvoices] = useState<InvoiceSummary[]>([]);
-  const [paymentMode, setPaymentMode] = useState<'manual' | 'register-only'>('manual');
   const [duplicateWarning, setDuplicateWarning] = useState<string>('');
   const [showAllInvoices, setShowAllInvoices] = useState(false);
   const [selectedInvoiceIds, setSelectedInvoiceIds] = useState<string[]>([]);
@@ -206,7 +207,7 @@ export const SmartPaymentForm: React.FC<SmartPaymentFormProps> = ({
     } else if (paymentAmount < totalPending) {
       return {
         type: 'partial',
-        message: `Se aplicará a las facturas más antiguas (FIFO)`,
+        message: `Pago parcial - Pendiente por aplicar: ${formatCurrency(totalPending - paymentAmount)}`,
         icon: <Clock className="h-4 w-4 text-yellow-500" />
       };
     } else {
@@ -239,12 +240,12 @@ export const SmartPaymentForm: React.FC<SmartPaymentFormProps> = ({
         status: 'pending'
       });
 
-      // Solo registrar el pago, no aplicar automáticamente
-      if (paymentMode === 'manual') {
-        // Redirigir al modal de aplicación manual
-        toast.success('Pago registrado. Seleccione las facturas a aplicar en el módulo de Conciliación de Pagos.');
-      } else {
-        toast.success('Pago registrado exitosamente. Podrá aplicarlo desde el módulo de Conciliación de Pagos.');
+      // Pago registrado exitosamente
+      toast.success('Pago registrado exitosamente');
+      
+      // Llamar callback si existe para redirigir a Conciliación
+      if (onPaymentCreated) {
+        onPaymentCreated(payment.id, formData.client_id);
       }
       
       onClose();
@@ -374,40 +375,6 @@ export const SmartPaymentForm: React.FC<SmartPaymentFormProps> = ({
               </Card>
             )}
 
-            {/* Modo de aplicación */}
-            <div>
-              <Label>¿Cómo desea procesar este pago?</Label>
-              <div className="flex gap-4 mt-2">
-                <label className="flex items-center space-x-2 cursor-pointer">
-                  <input
-                    type="radio"
-                    name="paymentMode"
-                    value="manual"
-                    checked={paymentMode === 'manual'}
-                    onChange={(e) => setPaymentMode(e.target.value as 'manual' | 'register-only')}
-                    className="text-blue-600"
-                  />
-                  <span>Aplicar manualmente ahora</span>
-                </label>
-                <label className="flex items-center space-x-2 cursor-pointer">
-                  <input
-                    type="radio"
-                    name="paymentMode"
-                    value="register-only"
-                    checked={paymentMode === 'register-only'}
-                    onChange={(e) => setPaymentMode(e.target.value as 'manual' | 'register-only')}
-                    className="text-blue-600"
-                  />
-                  <span>Solo registrar (aplicar después)</span>
-                </label>
-              </div>
-              {paymentMode === 'manual' && (
-                <p className="text-xs text-gray-500 mt-2">
-                  Se abrirá un modal para seleccionar las facturas específicas a pagar
-                </p>
-              )}
-            </div>
-
             {/* Monto */}
             <div>
               <Label htmlFor="amount">Monto del Pago *</Label>
@@ -521,9 +488,7 @@ export const SmartPaymentForm: React.FC<SmartPaymentFormProps> = ({
                 disabled={loading || !!duplicateWarning} 
                 className="flex-1 bg-blue-600 hover:bg-blue-700"
               >
-                {loading ? 'Procesando...' : 
-                 paymentMode === 'manual' ? 'Registrar Pago' : 'Solo Registrar'
-                }
+                {loading ? 'Procesando...' : 'Registrar Pago'}
               </Button>
               <Button type="button" variant="outline" onClick={onClose}>
                 Cancelar
