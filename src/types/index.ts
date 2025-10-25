@@ -193,6 +193,13 @@ export interface Invoice {
   folio: string;
   closureId: string;
   clientId: string;
+  client?: {
+    id: string;
+    name: string;
+    rut: string;
+    email?: string;
+    phone?: string;
+  };
   issueDate: string;
   dueDate: string;
   subtotal: number;
@@ -202,6 +209,9 @@ export interface Invoice {
   paymentDate?: string;
   numeroFiscal?: string;
   paymentTermId?: string;
+  paidAmount?: number;
+  remainingAmount?: number;
+  notes?: string;
   createdAt: string;
   updatedAt: string;
 }

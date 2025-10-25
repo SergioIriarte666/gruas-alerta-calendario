@@ -16,7 +16,16 @@ export const useInvoiceData = () => {
       // Simple query without real-time subscriptions
       const { data: invoicesData, error: invoicesError } = await supabase
         .from('invoices')
-        .select('*')
+        .select(`
+          *,
+          client:clients!client_id (
+            id,
+            name,
+            rut,
+            email,
+            phone
+          )
+        `)
         .order('created_at', { ascending: false });
 
       if (invoicesError) throw invoicesError;
