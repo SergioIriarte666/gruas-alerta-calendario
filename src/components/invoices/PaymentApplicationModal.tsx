@@ -25,9 +25,16 @@ export const PaymentApplicationModal: React.FC<PaymentApplicationModalProps> = (
   const [applications, setApplications] = useState<ManualApplication[]>([]);
   const [loading, setLoading] = useState(false);
 
+  // Ordenar facturas por fecha de vencimiento (más antiguas primero)
+  const sortedInvoices = [...availableInvoices].sort((a, b) => {
+    const dateA = new Date(a.due_date);
+    const dateB = new Date(b.due_date);
+    return dateA.getTime() - dateB.getTime();
+  });
+
   const handleInvoiceToggle = (invoiceId: string, checked: boolean) => {
     if (checked) {
-      const invoice = availableInvoices.find(inv => inv.id === invoiceId);
+      const invoice = sortedInvoices.find(inv => inv.id === invoiceId);
       if (invoice) {
         const invoiceRemaining = invoice.remaining_amount ?? (invoice.total - (invoice.paid_amount ?? 0));
         const paymentRemaining = payment.remaining_amount ?? (payment.amount - (payment.applied_amount ?? 0));
@@ -51,7 +58,7 @@ export const PaymentApplicationModal: React.FC<PaymentApplicationModalProps> = (
   };
 
   const handleAmountChange = (invoiceId: string, amount: number) => {
-    const invoice = availableInvoices.find(inv => inv.id === invoiceId);
+    const invoice = sortedInvoices.find(inv => inv.id === invoiceId);
     if (!invoice) return;
     
     const invoiceRemaining = invoice.remaining_amount ?? (invoice.total - (invoice.paid_amount ?? 0));
@@ -172,7 +179,7 @@ export const PaymentApplicationModal: React.FC<PaymentApplicationModalProps> = (
               </TableRow>
             </TableHeader>
             <TableBody>
-              {availableInvoices.map(invoice => {
+              {sortedInvoices.map(invoice => {
                 const application = applications.find(app => app.invoice_id === invoice.id);
                 const isSelected = !!application;
                 
