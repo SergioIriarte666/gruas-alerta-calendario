@@ -455,6 +455,7 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
                         {payment.remaining_amount > 0 && (
                           <>
                             <Button
+                              type="button"
                               size="sm"
                               onClick={() => handleAutoApply(payment)}
                               disabled={isProcessing}
@@ -463,6 +464,7 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
                               Auto
                             </Button>
                             <Button
+                              type="button"
                               size="sm"
                               variant="outline"
                               onClick={() => handleManualApplication(payment)}
