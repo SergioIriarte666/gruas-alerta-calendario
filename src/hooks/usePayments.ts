@@ -284,7 +284,7 @@ export const usePayments = () => {
         .from('invoices')
         .select('*')
         .eq('client_id', clientId)
-        .in('status', ['sent', 'overdue', 'partial'])
+        .in('status', ['draft', 'sent', 'overdue'])
         .gt('remaining_amount', 0)
         .order('due_date', { ascending: true });
 
