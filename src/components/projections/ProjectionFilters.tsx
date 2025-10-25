@@ -25,7 +25,7 @@ export const ProjectionFilters = ({
     queryFn: async () => {
       const { data, error } = await supabase
         .from('clients')
-        .select('id, name')
+        .select('id, name, rut, department')
         .eq('is_active', true)
         .order('name');
       
@@ -71,7 +71,23 @@ export const ProjectionFilters = ({
             <SelectItem value="all">Todos los clientes</SelectItem>
             {clients?.map((client) => (
               <SelectItem key={client.id} value={client.id}>
-                {client.name}
+                <div className="flex items-center gap-2">
+                  <span className="font-medium">{client.name}</span>
+                  {client.rut && (
+                    <>
+                      <span className="text-muted-foreground/30">•</span>
+                      <span className="text-xs text-muted-foreground">{client.rut}</span>
+                    </>
+                  )}
+                  {client.department && (
+                    <>
+                      <span className="text-muted-foreground/30">•</span>
+                      <span className="text-xs text-muted-foreground font-medium">
+                        {client.department}
+                      </span>
+                    </>
+                  )}
+                </div>
               </SelectItem>
             ))}
           </SelectContent>

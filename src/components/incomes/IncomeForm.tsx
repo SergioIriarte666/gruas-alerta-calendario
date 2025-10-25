@@ -57,7 +57,7 @@ export const IncomeForm = ({ isOpen, onClose, income }: IncomeFormProps) => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('clients')
-        .select('id, name, rut')
+        .select('id, name, rut, department')
         .eq('is_active', true)
         .order('name');
       
@@ -417,6 +417,14 @@ export const IncomeForm = ({ isOpen, onClose, income }: IncomeFormProps) => {
                                   <span className="font-medium">{client.name}</span>
                                   <span className="text-muted-foreground/30">•</span>
                                   <span className="text-xs text-muted-foreground">{client.rut}</span>
+                                  {client.department && (
+                                    <>
+                                      <span className="text-muted-foreground/30">•</span>
+                                      <span className="text-xs text-muted-foreground font-medium">
+                                        {client.department}
+                                      </span>
+                                    </>
+                                  )}
                                 </div>
                               </SelectItem>
                             ))}
