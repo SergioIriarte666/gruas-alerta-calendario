@@ -338,7 +338,12 @@ export const SmartPaymentForm: React.FC<SmartPaymentFormProps> = ({
                 </div>}
               
               {/* Recomendación de pago */}
-              {recommendation}
+              {recommendation && (
+                <div className="mt-2 flex items-center gap-2 text-sm p-2 rounded bg-gray-50">
+                  {recommendation.icon}
+                  <span>{recommendation.message}</span>
+                </div>
+              )}
 
               {/* Advertencias de conflictos de pago */}
               {Object.keys(paymentStatusWarnings).length > 0 && <Alert className="mt-2">
