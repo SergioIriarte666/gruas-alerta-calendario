@@ -1,8 +1,8 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Legend } from "recharts";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from "recharts";
 import { ProjectedInvoice } from "@/hooks/projections/useIncomeProjections";
-import { addDays, format, startOfWeek, endOfWeek, eachWeekOfInterval } from "date-fns";
+import { format } from "date-fns";
 import { es } from "date-fns/locale";
 
 interface CashFlowChartProps {
@@ -11,47 +11,28 @@ interface CashFlowChartProps {
 }
 
 export const CashFlowChart = ({ invoices, dateRange }: CashFlowChartProps) => {
-  const today = new Date();
-  const endDate = addDays(today, dateRange);
+  // Agrupar facturas por fecha de vencimiento
+  const invoicesByDate = invoices.reduce((acc, invoice) => {
+    const dateKey = format(new Date(invoice.due_date), 'yyyy-MM-dd');
+    if (!acc[dateKey]) {
+      acc[dateKey] = 0;
+    }
+    acc[dateKey] += invoice.remaining_amount;
+    return acc;
+  }, {} as Record<string, number>);
 
-  // Generar semanas
-  const weeks = eachWeekOfInterval(
-    { start: today, end: endDate },
-    { weekStartsOn: 1 }
-  );
-
-  // Calcular proyecciones por semana
-  const chartData = weeks.map((weekStart) => {
-    const weekEnd = endOfWeek(weekStart, { weekStartsOn: 1 });
-    
-    const weekInvoices = invoices.filter(inv => {
-      const dueDate = new Date(inv.due_date);
-      return dueDate >= weekStart && dueDate <= weekEnd;
-    });
-
-    const optimistic = weekInvoices.reduce((sum, inv) => sum + inv.remaining_amount, 0);
-    const realistic = optimistic * 0.85; // 85% de probabilidad
-    const pessimistic = optimistic * 0.70; // 70% de probabilidad
-
-    return {
-      week: format(weekStart, 'dd MMM', { locale: es }),
-      optimista: Math.round(optimistic),
-      realista: Math.round(realistic),
-      pesimista: Math.round(pessimistic),
-    };
-  });
+  // Convertir a array y ordenar
+  const chartData = Object.entries(invoicesByDate)
+    .map(([date, amount]) => ({
+      fecha: format(new Date(date), 'dd MMM', { locale: es }),
+      monto: Math.round(amount),
+      fullDate: date
+    }))
+    .sort((a, b) => a.fullDate.localeCompare(b.fullDate));
 
   const chartConfig = {
-    optimista: {
-      label: "Optimista",
-      color: "hsl(var(--chart-2))",
-    },
-    realista: {
-      label: "Realista",
-      color: "hsl(var(--chart-3))",
-    },
-    pesimista: {
-      label: "Pesimista",
+    monto: {
+      label: "Ingresos Proyectados",
       color: "hsl(var(--chart-1))",
     },
   };
@@ -59,9 +40,9 @@ export const CashFlowChart = ({ invoices, dateRange }: CashFlowChartProps) => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Flujo de Caja Proyectado</CardTitle>
+        <CardTitle>Ingresos Proyectados por Fecha de Vencimiento</CardTitle>
         <CardDescription>
-          Proyección de ingresos por semana según diferentes escenarios
+          Montos pendientes de cobro según fecha de vencimiento de facturas
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -70,7 +51,7 @@ export const CashFlowChart = ({ invoices, dateRange }: CashFlowChartProps) => {
             <LineChart data={chartData}>
               <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
               <XAxis 
-                dataKey="week" 
+                dataKey="fecha" 
                 className="text-xs"
                 tick={{ fill: 'hsl(var(--foreground))' }}
               />
@@ -80,27 +61,13 @@ export const CashFlowChart = ({ invoices, dateRange }: CashFlowChartProps) => {
                 tickFormatter={(value) => `$${(value / 1000000).toFixed(1)}M`}
               />
               <ChartTooltip content={<ChartTooltipContent />} />
-              <Legend />
               <Line
                 type="monotone"
-                dataKey="optimista"
-                stroke="var(--color-optimista)"
+                dataKey="monto"
+                stroke="var(--color-monto)"
                 strokeWidth={2}
-                dot={{ fill: "var(--color-optimista)" }}
-              />
-              <Line
-                type="monotone"
-                dataKey="realista"
-                stroke="var(--color-realista)"
-                strokeWidth={2}
-                dot={{ fill: "var(--color-realista)" }}
-              />
-              <Line
-                type="monotone"
-                dataKey="pesimista"
-                stroke="var(--color-pesimista)"
-                strokeWidth={2}
-                dot={{ fill: "var(--color-pesimista)" }}
+                dot={{ fill: "var(--color-monto)", r: 4 }}
+                activeDot={{ r: 6 }}
               />
             </LineChart>
           </ResponsiveContainer>
