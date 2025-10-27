@@ -21,6 +21,13 @@ export const PaymentApplicationModal: React.FC<PaymentApplicationModalProps> = (
   availableInvoices,
   onClose
 }) => {
+  console.log('🎯 [PaymentApplicationModal] Modal abierto con:', {
+    payment_id: payment.id,
+    client_id: payment.client_id,
+    invoices_count: availableInvoices.length,
+    invoices: availableInvoices.map(inv => ({ folio: inv.folio, status: inv.status }))
+  });
+  
   const { applyPaymentManual } = usePayments();
   const [applications, setApplications] = useState<ManualApplication[]>([]);
   const [loading, setLoading] = useState(false);

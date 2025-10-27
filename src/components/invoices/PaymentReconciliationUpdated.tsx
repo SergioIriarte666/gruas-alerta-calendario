@@ -125,7 +125,14 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
   };
 
   const handleManualApplication = async (payment: PaymentWithDetails) => {
+    console.log('🔍 [Modal] Obteniendo facturas para cliente:', payment.client_id);
     const invoices = await getUnpaidInvoicesForClient(payment.client_id);
+    console.log('📊 [Modal] Facturas recibidas:', invoices.length, invoices);
+    
+    if (invoices.length === 0) {
+      toast.warning('No se encontraron facturas pendientes para este cliente');
+    }
+    
     setAvailableInvoices(invoices);
     setSelectedPayment(payment);
     setShowPaymentModal(true);
