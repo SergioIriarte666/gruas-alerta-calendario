@@ -67,29 +67,24 @@ export const useServices = () => {
     console.log('🎯 useServices: Creating service with data:', serviceData.folio);
     
     const newService = await createServiceMutation(serviceData);
-    console.log('✅ useServices: Service created successfully, updating local state:', newService.folio);
+    console.log('✅ useServices: Service created successfully:', newService.folio);
     
-    // Update local state immediately
-    setServices(prev => [newService, ...prev]);
-    
-    // Force refresh from database after a short delay to ensure consistency
-    setTimeout(async () => {
-      console.log('🔄 useServices: Force refreshing services after creation...');
-      await loadServices();
-    }, 1000);
+    // Refresh services from database to ensure consistency
+    console.log('🔄 useServices: Refreshing services from database...');
+    await loadServices();
     
     return newService;
   };
 
   const updateService = async (id: string, serviceData: Partial<ServiceFormData>): Promise<Service> => {
+    console.log('🎯 useServices: Updating service:', id);
+    
     const updatedService = await updateServiceMutation(id, serviceData);
-    setServices(prev => prev.map(service => 
-      service.id === id 
-        ? updatedService
-        : service
-    ));
-    // Force refresh to ensure data consistency
+    console.log('✅ useServices: Service updated successfully');
+    
+    // Refresh services from database to ensure consistency
     await loadServices();
+    
     return updatedService;
   };
 
