@@ -11,7 +11,7 @@ export const useClientInvoices = (clientId: string | undefined) => {
         .from('invoices')
         .select('id, folio, numero_fiscal, total, paid_amount, remaining_amount, status, issue_date, due_date')
         .eq('client_id', clientId)
-        .in('status', ['sent', 'partial', 'overdue'])
+        .in('status', ['draft', 'sent', 'partial', 'overdue'])
         .gt('remaining_amount', 0)
         .order('due_date', { ascending: true });
       
