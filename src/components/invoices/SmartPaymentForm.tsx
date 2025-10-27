@@ -184,20 +184,14 @@ export const SmartPaymentForm: React.FC<SmartPaymentFormProps> = ({
     if (paymentAmount === totalPending) {
       return {
         type: 'perfect',
-        message: `Pago exacto para liquidar todas las facturas pendientes`,
+        message: `Monto exacto - Las facturas seleccionadas serán pagadas completamente`,
         icon: <CheckCircle className="h-4 w-4 text-green-500" />
-      };
-    } else if (paymentAmount < totalPending) {
-      return {
-        type: 'insufficient',
-        message: `Monto insuficiente - Seleccione menos facturas o aumente el monto`,
-        icon: <Clock className="h-4 w-4 text-yellow-500" />
       };
     } else {
       return {
-        type: 'excess',
-        message: `Excede el total pendiente. Sobrante: ${formatCurrency(paymentAmount - totalPending)}`,
-        icon: <AlertTriangle className="h-4 w-4 text-orange-500" />
+        type: 'mismatch',
+        message: `El monto debe ser exactamente ${formatCurrency(totalPending)} para las facturas seleccionadas`,
+        icon: <AlertTriangle className="h-4 w-4 text-red-500" />
       };
     }
   };
@@ -354,11 +348,7 @@ export const SmartPaymentForm: React.FC<SmartPaymentFormProps> = ({
                 amount: e.target.value
               });
               setIsAmountAutoCalculated(false);
-            }} placeholder="0.00" required className={isAmountAutoCalculated ? "border-blue-300 bg-blue-50" : ""} />
-              {isAmountAutoCalculated && <div className="mt-1 text-xs text-blue-600 flex items-center gap-1">
-                  <CheckCircle className="h-3 w-3" />
-                  Monto calculado automáticamente de facturas seleccionadas
-                </div>}
+            }} placeholder="0.00" required className={isAmountAutoCalculated ? "border-green-300 bg-green-50" : ""} />
               
               {/* Recomendación de pago */}
               {recommendation && (
