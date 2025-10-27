@@ -198,7 +198,7 @@ export const SmartPaymentForm: React.FC<SmartPaymentFormProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.client_id || !formData.amount) return;
-    
+
     // Validar que el monto coincida exactamente con las facturas seleccionadas
     if (selectedInvoiceIds.length > 0) {
       const selectedTotal = getSelectedInvoicesTotal();
@@ -208,7 +208,6 @@ export const SmartPaymentForm: React.FC<SmartPaymentFormProps> = ({
         return;
       }
     }
-    
     if (duplicateWarning && !confirm('Se detectó un posible duplicado. ¿Desea continuar?')) {
       return;
     }
@@ -230,9 +229,11 @@ export const SmartPaymentForm: React.FC<SmartPaymentFormProps> = ({
         const applications = selectedInvoiceIds.map(invoiceId => {
           const invoice = clientInvoices.find(inv => inv.id === invoiceId);
           const amount = invoice?.remaining_amount || 0;
-          return { invoice_id: invoiceId, amount };
+          return {
+            invoice_id: invoiceId,
+            amount
+          };
         });
-        
         await applyPaymentManual(payment.id, applications);
         toast.success(`Pago registrado y aplicado a ${selectedInvoiceIds.length} factura(s)`);
       } else {
@@ -351,12 +352,10 @@ export const SmartPaymentForm: React.FC<SmartPaymentFormProps> = ({
             }} placeholder="0.00" required className={isAmountAutoCalculated ? "border-green-300 bg-green-50" : ""} />
               
               {/* Recomendación de pago */}
-              {recommendation && (
-                <div className="mt-2 flex items-center gap-2 text-sm p-2 rounded bg-gray-50">
+              {recommendation && <div className="mt-2 flex items-center gap-2 text-sm p-2 rounded bg-gray-50">
                   {recommendation.icon}
-                  <span>{recommendation.message}</span>
-                </div>
-              )}
+                  
+                </div>}
 
               {/* Advertencias de conflictos de pago */}
               {Object.keys(paymentStatusWarnings).length > 0 && <Alert className="mt-2">
