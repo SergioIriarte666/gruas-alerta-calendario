@@ -128,7 +128,7 @@ export const SmartPaymentForm: React.FC<SmartPaymentFormProps> = ({
       const {
         data,
         error
-      } = await supabase.from('invoices').select('id, folio, numero_fiscal, total, remaining_amount, due_date, status').eq('client_id', formData.client_id).in('status', ['draft', 'sent', 'overdue']).gt('remaining_amount', 0).order('due_date', {
+      } = await supabase.from('invoices').select('id, folio, numero_fiscal, total, remaining_amount, due_date, status').eq('client_id', formData.client_id).in('status', ['draft', 'sent', 'overdue', 'partial']).gt('remaining_amount', 0).order('due_date', {
         ascending: true
       });
       if (error) throw error;
@@ -189,8 +189,8 @@ export const SmartPaymentForm: React.FC<SmartPaymentFormProps> = ({
       };
     } else if (paymentAmount < totalPending) {
       return {
-        type: 'partial',
-        message: `Pago parcial - Pendiente por aplicar: ${formatCurrency(totalPending - paymentAmount)}`,
+        type: 'insufficient',
+        message: `Monto insuficiente - Seleccione menos facturas o aumente el monto`,
         icon: <Clock className="h-4 w-4 text-yellow-500" />
       };
     } else {
@@ -204,6 +204,17 @@ export const SmartPaymentForm: React.FC<SmartPaymentFormProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.client_id || !formData.amount) return;
+    
+    // Validar que el monto coincida exactamente con las facturas seleccionadas
+    if (selectedInvoiceIds.length > 0) {
+      const selectedTotal = getSelectedInvoicesTotal();
+      const paymentAmount = parseFloat(formData.amount);
+      if (selectedTotal !== paymentAmount) {
+        toast.error(`El monto debe ser exactamente ${formatCurrency(selectedTotal)} para las facturas seleccionadas`);
+        return;
+      }
+    }
+    
     if (duplicateWarning && !confirm('Se detectó un posible duplicado. ¿Desea continuar?')) {
       return;
     }

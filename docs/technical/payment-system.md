@@ -1,10 +1,16 @@
 # Sistema de Pagos
 
+## Política Actual: Una Factura = Un Pago Completo
+
+**IMPORTANTE**: El sistema FIFO automático está **DEPRECADO**. 
+Todas las facturas se pagan íntegramente, no se permiten pagos parciales nuevos.
+
 ## Funcionalidades Principales
-- Conciliación automática de pagos con facturas
+- Conciliación manual de pagos con facturas
 - Validación de integridad del sistema
 - Corrección automática de inconsistencias
 - Triggers para mantener consistencia en tiempo real
+- Prevención de pagos parciales (solo pagos completos)
 
 ## Triggers Activos Críticos
 
@@ -28,9 +34,16 @@
 ## Estados de Factura
 - **Borrador**: En construcción
 - **Enviada**: Emitida al cliente  
-- **Parcial**: Pagada parcialmente
+- **Parcial**: Pagada parcialmente (solo histórico, no se crean nuevas)
 - **Pagada**: Saldada completamente
 - **Vencida**: Fuera de plazo
+
+## Flujo de Pago Integral
+1. Se registra un pago en el sistema
+2. Se selecciona(n) la(s) factura(s) completa(s) a pagar
+3. El monto del pago debe coincidir exactamente con el total de las facturas seleccionadas
+4. No se permite aplicar montos parciales a facturas
+5. Una factura debe quedar completamente pagada o sin pagar
 
 ## Validaciones Implementadas
 - Prevención de pagos duplicados

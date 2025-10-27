@@ -127,7 +127,7 @@ export const PaymentApplicationModal: React.FC<PaymentApplicationModalProps> = (
       <Card className="w-full max-w-4xl max-h-[90vh] overflow-auto bg-white">
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
-            <CardTitle>Aplicar Pago Manualmente</CardTitle>
+            <CardTitle>Conciliar Pago con Facturas</CardTitle>
             <p className="text-sm text-gray-600">
               Cliente: {payment.client?.name} | Monto disponible: {formatCurrency(payment.remaining_amount ?? (payment.amount - (payment.applied_amount ?? 0)))}
             </p>
