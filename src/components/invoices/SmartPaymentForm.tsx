@@ -352,10 +352,7 @@ export const SmartPaymentForm: React.FC<SmartPaymentFormProps> = ({
             }} placeholder="0.00" required className={isAmountAutoCalculated ? "border-green-300 bg-green-50" : ""} />
               
               {/* Recomendación de pago */}
-              {recommendation && <div className="mt-2 flex items-center gap-2 text-sm p-2 rounded bg-gray-50">
-                  {recommendation.icon}
-                  
-                </div>}
+              {recommendation}
 
               {/* Advertencias de conflictos de pago */}
               {Object.keys(paymentStatusWarnings).length > 0 && <Alert className="mt-2">
