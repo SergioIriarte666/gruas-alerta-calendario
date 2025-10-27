@@ -179,18 +179,23 @@ export const SmartPaymentForm: React.FC<SmartPaymentFormProps> = ({
   };
   const getPaymentRecommendation = () => {
     const paymentAmount = parseFloat(formData.amount) || 0;
-    const totalPending = getTotalPendingAmount();
+    
+    // Solo validar si hay facturas seleccionadas
+    if (selectedInvoiceIds.length === 0) return null;
     if (paymentAmount === 0) return null;
-    if (paymentAmount === totalPending) {
+    
+    const selectedTotal = getSelectedInvoicesTotal();
+    
+    if (paymentAmount === selectedTotal) {
       return {
         type: 'perfect',
-        message: `Monto exacto - Las facturas seleccionadas serán pagadas completamente`,
+        message: `Monto exacto - ${selectedInvoiceIds.length === 1 ? 'La factura seleccionada será pagada' : `Las ${selectedInvoiceIds.length} facturas seleccionadas serán pagadas`} completamente`,
         icon: <CheckCircle className="h-4 w-4 text-green-500" />
       };
     } else {
       return {
         type: 'mismatch',
-        message: `El monto debe ser exactamente ${formatCurrency(totalPending)} para las facturas seleccionadas`,
+        message: `El monto debe ser exactamente ${formatCurrency(selectedTotal)} para ${selectedInvoiceIds.length === 1 ? 'la factura seleccionada' : `las ${selectedInvoiceIds.length} facturas seleccionadas`}`,
         icon: <AlertTriangle className="h-4 w-4 text-red-500" />
       };
     }
