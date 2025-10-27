@@ -279,7 +279,6 @@ export const usePayments = () => {
   };
 
   const getUnpaidInvoicesForClient = async (clientId: string) => {
-    console.log('🔍 [usePayments] Buscando facturas para cliente:', clientId);
     try {
       const { data, error } = await supabase
         .from('invoices')
@@ -290,22 +289,12 @@ export const usePayments = () => {
         .order('due_date', { ascending: true });
 
       if (error) {
-        console.error('❌ [usePayments] Error al buscar facturas:', error);
         throw error;
       }
       
-      console.log('📊 [usePayments] Facturas encontradas:', {
-        total: data?.length || 0,
-        facturas: data?.map(inv => ({
-          folio: inv.folio,
-          status: inv.status,
-          remaining: inv.remaining_amount
-        }))
-      });
-      
       return data || [];
     } catch (error) {
-      console.error('❌ [usePayments] Error fetching unpaid invoices:', error);
+      console.error('Error fetching unpaid invoices:', error);
       return [];
     }
   };
