@@ -35,6 +35,12 @@ export interface SupplierPayment {
   updated_at: string;
   created_by?: string;
   updated_by?: string;
+  // Campos de piezas y repuestos
+  part_name?: string;
+  part_quantity?: number;
+  part_unit_price?: number;
+  crane_id?: string;
+  add_to_inventory?: boolean;
 }
 
 export type SupplierPaymentStatus = 'pending' | 'paid' | 'overdue' | 'cancelled';
