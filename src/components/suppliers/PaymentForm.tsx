@@ -76,18 +76,15 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
   });
 
   const onSubmit = (data: PaymentFormData) => {
-    // Filtrar campos que no existen en la tabla supplier_payments
-    const { part_name, part_quantity, part_unit_price, crane_id, ...paymentData } = data;
-    
     if (payment) {
-      updatePayment({ id: payment.id, data: paymentData }, {
+      updatePayment({ id: payment.id, data }, {
         onSuccess: () => {
           onSave?.();
           onClose();
         }
       });
     } else {
-      createPayment(paymentData, {
+      createPayment(data, {
         onSuccess: () => {
           onSave?.();
           onClose();
