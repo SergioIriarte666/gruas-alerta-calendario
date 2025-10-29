@@ -529,6 +529,7 @@ export type Database = {
           service_folio: string | null
           service_id: string | null
           subcategory: string | null
+          supplier_id: string | null
           supplier_payment_id: string | null
           updated_at: string
         }
@@ -554,6 +555,7 @@ export type Database = {
           service_folio?: string | null
           service_id?: string | null
           subcategory?: string | null
+          supplier_id?: string | null
           supplier_payment_id?: string | null
           updated_at?: string
         }
@@ -579,6 +581,7 @@ export type Database = {
           service_folio?: string | null
           service_id?: string | null
           subcategory?: string | null
+          supplier_id?: string | null
           supplier_payment_id?: string | null
           updated_at?: string
         }
@@ -652,6 +655,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "services_with_excess_summary"
             referencedColumns: ["related_service_id_actual"]
+          },
+          {
+            foreignKeyName: "costs_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -3844,6 +3854,18 @@ export type Database = {
           total_pending: number
         }[]
       }
+      get_supplier_sync_stats: {
+        Args: never
+        Returns: {
+          supplier_name: string
+          total_amount_costs: number
+          total_amount_inventory: number
+          total_amount_paid: number
+          total_costs: number
+          total_movements: number
+          total_payments: number
+        }[]
+      }
       get_supplier_traceability_stats: {
         Args: { p_supplier_id: string }
         Returns: Json
@@ -3960,6 +3982,8 @@ export type Database = {
         Args: { service_id_param: string; update_data: Json }
         Returns: Json
       }
+      show_limit: { Args: never; Returns: number }
+      show_trgm: { Args: { "": string }; Returns: string[] }
       smart_apply_payment: {
         Args: { p_auto_apply?: boolean; p_payment_id: string }
         Returns: {
