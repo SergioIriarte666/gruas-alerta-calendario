@@ -54,8 +54,13 @@ export const useSupplierPayments = () => {
           reference_number: data.reference_number || null,
           notes: data.notes || null,
           status: data.status || 'pending',
+          part_name: data.part_name || null,
+          part_quantity: data.part_quantity || null,
+          part_unit_price: data.part_unit_price || null,
+          crane_id: data.crane_id || null,
+          add_to_inventory: data.add_to_inventory || false,
           created_by: (await supabase.auth.getUser()).data.user?.id
-        } as any) // Temporary any to bypass type issues
+        } as any)
         .select()
         .single();
 
@@ -75,12 +80,9 @@ export const useSupplierPayments = () => {
 
   const updatePaymentMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: Partial<PaymentFormData> }): Promise<SupplierPayment> => {
-      // Filtrar campos que no existen en la tabla supplier_payments
-      const { part_name, part_quantity, part_unit_price, crane_id, ...paymentData } = data;
-      
       const { data: payment, error } = await supabase
         .from('supplier_payments')
-        .update(paymentData)
+        .update(data)
         .eq('id', id)
         .select()
         .single();
