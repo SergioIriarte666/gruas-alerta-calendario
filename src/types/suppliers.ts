@@ -52,11 +52,11 @@ export interface SupplierPaymentWithDetails extends SupplierPayment {
 
 export interface SupplierFormData {
   name: string;
-  rut: string;
-  email: string;
-  phone: string;
-  address: string;
-  contact_name: string;
+  rut?: string;
+  email?: string;
+  phone?: string;
+  address?: string;
+  contact_name?: string;
   category: string;
   notes?: string;
   is_active: boolean;
@@ -76,6 +76,8 @@ export interface PaymentFormData {
   part_quantity?: number;
   part_unit_price?: number;
   crane_id?: string;
+  // Nuevo: checkbox para agregar a inventario
+  add_to_inventory?: boolean;
 }
 
 export interface SupplierStats {

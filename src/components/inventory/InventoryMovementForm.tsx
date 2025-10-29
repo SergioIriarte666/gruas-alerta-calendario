@@ -18,6 +18,8 @@ import { cn } from '@/lib/utils';
 import { useInventoryItems, useInventoryLocations, useInventorySuppliers, useInventoryStock, useCreateInventoryMovement } from '@/hooks/useInventory';
 import { useCranes } from '@/hooks/useCranes';
 import { useOperators } from '@/hooks/useOperators';
+import { useSuppliers } from '@/hooks/useSuppliers';
+import { QuickSupplierModal } from '@/components/suppliers/QuickSupplierModal';
 import { toast } from 'sonner';
 
 const movementSchema = z.object({
@@ -29,7 +31,7 @@ const movementSchema = z.object({
   reference_document: z.string().optional(),
   batch_number: z.string().optional(),
   expiration_date: z.date().optional(),
-  supplier_name: z.string().optional(),
+  supplier_id: z.string().optional(),
   crane_id: z.string().optional(),
   operator_id: z.string().optional(),
   reason: z.string().optional(),
@@ -67,7 +69,10 @@ export const InventoryMovementForm: React.FC<InventoryMovementFormProps> = ({
   const { data: stockData } = useInventoryStock();
   const { cranes } = useCranes();
   const { operators } = useOperators();
+  const { suppliers: suppliersList, isLoading: isSuppliersLoading } = useSuppliers();
   const createMovement = useCreateInventoryMovement();
+
+  const [showQuickModal, setShowQuickModal] = React.useState(false);
 
   const form = useForm<MovementFormData>({
     resolver: zodResolver(movementSchema),
@@ -111,8 +116,7 @@ export const InventoryMovementForm: React.FC<InventoryMovementFormProps> = ({
         reference_document: data.reference_document,
         batch_number: data.batch_number,
         expiration_date: data.expiration_date?.toISOString().split('T')[0],
-        supplier_id: null,
-        supplier_name: data.supplier_name || undefined,
+        supplier_id: data.supplier_id || null,
         crane_id: data.crane_id,
         operator_id: data.operator_id,
         reason: data.reason,
@@ -131,8 +135,7 @@ export const InventoryMovementForm: React.FC<InventoryMovementFormProps> = ({
         reference_document: data.reference_document,
         batch_number: data.batch_number,
         expiration_date: data.expiration_date?.toISOString().split('T')[0],
-        supplier_id: null, // No longer using supplier_id
-        supplier_name: data.supplier_name || undefined,
+        supplier_id: data.supplier_id || null,
         crane_id: data.crane_id,
         operator_id: data.operator_id,
         reason: data.reason,
@@ -422,13 +425,45 @@ export const InventoryMovementForm: React.FC<InventoryMovementFormProps> = ({
           {/* Additional fields based on movement type */}
           {watchedMovementType === 'entry' && (
             <>
-              {/* Supplier */}
+              {/* Supplier Selector */}
               <div className="space-y-2">
-                <Label htmlFor="supplier_name">Proveedor (Opcional)</Label>
-                <Input
-                  {...form.register('supplier_name')}
-                  placeholder="Nombre del proveedor o empresa"
-                />
+                <Label htmlFor="supplier_id">Proveedor (Opcional)</Label>
+                <Select
+                  value={form.watch('supplier_id') || 'none'}
+                  onValueChange={(value) => {
+                    if (value === 'new_supplier') {
+                      setShowQuickModal(true);
+                    } else if (value === 'none') {
+                      form.setValue('supplier_id', undefined);
+                    } else {
+                      form.setValue('supplier_id', value);
+                    }
+                  }}
+                  disabled={isSuppliersLoading}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccionar proveedor" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Sin proveedor</SelectItem>
+                    {suppliersList.map((supplier) => (
+                      <SelectItem key={supplier.id} value={supplier.id}>
+                        <div className="flex flex-col">
+                          <span className="font-medium">{supplier.name}</span>
+                          {supplier.rut && (
+                            <span className="text-xs text-muted-foreground">RUT: {supplier.rut}</span>
+                          )}
+                        </div>
+                      </SelectItem>
+                    ))}
+                    <SelectItem value="new_supplier">
+                      <div className="flex items-center gap-2 text-primary font-medium">
+                        <Plus className="h-4 w-4" />
+                        Crear nuevo proveedor...
+                      </div>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
               {/* Reference Document - Enhanced for Multi-Product Purchases */}
@@ -539,6 +574,15 @@ export const InventoryMovementForm: React.FC<InventoryMovementFormProps> = ({
           </Button>
         </form>
       </CardContent>
+
+      <QuickSupplierModal
+        isOpen={showQuickModal}
+        onClose={() => setShowQuickModal(false)}
+        onSuccess={(supplierId) => {
+          form.setValue('supplier_id', supplierId);
+          setShowQuickModal(false);
+        }}
+      />
     </Card>
   );
 };

@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 import { X, Save, Loader2, Calendar, DollarSign } from 'lucide-react';
 import { useSupplierPayments, getStatusLabel } from '@/hooks/useSupplierPayments';
 import { useSuppliers } from '@/hooks/useSuppliers';
@@ -29,7 +30,9 @@ const paymentSchema = z.object({
   part_name: z.string().optional(),
   part_quantity: z.number().positive().optional(),
   part_unit_price: z.number().positive().optional(),
-  crane_id: z.string().optional()
+  crane_id: z.string().optional(),
+  // Nuevo: checkbox para sincronización
+  add_to_inventory: z.boolean().optional()
 });
 
 interface PaymentFormProps {
@@ -67,7 +70,8 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
       part_name: '',
       part_quantity: undefined,
       part_unit_price: undefined,
-      crane_id: ''
+      crane_id: '',
+      add_to_inventory: false
     }
   });
 
@@ -323,6 +327,24 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
                       </SelectContent>
                     </Select>
                   </div>
+                </div>
+
+                {/* Nuevo: Checkbox para agregar a inventario */}
+                <div className="flex items-center space-x-2 mt-4 p-3 bg-muted/50 rounded-lg border border-primary/20">
+                  <Checkbox
+                    id="add_to_inventory"
+                    checked={!!form.watch('add_to_inventory')}
+                    onCheckedChange={(checked: boolean) => form.setValue('add_to_inventory', checked)}
+                  />
+                  <Label htmlFor="add_to_inventory" className="flex items-center gap-2 cursor-pointer">
+                    <Package className="h-4 w-4 text-primary" />
+                    <div className="flex flex-col">
+                      <span className="font-medium">Agregar automáticamente a inventario (Bodega)</span>
+                      <span className="text-xs text-muted-foreground">
+                        ✅ El producto se registrará en Costos + Bodega automáticamente
+                      </span>
+                    </div>
+                  </Label>
                 </div>
               </div>
             )}

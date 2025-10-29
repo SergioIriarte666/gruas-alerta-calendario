@@ -42,6 +42,8 @@ export type CostFormData = Omit<Database['public']['Tables']['costs']['Insert'],
   purchase_unit_cost?: number | null;
   // Campo para consumo inmediato
   immediate_consumption?: boolean;
+  // NUEVA FASE: FK formal a proveedores
+  supplier_id?: string | null;
 };
 
 // Constantes para las categorías de servicios

@@ -14,6 +14,7 @@ import { CostAmountSection } from './CostAmountSection';
 import { useCostCenters } from '@/hooks/useCostCenters';
 import { CostCombobox } from './CostCombobox';
 import { InventoryPurchaseFields } from './InventoryPurchaseFields';  // FASE 3
+import { SupplierSelector } from './SupplierSelector';
 import { Package, User, Phone, Hash, DollarSign, Gauge, Calendar, FileText, Tag, Building2 } from 'lucide-react';
 
 interface CostFormInputsProps {
@@ -261,23 +262,12 @@ export const CostFormInputs = ({
                                 </FormItem>
                             )} />
 
-                            <FormField name="supplier" control={form.control} render={({ field }) => (
-                                <FormItem>
-                                    <Label className="flex items-center gap-2">
-                                        <User className="w-4 h-4" />
-                                        Proveedor *
-                                    </Label>
-                                    <FormControl>
-                                        <CostCombobox
-                                            value={field.value || ''}
-                                            onValueChange={field.onChange}
-                                            placeholder="Nombre del proveedor"
-                                            type="supplier"
-                                        />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )} />
+                            <SupplierSelector
+                                form={form}
+                                fieldName="supplier_id"
+                                label="Proveedor *"
+                                placeholder="Seleccionar proveedor"
+                            />
 
                             <FormField name="supplier_phone" control={form.control} render={({ field }) => (
                                 <FormItem>
