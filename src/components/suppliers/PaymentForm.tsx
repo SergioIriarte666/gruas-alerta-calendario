@@ -66,12 +66,12 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
       reference_number: payment?.reference_number || '',
       notes: payment?.notes || '',
       status: payment?.status || 'pending',
-      // Valores por defecto para campos de piezas
-      part_name: '',
-      part_quantity: undefined,
-      part_unit_price: undefined,
-      crane_id: '',
-      add_to_inventory: false
+      // Cargar valores de piezas si existen
+      part_name: payment?.part_name || '',
+      part_quantity: payment?.part_quantity || undefined,
+      part_unit_price: payment?.part_unit_price || undefined,
+      crane_id: payment?.crane_id || '',
+      add_to_inventory: payment?.add_to_inventory || false
     }
   });
 
