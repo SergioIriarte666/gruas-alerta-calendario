@@ -3073,8 +3073,10 @@ export type Database = {
       }
       supplier_payments: {
         Row: {
+          add_to_inventory: boolean | null
           amount: number
           category: string
+          crane_id: string | null
           created_at: string | null
           created_by: string | null
           description: string
@@ -3083,6 +3085,9 @@ export type Database = {
           notes: string | null
           paid_amount: number | null
           paid_date: string | null
+          part_name: string | null
+          part_quantity: number | null
+          part_unit_price: number | null
           reference_number: string | null
           status: string
           supplier_id: string
@@ -3090,8 +3095,10 @@ export type Database = {
           updated_by: string | null
         }
         Insert: {
+          add_to_inventory?: boolean | null
           amount: number
           category: string
+          crane_id?: string | null
           created_at?: string | null
           created_by?: string | null
           description: string
@@ -3100,6 +3107,9 @@ export type Database = {
           notes?: string | null
           paid_amount?: number | null
           paid_date?: string | null
+          part_name?: string | null
+          part_quantity?: number | null
+          part_unit_price?: number | null
           reference_number?: string | null
           status?: string
           supplier_id: string
@@ -3107,8 +3117,10 @@ export type Database = {
           updated_by?: string | null
         }
         Update: {
+          add_to_inventory?: boolean | null
           amount?: number
           category?: string
+          crane_id?: string | null
           created_at?: string | null
           created_by?: string | null
           description?: string
@@ -3117,6 +3129,9 @@ export type Database = {
           notes?: string | null
           paid_amount?: number | null
           paid_date?: string | null
+          part_name?: string | null
+          part_quantity?: number | null
+          part_unit_price?: number | null
           reference_number?: string | null
           status?: string
           supplier_id?: string
@@ -3124,6 +3139,13 @@ export type Database = {
           updated_by?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "supplier_payments_crane_id_fkey"
+            columns: ["crane_id"]
+            isOneToOne: false
+            referencedRelation: "cranes"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "supplier_payments_supplier_id_fkey"
             columns: ["supplier_id"]
