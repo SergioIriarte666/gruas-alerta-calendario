@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -9,12 +9,13 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { useInventoryItems, useInventoryLocations, useInventorySuppliers, useCreateInventoryMovement } from '@/hooks/useInventory';
-import { CalendarIcon, Package } from 'lucide-react';
+import { useInventoryItems, useInventoryLocations, useInventorySuppliers, useCreateInventoryMovement, useCreateInventoryItem, useInventoryCategories } from '@/hooks/useInventory';
+import { CalendarIcon, Package, Plus, X } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { Card } from '@/components/ui/card';
 
 const entrySchema = z.object({
   item_id: z.string().min(1, 'Selecciona un producto'),
@@ -38,7 +39,18 @@ export const SimpleEntryForm: React.FC<SimpleEntryFormProps> = ({ onSuccess }) =
   const { data: items = [] } = useInventoryItems();
   const { data: locations = [] } = useInventoryLocations();
   const { data: suppliers = [] } = useInventorySuppliers();
+  const { data: categories = [] } = useInventoryCategories();
   const createMovement = useCreateInventoryMovement();
+  const createItem = useCreateInventoryItem();
+  
+  const [showNewProductForm, setShowNewProductForm] = useState(false);
+  const [newProductData, setNewProductData] = useState({
+    name: '',
+    unit_of_measure: 'unidad',
+    category_id: '',
+    unit_cost: 0,
+    sku: '',
+  });
 
   const {
     register,
@@ -57,6 +69,50 @@ export const SimpleEntryForm: React.FC<SimpleEntryFormProps> = ({ onSuccess }) =
 
   const watchedValues = watch();
   const selectedItem = items.find(item => item.id === watchedValues.item_id);
+
+  const handleCreateNewProduct = async () => {
+    if (!newProductData.name.trim()) {
+      toast.error('El nombre del producto es requerido');
+      return;
+    }
+
+    try {
+      const result = await createItem.mutateAsync({
+        name: newProductData.name.trim(),
+        unit_of_measure: newProductData.unit_of_measure,
+        category_id: newProductData.category_id || null,
+        unit_cost: newProductData.unit_cost,
+        sku: newProductData.sku.trim() || null,
+        description: null,
+        barcode: null,
+        minimum_stock: 0,
+        maximum_stock: 0,
+        safety_stock: 0,
+        is_critical: false,
+        has_expiration: false,
+        is_active: true,
+      });
+
+      // Select the newly created product
+      setValue('item_id', result.id);
+      setValue('unit_cost', result.unit_cost || 0);
+      
+      // Reset form
+      setNewProductData({
+        name: '',
+        unit_of_measure: 'unidad',
+        category_id: '',
+        unit_cost: 0,
+        sku: '',
+      });
+      setShowNewProductForm(false);
+      
+      toast.success('Producto creado exitosamente');
+    } catch (error) {
+      console.error('Error creating product:', error);
+      toast.error('Error al crear el producto');
+    }
+  };
 
   const onSubmit = async (data: EntryFormData) => {
     try {
@@ -95,31 +151,156 @@ export const SimpleEntryForm: React.FC<SimpleEntryFormProps> = ({ onSuccess }) =
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Producto */}
-          <div className="space-y-2">
-            <Label htmlFor="item_id">Producto *</Label>
-            <Select
-              value={watchedValues.item_id}
-              onValueChange={(value) => {
-                setValue('item_id', value);
-                const item = items.find(i => i.id === value);
-                if (item && item.unit_cost) {
-                  setValue('unit_cost', item.unit_cost);
-                }
-              }}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Seleccionar producto" />
-              </SelectTrigger>
-              <SelectContent>
-                {items.filter(item => item.is_active).map((item) => (
-                  <SelectItem key={item.id} value={item.id}>
-                    {item.name} {item.sku && `(${item.sku})`}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {errors.item_id && (
-              <p className="text-sm text-destructive">{errors.item_id.message}</p>
+          <div className="space-y-2 md:col-span-2">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="item_id">Producto *</Label>
+              {!showNewProductForm && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowNewProductForm(true)}
+                  className="h-auto py-1 px-2 text-xs"
+                >
+                  <Plus className="w-3 h-3 mr-1" />
+                  Crear nuevo producto
+                </Button>
+              )}
+            </div>
+            
+            {!showNewProductForm ? (
+              <>
+                <Select
+                  value={watchedValues.item_id}
+                  onValueChange={(value) => {
+                    setValue('item_id', value);
+                    const item = items.find(i => i.id === value);
+                    if (item && item.unit_cost) {
+                      setValue('unit_cost', item.unit_cost);
+                    }
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccionar producto" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {items.filter(item => item.is_active).map((item) => (
+                      <SelectItem key={item.id} value={item.id}>
+                        {item.name} {item.sku && `(${item.sku})`}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {errors.item_id && (
+                  <p className="text-sm text-destructive">{errors.item_id.message}</p>
+                )}
+              </>
+            ) : (
+              <Card className="p-4 border-primary/20 bg-primary/5">
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <h4 className="text-sm font-medium">Crear Nuevo Producto</h4>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setShowNewProductForm(false);
+                        setNewProductData({
+                          name: '',
+                          unit_of_measure: 'unidad',
+                          category_id: '',
+                          unit_cost: 0,
+                          sku: '',
+                        });
+                      }}
+                      className="h-auto p-1"
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <Label className="text-xs">Nombre del Producto *</Label>
+                      <Input
+                        value={newProductData.name}
+                        onChange={(e) => setNewProductData({ ...newProductData, name: e.target.value })}
+                        placeholder="Ej: Aceite Hidráulico"
+                      />
+                    </div>
+                    
+                    <div className="space-y-1">
+                      <Label className="text-xs">SKU (Código)</Label>
+                      <Input
+                        value={newProductData.sku}
+                        onChange={(e) => setNewProductData({ ...newProductData, sku: e.target.value })}
+                        placeholder="Ej: ACE-001"
+                      />
+                    </div>
+                    
+                    <div className="space-y-1">
+                      <Label className="text-xs">Unidad de Medida *</Label>
+                      <Select
+                        value={newProductData.unit_of_measure}
+                        onValueChange={(value) => setNewProductData({ ...newProductData, unit_of_measure: value })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="unidad">Unidad</SelectItem>
+                          <SelectItem value="litro">Litro</SelectItem>
+                          <SelectItem value="kilogramo">Kilogramo</SelectItem>
+                          <SelectItem value="metro">Metro</SelectItem>
+                          <SelectItem value="caja">Caja</SelectItem>
+                          <SelectItem value="paquete">Paquete</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    
+                    <div className="space-y-1">
+                      <Label className="text-xs">Categoría</Label>
+                      <Select
+                        value={newProductData.category_id}
+                        onValueChange={(value) => setNewProductData({ ...newProductData, category_id: value })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Seleccionar" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {categories.filter(c => c.is_active).map((category) => (
+                            <SelectItem key={category.id} value={category.id}>
+                              {category.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    
+                    <div className="space-y-1">
+                      <Label className="text-xs">Costo Unitario ($)</Label>
+                      <Input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={newProductData.unit_cost}
+                        onChange={(e) => setNewProductData({ ...newProductData, unit_cost: parseFloat(e.target.value) || 0 })}
+                      />
+                    </div>
+                  </div>
+                  
+                  <Button
+                    type="button"
+                    onClick={handleCreateNewProduct}
+                    disabled={createItem.isPending || !newProductData.name.trim()}
+                    className="w-full"
+                    size="sm"
+                  >
+                    {createItem.isPending ? 'Creando...' : 'Crear y Seleccionar Producto'}
+                  </Button>
+                </div>
+              </Card>
             )}
           </div>
 
