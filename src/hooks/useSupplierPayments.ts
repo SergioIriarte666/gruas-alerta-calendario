@@ -95,7 +95,25 @@ export const useSupplierPayments = () => {
         .single();
 
       if (error) throw error;
-      return payment as SupplierPayment;
+
+      const typedPayment = payment as SupplierPayment;
+
+      // Si se está marcando como paid y tiene detalles de productos, ejecutar lógica adicional
+      if (data.status === 'paid' && payment && data.part_name && data.crane_id) {
+        await createPartCostAndInventory({
+          paymentId: id,
+          paymentData: typedPayment,
+          partDetails: {
+            part_name: data.part_name,
+            part_quantity: data.part_quantity || 1,
+            part_unit_price: data.part_unit_price || 0,
+            crane_id: data.crane_id,
+            add_to_inventory: data.add_to_inventory || false
+          }
+        });
+      }
+
+      return typedPayment;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['supplier-payments'] });
@@ -107,6 +125,133 @@ export const useSupplierPayments = () => {
       toast.error('Error al actualizar el pago');
     }
   });
+
+  // Función auxiliar para crear costos, crane_parts e inventory_movements
+  const createPartCostAndInventory = async ({
+    paymentId,
+    paymentData,
+    partDetails
+  }: {
+    paymentId: string;
+    paymentData: SupplierPayment;
+    partDetails: {
+      part_name: string;
+      part_quantity: number;
+      part_unit_price: number;
+      crane_id: string;
+      add_to_inventory: boolean;
+    }
+  }) => {
+    // Obtener nombre del proveedor
+    let supplierName = 'Proveedor';
+    if (paymentData.supplier_id) {
+      const { data: supplierData } = await supabase
+        .from('suppliers')
+        .select('name')
+        .eq('id', paymentData.supplier_id)
+        .single();
+      
+      if (supplierData) {
+        supplierName = supplierData.name;
+      }
+    }
+
+    // Obtener categoría de Mantenimiento
+    const { data: maintenanceCategory } = await supabase
+      .from('cost_categories')
+      .select('id')
+      .eq('name', 'Mantenimiento')
+      .single();
+
+    if (!maintenanceCategory) {
+      throw new Error('Categoría de Mantenimiento no encontrada');
+    }
+
+    const totalAmount = partDetails.part_quantity * partDetails.part_unit_price;
+
+    // Crear costo específico para piezas
+    const { data: costData, error: costError } = await supabase
+      .from('costs')
+      .insert({
+        amount: totalAmount,
+        category_id: maintenanceCategory.id,
+        crane_id: partDetails.crane_id,
+        date: paymentData.paid_date || new Date().toISOString().split('T')[0],
+        description: `Compra de piezas: ${partDetails.part_name}`,
+        notes: `Pago a proveedor. Cantidad: ${partDetails.part_quantity}, Precio unitario: $${partDetails.part_unit_price}`,
+        subcategory: 'Piezas y Repuestos',
+        supplier_payment_id: paymentId,
+        supplier_id: paymentData.supplier_id,
+        created_by: (await supabase.auth.getUser()).data.user?.id
+      })
+      .select()
+      .single();
+
+    if (costError) throw costError;
+
+    // Si add_to_inventory es true, crear movimiento de inventario
+    if (partDetails.add_to_inventory) {
+      // Buscar o crear el item de inventario
+      const { data: existingItem } = await supabase
+        .from('inventory_items')
+        .select('id')
+        .eq('name', partDetails.part_name)
+        .single();
+
+      let itemId = existingItem?.id;
+
+      // Si no existe, crear el item
+      if (!itemId) {
+        const { data: newItem, error: itemError } = await supabase
+          .from('inventory_items')
+          .insert({
+            name: partDetails.part_name,
+            unit_of_measure: 'unidad',
+            unit_cost: partDetails.part_unit_price,
+            created_by: (await supabase.auth.getUser()).data.user?.id
+          })
+          .select()
+          .single();
+
+        if (itemError) throw itemError;
+        itemId = newItem.id;
+      }
+
+      // Obtener la ubicación por defecto (Bodega Principal)
+      const { data: defaultLocation } = await supabase
+        .from('inventory_locations')
+        .select('id')
+        .eq('name', 'Bodega Principal')
+        .single();
+
+      if (!defaultLocation) {
+        throw new Error('Ubicación de bodega no encontrada');
+      }
+
+      // Crear movimiento de inventario
+      const { error: movementError } = await supabase
+        .from('inventory_movements')
+        .insert({
+          item_id: itemId,
+          location_id: defaultLocation.id,
+          movement_type: 'entry',
+          quantity: partDetails.part_quantity,
+          unit_cost: partDetails.part_unit_price,
+          total_cost: totalAmount,
+          crane_id: partDetails.crane_id,
+          supplier_id: paymentData.supplier_id,
+          cost_id: costData.id,
+          movement_date: paymentData.paid_date || new Date().toISOString().split('T')[0],
+          reason: 'Compra desde módulo de proveedores',
+          observations: `Pago: ${paymentData.reference_number || paymentData.description}`,
+          created_by: (await supabase.auth.getUser()).data.user?.id
+        });
+
+      if (movementError) throw movementError;
+    }
+
+    // NOTA: La creación de crane_parts se maneja automáticamente por triggers
+  };
 
   const markPaymentAsPaidMutation = useMutation({
     mutationFn: async ({ 
@@ -121,6 +266,7 @@ export const useSupplierPayments = () => {
         part_quantity: number;
         part_unit_price: number;
         crane_id: string;
+        add_to_inventory?: boolean;
       }
     }) => {
       // Marcar el pago como pagado
@@ -137,55 +283,21 @@ export const useSupplierPayments = () => {
 
       if (paymentError) throw paymentError;
 
-      // Si hay detalles de piezas, crear costo específico y registro en crane_parts
+      const typedPaymentData = paymentData as SupplierPayment;
+
+      // Si hay detalles de piezas, crear todo
       if (partDetails) {
-        // Obtener nombre del proveedor
-        let supplierName = 'Proveedor';
-        if (paymentData.supplier_id) {
-          const { data: supplierData } = await supabase
-            .from('suppliers')
-            .select('name')
-            .eq('id', paymentData.supplier_id)
-            .single();
-          
-          if (supplierData) {
-            supplierName = supplierData.name;
+        await createPartCostAndInventory({
+          paymentId: id,
+          paymentData: typedPaymentData,
+          partDetails: {
+            ...partDetails,
+            add_to_inventory: partDetails.add_to_inventory || false
           }
-        }
-
-        // Obtener categoría de Mantenimiento
-        const { data: maintenanceCategory } = await supabase
-          .from('cost_categories')
-          .select('id')
-          .eq('name', 'Mantenimiento')
-          .single();
-
-        if (maintenanceCategory) {
-          // Crear costo específico para piezas
-          const { data: costData, error: costError } = await supabase
-            .from('costs')
-            .insert({
-              amount: paid_amount,
-              category_id: maintenanceCategory.id,
-              crane_id: partDetails.crane_id,
-              date: new Date().toISOString().split('T')[0],
-              description: `Compra de piezas: ${partDetails.part_name}`,
-              notes: `Pago a proveedor automático por compra de piezas. Cantidad: ${partDetails.part_quantity}, Precio unitario: $${partDetails.part_unit_price}`,
-              subcategory: 'Piezas y Repuestos',
-              supplier_payment_id: id,
-              created_by: (await supabase.auth.getUser()).data.user?.id
-            })
-            .select()
-            .single();
-
-          if (costError) throw costError;
-
-          // NOTA: La creación de crane_parts ahora se maneja automáticamente por triggers
-          // cuando se crea el costo específico. No se crea manualmente para evitar duplicados.
-        }
+        });
       }
 
-      return paymentData;
+      return typedPaymentData;
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['supplier-payments'] });
