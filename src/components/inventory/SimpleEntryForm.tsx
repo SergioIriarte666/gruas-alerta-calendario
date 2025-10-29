@@ -10,7 +10,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useInventoryItems, useInventoryLocations, useCreateInventoryMovement, useCreateInventoryItem, useInventoryCategories } from '@/hooks/useInventory';
-import { SupplierSelector } from '@/components/costs/form/SupplierSelector';
+import { useSuppliers } from '@/hooks/useSuppliers';
+import { QuickSupplierModal } from '@/components/suppliers/QuickSupplierModal';
+import { Building2 } from 'lucide-react';
 import { CalendarIcon, Package, Plus, X } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -40,10 +42,12 @@ export const SimpleEntryForm: React.FC<SimpleEntryFormProps> = ({ onSuccess }) =
   const { data: items = [] } = useInventoryItems();
   const { data: locations = [] } = useInventoryLocations();
   const { data: categories = [] } = useInventoryCategories();
+  const { suppliers } = useSuppliers();
   const createMovement = useCreateInventoryMovement();
   const createItem = useCreateInventoryItem();
   
   const [showNewProductForm, setShowNewProductForm] = useState(false);
+  const [showQuickSupplierModal, setShowQuickSupplierModal] = useState(false);
   const [newProductData, setNewProductData] = useState({
     name: '',
     unit_of_measure: 'unidad',
@@ -52,7 +56,13 @@ export const SimpleEntryForm: React.FC<SimpleEntryFormProps> = ({ onSuccess }) =
     sku: '',
   });
 
-  const form = useForm<EntryFormData>({
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+    setValue,
+    watch,
+  } = useForm<EntryFormData>({
     resolver: zodResolver(entrySchema),
     defaultValues: {
       movement_date: new Date(),
@@ -60,14 +70,6 @@ export const SimpleEntryForm: React.FC<SimpleEntryFormProps> = ({ onSuccess }) =
       unit_cost: 0,
     },
   });
-
-  const {
-    register,
-    handleSubmit,
-    formState: { errors, isSubmitting },
-    setValue,
-    watch,
-  } = form;
 
   const watchedValues = watch();
   const selectedItem = items.find(item => item.id === watchedValues.item_id);
@@ -417,7 +419,47 @@ export const SimpleEntryForm: React.FC<SimpleEntryFormProps> = ({ onSuccess }) =
         </summary>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
           {/* Proveedor */}
-          <SupplierSelector form={form} />
+          <div className="space-y-2">
+            <Label htmlFor="supplier_id" className="flex items-center gap-2">
+              <Building2 className="w-4 h-4" />
+              Proveedor
+            </Label>
+            <Select
+              value={watchedValues.supplier_id || 'none'}
+              onValueChange={(value) => {
+                if (value === 'new_supplier') {
+                  setShowQuickSupplierModal(true);
+                } else if (value === 'none') {
+                  setValue('supplier_id', undefined);
+                } else {
+                  setValue('supplier_id', value);
+                }
+              }}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Seleccionar proveedor" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">Sin proveedor</SelectItem>
+                {suppliers.map((supplier) => (
+                  <SelectItem key={supplier.id} value={supplier.id}>
+                    <div className="flex flex-col">
+                      <span className="font-medium">{supplier.name}</span>
+                      {supplier.rut && (
+                        <span className="text-xs text-muted-foreground">RUT: {supplier.rut}</span>
+                      )}
+                    </div>
+                  </SelectItem>
+                ))}
+                <SelectItem value="new_supplier">
+                  <div className="flex items-center gap-2 text-primary font-medium">
+                    <Plus className="h-4 w-4" />
+                    Crear nuevo proveedor...
+                  </div>
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
 
           {/* Documento de Referencia */}
           <div className="space-y-2">
@@ -461,6 +503,15 @@ export const SimpleEntryForm: React.FC<SimpleEntryFormProps> = ({ onSuccess }) =
           {isSubmitting ? 'Registrando...' : 'Registrar Entrada'}
         </Button>
       </div>
+
+      <QuickSupplierModal
+        isOpen={showQuickSupplierModal}
+        onClose={() => setShowQuickSupplierModal(false)}
+        onSuccess={(supplierId) => {
+          setValue('supplier_id', supplierId);
+          setShowQuickSupplierModal(false);
+        }}
+      />
     </form>
   );
 };
