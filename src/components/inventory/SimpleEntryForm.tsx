@@ -9,7 +9,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { useInventoryItems, useInventoryLocations, useInventorySuppliers, useCreateInventoryMovement, useCreateInventoryItem, useInventoryCategories } from '@/hooks/useInventory';
+import { useInventoryItems, useInventoryLocations, useCreateInventoryMovement, useCreateInventoryItem, useInventoryCategories } from '@/hooks/useInventory';
+import { SupplierSelector } from '@/components/costs/form/SupplierSelector';
 import { CalendarIcon, Package, Plus, X } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -38,7 +39,6 @@ interface SimpleEntryFormProps {
 export const SimpleEntryForm: React.FC<SimpleEntryFormProps> = ({ onSuccess }) => {
   const { data: items = [] } = useInventoryItems();
   const { data: locations = [] } = useInventoryLocations();
-  const { data: suppliers = [] } = useInventorySuppliers();
   const { data: categories = [] } = useInventoryCategories();
   const createMovement = useCreateInventoryMovement();
   const createItem = useCreateInventoryItem();
@@ -52,13 +52,7 @@ export const SimpleEntryForm: React.FC<SimpleEntryFormProps> = ({ onSuccess }) =
     sku: '',
   });
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors, isSubmitting },
-    setValue,
-    watch,
-  } = useForm<EntryFormData>({
+  const form = useForm<EntryFormData>({
     resolver: zodResolver(entrySchema),
     defaultValues: {
       movement_date: new Date(),
@@ -66,6 +60,14 @@ export const SimpleEntryForm: React.FC<SimpleEntryFormProps> = ({ onSuccess }) =
       unit_cost: 0,
     },
   });
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+    setValue,
+    watch,
+  } = form;
 
   const watchedValues = watch();
   const selectedItem = items.find(item => item.id === watchedValues.item_id);
@@ -415,25 +417,7 @@ export const SimpleEntryForm: React.FC<SimpleEntryFormProps> = ({ onSuccess }) =
         </summary>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
           {/* Proveedor */}
-          <div className="space-y-2">
-            <Label htmlFor="supplier_id">Proveedor</Label>
-            <Select
-              value={watchedValues.supplier_id}
-              onValueChange={(value) => setValue('supplier_id', value)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Seleccionar proveedor" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">Sin proveedor</SelectItem>
-                {suppliers.filter(s => s.is_active).map((supplier) => (
-                  <SelectItem key={supplier.id} value={supplier.id}>
-                    {supplier.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          <SupplierSelector form={form} />
 
           {/* Documento de Referencia */}
           <div className="space-y-2">
