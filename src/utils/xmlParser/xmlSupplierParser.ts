@@ -619,7 +619,11 @@ export class XMLSupplierParser {
     return !!(document.folio && document.folio.trim().length > 0 && document.total_amount > 0);
   }
 
-  public convertDocumentsToPayments(documents: XMLDocumentData[], suppliers: XMLSupplierData[]): XMLSupplierPaymentData[] {
+  public convertDocumentsToPayments(
+    documents: XMLDocumentData[], 
+    suppliers: XMLSupplierData[],
+    dueDateOverrides?: Record<string, string>
+  ): XMLSupplierPaymentData[] {
     const payments: XMLSupplierPaymentData[] = [];
     const supplierMap = new Map<string, XMLSupplierData>();
     
@@ -636,10 +640,15 @@ export class XMLSupplierParser {
       const supplier = supplierMap.get(doc.supplier_rut);
       const category = supplier ? supplier.category : this.categorizeByBusiness(doc.description);
 
+      // Priorizar fecha personalizada, luego fecha del documento, luego calcular por defecto
+      const dueDate = (dueDateOverrides && dueDateOverrides[doc.folio]) || 
+                      doc.due_date || 
+                      this.calculateDefaultDueDate(doc.issue_date);
+
       payments.push({
         supplier_rut: doc.supplier_rut,
         amount: doc.total_amount,
-        due_date: doc.due_date || this.calculateDefaultDueDate(doc.issue_date),
+        due_date: dueDate,
         description: doc.description,
         category: category,
         reference_number: doc.folio,

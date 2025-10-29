@@ -9,7 +9,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Upload, FileText, AlertCircle, CheckCircle, Loader2, X, FileSpreadsheet, Users, Receipt, DollarSign, Calendar, Building } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Calendar as CalendarComponent } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Upload, FileText, AlertCircle, CheckCircle, Loader2, X, FileSpreadsheet, Users, Receipt, DollarSign, Calendar, Building, CalendarIcon } from 'lucide-react';
+import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
 import { XMLCompleteParseResult, XMLDocumentData, XMLSupplierData, XMLSupplierPaymentData } from '@/types/suppliers';
 import { useSuppliers } from '@/hooks/useSuppliers';
 import { useSupplierCategoryManager } from '@/hooks/useSupplierCategoryManager';
@@ -35,6 +40,8 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
   const [selectedSuppliers, setSelectedSuppliers] = useState<Set<string>>(new Set());
   const [selectedDocuments, setSelectedDocuments] = useState<Set<string>>(new Set());
   const [createPayments, setCreatePayments] = useState(true);
+  const [dueDateOverrides, setDueDateOverrides] = useState<Record<string, string>>({});
+  const [defaultDaysToAdd, setDefaultDaysToAdd] = useState<number>(30);
   const {
     suppliers,
     createSupplier
@@ -150,7 +157,11 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
       // Create payments if requested
       if (createPayments) {
         const parser = new XMLSupplierParser();
-        const paymentsData = parser.convertDocumentsToPayments(parseResult.documents.filter(d => selectedDocuments.has(d.folio)), parseResult.suppliers);
+        const paymentsData = parser.convertDocumentsToPayments(
+          parseResult.documents.filter(d => selectedDocuments.has(d.folio)), 
+          parseResult.suppliers,
+          dueDateOverrides
+        );
         for (const paymentData of paymentsData) {
           try {
             const supplierId = createdSupplierMap.get(paymentData.supplier_rut);
@@ -224,6 +235,31 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
     setSelectedSuppliers(new Set());
     setSelectedDocuments(new Set());
     setCreatePayments(true);
+    setDueDateOverrides({});
+    setDefaultDaysToAdd(30);
+  };
+
+  const handleDueDateChange = (documentFolio: string, date: Date | undefined) => {
+    if (date) {
+      setDueDateOverrides(prev => ({
+        ...prev,
+        [documentFolio]: format(date, 'yyyy-MM-dd')
+      }));
+    }
+  };
+
+  const applyDefaultDaysToAll = () => {
+    if (!parseResult) return;
+    const newOverrides: Record<string, string> = {};
+    parseResult.documents.forEach(doc => {
+      if (selectedDocuments.has(doc.folio) && doc.issue_date) {
+        const issueDate = new Date(doc.issue_date);
+        issueDate.setDate(issueDate.getDate() + defaultDaysToAdd);
+        newOverrides[doc.folio] = format(issueDate, 'yyyy-MM-dd');
+      }
+    });
+    setDueDateOverrides(newOverrides);
+    toast.success(`Fechas de vencimiento actualizadas a ${defaultDaysToAdd} días desde emisión`);
   };
   const formatFileSize = (bytes: number): string => {
     if (bytes === 0) return '0 Bytes';
@@ -370,13 +406,45 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
                 <CardHeader>
                   <CardTitle className="text-foreground">Opciones de Importación</CardTitle>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="space-y-4">
                   <div className="flex items-center space-x-2">
                     <Checkbox id="create-payments" checked={createPayments} onCheckedChange={checked => setCreatePayments(checked === true)} />
                     <label htmlFor="create-payments" className="text-foreground">
                       Crear pagos automáticamente desde los documentos
                     </label>
                   </div>
+                  
+                  {createPayments && parseResult.documents.length > 0 && (
+                    <div className="space-y-3 pt-3 border-t">
+                      <h4 className="text-sm font-medium text-foreground">Configuración de Fechas de Vencimiento</h4>
+                      <div className="flex items-end gap-3">
+                        <div className="flex-1">
+                          <label className="text-sm text-muted-foreground mb-1 block">
+                            Días hasta vencimiento por defecto
+                          </label>
+                          <Input
+                            type="number"
+                            min="0"
+                            max="365"
+                            value={defaultDaysToAdd}
+                            onChange={(e) => setDefaultDaysToAdd(parseInt(e.target.value) || 30)}
+                            className="w-32"
+                          />
+                        </div>
+                        <Button
+                          variant="outline"
+                          onClick={applyDefaultDaysToAll}
+                          disabled={selectedDocuments.size === 0}
+                        >
+                          Aplicar a todos los documentos
+                        </Button>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        Las fechas de vencimiento se calcularán desde la fecha de emisión de cada documento. 
+                        También puedes editarlas individualmente en la lista de documentos.
+                      </p>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
 
@@ -455,32 +523,94 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="space-y-3 max-h-60 overflow-y-auto">
-                      {parseResult.documents.map((document, index) => <div key={index} className="flex items-center justify-between p-3 bg-muted/50 rounded">
-                          <div className="flex items-center space-x-3">
-                            <Checkbox checked={selectedDocuments.has(document.folio)} onCheckedChange={checked => {
-                      if (checked === true) {
-                        toggleDocumentSelection(document.folio);
-                      } else if (checked === false) {
-                        toggleDocumentSelection(document.folio);
-                      }
-                    }} />
-                            <div className="min-w-0 flex-1">
-                              <p className="text-foreground font-medium">{document.description}</p>
-                              <div className="flex items-center space-x-4 text-sm text-muted-foreground">
-                                <span>Folio: {document.folio}</span>
-                                <span>Total: ${document.total_amount.toLocaleString()}</span>
-                                {document.due_date && <span className="flex items-center gap-1">
-                                    <Calendar className="h-3 w-3" />
-                                    {document.due_date}
-                                  </span>}
+                    <div className="space-y-3 max-h-96 overflow-y-auto">
+                      {parseResult.documents.map((document, index) => {
+                        const parser = new XMLSupplierParser();
+                        const defaultDueDate = dueDateOverrides[document.folio] || 
+                          document.due_date || 
+                          (() => {
+                            const date = new Date(document.issue_date || new Date());
+                            date.setDate(date.getDate() + defaultDaysToAdd);
+                            return format(date, 'yyyy-MM-dd');
+                          })();
+                        const hasCustomDate = !!dueDateOverrides[document.folio];
+                        
+                        return (
+                          <div key={index} className="flex items-center justify-between p-3 bg-muted/50 rounded gap-3">
+                            <div className="flex items-center space-x-3 flex-1 min-w-0">
+                              <Checkbox 
+                                checked={selectedDocuments.has(document.folio)} 
+                                onCheckedChange={checked => {
+                                  if (checked === true) {
+                                    toggleDocumentSelection(document.folio);
+                                  } else if (checked === false) {
+                                    toggleDocumentSelection(document.folio);
+                                  }
+                                }} 
+                              />
+                              <div className="min-w-0 flex-1">
+                                <p className="text-foreground font-medium truncate">{document.description}</p>
+                                <div className="flex items-center space-x-4 text-sm text-muted-foreground flex-wrap">
+                                  <span>Folio: {document.folio}</span>
+                                  <span>Total: ${document.total_amount.toLocaleString()}</span>
+                                  {document.issue_date && (
+                                    <span className="flex items-center gap-1">
+                                      <Calendar className="h-3 w-3" />
+                                      Emisión: {document.issue_date}
+                                    </span>
+                                  )}
+                                </div>
                               </div>
                             </div>
+                            
+                            <div className="flex items-center gap-2 flex-shrink-0">
+                              <Popover>
+                                <PopoverTrigger asChild>
+                                  <Button
+                                    variant="outline"
+                                    className={cn(
+                                      "justify-start text-left font-normal min-w-[200px]",
+                                      !defaultDueDate && "text-muted-foreground"
+                                    )}
+                                    size="sm"
+                                  >
+                                    <CalendarIcon className="mr-2 h-4 w-4" />
+                                    {defaultDueDate ? (
+                                      <span className="flex items-center gap-2">
+                                        {format(new Date(defaultDueDate), 'dd/MM/yyyy')}
+                                        {hasCustomDate && (
+                                          <Badge variant="secondary" className="text-xs">
+                                            Personalizada
+                                          </Badge>
+                                        )}
+                                      </span>
+                                    ) : (
+                                      <span>Seleccionar fecha</span>
+                                    )}
+                                  </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-auto p-0" align="end">
+                                  <CalendarComponent
+                                    mode="single"
+                                    selected={defaultDueDate ? new Date(defaultDueDate) : undefined}
+                                    onSelect={(date) => handleDueDateChange(document.folio, date)}
+                                    disabled={(date) => {
+                                      if (!document.issue_date) return false;
+                                      return date < new Date(document.issue_date);
+                                    }}
+                                    initialFocus
+                                    className={cn("p-3 pointer-events-auto")}
+                                  />
+                                </PopoverContent>
+                              </Popover>
+                              
+                              <Badge variant="outline" className="whitespace-nowrap">
+                                {document.document_type}
+                              </Badge>
+                            </div>
                           </div>
-                          <Badge variant="outline">
-                            {document.document_type}
-                          </Badge>
-                        </div>)}
+                        );
+                      })}
                     </div>
                   </CardContent>
                 </Card>}
