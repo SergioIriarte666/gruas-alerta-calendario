@@ -50,7 +50,7 @@ export const useSupplierPayments = () => {
           amount: data.amount,
           due_date: data.due_date,
           description: data.description,
-          category: data.category,
+          category: data.category || null,
           reference_number: data.reference_number || null,
           notes: data.notes || null,
           status: data.status || 'pending',
@@ -80,9 +80,16 @@ export const useSupplierPayments = () => {
 
   const updatePaymentMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: Partial<PaymentFormData> }): Promise<SupplierPayment> => {
+      // Clean up empty strings for UUID fields
+      const cleanedData = {
+        ...data,
+        crane_id: data.crane_id === "" ? null : data.crane_id,
+        category: data.category === "" ? null : data.category,
+      };
+      
       const { data: payment, error } = await supabase
         .from('supplier_payments')
-        .update(data)
+        .update(cleanedData)
         .eq('id', id)
         .select()
         .single();
