@@ -49,7 +49,7 @@ export const ServicesHeader = ({
             Administra todos los servicios de grúa del sistema
           </p>
         </div>
-        <div className="flex flex-col items-end gap-2">
+        <div className="flex flex-col items-center gap-2 w-full">
           <div className="flex items-center space-x-2">
             {/* View Toggle */}
             <div className="flex items-center bg-gray-100 rounded-lg p-1">
@@ -101,7 +101,7 @@ export const ServicesHeader = ({
           {isAdmin && (
             <Button 
               size="lg"
-              className="bg-purple-600 hover:bg-purple-700 text-white font-bold text-lg px-8 py-6 shadow-lg"
+              className="bg-purple-400 hover:bg-purple-500 text-white font-bold text-lg px-8 py-6 shadow-lg"
               title="Crear un nuevo servicio"
               onClick={onNewService}
             >
