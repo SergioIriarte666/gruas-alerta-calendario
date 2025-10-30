@@ -100,11 +100,12 @@ export const ServicesHeader = ({
           </div>
           {isAdmin && (
             <Button 
-              className="bg-tms-green hover:bg-tms-green/80 text-black font-medium"
+              size="lg"
+              className="bg-purple-600 hover:bg-purple-700 text-white font-bold text-lg px-8 py-6 shadow-lg"
               title="Crear un nuevo servicio"
               onClick={onNewService}
             >
-              <Plus className="w-4 h-4 mr-2" />
+              <Plus className="w-6 h-6 mr-3" />
               Nuevo Servicio
             </Button>
           )}
