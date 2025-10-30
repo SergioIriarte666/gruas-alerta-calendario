@@ -49,60 +49,64 @@ export const ServicesHeader = ({
             Administra todos los servicios de grúa del sistema
           </p>
         </div>
-        <div className="flex items-center space-x-2">
-          {/* View Toggle */}
-          <div className="flex items-center bg-gray-100 rounded-lg p-1">
-            <Button
-              variant={viewMode === 'table' ? 'default' : 'ghost'}
-              size="sm"
-              onClick={() => onViewModeChange('table')}
-              className={viewMode === 'table' ? 'bg-white shadow-sm' : ''}
-            >
-              <Table className="w-4 h-4 mr-1" />
-              Tabla
-            </Button>
-            <Button
-              variant={viewMode === 'pipeline' ? 'default' : 'ghost'}
-              size="sm"
-              onClick={() => onViewModeChange('pipeline')}
-              className={viewMode === 'pipeline' ? 'bg-white shadow-sm' : ''}
-            >
-              <BarChart3 className="w-4 h-4 mr-1" />
-              Pipeline
-            </Button>
-          </div>
+        <div className="flex flex-col items-end gap-2">
+          <div className="flex items-center space-x-2">
+            {/* View Toggle */}
+            <div className="flex items-center bg-gray-100 rounded-lg p-1">
+              <Button
+                variant={viewMode === 'table' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => onViewModeChange('table')}
+                className={viewMode === 'table' ? 'bg-white shadow-sm' : ''}
+              >
+                <Table className="w-4 h-4 mr-1" />
+                Tabla
+              </Button>
+              <Button
+                variant={viewMode === 'pipeline' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => onViewModeChange('pipeline')}
+                className={viewMode === 'pipeline' ? 'bg-white shadow-sm' : ''}
+              >
+                <BarChart3 className="w-4 h-4 mr-1" />
+                Pipeline
+              </Button>
+            </div>
 
-          <GlobalRefreshButton />
+            <GlobalRefreshButton />
+            {isAdmin && (
+              <>
+                <Button 
+                  onClick={onExportPending}
+                  disabled={isExportingPending || pendingServicesCount === 0}
+                  variant="outline"
+                  className="border-orange-300 bg-orange-50 text-orange-700 hover:bg-orange-100 disabled:opacity-50"
+                  title={pendingServicesCount === 0 ? "No hay servicios pendientes" : "Exportar servicios pendientes a PDF"}
+                >
+                  <FileDown className={`w-4 h-4 mr-2 ${isExportingPending ? 'animate-bounce' : ''}`} />
+                  Exportar Pendientes ({pendingServicesCount})
+                </Button>
+                <Button 
+                  onClick={onCSVUpload}
+                  variant="outline"
+                  className="border-blue-300 bg-blue-50 text-blue-700 hover:bg-blue-100"
+                  title="Cargar servicios desde un archivo CSV"
+                >
+                  <Upload className="w-4 h-4 mr-2" />
+                  Carga Masiva
+                </Button>
+              </>
+            )}
+          </div>
           {isAdmin && (
-            <>
-              <Button 
-                onClick={onExportPending}
-                disabled={isExportingPending || pendingServicesCount === 0}
-                variant="outline"
-                className="border-orange-300 bg-orange-50 text-orange-700 hover:bg-orange-100 disabled:opacity-50"
-                title={pendingServicesCount === 0 ? "No hay servicios pendientes" : "Exportar servicios pendientes a PDF"}
-              >
-                <FileDown className={`w-4 h-4 mr-2 ${isExportingPending ? 'animate-bounce' : ''}`} />
-                Exportar Pendientes ({pendingServicesCount})
-              </Button>
-              <Button 
-                onClick={onCSVUpload}
-                variant="outline"
-                className="border-blue-300 bg-blue-50 text-blue-700 hover:bg-blue-100"
-                title="Cargar servicios desde un archivo CSV"
-              >
-                <Upload className="w-4 h-4 mr-2" />
-                Carga Masiva
-              </Button>
-              <Button 
-                className="bg-tms-green hover:bg-tms-green/80 text-black font-medium"
-                title="Crear un nuevo servicio"
-                onClick={onNewService}
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Nuevo Servicio
-              </Button>
-            </>
+            <Button 
+              className="bg-tms-green hover:bg-tms-green/80 text-black font-medium"
+              title="Crear un nuevo servicio"
+              onClick={onNewService}
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Nuevo Servicio
+            </Button>
           )}
         </div>
       </div>
