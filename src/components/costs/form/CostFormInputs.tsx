@@ -232,13 +232,13 @@ export const CostFormInputs = ({
 
             {/* Campos específicos para Piezas y Repuestos */}
             {isPiezasYRepuestos && (
-                <Card className="bg-blue-900/20 border-blue-600">
+                <Card className="bg-blue-50/50 border-blue-200">
                     <CardHeader className="pb-4">
-                        <CardTitle className="flex items-center gap-2 text-lg text-blue-200">
+                        <CardTitle className="flex items-center gap-2 text-lg text-blue-900">
                             <Package className="w-5 h-5" />
                             Información de Piezas y Repuestos
                         </CardTitle>
-                        <p className="text-sm text-blue-300">
+                        <p className="text-sm text-blue-700">
                             Complete los detalles específicos de la pieza o repuesto
                         </p>
                     </CardHeader>
