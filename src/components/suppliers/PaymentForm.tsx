@@ -95,8 +95,12 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
 
   const isSubmitting = isCreating || isUpdating;
   const selectedCategory = form.watch('category');
-  // Permitir detalles de piezas para todas las categorías
-  const isPiezasCategory = true;
+  // Solo mostrar detalles de piezas para categoría "Mantenimiento"
+  const selectedCategoryData = activeCategories.find(cat => cat.id === selectedCategory);
+  const isPiezasCategory = selectedCategoryData ? 
+    (selectedCategoryData.name?.toLowerCase().includes('mantenimiento') || 
+     selectedCategoryData.label?.toLowerCase().includes('mantenimiento')) : 
+    false;
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 suppliers-scope">
