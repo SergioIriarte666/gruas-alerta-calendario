@@ -422,14 +422,30 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
                           <label className="text-sm text-muted-foreground mb-1 block">
                             Días hasta vencimiento por defecto
                           </label>
-                          <Input
-                            type="number"
-                            min="0"
-                            max="365"
-                            value={defaultDaysToAdd}
-                            onChange={(e) => setDefaultDaysToAdd(parseInt(e.target.value) || 30)}
-                            className="w-32"
-                          />
+                          <div className="flex gap-2">
+                            <Input
+                              type="number"
+                              min="0"
+                              max="365"
+                              value={defaultDaysToAdd}
+                              onChange={(e) => {
+                                const value = e.target.value;
+                                if (value === '' || value === '0') {
+                                  setDefaultDaysToAdd(0);
+                                } else {
+                                  setDefaultDaysToAdd(parseInt(value) || 0);
+                                }
+                              }}
+                              className="w-32"
+                            />
+                            <Button
+                              variant="outline"
+                              onClick={() => setDefaultDaysToAdd(0)}
+                              className="whitespace-nowrap"
+                            >
+                              Contado
+                            </Button>
+                          </div>
                         </div>
                         <Button
                           variant="outline"
