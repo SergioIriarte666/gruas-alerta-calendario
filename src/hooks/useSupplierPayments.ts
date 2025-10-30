@@ -269,30 +269,19 @@ export const useSupplierPayments = () => {
         add_to_inventory?: boolean;
       }
     }) => {
-      console.log('markPaymentAsPaid - Iniciando con:', { id, paid_amount, partDetails });
-      
       // Marcar el pago como pagado
-      const updatePayload = {
-        status: 'paid' as const,
-        paid_date: new Date().toISOString().split('T')[0],
-        paid_amount
-      };
-      
-      console.log('markPaymentAsPaid - Payload de actualización:', updatePayload);
-      
       const { data: paymentData, error: paymentError } = await supabase
         .from('supplier_payments')
-        .update(updatePayload)
+        .update({
+          status: 'paid',
+          paid_date: new Date().toISOString().split('T')[0],
+          paid_amount
+        })
         .eq('id', id)
         .select()
         .single();
 
-      if (paymentError) {
-        console.error('markPaymentAsPaid - Error en actualización:', paymentError);
-        throw paymentError;
-      }
-      
-      console.log('markPaymentAsPaid - Pago actualizado exitosamente:', paymentData);
+      if (paymentError) throw paymentError;
 
       const typedPaymentData = paymentData as SupplierPayment;
 
@@ -322,17 +311,9 @@ export const useSupplierPayments = () => {
       
       toast.success(message);
     },
-    onError: (error: any) => {
+    onError: (error) => {
       console.error('Error marking payment as paid:', error);
-      console.error('Error details:', {
-        message: error?.message,
-        details: error?.details,
-        hint: error?.hint,
-        code: error?.code
-      });
-      
-      const errorMessage = error?.message || 'Error desconocido al marcar el pago como pagado';
-      toast.error(`Error al marcar el pago como pagado: ${errorMessage}`);
+      toast.error('Error al marcar el pago como pagado');
     }
   });
 
