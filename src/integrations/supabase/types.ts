@@ -3687,6 +3687,16 @@ export type Database = {
       fix_amphos_payment_applications: { Args: never; Returns: Json }
       fix_applied_amount_duplications: { Args: never; Returns: Json }
       fix_duplicate_fact_4011_application: { Args: never; Returns: Json }
+      fix_duplicate_paid_amounts: {
+        Args: never
+        Returns: {
+          correct_paid_amount: number
+          difference: number
+          folio: string
+          invoice_id: string
+          old_paid_amount: number
+        }[]
+      }
       fix_existing_invoice_inconsistencies: {
         Args: never
         Returns: {
