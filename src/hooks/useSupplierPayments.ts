@@ -87,6 +87,12 @@ export const useSupplierPayments = () => {
         category: data.category === "" ? null : data.category,
       };
       
+      // Si se está marcando como paid, agregar paid_date y paid_amount
+      if (data.status === 'paid') {
+        cleanedData.paid_date = cleanedData.paid_date || new Date().toISOString().split('T')[0];
+        cleanedData.paid_amount = cleanedData.paid_amount || data.amount || 0;
+      }
+      
       const { data: payment, error } = await supabase
         .from('supplier_payments')
         .update(cleanedData)

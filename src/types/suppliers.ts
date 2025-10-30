@@ -84,6 +84,9 @@ export interface PaymentFormData {
   crane_id?: string;
   // Nuevo: checkbox para agregar a inventario
   add_to_inventory?: boolean;
+  // Campos para cuando se marca como pagado
+  paid_date?: string;
+  paid_amount?: number;
 }
 
 export interface SupplierStats {
