@@ -787,11 +787,90 @@ El Portal del Operador es una interfaz optimizada para personal de campo que pro
 
 #### Proceso de Movimientos
 
+##### 📝 **Entrada Simplificada** (Nuevo en v2.2.0)
+
+El sistema ofrece un formulario simplificado para registrar entradas de inventario rápidamente:
+
+1. **Acceder al formulario**:
+   - **Desde Inventario** → Botón "Entrada Rápida"
+   - **Desde vista de Stock** → "Agregar Stock"
+   - **Desde detalle de producto** → Icono "+"
+
+2. **Completar datos básicos**:
+   - **Producto**: Seleccionar de lista o crear nuevo
+   - **Cantidad**: Unidades que ingresan
+   - **Ubicación**: Donde se almacenarán
+   - **Proveedor**: Opcional, de donde proviene
+   - **Número de lote**: Para trazabilidad
+   - **Fecha de vencimiento**: Si aplica
+   - **Notas**: Información adicional
+
+3. **Integración automática**:
+   - **Actualización de stock**: Inmediata al guardar
+   - **Costo promedio**: Recalcula automáticamente
+   - **Notificaciones**: Si el producto estaba en stock bajo
+   - **Historial**: Registro completo del movimiento
+
+4. **Crear producto al vuelo**:
+   - Si el producto no existe, opción "Crear Nuevo"
+   - Formulario simplificado emergente
+   - Categorización automática sugerida
+   - Registro y asignación inmediata
+
+**Ventajas de Entrada Simplificada:**
+- ⚡ **Rapidez**: Registro en segundos
+- ✅ **Simplicidad**: Solo campos esenciales
+- 🔄 **Integración**: Con proveedores y costos
+- 📊 **Trazabilidad**: Lotes y vencimientos
+
+##### 📤 **Salida Simplificada** (Nuevo en v2.2.0)
+
+Formulario optimizado para registrar consumos y salidas:
+
+1. **Acceder al formulario**:
+   - **Desde Inventario** → Botón "Salida Rápida"
+   - **Desde vista de Stock** → "Reducir Stock"
+   - **Desde detalle de producto** → Icono "-"
+
+2. **Completar datos básicos**:
+   - **Producto**: Seleccionar existente
+   - **Cantidad**: Unidades que salen
+   - **Ubicación origen**: De donde se retira
+   - **Tipo de salida**: Consumo, venta, préstamo, etc.
+   - **Asignar a**:
+     - **Servicio**: Si es consumo en trabajo
+     - **Grúa**: Si es mantenimiento de equipo
+     - **Operador**: Si es asignación personal
+   - **Notas**: Motivo o destino
+
+3. **Validaciones automáticas**:
+   - **Stock disponible**: Verifica existencias
+   - **Alertas de stock bajo**: Si queda por debajo del mínimo
+   - **Confirmación**: Si es última unidad o crítico
+   - **Bloqueo**: No permite salidas mayores al stock
+
+4. **Integración con servicios**:
+   - **Vinculación automática**: Con servicio activo
+   - **Costo registrado**: En el servicio correspondiente
+   - **Trazabilidad completa**: Desde compra hasta uso
+
+**Ventajas de Salida Simplificada:**
+- ⚡ **Control inmediato**: Stock actualizado al instante
+- ✅ **Prevención**: Validaciones de stock
+- 🔗 **Vinculación**: Con servicios y grúas
+- 📊 **Reportes**: Consumo por servicio/grúa
+
+##### 📋 **Movimientos Avanzados**
+
+Para operaciones más complejas:
+
 1. **Registrar Movimiento**:
    - **Seleccionar tipo** de movimiento
    - **Elegir producto** del catálogo
    - **Indicar cantidad** y motivo
    - **Asignar responsable**
+   - **Adjuntar documentos**: Facturas, remitos
+   - **Fotografías**: Evidencia del movimiento
 
 2. **Validar Información**:
    - **Verificar disponibilidad** (para salidas)
@@ -869,9 +948,68 @@ El Portal del Operador es una interfaz optimizada para personal de campo que pro
    - **Tipo de Cuenta**: Ahorros, corriente
    - **Contacto Comercial**: Persona responsable
 
-### Gestión de Compras
+### Gestión de Compras y Documentos
+
+#### 📤 **Importación de Documentos XML** (Nuevo en v2.2.0)
+
+El sistema permite importar documentos de proveedores (facturas, notas de crédito) desde archivos XML, facilitando:
+- **Facturas electrónicas**: Importación automática desde SII o emisores
+- **Notas de crédito/débito**: Documentos tributarios electrónicos
+- **Conciliación automática**: Relación con proveedores existentes
+- **Registro de pagos**: Programación automática de vencimientos
+
+**Proceso de Importación XML:**
+
+1. **Acceder al Módulo**:
+   - **Proveedores** → Pestaña "Importar"
+   - O usar botón "Importar XML" en cualquier sección
+
+2. **Subir Documento**:
+   - **Seleccionar archivo**: XML tributario (DTE)
+   - **Vista previa automática**: Sistema extrae información
+   - **Datos detectados**:
+     - RUT y razón social del emisor
+     - Número y tipo de documento
+     - Fecha de emisión
+     - Monto total y detalles
+     - Fecha de vencimiento
+
+3. **Relación con Proveedor**:
+   - **Detección automática**: Por RUT del emisor
+   - **Crear nuevo**: Si el proveedor no existe
+   - **Selección manual**: Si hay múltiples coincidencias
+
+4. **Configuración del Pago**:
+   - **Días hasta vencimiento**: Configurar días para el pago
+     - **Campo numérico**: Ingresar días (ej: 30, 60, 90)
+     - **Botón "Contado"**: Establecer vencimiento inmediato (0 días)
+     - **Cálculo automático**: Fecha de vencimiento = Fecha emisión + Días
+   - **Categoría**: Seleccionar tipo de gasto
+   - **Prioridad de pago**: Alta, media, baja
+
+5. **Integración con Piezas** (Opcional):
+   - Para categoría "Mantenimiento", campos adicionales:
+     - **Nombre de la pieza**: Descripción del repuesto
+     - **Cantidad**: Unidades compradas
+     - **Precio unitario**: Costo por unidad
+     - **Grúa**: Asignar a equipo específico
+   - **Registro automático**: Sistema crea entrada en `crane_parts`
+   - **Actualización de inventario**: Si está configurado
+
+6. **Confirmación**:
+   - **Revisión final**: Validar todos los datos
+   - **Importar**: Crear pago pendiente automáticamente
+   - **Resultado**: Confirmación y detalles del registro
+
+**Ventajas de la Importación XML:**
+- ⚡ **Rapidez**: Importación en segundos
+- ✅ **Precisión**: Datos directos del documento tributario
+- 🔄 **Integración**: Conexión con proveedores e inventario
+- 📊 **Trazabilidad**: Documento original vinculado
+- 💰 **Control financiero**: Vencimientos automáticos
 
 #### Órdenes de Compra
+
 1. **Crear OC**:
    - **Seleccionar proveedor**
    - **Agregar productos**: Del catálogo o nuevos
@@ -886,6 +1024,7 @@ El Portal del Operador es una interfaz optimizada para personal de campo que pro
    - **🔴 Cancelada**: Anulada
 
 #### Recepción de Mercancía
+
 1. **Validar entrega**:
    - **Verificar cantidades**: Contra orden de compra
    - **Revisar calidad**: Estado de los productos
@@ -1377,7 +1516,11 @@ Las Entradas Rápidas son un sistema de registro instantáneo de gastos y evento
 ### Funcionalidades Principales
 
 #### 📱 **Registro Móvil**
-1. **Acceso rápido**: Botón flotante en app móvil
+1. **Acceso rápido**: 
+   - **Botón flotante "+"**: Visible en todas las páginas del sistema
+   - **Ubicación**: Esquina inferior derecha de la pantalla
+   - **Disponible para**: Administradores y operadores autorizados
+   - **Acceso instantáneo**: Sin necesidad de navegar a menú específico
 2. **Formulario simplificado**: Mínimos campos requeridos
 3. **Opciones predefinidas**: Categorías comunes
 4. **Guardado offline**: Funciona sin conexión
@@ -1561,6 +1704,8 @@ Las Entradas Rápidas son un sistema de registro instantáneo de gastos y evento
 
 #### Registro de Costos
 
+##### 📝 **Registro Manual**
+
 1. **Crear Costo**:
    - **Seleccionar categoría** del costo
    - **Asignar a servicio** o grúa
@@ -1579,6 +1724,143 @@ Las Entradas Rápidas son un sistema de registro instantáneo de gastos y evento
    - **Actualizar reportes**
    - **Distribuir por centro**
    - **Notificar** a responsables
+
+##### 📤 **Carga Masiva XML** (Nuevo en v2.2.0)
+
+El sistema permite importar costos masivamente desde archivos XML, ideal para:
+- **Facturas electrónicas**: Importación directa de documentos fiscales
+- **Reportes de gastos**: Integración con sistemas externos
+- **Migración de datos**: Importación desde otros sistemas
+- **Conciliación bancaria**: Carga de extractos en formato XML
+
+**Proceso de Carga XML:**
+
+1. **Preparar Archivo**:
+   - **Formato**: Archivo XML válido
+   - **Estructura**: Debe contener datos de costos (fecha, monto, descripción, categoría)
+   - **Validación**: Sistema detecta automáticamente la estructura
+
+2. **Subir Archivo**:
+   - **Acceder a Costos** → Botón "Cargar XML"
+   - **Seleccionar archivo**: Arrastrar y soltar o explorar
+   - **Analizar**: Sistema procesa y valida el XML
+
+3. **Revisión y Mapeo**:
+   - **Vista previa**: Sistema muestra costos detectados
+   - **Mapeo de categorías**: Asignar categorías del XML a categorías del sistema
+   - **Validación de datos**: 
+     - ✅ Datos válidos (verde)
+     - ⚠️ Advertencias (amarillo)
+     - ❌ Errores (rojo)
+   - **Revisión manual**: Corregir datos si es necesario
+
+4. **Configuración de Importación**:
+   - **Categoría por defecto**: Para costos sin categoría
+   - **Asignación automática**: Grúa, operador o servicio
+   - **Duplicados**: Opción de omitir o importar
+
+5. **Importar**:
+   - **Confirmar importación**: Botón "Importar Costos"
+   - **Progreso en tiempo real**: Barra de progreso
+   - **Resultado**: Resumen de costos importados
+   - **Errores**: Log detallado de problemas
+
+6. **Validación Post-Importación**:
+   - **Revisar costos**: En la lista principal
+   - **Verificar categorías**: Correcta asignación
+   - **Ajustar si necesario**: Editar costos importados
+
+**Ventajas de la Carga XML:**
+- ⚡ **Rapidez**: Importar cientos de costos en segundos
+- ✅ **Precisión**: Reducción de errores de digitación
+- 🔄 **Integración**: Conexión con sistemas externos
+- 📊 **Trazabilidad**: Registro del archivo de origen
+
+### Gestión de Ingresos (Nuevo en v2.2.0)
+
+El módulo de Ingresos permite registrar y controlar todos los ingresos de la empresa, complementando el sistema de facturación y proporcionando un control financiero completo.
+
+#### Tipos de Ingresos
+
+##### 💰 **Ingresos Operacionales**
+- **Servicios facturados**: Ingresos por servicios de grúas
+- **Pagos de clientes**: Cobros de facturas
+- **Anticipos**: Pagos adelantados de clientes
+- **Servicios adicionales**: Cargos extra no facturados inicialmente
+
+##### 💵 **Otros Ingresos**
+- **Venta de activos**: Equipos o vehículos vendidos
+- **Arriendos**: Alquiler de equipos o instalaciones
+- **Intereses**: Rendimientos financieros
+- **Recuperaciones**: Reembolsos o devoluciones
+- **Diversos**: Otros ingresos eventuales
+
+#### Registro de Ingresos
+
+1. **Crear Ingreso**:
+   - **Acceder a Finanzas** → "Ingresos"
+   - **Botón "+ Nuevo Ingreso"**
+   - **Completar formulario**:
+     - **Fecha**: Fecha del ingreso
+     - **Concepto**: Descripción clara
+     - **Categoría**: Tipo de ingreso
+     - **Monto**: Valor del ingreso
+     - **Cliente** (opcional): Si está relacionado
+     - **Método de pago**: Efectivo, transferencia, cheque
+     - **Comprobante**: Adjuntar documento
+
+2. **Validar Ingreso**:
+   - **Revisión de datos**: Verificar información completa
+   - **Verificar comprobantes**: Documentos de respaldo
+   - **Conciliación**: Comparar con extractos bancarios
+   - **Aprobar**: Confirmar el registro
+
+#### Dashboard de Ingresos
+
+##### 📊 **Métricas Principales**
+- **Total del mes**: Ingresos acumulados del mes actual
+- **Ingresos del día**: Entradas de hoy
+- **Promedio diario**: Ingreso promedio por día
+- **Comparación**: Mes actual vs. mes anterior
+
+##### 📈 **Análisis de Ingresos**
+- **Por categoría**: Distribución de tipos de ingreso
+- **Por cliente**: Principales fuentes de ingresos
+- **Por método de pago**: Forma de cobro preferida
+- **Tendencias**: Evolución temporal de ingresos
+
+##### 🔍 **Filtros Avanzados**
+- **Por fecha**: Rango de fechas específico
+- **Por categoría**: Tipo de ingreso
+- **Por cliente**: Ingresos de cliente específico
+- **Por método**: Forma de pago
+- **Por monto**: Rangos de valores
+
+#### Conciliación Bancaria
+
+1. **Comparar con extractos**:
+   - **Ingresos registrados**: En el sistema
+   - **Movimientos bancarios**: Del banco
+   - **Identificar diferencias**: Partidas pendientes
+
+2. **Conciliar automáticamente**:
+   - **Matching por monto y fecha**: Sistema sugiere coincidencias
+   - **Confirmar conciliación**: Marcar como conciliado
+   - **Pendientes**: Identificar ingresos no reflejados
+
+#### Reportes de Ingresos
+
+##### 📊 **Reporte Mensual**
+- **Total por mes**: Ingresos del período
+- **Desglose por categoría**: Distribución detallada
+- **Clientes top**: Mayores contribuyentes
+- **Comparativo**: Mes actual vs. anterior
+
+##### 📈 **Análisis Anual**
+- **Ingresos por mes**: Tendencia anual
+- **Estacionalidad**: Patrones temporales
+- **Proyecciones**: Estimaciones futuras
+- **Crecimiento**: Variación año a año
 
 ### Sistema de Comisiones Avanzado
 
@@ -2558,24 +2840,52 @@ La integración entre inventario y grúas permite:
 
 ## Conclusión
 
-Este manual proporciona una guía completa para el uso del sistema TMS Grúas v2.2.0, incluyendo todas las nuevas funcionalidades como el Pipeline VIP, Sistema de Cierres, Facturación Diferida, Portal del Operador, Entradas Rápidas y muchas más.
+Este manual proporciona una guía completa y actualizada para el uso del sistema TMS Grúas v2.2.0, incluyendo todas las funcionalidades, desde las básicas hasta las más avanzadas.
 
 ### Características Destacadas v2.2.0
-- ✅ **27 páginas principales** de la aplicación documentadas
-- ✅ **14 nuevas funcionalidades** completamente explicadas
-- ✅ **Más de 50 componentes** y procesos detallados
+
+#### 🆕 **Nuevas Funcionalidades Documentadas**
+- ✅ **Carga XML de Costos**: Importación masiva de gastos desde archivos XML
+- ✅ **Carga XML de Proveedores**: Documentos tributarios electrónicos (DTE)
+- ✅ **Entradas/Salidas Simplificadas**: Formularios rápidos de inventario
+- ✅ **Módulo de Ingresos**: Control completo de ingresos operacionales
+- ✅ **Botón FAB Flotante**: Entradas rápidas accesibles desde cualquier página
+- ✅ **Integración Proveedores-Piezas**: Registro automático de repuestos desde pagos
+- ✅ **Pipeline VIP**: Seguimiento de clientes estratégicos
+- ✅ **Sistema de Cierres**: Control avanzado de facturación
+- ✅ **Facturación Diferida**: Ciclos personalizados por cliente
+- ✅ **Portal del Operador**: Herramientas especializadas para campo
+- ✅ **Búsqueda expandida**: Cotización y orden de compra
+
+#### 📊 **Estadísticas del Sistema**
+- ✅ **30+ páginas principales** de la aplicación documentadas
+- ✅ **17+ funcionalidades** completamente explicadas
+- ✅ **60+ componentes** y procesos detallados
 - ✅ **Sistema de auditoría completo** con trazabilidad
 - ✅ **Integración en tiempo real** entre todos los módulos
 - ✅ **Respuesta móvil optimizada** para todos los dispositivos
-- ✅ **Búsqueda expandida** incluyendo cotización y orden de compra
 - ✅ **Automatizaciones avanzadas** para eficiencia operativa
+
+#### 💪 **Mejoras de Productividad**
+- **Carga masiva XML**: Importar cientos de registros en segundos
+- **Formularios simplificados**: Menos clics, más velocidad
+- **Integraciones automáticas**: Menos duplicados, más precisión
+- **Accesos rápidos**: Botón FAB flotante siempre disponible
+- **Validaciones inteligentes**: Prevención de errores en tiempo real
 
 ### Próximos Pasos
 1. **Familiarización**: Explore cada módulo según su rol
 2. **Capacitación**: Entrene a su equipo en las nuevas funcionalidades
 3. **Configuración**: Ajuste el sistema a sus necesidades específicas
 4. **Implementación gradual**: Adopte las nuevas funciones progresivamente
-5. **Feedback**: Comparta su experiencia para futuras mejoras
+5. **Optimización**: Use las cargas XML y formularios simplificados
+6. **Feedback**: Comparta su experiencia para futuras mejoras
+
+### Recursos Adicionales
+- **Manual Técnico**: [Guía de Administrador](technical/system-admin-guide.md)
+- **Documentación PWA**: [Configuración PWA](technical/pwa-configuration.md)
+- **Sistema de Pagos**: [Guía de Pagos](technical/payment-system.md)
+- **Troubleshooting**: [Resolución de Problemas](technical/troubleshooting.md)
 
 Para obtener ayuda adicional, acceder a capacitaciones específicas o reportar problemas, no dude en contactar al equipo de soporte técnico usando los canales proporcionados en la sección de Solución de Problemas.
 
@@ -2583,7 +2893,8 @@ Para obtener ayuda adicional, acceder a capacitaciones específicas o reportar p
 
 ---
 
-*Documento actualizado: Enero 2025*  
+*Documento actualizado: Octubre 2025*  
 *Versión del manual: 2.2.0*  
 *Versión del sistema: 2.2.0*  
-*Páginas: 1,200+ | Funcionalidades documentadas: 27 módulos principales + 14 nuevas funcionalidades*
+*Última actualización: Manual completamente revisado con todas las funcionalidades actuales*  
+*Páginas: 1,300+ | Módulos documentados: 30+ | Funcionalidades: 17+ nuevas características*
