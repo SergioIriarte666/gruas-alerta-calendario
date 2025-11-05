@@ -112,12 +112,6 @@ export interface Client {
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
-  // Nuevos campos para facturación diferida
-  billingCycleType?: 'immediate' | 'deferred';
-  billingDelayDays?: number;
-  billingCycleDay?: number;
-  autoInvoiceGeneration?: boolean;
-  billingNotes?: string;
   defaultPaymentTermId?: string;
 }
 

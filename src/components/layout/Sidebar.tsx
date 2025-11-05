@@ -73,7 +73,6 @@ export const Sidebar = ({
       items: [
         { name: 'Clientes', href: '/clients', icon: Users, adminOnly: false },
         { name: 'Calendario', href: '/calendar', icon: Calendar, adminOnly: false },
-        { name: 'Facturación Diferida', href: '/deferred-billing', icon: Calendar, adminOnly: false },
       ]
     },
     {
