@@ -20,10 +20,10 @@ interface AgingBucket {
 export const AgingReport = ({ invoices }: AgingReportProps) => {
   const today = startOfDay(new Date());
 
-  // Filtrar solo facturas vencidas
+  // Filtrar solo facturas vencidas (por status o por fecha)
   const overdueInvoices = invoices.filter(inv => {
-    const dueDate = new Date(inv.due_date);
-    return dueDate < today;
+    const dueDate = startOfDay(new Date(inv.due_date));
+    return inv.status === 'overdue' || dueDate < today;
   });
 
   // Agrupar por antigüedad
