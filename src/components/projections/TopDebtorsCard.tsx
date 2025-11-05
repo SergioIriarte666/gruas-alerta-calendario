@@ -96,7 +96,7 @@ export const TopDebtorsCard = ({ invoices, onClientSelect }: TopDebtorsCardProps
             <Users className="h-5 w-5 text-primary" />
           </div>
           <div className="flex-1">
-            <CardTitle>Top 5 Deudores</CardTitle>
+            <CardTitle>Top 5 Clientes por Cobrar</CardTitle>
             <CardDescription>
               Clientes con mayor monto pendiente de cobro
             </CardDescription>
