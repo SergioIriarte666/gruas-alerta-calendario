@@ -155,6 +155,7 @@ export const CashFlowChart = ({ invoices, dateRange }: CashFlowChartProps) => {
                 />} 
               />
               <ReferenceLine
+                yAxisId="left"
                 x={format(today, 'dd MMM', { locale: es })}
                 stroke="hsl(var(--muted-foreground))"
                 strokeDasharray="3 3"
