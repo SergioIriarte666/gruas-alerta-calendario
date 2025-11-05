@@ -1,22 +1,30 @@
-import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { ProjectionHeader } from "@/components/projections/ProjectionHeader";
 import { ProjectionFilters } from "@/components/projections/ProjectionFilters";
 import { PendingInvoicesTable } from "@/components/projections/PendingInvoicesTable";
 import { CashFlowChart } from "@/components/projections/CashFlowChart";
 import { AgingReport } from "@/components/projections/AgingReport";
+import { TopDebtorsCard } from "@/components/projections/TopDebtorsCard";
 import { useIncomeProjections } from "@/hooks/projections/useIncomeProjections";
-import { TrendingUp } from "lucide-react";
+import { useProjectionFilters } from "@/hooks/projections/useProjectionFilters";
+import { TrendingUp, X } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 export default function IncomeProjections() {
-  const [dateRange, setDateRange] = useState(30);
-  const [clientId, setClientId] = useState<string | null>(null);
-  const [status, setStatus] = useState<string[]>(['sent', 'partial', 'overdue']);
+  const {
+    filters,
+    setDateRange,
+    setClientId,
+    setStatus,
+    clearFilters,
+    hasActiveFilters,
+  } = useProjectionFilters();
 
   const { data, isLoading } = useIncomeProjections({
-    dateRange,
-    clientId,
-    status,
+    dateRange: filters.dateRange,
+    clientId: filters.clientId,
+    status: filters.status,
   });
 
   const invoices = data?.invoices || [];
@@ -48,25 +56,49 @@ export default function IncomeProjections() {
       {/* Filters */}
       <Card>
         <CardHeader>
-          <CardTitle>Filtros de Análisis</CardTitle>
-          <CardDescription>
-            Personaliza el análisis según tus necesidades
-          </CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Filtros de Análisis</CardTitle>
+              <CardDescription>
+                Personaliza el análisis según tus necesidades
+              </CardDescription>
+            </div>
+            {hasActiveFilters && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={clearFilters}
+                className="gap-2"
+              >
+                <X className="h-4 w-4" />
+                Limpiar filtros
+                <Badge variant="secondary" className="ml-1">
+                  Activos
+                </Badge>
+              </Button>
+            )}
+          </div>
         </CardHeader>
         <CardContent>
           <ProjectionFilters
-            dateRange={dateRange}
+            dateRange={filters.dateRange}
             onDateRangeChange={setDateRange}
-            clientId={clientId}
+            clientId={filters.clientId}
             onClientIdChange={setClientId}
-            status={status}
+            status={filters.status}
             onStatusChange={setStatus}
           />
         </CardContent>
       </Card>
 
       {/* Cash Flow Chart */}
-      <CashFlowChart invoices={invoices} dateRange={dateRange} />
+      <CashFlowChart invoices={invoices} dateRange={filters.dateRange} />
+
+      {/* Top Debtors */}
+      <TopDebtorsCard 
+        invoices={invoices} 
+        onClientSelect={(clientId) => setClientId(clientId)}
+      />
 
       {/* Aging Report */}
       <AgingReport invoices={invoices} />

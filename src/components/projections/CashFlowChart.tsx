@@ -1,9 +1,12 @@
+import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer, ReferenceLine } from "recharts";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer, ReferenceLine, Area } from "recharts";
 import { ProjectedInvoice } from "@/hooks/projections/useIncomeProjections";
-import { format, isBefore, startOfDay } from "date-fns";
+import { format, isBefore, startOfDay, addDays } from "date-fns";
 import { es } from "date-fns/locale";
+import { Button } from "@/components/ui/button";
+import { ZoomIn, ZoomOut } from "lucide-react";
 
 interface CashFlowChartProps {
   invoices: ProjectedInvoice[];
@@ -11,6 +14,7 @@ interface CashFlowChartProps {
 }
 
 export const CashFlowChart = ({ invoices, dateRange }: CashFlowChartProps) => {
+  const [zoomDays, setZoomDays] = useState(dateRange);
   const today = startOfDay(new Date());
 
   // Separar facturas vencidas y próximas
@@ -43,8 +47,8 @@ export const CashFlowChart = ({ invoices, dateRange }: CashFlowChartProps) => {
     ...Object.keys(upcomingByDate)
   ]);
 
-  // Crear dataset combinado
-  const chartData = Array.from(allDates)
+  // Crear dataset combinado con acumulado
+  const sortedData = Array.from(allDates)
     .map(date => ({
       fecha: format(new Date(date), 'dd MMM', { locale: es }),
       vencidas: overdueByDate[date] ? Math.round(overdueByDate[date]) : null,
@@ -52,6 +56,25 @@ export const CashFlowChart = ({ invoices, dateRange }: CashFlowChartProps) => {
       fullDate: date
     }))
     .sort((a, b) => a.fullDate.localeCompare(b.fullDate));
+
+  // Calcular acumulado proyectado
+  let accumulated = 0;
+  const chartData = sortedData.map(item => {
+    const dayAmount = (item.vencidas || 0) + (item.proximas || 0);
+    accumulated += dayAmount;
+    return {
+      ...item,
+      acumulado: accumulated,
+    };
+  });
+
+  // Filtrar por zoom
+  const cutoffDate = addDays(today, -60); // Mostrar últimos 60 días de vencidas
+  const futureDate = addDays(today, zoomDays);
+  const filteredData = chartData.filter(item => {
+    const itemDate = new Date(item.fullDate);
+    return itemDate >= cutoffDate && itemDate <= futureDate;
+  });
 
   const chartConfig = {
     vencidas: {
@@ -62,20 +85,48 @@ export const CashFlowChart = ({ invoices, dateRange }: CashFlowChartProps) => {
       label: "Facturas Próximas",
       color: "hsl(var(--chart-1))",
     },
+    acumulado: {
+      label: "Acumulado Proyectado",
+      color: "hsl(var(--primary))",
+    },
   };
+
+  const zoomOptions = [
+    { days: 7, label: '7d' },
+    { days: 30, label: '30d' },
+    { days: 60, label: '60d' },
+    { days: 90, label: '90d' },
+  ];
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Ingresos Proyectados por Fecha de Vencimiento</CardTitle>
-        <CardDescription>
-          Facturas vencidas (rojo) vs próximas (azul) • Línea vertical = Hoy
-        </CardDescription>
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex-1">
+            <CardTitle>Ingresos Proyectados por Fecha de Vencimiento</CardTitle>
+            <CardDescription>
+              Facturas vencidas (rojo) vs próximas (azul) • Línea acumulada (primario) • Línea vertical = Hoy
+            </CardDescription>
+          </div>
+          <div className="flex items-center gap-1">
+            {zoomOptions.map(option => (
+              <Button
+                key={option.days}
+                variant={zoomDays === option.days ? "default" : "outline"}
+                size="sm"
+                onClick={() => setZoomDays(option.days)}
+                className="h-8 px-3"
+              >
+                {option.label}
+              </Button>
+            ))}
+          </div>
+        </div>
       </CardHeader>
       <CardContent>
-        <ChartContainer config={chartConfig} className="h-[300px] w-full">
+        <ChartContainer config={chartConfig} className="h-[350px] w-full">
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={chartData}>
+            <LineChart data={filteredData}>
               <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
               <XAxis 
                 dataKey="fecha" 
@@ -83,11 +134,26 @@ export const CashFlowChart = ({ invoices, dateRange }: CashFlowChartProps) => {
                 tick={{ fill: 'hsl(var(--foreground))' }}
               />
               <YAxis 
+                yAxisId="left"
                 className="text-xs"
                 tick={{ fill: 'hsl(var(--foreground))' }}
                 tickFormatter={(value) => `$${(value / 1000000).toFixed(1)}M`}
               />
-              <ChartTooltip content={<ChartTooltipContent />} />
+              <YAxis 
+                yAxisId="right"
+                orientation="right"
+                className="text-xs"
+                tick={{ fill: 'hsl(var(--primary))' }}
+                tickFormatter={(value) => `$${(value / 1000000).toFixed(1)}M`}
+              />
+              <ChartTooltip 
+                content={<ChartTooltipContent 
+                  formatter={(value, name) => [
+                    new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', minimumFractionDigits: 0 }).format(Number(value)),
+                    name
+                  ]}
+                />} 
+              />
               <ReferenceLine
                 x={format(today, 'dd MMM', { locale: es })}
                 stroke="hsl(var(--muted-foreground))"
@@ -95,6 +161,7 @@ export const CashFlowChart = ({ invoices, dateRange }: CashFlowChartProps) => {
                 label={{ value: 'Hoy', position: 'top', fill: 'hsl(var(--muted-foreground))' }}
               />
               <Line
+                yAxisId="left"
                 type="monotone"
                 dataKey="vencidas"
                 stroke="var(--color-vencidas)"
@@ -104,6 +171,7 @@ export const CashFlowChart = ({ invoices, dateRange }: CashFlowChartProps) => {
                 connectNulls={false}
               />
               <Line
+                yAxisId="left"
                 type="monotone"
                 dataKey="proximas"
                 stroke="var(--color-proximas)"
@@ -111,6 +179,16 @@ export const CashFlowChart = ({ invoices, dateRange }: CashFlowChartProps) => {
                 dot={{ fill: "var(--color-proximas)", r: 4 }}
                 activeDot={{ r: 6 }}
                 connectNulls={false}
+              />
+              <Line
+                yAxisId="right"
+                type="monotone"
+                dataKey="acumulado"
+                stroke="var(--color-acumulado)"
+                strokeWidth={2}
+                strokeDasharray="5 5"
+                dot={false}
+                activeDot={{ r: 6 }}
               />
             </LineChart>
           </ResponsiveContainer>

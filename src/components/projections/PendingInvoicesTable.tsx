@@ -57,6 +57,28 @@ export const PendingInvoicesTable = ({ invoices, isLoading }: PendingInvoicesTab
     );
   };
 
+  // Determinar clase de urgencia para la fila
+  const getRowUrgencyClass = (invoice: ProjectedInvoice) => {
+    if (invoice.status === 'overdue') {
+      if (invoice.days_overdue > 90) {
+        return 'bg-red-50 dark:bg-red-950/20 border-l-4 border-l-red-500';
+      }
+      if (invoice.days_overdue > 60) {
+        return 'bg-red-50 dark:bg-red-950/10 border-l-4 border-l-red-400';
+      }
+      if (invoice.days_overdue > 30) {
+        return 'bg-orange-50 dark:bg-orange-950/10 border-l-4 border-l-orange-400';
+      }
+      return 'bg-yellow-50 dark:bg-yellow-950/10 border-l-4 border-l-yellow-400';
+    }
+    
+    if (invoice.days_until_due <= 7) {
+      return 'bg-yellow-50/50 dark:bg-yellow-950/5 border-l-4 border-l-yellow-300';
+    }
+    
+    return '';
+  };
+
   if (isLoading) {
     return (
       <div className="rounded-md border">
@@ -93,7 +115,10 @@ export const PendingInvoicesTable = ({ invoices, isLoading }: PendingInvoicesTab
         </TableHeader>
         <TableBody>
           {invoices.map((invoice) => (
-            <TableRow key={invoice.id} className="hover:bg-muted/50">
+            <TableRow 
+              key={invoice.id} 
+              className={`hover:bg-muted/50 transition-colors ${getRowUrgencyClass(invoice)}`}
+            >
               <TableCell className="font-medium">
                 <div>
                   <div className="font-semibold">{invoice.folio}</div>
