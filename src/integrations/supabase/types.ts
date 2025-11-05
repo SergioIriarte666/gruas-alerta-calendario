@@ -192,11 +192,6 @@ export type Database = {
       clients: {
         Row: {
           address: string | null
-          auto_invoice_generation: boolean | null
-          billing_cycle_day: number | null
-          billing_cycle_type: string | null
-          billing_delay_days: number | null
-          billing_notes: string | null
           contact_name: string | null
           created_at: string | null
           created_by: string | null
@@ -213,11 +208,6 @@ export type Database = {
         }
         Insert: {
           address?: string | null
-          auto_invoice_generation?: boolean | null
-          billing_cycle_day?: number | null
-          billing_cycle_type?: string | null
-          billing_delay_days?: number | null
-          billing_notes?: string | null
           contact_name?: string | null
           created_at?: string | null
           created_by?: string | null
@@ -234,11 +224,6 @@ export type Database = {
         }
         Update: {
           address?: string | null
-          auto_invoice_generation?: boolean | null
-          billing_cycle_day?: number | null
-          billing_cycle_type?: string | null
-          billing_delay_days?: number | null
-          billing_notes?: string | null
           contact_name?: string | null
           created_at?: string | null
           created_by?: string | null
@@ -3431,31 +3416,6 @@ export type Database = {
       }
     }
     Views: {
-      services_ready_for_deferred_billing: {
-        Row: {
-          auto_invoice_generation: boolean | null
-          billing_cycle_day: number | null
-          billing_cycle_type: string | null
-          billing_delay_days: number | null
-          billing_ready_date: string | null
-          client_id: string | null
-          client_name: string | null
-          id: string | null
-          service_count: number | null
-          service_month: string | null
-          service_period: string | null
-          total_value: number | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "services_client_id_fkey"
-            columns: ["client_id"]
-            isOneToOne: false
-            referencedRelation: "clients"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       services_with_excess_summary: {
         Row: {
           calculated_excess_amount: number | null
@@ -3478,14 +3438,14 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "services_client_id_fkey"
-            columns: ["related_client_id"]
+            columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "services_client_id_fkey"
-            columns: ["client_id"]
+            columns: ["related_client_id"]
             isOneToOne: false
             referencedRelation: "clients"
             referencedColumns: ["id"]
@@ -3804,7 +3764,6 @@ export type Database = {
         Args: never
         Returns: Database["public"]["Enums"]["app_role"]
       }
-      get_deferred_services_summary: { Args: never; Returns: Json }
       get_document_expiry_alerts: {
         Args: never
         Returns: {

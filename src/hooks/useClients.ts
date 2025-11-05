@@ -159,13 +159,7 @@ export const useClients = () => {
       if (clientData.department !== undefined) updateData.department = clientData.department;
       if (clientData.contactName !== undefined) updateData.contact_name = clientData.contactName;
       if (clientData.isActive !== undefined) updateData.is_active = clientData.isActive;
-      
-      // Nuevos campos de facturación diferida
-      if (clientData.billingCycleType !== undefined) updateData.billing_cycle_type = clientData.billingCycleType;
-      if (clientData.billingDelayDays !== undefined) updateData.billing_delay_days = clientData.billingDelayDays;
-      if (clientData.billingCycleDay !== undefined) updateData.billing_cycle_day = clientData.billingCycleDay;
-      if (clientData.autoInvoiceGeneration !== undefined) updateData.auto_invoice_generation = clientData.autoInvoiceGeneration;
-      if (clientData.billingNotes !== undefined) updateData.billing_notes = clientData.billingNotes;
+      if (clientData.defaultPaymentTermId !== undefined) updateData.default_payment_term_id = clientData.defaultPaymentTermId;
 
       const { error } = await supabase
         .from('clients')
