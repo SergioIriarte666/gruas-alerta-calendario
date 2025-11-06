@@ -8,6 +8,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { MoreHorizontal, Edit, Trash2, Eye, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import { Cost } from '@/types/costs';
@@ -16,6 +17,7 @@ import { ServiceDetailsModal } from '@/components/services/ServiceDetailsModal';
 import { useServiceDetails } from '@/hooks/useServiceDetails';
 import { useSupplierCategoryManager } from '@/hooks/useSupplierCategoryManager';
 import { getCategoryLabel } from '@/utils/categoryUtils';
+import { CostBatchActionBar } from './CostBatchActionBar';
 
 interface CostsTableViewProps {
   costs: Cost[];
@@ -24,12 +26,25 @@ interface CostsTableViewProps {
   onViewDetails: (cost: Cost) => void;
   loading?: boolean;
   highlightedCostId?: string;
+  selectedCosts?: Set<string>;
+  onSelectionChange?: (selected: Set<string>) => void;
+  onBatchUpdate?: () => void;
 }
 
 type SortField = 'date' | 'description' | 'category' | 'subcategory' | 'amount' | 'associated';
 type SortDirection = 'asc' | 'desc';
 
-export const CostsTableView = ({ costs, onEdit, onDelete, onViewDetails, loading, highlightedCostId }: CostsTableViewProps) => {
+export const CostsTableView = ({ 
+  costs, 
+  onEdit, 
+  onDelete, 
+  onViewDetails, 
+  loading, 
+  highlightedCostId,
+  selectedCosts = new Set<string>(),
+  onSelectionChange,
+  onBatchUpdate 
+}: CostsTableViewProps) => {
   const [sortField, setSortField] = useState<SortField>('date');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [selectedServiceId, setSelectedServiceId] = useState<string | null>(null);
@@ -40,6 +55,32 @@ export const CostsTableView = ({ costs, onEdit, onDelete, onViewDetails, loading
   
   // Obtener categorías de proveedores para resolver UUIDs
   const { activeCategories } = useSupplierCategoryManager();
+
+  const handleSelectAll = (checked: boolean) => {
+    if (!onSelectionChange) return;
+    if (checked) {
+      onSelectionChange(new Set(costs.map(c => c.id)));
+    } else {
+      onSelectionChange(new Set());
+    }
+  };
+
+  const handleSelectOne = (costId: string, checked: boolean) => {
+    if (!onSelectionChange) return;
+    const newSelection = new Set(selectedCosts);
+    if (checked) {
+      newSelection.add(costId);
+    } else {
+      newSelection.delete(costId);
+    }
+    onSelectionChange(newSelection);
+  };
+
+  const calculateSelectedTotal = () => {
+    return costs
+      .filter(c => selectedCosts.has(c.id))
+      .reduce((sum, cost) => sum + Number(cost.amount), 0);
+  };
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
@@ -158,12 +199,31 @@ export const CostsTableView = ({ costs, onEdit, onDelete, onViewDetails, loading
 
   return (
     <div className="space-y-4">
+      {/* Barra de acciones por lotes */}
+      {selectedCosts.size > 0 && onBatchUpdate && (
+        <CostBatchActionBar
+          selectedCount={selectedCosts.size}
+          totalAmount={calculateSelectedTotal()}
+          onBatchUpdate={onBatchUpdate}
+          onClearSelection={() => onSelectionChange?.(new Set())}
+        />
+      )}
+
       <Card className="bg-white dark:bg-gray-800">
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow className="hover:bg-transparent">
+                  {onSelectionChange && (
+                    <TableHead className="w-12">
+                      <Checkbox
+                        checked={selectedCosts.size === costs.length && costs.length > 0}
+                        onCheckedChange={handleSelectAll}
+                        aria-label="Seleccionar todos"
+                      />
+                    </TableHead>
+                  )}
                   <TableHead className="cursor-pointer" onClick={() => handleSort('date')}>
                     <div className="flex items-center">
                       Fecha
@@ -206,7 +266,7 @@ export const CostsTableView = ({ costs, onEdit, onDelete, onViewDetails, loading
               <TableBody>
                 {sortedCosts.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center text-gray-500 py-8">
+                    <TableCell colSpan={onSelectionChange ? 8 : 7} className="text-center text-gray-500 py-8">
                       No se encontraron costos que coincidan con los filtros aplicados.
                     </TableCell>
                   </TableRow>
@@ -220,6 +280,15 @@ export const CostsTableView = ({ costs, onEdit, onDelete, onViewDetails, loading
                           : ''
                       }`}
                     >
+                      {onSelectionChange && (
+                        <TableCell>
+                          <Checkbox
+                            checked={selectedCosts.has(cost.id)}
+                            onCheckedChange={(checked) => handleSelectOne(cost.id, checked as boolean)}
+                            aria-label={`Seleccionar ${cost.description}`}
+                          />
+                        </TableCell>
+                      )}
                       <TableCell className="font-medium">
                         {new Date(cost.date + 'T00:00:00').toLocaleDateString('es-ES')}
                       </TableCell>

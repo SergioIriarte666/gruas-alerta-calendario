@@ -9,6 +9,7 @@ import { CostForm } from '@/components/costs/CostForm';
 import { CostDetailsModal } from '@/components/costs/CostDetailsModal';
 import { XMLCostUpload } from '@/components/costs/XMLCostUpload';
 import { CostFilters } from '@/components/costs/CostFilters';
+import { CostBatchUpdateModal } from '@/components/costs/CostBatchUpdateModal';
 import { useCosts, useDeleteCost } from '@/hooks/useCosts';
 import { useCostInvalidation } from '@/hooks/useCostInvalidation';
 import { useQueryClient } from '@tanstack/react-query';
@@ -28,12 +29,14 @@ const CostsPage = () => {
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [isDetailsOpen, setIsDetailsOpen] = useState(false);
     const [isXMLUploadOpen, setIsXMLUploadOpen] = useState(false);
+    const [isBatchUpdateOpen, setIsBatchUpdateOpen] = useState(false);
     const [selectedCostForEdit, setSelectedCostForEdit] = useState<Cost | null>(null);
     const [selectedCostForDetails, setSelectedCostForDetails] = useState<Cost | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [viewMode, setViewMode] = useState<'table' | 'cards'>('table');
     const [highlightedCostId, setHighlightedCostId] = useState<string>('');
     const [dateFilter, setDateFilter] = useState<string>('all');
+    const [selectedCostIds, setSelectedCostIds] = useState<Set<string>>(new Set());
     const [filters, setFilters] = useState<CostFilters>({
         category: 'all',
         subcategory: 'all',
@@ -323,6 +326,9 @@ const CostsPage = () => {
                     onViewDetails={handleViewDetails}
                     loading={isLoading}
                     highlightedCostId={highlightedCostId}
+                    selectedCosts={selectedCostIds}
+                    onSelectionChange={setSelectedCostIds}
+                    onBatchUpdate={() => setIsBatchUpdateOpen(true)}
                 />
             ) : (
                 <CostList 
@@ -353,6 +359,15 @@ const CostsPage = () => {
                 isOpen={isXMLUploadOpen}
                 onClose={handleCloseXMLUpload}
                 onSuccess={handleXMLUploadSuccess}
+            />
+
+            <CostBatchUpdateModal
+                open={isBatchUpdateOpen}
+                onOpenChange={(open) => {
+                    setIsBatchUpdateOpen(open);
+                    if (!open) setSelectedCostIds(new Set());
+                }}
+                selectedCosts={finalFilteredCosts.filter(c => selectedCostIds.has(c.id))}
             />
         </div>
     );
