@@ -132,9 +132,10 @@ export const CostDetailsModal = ({ cost, isOpen, onClose }: CostDetailsModalProp
                 <DetailItem 
                   icon={Tag} 
                   label="Categoría" 
-                  value={cost.subcategory && cost.cost_categories?.name === 'Gastos de Servicios' 
-                    ? `${cost.cost_categories.name} - ${cost.subcategory}` 
-                    : cost.cost_categories?.name || 'Sin categoría'} 
+                  value={cost.subcategory 
+                    ? `${cost.cost_categories?.name} > ${cost.subcategory}` 
+                    : cost.cost_categories?.name || 'Sin categoría'
+                  } 
                 />
                 <DetailItem 
                   icon={Calendar} 
