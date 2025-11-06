@@ -13,8 +13,9 @@ import { NotificationSettingsTab } from '@/components/settings/NotificationSetti
 import { InvoiceAlertSettings } from '@/components/invoices/InvoiceAlertSettings';
 import { UserManagementTab } from '@/components/settings/UserManagementTab';
 import { PaymentTermsSettings } from '@/components/settings/PaymentTermsSettings';
-import { Building2, User, Settings as SettingsIcon, Bell, Users, Globe, CreditCard } from 'lucide-react';
+import { Building2, User, Settings as SettingsIcon, Bell, Users, Globe, CreditCard, Tag } from 'lucide-react';
 import { TimezoneSettingsTab } from '@/components/settings/TimezoneSettingsTab';
+import { CategoriesTab } from '@/components/settings/CategoriesTab';
 
 const Settings = () => {
   const {
@@ -78,7 +79,7 @@ const Settings = () => {
       <SettingsHeader onReset={resetSettings} />
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2 md:grid-cols-3 lg:grid-cols-6 bg-card border h-auto p-1 gap-1">
+        <TabsList className="grid w-full grid-cols-2 md:grid-cols-3 lg:grid-cols-7 bg-card border h-auto p-1 gap-1">
           <TabsTrigger 
             value="company" 
             className="flex flex-col md:flex-row items-center justify-center space-y-1 md:space-y-0 md:space-x-2 text-foreground data-[state=active]:text-primary-foreground data-[state=active]:bg-primary hover:bg-muted p-2 md:p-3 h-auto min-h-[60px] text-xs md:text-sm"
@@ -121,6 +122,13 @@ const Settings = () => {
             <Users className="w-4 h-4 flex-shrink-0" />
             <span className="text-center">Usuarios</span>
           </TabsTrigger>
+          <TabsTrigger 
+            value="categories" 
+            className="flex flex-col md:flex-row items-center justify-center space-y-1 md:space-y-0 md:space-x-2 text-foreground data-[state=active]:text-primary-foreground data-[state=active]:bg-primary hover:bg-muted p-2 md:p-3 h-auto min-h-[60px] text-xs md:text-sm"
+          >
+            <Tag className="w-4 h-4 flex-shrink-0" />
+            <span className="text-center">Categorías</span>
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="company">
@@ -153,6 +161,10 @@ const Settings = () => {
 
         <TabsContent value="users">
           <UserManagementTab />
+        </TabsContent>
+
+        <TabsContent value="categories">
+          <CategoriesTab />
         </TabsContent>
       </Tabs>
     </div>

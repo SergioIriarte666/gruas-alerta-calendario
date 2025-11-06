@@ -6,12 +6,13 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { CostCategory, MAINTENANCE_SUBCATEGORIES, SERVICE_SUBCATEGORIES } from '@/types/costs';
+import { CostCategory } from '@/types/costs';
 import { CostFormValues } from '@/schemas/costSchema';
 import { Crane, Operator, Service } from '@/types';
 import { ServiceSelector } from './ServiceSelector';
 import { CostAmountSection } from './CostAmountSection';
 import { useCostCenters } from '@/hooks/useCostCenters';
+import { useCostSubcategories } from '@/hooks/useCostSubcategories';
 import { CostCombobox } from './CostCombobox';
 import { InventoryPurchaseFields } from './InventoryPurchaseFields';  // FASE 3
 import { SupplierSelector } from './SupplierSelector';
@@ -50,10 +51,17 @@ export const CostFormInputs = ({
     const selectedCategoryId = form.watch('category_id');
     const selectedSubcategory = form.watch('subcategory');
     const selectedCategory = categories.find(cat => cat.id === selectedCategoryId);
+    
+    // Hook para cargar subcategorías dinámicas de la DB
+    const { subcategories, isLoading: isLoadingSubcategories } = useCostSubcategories(selectedCategoryId);
+    
     const isGastosDeServicios = selectedCategory?.name === 'Gastos de Servicios';
     const isMantenimiento = selectedCategory?.name === 'Mantenimiento';
     const isPiezasYRepuestos = isMantenimiento && selectedSubcategory === 'Piezas y Repuestos';
     const isInventario = selectedCategory?.name === 'Inventario';  // FASE 3: Detectar categoría Inventario
+    
+    // Determinar si la categoría tiene subcategorías predefinidas en DB
+    const hasSubcategories = subcategories.length > 0;
 
     
 
@@ -175,8 +183,8 @@ export const CostFormInputs = ({
                 <InventoryPurchaseFields form={form} />
             )}
 
-            {/* Subcategorías */}
-            {(isGastosDeServicios || isMantenimiento) && (
+            {/* Subcategorías - Dinámicas desde DB */}
+            {selectedCategoryId && hasSubcategories && (
                 <Card className="bg-card border">
                     <CardHeader className="pb-4">
                         <CardTitle className="flex items-center gap-2 text-lg text-foreground">
@@ -185,47 +193,39 @@ export const CostFormInputs = ({
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
-                        {isGastosDeServicios && (
-                            <FormField name="subcategory" control={form.control} render={({ field }) => (
-                                <FormItem>
-                                    <Label className="text-foreground">Tipo de Gasto</Label>
-                                    <Select onValueChange={field.onChange} value={field.value || ''}>
-                                        <FormControl>
-                                            <SelectTrigger>
-                                                <SelectValue placeholder="Seleccione tipo de gasto" />
-                                            </SelectTrigger>
-                                        </FormControl>
-                                        <SelectContent>
-                                            {SERVICE_SUBCATEGORIES.map(sub => (
-                                                <SelectItem key={sub} value={sub}>{sub}</SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                    <FormMessage />
-                                </FormItem>
-                            )} />
-                        )}
-
-                        {isMantenimiento && (
-                            <FormField name="subcategory" control={form.control} render={({ field }) => (
-                                <FormItem>
-                                    <Label className="text-foreground">Tipo de Mantenimiento</Label>
-                                    <Select onValueChange={field.onChange} value={field.value || ''}>
-                                        <FormControl>
-                                            <SelectTrigger>
-                                                <SelectValue placeholder="Seleccione tipo de mantenimiento" />
-                                            </SelectTrigger>
-                                        </FormControl>
-                                        <SelectContent>
-                                            {MAINTENANCE_SUBCATEGORIES.map(sub => (
-                                                <SelectItem key={sub} value={sub}>{sub}</SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                    <FormMessage />
-                                </FormItem>
-                            )} />
-                        )}
+                        <FormField name="subcategory" control={form.control} render={({ field }) => (
+                            <FormItem>
+                                <Label className="text-foreground">
+                                    {isGastosDeServicios ? 'Tipo de Gasto' : 
+                                     isMantenimiento ? 'Tipo de Mantenimiento' : 
+                                     'Subcategoría'}
+                                </Label>
+                                <Select 
+                                    onValueChange={field.onChange} 
+                                    value={field.value || ''}
+                                    disabled={isLoadingSubcategories}
+                                >
+                                    <FormControl>
+                                        <SelectTrigger>
+                                            <SelectValue placeholder={
+                                                isLoadingSubcategories ? 'Cargando...' :
+                                                isGastosDeServicios ? 'Seleccione tipo de gasto' :
+                                                isMantenimiento ? 'Seleccione tipo de mantenimiento' :
+                                                'Seleccione subcategoría'
+                                            } />
+                                        </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                        {subcategories.map(sub => (
+                                            <SelectItem key={sub.id} value={sub.name}>
+                                                {sub.name}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                                <FormMessage />
+                            </FormItem>
+                        )} />
                     </CardContent>
                 </Card>
             )}
