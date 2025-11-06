@@ -17,33 +17,31 @@ export const CostBatchActionBar = ({
   onClearSelection,
 }: CostBatchActionBarProps) => {
   return (
-    <div className="sticky top-0 z-50 bg-primary/95 backdrop-blur-sm border-b shadow-lg">
+    <div className="sticky top-0 z-50 bg-muted/95 backdrop-blur-sm border-b shadow-lg">
       <div className="container mx-auto px-4 py-3">
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-4">
-            <Badge variant="secondary" className="bg-white/20 text-white hover:bg-white/30 px-3 py-1.5">
+            <Badge variant="secondary" className="px-3 py-1.5">
               {selectedCount} {selectedCount === 1 ? 'costo seleccionado' : 'costos seleccionados'}
             </Badge>
-            <div className="text-white font-semibold">
+            <div className="text-foreground font-semibold">
               Total: ${totalAmount.toLocaleString('es-CL')}
             </div>
           </div>
 
           <div className="flex items-center gap-2">
             <Button
-              variant="secondary"
+              variant="default"
               size="sm"
               onClick={onBatchUpdate}
-              className="bg-white hover:bg-white/90 text-primary"
             >
               <RefreshCw className="h-4 w-4 mr-2" />
               Actualizar por Lotes
             </Button>
             <Button
-              variant="ghost"
+              variant="outline"
               size="sm"
               onClick={onClearSelection}
-              className="text-white hover:bg-white/20"
             >
               <X className="h-4 w-4 mr-2" />
               Limpiar
