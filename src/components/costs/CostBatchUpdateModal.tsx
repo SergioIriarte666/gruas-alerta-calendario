@@ -78,7 +78,10 @@ export const CostBatchUpdateModal = ({
     const fields: CostBatchUpdateData['fields'] = {};
 
     if (enableCategory && categoryId) fields.category_id = categoryId;
-    if (enableSubcategory) fields.subcategory = subcategory || null;
+    if (enableSubcategory) {
+      // Si es el valor especial "__NONE__", lo convertimos a null para limpiar
+      fields.subcategory = subcategory === '__NONE__' ? null : (subcategory || null);
+    }
     if (enableDate && date) fields.date = date;
     if (enablePaymentDate) fields.payment_date = paymentDate || null;
     if (enableCostCenter) fields.cost_center_id = costCenterId || null;
@@ -224,7 +227,7 @@ export const CostBatchUpdateModal = ({
                           <SelectValue placeholder="Seleccionar subcategoría" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="">Sin subcategoría (limpiar)</SelectItem>
+                          <SelectItem value="__NONE__">Sin subcategoría (limpiar)</SelectItem>
                           {availableSubcategories.map((sub) => (
                             <SelectItem key={sub.id} value={sub.name}>
                               {sub.name}
