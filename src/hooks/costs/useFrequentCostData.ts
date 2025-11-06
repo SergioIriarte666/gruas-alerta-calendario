@@ -6,7 +6,7 @@ interface FrequentData {
   count: number;
 }
 
-export const useFrequentCostData = () => {
+export const useFrequentCostData = (categoryId?: string) => {
   const { data: costs = [] } = useCosts();
 
   const frequentDescriptions = useMemo(() => {
@@ -65,14 +65,35 @@ export const useFrequentCostData = () => {
       .slice(0, 10);
   }, [costs]);
 
-  const searchData = (query: string, type: 'description' | 'supplier' | 'part_name'): FrequentData[] => {
+  const frequentSubcategories = useMemo(() => {
+    const subcategoryCounts = new Map<string, number>();
+    
+    costs.forEach(cost => {
+      // Filtrar por categoría si se proporciona
+      if (categoryId && cost.category_id !== categoryId) return;
+      
+      if (cost.subcategory && cost.subcategory.trim()) {
+        const normalized = cost.subcategory.trim();
+        subcategoryCounts.set(normalized, (subcategoryCounts.get(normalized) || 0) + 1);
+      }
+    });
+
+    return Array.from(subcategoryCounts.entries())
+      .map(([value, count]) => ({ value, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 10);
+  }, [costs, categoryId]);
+
+  const searchData = (query: string, type: 'description' | 'supplier' | 'part_name' | 'subcategory'): FrequentData[] => {
     if (!query || query.length < 2) return [];
 
     const dataSource = type === 'description' 
       ? frequentDescriptions 
       : type === 'supplier' 
       ? frequentSuppliers 
-      : frequentPartNames;
+      : type === 'part_name'
+      ? frequentPartNames
+      : frequentSubcategories;
 
     const searchTerm = query.toLowerCase();
 
@@ -85,6 +106,7 @@ export const useFrequentCostData = () => {
     frequentDescriptions,
     frequentSuppliers,
     frequentPartNames,
+    frequentSubcategories,
     searchData
   };
 };

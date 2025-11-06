@@ -10,7 +10,8 @@ interface CostComboboxProps {
   value: string;
   onValueChange: (value: string) => void;
   placeholder: string;
-  type: 'description' | 'supplier' | 'part_name';
+  type: 'description' | 'supplier' | 'part_name' | 'subcategory';
+  categoryId?: string;
   disabled?: boolean;
 }
 
@@ -19,11 +20,12 @@ export const CostCombobox = ({
   onValueChange, 
   placeholder,
   type,
+  categoryId,
   disabled = false
 }: CostComboboxProps) => {
   const [open, setOpen] = useState(false);
   const [inputValue, setInputValue] = useState(value || '');
-  const { frequentDescriptions, frequentSuppliers, frequentPartNames, searchData } = useFrequentCostData();
+  const { frequentDescriptions, frequentSuppliers, frequentPartNames, frequentSubcategories, searchData } = useFrequentCostData(categoryId);
 
   const handleSelect = (selectedValue: string) => {
     onValueChange(selectedValue);
@@ -40,7 +42,9 @@ export const CostCombobox = ({
     ? frequentDescriptions 
     : type === 'supplier' 
     ? frequentSuppliers 
-    : frequentPartNames;
+    : type === 'part_name'
+    ? frequentPartNames
+    : frequentSubcategories;
 
   const searchResults = inputValue.length >= 2 ? searchData(inputValue, type) : frequentData;
 

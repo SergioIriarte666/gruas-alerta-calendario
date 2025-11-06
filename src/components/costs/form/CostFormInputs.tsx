@@ -183,8 +183,8 @@ export const CostFormInputs = ({
                 <InventoryPurchaseFields form={form} />
             )}
 
-            {/* Subcategorías - Dinámicas desde DB */}
-            {selectedCategoryId && hasSubcategories && (
+            {/* Subcategorías - PARA TODAS LAS CATEGORÍAS */}
+            {selectedCategoryId && (
                 <Card className="bg-card border">
                     <CardHeader className="pb-4">
                         <CardTitle className="flex items-center gap-2 text-lg text-foreground">
@@ -198,31 +198,46 @@ export const CostFormInputs = ({
                                 <Label className="text-foreground">
                                     {isGastosDeServicios ? 'Tipo de Gasto' : 
                                      isMantenimiento ? 'Tipo de Mantenimiento' : 
-                                     'Subcategoría'}
+                                     'Subcategoría (Opcional)'}
                                 </Label>
-                                <Select 
-                                    onValueChange={field.onChange} 
-                                    value={field.value || ''}
-                                    disabled={isLoadingSubcategories}
-                                >
+                                
+                                {/* Mostrar Select si hay subcategorías predefinidas */}
+                                {hasSubcategories ? (
+                                    <Select 
+                                        onValueChange={field.onChange} 
+                                        value={field.value || ''}
+                                        disabled={isLoadingSubcategories}
+                                    >
+                                        <FormControl>
+                                            <SelectTrigger>
+                                                <SelectValue placeholder={
+                                                    isLoadingSubcategories ? 'Cargando...' :
+                                                    isGastosDeServicios ? 'Seleccione tipo de gasto' :
+                                                    isMantenimiento ? 'Seleccione tipo de mantenimiento' :
+                                                    'Seleccione subcategoría'
+                                                } />
+                                            </SelectTrigger>
+                                        </FormControl>
+                                        <SelectContent>
+                                            {subcategories.map(sub => (
+                                                <SelectItem key={sub.id} value={sub.name}>
+                                                    {sub.name}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                ) : (
+                                    /* Mostrar Input libre con sugerencias para categorías sin subcategorías predefinidas */
                                     <FormControl>
-                                        <SelectTrigger>
-                                            <SelectValue placeholder={
-                                                isLoadingSubcategories ? 'Cargando...' :
-                                                isGastosDeServicios ? 'Seleccione tipo de gasto' :
-                                                isMantenimiento ? 'Seleccione tipo de mantenimiento' :
-                                                'Seleccione subcategoría'
-                                            } />
-                                        </SelectTrigger>
+                                        <CostCombobox
+                                            value={field.value || ''}
+                                            onValueChange={field.onChange}
+                                            placeholder="Ej: Papelería, Honorarios, Prima anual, Aguinaldo..."
+                                            type="subcategory"
+                                            categoryId={selectedCategoryId}
+                                        />
                                     </FormControl>
-                                    <SelectContent>
-                                        {subcategories.map(sub => (
-                                            <SelectItem key={sub.id} value={sub.name}>
-                                                {sub.name}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
+                                )}
                                 <FormMessage />
                             </FormItem>
                         )} />
