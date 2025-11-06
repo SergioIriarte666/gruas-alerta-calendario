@@ -18,6 +18,7 @@ import { Badge } from '@/components/ui/badge';
 import { Cost } from '@/types/costs';
 import { CostBatchUpdateData, useUpdateCostsBatch } from '@/hooks/useUpdateCostsBatch';
 import { useCostCategories } from '@/hooks/useCostCategories';
+import { useCostSubcategories } from '@/hooks/useCostSubcategories';
 import { useCostCenters } from '@/hooks/useCostCenters';
 import { useInventorySuppliers } from '@/hooks/useInventory';
 import { BarChart3, Calendar, Tag, Building2, User, FileText } from 'lucide-react';
@@ -56,6 +57,18 @@ export const CostBatchUpdateModal = ({
   const [supplierId, setSupplierId] = useState<string>('');
   const [notes, setNotes] = useState<string>('');
   const [appendNotes, setAppendNotes] = useState(false);
+
+  // Hook para obtener subcategorías basadas en la categoría seleccionada
+  const { subcategories: availableSubcategories = [] } = useCostSubcategories(
+    enableCategory && categoryId ? categoryId : undefined
+  );
+
+  // Limpiar subcategoría cuando cambia la categoría
+  React.useEffect(() => {
+    if (enableCategory && categoryId) {
+      setSubcategory('');
+    }
+  }, [categoryId, enableCategory]);
 
   const totalAmount = useMemo(() => {
     return selectedCosts.reduce((sum, cost) => sum + Number(cost.amount), 0);
@@ -196,12 +209,31 @@ export const CostBatchUpdateModal = ({
                   />
                 </div>
                 {enableSubcategory && (
-                  <Input
-                    value={subcategory}
-                    onChange={(e) => setSubcategory(e.target.value)}
-                    placeholder="Subcategoría (dejar vacío para limpiar)"
-                    className="w-full"
-                  />
+                  <div className="space-y-2">
+                    {(!enableCategory || !categoryId) ? (
+                      <p className="text-sm text-muted-foreground italic">
+                        Primero debes seleccionar una categoría
+                      </p>
+                    ) : availableSubcategories.length === 0 ? (
+                      <p className="text-sm text-muted-foreground italic">
+                        No hay subcategorías configuradas para esta categoría
+                      </p>
+                    ) : (
+                      <Select value={subcategory} onValueChange={setSubcategory}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Seleccionar subcategoría" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="">Sin subcategoría (limpiar)</SelectItem>
+                          {availableSubcategories.map((sub) => (
+                            <SelectItem key={sub.id} value={sub.name}>
+                              {sub.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  </div>
                 )}
               </div>
             </CardContent>
