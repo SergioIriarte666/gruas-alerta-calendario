@@ -185,27 +185,24 @@ export const CostBatchUpdateModal = ({
           {/* Subcategoría */}
           <Card>
             <CardContent className="pt-6">
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex items-center gap-3 flex-1">
+              <div className="space-y-3">
+                <div className="flex items-center gap-3">
                   <Tag className="h-5 w-5 text-muted-foreground" />
-                  <div className="space-y-1 flex-1">
-                    <div className="flex items-center gap-2">
-                      <Label htmlFor="enable-subcategory">Subcategoría</Label>
-                      <Switch
-                        id="enable-subcategory"
-                        checked={enableSubcategory}
-                        onCheckedChange={setEnableSubcategory}
-                      />
-                    </div>
-                    {enableSubcategory && (
-                      <Input
-                        value={subcategory}
-                        onChange={(e) => setSubcategory(e.target.value)}
-                        placeholder="Subcategoría (dejar vacío para limpiar)"
-                      />
-                    )}
-                  </div>
+                  <Label htmlFor="enable-subcategory">Subcategoría</Label>
+                  <Switch
+                    id="enable-subcategory"
+                    checked={enableSubcategory}
+                    onCheckedChange={setEnableSubcategory}
+                  />
                 </div>
+                {enableSubcategory && (
+                  <Input
+                    value={subcategory}
+                    onChange={(e) => setSubcategory(e.target.value)}
+                    placeholder="Subcategoría (dejar vacío para limpiar)"
+                    className="w-full"
+                  />
+                )}
               </div>
             </CardContent>
           </Card>
