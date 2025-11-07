@@ -13,7 +13,7 @@ import { useCostCategories } from '@/hooks/useCostCategories';
 import { toast } from 'sonner';
 import { getCurrentChileDateString } from '@/utils/timezoneUtils';
 import { debounce } from 'lodash';
-import { SERVICE_SUBCATEGORIES, MAINTENANCE_SUBCATEGORIES } from '@/types/costs';
+import { useCostSubcategories } from '@/hooks/useCostSubcategories';
 
 interface ServiceCostDetail {
   id: string;
@@ -50,6 +50,20 @@ export const ServiceCostDetailsSection = ({
   const { mutate: addCost } = useAddCost();
   const { mutate: updateCost } = useUpdateCost();
   const { mutate: deleteCost } = useDeleteCost();
+
+  // Get category IDs for dynamic subcategories
+  const serviceCategoryId = categories.find(cat => 
+    cat.name.toLowerCase().includes('gastos') || 
+    cat.name.toLowerCase().includes('servicio')
+  )?.id;
+
+  const maintenanceCategoryId = categories.find(cat => 
+    cat.name.toLowerCase().includes('mantenimiento')
+  )?.id;
+
+  // Fetch dynamic subcategories for service and maintenance categories
+  const { subcategories: serviceSubcategories = [] } = useCostSubcategories(serviceCategoryId);
+  const { subcategories: maintenanceSubcategories = [] } = useCostSubcategories(maintenanceCategoryId);
 
   // Filter out commission costs - these are handled by MultipleOperatorsSection
   const commissionCategoryId = categories.find(cat => 
@@ -266,17 +280,17 @@ export const ServiceCostDetailsSection = ({
     return grouped;
   };
 
-  // Función para obtener subcategorías basadas en la categoría
-  const getSubcategoriesForCategory = (categoryId: string) => {
+  // Función para obtener subcategorías basadas en la categoría (dinámico desde DB)
+  const getSubcategoriesForCategory = (categoryId: string): string[] => {
     const category = nonCommissionCategories.find(cat => cat.id === categoryId);
     if (!category) return [];
 
     const categoryName = category.name.toLowerCase();
     
     if (categoryName.includes('gastos') || categoryName.includes('servicio')) {
-      return SERVICE_SUBCATEGORIES;
+      return serviceSubcategories.map(sub => sub.name);
     } else if (categoryName.includes('mantenimiento')) {
-      return MAINTENANCE_SUBCATEGORIES;
+      return maintenanceSubcategories.map(sub => sub.name);
     }
     
     return [];
