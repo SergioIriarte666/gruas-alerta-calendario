@@ -8,9 +8,10 @@ interface ReportMetricCardProps {
   value: string | number;
   description: string;
   valueClassName?: string;
+  showSensitiveData?: boolean;
 }
 
-export const ReportMetricCard = ({ icon: Icon, title, value, description, valueClassName }: ReportMetricCardProps) => (
+export const ReportMetricCard = ({ icon: Icon, title, value, description, valueClassName, showSensitiveData = true }: ReportMetricCardProps) => (
   <Card className="bg-card border hover:bg-muted/50 transition-colors">
     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
       <CardTitle className="text-sm font-medium text-foreground">{title}</CardTitle>

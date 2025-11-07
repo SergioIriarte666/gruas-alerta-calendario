@@ -12,23 +12,24 @@ import { formatCurrency } from '@/lib/utils';
 
 interface ServicesMetricsProps {
   metrics: ServicesMetricsType;
+  showSensitiveData?: boolean;
 }
 
-export const ServicesMetrics = ({ metrics }: ServicesMetricsProps) => {
+export const ServicesMetrics = ({ metrics, showSensitiveData = true }: ServicesMetricsProps) => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
       <ReportMetricCard
         icon={Truck}
         title="Total Servicios"
         value={`${metrics.totalServices} servicios`}
-        description={`Valor: ${formatCurrency(metrics.totalRevenue)}`}
+        description={`Valor: ${showSensitiveData ? formatCurrency(metrics.totalRevenue) : '••••••'}`}
         valueClassName="text-blue-400"
       />
       
       <ReportMetricCard
         icon={TrendingDown}
         title="Gastos"
-        value={formatCurrency(metrics.totalCosts)}
+        value={showSensitiveData ? formatCurrency(metrics.totalCosts) : '••••••'}
         description="Costos operativos del período"
         valueClassName="text-red-400"
       />
@@ -36,7 +37,7 @@ export const ServicesMetrics = ({ metrics }: ServicesMetricsProps) => {
       <ReportMetricCard
         icon={DollarSign}
         title="Total Generado"
-        value={formatCurrency(metrics.totalRevenue)}
+        value={showSensitiveData ? formatCurrency(metrics.totalRevenue) : '••••••'}
         description="Ingresos totales por servicios"
         valueClassName="text-green-400"
       />
@@ -44,8 +45,8 @@ export const ServicesMetrics = ({ metrics }: ServicesMetricsProps) => {
       <ReportMetricCard
         icon={metrics.netProfit >= 0 ? TrendingUp : TrendingDown}
         title="Balance"
-        value={formatCurrency(metrics.netProfit)}
-        description={`Margen: ${metrics.profitMargin.toFixed(1)}%`}
+        value={showSensitiveData ? formatCurrency(metrics.netProfit) : '••••••'}
+        description={`Margen: ${showSensitiveData ? metrics.profitMargin.toFixed(1) + '%' : '••••'}`}
         valueClassName="text-violet-600"
       />
     </div>

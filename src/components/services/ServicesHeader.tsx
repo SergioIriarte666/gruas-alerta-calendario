@@ -1,11 +1,11 @@
 
 import { Button } from '@/components/ui/button';
-import { Plus, Upload, RefreshCw, FileDown, Table, BarChart3 } from 'lucide-react';
+import { Plus, Upload, RefreshCw, FileDown, Table, BarChart3, Eye, EyeOff } from 'lucide-react';
 import { GlobalRefreshButton } from './GlobalRefreshButton';
 import { ServicesMetrics } from './ServicesMetrics';
 import { ServicesDateFilter } from './ServicesDateFilter';
 import { useServicesMetrics } from '@/hooks/services/useServicesMetrics';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 type DateFilter = 'today' | 'week' | 'month' | 'all';
 
@@ -38,6 +38,17 @@ export const ServicesHeader = ({
 }: ServicesHeaderProps) => {
   const [dateFilter, setDateFilter] = useState<DateFilter>('all');
   const { metrics, loading } = useServicesMetrics(dateFilter);
+  
+  // Estado para visibilidad de datos sensibles
+  const [showSensitiveData, setShowSensitiveData] = useState(() => {
+    const saved = localStorage.getItem('showSensitiveData');
+    return saved !== null ? JSON.parse(saved) : true;
+  });
+
+  // Persistir preferencia en localStorage
+  useEffect(() => {
+    localStorage.setItem('showSensitiveData', JSON.stringify(showSensitiveData));
+  }, [showSensitiveData]);
 
   return (
     <div className="space-y-6">
@@ -115,7 +126,22 @@ export const ServicesHeader = ({
       {/* Metrics Section */}
       <div className="bg-white p-6 rounded-lg border space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-black">Métricas de Servicios</h2>
+          <div className="flex items-center gap-3">
+            <h2 className="text-lg font-semibold text-black">Métricas de Servicios</h2>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowSensitiveData(!showSensitiveData)}
+              title={showSensitiveData ? "Ocultar información sensible" : "Mostrar información sensible"}
+              className="h-8 w-8 p-0 hover:bg-gray-100"
+            >
+              {showSensitiveData ? (
+                <Eye className="h-4 w-4 text-gray-600" />
+              ) : (
+                <EyeOff className="h-4 w-4 text-gray-400" />
+              )}
+            </Button>
+          </div>
           <ServicesDateFilter 
             selected={dateFilter} 
             onChange={setDateFilter} 
@@ -131,7 +157,7 @@ export const ServicesHeader = ({
             ))}
           </div>
         ) : (
-          <ServicesMetrics metrics={metrics} />
+          <ServicesMetrics metrics={metrics} showSensitiveData={showSensitiveData} />
         )}
       </div>
     </div>
