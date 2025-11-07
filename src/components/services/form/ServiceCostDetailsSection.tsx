@@ -13,7 +13,7 @@ import { useCostCategories } from '@/hooks/useCostCategories';
 import { toast } from 'sonner';
 import { getCurrentChileDateString } from '@/utils/timezoneUtils';
 import { debounce } from 'lodash';
-import { useCostSubcategories } from '@/hooks/useCostSubcategories';
+import { supabase } from '@/integrations/supabase/client';
 
 interface ServiceCostDetail {
   id: string;
@@ -51,19 +51,8 @@ export const ServiceCostDetailsSection = ({
   const { mutate: updateCost } = useUpdateCost();
   const { mutate: deleteCost } = useDeleteCost();
 
-  // Get category IDs for dynamic subcategories
-  const serviceCategoryId = categories.find(cat => 
-    cat.name.toLowerCase().includes('gastos') || 
-    cat.name.toLowerCase().includes('servicio')
-  )?.id;
-
-  const maintenanceCategoryId = categories.find(cat => 
-    cat.name.toLowerCase().includes('mantenimiento')
-  )?.id;
-
-  // Fetch dynamic subcategories for service and maintenance categories
-  const { subcategories: serviceSubcategories = [] } = useCostSubcategories(serviceCategoryId);
-  const { subcategories: maintenanceSubcategories = [] } = useCostSubcategories(maintenanceCategoryId);
+  // Track selected categories to load their subcategories dynamically
+  const [subcategoriesCache, setSubcategoriesCache] = useState<Record<string, string[]>>({});
 
   // Filter out commission costs - these are handled by MultipleOperatorsSection
   const commissionCategoryId = categories.find(cat => 
@@ -280,20 +269,39 @@ export const ServiceCostDetailsSection = ({
     return grouped;
   };
 
-  // Función para obtener subcategorías basadas en la categoría (dinámico desde DB)
-  const getSubcategoriesForCategory = (categoryId: string): string[] => {
-    const category = nonCommissionCategories.find(cat => cat.id === categoryId);
-    if (!category) return [];
+  // Load subcategories dynamically when category is selected
+  useEffect(() => {
+    const loadSubcategoriesForCategories = async () => {
+      const uniqueCategoryIds = [...new Set(costDetails.map(cost => cost.category_id).filter(Boolean))];
+      
+      for (const categoryId of uniqueCategoryIds) {
+        if (!subcategoriesCache[categoryId]) {
+          const { data } = await supabase
+            .from('cost_subcategories')
+            .select('name')
+            .eq('category_id', categoryId)
+            .eq('is_active', true)
+            .order('display_order', { ascending: true });
+          
+          if (data) {
+            setSubcategoriesCache(prev => ({
+              ...prev,
+              [categoryId]: data.map(sub => sub.name)
+            }));
+          }
+        }
+      }
+    };
 
-    const categoryName = category.name.toLowerCase();
-    
-    if (categoryName.includes('gastos') || categoryName.includes('servicio')) {
-      return serviceSubcategories.map(sub => sub.name);
-    } else if (categoryName.includes('mantenimiento')) {
-      return maintenanceSubcategories.map(sub => sub.name);
+    if (costDetails.length > 0) {
+      loadSubcategoriesForCategories();
     }
-    
-    return [];
+  }, [costDetails.map(c => c.category_id).join(',')]);
+
+  // Función para obtener subcategorías basadas en la categoría (dinámico desde cache)
+  const getSubcategoriesForCategory = (categoryId: string): string[] => {
+    if (!categoryId) return [];
+    return subcategoriesCache[categoryId] || [];
   };
 
   return (
