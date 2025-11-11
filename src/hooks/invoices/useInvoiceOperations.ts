@@ -49,6 +49,7 @@ export const useInvoiceOperations = () => {
         total: invoiceData.total.toString(),
         numero_fiscal: invoiceData.numeroFiscal,
         status: invoiceData.status || 'draft',
+        payment_term_id: invoiceData.paymentTermId || null,
         notes: null // Invoice notes not needed for this operation
       };
 
