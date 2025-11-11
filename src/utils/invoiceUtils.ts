@@ -101,6 +101,7 @@ export const formatInvoiceData = (data: any): Invoice => {
     paidAmount: safeNumber(data.paid_amount),
     remainingAmount: safeNumber(data.remaining_amount),
     paymentDate: safeDate(data.payment_date),
+    paymentTermId: data.payment_term_id || undefined,
     numeroFiscal: safeString(data.numero_fiscal) || null,
     notes: safeString(data.notes) || undefined,
     createdAt: safeString(data.created_at),
