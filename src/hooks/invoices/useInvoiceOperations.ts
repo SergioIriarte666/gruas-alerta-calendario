@@ -249,8 +249,15 @@ export const useInvoiceOperations = () => {
         updateData.payment_date = invoiceData.paymentDate === '' ? null : invoiceData.paymentDate;
       }
       if (invoiceData.paymentTermId !== undefined) {
-        updateData.payment_term_id = invoiceData.paymentTermId || null;
+        // Convertir undefined o valores falsy a null
+        updateData.payment_term_id = invoiceData.paymentTermId ? invoiceData.paymentTermId : null;
       }
+      
+      console.log('💾 UPDATE payment_term_id:', {
+        input: invoiceData.paymentTermId,
+        output: updateData.payment_term_id,
+        will_update: 'payment_term_id' in updateData
+      });
       
       // Handle calculated fields with validation
       if (invoiceData.subtotal !== undefined) {
