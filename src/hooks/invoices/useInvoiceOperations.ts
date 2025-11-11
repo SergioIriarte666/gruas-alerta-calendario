@@ -49,9 +49,18 @@ export const useInvoiceOperations = () => {
         total: invoiceData.total.toString(),
         numero_fiscal: invoiceData.numeroFiscal,
         status: invoiceData.status || 'draft',
-        payment_term_id: invoiceData.paymentTermId || null,
+        payment_term_id: invoiceData.paymentTermId || '',
         notes: null
       };
+
+      console.log('📊 INVOICE DATA DEBUG:', {
+        original_paymentTermId: invoiceData.paymentTermId,
+        transaction_payment_term_id: invoiceDataForTransaction.payment_term_id,
+        type_of_paymentTermId: typeof invoiceData.paymentTermId,
+        is_undefined: invoiceData.paymentTermId === undefined,
+        is_empty_string: invoiceDataForTransaction.payment_term_id === '',
+        full_transaction_data: JSON.stringify(invoiceDataForTransaction)
+      });
 
       // Usar función transaccional que maneja folio correctamente
       const { data: transactionResult, error: transactionError } = await supabase
