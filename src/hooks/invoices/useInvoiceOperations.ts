@@ -239,6 +239,9 @@ export const useInvoiceOperations = () => {
         // Convertir cadena vacía a null para evitar error de PostgreSQL
         updateData.payment_date = invoiceData.paymentDate === '' ? null : invoiceData.paymentDate;
       }
+      if (invoiceData.paymentTermId !== undefined) {
+        updateData.payment_term_id = invoiceData.paymentTermId || null;
+      }
       
       // Handle calculated fields with validation
       if (invoiceData.subtotal !== undefined) {
