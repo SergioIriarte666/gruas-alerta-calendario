@@ -53,14 +53,6 @@ export const useInvoiceOperations = () => {
         notes: null
       };
 
-      console.log('📊 CREATE INVOICE - Payment term handling:', {
-        received_paymentTermId: invoiceData.paymentTermId,
-        sent_payment_term_id: invoiceDataForTransaction.payment_term_id,
-        is_empty_string: invoiceDataForTransaction.payment_term_id === '',
-        type: typeof invoiceData.paymentTermId,
-        will_be_null_in_db: invoiceDataForTransaction.payment_term_id === ''
-      });
-
       // Usar función transaccional que maneja folio correctamente
       const { data: transactionResult, error: transactionError } = await supabase
         .rpc('create_invoice_transaction', {
@@ -251,12 +243,6 @@ export const useInvoiceOperations = () => {
         // Convertir undefined o valores falsy a null
         updateData.payment_term_id = invoiceData.paymentTermId ? invoiceData.paymentTermId : null;
       }
-      
-      console.log('💾 UPDATE payment_term_id:', {
-        input: invoiceData.paymentTermId,
-        output: updateData.payment_term_id,
-        will_update: 'payment_term_id' in updateData
-      });
       
       // Handle calculated fields with validation
       if (invoiceData.subtotal !== undefined) {

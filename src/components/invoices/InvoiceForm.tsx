@@ -264,12 +264,6 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
         paymentTermId: data.paymentTermId && data.paymentTermId.trim() !== '' ? data.paymentTermId : undefined,
         numeroFiscal: data.numeroFiscal?.trim() || undefined
       };
-      
-      console.log('✅ InvoiceForm - Submit data with payment term:', {
-        paymentTermId: submitData.paymentTermId,
-        hasPaymentTerm: !!submitData.paymentTermId,
-        rawValue: data.paymentTermId
-      });
       await onSubmit(submitData);
     } catch (error: any) {
       console.error('InvoiceForm - Submission error:', error);
@@ -372,7 +366,6 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
               <Label htmlFor="paymentTermId" className="text-foreground">Condición de Pago (Opcional)</Label>
               <Select 
                 onValueChange={(value) => {
-                  console.log('🔵 Payment term selected:', value);
                   setValue('paymentTermId', value, { shouldValidate: true, shouldDirty: true });
                 }}
                 value={watch('paymentTermId') || ''}
