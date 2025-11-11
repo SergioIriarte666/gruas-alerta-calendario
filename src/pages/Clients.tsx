@@ -86,16 +86,39 @@ const Clients = () => {
     });
   }, [createClient]);
 
-  const handleUpdateClient = React.useCallback((clientData: Omit<Client, 'id' | 'createdAt' | 'updatedAt'>) => {
+  const handleUpdateClient = React.useCallback((clientData: any) => {
     if (selectedClient) {
-      updateClient(selectedClient.id, clientData);
-      setIsDialogOpen(false);
-      setSelectedClient(undefined);
-      toast.success("Cliente actualizado", {
-        description: "Los datos del cliente han sido actualizados.",
-      });
+      // Verificar si está agregando un nuevo departamento
+      if (clientData._isAddingDepartment) {
+        const newClientData = {
+          name: clientData.name,
+          rut: clientData.rut,
+          phone: clientData.phone,
+          email: clientData.email,
+          address: clientData.address,
+          contactName: clientData.contactName,
+          isActive: clientData.isActive,
+          department: clientData.department,
+          departments: [clientData.department]
+        };
+        
+        createClient(newClientData);
+        setIsDialogOpen(false);
+        setSelectedClient(undefined);
+        toast.success("Departamento agregado", {
+          description: `Se agregó el departamento "${clientData.department}" al cliente.`,
+        });
+      } else {
+        // Actualización normal
+        updateClient(selectedClient.id, clientData);
+        setIsDialogOpen(false);
+        setSelectedClient(undefined);
+        toast.success("Cliente actualizado", {
+          description: "Los datos del cliente han sido actualizados.",
+        });
+      }
     }
-  }, [selectedClient, updateClient]);
+  }, [selectedClient, updateClient, createClient]);
 
   const handleEditClient = React.useCallback((client: Client) => {
     setSelectedClient(client);

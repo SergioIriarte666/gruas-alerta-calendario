@@ -30,12 +30,26 @@ export const ClientForm = ({ client, onSubmit, onCancel }: ClientFormProps) => {
     client ? [] : ['']
   );
 
+  // Estado para agregar departamento en modo edición
+  const [isAddingDepartment, setIsAddingDepartment] = React.useState(false);
+  const [newDepartmentName, setNewDepartmentName] = React.useState('');
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
     if (client) {
-      // Modo edición: enviar datos normales
-      onSubmit(formData);
+      // Verificar si está agregando un nuevo departamento
+      if (isAddingDepartment && newDepartmentName.trim()) {
+        onSubmit({
+          ...formData,
+          department: newDepartmentName.trim(),
+          departments: [newDepartmentName.trim()],
+          _isAddingDepartment: true
+        } as any);
+      } else {
+        // Modo edición normal
+        onSubmit(formData);
+      }
     } else {
       // Modo creación: enviar con múltiples departamentos
       const validDepartments = departments.filter(dep => dep.trim() !== '');
@@ -160,17 +174,45 @@ export const ClientForm = ({ client, onSubmit, onCancel }: ClientFormProps) => {
         <div className="grid grid-cols-1 gap-4">
           
           {client ? (
-            // Modo edición: un solo departamento
-            <div className="space-y-2">
-              <Label htmlFor="department" className="text-gray-700">Departamento *</Label>
+            // Modo edición: un solo departamento con opción de agregar
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <Label className="text-gray-700">Departamento *</Label>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsAddingDepartment(!isAddingDepartment)}
+                  className="border-tms-green text-tms-green hover:bg-tms-green hover:text-black"
+                >
+                  <Plus className="w-4 h-4 mr-1" />
+                  Agregar Departamento
+                </Button>
+              </div>
+              
               <Input
                 id="department"
                 value={formData.department}
                 onChange={(e) => handleChange('department', e.target.value)}
-                placeholder="Ej: Ventas, Administración, Operaciones"
-                className="bg-white border-gray-300 text-gray-900 focus:border-tms-green focus:ring-tms-green placeholder:text-gray-400"
-                required
+                disabled
+                className="bg-gray-100 border-gray-300 text-gray-600"
               />
+              
+              {isAddingDepartment && (
+                <div className="p-4 border border-tms-green rounded-lg bg-green-50">
+                  <Label className="text-gray-700 mb-2">Nuevo Departamento *</Label>
+                  <Input
+                    value={newDepartmentName}
+                    onChange={(e) => setNewDepartmentName(e.target.value)}
+                    placeholder="Ej: Operaciones, Marketing"
+                    className="bg-white border-gray-300 text-gray-900 focus:border-tms-green focus:ring-tms-green placeholder:text-gray-400"
+                    required={isAddingDepartment}
+                  />
+                  <p className="text-sm text-gray-600 mt-2">
+                    Se creará un nuevo registro con el mismo RUT y datos del cliente
+                  </p>
+                </div>
+              )}
             </div>
           ) : (
             // Modo creación: múltiples departamentos
