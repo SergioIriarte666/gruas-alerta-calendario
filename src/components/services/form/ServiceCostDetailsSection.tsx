@@ -24,6 +24,7 @@ interface ServiceCostDetail {
   notes?: string;
   category_id: string;
   subcategory?: string;
+  date?: string;
   isExisting?: boolean;
 }
 
@@ -85,6 +86,7 @@ export const ServiceCostDetailsSection = ({
         notes: cost.notes || '',
         category_id: cost.category_id,
         subcategory: cost.subcategory || '',
+        date: cost.date, // Preserve original date
         isExisting: true
       }));
       
@@ -205,7 +207,7 @@ export const ServiceCostDetailsSection = ({
       category_id: costDetail.category_id,
       description: costDetail.description.trim(),
       amount: costDetail.amount,
-      date: getCurrentChileDateString(),
+      date: costDetail.isExisting && costDetail.date ? costDetail.date : getCurrentChileDateString(),
       notes: costDetail.notes || '',
       subcategory: costDetail.subcategory || ''
     };

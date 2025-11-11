@@ -70,6 +70,7 @@ export interface ServiceCostDetail {
   notes?: string;
   category_id: string;
   subcategory?: string;
+  date?: string; // Original date of the cost
   isExisting?: boolean; // To track if it's saved in database
 }
 
