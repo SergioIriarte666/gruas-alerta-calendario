@@ -53,13 +53,12 @@ export const useInvoiceOperations = () => {
         notes: null
       };
 
-      console.log('📊 INVOICE DATA DEBUG:', {
-        original_paymentTermId: invoiceData.paymentTermId,
-        transaction_payment_term_id: invoiceDataForTransaction.payment_term_id,
-        type_of_paymentTermId: typeof invoiceData.paymentTermId,
-        is_undefined: invoiceData.paymentTermId === undefined,
+      console.log('📊 CREATE INVOICE - Payment term handling:', {
+        received_paymentTermId: invoiceData.paymentTermId,
+        sent_payment_term_id: invoiceDataForTransaction.payment_term_id,
         is_empty_string: invoiceDataForTransaction.payment_term_id === '',
-        full_transaction_data: JSON.stringify(invoiceDataForTransaction)
+        type: typeof invoiceData.paymentTermId,
+        will_be_null_in_db: invoiceDataForTransaction.payment_term_id === ''
       });
 
       // Usar función transaccional que maneja folio correctamente

@@ -261,11 +261,15 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
         vat,
         total,
         clientId: selectedClosure.clientId,
-        paymentTermId: data.paymentTermId || undefined,
+        paymentTermId: data.paymentTermId && data.paymentTermId.trim() !== '' ? data.paymentTermId : undefined,
         numeroFiscal: data.numeroFiscal?.trim() || undefined
       };
       
-      console.log('InvoiceForm - Validated submit data:', submitData);
+      console.log('✅ InvoiceForm - Submit data with payment term:', {
+        paymentTermId: submitData.paymentTermId,
+        hasPaymentTerm: !!submitData.paymentTermId,
+        rawValue: data.paymentTermId
+      });
       await onSubmit(submitData);
     } catch (error: any) {
       console.error('InvoiceForm - Submission error:', error);
@@ -368,9 +372,10 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
               <Label htmlFor="paymentTermId" className="text-foreground">Condición de Pago (Opcional)</Label>
               <Select 
                 onValueChange={(value) => {
-                  setValue('paymentTermId', value || undefined);
+                  console.log('🔵 Payment term selected:', value);
+                  setValue('paymentTermId', value, { shouldValidate: true, shouldDirty: true });
                 }}
-                value={watch('paymentTermId') || undefined}
+                value={watch('paymentTermId') || ''}
                 disabled={!editableFields.canEditDates || loadingTerms}
               >
                 <SelectTrigger className="disabled:opacity-50 disabled:cursor-not-allowed mt-1">
