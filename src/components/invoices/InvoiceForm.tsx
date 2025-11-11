@@ -115,6 +115,7 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
         issueDate: invoice.issueDate || new Date().toISOString().split('T')[0],
         dueDate: invoice.dueDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
         status: invoice.status || 'draft' as InvoiceStatus,
+        paymentTermId: invoice.paymentTermId || undefined,
         paymentDate: invoice.paymentDate || '',
         numeroFiscal: invoice.numeroFiscal || ''
       } : {
@@ -122,6 +123,7 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
         issueDate: new Date().toISOString().split('T')[0],
         dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
         status: 'draft' as InvoiceStatus,
+        paymentTermId: undefined,
         paymentDate: '',
         numeroFiscal: ''
       };
