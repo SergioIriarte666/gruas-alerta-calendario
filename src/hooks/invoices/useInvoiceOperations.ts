@@ -40,8 +40,6 @@ export const useInvoiceOperations = () => {
       console.log('📋 Servicios a facturar:', serviceIds);
 
       // Preparar datos para la transacción
-      console.log('💳 [PAYMENT_TERM] invoiceData.paymentTermId:', invoiceData.paymentTermId);
-      
       const invoiceDataForTransaction = {
         client_id: invoiceData.clientId,
         issue_date: invoiceData.issueDate,
@@ -52,10 +50,8 @@ export const useInvoiceOperations = () => {
         numero_fiscal: invoiceData.numeroFiscal,
         status: invoiceData.status || 'draft',
         payment_term_id: invoiceData.paymentTermId || null,
-        notes: null // Invoice notes not needed for this operation
+        notes: null
       };
-      
-      console.log('💳 [PAYMENT_TERM] invoiceDataForTransaction:', JSON.stringify(invoiceDataForTransaction, null, 2));
 
       // Usar función transaccional que maneja folio correctamente
       const { data: transactionResult, error: transactionError } = await supabase
