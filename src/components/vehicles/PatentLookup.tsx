@@ -149,7 +149,7 @@ export const PatentLookup: React.FC = () => {
             <div className="space-y-2">
               {history.map((item) => (
                 <Card
-                  key={item.timestamp}
+                  key={item.id}
                   className="cursor-pointer hover:bg-accent/50 transition-colors"
                   onClick={() => loadFromHistory(item)}
                 >
@@ -162,7 +162,7 @@ export const PatentLookup: React.FC = () => {
                           </Badge>
                           <span className="text-sm text-muted-foreground flex items-center gap-1">
                             <Clock className="h-3 w-3" />
-                            {format(new Date(item.timestamp), "dd MMM yyyy, HH:mm", { locale: es })}
+                            {format(new Date(item.created_at), "dd MMM yyyy, HH:mm", { locale: es })}
                           </span>
                         </div>
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
