@@ -3,12 +3,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Search, Loader2, Car } from 'lucide-react';
+import { Search, Loader2, Car, History, Trash2, Clock } from 'lucide-react';
 import { usePatentLookup } from '@/hooks/usePatentLookup';
+import { format } from 'date-fns';
+import { es } from 'date-fns/locale';
 
 export const PatentLookup: React.FC = () => {
   const [licensePlate, setLicensePlate] = useState('');
-  const { data, loading, error, lookupPatent, reset } = usePatentLookup();
+  const { data, loading, error, history, lookupPatent, loadFromHistory, clearHistory, reset } = usePatentLookup();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -117,6 +119,80 @@ export const PatentLookup: React.FC = () => {
             <p className="text-muted-foreground">
               Ingresa una patente chilena para consultar la información del vehículo
             </p>
+          </CardContent>
+        </Card>
+      )}
+
+      {history.length > 0 && (
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <History className="h-5 w-5" />
+                <CardTitle className="text-lg">Historial de Búsquedas</CardTitle>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={clearHistory}
+                className="h-8 text-muted-foreground hover:text-destructive"
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Limpiar
+              </Button>
+            </div>
+            <CardDescription>
+              Últimas {history.length} consultas realizadas
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {history.map((item) => (
+                <Card
+                  key={item.timestamp}
+                  className="cursor-pointer hover:bg-accent/50 transition-colors"
+                  onClick={() => loadFromHistory(item)}
+                >
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Badge variant="outline" className="font-mono">
+                            {item.patente}
+                          </Badge>
+                          <span className="text-sm text-muted-foreground flex items-center gap-1">
+                            <Clock className="h-3 w-3" />
+                            {format(new Date(item.timestamp), "dd MMM yyyy, HH:mm", { locale: es })}
+                          </span>
+                        </div>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
+                          <div>
+                            <span className="text-muted-foreground">Marca: </span>
+                            <span className="font-medium">{item.marca}</span>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">Modelo: </span>
+                            <span className="font-medium">{item.modelo}</span>
+                          </div>
+                          {item.año && (
+                            <div>
+                              <span className="text-muted-foreground">Año: </span>
+                              <span className="font-medium">{item.año}</span>
+                            </div>
+                          )}
+                          {item.color && (
+                            <div>
+                              <span className="text-muted-foreground">Color: </span>
+                              <span className="font-medium">{item.color}</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
           </CardContent>
         </Card>
       )}
