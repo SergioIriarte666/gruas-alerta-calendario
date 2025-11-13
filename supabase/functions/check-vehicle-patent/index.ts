@@ -76,12 +76,21 @@ serve(async (req) => {
     const data = await response.json();
     console.log('Vehicle data received:', data);
 
-    // Extract basic vehicle information
+    // Check if API returned success
+    if (!data.success || !data.data) {
+      return new Response(
+        JSON.stringify({ error: 'No se encontró información para esta patente' }),
+        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Extract basic vehicle information from the correct structure
+    const vehicleInfo = data.data;
     const vehicleData: VehicleData = {
-      marca: data.marca || 'No disponible',
-      modelo: data.modelo || 'No disponible',
-      año: data.año || data.anio || null,
-      color: data.color || null,
+      marca: vehicleInfo.model?.brand?.name || 'No disponible',
+      modelo: vehicleInfo.model?.name || 'No disponible',
+      año: vehicleInfo.year || null,
+      color: vehicleInfo.color || null,
     };
 
     return new Response(
