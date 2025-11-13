@@ -66,6 +66,10 @@ policy_id = 2
 entrypoint = "send-inspection-email"
 policy_id = 3
 
+[[edge_runtime.policy]]
+entrypoint = "check-vehicle-patent"
+policy_id = 4
+
 [functions.generate-backup]
 verify_jwt = true
 
@@ -73,4 +77,7 @@ verify_jwt = true
 verify_jwt = false
 
 [functions.send-inspection-email]
+verify_jwt = false
+
+[functions.check-vehicle-patent]
 verify_jwt = false
