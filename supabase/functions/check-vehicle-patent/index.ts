@@ -1,0 +1,99 @@
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
+
+interface VehicleData {
+  marca: string;
+  modelo: string;
+  año: number;
+  color?: string;
+}
+
+serve(async (req) => {
+  // Handle CORS preflight requests
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  try {
+    const { licensePlate } = await req.json();
+
+    if (!licensePlate) {
+      return new Response(
+        JSON.stringify({ error: 'La patente es requerida' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const apiKey = Deno.env.get('GETAPI_CHILE_API_KEY');
+    if (!apiKey) {
+      console.error('GETAPI_CHILE_API_KEY not configured');
+      return new Response(
+        JSON.stringify({ error: 'API key no configurada' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Clean the license plate (remove spaces and hyphens)
+    const cleanPlate = licensePlate.replace(/[-\s]/g, '').toUpperCase();
+    
+    console.log(`Consulting patent: ${cleanPlate}`);
+
+    const response = await fetch(`https://api.getapi.cl/v2/vehicle/${cleanPlate}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Accept': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      if (response.status === 404) {
+        return new Response(
+          JSON.stringify({ error: 'Patente no encontrada en el registro chileno' }),
+          { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      
+      if (response.status === 429) {
+        return new Response(
+          JSON.stringify({ error: 'Límite de consultas excedido. Intenta más tarde.' }),
+          { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      const errorText = await response.text();
+      console.error(`GetAPI error: ${response.status} - ${errorText}`);
+      return new Response(
+        JSON.stringify({ error: 'Error al consultar la API de patentes' }),
+        { status: response.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const data = await response.json();
+    console.log('Vehicle data received:', data);
+
+    // Extract basic vehicle information
+    const vehicleData: VehicleData = {
+      marca: data.marca || 'No disponible',
+      modelo: data.modelo || 'No disponible',
+      año: data.año || data.anio || null,
+      color: data.color || null,
+    };
+
+    return new Response(
+      JSON.stringify({ data: vehicleData }),
+      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+
+  } catch (error) {
+    console.error('Error in check-vehicle-patent function:', error);
+    return new Response(
+      JSON.stringify({ error: 'Error interno del servidor' }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+});

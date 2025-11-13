@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { VehicleBrandsManager } from '@/components/vehicles/VehicleBrandsManager';
 import { VehicleModelsManager } from '@/components/vehicles/VehicleModelsManager';
+import { PatentLookup } from '@/components/vehicles/PatentLookup';
 
 const Vehicles: React.FC = () => {
   const [activeTab, setActiveTab] = useState('brands');
@@ -20,6 +21,7 @@ const Vehicles: React.FC = () => {
         <TabsList>
           <TabsTrigger value="brands">Marcas</TabsTrigger>
           <TabsTrigger value="models">Modelos</TabsTrigger>
+          <TabsTrigger value="patent-lookup">Consulta de Patentes</TabsTrigger>
         </TabsList>
         
         <TabsContent value="brands" className="space-y-4">
@@ -28,6 +30,10 @@ const Vehicles: React.FC = () => {
         
         <TabsContent value="models" className="space-y-4">
           <VehicleModelsManager searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
+        </TabsContent>
+        
+        <TabsContent value="patent-lookup" className="space-y-4">
+          <PatentLookup />
         </TabsContent>
       </Tabs>
     </div>
