@@ -42,10 +42,10 @@ serve(async (req) => {
     
     console.log(`Consulting patent: ${cleanPlate}`);
 
-    const response = await fetch(`https://api.getapi.cl/v2/vehicle/${cleanPlate}`, {
+    const response = await fetch(`https://chile.getapi.cl/v1/vehicles/plate/${cleanPlate}`, {
       method: 'GET',
       headers: {
-        'Authorization': `Bearer ${apiKey}`,
+        'X-Api-Key': apiKey,
         'Accept': 'application/json',
       },
     });
