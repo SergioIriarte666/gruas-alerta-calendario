@@ -112,6 +112,51 @@ export const EnhancedServiceForm = ({
     custodyNotes: service?.custodyNotes || (service as any)?.custody_notes || ''
   });
 
+  // Map prefilledData to formData when duplicating
+  useEffect(() => {
+    if (prefilledData && !service) {
+      console.log('🔄 [FORM] Mapping prefilledData to formData:', prefilledData);
+      setFormData({
+        requestDate: prefilledData.requestDate || getCurrentChileDateString(),
+        serviceDate: prefilledData.serviceDate || getCurrentChileDateString(),
+        startTime: prefilledData.startTime,
+        endTime: prefilledData.endTime,
+        craneMileage: undefined,
+        client: prefilledData.clientId || '',
+        purchaseOrder: prefilledData.purchaseOrder || '',
+        quoteNumber: prefilledData.quoteNumber || '',
+        serviceType: prefilledData.serviceTypeId || '',
+        vehicleBrand: prefilledData.vehicleBrand || '',
+        vehicleModel: prefilledData.vehicleModel || '',
+        licensePlate: prefilledData.licensePlate || '',
+        origin: prefilledData.origin || '',
+        destination: prefilledData.destination || '',
+        crane: prefilledData.craneId || '',
+        operators: prefilledData.operators || [],
+        value: 0,
+        costDetails: [],
+        salesItems: [],
+        hasExcess: false,
+        clientCoveredAmount: 0,
+        excessAmount: 0,
+        status: prefilledData.status || 'pending',
+        observations: prefilledData.observations || '',
+        custodyMode: prefilledData.inCustody ? 'entry_exit' : 'none',
+        custodyDays: prefilledData.custodyDetails?.estimatedDays,
+        custodyDailyRate: prefilledData.custodyDetails?.dailyRate,
+        custodyRateType: 'daily',
+        custodyStartDate: prefilledData.custodyDetails?.entryDate || '',
+        custodyEndDate: prefilledData.custodyDetails?.exitDate || '',
+        custodyVehicleType: '',
+        custodyDiscountPercentage: 0,
+        custodyTotalAmount: prefilledData.custodyDetails?.totalAmount,
+        custodyNotes: ''
+      });
+      
+      setEnableCustody(prefilledData.inCustody || false);
+    }
+  }, [prefilledData, service]);
+
   // Initialize "Venta de Productos" service type when coming from inventory
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
