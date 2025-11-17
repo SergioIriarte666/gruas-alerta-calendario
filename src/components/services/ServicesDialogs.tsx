@@ -19,6 +19,7 @@ interface ServicesDialogsProps {
   isDetailsOpen: boolean;
   onDetailsClose: () => void;
   fromCalendarEvent?: boolean;
+  onDuplicate?: (service: Service) => void;
 }
 
 export const ServicesDialogs = ({
@@ -34,7 +35,8 @@ export const ServicesDialogs = ({
   selectedService,
   isDetailsOpen,
   onDetailsClose,
-  fromCalendarEvent = false
+  fromCalendarEvent = false,
+  onDuplicate
 }: ServicesDialogsProps) => {
   return (
     <>
@@ -72,6 +74,7 @@ export const ServicesDialogs = ({
           service={selectedService}
           isOpen={isDetailsOpen}
           onClose={onDetailsClose}
+          onDuplicate={onDuplicate}
         />
       )}
     </>

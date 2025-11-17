@@ -2158,6 +2158,39 @@ export type Database = {
           },
         ]
       }
+      patent_search_history: {
+        Row: {
+          año: number | null
+          color: string | null
+          created_at: string
+          id: string
+          marca: string
+          modelo: string
+          patente: string
+          user_id: string
+        }
+        Insert: {
+          año?: number | null
+          color?: string | null
+          created_at?: string
+          id?: string
+          marca: string
+          modelo: string
+          patente: string
+          user_id: string
+        }
+        Update: {
+          año?: number | null
+          color?: string | null
+          created_at?: string
+          id?: string
+          marca?: string
+          modelo?: string
+          patente?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       payment_applications: {
         Row: {
           application_method:

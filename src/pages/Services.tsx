@@ -61,6 +61,7 @@ const Services = () => {
     handleDelete,
     handleCSVSuccess,
     handleSort,
+    handleDuplicateService,
   } = useServicesPage();
 
   const { 
@@ -177,6 +178,7 @@ const Services = () => {
         isDetailsOpen={isDetailsOpen}
         onDetailsClose={() => setIsDetailsOpen(false)}
         fromCalendarEvent={fromCalendarEvent}
+        onDuplicate={handleDuplicateService}
       />
     </div>
   );
