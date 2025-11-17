@@ -8,6 +8,7 @@ import { Service, ServiceStatus } from '@/types';
 import { toast } from 'sonner';
 import { isFutureDate } from '@/utils/timezoneUtils';
 import { supabase } from '@/integrations/supabase/client';
+import { prepareServiceForDuplication } from '@/utils/serviceHelpers';
 
 export const useServicesPage = () => {
   const { services, loading, deleteService: legacyDeleteService, refetch } = useServices();
@@ -336,6 +337,16 @@ export const useServicesPage = () => {
     }
   };
 
+  const handleDuplicateService = (service: Service) => {
+    const duplicatedData = prepareServiceForDuplication(service);
+    setPrefilledData(duplicatedData);
+    setEditingService(null);
+    setSelectedService(null);
+    setIsDetailsOpen(false);
+    setIsFormOpen(true);
+    toast.success(`Servicio ${service.folio} preparado para duplicación. Revisa y ajusta los campos necesarios.`);
+  };
+
   const handleSort = (field: 'folio' | 'date' | 'client' | 'vehicle' | 'crane' | 'operator' | 'value' | 'status') => {
     if (sortField !== field) {
       setSortField(field);
@@ -420,5 +431,6 @@ export const useServicesPage = () => {
     handleDelete,
     handleCSVSuccess,
     handleSort,
+    handleDuplicateService,
   };
 };

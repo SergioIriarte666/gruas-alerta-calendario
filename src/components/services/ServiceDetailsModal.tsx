@@ -22,7 +22,8 @@ import {
   Shield,
   Download,
   Timer,
-  Gauge
+  Gauge,
+  Copy
 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { VehicleHistory } from './VehicleHistory';
@@ -40,6 +41,7 @@ interface ServiceDetailsModalProps {
   service: Service;
   isOpen: boolean;
   onClose: () => void;
+  onDuplicate?: (service: Service) => void;
 }
 
 interface DetailItemProps {
@@ -103,7 +105,7 @@ const DetailSection = ({ title, icon: Icon, children }: DetailSectionProps) => (
   </div>
 );
 
-export const ServiceDetailsModal = ({ service, isOpen, onClose }: ServiceDetailsModalProps) => {
+export const ServiceDetailsModal = ({ service, isOpen, onClose, onDuplicate }: ServiceDetailsModalProps) => {
   // Verificar si service es null antes de continuar
   if (!service) return null;
   
@@ -249,16 +251,29 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose }: ServiceDetails
               <span>Detalles del Servicio - {serviceData.folio}</span>
               {getServiceStatusBadge(serviceData.status)}
             </DialogTitle>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleDownloadPDF}
-              disabled={isGenerating}
-              className="flex items-center gap-2"
-            >
-              <Download className="h-4 w-4" />
-              {isGenerating ? 'Generando...' : 'Descargar PDF'}
-            </Button>
+            <div className="flex items-center gap-2">
+              {onDuplicate && (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => onDuplicate(service)}
+                  className="flex items-center gap-2"
+                >
+                  <Copy className="h-4 w-4" />
+                  Duplicar
+                </Button>
+              )}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleDownloadPDF}
+                disabled={isGenerating}
+                className="flex items-center gap-2"
+              >
+                <Download className="h-4 w-4" />
+                {isGenerating ? 'Generando...' : 'Descargar PDF'}
+              </Button>
+            </div>
           </div>
         </DialogHeader>
 

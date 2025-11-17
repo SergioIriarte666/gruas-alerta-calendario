@@ -26,7 +26,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { Truck, FileText, Shield } from 'lucide-react';
+import { Truck, FileText, Shield, Copy } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { getCurrentChileDateString } from '@/utils/timezoneUtils';
@@ -64,6 +64,10 @@ export const EnhancedServiceForm = ({
   const [folio, setFolio] = useState(service?.folio || '');
   const [isManualFolio, setIsManualFolio] = useState(false);
   const [enableCustody, setEnableCustody] = useState(false);
+  
+  // Detectar si está duplicando
+  const isDuplicating = prefilledData?._isDuplicating;
+  const originalFolio = prefilledData?._originalFolio;
   const [formData, setFormData] = useState({
     requestDate: service?.requestDate || getCurrentChileDateString(),
     serviceDate: service?.serviceDate || getCurrentChileDateString(),
@@ -473,7 +477,17 @@ export const EnhancedServiceForm = ({
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-20">
+      {isDuplicating && (
+        <div className="bg-secondary/50 border border-secondary rounded-lg p-4 flex items-center gap-3">
+          <Copy className="h-5 w-5 text-secondary-foreground" />
+          <div>
+            <p className="font-semibold text-secondary-foreground">Duplicando servicio {originalFolio}</p>
+            <p className="text-sm text-muted-foreground">Revisa y ajusta los campos necesarios antes de crear el nuevo servicio</p>
+          </div>
+        </div>
+      )}
+      
       <ServiceFormHeader service={service} />
 
       <form onSubmit={handleSubmit} className="space-y-6">
