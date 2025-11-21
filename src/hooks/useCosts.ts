@@ -188,7 +188,7 @@ export const useAddCost = () => {
   
   return useMutation({
     mutationFn: addCost,
-    onSuccess: (data) => {
+    onSuccess: (data, variables) => {
       console.log('[useAddCost] Mutation success with data:', data);
       invalidateAll();
       toast.success('Costo registrado correctamente');
@@ -196,6 +196,14 @@ export const useAddCost = () => {
       if (data?.[0]?.service_id) {
         queryClient.invalidateQueries({ queryKey: ['service-costs', data[0].service_id] });
       }
+
+      // Retornar información para triggear el diálogo de distribución si es necesario
+      return {
+        cost: data[0],
+        shouldShowDistribution: variables.immediate_consumption && 
+                                variables.purchase_quantity && 
+                                variables.purchase_quantity > 0
+      };
     },
     onError: createMutationErrorHandler({
       title: 'Error al Crear Costo',

@@ -21,9 +21,16 @@ interface CostFormProps {
     isOpen: boolean;
     onClose: () => void;
     cost: Cost | null;
+    onInventoryCostCreated?: (data: {
+        costId: string;
+        description: string;
+        quantity: number;
+        unitCost: number;
+        date: string;
+    }) => void;
 }
 
-export const CostForm = ({ isOpen, onClose, cost }: CostFormProps) => {
+export const CostForm = ({ isOpen, onClose, cost, onInventoryCostCreated }: CostFormProps) => {
     console.log('[CostForm] Rendered with cost:', cost, 'isNewCost:', !cost);
     const queryClient = useQueryClient();
     const { mutate: addCost, isPending: isAdding, error: addError } = useAddCost();
@@ -237,6 +244,26 @@ export const CostForm = ({ isOpen, onClose, cost }: CostFormProps) => {
                         toast.success("Costo Agregado", { description: "El nuevo costo se ha registrado correctamente." });
                         queryClient.invalidateQueries({ queryKey: ['costs'] });
                         queryClient.invalidateQueries({ queryKey: ['cost-centers-stats'] });
+                        
+                        // Verificar si es compra de inventario con consumo inmediato y sin grúa específica
+                        const isInventoryPurchase = submissionData.purchase_quantity && 
+                                                   submissionData.purchase_quantity > 0 &&
+                                                   submissionData.purchase_unit_cost &&
+                                                   submissionData.immediate_consumption;
+                        
+                        const hasNoCraneSelected = !submissionData.crane_id || submissionData.crane_id === 'none';
+                        
+                        if (isInventoryPurchase && hasNoCraneSelected && onInventoryCostCreated && data?.[0]) {
+                            // Triggear el diálogo de distribución
+                            onInventoryCostCreated({
+                                costId: data[0].id,
+                                description: submissionData.description,
+                                quantity: submissionData.purchase_quantity!,
+                                unitCost: submissionData.purchase_unit_cost!,
+                                date: submissionData.date,
+                            });
+                        }
+                        
                         onClose();
                     },
                     onError: (error) => {
