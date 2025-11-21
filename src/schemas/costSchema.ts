@@ -60,6 +60,12 @@ export const costSchema = z.object({
     
     // Campo para consumo inmediato
     immediate_consumption: z.boolean().optional().default(false),
+    
+    // Campo para proveedor
+    supplier_id: z.preprocess(
+        (val) => (val === 'none' || val === '' || !val) ? null : val,
+        z.string().nullable().optional()
+    ),
 }).refine((data) => {
     // Si la subcategoría es "Piezas y Repuestos", validar campos requeridos
     if (data.subcategory === 'Piezas y Repuestos') {

@@ -60,6 +60,10 @@ export const CostForm = ({ isOpen, onClose, cost, onInventoryCostCreated }: Cost
             subcategory: '',
             notes: '',
             cost_center_id: 'none',
+            purchase_quantity: null,
+            purchase_unit_cost: null,
+            immediate_consumption: false,
+            supplier_id: 'none',
         },
     });
     const { reset, watch, setValue } = form;
@@ -143,6 +147,11 @@ export const CostForm = ({ isOpen, onClose, cost, onInventoryCostCreated }: Cost
                 quantity: cost.crane_parts?.[0]?.quantity || null,
                 unit_price: cost.crane_parts?.[0]?.unit_price || null,
                 kilometraje: cost.crane_parts?.[0]?.kilometraje || null,
+                // Campos de inventario
+                purchase_quantity: cost.purchase_quantity || null,
+                purchase_unit_cost: cost.purchase_unit_cost || null,
+                immediate_consumption: cost.immediate_consumption || false,
+                supplier_id: cost.supplier_id || 'none',
             };
             console.log('[CostForm] Setting form values for editing:', initialValues);
             reset(initialValues);
@@ -159,6 +168,10 @@ export const CostForm = ({ isOpen, onClose, cost, onInventoryCostCreated }: Cost
                 subcategory: '',
                 notes: '',
                 cost_center_id: 'none',
+                purchase_quantity: null,
+                purchase_unit_cost: null,
+                immediate_consumption: false,
+                supplier_id: 'none',
             };
             console.log('[CostForm] Setting default values for new cost:', defaultValues);
             reset(defaultValues);
@@ -210,12 +223,16 @@ export const CostForm = ({ isOpen, onClose, cost, onInventoryCostCreated }: Cost
                 amount: validAmount,
                 description: values.description.trim(),
                 cost_center_id: values.cost_center_id === 'none' ? null : values.cost_center_id || null,
+                supplier_id: values.supplier_id === 'none' ? null : values.supplier_id || null,
                 part_name: values.part_name?.trim() || null,
                 supplier: values.supplier?.trim() || null,
                 supplier_phone: values.supplier_phone?.trim() || null,
                 quantity: values.quantity || null,
                 unit_price: values.unit_price || null,
                 kilometraje: values.kilometraje || null,
+                purchase_quantity: values.purchase_quantity || null,
+                purchase_unit_cost: values.purchase_unit_cost || null,
+                immediate_consumption: values.immediate_consumption || false,
             } as CostFormData;
             
             console.log('[CostForm] Final submission data after validation:', submissionData);
@@ -236,6 +253,10 @@ export const CostForm = ({ isOpen, onClose, cost, onInventoryCostCreated }: Cost
                         
                         const hasNoCraneSelected = !submissionData.crane_id || submissionData.crane_id === 'none';
                         
+                        // Cerrar el formulario primero
+                        onClose();
+                        
+                        // Luego abrir el modal de distribución si corresponde
                         if (isInventoryPurchase && hasNoCraneSelected && onInventoryCostCreated) {
                             // Triggear el diálogo de distribución
                             onInventoryCostCreated({
@@ -246,8 +267,6 @@ export const CostForm = ({ isOpen, onClose, cost, onInventoryCostCreated }: Cost
                                 date: submissionData.date,
                             });
                         }
-                        
-                        onClose();
                     },
                     onError: (error) => {
                         console.error("[CostForm] Update cost failed:", error);
