@@ -69,15 +69,6 @@ export const costSchema = z.object({
 }, {
     message: "Los campos de pieza, proveedor, cantidad y precio unitario son requeridos para piezas y repuestos",
     path: ["part_name"],
-}).refine((data) => {
-    // Si es consumo inmediato, debe tener grúa seleccionada
-    if (data.immediate_consumption && !data.crane_id) {
-        return false;
-    }
-    return true;
-}, {
-    message: "Debes seleccionar una grúa para consumo inmediato",
-    path: ["crane_id"],
 });
 
 export type CostFormValues = z.infer<typeof costSchema>;
