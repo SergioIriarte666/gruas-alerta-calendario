@@ -277,12 +277,6 @@ export const CostFormInputs = ({
                                 </FormItem>
                             )} />
 
-                            <SupplierSelector
-                                form={form}
-                                fieldName="supplier_id"
-                                label="Proveedor *"
-                                placeholder="Seleccionar proveedor"
-                            />
 
                             <FormField name="supplier_phone" control={form.control} render={({ field }) => (
                                 <FormItem>
@@ -479,6 +473,13 @@ export const CostFormInputs = ({
                             <FormMessage />
                         </FormItem>
                     )} />
+
+                    <SupplierSelector
+                        form={form}
+                        fieldName="supplier_id"
+                        label="Proveedor"
+                        placeholder="Seleccionar proveedor"
+                    />
                 </CardContent>
             </Card>
 
