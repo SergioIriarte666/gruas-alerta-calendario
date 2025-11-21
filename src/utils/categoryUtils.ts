@@ -1,4 +1,4 @@
-import { SupplierCategory } from '@/hooks/useSupplierCategoryManager';
+import { SupplierCategory } from '@/types/suppliers';
 
 // Utility function to get category label from ID
 export const getCategoryLabel = (categories: SupplierCategory[], categoryId: string): string => {

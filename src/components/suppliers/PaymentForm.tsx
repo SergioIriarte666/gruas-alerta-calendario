@@ -65,7 +65,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
       category: payment?.category || (activeCategories?.[0]?.id || ''),
       reference_number: payment?.reference_number || '',
       notes: payment?.notes || '',
-      status: payment?.status || 'pending',
+      status: payment?.status || 'pending' as SupplierPaymentStatus,
       // Cargar valores de piezas si existen
       part_name: payment?.part_name || '',
       part_quantity: payment?.part_quantity || undefined,

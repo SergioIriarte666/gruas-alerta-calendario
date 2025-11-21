@@ -1,49 +1,28 @@
-// Re-export dynamic supplier category type for components that need the full object
-import type { SupplierCategory as SupplierCategoryObject } from '@/hooks/useSupplierCategoryManager';
-export type { SupplierCategory as SupplierCategoryObject } from '@/hooks/useSupplierCategoryManager';
+import { Database } from "@/integrations/supabase/types";
 
-export interface Supplier {
-  id: string;
-  name: string;
-  rut: string;
-  email: string;
-  phone: string;
-  address: string;
-  contact_name: string;
-  category: string; // Now stores category ID
-  notes?: string;
-  is_active: boolean;
-  created_at: string;
-  updated_at: string;
-  created_by?: string;
-  updated_by?: string;
-}
+// Tipos base desde Supabase (única fuente de verdad)
+export type Supplier = Database['public']['Tables']['suppliers']['Row'];
+export type SupplierCategory = Database['public']['Tables']['supplier_categories']['Row'];
 
-export interface SupplierPayment {
-  id: string;
-  supplier_id: string;
-  amount: number;
-  due_date: string;
-  paid_date?: string;
-  description: string;
-  category: string; // Now stores category ID
-  reference_number?: string;
-  notes?: string;
-  status: SupplierPaymentStatus;
-  paid_amount?: number;
-  created_at: string;
-  updated_at: string;
-  created_by?: string;
-  updated_by?: string;
-  // Campos de piezas y repuestos
-  part_name?: string;
-  part_quantity?: number;
-  part_unit_price?: number;
-  crane_id?: string;
-  add_to_inventory?: boolean;
-}
-
+// SupplierPaymentStatus - definir antes de usarlo
 export type SupplierPaymentStatus = 'pending' | 'paid' | 'overdue' | 'cancelled';
+
+// SupplierPayment - override status field to use our specific type
+type SupplierPaymentBase = Database['public']['Tables']['supplier_payments']['Row'];
+export interface SupplierPayment extends Omit<SupplierPaymentBase, 'status'> {
+  status: SupplierPaymentStatus;
+}
+
+// Stats type (computed/aggregated data not from a single table)
+export interface SupplierStats {
+  total_suppliers: number;
+  active_suppliers: number;
+  total_pending_payments: number;
+  total_pending_amount: number;
+  total_overdue_payments: number;
+  total_overdue_amount: number;
+  suppliers_by_category: Record<string, number>;
+}
 
 export interface SupplierWithStats extends Supplier {
   total_payments?: number;
@@ -89,15 +68,7 @@ export interface PaymentFormData {
   paid_amount?: number;
 }
 
-export interface SupplierStats {
-  total_suppliers: number;
-  active_suppliers: number;
-  total_pending_payments: number;
-  total_pending_amount: number;
-  total_overdue_payments: number;
-  total_overdue_amount: number;
-  suppliers_by_category: Record<string, number>;
-}
+// Remove duplicate SupplierStats - now defined at the top
 
 // Tipos para XML parsing de proveedores
 export interface XMLSupplierData {
