@@ -10,6 +10,7 @@ import { CostDetailsModal } from '@/components/costs/CostDetailsModal';
 import { XMLCostUpload } from '@/components/costs/XMLCostUpload';
 import { CostFilters } from '@/components/costs/CostFilters';
 import { CostBatchUpdateModal } from '@/components/costs/CostBatchUpdateModal';
+import { DistributionAssistantDialog } from '@/components/costs/dialogs/DistributionAssistantDialog';
 import { useCosts, useDeleteCost } from '@/hooks/useCosts';
 import { useCostInvalidation } from '@/hooks/useCostInvalidation';
 import { useQueryClient } from '@tanstack/react-query';
@@ -30,6 +31,7 @@ const CostsPage = () => {
     const [isDetailsOpen, setIsDetailsOpen] = useState(false);
     const [isXMLUploadOpen, setIsXMLUploadOpen] = useState(false);
     const [isBatchUpdateOpen, setIsBatchUpdateOpen] = useState(false);
+    const [isDistributionOpen, setIsDistributionOpen] = useState(false);
     const [selectedCostForEdit, setSelectedCostForEdit] = useState<Cost | null>(null);
     const [selectedCostForDetails, setSelectedCostForDetails] = useState<Cost | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
@@ -37,6 +39,13 @@ const CostsPage = () => {
     const [highlightedCostId, setHighlightedCostId] = useState<string>('');
     const [dateFilter, setDateFilter] = useState<string>('all');
     const [selectedCostIds, setSelectedCostIds] = useState<Set<string>>(new Set());
+    const [distributionData, setDistributionData] = useState<{
+        costId: string;
+        itemName: string;
+        totalQuantity: number;
+        unitCost: number;
+        date: string;
+    } | null>(null);
     const [filters, setFilters] = useState<CostFilters>({
         category: 'all',
         subcategory: 'all',
@@ -89,6 +98,23 @@ const CostsPage = () => {
     const handleCloseForm = useCallback(() => {
         setIsFormOpen(false);
         setSelectedCostForEdit(null);
+    }, []);
+
+    const handleInventoryCostCreated = useCallback((data: {
+        costId: string;
+        description: string;
+        quantity: number;
+        unitCost: number;
+        date: string;
+    }) => {
+        setDistributionData({
+            costId: data.costId,
+            itemName: data.description,
+            totalQuantity: data.quantity,
+            unitCost: data.unitCost,
+            date: data.date,
+        });
+        setIsDistributionOpen(true);
     }, []);
 
     const handleViewDetails = useCallback((cost: Cost) => {
@@ -345,6 +371,7 @@ const CostsPage = () => {
                 isOpen={isFormOpen}
                 onClose={handleCloseForm}
                 cost={selectedCostForEdit}
+                onInventoryCostCreated={handleInventoryCostCreated}
             />
             
             {selectedCostForDetails && (
@@ -368,6 +395,12 @@ const CostsPage = () => {
                     if (!open) setSelectedCostIds(new Set());
                 }}
                 selectedCosts={finalFilteredCosts.filter(c => selectedCostIds.has(c.id))}
+            />
+
+            <DistributionAssistantDialog
+                open={isDistributionOpen}
+                onOpenChange={setIsDistributionOpen}
+                inventoryData={distributionData}
             />
         </div>
     );

@@ -176,14 +176,12 @@ export const InventoryPurchaseFields = ({ form }: InventoryPurchaseFieldsProps) 
             <Alert className="bg-orange-50 dark:bg-orange-950/30 border-orange-200 dark:border-orange-800">
               <Zap className="h-4 w-4 text-orange-600 dark:text-orange-500" />
               <AlertDescription className="text-sm text-orange-800 dark:text-orange-200">
-                <strong>Consumo inmediato activado:</strong> Se registrará automáticamente 
-                la entrada a bodega y la salida inmediata {craneId ? (
-                  <span className="font-semibold">a la grúa seleccionada</span>
+                <strong>Consumo inmediato activado:</strong>
+                {craneId && craneId !== 'none' ? (
+                  <span> Se registrará automáticamente la entrada y salida inmediata a la grúa seleccionada.</span>
                 ) : (
-                  <span className="font-semibold text-orange-600 dark:text-orange-400">
-                    (debes seleccionar una grúa)
-                  </span>
-                )}. El stock final en bodega será 0.
+                  <span> Al guardar, podrás <strong>distribuir entre varias grúas</strong> usando el asistente de distribución.</span>
+                )}
               </AlertDescription>
             </Alert>
           )}
