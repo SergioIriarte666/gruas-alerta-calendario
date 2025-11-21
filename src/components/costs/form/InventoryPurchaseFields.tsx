@@ -125,9 +125,9 @@ export const InventoryPurchaseFields = ({ form }: InventoryPurchaseFieldsProps) 
         </div>
 
         {quantity && unitCost && Number(quantity) > 0 && Number(unitCost) > 0 && (
-          <div className="sticky top-0 z-10 px-3 py-2 bg-primary/10 border-l-4 border-primary rounded shadow-sm">
+          <div className="sticky top-0 z-10 px-3 py-2 bg-violet-100 dark:bg-violet-950/30 border-l-4 border-violet-500 dark:border-violet-400 rounded shadow-sm">
             <p className="text-xs font-medium text-foreground">
-              📦 {quantity} unidad{Number(quantity) !== 1 ? 'es' : ''} × ${Number(unitCost).toLocaleString('es-CL')} = <span className="text-blue-700 dark:text-blue-300 font-bold">${(Number(quantity) * Number(unitCost)).toLocaleString('es-CL')}</span>
+              📦 {quantity} unidad{Number(quantity) !== 1 ? 'es' : ''} × ${Number(unitCost).toLocaleString('es-CL')} = <span className="text-violet-700 dark:text-violet-300 font-bold">${(Number(quantity) * Number(unitCost)).toLocaleString('es-CL')}</span>
             </p>
           </div>
         )}
