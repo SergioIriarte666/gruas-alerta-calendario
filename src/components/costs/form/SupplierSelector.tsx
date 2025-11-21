@@ -69,7 +69,7 @@ export const SupplierSelector: React.FC<SupplierSelectorProps> = ({
                     </SelectItem>
                   ))}
                   <SelectItem value="new_supplier">
-                    <div className="flex items-center gap-2 text-primary font-medium">
+                    <div className="flex items-center gap-2 text-violet-600 dark:text-violet-400 font-medium">
                       <Plus className="h-4 w-4" />
                       Crear nuevo proveedor...
                     </div>
