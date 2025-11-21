@@ -1,15 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-
-export interface SupplierStats {
-  total_suppliers: number;
-  active_suppliers: number;
-  total_pending_payments: number;
-  total_pending_amount: number;
-  total_overdue_payments: number;
-  total_overdue_amount: number;
-  suppliers_by_category: Record<string, number>;
-}
+import { SupplierStats } from '@/types/suppliers';
 
 const fetchSupplierStats = async (): Promise<SupplierStats> => {
   // Get basic supplier counts

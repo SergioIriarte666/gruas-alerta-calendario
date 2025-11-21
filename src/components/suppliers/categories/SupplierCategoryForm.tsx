@@ -6,7 +6,8 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
-import { useSupplierCategoryManager, SupplierCategory, SupplierCategoryFormData } from '@/hooks/useSupplierCategoryManager';
+import { useSupplierCategoryManager, SupplierCategoryFormData } from '@/hooks/useSupplierCategoryManager';
+import { SupplierCategory } from '@/types/suppliers';
 
 const formSchema = z.object({
   name: z.string().min(1, 'El nombre es obligatorio').max(50, 'Máximo 50 caracteres'),
