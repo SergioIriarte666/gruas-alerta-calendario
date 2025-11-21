@@ -1,17 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-
-export interface CostSubcategory {
-  id: string;
-  category_id: string;
-  name: string;
-  description?: string;
-  is_active: boolean;
-  display_order: number;
-  created_at: string;
-  updated_at: string;
-}
+import { CostSubcategory } from "@/types/costs";
 
 export interface CostSubcategoryFormData {
   category_id: string;

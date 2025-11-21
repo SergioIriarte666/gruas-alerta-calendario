@@ -1,18 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-
-export interface IncomeSubcategory {
-  id: string;
-  category_id: string;
-  name: string;
-  description?: string;
-  is_active: boolean;
-  display_order: number;
-  created_at: string;
-  created_by?: string;
-  updated_at: string;
-}
+import { IncomeSubcategory } from "@/types/incomes";
 
 export interface IncomeSubcategoryFormData {
   category_id: string;

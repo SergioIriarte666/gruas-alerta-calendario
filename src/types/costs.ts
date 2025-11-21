@@ -1,6 +1,7 @@
 import { Database } from "@/integrations/supabase/types";
 
 export type CostCategory = Database['public']['Tables']['cost_categories']['Row'];
+export type CostSubcategory = Database['public']['Tables']['cost_subcategories']['Row'];
 
 export type Cost = Database['public']['Tables']['costs']['Row'] & {
   payment_date?: string | null;  // Agregar explícitamente para claridad

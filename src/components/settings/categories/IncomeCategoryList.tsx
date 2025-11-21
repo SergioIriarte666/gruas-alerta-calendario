@@ -4,7 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Plus, Pencil, Trash2, ArrowUpDown, Settings2 } from 'lucide-react';
-import { useIncomeCategoryManager, IncomeCategory } from '@/hooks/useIncomeCategoryManager';
+import { useIncomeCategoryManager } from '@/hooks/useIncomeCategoryManager';
+import { IncomeCategory } from '@/types/incomes';
 import { IncomeCategoryForm } from './IncomeCategoryForm';
 import { IncomeSubcategoryManager } from './IncomeSubcategoryManager';
 

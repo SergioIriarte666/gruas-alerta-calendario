@@ -29,16 +29,11 @@ export interface IncomeWithDetails extends Income {
   };
 }
 
-export interface IncomeCategory {
-  id: string;
-  name: string;
-  description?: string;
-  color: string;
-  icon: string;
-  is_active: boolean;
-  created_at: string;
-  updated_at: string;
-}
+import { Database } from "@/integrations/supabase/types";
+
+// Income Categories - usar tipo generado por Supabase
+export type IncomeCategory = Database['public']['Tables']['income_categories']['Row'];
+export type IncomeSubcategory = Database['public']['Tables']['income_subcategories']['Row'];
 
 export type PaymentMethod = 
   | 'transferencia' 

@@ -5,7 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { IncomeCategory, useIncomeCategoryManager } from '@/hooks/useIncomeCategoryManager';
+import { useIncomeCategoryManager } from '@/hooks/useIncomeCategoryManager';
+import { IncomeCategory } from '@/types/incomes';
 
 const formSchema = z.object({
   name: z.string().min(1, 'El nombre es requerido'),
