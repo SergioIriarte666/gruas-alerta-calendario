@@ -227,6 +227,26 @@ export const CostForm = ({ isOpen, onClose, cost, onInventoryCostCreated }: Cost
                         toast.success("Costo Actualizado", { description: "El costo se ha actualizado correctamente." });
                         queryClient.invalidateQueries({ queryKey: ['costs'] });
                         queryClient.invalidateQueries({ queryKey: ['cost-centers-stats'] });
+                        
+                        // Verificar si es compra de inventario con consumo inmediato y sin grúa específica (también al editar)
+                        const isInventoryPurchase = submissionData.purchase_quantity && 
+                                                   submissionData.purchase_quantity > 0 &&
+                                                   submissionData.purchase_unit_cost &&
+                                                   submissionData.immediate_consumption;
+                        
+                        const hasNoCraneSelected = !submissionData.crane_id || submissionData.crane_id === 'none';
+                        
+                        if (isInventoryPurchase && hasNoCraneSelected && onInventoryCostCreated) {
+                            // Triggear el diálogo de distribución
+                            onInventoryCostCreated({
+                                costId: cost.id,
+                                description: submissionData.description,
+                                quantity: submissionData.purchase_quantity!,
+                                unitCost: submissionData.purchase_unit_cost!,
+                                date: submissionData.date,
+                            });
+                        }
+                        
                         onClose();
                     },
                     onError: (error) => {
