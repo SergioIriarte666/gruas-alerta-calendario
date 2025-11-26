@@ -438,7 +438,7 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose, onDuplicate }: S
                               icon={DollarSign} 
                               label="Valor Total del Servicio" 
                               value={formatCurrency(displayServiceValue)} 
-                              valueClass="text-lg text-tms-green font-bold border-t border-border pt-2" 
+                              valueClass="text-lg text-violet-600 font-bold border-t border-border pt-2" 
                             />
                           </>
                         ) : (
@@ -446,7 +446,7 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose, onDuplicate }: S
                             icon={DollarSign} 
                             label={isCustody ? "Valor Total Servicio" : serviceData.hasExcess ? "Valor Total del Servicio" : "Valor del Servicio"} 
                             value={formatCurrency(displayServiceValue)} 
-                            valueClass="text-lg text-tms-green font-bold" 
+                            valueClass="text-lg text-violet-600 font-bold" 
                           />
                         )}
                         {serviceData.hasExcess && serviceData.clientCoveredAmount && (
