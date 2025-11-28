@@ -143,7 +143,14 @@ export const PaymentHistory: React.FC<PaymentHistoryProps> = ({ onClose }) => {
             <SelectContent>
               {clients.map(client => (
                 <SelectItem key={client.id} value={client.id}>
-                  {client.name}{client.department ? ` - ${client.department}` : ''}
+                  <div className="flex flex-col py-0.5">
+                    <span className="font-medium">{client.name}</span>
+                    {client.department && client.department !== 'General' && (
+                      <span className="text-xs text-violet-600 dark:text-violet-400">
+                        {client.department}
+                      </span>
+                    )}
+                  </div>
                 </SelectItem>
               ))}
             </SelectContent>
