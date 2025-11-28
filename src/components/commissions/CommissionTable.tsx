@@ -130,7 +130,7 @@ export const CommissionTable: React.FC<CommissionTableProps> = ({
                 {getStatusBadge(commission.status)}
               </TableCell>
               <TableCell className="font-medium">
-                {commission.service_folio || 'N/A'}
+                {commission.service_folio || commission.services?.folio || 'N/A'}
               </TableCell>
               <TableCell>
                 {commission.services?.service_date 
