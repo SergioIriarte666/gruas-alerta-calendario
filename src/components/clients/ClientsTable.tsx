@@ -6,6 +6,8 @@ import { Client } from '@/types';
 import { useDeviceType } from '@/hooks/useDeviceType';
 import { useNavigate } from 'react-router-dom';
 import { ClientsMobileView } from './ClientsMobileView';
+import { DepartmentBadge } from './DepartmentBadge';
+import { useClients } from '@/hooks/useClients';
 
 export type ClientSortField = 'name' | 'rut' | 'department' | 'contactName' | 'email' | 'phone' | 'isActive';
 export type SortDirection = 'asc' | 'desc';
@@ -52,6 +54,7 @@ export const ClientsTable = ({
 }: ClientsTableProps) => {
   const { isMobile } = useDeviceType();
   const navigate = useNavigate();
+  const { clients: allClients } = useClients();
 
   const handleViewPipeline = (client: Client) => {
     navigate(`/clients/${client.id}/pipeline`);
@@ -69,6 +72,7 @@ export const ClientsTable = ({
         onViewDetails={onViewDetails}
         onNewClient={onNewClient}
         searchTerm={searchTerm}
+        allClients={allClients}
       />
     );
   }
@@ -193,7 +197,14 @@ export const ClientsTable = ({
                 <tr key={client.id} className="border-b hover:bg-muted/50">
                   <td className="py-3 px-4 font-medium">{client.name}</td>
                   <td className="py-3 px-4">{client.rut}</td>
-                  <td className="py-3 px-4">{client.department}</td>
+                  <td className="py-3 px-4">
+                    <DepartmentBadge
+                      department={client.department}
+                      clientRut={client.rut}
+                      clientName={client.name}
+                      allClients={allClients}
+                    />
+                  </td>
                   <td className="py-3 px-4">{client.contactName || '-'}</td>
                   <td className="py-3 px-4">{client.email}</td>
                   <td className="py-3 px-4">{client.phone}</td>

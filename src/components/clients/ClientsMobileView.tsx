@@ -2,11 +2,12 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Edit, Trash2, Eye, UserCheck, UserX, Plus, Users, Phone, Mail, MapPin, User, TrendingUp } from 'lucide-react';
+import { Edit, Trash2, Eye, UserCheck, UserX, Plus, Users, Phone, Mail, MapPin, User, TrendingUp, Building2 } from 'lucide-react';
 import { Client } from '@/types';
 import { useDeviceType } from '@/hooks/useDeviceType';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
+import { DepartmentBadge } from './DepartmentBadge';
 
 interface ClientsMobileViewProps {
   clients: Client[];
@@ -17,6 +18,7 @@ interface ClientsMobileViewProps {
   onViewDetails: (client: Client) => void;
   onNewClient: () => void;
   searchTerm: string;
+  allClients: Client[];
 }
 
 export const ClientsMobileView = ({
@@ -28,6 +30,7 @@ export const ClientsMobileView = ({
   onViewDetails,
   onNewClient,
   searchTerm,
+  allClients,
 }: ClientsMobileViewProps) => {
   const { isMobile, isTablet } = useDeviceType();
   const navigate = useNavigate();
@@ -83,9 +86,19 @@ export const ClientsMobileView = ({
             <div className="flex items-start justify-between mb-3">
               <div className="flex-1">
                 <h4 className="font-semibold text-white text-lg">{client.name}</h4>
-                <p className="text-tms-green text-sm font-medium">{client.rut}</p>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <p className="text-tms-green text-sm font-medium">{client.rut}</p>
+                  <span className="text-gray-500">•</span>
+                  <DepartmentBadge
+                    department={client.department}
+                    clientRut={client.rut}
+                    clientName={client.name}
+                    allClients={allClients}
+                    className="text-sm"
+                  />
+                </div>
               </div>
-              <Badge 
+              <Badge
                 variant={client.isActive ? "default" : "secondary"}
                 className={client.isActive 
                   ? "bg-tms-green text-black" 
