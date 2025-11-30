@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useNavigate } from 'react-router-dom';
 import { useClients } from '@/hooks/useClients';
+import { DepartmentBadge } from '@/components/clients/DepartmentBadge';
 import { useClientServices } from '@/hooks/useClientServices';
 import { useServices } from '@/hooks/useServices';
 import { PipelineListView } from '@/components/vip/PipelineListView';
@@ -198,7 +199,15 @@ export default function VipClientPipeline() {
               VIP Pipeline
             </Badge>
             </h1>
-            <p className="text-muted-foreground">RUT: {client.rut} • {client.department}</p>
+            <p className="text-muted-foreground flex items-center gap-2">
+              RUT: {client.rut} • 
+              <DepartmentBadge
+                department={client.department}
+                clientRut={client.rut}
+                clientName={client.name}
+                allClients={clients}
+              />
+            </p>
           </div>
         </div>
 
