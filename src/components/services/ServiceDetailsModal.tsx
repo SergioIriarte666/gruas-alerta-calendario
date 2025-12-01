@@ -127,13 +127,19 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose, onDuplicate }: S
       department: (enhancedService.client.department && enhancedService.client.department.trim()) 
                   ? enhancedService.client.department 
                   : service.client.department
-    }
+    },
+    // CRÍTICO: Preservar información del creador
+    createdBy: enhancedService.createdBy || service.createdBy,
+    creatorName: enhancedService.creatorName || service.creatorName
   } : service;
 
-  // Debug logs para rastrear el department
-  console.log('🔍 [MODAL DEBUG] Enhanced service department:', enhancedService?.client?.department);
-  console.log('🔍 [MODAL DEBUG] Basic service department:', service.client.department);
-  console.log('🔍 [MODAL DEBUG] Final serviceData department:', serviceData.client.department);
+  // Debug logs para rastrear el creador
+  console.log('🔍 [MODAL DEBUG] Enhanced creatorName:', enhancedService?.creatorName);
+  console.log('🔍 [MODAL DEBUG] Enhanced createdBy:', enhancedService?.createdBy);
+  console.log('🔍 [MODAL DEBUG] Basic service creatorName:', service.creatorName);
+  console.log('🔍 [MODAL DEBUG] Basic service createdBy:', service.createdBy);
+  console.log('🔍 [MODAL DEBUG] Final serviceData creatorName:', serviceData.creatorName);
+  console.log('🔍 [MODAL DEBUG] Final serviceData createdBy:', serviceData.createdBy);
   
   const serviceCosts = enhancedService?.serviceCosts || [];
   const totalCommissions = enhancedService?.totalCommissions || 0;

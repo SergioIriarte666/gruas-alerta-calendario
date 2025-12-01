@@ -42,6 +42,13 @@ const fetchEnhancedServiceDetails = async (serviceId: string): Promise<EnhancedS
 
   if (!serviceData) return null;
 
+  console.log('🔍 [ENHANCED_SERVICE] Service creator data:', {
+    created_by: serviceData.created_by,
+    creator: serviceData.creator,
+    creator_full_name: serviceData.creator?.full_name,
+    creator_email: serviceData.creator?.email
+  });
+
   // 2. Obtener todos los costos del servicio
   const { data: costsData, error: costsError } = await supabase
     .from('costs')
@@ -241,7 +248,9 @@ const fetchEnhancedServiceDetails = async (serviceId: string): Promise<EnhancedS
     operatorsCount: operators.length,
     serviceCostsCount: serviceCosts.length,
     totalCommissions,
-    totalCosts
+    totalCosts,
+    createdBy: enhancedService.createdBy,
+    creatorName: enhancedService.creatorName
   });
 
   return enhancedService;
