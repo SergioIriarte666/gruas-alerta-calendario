@@ -6,7 +6,8 @@ import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Loader2, UserPlus, RefreshCw, Settings } from 'lucide-react';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { Loader2, UserPlus, RefreshCw, Settings, Trash2 } from 'lucide-react';
 import { useUserManagement } from '@/hooks/useUserManagement';
 import { CreateUserDialog } from './CreateUserDialog';
 import { format } from 'date-fns';
@@ -24,6 +25,7 @@ export const UserManagementTab = () => {
     updateUserRole, 
     assignClientToUser, 
     toggleUserStatus, 
+    deleteUser,
     refetchUsers,
     resendInvitation,
     getInvitationStatus
@@ -31,6 +33,7 @@ export const UserManagementTab = () => {
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [isClientAssignOpen, setIsClientAssignOpen] = useState(false);
   const [isCreateUserOpen, setIsCreateUserOpen] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<any>(null);
 
   const getRoleBadgeColor = (role: string) => {
     switch (role) {
@@ -93,6 +96,13 @@ export const UserManagementTab = () => {
 
   const handleUserCreated = () => {
     refetchUsers();
+  };
+
+  const handleDeleteUser = async () => {
+    if (userToDelete) {
+      await deleteUser(userToDelete.id);
+      setUserToDelete(null);
+    }
   };
 
   if (loading) {
@@ -267,29 +277,40 @@ export const UserManagementTab = () => {
                       {format(new Date(user.created_at), 'dd/MM/yyyy', { locale: es })}
                     </TableCell>
                     <TableCell>
-                      <Select
-                        value={user.role}
-                        onValueChange={(newRole) => updateUserRole(user.id, newRole as any)}
-                        disabled={updating === user.id}
-                      >
-                        <SelectTrigger className="w-40">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="admin">
-                            Administrador
-                          </SelectItem>
-                          <SelectItem value="operator">
-                            Operador
-                          </SelectItem>
-                          <SelectItem value="viewer">
-                            Visualizador
-                          </SelectItem>
-                          <SelectItem value="client">
-                            Cliente
-                          </SelectItem>
-                        </SelectContent>
-                      </Select>
+                      <div className="flex items-center gap-2">
+                        <Select
+                          value={user.role}
+                          onValueChange={(newRole) => updateUserRole(user.id, newRole as any)}
+                          disabled={updating === user.id}
+                        >
+                          <SelectTrigger className="w-40">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="admin">
+                              Administrador
+                            </SelectItem>
+                            <SelectItem value="operator">
+                              Operador
+                            </SelectItem>
+                            <SelectItem value="viewer">
+                              Visualizador
+                            </SelectItem>
+                            <SelectItem value="client">
+                              Cliente
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                          onClick={() => setUserToDelete(user)}
+                          disabled={updating === user.id}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -349,6 +370,35 @@ export const UserManagementTab = () => {
         creating={creating}
         createUser={createUser}
       />
+
+      <AlertDialog open={!!userToDelete} onOpenChange={(open) => !open && setUserToDelete(null)}>
+        <AlertDialogContent className="bg-white">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-black">¿Eliminar usuario?</AlertDialogTitle>
+            <AlertDialogDescription className="text-gray-600">
+              Esta acción eliminará permanentemente al usuario <strong>{userToDelete?.full_name || userToDelete?.email}</strong> y todos sus datos asociados. 
+              Esta acción no se puede deshacer.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="border-gray-300">Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteUser}
+              className="bg-red-600 hover:bg-red-700 text-white"
+              disabled={updating === userToDelete?.id}
+            >
+              {updating === userToDelete?.id ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Eliminando...
+                </>
+              ) : (
+                'Eliminar'
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
