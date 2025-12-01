@@ -295,13 +295,16 @@ export const useUserManagement = () => {
     try {
       setUpdating(userId);
       
-      // Delete from auth.users (cascade will handle profiles and related data)
-      const { error } = await supabase.auth.admin.deleteUser(userId);
+      // Call RPC function to delete user (requires admin privileges)
+      const { error } = await (supabase as any).rpc('delete_user_admin', {
+        target_user_id: userId
+      });
 
       if (error) throw error;
 
       toast.success('Usuario eliminado correctamente');
       await fetchUsers();
+      await fetchInvitations();
     } catch (error: any) {
       console.error('Error deleting user:', error);
       toast.error(error.message || 'Error al eliminar el usuario');
