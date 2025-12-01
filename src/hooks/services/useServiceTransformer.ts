@@ -151,7 +151,9 @@ export const useServiceTransformer = () => {
         custodyEndDate: item.custody_end_date || null,
         custodyVehicleType: item.custody_vehicle_type || '',
         createdAt: item.created_at,
-        updatedAt: item.updated_at
+        updatedAt: item.updated_at,
+        createdBy: item.created_by || undefined,
+        creatorName: item.creator?.full_name || item.creator?.email || undefined
       };
       
       console.log('✅ Service transformed with custody:', {
