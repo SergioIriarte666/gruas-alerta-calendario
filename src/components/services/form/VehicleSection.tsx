@@ -10,6 +10,7 @@ import {
 } from '@/components/ui/select';
 import { useVehicleBrands } from '@/hooks/useVehicleBrands';
 import { useVehicleModels } from '@/hooks/useVehicleModels';
+import { AlertTriangle } from 'lucide-react';
 
 interface VehicleSectionProps {
   vehicleBrand: string;
@@ -22,6 +23,9 @@ interface VehicleSectionProps {
   vehicleModelRequired?: boolean;
   licensePlateRequired?: boolean;
   disabled?: boolean;
+  vehicleBrandError?: boolean;
+  vehicleModelError?: boolean;
+  licensePlateError?: boolean;
 }
 
 export const VehicleSection = ({
@@ -34,7 +38,10 @@ export const VehicleSection = ({
   vehicleBrandRequired = false,
   vehicleModelRequired = false,
   licensePlateRequired = false,
-  disabled = false
+  disabled = false,
+  vehicleBrandError = false,
+  vehicleModelError = false,
+  licensePlateError = false
 }: VehicleSectionProps) => {
   const { brands, loading: brandsLoading, error: brandsError } = useVehicleBrands();
   const [selectedBrandId, setSelectedBrandId] = useState<string>('');
@@ -71,10 +78,16 @@ export const VehicleSection = ({
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
       {/* Marca del Vehículo */}
       <div className="space-y-2">
-        <Label htmlFor="vehicleBrand">
+        <Label htmlFor="vehicleBrand" className={vehicleBrandError ? 'text-destructive' : ''}>
           Marca del Vehículo {vehicleBrandRequired && <span className="text-red-500">*</span>}
+          {vehicleBrandError && (
+            <span className="ml-2 text-xs bg-destructive/10 text-destructive px-2 py-0.5 rounded inline-flex items-center gap-1">
+              <AlertTriangle className="h-3 w-3" />
+              Requerido
+            </span>
+          )}
         </Label>
-        {!vehicleBrandRequired && (
+        {!vehicleBrandRequired && !vehicleBrandError && (
           <p className="text-xs text-gray-400">Opcional para este tipo de servicio</p>
         )}
         <Select 
@@ -82,7 +95,7 @@ export const VehicleSection = ({
           onValueChange={handleBrandChange}
           disabled={disabled || brandsLoading}
         >
-          <SelectTrigger>
+          <SelectTrigger className={vehicleBrandError ? 'border-destructive' : ''}>
             <SelectValue placeholder={brandsLoading ? "Cargando marcas..." : "Selecciona una marca"} />
           </SelectTrigger>
           <SelectContent>
@@ -97,10 +110,16 @@ export const VehicleSection = ({
 
       {/* Modelo del Vehículo */}
       <div className="space-y-2">
-        <Label htmlFor="vehicleModel">
+        <Label htmlFor="vehicleModel" className={vehicleModelError ? 'text-destructive' : ''}>
           Modelo del Vehículo {vehicleModelRequired && <span className="text-red-500">*</span>}
+          {vehicleModelError && (
+            <span className="ml-2 text-xs bg-destructive/10 text-destructive px-2 py-0.5 rounded inline-flex items-center gap-1">
+              <AlertTriangle className="h-3 w-3" />
+              Requerido
+            </span>
+          )}
         </Label>
-        {!vehicleModelRequired && (
+        {!vehicleModelRequired && !vehicleModelError && (
           <p className="text-xs text-gray-400">Opcional para este tipo de servicio</p>
         )}
         <Select 
@@ -108,7 +127,7 @@ export const VehicleSection = ({
           onValueChange={handleModelChange}
           disabled={disabled || !selectedBrandId || modelsLoading}
         >
-          <SelectTrigger>
+          <SelectTrigger className={vehicleModelError ? 'border-destructive' : ''}>
             <SelectValue placeholder={
               !selectedBrandId 
                 ? "Primero selecciona una marca" 
@@ -129,10 +148,16 @@ export const VehicleSection = ({
 
       {/* Patente */}
       <div className="space-y-2">
-        <Label htmlFor="licensePlate">
+        <Label htmlFor="licensePlate" className={licensePlateError ? 'text-destructive' : ''}>
           Patente {licensePlateRequired && <span className="text-red-500">*</span>}
+          {licensePlateError && (
+            <span className="ml-2 text-xs bg-destructive/10 text-destructive px-2 py-0.5 rounded inline-flex items-center gap-1">
+              <AlertTriangle className="h-3 w-3" />
+              Requerido
+            </span>
+          )}
         </Label>
-        {!licensePlateRequired && (
+        {!licensePlateRequired && !licensePlateError && (
           <p className="text-xs text-gray-400">Opcional para este tipo de servicio</p>
         )}
         <Input
@@ -142,6 +167,7 @@ export const VehicleSection = ({
           placeholder="Ej: AB-CD-12"
           required={licensePlateRequired}
           disabled={disabled}
+          className={licensePlateError ? 'border-destructive' : ''}
         />
       </div>
     </div>
