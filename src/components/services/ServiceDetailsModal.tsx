@@ -117,29 +117,25 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose, onDuplicate }: S
   // Hook para generar PDF
   const { generatePDF, isGenerating } = useServiceDetailsPDF();
   
-  // Crear datos combinados inteligentemente con validación robusta
+  // Crear datos combinados preservando SIEMPRE el creatorName
   const serviceData = enhancedService ? {
     ...enhancedService,
-    // Preservar datos críticos del service básico si no están en enhanced
+    // Preservar datos críticos del service básico
     client: {
       ...enhancedService.client,
-      // Usar validación explícita para manejar strings vacíos, null y undefined
       department: (enhancedService.client.department && enhancedService.client.department.trim()) 
                   ? enhancedService.client.department 
                   : service.client.department
     },
-    // CRÍTICO: Preservar información del creador
+    // FORZAR preservación del creador: usar enhanced SOLO si tiene valor, sino usar service básico
     createdBy: enhancedService.createdBy || service.createdBy,
-    creatorName: enhancedService.creatorName || service.creatorName
+    creatorName: enhancedService.creatorName || service.creatorName || 'Usuario Desconocido'
   } : service;
 
   // Debug logs para rastrear el creador
-  console.log('🔍 [MODAL DEBUG] Enhanced creatorName:', enhancedService?.creatorName);
-  console.log('🔍 [MODAL DEBUG] Enhanced createdBy:', enhancedService?.createdBy);
-  console.log('🔍 [MODAL DEBUG] Basic service creatorName:', service.creatorName);
-  console.log('🔍 [MODAL DEBUG] Basic service createdBy:', service.createdBy);
-  console.log('🔍 [MODAL DEBUG] Final serviceData creatorName:', serviceData.creatorName);
-  console.log('🔍 [MODAL DEBUG] Final serviceData createdBy:', serviceData.createdBy);
+  console.log('🔍🔍🔍 [MODAL] Enhanced creatorName:', enhancedService?.creatorName);
+  console.log('🔍🔍🔍 [MODAL] Basic service creatorName:', service.creatorName);
+  console.log('🔍🔍🔍 [MODAL] Final serviceData creatorName:', serviceData.creatorName);
   
   const serviceCosts = enhancedService?.serviceCosts || [];
   const totalCommissions = enhancedService?.totalCommissions || 0;
