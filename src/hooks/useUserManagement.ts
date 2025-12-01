@@ -291,6 +291,25 @@ export const useUserManagement = () => {
     }
   };
 
+  const deleteUser = async (userId: string) => {
+    try {
+      setUpdating(userId);
+      
+      // Delete from auth.users (cascade will handle profiles and related data)
+      const { error } = await supabase.auth.admin.deleteUser(userId);
+
+      if (error) throw error;
+
+      toast.success('Usuario eliminado correctamente');
+      await fetchUsers();
+    } catch (error: any) {
+      console.error('Error deleting user:', error);
+      toast.error(error.message || 'Error al eliminar el usuario');
+    } finally {
+      setUpdating(null);
+    }
+  };
+
   useEffect(() => {
     fetchUsers();
     fetchClients();
@@ -311,6 +330,7 @@ export const useUserManagement = () => {
     updateUserRole,
     assignClientToUser,
     toggleUserStatus,
+    deleteUser,
     refetchUsers: fetchUsers
   };
 };
