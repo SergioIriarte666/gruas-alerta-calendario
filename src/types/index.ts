@@ -44,6 +44,8 @@ export interface Service {
   custodyNotes?: string;
   createdAt: string;
   updatedAt: string;
+  createdBy?: string;
+  creatorName?: string;
 }
 
 export interface ServiceFormData {

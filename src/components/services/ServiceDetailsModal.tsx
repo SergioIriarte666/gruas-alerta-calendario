@@ -497,7 +497,10 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose, onDuplicate }: S
           </Tabs>
 
           <div className="flex justify-between text-sm text-muted-foreground pt-4 mt-6 mb-6 border-t border-border">
-            <span>Creado: {formatForDisplayWithTime(serviceData.createdAt)}</span>
+            <span>
+              Creado: {formatForDisplayWithTime(serviceData.createdAt)}
+              {serviceData.creatorName && ` por ${serviceData.creatorName}`}
+            </span>
             <span>Actualizado: {formatForDisplayWithTime(serviceData.updatedAt)}</span>
           </div>
         </ScrollArea>

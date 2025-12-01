@@ -167,7 +167,9 @@ const transformToService = (data: any): Service => {
     custodyTotalAmount: data.custody_total_amount || undefined,
     custodyNotes: data.custody_notes || undefined,
     createdAt: data.created_at,
-    updatedAt: data.updated_at
+    updatedAt: data.updated_at,
+    createdBy: data.created_by || undefined,
+    creatorName: data.creator?.full_name || data.creator?.email || undefined
   };
 };
 
@@ -279,7 +281,8 @@ export const useServiceManager = () => {
           custody_vehicle_type: serviceData.custodyVehicleType || null,
           custody_discount_percentage: serviceData.custodyDiscountPercentage || null,
           custody_total_amount: serviceData.custodyTotalAmount || null,
-          custody_notes: serviceData.custodyNotes || null
+          custody_notes: serviceData.custodyNotes || null,
+          created_by: (await supabase.auth.getUser()).data.user?.id || null
         };
 
         console.log('📤 [INTEGRAL] Transformed data for ALL special service types:', {
@@ -307,6 +310,7 @@ export const useServiceManager = () => {
             crane:cranes(*),
             operator:operators(*),
             serviceType:service_types(*),
+            creator:profiles!services_created_by_fkey(id, full_name, email),
             service_resources!service_resources_service_id_fkey(
               id,
               resource_type,
