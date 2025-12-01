@@ -235,7 +235,7 @@ export const useUserManagement = () => {
     try {
       setUpdating(userId);
       const { error } = await (supabase as any).rpc('update_user_role', {
-        user_id: userId,
+        target_user_id: userId,
         new_role: newRole
       });
 
