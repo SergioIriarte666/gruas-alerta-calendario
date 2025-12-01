@@ -3734,6 +3734,10 @@ export type Database = {
         Args: { p_service_id: string }
         Returns: undefined
       }
+      delete_user_admin: {
+        Args: { target_user_id: string }
+        Returns: undefined
+      }
       detect_duplicate_crane_parts: {
         Args: { p_crane_id?: string }
         Returns: Json
