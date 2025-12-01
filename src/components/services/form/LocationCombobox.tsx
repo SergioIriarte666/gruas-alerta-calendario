@@ -23,6 +23,7 @@ interface LocationComboboxProps {
   placeholder: string;
   type: 'origin' | 'destination';
   disabled?: boolean;
+  className?: string;
 }
 
 export const LocationCombobox = ({
@@ -30,7 +31,8 @@ export const LocationCombobox = ({
   onValueChange,
   placeholder,
   type,
-  disabled = false
+  disabled = false,
+  className = ''
 }: LocationComboboxProps) => {
   const [open, setOpen] = useState(false);
   const [inputValue, setInputValue] = useState(value);
@@ -60,7 +62,7 @@ export const LocationCombobox = ({
           variant="outline"
           role="combobox"
           aria-expanded={open}
-          className="w-full justify-between"
+          className={cn("w-full justify-between", className)}
           disabled={disabled}
         >
           <span className="truncate">

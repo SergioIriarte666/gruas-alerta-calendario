@@ -12,6 +12,7 @@ import { EnhancedFinancialSection } from './form/EnhancedFinancialSection';
 import { ObservationsSection } from './form/ObservationsSection';
 import { FormActions } from './form/FormActions';
 import { ServiceFormHeader } from './form/ServiceFormHeader';
+import { ServiceValidationAlerts } from './form/ServiceValidationAlerts';
 import { CustodySection } from '../forms/CustodySection';
 import { useServiceManager } from '@/hooks/services/useServiceManager';
 import { useInventoryDeduction } from '@/hooks/useInventoryDeduction';
@@ -21,12 +22,13 @@ import { useOperatorsData } from '@/hooks/operators/useOperatorsData';
 import { useServiceTypes } from '@/hooks/useServiceTypes';
 import { useServiceDetailsForForm } from '@/hooks/useServiceDetailsGlobal';
 import { useEnhancedFolioGeneration } from '@/hooks/services/useEnhancedFolioGeneration';
+import { useServiceFormValidation } from '@/hooks/services/useServiceFormValidation';
 import { useUser } from '@/contexts/UserContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { Truck, FileText, Shield, Copy } from 'lucide-react';
+import { Truck, FileText, Shield, Copy, AlertTriangle } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { getCurrentChileDateString } from '@/utils/timezoneUtils';
@@ -281,6 +283,22 @@ export const EnhancedServiceForm = ({
   // Obtener el tipo de servicio seleccionado
   const selectedServiceType = serviceTypes?.find(st => st.id === formData.serviceType);
 
+  // Hook de validación del formulario
+  const { validationErrors, hasErrors, isFieldInvalid, getFieldError } = useServiceFormValidation({
+    formData: {
+      serviceType: formData.serviceType,
+      crane: formData.crane,
+      operators: formData.operators,
+      origin: formData.origin,
+      destination: formData.destination,
+      vehicleBrand: formData.vehicleBrand,
+      vehicleModel: formData.vehicleModel,
+      licensePlate: formData.licensePlate,
+      purchaseOrder: formData.purchaseOrder
+    },
+    selectedServiceType
+  });
+
   // Calculadores de totales
   const getTotalCommissions = () => {
     return formData.operators?.reduce((total, op) => total + (op.commission || 0), 0) || 0;
@@ -402,6 +420,12 @@ export const EnhancedServiceForm = ({
       // Validación básica
       if (!finalFolio || finalFolio.trim() === '') {
         toast.error('Error: El folio no puede estar vacío');
+        return;
+      }
+
+      // Validación según tipo de servicio
+      if (hasErrors) {
+        toast.error('Por favor complete todos los campos requeridos para este tipo de servicio');
         return;
       }
 
@@ -535,6 +559,11 @@ export const EnhancedServiceForm = ({
       
       <ServiceFormHeader service={service} />
 
+      {/* Alertas de Validación */}
+      {selectedServiceType && validationErrors.length > 0 && (
+        <ServiceValidationAlerts errors={validationErrors} />
+      )}
+
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Información Básica */}
         <Card>
@@ -619,6 +648,9 @@ export const EnhancedServiceForm = ({
               vehicleModelRequired={selectedServiceType?.vehicleModelRequired || false}
               licensePlateRequired={selectedServiceType?.licensePlateRequired || false}
               disabled={false}
+              vehicleBrandError={isFieldInvalid('vehicleBrand')}
+              vehicleModelError={isFieldInvalid('vehicleModel')}
+              licensePlateError={isFieldInvalid('licensePlate')}
             />
 
             <EnhancedLocationSection
@@ -629,14 +661,24 @@ export const EnhancedServiceForm = ({
               originRequired={selectedServiceType?.originRequired || false}
               destinationRequired={selectedServiceType?.destinationRequired || false}
               disabled={false}
+              originError={isFieldInvalid('origin')}
+              destinationError={isFieldInvalid('destination')}
             />
           </CardContent>
         </Card>
 
         {/* Recursos Asignados */}
-        <Card>
+        <Card className={isFieldInvalid('crane') ? 'border-destructive' : ''}>
           <CardHeader>
-            <CardTitle>Recursos Asignados</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              Recursos Asignados
+              {isFieldInvalid('crane') && (
+                <span className="text-xs bg-destructive/10 text-destructive px-2 py-1 rounded flex items-center gap-1">
+                  <AlertTriangle className="h-3 w-3" />
+                  Requerido
+                </span>
+              )}
+            </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
@@ -649,7 +691,7 @@ export const EnhancedServiceForm = ({
                 onValueChange={(value) => setFormData(prev => ({ ...prev, crane: value === "unassigned" ? "" : value }))} 
                 disabled={false}
               >
-                <SelectTrigger>
+                <SelectTrigger className={isFieldInvalid('crane') ? 'border-destructive' : ''}>
                   <SelectValue placeholder="Seleccionar grúa" />
                 </SelectTrigger>
                 <SelectContent>
@@ -661,6 +703,12 @@ export const EnhancedServiceForm = ({
                   ))}
                 </SelectContent>
               </Select>
+              {isFieldInvalid('crane') && (
+                <p className="text-sm text-destructive flex items-center gap-1">
+                  <AlertTriangle className="h-3 w-3" />
+                  {getFieldError('crane')?.message}
+                </p>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -681,6 +729,8 @@ export const EnhancedServiceForm = ({
           availableOperators={operators}
           operatorRequired={selectedServiceType?.operatorRequired || false}
           disabled={false}
+          hasValidationError={isFieldInvalid('operators')}
+          validationMessage={getFieldError('operators')?.message}
         />
 
         {/* Product Sales Section - Only for "Venta de Productos" service type */}
@@ -793,8 +843,9 @@ export const EnhancedServiceForm = ({
         <FormActions 
           onCancel={onCancel} 
           isEditing={!!service} 
-          disabled={false}
+          disabled={hasErrors}
           loading={isCreating || isUpdating}
+          validationErrorCount={validationErrors.filter(e => e.severity === 'error').length}
         />
       </form>
     </div>

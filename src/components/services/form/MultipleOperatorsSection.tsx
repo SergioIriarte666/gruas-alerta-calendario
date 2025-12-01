@@ -4,22 +4,27 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Trash2, Plus, Users, DollarSign } from 'lucide-react';
+import { Trash2, Plus, Users, DollarSign, AlertTriangle } from 'lucide-react';
 import { Operator } from '@/types';
 import { ServiceOperator } from '@/types/serviceDetails';
+
 interface MultipleOperatorsSectionProps {
   operators: ServiceOperator[];
   onOperatorsChange: (operators: ServiceOperator[]) => void;
   availableOperators: Operator[];
   operatorRequired?: boolean;
   disabled?: boolean;
+  hasValidationError?: boolean;
+  validationMessage?: string;
 }
 export const MultipleOperatorsSection = ({
   operators,
   onOperatorsChange,
   availableOperators,
   operatorRequired = false,
-  disabled = false
+  disabled = false,
+  hasValidationError = false,
+  validationMessage
 }: MultipleOperatorsSectionProps) => {
   const [nextId, setNextId] = useState(1);
   const addOperator = () => {
@@ -56,19 +61,32 @@ export const MultipleOperatorsSection = ({
   const getTotalCommissions = () => {
     return operators.reduce((total, op) => total + (op.commission || 0), 0);
   };
-  return <Card className="border-green-200 bg-green-50/30">
+  return <Card className={`${hasValidationError ? 'border-destructive bg-destructive/5' : 'border-green-200 bg-green-50/30'}`}>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Users className="h-5 w-5 text-green-600" />
+          <Users className={`h-5 w-5 ${hasValidationError ? 'text-destructive' : 'text-green-600'}`} />
           Operadores y Comisiones del Servicio
           {operatorRequired && <span className="text-red-500">*</span>}
-          {!operatorRequired}
+          {hasValidationError && (
+            <span className="text-xs bg-destructive/10 text-destructive px-2 py-1 rounded flex items-center gap-1">
+              <AlertTriangle className="h-3 w-3" />
+              Requerido
+            </span>
+          )}
         </CardTitle>
-        <div className="text-sm text-blue-700 bg-blue-100 p-2 rounded border">
-          <DollarSign className="h-4 w-4 inline mr-1" />
-          <strong>Sistema Simplificado:</strong> Para servicios con un solo operador, la comisión se maneja en el campo principal del servicio.
-          Esta sección es para servicios con múltiples operadores.
-        </div>
+        {hasValidationError && validationMessage && (
+          <div className="text-sm text-destructive bg-destructive/10 p-2 rounded border border-destructive/30 flex items-center gap-2">
+            <AlertTriangle className="h-4 w-4" />
+            {validationMessage}
+          </div>
+        )}
+        {!hasValidationError && (
+          <div className="text-sm text-blue-700 bg-blue-100 p-2 rounded border">
+            <DollarSign className="h-4 w-4 inline mr-1" />
+            <strong>Sistema Simplificado:</strong> Para servicios con un solo operador, la comisión se maneja en el campo principal del servicio.
+            Esta sección es para servicios con múltiples operadores.
+          </div>
+        )}
       </CardHeader>
       <CardContent className="space-y-4">
         {operators.map((operator, index) => <div key={operator.id} className="border rounded-lg p-4 space-y-4 bg-white shadow-sm">
