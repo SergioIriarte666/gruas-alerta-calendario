@@ -197,6 +197,10 @@ export const useServiceManager = () => {
 
         console.log('📋 Service type config:', serviceTypeConfig);
 
+        // Obtener el usuario actual para created_by
+        const { data: { user } } = await supabase.auth.getUser();
+        const createdBy = user?.id || null;
+
         // VALIDACIÓN INTEGRAL para TODOS los tipos de servicios especiales
         const transformedData = {
           folio: serviceData.folio,
@@ -282,7 +286,7 @@ export const useServiceManager = () => {
           custody_discount_percentage: serviceData.custodyDiscountPercentage || null,
           custody_total_amount: serviceData.custodyTotalAmount || null,
           custody_notes: serviceData.custodyNotes || null,
-          created_by: (await supabase.auth.getUser()).data.user?.id || null
+          created_by: createdBy
         };
 
         console.log('📤 [INTEGRAL] Transformed data for ALL special service types:', {
