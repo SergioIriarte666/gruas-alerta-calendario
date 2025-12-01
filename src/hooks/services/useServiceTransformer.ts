@@ -156,12 +156,13 @@ export const useServiceTransformer = () => {
         creatorName: item.creator?.full_name || item.creator?.email || undefined
       };
       
-      console.log('✅ Service transformed with custody:', {
+      console.log('✅ Service transformed:', {
         folio: transformedService.folio,
-        custodyMode: transformedService.custodyMode,
-        custodyDays: transformedService.custodyDays,
-        custodyDailyRate: transformedService.custodyDailyRate,
-        custodyTotalAmount: transformedService.custodyTotalAmount
+        createdBy: transformedService.createdBy,
+        creatorName: transformedService.creatorName,
+        hasCreatorData: !!item.creator,
+        creatorFullName: item.creator?.full_name,
+        creatorEmail: item.creator?.email
       });
       return transformedService;
     });
