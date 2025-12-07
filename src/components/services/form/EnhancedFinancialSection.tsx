@@ -142,7 +142,7 @@ export const EnhancedFinancialSection = ({
               placeholder={isCustodyService ? "0 (opcional)" : "150000"}
               required={!isCustodyService}
               disabled={disabled}
-              className="text-2xl font-bold h-14"
+              className="!text-2xl !font-bold h-14"
             />
             {isCustodyService && custodyTotalAmount > 0 && (
               <div className="flex items-center gap-2 p-2 bg-blue-50 rounded-md">
