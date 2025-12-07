@@ -127,7 +127,7 @@ export const EnhancedFinancialSection = ({
         ) : (
           /* Valor único del servicio - mostrar input normal */
           <div className="space-y-2">
-            <Label htmlFor="value">
+            <Label htmlFor="value" className="text-base font-semibold">
               Valor del Servicio (CLP) 
               {!isCustodyService && <span className="text-red-500"> *</span>}
               {isCustodyService && (
@@ -142,7 +142,7 @@ export const EnhancedFinancialSection = ({
               placeholder={isCustodyService ? "0 (opcional)" : "150000"}
               required={!isCustodyService}
               disabled={disabled}
-              className="text-xl font-bold"
+              className="text-2xl font-bold h-14"
             />
             {isCustodyService && custodyTotalAmount > 0 && (
               <div className="flex items-center gap-2 p-2 bg-blue-50 rounded-md">
