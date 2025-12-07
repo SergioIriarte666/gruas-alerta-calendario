@@ -92,7 +92,7 @@ export const EnhancedFinancialSection = ({
                 placeholder="25000"
                 required
                 disabled={disabled}
-                className="text-lg font-semibold"
+              className="text-xl font-bold"
               />
             </div>
 
@@ -142,7 +142,7 @@ export const EnhancedFinancialSection = ({
               placeholder={isCustodyService ? "0 (opcional)" : "150000"}
               required={!isCustodyService}
               disabled={disabled}
-              className="text-lg font-semibold"
+              className="text-xl font-bold"
             />
             {isCustodyService && custodyTotalAmount > 0 && (
               <div className="flex items-center gap-2 p-2 bg-blue-50 rounded-md">
@@ -187,8 +187,8 @@ export const EnhancedFinancialSection = ({
             </div>
           </div>
           <div className="ml-auto text-right">
-            <Label className="text-sm text-muted-foreground">Valor Total Servicio</Label>
-            <div className="text-lg font-bold text-violet-600">
+            <Label className="text-sm font-medium text-muted-foreground">Valor Total Servicio</Label>
+            <div className="text-2xl font-bold text-violet-600">
               ${serviceBreakdown.totalValue.toLocaleString('es-CL')}
             </div>
           </div>
