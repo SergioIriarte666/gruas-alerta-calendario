@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Plus, Eye, Edit, Trash2, Truck, Check, ChevronUp, ChevronDown } from 'lucide-react';
 import { formatForDisplay, parseFromDatabase } from '@/utils/timezoneUtils';
 import { useUser } from '@/contexts/UserContext';
@@ -22,6 +23,9 @@ interface ServicesTableProps {
   sortField?: 'folio' | 'date' | 'client' | 'vehicle' | 'crane' | 'operator' | 'value' | 'status' | null;
   sortDirection?: 'asc' | 'desc';
   onSort?: (field: 'folio' | 'date' | 'client' | 'vehicle' | 'crane' | 'operator' | 'value' | 'status') => void;
+  // Batch selection props
+  selectedServices?: Set<string>;
+  onSelectionChange?: (selectedIds: Set<string>) => void;
 }
 
 export const ServicesTable = ({
@@ -35,10 +39,45 @@ export const ServicesTable = ({
   sortField,
   sortDirection,
   onSort,
+  selectedServices = new Set(),
+  onSelectionChange,
 }: ServicesTableProps) => {
   const { user } = useUser();
   const isAdmin = user?.role === 'admin';
   const { isMobile } = useDeviceType();
+
+  // Get closeable services (pending or in_progress)
+  const closeableServices = services.filter(
+    s => s.status === 'pending' || s.status === 'in_progress'
+  );
+
+  const isServiceCloseable = (service: Service) => 
+    service.status === 'pending' || service.status === 'in_progress';
+
+  const handleSelectAll = (checked: boolean) => {
+    if (!onSelectionChange) return;
+    if (checked) {
+      const newSelection = new Set(closeableServices.map(s => s.id));
+      onSelectionChange(newSelection);
+    } else {
+      onSelectionChange(new Set());
+    }
+  };
+
+  const handleSelectService = (serviceId: string, checked: boolean) => {
+    if (!onSelectionChange) return;
+    const newSelection = new Set(selectedServices);
+    if (checked) {
+      newSelection.add(serviceId);
+    } else {
+      newSelection.delete(serviceId);
+    }
+    onSelectionChange(newSelection);
+  };
+
+  const allCloseableSelected = closeableServices.length > 0 && 
+    closeableServices.every(s => selectedServices.has(s.id));
+  const someSelected = closeableServices.some(s => selectedServices.has(s.id));
 
   // Helper component for sortable table headers
   const SortableHeader = ({ field, children }: { field: 'folio' | 'date' | 'client' | 'vehicle' | 'crane' | 'operator' | 'value' | 'status'; children: React.ReactNode }) => (
@@ -80,7 +119,7 @@ export const ServicesTable = ({
     );
   }
 
-  // Desktop view (unchanged functionality)
+  // Desktop view
   return (
     <Card>
       <CardHeader>
@@ -120,6 +159,16 @@ export const ServicesTable = ({
             <Table>
               <TableHeader>
                 <TableRow>
+                  {onSelectionChange && (
+                    <TableHead className="w-12">
+                      <Checkbox
+                        checked={allCloseableSelected}
+                        onCheckedChange={handleSelectAll}
+                        aria-label="Seleccionar todos los servicios cerrables"
+                        className={someSelected && !allCloseableSelected ? 'data-[state=checked]:bg-primary/50' : ''}
+                      />
+                    </TableHead>
+                  )}
                   <TableHead>
                     <SortableHeader field="folio">Folio</SortableHeader>
                   </TableHead>
@@ -151,9 +200,31 @@ export const ServicesTable = ({
               <TableBody>
                 {services.map((service) => {
                   const isInvoiced = service.status === 'invoiced';
+                  const canBeSelected = isServiceCloseable(service);
+                  const isSelected = selectedServices.has(service.id);
                   
                   return (
-                    <TableRow key={service.id} className="hover:bg-muted/50">
+                    <TableRow 
+                      key={service.id} 
+                      className={`hover:bg-muted/50 ${isSelected ? 'bg-primary/5' : ''}`}
+                    >
+                      {onSelectionChange && (
+                        <TableCell>
+                          {canBeSelected ? (
+                            <Checkbox
+                              checked={isSelected}
+                              onCheckedChange={(checked) => handleSelectService(service.id, !!checked)}
+                              aria-label={`Seleccionar servicio ${service.folio}`}
+                            />
+                          ) : (
+                            <Checkbox
+                              disabled
+                              className="opacity-30"
+                              aria-label="No se puede seleccionar"
+                            />
+                          )}
+                        </TableCell>
+                      )}
                       <TableCell className="font-medium">
                         <Badge variant="tms" className="whitespace-nowrap text-violet-600" title={`Folio: ${service.folio}`}>
                           {service.folio}
