@@ -9,7 +9,6 @@ import { ServicesPipelineView } from '@/components/services/ServicesPipelineView
 import { ServicesDialogs } from '@/components/services/ServicesDialogs';
 import { ServiceBatchActionBar } from '@/components/services/ServiceBatchActionBar';
 import { ServiceBatchUpdateModal } from '@/components/services/ServiceBatchUpdateModal';
-import { ServiceBatchQuoteModal } from '@/components/services/ServiceBatchQuoteModal';
 import { AppPagination } from '@/components/shared/AppPagination';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -21,7 +20,6 @@ type ViewMode = 'table' | 'pipeline';
 const Services = () => {
   const [viewMode, setViewMode] = useState<ViewMode>('table');
   const [isBatchUpdateOpen, setIsBatchUpdateOpen] = useState(false);
-  const [isBatchQuoteOpen, setIsBatchQuoteOpen] = useState(false);
   const [isBatchDeleting, setIsBatchDeleting] = useState(false);
   const [isBatchDuplicating, setIsBatchDuplicating] = useState(false);
   
@@ -96,13 +94,6 @@ const Services = () => {
   // Check if batch delete is allowed (no invoiced services)
   const canBatchDelete = useMemo(() => {
     return selectedServicesData.every(s => s.status !== 'invoiced');
-  }, [selectedServicesData]);
-
-  // Check if batch quote is allowed (all same client)
-  const canBatchQuote = useMemo(() => {
-    if (selectedServicesData.length === 0) return false;
-    const firstClientId = selectedServicesData[0]?.client?.id;
-    return selectedServicesData.every(s => s.client?.id === firstClientId);
   }, [selectedServicesData]);
 
   // Batch delete handler
@@ -213,11 +204,9 @@ const Services = () => {
           onBatchUpdate={() => setIsBatchUpdateOpen(true)}
           onBatchDelete={handleBatchDeleteServices}
           onBatchDuplicate={handleBatchDuplicateServices}
-          onBatchQuote={() => setIsBatchQuoteOpen(true)}
           onClearSelection={handleClearSelection}
           isProcessing={isBatchClosing || isBatchDeleting || isBatchDuplicating}
           canDelete={canBatchDelete}
-          canQuote={canBatchQuote}
         />
       )}
 
@@ -320,17 +309,6 @@ const Services = () => {
       <ServiceBatchUpdateModal
         open={isBatchUpdateOpen}
         onOpenChange={setIsBatchUpdateOpen}
-        selectedServices={selectedServicesData}
-        onSuccess={() => {
-          handleClearSelection();
-          handleRefresh();
-        }}
-      />
-
-      {/* Batch Quote Modal */}
-      <ServiceBatchQuoteModal
-        open={isBatchQuoteOpen}
-        onOpenChange={setIsBatchQuoteOpen}
         selectedServices={selectedServicesData}
         onSuccess={() => {
           handleClearSelection();

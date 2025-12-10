@@ -1,7 +1,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Check, X, Edit, Trash2, Copy, FileText } from 'lucide-react';
+import { Check, X, Edit, Trash2, Copy } from 'lucide-react';
 
 interface ServiceBatchActionBarProps {
   selectedCount: number;
@@ -10,11 +10,9 @@ interface ServiceBatchActionBarProps {
   onBatchUpdate: () => void;
   onBatchDelete: () => void;
   onBatchDuplicate: () => void;
-  onBatchQuote: () => void;
   onClearSelection: () => void;
   isProcessing?: boolean;
   canDelete?: boolean;
-  canQuote?: boolean;
 }
 
 export const ServiceBatchActionBar = ({
@@ -24,11 +22,9 @@ export const ServiceBatchActionBar = ({
   onBatchUpdate,
   onBatchDelete,
   onBatchDuplicate,
-  onBatchQuote,
   onClearSelection,
   isProcessing = false,
   canDelete = true,
-  canQuote = false,
 }: ServiceBatchActionBarProps) => {
   return (
     <div className="sticky top-0 z-50 bg-muted/95 backdrop-blur-sm border-b shadow-lg">
@@ -72,17 +68,6 @@ export const ServiceBatchActionBar = ({
               <Copy className="h-4 w-4 mr-2" />
               Duplicar
             </Button>
-            {canQuote && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={onBatchQuote}
-                disabled={isProcessing}
-              >
-                <FileText className="h-4 w-4 mr-2" />
-                Cotización
-              </Button>
-            )}
             {canDelete && (
               <Button
                 variant="destructive"
