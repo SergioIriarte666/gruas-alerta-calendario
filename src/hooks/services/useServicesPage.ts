@@ -35,6 +35,10 @@ export const useServicesPage = () => {
   const [sortField, setSortField] = useState<'folio' | 'date' | 'client' | 'vehicle' | 'crane' | 'operator' | 'value' | 'status' | null>(null);
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
 
+  // Batch selection state
+  const [selectedServiceIds, setSelectedServiceIds] = useState<Set<string>>(new Set());
+  const [isBatchClosing, setIsBatchClosing] = useState(false);
+
   const newSaleHandledRef = useRef(false);
 
   const isAdmin = user?.role === 'admin';
@@ -208,6 +212,10 @@ export const useServicesPage = () => {
     currentPage * ITEMS_PER_PAGE
   );
 
+  // Calculate selected services data for batch action bar
+  const selectedServicesData = services.filter(s => selectedServiceIds.has(s.id));
+  const selectedServicesTotal = selectedServicesData.reduce((sum, s) => sum + (s.value || 0), 0);
+
   const handleRefresh = async () => {
     setRefreshing(true);
     try {
@@ -299,6 +307,66 @@ export const useServicesPage = () => {
         toast.error('No se pudo cerrar el servicio');
       }
     }
+  };
+
+  // Batch close handler
+  const handleBatchCloseServices = async () => {
+    const count = selectedServiceIds.size;
+    if (count === 0) return;
+
+    const confirmed = window.confirm(
+      `¿Estás seguro de que deseas cerrar ${count} servicio${count > 1 ? 's' : ''}? El estado de cada uno cambiará a "Completado".`
+    );
+
+    if (!confirmed) return;
+
+    setIsBatchClosing(true);
+    let successCount = 0;
+    let errorCount = 0;
+
+    try {
+      const serviceIds = Array.from(selectedServiceIds);
+      
+      for (const serviceId of serviceIds) {
+        try {
+          const { data, error } = await supabase.rpc('emergency_close_service', {
+            p_service_id: serviceId
+          });
+
+          if (error || !(data as any)?.success) {
+            console.error(`Error closing service ${serviceId}:`, error || (data as any)?.error);
+            errorCount++;
+          } else {
+            successCount++;
+          }
+        } catch (err) {
+          console.error(`Error closing service ${serviceId}:`, err);
+          errorCount++;
+        }
+      }
+
+      // Clear selection and refresh
+      setSelectedServiceIds(new Set());
+      await refetch();
+
+      // Show result
+      if (errorCount === 0) {
+        toast.success(`${successCount} servicio${successCount > 1 ? 's' : ''} cerrado${successCount > 1 ? 's' : ''} exitosamente`);
+      } else if (successCount === 0) {
+        toast.error(`No se pudieron cerrar los servicios`);
+      } else {
+        toast.warning(`${successCount} cerrado${successCount > 1 ? 's' : ''}, ${errorCount} con error`);
+      }
+    } catch (error) {
+      console.error('Error in batch close:', error);
+      toast.error('Error al cerrar servicios por lotes');
+    } finally {
+      setIsBatchClosing(false);
+    }
+  };
+
+  const handleClearSelection = () => {
+    setSelectedServiceIds(new Set());
   };
 
   const handleViewDetails = (service: Service) => {
@@ -409,6 +477,11 @@ export const useServicesPage = () => {
     sortField,
     sortDirection,
     
+    // Batch selection state
+    selectedServiceIds,
+    selectedServicesTotal,
+    isBatchClosing,
+    
     // Setters
     setSelectedService,
     setIsFormOpen,
@@ -418,6 +491,7 @@ export const useServicesPage = () => {
     setSearchTerm,
     setStatusFilter,
     setCurrentPage,
+    setSelectedServiceIds,
     
     // Handlers
     handleAdvancedFiltersChange,
@@ -426,6 +500,8 @@ export const useServicesPage = () => {
     handleUpdateService,
     handleFormOpenChange,
     handleCloseService,
+    handleBatchCloseServices,
+    handleClearSelection,
     handleViewDetails,
     handleEdit,
     handleDelete,

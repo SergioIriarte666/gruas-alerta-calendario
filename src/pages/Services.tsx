@@ -7,6 +7,7 @@ import { ServicesTable } from '@/components/services/ServicesTable';
 import { ServicesMobileView } from '@/components/services/ServicesMobileView';
 import { ServicesPipelineView } from '@/components/services/ServicesPipelineView';
 import { ServicesDialogs } from '@/components/services/ServicesDialogs';
+import { ServiceBatchActionBar } from '@/components/services/ServiceBatchActionBar';
 import { AppPagination } from '@/components/shared/AppPagination';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -41,6 +42,11 @@ const Services = () => {
     sortField,
     sortDirection,
     
+    // Batch selection state
+    selectedServiceIds,
+    selectedServicesTotal,
+    isBatchClosing,
+    
     // Setters
     setIsCSVUploadOpen,
     setIsFormOpen,
@@ -48,6 +54,7 @@ const Services = () => {
     setSearchTerm,
     setStatusFilter,
     setCurrentPage,
+    setSelectedServiceIds,
     
     // Handlers
     handleAdvancedFiltersChange,
@@ -56,6 +63,8 @@ const Services = () => {
     handleUpdateService,
     handleFormOpenChange,
     handleCloseService,
+    handleBatchCloseServices,
+    handleClearSelection,
     handleViewDetails,
     handleEdit,
     handleDelete,
@@ -88,6 +97,17 @@ const Services = () => {
 
   return (
     <div className="services-scope container mx-auto py-6 space-y-6 bg-white min-h-screen">
+      {/* Batch Action Bar - show when services are selected */}
+      {selectedServiceIds.size > 0 && (
+        <ServiceBatchActionBar
+          selectedCount={selectedServiceIds.size}
+          totalAmount={selectedServicesTotal}
+          onBatchClose={handleBatchCloseServices}
+          onClearSelection={handleClearSelection}
+          isProcessing={isBatchClosing}
+        />
+      )}
+
       <ServicesHeader 
         isAdmin={isAdmin}
         refreshing={refreshing}
@@ -136,6 +156,8 @@ const Services = () => {
               sortField={sortField}
               sortDirection={sortDirection}
               onSort={handleSort}
+              selectedServices={selectedServiceIds}
+              onSelectionChange={setSelectedServiceIds}
             />
           )}
 
