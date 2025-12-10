@@ -1,27 +1,39 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Check, X } from 'lucide-react';
+import { Check, X, Edit, Trash2, Copy, FileText } from 'lucide-react';
 
 interface ServiceBatchActionBarProps {
   selectedCount: number;
   totalAmount: number;
   onBatchClose: () => void;
+  onBatchUpdate: () => void;
+  onBatchDelete: () => void;
+  onBatchDuplicate: () => void;
+  onBatchQuote: () => void;
   onClearSelection: () => void;
   isProcessing?: boolean;
+  canDelete?: boolean;
+  canQuote?: boolean;
 }
 
 export const ServiceBatchActionBar = ({
   selectedCount,
   totalAmount,
   onBatchClose,
+  onBatchUpdate,
+  onBatchDelete,
+  onBatchDuplicate,
+  onBatchQuote,
   onClearSelection,
   isProcessing = false,
+  canDelete = true,
+  canQuote = false,
 }: ServiceBatchActionBarProps) => {
   return (
     <div className="sticky top-0 z-50 bg-muted/95 backdrop-blur-sm border-b shadow-lg">
       <div className="container mx-auto px-4 py-3">
-        <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center justify-between gap-4 flex-wrap">
           <div className="flex items-center gap-4">
             <Badge variant="secondary" className="px-3 py-1.5">
               {selectedCount} {selectedCount === 1 ? 'servicio seleccionado' : 'servicios seleccionados'}
@@ -31,7 +43,7 @@ export const ServiceBatchActionBar = ({
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <Button
               variant="default"
               size="sm"
@@ -40,10 +52,50 @@ export const ServiceBatchActionBar = ({
               className="bg-green-600 hover:bg-green-700 text-white"
             >
               <Check className="h-4 w-4 mr-2" />
-              {isProcessing ? 'Cerrando...' : 'Cerrar Servicios'}
+              Cerrar
             </Button>
             <Button
               variant="outline"
+              size="sm"
+              onClick={onBatchUpdate}
+              disabled={isProcessing}
+            >
+              <Edit className="h-4 w-4 mr-2" />
+              Editar
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onBatchDuplicate}
+              disabled={isProcessing}
+            >
+              <Copy className="h-4 w-4 mr-2" />
+              Duplicar
+            </Button>
+            {canQuote && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={onBatchQuote}
+                disabled={isProcessing}
+              >
+                <FileText className="h-4 w-4 mr-2" />
+                Cotización
+              </Button>
+            )}
+            {canDelete && (
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={onBatchDelete}
+                disabled={isProcessing}
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Eliminar
+              </Button>
+            )}
+            <Button
+              variant="ghost"
               size="sm"
               onClick={onClearSelection}
               disabled={isProcessing}
