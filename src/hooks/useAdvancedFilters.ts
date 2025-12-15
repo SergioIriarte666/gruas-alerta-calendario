@@ -1,6 +1,6 @@
-
 import { useState, useMemo } from 'react';
 import { Service } from '@/types';
+import { parseFromDatabase } from '@/utils/timezoneUtils';
 
 export interface AdvancedFilters {
   serviceTypeId?: string;
@@ -60,7 +60,7 @@ export const useAdvancedFilters = () => {
 
       // Apply date filters
       if (filters.dateFrom || filters.dateTo) {
-        const serviceDate = service.serviceDate ? new Date(service.serviceDate) : null;
+        const serviceDate = service.serviceDate ? parseFromDatabase(service.serviceDate) : null;
         if (!serviceDate) return false;
         
         if (filters.dateFrom) {
