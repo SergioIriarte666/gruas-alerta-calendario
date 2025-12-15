@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AdvancedFilters } from '@/hooks/useAdvancedFilters';
 import { useServiceTypes } from '@/hooks/useServiceTypes';
+import DateRangePicker from '@/components/closures/DateRangePicker';
 
 interface AdvancedServiceFiltersProps {
   isOpen: boolean;
@@ -58,6 +59,17 @@ export const AdvancedServiceFilters: React.FC<AdvancedServiceFiltersProps> = ({
         <DialogHeader>
           <DialogTitle className="text-foreground">Filtros Avanzados</DialogTitle>
         </DialogHeader>
+
+        {/* Date Range Filter */}
+        <div className="mb-6 pb-4 border-b">
+          <Label className="text-foreground mb-3 block">Rango de Fechas</Label>
+          <DateRangePicker
+            dateFrom={filters.dateFrom}
+            dateTo={filters.dateTo}
+            onDateFromChange={(date) => onFiltersChange({ ...filters, dateFrom: date })}
+            onDateToChange={(date) => onFiltersChange({ ...filters, dateTo: date })}
+          />
+        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-4">

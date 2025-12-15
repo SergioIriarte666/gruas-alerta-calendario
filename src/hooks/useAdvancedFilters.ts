@@ -8,6 +8,8 @@ export interface AdvancedFilters {
   quoteNumber?: string;
   purchaseOrderNumber?: string;
   numeroFiscal?: string;
+  dateFrom?: Date;
+  dateTo?: Date;
 }
 
 export const useAdvancedFilters = () => {
@@ -15,10 +17,12 @@ export const useAdvancedFilters = () => {
   const [filters, setFilters] = useState<AdvancedFilters>({});
 
   const hasActiveFilters = useMemo(() => {
-    return Object.values(filters).some(value => 
-      value !== undefined && value !== '' && 
-      (Array.isArray(value) ? value.length > 0 : true)
-    );
+    return Object.entries(filters).some(([key, value]) => {
+      if (value === undefined || value === '') return false;
+      if (value instanceof Date) return true;
+      if (Array.isArray(value)) return value.length > 0;
+      return true;
+    });
   }, [filters]);
 
   const applyAdvancedFilters = (services: Service[], basicFilters: { searchTerm: string; statusFilter: string }) => {
@@ -53,6 +57,24 @@ export const useAdvancedFilters = () => {
       if (filters.quoteNumber && !normalizeSearchTerm(service.quoteNumber || '').includes(normalizeSearchTerm(filters.quoteNumber))) return false;
       if (filters.purchaseOrderNumber && !normalizeSearchTerm(service.purchaseOrderNumber || service.purchaseOrder || '').includes(normalizeSearchTerm(filters.purchaseOrderNumber))) return false;
       if (filters.numeroFiscal && !normalizeSearchTerm(service.invoiceNumeroFiscal || '').includes(normalizeSearchTerm(filters.numeroFiscal))) return false;
+
+      // Apply date filters
+      if (filters.dateFrom || filters.dateTo) {
+        const serviceDate = service.serviceDate ? new Date(service.serviceDate) : null;
+        if (!serviceDate) return false;
+        
+        if (filters.dateFrom) {
+          const fromDate = new Date(filters.dateFrom);
+          fromDate.setHours(0, 0, 0, 0);
+          if (serviceDate < fromDate) return false;
+        }
+        
+        if (filters.dateTo) {
+          const toDate = new Date(filters.dateTo);
+          toDate.setHours(23, 59, 59, 999);
+          if (serviceDate > toDate) return false;
+        }
+      }
 
       return true;
     });
