@@ -6,14 +6,21 @@ import { Operator } from '@/types';
 const fetchOperators = async (): Promise<Operator[]> => {
   const { data, error } = await supabase
     .from('operators')
-    .select('*')
+    .select(`
+      *,
+      creator:profiles!operators_created_by_fkey (
+        id,
+        full_name,
+        email
+      )
+    `)
     .order('created_at', { ascending: false });
 
   if (error) {
     throw new Error(error.message);
   }
 
-  return data.map(operator => ({
+  return data.map((operator: any) => ({
     id: operator.id,
     name: operator.name,
     rut: operator.rut,
@@ -25,7 +32,9 @@ const fetchOperators = async (): Promise<Operator[]> => {
     examExpiry: operator.exam_expiry || '',
     isActive: operator.is_active || false,
     createdAt: operator.created_at,
-    updatedAt: operator.updated_at
+    updatedAt: operator.updated_at,
+    createdBy: operator.created_by,
+    creatorName: operator.creator?.full_name || operator.creator?.email || undefined
   }));
 };
 

@@ -2,6 +2,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from '@/components/ui/button';
 import { Crane } from '@/types';
 import { CraneTabsWithCounters } from './CraneTabsWithCounters';
+import { formatForDisplayWithTime } from '@/utils/timezoneUtils';
 
 interface CraneDetailsModalProps {
   crane: Crane | null;
@@ -43,7 +44,16 @@ export const CraneDetailsModal = ({
           <CraneTabsWithCounters crane={crane} />
         </div>
 
-        <div className="flex justify-end px-6 py-4 border-t">
+        {/* Footer con información de creación */}
+        <div className="flex justify-between text-sm text-muted-foreground px-6 py-4 border-t">
+          <span>
+            Creado: {formatForDisplayWithTime(crane.createdAt)}
+            {crane.creatorName && ` por ${crane.creatorName}`}
+          </span>
+          <span>Actualizado: {formatForDisplayWithTime(crane.updatedAt)}</span>
+        </div>
+
+        <div className="flex justify-end px-6 pb-4">
           <Button onClick={onClose} variant="outline">
             Cerrar
           </Button>

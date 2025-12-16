@@ -12,10 +12,17 @@ export const useClosureData = () => {
     try {
       console.log('Fetching closures...');
       
-      // First, let's try to fetch closures without the join to see if basic data works
+      // First, let's try to fetch closures with creator info
       const { data: basicClosures, error: basicError } = await supabase
         .from('service_closures')
-        .select('*')
+        .select(`
+          *,
+          creator:profiles!service_closures_created_by_fkey (
+            id,
+            full_name,
+            email
+          )
+        `)
         .order('created_at', { ascending: false });
 
       if (basicError) {

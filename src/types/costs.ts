@@ -1,4 +1,5 @@
 import { Database } from "@/integrations/supabase/types";
+import { CreatorInfo } from "./common";
 
 export type CostCategory = Database['public']['Tables']['cost_categories']['Row'];
 export type CostSubcategory = Database['public']['Tables']['cost_subcategories']['Row'];
@@ -28,6 +29,7 @@ export type Cost = Database['public']['Tables']['costs']['Row'] & {
     provider: string | null;
     notes: string | null;
   } | null;
+  creator?: CreatorInfo | null;
 };
 
 export type CostFormData = Omit<Database['public']['Tables']['costs']['Insert'], 'id' | 'created_at' | 'updated_at' | 'created_by'> & {

@@ -4,6 +4,7 @@ import { Client } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ClientTabsWithCounters } from './ClientTabsWithCounters';
+import { formatForDisplayWithTime } from '@/utils/timezoneUtils';
 
 interface ClientDetailsModalProps {
   client: Client;
@@ -37,8 +38,17 @@ export const ClientDetailsModal = ({ client, isOpen, onClose }: ClientDetailsMod
           <ClientTabsWithCounters client={client} />
         </div>
         
-        {/* Footer */}
-        <div className="flex justify-end pt-4 mt-4 border-t">
+        {/* Footer con información de creación */}
+        <div className="flex justify-between text-sm text-muted-foreground pt-4 mt-4 border-t">
+          <span>
+            Creado: {formatForDisplayWithTime(client.createdAt)}
+            {client.creatorName && ` por ${client.creatorName}`}
+          </span>
+          <span>Actualizado: {formatForDisplayWithTime(client.updatedAt)}</span>
+        </div>
+        
+        {/* Footer con botón */}
+        <div className="flex justify-end pt-2">
           <Button 
             onClick={onClose}
             variant="outline"

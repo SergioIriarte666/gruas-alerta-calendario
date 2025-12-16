@@ -24,6 +24,11 @@ export const useInvoiceData = () => {
             rut,
             email,
             phone
+          ),
+          creator:profiles!invoices_created_by_fkey (
+            id,
+            full_name,
+            email
           )
         `)
         .order('created_at', { ascending: false });

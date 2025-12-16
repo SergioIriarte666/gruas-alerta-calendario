@@ -2,6 +2,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { formatCurrency } from '@/lib/utils';
+import { Invoice } from '@/types';
 import { 
   FileText,
   Calendar,
@@ -11,9 +12,10 @@ import {
   CheckCircle,
   AlertTriangle
 } from 'lucide-react';
+import { formatForDisplayWithTime, formatForDisplay } from '@/utils/timezoneUtils';
 
 interface InvoiceDetailsModalProps {
-  invoice: any | null;
+  invoice: Invoice | null;
   isOpen: boolean;
   onClose: () => void;
 }
@@ -21,8 +23,8 @@ interface InvoiceDetailsModalProps {
 export const InvoiceDetailsModal = ({ invoice, isOpen, onClose }: InvoiceDetailsModalProps) => {
   if (!invoice) return null;
 
-  const isOverdue = new Date(invoice.due_date) < new Date();
-  const pendingAmount = invoice.total - (invoice.paid_amount || 0);
+  const isOverdue = new Date(invoice.dueDate) < new Date();
+  const pendingAmount = invoice.total - (invoice.paidAmount || 0);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -59,7 +61,7 @@ export const InvoiceDetailsModal = ({ invoice, isOpen, onClose }: InvoiceDetails
                 <Calendar className="w-4 h-4 text-muted-foreground" />
                 <span className="font-medium">Fecha de Vencimiento</span>
               </div>
-              <p className="text-sm">{invoice.due_date}</p>
+              <p className="text-sm">{formatForDisplay(invoice.dueDate)}</p>
             </div>
           </div>
 
@@ -77,7 +79,7 @@ export const InvoiceDetailsModal = ({ invoice, isOpen, onClose }: InvoiceDetails
               </div>
               <div>
                 <p className="text-muted-foreground">Pagado</p>
-                <p className="font-medium">{formatCurrency(invoice.paid_amount || 0)}</p>
+                <p className="font-medium">{formatCurrency(invoice.paidAmount || 0)}</p>
               </div>
               <div>
                 <p className="text-muted-foreground">Pendiente</p>
@@ -99,6 +101,15 @@ export const InvoiceDetailsModal = ({ invoice, isOpen, onClose }: InvoiceDetails
               <p className="text-sm text-muted-foreground">{invoice.notes}</p>
             </div>
           )}
+
+          {/* Footer con información de creación */}
+          <div className="flex justify-between text-sm text-muted-foreground pt-4 border-t">
+            <span>
+              Creado: {formatForDisplayWithTime(invoice.createdAt)}
+              {invoice.creatorName && ` por ${invoice.creatorName}`}
+            </span>
+            <span>Actualizado: {formatForDisplayWithTime(invoice.updatedAt)}</span>
+          </div>
 
           <div className="flex justify-end">
             <Button variant="outline" onClick={onClose}>

@@ -105,7 +105,9 @@ export const formatInvoiceData = (data: any): Invoice => {
     numeroFiscal: safeString(data.numero_fiscal) || null,
     notes: safeString(data.notes) || undefined,
     createdAt: safeString(data.created_at),
-    updatedAt: safeString(data.updated_at)
+    updatedAt: safeString(data.updated_at),
+    createdBy: data.created_by || undefined,
+    creatorName: data.creator?.full_name || data.creator?.email || undefined
   };
 };
 

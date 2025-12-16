@@ -115,6 +115,8 @@ export interface Client {
   createdAt: string;
   updatedAt: string;
   defaultPaymentTermId?: string;
+  createdBy?: string;
+  creatorName?: string;
 }
 
 export interface Crane {
@@ -129,6 +131,8 @@ export interface Crane {
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
+  createdBy?: string;
+  creatorName?: string;
 }
 
 export interface Operator {
@@ -144,6 +148,8 @@ export interface Operator {
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
+  createdBy?: string;
+  creatorName?: string;
 }
 
 export interface ServiceType {
@@ -210,6 +216,8 @@ export interface Invoice {
   notes?: string;
   createdAt: string;
   updatedAt: string;
+  createdBy?: string;
+  creatorName?: string;
 }
 
 export interface PaymentTerm {
@@ -241,6 +249,8 @@ export interface ServiceClosure {
   purchaseOrder?: string;
   createdAt: string;
   updatedAt: string;
+  createdBy?: string;
+  creatorName?: string;
 }
 
 // Updated to match database enums - Added new states for special client workflow (Fase 1)

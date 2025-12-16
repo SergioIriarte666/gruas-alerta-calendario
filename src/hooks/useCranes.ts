@@ -6,12 +6,19 @@ import { toast } from 'sonner';
 const fetchCranes = async (): Promise<Crane[]> => {
   const { data, error } = await supabase
     .from('cranes')
-    .select('*')
+    .select(`
+      *,
+      creator:profiles!cranes_created_by_fkey (
+        id,
+        full_name,
+        email
+      )
+    `)
     .order('license_plate', { ascending: true });
 
   if (error) throw error;
 
-  const formattedCranes: Crane[] = data.map(crane => ({
+  const formattedCranes: Crane[] = data.map((crane: any) => ({
     id: crane.id,
     licensePlate: crane.license_plate,
     brand: crane.brand,
@@ -22,7 +29,9 @@ const fetchCranes = async (): Promise<Crane[]> => {
     technicalReviewExpiry: crane.technical_review_expiry,
     isActive: crane.is_active ?? false,
     createdAt: crane.created_at,
-    updatedAt: crane.updated_at
+    updatedAt: crane.updated_at,
+    createdBy: crane.created_by,
+    creatorName: crane.creator?.full_name || crane.creator?.email || undefined
   }));
 
   return formattedCranes;

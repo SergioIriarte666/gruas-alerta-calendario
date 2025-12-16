@@ -10,6 +10,7 @@ import {
   FileText,
   Clock
 } from 'lucide-react';
+import { formatForDisplayWithTime, formatForDisplay } from '@/utils/timezoneUtils';
 
 interface PaymentDetailsModalProps {
   payment: any | null;
@@ -88,7 +89,7 @@ export const PaymentDetailsModal = ({ payment, isOpen, onClose }: PaymentDetails
                   <Calendar className="w-4 h-4 text-muted-foreground" />
                   <span className="font-medium">Fecha de Vencimiento</span>
                 </div>
-                <p className="text-sm">{payment.due_date}</p>
+                <p className="text-sm">{formatForDisplay(payment.due_date)}</p>
               </div>
             )}
 
@@ -98,7 +99,7 @@ export const PaymentDetailsModal = ({ payment, isOpen, onClose }: PaymentDetails
                   <Clock className="w-4 h-4 text-muted-foreground" />
                   <span className="font-medium">Fecha Programada</span>
                 </div>
-                <p className="text-sm">{payment.scheduled_date}</p>
+                <p className="text-sm">{formatForDisplay(payment.scheduled_date)}</p>
               </div>
             )}
           </div>
@@ -108,6 +109,19 @@ export const PaymentDetailsModal = ({ payment, isOpen, onClose }: PaymentDetails
             <div className="space-y-2">
               <span className="font-medium">Notas</span>
               <p className="text-sm text-muted-foreground">{payment.notes}</p>
+            </div>
+          )}
+
+          {/* Footer con información de creación */}
+          {payment.created_at && (
+            <div className="flex justify-between text-sm text-muted-foreground pt-4 border-t">
+              <span>
+                Creado: {formatForDisplayWithTime(payment.created_at)}
+                {payment.creator_name && ` por ${payment.creator_name}`}
+              </span>
+              {payment.updated_at && (
+                <span>Actualizado: {formatForDisplayWithTime(payment.updated_at)}</span>
+              )}
             </div>
           )}
 

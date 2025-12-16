@@ -21,7 +21,8 @@ import {
   Car
 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { parseFromDatabase } from '@/utils/timezoneUtils';
+import { parseFromDatabase, formatForDisplayWithTime } from '@/utils/timezoneUtils';
+import { getCreatorDisplayName } from '@/types/common';
 
 interface CostDetailsModalProps {
   cost: Cost;
@@ -314,8 +315,11 @@ export const CostDetailsModal = ({ cost, isOpen, onClose }: CostDetailsModalProp
         </Tabs>
 
         <div className="flex justify-between text-sm text-muted-foreground pt-4 mt-4 border-t">
-          <span>Creado: {format(parseFromDatabase(cost.created_at), 'dd/MM/yyyy HH:mm', { locale: es })}</span>
-          <span>Actualizado: {format(parseFromDatabase(cost.updated_at), 'dd/MM/yyyy HH:mm', { locale: es })}</span>
+          <span>
+            Creado: {formatForDisplayWithTime(cost.created_at)}
+            {cost.creator && ` por ${getCreatorDisplayName(cost.creator)}`}
+          </span>
+          <span>Actualizado: {formatForDisplayWithTime(cost.updated_at)}</span>
         </div>
       </DialogContent>
     </Dialog>
