@@ -30,6 +30,11 @@ const fetchCosts = async (): Promise<Cost[]> => {
         maintenance_type,
         provider,
         notes
+      ),
+      creator:profiles!costs_created_by_fkey (
+        id,
+        full_name,
+        email
       )
     `)
     .order('payment_date', { ascending: false, nullsFirst: false })

@@ -18,7 +18,9 @@ export const formatClosureData = (data: any): ServiceClosure => {
       status: data.status as ServiceClosure['status'] || 'open',
       purchaseOrder: data.purchase_order || undefined,
       createdAt: data.created_at,
-      updatedAt: data.updated_at
+      updatedAt: data.updated_at,
+      createdBy: data.created_by || undefined,
+      creatorName: data.creator?.full_name || data.creator?.email || undefined
     };
     
     console.log('Formatted closure:', formatted);

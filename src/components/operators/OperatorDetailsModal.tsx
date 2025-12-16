@@ -1,6 +1,7 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Operator } from '@/types';
 import { 
   User,
   Phone,
@@ -11,9 +12,10 @@ import {
   CheckCircle,
   FileText
 } from 'lucide-react';
+import { formatForDisplayWithTime } from '@/utils/timezoneUtils';
 
 interface OperatorDetailsModalProps {
-  operator: any | null;
+  operator: (Operator & { services?: any[] }) | null;
   isOpen: boolean;
   onClose: () => void;
 }
@@ -34,8 +36,10 @@ export const OperatorDetailsModal = ({ operator, isOpen, onClose }: OperatorDeta
         <div className="space-y-6">
           {/* Estado */}
           <div className="flex items-center gap-2">
-            <Badge variant="default">Asignado</Badge>
-            <CheckCircle className="w-4 h-4 text-green-500" />
+            <Badge variant={operator.isActive ? "default" : "secondary"}>
+              {operator.isActive ? 'Activo' : 'Inactivo'}
+            </Badge>
+            {operator.isActive && <CheckCircle className="w-4 h-4 text-green-500" />}
           </div>
 
           {/* Información de Contacto */}
@@ -50,15 +54,13 @@ export const OperatorDetailsModal = ({ operator, isOpen, onClose }: OperatorDeta
               </div>
             )}
 
-            {operator.email && (
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <Mail className="w-4 h-4 text-muted-foreground" />
-                  <span className="font-medium">Email</span>
-                </div>
-                <p className="text-sm">{operator.email}</p>
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <FileText className="w-4 h-4 text-muted-foreground" />
+                <span className="font-medium">RUT</span>
               </div>
-            )}
+              <p className="text-sm">{operator.rut}</p>
+            </div>
           </div>
 
           {/* Servicios del Día */}
@@ -94,26 +96,35 @@ export const OperatorDetailsModal = ({ operator, isOpen, onClose }: OperatorDeta
           </div>
 
           {/* Información de Licencias */}
-          {operator.license_type && (
+          {operator.licenseNumber && (
             <div className="space-y-2">
               <div className="flex items-center gap-2">
                 <FileText className="w-4 h-4 text-muted-foreground" />
-                <span className="font-medium">Tipo de Licencia</span>
+                <span className="font-medium">Número de Licencia</span>
               </div>
-              <p className="text-sm">{operator.license_type}</p>
+              <p className="text-sm">{operator.licenseNumber}</p>
             </div>
           )}
 
-          {/* Experiencia */}
-          {operator.experience_years && (
+          {/* Vencimiento de Examen */}
+          {operator.examExpiry && (
             <div className="space-y-2">
               <div className="flex items-center gap-2">
-                <Clock className="w-4 h-4 text-muted-foreground" />
-                <span className="font-medium">Experiencia</span>
+                <Calendar className="w-4 h-4 text-muted-foreground" />
+                <span className="font-medium">Vencimiento Examen</span>
               </div>
-              <p className="text-sm">{operator.experience_years} años</p>
+              <p className="text-sm">{operator.examExpiry}</p>
             </div>
           )}
+
+          {/* Footer con información de creación */}
+          <div className="flex justify-between text-sm text-muted-foreground pt-4 border-t">
+            <span>
+              Creado: {formatForDisplayWithTime(operator.createdAt)}
+              {operator.creatorName && ` por ${operator.creatorName}`}
+            </span>
+            <span>Actualizado: {formatForDisplayWithTime(operator.updatedAt)}</span>
+          </div>
 
           <div className="flex justify-end">
             <Button variant="outline" onClick={onClose}>

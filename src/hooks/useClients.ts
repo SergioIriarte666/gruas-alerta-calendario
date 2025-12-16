@@ -8,7 +8,14 @@ import { toast } from 'sonner';
 const fetchClients = async (): Promise<Client[]> => {
   const { data, error } = await supabase
     .from('clients')
-    .select('*')
+    .select(`
+      *,
+      creator:profiles!clients_created_by_fkey (
+        id,
+        full_name,
+        email
+      )
+    `)
     .order('name', { ascending: true });
 
   if (error) throw error;
@@ -25,6 +32,8 @@ const fetchClients = async (): Promise<Client[]> => {
     isActive: client.is_active ?? false,
     createdAt: client.created_at,
     updatedAt: client.updated_at,
+    createdBy: client.created_by,
+    creatorName: client.creator?.full_name || client.creator?.email || undefined,
     // Nuevos campos de facturación diferida
     billingCycleType: client.billing_cycle_type || 'immediate',
     billingDelayDays: client.billing_delay_days || 0,
