@@ -9,21 +9,24 @@ export const useClosureOperations = () => {
     try {
       console.log('Creating closure with data:', closureData);
       
-      // Generate folio by finding the next available number
-      const { data: lastClosure, error: folioError } = await supabase
+      // Generate folio by finding the highest CIE-XXX folio
+      const { data: lastClosure } = await supabase
         .from('service_closures')
         .select('folio')
-        .order('created_at', { ascending: false })
+        .like('folio', 'CIE-%')
+        .order('folio', { ascending: false })
         .limit(1)
-        .single();
+        .maybeSingle();
       
       let nextNumber = 1;
-      if (lastClosure && lastClosure.folio && !folioError) {
+      if (lastClosure?.folio) {
         const match = lastClosure.folio.match(/CIE-(\d+)/);
         if (match) {
           nextNumber = parseInt(match[1]) + 1;
         }
       }
+      
+      console.log('Last CIE closure found:', lastClosure?.folio, '-> Next number:', nextNumber);
       
       const folio = `CIE-${String(nextNumber).padStart(3, '0')}`;
 
