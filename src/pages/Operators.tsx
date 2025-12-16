@@ -2,6 +2,7 @@
 import { useState, useMemo } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { OperatorForm } from '@/components/operators/OperatorForm';
+import { OperatorDetailsModal } from '@/components/operators/OperatorDetailsModal';
 import { useOperatorsData } from '@/hooks/operators/useOperatorsData';
 import { useOperatorMutations } from '@/hooks/operators/useOperatorMutations';
 import { Operator } from '@/types';
@@ -20,6 +21,7 @@ const Operators = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingOperator, setEditingOperator] = useState<Operator | undefined>();
+  const [selectedOperatorForDetails, setSelectedOperatorForDetails] = useState<Operator | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [typeFilter, setTypeFilter] = useState<'all' | 'crane_operator' | 'administrative'>('all');
   const [sortField, setSortField] = useState<OperatorSortField>('name');
@@ -153,11 +155,18 @@ const Operators = () => {
         onEdit={handleEdit}
         onDelete={handleDelete}
         onToggleStatus={handleToggleStatus}
+        onViewDetails={setSelectedOperatorForDetails}
         onNewOperator={handleCreate}
         searchTerm={searchTerm}
         sortField={sortField}
         sortDirection={sortDirection}
         onSort={handleSort}
+      />
+
+      <OperatorDetailsModal
+        operator={selectedOperatorForDetails}
+        isOpen={!!selectedOperatorForDetails}
+        onClose={() => setSelectedOperatorForDetails(null)}
       />
 
       <AppPagination
