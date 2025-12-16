@@ -9,6 +9,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { X, Calculator, CheckCircle } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 import { toast } from 'sonner';
+import { BatchProgressModal, useBatchProgress } from '@/components/ui/batch-progress-modal';
 
 interface PaymentApplicationModalProps {
   payment: PaymentWithDetails;
@@ -24,6 +25,7 @@ export const PaymentApplicationModal: React.FC<PaymentApplicationModalProps> = (
   const { applyPaymentManual } = usePayments();
   const [applications, setApplications] = useState<ManualApplication[]>([]);
   const [loading, setLoading] = useState(false);
+  const batchProgress = useBatchProgress();
 
   // Ordenar facturas por fecha de vencimiento (más antiguas primero)
   const sortedInvoices = [...availableInvoices].sort((a, b) => {
@@ -110,126 +112,145 @@ export const PaymentApplicationModal: React.FC<PaymentApplicationModalProps> = (
     }
 
     setLoading(true);
+    batchProgress.start('Conciliando pago con facturas', applications.length);
+    
     try {
+      // Simular progreso por factura
+      for (let i = 0; i < applications.length; i++) {
+        const app = applications[i];
+        const invoice = sortedInvoices.find(inv => inv.id === app.invoice_id);
+        batchProgress.update(i + 1, invoice?.numero_fiscal || invoice?.folio || `Factura ${i + 1}`);
+        await new Promise(resolve => setTimeout(resolve, 150));
+      }
+      
       await applyPaymentManual(payment.id, applications);
-      toast.success(`Pago aplicado exitosamente a ${applications.length} factura(s)`);
-      onClose();
+      batchProgress.complete();
+      
+      setTimeout(() => {
+        batchProgress.close();
+        toast.success(`Pago aplicado exitosamente a ${applications.length} factura(s)`);
+        onClose();
+      }, 1500);
     } catch (error) {
       console.error('Error applying payment:', error);
-      toast.error('Error al aplicar el pago manualmente');
+      batchProgress.error('Error al aplicar el pago');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-      <Card className="w-full max-w-4xl max-h-[90vh] overflow-auto bg-white">
-        <CardHeader className="flex flex-row items-center justify-between">
-          <div>
-            <CardTitle>Conciliar Pago con Facturas</CardTitle>
-            <p className="text-sm text-gray-600">
-              Cliente: {payment.client?.name} | Monto disponible: {formatCurrency(payment.remaining_amount ?? (payment.amount - (payment.applied_amount ?? 0)))}
-            </p>
-          </div>
-          <Button variant="ghost" size="sm" onClick={onClose}>
-            <X className="h-4 w-4" />
-          </Button>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-            <div className="flex items-center gap-2 mb-3">
-              <Calculator className="h-4 w-4 text-blue-600" />
-              <span className="font-medium text-blue-900">Resumen de Aplicación</span>
+    <>
+      <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+        <Card className="w-full max-w-4xl max-h-[90vh] overflow-auto bg-white">
+          <CardHeader className="flex flex-row items-center justify-between">
+            <div>
+              <CardTitle>Conciliar Pago con Facturas</CardTitle>
+              <p className="text-sm text-gray-600">
+                Cliente: {payment.client?.name} | Monto disponible: {formatCurrency(payment.remaining_amount ?? (payment.amount - (payment.applied_amount ?? 0)))}
+              </p>
             </div>
-            <div className="grid grid-cols-3 gap-4 text-sm">
-              <div>
-                <p className="text-gray-600">Total seleccionado:</p>
-                <p className="font-semibold text-blue-900">{formatCurrency(getTotalSelected())}</p>
+            <Button variant="ghost" size="sm" onClick={onClose}>
+              <X className="h-4 w-4" />
+            </Button>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+              <div className="flex items-center gap-2 mb-3">
+                <Calculator className="h-4 w-4 text-blue-600" />
+                <span className="font-medium text-blue-900">Resumen de Aplicación</span>
               </div>
-              <div>
-                <p className="text-gray-600">Restante del pago:</p>
-                <p className="font-semibold text-blue-900">
-                  {formatCurrency((payment.remaining_amount ?? (payment.amount - (payment.applied_amount ?? 0))) - getTotalSelected())}
-                </p>
+              <div className="grid grid-cols-3 gap-4 text-sm">
+                <div>
+                  <p className="text-gray-600">Total seleccionado:</p>
+                  <p className="font-semibold text-blue-900">{formatCurrency(getTotalSelected())}</p>
+                </div>
+                <div>
+                  <p className="text-gray-600">Restante del pago:</p>
+                  <p className="font-semibold text-blue-900">
+                    {formatCurrency((payment.remaining_amount ?? (payment.amount - (payment.applied_amount ?? 0))) - getTotalSelected())}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-gray-600">Facturas seleccionadas:</p>
+                  <p className="font-semibold text-blue-900">{applications.length}</p>
+                </div>
               </div>
-              <div>
-                <p className="text-gray-600">Facturas seleccionadas:</p>
-                <p className="font-semibold text-blue-900">{applications.length}</p>
-              </div>
+              {getTotalSelected() > 0 && (
+                <div className="mt-3 pt-3 border-t border-blue-200">
+                  <p className="text-xs text-blue-700">
+                    ✓ Las facturas seleccionadas se marcarán como pagadas automáticamente
+                  </p>
+                </div>
+              )}
             </div>
-            {getTotalSelected() > 0 && (
-              <div className="mt-3 pt-3 border-t border-blue-200">
-                <p className="text-xs text-blue-700">
-                  ✓ Las facturas seleccionadas se marcarán como pagadas automáticamente
-                </p>
-              </div>
-            )}
-          </div>
 
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-12">Aplicar</TableHead>
-                <TableHead>Factura</TableHead>
-                <TableHead>Fecha Venc.</TableHead>
-                <TableHead>Total</TableHead>
-                <TableHead>Pendiente</TableHead>
-                <TableHead>Monto a Aplicar</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {sortedInvoices.map(invoice => {
-                const application = applications.find(app => app.invoice_id === invoice.id);
-                const isSelected = !!application;
-                
-                return (
-                  <TableRow key={invoice.id}>
-                    <TableCell>
-                      <Checkbox
-                        checked={isSelected}
-                        onCheckedChange={(checked) => handleInvoiceToggle(invoice.id, checked as boolean)}
-                      />
-                    </TableCell>
-                    <TableCell>{invoice.numero_fiscal || invoice.folio}</TableCell>
-                    <TableCell>{new Date(invoice.due_date).toLocaleDateString()}</TableCell>
-                    <TableCell>{formatCurrency(invoice.total)}</TableCell>
-                    <TableCell>{formatCurrency(invoice.remaining_amount)}</TableCell>
-                    <TableCell>
-                      {isSelected ? (
-                        <Input
-                          type="number"
-                          step="0.01"
-                          value={application.amount}
-                          onChange={(e) => handleAmountChange(invoice.id, parseFloat(e.target.value) || 0)}
-                          max={Math.min(invoice.remaining_amount, payment.remaining_amount)}
-                          className="w-24"
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-12">Aplicar</TableHead>
+                  <TableHead>Factura</TableHead>
+                  <TableHead>Fecha Venc.</TableHead>
+                  <TableHead>Total</TableHead>
+                  <TableHead>Pendiente</TableHead>
+                  <TableHead>Monto a Aplicar</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {sortedInvoices.map(invoice => {
+                  const application = applications.find(app => app.invoice_id === invoice.id);
+                  const isSelected = !!application;
+                  
+                  return (
+                    <TableRow key={invoice.id}>
+                      <TableCell>
+                        <Checkbox
+                          checked={isSelected}
+                          onCheckedChange={(checked) => handleInvoiceToggle(invoice.id, checked as boolean)}
                         />
-                      ) : (
-                        <span className="text-gray-400">-</span>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
+                      </TableCell>
+                      <TableCell>{invoice.numero_fiscal || invoice.folio}</TableCell>
+                      <TableCell>{new Date(invoice.due_date).toLocaleDateString()}</TableCell>
+                      <TableCell>{formatCurrency(invoice.total)}</TableCell>
+                      <TableCell>{formatCurrency(invoice.remaining_amount)}</TableCell>
+                      <TableCell>
+                        {isSelected ? (
+                          <Input
+                            type="number"
+                            step="0.01"
+                            value={application.amount}
+                            onChange={(e) => handleAmountChange(invoice.id, parseFloat(e.target.value) || 0)}
+                            max={Math.min(invoice.remaining_amount, payment.remaining_amount)}
+                            className="w-24"
+                          />
+                        ) : (
+                          <span className="text-gray-400">-</span>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
 
-          <div className="flex justify-end gap-2 pt-4">
-            <Button variant="outline" onClick={onClose}>
-              Cancelar
-            </Button>
-            <Button 
-              onClick={handleApply} 
-              disabled={loading || applications.length === 0}
-              className="bg-green-600 hover:bg-green-700"
-            >
-              <CheckCircle className="h-4 w-4 mr-2" />
-              {loading ? 'Aplicando...' : 'Aplicar Pago'}
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
+            <div className="flex justify-end gap-2 pt-4">
+              <Button variant="outline" onClick={onClose}>
+                Cancelar
+              </Button>
+              <Button 
+                onClick={handleApply} 
+                disabled={loading || applications.length === 0}
+                className="bg-green-600 hover:bg-green-700"
+              >
+                <CheckCircle className="h-4 w-4 mr-2" />
+                {loading ? 'Aplicando...' : 'Aplicar Pago'}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+      
+      <BatchProgressModal state={batchProgress.state} onClose={batchProgress.close} />
+    </>
   );
 };

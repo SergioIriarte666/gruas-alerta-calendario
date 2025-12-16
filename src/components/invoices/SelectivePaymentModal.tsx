@@ -10,6 +10,7 @@ import { PaymentWithDetails } from '@/types/payments';
 import { formatCurrency } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { BatchProgressModal, useBatchProgress } from '@/components/ui/batch-progress-modal';
 
 interface SelectivePaymentModalProps {
   payment: PaymentWithDetails;
@@ -40,6 +41,7 @@ export const SelectivePaymentModal: React.FC<SelectivePaymentModalProps> = ({
   const [loading, setLoading] = useState(false);
   const [isApplying, setIsApplying] = useState(false);
   const [applyOnlyToSpecified, setApplyOnlyToSpecified] = useState(true);
+  const batchProgress = useBatchProgress();
 
   useEffect(() => {
     if (isOpen && payment) {
@@ -90,12 +92,26 @@ export const SelectivePaymentModal: React.FC<SelectivePaymentModalProps> = ({
     }
 
     setIsApplying(true);
+    batchProgress.start('Aplicando pago a facturas', selectedFiscalNumbers.length);
+    
     try {
+      // Simular progreso por factura
+      for (let i = 0; i < selectedFiscalNumbers.length; i++) {
+        batchProgress.update(i + 1, selectedFiscalNumbers[i]);
+        await new Promise(resolve => setTimeout(resolve, 150));
+      }
+      
       await onApply(selectedFiscalNumbers, applyOnlyToSpecified);
-      toast.success('Pago aplicado exitosamente a las facturas seleccionadas');
-      onClose();
+      batchProgress.complete();
+      
+      setTimeout(() => {
+        batchProgress.close();
+        toast.success('Pago aplicado exitosamente a las facturas seleccionadas');
+        onClose();
+      }, 1500);
     } catch (error) {
       console.error('Error applying payment:', error);
+      batchProgress.error('Error al aplicar el pago');
     } finally {
       setIsApplying(false);
     }
@@ -108,173 +124,177 @@ export const SelectivePaymentModal: React.FC<SelectivePaymentModalProps> = ({
   const remainingPaymentAmount = Math.max(0, payment.remaining_amount - totalSelectedAmount);
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <DollarSign className="h-5 w-5 text-blue-500" />
-            Aplicar Pago a Facturas Específicas
-          </DialogTitle>
-          <div className="text-sm text-muted-foreground">
-            Cliente: {payment.client?.name} | Monto disponible: {formatCurrency(payment.remaining_amount)}
+    <>
+      <Dialog open={isOpen} onOpenChange={onClose}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <DollarSign className="h-5 w-5 text-blue-500" />
+              Aplicar Pago a Facturas Específicas
+            </DialogTitle>
+            <div className="text-sm text-muted-foreground">
+              Cliente: {payment.client?.name} | Monto disponible: {formatCurrency(payment.remaining_amount)}
+            </div>
+          </DialogHeader>
+
+          {/* Resumen */}
+          <div className="grid grid-cols-2 gap-4 mb-4">
+            <Card className="bg-blue-50 border-blue-200">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-blue-700">Facturas Seleccionadas</p>
+                    <p className="text-2xl font-bold text-blue-900">{selectedFiscalNumbers.length}</p>
+                  </div>
+                  <Receipt className="h-8 w-8 text-blue-500" />
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card className="bg-green-50 border-green-200">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-green-700">Saldo Restante</p>
+                    <p className="text-2xl font-bold text-green-900">{formatCurrency(remainingPaymentAmount)}</p>
+                  </div>
+                  <DollarSign className="h-8 w-8 text-green-500" />
+                </div>
+              </CardContent>
+            </Card>
           </div>
-        </DialogHeader>
 
-        {/* Resumen */}
-        <div className="grid grid-cols-2 gap-4 mb-4">
-          <Card className="bg-blue-50 border-blue-200">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-blue-700">Facturas Seleccionadas</p>
-                  <p className="text-2xl font-bold text-blue-900">{selectedFiscalNumbers.length}</p>
-                </div>
-                <Receipt className="h-8 w-8 text-blue-500" />
+          {/* Búsqueda */}
+          <div className="relative mb-4">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Buscar por folio o número fiscal..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+
+          {/* Lista de facturas */}
+          <div className="flex-1 overflow-y-auto border rounded-lg">
+            {loading ? (
+              <div className="p-8 text-center text-muted-foreground">
+                Cargando facturas...
               </div>
-            </CardContent>
-          </Card>
-          
-          <Card className="bg-green-50 border-green-200">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-green-700">Saldo Restante</p>
-                  <p className="text-2xl font-bold text-green-900">{formatCurrency(remainingPaymentAmount)}</p>
-                </div>
-                <DollarSign className="h-8 w-8 text-green-500" />
+            ) : filteredInvoices.length === 0 ? (
+              <div className="p-8 text-center text-muted-foreground">
+                No se encontraron facturas disponibles
               </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Búsqueda */}
-        <div className="relative mb-4">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Buscar por folio o número fiscal..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10"
-          />
-        </div>
-
-        {/* Lista de facturas */}
-        <div className="flex-1 overflow-y-auto border rounded-lg">
-          {loading ? (
-            <div className="p-8 text-center text-muted-foreground">
-              Cargando facturas...
-            </div>
-          ) : filteredInvoices.length === 0 ? (
-            <div className="p-8 text-center text-muted-foreground">
-              No se encontraron facturas disponibles
-            </div>
-          ) : (
-            <div className="p-4 space-y-2">
-              {filteredInvoices.map((invoice) => (
-                <div
-                  key={invoice.id}
-                  className={`p-3 border rounded-lg cursor-pointer transition-colors ${
-                    selectedFiscalNumbers.includes(invoice.numero_fiscal)
-                      ? 'bg-blue-50 border-blue-300'
-                      : 'bg-white hover:bg-gray-50'
-                  }`}
-                  onClick={() => handleInvoiceToggle(invoice.numero_fiscal)}
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="font-medium">{invoice.folio}</span>
-                        <Badge variant="outline" className="text-xs">
-                          {invoice.numero_fiscal}
-                        </Badge>
+            ) : (
+              <div className="p-4 space-y-2">
+                {filteredInvoices.map((invoice) => (
+                  <div
+                    key={invoice.id}
+                    className={`p-3 border rounded-lg cursor-pointer transition-colors ${
+                      selectedFiscalNumbers.includes(invoice.numero_fiscal)
+                        ? 'bg-blue-50 border-blue-300'
+                        : 'bg-white hover:bg-gray-50'
+                    }`}
+                    onClick={() => handleInvoiceToggle(invoice.numero_fiscal)}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="font-medium">{invoice.folio}</span>
+                          <Badge variant="outline" className="text-xs">
+                            {invoice.numero_fiscal}
+                          </Badge>
+                        </div>
+                        <div className="text-sm text-muted-foreground">
+                          Total: {formatCurrency(invoice.total)} | 
+                          Pendiente: {formatCurrency(invoice.remaining_amount)}
+                        </div>
                       </div>
-                      <div className="text-sm text-muted-foreground">
-                        Total: {formatCurrency(invoice.total)} | 
-                        Pendiente: {formatCurrency(invoice.remaining_amount)}
+                      <div className="flex items-center gap-2">
+                        {selectedFiscalNumbers.includes(invoice.numero_fiscal) && (
+                          <Badge className="bg-blue-500">Seleccionada</Badge>
+                        )}
                       </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {selectedFiscalNumbers.includes(invoice.numero_fiscal) && (
-                        <Badge className="bg-blue-500">Seleccionada</Badge>
-                      )}
                     </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Opciones de aplicación */}
+          <div className="mt-4 p-4 border rounded-lg bg-amber-50 border-amber-200">
+            <div className="flex items-center space-x-2">
+              <Checkbox 
+                id="apply-only-specified"
+                checked={applyOnlyToSpecified}
+                onCheckedChange={(checked) => setApplyOnlyToSpecified(checked === true)}
+              />
+              <label 
+                htmlFor="apply-only-specified" 
+                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+              >
+                Solo aplicar a facturas especificadas (no continuar con FIFO automático)
+              </label>
+            </div>
+            <p className="text-xs text-amber-700 mt-2">
+              {applyOnlyToSpecified 
+                ? "El pago se aplicará únicamente a las facturas seleccionadas. El saldo restante quedará pendiente."
+                : "Después de aplicar a las facturas seleccionadas, el saldo restante se aplicará automáticamente a otras facturas pendientes (FIFO)."
+              }
+            </p>
+          </div>
+
+          {/* Facturas seleccionadas */}
+          {selectedFiscalNumbers.length > 0 && (
+            <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+              <h4 className="font-medium mb-2">Facturas Seleccionadas:</h4>
+              <div className="flex flex-wrap gap-2">
+                {selectedFiscalNumbers.map((fiscalNumber) => {
+                  const invoice = availableInvoices.find(inv => inv.numero_fiscal === fiscalNumber);
+                  return (
+                    <Badge 
+                      key={fiscalNumber} 
+                      variant="secondary" 
+                      className="flex items-center gap-1"
+                    >
+                      {fiscalNumber}
+                      {invoice && ` (${formatCurrency(invoice.remaining_amount)})`}
+                      <X 
+                        className="h-3 w-3 cursor-pointer" 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleInvoiceToggle(fiscalNumber);
+                        }}
+                      />
+                    </Badge>
+                  );
+                })}
+              </div>
+              <div className="mt-2 text-sm text-muted-foreground">
+                Total a aplicar: {formatCurrency(totalSelectedAmount)} | 
+                Saldo restante: {formatCurrency(remainingPaymentAmount)}
+              </div>
             </div>
           )}
-        </div>
 
-        {/* Opciones de aplicación */}
-        <div className="mt-4 p-4 border rounded-lg bg-amber-50 border-amber-200">
-          <div className="flex items-center space-x-2">
-            <Checkbox 
-              id="apply-only-specified"
-              checked={applyOnlyToSpecified}
-              onCheckedChange={(checked) => setApplyOnlyToSpecified(checked === true)}
-            />
-            <label 
-              htmlFor="apply-only-specified" 
-              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+          {/* Acciones */}
+          <div className="flex justify-end gap-3 pt-4 border-t">
+            <Button variant="outline" onClick={onClose} disabled={isApplying}>
+              Cancelar
+            </Button>
+            <Button 
+              onClick={handleApply} 
+              disabled={selectedFiscalNumbers.length === 0 || isApplying}
+              className="bg-blue-600 hover:bg-blue-700"
             >
-              Solo aplicar a facturas especificadas (no continuar con FIFO automático)
-            </label>
+              {isApplying ? 'Aplicando...' : 'Aplicar Pago'}
+            </Button>
           </div>
-          <p className="text-xs text-amber-700 mt-2">
-            {applyOnlyToSpecified 
-              ? "El pago se aplicará únicamente a las facturas seleccionadas. El saldo restante quedará pendiente."
-              : "Después de aplicar a las facturas seleccionadas, el saldo restante se aplicará automáticamente a otras facturas pendientes (FIFO)."
-            }
-          </p>
-        </div>
-
-        {/* Facturas seleccionadas */}
-        {selectedFiscalNumbers.length > 0 && (
-          <div className="mt-4 p-4 bg-gray-50 rounded-lg">
-            <h4 className="font-medium mb-2">Facturas Seleccionadas:</h4>
-            <div className="flex flex-wrap gap-2">
-              {selectedFiscalNumbers.map((fiscalNumber) => {
-                const invoice = availableInvoices.find(inv => inv.numero_fiscal === fiscalNumber);
-                return (
-                  <Badge 
-                    key={fiscalNumber} 
-                    variant="secondary" 
-                    className="flex items-center gap-1"
-                  >
-                    {fiscalNumber}
-                    {invoice && ` (${formatCurrency(invoice.remaining_amount)})`}
-                    <X 
-                      className="h-3 w-3 cursor-pointer" 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleInvoiceToggle(fiscalNumber);
-                      }}
-                    />
-                  </Badge>
-                );
-              })}
-            </div>
-            <div className="mt-2 text-sm text-muted-foreground">
-              Total a aplicar: {formatCurrency(totalSelectedAmount)} | 
-              Saldo restante: {formatCurrency(remainingPaymentAmount)}
-            </div>
-          </div>
-        )}
-
-        {/* Acciones */}
-        <div className="flex justify-end gap-3 pt-4 border-t">
-          <Button variant="outline" onClick={onClose} disabled={isApplying}>
-            Cancelar
-          </Button>
-          <Button 
-            onClick={handleApply} 
-            disabled={selectedFiscalNumbers.length === 0 || isApplying}
-            className="bg-blue-600 hover:bg-blue-700"
-          >
-            {isApplying ? 'Aplicando...' : 'Aplicar Pago'}
-          </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
+        </DialogContent>
+      </Dialog>
+      
+      <BatchProgressModal state={batchProgress.state} onClose={batchProgress.close} />
+    </>
   );
 };
