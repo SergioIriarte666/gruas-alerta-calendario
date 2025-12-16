@@ -2,7 +2,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Edit, Trash2, UserCheck, UserX, Plus, Users, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
+import { Edit, Trash2, UserCheck, UserX, Plus, Users, ArrowUpDown, ArrowUp, ArrowDown, Eye } from 'lucide-react';
 import { Operator } from '@/types';
 import { formatForDisplay } from '@/utils/timezoneUtils';
 
@@ -15,6 +15,7 @@ interface OperatorsTableProps {
   onEdit: (operator: Operator) => void;
   onDelete: (id: string, name: string) => void;
   onToggleStatus: (id: string, currentStatus: boolean, name: string) => void;
+  onViewDetails: (operator: Operator) => void;
   onNewOperator: () => void;
   searchTerm: string;
   sortField?: OperatorSortField;
@@ -41,6 +42,7 @@ export const OperatorsTable = ({
   onEdit,
   onDelete,
   onToggleStatus,
+  onViewDetails,
   onNewOperator,
   searchTerm,
   sortField,
@@ -198,6 +200,15 @@ export const OperatorsTable = ({
                   </td>
                   <td className="py-3 px-4">
                     <div className="flex items-center justify-center space-x-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => onViewDetails(operator)}
+                        className="text-muted-foreground hover:text-foreground hover:bg-muted border border-border"
+                        title="Ver detalles"
+                      >
+                        <Eye className="w-4 h-4" />
+                      </Button>
                       <Button
                         variant="ghost"
                         size="sm"
