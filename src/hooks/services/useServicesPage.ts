@@ -344,11 +344,22 @@ export const useServicesPage = () => {
 
   // Batch close handler
   const handleBatchCloseServices = async () => {
-    const count = selectedServiceIds.size;
-    if (count === 0) return;
+    const selectedCount = selectedServiceIds.size;
+    if (selectedCount === 0) return;
+
+    // Only pending / in_progress are closeable
+    const selectedData = services.filter(s => selectedServiceIds.has(s.id));
+    const closeable = selectedData.filter(s => s.status === 'pending' || s.status === 'in_progress');
+    const notCloseableCount = selectedCount - closeable.length;
+
+    if (closeable.length === 0) {
+      toast.error('No hay servicios pendientes o en progreso para cerrar');
+      return;
+    }
 
     const confirmed = window.confirm(
-      `¿Estás seguro de que deseas cerrar ${count} servicio${count > 1 ? 's' : ''}? El estado de cada uno cambiará a "Completado".`
+      `¿Estás seguro de que deseas cerrar ${closeable.length} servicio${closeable.length > 1 ? 's' : ''}?` +
+      (notCloseableCount > 0 ? `\n\n(${notCloseableCount} seleccionado${notCloseableCount > 1 ? 's' : ''} no se puede${notCloseableCount > 1 ? 'n' : ''} cerrar por su estado)` : '')
     );
 
     if (!confirmed) return;
@@ -358,22 +369,20 @@ export const useServicesPage = () => {
     let errorCount = 0;
 
     try {
-      const serviceIds = Array.from(selectedServiceIds);
-      
-      for (const serviceId of serviceIds) {
+      for (const service of closeable) {
         try {
           const { data, error } = await supabase.rpc('emergency_close_service', {
-            p_service_id: serviceId
+            p_service_id: service.id
           });
 
           if (error || !(data as any)?.success) {
-            console.error(`Error closing service ${serviceId}:`, error || (data as any)?.error);
+            console.error(`Error closing service ${service.id}:`, error || (data as any)?.error);
             errorCount++;
           } else {
             successCount++;
           }
         } catch (err) {
-          console.error(`Error closing service ${serviceId}:`, err);
+          console.error(`Error closing service ${service.id}:`, err);
           errorCount++;
         }
       }
