@@ -21,6 +21,7 @@ import { useCostCategories } from '@/hooks/useCostCategories';
 import { useCostSubcategories } from '@/hooks/useCostSubcategories';
 import { useCostCenters } from '@/hooks/useCostCenters';
 import { useInventorySuppliers } from '@/hooks/useInventory';
+import { BatchProgressModal, useBatchProgress } from '@/components/ui/batch-progress-modal';
 import { BarChart3, Calendar, Tag, Building2, User, FileText } from 'lucide-react';
 
 interface CostBatchUpdateModalProps {
@@ -38,6 +39,7 @@ export const CostBatchUpdateModal = ({
   const { data: categories = [] } = useCostCategories();
   const { data: costCenters = [] } = useCostCenters();
   const { data: suppliers = [] } = useInventorySuppliers();
+  const batchProgress = useBatchProgress();
 
   // Estados para los toggles de cada campo
   const [enableCategory, setEnableCategory] = useState(false);
@@ -94,12 +96,27 @@ export const CostBatchUpdateModal = ({
       appendNotes,
     };
 
+    batchProgress.start('Actualizando Costos', selectedCosts.length);
+
     try {
+      // Simulate progress for better UX
+      for (let i = 0; i < selectedCosts.length; i++) {
+        batchProgress.update(i + 1, selectedCosts[i].description.substring(0, 30));
+        await new Promise(resolve => setTimeout(resolve, 50)); // Small delay for visual feedback
+      }
+      
       await updateBatch(updateData);
-      onOpenChange(false);
-      resetForm();
+      batchProgress.complete();
+      
+      // Delay close to show completion
+      setTimeout(() => {
+        onOpenChange(false);
+        resetForm();
+        batchProgress.close();
+      }, 1500);
     } catch (error) {
       console.error('Error updating batch:', error);
+      batchProgress.error('Error al actualizar');
     }
   };
 
@@ -443,6 +460,11 @@ export const CostBatchUpdateModal = ({
           </Button>
         </DialogFooter>
       </DialogContent>
+
+      <BatchProgressModal
+        state={batchProgress.state}
+        onClose={batchProgress.close}
+      />
     </Dialog>
   );
 };

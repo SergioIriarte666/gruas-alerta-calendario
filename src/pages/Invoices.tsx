@@ -18,6 +18,7 @@ import { cn } from '@/lib/utils';
 import { AppPagination } from '@/components/shared/AppPagination';
 import InvoiceBatchActions from '@/components/invoices/InvoiceBatchActions';
 import InvoiceExportModal from '@/components/invoices/InvoiceExportModal';
+import { BatchProgressModal, useBatchProgress } from '@/components/ui/batch-progress-modal';
 
 const INVOICE_STATUS_MAP: { [key: string]: string } = {
   all: 'Todas',
@@ -46,6 +47,7 @@ const Invoices = () => {
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const [selectedInvoiceIds, setSelectedInvoiceIds] = useState<string[]>([]);
   const [exportModalOpen, setExportModalOpen] = useState(false);
+  const batchProgress = useBatchProgress();
   const ITEMS_PER_PAGE = 10;
 
   // Check for preselected closure from navigation state
@@ -236,29 +238,61 @@ const Invoices = () => {
   };
 
   const handleBatchMarkAsPaid = async (invoiceIds: string[]) => {
+    batchProgress.start('Marcando como Pagadas', invoiceIds.length);
+    let errorCount = 0;
+    
     try {
-      for (const id of invoiceIds) {
-        await markAsPaid(id);
+      for (let i = 0; i < invoiceIds.length; i++) {
+        const id = invoiceIds[i];
+        const invoice = invoices.find(inv => inv.id === id);
+        batchProgress.update(i + 1, invoice?.folio || id);
+        try {
+          await markAsPaid(id);
+        } catch (err) {
+          errorCount++;
+        }
       }
       setSelectedInvoiceIds([]);
       setTimeout(() => {
         refetch();
       }, 500);
-      toast.success(`${invoiceIds.length} facturas marcadas como pagadas`);
+      
+      if (errorCount === 0) {
+        batchProgress.complete();
+      } else {
+        batchProgress.error(`${errorCount} factura(s) con error`);
+      }
     } catch (error) {
       console.error('Error marking invoices as paid:', error);
+      batchProgress.error('Error al procesar');
     }
   };
 
   const handleBatchDelete = async (invoiceIds: string[]) => {
+    batchProgress.start('Eliminando Facturas', invoiceIds.length);
+    let errorCount = 0;
+    
     try {
-      for (const id of invoiceIds) {
-        await deleteInvoice(id);
+      for (let i = 0; i < invoiceIds.length; i++) {
+        const id = invoiceIds[i];
+        const invoice = invoices.find(inv => inv.id === id);
+        batchProgress.update(i + 1, invoice?.folio || id);
+        try {
+          await deleteInvoice(id);
+        } catch (err) {
+          errorCount++;
+        }
       }
       setSelectedInvoiceIds([]);
-      toast.success(`${invoiceIds.length} facturas eliminadas`);
+      
+      if (errorCount === 0) {
+        batchProgress.complete();
+      } else {
+        batchProgress.error(`${errorCount} factura(s) con error`);
+      }
     } catch (error) {
       console.error('Error deleting invoices:', error);
+      batchProgress.error('Error al eliminar');
     }
   };
 
@@ -440,6 +474,11 @@ const Invoices = () => {
         open={exportModalOpen}
         onOpenChange={setExportModalOpen}
         initialInvoices={filteredInvoices}
+      />
+
+      <BatchProgressModal
+        state={batchProgress.state}
+        onClose={batchProgress.close}
       />
     </div>
   );

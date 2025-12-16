@@ -11,6 +11,7 @@ import { ServiceBatchActionBar } from '@/components/services/ServiceBatchActionB
 import { ServiceBatchUpdateModal } from '@/components/services/ServiceBatchUpdateModal';
 import { AppPagination } from '@/components/shared/AppPagination';
 import { Skeleton } from '@/components/ui/skeleton';
+import { BatchProgressModal, useBatchProgress } from '@/components/ui/batch-progress-modal';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { toast } from 'sonner';
 import { prepareServiceForDuplication } from '@/utils/serviceHelpers';
@@ -22,6 +23,7 @@ const Services = () => {
   const [isBatchUpdateOpen, setIsBatchUpdateOpen] = useState(false);
   const [isBatchDeleting, setIsBatchDeleting] = useState(false);
   const [isBatchDuplicating, setIsBatchDuplicating] = useState(false);
+  const batchProgress = useBatchProgress();
   
   const {
     // State
@@ -113,14 +115,18 @@ const Services = () => {
     if (!confirmed) return;
 
     setIsBatchDeleting(true);
+    batchProgress.start('Eliminando Servicios', count);
     let successCount = 0;
     let errorCount = 0;
 
     try {
-      for (const serviceId of selectedServiceIds) {
+      const serviceIdArray = Array.from(selectedServiceIds);
+      for (let i = 0; i < serviceIdArray.length; i++) {
+        const serviceId = serviceIdArray[i];
         try {
           const service = services.find(s => s.id === serviceId);
           if (service) {
+            batchProgress.update(i + 1, service.folio);
             await handleDelete(service);
             successCount++;
           }
@@ -133,9 +139,9 @@ const Services = () => {
       handleClearSelection();
       
       if (errorCount === 0) {
-        toast.success(`${successCount} servicio${successCount > 1 ? 's' : ''} eliminado${successCount > 1 ? 's' : ''}`);
+        batchProgress.complete();
       } else {
-        toast.warning(`${successCount} eliminado${successCount > 1 ? 's' : ''}, ${errorCount} con error`);
+        batchProgress.error(`${errorCount} servicio(s) con error`);
       }
     } finally {
       setIsBatchDeleting(false);
@@ -154,22 +160,24 @@ const Services = () => {
     if (!confirmed) return;
 
     setIsBatchDuplicating(true);
+    batchProgress.start('Duplicando Servicios', 1);
     let successCount = 0;
 
     try {
-      for (const serviceId of selectedServiceIds) {
+      const serviceIdArray = Array.from(selectedServiceIds);
+      for (let i = 0; i < serviceIdArray.length; i++) {
+        const serviceId = serviceIdArray[i];
         const service = services.find(s => s.id === serviceId);
         if (service) {
-          // Use existing duplicate function for each service
+          batchProgress.update(1, service.folio);
           handleDuplicateService(service);
           successCount++;
-          // Note: This will open the form for each service, which may not be ideal
-          // For now, we'll just duplicate the first one and inform the user
           break;
         }
       }
 
       handleClearSelection();
+      batchProgress.complete();
       
       if (count > 1) {
         toast.info(`Se ha preparado el primer servicio para duplicación. Para duplicar múltiples servicios, repita el proceso.`);
@@ -314,6 +322,12 @@ const Services = () => {
           handleClearSelection();
           handleRefresh();
         }}
+      />
+
+      {/* Batch Progress Modal */}
+      <BatchProgressModal
+        state={batchProgress.state}
+        onClose={batchProgress.close}
       />
     </div>
   );
