@@ -47,6 +47,9 @@ export const useCranes = () => {
 
   const createCraneMutation = useMutation({
     mutationFn: async (craneData: Omit<Crane, 'id' | 'createdAt' | 'updatedAt'>) => {
+      // Get current user for created_by
+      const { data: { user } } = await supabase.auth.getUser();
+      
       const { data, error } = await supabase
         .from('cranes')
         .insert({
@@ -57,7 +60,8 @@ export const useCranes = () => {
           circulation_permit_expiry: craneData.circulationPermitExpiry,
           insurance_expiry: craneData.insuranceExpiry,
           technical_review_expiry: craneData.technicalReviewExpiry,
-          is_active: craneData.isActive
+          is_active: craneData.isActive,
+          created_by: user?.id || null
         })
         .select()
         .single();

@@ -45,6 +45,9 @@ export const useOperatorMutations = () => {
 
   const createOperatorMutation = useMutation({
     mutationFn: async (operatorData: OperatorCreationData) => {
+      // Get current user for created_by
+      const { data: { user } } = await supabase.auth.getUser();
+      
       const { data, error } = await supabase
         .from('operators')
         .insert({
@@ -56,7 +59,8 @@ export const useOperatorMutations = () => {
           position: operatorData.position || null,
           license_number: operatorData.licenseNumber || null,
           exam_expiry: operatorData.examExpiry || null,
-          is_active: operatorData.isActive
+          is_active: operatorData.isActive,
+          created_by: user?.id || null
         })
         .select()
         .single();

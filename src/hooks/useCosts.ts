@@ -64,6 +64,9 @@ const addCost = async (costData: CostFormData) => {
   console.log('[useCosts - addCost] Attempting to create cost with data:', costData);
   
   try {
+    // Get current user for created_by
+    const { data: { user } } = await supabase.auth.getUser();
+    
     // VALIDACIÓN ROBUSTA DE DATOS REQUERIDOS
     if (!costData.category_id) {
       throw new Error('La categoría es requerida');
@@ -103,6 +106,7 @@ const addCost = async (costData: CostFormData) => {
       purchase_quantity: costData.purchase_quantity,
       purchase_unit_cost: costData.purchase_unit_cost,
       immediate_consumption: costData.immediate_consumption || false,
+      created_by: user?.id || null,
     };
     
     console.log('[useCosts - addCost] Validated cost data (only costs fields):', validCostFields);
