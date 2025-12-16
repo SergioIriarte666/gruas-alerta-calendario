@@ -12,6 +12,7 @@ import ClosuresSearch from '@/components/closures/ClosuresSearch';
 import ClosuresTable, { ClosureSortField, SortDirection } from '@/components/closures/ClosuresTable';
 import InvoiceConfirmationDialog from '@/components/closures/InvoiceConfirmationDialog';
 import AutomatedClosureWorkflow from '@/components/closures/automation/AutomatedClosureWorkflow';
+import { ClosureDetailsModal } from '@/components/closures/ClosureDetailsModal';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { parseFromDatabase } from '@/utils/timezoneUtils';
@@ -39,6 +40,7 @@ const Closures = () => {
   const [showAutomation, setShowAutomation] = useState(false);
   const [sortField, setSortField] = useState<ClosureSortField>('dateFrom');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
+  const [selectedClosure, setSelectedClosure] = useState<ServiceClosure | null>(null);
 
   console.log('Closures page render - closures:', closures.length, 'loading:', loading, 'showCreateModal:', showCreateModal);
 
@@ -260,9 +262,17 @@ const Closures = () => {
         onEdit={handleEdit}
         onDelete={handleDelete}
         onClose={handleClose}
+        onViewDetails={setSelectedClosure}
         sortField={sortField}
         sortDirection={sortDirection}
         onSort={handleSort}
+      />
+
+      <ClosureDetailsModal
+        closure={selectedClosure}
+        clientName={selectedClosure ? getClientName(selectedClosure.clientId) : undefined}
+        isOpen={!!selectedClosure}
+        onClose={() => setSelectedClosure(null)}
       />
 
       {closures.length === 0 && !loading && (
