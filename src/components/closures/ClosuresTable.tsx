@@ -1,5 +1,4 @@
-
-import { Edit, Trash2, FileText, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
+import { Edit, Trash2, FileText, ArrowUpDown, ArrowUp, ArrowDown, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -17,6 +16,7 @@ interface ClosuresTableProps {
   onEdit: (closure: ServiceClosure) => void;
   onDelete: (id: string, folio: string) => void;
   onClose: (id: string, folio: string) => void;
+  onViewDetails: (closure: ServiceClosure) => void;
   sortField?: ClosureSortField;
   sortDirection?: SortDirection;
   onSort?: (field: ClosureSortField) => void;
@@ -35,7 +35,7 @@ const SortIcon = ({ field, currentSortField, sortDirection }: {
     <ArrowDown className="ml-2 h-4 w-4 text-primary" />;
 };
 
-const ClosuresTable = ({ closures, clients, onEdit, onDelete, onClose, sortField, sortDirection, onSort }: ClosuresTableProps) => {
+const ClosuresTable = ({ closures, clients, onEdit, onDelete, onClose, onViewDetails, sortField, sortDirection, onSort }: ClosuresTableProps) => {
   const getClientName = (clientId?: string) => {
     if (!clientId) return 'Todos los clientes';
     const client = clients.find(c => c.id === clientId);
@@ -140,7 +140,11 @@ const ClosuresTable = ({ closures, clients, onEdit, onDelete, onClose, sortField
           </TableHeader>
           <TableBody>
             {closures.map((closure) => (
-              <TableRow key={closure.id} className="border-border hover:bg-muted">
+              <TableRow 
+                key={closure.id} 
+                className="border-border hover:bg-muted cursor-pointer"
+                onClick={() => onViewDetails(closure)}
+              >
                 <TableCell className="text-foreground font-medium">
                   {closure.folio}
                 </TableCell>
@@ -159,14 +163,21 @@ const ClosuresTable = ({ closures, clients, onEdit, onDelete, onClose, sortField
                 <TableCell>
                   {getStatusBadge(closure.status)}
                 </TableCell>
-                <TableCell className="text-right">
+                <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                   <div className="flex justify-end space-x-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => onViewDetails(closure)}
+                      title="Ver detalles"
+                    >
+                      <Eye className="w-4 h-4" />
+                    </Button>
                     {closure.status === 'open' && (
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={() => onClose(closure.id, closure.folio)}
-                        className=""
                         title="Cerrar periodo"
                       >
                         <FileText className="w-4 h-4" />
@@ -176,7 +187,6 @@ const ClosuresTable = ({ closures, clients, onEdit, onDelete, onClose, sortField
                       variant="outline"
                       size="sm"
                       onClick={() => onEdit(closure)}
-                      className=""
                       title="Editar cierre"
                     >
                       <Edit className="w-4 h-4" />
