@@ -68,14 +68,20 @@ export const ServiceBatchUpdateModal = ({
     const fields: ServiceBatchUpdateData['fields'] = {};
 
     if (enableStatus) fields.status = status;
-    if (enableCrane) fields.crane_id = craneId || null;
+    // Convert __NONE__ to null for crane
+    if (enableCrane) {
+      fields.crane_id = craneId && craneId !== '__NONE__' ? craneId : null;
+    }
     if (enableObservations) fields.observations = observations || null;
 
     const updateData: ServiceBatchUpdateData = {
       serviceIds: selectedServices.map(s => s.id),
       fields,
       appendObservations,
-      operatorId: enableOperator ? (operatorId || null) : undefined,
+      // Convert __NONE__ to null for operator
+      operatorId: enableOperator 
+        ? (operatorId && operatorId !== '__NONE__' ? operatorId : null) 
+        : undefined,
     };
 
     try {

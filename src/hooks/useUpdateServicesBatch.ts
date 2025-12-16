@@ -11,7 +11,6 @@ export interface ServiceBatchUpdateData {
     observations?: string | null;
   };
   appendObservations?: boolean;
-  // For operator changes, we update service_resources table
   operatorId?: string | null;
 }
 
@@ -22,9 +21,8 @@ export const useUpdateServicesBatch = () => {
     mutationFn: async (data: ServiceBatchUpdateData) => {
       const { serviceIds, fields, appendObservations, operatorId } = data;
 
-      // Update each service
       for (const serviceId of serviceIds) {
-        const updateData: any = {};
+        const updateData: Record<string, unknown> = {};
 
         if (fields.status !== undefined) {
           updateData.status = fields.status;
@@ -36,12 +34,15 @@ export const useUpdateServicesBatch = () => {
 
         if (fields.observations !== undefined) {
           if (appendObservations && fields.observations) {
-            // Fetch existing observations first
-            const { data: existing } = await supabase
+            const { data: existing, error: fetchObsError } = await supabase
               .from('services')
               .select('observations')
               .eq('id', serviceId)
               .single();
+            
+            if (fetchObsError) {
+              console.error('Error fetching observations:', fetchObsError);
+            }
             
             const existingObs = existing?.observations || '';
             updateData.observations = existingObs 
@@ -67,37 +68,57 @@ export const useUpdateServicesBatch = () => {
         // Update operator if specified (update primary operator in service_resources)
         if (operatorId !== undefined) {
           // First, check if there's an existing primary operator
-          const { data: existingResources } = await supabase
+          const { data: existingResources, error: fetchError } = await supabase
             .from('service_resources')
             .select('id')
             .eq('service_id', serviceId)
-            .eq('role', 'primary')
+            .eq('role', 'Principal')
             .limit(1);
 
+          if (fetchError) {
+            console.error('Error fetching service resources:', fetchError);
+            throw new Error(`Error fetching operator data: ${fetchError.message}`);
+          }
+
           if (existingResources && existingResources.length > 0) {
-            // Update existing primary operator
             if (operatorId) {
-              await supabase
+              // Update existing primary operator
+              const { error: updateError } = await supabase
                 .from('service_resources')
                 .update({ operator_id: operatorId })
                 .eq('id', existingResources[0].id);
+              
+              if (updateError) {
+                console.error('Error updating operator:', updateError);
+                throw new Error(`Error updating operator: ${updateError.message}`);
+              }
             } else {
-              // Remove operator assignment
-              await supabase
+              // Remove operator assignment (operatorId is null)
+              const { error: deleteError } = await supabase
                 .from('service_resources')
                 .delete()
                 .eq('id', existingResources[0].id);
+              
+              if (deleteError) {
+                console.error('Error removing operator:', deleteError);
+                throw new Error(`Error removing operator: ${deleteError.message}`);
+              }
             }
           } else if (operatorId) {
             // Create new primary operator assignment
-            await supabase
+            const { error: insertError } = await supabase
               .from('service_resources')
               .insert({
                 service_id: serviceId,
                 operator_id: operatorId,
-                role: 'primary',
+                role: 'Principal',
                 resource_type: 'operator'
               });
+            
+            if (insertError) {
+              console.error('Error assigning operator:', insertError);
+              throw new Error(`Error assigning operator: ${insertError.message}`);
+            }
           }
         }
       }
