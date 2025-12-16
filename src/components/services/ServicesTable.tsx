@@ -46,28 +46,29 @@ export const ServicesTable = ({
   const isAdmin = user?.role === 'admin';
   const { isMobile } = useDeviceType();
 
-  // Get closeable services (pending or in_progress)
-  const closeableServices = services.filter(
-    s => s.status === 'pending' || s.status === 'in_progress'
-  );
-
-  const isServiceCloseable = (service: Service) => 
-    service.status === 'pending' || service.status === 'in_progress';
-
-  const handleSelectAll = (checked: boolean) => {
+  const handleSelectAll = (checked: boolean | 'indeterminate') => {
     if (!onSelectionChange) return;
-    if (checked) {
-      const newSelection = new Set(closeableServices.map(s => s.id));
-      onSelectionChange(newSelection);
+    const isChecked = checked === true;
+
+    const newSelection = new Set(selectedServices);
+
+    if (isChecked) {
+      // Add all currently visible services (keeps selections across pages)
+      services.forEach(s => newSelection.add(s.id));
     } else {
-      onSelectionChange(new Set());
+      // Remove all currently visible services
+      services.forEach(s => newSelection.delete(s.id));
     }
+
+    onSelectionChange(newSelection);
   };
 
-  const handleSelectService = (serviceId: string, checked: boolean) => {
+  const handleSelectService = (serviceId: string, checked: boolean | 'indeterminate') => {
     if (!onSelectionChange) return;
+    const isChecked = checked === true;
+
     const newSelection = new Set(selectedServices);
-    if (checked) {
+    if (isChecked) {
       newSelection.add(serviceId);
     } else {
       newSelection.delete(serviceId);
@@ -75,9 +76,8 @@ export const ServicesTable = ({
     onSelectionChange(newSelection);
   };
 
-  const allCloseableSelected = closeableServices.length > 0 && 
-    closeableServices.every(s => selectedServices.has(s.id));
-  const someSelected = closeableServices.some(s => selectedServices.has(s.id));
+  const allVisibleSelected = services.length > 0 && services.every(s => selectedServices.has(s.id));
+  const someSelected = services.some(s => selectedServices.has(s.id));
 
   // Helper component for sortable table headers
   const SortableHeader = ({ field, children }: { field: 'folio' | 'date' | 'client' | 'vehicle' | 'crane' | 'operator' | 'value' | 'status'; children: React.ReactNode }) => (
@@ -162,10 +162,10 @@ export const ServicesTable = ({
                   {onSelectionChange && (
                     <TableHead className="w-12">
                       <Checkbox
-                        checked={allCloseableSelected}
+                        checked={allVisibleSelected}
                         onCheckedChange={handleSelectAll}
-                        aria-label="Seleccionar todos los servicios cerrables"
-                        className={someSelected && !allCloseableSelected ? 'data-[state=checked]:bg-primary/50' : ''}
+                        aria-label="Seleccionar todos los servicios"
+                        className={someSelected && !allVisibleSelected ? 'data-[state=checked]:bg-primary/50' : ''}
                       />
                     </TableHead>
                   )}
@@ -200,7 +200,6 @@ export const ServicesTable = ({
               <TableBody>
                 {services.map((service) => {
                   const isInvoiced = service.status === 'invoiced';
-                  const canBeSelected = isServiceCloseable(service);
                   const isSelected = selectedServices.has(service.id);
                   
                   return (
@@ -210,19 +209,11 @@ export const ServicesTable = ({
                     >
                       {onSelectionChange && (
                         <TableCell>
-                          {canBeSelected ? (
-                            <Checkbox
-                              checked={isSelected}
-                              onCheckedChange={(checked) => handleSelectService(service.id, !!checked)}
-                              aria-label={`Seleccionar servicio ${service.folio}`}
-                            />
-                          ) : (
-                            <Checkbox
-                              disabled
-                              className="opacity-30"
-                              aria-label="No se puede seleccionar"
-                            />
-                          )}
+                          <Checkbox
+                            checked={isSelected}
+                            onCheckedChange={(checked) => handleSelectService(service.id, checked)}
+                            aria-label={`Seleccionar servicio ${service.folio}`}
+                          />
                         </TableCell>
                       )}
                       <TableCell className="font-medium">
