@@ -1,12 +1,13 @@
-
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Edit, Trash2, DollarSign, FileText, CheckCircle, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
+import { Edit, Trash2, DollarSign, FileText, CheckCircle, ArrowUpDown, ArrowUp, ArrowDown, Eye } from 'lucide-react';
 import { Invoice } from '@/types';
 import { format, isValid, parseISO, differenceInDays } from 'date-fns';
 import { es } from 'date-fns/locale';
 import InvoiceEmergencyActions from './InvoiceEmergencyActions';
+import { InvoiceDetailsModal } from './InvoiceDetailsModal';
 
 
 interface InvoicesTableProps {
@@ -161,6 +162,8 @@ const InvoicesTable = ({
   onInvoiceToggle,
   onSelectAllToggle
 }: InvoicesTableProps) => {
+  const [viewingInvoice, setViewingInvoice] = useState<Invoice | null>(null);
+
   const handleInvoiceDeleted = () => {
     if (onRefresh) {
       onRefresh();
@@ -277,6 +280,14 @@ const InvoicesTable = ({
                           <Button
                             variant="outline"
                             size="sm"
+                            onClick={() => setViewingInvoice(invoice)}
+                            title="Ver detalles"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
                             onClick={() => {
                               if (!invoice.id) {
                                 console.error('Cannot edit invoice: missing ID');
@@ -285,7 +296,6 @@ const InvoicesTable = ({
                               console.log('Editing invoice:', invoice.id, invoice);
                               onEdit(invoice);
                             }}
-                            className=""
                             title="Editar factura"
                             disabled={!invoice.id}
                           >
@@ -342,6 +352,12 @@ const InvoicesTable = ({
           </table>
         </div>
       </CardContent>
+
+      <InvoiceDetailsModal
+        invoice={viewingInvoice}
+        isOpen={!!viewingInvoice}
+        onClose={() => setViewingInvoice(null)}
+      />
     </Card>
   );
 };
