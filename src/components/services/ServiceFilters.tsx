@@ -1,4 +1,5 @@
 
+import { useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -37,6 +38,15 @@ export const ServiceFilters = ({
       applyAdvancedFilters(services, { searchTerm, statusFilter });
     onAdvancedFiltersChange(hasActiveFilters, filterFunction);
   };
+
+  // Re-apply advanced filters when search term or status filter changes
+  useEffect(() => {
+    if (hasActiveFilters) {
+      const filterFunction = (services: Service[]) => 
+        applyAdvancedFilters(services, { searchTerm, statusFilter });
+      onAdvancedFiltersChange(true, filterFunction);
+    }
+  }, [searchTerm, statusFilter]);
 
   const handleClearFilters = () => {
     clearFilters();
