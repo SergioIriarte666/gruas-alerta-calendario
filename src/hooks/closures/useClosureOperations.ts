@@ -9,6 +9,9 @@ export const useClosureOperations = () => {
     try {
       console.log('Creating closure with data:', closureData);
       
+      // Get current user for created_by
+      const { data: { user } } = await supabase.auth.getUser();
+      
       // Generate folio by finding the highest CIE-XXX folio
       const { data: lastClosure } = await supabase
         .from('service_closures')
@@ -39,7 +42,8 @@ export const useClosureOperations = () => {
           client_id: closureData.clientId || null,
           total: closureData.total,
           status: closureData.status,
-          purchase_order: closureData.purchaseOrder || null
+          purchase_order: closureData.purchaseOrder || null,
+          created_by: user?.id || null
         })
         .select()
         .single();

@@ -57,6 +57,9 @@ export const useClients = () => {
 
   const createClientMutation = useMutation({
     mutationFn: async (clientData: (Omit<Client, 'id' | 'createdAt' | 'updatedAt'> & { departments?: string[] })) => {
+      // Get current user for created_by
+      const { data: { user } } = await supabase.auth.getUser();
+      
       const departments = clientData.departments;
       
       if (departments && departments.length > 1) {
@@ -69,7 +72,8 @@ export const useClients = () => {
           address: clientData.address,
           department: department,
           contact_name: clientData.contactName,
-          is_active: clientData.isActive
+          is_active: clientData.isActive,
+          created_by: user?.id || null
         }));
 
         const { data, error } = await supabase
@@ -97,7 +101,8 @@ export const useClients = () => {
             address: clientData.address,
             department: department,
             contact_name: clientData.contactName,
-            is_active: clientData.isActive
+            is_active: clientData.isActive,
+            created_by: user?.id || null
           })
           .select()
           .single();
