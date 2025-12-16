@@ -14,6 +14,7 @@ import { Separator } from '@/components/ui/separator';
 import { X, AlertTriangle, CheckCircle, Clock, Zap } from 'lucide-react';
 import { toast } from 'sonner';
 import { formatCurrency } from '@/lib/utils';
+import { BatchProgressModal, useBatchProgress } from '@/components/ui/batch-progress-modal';
 interface SmartPaymentFormProps {
   onClose: () => void;
   preselectedClientId?: string;
@@ -56,6 +57,7 @@ export const SmartPaymentForm: React.FC<SmartPaymentFormProps> = ({
   const [selectedInvoiceIds, setSelectedInvoiceIds] = useState<string[]>([]);
   const [isAmountAutoCalculated, setIsAmountAutoCalculated] = useState(false);
   const [paymentStatusWarnings, setPaymentStatusWarnings] = useState<Record<string, string>>({});
+  const batchProgress = useBatchProgress();
 
   // Fetch client invoices when client changes
   useEffect(() => {
@@ -217,8 +219,19 @@ export const SmartPaymentForm: React.FC<SmartPaymentFormProps> = ({
       return;
     }
     setLoading(true);
+    
+    // Iniciar progreso si hay facturas seleccionadas
+    if (selectedInvoiceIds.length > 0) {
+      batchProgress.start('Registrando y aplicando pago', selectedInvoiceIds.length + 1);
+    }
+    
     try {
-      // Crear pago
+      // Paso 1: Crear pago
+      if (selectedInvoiceIds.length > 0) {
+        batchProgress.update(1, 'Creando pago...');
+        await new Promise(resolve => setTimeout(resolve, 200));
+      }
+      
       const payment = await createPayment({
         client_id: formData.client_id,
         amount: parseFloat(formData.amount),
@@ -239,19 +252,37 @@ export const SmartPaymentForm: React.FC<SmartPaymentFormProps> = ({
             amount
           };
         });
+        
+        // Mostrar progreso por cada factura
+        for (let i = 0; i < selectedInvoiceIds.length; i++) {
+          const invoice = clientInvoices.find(inv => inv.id === selectedInvoiceIds[i]);
+          batchProgress.update(i + 2, invoice?.numero_fiscal || invoice?.folio || `Factura ${i + 1}`);
+          await new Promise(resolve => setTimeout(resolve, 150));
+        }
+        
         await applyPaymentManual(payment.id, applications);
-        toast.success(`Pago registrado y aplicado a ${selectedInvoiceIds.length} factura(s)`);
+        batchProgress.complete();
+        
+        setTimeout(() => {
+          batchProgress.close();
+          toast.success(`Pago registrado y aplicado a ${selectedInvoiceIds.length} factura(s)`);
+          if (onPaymentCreated) {
+            onPaymentCreated(payment.id, formData.client_id);
+          }
+          onClose();
+        }, 1500);
       } else {
         toast.success('Pago registrado exitosamente');
+        if (onPaymentCreated) {
+          onPaymentCreated(payment.id, formData.client_id);
+        }
+        onClose();
       }
-
-      // Llamar callback si existe para redirigir a Conciliación
-      if (onPaymentCreated) {
-        onPaymentCreated(payment.id, formData.client_id);
-      }
-      onClose();
     } catch (error: any) {
       console.error('Error creating payment:', error);
+      if (selectedInvoiceIds.length > 0) {
+        batchProgress.error('Error al registrar el pago');
+      }
       if (error.message?.includes('duplicado')) {
         toast.error('Pago duplicado detectado. Revise los pagos existentes.');
       } else {
@@ -263,7 +294,8 @@ export const SmartPaymentForm: React.FC<SmartPaymentFormProps> = ({
   };
   const selectedClient = clients.find(c => c.id === formData.client_id);
   const recommendation = getPaymentRecommendation();
-  return <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+  return <>
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
       <Card className="w-full max-w-2xl bg-white max-h-[90vh] overflow-y-auto">
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="flex items-center gap-2">
@@ -449,5 +481,8 @@ export const SmartPaymentForm: React.FC<SmartPaymentFormProps> = ({
           </form>
         </CardContent>
       </Card>
-    </div>;
+    </div>
+    
+    <BatchProgressModal state={batchProgress.state} onClose={batchProgress.close} />
+  </>;
 };
