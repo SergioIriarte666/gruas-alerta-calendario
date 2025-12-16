@@ -4118,7 +4118,6 @@ export type Database = {
       sync_existing_services_to_resources: { Args: never; Returns: undefined }
       sync_existing_supplier_payments_to_costs: { Args: never; Returns: Json }
       sync_maintenance_costs: { Args: never; Returns: string }
-      sync_missing_commissions: { Args: never; Returns: Json }
       sync_paid_invoices_with_payments: { Args: never; Returns: Json }
       sync_specific_income_to_payment: {
         Args: { p_income_id: string }
