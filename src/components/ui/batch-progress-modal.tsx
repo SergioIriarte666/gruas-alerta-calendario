@@ -5,6 +5,7 @@ import {
 import { RetroProgressBar } from './retro-progress-bar';
 import { CheckCircle2, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { playRetroSuccessSound } from '@/lib/sounds';
 
 export interface BatchProgressState {
   isOpen: boolean;
@@ -111,6 +112,7 @@ export const useBatchProgress = () => {
   };
 
   const complete = () => {
+    playRetroSuccessSound();
     setState(prev => ({
       ...prev,
       current: prev.total,
