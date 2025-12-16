@@ -11,7 +11,7 @@ import { CommissionExportButton } from '@/components/commissions/CommissionExpor
 import { CommissionFiltersComponent } from '@/components/commissions/CommissionFilters';
 import { CommissionTable, SortField, SortDirection } from '@/components/commissions/CommissionTable';
 import { EditPaymentDateDialog } from '@/components/commissions/EditPaymentDateDialog';
-import { SyncMissingCommissionsButton } from '@/components/commissions/SyncMissingCommissionsButton';
+
 import { Commission, CommissionFilters } from '@/types/commissions';
 import { Checkbox } from '@/components/ui/checkbox';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
@@ -406,8 +406,6 @@ const Commissions = () => {
           />
           
           <div className="flex items-center gap-2">
-            <SyncMissingCommissionsButton />
-            
             <Button
               variant="outline"
               size="sm"
