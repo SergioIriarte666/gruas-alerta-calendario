@@ -65,42 +65,74 @@ export const useUpdateServicesBatch = () => {
           }
         }
 
-        // Update operator if specified (update primary operator in service_resources)
+        // Update operator if specified
+        // IMPORTANT: The Services page reads the legacy services.operator_id, so we must keep it in sync.
         if (operatorId !== undefined) {
-          // First, check if there's an existing primary operator
-          const { data: existingResources, error: fetchError } = await supabase
+          // 1) Update legacy field for immediate UI consistency
+          const { error: legacyOperatorError } = await supabase
+            .from('services')
+            .update({ operator_id: operatorId || null })
+            .eq('id', serviceId);
+
+          if (legacyOperatorError) {
+            throw new Error(`Error updating service operator: ${legacyOperatorError.message}`);
+          }
+
+          // 2) Sync primary operator in service_resources (unified multi-operator system)
+          const { data: existingPrimaryResources, error: fetchError } = await supabase
             .from('service_resources')
             .select('id')
             .eq('service_id', serviceId)
-            .eq('role', 'Principal')
+            .eq('resource_type', 'operator')
+            .or('is_primary.eq.true,role.eq.Principal')
+            .order('is_primary', { ascending: false })
             .limit(1);
 
           if (fetchError) {
-            console.error('Error fetching service resources:', fetchError);
+            console.error('Error fetching service_resources primary operator:', fetchError);
             throw new Error(`Error fetching operator data: ${fetchError.message}`);
           }
 
-          if (existingResources && existingResources.length > 0) {
+          const existingPrimaryId = existingPrimaryResources?.[0]?.id;
+
+          if (existingPrimaryId) {
             if (operatorId) {
-              // Update existing primary operator
               const { error: updateError } = await supabase
                 .from('service_resources')
-                .update({ operator_id: operatorId })
-                .eq('id', existingResources[0].id);
-              
+                .update({
+                  operator_id: operatorId,
+                  is_primary: true,
+                  role: 'Principal',
+                  updated_at: new Date().toISOString(),
+                })
+                .eq('id', existingPrimaryId);
+
               if (updateError) {
-                console.error('Error updating operator:', updateError);
+                console.error('Error updating primary operator resource:', updateError);
                 throw new Error(`Error updating operator: ${updateError.message}`);
+              }
+
+              // Ensure no other operator resource remains marked as primary
+              const { error: demoteError } = await supabase
+                .from('service_resources')
+                .update({ is_primary: false, updated_at: new Date().toISOString() })
+                .eq('service_id', serviceId)
+                .eq('resource_type', 'operator')
+                .neq('id', existingPrimaryId)
+                .eq('is_primary', true);
+
+              if (demoteError) {
+                console.error('Error demoting other primary operator resources:', demoteError);
               }
             } else {
               // Remove operator assignment (operatorId is null)
               const { error: deleteError } = await supabase
                 .from('service_resources')
                 .delete()
-                .eq('id', existingResources[0].id);
-              
+                .eq('id', existingPrimaryId);
+
               if (deleteError) {
-                console.error('Error removing operator:', deleteError);
+                console.error('Error removing operator resource:', deleteError);
                 throw new Error(`Error removing operator: ${deleteError.message}`);
               }
             }
@@ -112,9 +144,10 @@ export const useUpdateServicesBatch = () => {
                 service_id: serviceId,
                 operator_id: operatorId,
                 role: 'Principal',
-                resource_type: 'operator'
+                resource_type: 'operator',
+                is_primary: true,
               });
-            
+
             if (insertError) {
               console.error('Error assigning operator:', insertError);
               throw new Error(`Error assigning operator: ${insertError.message}`);
