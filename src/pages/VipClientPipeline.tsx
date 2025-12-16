@@ -16,6 +16,7 @@ import { PurchaseOrderManager } from '@/components/vip/PurchaseOrderManager';
 import { PurchaseOrderDialog } from '@/components/vip/PurchaseOrderDialog';
 import { ServiceDetailsModal } from '@/components/services/ServiceDetailsModal';
 import { ServicesDialogs } from '@/components/services/ServicesDialogs';
+import { BatchProgressModal, useBatchProgress } from '@/components/ui/batch-progress-modal';
 
 import { ClientAnalytics } from '@/components/vip/ClientAnalytics';
 import { ExecutiveReports } from '@/components/vip/ExecutiveReports';
@@ -38,6 +39,9 @@ export default function VipClientPipeline() {
   // Estados para edición de servicios
   const [editingService, setEditingService] = React.useState<Service | null>(null);
   const [isFormOpen, setIsFormOpen] = React.useState(false);
+  
+  // Batch progress
+  const batchProgress = useBatchProgress();
 
   const client = clients.find(c => c.id === clientId);
 
@@ -97,17 +101,13 @@ export default function VipClientPipeline() {
     try {
       console.log('🔄 Iniciando actualización por lotes:', updates);
       
-      // Actualizar cada servicio individualmente
-      const updatePromises = updates.services.map(async (serviceUpdate: any) => {
+      // Start progress modal
+      batchProgress.start('REGISTRANDO LOTE', updates.services.length);
+      
+      // Sequential loop instead of Promise.all for progress reporting
+      for (let i = 0; i < updates.services.length; i++) {
+        const serviceUpdate = updates.services[i];
         const updateData: any = {};
-        
-        // 🔍 DEBUG: Logging condiciones de estado
-        console.log('🔍 VipClientPipeline - Verificando condiciones:', {
-          serviceId: serviceUpdate.id,
-          autoUpdateStatus: updates.auto_update_status,
-          targetStatus: serviceUpdate.target_status,
-          shouldUpdateStatus: updates.auto_update_status && serviceUpdate.target_status
-        });
         
         // Agregar campos según lo que se esté actualizando
         if (serviceUpdate.quote_number) {
@@ -120,18 +120,15 @@ export default function VipClientPipeline() {
         // Agregar cambio de estado automático si está habilitado
         if (updates.auto_update_status && serviceUpdate.target_status) {
           updateData.status = serviceUpdate.target_status;
-          console.log('✅ VipClientPipeline - Agregando status al updateData:', updateData.status);
         }
         
-        console.log('📝 VipClientPipeline - Datos finales para updateService:', { 
-          serviceId: serviceUpdate.id, 
-          updateData 
-        });
+        await updateService(serviceUpdate.id, updateData);
         
-        return await updateService(serviceUpdate.id, updateData);
-      });
+        // Update progress
+        batchProgress.update(i + 1, serviceUpdate.folio || `Servicio ${i + 1}`);
+      }
 
-      await Promise.all(updatePromises);
+      batchProgress.complete();
       
       // Mensaje más detallado según lo que se actualizó
       let message = `${updates.services.length} servicios actualizados correctamente`;
@@ -140,9 +137,14 @@ export default function VipClientPipeline() {
         message += ` - Estado cambiado a '${statusName}'`;
       }
       
-      toast.success(message);
-      refetch();
+      // Delay to show completion animation
+      setTimeout(() => {
+        batchProgress.close();
+        toast.success(message);
+        refetch();
+      }, 1500);
     } catch (error) {
+      batchProgress.close();
       console.error('❌ Error en actualización por lotes:', error);
       toast.error('Error al actualizar los servicios');
       throw error;
@@ -326,6 +328,12 @@ export default function VipClientPipeline() {
         selectedService={null}
         isDetailsOpen={false}
         onDetailsClose={() => {}}
+      />
+
+      {/* Batch Progress Modal */}
+      <BatchProgressModal 
+        state={batchProgress.state} 
+        onClose={batchProgress.close} 
       />
     </div>
   );
