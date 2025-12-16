@@ -19,6 +19,7 @@ import { ServiceBatchUpdateData, useUpdateServicesBatch } from '@/hooks/useUpdat
 import { useOperatorsData } from '@/hooks/operators/useOperatorsData';
 import { useCranes } from '@/hooks/useCranes';
 import { Settings2, Truck, User, FileText, Activity } from 'lucide-react';
+import { BatchProgressModal, useBatchProgress } from '@/components/ui/batch-progress-modal';
 
 interface ServiceBatchUpdateModalProps {
   open: boolean;
@@ -43,6 +44,7 @@ export const ServiceBatchUpdateModal = ({
   const { mutateAsync: updateBatch, isPending } = useUpdateServicesBatch();
   const { data: operators = [] } = useOperatorsData();
   const { cranes = [] } = useCranes();
+  const batchProgress = useBatchProgress();
 
   // Toggle states
   const [enableStatus, setEnableStatus] = useState(false);
@@ -74,6 +76,9 @@ export const ServiceBatchUpdateModal = ({
     }
     if (enableObservations) fields.observations = observations || null;
 
+    // Start progress modal
+    batchProgress.start('ACTUALIZANDO SERVICIOS', selectedServices.length);
+
     const updateData: ServiceBatchUpdateData = {
       serviceIds: selectedServices.map(s => s.id),
       fields,
@@ -82,14 +87,24 @@ export const ServiceBatchUpdateModal = ({
       operatorId: enableOperator 
         ? (operatorId && operatorId !== '__NONE__' ? operatorId : null) 
         : undefined,
+      onProgress: ({ current, currentItemId }) => {
+        const service = selectedServices.find(s => s.id === currentItemId);
+        batchProgress.update(current, service?.folio || `Servicio ${current}`);
+      },
     };
 
     try {
       await updateBatch(updateData);
-      onOpenChange(false);
-      resetForm();
-      onSuccess();
+      batchProgress.complete();
+      // Delay closing to show completion
+      setTimeout(() => {
+        batchProgress.close();
+        onOpenChange(false);
+        resetForm();
+        onSuccess();
+      }, 1500);
     } catch (error) {
+      batchProgress.close();
       console.error('Error updating batch:', error);
     }
   };
@@ -310,6 +325,12 @@ export const ServiceBatchUpdateModal = ({
           </Button>
         </DialogFooter>
       </DialogContent>
+
+      {/* Batch Progress Modal */}
+      <BatchProgressModal 
+        state={batchProgress.state} 
+        onClose={batchProgress.close} 
+      />
     </Dialog>
   );
 };
