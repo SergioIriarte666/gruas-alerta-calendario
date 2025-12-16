@@ -4,13 +4,17 @@ interface RetroProgressBarProps {
   value: number;
   className?: string;
   showLabel?: boolean;
+  hasError?: boolean;
 }
 
-export const RetroProgressBar = ({ value, className, showLabel = true }: RetroProgressBarProps) => {
+export const RetroProgressBar = ({ value, className, showLabel = true, hasError = false }: RetroProgressBarProps) => {
   const clampedValue = Math.min(100, Math.max(0, value));
   
-  // Calculate color based on progress (red → orange → yellow → green)
+  // Calculate color based on progress (red → orange → yellow → green) or error state
   const getGradientColor = () => {
+    if (hasError) {
+      return 'from-red-700 via-red-600 to-red-500';
+    }
     if (clampedValue <= 25) {
       return 'from-red-600 via-red-500 to-red-400';
     } else if (clampedValue <= 50) {
@@ -22,6 +26,16 @@ export const RetroProgressBar = ({ value, className, showLabel = true }: RetroPr
     }
   };
 
+  const getBorderColor = () => {
+    if (hasError) return 'border-red-500/70 shadow-[0_0_15px_rgba(255,0,0,0.3)]';
+    return 'border-cyan-500/70 shadow-[0_0_15px_rgba(0,255,255,0.3)]';
+  };
+
+  const getLabelColor = () => {
+    if (hasError) return 'text-red-400';
+    return 'text-cyan-400';
+  };
+
   // Generate segments for retro effect
   const totalSegments = 20;
   const filledSegments = Math.floor((clampedValue / 100) * totalSegments);
@@ -30,14 +44,20 @@ export const RetroProgressBar = ({ value, className, showLabel = true }: RetroPr
     <div className={cn('w-full', className)}>
       {showLabel && (
         <div className="text-center mb-2">
-          <span className="text-xs font-mono tracking-widest text-cyan-400 animate-pulse">
-            PROCESANDO...
+          <span className={cn(
+            'text-xs font-mono tracking-widest animate-pulse',
+            getLabelColor()
+          )}>
+            {hasError ? 'ERROR' : 'PROCESANDO...'}
           </span>
         </div>
       )}
       
       {/* Outer container with retro border */}
-      <div className="relative p-1 bg-gray-950 rounded-sm border-2 border-cyan-500/70 shadow-[0_0_15px_rgba(0,255,255,0.3)]">
+      <div className={cn(
+        "relative p-1 bg-gray-950 rounded-sm border-2",
+        getBorderColor()
+      )}>
         {/* Inner track */}
         <div className="relative h-6 bg-gray-900 rounded-sm overflow-hidden border border-gray-700">
           {/* Segments container */}
@@ -59,8 +79,8 @@ export const RetroProgressBar = ({ value, className, showLabel = true }: RetroPr
             ))}
           </div>
           
-          {/* Shimmer effect */}
-          {clampedValue > 0 && clampedValue < 100 && (
+          {/* Shimmer effect - only when not error */}
+          {!hasError && clampedValue > 0 && clampedValue < 100 && (
             <div 
               className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-[shimmer_1.5s_infinite]"
               style={{ 
@@ -77,7 +97,10 @@ export const RetroProgressBar = ({ value, className, showLabel = true }: RetroPr
       
       {/* Percentage display */}
       <div className="text-center mt-2">
-        <span className="text-lg font-mono font-bold text-white tabular-nums">
+        <span className={cn(
+          "text-lg font-mono font-bold tabular-nums",
+          hasError ? 'text-red-400' : 'text-white'
+        )}>
           {Math.round(clampedValue)}%
         </span>
       </div>

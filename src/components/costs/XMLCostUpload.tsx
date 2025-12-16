@@ -3,9 +3,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { BatchProgressModal, useBatchProgress } from '@/components/ui/batch-progress-modal';
 import { 
   Upload, 
   FileX,
@@ -35,8 +35,8 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
   const [file, setFile] = useState<File | null>(null);
   const [parseResult, setParseResult] = useState<XMLParseResult | null>(null);
   const [isUploading, setIsUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
   const [categoryMappings, setCategoryMappings] = useState<{ [key: string]: string }>({});
+  const batchProgress = useBatchProgress();
   
   const { mutate: addCost } = useAddCost();
   const { data: categories = [] } = useCostCategories();
@@ -110,14 +110,16 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
     if (!parseResult || !parseResult.success) return;
     
     setIsUploading(true);
-    setUploadProgress(0);
+    batchProgress.start('Cargando Gastos desde XML', parseResult.data.length);
     
     let successCount = 0;
+    let errorCount = 0;
     const total = parseResult.data.length;
 
     try {
       for (let i = 0; i < parseResult.data.length; i++) {
         const xmlCost = parseResult.data[i];
+        batchProgress.update(i + 1, xmlCost.descripcion.substring(0, 40));
         
         const categoryId = categoryMappings[`${i}-categoria`] || getDefaultCategoryId(xmlCost.categoria);
         
@@ -137,35 +139,39 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
           service_folio: xmlCost.numeroFactura || null
         };
 
-        await new Promise<void>((resolve, reject) => {
+        await new Promise<void>((resolve) => {
           addCost(costData, {
             onSuccess: () => {
               successCount++;
-              setUploadProgress(((i + 1) / total) * 100);
               resolve();
             },
             onError: (error) => {
               console.error(`Error cargando gasto ${i + 1}:`, error);
-              setUploadProgress(((i + 1) / total) * 100);
-              resolve(); // Continuar con el siguiente aunque falle
+              errorCount++;
+              resolve();
             }
           });
         });
         
-        // Pequeña pausa para no sobrecargar
         await new Promise(resolve => setTimeout(resolve, 100));
       }
       
-      toast.success(`Carga completada: ${successCount} de ${total} gastos cargados correctamente`);
-      onSuccess?.(successCount);
-      onClose();
+      if (errorCount === 0) {
+        batchProgress.complete();
+        setTimeout(() => {
+          onSuccess?.(successCount);
+          onClose();
+          batchProgress.close();
+        }, 1500);
+      } else {
+        batchProgress.error(`${errorCount} de ${total} con error`);
+      }
       
     } catch (error) {
-      toast.error('Error durante la carga masiva');
       console.error('Upload error:', error);
+      batchProgress.error('Error durante la carga');
     } finally {
       setIsUploading(false);
-      setUploadProgress(0);
     }
   };
 
@@ -188,7 +194,6 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
     setFile(null);
     setParseResult(null);
     setCategoryMappings({});
-    setUploadProgress(0);
   };
 
   return (
@@ -267,27 +272,6 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
               )}
             </CardContent>
           </Card>
-
-          {/* Upload Progress */}
-          {isUploading && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Database className="w-5 h-5" />
-                  Cargando Gastos...
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  <div className="flex justify-between text-sm text-gray-600">
-                    <span>Progreso de carga</span>
-                    <span>{Math.round(uploadProgress)}%</span>
-                  </div>
-                  <Progress value={uploadProgress} className="w-full" />
-                </div>
-              </CardContent>
-            </Card>
-          )}
 
           {/* Parse Results */}
           {parseResult && (
@@ -452,6 +436,11 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
           )}
         </div>
       </DialogContent>
+
+      <BatchProgressModal
+        state={batchProgress.state}
+        onClose={batchProgress.close}
+      />
     </Dialog>
   );
 };
