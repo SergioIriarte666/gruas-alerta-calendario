@@ -1,19 +1,16 @@
-
-import { useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Search, Filter, X } from 'lucide-react';
 import { AdvancedServiceFilters } from './AdvancedServiceFilters';
 import { useAdvancedFilters, AdvancedFilters } from '@/hooks/useAdvancedFilters';
-import { Service } from '@/types';
 
 interface ServiceFiltersProps {
   searchTerm: string;
   onSearchChange: (value: string) => void;
   statusFilter: string;
   onStatusChange: (value: string) => void;
-  onAdvancedFiltersChange: (hasFilters: boolean, filterFunction: (services: Service[]) => Service[]) => void;
+  onAdvancedFiltersChange: (filters: AdvancedFilters | null) => void;
 }
 
 export const ServiceFilters = ({ 
@@ -28,30 +25,17 @@ export const ServiceFilters = ({
     setIsOpen,
     filters,
     hasActiveFilters,
-    applyAdvancedFilters,
     clearFilters,
     updateFilters
   } = useAdvancedFilters();
 
   const handleApplyFilters = () => {
-    const filterFunction = (services: Service[]) => 
-      applyAdvancedFilters(services, { searchTerm, statusFilter });
-    onAdvancedFiltersChange(hasActiveFilters, filterFunction);
+    onAdvancedFiltersChange(hasActiveFilters ? filters : null);
   };
-
-  // Re-apply advanced filters when search term or status filter changes
-  useEffect(() => {
-    if (hasActiveFilters) {
-      const filterFunction = (services: Service[]) => 
-        applyAdvancedFilters(services, { searchTerm, statusFilter });
-      onAdvancedFiltersChange(true, filterFunction);
-    }
-  }, [searchTerm, statusFilter]);
 
   const handleClearFilters = () => {
     clearFilters();
-    const filterFunction = (services: Service[]) => services;
-    onAdvancedFiltersChange(false, filterFunction);
+    onAdvancedFiltersChange(null);
   };
 
   return (
