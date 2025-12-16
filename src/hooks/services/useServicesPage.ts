@@ -6,9 +6,10 @@ import { useServiceManager } from './useServiceManager';
 import { useUser } from '@/contexts/UserContext';
 import { Service, ServiceStatus } from '@/types';
 import { toast } from 'sonner';
-import { isFutureDate } from '@/utils/timezoneUtils';
+import { isFutureDate, parseFromDatabase } from '@/utils/timezoneUtils';
 import { supabase } from '@/integrations/supabase/client';
 import { prepareServiceForDuplication } from '@/utils/serviceHelpers';
+import { AdvancedFilters } from '@/hooks/useAdvancedFilters';
 
 export const useServicesPage = () => {
   const { services, loading, deleteService: legacyDeleteService, refetch } = useServices();
@@ -28,8 +29,7 @@ export const useServicesPage = () => {
   const [statusFilter, setStatusFilter] = useState<string>(statusParam || 'all');
   const [currentPage, setCurrentPage] = useState(1);
   const [refreshing, setRefreshing] = useState(false);
-  const [advancedFilterFunction, setAdvancedFilterFunction] = useState<((services: Service[]) => Service[]) | null>(null);
-  const [hasAdvancedFilters, setHasAdvancedFilters] = useState(false);
+  const [advancedFilters, setAdvancedFilters] = useState<AdvancedFilters | null>(null);
   const [prefilledData, setPrefilledData] = useState<any>(null);
   const [fromCalendarEvent, setFromCalendarEvent] = useState(false);
   const [sortField, setSortField] = useState<'folio' | 'date' | 'client' | 'vehicle' | 'crane' | 'operator' | 'value' | 'status' | null>(null);
@@ -70,11 +70,12 @@ export const useServicesPage = () => {
     }
   }, [location.search, navigate]);
 
-  const handleAdvancedFiltersChange = (hasFilters: boolean, filterFunction: (services: Service[]) => Service[]) => {
-    setHasAdvancedFilters(hasFilters);
-    setAdvancedFilterFunction(() => filterFunction);
+  const handleAdvancedFiltersChange = (filters: AdvancedFilters | null) => {
+    setAdvancedFilters(filters);
     setCurrentPage(1);
   };
+
+  const hasAdvancedFilters = advancedFilters !== null;
 
   const filteredAndSortedServices = (() => {
     // Función de normalización para búsqueda flexible
@@ -82,59 +83,91 @@ export const useServicesPage = () => {
       return text.toLowerCase().replace(/[-\s_]/g, '').trim();
     };
 
-    let filtered = [];
+    const normalizedSearchTerm = normalizeSearchTerm(searchTerm);
     
-    if (hasAdvancedFilters && advancedFilterFunction) {
-      filtered = advancedFilterFunction(services);
-    } else {
-      // Normalizar el término de búsqueda una sola vez
-      const normalizedSearchTerm = normalizeSearchTerm(searchTerm);
+    const filtered = services.filter(service => {
+      // 1. Basic search filter
+      const matchesSearch = normalizedSearchTerm === '' || (
+        normalizeSearchTerm(service.folio || '').includes(normalizedSearchTerm) ||
+        normalizeSearchTerm(service.client?.name || '').includes(normalizedSearchTerm) ||
+        normalizeSearchTerm(service.licensePlate || '').includes(normalizedSearchTerm) ||
+        normalizeSearchTerm(service.vehicleBrand || '').includes(normalizedSearchTerm) ||
+        normalizeSearchTerm(service.quoteNumber || '').includes(normalizedSearchTerm) ||
+        normalizeSearchTerm(service.purchaseOrder || '').includes(normalizedSearchTerm) ||
+        normalizeSearchTerm(service.purchaseOrderNumber || '').includes(normalizedSearchTerm) ||
+        normalizeSearchTerm(service.invoiceNumeroFiscal || '').includes(normalizedSearchTerm)
+      );
       
-      filtered = services.filter(service => {
-        const matchesSearch = normalizedSearchTerm === '' || (
-          normalizeSearchTerm(service.folio || '').includes(normalizedSearchTerm) ||
-          normalizeSearchTerm(service.client?.name || '').includes(normalizedSearchTerm) ||
-          normalizeSearchTerm(service.licensePlate || '').includes(normalizedSearchTerm) ||
-          normalizeSearchTerm(service.vehicleBrand || '').includes(normalizedSearchTerm) ||
-          normalizeSearchTerm(service.quoteNumber || '').includes(normalizedSearchTerm) ||
-          normalizeSearchTerm(service.purchaseOrder || '').includes(normalizedSearchTerm) ||
-          normalizeSearchTerm(service.purchaseOrderNumber || '').includes(normalizedSearchTerm)
+      if (!matchesSearch) return false;
+
+      // 2. Status filter
+      let matchesStatus = false;
+      if (statusFilter === 'all') {
+        matchesStatus = true;
+      } else if (statusFilter === 'with_purchase_order') {
+        matchesStatus = !!(
+          (service.purchaseOrderNumber && service.purchaseOrderNumber.trim() !== '') ||
+          (service.purchaseOrder && service.purchaseOrder.trim() !== '')
         );
-        
-        const statusesToFilter = statusFilter === 'all' ? [] : statusFilter.split(',');
-        let matchesStatus = false;
-        
-        if (statusFilter === 'all') {
-          matchesStatus = true;
-        } else if (statusFilter === 'with_purchase_order') {
-          // Filtrar servicios que tienen orden de compra asignada (no vacía)
-          matchesStatus = !!(
-            (service.purchaseOrderNumber && service.purchaseOrderNumber.trim() !== '') ||
-            (service.purchaseOrder && service.purchaseOrder.trim() !== '')
-          );
-        } else {
-          matchesStatus = statusesToFilter.includes(service.status);
+      } else {
+        const statusesToFilter = statusFilter.split(',');
+        matchesStatus = statusesToFilter.includes(service.status);
+      }
+      
+      if (!matchesStatus) return false;
+      
+      // 3. Future filter from URL param
+      const matchesFuture = futureParam !== 'true' || isFutureDate(service.serviceDate);
+      if (!matchesFuture) return false;
+
+      // 4. Advanced filters (only if active)
+      if (advancedFilters) {
+        // Service type filter
+        if (advancedFilters.serviceTypeId && service.serviceType?.id !== advancedFilters.serviceTypeId) {
+          return false;
         }
         
-        // Filtro para servicios futuros si se especifica el parámetro - FIXED: Solo filtrar si explicitly future=true
-        const matchesFuture = futureParam !== 'true' || isFutureDate(service.serviceDate);
-        
-        // Debug: Log filtering for problematic services
-        if (service.folio.includes('4019') || service.folio.includes('4020') || service.folio.includes('4022')) {
-          console.log(`[FILTER DEBUG] Service ${service.folio}:`, {
-            serviceDate: service.serviceDate,
-            matchesSearch,
-            matchesStatus,
-            matchesFuture,
-            futureParam,
-            statusFilter,
-            searchTerm
-          });
+        // License plate filter
+        if (advancedFilters.licensePlate && !normalizeSearchTerm(service.licensePlate || '').includes(normalizeSearchTerm(advancedFilters.licensePlate))) {
+          return false;
         }
         
-        return matchesSearch && matchesStatus && matchesFuture;
-      });
-    }
+        // Quote number filter
+        if (advancedFilters.quoteNumber && !normalizeSearchTerm(service.quoteNumber || '').includes(normalizeSearchTerm(advancedFilters.quoteNumber))) {
+          return false;
+        }
+        
+        // Purchase order filter
+        if (advancedFilters.purchaseOrderNumber && !normalizeSearchTerm(service.purchaseOrderNumber || service.purchaseOrder || '').includes(normalizeSearchTerm(advancedFilters.purchaseOrderNumber))) {
+          return false;
+        }
+        
+        // Numero fiscal filter
+        if (advancedFilters.numeroFiscal && !normalizeSearchTerm(service.invoiceNumeroFiscal || '').includes(normalizeSearchTerm(advancedFilters.numeroFiscal))) {
+          return false;
+        }
+        
+        // Date range filters
+        if (advancedFilters.dateFrom || advancedFilters.dateTo) {
+          const serviceDate = service.serviceDate ? parseFromDatabase(service.serviceDate) : null;
+          if (!serviceDate) return false;
+          
+          if (advancedFilters.dateFrom) {
+            const fromDate = new Date(advancedFilters.dateFrom);
+            fromDate.setHours(0, 0, 0, 0);
+            if (serviceDate < fromDate) return false;
+          }
+          
+          if (advancedFilters.dateTo) {
+            const toDate = new Date(advancedFilters.dateTo);
+            toDate.setHours(23, 59, 59, 999);
+            if (serviceDate > toDate) return false;
+          }
+        }
+      }
+      
+      return true;
+    });
 
     // Apply sorting if active
     if (sortField) {
@@ -435,8 +468,8 @@ export const useServicesPage = () => {
     // Resetear filtros para mostrar todos los servicios
     setSearchTerm('');
     setStatusFilter('all');
-    setHasAdvancedFilters(false);
-    setAdvancedFilterFunction(null);
+    setAdvancedFilters(null);
+    setSortField(null);
     setSortField(null);
     setSortDirection('asc');
     setCurrentPage(1);
