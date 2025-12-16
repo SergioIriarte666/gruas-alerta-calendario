@@ -3,6 +3,13 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { ServiceStatus } from '@/types';
 
+export interface BatchProgressCallback {
+  current: number;
+  total: number;
+  percentage: number;
+  currentItemId?: string;
+}
+
 export interface ServiceBatchUpdateData {
   serviceIds: string[];
   fields: {
@@ -12,6 +19,7 @@ export interface ServiceBatchUpdateData {
   };
   appendObservations?: boolean;
   operatorId?: string | null;
+  onProgress?: (progress: BatchProgressCallback) => void;
 }
 
 export const useUpdateServicesBatch = () => {
@@ -19,9 +27,11 @@ export const useUpdateServicesBatch = () => {
 
   return useMutation({
     mutationFn: async (data: ServiceBatchUpdateData) => {
-      const { serviceIds, fields, appendObservations, operatorId } = data;
+      const { serviceIds, fields, appendObservations, operatorId, onProgress } = data;
+      const total = serviceIds.length;
 
-      for (const serviceId of serviceIds) {
+      for (let index = 0; index < serviceIds.length; index++) {
+        const serviceId = serviceIds[index];
         const updateData: Record<string, unknown> = {};
 
         if (fields.status !== undefined) {
@@ -154,6 +164,14 @@ export const useUpdateServicesBatch = () => {
             }
           }
         }
+
+        // Report progress after each service
+        onProgress?.({
+          current: index + 1,
+          total,
+          percentage: ((index + 1) / total) * 100,
+          currentItemId: serviceId,
+        });
       }
 
       return { success: true, count: serviceIds.length };
