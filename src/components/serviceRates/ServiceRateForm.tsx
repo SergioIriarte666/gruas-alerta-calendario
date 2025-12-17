@@ -36,7 +36,7 @@ import { Loader2 } from 'lucide-react';
 const formSchema = z.object({
   client_id: z.string().min(1, 'Seleccione un cliente'),
   service_type_id: z.string().optional(),
-  origin: z.string().min(1, 'Ingrese el origen'),
+  origin: z.string().optional(),
   destination: z.string().optional(),
   value: z.coerce.number().min(0, 'El valor debe ser mayor o igual a 0'),
   is_active: z.boolean(),
@@ -101,7 +101,7 @@ export const ServiceRateForm: React.FC<ServiceRateFormProps> = ({
     await onSubmit({
       client_id: values.client_id,
       service_type_id: values.service_type_id || null,
-      origin: values.origin,
+      origin: values.origin?.trim() || null,
       destination: values.destination || null,
       value: values.value,
       is_active: values.is_active,
@@ -188,7 +188,7 @@ export const ServiceRateForm: React.FC<ServiceRateFormProps> = ({
                 name="origin"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Origen *</FormLabel>
+                    <FormLabel>Origen (opcional)</FormLabel>
                     <FormControl>
                       <Input placeholder="Ej: Santiago Centro" {...field} />
                     </FormControl>

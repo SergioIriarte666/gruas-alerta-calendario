@@ -27,7 +27,7 @@ export interface ServiceRateWithRelations extends ServiceRate {
 export interface ServiceRateFormData {
   client_id: string;
   service_type_id?: string | null;
-  origin: string;
+  origin?: string | null;
   destination?: string | null;
   value: number;
   is_active: boolean;
