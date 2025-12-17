@@ -20,7 +20,7 @@ export const useServiceRateLookup = () => {
 
     setIsLookingUp(true);
     try {
-      // First try to find an exact match with service type
+      // 1. First try exact match: client + origin + service type
       if (serviceTypeId) {
         const { data: exactMatch, error: exactError } = await supabase
           .from('service_rates')
@@ -37,8 +37,8 @@ export const useServiceRateLookup = () => {
         }
       }
 
-      // If no exact match with service type, try without service type
-      const { data: clientMatch, error: clientError } = await supabase
+      // 2. Try generic rate: client + origin + NO service type (null)
+      const { data: genericMatch, error: genericError } = await supabase
         .from('service_rates')
         .select('*')
         .eq('client_id', clientId)
@@ -47,9 +47,24 @@ export const useServiceRateLookup = () => {
         .eq('is_active', true)
         .maybeSingle();
 
-      if (!clientError && clientMatch) {
-        setMatchedRate(clientMatch);
-        return clientMatch;
+      if (!genericError && genericMatch) {
+        setMatchedRate(genericMatch);
+        return genericMatch;
+      }
+
+      // 3. Fallback: any rate matching client + origin (ignore service type)
+      const { data: anyMatch, error: anyError } = await supabase
+        .from('service_rates')
+        .select('*')
+        .eq('client_id', clientId)
+        .ilike('origin', origin.trim())
+        .eq('is_active', true)
+        .limit(1)
+        .single();
+
+      if (!anyError && anyMatch) {
+        setMatchedRate(anyMatch);
+        return anyMatch;
       }
 
       // No match found
