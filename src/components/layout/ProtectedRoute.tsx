@@ -1,18 +1,22 @@
-
 import * as React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUser } from '@/contexts/UserContext';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
+import { useUserModulePermissions } from '@/hooks/useUserModulePermissions';
+import { getModuleByRoute } from '@/constants/modules';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
   allowedRoles?: string[];
   requireRole?: string;
+  moduleKey?: string;
 }
 
-const ProtectedRoute = ({ children, allowedRoles, requireRole }: ProtectedRouteProps) => {
+const ProtectedRoute = ({ children, allowedRoles, requireRole, moduleKey }: ProtectedRouteProps) => {
   const { user: authUser, loading: authLoading } = useAuth();
   const { user: profileUser, loading: profileLoading, forceRefreshProfile } = useUser();
+  const { hasModuleAccess, loadingCurrentUser } = useUserModulePermissions();
+  const location = useLocation();
   const [waitTime, setWaitTime] = React.useState(0);
   const [hasTriedRefresh, setHasTriedRefresh] = React.useState(false);
 
@@ -144,6 +148,19 @@ const ProtectedRoute = ({ children, allowedRoles, requireRole }: ProtectedRouteP
       default:
         console.error('ProtectedRoute - Unknown role, redirecting to auth');
         return <Navigate to="/auth" replace />;
+    }
+  }
+
+  // Module permission check (after role check passes)
+  const effectiveModuleKey = moduleKey || getModuleByRoute(location.pathname)?.key;
+  
+  if (effectiveModuleKey && !loadingCurrentUser) {
+    const hasAccess = hasModuleAccess(effectiveModuleKey);
+    console.log('ProtectedRoute - Module access check:', effectiveModuleKey, hasAccess);
+    
+    if (!hasAccess) {
+      console.warn(`ProtectedRoute - Module access denied for '${effectiveModuleKey}', redirecting to dashboard`);
+      return <Navigate to="/dashboard" replace />;
     }
   }
 
