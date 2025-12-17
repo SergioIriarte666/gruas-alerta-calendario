@@ -2681,7 +2681,7 @@ export type Database = {
           id: string
           is_active: boolean
           notes: string | null
-          origin: string
+          origin: string | null
           service_type_id: string | null
           updated_at: string
           value: number
@@ -2694,7 +2694,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           notes?: string | null
-          origin: string
+          origin?: string | null
           service_type_id?: string | null
           updated_at?: string
           value?: number
@@ -2707,7 +2707,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           notes?: string | null
-          origin?: string
+          origin?: string | null
           service_type_id?: string | null
           updated_at?: string
           value?: number
