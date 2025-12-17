@@ -1,10 +1,10 @@
-
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useUser } from '@/contexts/UserContext';
 import { useSettings } from '@/hooks/useSettings';
 import { useDeviceType } from '@/hooks/useDeviceType';
+import { useUserModulePermissions } from '@/hooks/useUserModulePermissions';
 import { cn } from '@/lib/utils';
 import { 
   LayoutDashboard, Calendar, Truck, Users, Building2, DollarSign, Target, 
@@ -34,9 +34,8 @@ export const Sidebar = ({
     settings
   } = useSettings();
   const { isTablet } = useDeviceType();
+  const { hasModuleAccess } = useUserModulePermissions();
   const location = useLocation();
-  console.log('🔍 SIDEBAR RENDER - User:', user?.name, 'Role:', user?.role);
-  console.log('🔍 SIDEBAR COMPONENT LOADED AND RENDERING');
   const companyName = settings?.company?.name || 'TMS Grúas';
   const companyLogo = settings?.company?.logo;
   
@@ -49,6 +48,33 @@ export const Sidebar = ({
         ? prev.filter(g => g !== groupName)
         : [...prev, groupName]
     );
+  };
+
+  // Mapeo de rutas a module keys para verificación de permisos
+  const routeToModuleKey: Record<string, string> = {
+    '/dashboard': 'dashboard',
+    '/daily-report': 'reports',
+    '/services': 'services',
+    '/clients': 'clients',
+    '/calendar': 'calendar',
+    '/cranes': 'cranes',
+    '/operators': 'operators',
+    '/vehicles': 'cranes',
+    '/inventory': 'inventory',
+    '/suppliers': 'suppliers',
+    '/incomes': 'incomes',
+    '/costs': 'costs',
+    '/commissions': 'commissions',
+    '/closures': 'closures',
+    '/invoices': 'invoices',
+    '/income-projections': 'incomes',
+    '/reports': 'reports',
+    '/service-types': 'settings',
+    '/service-rates': 'service-rates',
+    '/cost-centers': 'costs',
+    '/quick-entries': 'settings',
+    '/settings': 'settings',
+    '/payments': 'payments',
   };
 
   // Navegación organizada en dos niveles con colores
@@ -134,11 +160,21 @@ export const Sidebar = ({
     }
   ];
 
-  // Filtrar items según permisos
+  // Filtrar items según permisos de rol Y permisos de módulo
   const filterItems = (items: typeof navigationGroups[0]['items']) => {
     return items.filter(item => {
-      if (!item.adminOnly) return true;
-      return user && user.role === 'admin';
+      // Primero verificar permisos de rol (adminOnly)
+      if (item.adminOnly && (!user || user.role !== 'admin')) {
+        return false;
+      }
+      
+      // Luego verificar permisos de módulo
+      const moduleKey = routeToModuleKey[item.href];
+      if (moduleKey && !hasModuleAccess(moduleKey)) {
+        return false;
+      }
+      
+      return true;
     });
   };
   

@@ -7,9 +7,10 @@ import { Switch } from '@/components/ui/switch';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { Loader2, UserPlus, RefreshCw, Settings, Trash2 } from 'lucide-react';
+import { Loader2, UserPlus, RefreshCw, Settings, Trash2, Shield } from 'lucide-react';
 import { useUserManagement } from '@/hooks/useUserManagement';
 import { CreateUserDialog } from './CreateUserDialog';
+import UserPermissionsModal from './UserPermissionsModal';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
@@ -34,6 +35,7 @@ export const UserManagementTab = () => {
   const [isClientAssignOpen, setIsClientAssignOpen] = useState(false);
   const [isCreateUserOpen, setIsCreateUserOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState<any>(null);
+  const [userForPermissions, setUserForPermissions] = useState<any>(null);
 
   const getRoleBadgeColor = (role: string) => {
     switch (role) {
@@ -304,6 +306,16 @@ export const UserManagementTab = () => {
                         <Button
                           variant="ghost"
                           size="icon"
+                          className="text-violet-600 hover:text-violet-700 hover:bg-violet-50"
+                          onClick={() => setUserForPermissions(user)}
+                          disabled={updating === user.id}
+                          title="Configurar permisos de módulos"
+                        >
+                          <Shield className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
                           className="text-red-600 hover:text-red-700 hover:bg-red-50"
                           onClick={() => setUserToDelete(user)}
                           disabled={updating === user.id}
@@ -399,6 +411,12 @@ export const UserManagementTab = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <UserPermissionsModal
+        open={!!userForPermissions}
+        onOpenChange={(open) => !open && setUserForPermissions(null)}
+        user={userForPermissions}
+      />
     </div>
   );
 };
