@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { playRetroSuccessSound, playRetroErrorSound } from '@/lib/sounds';
 import { Service } from '@/types';
 import { FolioSection } from './form/FolioSection';
 import { DateSection } from './form/DateSection';
@@ -412,6 +413,7 @@ export const EnhancedServiceForm = ({
           console.log('✅ Folio generated successfully:', finalFolio);
         } catch (error) {
           console.error('❌ Error generating folio:', error);
+          playRetroErrorSound();
           toast.error('Error al generar el folio. Por favor, intenta nuevamente.');
           return;
         }
@@ -419,12 +421,14 @@ export const EnhancedServiceForm = ({
       
       // Validación básica
       if (!finalFolio || finalFolio.trim() === '') {
+        playRetroErrorSound();
         toast.error('Error: El folio no puede estar vacío');
         return;
       }
 
       // Validación según tipo de servicio
       if (hasErrors) {
+        playRetroErrorSound();
         toast.error('Por favor complete todos los campos requeridos para este tipo de servicio');
         return;
       }
@@ -497,6 +501,7 @@ export const EnhancedServiceForm = ({
 
       // Notificar éxito
       const action = service ? 'actualizado' : 'creado';
+      playRetroSuccessSound();
       toast.success(`Servicio ${action} exitosamente: ${result.folio}`);
       
       console.log('📞 Calling onSubmit callback...');
@@ -541,6 +546,7 @@ export const EnhancedServiceForm = ({
         }
       }
       
+      playRetroErrorSound();
       toast.error(`Error al ${service ? 'actualizar' : 'crear'} el servicio: ${errorMessage}`);
     }
   };
