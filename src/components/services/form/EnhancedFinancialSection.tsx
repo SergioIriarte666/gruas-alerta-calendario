@@ -3,8 +3,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { DollarSign, TrendingUp, AlertCircle, Shield, Calculator } from 'lucide-react';
+import { DollarSign, TrendingUp, AlertCircle, Shield, Calculator, Sparkles } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
 import { getServiceValueBreakdown, getCompleteServiceValue } from '@/utils/serviceValueCalculations';
 
 interface EnhancedFinancialSectionProps {
@@ -21,6 +22,10 @@ interface EnhancedFinancialSectionProps {
   disabled?: boolean;
   isCustodyService?: boolean;
   custodyTotalAmount?: number;
+  // Rate lookup props
+  matchedRateOrigin?: string | null;
+  valueFromRate?: boolean;
+  onClearRate?: () => void;
 }
 
 export const EnhancedFinancialSection = ({
@@ -36,7 +41,10 @@ export const EnhancedFinancialSection = ({
   onExcessAmountChange,
   disabled = false,
   isCustodyService = false,
-  custodyTotalAmount = 0
+  custodyTotalAmount = 0,
+  matchedRateOrigin,
+  valueFromRate = false,
+  onClearRate
 }: EnhancedFinancialSectionProps) => {
   // Get service value breakdown for display
   const serviceBreakdown = getServiceValueBreakdown({
@@ -127,23 +135,41 @@ export const EnhancedFinancialSection = ({
         ) : (
           /* Valor único del servicio - mostrar input normal */
           <div className="space-y-2">
-            <Label htmlFor="value" className="text-base font-semibold">
-              Valor del Servicio (CLP) 
-              {!isCustodyService && <span className="text-red-500"> *</span>}
-              {isCustodyService && (
-                <span className="text-muted-foreground text-sm"> (Opcional para custodia)</span>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="value" className="text-base font-semibold">
+                Valor del Servicio (CLP) 
+                {!isCustodyService && <span className="text-red-500"> *</span>}
+                {isCustodyService && (
+                  <span className="text-muted-foreground text-sm"> (Opcional para custodia)</span>
+                )}
+              </Label>
+              {valueFromRate && matchedRateOrigin && (
+                <Badge variant="secondary" className="bg-violet-100 text-violet-700 border-violet-300 flex items-center gap-1">
+                  <Sparkles className="h-3 w-3" />
+                  Tarifa: {matchedRateOrigin}
+                </Badge>
               )}
-            </Label>
+            </div>
             <Input
               id="value"
               type="number"
               value={value}
-              onChange={(e) => onValueChange(Number(e.target.value))}
+              onChange={(e) => {
+                onValueChange(Number(e.target.value));
+                // Si el usuario cambia manualmente el valor, limpiar indicador de tarifa
+                if (onClearRate) onClearRate();
+              }}
               placeholder={isCustodyService ? "0 (opcional)" : "150000"}
               required={!isCustodyService}
               disabled={disabled}
-              className="!text-2xl !font-bold h-14"
+              className={`!text-2xl !font-bold h-14 ${valueFromRate ? 'border-violet-400 bg-violet-50/50' : ''}`}
             />
+            {valueFromRate && (
+              <p className="text-xs text-violet-600 flex items-center gap-1">
+                <Sparkles className="h-3 w-3" />
+                Valor aplicado automáticamente desde tarifa predefinida
+              </p>
+            )}
             {isCustodyService && custodyTotalAmount > 0 && (
               <div className="flex items-center gap-2 p-2 bg-blue-50 rounded-md">
                 <Shield className="h-4 w-4 text-blue-600" />

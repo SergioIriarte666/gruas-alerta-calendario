@@ -43,6 +43,7 @@ import VipClientPipeline from '@/pages/VipClientPipeline';
 import NotFound from '@/pages/NotFound';
 import DailyReport from '@/pages/DailyReport';
 import Incomes from '@/pages/Incomes';
+import ServiceRates from '@/pages/ServiceRates';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -126,6 +127,14 @@ function AppContent() {
           </ProtectedRoute>
         }>
           <Route index element={<ServiceTypes />} />
+        </Route>
+
+        <Route path="/service-rates" element={
+          <ProtectedRoute requireRole="admin">
+            <Layout />
+          </ProtectedRoute>
+        }>
+          <Route index element={<ServiceRates />} />
         </Route>
 
         <Route path="/vehicles" element={

@@ -24,6 +24,7 @@ import { useServiceTypes } from '@/hooks/useServiceTypes';
 import { useServiceDetailsForForm } from '@/hooks/useServiceDetailsGlobal';
 import { useEnhancedFolioGeneration } from '@/hooks/services/useEnhancedFolioGeneration';
 import { useServiceFormValidation } from '@/hooks/services/useServiceFormValidation';
+import { useServiceRateLookup } from '@/hooks/useServiceRateLookup';
 import { useUser } from '@/contexts/UserContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -60,6 +61,7 @@ export const EnhancedServiceForm = ({
   const { createService, updateService, isCreating, isUpdating } = useServiceManager();
   const { processInventoryDeduction } = useInventoryDeduction();
   const { generateUniqueValidFolio } = useEnhancedFolioGeneration();
+  const { matchedRate, lookupRate, clearMatchedRate } = useServiceRateLookup();
   
   // Cargar datos completos del servicio para edición
   const { enhancedService, isLoading: loadingEnhancedService } = useServiceDetailsForForm(service?.id || null);
@@ -67,6 +69,7 @@ export const EnhancedServiceForm = ({
   const [folio, setFolio] = useState(service?.folio || '');
   const [isManualFolio, setIsManualFolio] = useState(false);
   const [enableCustody, setEnableCustody] = useState(false);
+  const [valueFromRate, setValueFromRate] = useState(false);
   
   // Detectar si está duplicando
   const isDuplicating = prefilledData?._isDuplicating;
@@ -176,6 +179,37 @@ export const EnhancedServiceForm = ({
       }
     }
   }, [serviceTypes, service]);
+
+  // Rate lookup: buscar tarifa predefinida cuando cambia cliente, origen o tipo de servicio
+  useEffect(() => {
+    // Solo buscar tarifas para nuevos servicios o duplicados (no al editar)
+    if (service?.id && !isDuplicating) return;
+    
+    const performLookup = async () => {
+      if (formData.client && formData.origin && formData.origin.trim() !== '') {
+        const rate = await lookupRate({
+          clientId: formData.client,
+          origin: formData.origin,
+          serviceTypeId: formData.serviceType || null,
+        });
+        
+        if (rate && !valueFromRate) {
+          // Aplicar automáticamente el valor de la tarifa encontrada
+          setFormData(prev => ({ ...prev, value: Number(rate.value) }));
+          setValueFromRate(true);
+          toast.info(`Tarifa aplicada: ${Number(rate.value).toLocaleString('es-CL')} CLP`, {
+            description: `Tarifa predefinida para ${rate.origin}`,
+            duration: 3000,
+          });
+        }
+      } else {
+        clearMatchedRate();
+        setValueFromRate(false);
+      }
+    };
+    
+    performLookup();
+  }, [formData.client, formData.origin, formData.serviceType, service?.id, isDuplicating]);
 
   // FOLIO LAZY GENERATION: No generar automáticamente, solo al guardar
 
@@ -761,7 +795,10 @@ export const EnhancedServiceForm = ({
         {/* Financiero */}
         <EnhancedFinancialSection
           value={formData.value}
-          onValueChange={(value) => setFormData(prev => ({ ...prev, value }))}
+          onValueChange={(value) => {
+            setFormData(prev => ({ ...prev, value }));
+            setValueFromRate(false);
+          }}
           totalCommissions={getTotalCommissions()}
           totalCosts={getTotalCosts()}
           hasExcess={formData.hasExcess}
@@ -773,6 +810,9 @@ export const EnhancedServiceForm = ({
           disabled={false}
           isCustodyService={isCustodyService(formData)}
           custodyTotalAmount={formData.custodyTotalAmount || 0}
+          matchedRateOrigin={matchedRate?.origin}
+          valueFromRate={valueFromRate}
+          onClearRate={() => setValueFromRate(false)}
         />
 
         {/* Toggle para habilitar Custodia/Arriendo */}
