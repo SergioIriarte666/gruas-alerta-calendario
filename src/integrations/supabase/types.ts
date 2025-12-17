@@ -2672,6 +2672,70 @@ export type Database = {
           },
         ]
       }
+      service_rates: {
+        Row: {
+          client_id: string
+          created_at: string
+          created_by: string | null
+          destination: string | null
+          id: string
+          is_active: boolean
+          notes: string | null
+          origin: string
+          service_type_id: string | null
+          updated_at: string
+          value: number
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          created_by?: string | null
+          destination?: string | null
+          id?: string
+          is_active?: boolean
+          notes?: string | null
+          origin: string
+          service_type_id?: string | null
+          updated_at?: string
+          value?: number
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          created_by?: string | null
+          destination?: string | null
+          id?: string
+          is_active?: boolean
+          notes?: string | null
+          origin?: string
+          service_type_id?: string | null
+          updated_at?: string
+          value?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_rates_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_rates_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_rates_service_type_id_fkey"
+            columns: ["service_type_id"]
+            isOneToOne: false
+            referencedRelation: "service_types"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       service_resources: {
         Row: {
           commission_amount: number | null
