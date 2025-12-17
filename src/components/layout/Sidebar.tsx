@@ -126,6 +126,7 @@ export const Sidebar = ({
       color: 'configuracion',
       items: [
         { name: 'Tipos de Servicio', href: '/service-types', icon: Tags, adminOnly: false },
+        { name: 'Tarifas de Servicio', href: '/service-rates', icon: DollarSign, adminOnly: false },
         { name: 'Centros de Costo', href: '/cost-centers', icon: Target, adminOnly: false },
         { name: 'Registros Rápidos', href: '/quick-entries', icon: Zap, adminOnly: true },
         { name: 'Configuración', href: '/settings', icon: Settings, adminOnly: true },
