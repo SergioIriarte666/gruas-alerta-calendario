@@ -13,66 +13,89 @@ export const useServiceRateLookup = () => {
   const [isLookingUp, setIsLookingUp] = useState(false);
 
   const lookupRate = useCallback(async ({ clientId, origin, serviceTypeId }: LookupParams) => {
-    if (!clientId || !origin || origin.trim() === '') {
+    if (!clientId) {
       setMatchedRate(null);
       return null;
     }
 
+    const hasOrigin = origin && origin.trim() !== '';
+
     setIsLookingUp(true);
     try {
-      // 1. First try exact match: client + origin + service type
-      if (serviceTypeId) {
-        const { data: exactMatch, error: exactError } = await supabase
+      // Si hay origen, buscar tarifas específicas por origen primero
+      if (hasOrigin) {
+        // 1. Exact match: client + origin + service type
+        if (serviceTypeId) {
+          const { data: exactMatch, error: exactError } = await supabase
+            .from('service_rates')
+            .select('*')
+            .eq('client_id', clientId)
+            .eq('service_type_id', serviceTypeId)
+            .ilike('origin', origin.trim())
+            .eq('is_active', true)
+            .maybeSingle();
+
+          if (!exactError && exactMatch) {
+            setMatchedRate(exactMatch);
+            return exactMatch;
+          }
+        }
+
+        // 2. Generic rate: client + origin + NO service type
+        const { data: genericMatch, error: genericError } = await supabase
           .from('service_rates')
           .select('*')
           .eq('client_id', clientId)
-          .eq('service_type_id', serviceTypeId)
+          .is('service_type_id', null)
           .ilike('origin', origin.trim())
           .eq('is_active', true)
           .maybeSingle();
 
-        if (!exactError && exactMatch) {
-          setMatchedRate(exactMatch);
-          return exactMatch;
+        if (!genericError && genericMatch) {
+          setMatchedRate(genericMatch);
+          return genericMatch;
+        }
+
+        // 3. Any rate: client + origin (ignore service type)
+        const { data: anyMatch, error: anyError } = await supabase
+          .from('service_rates')
+          .select('*')
+          .eq('client_id', clientId)
+          .ilike('origin', origin.trim())
+          .eq('is_active', true)
+          .limit(1)
+          .maybeSingle();
+
+        if (!anyError && anyMatch) {
+          setMatchedRate(anyMatch);
+          return anyMatch;
         }
       }
 
-      // 2. Try generic rate: client + origin + NO service type (null)
-      const { data: genericMatch, error: genericError } = await supabase
-        .from('service_rates')
-        .select('*')
-        .eq('client_id', clientId)
-        .is('service_type_id', null)
-        .ilike('origin', origin.trim())
-        .eq('is_active', true)
-        .maybeSingle();
+      // 4. Client + service type + no origin (tarifa genérica por tipo)
+      if (serviceTypeId) {
+        const { data: typeMatch, error: typeError } = await supabase
+          .from('service_rates')
+          .select('*')
+          .eq('client_id', clientId)
+          .eq('service_type_id', serviceTypeId)
+          .is('origin', null)
+          .eq('is_active', true)
+          .maybeSingle();
 
-      if (!genericError && genericMatch) {
-        setMatchedRate(genericMatch);
-        return genericMatch;
+        if (!typeError && typeMatch) {
+          setMatchedRate(typeMatch);
+          return typeMatch;
+        }
       }
 
-      // 3. Fallback: any rate matching client + origin (ignore service type)
-      const { data: anyMatch, error: anyError } = await supabase
-        .from('service_rates')
-        .select('*')
-        .eq('client_id', clientId)
-        .ilike('origin', origin.trim())
-        .eq('is_active', true)
-        .limit(1)
-        .maybeSingle();
-
-      if (!anyError && anyMatch) {
-        setMatchedRate(anyMatch);
-        return anyMatch;
-      }
-
-      // 4. Final fallback: client-only rate (no origin required)
+      // 5. Final fallback: client-only rate (no origin, no service type)
       const { data: clientOnlyMatch, error: clientOnlyError } = await supabase
         .from('service_rates')
         .select('*')
         .eq('client_id', clientId)
         .is('origin', null)
+        .is('service_type_id', null)
         .eq('is_active', true)
         .limit(1)
         .maybeSingle();

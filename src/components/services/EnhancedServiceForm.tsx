@@ -186,10 +186,11 @@ export const EnhancedServiceForm = ({
     if (service?.id && !isDuplicating) return;
     
     const performLookup = async () => {
-      if (formData.client && formData.origin && formData.origin.trim() !== '') {
+      // Solo requerir cliente, origen es opcional
+      if (formData.client) {
         const rate = await lookupRate({
           clientId: formData.client,
-          origin: formData.origin,
+          origin: formData.origin?.trim() || '',
           serviceTypeId: formData.serviceType || null,
         });
         
@@ -198,7 +199,9 @@ export const EnhancedServiceForm = ({
           setFormData(prev => ({ ...prev, value: Number(rate.value) }));
           setValueFromRate(true);
           toast.info(`Tarifa aplicada: ${Number(rate.value).toLocaleString('es-CL')} CLP`, {
-            description: `Tarifa predefinida para ${rate.origin}`,
+            description: rate.origin 
+              ? `Tarifa predefinida para ${rate.origin}` 
+              : `Tarifa genérica del cliente`,
             duration: 3000,
           });
         }
