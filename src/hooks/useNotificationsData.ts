@@ -232,12 +232,17 @@ const fetchNotificationsData = async (): Promise<Omit<Notification, 'read'>[]> =
   
   const closedIds = (closedServiceIds || []).map(item => item.service_id);
   
-  const { data: pendingServices } = await supabase
+  let pendingServicesQuery = supabase
     .from('services')
     .select('id, folio, service_date, client:clients(name)')
     .eq('status', 'completed')
-    .lte('service_date', format(serviceClosureThreshold, 'yyyy-MM-dd'))
-    .not('id', 'in', `(${closedIds.length > 0 ? closedIds.join(',') : 'NULL'})`);
+    .lte('service_date', format(serviceClosureThreshold, 'yyyy-MM-dd'));
+  
+  if (closedIds.length > 0) {
+    pendingServicesQuery = pendingServicesQuery.not('id', 'in', `(${closedIds.join(',')})`);
+  }
+  
+  const { data: pendingServices } = await pendingServicesQuery;
 
   if (pendingServices && pendingServices.length > 0) {
     notifications.push({
@@ -253,12 +258,17 @@ const fetchNotificationsData = async (): Promise<Omit<Notification, 'read'>[]> =
   }
 
   // 5. Critical services >60 days without closure
-  const { data: criticalServices } = await supabase
+  let criticalServicesQuery = supabase
     .from('services')
     .select('id, folio, service_date, client:clients(name)')
     .eq('status', 'completed')
-    .lte('service_date', format(criticalServiceThreshold, 'yyyy-MM-dd'))
-    .not('id', 'in', `(${closedIds.length > 0 ? closedIds.join(',') : 'NULL'})`);
+    .lte('service_date', format(criticalServiceThreshold, 'yyyy-MM-dd'));
+  
+  if (closedIds.length > 0) {
+    criticalServicesQuery = criticalServicesQuery.not('id', 'in', `(${closedIds.join(',')})`);
+  }
+  
+  const { data: criticalServices } = await criticalServicesQuery;
 
   if (criticalServices && criticalServices.length > 0) {
     notifications.push({
@@ -281,12 +291,17 @@ const fetchNotificationsData = async (): Promise<Omit<Notification, 'read'>[]> =
   
   const invoicedIds = (invoicedClosureIds || []).map(item => item.closure_id);
   
-  const { data: pendingClosures } = await supabase
+  let pendingClosuresQuery = supabase
     .from('service_closures')
     .select('id, folio, created_at, total, client:clients(name)')
     .eq('status', 'closed')
-    .lte('created_at', format(closureInvoiceThreshold, 'yyyy-MM-dd'))
-    .not('id', 'in', `(${invoicedIds.length > 0 ? invoicedIds.join(',') : 'NULL'})`);
+    .lte('created_at', format(closureInvoiceThreshold, 'yyyy-MM-dd'));
+  
+  if (invoicedIds.length > 0) {
+    pendingClosuresQuery = pendingClosuresQuery.not('id', 'in', `(${invoicedIds.join(',')})`);
+  }
+  
+  const { data: pendingClosures } = await pendingClosuresQuery;
 
   (pendingClosures || []).forEach((closure: any) => {
     const daysSince = Math.floor((today.getTime() - new Date(closure.created_at).getTime()) / (1000 * 60 * 60 * 24));
