@@ -60,11 +60,26 @@ export const useServiceRateLookup = () => {
         .ilike('origin', origin.trim())
         .eq('is_active', true)
         .limit(1)
-        .single();
+        .maybeSingle();
 
       if (!anyError && anyMatch) {
         setMatchedRate(anyMatch);
         return anyMatch;
+      }
+
+      // 4. Final fallback: client-only rate (no origin required)
+      const { data: clientOnlyMatch, error: clientOnlyError } = await supabase
+        .from('service_rates')
+        .select('*')
+        .eq('client_id', clientId)
+        .is('origin', null)
+        .eq('is_active', true)
+        .limit(1)
+        .maybeSingle();
+
+      if (!clientOnlyError && clientOnlyMatch) {
+        setMatchedRate(clientOnlyMatch);
+        return clientOnlyMatch;
       }
 
       // No match found
