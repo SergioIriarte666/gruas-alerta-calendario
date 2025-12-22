@@ -41,15 +41,40 @@ export const useInvoiceCancellation = () => {
     try {
       console.log('🚀 Iniciando anulación de factura:', data.invoiceId);
 
-      // 1. Obtener datos de la factura para registro
+      // 1. Verificar y refrescar sesión si es necesario
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError) {
+        console.error('❌ Error obteniendo sesión:', sessionError);
+        throw new Error('Error de autenticación. Por favor, recargue la página e intente nuevamente.');
+      }
+      
+      if (!sessionData.session) {
+        console.log('⚠️ No hay sesión activa, intentando refrescar...');
+        const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
+        
+        if (refreshError || !refreshData.session) {
+          console.error('❌ No se pudo refrescar la sesión:', refreshError);
+          throw new Error('Su sesión ha expirado. Por favor, inicie sesión nuevamente.');
+        }
+        
+        console.log('✅ Sesión refrescada exitosamente');
+      }
+
+      // 2. Obtener datos de la factura para registro
       const { data: invoice, error: invoiceError } = await supabase
         .from('invoices')
         .select('id, folio, numero_fiscal, total, client_id, status')
         .eq('id', data.invoiceId)
-        .single();
+        .maybeSingle();
 
-      if (invoiceError || !invoice) {
-        throw new Error('Factura no encontrada');
+      if (invoiceError) {
+        console.error('❌ Error consultando factura:', invoiceError);
+        throw new Error('Error al acceder a la factura. Verifique su conexión e intente nuevamente.');
+      }
+      
+      if (!invoice) {
+        throw new Error('No se pudo acceder a la factura. Recargue la página e intente nuevamente.');
       }
 
       // Validar que no esté ya anulada
