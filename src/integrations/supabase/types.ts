@@ -1830,6 +1830,73 @@ export type Database = {
         }
         Relationships: []
       }
+      invoice_cancellations: {
+        Row: {
+          cancellation_reason: string
+          cancelled_at: string
+          cancelled_by: string | null
+          created_at: string
+          credit_note_number: string
+          id: string
+          invoice_id: string
+          original_client_id: string | null
+          original_folio: string
+          original_numero_fiscal: string | null
+          original_total: number
+          reason_details: string | null
+        }
+        Insert: {
+          cancellation_reason: string
+          cancelled_at?: string
+          cancelled_by?: string | null
+          created_at?: string
+          credit_note_number: string
+          id?: string
+          invoice_id: string
+          original_client_id?: string | null
+          original_folio: string
+          original_numero_fiscal?: string | null
+          original_total: number
+          reason_details?: string | null
+        }
+        Update: {
+          cancellation_reason?: string
+          cancelled_at?: string
+          cancelled_by?: string | null
+          created_at?: string
+          credit_note_number?: string
+          id?: string
+          invoice_id?: string
+          original_client_id?: string | null
+          original_folio?: string
+          original_numero_fiscal?: string | null
+          original_total?: number
+          reason_details?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoice_cancellations_cancelled_by_fkey"
+            columns: ["cancelled_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoice_cancellations_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: true
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoice_cancellations_original_client_id_fkey"
+            columns: ["original_client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       invoice_closures: {
         Row: {
           closure_id: string

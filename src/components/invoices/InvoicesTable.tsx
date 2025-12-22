@@ -2,12 +2,12 @@ import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Edit, Trash2, DollarSign, FileText, CheckCircle, ArrowUpDown, ArrowUp, ArrowDown, Eye } from 'lucide-react';
+import { Edit, Trash2, FileText, CheckCircle, ArrowUpDown, ArrowUp, ArrowDown, Eye, Ban } from 'lucide-react';
 import { Invoice } from '@/types';
 import { format, isValid, parseISO, differenceInDays } from 'date-fns';
 import { es } from 'date-fns/locale';
-import InvoiceEmergencyActions from './InvoiceEmergencyActions';
 import { InvoiceDetailsModal } from './InvoiceDetailsModal';
+import { InvoiceCancellationModal } from './InvoiceCancellationModal';
 
 
 interface InvoicesTableProps {
@@ -163,11 +163,17 @@ const InvoicesTable = ({
   onSelectAllToggle
 }: InvoicesTableProps) => {
   const [viewingInvoice, setViewingInvoice] = useState<Invoice | null>(null);
+  const [cancellingInvoice, setCancellingInvoice] = useState<Invoice | null>(null);
 
-  const handleInvoiceDeleted = () => {
+  const handleCancellationSuccess = () => {
     if (onRefresh) {
       onRefresh();
     }
+  };
+
+  const getClientName = (invoice: Invoice): string => {
+    const details = getInvoiceWithDetails(invoice);
+    return details?.client?.name || 'Cliente no encontrado';
   };
 
   if (invoices.length === 0) {
@@ -320,28 +326,22 @@ const InvoicesTable = ({
                               <CheckCircle className="w-4 h-4" />
                             </Button>
                           )}
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              if (!invoice.id) {
-                                console.error('Cannot delete invoice: missing ID');
-                                return;
-                              }
-                              onDelete(invoice.id);
-                            }}
-                            className="text-destructive border-destructive/40 hover:bg-destructive/10"
-                            title="Eliminar factura"
-                            disabled={!invoice.id}
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                          {invoice.id && invoice.folio && (
-                            <InvoiceEmergencyActions
-                              invoiceId={invoice.id}
-                              invoiceFolio={invoice.folio}
-                              onInvoiceDeleted={handleInvoiceDeleted}
-                            />
+                          {invoice.status !== 'cancelled' && invoice.status !== 'paid' && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setCancellingInvoice(invoice)}
+                              className="text-destructive border-destructive/40 hover:bg-destructive/10"
+                              title="Anular con Nota de Crédito"
+                              disabled={!invoice.id}
+                            >
+                              <Ban className="w-4 h-4" />
+                            </Button>
+                          )}
+                          {invoice.status === 'cancelled' && (
+                            <Badge variant="outline" className="bg-muted text-muted-foreground text-xs">
+                              Anulada
+                            </Badge>
                           )}
                         </div>
                     </td>
@@ -357,6 +357,14 @@ const InvoicesTable = ({
         invoice={viewingInvoice}
         isOpen={!!viewingInvoice}
         onClose={() => setViewingInvoice(null)}
+      />
+
+      <InvoiceCancellationModal
+        invoice={cancellingInvoice}
+        isOpen={!!cancellingInvoice}
+        onClose={() => setCancellingInvoice(null)}
+        onSuccess={handleCancellationSuccess}
+        getClientName={getClientName}
       />
     </Card>
   );
