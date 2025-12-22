@@ -2,7 +2,7 @@ import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Cost } from '@/types/costs';
-import { Edit, Trash2, Calendar, DollarSign, Tag, Truck, User, FileText } from 'lucide-react';
+import { Edit, Trash2, Calendar, DollarSign, Tag, Truck, User, FileText, Copy } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
@@ -11,9 +11,10 @@ interface CostCardProps {
   onEdit: (cost: Cost) => void;
   onDelete: (cost: Cost) => void;
   onViewDetails?: (cost: Cost) => void;
+  onDuplicate?: (cost: Cost) => void;
 }
 
-export const CostCard = ({ cost, onEdit, onDelete, onViewDetails }: CostCardProps) => {
+export const CostCard = ({ cost, onEdit, onDelete, onViewDetails, onDuplicate }: CostCardProps) => {
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('es-CL', {
       style: 'currency',
@@ -115,6 +116,18 @@ export const CostCard = ({ cost, onEdit, onDelete, onViewDetails }: CostCardProp
             <Edit className="w-4 h-4 mr-1" />
             Editar
           </Button>
+          
+          {onDuplicate && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onDuplicate(cost)}
+              className="hover-scale"
+              title="Duplicar costo"
+            >
+              <Copy className="w-4 h-4" />
+            </Button>
+          )}
           
           {onViewDetails && (
             <Button

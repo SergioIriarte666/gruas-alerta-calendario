@@ -21,6 +21,7 @@ interface CostFormProps {
     isOpen: boolean;
     onClose: () => void;
     cost: Cost | null;
+    prefilledData?: ReturnType<typeof import('@/utils/costHelpers').prepareCostForDuplication> | null;
     onInventoryCostCreated?: (data: {
         costId: string;
         description: string;
@@ -30,8 +31,8 @@ interface CostFormProps {
     }) => void;
 }
 
-export const CostForm = ({ isOpen, onClose, cost, onInventoryCostCreated }: CostFormProps) => {
-    console.log('[CostForm] Rendered with cost:', cost, 'isNewCost:', !cost);
+export const CostForm = ({ isOpen, onClose, cost, prefilledData, onInventoryCostCreated }: CostFormProps) => {
+    console.log('[CostForm] Rendered with cost:', cost, 'prefilledData:', prefilledData, 'isNewCost:', !cost);
     const queryClient = useQueryClient();
     const { mutate: addCost, isPending: isAdding, error: addError } = useAddCost();
     const { mutate: updateCost, isPending: isUpdating, error: updateError } = useUpdateCost();
@@ -155,6 +156,27 @@ export const CostForm = ({ isOpen, onClose, cost, onInventoryCostCreated }: Cost
             };
             console.log('[CostForm] Setting form values for editing:', initialValues);
             reset(initialValues);
+        } else if (prefilledData) {
+            // Datos pre-cargados para duplicación
+            console.log('[CostForm] Setting form values from prefilled data (duplication):', prefilledData);
+            reset({
+                date: prefilledData.date,
+                description: prefilledData.description,
+                amount: prefilledData.amount,
+                category_id: prefilledData.category_id,
+                crane_id: prefilledData.crane_id,
+                operator_id: prefilledData.operator_id,
+                service_id: prefilledData.service_id,
+                service_folio: prefilledData.service_folio,
+                subcategory: prefilledData.subcategory,
+                notes: prefilledData.notes,
+                cost_center_id: prefilledData.cost_center_id,
+                purchase_quantity: prefilledData.purchase_quantity,
+                purchase_unit_cost: prefilledData.purchase_unit_cost,
+                immediate_consumption: prefilledData.immediate_consumption,
+                supplier_id: prefilledData.supplier_id,
+            });
+            setCalculatedServiceTotal(0);
         } else {
             const defaultValues = {
                 date: getCurrentChileDateString(),
@@ -177,7 +199,7 @@ export const CostForm = ({ isOpen, onClose, cost, onInventoryCostCreated }: Cost
             reset(defaultValues);
             setCalculatedServiceTotal(0);
         }
-    }, [cost, reset, isOpen]);
+    }, [cost, prefilledData, reset, isOpen]);
     
     const onSubmit = (values: CostFormValues) => {
         console.log('[CostForm] Submitting form with values:', values);
@@ -328,10 +350,10 @@ export const CostForm = ({ isOpen, onClose, cost, onInventoryCostCreated }: Cost
                 <DialogContent className="bg-card border max-w-5xl max-h-[90vh] overflow-y-auto">
                     <DialogHeader>
                         <DialogTitle className="text-2xl font-bold text-foreground">
-                            {cost ? 'Editar Costo' : 'Registrar Nuevo Costo'}
+                            {cost ? 'Editar Costo' : prefilledData ? 'Duplicar Costo' : 'Registrar Nuevo Costo'}
                         </DialogTitle>
                         <p className="text-muted-foreground">
-                            {cost ? 'Modifica los datos del costo existente' : 'Completa la información del nuevo costo'}
+                            {cost ? 'Modifica los datos del costo existente' : prefilledData ? 'Se ha pre-cargado la información del costo original. Ajusta la fecha o descripción según necesites.' : 'Completa la información del nuevo costo'}
                         </p>
                     </DialogHeader>
                     <Form {...form}>

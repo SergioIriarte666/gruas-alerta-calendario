@@ -9,11 +9,12 @@ interface CostListProps {
   onEdit: (cost: Cost) => void;
   onDelete: (cost: Cost) => void;
   onViewDetails?: (cost: Cost) => void;
+  onDuplicate?: (cost: Cost) => void;
   loading?: boolean;
   highlightedCostId?: string;
 }
 
-export const CostList = ({ costs, onEdit, onDelete, onViewDetails, loading, highlightedCostId }: CostListProps) => {
+export const CostList = ({ costs, onEdit, onDelete, onViewDetails, onDuplicate, loading, highlightedCostId }: CostListProps) => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [costToDelete, setCostToDelete] = useState<Cost | null>(null);
 
@@ -81,6 +82,7 @@ export const CostList = ({ costs, onEdit, onDelete, onViewDetails, loading, high
               onEdit={onEdit}
               onDelete={handleDeleteClick}
               onViewDetails={onViewDetails}
+              onDuplicate={onDuplicate}
             />
           </div>
         ))}

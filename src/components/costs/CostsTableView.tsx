@@ -10,7 +10,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { MoreHorizontal, Edit, Trash2, Eye, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
+import { MoreHorizontal, Edit, Trash2, Eye, ArrowUpDown, ArrowUp, ArrowDown, Copy } from 'lucide-react';
 import { Cost } from '@/types/costs';
 import { Card, CardContent } from '@/components/ui/card';
 import { ServiceDetailsModal } from '@/components/services/ServiceDetailsModal';
@@ -24,6 +24,7 @@ interface CostsTableViewProps {
   onEdit: (cost: Cost) => void;
   onDelete: (cost: Cost) => void;
   onViewDetails: (cost: Cost) => void;
+  onDuplicate?: (cost: Cost) => void;
   loading?: boolean;
   highlightedCostId?: string;
   selectedCosts?: Set<string>;
@@ -38,7 +39,8 @@ export const CostsTableView = ({
   costs, 
   onEdit, 
   onDelete, 
-  onViewDetails, 
+  onViewDetails,
+  onDuplicate, 
   loading, 
   highlightedCostId,
   selectedCosts = new Set<string>(),
@@ -341,6 +343,12 @@ export const CostsTableView = ({
                               <Edit className="mr-2 h-4 w-4" />
                               Editar
                             </DropdownMenuItem>
+                            {onDuplicate && (
+                              <DropdownMenuItem onClick={() => onDuplicate(cost)}>
+                                <Copy className="mr-2 h-4 w-4" />
+                                Duplicar
+                              </DropdownMenuItem>
+                            )}
                             <DropdownMenuItem 
                               onClick={() => onDelete(cost)}
                               className="text-red-600 focus:text-red-600"

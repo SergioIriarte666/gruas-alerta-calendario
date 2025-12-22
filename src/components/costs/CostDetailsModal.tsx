@@ -18,8 +18,10 @@ import {
   MapPin,
   Navigation,
   Users,
-  Car
+  Car,
+  Copy
 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { parseFromDatabase, formatForDisplayWithTime } from '@/utils/timezoneUtils';
 import { getCreatorDisplayName } from '@/types/common';
@@ -28,6 +30,7 @@ interface CostDetailsModalProps {
   cost: Cost;
   isOpen: boolean;
   onClose: () => void;
+  onDuplicate?: (cost: Cost) => void;
 }
 
 interface DetailItemProps {
@@ -66,7 +69,7 @@ const DetailSection = ({ title, icon: Icon, children }: DetailSectionProps) => (
   </div>
 );
 
-export const CostDetailsModal = ({ cost, isOpen, onClose }: CostDetailsModalProps) => {
+export const CostDetailsModal = ({ cost, isOpen, onClose, onDuplicate }: CostDetailsModalProps) => {
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('es-CL', {
       style: 'currency',
@@ -108,9 +111,25 @@ export const CostDetailsModal = ({ cost, isOpen, onClose }: CostDetailsModalProp
         <DialogHeader>
           <DialogTitle className="flex items-center justify-between">
             <span>Detalles del Costo - {cost.description}</span>
-            <Badge className="bg-destructive text-destructive-foreground">
-              {formatCurrency(Number(cost.amount))}
-            </Badge>
+            <div className="flex items-center gap-2">
+              {onDuplicate && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    onDuplicate(cost);
+                    onClose();
+                  }}
+                  className="flex items-center gap-1"
+                >
+                  <Copy className="w-4 h-4" />
+                  Duplicar
+                </Button>
+              )}
+              <Badge className="bg-destructive text-destructive-foreground">
+                {formatCurrency(Number(cost.amount))}
+              </Badge>
+            </div>
           </DialogTitle>
         </DialogHeader>
 

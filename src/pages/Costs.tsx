@@ -16,6 +16,7 @@ import { useCostInvalidation } from '@/hooks/useCostInvalidation';
 import { useQueryClient } from '@tanstack/react-query';
 import { useDateFilters } from '@/hooks/useDateFilters';
 import { Cost } from '@/types/costs';
+import { prepareCostForDuplication } from '@/utils/costHelpers';
 import { Skeleton } from '@/components/ui/skeleton';
 import * as XLSX from 'xlsx';
 import { 
@@ -33,6 +34,7 @@ const CostsPage = () => {
     const [isBatchUpdateOpen, setIsBatchUpdateOpen] = useState(false);
     const [isDistributionOpen, setIsDistributionOpen] = useState(false);
     const [selectedCostForEdit, setSelectedCostForEdit] = useState<Cost | null>(null);
+    const [prefilledDataForDuplication, setPrefilledDataForDuplication] = useState<ReturnType<typeof prepareCostForDuplication> | null>(null);
     const [selectedCostForDetails, setSelectedCostForDetails] = useState<Cost | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [viewMode, setViewMode] = useState<'table' | 'cards'>('table');
@@ -98,6 +100,14 @@ const CostsPage = () => {
     const handleCloseForm = useCallback(() => {
         setIsFormOpen(false);
         setSelectedCostForEdit(null);
+        setPrefilledDataForDuplication(null);
+    }, []);
+
+    const handleDuplicateCost = useCallback((cost: Cost) => {
+        const duplicatedData = prepareCostForDuplication(cost);
+        setPrefilledDataForDuplication(duplicatedData);
+        setSelectedCostForEdit(null);
+        setIsFormOpen(true);
     }, []);
 
     const handleInventoryCostCreated = useCallback((data: {
@@ -350,6 +360,7 @@ const CostsPage = () => {
                     onEdit={handleOpenForm}
                     onDelete={handleDeleteCost}
                     onViewDetails={handleViewDetails}
+                    onDuplicate={handleDuplicateCost}
                     loading={isLoading}
                     highlightedCostId={highlightedCostId}
                     selectedCosts={selectedCostIds}
@@ -362,6 +373,7 @@ const CostsPage = () => {
                     onEdit={handleOpenForm}
                     onDelete={handleDeleteCost}
                     onViewDetails={handleViewDetails}
+                    onDuplicate={handleDuplicateCost}
                     loading={isLoading}
                     highlightedCostId={highlightedCostId}
                 />
@@ -371,6 +383,7 @@ const CostsPage = () => {
                 isOpen={isFormOpen}
                 onClose={handleCloseForm}
                 cost={selectedCostForEdit}
+                prefilledData={prefilledDataForDuplication}
                 onInventoryCostCreated={handleInventoryCostCreated}
             />
             
@@ -379,6 +392,7 @@ const CostsPage = () => {
                     cost={selectedCostForDetails}
                     isOpen={isDetailsOpen}
                     onClose={handleCloseDetails}
+                    onDuplicate={handleDuplicateCost}
                 />
             )}
             
