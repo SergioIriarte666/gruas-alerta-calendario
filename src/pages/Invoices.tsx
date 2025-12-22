@@ -5,6 +5,7 @@ import { InvoiceForm } from '@/components/invoices/InvoiceForm';
 import { PaymentReconciliation } from '@/components/invoices/PaymentReconciliation';
 import { PaymentHistory } from '@/components/invoices/PaymentHistory';
 import { InvoiceAlertsDashboard } from '@/components/invoices/InvoiceAlertsDashboard';
+import { InvoiceCancellationsHistory } from '@/components/invoices/InvoiceCancellationsHistory';
 import { Invoice } from '@/types';
 import { toast } from 'sonner';
 import InvoicesHeader from '@/components/invoices/InvoicesHeader';
@@ -362,7 +363,7 @@ const Invoices = () => {
   return (
     <div className="space-y-6">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-5 max-w-3xl mx-auto bg-card border-border">
+        <TabsList className="grid w-full grid-cols-6 max-w-4xl mx-auto bg-card border-border">
           <TabsTrigger value="invoices" className="text-foreground data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
             Facturas
           </TabsTrigger>
@@ -377,6 +378,9 @@ const Invoices = () => {
           </TabsTrigger>
           <TabsTrigger value="history" className="text-foreground data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
             Historial
+          </TabsTrigger>
+          <TabsTrigger value="cancellations" className="text-foreground data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+            Anulaciones
           </TabsTrigger>
         </TabsList>
 
@@ -467,6 +471,10 @@ const Invoices = () => {
 
         <TabsContent value="history">
           <PaymentHistory />
+        </TabsContent>
+
+        <TabsContent value="cancellations">
+          <InvoiceCancellationsHistory />
         </TabsContent>
       </Tabs>
 
