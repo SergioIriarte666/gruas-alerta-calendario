@@ -186,6 +186,18 @@ export const useInvoiceCancellation = () => {
         } else {
           console.log('✅ Cierres revertidos a closed');
         }
+
+        // 10. Eliminar relación invoice_closures para liberar el cierre para re-facturación
+        const { error: deleteRelationError } = await supabase
+          .from('invoice_closures')
+          .delete()
+          .eq('invoice_id', data.invoiceId);
+
+        if (deleteRelationError) {
+          console.error('Error eliminando relación invoice_closures:', deleteRelationError);
+        } else {
+          console.log('✅ Relación invoice_closures eliminada - Cierre disponible para re-facturar');
+        }
       }
 
       // 10. Invalidar queries
