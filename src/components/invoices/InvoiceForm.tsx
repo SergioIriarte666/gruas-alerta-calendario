@@ -1,75 +1,28 @@
-
-import React, { useEffect, useCallback, useMemo } from 'react';
+import React, { useEffect, useCallback, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import DatePickerInput from '@/components/common/DatePickerInput';
 import { Invoice, InvoiceStatus } from '@/types';
 import { useClosuresForInvoices } from '@/hooks/useClosuresForInvoices';
 import { useInvoiceFormData } from '@/hooks/invoices/useInvoiceFormData';
 import { usePaymentTerms } from '@/hooks/usePaymentTerms';
-import EnhancedClosureSelector from './EnhancedClosureSelector';
-import InvoiceSummary from './InvoiceSummary';
+import { ChevronLeft, ChevronRight, Save, X, Receipt } from 'lucide-react';
+import { InvoiceFormStepNavigation, getInvoiceFormSteps, InvoiceFormStep } from './form/InvoiceFormStepNavigation';
+import { InvoiceSummaryPanel } from './form/InvoiceSummaryPanel';
+import { InvoiceFormStep1 } from './form/InvoiceFormStep1';
+import { InvoiceFormStep2 } from './form/InvoiceFormStep2';
+import { InvoiceFormStep3 } from './form/InvoiceFormStep3';
 
 const invoiceSchema = z.object({
   closureId: z.string().min(1, 'Debe seleccionar un cierre'),
-  issueDate: z.string()
-    .min(1, 'Fecha de emisión es requerida')
-    .refine((date) => {
-      const d = new Date(date);
-      return !isNaN(d.getTime());
-    }, 'Fecha de emisión inválida'),
-  dueDate: z.string()
-    .min(1, 'Fecha de vencimiento es requerida')
-    .refine((date) => {
-      const d = new Date(date);
-      return !isNaN(d.getTime());
-    }, 'Fecha de vencimiento inválida'),
+  issueDate: z.string().min(1, 'Fecha de emisión es requerida'),
+  dueDate: z.string().min(1, 'Fecha de vencimiento es requerida'),
   status: z.enum(['draft', 'sent', 'paid', 'overdue', 'cancelled'] as const),
   paymentTermId: z.string().optional(),
-  paymentDate: z.string()
-    .optional()
-    .refine((date) => {
-      if (!date || date.trim() === '') return true;
-      const d = new Date(date);
-      return !isNaN(d.getTime());
-    }, 'Fecha de pago inválida'),
-  numeroFiscal: z.string()
-    .optional()
-    .refine((val) => {
-      if (!val || val.trim() === '') return true;
-      return /^\d+$/.test(val.trim());
-    }, 'El número fiscal debe contener solo números')
-}).refine((data) => {
-  const issueDate = new Date(data.issueDate);
-  const dueDate = new Date(data.dueDate);
-  return dueDate > issueDate;
-}, {
-  message: 'La fecha de vencimiento debe ser posterior a la fecha de emisión',
-  path: ['dueDate']
-}).refine((data) => {
-  if (data.status === 'paid' && (!data.paymentDate || data.paymentDate.trim() === '')) {
-    return false;
-  }
-  return true;
-}, {
-  message: 'La fecha de pago es requerida cuando el estado es "pagada"',
-  path: ['paymentDate']
-}).refine((data) => {
-  if (data.paymentDate && data.paymentDate.trim() !== '') {
-    const issueDate = new Date(data.issueDate);
-    const paymentDate = new Date(data.paymentDate);
-    return paymentDate >= issueDate;
-  }
-  return true;
-}, {
-  message: 'La fecha de pago no puede ser anterior a la fecha de emisión',
-  path: ['paymentDate']
+  paymentDate: z.string().optional(),
+  numeroFiscal: z.string().optional()
 });
 
 type InvoiceFormData = z.infer<typeof invoiceSchema>;
@@ -89,26 +42,18 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
   onCancel,
   isLoading = false
 }) => {
+  const [currentStep, setCurrentStep] = useState(1);
   const isEditing = !!invoice;
   const { formData, shouldReset } = useInvoiceFormData({ invoice, preselectedClosureId });
   const { closures } = useClosuresForInvoices({ includeInvoiced: isEditing });
   const { paymentTerms, loading: loadingTerms } = usePaymentTerms();
   
-  const {
-    register,
-    handleSubmit,
-    watch,
-    setValue,
-    formState: { errors, isSubmitting },
-    reset,
-    trigger
-  } = useForm<InvoiceFormData>({
+  const { watch, setValue, formState: { errors, isSubmitting }, reset, handleSubmit } = useForm<InvoiceFormData>({
     resolver: zodResolver(invoiceSchema),
     defaultValues: formData,
     mode: 'onChange'
   });
 
-  // Single effect to reset form only when needed
   useEffect(() => {
     if (shouldReset) {
       const resetFormData = invoice ? {
@@ -128,170 +73,39 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
         paymentDate: '',
         numeroFiscal: ''
       };
-      console.log('InvoiceForm - Resetting form with data:', resetFormData);
       reset(resetFormData);
     }
   }, [shouldReset, invoice?.id, preselectedClosureId, reset]);
 
-  // Determine what can be edited based on invoice status
   const getEditableFields = (status: InvoiceStatus) => {
     switch (status) {
-      case 'draft':
-        return {
-          canEditClosure: true,
-          canEditDates: true,
-          canEditNumeroFiscal: true,
-          canEditStatus: true,
-          canEditPaymentDate: false,
-          message: 'Factura en borrador - se puede editar completamente'
-        };
-      case 'sent':
-        return {
-          canEditClosure: true,
-          canEditDates: true,
-          canEditNumeroFiscal: true,
-          canEditStatus: true,
-          canEditPaymentDate: false,
-          message: 'Factura enviada - se puede cambiar cierre, fechas, número fiscal y estado'
-        };
-      case 'paid':
-        return {
-          canEditClosure: false,
-          canEditDates: false,
-          canEditNumeroFiscal: false,
-          canEditStatus: true,
-          canEditPaymentDate: true,
-          message: 'Factura pagada - se puede cambiar el estado y fecha de pago'
-        };
-      case 'overdue':
-        return {
-          canEditClosure: true,
-          canEditDates: true,
-          canEditNumeroFiscal: true,
-          canEditStatus: true,
-          canEditPaymentDate: false,
-          message: 'Factura vencida - se puede cambiar cierre, fechas, número fiscal y estado'
-        };
-      case 'cancelled':
-        return {
-          canEditClosure: false,
-          canEditDates: false,
-          canEditNumeroFiscal: false,
-          canEditStatus: true,
-          canEditPaymentDate: false,
-          message: 'Factura cancelada - solo se puede reactivar cambiando el estado'
-        };
-      default:
-        return {
-          canEditClosure: true,
-          canEditDates: true,
-          canEditNumeroFiscal: true,
-          canEditStatus: true,
-          canEditPaymentDate: false,
-          message: ''
-        };
+      case 'paid': return { canEditClosure: false, canEditDates: false, canEditNumeroFiscal: false, canEditStatus: true, canEditPaymentDate: true };
+      case 'cancelled': return { canEditClosure: false, canEditDates: false, canEditNumeroFiscal: false, canEditStatus: true, canEditPaymentDate: false };
+      default: return { canEditClosure: true, canEditDates: true, canEditNumeroFiscal: true, canEditStatus: true, canEditPaymentDate: false };
     }
   };
 
   const editableFields = isEditing && invoice ? getEditableFields(invoice.status) : {
-    canEditClosure: true,
-    canEditDates: true,
-    canEditNumeroFiscal: true,
-    canEditStatus: true,
-    canEditPaymentDate: false,
-    message: ''
+    canEditClosure: true, canEditDates: true, canEditNumeroFiscal: true, canEditStatus: true, canEditPaymentDate: false
   };
 
   const selectedClosureId = watch('closureId');
+  const selectedClosure = useMemo(() => closures.find(c => c.id === selectedClosureId), [closures, selectedClosureId]);
   
-  // Memoize selected closure to prevent recalculation
-  const selectedClosure = useMemo(() => {
-    return closures.find(c => c.id === selectedClosureId);
-  }, [closures, selectedClosureId]);
-  
-  // Memoize calculated totals
   const { subtotal, vat, total } = useMemo(() => {
     const subtotalValue = Math.round(selectedClosure?.total || 0);
-    const vatValue = Math.round(subtotalValue * 0.19); // 19% IVA
-    const totalValue = subtotalValue + vatValue;
-    
-    return {
-      subtotal: subtotalValue,
-      vat: vatValue,
-      total: totalValue
-    };
+    const vatValue = Math.round(subtotalValue * 0.19);
+    return { subtotal: subtotalValue, vat: vatValue, total: subtotalValue + vatValue };
   }, [selectedClosure?.total]);
 
-  // Enhanced form submission with validation and loading states
   const handleFormSubmit = useCallback(async (data: InvoiceFormData) => {
-    try {
-      console.log('InvoiceForm - Starting form submission with data:', data);
-      
-      // Validate closure selection
-      if (!selectedClosure) {
-        console.error('InvoiceForm - No closure selected for submission');
-        throw new Error('Debe seleccionar un cierre para continuar');
-      }
+    if (!selectedClosure) throw new Error('Debe seleccionar un cierre');
+    await onSubmit({ ...data, subtotal, vat, total, clientId: selectedClosure.clientId });
+  }, [selectedClosure, subtotal, vat, total, onSubmit]);
 
-      // Validate calculated totals
-      if (subtotal < 0 || vat < 0 || total < 0) {
-        throw new Error('Los montos calculados no pueden ser negativos');
-      }
-
-      // Validate client ID
-      if (!selectedClosure.clientId) {
-        throw new Error('El cierre seleccionado no tiene un cliente asociado válido');
-      }
-
-      // Additional validation for editing mode
-      if (isEditing && invoice) {
-        const editableFields = getEditableFields(invoice.status);
-        
-        if (!editableFields.canEditClosure && data.closureId !== invoice.closureId) {
-          throw new Error('No se puede cambiar el cierre para facturas en este estado');
-        }
-        
-        if (!editableFields.canEditDates && (data.issueDate !== invoice.issueDate || data.dueDate !== invoice.dueDate)) {
-          throw new Error('No se pueden cambiar las fechas para facturas en este estado');
-        }
-      }
-
-      const submitData = {
-        ...data,
-        subtotal,
-        vat,
-        total,
-        clientId: selectedClosure.clientId,
-        paymentTermId: data.paymentTermId && data.paymentTermId.trim() !== '' ? data.paymentTermId : undefined,
-        numeroFiscal: data.numeroFiscal?.trim() || undefined
-      };
-      await onSubmit(submitData);
-    } catch (error: any) {
-      console.error('InvoiceForm - Submission error:', error);
-      // Error will be handled by parent component
-      throw error;
-    }
-  }, [selectedClosure, subtotal, vat, total, onSubmit, isEditing, invoice]);
-
-  // Enhanced closure change with validation
-  const handleClosureChange = useCallback(async (closureId: string) => {
-    setValue('closureId', closureId);
-    // Trigger validation after closure change
-    await trigger('closureId');
-  }, [setValue, trigger]);
-
-  // Enhanced status change with field validation
-  const handleStatusChange = useCallback(async (value: string) => {
-    setValue('status', value as InvoiceStatus);
-    await trigger('status');
-    await trigger('paymentDate'); // Also validate payment date as it depends on status
-  }, [setValue, trigger]);
-
-  // Auto-calculate due date based on payment term
   useEffect(() => {
     const termId = watch('paymentTermId');
     const issueDate = watch('issueDate');
-    
     if (termId && issueDate && !isEditing) {
       const term = paymentTerms.find(t => t.id === termId);
       if (term && term.days > 0) {
@@ -302,194 +116,81 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
     }
   }, [watch('paymentTermId'), watch('issueDate'), paymentTerms, setValue, isEditing]);
 
+  const validateStep = (step: number): boolean => {
+    switch (step) {
+      case 1: return true;
+      case 2: return watch('issueDate') !== '' && watch('dueDate') !== '';
+      case 3: return watch('closureId') !== '';
+      default: return true;
+    }
+  };
+
+  const canGoNext = validateStep(currentStep);
+  const canSubmit = validateStep(1) && validateStep(2) && validateStep(3);
+
+  const steps: InvoiceFormStep[] = getInvoiceFormSteps().map(step => ({
+    ...step,
+    isCompleted: step.id < currentStep || (step.id === currentStep && validateStep(step.id)),
+    hasError: false,
+  }));
+
+  const renderStepContent = () => {
+    switch (currentStep) {
+      case 1:
+        return <InvoiceFormStep1 status={watch('status')} numeroFiscal={watch('numeroFiscal') || ''} canEditStatus={editableFields.canEditStatus} canEditNumeroFiscal={editableFields.canEditNumeroFiscal} onStatusChange={(v) => setValue('status', v)} onNumeroFiscalChange={(v) => setValue('numeroFiscal', v)} errors={{ status: errors.status?.message, numeroFiscal: errors.numeroFiscal?.message }} />;
+      case 2:
+        return <InvoiceFormStep2 issueDate={watch('issueDate')} dueDate={watch('dueDate')} paymentDate={watch('paymentDate') || ''} paymentTermId={watch('paymentTermId') || ''} status={watch('status')} canEditDates={editableFields.canEditDates} canEditPaymentDate={editableFields.canEditPaymentDate} paymentTerms={paymentTerms} loadingTerms={loadingTerms} onIssueDateChange={(v) => setValue('issueDate', v)} onDueDateChange={(v) => setValue('dueDate', v)} onPaymentDateChange={(v) => setValue('paymentDate', v)} onPaymentTermIdChange={(v) => setValue('paymentTermId', v)} errors={{ issueDate: errors.issueDate?.message, dueDate: errors.dueDate?.message, paymentDate: errors.paymentDate?.message }} />;
+      case 3:
+        return <InvoiceFormStep3 selectedClosureId={selectedClosureId} isEditing={isEditing} currentInvoice={invoice ? { id: invoice.id, closureId: invoice.closureId } : undefined} canEditClosure={editableFields.canEditClosure} subtotal={subtotal} vat={vat} total={total} showSummary={!!selectedClosure} onClosureChange={(v) => setValue('closureId', v)} errors={{ closureId: errors.closureId?.message }} />;
+      default: return null;
+    }
+  };
+
   return (
-    <Card className="bg-card border">
-      <CardHeader className="bg-gradient-to-r from-violet-600 to-violet-500 text-white rounded-t-lg">
-        <CardTitle className="text-white">
-          {isEditing ? 'Editar Factura' : 'Nueva Factura'}
-          {preselectedClosureId && (
-            <span className="text-sm font-normal text-violet-200 ml-2">
-              (Cierre preseleccionado)
-            </span>
-          )}
-        </CardTitle>
+    <Card className="bg-card border max-h-[90vh] overflow-hidden flex flex-col">
+      <CardHeader className="bg-gradient-to-r from-violet-600 to-violet-500 text-white rounded-t-lg flex-shrink-0">
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-white flex items-center gap-2">
+            <Receipt className="h-5 w-5" />
+            {isEditing ? 'Editar Factura' : 'Nueva Factura'}
+          </CardTitle>
+          <Button variant="ghost" size="sm" onClick={onCancel} className="text-white/80 hover:text-white hover:bg-white/20">
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
       </CardHeader>
-      <CardContent>
-        {editableFields.message && (
-          <div className="mb-4 p-3 bg-muted border rounded-lg">
-            <p className="text-base text-foreground font-medium">{editableFields.message}</p>
-          </div>
-        )}
-        <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="status" className="text-foreground">Estado</Label>
-              <Select 
-                onValueChange={handleStatusChange}
-                value={watch('status')}
-                disabled={!editableFields.canEditStatus}
-              >
-                <SelectTrigger className="disabled:opacity-50 disabled:cursor-not-allowed">
-                  <SelectValue placeholder="Seleccionar estado" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="draft">Borrador</SelectItem>
-                  <SelectItem value="sent">Enviada</SelectItem>
-                  <SelectItem value="paid">Pagada</SelectItem>
-                  <SelectItem value="overdue">Vencida</SelectItem>
-                  <SelectItem value="cancelled">Cancelada</SelectItem>
-                </SelectContent>
-              </Select>
-              {errors.status && (
-                <p className="text-sm text-destructive mt-1">{errors.status.message}</p>
-              )}
-            </div>
 
-            <div>
-              <Label htmlFor="numeroFiscal" className="text-foreground">Número Fiscal (Opcional)</Label>
-              <Input
-                id="numeroFiscal"
-                type="text"
-                placeholder="Ej: 123456789"
-                {...register('numeroFiscal')}
-                disabled={!editableFields.canEditNumeroFiscal}
-                className="mt-1 placeholder:text-muted-foreground disabled:opacity-50 disabled:cursor-not-allowed"
-              />
-              {errors.numeroFiscal && (
-                <p className="text-sm text-destructive mt-1">{errors.numeroFiscal.message}</p>
-              )}
-              <p className="text-xs text-muted-foreground mt-1">
-                Número fiscal para registro SII (opcional)
-              </p>
+      <CardContent className="flex-1 overflow-hidden p-0">
+        <form onSubmit={handleSubmit(handleFormSubmit)} className="h-full flex flex-col">
+          <div className="flex-1 overflow-auto">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 p-6">
+              <div className="lg:col-span-1 space-y-4">
+                <InvoiceFormStepNavigation steps={steps} currentStep={currentStep} onStepClick={setCurrentStep} />
+                <InvoiceSummaryPanel status={watch('status')} numeroFiscal={watch('numeroFiscal') || ''} issueDate={watch('issueDate')} dueDate={watch('dueDate')} paymentDate={watch('paymentDate') || ''} clientName={selectedClosure?.clientName || ''} closureFolio={selectedClosure?.folio || ''} subtotal={subtotal} vat={vat} total={total} isEditing={isEditing} />
+              </div>
+              <div className="lg:col-span-2">{renderStepContent()}</div>
             </div>
-
-            <div>
-              <Label htmlFor="paymentTermId" className="text-foreground">Condición de Pago (Opcional)</Label>
-              <Select 
-                onValueChange={(value) => {
-                  setValue('paymentTermId', value, { shouldValidate: true, shouldDirty: true });
-                }}
-                value={watch('paymentTermId') || ''}
-                disabled={!editableFields.canEditDates || loadingTerms}
-              >
-                <SelectTrigger className="disabled:opacity-50 disabled:cursor-not-allowed mt-1">
-                  <SelectValue placeholder="Sin especificar" />
-                </SelectTrigger>
-                <SelectContent>
-                  {paymentTerms.map((term) => (
-                    <SelectItem key={term.id} value={term.id}>
-                      {term.name}
-                      {term.days > 0 && ` (${term.days} días)`}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {errors.paymentTermId && (
-                <p className="text-sm text-destructive mt-1">{errors.paymentTermId.message}</p>
-              )}
-              <p className="text-xs text-muted-foreground mt-1">
-                Auto-calcula fecha de vencimiento según los días
-              </p>
-            </div>
-
-          {watch('status') === 'paid' && (
-            <div>
-              <Label htmlFor="paymentDate" className="text-foreground">Fecha de Pago</Label>
-              <DatePickerInput
-                id="paymentDate"
-                value={watch('paymentDate') || ''}
-                onChange={(value) => setValue('paymentDate', value)}
-                disabled={!editableFields.canEditPaymentDate}
-                placeholder="Seleccionar fecha"
-                className="mt-1"
-              />
-              {errors.paymentDate && (
-                <p className="text-sm text-destructive mt-1">{errors.paymentDate.message}</p>
-              )}
-              <p className="text-xs text-muted-foreground mt-1">
-                Fecha en que se recibió el pago
-              </p>
-            </div>
-          )}
-
-          <div>
-            <Label htmlFor="issueDate" className="text-foreground">Fecha de Emisión</Label>
-            <DatePickerInput
-              id="issueDate"
-              value={watch('issueDate') || ''}
-              onChange={(value) => setValue('issueDate', value)}
-              disabled={!editableFields.canEditDates}
-              placeholder="Seleccionar fecha"
-              className="mt-1"
-            />
-            {errors.issueDate && (
-              <p className="text-sm text-destructive mt-1">{errors.issueDate.message}</p>
-            )}
           </div>
 
-          <div>
-            <Label htmlFor="dueDate" className="text-foreground">Fecha de Vencimiento</Label>
-            <DatePickerInput
-              id="dueDate"
-              value={watch('dueDate') || ''}
-              onChange={(value) => setValue('dueDate', value)}
-              disabled={!editableFields.canEditDates}
-              placeholder="Seleccionar fecha"
-              className="mt-1"
-            />
-            {errors.dueDate && (
-              <p className="text-sm text-destructive mt-1">{errors.dueDate.message}</p>
-            )}
-          </div>
-          </div>
-
-          <EnhancedClosureSelector
-            selectedClosureId={selectedClosureId}
-            onClosureChange={handleClosureChange}
-            isEditing={isEditing}
-            currentInvoice={invoice ? { id: invoice.id, closureId: invoice.closureId } : undefined}
-            disabled={!editableFields.canEditClosure}
-          />
-          
-          {errors.closureId && (
-            <p className="text-sm text-red-400 mt-1">{errors.closureId.message}</p>
-          )}
-
-          {selectedClosure && (
-            <InvoiceSummary
-              subtotal={subtotal}
-              vat={vat}
-              total={total}
-            />
-          )}
-
-          <div className="flex justify-end gap-4">
-            <Button 
-              type="button" 
-              variant="outline" 
-              onClick={onCancel}
-            >
-              Cancelar
-            </Button>
-            <Button 
-              type="submit" 
-              className="bg-violet-600 hover:bg-violet-700 text-white" 
-              disabled={!selectedClosure || isSubmitting || isLoading}
-            >
-              {isSubmitting || isLoading ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                  {isEditing ? 'Actualizando...' : 'Creando...'}
-                </>
-              ) : (
-                `${isEditing ? 'Actualizar' : 'Crear'} Factura`
-              )}
-            </Button>
-            {!selectedClosure && (
-              <p className="text-sm text-destructive mt-2">
-                Debe seleccionar un cierre para continuar
-              </p>
-            )}
+          <div className="border-t bg-muted/30 p-4 flex-shrink-0">
+            <div className="flex items-center justify-between">
+              <Button type="button" variant="outline" onClick={() => currentStep > 1 && setCurrentStep(currentStep - 1)} disabled={currentStep === 1} className="gap-2">
+                <ChevronLeft className="h-4 w-4" /> Anterior
+              </Button>
+              <div className="flex items-center gap-2">
+                <Button type="button" variant="outline" onClick={onCancel}>Cancelar</Button>
+                {currentStep < 3 ? (
+                  <Button type="button" onClick={() => canGoNext && setCurrentStep(currentStep + 1)} disabled={!canGoNext} className="bg-violet-600 hover:bg-violet-700 text-white gap-2">
+                    Siguiente <ChevronRight className="h-4 w-4" />
+                  </Button>
+                ) : (
+                  <Button type="submit" disabled={!canSubmit || isSubmitting || isLoading} className="bg-violet-600 hover:bg-violet-700 text-white gap-2">
+                    <Save className="h-4 w-4" />
+                    {isSubmitting || isLoading ? 'Guardando...' : `${isEditing ? 'Actualizar' : 'Crear'} Factura`}
+                  </Button>
+                )}
+              </div>
+            </div>
           </div>
         </form>
       </CardContent>
