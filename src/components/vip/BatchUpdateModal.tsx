@@ -517,18 +517,18 @@ export const BatchUpdateModal: React.FC<BatchUpdateModalProps> = ({
                     
                     {autoUpdateStatus && (enableQuote || enablePurchaseOrder) && (
                       <div className="mt-3 p-3 rounded-lg bg-purple-500/10 animate-fade-in">
-                        <div className="flex items-center gap-2">
-                          <AlertCircle className="w-4 h-4 text-purple-400" />
-                          <span className="text-sm text-foreground">Estado resultante:</span>
+                      <div className="flex items-center gap-2">
+                          <AlertCircle className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                          <span className="text-sm text-gray-900 dark:text-gray-100 font-medium">Estado resultante:</span>
                           <Badge className={`${
                             enablePurchaseOrder 
-                              ? 'bg-green-500/20 text-green-300 border-green-500/30' 
-                              : 'bg-blue-500/20 text-blue-300 border-blue-500/30'
+                              ? 'bg-green-500/20 text-green-700 dark:text-green-300 border-green-500/30' 
+                              : 'bg-blue-500/20 text-blue-700 dark:text-blue-300 border-blue-500/30'
                           }`}>
                             {enablePurchaseOrder ? 'Con Orden de Compra' : 'Cotizado'}
                           </Badge>
                           {enablePurchaseOrder && enableQuote && (
-                            <span className="text-xs text-purple-400">(OC prevalece)</span>
+                            <span className="text-xs text-purple-700 dark:text-purple-300 font-medium">(OC prevalece)</span>
                           )}
                         </div>
                       </div>
