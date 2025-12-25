@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { playRetroSuccessSound, playRetroErrorSound } from '@/lib/sounds';
 import { Service } from '@/types';
 import { FolioSection } from './form/FolioSection';
@@ -15,6 +15,9 @@ import { FormActions } from './form/FormActions';
 import { ServiceFormHeader } from './form/ServiceFormHeader';
 import { ServiceValidationAlerts } from './form/ServiceValidationAlerts';
 import { CustodySection } from '../forms/CustodySection';
+import { FormStepNavigation, getDefaultSteps, FormStep } from './form/FormStepNavigation';
+import { FormSummaryPanel } from './form/FormSummaryPanel';
+import { ColoredSectionCard } from './form/ColoredSectionCard';
 import { useServiceManager } from '@/hooks/services/useServiceManager';
 import { useInventoryDeduction } from '@/hooks/useInventoryDeduction';
 import { useClients } from '@/hooks/useClients';
@@ -26,17 +29,16 @@ import { useEnhancedFolioGeneration } from '@/hooks/services/useEnhancedFolioGen
 import { useServiceFormValidation } from '@/hooks/services/useServiceFormValidation';
 import { useServiceRateLookup } from '@/hooks/useServiceRateLookup';
 import { useUser } from '@/contexts/UserContext';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { Truck, FileText, Shield, Copy, AlertTriangle } from 'lucide-react';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
+import { Button } from '@/components/ui/button';
+import { Progress } from '@/components/ui/progress';
+import { Truck, FileText, Shield, Copy, AlertTriangle, ChevronLeft, ChevronRight, Sparkles, Users, DollarSign, MapPin } from 'lucide-react';
 import { getCurrentChileDateString } from '@/utils/timezoneUtils';
 import { isCustodyService } from '@/utils/serviceValueCalculations';
-import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
 
 interface EnhancedServiceFormProps {
   service?: Service | null;
@@ -62,6 +64,10 @@ export const EnhancedServiceForm = ({
   const { processInventoryDeduction } = useInventoryDeduction();
   const { generateUniqueValidFolio } = useEnhancedFolioGeneration();
   const { matchedRate, lookupRate, clearMatchedRate } = useServiceRateLookup();
+  
+  // Step navigation state
+  const [currentStep, setCurrentStep] = useState(1);
+  const totalSteps = 4;
   
   // Cargar datos completos del servicio para edición
   const { enhancedService, isLoading: loadingEnhancedService } = useServiceDetailsForForm(service?.id || null);
@@ -99,13 +105,12 @@ export const EnhancedServiceForm = ({
     }] : [],
     value: service?.value || 0,
     costDetails: [],
-    salesItems: [], // New field for product sales
+    salesItems: [],
     hasExcess: service?.hasExcess || false,
     clientCoveredAmount: service?.clientCoveredAmount || 0,
     excessAmount: service?.excessAmount || 0,
     status: service?.status || 'pending' as const,
     observations: service?.observations || '',
-    // Custody fields - support both camelCase and snake_case
     custodyMode: service?.custodyMode || (service as any)?.custody_mode || 'none',
     custodyDays: service?.custodyDays || (service as any)?.custody_days || undefined,
     custodyDailyRate: service?.custodyDailyRate || (service as any)?.custody_daily_rate || undefined,
@@ -182,11 +187,9 @@ export const EnhancedServiceForm = ({
 
   // Rate lookup: buscar tarifa predefinida cuando cambia cliente, origen o tipo de servicio
   useEffect(() => {
-    // Solo buscar tarifas para nuevos servicios o duplicados (no al editar)
     if (service?.id && !isDuplicating) return;
     
     const performLookup = async () => {
-      // Solo requerir cliente, origen es opcional
       if (formData.client) {
         const rate = await lookupRate({
           clientId: formData.client,
@@ -195,7 +198,6 @@ export const EnhancedServiceForm = ({
         });
         
         if (rate && !valueFromRate) {
-          // Aplicar automáticamente el valor de la tarifa encontrada
           setFormData(prev => ({ ...prev, value: Number(rate.value) }));
           setValueFromRate(true);
           toast.info(`Tarifa aplicada: ${Number(rate.value).toLocaleString('es-CL')} CLP`, {
@@ -214,8 +216,6 @@ export const EnhancedServiceForm = ({
     performLookup();
   }, [formData.client, formData.origin, formData.serviceType, service?.id, isDuplicating]);
 
-  // FOLIO LAZY GENERATION: No generar automáticamente, solo al guardar
-
   // Cargar datos completos del servicio desde el hook mejorado
   useEffect(() => {
     console.log('🔄 [FORM] useEffect triggered:', { 
@@ -228,7 +228,6 @@ export const EnhancedServiceForm = ({
     if (enhancedService && service?.id) {
       console.log('🔄 [FORM] Loading enhanced service data for editing:', enhancedService.folio);
       
-      // Construir detalles de costos desde el servicio mejorado
       const costDetails = enhancedService.serviceCosts?.map(cost => ({
         id: cost.id,
         description: cost.description,
@@ -241,7 +240,6 @@ export const EnhancedServiceForm = ({
         isExisting: true
       })) || [];
 
-      // Actualizar estado del formulario con datos del servicio mejorado
       setFormData(prev => ({
         ...prev,
         operators: enhancedService.operators || [],
@@ -249,7 +247,6 @@ export const EnhancedServiceForm = ({
         startTime: enhancedService.startTime,
         endTime: enhancedService.endTime,
         craneMileage: enhancedService.craneMileage,
-        // Update custody fields from enhanced service if available
         custodyMode: enhancedService.custodyMode || enhancedService.custody_mode || prev.custodyMode,
         custodyDays: enhancedService.custodyDays || enhancedService.custody_days || prev.custodyDays,
         custodyDailyRate: enhancedService.custodyDailyRate || enhancedService.custody_daily_rate || prev.custodyDailyRate,
@@ -272,7 +269,7 @@ export const EnhancedServiceForm = ({
     }
   }, [enhancedService, service?.id, loadingEnhancedService]);
 
-  // Efecto para cargar datos existentes del servicio (solo datos básicos, NO operadores)
+  // Efecto para cargar datos existentes del servicio
   useEffect(() => {
     if (service && !enhancedService) {
       console.log('🔄 [FORM] Loading basic service data (no enhanced service yet)');
@@ -293,16 +290,15 @@ export const EnhancedServiceForm = ({
         origin: service.origin,
         destination: service.destination,
         crane: service.crane?.id || '',
-        operators: [], // Vacío hasta que se cargue el enhanced service
+        operators: [],
         value: service.value,
-        costDetails: [], // Vacío hasta que se cargue el enhanced service
-        salesItems: [], // Vacío para el nuevo campo
+        costDetails: [],
+        salesItems: [],
         hasExcess: service.hasExcess,
         clientCoveredAmount: service.clientCoveredAmount || 0,
         excessAmount: service.excessAmount || 0,
         status: service.status,
         observations: service.observations || '',
-        // Custody fields - support both camelCase and snake_case
         custodyMode: service.custodyMode || (service as any)?.custody_mode || 'none',
         custodyDays: service.custodyDays || (service as any)?.custody_days || undefined,
         custodyDailyRate: service.custodyDailyRate || (service as any)?.custody_daily_rate || undefined,
@@ -351,13 +347,11 @@ export const EnhancedServiceForm = ({
     if (formData.custodyMode === 'manual' && formData.custodyDays && formData.custodyDailyRate) {
       let effectiveDailyRate = formData.custodyDailyRate;
       
-      // Calcular tarifa diaria efectiva para el cálculo SOLAMENTE
       if (formData.custodyRateType === 'weekly') {
         effectiveDailyRate = formData.custodyDailyRate / 7;
       } else if (formData.custodyRateType === 'monthly') {
         effectiveDailyRate = formData.custodyDailyRate / 30;
       }
-      // Si es 'daily', usar la tarifa tal como está
       
       const subtotal = formData.custodyDays * effectiveDailyRate;
       const discount = (subtotal * (formData.custodyDiscountPercentage || 0)) / 100;
@@ -376,13 +370,11 @@ export const EnhancedServiceForm = ({
       
       let effectiveDailyRate = formData.custodyDailyRate;
       
-      // Calcular tarifa diaria efectiva para el cálculo SOLAMENTE
       if (formData.custodyRateType === 'weekly') {
         effectiveDailyRate = formData.custodyDailyRate / 7;
       } else if (formData.custodyRateType === 'monthly') {
         effectiveDailyRate = formData.custodyDailyRate / 30;
       }
-      // Si es 'daily', usar la tarifa tal como está
       
       const subtotal = diffDays * effectiveDailyRate;
       const discount = (subtotal * (formData.custodyDiscountPercentage || 0)) / 100;
@@ -395,10 +387,6 @@ export const EnhancedServiceForm = ({
       }));
     }
   }, [formData.custodyStartDate, formData.custodyEndDate, formData.custodyDailyRate, formData.custodyRateType, formData.custodyDiscountPercentage, formData.custodyMode]);
-
-  // Note: We keep custody total separate from base service value
-  // The total service value is calculated in utils/serviceValueCalculations.ts
-  // by summing base value + custody when both exist
 
   // Auto-calculate service value for product sales
   useEffect(() => {
@@ -426,10 +414,58 @@ export const EnhancedServiceForm = ({
     const shouldEnableCustody = 
       selectedServiceType?.name === 'Arriendo de Equipos' || 
       selectedServiceType?.name === 'Custodia de Vehículos ' ||
-      (service && formData.custodyMode !== 'none'); // Enable for existing services with custody
+      (service && formData.custodyMode !== 'none');
     
     setEnableCustody(shouldEnableCustody);
   }, [selectedServiceType?.name, service, formData.custodyMode]);
+
+  // Get summary data for panel
+  const selectedClient = clients.find(c => c.id === formData.client);
+  const selectedCrane = cranes.find(c => c.id === formData.crane);
+
+  // Step validation - check if current step has required fields filled
+  const getStepValidation = useMemo(() => {
+    const step1Valid = true; // Folio is optional, dates have defaults
+    const step2Valid = true; // Vehicle info is optional unless required by service type
+    const step3Valid = !isFieldInvalid('crane') && !isFieldInvalid('operators');
+    const step4Valid = true; // Financial is optional
+    
+    return { step1Valid, step2Valid, step3Valid, step4Valid };
+  }, [isFieldInvalid]);
+
+  // Build steps with completion status
+  const steps: FormStep[] = useMemo(() => {
+    const defaultSteps = getDefaultSteps();
+    return defaultSteps.map(step => ({
+      ...step,
+      isCompleted: step.id < currentStep,
+      hasError: step.id === 3 && (isFieldInvalid('crane') || isFieldInvalid('operators'))
+    }));
+  }, [currentStep, isFieldInvalid]);
+
+  const progressPercentage = ((currentStep - 1) / (totalSteps - 1)) * 100;
+
+  const canGoNext = () => {
+    switch (currentStep) {
+      case 1: return getStepValidation.step1Valid;
+      case 2: return getStepValidation.step2Valid;
+      case 3: return getStepValidation.step3Valid;
+      case 4: return getStepValidation.step4Valid;
+      default: return true;
+    }
+  };
+
+  const handleNext = () => {
+    if (currentStep < totalSteps && canGoNext()) {
+      setCurrentStep(prev => prev + 1);
+    }
+  };
+
+  const handlePrevious = () => {
+    if (currentStep > 1) {
+      setCurrentStep(prev => prev - 1);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -439,7 +475,6 @@ export const EnhancedServiceForm = ({
     }
 
     try {
-      // GENERACIÓN TARDÍA DEL FOLIO: Solo generar si es nuevo servicio y no es manual
       let finalFolio = folio;
       
       if (!service && !isManualFolio && (!folio || folio.trim() === '')) {
@@ -456,14 +491,12 @@ export const EnhancedServiceForm = ({
         }
       }
       
-      // Validación básica
       if (!finalFolio || finalFolio.trim() === '') {
         playRetroErrorSound();
         toast.error('Error: El folio no puede estar vacío');
         return;
       }
 
-      // Validación según tipo de servicio
       if (hasErrors) {
         playRetroErrorSound();
         toast.error('Por favor complete todos los campos requeridos para este tipo de servicio');
@@ -472,7 +505,6 @@ export const EnhancedServiceForm = ({
 
       console.log('🔄 Form submission started:', { folio: finalFolio, serviceType: formData.serviceType });
       
-      // Preparar datos finales
       const finalData = {
         ...formData,
         folio: finalFolio,
@@ -488,7 +520,6 @@ export const EnhancedServiceForm = ({
         console.log('🔄 Updating existing service...');
         result = await updateService(service.id, finalData);
         
-        // Process inventory deduction when updating to completed status
         if (selectedServiceType?.name === 'Venta de Productos' && 
             finalData.status === 'completed' && 
             service.status !== 'completed' &&
@@ -513,7 +544,6 @@ export const EnhancedServiceForm = ({
         console.log('🔄 Creating new service...');
         result = await createService(finalData);
         
-        // Process inventory deduction for all product sales (regardless of status)
         if (selectedServiceType?.name === 'Venta de Productos' && 
             finalData.salesItems?.length > 0) {
           
@@ -536,16 +566,13 @@ export const EnhancedServiceForm = ({
 
       console.log('✅ Service operation completed:', { id: result.id, folio: result.folio });
 
-      // Notificar éxito
       const action = service ? 'actualizado' : 'creado';
       playRetroSuccessSound();
       toast.success(`Servicio ${action} exitosamente: ${result.folio}`);
       
       console.log('📞 Calling onSubmit callback...');
-      // Llamar callback
       onSubmit?.(result);
       
-      // Cerrar modal automáticamente después del éxito
       onCancel?.();
       
       console.log('✅ Form submission completed successfully');
@@ -563,7 +590,6 @@ export const EnhancedServiceForm = ({
       let errorMessage = 'Error desconocido';
       
       if (error?.message) {
-        // Si el error viene de Supabase/PostgreSQL
         if (error.code) {
           switch (error.code) {
             case '23505':
@@ -589,314 +615,462 @@ export const EnhancedServiceForm = ({
   };
 
   return (
-    <div className="space-y-6 pb-20">
-      {isDuplicating && (
-        <div className="bg-secondary/50 border border-secondary rounded-lg p-4 flex items-center gap-3">
-          <Copy className="h-5 w-5 text-secondary-foreground" />
-          <div>
-            <p className="font-semibold text-secondary-foreground">Duplicando servicio {originalFolio}</p>
-            <p className="text-sm text-muted-foreground">Revisa y ajusta los campos necesarios antes de crear el nuevo servicio</p>
+    <div className="flex flex-col h-full max-h-[calc(90vh-80px)]">
+      {/* Header con progreso */}
+      <div className="flex-shrink-0 pb-4 border-b border-border/50 mb-4">
+        <div className="flex items-center gap-4">
+          <div className={cn(
+            "p-3 rounded-xl",
+            service ? "bg-amber-500/10" : "bg-primary/10"
+          )}>
+            {service ? (
+              <FileText className="h-6 w-6 text-amber-600 dark:text-amber-400" />
+            ) : (
+              <Sparkles className="h-6 w-6 text-primary" />
+            )}
+          </div>
+          <div className="flex-1">
+            <h2 className="text-lg font-semibold">
+              {service ? `Editando ${folio || service.folio}` : 'Nuevo Servicio'}
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              Paso {currentStep} de {totalSteps}: {steps[currentStep - 1]?.title}
+            </p>
+          </div>
+          {isDuplicating && (
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-secondary/50 rounded-lg">
+              <Copy className="h-4 w-4 text-secondary-foreground" />
+              <span className="text-sm font-medium text-secondary-foreground">
+                Duplicando {originalFolio}
+              </span>
+            </div>
+          )}
+        </div>
+        
+        {/* Progress bar */}
+        <div className="mt-4">
+          <Progress value={progressPercentage} className="h-2" />
+        </div>
+      </div>
+
+      {/* Main content - Two columns */}
+      <div className="flex-1 flex gap-6 overflow-hidden">
+        {/* Left Panel - Navigation & Summary */}
+        <div className="w-72 flex-shrink-0 flex flex-col gap-4 overflow-y-auto pr-2">
+          <FormStepNavigation
+            steps={steps}
+            currentStep={currentStep}
+            onStepClick={setCurrentStep}
+          />
+          
+          <FormSummaryPanel
+            folio={folio}
+            clientName={selectedClient?.name || ''}
+            serviceTypeName={selectedServiceType?.name || ''}
+            value={formData.value}
+            totalCommissions={getTotalCommissions()}
+            totalCosts={getTotalCosts()}
+            operatorsCount={formData.operators?.length || 0}
+            craneName={selectedCrane?.licensePlate || ''}
+            origin={formData.origin}
+            destination={formData.destination}
+            status={formData.status}
+            isEditing={!!service}
+          />
+        </div>
+
+        {/* Right Panel - Form Content */}
+        <div className="flex-1 overflow-y-auto pr-2">
+          {/* Alertas de Validación */}
+          {selectedServiceType && validationErrors.length > 0 && (
+            <ServiceValidationAlerts errors={validationErrors} />
+          )}
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Step 1: Información Básica */}
+            {currentStep === 1 && (
+              <div className="space-y-4 animate-fade-in">
+                <ColoredSectionCard
+                  title="Identificación"
+                  icon={<FileText className="h-5 w-5" />}
+                  color="blue"
+                >
+                  <FolioSection
+                    folio={folio}
+                    onFolioChange={setFolio}
+                    isManualFolio={isManualFolio}
+                    onManualFolioChange={setIsManualFolio}
+                    onGenerateNewFolio={async () => {
+                      try {
+                        const newFolio = await generateUniqueValidFolio();
+                        setFolio(newFolio);
+                      } catch (error) {
+                        console.error('Error generando folio:', error);
+                        toast.error('Error generando folio');
+                      }
+                    }}
+                    isEditing={!!service}
+                    serviceId={service?.id}
+                    isLoading={false}
+                    disabled={false}
+                    onValidationChange={() => {}}
+                  />
+                </ColoredSectionCard>
+
+                <ColoredSectionCard
+                  title="Fechas y Horarios"
+                  icon={<FileText className="h-5 w-5" />}
+                  color="cyan"
+                >
+                  <DateSection
+                    requestDate={formData.requestDate}
+                    serviceDate={formData.serviceDate}
+                    startTime={formData.startTime}
+                    endTime={formData.endTime}
+                    craneMileage={formData.craneMileage}
+                    onRequestDateChange={(date) => setFormData(prev => ({ ...prev, requestDate: date }))}
+                    onServiceDateChange={(date) => setFormData(prev => ({ ...prev, serviceDate: date }))}
+                    onStartTimeChange={(time) => setFormData(prev => ({ ...prev, startTime: time }))}
+                    onEndTimeChange={(time) => setFormData(prev => ({ ...prev, endTime: time }))}
+                    onCraneMileageChange={(mileage) => setFormData(prev => ({ ...prev, craneMileage: mileage }))}
+                    disabled={false}
+                  />
+                </ColoredSectionCard>
+
+                <ColoredSectionCard
+                  title="Cliente y Servicio"
+                  icon={<Users className="h-5 w-5" />}
+                  color="purple"
+                >
+                  <ClientServiceSection
+                    clientId={formData.client}
+                    onClientChange={(value) => setFormData(prev => ({ ...prev, client: value }))}
+                    clients={clients}
+                    purchaseOrder={formData.purchaseOrder}
+                    onPurchaseOrderChange={(value) => setFormData(prev => ({ ...prev, purchaseOrder: value }))}
+                    quoteNumber={formData.quoteNumber}
+                    onQuoteNumberChange={(value) => setFormData(prev => ({ ...prev, quoteNumber: value }))}
+                    serviceTypeId={formData.serviceType}
+                    onServiceTypeChange={(value) => setFormData(prev => ({ ...prev, serviceType: value }))}
+                    serviceTypes={serviceTypes}
+                    serviceTypesLoading={serviceTypesLoading}
+                    disabled={false}
+                    invoiceFolio={service?.invoiceFolio}
+                    invoiceNumeroFiscal={service?.invoiceNumeroFiscal}
+                  />
+                </ColoredSectionCard>
+              </div>
+            )}
+
+            {/* Step 2: Vehículo y Ubicación */}
+            {currentStep === 2 && (
+              <div className="space-y-4 animate-fade-in">
+                <ColoredSectionCard
+                  title="Datos del Vehículo"
+                  icon={<Truck className="h-5 w-5" />}
+                  color="green"
+                  hasError={isFieldInvalid('vehicleBrand') || isFieldInvalid('vehicleModel') || isFieldInvalid('licensePlate')}
+                >
+                  <VehicleSection
+                    vehicleBrand={formData.vehicleBrand}
+                    onVehicleBrandChange={(value) => setFormData(prev => ({ ...prev, vehicleBrand: value }))}
+                    vehicleModel={formData.vehicleModel}
+                    onVehicleModelChange={(value) => setFormData(prev => ({ ...prev, vehicleModel: value }))}
+                    licensePlate={formData.licensePlate}
+                    onLicensePlateChange={(value) => setFormData(prev => ({ ...prev, licensePlate: value }))}
+                    vehicleBrandRequired={selectedServiceType?.vehicleBrandRequired || false}
+                    vehicleModelRequired={selectedServiceType?.vehicleModelRequired || false}
+                    licensePlateRequired={selectedServiceType?.licensePlateRequired || false}
+                    disabled={false}
+                    vehicleBrandError={isFieldInvalid('vehicleBrand')}
+                    vehicleModelError={isFieldInvalid('vehicleModel')}
+                    licensePlateError={isFieldInvalid('licensePlate')}
+                  />
+                </ColoredSectionCard>
+
+                <ColoredSectionCard
+                  title="Ubicación"
+                  icon={<MapPin className="h-5 w-5" />}
+                  color="orange"
+                  hasError={isFieldInvalid('origin') || isFieldInvalid('destination')}
+                >
+                  <EnhancedLocationSection
+                    origin={formData.origin}
+                    onOriginChange={(value) => setFormData(prev => ({ ...prev, origin: value }))}
+                    destination={formData.destination}
+                    onDestinationChange={(value) => setFormData(prev => ({ ...prev, destination: value }))}
+                    originRequired={selectedServiceType?.originRequired || false}
+                    destinationRequired={selectedServiceType?.destinationRequired || false}
+                    disabled={false}
+                    originError={isFieldInvalid('origin')}
+                    destinationError={isFieldInvalid('destination')}
+                  />
+                </ColoredSectionCard>
+              </div>
+            )}
+
+            {/* Step 3: Recursos Asignados */}
+            {currentStep === 3 && (
+              <div className="space-y-4 animate-fade-in">
+                <ColoredSectionCard
+                  title="Grúa Asignada"
+                  icon={<Truck className="h-5 w-5" />}
+                  color="amber"
+                  hasError={isFieldInvalid('crane')}
+                  required={selectedServiceType?.craneRequired}
+                >
+                  <div className="space-y-2">
+                    <Label htmlFor="crane">
+                      Grúa {selectedServiceType?.craneRequired && <span className="text-red-500">*</span>}
+                      {!selectedServiceType?.craneRequired && <span className="text-muted-foreground text-sm">(Opcional)</span>}
+                    </Label>
+                    <Select 
+                      value={formData.crane} 
+                      onValueChange={(value) => setFormData(prev => ({ ...prev, crane: value === "unassigned" ? "" : value }))} 
+                      disabled={false}
+                    >
+                      <SelectTrigger className={isFieldInvalid('crane') ? 'border-destructive' : ''}>
+                        <SelectValue placeholder="Seleccionar grúa" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="unassigned">Sin asignar</SelectItem>
+                        {cranes.filter(c => c.isActive).map((crane) => (
+                          <SelectItem key={crane.id} value={crane.id}>
+                            {crane.licensePlate} - {crane.brand} {crane.model}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {isFieldInvalid('crane') && (
+                      <p className="text-sm text-destructive flex items-center gap-1">
+                        <AlertTriangle className="h-3 w-3" />
+                        {getFieldError('crane')?.message}
+                      </p>
+                    )}
+                  </div>
+                </ColoredSectionCard>
+
+                <ColoredSectionCard
+                  title="Operadores"
+                  icon={<Users className="h-5 w-5" />}
+                  color="pink"
+                  hasError={isFieldInvalid('operators')}
+                  required={selectedServiceType?.operatorRequired}
+                >
+                  <MultipleOperatorsSection
+                    operators={formData.operators || []}
+                    onOperatorsChange={(operators) => setFormData(prev => ({ 
+                      ...prev, 
+                      operators: operators.map(op => ({
+                        id: op.id,
+                        operatorId: op.operatorId,
+                        commission: op.commission || 0,
+                        role: op.role || 'Principal',
+                        hours: op.hours || 8
+                      }))
+                    }))}
+                    availableOperators={operators}
+                    operatorRequired={selectedServiceType?.operatorRequired || false}
+                    disabled={false}
+                    hasValidationError={isFieldInvalid('operators')}
+                    validationMessage={getFieldError('operators')?.message}
+                  />
+                </ColoredSectionCard>
+
+                {/* Product Sales Section */}
+                {selectedServiceType?.name === 'Venta de Productos' && (
+                  <ProductSalesSection
+                    salesItems={formData.salesItems || []}
+                    onSalesItemsChange={(items) => setFormData(prev => ({ ...prev, salesItems: items }))}
+                    disabled={false}
+                  />
+                )}
+
+                {/* Costos del Servicio */}
+                {selectedServiceType?.name !== 'Venta de Productos' && (
+                  <ServiceCostDetailsSection
+                    costDetails={formData.costDetails || []}
+                    onCostDetailsChange={(costs) => setFormData(prev => ({ ...prev, costDetails: costs }))}
+                    serviceId={service?.id}
+                    disabled={false}
+                  />
+                )}
+              </div>
+            )}
+
+            {/* Step 4: Financiero y Final */}
+            {currentStep === 4 && (
+              <div className="space-y-4 animate-fade-in">
+                <ColoredSectionCard
+                  title="Información Financiera"
+                  icon={<DollarSign className="h-5 w-5" />}
+                  color="green"
+                >
+                  <EnhancedFinancialSection
+                    value={formData.value}
+                    onValueChange={(value) => {
+                      setFormData(prev => ({ ...prev, value }));
+                      setValueFromRate(false);
+                    }}
+                    totalCommissions={getTotalCommissions()}
+                    totalCosts={getTotalCosts()}
+                    hasExcess={formData.hasExcess}
+                    onHasExcessChange={(value) => setFormData(prev => ({ ...prev, hasExcess: value }))}
+                    clientCoveredAmount={formData.clientCoveredAmount}
+                    onClientCoveredAmountChange={(value) => setFormData(prev => ({ ...prev, clientCoveredAmount: value }))}
+                    excessAmount={formData.excessAmount}
+                    onExcessAmountChange={(value) => setFormData(prev => ({ ...prev, excessAmount: value }))}
+                    disabled={false}
+                    isCustodyService={isCustodyService(formData)}
+                    custodyTotalAmount={formData.custodyTotalAmount || 0}
+                    matchedRateOrigin={matchedRate?.origin}
+                    valueFromRate={valueFromRate}
+                    onClearRate={() => setValueFromRate(false)}
+                  />
+                </ColoredSectionCard>
+
+                {/* Toggle para habilitar Custodia/Arriendo */}
+                <ColoredSectionCard
+                  title="Configuración Adicional"
+                  icon={<Shield className="h-5 w-5" />}
+                  color="purple"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label className="text-base">
+                        Habilitar Custodia/Arriendo
+                      </Label>
+                      <div className="text-sm text-muted-foreground">
+                        Activar para incluir servicios de custodia o arriendo de equipos
+                      </div>
+                    </div>
+                    <Switch
+                      checked={enableCustody || selectedServiceType?.name === 'Arriendo de Equipos' || selectedServiceType?.name === 'Custodia de Vehículos '}
+                      onCheckedChange={(checked) => {
+                        setEnableCustody(checked);
+                        if (checked && formData.custodyMode === 'none') {
+                          setFormData(prev => ({ ...prev, custodyMode: 'manual' }));
+                        } else if (!checked && formData.custodyMode !== 'none' && selectedServiceType?.name !== 'Arriendo de Equipos' && selectedServiceType?.name !== 'Custodia de Vehículos ') {
+                          setFormData(prev => ({ ...prev, custodyMode: 'none' }));
+                        }
+                      }}
+                      disabled={selectedServiceType?.name === 'Arriendo de Equipos' || selectedServiceType?.name === 'Custodia de Vehículos '}
+                    />
+                  </div>
+                </ColoredSectionCard>
+
+                {/* Custodia/Arriendo de Equipos */}
+                {(enableCustody || formData.custodyMode !== 'none' || selectedServiceType?.name === 'Arriendo de Equipos' || selectedServiceType?.name === 'Custodia de Vehículos ') && (
+                  <CustodySection 
+                    serviceTypeName={selectedServiceType?.name}
+                    custodyMode={formData.custodyMode}
+                    custodyDays={formData.custodyDays}
+                    custodyDailyRate={formData.custodyDailyRate}
+                    custodyRateType={formData.custodyRateType}
+                    custodyStartDate={formData.custodyStartDate}
+                    custodyEndDate={formData.custodyEndDate}
+                    custodyVehicleType={formData.custodyVehicleType}
+                    custodyDiscountPercentage={formData.custodyDiscountPercentage}
+                    custodyTotalAmount={formData.custodyTotalAmount}
+                    custodyNotes={formData.custodyNotes}
+                    onCustodyModeChange={(value) => setFormData(prev => ({ ...prev, custodyMode: value }))}
+                    onCustodyDaysChange={(value) => setFormData(prev => ({ ...prev, custodyDays: value }))}
+                    onCustodyDailyRateChange={(value) => setFormData(prev => ({ ...prev, custodyDailyRate: value }))}
+                    onCustodyRateTypeChange={(value) => setFormData(prev => ({ ...prev, custodyRateType: value }))}
+                    onCustodyStartDateChange={(value) => setFormData(prev => ({ ...prev, custodyStartDate: value }))}
+                    onCustodyEndDateChange={(value) => setFormData(prev => ({ ...prev, custodyEndDate: value }))}
+                    onCustodyVehicleTypeChange={(value) => setFormData(prev => ({ ...prev, custodyVehicleType: value }))}
+                    onCustodyDiscountPercentageChange={(value) => setFormData(prev => ({ ...prev, custodyDiscountPercentage: value }))}
+                    onCustodyTotalAmountChange={(value) => setFormData(prev => ({ ...prev, custodyTotalAmount: value }))}
+                    onCustodyNotesChange={(value) => setFormData(prev => ({ ...prev, custodyNotes: value }))}
+                  />
+                )}
+
+                {/* Observaciones */}
+                <ColoredSectionCard
+                  title="Estado y Observaciones"
+                  icon={<FileText className="h-5 w-5" />}
+                  color="cyan"
+                >
+                  <ObservationsSection
+                    status={formData.status}
+                    onStatusChange={(value) => setFormData(prev => ({ ...prev, status: value }))}
+                    observations={formData.observations}
+                    onObservationsChange={(value) => setFormData(prev => ({ ...prev, observations: value }))}
+                    disabled={false}
+                  />
+                </ColoredSectionCard>
+              </div>
+            )}
+          </form>
+        </div>
+      </div>
+
+      {/* Footer - Navigation & Actions */}
+      <div className="flex-shrink-0 pt-4 mt-4 border-t border-border/50">
+        <div className="flex items-center justify-between">
+          {/* Left - Context info */}
+          <div className="text-sm text-muted-foreground">
+            {selectedClient ? (
+              <span>
+                {service ? 'Editando' : 'Creando'} servicio para <span className="font-medium text-foreground">{selectedClient.name}</span>
+              </span>
+            ) : (
+              <span>Selecciona un cliente para continuar</span>
+            )}
+          </div>
+
+          {/* Right - Navigation buttons */}
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onCancel}
+              disabled={isCreating || isUpdating}
+            >
+              Cancelar
+            </Button>
+
+            {currentStep > 1 && (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handlePrevious}
+                disabled={isCreating || isUpdating}
+              >
+                <ChevronLeft className="h-4 w-4 mr-1" />
+                Anterior
+              </Button>
+            )}
+
+            {currentStep < totalSteps ? (
+              <Button
+                type="button"
+                onClick={handleNext}
+                disabled={!canGoNext()}
+              >
+                Siguiente
+                <ChevronRight className="h-4 w-4 ml-1" />
+              </Button>
+            ) : (
+              <Button
+                type="submit"
+                onClick={handleSubmit}
+                disabled={hasErrors || isCreating || isUpdating}
+                className="bg-green-600 hover:bg-green-700"
+              >
+                {isCreating || isUpdating ? (
+                  'Guardando...'
+                ) : service ? (
+                  'Actualizar Servicio'
+                ) : (
+                  'Crear Servicio'
+                )}
+              </Button>
+            )}
           </div>
         </div>
-      )}
-      
-      <ServiceFormHeader service={service} />
-
-      {/* Alertas de Validación */}
-      {selectedServiceType && validationErrors.length > 0 && (
-        <ServiceValidationAlerts errors={validationErrors} />
-      )}
-
-      <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Información Básica */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <FileText className="h-5 w-5" />
-              Información Básica
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <FolioSection
-              folio={folio}
-              onFolioChange={setFolio}
-              isManualFolio={isManualFolio}
-              onManualFolioChange={setIsManualFolio}
-              onGenerateNewFolio={async () => {
-                try {
-                  const newFolio = await generateUniqueValidFolio();
-                  setFolio(newFolio);
-                } catch (error) {
-                  console.error('Error generando folio:', error);
-                  toast.error('Error generando folio');
-                }
-              }}
-              isEditing={!!service}
-              serviceId={service?.id}
-              isLoading={false}
-              disabled={false}
-              onValidationChange={() => {}}
-            />
-
-            <DateSection
-              requestDate={formData.requestDate}
-              serviceDate={formData.serviceDate}
-              startTime={formData.startTime}
-              endTime={formData.endTime}
-              craneMileage={formData.craneMileage}
-              onRequestDateChange={(date) => setFormData(prev => ({ ...prev, requestDate: date }))}
-              onServiceDateChange={(date) => setFormData(prev => ({ ...prev, serviceDate: date }))}
-              onStartTimeChange={(time) => setFormData(prev => ({ ...prev, startTime: time }))}
-              onEndTimeChange={(time) => setFormData(prev => ({ ...prev, endTime: time }))}
-              onCraneMileageChange={(mileage) => setFormData(prev => ({ ...prev, craneMileage: mileage }))}
-              disabled={false}
-            />
-
-            <ClientServiceSection
-              clientId={formData.client}
-              onClientChange={(value) => setFormData(prev => ({ ...prev, client: value }))}
-              clients={clients}
-              purchaseOrder={formData.purchaseOrder}
-              onPurchaseOrderChange={(value) => setFormData(prev => ({ ...prev, purchaseOrder: value }))}
-              quoteNumber={formData.quoteNumber}
-              onQuoteNumberChange={(value) => setFormData(prev => ({ ...prev, quoteNumber: value }))}
-              serviceTypeId={formData.serviceType}
-              onServiceTypeChange={(value) => setFormData(prev => ({ ...prev, serviceType: value }))}
-              serviceTypes={serviceTypes}
-              serviceTypesLoading={serviceTypesLoading}
-              disabled={false}
-              invoiceFolio={service?.invoiceFolio}
-              invoiceNumeroFiscal={service?.invoiceNumeroFiscal}
-            />
-          </CardContent>
-        </Card>
-
-        {/* Información del Vehículo y Ubicación */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Truck className="h-5 w-5" />
-              Vehículo y Ubicación
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <VehicleSection
-              vehicleBrand={formData.vehicleBrand}
-              onVehicleBrandChange={(value) => setFormData(prev => ({ ...prev, vehicleBrand: value }))}
-              vehicleModel={formData.vehicleModel}
-              onVehicleModelChange={(value) => setFormData(prev => ({ ...prev, vehicleModel: value }))}
-              licensePlate={formData.licensePlate}
-              onLicensePlateChange={(value) => setFormData(prev => ({ ...prev, licensePlate: value }))}
-              vehicleBrandRequired={selectedServiceType?.vehicleBrandRequired || false}
-              vehicleModelRequired={selectedServiceType?.vehicleModelRequired || false}
-              licensePlateRequired={selectedServiceType?.licensePlateRequired || false}
-              disabled={false}
-              vehicleBrandError={isFieldInvalid('vehicleBrand')}
-              vehicleModelError={isFieldInvalid('vehicleModel')}
-              licensePlateError={isFieldInvalid('licensePlate')}
-            />
-
-            <EnhancedLocationSection
-              origin={formData.origin}
-              onOriginChange={(value) => setFormData(prev => ({ ...prev, origin: value }))}
-              destination={formData.destination}
-              onDestinationChange={(value) => setFormData(prev => ({ ...prev, destination: value }))}
-              originRequired={selectedServiceType?.originRequired || false}
-              destinationRequired={selectedServiceType?.destinationRequired || false}
-              disabled={false}
-              originError={isFieldInvalid('origin')}
-              destinationError={isFieldInvalid('destination')}
-            />
-          </CardContent>
-        </Card>
-
-        {/* Recursos Asignados */}
-        <Card className={isFieldInvalid('crane') ? 'border-destructive' : ''}>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              Recursos Asignados
-              {isFieldInvalid('crane') && (
-                <span className="text-xs bg-destructive/10 text-destructive px-2 py-1 rounded flex items-center gap-1">
-                  <AlertTriangle className="h-3 w-3" />
-                  Requerido
-                </span>
-              )}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="crane">
-                Grúa {selectedServiceType?.craneRequired && <span className="text-red-500">*</span>}
-                {!selectedServiceType?.craneRequired && <span className="text-muted-foreground text-sm">(Opcional)</span>}
-              </Label>
-               <Select 
-                value={formData.crane} 
-                onValueChange={(value) => setFormData(prev => ({ ...prev, crane: value === "unassigned" ? "" : value }))} 
-                disabled={false}
-              >
-                <SelectTrigger className={isFieldInvalid('crane') ? 'border-destructive' : ''}>
-                  <SelectValue placeholder="Seleccionar grúa" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="unassigned">Sin asignar</SelectItem>
-                  {cranes.filter(c => c.isActive).map((crane) => (
-                    <SelectItem key={crane.id} value={crane.id}>
-                      {crane.licensePlate} - {crane.brand} {crane.model}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {isFieldInvalid('crane') && (
-                <p className="text-sm text-destructive flex items-center gap-1">
-                  <AlertTriangle className="h-3 w-3" />
-                  {getFieldError('crane')?.message}
-                </p>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Operadores */}
-        <MultipleOperatorsSection
-          operators={formData.operators || []}
-          onOperatorsChange={(operators) => setFormData(prev => ({ 
-            ...prev, 
-            operators: operators.map(op => ({
-              id: op.id,
-              operatorId: op.operatorId,
-              commission: op.commission || 0,
-              role: op.role || 'Principal',
-              hours: op.hours || 8
-            }))
-          }))}
-          availableOperators={operators}
-          operatorRequired={selectedServiceType?.operatorRequired || false}
-          disabled={false}
-          hasValidationError={isFieldInvalid('operators')}
-          validationMessage={getFieldError('operators')?.message}
-        />
-
-        {/* Product Sales Section - Only for "Venta de Productos" service type */}
-        {selectedServiceType?.name === 'Venta de Productos' && (
-          <ProductSalesSection
-            salesItems={formData.salesItems || []}
-            onSalesItemsChange={(items) => setFormData(prev => ({ ...prev, salesItems: items }))}
-            disabled={false}
-          />
-        )}
-
-        {/* Costos del Servicio - Hide for "Venta de Productos" */}
-        {selectedServiceType?.name !== 'Venta de Productos' && (
-          <ServiceCostDetailsSection
-            costDetails={formData.costDetails || []}
-            onCostDetailsChange={(costs) => setFormData(prev => ({ ...prev, costDetails: costs }))}
-            serviceId={service?.id}
-            disabled={false}
-          />
-        )}
-
-        {/* Financiero */}
-        <EnhancedFinancialSection
-          value={formData.value}
-          onValueChange={(value) => {
-            setFormData(prev => ({ ...prev, value }));
-            setValueFromRate(false);
-          }}
-          totalCommissions={getTotalCommissions()}
-          totalCosts={getTotalCosts()}
-          hasExcess={formData.hasExcess}
-          onHasExcessChange={(value) => setFormData(prev => ({ ...prev, hasExcess: value }))}
-          clientCoveredAmount={formData.clientCoveredAmount}
-          onClientCoveredAmountChange={(value) => setFormData(prev => ({ ...prev, clientCoveredAmount: value }))}
-          excessAmount={formData.excessAmount}
-          onExcessAmountChange={(value) => setFormData(prev => ({ ...prev, excessAmount: value }))}
-          disabled={false}
-          isCustodyService={isCustodyService(formData)}
-          custodyTotalAmount={formData.custodyTotalAmount || 0}
-          matchedRateOrigin={matchedRate?.origin}
-          valueFromRate={valueFromRate}
-          onClearRate={() => setValueFromRate(false)}
-        />
-
-        {/* Toggle para habilitar Custodia/Arriendo */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Shield className="h-5 w-5" />
-              Configuración Adicional
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label className="text-base">
-                  Habilitar Custodia/Arriendo
-                </Label>
-                <div className="text-sm text-muted-foreground">
-                  Activar para incluir servicios de custodia o arriendo de equipos
-                </div>
-              </div>
-              <Switch
-                checked={enableCustody || selectedServiceType?.name === 'Arriendo de Equipos' || selectedServiceType?.name === 'Custodia de Vehículos '}
-                onCheckedChange={(checked) => {
-                  setEnableCustody(checked);
-                  if (checked && formData.custodyMode === 'none') {
-                    setFormData(prev => ({ ...prev, custodyMode: 'manual' }));
-                  } else if (!checked && formData.custodyMode !== 'none' && selectedServiceType?.name !== 'Arriendo de Equipos' && selectedServiceType?.name !== 'Custodia de Vehículos ') {
-                    setFormData(prev => ({ ...prev, custodyMode: 'none' }));
-                  }
-                }}
-                disabled={selectedServiceType?.name === 'Arriendo de Equipos' || selectedServiceType?.name === 'Custodia de Vehículos '}
-              />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Custodia/Arriendo de Equipos */}
-        {(enableCustody || formData.custodyMode !== 'none' || selectedServiceType?.name === 'Arriendo de Equipos' || selectedServiceType?.name === 'Custodia de Vehículos ') && (
-          <CustodySection 
-            serviceTypeName={selectedServiceType?.name}
-            custodyMode={formData.custodyMode}
-            custodyDays={formData.custodyDays}
-            custodyDailyRate={formData.custodyDailyRate}
-            custodyRateType={formData.custodyRateType}
-            custodyStartDate={formData.custodyStartDate}
-            custodyEndDate={formData.custodyEndDate}
-            custodyVehicleType={formData.custodyVehicleType}
-            custodyDiscountPercentage={formData.custodyDiscountPercentage}
-            custodyTotalAmount={formData.custodyTotalAmount}
-            custodyNotes={formData.custodyNotes}
-            onCustodyModeChange={(value) => setFormData(prev => ({ ...prev, custodyMode: value }))}
-            onCustodyDaysChange={(value) => setFormData(prev => ({ ...prev, custodyDays: value }))}
-            onCustodyDailyRateChange={(value) => setFormData(prev => ({ ...prev, custodyDailyRate: value }))}
-            onCustodyRateTypeChange={(value) => setFormData(prev => ({ ...prev, custodyRateType: value }))}
-            onCustodyStartDateChange={(value) => setFormData(prev => ({ ...prev, custodyStartDate: value }))}
-            onCustodyEndDateChange={(value) => setFormData(prev => ({ ...prev, custodyEndDate: value }))}
-            onCustodyVehicleTypeChange={(value) => setFormData(prev => ({ ...prev, custodyVehicleType: value }))}
-            onCustodyDiscountPercentageChange={(value) => setFormData(prev => ({ ...prev, custodyDiscountPercentage: value }))}
-            onCustodyTotalAmountChange={(value) => setFormData(prev => ({ ...prev, custodyTotalAmount: value }))}
-            onCustodyNotesChange={(value) => setFormData(prev => ({ ...prev, custodyNotes: value }))}
-          />
-        )}
-
-        {/* Observaciones */}
-        <ObservationsSection
-          status={formData.status}
-          onStatusChange={(value) => setFormData(prev => ({ ...prev, status: value }))}
-          observations={formData.observations}
-          onObservationsChange={(value) => setFormData(prev => ({ ...prev, observations: value }))}
-          disabled={false}
-        />
-
-        {/* Acciones del Formulario */}
-        <FormActions 
-          onCancel={onCancel} 
-          isEditing={!!service} 
-          disabled={hasErrors}
-          loading={isCreating || isUpdating}
-          validationErrorCount={validationErrors.filter(e => e.severity === 'error').length}
-        />
-      </form>
+      </div>
     </div>
   );
 };

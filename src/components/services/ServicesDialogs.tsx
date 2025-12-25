@@ -53,7 +53,7 @@ export const ServicesDialogs = ({
       </Dialog>
 
       <Dialog open={isFormOpen} onOpenChange={onFormOpenChange}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-6xl max-h-[90vh] overflow-hidden p-6">
           <DialogHeader>
             <DialogTitle>
               {editingService ? `Editar Servicio ${editingService.status === 'invoiced' ? '(⚠️ FACTURADO)' : ''}` : 'Nuevo Servicio'}
