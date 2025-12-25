@@ -86,8 +86,7 @@ const ClosureForm = ({
     }));
   }, [formData]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async () => {
     if (!formData.dateFrom || !formData.dateTo) return;
     if (formData.serviceIds.length === 0) return;
 
@@ -220,7 +219,7 @@ const ClosureForm = ({
 
               {/* Right Content */}
               <div className="lg:col-span-3 flex flex-col overflow-hidden">
-                <form onSubmit={handleSubmit} className="flex flex-col h-full">
+                <div className="flex flex-col h-full">
                   <div className="flex-1 overflow-y-auto p-6">
                     {/* Step 1: Período */}
                     {currentStep === 1 && (
@@ -390,7 +389,8 @@ const ClosureForm = ({
                         </Button>
                       ) : (
                         <Button
-                          type="submit"
+                          type="button"
+                          onClick={handleSubmit}
                           disabled={loading || !isFormValid}
                           className="gap-2 bg-violet-600 hover:bg-violet-700"
                         >
@@ -409,7 +409,7 @@ const ClosureForm = ({
                       )}
                     </div>
                   </div>
-                </form>
+                </div>
               </div>
             </div>
           </div>
