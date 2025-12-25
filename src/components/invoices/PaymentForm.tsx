@@ -11,6 +11,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { X, FileText, Calendar } from 'lucide-react';
+import DatePickerInput from '@/components/common/DatePickerInput';
 
 interface PaymentFormProps {
   onClose: () => void;
@@ -310,12 +311,11 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({ onClose, onCancel, pre
 
             <div>
               <Label htmlFor="payment_date">Fecha de Pago *</Label>
-              <Input
+              <DatePickerInput
                 id="payment_date"
-                type="date"
                 value={formData.payment_date}
-                onChange={(e) => setFormData({...formData, payment_date: e.target.value})}
-                required
+                onChange={(value) => setFormData({...formData, payment_date: value})}
+                placeholder="Seleccionar fecha"
               />
             </div>
 

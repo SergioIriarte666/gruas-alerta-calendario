@@ -17,6 +17,7 @@ import { CostCombobox } from './CostCombobox';
 import { InventoryPurchaseFields } from './InventoryPurchaseFields';  // FASE 3
 import { SupplierSelector } from './SupplierSelector';
 import { Package, User, Phone, Hash, DollarSign, Gauge, Calendar, FileText, Tag, Building2 } from 'lucide-react';
+import DatePickerInput from '@/components/common/DatePickerInput';
 
 interface CostFormInputsProps {
     form: UseFormReturn<CostFormValues>;
@@ -95,7 +96,11 @@ export const CostFormInputs = ({
                                     Fecha
                                 </Label>
                                 <FormControl>
-                                    <Input type="date" {...field} />
+                                    <DatePickerInput
+                                        value={field.value || ''}
+                                        onChange={field.onChange}
+                                        placeholder="Seleccionar fecha"
+                                    />
                                 </FormControl>
                                 <FormMessage />
                             </FormItem>

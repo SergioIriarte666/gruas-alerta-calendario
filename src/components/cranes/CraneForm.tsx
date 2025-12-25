@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import DatePickerInput from '@/components/common/DatePickerInput';
 import {
   DialogContent,
   DialogDescription,
@@ -142,31 +143,31 @@ export const CraneForm = ({ crane, onSubmit, onCancel }: CraneFormProps) => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="space-y-2">
             <Label htmlFor="circulationPermitExpiry" className="text-foreground">Venc. Permiso Circulación</Label>
-            <Input
+            <DatePickerInput
               id="circulationPermitExpiry"
-              type="date"
               value={formData.circulationPermitExpiry}
-              onChange={(e) => handleChange('circulationPermitExpiry', e.target.value)}
+              onChange={(value) => handleChange('circulationPermitExpiry', value)}
+              placeholder="Seleccionar fecha"
             />
           </div>
           
           <div className="space-y-2">
             <Label htmlFor="insuranceExpiry" className="text-foreground">Venc. Seguro</Label>
-            <Input
+            <DatePickerInput
               id="insuranceExpiry"
-              type="date"
               value={formData.insuranceExpiry}
-              onChange={(e) => handleChange('insuranceExpiry', e.target.value)}
+              onChange={(value) => handleChange('insuranceExpiry', value)}
+              placeholder="Seleccionar fecha"
             />
           </div>
           
           <div className="space-y-2">
             <Label htmlFor="technicalReviewExpiry" className="text-foreground">Venc. Revisión Técnica</Label>
-            <Input
+            <DatePickerInput
               id="technicalReviewExpiry"
-              type="date"
               value={formData.technicalReviewExpiry}
-              onChange={(e) => handleChange('technicalReviewExpiry', e.target.value)}
+              onChange={(value) => handleChange('technicalReviewExpiry', value)}
+              placeholder="Seleccionar fecha"
             />
           </div>
         </div>

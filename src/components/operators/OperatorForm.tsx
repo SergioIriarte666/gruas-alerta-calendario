@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
+import DatePickerInput from '@/components/common/DatePickerInput';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Save } from 'lucide-react';
@@ -210,12 +211,11 @@ export const OperatorForm = ({ operator, onSubmit, onCancel }: OperatorFormProps
 
               <div className="space-y-2">
                 <Label htmlFor="examExpiry">Vencimiento Examen</Label>
-                <Input
+                <DatePickerInput
                   id="examExpiry"
-                  type="date"
                   value={formData.examExpiry}
-                  onChange={(e) => handleChange('examExpiry', e.target.value)}
-                  required
+                  onChange={(value) => handleChange('examExpiry', value)}
+                  placeholder="Seleccionar fecha"
                 />
               </div>
             </>

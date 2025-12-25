@@ -7,6 +7,7 @@ import { MaintenanceReportFilters } from '@/hooks/reports/useMaintenanceReport';
 import { useCranes } from '@/hooks/useCranes';
 import { RotateCcw } from 'lucide-react';
 import { format } from 'date-fns';
+import DatePickerInput from '@/components/common/DatePickerInput';
 
 interface MaintenanceFiltersProps {
   filters: MaintenanceReportFilters;
@@ -56,11 +57,11 @@ export const MaintenanceFilters = ({ filters, onFiltersChange }: MaintenanceFilt
               <Label htmlFor="dateFrom" className="text-sm text-black">
                 Fecha Desde
               </Label>
-              <Input
+              <DatePickerInput
                 id="dateFrom"
-                type="date"
                 value={filters.dateFrom}
-                onChange={(e) => handleFilterChange('dateFrom', e.target.value)}
+                onChange={(value) => handleFilterChange('dateFrom', value)}
+                placeholder="Seleccionar fecha"
                 className="h-10 bg-background/50 border-border"
               />
             </div>
@@ -69,11 +70,11 @@ export const MaintenanceFilters = ({ filters, onFiltersChange }: MaintenanceFilt
               <Label htmlFor="dateTo" className="text-sm text-black">
                 Fecha Hasta
               </Label>
-              <Input
+              <DatePickerInput
                 id="dateTo"
-                type="date"
                 value={filters.dateTo}
-                onChange={(e) => handleFilterChange('dateTo', e.target.value)}
+                onChange={(value) => handleFilterChange('dateTo', value)}
+                placeholder="Seleccionar fecha"
                 className="h-10 bg-background/50 border-border"
               />
             </div>

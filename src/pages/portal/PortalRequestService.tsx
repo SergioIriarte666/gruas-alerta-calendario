@@ -11,6 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import DatePickerInput from '@/components/common/DatePickerInput';
 
 const PortalRequestService = () => {
   const { register, handleSubmit, formState: { errors }, watch, setValue } = useForm<PortalRequestServiceSchema>({
@@ -95,11 +96,12 @@ const PortalRequestService = () => {
                 </div>
                 <div>
                   <Label htmlFor="service_date" className="text-gray-300">Fecha de Servicio *</Label>
-                  <Input 
-                    id="service_date" 
-                    type="date" 
-                    {...register('service_date')} 
-                    className="bg-gray-700 border-gray-600 text-white" 
+                  <DatePickerInput
+                    id="service_date"
+                    value={watch('service_date') || ''}
+                    onChange={(value) => setValue('service_date', value)}
+                    placeholder="Seleccionar fecha"
+                    className="bg-gray-700 border-gray-600 text-white"
                   />
                   {errors.service_date && <p className="text-red-500 text-sm mt-1">{errors.service_date.message}</p>}
                 </div>

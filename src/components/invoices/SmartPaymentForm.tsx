@@ -15,6 +15,7 @@ import { X, AlertTriangle, CheckCircle, Clock, Zap } from 'lucide-react';
 import { toast } from 'sonner';
 import { formatCurrency } from '@/lib/utils';
 import { BatchProgressModal, useBatchProgress } from '@/components/ui/batch-progress-modal';
+import DatePickerInput from '@/components/common/DatePickerInput';
 interface SmartPaymentFormProps {
   onClose: () => void;
   preselectedClientId?: string;
@@ -425,14 +426,15 @@ export const SmartPaymentForm: React.FC<SmartPaymentFormProps> = ({
 
             <Separator />
 
-            {/* Campos adicionales */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="payment_date">Fecha de Pago *</Label>
-                <Input id="payment_date" type="date" value={formData.payment_date} onChange={e => setFormData({
-                ...formData,
-                payment_date: e.target.value
-              })} required />
+                <DatePickerInput
+                  id="payment_date"
+                  value={formData.payment_date}
+                  onChange={(value) => setFormData({ ...formData, payment_date: value })}
+                  placeholder="Seleccionar fecha"
+                />
               </div>
 
               <div>

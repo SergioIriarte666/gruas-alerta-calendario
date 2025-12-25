@@ -3,6 +3,7 @@ import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import DatePickerInput from '@/components/common/DatePickerInput';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useQuickEntry, QuickEntry } from '@/hooks/useQuickEntry';
@@ -124,12 +125,11 @@ export function QuickEntryForm({ isOpen, onClose }: QuickEntryFormProps) {
           {/* Date */}
           <div className="space-y-2">
             <Label htmlFor="date">Fecha</Label>
-            <Input
+            <DatePickerInput
               id="date"
-              type="date"
               value={formData.date}
-              onChange={(e) => setFormData(prev => ({ ...prev, date: e.target.value }))}
-              required
+              onChange={(value) => setFormData(prev => ({ ...prev, date: value }))}
+              placeholder="Seleccionar fecha"
             />
           </div>
 

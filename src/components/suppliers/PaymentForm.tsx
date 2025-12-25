@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { X, Save, Loader2, Calendar, DollarSign } from 'lucide-react';
+import DatePickerInput from '@/components/common/DatePickerInput';
 import { useSupplierPayments, getStatusLabel } from '@/hooks/useSupplierPayments';
 import { useSuppliers } from '@/hooks/useSuppliers';
 import { useSupplierCategoryManager } from '@/hooks/useSupplierCategoryManager';
@@ -172,9 +173,10 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
                   <Calendar className="h-4 w-4" />
                   Fecha de Vencimiento *
                 </Label>
-                <Input
-                  {...form.register('due_date')}
-                  type="date"
+                <DatePickerInput
+                  value={form.watch('due_date') || ''}
+                  onChange={(value) => form.setValue('due_date', value)}
+                  placeholder="Seleccionar fecha"
                 />
                 {form.formState.errors.due_date && (
                   <p className="text-destructive text-sm mt-1">

@@ -3,11 +3,11 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
+import DatePickerInput from '@/components/common/DatePickerInput';
 import { ServiceClosure, ClosureStatus } from '@/types';
 import { useClients } from '@/hooks/useClients';
 import { useEditClosure } from '@/hooks/closures/useEditClosure';
@@ -127,10 +127,11 @@ export const EditClosureForm: React.FC<EditClosureFormProps> = ({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <Label htmlFor="dateFrom" className="text-foreground">Fecha de Inicio</Label>
-              <Input
+              <DatePickerInput
                 id="dateFrom"
-                type="date"
-                {...register('dateFrom')}
+                value={watch('dateFrom') || ''}
+                onChange={(value) => setValue('dateFrom', value)}
+                placeholder="Seleccionar fecha"
                 className="mt-1"
               />
               {errors.dateFrom && (
@@ -140,10 +141,11 @@ export const EditClosureForm: React.FC<EditClosureFormProps> = ({
 
             <div>
               <Label htmlFor="dateTo" className="text-foreground">Fecha de Fin</Label>
-              <Input
+              <DatePickerInput
                 id="dateTo"
-                type="date"
-                {...register('dateTo')}
+                value={watch('dateTo') || ''}
+                onChange={(value) => setValue('dateTo', value)}
+                placeholder="Seleccionar fecha"
                 className="mt-1"
               />
               {errors.dateTo && (
