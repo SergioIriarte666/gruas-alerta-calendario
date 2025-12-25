@@ -11,15 +11,18 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { Service, ServiceStatus } from '@/types';
 import { ServiceBatchUpdateData, useUpdateServicesBatch } from '@/hooks/useUpdateServicesBatch';
 import { useOperatorsData } from '@/hooks/operators/useOperatorsData';
 import { useCranes } from '@/hooks/useCranes';
-import { Settings2, Truck, User, FileText, Activity } from 'lucide-react';
+import { Hash, Truck, User, FileText, Activity, X, Check } from 'lucide-react';
 import { BatchProgressModal, useBatchProgress } from '@/components/ui/batch-progress-modal';
+import { format } from 'date-fns';
+import { es } from 'date-fns/locale';
 
 interface ServiceBatchUpdateModalProps {
   open: boolean;
@@ -62,28 +65,24 @@ export const ServiceBatchUpdateModal = ({
   const activeOperators = operators.filter(op => op.isActive);
   const activeCranes = cranes.filter(c => c.isActive);
 
-  const totalAmount = useMemo(() => {
-    return selectedServices.reduce((sum, service) => sum + (service.value || 0), 0);
-  }, [selectedServices]);
+  // Get client name from first service (assuming all are same client for batch)
+  const clientName = selectedServices[0]?.client?.name || 'Cliente';
 
   const handleSubmit = async () => {
     const fields: ServiceBatchUpdateData['fields'] = {};
 
     if (enableStatus) fields.status = status;
-    // Convert __NONE__ to null for crane
     if (enableCrane) {
       fields.crane_id = craneId && craneId !== '__NONE__' ? craneId : null;
     }
     if (enableObservations) fields.observations = observations || null;
 
-    // Start progress modal
     batchProgress.start('ACTUALIZANDO SERVICIOS', selectedServices.length);
 
     const updateData: ServiceBatchUpdateData = {
       serviceIds: selectedServices.map(s => s.id),
       fields,
       appendObservations,
-      // Convert __NONE__ to null for operator
       operatorId: enableOperator 
         ? (operatorId && operatorId !== '__NONE__' ? operatorId : null) 
         : undefined,
@@ -96,7 +95,6 @@ export const ServiceBatchUpdateModal = ({
     try {
       await updateBatch(updateData);
       batchProgress.complete();
-      // Delay closing to show completion
       setTimeout(() => {
         batchProgress.close();
         onOpenChange(false);
@@ -123,210 +121,203 @@ export const ServiceBatchUpdateModal = ({
 
   const hasChanges = enableStatus || enableOperator || enableCrane || enableObservations;
 
+  const formatServiceDate = (dateString?: string) => {
+    if (!dateString) return '';
+    try {
+      return format(new Date(dateString), 'dd/MM/yyyy', { locale: es });
+    } catch {
+      return dateString;
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Settings2 className="h-5 w-5 text-primary" />
-            Edición por Lotes
+      <DialogContent className="max-w-xl max-h-[90vh] overflow-hidden p-0">
+        <DialogHeader className="px-6 pt-6 pb-4">
+          <DialogTitle className="flex items-center gap-2 text-lg">
+            <Hash className="h-5 w-5 text-primary" />
+            Edición por Lotes - {clientName}
           </DialogTitle>
           <DialogDescription>
-            Modifica múltiples servicios simultáneamente. Solo se actualizarán los campos que habilites.
+            Modifica estado, operador, grúa u observaciones para múltiples servicios
           </DialogDescription>
         </DialogHeader>
 
-        {/* Summary */}
-        <Card className="bg-muted/20">
-          <CardContent className="pt-6">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <p className="text-sm text-muted-foreground">Servicios seleccionados</p>
-                <p className="text-2xl font-bold">{selectedServices.length}</p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Valor Total</p>
-                <p className="text-2xl font-bold text-violet-600">
-                  ${totalAmount.toLocaleString('es-CL')}
-                </p>
-              </div>
+        <div className="px-6 space-y-4">
+          {/* Selected services badge and list */}
+          <Badge variant="outline" className="text-sm font-normal">
+            {selectedServices.length} servicios seleccionados
+          </Badge>
+
+          <ScrollArea className="max-h-32 rounded-md border bg-muted/30 p-3">
+            <div className="space-y-2">
+              {selectedServices.map((service, index) => (
+                <div key={service.id} className="flex items-center justify-between text-sm">
+                  <div className="flex items-center gap-3">
+                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10 text-xs font-medium text-primary">
+                      {index + 1}
+                    </span>
+                    <span className="font-medium">{service.folio}</span>
+                    <span className="text-muted-foreground">•</span>
+                    <span className="text-muted-foreground">{service.serviceType?.name || 'Sin tipo'}</span>
+                  </div>
+                  <span className="text-muted-foreground">{formatServiceDate(service.serviceDate)}</span>
+                </div>
+              ))}
             </div>
-          </CardContent>
-        </Card>
+          </ScrollArea>
 
-        {/* Configurable fields */}
-        <div className="space-y-4">
-          {/* Status */}
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-3 flex-1">
-                <Activity className="h-5 w-5 text-muted-foreground" />
-                <div className="space-y-2 flex-1">
-                  <div className="flex items-center gap-2">
-                    <Label htmlFor="enable-status">Estado</Label>
-                    <Switch
-                      id="enable-status"
-                      checked={enableStatus}
-                      onCheckedChange={setEnableStatus}
-                    />
-                  </div>
-                  {enableStatus && (
-                    <Select value={status} onValueChange={(v) => setStatus(v as ServiceStatus)}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Seleccionar estado" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {STATUS_OPTIONS.map((opt) => (
-                          <SelectItem key={opt.value} value={opt.value}>
-                            {opt.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
+          {/* Toggle sections */}
+          <div className="space-y-3">
+            {/* Status */}
+            <div className="rounded-lg border bg-card">
+              <div className="flex items-center justify-between p-4">
+                <div className="flex items-center gap-3">
+                  <Activity className="h-4 w-4 text-muted-foreground" />
+                  <span className="font-medium">Estado</span>
                 </div>
+                <Switch
+                  checked={enableStatus}
+                  onCheckedChange={setEnableStatus}
+                />
               </div>
-            </CardContent>
-          </Card>
+              {enableStatus && (
+                <div className="border-t bg-primary/5 p-4">
+                  <Select value={status} onValueChange={(v) => setStatus(v as ServiceStatus)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Seleccionar estado" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {STATUS_OPTIONS.map((opt) => (
+                        <SelectItem key={opt.value} value={opt.value}>
+                          {opt.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+            </div>
 
-          {/* Operator */}
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-3 flex-1">
-                <User className="h-5 w-5 text-muted-foreground" />
-                <div className="space-y-2 flex-1">
-                  <div className="flex items-center gap-2">
-                    <Label htmlFor="enable-operator">Operador Principal</Label>
-                    <Switch
-                      id="enable-operator"
-                      checked={enableOperator}
-                      onCheckedChange={setEnableOperator}
-                    />
-                  </div>
-                  {enableOperator && (
-                    <Select value={operatorId} onValueChange={setOperatorId}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Seleccionar operador" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="__NONE__">Sin operador (quitar asignación)</SelectItem>
-                        {activeOperators.map((op) => (
-                          <SelectItem key={op.id} value={op.id}>
-                            {op.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
+            {/* Operator */}
+            <div className="rounded-lg border bg-card">
+              <div className="flex items-center justify-between p-4">
+                <div className="flex items-center gap-3">
+                  <User className="h-4 w-4 text-muted-foreground" />
+                  <span className="font-medium">Operador Principal</span>
                 </div>
+                <Switch
+                  checked={enableOperator}
+                  onCheckedChange={setEnableOperator}
+                />
               </div>
-            </CardContent>
-          </Card>
+              {enableOperator && (
+                <div className="border-t bg-primary/5 p-4">
+                  <Select value={operatorId} onValueChange={setOperatorId}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Seleccionar operador" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__NONE__">Sin operador (quitar asignación)</SelectItem>
+                      {activeOperators.map((op) => (
+                        <SelectItem key={op.id} value={op.id}>
+                          {op.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+            </div>
 
-          {/* Crane */}
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-3 flex-1">
-                <Truck className="h-5 w-5 text-muted-foreground" />
-                <div className="space-y-2 flex-1">
-                  <div className="flex items-center gap-2">
-                    <Label htmlFor="enable-crane">Grúa</Label>
-                    <Switch
-                      id="enable-crane"
-                      checked={enableCrane}
-                      onCheckedChange={setEnableCrane}
-                    />
-                  </div>
-                  {enableCrane && (
-                    <Select value={craneId} onValueChange={setCraneId}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Seleccionar grúa" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="__NONE__">Sin grúa (quitar asignación)</SelectItem>
-                        {activeCranes.map((crane) => (
-                          <SelectItem key={crane.id} value={crane.id}>
-                            {crane.licensePlate} - {crane.brand} {crane.model}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
+            {/* Crane */}
+            <div className="rounded-lg border bg-card">
+              <div className="flex items-center justify-between p-4">
+                <div className="flex items-center gap-3">
+                  <Truck className="h-4 w-4 text-muted-foreground" />
+                  <span className="font-medium">Grúa</span>
                 </div>
+                <Switch
+                  checked={enableCrane}
+                  onCheckedChange={setEnableCrane}
+                />
               </div>
-            </CardContent>
-          </Card>
+              {enableCrane && (
+                <div className="border-t bg-primary/5 p-4">
+                  <Select value={craneId} onValueChange={setCraneId}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Seleccionar grúa" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__NONE__">Sin grúa (quitar asignación)</SelectItem>
+                      {activeCranes.map((crane) => (
+                        <SelectItem key={crane.id} value={crane.id}>
+                          {crane.licensePlate} - {crane.brand} {crane.model}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+            </div>
 
-          {/* Observations */}
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-3 flex-1">
-                <FileText className="h-5 w-5 text-muted-foreground" />
-                <div className="space-y-2 flex-1">
-                  <div className="flex items-center gap-2">
-                    <Label htmlFor="enable-observations">Observaciones</Label>
-                    <Switch
-                      id="enable-observations"
-                      checked={enableObservations}
-                      onCheckedChange={setEnableObservations}
-                    />
-                  </div>
-                  {enableObservations && (
-                    <>
-                      <Textarea
-                        value={observations}
-                        onChange={(e) => setObservations(e.target.value)}
-                        placeholder="Observación común para todos los servicios"
-                        rows={3}
-                      />
-                      <div className="flex items-center gap-2 mt-2">
-                        <Switch
-                          id="append-observations"
-                          checked={appendObservations}
-                          onCheckedChange={setAppendObservations}
-                        />
-                        <Label htmlFor="append-observations" className="text-sm text-muted-foreground">
-                          Añadir a observaciones existentes
-                        </Label>
-                      </div>
-                    </>
-                  )}
+            {/* Observations */}
+            <div className="rounded-lg border bg-card">
+              <div className="flex items-center justify-between p-4">
+                <div className="flex items-center gap-3">
+                  <FileText className="h-4 w-4 text-muted-foreground" />
+                  <span className="font-medium">Observaciones</span>
                 </div>
+                <Switch
+                  checked={enableObservations}
+                  onCheckedChange={setEnableObservations}
+                />
               </div>
-            </CardContent>
-          </Card>
+              {enableObservations && (
+                <div className="border-t bg-primary/5 p-4 space-y-3">
+                  <Textarea
+                    value={observations}
+                    onChange={(e) => setObservations(e.target.value)}
+                    placeholder="Observación común para todos los servicios"
+                    rows={3}
+                  />
+                  <div className="flex items-center gap-2">
+                    <Switch
+                      id="append-observations"
+                      checked={appendObservations}
+                      onCheckedChange={setAppendObservations}
+                    />
+                    <Label htmlFor="append-observations" className="text-sm text-muted-foreground">
+                      Añadir a observaciones existentes
+                    </Label>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
 
-        {/* Preview */}
-        {hasChanges && selectedServices.length <= 5 && (
-          <Card className="bg-muted/20">
-            <CardContent className="pt-6">
-              <p className="text-sm font-medium mb-3">Vista previa de cambios:</p>
-              <div className="space-y-2">
-                {selectedServices.slice(0, 5).map((service) => (
-                  <div key={service.id} className="text-sm flex items-center gap-2">
-                    <Badge variant="outline">{service.folio}</Badge>
-                    <span className="text-muted-foreground">
-                      {service.client?.name} - ${(service.value || 0).toLocaleString('es-CL')}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isPending}>
+        <DialogFooter className="px-6 py-4 border-t mt-4">
+          <Button 
+            variant="outline" 
+            onClick={() => onOpenChange(false)} 
+            disabled={isPending}
+            className="gap-2"
+          >
+            <X className="h-4 w-4" />
             Cancelar
           </Button>
-          <Button onClick={handleSubmit} disabled={!hasChanges || isPending}>
-            {isPending ? 'Actualizando...' : `Actualizar ${selectedServices.length} Servicios`}
+          <Button 
+            onClick={handleSubmit} 
+            disabled={!hasChanges || isPending}
+            className="gap-2"
+          >
+            <Check className="h-4 w-4" />
+            {isPending ? 'Actualizando...' : 'Actualizar Servicios'}
           </Button>
         </DialogFooter>
       </DialogContent>
 
-      {/* Batch Progress Modal */}
       <BatchProgressModal 
         state={batchProgress.state} 
         onClose={batchProgress.close} 
