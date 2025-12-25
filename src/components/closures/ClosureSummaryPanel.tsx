@@ -83,7 +83,7 @@ export const ClosureSummaryPanel = ({
           <ListChecks className="h-4 w-4 text-muted-foreground" />
           <span className="text-xs text-muted-foreground">Servicios:</span>
           <Badge variant={selectedCount > 0 ? "default" : "secondary"} className={cn(
-            selectedCount > 0 && "bg-violet-600"
+            selectedCount > 0 && "bg-violet-600 text-white"
           )}>
             {selectedCount} seleccionados
           </Badge>
