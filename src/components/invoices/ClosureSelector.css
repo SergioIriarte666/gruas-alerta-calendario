@@ -58,11 +58,11 @@
 }
 
 .ClosureSelector-container [data-radix-select-item]:hover {
-  background-color: rgba(156, 250, 36, 0.15) !important;
+  background-color: hsl(var(--primary) / 0.15) !important;
 }
 
 .ClosureSelector-container [data-radix-select-item] .text-green-600 {
-  color: rgb(156, 250, 36) !important;
+  color: hsl(var(--primary)) !important;
 }
 
 /* Item text styling */
@@ -81,19 +81,19 @@
 }
 
 .ClosureSelector-folio {
-  font-weight: 500;
+  font-weight: 600;
   font-size: 0.875rem;
-  color: #f8fafc !important;
+  color: hsl(var(--primary)) !important;
 }
 
 .ClosureSelector-date,
 .ClosureSelector-client {
   font-size: 0.75rem;
-  color: #94a3b8 !important;
+  color: hsl(var(--muted-foreground)) !important;
 }
 
 .ClosureSelector-amount {
-  font-size: 0.75rem;
-  font-weight: 500;
-  color: rgb(156, 250, 36) !important;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: hsl(var(--foreground)) !important;
 }
