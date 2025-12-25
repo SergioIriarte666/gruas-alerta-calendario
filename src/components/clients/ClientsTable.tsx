@@ -127,7 +127,7 @@ export const ClientsTable = ({
             <thead>
               <tr className="border-b">
                 <th 
-                  className="text-left py-3 px-4 font-medium cursor-pointer hover:text-primary transition-colors" 
+                  className="text-left py-3 px-4 font-medium text-foreground cursor-pointer hover:text-primary transition-colors" 
                   onClick={() => onSort?.('name')}
                 >
                   <div className="flex items-center">
@@ -136,7 +136,7 @@ export const ClientsTable = ({
                   </div>
                 </th>
                 <th 
-                  className="text-left py-3 px-4 font-medium cursor-pointer hover:text-primary transition-colors" 
+                  className="text-left py-3 px-4 font-medium text-foreground cursor-pointer hover:text-primary transition-colors" 
                   onClick={() => onSort?.('rut')}
                 >
                   <div className="flex items-center">
@@ -145,7 +145,7 @@ export const ClientsTable = ({
                   </div>
                 </th>
                 <th 
-                  className="text-left py-3 px-4 font-medium cursor-pointer hover:text-primary transition-colors" 
+                  className="text-left py-3 px-4 font-medium text-foreground cursor-pointer hover:text-primary transition-colors" 
                   onClick={() => onSort?.('department')}
                 >
                   <div className="flex items-center">
@@ -154,7 +154,7 @@ export const ClientsTable = ({
                   </div>
                 </th>
                 <th 
-                  className="text-left py-3 px-4 font-medium cursor-pointer hover:text-primary transition-colors" 
+                  className="text-left py-3 px-4 font-medium text-foreground cursor-pointer hover:text-primary transition-colors" 
                   onClick={() => onSort?.('contactName')}
                 >
                   <div className="flex items-center">
@@ -163,7 +163,7 @@ export const ClientsTable = ({
                   </div>
                 </th>
                 <th 
-                  className="text-left py-3 px-4 font-medium cursor-pointer hover:text-primary transition-colors" 
+                  className="text-left py-3 px-4 font-medium text-foreground cursor-pointer hover:text-primary transition-colors" 
                   onClick={() => onSort?.('email')}
                 >
                   <div className="flex items-center">
@@ -172,7 +172,7 @@ export const ClientsTable = ({
                   </div>
                 </th>
                 <th 
-                  className="text-left py-3 px-4 font-medium cursor-pointer hover:text-primary transition-colors" 
+                  className="text-left py-3 px-4 font-medium text-foreground cursor-pointer hover:text-primary transition-colors" 
                   onClick={() => onSort?.('phone')}
                 >
                   <div className="flex items-center">
@@ -181,7 +181,7 @@ export const ClientsTable = ({
                   </div>
                 </th>
                 <th 
-                  className="text-left py-3 px-4 font-medium cursor-pointer hover:text-primary transition-colors" 
+                  className="text-left py-3 px-4 font-medium text-foreground cursor-pointer hover:text-primary transition-colors" 
                   onClick={() => onSort?.('isActive')}
                 >
                   <div className="flex items-center">
@@ -189,14 +189,14 @@ export const ClientsTable = ({
                     <SortIcon field="isActive" currentSortField={sortField} sortDirection={sortDirection} />
                   </div>
                 </th>
-                <th className="text-center py-3 px-4 font-medium">Acciones</th>
+                <th className="text-center py-3 px-4 font-medium text-foreground">Acciones</th>
               </tr>
             </thead>
             <tbody>
               {clients.map((client) => (
                 <tr key={client.id} className="border-b hover:bg-muted/50">
-                  <td className="py-3 px-4 font-medium">{client.name}</td>
-                  <td className="py-3 px-4">{client.rut}</td>
+                  <td className="py-3 px-4 font-medium text-foreground">{client.name}</td>
+                  <td className="py-3 px-4 text-foreground">{client.rut}</td>
                   <td className="py-3 px-4">
                     <DepartmentBadge
                       department={client.department}
@@ -205,9 +205,9 @@ export const ClientsTable = ({
                       allClients={allClients}
                     />
                   </td>
-                  <td className="py-3 px-4">{client.contactName || '-'}</td>
-                  <td className="py-3 px-4">{client.email}</td>
-                  <td className="py-3 px-4">{client.phone}</td>
+                  <td className="py-3 px-4 text-foreground">{client.contactName || <span className="text-muted-foreground">-</span>}</td>
+                  <td className="py-3 px-4 text-foreground">{client.email || <span className="text-muted-foreground">-</span>}</td>
+                  <td className="py-3 px-4 text-foreground">{client.phone || <span className="text-muted-foreground">-</span>}</td>
                   <td className="py-3 px-4">
                     <Badge 
                       variant={client.isActive ? "default" : "secondary"}
