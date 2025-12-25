@@ -150,9 +150,9 @@ export const CostBatchUpdateModal = ({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
+        <DialogHeader className="border-b pb-4 bg-gradient-to-r from-violet-500/10 to-purple-500/10 -mx-6 -mt-6 px-6 pt-6 rounded-t-lg">
           <DialogTitle className="flex items-center gap-2">
-            <BarChart3 className="h-5 w-5 text-primary" />
+            <BarChart3 className="h-5 w-5 text-violet-600" />
             Actualización por Lotes
           </DialogTitle>
           <DialogDescription>
@@ -161,7 +161,7 @@ export const CostBatchUpdateModal = ({
         </DialogHeader>
 
         {/* Resumen */}
-        <Card className="bg-muted/20">
+        <Card className="bg-violet-500/5 border-violet-500/20">
           <CardContent className="pt-6">
             <div className="grid grid-cols-2 gap-4">
               <div>
@@ -170,7 +170,7 @@ export const CostBatchUpdateModal = ({
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Total</p>
-                <p className="text-2xl font-bold text-primary">
+                <p className="text-2xl font-bold text-violet-600">
                   ${totalAmount.toLocaleString('es-CL')}
                 </p>
               </div>
@@ -450,11 +450,15 @@ export const CostBatchUpdateModal = ({
           </Card>
         )}
 
-        <DialogFooter>
+        <DialogFooter className="border-t pt-4 mt-4">
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isPending}>
             Cancelar
           </Button>
-          <Button onClick={handleSubmit} disabled={!hasChanges || isPending}>
+          <Button 
+            onClick={handleSubmit} 
+            disabled={!hasChanges || isPending}
+            className="bg-violet-600 hover:bg-violet-700"
+          >
             {isPending ? 'Actualizando...' : `Actualizar ${selectedCosts.length} costos`}
           </Button>
         </DialogFooter>
