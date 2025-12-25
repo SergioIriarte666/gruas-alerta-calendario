@@ -501,7 +501,7 @@ export const CostForm = ({ isOpen, onClose, cost, prefilledData, onInventoryCost
                                                         <Button
                                                             type="submit"
                                                             disabled={isSubmitting}
-                                                            className="gap-2 bg-violet-600 hover:bg-violet-700"
+                                                            className="gap-2 bg-violet-600 hover:bg-violet-700 text-white"
                                                         >
                                                             {isSubmitting ? (
                                                                 <>
