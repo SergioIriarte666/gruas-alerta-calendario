@@ -1,21 +1,29 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Form } from '@/components/ui/form';
+import { Button } from '@/components/ui/button';
 import { Cost, CostFormData } from '@/types/costs';
 import { useAddCost, useUpdateCost } from '@/hooks/useCosts';
 import { useCostCategories } from '@/hooks/useCostCategories';
 import { useCranes } from '@/hooks/useCranes';
 import { useOperatorsData } from '@/hooks/operators/useOperatorsData';
 import { useServices } from '@/hooks/useServices';
+import { useSuppliers } from '@/hooks/useSuppliers';
+import { useCostCenters } from '@/hooks/useCostCenters';
 import { costSchema, CostFormValues } from '@/schemas/costSchema';
-import { CostFormInputs } from './form/CostFormInputs';
-import { CostFormActions } from './form/CostFormActions';
 import { ServiceExpenseModals } from './ServiceExpenseModals';
+import { CostFormStepNavigation, getCostFormSteps, CostFormStep } from './form/CostFormStepNavigation';
+import { CostSummaryPanel } from './form/CostSummaryPanel';
+import { CostFormStep1 } from './form/CostFormStep1';
+import { CostFormStep2 } from './form/CostFormStep2';
+import { CostFormStep3 } from './form/CostFormStep3';
+import { CostFormStep4 } from './form/CostFormStep4';
 import { toast } from 'sonner';
 import { getCurrentChileDateString, formatForInput } from '@/utils/timezoneUtils';
 import { useQueryClient } from '@tanstack/react-query';
+import { ChevronLeft, ChevronRight, Save, Loader2 } from 'lucide-react';
 
 interface CostFormProps {
     isOpen: boolean;
@@ -32,18 +40,20 @@ interface CostFormProps {
 }
 
 export const CostForm = ({ isOpen, onClose, cost, prefilledData, onInventoryCostCreated }: CostFormProps) => {
-    console.log('[CostForm] Rendered with cost:', cost, 'prefilledData:', prefilledData, 'isNewCost:', !cost);
     const queryClient = useQueryClient();
-    const { mutate: addCost, isPending: isAdding, error: addError } = useAddCost();
-    const { mutate: updateCost, isPending: isUpdating, error: updateError } = useUpdateCost();
+    const { mutate: addCost, isPending: isAdding } = useAddCost();
+    const { mutate: updateCost, isPending: isUpdating } = useUpdateCost();
     
-    const [showServiceExpenseModals, setShowServiceExpenseModals] = React.useState(false);
-    const [calculatedServiceTotal, setCalculatedServiceTotal] = React.useState(0);
+    const [currentStep, setCurrentStep] = useState(1);
+    const [showServiceExpenseModals, setShowServiceExpenseModals] = useState(false);
+    const [calculatedServiceTotal, setCalculatedServiceTotal] = useState(0);
     
     const { data: categories = [], isLoading: isLoadingCategories } = useCostCategories();
     const { cranes, loading: isLoadingCranes } = useCranes();
     const { data: operators = [], isLoading: isLoadingOperators } = useOperatorsData();
     const { getServicesForCosts, services, loading: isLoadingServices } = useServices();
+    const { suppliers = [] } = useSuppliers();
+    const { data: costCenters = [] } = useCostCenters();
 
     const servicesForCosts = getServicesForCosts();
 
@@ -71,17 +81,16 @@ export const CostForm = ({ isOpen, onClose, cost, prefilledData, onInventoryCost
 
     const selectedServiceId = watch('service_id');
     const selectedCategoryId = watch('category_id');
+    const watchedValues = watch();
 
+    // Auto-fill fields when service is selected
     useEffect(() => {
         if (selectedServiceId && selectedServiceId !== 'none') {
             const selectedService = services.find(service => service.id === selectedServiceId);
             if (selectedService) {
-                console.log('[CostForm] Auto-filling fields for selected service:', selectedService.folio);
-                
                 setValue('crane_id', selectedService.crane?.id || 'none');
                 setValue('operator_id', selectedService.operator?.id || 'none');
                 setValue('service_folio', selectedService.folio);
-                
                 toast.success("Campos Completados", { 
                     description: "Se han llenado automáticamente los campos relacionados al servicio" 
                 });
@@ -89,10 +98,62 @@ export const CostForm = ({ isOpen, onClose, cost, prefilledData, onInventoryCost
         }
     }, [selectedServiceId, services, setValue]);
 
-    const handleServiceExpenseSelect = () => {
-        console.log('[CostForm] Service expense selected - opening specialized modals');
+    // Reset step when opening
+    useEffect(() => {
+        if (isOpen) {
+            setCurrentStep(1);
+        }
+    }, [isOpen]);
+
+    // Get derived data for summary panel
+    const summaryData = useMemo(() => {
+        const category = categories.find(c => c.id === watchedValues.category_id);
+        const crane = cranes.find(c => c.id === watchedValues.crane_id);
+        const operator = operators.find(o => o.id === watchedValues.operator_id);
+        const supplier = suppliers.find(s => s.id === watchedValues.supplier_id);
+        const costCenter = costCenters.find(cc => cc.id === watchedValues.cost_center_id);
+        const selectedCategory = categories.find(cat => cat.id === selectedCategoryId);
+        const isPiezasYRepuestos = selectedCategory?.name === 'Mantenimiento' && watchedValues.subcategory === 'Piezas y Repuestos';
+
+        return {
+            date: watchedValues.date || '',
+            categoryName: category?.name || '',
+            subcategory: watchedValues.subcategory || '',
+            description: watchedValues.description || '',
+            amount: Number(watchedValues.amount) || 0,
+            craneName: crane?.licensePlate || '',
+            operatorName: operator?.name || '',
+            serviceFolio: watchedValues.service_folio || '',
+            costCenterName: costCenter ? `${costCenter.code} - ${costCenter.name}` : '',
+            supplierName: supplier?.name || '',
+            notes: watchedValues.notes || '',
+            isEditing: !!cost,
+            isPiezasYRepuestos,
+            partName: watchedValues.part_name || '',
+            quantity: watchedValues.quantity || undefined,
+            unitPrice: watchedValues.unit_price || undefined,
+        };
+    }, [watchedValues, categories, cranes, operators, suppliers, costCenters, cost, selectedCategoryId]);
+
+    // Calculate step completion
+    const steps = useMemo((): CostFormStep[] => {
+        const baseSteps = getCostFormSteps();
         
-        // Validar que se haya seleccionado un servicio primero
+        const step1Complete = !!watchedValues.date && !!watchedValues.category_id && !!watchedValues.description?.trim();
+        const step2Complete = (watchedValues.amount || 0) > 0;
+        const step3Complete = true; // Associations are optional
+        const step4Complete = true; // Notes are optional
+
+        const completionStatus = [step1Complete, step2Complete, step3Complete, step4Complete];
+        
+        return baseSteps.map((step, index) => ({
+            ...step,
+            isCompleted: completionStatus[index],
+            hasError: false,
+        }));
+    }, [watchedValues]);
+
+    const handleServiceExpenseSelect = () => {
         const currentServiceId = form.getValues('service_id');
         if (!currentServiceId || currentServiceId === 'none') {
             toast.error("Servicio Requerido", { 
@@ -100,22 +161,17 @@ export const CostForm = ({ isOpen, onClose, cost, prefilledData, onInventoryCost
             });
             return;
         }
-        
         setShowServiceExpenseModals(true);
     };
 
     const handleServiceExpenseComplete = (totalAmount?: number) => {
-        console.log('[CostForm] Service expense completed - total:', totalAmount);
         setShowServiceExpenseModals(false);
-        
         if (totalAmount && totalAmount > 0) {
             setCalculatedServiceTotal(totalAmount);
             setValue('amount', totalAmount);
             toast.success("Gastos Desglosados", { 
                 description: `Se crearon los costos desglosados por un total de $${totalAmount.toLocaleString()}` 
             });
-            
-            // Cerrar el formulario principal después del desglose exitoso
             onClose();
         } else {
             toast.info("Desglose Cancelado", { 
@@ -130,7 +186,7 @@ export const CostForm = ({ isOpen, onClose, cost, prefilledData, onInventoryCost
                 ? formatForInput(cost.date)
                 : getCurrentChileDateString();
 
-            const initialValues = {
+            reset({
                 date: dateValue,
                 description: cost.description,
                 amount: Number(cost.amount),
@@ -148,17 +204,12 @@ export const CostForm = ({ isOpen, onClose, cost, prefilledData, onInventoryCost
                 quantity: cost.crane_parts?.[0]?.quantity || null,
                 unit_price: cost.crane_parts?.[0]?.unit_price || null,
                 kilometraje: cost.crane_parts?.[0]?.kilometraje || null,
-                // Campos de inventario
                 purchase_quantity: cost.purchase_quantity || null,
                 purchase_unit_cost: cost.purchase_unit_cost || null,
                 immediate_consumption: cost.immediate_consumption || false,
                 supplier_id: cost.supplier_id || 'none',
-            };
-            console.log('[CostForm] Setting form values for editing:', initialValues);
-            reset(initialValues);
+            });
         } else if (prefilledData) {
-            // Datos pre-cargados para duplicación
-            console.log('[CostForm] Setting form values from prefilled data (duplication):', prefilledData);
             reset({
                 date: prefilledData.date,
                 description: prefilledData.description,
@@ -178,7 +229,7 @@ export const CostForm = ({ isOpen, onClose, cost, prefilledData, onInventoryCost
             });
             setCalculatedServiceTotal(0);
         } else {
-            const defaultValues = {
+            reset({
                 date: getCurrentChileDateString(),
                 description: '',
                 amount: 0,
@@ -194,48 +245,51 @@ export const CostForm = ({ isOpen, onClose, cost, prefilledData, onInventoryCost
                 purchase_unit_cost: null,
                 immediate_consumption: false,
                 supplier_id: 'none',
-            };
-            console.log('[CostForm] Setting default values for new cost:', defaultValues);
-            reset(defaultValues);
+            });
             setCalculatedServiceTotal(0);
         }
     }, [cost, prefilledData, reset, isOpen]);
     
     const onSubmit = (values: CostFormValues) => {
-        console.log('[CostForm] Submitting form with values:', values);
-        
         try {
             if (!values.category_id) {
                 toast.error("Campo Requerido", { description: "Debe seleccionar una categoría" });
+                setCurrentStep(1);
                 return;
             }
             
             if (!values.description || values.description.trim() === '') {
                 toast.error("Campo Requerido", { description: "La descripción es obligatoria" });
+                setCurrentStep(1);
                 return;
             }
             
             const validAmount = typeof values.amount === 'number' ? values.amount : parseFloat(String(values.amount)) || 0;
             if (validAmount <= 0) {
                 toast.error("Valor Inválido", { description: "El monto debe ser mayor a 0" });
+                setCurrentStep(2);
                 return;
             }
             
             if (values.subcategory === 'Piezas y Repuestos') {
                 if (!values.part_name || values.part_name.trim() === '') {
                     toast.error("Campo Requerido", { description: "El nombre de la pieza es obligatorio" });
+                    setCurrentStep(2);
                     return;
                 }
                 if (!values.supplier || values.supplier.trim() === '') {
                     toast.error("Campo Requerido", { description: "El proveedor es obligatorio" });
+                    setCurrentStep(2);
                     return;
                 }
                 if (!values.quantity || values.quantity <= 0) {
                     toast.error("Valor Inválido", { description: "La cantidad debe ser mayor a 0" });
+                    setCurrentStep(2);
                     return;
                 }
                 if (!values.unit_price || values.unit_price <= 0) {
                     toast.error("Valor Inválido", { description: "El precio unitario debe ser mayor a 0" });
+                    setCurrentStep(2);
                     return;
                 }
             }
@@ -256,31 +310,23 @@ export const CostForm = ({ isOpen, onClose, cost, prefilledData, onInventoryCost
                 purchase_unit_cost: values.purchase_unit_cost || null,
                 immediate_consumption: values.immediate_consumption || false,
             } as CostFormData;
-            
-            console.log('[CostForm] Final submission data after validation:', submissionData);
         
             if (cost && cost.id) {
                 updateCost({ id: cost.id, ...submissionData }, {
                     onSuccess: (data) => {
-                        console.log('[CostForm] Update cost success:', data);
                         toast.success("Costo Actualizado", { description: "El costo se ha actualizado correctamente." });
                         queryClient.invalidateQueries({ queryKey: ['costs'] });
                         queryClient.invalidateQueries({ queryKey: ['cost-centers-stats'] });
                         
-                        // Verificar si es compra de inventario con consumo inmediato y sin grúa específica (también al editar)
                         const isInventoryPurchase = submissionData.purchase_quantity && 
                                                    submissionData.purchase_quantity > 0 &&
                                                    submissionData.purchase_unit_cost &&
                                                    submissionData.immediate_consumption;
-                        
                         const hasNoCraneSelected = !submissionData.crane_id || submissionData.crane_id === 'none';
                         
-                        // Cerrar el formulario primero
                         onClose();
                         
-                        // Luego abrir el modal de distribución si corresponde
                         if (isInventoryPurchase && hasNoCraneSelected && onInventoryCostCreated) {
-                            // Triggear el diálogo de distribución
                             onInventoryCostCreated({
                                 costId: cost.id,
                                 description: submissionData.description,
@@ -291,7 +337,6 @@ export const CostForm = ({ isOpen, onClose, cost, prefilledData, onInventoryCost
                         }
                     },
                     onError: (error) => {
-                        console.error("[CostForm] Update cost failed:", error);
                         const errorMessage = error?.message || 'Error desconocido';
                         toast.error("Error al Actualizar", { 
                             description: `No se pudo actualizar el costo: ${errorMessage}` 
@@ -301,21 +346,17 @@ export const CostForm = ({ isOpen, onClose, cost, prefilledData, onInventoryCost
             } else {
                 addCost(submissionData, {
                     onSuccess: (data) => {
-                        console.log('[CostForm] Add cost success:', data);
                         toast.success("Costo Agregado", { description: "El nuevo costo se ha registrado correctamente." });
                         queryClient.invalidateQueries({ queryKey: ['costs'] });
                         queryClient.invalidateQueries({ queryKey: ['cost-centers-stats'] });
                         
-                        // Verificar si es compra de inventario con consumo inmediato y sin grúa específica
                         const isInventoryPurchase = submissionData.purchase_quantity && 
                                                    submissionData.purchase_quantity > 0 &&
                                                    submissionData.purchase_unit_cost &&
                                                    submissionData.immediate_consumption;
-                        
                         const hasNoCraneSelected = !submissionData.crane_id || submissionData.crane_id === 'none';
                         
                         if (isInventoryPurchase && hasNoCraneSelected && onInventoryCostCreated && data?.[0]) {
-                            // Triggear el diálogo de distribución
                             onInventoryCostCreated({
                                 costId: data[0].id,
                                 description: submissionData.description,
@@ -328,7 +369,6 @@ export const CostForm = ({ isOpen, onClose, cost, prefilledData, onInventoryCost
                         onClose();
                     },
                     onError: (error) => {
-                        console.error("[CostForm] Add cost failed:", error);
                         const errorMessage = error?.message || 'Error desconocido';
                         toast.error("Error al Agregar", { 
                             description: `No se pudo registrar el nuevo costo: ${errorMessage}` 
@@ -337,53 +377,159 @@ export const CostForm = ({ isOpen, onClose, cost, prefilledData, onInventoryCost
                 });
             }
         } catch (validationError: any) {
-            console.error("[CostForm] Validation error:", validationError);
             toast.error("Error de Validación", { 
                 description: validationError.message || "Revise los datos ingresados" 
             });
         }
     };
 
+    const handleNextStep = () => {
+        if (currentStep < 4) {
+            setCurrentStep(currentStep + 1);
+        }
+    };
+
+    const handlePrevStep = () => {
+        if (currentStep > 1) {
+            setCurrentStep(currentStep - 1);
+        }
+    };
+
+    const isSubmitting = isAdding || isUpdating;
+
     return (
         <>
             <Dialog open={isOpen && !showServiceExpenseModals} onOpenChange={onClose}>
-                <DialogContent className="bg-card border max-w-5xl max-h-[90vh] overflow-y-auto">
-                    <DialogHeader>
-                        <DialogTitle className="text-2xl font-bold text-foreground">
-                            {cost ? 'Editar Costo' : prefilledData ? 'Duplicar Costo' : 'Registrar Nuevo Costo'}
-                        </DialogTitle>
-                        <p className="text-muted-foreground">
-                            {cost ? 'Modifica los datos del costo existente' : prefilledData ? 'Se ha pre-cargado la información del costo original. Ajusta la fecha o descripción según necesites.' : 'Completa la información del nuevo costo'}
-                        </p>
-                    </DialogHeader>
-                    <Form {...form}>
-                        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                            <CostFormInputs
-                                form={form}
-                                categories={categories}
-                                isLoadingCategories={isLoadingCategories}
-                                cranes={cranes}
-                                isLoadingCranes={isLoadingCranes}
-                                operators={operators}
-                                isLoadingOperators={isLoadingOperators}
-                                services={servicesForCosts}
-                                isLoadingServices={isLoadingServices}
-                                isNewCost={!cost}
-                                onServiceExpenseSelect={!cost ? handleServiceExpenseSelect : undefined}
-                                calculatedServiceTotal={calculatedServiceTotal}
-                            />
-                            <CostFormActions onClose={onClose} isSubmitting={isAdding || isUpdating} />
-                        </form>
-                    </Form>
+                <DialogContent className="bg-card border max-w-6xl max-h-[90vh] overflow-hidden p-0">
+                    <div className="flex flex-col h-full max-h-[90vh]">
+                        {/* Header */}
+                        <DialogHeader className="px-6 py-4 border-b bg-gradient-to-r from-violet-500/10 to-purple-500/10">
+                            <DialogTitle className="text-2xl font-bold text-foreground">
+                                {cost ? 'Editar Costo' : prefilledData ? 'Duplicar Costo' : 'Registrar Nuevo Costo'}
+                            </DialogTitle>
+                            <p className="text-muted-foreground">
+                                {cost ? 'Modifica los datos del costo existente' : prefilledData ? 'Se ha pre-cargado la información del costo original.' : 'Completa la información del nuevo costo'}
+                            </p>
+                        </DialogHeader>
+
+                        {/* Main Content - 2 Column Layout */}
+                        <div className="flex-1 overflow-hidden">
+                            <div className="grid grid-cols-1 lg:grid-cols-4 h-full">
+                                {/* Left Sidebar - Navigation & Summary */}
+                                <div className="lg:col-span-1 border-r bg-muted/30 p-4 overflow-y-auto space-y-4">
+                                    <CostFormStepNavigation
+                                        steps={steps}
+                                        currentStep={currentStep}
+                                        onStepClick={setCurrentStep}
+                                    />
+                                    
+                                    <div className="hidden lg:block">
+                                        <CostSummaryPanel {...summaryData} />
+                                    </div>
+                                </div>
+
+                                {/* Right Content - Form Steps */}
+                                <div className="lg:col-span-3 flex flex-col overflow-hidden">
+                                    <Form {...form}>
+                                        <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col h-full">
+                                            {/* Step Content */}
+                                            <div className="flex-1 overflow-y-auto p-6">
+                                                {currentStep === 1 && (
+                                                    <CostFormStep1
+                                                        form={form}
+                                                        categories={categories}
+                                                        isLoadingCategories={isLoadingCategories}
+                                                        isNewCost={!cost}
+                                                        onServiceExpenseSelect={!cost ? handleServiceExpenseSelect : undefined}
+                                                    />
+                                                )}
+                                                {currentStep === 2 && (
+                                                    <CostFormStep2
+                                                        form={form}
+                                                        categories={categories}
+                                                        isNewCost={!cost}
+                                                        onServiceExpenseSelect={!cost ? handleServiceExpenseSelect : undefined}
+                                                        calculatedServiceTotal={calculatedServiceTotal}
+                                                    />
+                                                )}
+                                                {currentStep === 3 && (
+                                                    <CostFormStep3
+                                                        form={form}
+                                                        cranes={cranes}
+                                                        isLoadingCranes={isLoadingCranes}
+                                                        operators={operators}
+                                                        isLoadingOperators={isLoadingOperators}
+                                                        services={servicesForCosts}
+                                                        isLoadingServices={isLoadingServices}
+                                                    />
+                                                )}
+                                                {currentStep === 4 && (
+                                                    <CostFormStep4 form={form} />
+                                                )}
+                                            </div>
+
+                                            {/* Footer - Navigation Buttons */}
+                                            <div className="border-t bg-muted/30 px-6 py-4 flex items-center justify-between">
+                                                <Button
+                                                    type="button"
+                                                    variant="outline"
+                                                    onClick={handlePrevStep}
+                                                    disabled={currentStep === 1}
+                                                    className="gap-2"
+                                                >
+                                                    <ChevronLeft className="h-4 w-4" />
+                                                    Anterior
+                                                </Button>
+
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-sm text-muted-foreground">
+                                                        Paso {currentStep} de 4
+                                                    </span>
+                                                </div>
+
+                                                <div className="flex gap-2">
+                                                    {currentStep < 4 ? (
+                                                        <Button
+                                                            type="button"
+                                                            onClick={handleNextStep}
+                                                            className="gap-2 bg-violet-600 hover:bg-violet-700"
+                                                        >
+                                                            Siguiente
+                                                            <ChevronRight className="h-4 w-4" />
+                                                        </Button>
+                                                    ) : (
+                                                        <Button
+                                                            type="submit"
+                                                            disabled={isSubmitting}
+                                                            className="gap-2 bg-violet-600 hover:bg-violet-700"
+                                                        >
+                                                            {isSubmitting ? (
+                                                                <>
+                                                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                                                    Guardando...
+                                                                </>
+                                                            ) : (
+                                                                <>
+                                                                    <Save className="h-4 w-4" />
+                                                                    {cost ? 'Actualizar' : 'Guardar'}
+                                                                </>
+                                                            )}
+                                                        </Button>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </form>
+                                    </Form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </DialogContent>
             </Dialog>
 
             <ServiceExpenseModals
                 isOpen={showServiceExpenseModals}
-                onClose={() => {
-                    console.log('[CostForm] Closing service expense modals');
-                    setShowServiceExpenseModals(false);
-                }}
+                onClose={() => setShowServiceExpenseModals(false)}
                 onComplete={(totalAmount) => handleServiceExpenseComplete(totalAmount)}
                 baseData={{
                     date: form.getValues('date'),
