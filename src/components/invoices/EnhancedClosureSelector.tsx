@@ -96,8 +96,8 @@ const EnhancedClosureSelector: React.FC<EnhancedClosureSelectorProps> = ({
                     <div className="flex-1 space-y-2">
                       {/* Folio */}
                       <div className="flex items-center gap-2">
-                        <FileText className="w-4 h-4 text-primary" />
-                        <span className="font-medium text-primary">{closure.folio}</span>
+                        <FileText className="w-4 h-4 text-foreground" />
+                        <span className="font-medium text-foreground">{closure.folio}</span>
                         {selectedClosureId === closure.id && <Check className="w-4 h-4 text-primary ml-auto" />}
                       </div>
                         
