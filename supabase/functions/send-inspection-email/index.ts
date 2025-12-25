@@ -39,10 +39,37 @@ const handler = async (req: Request): Promise<Response> => {
       serviceDate: inspectionData.serviceDate
     });
 
-    // Validate email address
-    if (!inspectionData.clientEmail || !inspectionData.clientEmail.includes('@')) {
+    // Validate email address with proper regex
+    const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    const sanitizedEmail = inspectionData.clientEmail?.trim().toLowerCase();
+    
+    if (!sanitizedEmail || !EMAIL_REGEX.test(sanitizedEmail)) {
       console.error("❌ Email inválido:", inspectionData.clientEmail);
-      throw new Error("Email del cliente inválido");
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: "Formato de email inválido" 
+        }),
+        {
+          status: 400,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        }
+      );
+    }
+
+    // Validate max length (RFC 5321)
+    if (sanitizedEmail.length > 254) {
+      console.error("❌ Email demasiado largo:", sanitizedEmail.length);
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: "Email demasiado largo" 
+        }),
+        {
+          status: 400,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        }
+      );
     }
 
     // Convert base64 to buffer for attachment
@@ -51,7 +78,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     const emailResponse = await resend.emails.send({
       from: "Grúas 5 Norte <noreply@gruas5norte.com>",
-      to: [inspectionData.clientEmail],
+      to: [sanitizedEmail],
       subject: `Reporte de Inspección Pre-Servicio - ${inspectionData.folio}`,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">

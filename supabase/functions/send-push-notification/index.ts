@@ -25,10 +25,40 @@ const handler = async (req: Request): Promise<Response> => {
   try {
     console.log('[PushNotification] Processing request...');
     
-    const supabase = createClient(
+    // Verify authentication
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      console.error('[PushNotification] No authorization header');
+      return new Response(JSON.stringify({
+        success: false,
+        error: 'No autorizado'
+      }), {
+        status: 401,
+        headers: { 'Content-Type': 'application/json', ...corsHeaders },
+      });
+    }
+
+    // Create client with user's auth token to verify identity
+    const supabaseAuth = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      { global: { headers: { Authorization: authHeader } } }
     );
+
+    // Verify caller's identity
+    const { data: { user }, error: authError } = await supabaseAuth.auth.getUser();
+    if (authError || !user) {
+      console.error('[PushNotification] Auth error:', authError?.message);
+      return new Response(JSON.stringify({
+        success: false,
+        error: 'Usuario no autenticado'
+      }), {
+        status: 401,
+        headers: { 'Content-Type': 'application/json', ...corsHeaders },
+      });
+    }
+
+    console.log('[PushNotification] Authenticated user:', user.id);
 
     const { userId, notification }: PushNotificationRequest = await req.json();
 
@@ -46,8 +76,48 @@ const handler = async (req: Request): Promise<Response> => {
       });
     }
 
+    // Create service role client for database operations
+    const supabaseService = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
+
+    // Verify caller has permission: must be admin or sending to self
+    const { data: callerProfile, error: profileError } = await supabaseService
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single();
+
+    if (profileError) {
+      console.error('[PushNotification] Error fetching caller profile:', profileError);
+      return new Response(JSON.stringify({
+        success: false,
+        error: 'Error verificando permisos'
+      }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json', ...corsHeaders },
+      });
+    }
+
+    const isAdmin = callerProfile?.role === 'admin';
+    const isSelfNotification = userId === user.id;
+
+    if (!isAdmin && !isSelfNotification) {
+      console.error('[PushNotification] Unauthorized: user', user.id, 'trying to notify', userId);
+      return new Response(JSON.stringify({
+        success: false,
+        error: 'No autorizado para enviar notificaciones a este usuario'
+      }), {
+        status: 403,
+        headers: { 'Content-Type': 'application/json', ...corsHeaders },
+      });
+    }
+
+    console.log('[PushNotification] Authorization check passed. Admin:', isAdmin, 'Self:', isSelfNotification);
+
     // Get active subscription for user
-    const { data: subscription, error: subscriptionError } = await supabase
+    const { data: subscription, error: subscriptionError } = await supabaseService
       .from('push_subscriptions')
       .select('*')
       .eq('user_id', userId)
@@ -93,7 +163,7 @@ const handler = async (req: Request): Promise<Response> => {
     }
     
     // Log the notification
-    const { error: logError } = await supabase
+    const { error: logError } = await supabaseService
       .from('notification_logs')
       .insert({
         user_id: userId,
@@ -126,8 +196,7 @@ const handler = async (req: Request): Promise<Response> => {
     console.error('[PushNotification] Service error:', error);
     return new Response(JSON.stringify({
       success: false,
-      error: error.message || 'Error desconocido',
-      details: 'Error en el servicio de notificación push'
+      error: 'Error en el servicio de notificación push'
     }), {
       status: 500,
       headers: { 'Content-Type': 'application/json', ...corsHeaders },
