@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import DatePickerInput from '@/components/common/DatePickerInput';
 import { useDailyReport } from '@/hooks/useDailyReport';
 import { formatForInput, formatForDisplay } from '@/utils/timezoneUtils';
 import { useSettings } from '@/hooks/useSettings';
@@ -225,12 +225,10 @@ const DailyReportPage = () => {
             </Button>
 
             <div className="flex items-center gap-2">
-              <Calendar className="w-4 h-4 text-muted-foreground" />
-              <Input
-                type="date"
+              <DatePickerInput
                 value={selectedDate}
-                onChange={(e) => setSelectedDate(e.target.value)}
-                className="w-auto"
+                onChange={setSelectedDate}
+                placeholder="Seleccionar fecha"
               />
               <Button variant="ghost" size="sm" onClick={handleToday}>
                 Hoy

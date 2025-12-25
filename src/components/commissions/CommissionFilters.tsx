@@ -3,8 +3,10 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { CalendarDays, Filter, X } from 'lucide-react';
+import { Filter, X } from 'lucide-react';
 import { CommissionFilters } from '@/types/commissions';
+import DatePickerInput from '@/components/common/DatePickerInput';
+import { format, parse } from 'date-fns';
 
 interface CommissionFiltersProps {
   filters: CommissionFilters;
@@ -106,19 +108,19 @@ export const CommissionFiltersComponent: React.FC<CommissionFiltersProps> = ({
 
         <div>
           <label className="text-sm font-medium mb-1 block">Fecha desde</label>
-          <Input
-            type="date"
-            value={filters.date_from ? filters.date_from.toISOString().split('T')[0] : ""}
-            onChange={(e) => handleFilterChange('date_from', e.target.value ? new Date(e.target.value) : undefined)}
+          <DatePickerInput
+            value={filters.date_from ? format(filters.date_from, 'yyyy-MM-dd') : ""}
+            onChange={(value) => handleFilterChange('date_from', value ? parse(value, 'yyyy-MM-dd', new Date()) : undefined)}
+            placeholder="Seleccionar"
           />
         </div>
 
         <div>
           <label className="text-sm font-medium mb-1 block">Fecha hasta</label>
-          <Input
-            type="date"
-            value={filters.date_to ? filters.date_to.toISOString().split('T')[0] : ""}
-            onChange={(e) => handleFilterChange('date_to', e.target.value ? new Date(e.target.value) : undefined)}
+          <DatePickerInput
+            value={filters.date_to ? format(filters.date_to, 'yyyy-MM-dd') : ""}
+            onChange={(value) => handleFilterChange('date_to', value ? parse(value, 'yyyy-MM-dd', new Date()) : undefined)}
+            placeholder="Seleccionar"
           />
         </div>
 
