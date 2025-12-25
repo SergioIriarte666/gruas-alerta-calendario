@@ -115,8 +115,8 @@ const EnhancedClosureSelector: React.FC<EnhancedClosureSelectorProps> = ({
                       
                       {/* Monto */}
                       <div className="flex items-center gap-2 text-sm">
-                        <DollarSign className="w-4 h-4 text-muted-foreground" />
-                        <span className="font-medium text-primary">
+                        <DollarSign className="w-4 h-4 text-violet-600" />
+                        <span className="font-medium text-violet-600">
                           ${Math.round(closure.total).toLocaleString()}
                         </span>
                       </div>
