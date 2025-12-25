@@ -79,11 +79,11 @@ export const CraneForm = ({ crane, onSubmit, onCancel }: CraneFormProps) => {
 
   return (
     <DialogContent className="sm:max-w-[600px] bg-card border">
-      <DialogHeader>
-        <DialogTitle className="text-foreground">
+      <DialogHeader className="bg-gradient-to-r from-violet-600 to-violet-500 text-white -mx-6 -mt-6 px-6 py-4 rounded-t-lg">
+        <DialogTitle className="text-white">
           {crane ? 'Editar Grúa' : 'Nueva Grúa'}
         </DialogTitle>
-        <DialogDescription className="text-muted-foreground">
+        <DialogDescription className="text-violet-200">
           {crane ? 'Modifica los datos de la grúa' : 'Ingresa los datos de la nueva grúa'}
         </DialogDescription>
       </DialogHeader>
@@ -193,7 +193,7 @@ export const CraneForm = ({ crane, onSubmit, onCancel }: CraneFormProps) => {
           </Button>
           <Button
             type="submit"
-            className="bg-primary hover:bg-primary/90 text-primary-foreground"
+            className="bg-violet-600 hover:bg-violet-700 text-white"
           >
             {crane ? 'Actualizar' : 'Crear'} Grúa
           </Button>

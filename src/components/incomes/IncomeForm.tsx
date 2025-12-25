@@ -222,9 +222,9 @@ export const IncomeForm = ({ isOpen, onClose, income }: IncomeFormProps) => {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>{income ? 'Editar Ingreso' : 'Registrar Nuevo Ingreso'}</DialogTitle>
-          <DialogDescription>
+        <DialogHeader className="bg-gradient-to-r from-violet-600 to-violet-500 text-white -mx-6 -mt-6 px-6 py-4 rounded-t-lg">
+          <DialogTitle className="text-white">{income ? 'Editar Ingreso' : 'Registrar Nuevo Ingreso'}</DialogTitle>
+          <DialogDescription className="text-violet-200">
             Complete los detalles del ingreso bancario
           </DialogDescription>
         </DialogHeader>
@@ -597,7 +597,11 @@ export const IncomeForm = ({ isOpen, onClose, income }: IncomeFormProps) => {
               <Button type="button" variant="outline" onClick={onClose}>
                 Cancelar
               </Button>
-              <Button type="submit" disabled={createIncome.isPending || updateIncome.isPending}>
+              <Button 
+                type="submit" 
+                disabled={createIncome.isPending || updateIncome.isPending}
+                className="bg-violet-600 hover:bg-violet-700 text-white"
+              >
                 {income ? 'Actualizar' : 'Registrar'}
               </Button>
             </DialogFooter>

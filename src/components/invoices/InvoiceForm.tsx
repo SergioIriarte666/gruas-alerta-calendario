@@ -304,11 +304,11 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
 
   return (
     <Card className="bg-card border">
-      <CardHeader>
-        <CardTitle className="text-foreground">
+      <CardHeader className="bg-gradient-to-r from-violet-600 to-violet-500 text-white rounded-t-lg">
+        <CardTitle className="text-white">
           {isEditing ? 'Editar Factura' : 'Nueva Factura'}
           {preselectedClosureId && (
-            <span className="text-sm font-normal text-primary ml-2">
+            <span className="text-sm font-normal text-violet-200 ml-2">
               (Cierre preseleccionado)
             </span>
           )}
@@ -473,7 +473,7 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
             </Button>
             <Button 
               type="submit" 
-              className="bg-primary text-primary-foreground hover:bg-primary/90" 
+              className="bg-violet-600 hover:bg-violet-700 text-white" 
               disabled={!selectedClosure || isSubmitting || isLoading}
             >
               {isSubmitting || isLoading ? (

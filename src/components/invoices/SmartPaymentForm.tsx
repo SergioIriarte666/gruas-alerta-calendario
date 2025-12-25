@@ -298,16 +298,16 @@ export const SmartPaymentForm: React.FC<SmartPaymentFormProps> = ({
   return <>
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
       <Card className="w-full max-w-2xl bg-white max-h-[90vh] overflow-y-auto">
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
-            <Zap className="h-5 w-5 text-blue-500" />
+        <CardHeader className="flex flex-row items-center justify-between bg-gradient-to-r from-violet-600 to-violet-500 text-white -mx-6 -mt-6 px-6 py-4 rounded-t-lg">
+          <CardTitle className="flex items-center gap-2 text-white">
+            <Zap className="h-5 w-5" />
             Registrar Pago Inteligente
           </CardTitle>
-          <Button variant="ghost" size="sm" onClick={onClose}>
+          <Button variant="ghost" size="sm" onClick={onClose} className="text-white hover:bg-white/20">
             <X className="h-4 w-4" />
           </Button>
         </CardHeader>
-        <CardContent>
+        <CardContent className="pt-6">
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Cliente */}
             <div>
@@ -473,7 +473,7 @@ export const SmartPaymentForm: React.FC<SmartPaymentFormProps> = ({
             </div>
 
             <div className="flex gap-2 pt-4">
-              <Button type="submit" disabled={loading || !!duplicateWarning} className="flex-1 bg-blue-600 hover:bg-blue-700">
+              <Button type="submit" disabled={loading || !!duplicateWarning} className="flex-1 bg-violet-600 hover:bg-violet-700 text-white">
                 {loading ? 'Procesando...' : 'Registrar Pago'}
               </Button>
               <Button type="button" variant="outline" onClick={onClose}>
