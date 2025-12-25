@@ -1,18 +1,18 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Switch } from '@/components/ui/switch';
-import { X, Save, Loader2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Save, X, Loader2, Building2 } from 'lucide-react';
 import { useSuppliers } from '@/hooks/useSuppliers';
 import { useSupplierCategoryManager } from '@/hooks/useSupplierCategoryManager';
 import { SupplierFormData, Supplier } from '@/types/suppliers';
+import { SupplierFormStepNavigation, getSupplierFormSteps, SupplierFormStep } from './form/SupplierFormStepNavigation';
+import { SupplierSummaryPanel } from './form/SupplierSummaryPanel';
+import { SupplierFormStep1 } from './form/SupplierFormStep1';
+import { SupplierFormStep2 } from './form/SupplierFormStep2';
+import { SupplierFormStep3 } from './form/SupplierFormStep3';
 
 const supplierSchema = z.object({
   name: z.string().min(1, 'El nombre es requerido'),
@@ -39,8 +39,10 @@ export const SupplierForm: React.FC<SupplierFormProps> = ({
   onClose, 
   onSave 
 }) => {
+  const [currentStep, setCurrentStep] = useState(1);
   const { createSupplier, updateSupplier, isCreating, isUpdating } = useSuppliers();
   const { activeCategories, isLoading: categoriesLoading } = useSupplierCategoryManager();
+  const isEditing = !!supplier;
 
   const form = useForm<FormData>({
     resolver: zodResolver(supplierSchema),
@@ -56,6 +58,9 @@ export const SupplierForm: React.FC<SupplierFormProps> = ({
       is_active: supplier?.is_active ?? true
     }
   });
+
+  const formValues = form.watch();
+  const errors = form.formState.errors;
 
   const onSubmit = (data: FormData) => {
     const supplierData: SupplierFormData = {
@@ -89,180 +94,214 @@ export const SupplierForm: React.FC<SupplierFormProps> = ({
 
   const isSubmitting = isCreating || isUpdating;
 
+  // Step validation
+  const validateStep = (step: number): boolean => {
+    switch (step) {
+      case 1:
+        return formValues.name?.trim() !== '' && formValues.rut?.trim() !== '';
+      case 2:
+        return formValues.phone?.trim() !== '' && formValues.address?.trim() !== '' && formValues.contact_name?.trim() !== '';
+      case 3:
+        return formValues.category?.trim() !== '';
+      default:
+        return true;
+    }
+  };
+
+  const canGoNext = validateStep(currentStep);
+  const canSubmit = validateStep(1) && validateStep(2) && validateStep(3);
+
+  const steps: SupplierFormStep[] = getSupplierFormSteps().map(step => ({
+    ...step,
+    isCompleted: step.id < currentStep || (step.id === currentStep && validateStep(step.id)),
+    hasError: false,
+  }));
+
+  const goToNextStep = () => {
+    if (currentStep < 3 && canGoNext) {
+      setCurrentStep(currentStep + 1);
+    }
+  };
+
+  const goToPreviousStep = () => {
+    if (currentStep > 1) {
+      setCurrentStep(currentStep - 1);
+    }
+  };
+
+  const getCategoryLabel = (categoryId: string) => {
+    const cat = activeCategories.find(c => c.id === categoryId);
+    return cat?.label || '';
+  };
+
+  const renderStepContent = () => {
+    switch (currentStep) {
+      case 1:
+        return (
+          <SupplierFormStep1
+            name={formValues.name}
+            rut={formValues.rut}
+            onNameChange={(value) => form.setValue('name', value)}
+            onRutChange={(value) => form.setValue('rut', value)}
+            errors={{
+              name: errors.name?.message,
+              rut: errors.rut?.message,
+            }}
+          />
+        );
+      case 2:
+        return (
+          <SupplierFormStep2
+            email={formValues.email || ''}
+            phone={formValues.phone}
+            address={formValues.address}
+            contactName={formValues.contact_name}
+            onEmailChange={(value) => form.setValue('email', value)}
+            onPhoneChange={(value) => form.setValue('phone', value)}
+            onAddressChange={(value) => form.setValue('address', value)}
+            onContactNameChange={(value) => form.setValue('contact_name', value)}
+            errors={{
+              email: errors.email?.message,
+              phone: errors.phone?.message,
+              address: errors.address?.message,
+              contact_name: errors.contact_name?.message,
+            }}
+          />
+        );
+      case 3:
+        return (
+          <SupplierFormStep3
+            category={formValues.category}
+            notes={formValues.notes || ''}
+            isActive={formValues.is_active}
+            categories={activeCategories}
+            categoriesLoading={categoriesLoading}
+            onCategoryChange={(value) => form.setValue('category', value)}
+            onNotesChange={(value) => form.setValue('notes', value)}
+            onIsActiveChange={(value) => form.setValue('is_active', value)}
+            errors={{
+              category: errors.category?.message,
+            }}
+          />
+        );
+      default:
+        return null;
+    }
+  };
+
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 suppliers-scope">
-      <Card className="w-full max-w-2xl max-h-[90vh] overflow-auto bg-card border">
-        <CardHeader className="flex flex-row items-center justify-between border-b border">
-          <CardTitle className="text-foreground">
-            {supplier ? 'Editar Proveedor' : 'Nuevo Proveedor'}
-          </CardTitle>
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={onClose}
-            className="text-muted-foreground hover:text-foreground"
-          >
-            <X className="h-4 w-4" />
-          </Button>
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <Card className="w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col bg-card border">
+        {/* Header */}
+        <CardHeader className="bg-gradient-to-r from-violet-600 to-violet-500 text-white rounded-t-lg flex-shrink-0">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-white flex items-center gap-2">
+              <Building2 className="h-5 w-5" />
+              {isEditing ? 'Editar Proveedor' : 'Nuevo Proveedor'}
+            </CardTitle>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={onClose}
+              className="text-white/80 hover:text-white hover:bg-white/20"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+          <p className="text-violet-200 text-sm mt-1">
+            {isEditing ? 'Modifica los datos del proveedor' : 'Ingresa los datos del nuevo proveedor'}
+          </p>
         </CardHeader>
-        
-        <CardContent className="p-6">
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label className="text-foreground">Nombre *</Label>
-                <Input
-                  {...form.register('name')}
-                  placeholder="Nombre del proveedor"
-                />
-                {form.formState.errors.name && (
-                  <p className="text-destructive text-sm mt-1">
-                    {form.formState.errors.name.message}
-                  </p>
-                )}
-              </div>
 
-              <div>
-                <Label className="text-foreground">RUT *</Label>
-                <Input
-                  {...form.register('rut')}
-                  placeholder="12.345.678-9"
-                />
-                {form.formState.errors.rut && (
-                  <p className="text-destructive text-sm mt-1">
-                    {form.formState.errors.rut.message}
-                  </p>
-                )}
-              </div>
+        <CardContent className="flex-1 overflow-hidden p-0">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="h-full flex flex-col">
+            <div className="flex-1 overflow-auto">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 p-6">
+                {/* Left column - Navigation and Summary */}
+                <div className="lg:col-span-1 space-y-4">
+                  <SupplierFormStepNavigation
+                    steps={steps}
+                    currentStep={currentStep}
+                    onStepClick={setCurrentStep}
+                  />
+                  
+                  <SupplierSummaryPanel
+                    name={formValues.name}
+                    rut={formValues.rut}
+                    phone={formValues.phone}
+                    email={formValues.email || ''}
+                    address={formValues.address}
+                    contactName={formValues.contact_name}
+                    category={formValues.category}
+                    categoryLabel={getCategoryLabel(formValues.category)}
+                    notes={formValues.notes || ''}
+                    isActive={formValues.is_active}
+                    isEditing={isEditing}
+                  />
+                </div>
 
-              <div>
-                <Label className="text-foreground">Email</Label>
-                <Input
-                  {...form.register('email')}
-                  type="email"
-                  placeholder="email@ejemplo.com"
-                />
-                {form.formState.errors.email && (
-                  <p className="text-destructive text-sm mt-1">
-                    {form.formState.errors.email.message}
-                  </p>
-                )}
-              </div>
-
-              <div>
-                <Label className="text-foreground">Teléfono *</Label>
-                <Input
-                  {...form.register('phone')}
-                  placeholder="+56 9 1234 5678"
-                />
-                {form.formState.errors.phone && (
-                  <p className="text-destructive text-sm mt-1">
-                    {form.formState.errors.phone.message}
-                  </p>
-                )}
+                {/* Right column - Step Content */}
+                <div className="lg:col-span-2">
+                  {renderStepContent()}
+                </div>
               </div>
             </div>
 
-            <div>
-              <Label className="text-foreground">Dirección *</Label>
-              <Input
-                {...form.register('address')}
-                placeholder="Dirección completa"
-              />
-              {form.formState.errors.address && (
-                <p className="text-destructive text-sm mt-1">
-                  {form.formState.errors.address.message}
-                </p>
-              )}
-            </div>
+            {/* Footer */}
+            <div className="border-t bg-muted/30 p-4 flex-shrink-0">
+              <div className="flex items-center justify-between">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={goToPreviousStep}
+                  disabled={currentStep === 1 || isSubmitting}
+                  className="gap-2"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                  Anterior
+                </Button>
 
-            <div>
-              <Label className="text-foreground">Persona de Contacto *</Label>
-              <Input
-                {...form.register('contact_name')}
-                placeholder="Nombre del contacto principal"
-              />
-              {form.formState.errors.contact_name && (
-                <p className="text-destructive text-sm mt-1">
-                  {form.formState.errors.contact_name.message}
-                </p>
-              )}
-            </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={onClose}
+                    disabled={isSubmitting}
+                  >
+                    Cancelar
+                  </Button>
 
-            <div>
-              <Label className="text-foreground">Categoría *</Label>
-              <Select
-                value={form.watch('category')}
-                onValueChange={(value) => form.setValue('category', value)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Seleccionar categoría" />
-                </SelectTrigger>
-                <SelectContent>
-                  {categoriesLoading ? (
-                    <SelectItem value="loading" disabled>Cargando categorías...</SelectItem>
+                  {currentStep < 3 ? (
+                    <Button
+                      type="button"
+                      onClick={goToNextStep}
+                      disabled={!canGoNext || isSubmitting}
+                      className="bg-violet-600 hover:bg-violet-700 text-white gap-2"
+                    >
+                      Siguiente
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
                   ) : (
-                    activeCategories.map((category) => (
-                      <SelectItem 
-                        key={category.id} 
-                        value={category.id}
-                      >
-                        {category.label}
-                      </SelectItem>
-                    ))
+                    <Button
+                      type="submit"
+                      disabled={!canSubmit || isSubmitting}
+                      className="bg-violet-600 hover:bg-violet-700 text-white gap-2"
+                    >
+                      {isSubmitting ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          {isEditing ? 'Actualizando...' : 'Creando...'}
+                        </>
+                      ) : (
+                        <>
+                          <Save className="h-4 w-4" />
+                          {isEditing ? 'Actualizar' : 'Crear'}
+                        </>
+                      )}
+                    </Button>
                   )}
-                </SelectContent>
-              </Select>
-              {form.formState.errors.category && (
-                <p className="text-destructive text-sm mt-1">
-                  {form.formState.errors.category.message}
-                </p>
-              )}
-            </div>
-
-            <div>
-              <Label className="text-foreground">Notas</Label>
-              <Textarea
-                {...form.register('notes')}
-                placeholder="Información adicional sobre el proveedor..."
-                rows={3}
-              />
-            </div>
-
-            <div className="flex items-center space-x-2">
-              <Switch
-                checked={form.watch('is_active')}
-                onCheckedChange={(checked) => form.setValue('is_active', checked)}
-              />
-              <Label className="text-foreground">Activo</Label>
-            </div>
-
-            <div className="flex justify-end space-x-2 pt-4 border-t border">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={onClose}
-                disabled={isSubmitting}
-              >
-                Cancelar
-              </Button>
-              <Button
-                type="submit"
-                disabled={isSubmitting}
-                variant="default"
-              >
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    {supplier ? 'Actualizando...' : 'Creando...'}
-                  </>
-                ) : (
-                  <>
-                    <Save className="h-4 w-4 mr-2" />
-                    {supplier ? 'Actualizar' : 'Crear'}
-                  </>
-                )}
-              </Button>
+                </div>
+              </div>
             </div>
           </form>
         </CardContent>
