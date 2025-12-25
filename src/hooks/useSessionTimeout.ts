@@ -8,6 +8,8 @@ interface UseSessionTimeoutOptions {
   timeoutTime?: number;
   /** Eventos que reinician el contador de inactividad */
   activityEvents?: string[];
+  /** Habilitar/deshabilitar el timeout de sesión */
+  enabled?: boolean;
 }
 
 interface UseSessionTimeoutReturn {
@@ -21,7 +23,8 @@ interface UseSessionTimeoutReturn {
 export const useSessionTimeout = ({
   warningTime = 25 * 60 * 1000, // 25 minutos
   timeoutTime = 30 * 60 * 1000, // 30 minutos
-  activityEvents = ['mousedown', 'mousemove', 'keydown', 'scroll', 'touchstart', 'click']
+  activityEvents = ['mousedown', 'mousemove', 'keydown', 'scroll', 'touchstart', 'click'],
+  enabled = true
 }: UseSessionTimeoutOptions = {}): UseSessionTimeoutReturn => {
   const { session, signOut } = useAuth();
   const [showWarning, setShowWarning] = useState(false);
@@ -96,7 +99,8 @@ export const useSessionTimeout = ({
 
   // Detectar actividad del usuario
   useEffect(() => {
-    if (!session) {
+    // Si está deshabilitado o no hay sesión, no hacer nada
+    if (!enabled || !session) {
       clearAllTimers();
       setShowWarning(false);
       return;
@@ -128,7 +132,7 @@ export const useSessionTimeout = ({
       });
       clearAllTimers();
     };
-  }, [session, showWarning, activityEvents, resetTimers, clearAllTimers]);
+  }, [session, showWarning, activityEvents, resetTimers, clearAllTimers, enabled]);
 
   return {
     showWarning,

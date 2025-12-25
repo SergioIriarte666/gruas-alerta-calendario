@@ -1,19 +1,16 @@
 import { useSessionTimeout } from '@/hooks/useSessionTimeout';
+import { useSessionSettings } from '@/hooks/useSessionSettings';
 import { SessionTimeoutModal } from './SessionTimeoutModal';
 
 interface SessionTimeoutProviderProps {
   children: React.ReactNode;
-  /** Tiempo de inactividad antes de mostrar advertencia (minutos) - default 25 */
-  warningMinutes?: number;
-  /** Tiempo total antes de cerrar sesión (minutos) - default 30 */
-  timeoutMinutes?: number;
 }
 
 export const SessionTimeoutProvider = ({
   children,
-  warningMinutes = 25,
-  timeoutMinutes = 30
 }: SessionTimeoutProviderProps) => {
+  const { settings, loading } = useSessionSettings();
+
   const {
     showWarning,
     remainingTime,
@@ -21,20 +18,28 @@ export const SessionTimeoutProvider = ({
     extendSession,
     logout
   } = useSessionTimeout({
-    warningTime: warningMinutes * 60 * 1000,
-    timeoutTime: timeoutMinutes * 60 * 1000
+    warningTime: settings.warningMinutes * 60 * 1000,
+    timeoutTime: settings.timeoutMinutes * 60 * 1000,
+    enabled: settings.enabled
   });
+
+  // No mostrar nada mientras carga o si está deshabilitado
+  if (loading) {
+    return <>{children}</>;
+  }
 
   return (
     <>
       {children}
-      <SessionTimeoutModal
-        isOpen={showWarning}
-        remainingTime={remainingTime}
-        totalTime={totalWarningTime}
-        onExtend={extendSession}
-        onLogout={logout}
-      />
+      {settings.enabled && (
+        <SessionTimeoutModal
+          isOpen={showWarning}
+          remainingTime={remainingTime}
+          totalTime={totalWarningTime}
+          onExtend={extendSession}
+          onLogout={logout}
+        />
+      )}
     </>
   );
 };

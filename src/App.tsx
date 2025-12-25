@@ -294,7 +294,7 @@ export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <SessionTimeoutProvider warningMinutes={25} timeoutMinutes={30}>
+        <SessionTimeoutProvider>
           <UserProvider>
             <NotificationProvider>
               <ToastProvider>

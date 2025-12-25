@@ -3455,6 +3455,9 @@ export type Database = {
           maintenance_mode: boolean
           overdue_notifications: boolean
           service_reminders: boolean
+          session_timeout_enabled: boolean | null
+          session_timeout_minutes: number | null
+          session_warning_minutes: number | null
           system_updates: boolean
           updated_at: string
         }
@@ -3469,6 +3472,9 @@ export type Database = {
           maintenance_mode?: boolean
           overdue_notifications?: boolean
           service_reminders?: boolean
+          session_timeout_enabled?: boolean | null
+          session_timeout_minutes?: number | null
+          session_warning_minutes?: number | null
           system_updates?: boolean
           updated_at?: string
         }
@@ -3483,6 +3489,9 @@ export type Database = {
           maintenance_mode?: boolean
           overdue_notifications?: boolean
           service_reminders?: boolean
+          session_timeout_enabled?: boolean | null
+          session_timeout_minutes?: number | null
+          session_warning_minutes?: number | null
           system_updates?: boolean
           updated_at?: string
         }
