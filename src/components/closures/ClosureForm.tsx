@@ -392,7 +392,7 @@ const ClosureForm = ({
                           type="button"
                           onClick={handleSubmit}
                           disabled={loading || !isFormValid}
-                          className="gap-2 bg-violet-600 hover:bg-violet-700"
+                          className="gap-2 bg-violet-600 hover:bg-violet-700 text-white"
                         >
                           {loading ? (
                             <>
