@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
-import { Input } from '@/components/ui/input';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -19,10 +19,14 @@ import { Service, ServiceStatus } from '@/types';
 import { ServiceBatchUpdateData, useUpdateServicesBatch } from '@/hooks/useUpdateServicesBatch';
 import { useOperatorsData } from '@/hooks/operators/useOperatorsData';
 import { useCranes } from '@/hooks/useCranes';
-import { Hash, Truck, User, FileText, Activity, X, Check } from 'lucide-react';
+import { 
+  Hash, Truck, User, FileText, Activity, X, Check, 
+  CheckSquare, Square, Layers, ArrowRight 
+} from 'lucide-react';
 import { BatchProgressModal, useBatchProgress } from '@/components/ui/batch-progress-modal';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { cn } from '@/lib/utils';
 
 interface ServiceBatchUpdateModalProps {
   open: boolean;
@@ -31,11 +35,11 @@ interface ServiceBatchUpdateModalProps {
   onSuccess: () => void;
 }
 
-const STATUS_OPTIONS: { value: ServiceStatus; label: string }[] = [
-  { value: 'pending', label: 'Pendiente' },
-  { value: 'in_progress', label: 'En Progreso' },
-  { value: 'completed', label: 'Completado' },
-  { value: 'cancelled', label: 'Cancelado' },
+const STATUS_OPTIONS: { value: ServiceStatus; label: string; color: string }[] = [
+  { value: 'pending', label: 'Pendiente', color: 'bg-yellow-500' },
+  { value: 'in_progress', label: 'En Progreso', color: 'bg-blue-500' },
+  { value: 'completed', label: 'Completado', color: 'bg-green-500' },
+  { value: 'cancelled', label: 'Cancelado', color: 'bg-red-500' },
 ];
 
 export const ServiceBatchUpdateModal = ({
@@ -48,6 +52,9 @@ export const ServiceBatchUpdateModal = ({
   const { data: operators = [] } = useOperatorsData();
   const { cranes = [] } = useCranes();
   const batchProgress = useBatchProgress();
+
+  // Excluded services state
+  const [excludedServices, setExcludedServices] = useState<Set<string>>(new Set());
 
   // Toggle states
   const [enableStatus, setEnableStatus] = useState(false);
@@ -65,10 +72,33 @@ export const ServiceBatchUpdateModal = ({
   const activeOperators = operators.filter(op => op.isActive);
   const activeCranes = cranes.filter(c => c.isActive);
 
-  // Get client name from first service (assuming all are same client for batch)
+  // Active services (not excluded)
+  const activeServices = useMemo(() => 
+    selectedServices.filter(s => !excludedServices.has(s.id)),
+    [selectedServices, excludedServices]
+  );
+
+  // Get client name from first service
   const clientName = selectedServices[0]?.client?.name || 'Cliente';
 
+  const toggleServiceExclusion = (serviceId: string) => {
+    setExcludedServices(prev => {
+      const next = new Set(prev);
+      if (next.has(serviceId)) {
+        next.delete(serviceId);
+      } else {
+        next.add(serviceId);
+      }
+      return next;
+    });
+  };
+
+  const selectAllServices = () => setExcludedServices(new Set());
+  const deselectAllServices = () => setExcludedServices(new Set(selectedServices.map(s => s.id)));
+
   const handleSubmit = async () => {
+    if (activeServices.length === 0) return;
+
     const fields: ServiceBatchUpdateData['fields'] = {};
 
     if (enableStatus) fields.status = status;
@@ -77,17 +107,17 @@ export const ServiceBatchUpdateModal = ({
     }
     if (enableObservations) fields.observations = observations || null;
 
-    batchProgress.start('ACTUALIZANDO SERVICIOS', selectedServices.length);
+    batchProgress.start('ACTUALIZANDO SERVICIOS', activeServices.length);
 
     const updateData: ServiceBatchUpdateData = {
-      serviceIds: selectedServices.map(s => s.id),
+      serviceIds: activeServices.map(s => s.id),
       fields,
       appendObservations,
       operatorId: enableOperator 
         ? (operatorId && operatorId !== '__NONE__' ? operatorId : null) 
         : undefined,
       onProgress: ({ current, currentItemId }) => {
-        const service = selectedServices.find(s => s.id === currentItemId);
+        const service = activeServices.find(s => s.id === currentItemId);
         batchProgress.update(current, service?.folio || `Servicio ${current}`);
       },
     };
@@ -108,6 +138,7 @@ export const ServiceBatchUpdateModal = ({
   };
 
   const resetForm = () => {
+    setExcludedServices(new Set());
     setEnableStatus(false);
     setEnableOperator(false);
     setEnableCrane(false);
@@ -124,197 +155,377 @@ export const ServiceBatchUpdateModal = ({
   const formatServiceDate = (dateString?: string) => {
     if (!dateString) return '';
     try {
-      return format(new Date(dateString), 'dd/MM/yyyy', { locale: es });
+      return format(new Date(dateString), 'dd/MM', { locale: es });
     } catch {
       return dateString;
     }
   };
 
+  // Build summary of changes
+  const changeSummary = useMemo(() => {
+    const changes: string[] = [];
+    if (enableStatus) {
+      const statusLabel = STATUS_OPTIONS.find(s => s.value === status)?.label;
+      changes.push(`Estado → ${statusLabel}`);
+    }
+    if (enableOperator) {
+      const opName = operatorId && operatorId !== '__NONE__' 
+        ? activeOperators.find(o => o.id === operatorId)?.name || 'Operador'
+        : 'Sin operador';
+      changes.push(`Operador → ${opName}`);
+    }
+    if (enableCrane) {
+      const craneName = craneId && craneId !== '__NONE__'
+        ? activeCranes.find(c => c.id === craneId)?.licensePlate || 'Grúa'
+        : 'Sin grúa';
+      changes.push(`Grúa → ${craneName}`);
+    }
+    if (enableObservations) {
+      changes.push(appendObservations ? 'Añadir observación' : 'Reemplazar observación');
+    }
+    return changes;
+  }, [enableStatus, enableOperator, enableCrane, enableObservations, status, operatorId, craneId, appendObservations, activeOperators, activeCranes]);
+
+  const getStatusBadge = (serviceStatus?: string) => {
+    const statusInfo = STATUS_OPTIONS.find(s => s.value === serviceStatus);
+    return statusInfo ? (
+      <span className={cn("h-2 w-2 rounded-full", statusInfo.color)} />
+    ) : null;
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-xl max-h-[90vh] overflow-hidden p-0">
-        <DialogHeader className="px-6 pt-6 pb-4">
-          <DialogTitle className="flex items-center gap-2 text-lg">
-            <Hash className="h-5 w-5 text-primary" />
-            Edición por Lotes - {clientName}
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden p-0">
+        <DialogHeader className="px-6 pt-6 pb-4 border-b bg-muted/30">
+          <DialogTitle className="flex items-center gap-3 text-lg">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
+              <Layers className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <span>Edición por Lotes</span>
+              <p className="text-sm font-normal text-muted-foreground mt-0.5">{clientName}</p>
+            </div>
           </DialogTitle>
-          <DialogDescription>
-            Modifica estado, operador, grúa u observaciones para múltiples servicios
-          </DialogDescription>
         </DialogHeader>
 
-        <div className="px-6 space-y-4">
-          {/* Selected services badge and list */}
-          <Badge variant="outline" className="text-sm font-normal">
-            {selectedServices.length} servicios seleccionados
-          </Badge>
-
-          <ScrollArea className="max-h-32 rounded-md border bg-muted/30 p-3">
-            <div className="space-y-2">
-              {selectedServices.map((service, index) => (
-                <div key={service.id} className="flex items-center justify-between text-sm">
-                  <div className="flex items-center gap-3">
-                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10 text-xs font-medium text-primary">
-                      {index + 1}
-                    </span>
-                    <span className="font-medium">{service.folio}</span>
-                    <span className="text-muted-foreground">•</span>
-                    <span className="text-muted-foreground">{service.serviceType?.name || 'Sin tipo'}</span>
-                  </div>
-                  <span className="text-muted-foreground">{formatServiceDate(service.serviceDate)}</span>
-                </div>
-              ))}
-            </div>
-          </ScrollArea>
-
-          {/* Toggle sections */}
-          <div className="space-y-3">
-            {/* Status */}
-            <div className="rounded-lg border bg-card">
-              <div className="flex items-center justify-between p-4">
-                <div className="flex items-center gap-3">
-                  <Activity className="h-4 w-4 text-muted-foreground" />
-                  <span className="font-medium">Estado</span>
-                </div>
-                <Switch
-                  checked={enableStatus}
-                  onCheckedChange={setEnableStatus}
-                />
+        {/* Two-column layout */}
+        <div className="flex flex-1 overflow-hidden">
+          {/* Left panel - Services list */}
+          <div className="w-[340px] border-r flex flex-col bg-muted/20">
+            <div className="px-4 py-3 border-b flex items-center justify-between">
+              <span className="text-sm font-medium">Servicios</span>
+              <div className="flex gap-1">
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={selectAllServices}
+                  className="h-7 px-2 text-xs"
+                >
+                  <CheckSquare className="h-3.5 w-3.5 mr-1" />
+                  Todos
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={deselectAllServices}
+                  className="h-7 px-2 text-xs"
+                >
+                  <Square className="h-3.5 w-3.5 mr-1" />
+                  Ninguno
+                </Button>
               </div>
-              {enableStatus && (
-                <div className="border-t bg-primary/5 p-4">
-                  <Select value={status} onValueChange={(v) => setStatus(v as ServiceStatus)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Seleccionar estado" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {STATUS_OPTIONS.map((opt) => (
-                        <SelectItem key={opt.value} value={opt.value}>
-                          {opt.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
             </div>
-
-            {/* Operator */}
-            <div className="rounded-lg border bg-card">
-              <div className="flex items-center justify-between p-4">
-                <div className="flex items-center gap-3">
-                  <User className="h-4 w-4 text-muted-foreground" />
-                  <span className="font-medium">Operador Principal</span>
-                </div>
-                <Switch
-                  checked={enableOperator}
-                  onCheckedChange={setEnableOperator}
-                />
+            
+            <ScrollArea className="flex-1 px-2 py-2">
+              <div className="space-y-1">
+                {selectedServices.map((service) => {
+                  const isExcluded = excludedServices.has(service.id);
+                  return (
+                    <div 
+                      key={service.id} 
+                      onClick={() => toggleServiceExclusion(service.id)}
+                      className={cn(
+                        "flex items-center gap-3 p-2.5 rounded-lg cursor-pointer transition-all",
+                        isExcluded 
+                          ? "bg-muted/50 opacity-50" 
+                          : "bg-card hover:bg-accent/50 border shadow-sm"
+                      )}
+                    >
+                      <Checkbox 
+                        checked={!isExcluded}
+                        className="pointer-events-none"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className={cn(
+                            "font-medium text-sm",
+                            isExcluded && "line-through"
+                          )}>
+                            {service.folio}
+                          </span>
+                          {getStatusBadge(service.status)}
+                        </div>
+                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-0.5">
+                          <span className="truncate">{service.serviceType?.name || 'Sin tipo'}</span>
+                          <span>•</span>
+                          <span>{formatServiceDate(service.serviceDate)}</span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
-              {enableOperator && (
-                <div className="border-t bg-primary/5 p-4">
-                  <Select value={operatorId} onValueChange={setOperatorId}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Seleccionar operador" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="__NONE__">Sin operador (quitar asignación)</SelectItem>
-                      {activeOperators.map((op) => (
-                        <SelectItem key={op.id} value={op.id}>
-                          {op.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
+            </ScrollArea>
+
+            <div className="px-4 py-3 border-t bg-muted/30">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-muted-foreground">Seleccionados</span>
+                <Badge variant={activeServices.length > 0 ? "default" : "secondary"}>
+                  {activeServices.length} de {selectedServices.length}
+                </Badge>
+              </div>
             </div>
+          </div>
 
-            {/* Crane */}
-            <div className="rounded-lg border bg-card">
-              <div className="flex items-center justify-between p-4">
-                <div className="flex items-center gap-3">
-                  <Truck className="h-4 w-4 text-muted-foreground" />
-                  <span className="font-medium">Grúa</span>
-                </div>
-                <Switch
-                  checked={enableCrane}
-                  onCheckedChange={setEnableCrane}
-                />
-              </div>
-              {enableCrane && (
-                <div className="border-t bg-primary/5 p-4">
-                  <Select value={craneId} onValueChange={setCraneId}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Seleccionar grúa" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="__NONE__">Sin grúa (quitar asignación)</SelectItem>
-                      {activeCranes.map((crane) => (
-                        <SelectItem key={crane.id} value={crane.id}>
-                          {crane.licensePlate} - {crane.brand} {crane.model}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
+          {/* Right panel - Edit fields */}
+          <div className="flex-1 flex flex-col overflow-hidden">
+            <div className="px-4 py-3 border-b">
+              <span className="text-sm font-medium">Campos a modificar</span>
+              <p className="text-xs text-muted-foreground mt-0.5">Activa los campos que deseas actualizar</p>
             </div>
 
-            {/* Observations */}
-            <div className="rounded-lg border bg-card">
-              <div className="flex items-center justify-between p-4">
-                <div className="flex items-center gap-3">
-                  <FileText className="h-4 w-4 text-muted-foreground" />
-                  <span className="font-medium">Observaciones</span>
-                </div>
-                <Switch
-                  checked={enableObservations}
-                  onCheckedChange={setEnableObservations}
-                />
-              </div>
-              {enableObservations && (
-                <div className="border-t bg-primary/5 p-4 space-y-3">
-                  <Textarea
-                    value={observations}
-                    onChange={(e) => setObservations(e.target.value)}
-                    placeholder="Observación común para todos los servicios"
-                    rows={3}
-                  />
-                  <div className="flex items-center gap-2">
+            <ScrollArea className="flex-1 px-4 py-4">
+              <div className="space-y-3">
+                {/* Status card */}
+                <div className={cn(
+                  "rounded-xl border-2 transition-all overflow-hidden",
+                  enableStatus ? "border-blue-500/50 bg-blue-500/5" : "border-transparent bg-card"
+                )}>
+                  <div className="flex items-center justify-between p-4">
+                    <div className="flex items-center gap-3">
+                      <div className={cn(
+                        "flex h-10 w-10 items-center justify-center rounded-full transition-colors",
+                        enableStatus ? "bg-blue-500/20" : "bg-muted"
+                      )}>
+                        <Activity className={cn(
+                          "h-5 w-5 transition-colors",
+                          enableStatus ? "text-blue-500" : "text-muted-foreground"
+                        )} />
+                      </div>
+                      <div>
+                        <span className="font-medium">Estado</span>
+                        <p className="text-xs text-muted-foreground">Cambiar estado del servicio</p>
+                      </div>
+                    </div>
                     <Switch
-                      id="append-observations"
-                      checked={appendObservations}
-                      onCheckedChange={setAppendObservations}
+                      checked={enableStatus}
+                      onCheckedChange={setEnableStatus}
                     />
-                    <Label htmlFor="append-observations" className="text-sm text-muted-foreground">
-                      Añadir a observaciones existentes
-                    </Label>
                   </div>
+                  {enableStatus && (
+                    <div className="px-4 pb-4 pt-0">
+                      <Select value={status} onValueChange={(v) => setStatus(v as ServiceStatus)}>
+                        <SelectTrigger className="bg-background">
+                          <SelectValue placeholder="Seleccionar estado" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {STATUS_OPTIONS.map((opt) => (
+                            <SelectItem key={opt.value} value={opt.value}>
+                              <div className="flex items-center gap-2">
+                                <span className={cn("h-2 w-2 rounded-full", opt.color)} />
+                                {opt.label}
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
+
+                {/* Operator card */}
+                <div className={cn(
+                  "rounded-xl border-2 transition-all overflow-hidden",
+                  enableOperator ? "border-green-500/50 bg-green-500/5" : "border-transparent bg-card"
+                )}>
+                  <div className="flex items-center justify-between p-4">
+                    <div className="flex items-center gap-3">
+                      <div className={cn(
+                        "flex h-10 w-10 items-center justify-center rounded-full transition-colors",
+                        enableOperator ? "bg-green-500/20" : "bg-muted"
+                      )}>
+                        <User className={cn(
+                          "h-5 w-5 transition-colors",
+                          enableOperator ? "text-green-500" : "text-muted-foreground"
+                        )} />
+                      </div>
+                      <div>
+                        <span className="font-medium">Operador Principal</span>
+                        <p className="text-xs text-muted-foreground">Asignar o cambiar operador</p>
+                      </div>
+                    </div>
+                    <Switch
+                      checked={enableOperator}
+                      onCheckedChange={setEnableOperator}
+                    />
+                  </div>
+                  {enableOperator && (
+                    <div className="px-4 pb-4 pt-0">
+                      <Select value={operatorId} onValueChange={setOperatorId}>
+                        <SelectTrigger className="bg-background">
+                          <SelectValue placeholder="Seleccionar operador" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="__NONE__">
+                            <span className="text-muted-foreground">Sin operador (quitar asignación)</span>
+                          </SelectItem>
+                          {activeOperators.map((op) => (
+                            <SelectItem key={op.id} value={op.id}>
+                              {op.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+                </div>
+
+                {/* Crane card */}
+                <div className={cn(
+                  "rounded-xl border-2 transition-all overflow-hidden",
+                  enableCrane ? "border-orange-500/50 bg-orange-500/5" : "border-transparent bg-card"
+                )}>
+                  <div className="flex items-center justify-between p-4">
+                    <div className="flex items-center gap-3">
+                      <div className={cn(
+                        "flex h-10 w-10 items-center justify-center rounded-full transition-colors",
+                        enableCrane ? "bg-orange-500/20" : "bg-muted"
+                      )}>
+                        <Truck className={cn(
+                          "h-5 w-5 transition-colors",
+                          enableCrane ? "text-orange-500" : "text-muted-foreground"
+                        )} />
+                      </div>
+                      <div>
+                        <span className="font-medium">Grúa</span>
+                        <p className="text-xs text-muted-foreground">Asignar o cambiar grúa</p>
+                      </div>
+                    </div>
+                    <Switch
+                      checked={enableCrane}
+                      onCheckedChange={setEnableCrane}
+                    />
+                  </div>
+                  {enableCrane && (
+                    <div className="px-4 pb-4 pt-0">
+                      <Select value={craneId} onValueChange={setCraneId}>
+                        <SelectTrigger className="bg-background">
+                          <SelectValue placeholder="Seleccionar grúa" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="__NONE__">
+                            <span className="text-muted-foreground">Sin grúa (quitar asignación)</span>
+                          </SelectItem>
+                          {activeCranes.map((crane) => (
+                            <SelectItem key={crane.id} value={crane.id}>
+                              {crane.licensePlate} - {crane.brand} {crane.model}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+                </div>
+
+                {/* Observations card */}
+                <div className={cn(
+                  "rounded-xl border-2 transition-all overflow-hidden",
+                  enableObservations ? "border-purple-500/50 bg-purple-500/5" : "border-transparent bg-card"
+                )}>
+                  <div className="flex items-center justify-between p-4">
+                    <div className="flex items-center gap-3">
+                      <div className={cn(
+                        "flex h-10 w-10 items-center justify-center rounded-full transition-colors",
+                        enableObservations ? "bg-purple-500/20" : "bg-muted"
+                      )}>
+                        <FileText className={cn(
+                          "h-5 w-5 transition-colors",
+                          enableObservations ? "text-purple-500" : "text-muted-foreground"
+                        )} />
+                      </div>
+                      <div>
+                        <span className="font-medium">Observaciones</span>
+                        <p className="text-xs text-muted-foreground">Añadir o reemplazar observaciones</p>
+                      </div>
+                    </div>
+                    <Switch
+                      checked={enableObservations}
+                      onCheckedChange={setEnableObservations}
+                    />
+                  </div>
+                  {enableObservations && (
+                    <div className="px-4 pb-4 pt-0 space-y-3">
+                      <Textarea
+                        value={observations}
+                        onChange={(e) => setObservations(e.target.value)}
+                        placeholder="Observación común para todos los servicios"
+                        rows={3}
+                        className="bg-background"
+                      />
+                      <div className="flex items-center gap-2">
+                        <Switch
+                          id="append-observations"
+                          checked={appendObservations}
+                          onCheckedChange={setAppendObservations}
+                        />
+                        <Label htmlFor="append-observations" className="text-sm text-muted-foreground">
+                          Añadir a observaciones existentes
+                        </Label>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </ScrollArea>
           </div>
         </div>
 
-        <DialogFooter className="px-6 py-4 border-t mt-4">
-          <Button 
-            variant="outline" 
-            onClick={() => onOpenChange(false)} 
-            disabled={isPending}
-            className="gap-2"
-          >
-            <X className="h-4 w-4" />
-            Cancelar
-          </Button>
-          <Button 
-            onClick={handleSubmit} 
-            disabled={!hasChanges || isPending}
-            className="gap-2"
-          >
-            <Check className="h-4 w-4" />
-            {isPending ? 'Actualizando...' : 'Actualizar Servicios'}
-          </Button>
+        {/* Footer with summary */}
+        <DialogFooter className="px-6 py-4 border-t bg-muted/30 flex-col sm:flex-row gap-3">
+          <div className="flex-1 flex items-center gap-2 text-sm">
+            {hasChanges && activeServices.length > 0 ? (
+              <>
+                <ArrowRight className="h-4 w-4 text-primary" />
+                <span className="text-muted-foreground">
+                  Aplicando a <strong className="text-foreground">{activeServices.length}</strong> servicios:
+                </span>
+                <span className="text-primary font-medium truncate">
+                  {changeSummary.join(' • ')}
+                </span>
+              </>
+            ) : !hasChanges ? (
+              <span className="text-muted-foreground">Selecciona al menos un campo para modificar</span>
+            ) : (
+              <span className="text-muted-foreground">Selecciona al menos un servicio</span>
+            )}
+          </div>
+          <div className="flex gap-2">
+            <Button 
+              variant="outline" 
+              onClick={() => onOpenChange(false)} 
+              disabled={isPending}
+            >
+              <X className="h-4 w-4 mr-2" />
+              Cancelar
+            </Button>
+            <Button 
+              onClick={handleSubmit} 
+              disabled={!hasChanges || isPending || activeServices.length === 0}
+            >
+              <Check className="h-4 w-4 mr-2" />
+              {isPending ? 'Actualizando...' : `Actualizar ${activeServices.length} servicios`}
+            </Button>
+          </div>
         </DialogFooter>
       </DialogContent>
 
