@@ -1,9 +1,9 @@
 import * as React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Calendar, FilterX, FileText } from 'lucide-react';
+import DatePickerInput from '@/components/common/DatePickerInput';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useClients } from '@/hooks/useClients';
 import { useCranes } from '@/hooks/useCranes';
@@ -71,20 +71,20 @@ export const ReportFilters = ({
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
                     <div>
                         <Label htmlFor="from-date" className="text-foreground">Fecha Inicio</Label>
-                        <Input
+                        <DatePickerInput
                             id="from-date"
-                            type="date"
                             value={filters.dateRange.from}
-                            onChange={(e) => onDateChange('from', e.target.value)}
+                            onChange={(value) => onDateChange('from', value)}
+                            placeholder="Fecha inicio"
                         />
                     </div>
                     <div>
                         <Label htmlFor="to-date" className="text-foreground">Fecha Fin</Label>
-                        <Input
+                        <DatePickerInput
                             id="to-date"
-                            type="date"
                             value={filters.dateRange.to}
-                            onChange={(e) => onDateChange('to', e.target.value)}
+                            onChange={(value) => onDateChange('to', value)}
+                            placeholder="Fecha fin"
                         />
                     </div>
                     
@@ -185,20 +185,20 @@ export const ReportFilters = ({
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-end">
                     <div>
                         <Label htmlFor="sr-from-date" className="text-foreground">Fecha Inicio</Label>
-                        <Input
+                        <DatePickerInput
                             id="sr-from-date"
-                            type="date"
                             value={serviceReportFilters.dateRange.from}
-                            onChange={(e) => onServiceReportDateChange('from', e.target.value)}
+                            onChange={(value) => onServiceReportDateChange('from', value)}
+                            placeholder="Fecha inicio"
                         />
                     </div>
                     <div>
                         <Label htmlFor="sr-to-date" className="text-foreground">Fecha Fin</Label>
-                        <Input
+                        <DatePickerInput
                             id="sr-to-date"
-                            type="date"
                             value={serviceReportFilters.dateRange.to}
-                            onChange={(e) => onServiceReportDateChange('to', e.target.value)}
+                            onChange={(value) => onServiceReportDateChange('to', value)}
+                            placeholder="Fecha fin"
                         />
                     </div>
                     <div>
@@ -243,20 +243,20 @@ export const ReportFilters = ({
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
                     <div>
                         <Label htmlFor="cr-from-date" className="text-foreground">Fecha Inicio</Label>
-                        <Input
+                        <DatePickerInput
                             id="cr-from-date"
-                            type="date"
                             value={costReportFilters.dateRange.from}
-                            onChange={(e) => onCostReportDateChange('from', e.target.value)}
+                            onChange={(value) => onCostReportDateChange('from', value)}
+                            placeholder="Fecha inicio"
                         />
                     </div>
                     <div>
                         <Label htmlFor="cr-to-date" className="text-foreground">Fecha Fin</Label>
-                        <Input
+                        <DatePickerInput
                             id="cr-to-date"
-                            type="date"
                             value={costReportFilters.dateRange.to}
-                            onChange={(e) => onCostReportDateChange('to', e.target.value)}
+                            onChange={(value) => onCostReportDateChange('to', value)}
+                            placeholder="Fecha fin"
                         />
                     </div>
                     <div>

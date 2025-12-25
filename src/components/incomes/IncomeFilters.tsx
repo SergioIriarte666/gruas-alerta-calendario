@@ -1,6 +1,7 @@
 import { Search, Filter, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import DatePickerInput from '@/components/common/DatePickerInput';
 import {
   Select,
   SelectContent,
@@ -138,18 +139,15 @@ export const IncomeFilters = ({ filters, onFiltersChange, onSearch, searchTerm }
             <SelectItem value="otro">Otro</SelectItem>
           </SelectContent>
         </Select>
-
-        <Input
-          type="date"
+        <DatePickerInput
           value={filters.dateFrom || ''}
-          onChange={(e) => onFiltersChange({ ...filters, dateFrom: e.target.value || null })}
+          onChange={(value) => onFiltersChange({ ...filters, dateFrom: value || null })}
           placeholder="Fecha desde"
         />
 
-        <Input
-          type="date"
+        <DatePickerInput
           value={filters.dateTo || ''}
-          onChange={(e) => onFiltersChange({ ...filters, dateTo: e.target.value || null })}
+          onChange={(value) => onFiltersChange({ ...filters, dateTo: value || null })}
           placeholder="Fecha hasta"
         />
 

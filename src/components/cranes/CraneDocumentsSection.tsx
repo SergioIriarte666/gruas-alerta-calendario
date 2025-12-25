@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import DatePickerInput from '@/components/common/DatePickerInput';
 import { 
   Calendar,
   Upload,
@@ -207,11 +208,11 @@ export const CraneDocumentsSection = ({ crane }: CraneDocumentsSectionProps) => 
               <Label htmlFor={`expiry-${type.key}`} className="text-sm text-gray-300">
                 Fecha de vencimiento
               </Label>
-              <Input
+              <DatePickerInput
                 id={`expiry-${type.key}`}
-                type="date"
                 value={expiryDates[type.key] || ''}
-                onChange={(e) => setExpiryDates(prev => ({ ...prev, [type.key]: e.target.value }))}
+                onChange={(value) => setExpiryDates(prev => ({ ...prev, [type.key]: value }))}
+                placeholder="Seleccionar fecha"
                 className="mt-1"
               />
             </div>

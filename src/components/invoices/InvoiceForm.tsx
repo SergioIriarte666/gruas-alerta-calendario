@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import DatePickerInput from '@/components/common/DatePickerInput';
 import { Invoice, InvoiceStatus } from '@/types';
 import { useClosuresForInvoices } from '@/hooks/useClosuresForInvoices';
 import { useInvoiceFormData } from '@/hooks/invoices/useInvoiceFormData';
@@ -394,12 +395,13 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
           {watch('status') === 'paid' && (
             <div>
               <Label htmlFor="paymentDate" className="text-foreground">Fecha de Pago</Label>
-              <Input
+              <DatePickerInput
                 id="paymentDate"
-                type="date"
-                {...register('paymentDate')}
+                value={watch('paymentDate') || ''}
+                onChange={(value) => setValue('paymentDate', value)}
                 disabled={!editableFields.canEditPaymentDate}
-                className="mt-1 disabled:opacity-50 disabled:cursor-not-allowed"
+                placeholder="Seleccionar fecha"
+                className="mt-1"
               />
               {errors.paymentDate && (
                 <p className="text-sm text-destructive mt-1">{errors.paymentDate.message}</p>
@@ -412,12 +414,13 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
 
           <div>
             <Label htmlFor="issueDate" className="text-foreground">Fecha de Emisión</Label>
-            <Input
+            <DatePickerInput
               id="issueDate"
-              type="date"
-              {...register('issueDate')}
+              value={watch('issueDate') || ''}
+              onChange={(value) => setValue('issueDate', value)}
               disabled={!editableFields.canEditDates}
-              className="mt-1 disabled:opacity-50 disabled:cursor-not-allowed"
+              placeholder="Seleccionar fecha"
+              className="mt-1"
             />
             {errors.issueDate && (
               <p className="text-sm text-destructive mt-1">{errors.issueDate.message}</p>
@@ -426,12 +429,13 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
 
           <div>
             <Label htmlFor="dueDate" className="text-foreground">Fecha de Vencimiento</Label>
-            <Input
+            <DatePickerInput
               id="dueDate"
-              type="date"
-              {...register('dueDate')}
+              value={watch('dueDate') || ''}
+              onChange={(value) => setValue('dueDate', value)}
               disabled={!editableFields.canEditDates}
-              className="mt-1 disabled:opacity-50 disabled:cursor-not-allowed"
+              placeholder="Seleccionar fecha"
+              className="mt-1"
             />
             {errors.dueDate && (
               <p className="text-sm text-destructive mt-1">{errors.dueDate.message}</p>

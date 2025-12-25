@@ -14,6 +14,7 @@ import { es } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { useInventoryLocations, useInventorySuppliers, useUpdateInventoryMovement, type InventoryMovement } from '@/hooks/useInventory';
+import DatePickerInput from '@/components/common/DatePickerInput';
 
 interface MovementEditModalProps {
   movement: InventoryMovement;
@@ -261,12 +262,12 @@ export const MovementEditModal: React.FC<MovementEditModalProps> = ({
               {movement.item?.has_expiration && (
                 <div className="space-y-2">
                   <Label htmlFor="expiration_date">Fecha de Vencimiento</Label>
-                  <Input
+                  <DatePickerInput
                     id="expiration_date"
-                    type="date"
                     value={formData.expiration_date}
-                    onChange={(e) => handleInputChange('expiration_date', e.target.value)}
+                    onChange={(value) => handleInputChange('expiration_date', value)}
                     disabled={isSubmitting}
+                    placeholder="Seleccionar fecha"
                   />
                 </div>
               )}

@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { Shield, Wrench } from 'lucide-react';
 import { calculateCustodyTotal, calculateDaysBetween, isCustodyDataComplete, type CustodyData } from '@/utils/custodyCalculations';
+import DatePickerInput from '@/components/common/DatePickerInput';
 
 interface CustodySectionProps {
   serviceTypeName?: string;
@@ -213,10 +214,11 @@ export const CustodySection = ({
                 <Label htmlFor="custodyStartDate">
                   {isEquipmentRental ? 'Fecha de Inicio del Arriendo' : 'Fecha de Inicio'}
                 </Label>
-                <Input
-                  type="date"
+                <DatePickerInput
+                  id="custodyStartDate"
                   value={custodyStartDate || ''}
-                  onChange={(e) => onCustodyStartDateChange?.(e.target.value)}
+                  onChange={(value) => onCustodyStartDateChange?.(value)}
+                  placeholder="Seleccionar fecha"
                 />
               </div>
 
@@ -224,10 +226,11 @@ export const CustodySection = ({
                 <Label htmlFor="custodyEndDate">
                   {isEquipmentRental ? 'Fecha de Fin del Arriendo' : 'Fecha de Fin'}
                 </Label>
-                <Input
-                  type="date"
+                <DatePickerInput
+                  id="custodyEndDate"
                   value={custodyEndDate || ''}
-                  onChange={(e) => onCustodyEndDateChange?.(e.target.value)}
+                  onChange={(value) => onCustodyEndDateChange?.(value)}
+                  placeholder="Seleccionar fecha"
                 />
               </div>
             </div>

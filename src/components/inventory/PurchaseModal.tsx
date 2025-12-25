@@ -10,6 +10,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useCreateInventoryMovement, useInventoryLocations, useInventorySuppliers, type InventoryItem } from '@/hooks/useInventory';
 import { toast } from 'sonner';
+import DatePickerInput from '@/components/common/DatePickerInput';
 
 const purchaseSchema = z.object({
   quantity: z.number().min(1, 'La cantidad debe ser mayor a 0'),
@@ -153,10 +154,11 @@ export const PurchaseModal: React.FC<PurchaseModalProps> = ({
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Label htmlFor="movement_date">Fecha de Compra *</Label>
-              <Input
+              <DatePickerInput
                 id="movement_date"
-                type="date"
-                {...register('movement_date')}
+                value={watch('movement_date') || ''}
+                onChange={(value) => setValue('movement_date', value)}
+                placeholder="Seleccionar fecha"
               />
               {errors.movement_date && (
                 <p className="text-sm text-destructive mt-1">{errors.movement_date.message}</p>
@@ -228,10 +230,11 @@ export const PurchaseModal: React.FC<PurchaseModalProps> = ({
 
             <div>
               <Label htmlFor="expiration_date">Fecha de Vencimiento</Label>
-              <Input
+              <DatePickerInput
                 id="expiration_date"
-                type="date"
-                {...register('expiration_date')}
+                value={watch('expiration_date') || ''}
+                onChange={(value) => setValue('expiration_date', value)}
+                placeholder="Seleccionar fecha"
               />
             </div>
           </div>

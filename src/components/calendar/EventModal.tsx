@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import DatePickerInput from '@/components/common/DatePickerInput';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { CalendarEvent } from '@/hooks/useCalendar';
@@ -120,12 +121,11 @@ export const EventModal = ({ onCreateEvent, selectedDate }: EventModalProps) => 
           <div className="grid grid-cols-3 gap-4">
             <div>
               <Label htmlFor="date" className="text-muted-foreground">Fecha *</Label>
-              <Input
+              <DatePickerInput
                 id="date"
-                type="date"
                 value={formData.date}
-                onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                required
+                onChange={(value) => setFormData({ ...formData, date: value })}
+                placeholder="Seleccionar fecha"
                 className="bg-card border-border text-foreground"
               />
             </div>
