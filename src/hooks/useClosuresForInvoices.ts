@@ -9,8 +9,12 @@ interface UseClosuresForInvoicesProps {
   includeInvoiced?: boolean; // For editing existing invoices
 }
 
+export interface ClosureWithClient extends ServiceClosure {
+  clientName?: string;
+}
+
 export const useClosuresForInvoices = (options: UseClosuresForInvoicesProps = {}) => {
-  const [allClosures, setAllClosures] = useState<ServiceClosure[]>([]);
+  const [allClosures, setAllClosures] = useState<ClosureWithClient[]>([]);
   const [loading, setLoading] = useState(true);
   const { includeInvoiced = false } = options;
 
@@ -19,13 +23,16 @@ export const useClosuresForInvoices = (options: UseClosuresForInvoicesProps = {}
       console.log('Fetching closures for invoices, includeInvoiced:', includeInvoiced);
       setLoading(true);
       
-      // Build query based on mode
+      // Build query based on mode - include client relation
       let query = supabase
         .from('service_closures')
         .select(`
           *,
           closure_services (
             service_id
+          ),
+          clients:client_id (
+            name
           )
         `);
 
@@ -56,8 +63,11 @@ export const useClosuresForInvoices = (options: UseClosuresForInvoicesProps = {}
 
       console.log('Fetched closures data:', closuresData?.length || 0, 'closures');
 
-      // Format all closures
-      const formattedClosures: ServiceClosure[] = (closuresData || []).map(formatClosureData);
+      // Format all closures and include client name
+      const formattedClosures: ClosureWithClient[] = (closuresData || []).map(data => ({
+        ...formatClosureData(data),
+        clientName: (data.clients as any)?.name || ''
+      }));
       setAllClosures(formattedClosures);
       
     } catch (error: any) {
@@ -77,7 +87,7 @@ export const useClosuresForInvoices = (options: UseClosuresForInvoicesProps = {}
     fetchClosures();
   }, [includeInvoiced]); // Re-fetch when mode changes
 
-  const [filteredClosures, setFilteredClosures] = useState<ServiceClosure[]>([]);
+  const [filteredClosures, setFilteredClosures] = useState<ClosureWithClient[]>([]);
 
   // Filter closures based on mode
   useEffect(() => {

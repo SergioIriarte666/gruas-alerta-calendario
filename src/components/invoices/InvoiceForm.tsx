@@ -5,7 +5,7 @@ import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Invoice, InvoiceStatus } from '@/types';
-import { useClosuresForInvoices } from '@/hooks/useClosuresForInvoices';
+import { useClosuresForInvoices, ClosureWithClient } from '@/hooks/useClosuresForInvoices';
 import { useInvoiceFormData } from '@/hooks/invoices/useInvoiceFormData';
 import { usePaymentTerms } from '@/hooks/usePaymentTerms';
 import { ChevronLeft, ChevronRight, Save, X, Receipt } from 'lucide-react';
