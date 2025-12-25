@@ -246,7 +246,7 @@ export const OperatorForm = ({ operator, onSubmit, onCancel }: OperatorFormProps
           </Button>
           <Button
             type="submit"
-            variant="default"
+            className="bg-violet-600 hover:bg-violet-700 text-white"
           >
             {operator ? 'Actualizar' : 'Crear'} {formData.operatorType === 'administrative' ? 'Personal' : 'Operador'}
           </Button>

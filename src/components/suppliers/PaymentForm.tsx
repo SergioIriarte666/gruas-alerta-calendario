@@ -106,8 +106,8 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 suppliers-scope">
       <Card className="w-full max-w-4xl max-h-[90vh] overflow-auto bg-card border">
-        <CardHeader className="flex flex-row items-center justify-between border-b border">
-          <CardTitle className="text-foreground flex items-center gap-2">
+        <CardHeader className="flex flex-row items-center justify-between bg-gradient-to-r from-violet-600 to-violet-500 text-white -mx-6 -mt-6 px-6 py-4 rounded-t-lg">
+          <CardTitle className="text-white flex items-center gap-2">
             <DollarSign className="h-5 w-5" />
             {payment ? 'Editar Pago a Proveedor' : 'Nuevo Pago a Proveedor'}
           </CardTitle>
@@ -115,7 +115,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
             variant="ghost" 
             size="sm" 
             onClick={onClose}
-            className="text-muted-foreground hover:text-foreground"
+            className="text-white hover:bg-white/20"
           >
             <X className="h-4 w-4" />
           </Button>
@@ -373,7 +373,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
               <Button
                 type="submit"
                 disabled={isSubmitting}
-                variant="default"
+                className="bg-violet-600 hover:bg-violet-700 text-white"
               >
                 {isSubmitting ? (
                   <>
