@@ -110,7 +110,7 @@ const fetchSettings = async (): Promise<Settings> => {
     if (!data) {
       return {
         company: { name: 'Mi Empresa', taxId: '', address: '', phone: '', email: '', folioFormat: 'SRV-{number}'},
-        system: { autoBackup: true, backupFrequency: 'daily', dataRetention: 12, maintenanceMode: false },
+        system: { autoBackup: true, backupFrequency: 'daily', dataRetention: 12, maintenanceMode: false, sessionTimeoutEnabled: true, sessionWarningMinutes: 25, sessionTimeoutMinutes: 30 },
         user: { 
           theme: 'dark', 
           language: 'es', 
@@ -138,6 +138,9 @@ const fetchSettings = async (): Promise<Settings> => {
         backupFrequency: 'daily',
         dataRetention: 12,
         maintenanceMode: false,
+        sessionTimeoutEnabled: true,
+        sessionWarningMinutes: 25,
+        sessionTimeoutMinutes: 30,
       },
       user: {
         theme: 'dark',

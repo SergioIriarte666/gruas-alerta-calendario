@@ -23,6 +23,9 @@ export const useSystemSettings = () => {
     backupFrequency: 'daily',
     dataRetention: 12,
     maintenanceMode: false,
+    sessionTimeoutEnabled: true,
+    sessionWarningMinutes: 25,
+    sessionTimeoutMinutes: 30,
   });
 
   const [notificationSettings, setNotificationSettings] = useState<NotificationSettings>({
@@ -55,6 +58,9 @@ export const useSystemSettings = () => {
           backupFrequency: data.backup_frequency as 'daily' | 'weekly' | 'monthly',
           dataRetention: data.data_retention,
           maintenanceMode: data.maintenance_mode,
+          sessionTimeoutEnabled: data.session_timeout_enabled ?? true,
+          sessionWarningMinutes: data.session_warning_minutes ?? 25,
+          sessionTimeoutMinutes: data.session_timeout_minutes ?? 30,
         });
 
         setNotificationSettings({
@@ -95,6 +101,9 @@ export const useSystemSettings = () => {
         backup_frequency: systemSettings.backupFrequency,
         data_retention: systemSettings.dataRetention,
         maintenance_mode: systemSettings.maintenanceMode,
+        session_timeout_enabled: systemSettings.sessionTimeoutEnabled,
+        session_warning_minutes: systemSettings.sessionWarningMinutes,
+        session_timeout_minutes: systemSettings.sessionTimeoutMinutes,
         email_notifications: notificationSettings.emailNotifications,
         service_reminders: notificationSettings.serviceReminders,
         invoice_alerts: notificationSettings.invoiceAlerts,

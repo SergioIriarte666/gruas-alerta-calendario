@@ -161,7 +161,7 @@ export const useLogoUpdater = () => {
           nextServiceFolioNumber: 1000
         },
         user: { language: 'es', theme: 'dark', timezone: 'America/Santiago', useSystemTimezone: true, notifications: true, dateFormat: 'DD/MM/YYYY', currency: 'CLP' },
-        system: { autoBackup: true, backupFrequency: 'daily', dataRetention: 12, maintenanceMode: false },
+        system: { autoBackup: true, backupFrequency: 'daily', dataRetention: 12, maintenanceMode: false, sessionTimeoutEnabled: true, sessionWarningMinutes: 25, sessionTimeoutMinutes: 30 },
         notifications: { emailNotifications: true, serviceReminders: true, invoiceAlerts: true, overdueNotifications: true, systemUpdates: false }
       });
       

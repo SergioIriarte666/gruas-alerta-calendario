@@ -33,6 +33,9 @@ export interface SystemSettings {
   backupFrequency: 'daily' | 'weekly' | 'monthly';
   dataRetention: number;
   maintenanceMode: boolean;
+  sessionTimeoutEnabled: boolean;
+  sessionWarningMinutes: number;
+  sessionTimeoutMinutes: number;
 }
 
 export interface NotificationSettings {
@@ -73,6 +76,9 @@ export const defaultSettings: Settings = {
     backupFrequency: 'daily',
     dataRetention: 12,
     maintenanceMode: false,
+    sessionTimeoutEnabled: true,
+    sessionWarningMinutes: 25,
+    sessionTimeoutMinutes: 30,
   },
   notifications: {
     emailNotifications: true,
