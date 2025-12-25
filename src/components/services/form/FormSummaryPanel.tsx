@@ -58,7 +58,7 @@ export const FormSummaryPanel = ({
       <CardHeader className="pb-3">
         <CardTitle className="text-sm font-medium flex items-center justify-between">
           <span className="flex items-center gap-2">
-            <Receipt className="h-4 w-4 text-violet-500" />
+            <Receipt className="h-4 w-4 text-primary" />
             Resumen del Servicio
           </span>
           {getStatusBadge()}
@@ -69,7 +69,7 @@ export const FormSummaryPanel = ({
         <div className="flex items-center gap-2">
           <FileText className="h-4 w-4 text-muted-foreground" />
           <span className="text-xs text-muted-foreground">Folio:</span>
-          <span className="text-sm font-mono font-semibold text-violet-600 dark:text-violet-400">
+          <span className="text-sm font-mono font-semibold px-2 py-0.5 rounded bg-zinc-900 dark:bg-zinc-800 text-primary">
             {folio || 'Auto-generado'}
           </span>
         </div>
