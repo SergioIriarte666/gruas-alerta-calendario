@@ -6,6 +6,7 @@ import { UserProvider } from '@/contexts/UserContext';
 import { NotificationProvider } from '@/contexts/NotificationContext';
 import { useNotificationTriggers } from '@/hooks/useNotificationTriggers';
 import { ToastProvider } from '@/components/ui/custom-toast';
+import { SessionTimeoutProvider } from '@/components/auth/SessionTimeoutProvider';
 import { Toaster } from '@/components/ui/sonner';
 import { Layout } from '@/components/layout/Layout';
 import { OperatorLayout } from '@/components/layout/OperatorLayout';
@@ -293,15 +294,17 @@ export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <UserProvider>
-          <NotificationProvider>
-            <ToastProvider>
-              <Router>
-                <AppContent />
-              </Router>
-            </ToastProvider>
-          </NotificationProvider>
-        </UserProvider>
+        <SessionTimeoutProvider warningMinutes={25} timeoutMinutes={30}>
+          <UserProvider>
+            <NotificationProvider>
+              <ToastProvider>
+                <Router>
+                  <AppContent />
+                </Router>
+              </ToastProvider>
+            </NotificationProvider>
+          </UserProvider>
+        </SessionTimeoutProvider>
       </AuthProvider>
     </QueryClientProvider>
   );
