@@ -10,7 +10,6 @@ import {
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent } from '@/components/ui/card';
@@ -23,6 +22,7 @@ import { useCostCenters } from '@/hooks/useCostCenters';
 import { useInventorySuppliers } from '@/hooks/useInventory';
 import { BatchProgressModal, useBatchProgress } from '@/components/ui/batch-progress-modal';
 import { BarChart3, Calendar, Tag, Building2, User, FileText } from 'lucide-react';
+import DatePickerInput from '@/components/common/DatePickerInput';
 
 interface CostBatchUpdateModalProps {
   open: boolean;
@@ -275,10 +275,10 @@ export const CostBatchUpdateModal = ({
                       />
                     </div>
                     {enableDate && (
-                      <Input
-                        type="date"
+                      <DatePickerInput
                         value={date}
-                        onChange={(e) => setDate(e.target.value)}
+                        onChange={setDate}
+                        placeholder="Seleccionar fecha"
                       />
                     )}
                   </div>
@@ -303,10 +303,9 @@ export const CostBatchUpdateModal = ({
                       />
                     </div>
                     {enablePaymentDate && (
-                      <Input
-                        type="date"
+                      <DatePickerInput
                         value={paymentDate}
-                        onChange={(e) => setPaymentDate(e.target.value)}
+                        onChange={setPaymentDate}
                         placeholder="Dejar vacío para limpiar"
                       />
                     )}

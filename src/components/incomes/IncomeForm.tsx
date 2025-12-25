@@ -40,6 +40,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { toast } from 'sonner';
+import DatePickerInput from '@/components/common/DatePickerInput';
 
 interface IncomeFormProps {
   isOpen: boolean;
@@ -238,7 +239,11 @@ export const IncomeForm = ({ isOpen, onClose, income }: IncomeFormProps) => {
                   <FormItem>
                     <FormLabel>Fecha *</FormLabel>
                     <FormControl>
-                      <Input type="date" {...field} />
+                      <DatePickerInput
+                        value={field.value}
+                        onChange={field.onChange}
+                        placeholder="Seleccionar fecha"
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

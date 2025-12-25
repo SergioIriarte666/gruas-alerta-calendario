@@ -3,6 +3,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Clock, Timer, Gauge } from 'lucide-react';
+import DatePickerInput from '@/components/common/DatePickerInput';
 
 interface DateSectionProps {
   requestDate: string;
@@ -65,25 +66,23 @@ export const DateSection = ({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="space-y-2">
           <Label htmlFor="requestDate">Fecha de Solicitud</Label>
-          <Input
+          <DatePickerInput
             id="requestDate"
-            type="date"
             value={requestDate}
-            onChange={(e) => onRequestDateChange(e.target.value)}
+            onChange={onRequestDateChange}
             disabled={disabled}
-            className="w-full"
+            placeholder="Seleccionar fecha"
           />
         </div>
 
         <div className="space-y-2">
           <Label htmlFor="serviceDate">Fecha de Servicio</Label>
-          <Input
+          <DatePickerInput
             id="serviceDate"
-            type="date"
             value={serviceDate}
-            onChange={(e) => onServiceDateChange(e.target.value)}
+            onChange={onServiceDateChange}
             disabled={disabled}
-            className="w-full"
+            placeholder="Seleccionar fecha"
           />
         </div>
       </div>
