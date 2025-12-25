@@ -161,7 +161,7 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
       </CardHeader>
 
       <CardContent className="flex-1 overflow-hidden p-0">
-        <form onSubmit={handleSubmit(handleFormSubmit)} className="h-full flex flex-col">
+        <div className="h-full flex flex-col">
           <div className="flex-1 overflow-auto">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 p-6">
               <div className="lg:col-span-1 space-y-4">
@@ -184,7 +184,7 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
                     Siguiente <ChevronRight className="h-4 w-4" />
                   </Button>
                 ) : (
-                  <Button type="submit" disabled={!canSubmit || isSubmitting || isLoading} className="bg-violet-600 hover:bg-violet-700 text-white gap-2 min-w-[140px]">
+                  <Button type="button" onClick={handleSubmit(handleFormSubmit)} disabled={!canSubmit || isSubmitting || isLoading} className="bg-violet-600 hover:bg-violet-700 text-white gap-2 min-w-[140px]">
                     <Save className="h-4 w-4" />
                     {isSubmitting || isLoading ? 'Guardando...' : `${isEditing ? 'Actualizar' : 'Crear'} Factura`}
                   </Button>
@@ -192,7 +192,7 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
               </div>
             </div>
           </div>
-        </form>
+        </div>
       </CardContent>
     </Card>
   );
