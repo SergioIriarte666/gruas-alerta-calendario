@@ -621,12 +621,12 @@ export const EnhancedServiceForm = ({
         <div className="flex items-center gap-4">
           <div className={cn(
             "p-3 rounded-xl",
-            service ? "bg-amber-500/10" : "bg-violet-500/10"
+            service ? "bg-amber-500/10" : "bg-zinc-900 dark:bg-zinc-800"
           )}>
             {service ? (
               <FileText className="h-6 w-6 text-amber-600 dark:text-amber-400" />
             ) : (
-              <Sparkles className="h-6 w-6 text-violet-600 dark:text-violet-400" />
+              <Sparkles className="h-6 w-6 text-primary" />
             )}
           </div>
           <div className="flex-1">
