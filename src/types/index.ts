@@ -193,7 +193,7 @@ export interface CompanyData {
 export interface Invoice {
   id: string;
   folio: string;
-  closureId: string;
+  closureId?: string | null;
   clientId: string;
   client?: {
     id: string;
