@@ -45,6 +45,7 @@ import NotFound from '@/pages/NotFound';
 import DailyReport from '@/pages/DailyReport';
 import Incomes from '@/pages/Incomes';
 import ServiceRates from '@/pages/ServiceRates';
+import Notifications from '@/pages/Notifications';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -240,6 +241,14 @@ function AppContent() {
           </ProtectedRoute>
         }>
           <Route index element={<Suppliers />} />
+        </Route>
+
+        <Route path="/notifications" element={
+          <ProtectedRoute allowedRoles={['admin', 'viewer', 'operator']}>
+            <Layout />
+          </ProtectedRoute>
+        }>
+          <Route index element={<Notifications />} />
         </Route>
 
         <Route path="/daily-report" element={
