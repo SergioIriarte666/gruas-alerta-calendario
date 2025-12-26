@@ -10,138 +10,199 @@ export const useInvoiceOperations = () => {
 
   const createInvoice = async (invoiceData: Omit<Invoice, 'id' | 'folio' | 'createdAt' | 'updatedAt'>): Promise<Invoice> => {
     try {
-      console.log('🚀 Starting invoice creation with transaction:', invoiceData);
+      console.log('🚀 Starting invoice creation:', invoiceData);
 
-      if (!invoiceData.closureId) {
-        throw new Error('closureId es requerido para crear una factura');
-      }
-
-      // Obtener servicios del cierre
-      const { data: closureServices, error: closureError } = await supabase
-        .from('closure_services')
-        .select(`
-          service_id,
-          services (
-            id, folio, value, client_covered_amount, has_excess
-          )
-        `)
-        .eq('closure_id', invoiceData.closureId);
-
-      if (closureError) {
-        console.error('❌ Error al obtener servicios del cierre:', closureError);
-        throw new Error('Error al obtener servicios del cierre');
-      }
-
-      if (!closureServices || closureServices.length === 0) {
-        throw new Error('No se encontraron servicios en el cierre especificado');
-      }
-
-      const serviceIds = closureServices.map(cs => cs.service_id);
-      console.log('📋 Servicios a facturar:', serviceIds);
-
-      // Preparar datos para la transacción
-      const invoiceDataForTransaction = {
-        client_id: invoiceData.clientId,
-        issue_date: invoiceData.issueDate,
-        due_date: invoiceData.dueDate,
-        subtotal: invoiceData.subtotal.toString(),
-        vat: invoiceData.vat.toString(),
-        total: invoiceData.total.toString(),
-        numero_fiscal: invoiceData.numeroFiscal,
-        status: invoiceData.status || 'draft',
-        payment_term_id: invoiceData.paymentTermId || '',
-        notes: null
-      };
-
-      // Usar función transaccional que maneja folio correctamente
-      const { data: transactionResult, error: transactionError } = await supabase
-        .rpc('create_invoice_transaction', {
-          p_invoice_data: invoiceDataForTransaction,
-          p_service_ids: serviceIds
-        });
-
-      if (transactionError) {
-        console.error('❌ Error en transacción de factura:', transactionError);
-        throw new Error(`Error al crear la factura: ${transactionError.message}`);
-      }
-
-      // La función SQL devuelve TABLE(invoice_id UUID, invoice_folio TEXT)
-      if (!transactionResult || !Array.isArray(transactionResult) || transactionResult.length === 0) {
-        throw new Error('Error en la transacción de factura: no se recibió respuesta válida');
-      }
-
-      const result = transactionResult[0];
-      if (!result?.invoice_id || !result?.invoice_folio) {
-        throw new Error('Error en la transacción de factura: datos incompletos');
-      }
-
-      console.log('✅ Transacción de factura exitosa:', result);
-
-      // Obtener la factura creada
-      const { data: newInvoice, error: fetchError } = await supabase
-        .from('invoices')
-        .select('*')
-        .eq('id', result.invoice_id)
-        .single();
-
-      if (fetchError || !newInvoice) {
-        throw new Error('Error al obtener la factura creada');
-      }
-
-      // Crear relación invoice_closures
-      const { error: closureRelationError } = await supabase
-        .from('invoice_closures')
-        .insert({
-          invoice_id: newInvoice.id,
-          closure_id: invoiceData.closureId
-        });
-
-      if (closureRelationError) {
-        console.error('❌ Error al crear relación invoice_closures:', closureRelationError);
-        throw new Error('Error al relacionar factura con cierre');
-      }
-
-      console.log('🔗 Relación invoice_closures creada');
-
-      // NUEVO: Actualizar estado del cierre a 'invoiced'
-      const { error: closureUpdateError } = await supabase
-        .from('service_closures')
-        .update({ 
-          status: 'invoiced',
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', invoiceData.closureId);
-
-      if (closureUpdateError) {
-        console.error('❌ Error al actualizar estado del cierre:', closureUpdateError);
-        toast.warning("Advertencia", {
-          description: "La factura se creó correctamente, pero no se pudo actualizar el estado del cierre.",
-        });
-      } else {
-        console.log('✅ Estado del cierre actualizado a "invoiced"');
-      }
-
-      // Invalidar queries de React Query para refresh inmediato
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['services'] }),
-        queryClient.invalidateQueries({ queryKey: ['operatorServices'] }),
-        queryClient.invalidateQueries({ queryKey: ['crane-services'] }),
-        queryClient.invalidateQueries({ queryKey: ['invoices'] }),
-        queryClient.invalidateQueries({ queryKey: ['closures'] })
-      ]);
-
-      // Dispatch del evento custom para otros listeners
-      window.dispatchEvent(new CustomEvent('invoice-created', { 
-        detail: { invoiceId: newInvoice.id, serviceIds } 
-      }));
-
-      console.log('🎉 Factura creada exitosamente con folios consecutivos');
+      // Determinar si es factura con cierre o directa
+      const hasClosureId = invoiceData.closureId && invoiceData.closureId !== '';
       
-      toast.success("Factura creada", {
-        description: `Factura ${result.invoice_folio} creada exitosamente.`,
-      });
+      if (hasClosureId) {
+        // ========== FLUJO CON CIERRE (existente) ==========
+        console.log('📋 Creando factura CON cierre:', invoiceData.closureId);
+        
+        // Obtener servicios del cierre
+        const { data: closureServices, error: closureError } = await supabase
+          .from('closure_services')
+          .select(`
+            service_id,
+            services (
+              id, folio, value, client_covered_amount, has_excess
+            )
+          `)
+          .eq('closure_id', invoiceData.closureId);
 
-      return formatInvoiceData({ ...newInvoice, invoice_closures: [{ closure_id: invoiceData.closureId }] });
+        if (closureError) {
+          console.error('❌ Error al obtener servicios del cierre:', closureError);
+          throw new Error('Error al obtener servicios del cierre');
+        }
+
+        if (!closureServices || closureServices.length === 0) {
+          throw new Error('No se encontraron servicios en el cierre especificado');
+        }
+
+        const serviceIds = closureServices.map(cs => cs.service_id);
+        console.log('📋 Servicios a facturar:', serviceIds);
+
+        // Preparar datos para la transacción
+        const invoiceDataForTransaction = {
+          client_id: invoiceData.clientId,
+          issue_date: invoiceData.issueDate,
+          due_date: invoiceData.dueDate,
+          subtotal: invoiceData.subtotal.toString(),
+          vat: invoiceData.vat.toString(),
+          total: invoiceData.total.toString(),
+          numero_fiscal: invoiceData.numeroFiscal,
+          status: invoiceData.status || 'draft',
+          payment_term_id: invoiceData.paymentTermId || '',
+          notes: null
+        };
+
+        // Usar función transaccional que maneja folio correctamente
+        const { data: transactionResult, error: transactionError } = await supabase
+          .rpc('create_invoice_transaction', {
+            p_invoice_data: invoiceDataForTransaction,
+            p_service_ids: serviceIds
+          });
+
+        if (transactionError) {
+          console.error('❌ Error en transacción de factura:', transactionError);
+          throw new Error(`Error al crear la factura: ${transactionError.message}`);
+        }
+
+        // La función SQL devuelve TABLE(invoice_id UUID, invoice_folio TEXT)
+        if (!transactionResult || !Array.isArray(transactionResult) || transactionResult.length === 0) {
+          throw new Error('Error en la transacción de factura: no se recibió respuesta válida');
+        }
+
+        const result = transactionResult[0];
+        if (!result?.invoice_id || !result?.invoice_folio) {
+          throw new Error('Error en la transacción de factura: datos incompletos');
+        }
+
+        console.log('✅ Transacción de factura exitosa:', result);
+
+        // Obtener la factura creada
+        const { data: newInvoice, error: fetchError } = await supabase
+          .from('invoices')
+          .select('*')
+          .eq('id', result.invoice_id)
+          .single();
+
+        if (fetchError || !newInvoice) {
+          throw new Error('Error al obtener la factura creada');
+        }
+
+        // Crear relación invoice_closures
+        const { error: closureRelationError } = await supabase
+          .from('invoice_closures')
+          .insert({
+            invoice_id: newInvoice.id,
+            closure_id: invoiceData.closureId
+          });
+
+        if (closureRelationError) {
+          console.error('❌ Error al crear relación invoice_closures:', closureRelationError);
+          throw new Error('Error al relacionar factura con cierre');
+        }
+
+        console.log('🔗 Relación invoice_closures creada');
+
+        // Actualizar estado del cierre a 'invoiced'
+        const { error: closureUpdateError } = await supabase
+          .from('service_closures')
+          .update({ 
+            status: 'invoiced',
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', invoiceData.closureId);
+
+        if (closureUpdateError) {
+          console.error('❌ Error al actualizar estado del cierre:', closureUpdateError);
+          toast.warning("Advertencia", {
+            description: "La factura se creó correctamente, pero no se pudo actualizar el estado del cierre.",
+          });
+        } else {
+          console.log('✅ Estado del cierre actualizado a "invoiced"');
+        }
+
+        // Invalidar queries de React Query para refresh inmediato
+        await Promise.all([
+          queryClient.invalidateQueries({ queryKey: ['services'] }),
+          queryClient.invalidateQueries({ queryKey: ['operatorServices'] }),
+          queryClient.invalidateQueries({ queryKey: ['crane-services'] }),
+          queryClient.invalidateQueries({ queryKey: ['invoices'] }),
+          queryClient.invalidateQueries({ queryKey: ['closures'] })
+        ]);
+
+        // Dispatch del evento custom para otros listeners
+        window.dispatchEvent(new CustomEvent('invoice-created', { 
+          detail: { invoiceId: newInvoice.id, serviceIds } 
+        }));
+
+        console.log('🎉 Factura creada exitosamente con folios consecutivos');
+        
+        toast.success("Factura creada", {
+          description: `Factura ${result.invoice_folio} creada exitosamente.`,
+        });
+
+        return formatInvoiceData({ ...newInvoice, invoice_closures: [{ closure_id: invoiceData.closureId }] });
+        
+      } else {
+        // ========== FLUJO SIN CIERRE (facturación directa) ==========
+        console.log('📋 Creando factura SIN cierre (facturación directa)');
+        
+        if (!invoiceData.clientId) {
+          throw new Error('Cliente es requerido para facturación directa');
+        }
+        
+        if (!invoiceData.subtotal || invoiceData.subtotal <= 0) {
+          throw new Error('Monto es requerido para facturación directa');
+        }
+
+        // Generar folio manualmente
+        const folio = await generateInvoiceFolio();
+        
+        // Insertar factura directamente
+        const { data: newInvoice, error: insertError } = await supabase
+          .from('invoices')
+          .insert({
+            folio,
+            client_id: invoiceData.clientId,
+            issue_date: invoiceData.issueDate,
+            due_date: invoiceData.dueDate,
+            subtotal: Math.round(invoiceData.subtotal),
+            vat: Math.round(invoiceData.vat),
+            total: Math.round(invoiceData.total),
+            numero_fiscal: invoiceData.numeroFiscal || null,
+            status: invoiceData.status || 'draft',
+            payment_term_id: invoiceData.paymentTermId || null,
+            notes: null
+          })
+          .select('*')
+          .single();
+
+        if (insertError || !newInvoice) {
+          console.error('❌ Error al crear factura directa:', insertError);
+          throw new Error(`Error al crear la factura: ${insertError?.message || 'Error desconocido'}`);
+        }
+
+        console.log('✅ Factura directa creada:', newInvoice);
+
+        // Invalidar queries
+        await Promise.all([
+          queryClient.invalidateQueries({ queryKey: ['invoices'] })
+        ]);
+
+        // Dispatch del evento custom
+        window.dispatchEvent(new CustomEvent('invoice-created', { 
+          detail: { invoiceId: newInvoice.id, serviceIds: [] } 
+        }));
+        
+        toast.success("Factura creada", {
+          description: `Factura ${folio} creada exitosamente (sin cierre asociado).`,
+        });
+
+        return formatInvoiceData(newInvoice);
+      }
 
     } catch (error: any) {
       console.error('❌ Error general en createInvoice:', error);
