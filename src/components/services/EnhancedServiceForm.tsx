@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { playRetroSuccessSound, playRetroErrorSound } from '@/lib/sounds';
 import { Service } from '@/types';
 import { FolioSection } from './form/FolioSection';
@@ -68,6 +68,16 @@ export const EnhancedServiceForm = ({
   // Step navigation state
   const [currentStep, setCurrentStep] = useState(1);
   const totalSteps = 4;
+  
+  // Ref for scroll reset on step change
+  const formContentRef = useRef<HTMLDivElement>(null);
+  
+  // Reset scroll when step changes
+  useEffect(() => {
+    if (formContentRef.current) {
+      formContentRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [currentStep]);
   
   // Cargar datos completos del servicio para edición
   const { enhancedService, isLoading: loadingEnhancedService } = useServiceDetailsForForm(service?.id || null);
@@ -681,7 +691,7 @@ export const EnhancedServiceForm = ({
         </div>
 
         {/* Right Panel - Form Content */}
-        <div className="flex-1 overflow-y-auto pr-2">
+        <div ref={formContentRef} className="flex-1 overflow-y-auto pr-2">
           {/* Alertas de Validación */}
           {selectedServiceType && validationErrors.length > 0 && (
             <ServiceValidationAlerts errors={validationErrors} />
