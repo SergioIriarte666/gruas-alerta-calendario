@@ -1,6 +1,6 @@
-
 import * as React from 'react';
 import { useClients } from '@/hooks/useClients';
+import { useClientsMetrics } from '@/hooks/useClientsMetrics';
 import { Client } from '@/types';
 import { toast } from 'sonner';
 import { ClientDetailsModal } from '@/components/clients/ClientDetailsModal';
@@ -8,10 +8,13 @@ import { AppPagination } from '@/components/shared/AppPagination';
 import { ClientsHeader } from '@/components/clients/ClientsHeader';
 import { ClientsFilters } from '@/components/clients/ClientsFilters';
 import { ClientsTable, ClientSortField, SortDirection } from '@/components/clients/ClientsTable';
+import { ClientStatusFilter } from '@/components/clients/ClientsQuickFilters';
 
 const Clients = () => {
   const { clients, loading, createClient, updateClient, deleteClient, toggleClientStatus } = useClients();
   const [searchTerm, setSearchTerm] = React.useState('');
+  const [departmentFilter, setDepartmentFilter] = React.useState('all');
+  const [statusFilter, setStatusFilter] = React.useState<ClientStatusFilter>('all');
   const [selectedClient, setSelectedClient] = React.useState<Client | undefined>();
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = React.useState(false);
@@ -20,6 +23,24 @@ const Clients = () => {
   const [sortField, setSortField] = React.useState<ClientSortField>('name');
   const [sortDirection, setSortDirection] = React.useState<SortDirection>('asc');
   const ITEMS_PER_PAGE = 10;
+
+  // Calcular métricas
+  const metrics = useClientsMetrics(clients);
+
+  // Obtener departamentos únicos para el filtro
+  const uniqueDepartments = React.useMemo(() => {
+    const depts = new Set(clients.map(c => c.department).filter(Boolean));
+    return Array.from(depts).sort();
+  }, [clients]);
+
+  // Obtener RUTs con múltiples departamentos
+  const multiDepartmentRuts = React.useMemo(() => {
+    const rutCounts = clients.reduce((acc, client) => {
+      acc[client.rut] = (acc[client.rut] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+    return new Set(Object.entries(rutCounts).filter(([_, count]) => count > 1).map(([rut]) => rut));
+  }, [clients]);
 
   const handleSort = React.useCallback((field: ClientSortField) => {
     if (sortField === field) {
@@ -31,11 +52,29 @@ const Clients = () => {
   }, [sortField, sortDirection]);
 
   const filteredAndSortedClients = React.useMemo(() => {
-    const filtered = clients.filter(client =>
+    let filtered = clients.filter(client =>
       client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       client.rut.includes(searchTerm) ||
       client.email.toLowerCase().includes(searchTerm.toLowerCase())
     );
+
+    // Filtro por departamento
+    if (departmentFilter !== 'all') {
+      filtered = filtered.filter(client => client.department === departmentFilter);
+    }
+
+    // Filtro por estado (quick filters)
+    switch (statusFilter) {
+      case 'active':
+        filtered = filtered.filter(client => client.isActive);
+        break;
+      case 'inactive':
+        filtered = filtered.filter(client => !client.isActive);
+        break;
+      case 'multi-department':
+        filtered = filtered.filter(client => multiDepartmentRuts.has(client.rut));
+        break;
+    }
 
     return [...filtered].sort((a, b) => {
       let comparison = 0;
@@ -68,7 +107,7 @@ const Clients = () => {
       
       return sortDirection === 'asc' ? comparison : -comparison;
     });
-  }, [clients, searchTerm, sortField, sortDirection]);
+  }, [clients, searchTerm, departmentFilter, statusFilter, sortField, sortDirection, multiDepartmentRuts]);
 
   const totalPages = Math.ceil(filteredAndSortedClients.length / ITEMS_PER_PAGE);
   const paginatedClients = React.useMemo(() => 
@@ -77,6 +116,11 @@ const Clients = () => {
       currentPage * ITEMS_PER_PAGE
     ), [filteredAndSortedClients, currentPage, ITEMS_PER_PAGE]
   );
+
+  // Reset page when filters change
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, departmentFilter, statusFilter]);
 
   const handleCreateClient = React.useCallback((clientData: Omit<Client, 'id' | 'createdAt' | 'updatedAt'>) => {
     createClient(clientData);
@@ -159,7 +203,7 @@ const Clients = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="text-white">Cargando clientes...</div>
+        <div className="text-foreground">Cargando clientes...</div>
       </div>
     );
   }
@@ -174,9 +218,22 @@ const Clients = () => {
         handleNewClient={handleNewClient}
         handleCreateClient={handleCreateClient}
         handleUpdateClient={handleUpdateClient}
+        totalClients={metrics.totalClients}
+        activeClients={metrics.activeClients}
+        uniqueCompanies={metrics.uniqueCompanies}
+        multiDepartmentCompanies={metrics.multiDepartmentCompanies}
+        activePercentage={metrics.activePercentage}
+        statusFilter={statusFilter}
+        onStatusFilterChange={setStatusFilter}
       />
 
-      <ClientsFilters searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
+      <ClientsFilters 
+        searchTerm={searchTerm} 
+        setSearchTerm={setSearchTerm}
+        departmentFilter={departmentFilter}
+        setDepartmentFilter={setDepartmentFilter}
+        departments={uniqueDepartments}
+      />
 
       <ClientsTable
         clients={paginatedClients}

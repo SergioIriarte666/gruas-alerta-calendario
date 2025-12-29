@@ -1,9 +1,10 @@
-
 import * as React from 'react';
 import { Button } from '@/components/ui/button';
-import { Plus, X } from 'lucide-react';
+import { Plus, X, Eye, EyeOff } from 'lucide-react';
 import { ClientForm } from '@/components/clients/ClientForm';
 import { Client } from '@/types';
+import { ClientsMetricsCards } from './ClientsMetricsCards';
+import { ClientsQuickFilters, ClientStatusFilter } from './ClientsQuickFilters';
 
 interface ClientsHeaderProps {
   isDialogOpen: boolean;
@@ -13,6 +14,15 @@ interface ClientsHeaderProps {
   handleNewClient: () => void;
   handleCreateClient: (clientData: Omit<Client, 'id' | 'createdAt' | 'updatedAt'>) => void;
   handleUpdateClient: (clientData: Omit<Client, 'id' | 'createdAt' | 'updatedAt'>) => void;
+  // Nuevas props para métricas
+  totalClients: number;
+  activeClients: number;
+  uniqueCompanies: number;
+  multiDepartmentCompanies: number;
+  activePercentage: number;
+  // Props para filtros
+  statusFilter: ClientStatusFilter;
+  onStatusFilterChange: (filter: ClientStatusFilter) => void;
 }
 
 export const ClientsHeader = ({
@@ -23,6 +33,13 @@ export const ClientsHeader = ({
   handleNewClient,
   handleCreateClient,
   handleUpdateClient,
+  totalClients,
+  activeClients,
+  uniqueCompanies,
+  multiDepartmentCompanies,
+  activePercentage,
+  statusFilter,
+  onStatusFilterChange,
 }: ClientsHeaderProps) => {
   const handleCloseModal = () => {
     setIsDialogOpen(false);
@@ -50,21 +67,51 @@ export const ClientsHeader = ({
 
   return (
     <>
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-black">Gestión de Clientes</h1>
-          <p className="text-gray-600 mt-2">
-            Administra la información de todos los clientes del sistema
-          </p>
+      <div className="space-y-6">
+        {/* Header Section */}
+        <div className="flex items-center justify-between bg-white p-6 rounded-lg border">
+          <div>
+            <h1 className="text-3xl font-bold text-foreground">Gestión de Clientes</h1>
+            <p className="text-muted-foreground mt-2">
+              Administra la información de todos los clientes del sistema
+            </p>
+          </div>
+          
+          <Button 
+            size="lg"
+            onClick={handleNewClient}
+            className="bg-violet-600 hover:bg-violet-700 text-white font-bold text-lg px-8 py-6 shadow-lg"
+          >
+            <Plus className="w-6 h-6 mr-3" />
+            Nuevo Cliente
+          </Button>
         </div>
-        
-        <Button 
-          onClick={handleNewClient}
-          className="bg-tms-green hover:bg-tms-green/80 text-black font-medium"
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Nuevo Cliente
-        </Button>
+
+        {/* Quick Filters */}
+        <div className="bg-white p-4 rounded-lg border">
+          <div className="flex items-center justify-between flex-wrap gap-4">
+            <div>
+              <h3 className="text-sm font-medium text-muted-foreground mb-2">Filtros Rápidos</h3>
+              <ClientsQuickFilters
+                selected={statusFilter}
+                onChange={onStatusFilterChange}
+                multiDepartmentCount={multiDepartmentCompanies}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Metrics Section */}
+        <div className="bg-white p-6 rounded-lg border space-y-4">
+          <h2 className="text-lg font-semibold text-foreground">Resumen de Clientes</h2>
+          <ClientsMetricsCards
+            totalClients={totalClients}
+            activeClients={activeClients}
+            uniqueCompanies={uniqueCompanies}
+            multiDepartmentCompanies={multiDepartmentCompanies}
+            activePercentage={activePercentage}
+          />
+        </div>
       </div>
 
       {/* Custom Modal Implementation */}
