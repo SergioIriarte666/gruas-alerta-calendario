@@ -35,8 +35,8 @@ const SortIcon = ({ field, currentSortField, sortDirection }: {
     return <ArrowUpDown className="ml-2 h-4 w-4 text-muted-foreground" />;
   }
   return sortDirection === 'asc' ? 
-    <ArrowUp className="ml-2 h-4 w-4 text-primary" /> : 
-    <ArrowDown className="ml-2 h-4 w-4 text-primary" />;
+    <ArrowUp className="ml-2 h-4 w-4 text-violet-600" /> : 
+    <ArrowDown className="ml-2 h-4 w-4 text-violet-600" />;
 };
 
 export const ClientsTable = ({
@@ -80,14 +80,14 @@ export const ClientsTable = ({
   // Desktop view (unchanged functionality)
   if (clients.length === 0 && searchTerm) {
     return (
-      <Card>
+      <Card className="border-0 shadow-sm">
         <CardContent className="p-8 text-center">
           <Users className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
           <h3 className="text-lg font-medium text-foreground mb-2">No se encontraron clientes</h3>
           <p className="text-muted-foreground mb-4">
             No hay clientes que coincidan con "{searchTerm}"
           </p>
-          <Button onClick={onNewClient} className="bg-primary hover:bg-primary/90 text-primary-foreground">
+          <Button onClick={onNewClient} className="bg-violet-600 hover:bg-violet-700 text-white">
             <Plus className="w-4 h-4 mr-2" />
             Agregar Cliente
           </Button>
@@ -98,14 +98,14 @@ export const ClientsTable = ({
 
   if (clients.length === 0) {
     return (
-      <Card>
+      <Card className="border-0 shadow-sm">
         <CardContent className="p-8 text-center">
           <Users className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
           <h3 className="text-lg font-medium text-foreground mb-2">No hay clientes registrados</h3>
           <p className="text-muted-foreground mb-4">
             Comienza agregando tu primer cliente al sistema
           </p>
-          <Button onClick={onNewClient} className="bg-primary hover:bg-primary/90 text-primary-foreground">
+          <Button onClick={onNewClient} className="bg-violet-600 hover:bg-violet-700 text-white">
             <Plus className="w-4 h-4 mr-2" />
             Agregar Primer Cliente
           </Button>
@@ -115,19 +115,22 @@ export const ClientsTable = ({
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center justify-between">
-          <span>Clientes ({totalClients})</span>
+    <Card className="border-0 shadow-sm overflow-hidden">
+      <CardHeader className="bg-gradient-to-r from-violet-50 to-purple-50 border-b">
+        <CardTitle className="flex items-center justify-between text-foreground">
+          <span className="flex items-center gap-2">
+            <Users className="h-5 w-5 text-violet-600" />
+            Clientes ({totalClients})
+          </span>
         </CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="p-0">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="border-b">
+              <tr className="bg-gray-50/80 border-b">
                 <th 
-                  className="text-left py-3 px-4 font-medium text-foreground cursor-pointer hover:text-primary transition-colors" 
+                  className="text-left py-3 px-4 font-semibold text-sm text-foreground cursor-pointer hover:text-violet-600 transition-colors" 
                   onClick={() => onSort?.('name')}
                 >
                   <div className="flex items-center">
@@ -136,7 +139,7 @@ export const ClientsTable = ({
                   </div>
                 </th>
                 <th 
-                  className="text-left py-3 px-4 font-medium text-foreground cursor-pointer hover:text-primary transition-colors" 
+                  className="text-left py-3 px-4 font-semibold text-sm text-foreground cursor-pointer hover:text-violet-600 transition-colors" 
                   onClick={() => onSort?.('rut')}
                 >
                   <div className="flex items-center">
@@ -145,7 +148,7 @@ export const ClientsTable = ({
                   </div>
                 </th>
                 <th 
-                  className="text-left py-3 px-4 font-medium text-foreground cursor-pointer hover:text-primary transition-colors" 
+                  className="text-left py-3 px-4 font-semibold text-sm text-foreground cursor-pointer hover:text-violet-600 transition-colors" 
                   onClick={() => onSort?.('department')}
                 >
                   <div className="flex items-center">
@@ -154,7 +157,7 @@ export const ClientsTable = ({
                   </div>
                 </th>
                 <th 
-                  className="text-left py-3 px-4 font-medium text-foreground cursor-pointer hover:text-primary transition-colors" 
+                  className="text-left py-3 px-4 font-semibold text-sm text-foreground cursor-pointer hover:text-violet-600 transition-colors" 
                   onClick={() => onSort?.('contactName')}
                 >
                   <div className="flex items-center">
@@ -163,7 +166,7 @@ export const ClientsTable = ({
                   </div>
                 </th>
                 <th 
-                  className="text-left py-3 px-4 font-medium text-foreground cursor-pointer hover:text-primary transition-colors" 
+                  className="text-left py-3 px-4 font-semibold text-sm text-foreground cursor-pointer hover:text-violet-600 transition-colors" 
                   onClick={() => onSort?.('email')}
                 >
                   <div className="flex items-center">
@@ -172,7 +175,7 @@ export const ClientsTable = ({
                   </div>
                 </th>
                 <th 
-                  className="text-left py-3 px-4 font-medium text-foreground cursor-pointer hover:text-primary transition-colors" 
+                  className="text-left py-3 px-4 font-semibold text-sm text-foreground cursor-pointer hover:text-violet-600 transition-colors" 
                   onClick={() => onSort?.('phone')}
                 >
                   <div className="flex items-center">
@@ -181,7 +184,7 @@ export const ClientsTable = ({
                   </div>
                 </th>
                 <th 
-                  className="text-left py-3 px-4 font-medium text-foreground cursor-pointer hover:text-primary transition-colors" 
+                  className="text-left py-3 px-4 font-semibold text-sm text-foreground cursor-pointer hover:text-violet-600 transition-colors" 
                   onClick={() => onSort?.('isActive')}
                 >
                   <div className="flex items-center">
@@ -189,14 +192,19 @@ export const ClientsTable = ({
                     <SortIcon field="isActive" currentSortField={sortField} sortDirection={sortDirection} />
                   </div>
                 </th>
-                <th className="text-center py-3 px-4 font-medium text-foreground">Acciones</th>
+                <th className="text-center py-3 px-4 font-semibold text-sm text-foreground">Acciones</th>
               </tr>
             </thead>
             <tbody>
-              {clients.map((client) => (
-                <tr key={client.id} className="border-b hover:bg-muted/50">
+              {clients.map((client, index) => (
+                <tr 
+                  key={client.id} 
+                  className={`border-b hover:bg-violet-50/50 transition-colors ${
+                    index % 2 === 0 ? 'bg-white' : 'bg-gray-50/30'
+                  }`}
+                >
                   <td className="py-3 px-4 font-medium text-foreground">{client.name}</td>
-                  <td className="py-3 px-4 text-foreground">{client.rut}</td>
+                  <td className="py-3 px-4 text-foreground font-mono text-sm">{client.rut}</td>
                   <td className="py-3 px-4">
                     <DepartmentBadge
                       department={client.department}
@@ -211,6 +219,10 @@ export const ClientsTable = ({
                   <td className="py-3 px-4">
                     <Badge 
                       variant={client.isActive ? "default" : "secondary"}
+                      className={client.isActive 
+                        ? "bg-green-100 text-green-700 hover:bg-green-100" 
+                        : "bg-gray-100 text-gray-600 hover:bg-gray-100"
+                      }
                     >
                       {client.isActive ? 'Activo' : 'Inactivo'}
                     </Badge>
@@ -221,7 +233,7 @@ export const ClientsTable = ({
                         variant="ghost"
                         size="sm"
                         onClick={() => handleViewPipeline(client)}
-                        className="text-purple-400 hover:text-purple-300 hover:bg-purple-400/10 border border-purple-400/50"
+                        className="text-purple-500 hover:text-purple-600 hover:bg-purple-50"
                         title="Pipeline VIP"
                       >
                         <TrendingUp className="w-4 h-4" />
@@ -230,7 +242,7 @@ export const ClientsTable = ({
                         variant="ghost"
                         size="sm"
                         onClick={() => onViewDetails(client)}
-                        className="text-blue-400 hover:text-blue-300 hover:bg-blue-400/10 border border-blue-400/50"
+                        className="text-blue-500 hover:text-blue-600 hover:bg-blue-50"
                         title="Ver detalles"
                       >
                         <Eye className="w-4 h-4" />
@@ -239,7 +251,7 @@ export const ClientsTable = ({
                         variant="ghost"
                         size="sm"
                         onClick={() => onEdit(client)}
-                        className="text-primary hover:text-primary/80 hover:bg-primary/10 border border-primary/50"
+                        className="text-violet-500 hover:text-violet-600 hover:bg-violet-50"
                         title="Editar cliente"
                       >
                         <Edit className="w-4 h-4" />
@@ -248,11 +260,11 @@ export const ClientsTable = ({
                         variant="ghost"
                         size="sm"
                         onClick={() => onToggleStatus(client)}
-                        className={`border ${
+                        className={
                           client.isActive 
-                            ? 'text-red-400 hover:text-red-300 hover:bg-red-400/10 border-red-400/50' 
-                            : 'text-green-400 hover:text-green-300 hover:bg-green-400/10 border-green-400/50'
-                        }`}
+                            ? 'text-amber-500 hover:text-amber-600 hover:bg-amber-50' 
+                            : 'text-green-500 hover:text-green-600 hover:bg-green-50'
+                        }
                         title={client.isActive ? 'Desactivar cliente' : 'Activar cliente'}
                       >
                         {client.isActive ? <UserX className="w-4 h-4" /> : <UserCheck className="w-4 h-4" />}
@@ -261,7 +273,7 @@ export const ClientsTable = ({
                         variant="ghost"
                         size="sm"
                         onClick={() => onDelete(client)}
-                        className="text-red-400 hover:text-red-300 hover:bg-red-400/10 border border-red-400/50"
+                        className="text-red-500 hover:text-red-600 hover:bg-red-50"
                         title="Eliminar cliente"
                       >
                         <Trash2 className="w-4 h-4" />
