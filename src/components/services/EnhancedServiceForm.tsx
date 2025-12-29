@@ -434,14 +434,15 @@ export const EnhancedServiceForm = ({
   }, [isFieldInvalid]);
 
   // Build steps with completion status
+  // When editing (service exists), mark all steps as completed to allow free navigation
   const steps: FormStep[] = useMemo(() => {
     const defaultSteps = getDefaultSteps();
     return defaultSteps.map(step => ({
       ...step,
-      isCompleted: step.id < currentStep,
+      isCompleted: !!service || step.id < currentStep,
       hasError: step.id === 3 && (isFieldInvalid('crane') || isFieldInvalid('operators'))
     }));
-  }, [currentStep, isFieldInvalid]);
+  }, [currentStep, isFieldInvalid, service]);
 
   const progressPercentage = ((currentStep - 1) / (totalSteps - 1)) * 100;
 
