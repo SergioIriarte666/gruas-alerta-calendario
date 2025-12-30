@@ -1,6 +1,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { useUser } from '@/contexts/UserContext';
+import { useOfflineMode } from '@/contexts/OfflineModeContext';
 import type { BeforeInstallPromptEvent, ServiceWorkerRegistrationWithSync } from '@/types/pwa';
 
 interface InstallPrompt {
@@ -40,7 +41,8 @@ interface PWACapabilities {
 
 export const usePWACapabilities = (): PWACapabilities => {
   const { user } = useUser();
-  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const { effectiveIsOnline, isForceOffline } = useOfflineMode();
+  const [isOnline, setIsOnline] = useState(effectiveIsOnline);
   const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [isInstalled, setIsInstalled] = useState(false);
   const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>('default');
@@ -48,31 +50,20 @@ export const usePWACapabilities = (): PWACapabilities => {
   const [lastSync, setLastSync] = useState<Date | null>(null);
   const [syncInProgress, setSyncInProgress] = useState(false);
 
-  // Detectar estado online/offline
+  // Sincronizar con effectiveIsOnline del contexto
   useEffect(() => {
-    const handleOnline = () => {
-      setIsOnline(true);
-      // Trigger background sync cuando vuelve la conexión
-      if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.ready.then(registration => {
-          const syncRegistration = registration as ServiceWorkerRegistrationWithSync;
-          if ('sync' in syncRegistration && syncRegistration.sync) {
-            syncRegistration.sync.register('offline-action');
-          }
-        });
-      }
-    };
+    setIsOnline(effectiveIsOnline);
     
-    const handleOffline = () => setIsOnline(false);
-
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
-
-    return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
-    };
-  }, []);
+    // Trigger background sync cuando vuelve la conexión (solo si no está forzado offline)
+    if (effectiveIsOnline && !isForceOffline && 'serviceWorker' in navigator) {
+      navigator.serviceWorker.ready.then(registration => {
+        const syncRegistration = registration as ServiceWorkerRegistrationWithSync;
+        if ('sync' in syncRegistration && syncRegistration.sync) {
+          syncRegistration.sync.register('offline-action');
+        }
+      });
+    }
+  }, [effectiveIsOnline, isForceOffline]);
 
   // Detectar install prompt
   useEffect(() => {

@@ -25,11 +25,14 @@ import {
   Smartphone,
   Database,
   CloudOff,
-  Loader2
+  Loader2,
+  FlaskConical,
+  AlertTriangle
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useOfflineSync } from '@/hooks/useOfflineSync';
 import { usePWAInstall } from '@/hooks/usePWAInstall';
+import { useOfflineMode } from '@/contexts/OfflineModeContext';
 import {
   getAllCacheMetadata,
   getCacheSize,
@@ -58,6 +61,7 @@ export const OfflineSettingsPanel: React.FC = () => {
   } = useOfflineSync();
   
   const { isInstallable, isInstalled, promptInstall } = usePWAInstall();
+  const { isForceOffline, toggleForceOffline } = useOfflineMode();
   
   const [cacheMetadata, setCacheMetadata] = useState<CacheMetadata[]>([]);
   const [cacheSize, setCacheSize] = useState(0);
@@ -138,12 +142,16 @@ export const OfflineSettingsPanel: React.FC = () => {
             </div>
           </div>
           <Badge 
-            className={isOnline 
-              ? 'bg-green-500/20 text-green-400 border-green-500/30' 
-              : 'bg-red-500/20 text-red-400 border-red-500/30'
+            className={isForceOffline
+              ? 'bg-amber-500/20 text-amber-400 border-amber-500/30'
+              : isOnline 
+                ? 'bg-green-500/20 text-green-400 border-green-500/30' 
+                : 'bg-red-500/20 text-red-400 border-red-500/30'
             }
           >
-            {isOnline ? (
+            {isForceOffline ? (
+              <><FlaskConical className="w-3 h-3 mr-1" /> Modo Prueba</>
+            ) : isOnline ? (
               <><Wifi className="w-3 h-3 mr-1" /> Conectado</>
             ) : (
               <><WifiOff className="w-3 h-3 mr-1" /> Sin conexión</>
@@ -153,6 +161,46 @@ export const OfflineSettingsPanel: React.FC = () => {
       </CardHeader>
 
       <CardContent className="space-y-6">
+        {/* Modo de Prueba Offline */}
+        <div className="space-y-3">
+          <h4 className="text-sm font-medium text-foreground flex items-center gap-2">
+            <FlaskConical className="w-4 h-4" />
+            Modo de Prueba
+          </h4>
+          <div className="p-4 rounded-lg bg-muted/50 space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="space-y-1 flex-1 mr-4">
+                <Label htmlFor="force-offline" className="text-sm font-medium">
+                  Simular modo sin conexión
+                </Label>
+                <p className="text-xs text-muted-foreground">
+                  Activa para probar la funcionalidad offline sin desconectar tu red real
+                </p>
+              </div>
+              <Switch
+                id="force-offline"
+                checked={isForceOffline}
+                onCheckedChange={toggleForceOffline}
+              />
+            </div>
+            
+            {isForceOffline && (
+              <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-500/10 border border-amber-500/30">
+                <AlertTriangle className="w-4 h-4 text-amber-400 mt-0.5 flex-shrink-0" />
+                <div className="text-xs text-amber-400">
+                  <p className="font-medium">Modo offline forzado activo</p>
+                  <p className="mt-1 text-amber-400/80">
+                    Los datos no se sincronizarán con el servidor hasta que desactives este modo.
+                    Todos los cambios se guardarán localmente.
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <Separator />
+
         {/* Estado de instalación PWA */}
         <div className="space-y-3">
           <h4 className="text-sm font-medium text-foreground flex items-center gap-2">

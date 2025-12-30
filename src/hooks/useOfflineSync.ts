@@ -6,6 +6,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useOfflineMode } from '@/contexts/OfflineModeContext';
 
 export interface OfflineAction {
   id: string;
@@ -48,37 +49,29 @@ async function openDatabase(): Promise<IDBDatabase> {
 }
 
 export function useOfflineSync() {
-  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const { effectiveIsOnline, isForceOffline } = useOfflineMode();
+  const [isOnline, setIsOnline] = useState(effectiveIsOnline);
   const [pendingActions, setPendingActions] = useState<OfflineAction[]>([]);
   const [isSyncing, setIsSyncing] = useState(false);
   const [lastSyncTime, setLastSyncTime] = useState<Date | null>(null);
   const syncInProgress = useRef(false);
 
-  // Actualizar estado de conexión
+  // Sincronizar con effectiveIsOnline del contexto
   useEffect(() => {
-    const handleOnline = () => {
-      setIsOnline(true);
+    const wasOffline = !isOnline;
+    setIsOnline(effectiveIsOnline);
+    
+    if (wasOffline && effectiveIsOnline) {
       toast.success('Conexión restaurada', {
         description: 'Sincronizando datos pendientes...'
       });
       syncPendingActions();
-    };
-
-    const handleOffline = () => {
-      setIsOnline(false);
-      toast.warning('Sin conexión', {
+    } else if (!wasOffline && !effectiveIsOnline) {
+      toast.warning(isForceOffline ? 'Modo offline activado' : 'Sin conexión', {
         description: 'Los cambios se guardarán localmente'
       });
-    };
-
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
-
-    return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
-    };
-  }, []);
+    }
+  }, [effectiveIsOnline, isForceOffline]);
 
   // Cargar acciones pendientes al iniciar
   useEffect(() => {
@@ -196,7 +189,7 @@ export function useOfflineSync() {
   };
 
   const syncPendingActions = useCallback(async () => {
-    if (syncInProgress.current || !navigator.onLine) return;
+    if (syncInProgress.current || !effectiveIsOnline) return;
     syncInProgress.current = true;
     setIsSyncing(true);
 
@@ -290,7 +283,7 @@ export function useOfflineSync() {
     operation: () => Promise<{ data: T | null; error: any }>,
     offlineAction: Omit<OfflineAction, 'id' | 'timestamp' | 'retries' | 'status'>
   ): Promise<{ data: T | null; error: any; isOffline: boolean }> => {
-    if (navigator.onLine) {
+    if (effectiveIsOnline) {
       try {
         const result = await operation();
         return { ...result, isOffline: false };

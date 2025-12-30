@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { UserProvider } from '@/contexts/UserContext';
 import { NotificationProvider } from '@/contexts/NotificationContext';
+import { OfflineModeProvider } from '@/contexts/OfflineModeContext';
 import { useNotificationTriggers } from '@/hooks/useNotificationTriggers';
 import { ToastProvider } from '@/components/ui/custom-toast';
 import { SessionTimeoutProvider } from '@/components/auth/SessionTimeoutProvider';
@@ -307,13 +308,15 @@ export default function App() {
         <SessionTimeoutProvider>
           <UserProvider>
             <NotificationProvider>
-              <ToastProvider>
-                <Router>
-                  <PWAWrapper>
-                    <AppContent />
-                  </PWAWrapper>
-                </Router>
-              </ToastProvider>
+              <OfflineModeProvider>
+                <ToastProvider>
+                  <Router>
+                    <PWAWrapper>
+                      <AppContent />
+                    </PWAWrapper>
+                  </Router>
+                </ToastProvider>
+              </OfflineModeProvider>
             </NotificationProvider>
           </UserProvider>
         </SessionTimeoutProvider>
