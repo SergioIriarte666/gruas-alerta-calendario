@@ -206,14 +206,14 @@ export const generateVehicleHistoryPDF = async (
   } else {
     // Preparar datos - cada servicio con su info de factura en la misma fila
     const tableData = data.services.map((service: VehicleHistoryRecord) => {
-      // Construir columna de COT/OC
+      // Construir columna de COT/OC (sin duplicar prefijos)
       let cotOc = '-';
       if (service.quoteNumber && service.purchaseOrder) {
-        cotOc = `COT: ${service.quoteNumber} / OC: ${service.purchaseOrder}`;
+        cotOc = `${service.quoteNumber} / ${service.purchaseOrder}`;
       } else if (service.quoteNumber) {
-        cotOc = `COT: ${service.quoteNumber}`;
+        cotOc = service.quoteNumber;
       } else if (service.purchaseOrder) {
-        cotOc = `OC: ${service.purchaseOrder}`;
+        cotOc = service.purchaseOrder;
       }
       
       // Construir columna de factura - solo número fiscal
