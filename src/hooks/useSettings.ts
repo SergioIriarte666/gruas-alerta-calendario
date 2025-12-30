@@ -1,27 +1,41 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Settings, defaultSettings } from '@/types/settings';
 import { useSettingsFetcher } from './settings/useSettingsFetcher';
 import { useSettingsSaver } from './settings/useSettingsSaver';
+import { useAuth } from '@/contexts/AuthContext';
 
 export const useSettings = () => {
+  const { user: authUser, loading: authLoading } = useAuth();
   const [settings, setSettings] = useState<Settings>(defaultSettings);
   const [loading, setLoading] = useState(true);
   const { fetchSettings } = useSettingsFetcher();
   const { saveSettings: saveSettingsToDb, saving } = useSettingsSaver();
 
-  const loadSettings = async () => {
+  const loadSettings = useCallback(async () => {
     setLoading(true);
     const loadedSettings = await fetchSettings();
     setSettings(loadedSettings);
     setLoading(false);
-  };
+  }, [fetchSettings]);
 
+  // Cargar settings SOLO cuando haya usuario autenticado (evita quedar con valores "default" tras login)
   useEffect(() => {
+    if (authLoading) return;
+
+    if (!authUser) {
+      setSettings(defaultSettings);
+      setLoading(false);
+      return;
+    }
+
     loadSettings();
-  }, []);
+  }, [authLoading, authUser?.id, loadSettings]);
 
+  // Recargar cuando se actualiza configuración, pero solo si hay usuario autenticado
   useEffect(() => {
+    if (!authUser) return;
+
     const refetch = () => {
       loadSettings();
     };
@@ -29,7 +43,7 @@ export const useSettings = () => {
     return () => {
       window.removeEventListener('settings-updated', refetch);
     };
-  }, []);
+  }, [authUser?.id, loadSettings]);
 
   const updateSettings = (updates: Partial<Settings>) => {
     setSettings(prev => {
