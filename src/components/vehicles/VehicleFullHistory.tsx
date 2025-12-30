@@ -269,13 +269,8 @@ export const VehicleFullHistory: React.FC<VehicleFullHistoryProps> = ({ data, is
                         {service.relatedInvoice ? (
                           <div className="flex items-center gap-2">
                             <Receipt className="h-4 w-4 text-green-600" />
-                            <div className="text-xs">
-                              <div className="font-medium">{service.relatedInvoice.folio}</div>
-                              {service.relatedInvoice.numeroFiscal && (
-                                <div className="text-muted-foreground">
-                                  NF: {service.relatedInvoice.numeroFiscal}
-                                </div>
-                              )}
+                            <div className="text-xs font-medium">
+                              {service.relatedInvoice.numeroFiscal || 'Pendiente'}
                             </div>
                           </div>
                         ) : (

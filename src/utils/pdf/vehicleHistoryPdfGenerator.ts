@@ -216,13 +216,10 @@ export const generateVehicleHistoryPDF = async (
         cotOc = `OC: ${service.purchaseOrder}`;
       }
       
-      // Construir columna de factura
+      // Construir columna de factura - solo número fiscal
       let factura = 'Sin factura';
       if (service.relatedInvoice) {
-        factura = service.relatedInvoice.folio;
-        if (service.relatedInvoice.numeroFiscal) {
-          factura += ` (NF: ${service.relatedInvoice.numeroFiscal})`;
-        }
+        factura = service.relatedInvoice.numeroFiscal || 'Pendiente';
       }
       
       return [
