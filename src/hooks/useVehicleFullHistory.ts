@@ -4,7 +4,7 @@ import { getServiceValueForClosure } from '@/utils/serviceValueCalculations';
 
 export interface VehicleHistoryRecord {
   id: string;
-  type: 'service' | 'quote' | 'purchase_order' | 'invoice';
+  type: 'service' | 'invoice';
   folio: string;
   date: string;
   clientName: string;
@@ -20,13 +20,23 @@ export interface VehicleHistoryRecord {
   invoiceNumeroFiscal?: string;
   operatorName?: string;
   cranePlate?: string;
+  // Para agrupar servicio con su factura
+  relatedInvoice?: {
+    id: string;
+    folio: string;
+    date: string;
+    status: string;
+    value: number;
+    numeroFiscal?: string;
+  };
 }
 
 export interface VehicleFullHistoryData {
   licensePlate: string;
   vehicleBrand?: string;
   vehicleModel?: string;
-  records: VehicleHistoryRecord[];
+  // Servicios agrupados (cada servicio puede tener su factura relacionada)
+  services: VehicleHistoryRecord[];
   summary: {
     totalServices: number;
     totalValue: number;
@@ -94,7 +104,7 @@ const fetchVehicleFullHistory = async (licensePlate: string): Promise<VehicleFul
   if (matchingServices.length === 0) {
     return {
       licensePlate,
-      records: [],
+      services: [],
       summary: {
         totalServices: 0,
         totalValue: 0,
@@ -135,8 +145,8 @@ const fetchVehicleFullHistory = async (licensePlate: string): Promise<VehicleFul
     }
   });
 
-  // Construir registros del historial
-  const records: VehicleHistoryRecord[] = [];
+  // Construir registros del historial - AGRUPADOS POR SERVICIO
+  const services: VehicleHistoryRecord[] = [];
   let vehicleBrand = '';
   let vehicleModel = '';
   let totalQuotes = 0;
@@ -144,7 +154,6 @@ const fetchVehicleFullHistory = async (licensePlate: string): Promise<VehicleFul
   let totalInvoices = 0;
   let completedServices = 0;
   let cancelledServices = 0;
-  const invoiceIds = new Set<string>();
 
   matchingServices.forEach((service: any) => {
     // Capturar marca/modelo del primer servicio que lo tenga
@@ -160,8 +169,24 @@ const fetchVehicleFullHistory = async (licensePlate: string): Promise<VehicleFul
     if (service.quote_number) totalQuotes++;
     if (service.purchase_order) totalPurchaseOrders++;
 
-    // Agregar registro del servicio
-    records.push({
+    // Obtener factura relacionada si existe
+    const invoice = serviceToInvoice[service.id];
+    let relatedInvoice = undefined;
+    
+    if (invoice) {
+      totalInvoices++;
+      relatedInvoice = {
+        id: invoice.id,
+        folio: invoice.folio,
+        date: invoice.issue_date,
+        status: invoice.status,
+        value: Number(invoice.total) || 0,
+        numeroFiscal: invoice.numero_fiscal
+      };
+    }
+
+    // Agregar servicio con su factura relacionada
+    services.push({
       id: service.id,
       type: 'service',
       folio: service.folio,
@@ -176,41 +201,21 @@ const fetchVehicleFullHistory = async (licensePlate: string): Promise<VehicleFul
       quoteNumber: service.quote_number,
       purchaseOrder: service.purchase_order,
       operatorName: service.operators?.name,
-      cranePlate: service.cranes?.license_plate
+      cranePlate: service.cranes?.license_plate,
+      relatedInvoice
     });
-
-    // Agregar factura relacionada si existe
-    const invoice = serviceToInvoice[service.id];
-    if (invoice && !invoiceIds.has(invoice.id)) {
-      invoiceIds.add(invoice.id);
-      totalInvoices++;
-      records.push({
-        id: invoice.id,
-        type: 'invoice',
-        folio: invoice.folio,
-        date: invoice.issue_date,
-        clientName: invoice.client?.name || client?.name || 'N/A',
-        clientRut: invoice.client?.rut || client?.rut || 'N/A',
-        status: invoice.status,
-        value: Number(invoice.total) || 0,
-        invoiceFolio: invoice.folio,
-        invoiceNumeroFiscal: invoice.numero_fiscal
-      });
-    }
   });
 
-  // Ordenar por fecha descendente
-  records.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  // Ordenar servicios por fecha descendente
+  services.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
-  const totalValue = records
-    .filter(r => r.type === 'service')
-    .reduce((sum, r) => sum + r.value, 0);
+  const totalValue = services.reduce((sum, r) => sum + r.value, 0);
 
   return {
     licensePlate,
     vehicleBrand,
     vehicleModel,
-    records,
+    services,
     summary: {
       totalServices: matchingServices.length,
       totalValue,

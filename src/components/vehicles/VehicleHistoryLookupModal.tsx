@@ -39,7 +39,7 @@ export const VehicleHistoryLookupModal: React.FC<VehicleHistoryLookupModalProps>
   };
 
   const handleExportPDF = async () => {
-    if (!data || data.records.length === 0) {
+    if (!data || data.services.length === 0) {
       toast.error('No hay datos para exportar');
       return;
     }
@@ -115,7 +115,7 @@ export const VehicleHistoryLookupModal: React.FC<VehicleHistoryLookupModalProps>
               'Buscar'
             )}
           </Button>
-          {data && data.records.length > 0 && (
+          {data && data.services.length > 0 && (
             <Button
               type="button"
               variant="outline"

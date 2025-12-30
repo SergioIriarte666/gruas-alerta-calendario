@@ -11,7 +11,8 @@ import {
   TrendingUp,
   CheckCircle2,
   XCircle,
-  AlertCircle
+  AlertCircle,
+  ArrowRight
 } from 'lucide-react';
 import { formatCurrency } from '@/utils/statusHelpers';
 import { VehicleFullHistoryData, VehicleHistoryRecord } from '@/hooks/useVehicleFullHistory';
@@ -40,16 +41,6 @@ const getStatusConfig = (status: string) => {
     partially_paid: { label: 'Pago Parcial', variant: 'secondary' }
   };
   return configs[status] || { label: status, variant: 'secondary' as const };
-};
-
-const getTypeConfig = (type: string) => {
-  const configs: Record<string, { label: string; icon: React.ReactNode; color: string }> = {
-    service: { label: 'Servicio', icon: <Car className="h-4 w-4" />, color: 'text-blue-600' },
-    quote: { label: 'Cotización', icon: <ClipboardList className="h-4 w-4" />, color: 'text-amber-600' },
-    purchase_order: { label: 'OC', icon: <FileText className="h-4 w-4" />, color: 'text-purple-600' },
-    invoice: { label: 'Factura', icon: <Receipt className="h-4 w-4" />, color: 'text-green-600' }
-  };
-  return configs[type] || { label: type, icon: <FileText className="h-4 w-4" />, color: 'text-muted-foreground' };
 };
 
 const formatDate = (dateStr: string) => {
@@ -89,7 +80,7 @@ export const VehicleFullHistory: React.FC<VehicleFullHistoryProps> = ({ data, is
     );
   }
 
-  if (!data || data.records.length === 0) {
+  if (!data || data.services.length === 0) {
     return (
       <Card className="border-dashed">
         <CardContent className="flex flex-col items-center justify-center py-12 text-center">
@@ -204,12 +195,12 @@ export const VehicleFullHistory: React.FC<VehicleFullHistoryProps> = ({ data, is
         )}
       </div>
 
-      {/* Tabla de historial */}
+      {/* Tabla de historial - Servicios agrupados con sus facturas */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Historial Detallado</CardTitle>
+          <CardTitle className="text-base">Historial de Servicios</CardTitle>
           <CardDescription>
-            Cronología de todos los servicios, cotizaciones y facturas
+            Servicios ordenados cronológicamente con sus facturas asociadas
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -218,34 +209,29 @@ export const VehicleFullHistory: React.FC<VehicleFullHistoryProps> = ({ data, is
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-[100px]">Fecha</TableHead>
-                  <TableHead className="w-[100px]">Tipo</TableHead>
                   <TableHead>Folio</TableHead>
-                  <TableHead>Servicio</TableHead>
+                  <TableHead>Tipo Servicio</TableHead>
                   <TableHead>Estado</TableHead>
                   <TableHead>Cliente</TableHead>
                   <TableHead className="text-right">Valor</TableHead>
-                  <TableHead>Referencia</TableHead>
+                  <TableHead>COT / OC</TableHead>
+                  <TableHead>Factura</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {data.records.map((record: VehicleHistoryRecord) => {
-                  const typeConfig = getTypeConfig(record.type);
-                  const statusConfig = getStatusConfig(record.status);
+                {data.services.map((service: VehicleHistoryRecord) => {
+                  const statusConfig = getStatusConfig(service.status);
                   
                   return (
-                    <TableRow key={`${record.type}-${record.id}`}>
+                    <TableRow key={service.id}>
                       <TableCell className="font-medium text-sm">
-                        {formatDate(record.date)}
+                        {formatDate(service.date)}
                       </TableCell>
-                      <TableCell>
-                        <div className={`flex items-center gap-1.5 ${typeConfig.color}`}>
-                          {typeConfig.icon}
-                          <span className="text-xs font-medium">{typeConfig.label}</span>
-                        </div>
+                      <TableCell className="font-mono text-sm font-medium">
+                        {service.folio}
                       </TableCell>
-                      <TableCell className="font-mono text-sm">{record.folio}</TableCell>
                       <TableCell className="text-sm max-w-[150px] truncate">
-                        {record.serviceTypeName || '-'}
+                        {service.serviceTypeName || '-'}
                       </TableCell>
                       <TableCell>
                         <Badge variant={statusConfig.variant} className="text-xs">
@@ -253,16 +239,44 @@ export const VehicleFullHistory: React.FC<VehicleFullHistoryProps> = ({ data, is
                         </Badge>
                       </TableCell>
                       <TableCell className="text-sm max-w-[120px] truncate">
-                        {record.clientName}
+                        {service.clientName}
                       </TableCell>
                       <TableCell className="text-right font-medium">
-                        {formatCurrency(record.value)}
+                        {formatCurrency(service.value)}
                       </TableCell>
                       <TableCell className="text-xs text-muted-foreground">
-                        {record.quoteNumber && `COT: ${record.quoteNumber}`}
-                        {record.purchaseOrder && `OC: ${record.purchaseOrder}`}
-                        {record.invoiceNumeroFiscal && `NF: ${record.invoiceNumeroFiscal}`}
-                        {!record.quoteNumber && !record.purchaseOrder && !record.invoiceNumeroFiscal && '-'}
+                        <div className="space-y-0.5">
+                          {service.quoteNumber && (
+                            <div className="flex items-center gap-1">
+                              <ClipboardList className="h-3 w-3" />
+                              {service.quoteNumber}
+                            </div>
+                          )}
+                          {service.purchaseOrder && (
+                            <div className="flex items-center gap-1">
+                              <FileText className="h-3 w-3" />
+                              {service.purchaseOrder}
+                            </div>
+                          )}
+                          {!service.quoteNumber && !service.purchaseOrder && '-'}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        {service.relatedInvoice ? (
+                          <div className="flex items-center gap-2">
+                            <Receipt className="h-4 w-4 text-green-600" />
+                            <div className="text-xs">
+                              <div className="font-medium">{service.relatedInvoice.folio}</div>
+                              {service.relatedInvoice.numeroFiscal && (
+                                <div className="text-muted-foreground">
+                                  NF: {service.relatedInvoice.numeroFiscal}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">Sin factura</span>
+                        )}
                       </TableCell>
                     </TableRow>
                   );

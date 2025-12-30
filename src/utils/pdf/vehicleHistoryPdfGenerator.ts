@@ -66,16 +66,6 @@ const getStatusLabel = (status: string): string => {
   return labels[status] || status;
 };
 
-const getTypeLabel = (type: string): string => {
-  const labels: Record<string, string> = {
-    service: 'Servicio',
-    quote: 'Cotización',
-    purchase_order: 'OC',
-    invoice: 'Factura'
-  };
-  return labels[type] || type;
-};
-
 export const generateVehicleHistoryPDF = async (
   data: VehicleFullHistoryData
 ): Promise<Blob> => {
@@ -201,47 +191,57 @@ export const generateVehicleHistoryPDF = async (
   );
   yPosition += 10;
 
-  // ============ HISTORIAL DETALLADO ============
+  // ============ HISTORIAL DE SERVICIOS ============
   doc.setFontSize(11);
   doc.setTextColor(...TMS_GREEN);
   doc.setFont('helvetica', 'bold');
-  doc.text('HISTORIAL DETALLADO', margin, yPosition);
+  doc.text('HISTORIAL DE SERVICIOS', margin, yPosition);
   yPosition += 5;
 
-  if (data.records.length === 0) {
+  if (data.services.length === 0) {
     doc.setFontSize(10);
     doc.setTextColor(100, 100, 100);
     doc.setFont('helvetica', 'italic');
     doc.text('No se encontraron registros para este vehículo.', margin, yPosition + 5);
   } else {
-    // Preparar datos de la tabla - simplificado para mejor legibilidad
-    const tableData = data.records.map((record: VehicleHistoryRecord) => {
-      let reference = '-';
-      if (record.quoteNumber) reference = `COT: ${record.quoteNumber}`;
-      else if (record.purchaseOrder) reference = `OC: ${record.purchaseOrder}`;
-      else if (record.invoiceNumeroFiscal) reference = `NF: ${record.invoiceNumeroFiscal}`;
+    // Preparar datos - cada servicio con su info de factura en la misma fila
+    const tableData = data.services.map((service: VehicleHistoryRecord) => {
+      // Construir columna de COT/OC
+      let cotOc = '-';
+      if (service.quoteNumber && service.purchaseOrder) {
+        cotOc = `COT: ${service.quoteNumber} / OC: ${service.purchaseOrder}`;
+      } else if (service.quoteNumber) {
+        cotOc = `COT: ${service.quoteNumber}`;
+      } else if (service.purchaseOrder) {
+        cotOc = `OC: ${service.purchaseOrder}`;
+      }
+      
+      // Construir columna de factura
+      let factura = 'Sin factura';
+      if (service.relatedInvoice) {
+        factura = service.relatedInvoice.folio;
+        if (service.relatedInvoice.numeroFiscal) {
+          factura += ` (NF: ${service.relatedInvoice.numeroFiscal})`;
+        }
+      }
       
       return [
-        formatDate(record.date),
-        getTypeLabel(record.type),
-        record.folio,
-        record.type === 'service' ? (record.serviceTypeName || '-') : '-',
-        getStatusLabel(record.status),
-        record.clientName.length > 25 ? record.clientName.substring(0, 25) + '...' : record.clientName,
-        formatCurrency(record.value),
-        reference
+        formatDate(service.date),
+        service.folio,
+        service.serviceTypeName || '-',
+        getStatusLabel(service.status),
+        service.clientName.length > 30 ? service.clientName.substring(0, 30) + '...' : service.clientName,
+        formatCurrency(service.value),
+        cotOc,
+        factura
       ];
     });
 
-    // Calcular anchos de columna proporcionalmente al espacio disponible
-    const tableWidth = pageWidth - margin * 2;
-    
     autoTable(doc, {
       startY: yPosition,
-      head: [['Fecha', 'Tipo', 'Folio', 'Tipo Servicio', 'Estado', 'Cliente', 'Valor', 'Referencia']],
+      head: [['Fecha', 'Folio', 'Tipo Servicio', 'Estado', 'Cliente', 'Valor', 'COT / OC', 'Factura']],
       body: tableData,
       theme: 'striped',
-      tableWidth: tableWidth,
       headStyles: {
         fillColor: TMS_GREEN,
         textColor: WHITE,
@@ -260,13 +260,13 @@ export const generateVehicleHistoryPDF = async (
       },
       columnStyles: {
         0: { cellWidth: 22, halign: 'center' },    // Fecha
-        1: { cellWidth: 20, halign: 'center' },    // Tipo
-        2: { cellWidth: 28, halign: 'left' },      // Folio
-        3: { cellWidth: 45, halign: 'left' },      // Tipo Servicio
-        4: { cellWidth: 25, halign: 'center' },    // Estado
-        5: { cellWidth: 55, halign: 'left' },      // Cliente
-        6: { cellWidth: 30, halign: 'right' },     // Valor
-        7: { cellWidth: 42, halign: 'left' }       // Referencia
+        1: { cellWidth: 25, halign: 'left' },      // Folio
+        2: { cellWidth: 40, halign: 'left' },      // Tipo Servicio
+        3: { cellWidth: 22, halign: 'center' },    // Estado
+        4: { cellWidth: 50, halign: 'left' },      // Cliente
+        5: { cellWidth: 28, halign: 'right' },     // Valor
+        6: { cellWidth: 40, halign: 'left' },      // COT / OC
+        7: { cellWidth: 40, halign: 'left' }       // Factura
       },
       margin: { left: margin, right: margin },
       didDrawPage: (hookData) => {
