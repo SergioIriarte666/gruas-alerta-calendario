@@ -10,11 +10,15 @@ interface OfflineModeContextType {
   effectiveIsOnline: boolean;
   toggleForceOffline: () => void;
   setForceOffline: (value: boolean) => void;
+  triggerOfflineHydration: () => void;
 }
 
 const OfflineModeContext = createContext<OfflineModeContextType | undefined>(undefined);
 
 const STORAGE_KEY = 'tms-force-offline-mode';
+
+// Custom event for triggering hydration across contexts
+export const OFFLINE_HYDRATION_EVENT = 'tms-offline-hydration';
 
 export const OfflineModeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [isForceOffline, setIsForceOffline] = useState(() => {
@@ -50,12 +54,29 @@ export const OfflineModeProvider: React.FC<{ children: React.ReactNode }> = ({ c
     }
   }, [isForceOffline]);
 
+  // Dispatch hydration event when offline mode changes
+  const triggerOfflineHydration = useCallback(() => {
+    console.log('[OfflineMode] Triggering offline hydration event');
+    window.dispatchEvent(new CustomEvent(OFFLINE_HYDRATION_EVENT));
+  }, []);
+
   const toggleForceOffline = useCallback(() => {
-    setIsForceOffline(prev => !prev);
+    setIsForceOffline(prev => {
+      const newValue = !prev;
+      // Trigger hydration after state change
+      setTimeout(() => {
+        window.dispatchEvent(new CustomEvent(OFFLINE_HYDRATION_EVENT));
+      }, 0);
+      return newValue;
+    });
   }, []);
 
   const setForceOfflineValue = useCallback((value: boolean) => {
     setIsForceOffline(value);
+    // Trigger hydration after state change
+    setTimeout(() => {
+      window.dispatchEvent(new CustomEvent(OFFLINE_HYDRATION_EVENT));
+    }, 0);
   }, []);
 
   // Estado efectivo: offline si está forzado O si realmente no hay conexión
@@ -67,8 +88,9 @@ export const OfflineModeProvider: React.FC<{ children: React.ReactNode }> = ({ c
     isForceOffline,
     effectiveIsOnline,
     toggleForceOffline,
-    setForceOffline: setForceOfflineValue
-  }), [isForceOffline, effectiveIsOnline, toggleForceOffline, setForceOfflineValue]);
+    setForceOffline: setForceOfflineValue,
+    triggerOfflineHydration
+  }), [isForceOffline, effectiveIsOnline, toggleForceOffline, setForceOfflineValue, triggerOfflineHydration]);
 
   return (
     <OfflineModeContext.Provider value={value}>
@@ -83,4 +105,10 @@ export const useOfflineMode = (): OfflineModeContextType => {
     throw new Error('useOfflineMode must be used within an OfflineModeProvider');
   }
   return context;
+};
+
+// Helper hook for components that might render before provider is available
+export const useOfflineModeOptional = (): OfflineModeContextType | null => {
+  const context = useContext(OfflineModeContext);
+  return context ?? null;
 };
