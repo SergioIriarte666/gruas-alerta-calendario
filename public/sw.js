@@ -1,6 +1,6 @@
 
-const CACHE_NAME = 'tms-operador-v11';
-const SW_VERSION = '11.0.0';
+const CACHE_NAME = 'tms-operador-v12';
+const SW_VERSION = '12.0.0';
 
 // Recursos estáticos para pre-cachear
 const STATIC_ASSETS = [
@@ -38,18 +38,33 @@ const ASSET_ROUTES = [
 
 self.addEventListener('install', (event) => {
   console.log(`[Service Worker] Install v${SW_VERSION} - Full offline support with SPA fallback`);
-  
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      console.log('[Service Worker] Pre-caching static assets including app shell');
-      return cache.addAll(STATIC_ASSETS).catch(error => {
-        console.warn('[Service Worker] Some assets failed to cache:', error);
-        // Continue even if some assets fail
-        return Promise.resolve();
-      });
-    })
-  );
-  
+
+  event.waitUntil((async () => {
+    const cache = await caches.open(CACHE_NAME);
+    console.log('[Service Worker] Pre-caching static assets (non-blocking)');
+
+    // CRITICAL: cache.addAll fails entirely if one asset 404s.
+    // We cache app-shell first, then cache the rest with allSettled.
+    const appShellAssets = ['/', '/index.html'];
+    for (const asset of appShellAssets) {
+      try {
+        await cache.add(new Request(asset, { cache: 'reload' }));
+      } catch (error) {
+        console.warn('[Service Worker] Failed to cache app shell asset:', asset, error);
+      }
+    }
+
+    const otherAssets = STATIC_ASSETS.filter(a => !appShellAssets.includes(a));
+    const results = await Promise.allSettled(
+      otherAssets.map((asset) => cache.add(asset))
+    );
+
+    const failed = results.filter(r => r.status === 'rejected').length;
+    if (failed > 0) {
+      console.warn('[Service Worker] Some assets failed to cache:', failed);
+    }
+  })());
+
   // Force immediate activation
   self.skipWaiting();
 });
@@ -214,20 +229,23 @@ async function cacheFirst(request) {
 // Stale While Revalidate strategy
 async function staleWhileRevalidate(request) {
   const cachedResponse = await caches.match(request);
-  
-  const fetchPromise = fetch(request).then((networkResponse) => {
-    if (networkResponse.ok) {
-      const cache = caches.open(CACHE_NAME).then((cache) => {
-        cache.put(request, networkResponse.clone());
-      });
-    }
-    return networkResponse;
-  }).catch((error) => {
-    console.log('[Service Worker] Fetch failed:', request.url);
-    // Don't throw for non-navigation requests
-    return null;
-  });
-  
+
+  const fetchPromise = fetch(request)
+    .then((networkResponse) => {
+      if (networkResponse.ok) {
+        caches.open(CACHE_NAME).then((cache) => {
+          cache.put(request, networkResponse.clone());
+        });
+      }
+      return networkResponse;
+    })
+    .catch((error) => {
+      console.log('[Service Worker] Fetch failed:', request.url);
+      // If we have cache, serve it; otherwise propagate the error.
+      if (cachedResponse) return cachedResponse;
+      throw error;
+    });
+
   return cachedResponse || fetchPromise;
 }
 
