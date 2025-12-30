@@ -90,6 +90,16 @@ const getTableConfigs = (): TableConfig[] => [
     name: 'income_categories',
     label: 'Categorías ingresos',
     query: () => supabase.from('income_categories').select('*').eq('is_active', true)
+  },
+  {
+    name: 'service_types',
+    label: 'Tipos de servicio',
+    query: () => supabase.from('service_types').select('*').eq('is_active', true).order('name')
+  },
+  {
+    name: 'service_resources',
+    label: 'Recursos de servicios',
+    query: () => supabase.from('service_resources').select('*').order('created_at', { ascending: false }).limit(500)
   }
 ];
 

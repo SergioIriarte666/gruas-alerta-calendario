@@ -746,6 +746,101 @@ export const useServiceManager = () => {
       
       console.log('✅ Final transformedData being sent to database:', transformedData);
 
+      // 📴 MODO OFFLINE: Guardar actualización localmente
+      if (!effectiveIsOnline) {
+        console.log('📴 [OFFLINE] Guardando actualización de servicio localmente...');
+        
+        // Guardar acción pendiente para sincronizar después
+        await addOfflineAction({
+          type: 'UPDATE',
+          table: 'services',
+          data: { id, ...transformedData }
+        });
+
+        // Actualizar en el cache local
+        const cachedData = await getCachedData('services');
+        const serviceIndex = cachedData.findIndex((s: any) => s.id === id);
+        
+        if (serviceIndex !== -1) {
+          // Actualizar el servicio existente en cache
+          const updatedCacheService = {
+            ...cachedData[serviceIndex],
+            ...transformedData,
+            updated_at: new Date().toISOString(),
+            _isOffline: true
+          };
+          cachedData[serviceIndex] = updatedCacheService;
+          await cacheTableData('services', cachedData);
+          
+          console.log('📴 [OFFLINE] Servicio actualizado en cache local');
+        }
+
+        // Invalidar queries para refrescar UI
+        await queryClient.invalidateQueries({ queryKey: ['services'] });
+
+        toast.success('Cambios guardados localmente', {
+          description: 'Se sincronizarán automáticamente al reconectar'
+        });
+
+        // Crear respuesta offline
+        const offlineService: Service = {
+          id,
+          folio: transformedData.folio || '',
+          requestDate: transformedData.request_date || '',
+          serviceDate: transformedData.service_date || '',
+          client: {
+            id: transformedData.client_id || '',
+            name: 'Pendiente sincronización',
+            rut: '',
+            phone: '',
+            email: '',
+            address: '',
+            department: '',
+            isActive: true,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          },
+          purchaseOrder: transformedData.purchase_order || '',
+          quoteNumber: transformedData.quote_number || '',
+          vehicleBrand: transformedData.vehicle_brand || '',
+          vehicleModel: transformedData.vehicle_model || '',
+          licensePlate: transformedData.license_plate || '',
+          origin: transformedData.origin || '',
+          destination: transformedData.destination || '',
+          serviceType: {
+            id: transformedData.service_type_id || '',
+            name: 'Tipo no disponible',
+            description: '',
+            basePrice: null,
+            isActive: true,
+            vehicleInfoOptional: false,
+            purchaseOrderRequired: false,
+            originRequired: true,
+            destinationRequired: true,
+            craneRequired: true,
+            operatorRequired: true,
+            vehicleBrandRequired: true,
+            vehicleModelRequired: true,
+            licensePlateRequired: true,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          },
+          value: transformedData.value || 0,
+          crane: null,
+          operator: null,
+          operatorCommission: transformedData.operator_commission || 0,
+          status: transformedData.status || 'pending',
+          observations: transformedData.observations || '',
+          hasExcess: transformedData.has_excess || false,
+          clientCoveredAmount: transformedData.client_covered_amount,
+          excessAmount: transformedData.excess_amount || 0,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        };
+
+        return offlineService;
+      }
+
       // ✅ MODIFICADO: Handle service costs (gastos) update con prevención de duplicación
       if (serviceData.costDetails && Array.isArray(serviceData.costDetails)) {
       // ✅ NUEVO: Solo procesar costos si viene del formulario principal
