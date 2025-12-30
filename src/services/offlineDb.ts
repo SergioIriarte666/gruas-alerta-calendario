@@ -121,4 +121,71 @@ export async function hasStore(storeName: string): Promise<boolean> {
   return db.objectStoreNames.contains(storeName);
 }
 
+/**
+ * Obtiene el contador de folio offline
+ */
+export async function getOfflineFolioCounter(): Promise<number> {
+  try {
+    const db = await openOfflineDatabase();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction('_metadata', 'readonly');
+      const store = tx.objectStore('_metadata');
+      const request = store.get('offline_folio_counter');
+      
+      request.onsuccess = () => {
+        const result = request.result;
+        resolve(result?.value || 0);
+      };
+      request.onerror = () => reject(request.error);
+    });
+  } catch (error) {
+    console.error('[OfflineDB] Error getting folio counter:', error);
+    return 0;
+  }
+}
+
+/**
+ * Guarda el contador de folio offline
+ */
+export async function saveOfflineFolioCounter(value: number): Promise<void> {
+  try {
+    const db = await openOfflineDatabase();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction('_metadata', 'readwrite');
+      const store = tx.objectStore('_metadata');
+      const request = store.put({ tableName: 'offline_folio_counter', value });
+      
+      request.onsuccess = () => {
+        console.log('[OfflineDB] Folio counter saved:', value);
+        resolve();
+      };
+      request.onerror = () => reject(request.error);
+    });
+  } catch (error) {
+    console.error('[OfflineDB] Error saving folio counter:', error);
+  }
+}
+
+/**
+ * Limpia el contador de folio offline (después de sincronizar)
+ */
+export async function clearOfflineFolioCounter(): Promise<void> {
+  try {
+    const db = await openOfflineDatabase();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction('_metadata', 'readwrite');
+      const store = tx.objectStore('_metadata');
+      const request = store.delete('offline_folio_counter');
+      
+      request.onsuccess = () => {
+        console.log('[OfflineDB] Folio counter cleared');
+        resolve();
+      };
+      request.onerror = () => reject(request.error);
+    });
+  } catch (error) {
+    console.error('[OfflineDB] Error clearing folio counter:', error);
+  }
+}
+
 export { CACHEABLE_TABLES, DB_NAME, DB_VERSION };

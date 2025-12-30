@@ -1,13 +1,25 @@
 import { useCallback } from 'react';
 import { useFolioGenerator } from '@/hooks/useFolioGenerator';
 import { useFolioValidation } from './useFolioValidation';
+import { useOfflineMode } from '@/contexts/OfflineModeContext';
 import { toast } from 'sonner';
 
 export const useEnhancedFolioGeneration = () => {
   const { generateNextFolio, validateFolioUniqueness } = useFolioGenerator();
   const { validateFolio } = useFolioValidation();
+  const { effectiveIsOnline } = useOfflineMode();
 
   const generateUniqueValidFolio = useCallback(async (excludeServiceId?: string): Promise<string> => {
+    // En modo offline, generar folio directamente sin validación de duplicados
+    // (la validación se hará al sincronizar)
+    if (!effectiveIsOnline) {
+      console.log('📴 Generating folio in offline mode (skip validation)');
+      const folio = await generateNextFolio();
+      console.log(`✅ Generated offline folio: ${folio}`);
+      return folio;
+    }
+
+    // Modo online: validar unicidad
     let attempts = 0;
     const maxAttempts = 10;
 
@@ -44,7 +56,7 @@ export const useEnhancedFolioGeneration = () => {
     });
     
     return fallbackFolio;
-  }, [generateNextFolio, validateFolio]);
+  }, [generateNextFolio, validateFolio, effectiveIsOnline]);
 
   const handleDuplicateFolio = useCallback(async (duplicatedFolio: string, excludeServiceId?: string): Promise<string> => {
     console.log(`🔄 Handling duplicate folio: ${duplicatedFolio}`);

@@ -111,6 +111,28 @@ const transformVehicleModelForCache = (model: any) => ({
   createdAt: model.created_at
 });
 
+const transformCompanyDataForCache = (company: any) => ({
+  id: company.id,
+  businessName: company.business_name,
+  rut: company.rut,
+  address: company.address,
+  phone: company.phone,
+  email: company.email,
+  website: company.website,
+  logoUrl: company.logo_url,
+  folioFormat: company.folio_format || 'SRV-{number}',
+  nextServiceFolioNumber: company.next_service_folio_number || 1000,
+  nextInvoiceFolioNumber: company.next_invoice_folio_number,
+  nextExcessFolioNumber: company.next_excess_folio_number,
+  excessFolioFormat: company.excess_folio_format,
+  vatPercentage: company.vat_percentage,
+  invoiceDueDays: company.invoice_due_days,
+  alertDays: company.alert_days,
+  legalTexts: company.legal_texts,
+  createdAt: company.created_at,
+  updatedAt: company.updated_at
+});
+
 // Configuración de tablas a pre-cargar
 // IMPORTANTE: Tablas base sin filtro is_active para garantizar datos offline
 const getTableConfigs = (): TableConfig[] => [
@@ -200,6 +222,12 @@ const getTableConfigs = (): TableConfig[] => [
     label: 'Modelos de vehículos',
     query: () => supabase.from('vehicle_models').select('*').order('name'),
     transformForCache: (data) => data.map(transformVehicleModelForCache)
+  },
+  {
+    name: 'company_data',
+    label: 'Configuración empresa',
+    query: () => supabase.from('company_data').select('*').limit(1),
+    transformForCache: (data) => data.map(transformCompanyDataForCache)
   }
 ];
 
