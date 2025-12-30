@@ -5,7 +5,8 @@ import { Service, ServiceFormData } from '@/types';
 import { toast } from 'sonner';
 import { useErrorHandler } from '@/hooks/useErrorHandler';
 import { useOfflineMode } from '@/contexts/OfflineModeContext';
-import { useOfflineSync, addToLocalCache } from '@/hooks/useOfflineSync';
+import { useOfflineSync, addToLocalCache, cacheTableData } from '@/hooks/useOfflineSync';
+import { getCachedData } from '@/services/offlineDataCache';
 
 // Función helper para detectar comisiones existentes y comparar con nuevas
 const detectExistingCommissions = async (serviceId: string, newOperators: any[]) => {
@@ -1192,6 +1193,30 @@ export const useServiceManager = () => {
   // ELIMINAR SERVICIO
   const deleteServiceMutation = useMutation({
     mutationFn: async (id: string) => {
+      // MODO OFFLINE: Eliminar localmente
+      if (!effectiveIsOnline) {
+        console.log('📴 [OFFLINE] Eliminando servicio localmente...');
+        
+        // Agregar acción pendiente para sincronizar después
+        await addOfflineAction({
+          type: 'DELETE',
+          table: 'services',
+          data: { id }
+        });
+
+        // Remover del cache local
+        const cachedServices = await getCachedData('services');
+        const filteredServices = cachedServices.filter((s: any) => s.id !== id);
+        await cacheTableData('services', filteredServices);
+
+        toast.success('Eliminación guardada localmente', {
+          description: 'Se sincronizará automáticamente al reconectar'
+        });
+
+        await queryClient.invalidateQueries({ queryKey: ['services'] });
+        return { isOffline: true };
+      }
+
       const { error } = await supabase
         .from('services')
         .delete()
@@ -1202,9 +1227,16 @@ export const useServiceManager = () => {
       }
 
       await queryClient.invalidateQueries({ queryKey: ['services'] });
+      return { isOffline: false };
+    },
+    onSuccess: (result) => {
+      if (!result?.isOffline) {
+        toast.success('Servicio eliminado exitosamente');
+      }
     },
     onError: (error) => {
       console.error('Error eliminando servicio:', error);
+      toast.error('Error al eliminar el servicio');
     }
   });
 
@@ -1221,7 +1253,7 @@ export const useServiceManager = () => {
   };
 
   const deleteService = async (id: string): Promise<void> => {
-    return deleteServiceMutation.mutateAsync(id);
+    await deleteServiceMutation.mutateAsync(id);
   };
 
   return {
