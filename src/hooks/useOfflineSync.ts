@@ -115,10 +115,32 @@ export function useOfflineSync() {
     }
   }, [effectiveIsOnline, isForceOffline]);
 
-  // Cargar acciones pendientes al iniciar
+  // Cargar acciones pendientes al iniciar Y auto-sync si hay pendientes y estamos online
   useEffect(() => {
-    loadPendingActions();
-  }, []);
+    const initAndAutoSync = async () => {
+      await loadPendingActions();
+      
+      // CRITICAL: Auto-sync on mount if online and has pending actions
+      if (effectiveIsOnline && !syncInProgress.current) {
+        const db = await openDatabase();
+        const transaction = db.transaction(STORE_NAME, 'readonly');
+        const store = transaction.objectStore(STORE_NAME);
+        const request = store.getAll();
+        
+        request.onsuccess = () => {
+          const pending = (request.result || []).filter(
+            (a: OfflineAction) => a.status === 'pending' || a.status === 'failed'
+          );
+          if (pending.length > 0) {
+            console.log('[OfflineSync] Auto-syncing', pending.length, 'pending actions on mount');
+            syncPendingActions();
+          }
+        };
+      }
+    };
+    
+    initAndAutoSync();
+  }, [effectiveIsOnline]);
 
   // Escuchar mensajes del Service Worker
   useEffect(() => {

@@ -1,10 +1,11 @@
 
-const CACHE_NAME = 'tms-operador-v10';
-const SW_VERSION = '10.0.0';
+const CACHE_NAME = 'tms-operador-v11';
+const SW_VERSION = '11.0.0';
 
 // Recursos estáticos para pre-cachear
 const STATIC_ASSETS = [
   '/',
+  '/index.html',
   '/offline.html',
   '/icons/icon-192x192.png',
   '/icons/icon-512x512.png',
@@ -36,11 +37,11 @@ const ASSET_ROUTES = [
 ];
 
 self.addEventListener('install', (event) => {
-  console.log(`[Service Worker] Install v${SW_VERSION} - Full offline support`);
+  console.log(`[Service Worker] Install v${SW_VERSION} - Full offline support with SPA fallback`);
   
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      console.log('[Service Worker] Pre-caching static assets');
+      console.log('[Service Worker] Pre-caching static assets including app shell');
       return cache.addAll(STATIC_ASSETS).catch(error => {
         console.warn('[Service Worker] Some assets failed to cache:', error);
         // Continue even if some assets fail
@@ -75,7 +76,7 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// Fetch handler with caching strategies
+// Fetch handler with caching strategies - CRITICAL: SPA fallback for navigation
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
@@ -96,6 +97,12 @@ self.addEventListener('fetch', (event) => {
   // Check if it's a static asset
   const isAsset = ASSET_ROUTES.some(route => request.url.includes(route));
   
+  // CRITICAL: Navigation requests (HTML pages) - Use SPA fallback strategy
+  if (request.mode === 'navigate') {
+    event.respondWith(handleNavigationRequest(request));
+    return;
+  }
+  
   if (isApiRequest) {
     // Network First for API requests
     event.respondWith(networkFirst(request));
@@ -103,10 +110,59 @@ self.addEventListener('fetch', (event) => {
     // Cache First for static assets
     event.respondWith(cacheFirst(request));
   } else {
-    // Stale While Revalidate for HTML pages
+    // Stale While Revalidate for other resources
     event.respondWith(staleWhileRevalidate(request));
   }
 });
+
+// CRITICAL: SPA fallback for navigation requests
+// This ensures that when offline, React Router can handle all routes
+async function handleNavigationRequest(request) {
+  try {
+    // Try network first for navigation
+    const networkResponse = await fetch(request);
+    
+    if (networkResponse.ok) {
+      // Cache the successful response
+      const cache = await caches.open(CACHE_NAME);
+      cache.put(request, networkResponse.clone());
+    }
+    
+    return networkResponse;
+  } catch (error) {
+    console.log('[Service Worker] Navigation failed, serving app shell for SPA fallback:', request.url);
+    
+    // CRITICAL: Return the cached app shell (/) so React Router can handle the route
+    // This is what allows /dashboard, /services, etc. to work offline
+    const appShell = await caches.match('/');
+    
+    if (appShell) {
+      console.log('[Service Worker] Serving cached app shell for:', request.url);
+      return appShell;
+    }
+    
+    // Try index.html as alternative
+    const indexHtml = await caches.match('/index.html');
+    if (indexHtml) {
+      console.log('[Service Worker] Serving cached index.html for:', request.url);
+      return indexHtml;
+    }
+    
+    // Last resort: offline.html (only if app shell is not cached)
+    console.log('[Service Worker] No app shell cached, falling back to offline.html');
+    const offlinePage = await caches.match('/offline.html');
+    if (offlinePage) {
+      return offlinePage;
+    }
+    
+    // Absolute last resort
+    return new Response('Offline - Please connect to the internet and reload', {
+      status: 503,
+      statusText: 'Service Unavailable',
+      headers: { 'Content-Type': 'text/plain' }
+    });
+  }
+}
 
 // Network First strategy
 async function networkFirst(request) {
@@ -126,11 +182,6 @@ async function networkFirst(request) {
     
     if (cachedResponse) {
       return cachedResponse;
-    }
-    
-    // Return offline page for navigation requests
-    if (request.mode === 'navigate') {
-      return caches.match('/offline.html');
     }
     
     throw error;
@@ -173,10 +224,8 @@ async function staleWhileRevalidate(request) {
     return networkResponse;
   }).catch((error) => {
     console.log('[Service Worker] Fetch failed:', request.url);
-    if (request.mode === 'navigate') {
-      return caches.match('/offline.html');
-    }
-    throw error;
+    // Don't throw for non-navigation requests
+    return null;
   });
   
   return cachedResponse || fetchPromise;
@@ -296,61 +345,30 @@ self.addEventListener('notificationclick', (event) => {
   );
 });
 
-// Background sync for offline actions
+// Background sync handler
+// IMPORTANT: Offline data sync is handled by the app (useOfflineSync) with user's JWT
+// The SW only handles push subscription sync, NOT data writes to Supabase
 self.addEventListener('sync', (event) => {
   console.log('[Service Worker] Background sync:', event.tag);
   
   if (event.tag === 'push-subscription-sync') {
     event.waitUntil(syncPushSubscription());
-  } else if (event.tag === 'offline-action') {
-    event.waitUntil(syncOfflineActions());
   }
+  // NOTE: 'offline-action' sync is deliberately NOT handled here
+  // Data sync requires user's JWT which the SW doesn't have
+  // The app's useOfflineSync hook handles data synchronization properly
 });
 
 async function syncPushSubscription() {
   try {
     console.log('[Service Worker] Syncing push subscription');
+    // Just log - actual subscription sync is handled by the app
   } catch (error) {
     console.error('[Service Worker] Error syncing push subscription:', error);
   }
 }
 
-async function syncOfflineActions() {
-  try {
-    console.log('[Service Worker] Syncing offline actions');
-    
-    // Notify all clients that sync is starting
-    const clients = await self.clients.matchAll();
-    clients.forEach(client => {
-      client.postMessage({ type: 'SYNC_STARTED' });
-    });
-    
-    // Open IndexedDB and process pending actions
-    const db = await openOfflineDB();
-    if (db) {
-      const actions = await getPendingActions(db);
-      console.log(`[Service Worker] Found ${actions.length} pending actions`);
-      
-      for (const action of actions) {
-        try {
-          await processOfflineAction(action);
-          await removeAction(db, action.id);
-        } catch (error) {
-          console.error('[Service Worker] Failed to sync action:', action.id, error);
-          await incrementRetry(db, action.id);
-        }
-      }
-    }
-    
-    // Notify completion
-    clients.forEach(client => {
-      client.postMessage({ type: 'SYNC_COMPLETED' });
-    });
-  } catch (error) {
-    console.error('[Service Worker] Error syncing offline actions:', error);
-  }
-}
-
+// Helper to open IndexedDB (used for reading pending count, not for syncing)
 function openOfflineDB() {
   return new Promise((resolve, reject) => {
     const request = indexedDB.open('tms-offline-cache', 3);
@@ -358,7 +376,6 @@ function openOfflineDB() {
     request.onsuccess = () => resolve(request.result);
     request.onupgradeneeded = (event) => {
       const db = event.target.result;
-      // Create stores if they don't exist
       if (!db.objectStoreNames.contains('_offlineActions')) {
         db.createObjectStore('_offlineActions', { keyPath: 'id' });
       }
@@ -367,89 +384,4 @@ function openOfflineDB() {
       }
     };
   });
-}
-
-function getPendingActions(db) {
-  return new Promise((resolve, reject) => {
-    const transaction = db.transaction('_offlineActions', 'readonly');
-    const store = transaction.objectStore('_offlineActions');
-    const request = store.getAll();
-    request.onsuccess = () => {
-      const actions = (request.result || []).filter(
-        a => (a.status === 'pending' || a.status === 'failed') && a.retries < 3
-      );
-      resolve(actions.sort((a, b) => a.timestamp - b.timestamp));
-    };
-    request.onerror = () => resolve([]);
-  });
-}
-
-function removeAction(db, id) {
-  return new Promise((resolve, reject) => {
-    const transaction = db.transaction('_offlineActions', 'readwrite');
-    const store = transaction.objectStore('_offlineActions');
-    store.delete(id);
-    transaction.oncomplete = () => resolve();
-    transaction.onerror = () => reject(transaction.error);
-  });
-}
-
-function incrementRetry(db, id) {
-  return new Promise((resolve, reject) => {
-    const transaction = db.transaction('_offlineActions', 'readwrite');
-    const store = transaction.objectStore('_offlineActions');
-    const getRequest = store.get(id);
-    getRequest.onsuccess = () => {
-      if (getRequest.result) {
-        const updated = {
-          ...getRequest.result,
-          status: 'failed',
-          retries: (getRequest.result.retries || 0) + 1
-        };
-        store.put(updated);
-      }
-    };
-    transaction.oncomplete = () => resolve();
-    transaction.onerror = () => reject(transaction.error);
-  });
-}
-
-async function processOfflineAction(action) {
-  const { type, table, data } = action;
-  const SUPABASE_URL = 'https://jqszxljtfuknhuvuheko.supabase.co';
-  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impxc3p4bGp0ZnVrbmh1dnVoZWtvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk4NjcxMDEsImV4cCI6MjA2NTQ0MzEwMX0.vsTKjDOp6_eTi4IaOEOfABfEtJEtUPtUa_WmZ-QLZic';
-  
-  const headers = {
-    'apikey': SUPABASE_ANON_KEY,
-    'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-    'Content-Type': 'application/json',
-    'Prefer': 'return=minimal'
-  };
-  
-  let url = `${SUPABASE_URL}/rest/v1/${table}`;
-  let method = 'POST';
-  let body = data;
-  
-  if (type === 'UPDATE') {
-    method = 'PATCH';
-    url += `?id=eq.${data.id}`;
-    const { id, ...updateData } = data;
-    body = updateData;
-  } else if (type === 'DELETE') {
-    method = 'DELETE';
-    url += `?id=eq.${data.id}`;
-    body = null;
-  }
-  
-  const response = await fetch(url, {
-    method,
-    headers,
-    body: body ? JSON.stringify(body) : undefined
-  });
-  
-  if (!response.ok) {
-    throw new Error(`Failed to sync: ${response.status}`);
-  }
-  
-  return response;
 }
