@@ -24,8 +24,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     // Get initial session with enhanced error handling and retries
     const getInitialSession = async () => {
+      // Check if we're online first
+      const isOnline = navigator.onLine;
+      
       try {
-        console.log('AuthContext: Getting initial session...');
+        console.log('AuthContext: Getting initial session... Online:', isOnline);
         
         // First, verify Supabase connectivity
         const { data: { session: initialSession }, error } = await supabase.auth.getSession();
@@ -51,8 +54,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           setSession(initialSession);
           setUser(initialSession?.user ?? null);
           
-          // If we have a session, verify it can access the database
-          if (initialSession) {
+          // If we have a session AND we're online, verify database connectivity
+          // Skip this check when offline to prevent blocking
+          if (initialSession && isOnline) {
             try {
               console.log('AuthContext: Verifying database connectivity...');
               const { error: dbError } = await supabase
@@ -86,18 +90,28 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
               }
             } catch (dbError) {
               console.error('AuthContext: Database verification failed:', dbError);
+              // Don't fail the session - just log the error
             }
+          } else if (initialSession && !isOnline) {
+            console.log('AuthContext: Offline - skipping database connectivity check, using cached session');
           }
         }
       } catch (error: any) {
         console.error('AuthContext: Critical error getting initial session:', error);
         
-        // For network errors, provide user feedback
+        // For network errors when offline, don't clear session - just log
         if (error.message?.includes('fetch') || error.message?.includes('network')) {
           console.error('AuthContext: Network connectivity issue detected');
+          
+          // If offline, try to keep existing session from localStorage
+          if (!isOnline) {
+            console.log('AuthContext: Offline - preserving session state');
+            // Don't set session to null - let Supabase client handle cached session
+          }
         }
         
-        if (mounted) {
+        if (mounted && isOnline) {
+          // Only clear session if we're online and got an error
           setSession(null);
           setUser(null);
         }

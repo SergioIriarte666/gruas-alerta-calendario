@@ -3,6 +3,7 @@ import React, { createContext, useContext, useState, useEffect, useRef } from 'r
 import { useAuth } from './AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { cleanupAuthState, performGlobalSignOut } from '@/utils/authCleanup';
+import { useOfflineMode } from './OfflineModeContext';
 
 interface UserProfile {
   id: string;
@@ -11,6 +12,48 @@ interface UserProfile {
   role: 'admin' | 'operator' | 'viewer' | 'client';
   client_id?: string;
 }
+
+// Helper functions for profile caching
+const PROFILE_CACHE_KEY = 'tms-profile-cache';
+
+const saveProfileToCache = (profile: UserProfile) => {
+  try {
+    localStorage.setItem(PROFILE_CACHE_KEY, JSON.stringify({
+      ...profile,
+      cachedAt: Date.now()
+    }));
+    console.log('UserContext - Profile cached locally');
+  } catch (error) {
+    console.warn('UserContext - Failed to cache profile:', error);
+  }
+};
+
+const getProfileFromCache = (userId: string): UserProfile | null => {
+  try {
+    const cached = localStorage.getItem(PROFILE_CACHE_KEY);
+    if (!cached) return null;
+    
+    const parsed = JSON.parse(cached);
+    // Verify it's the same user and not too old (7 days)
+    if (parsed.id === userId && Date.now() - parsed.cachedAt < 7 * 24 * 60 * 60 * 1000) {
+      const { cachedAt, ...profile } = parsed;
+      console.log('UserContext - Profile loaded from cache');
+      return profile as UserProfile;
+    }
+    return null;
+  } catch (error) {
+    console.warn('UserContext - Failed to read cached profile:', error);
+    return null;
+  }
+};
+
+const clearProfileCache = () => {
+  try {
+    localStorage.removeItem(PROFILE_CACHE_KEY);
+  } catch (error) {
+    console.warn('UserContext - Failed to clear profile cache:', error);
+  }
+};
 
 interface UserContextType {
   user: UserProfile | null;
@@ -29,6 +72,16 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const fetchingRef = useRef(false);
   const retryCountRef = useRef(0);
   const maxRetries = 3;
+  
+  // Get offline mode - wrapped in try/catch in case context not available yet
+  let effectiveIsOnline = true;
+  try {
+    const offlineMode = useOfflineMode();
+    effectiveIsOnline = offlineMode.effectiveIsOnline;
+  } catch {
+    // Context might not be available during initial render
+    effectiveIsOnline = navigator.onLine;
+  }
 
   const fetchUserProfile = async (retryCount = 0) => {
     if (!authUser || fetchingRef.current) {
@@ -37,6 +90,23 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     fetchingRef.current = true;
+    
+    // If offline, try to load from cache immediately
+    if (!effectiveIsOnline) {
+      console.log('UserContext - Offline, attempting to load profile from cache');
+      const cachedProfile = getProfileFromCache(authUser.id);
+      if (cachedProfile) {
+        setUser(cachedProfile);
+        setLoading(false);
+        fetchingRef.current = false;
+        return;
+      }
+      console.log('UserContext - No cached profile found while offline');
+      setUser(null);
+      setLoading(false);
+      fetchingRef.current = false;
+      return;
+    }
     
     try {
       console.log(`UserContext - Fetching profile for: ${authUser.email} (ID: ${authUser.id}), attempt: ${retryCount + 1}`);
@@ -116,11 +186,28 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         };
         console.log('UserContext - Profile found:', userProfile);
         setUser(userProfile);
+        saveProfileToCache(userProfile); // Cache the profile
         retryCountRef.current = 0; // Reset retry count on success
       }
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('UserContext - Exception:', error);
+      
+      // Check if it's a network error - try to load from cache
+      const isNetworkError = error?.message?.includes('fetch') || 
+                             error?.message?.includes('network') ||
+                             error?.message?.includes('Failed to fetch');
+      
+      if (isNetworkError) {
+        console.log('UserContext - Network error, attempting to load profile from cache');
+        const cachedProfile = getProfileFromCache(authUser.id);
+        if (cachedProfile) {
+          setUser(cachedProfile);
+          setLoading(false);
+          fetchingRef.current = false;
+          return;
+        }
+      }
       
       // Retry on exceptions if possible
       if (retryCount < maxRetries) {
@@ -173,11 +260,13 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       fetchingRef.current = false;
       retryCountRef.current = 0;
       cleanupAuthState();
+      clearProfileCache(); // Clear cached profile on logout
       await performGlobalSignOut(supabase);
       window.location.href = '/auth';
     } catch (error) {
       console.error('UserContext - Logout error:', error);
       cleanupAuthState();
+      clearProfileCache();
       setUser(null);
       window.location.href = '/auth';
     }
