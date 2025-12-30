@@ -6,6 +6,7 @@ import { PaymentReconciliation } from '@/components/invoices/PaymentReconciliati
 import { PaymentHistory } from '@/components/invoices/PaymentHistory';
 import { InvoiceAlertsDashboard } from '@/components/invoices/InvoiceAlertsDashboard';
 import { InvoiceCancellationsHistory } from '@/components/invoices/InvoiceCancellationsHistory';
+import { VehicleHistoryLookupModal } from '@/components/vehicles/VehicleHistoryLookupModal';
 import { Invoice } from '@/types';
 import { toast } from 'sonner';
 import InvoicesHeader from '@/components/invoices/InvoicesHeader';
@@ -23,6 +24,7 @@ import InvoiceBatchActions from '@/components/invoices/InvoiceBatchActions';
 import InvoiceExportModal from '@/components/invoices/InvoiceExportModal';
 import { BatchProgressModal, useBatchProgress } from '@/components/ui/batch-progress-modal';
 import { startOfDay, startOfWeek, startOfMonth, endOfDay, endOfWeek, endOfMonth, isWithinInterval } from 'date-fns';
+import { Car } from 'lucide-react';
 
 const INVOICE_STATUS_MAP: { [key: string]: string } = {
   all: 'Todas',
@@ -57,6 +59,7 @@ const Invoices = () => {
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const [selectedInvoiceIds, setSelectedInvoiceIds] = useState<string[]>([]);
   const [exportModalOpen, setExportModalOpen] = useState(false);
+  const [vehicleHistoryModalOpen, setVehicleHistoryModalOpen] = useState(false);
   const batchProgress = useBatchProgress();
   const ITEMS_PER_PAGE = 10;
 
@@ -561,6 +564,11 @@ const Invoices = () => {
       <BatchProgressModal
         state={batchProgress.state}
         onClose={batchProgress.close}
+      />
+
+      <VehicleHistoryLookupModal
+        open={vehicleHistoryModalOpen}
+        onOpenChange={setVehicleHistoryModalOpen}
       />
     </div>
   );
