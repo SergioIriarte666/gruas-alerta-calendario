@@ -1,10 +1,10 @@
 
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { OfflineModeProvider } from '@/contexts/OfflineModeContext';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { UserProvider } from '@/contexts/UserContext';
 import { NotificationProvider } from '@/contexts/NotificationContext';
-import { OfflineModeProvider } from '@/contexts/OfflineModeContext';
 import { useNotificationTriggers } from '@/hooks/useNotificationTriggers';
 import { ToastProvider } from '@/components/ui/custom-toast';
 import { SessionTimeoutProvider } from '@/components/auth/SessionTimeoutProvider';
@@ -304,11 +304,11 @@ function AppContent() {
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <SessionTimeoutProvider>
-          <UserProvider>
-            <NotificationProvider>
-              <OfflineModeProvider>
+      <OfflineModeProvider>
+        <AuthProvider>
+          <SessionTimeoutProvider>
+            <UserProvider>
+              <NotificationProvider>
                 <ToastProvider>
                   <Router>
                     <PWAWrapper>
@@ -316,11 +316,11 @@ export default function App() {
                     </PWAWrapper>
                   </Router>
                 </ToastProvider>
-              </OfflineModeProvider>
-            </NotificationProvider>
-          </UserProvider>
-        </SessionTimeoutProvider>
-      </AuthProvider>
+              </NotificationProvider>
+            </UserProvider>
+          </SessionTimeoutProvider>
+        </AuthProvider>
+      </OfflineModeProvider>
     </QueryClientProvider>
   );
 }

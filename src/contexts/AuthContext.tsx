@@ -1,8 +1,9 @@
 
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { cleanupAuthState, performGlobalSignOut } from '@/utils/authCleanup';
+import { OFFLINE_HYDRATION_EVENT } from './OfflineModeContext';
 
 interface AuthContextType {
   session: Session | null;
@@ -14,23 +15,117 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// Session cache keys
+const SESSION_CACHE_KEY = 'tms-session-cache';
+const USER_CACHE_KEY = 'tms-user-cache';
+
+// Cache functions
+const saveSessionToCache = (session: Session | null) => {
+  try {
+    if (session) {
+      localStorage.setItem(SESSION_CACHE_KEY, JSON.stringify({
+        ...session,
+        cachedAt: Date.now()
+      }));
+      localStorage.setItem(USER_CACHE_KEY, JSON.stringify(session.user));
+    } else {
+      localStorage.removeItem(SESSION_CACHE_KEY);
+      localStorage.removeItem(USER_CACHE_KEY);
+    }
+  } catch (error) {
+    console.warn('AuthContext: Failed to cache session:', error);
+  }
+};
+
+const getSessionFromCache = (): { session: Session | null; user: User | null } => {
+  try {
+    const cachedSession = localStorage.getItem(SESSION_CACHE_KEY);
+    const cachedUser = localStorage.getItem(USER_CACHE_KEY);
+    
+    if (!cachedSession || !cachedUser) {
+      return { session: null, user: null };
+    }
+    
+    const session = JSON.parse(cachedSession);
+    const user = JSON.parse(cachedUser);
+    
+    // Check if cache is not too old (7 days)
+    if (Date.now() - session.cachedAt > 7 * 24 * 60 * 60 * 1000) {
+      console.log('AuthContext: Cached session expired');
+      return { session: null, user: null };
+    }
+    
+    // Remove cachedAt from session object
+    const { cachedAt, ...sessionData } = session;
+    
+    console.log('AuthContext: Session loaded from cache');
+    return { session: sessionData, user };
+  } catch (error) {
+    console.warn('AuthContext: Failed to read cached session:', error);
+    return { session: null, user: null };
+  }
+};
+
+const clearSessionCache = () => {
+  try {
+    localStorage.removeItem(SESSION_CACHE_KEY);
+    localStorage.removeItem(USER_CACHE_KEY);
+  } catch (error) {
+    console.warn('AuthContext: Failed to clear session cache:', error);
+  }
+};
+
+// Helper to check if we're truly online
+const checkIsOnline = (): boolean => {
+  // Check localStorage for forced offline mode
+  try {
+    const forceOffline = localStorage.getItem('tms-force-offline-mode') === 'true';
+    return navigator.onLine && !forceOffline;
+  } catch {
+    return navigator.onLine;
+  }
+};
+
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // Load from cache immediately on mount (for offline-first)
+  const loadFromCache = useCallback(() => {
+    const { session: cachedSession, user: cachedUser } = getSessionFromCache();
+    if (cachedSession && cachedUser) {
+      console.log('AuthContext: Hydrating from cache');
+      setSession(cachedSession);
+      setUser(cachedUser);
+      return true;
+    }
+    return false;
+  }, []);
+
   useEffect(() => {
     let mounted = true;
+    const isOnline = checkIsOnline();
 
-    // Get initial session with enhanced error handling and retries
+    // Get initial session with enhanced error handling
     const getInitialSession = async () => {
-      // Check if we're online first
-      const isOnline = navigator.onLine;
+      console.log('AuthContext: Getting initial session... Online:', isOnline);
+      
+      // If offline, load from cache immediately and don't make network requests
+      if (!isOnline) {
+        console.log('AuthContext: Offline - loading from cache only');
+        const loaded = loadFromCache();
+        if (mounted) {
+          if (!loaded) {
+            console.log('AuthContext: No cached session available while offline');
+          }
+          setLoading(false);
+        }
+        return;
+      }
       
       try {
-        console.log('AuthContext: Getting initial session... Online:', isOnline);
-        
-        // First, verify Supabase connectivity
+        // Try to get session from Supabase
         const { data: { session: initialSession }, error } = await supabase.auth.getSession();
         
         if (error) {
@@ -40,13 +135,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           if (error.message?.includes('JWT') || error.message?.includes('expired')) {
             console.log('AuthContext: JWT expired/invalid, cleaning up...');
             cleanupAuthState();
+            clearSessionCache();
             setSession(null);
             setUser(null);
             setLoading(false);
             return;
           }
           
-          throw error;
+          // For other errors, try cache
+          loadFromCache();
+          if (mounted) setLoading(false);
+          return;
         }
         
         if (mounted) {
@@ -54,66 +153,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           setSession(initialSession);
           setUser(initialSession?.user ?? null);
           
-          // If we have a session AND we're online, verify database connectivity
-          // Skip this check when offline to prevent blocking
-          if (initialSession && isOnline) {
-            try {
-              console.log('AuthContext: Verifying database connectivity...');
-              const { error: dbError } = await supabase
-                .from('profiles')
-                .select('id')
-                .limit(1);
-                
-              if (dbError) {
-                console.error('AuthContext: Database access failed:', dbError);
-                
-                // If RLS policy fails, it might be a stale session
-                if (dbError.code === 'PGRST116' || dbError.message?.includes('RLS')) {
-                  console.log('AuthContext: RLS policy failed, session may be stale');
-                  // Try to refresh the session
-                  const { data: { session: refreshedSession }, error: refreshError } = 
-                    await supabase.auth.refreshSession();
-                    
-                  if (refreshError || !refreshedSession) {
-                    console.log('AuthContext: Session refresh failed, cleaning up');
-                    cleanupAuthState();
-                    setSession(null);
-                    setUser(null);
-                  } else {
-                    console.log('AuthContext: Session refreshed successfully');
-                    setSession(refreshedSession);
-                    setUser(refreshedSession.user);
-                  }
-                }
-              } else {
-                console.log('AuthContext: Database connectivity verified');
-              }
-            } catch (dbError) {
-              console.error('AuthContext: Database verification failed:', dbError);
-              // Don't fail the session - just log the error
-            }
-          } else if (initialSession && !isOnline) {
-            console.log('AuthContext: Offline - skipping database connectivity check, using cached session');
+          // Cache the session for offline use
+          if (initialSession) {
+            saveSessionToCache(initialSession);
           }
         }
       } catch (error: any) {
         console.error('AuthContext: Critical error getting initial session:', error);
         
-        // For network errors when offline, don't clear session - just log
+        // For network errors, try to use cache
         if (error.message?.includes('fetch') || error.message?.includes('network')) {
-          console.error('AuthContext: Network connectivity issue detected');
-          
-          // If offline, try to keep existing session from localStorage
-          if (!isOnline) {
-            console.log('AuthContext: Offline - preserving session state');
-            // Don't set session to null - let Supabase client handle cached session
-          }
+          console.log('AuthContext: Network error - attempting cache load');
+          loadFromCache();
         }
         
-        if (mounted && isOnline) {
-          // Only clear session if we're online and got an error
-          setSession(null);
-          setUser(null);
+        if (mounted) {
+          setLoading(false);
         }
       } finally {
         if (mounted) {
@@ -122,40 +177,38 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
     };
 
-    // Set up auth state listener with enhanced handling
+    // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      (event, newSession) => {
         if (mounted) {
-          console.log('AuthContext: Auth state change:', event, 'Session valid:', !!session);
+          console.log('AuthContext: Auth state change:', event, 'Session valid:', !!newSession);
           
-          // Enhanced session validation
-          if (session) {
-            console.log('AuthContext: Session details - User ID:', session.user?.id, 'Expires at:', session.expires_at);
+          setSession(newSession);
+          setUser(newSession?.user ?? null);
+          
+          // Cache session on changes (only when online)
+          if (checkIsOnline()) {
+            saveSessionToCache(newSession);
+          }
+          
+          // Handle session refresh
+          if (newSession?.expires_at) {
+            const expiresAt = new Date(newSession.expires_at * 1000);
+            const now = new Date();
+            const fiveMinutes = 5 * 60 * 1000;
             
-            // Check if session is close to expiring (within 5 minutes)
-            if (session.expires_at) {
-              const expiresAt = new Date(session.expires_at * 1000);
-              const now = new Date();
-              const fiveMinutes = 5 * 60 * 1000;
-              
-              if (expiresAt.getTime() - now.getTime() < fiveMinutes) {
-                console.log('AuthContext: Session expires soon, refreshing...');
-                // Defer refresh to avoid blocking the auth state change
-                setTimeout(async () => {
-                  try {
-                    await supabase.auth.refreshSession();
-                  } catch (error) {
-                    console.error('AuthContext: Failed to refresh expiring session:', error);
-                  }
-                }, 0);
-              }
+            if (expiresAt.getTime() - now.getTime() < fiveMinutes && checkIsOnline()) {
+              console.log('AuthContext: Session expires soon, refreshing...');
+              setTimeout(async () => {
+                try {
+                  await supabase.auth.refreshSession();
+                } catch (error) {
+                  console.error('AuthContext: Failed to refresh expiring session:', error);
+                }
+              }, 0);
             }
           }
           
-          setSession(session);
-          setUser(session?.user ?? null);
-          
-          // Only set loading to false after we have processed the session
           if (loading) {
             setLoading(false);
           }
@@ -163,36 +216,48 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
     );
 
+    // Listen for offline hydration events
+    const handleOfflineHydration = () => {
+      console.log('AuthContext: Received offline hydration event');
+      const isStillOnline = checkIsOnline();
+      if (!isStillOnline) {
+        loadFromCache();
+      }
+    };
+    
+    window.addEventListener(OFFLINE_HYDRATION_EVENT, handleOfflineHydration);
+
     getInitialSession();
 
     return () => {
       mounted = false;
       subscription.unsubscribe();
+      window.removeEventListener(OFFLINE_HYDRATION_EVENT, handleOfflineHydration);
     };
-  }, [loading]);
+  }, [loadFromCache, loading]);
 
   const signOut = async () => {
     try {
       console.log('AuthContext: Starting sign out process...');
       
-      // Step 1: Clean up auth state first
+      // Clear caches
+      clearSessionCache();
       cleanupAuthState();
       
-      // Step 2: Perform global sign out
+      // Perform global sign out
       await performGlobalSignOut(supabase);
       
-      // Step 3: Clear local state immediately
+      // Clear local state
       setSession(null);
       setUser(null);
       
       console.log('AuthContext: Sign out completed, forcing redirect...');
-      
-      // Step 4: Force complete page reload to ensure clean state
       window.location.href = '/auth';
     } catch (error) {
       console.error('AuthContext: Error during sign out:', error);
       
       // Force cleanup and redirect even if there's an error
+      clearSessionCache();
       cleanupAuthState();
       setSession(null);
       setUser(null);
@@ -201,21 +266,29 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const refreshSession = async () => {
+    if (!checkIsOnline()) {
+      console.log('AuthContext: Offline - cannot refresh session');
+      return;
+    }
+    
     try {
       console.log('AuthContext: Refreshing session...');
-      const { data: { session }, error } = await supabase.auth.refreshSession();
+      const { data: { session: refreshedSession }, error } = await supabase.auth.refreshSession();
       
       if (error) {
         console.error('AuthContext: Session refresh error:', error);
-        // Clear invalid session
         setSession(null);
         setUser(null);
         throw error;
       }
       
-      console.log('AuthContext: Session refreshed successfully', !!session);
-      setSession(session);
-      setUser(session?.user ?? null);
+      console.log('AuthContext: Session refreshed successfully', !!refreshedSession);
+      setSession(refreshedSession);
+      setUser(refreshedSession?.user ?? null);
+      
+      if (refreshedSession) {
+        saveSessionToCache(refreshedSession);
+      }
     } catch (error) {
       console.error('AuthContext: Failed to refresh session:', error);
       throw error;
