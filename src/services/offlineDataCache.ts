@@ -4,7 +4,7 @@
  */
 
 const DB_NAME = 'tms-offline-cache';
-const DB_VERSION = 2;
+const DB_VERSION = 3;
 
 export interface CacheMetadata {
   tableName: string;
@@ -64,6 +64,13 @@ async function openDatabase(): Promise<IDBDatabase> {
         const actionsStore = db.createObjectStore('_offlineActions', { keyPath: 'id' });
         actionsStore.createIndex('timestamp', 'timestamp', { unique: false });
         actionsStore.createIndex('status', 'status', { unique: false });
+      }
+
+      // Nueva store para cache de datos del hook useOfflineSync
+      if (!db.objectStoreNames.contains('_offlineDataCache')) {
+        const cacheStore = db.createObjectStore('_offlineDataCache', { keyPath: 'key' });
+        cacheStore.createIndex('table', 'table', { unique: false });
+        cacheStore.createIndex('updatedAt', 'updatedAt', { unique: false });
       }
     };
   });
@@ -209,18 +216,51 @@ export async function getCacheMetadata(tableName: CacheableTable): Promise<Cache
 export async function getAllCacheMetadata(): Promise<CacheMetadata[]> {
   const db = await openDatabase();
 
-  return new Promise((resolve, reject) => {
-    const transaction = db.transaction('_metadata', 'readonly');
-    const store = transaction.objectStore('_metadata');
-    const request = store.getAll();
+  return new Promise(async (resolve, reject) => {
+    try {
+      // Obtener metadata de tablas normales
+      const transaction = db.transaction('_metadata', 'readonly');
+      const store = transaction.objectStore('_metadata');
+      const request = store.getAll();
 
-    request.onsuccess = () => {
-      resolve(request.result || []);
-    };
+      request.onsuccess = async () => {
+        const normalMetadata = request.result || [];
+        
+        // También obtener metadata del cache del hook useOfflineSync
+        try {
+          if (db.objectStoreNames.contains('_offlineDataCache')) {
+            const cacheTransaction = db.transaction('_offlineDataCache', 'readonly');
+            const cacheStore = cacheTransaction.objectStore('_offlineDataCache');
+            const cacheRequest = cacheStore.getAll();
+            
+            cacheRequest.onsuccess = () => {
+              const hookCacheData = cacheRequest.result || [];
+              const hookMetadata = hookCacheData.map((item: any) => ({
+                tableName: `${item.table} (offline)`,
+                lastSync: item.updatedAt || Date.now(),
+                recordCount: Array.isArray(item.data) ? item.data.length : 0
+              }));
+              
+              resolve([...normalMetadata, ...hookMetadata]);
+            };
+            
+            cacheRequest.onerror = () => {
+              resolve(normalMetadata);
+            };
+          } else {
+            resolve(normalMetadata);
+          }
+        } catch {
+          resolve(normalMetadata);
+        }
+      };
 
-    request.onerror = () => {
-      reject(request.error);
-    };
+      request.onerror = () => {
+        reject(request.error);
+      };
+    } catch (error) {
+      reject(error);
+    }
   });
 }
 
@@ -256,7 +296,7 @@ export async function clearAllCache(): Promise<void> {
   const db = await openDatabase();
 
   return new Promise((resolve, reject) => {
-    const storeNames = [...CACHEABLE_TABLES, '_metadata', '_offlineActions'] as const;
+    const storeNames = [...CACHEABLE_TABLES, '_metadata', '_offlineActions', '_offlineDataCache'] as const;
     const transaction = db.transaction(storeNames as unknown as string[], 'readwrite');
 
     storeNames.forEach(storeName => {

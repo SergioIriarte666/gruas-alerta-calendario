@@ -4,6 +4,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { Service, ServiceFormData } from '@/types';
 import { toast } from 'sonner';
 import { useErrorHandler } from '@/hooks/useErrorHandler';
+import { useOfflineMode } from '@/contexts/OfflineModeContext';
+import { useOfflineSync, addToLocalCache } from '@/hooks/useOfflineSync';
 
 // Función helper para detectar comisiones existentes y comparar con nuevas
 const detectExistingCommissions = async (serviceId: string, newOperators: any[]) => {
@@ -176,12 +178,14 @@ const transformToService = (data: any): Service => {
 export const useServiceManager = () => {
   const queryClient = useQueryClient();
   const { createMutationErrorHandler } = useErrorHandler();
+  const { effectiveIsOnline } = useOfflineMode();
+  const { addOfflineAction } = useOfflineSync();
 
   // CREAR SERVICIO
   const createServiceMutation = useMutation({
     mutationFn: async (serviceData: ServiceFormData): Promise<Service> => {
       try {
-        console.log('🔄 Creating service with data:', { 
+        console.log('🔄 Creating service with data:', {
           folio: serviceData.folio, 
           serviceType: serviceData.serviceType,
           hasOperators: !!serviceData.operators?.length,
@@ -303,6 +307,112 @@ export const useServiceManager = () => {
           },
           finalData: transformedData
         });
+
+        // 📴 MODO OFFLINE: Guardar localmente si no hay conexión
+        if (!effectiveIsOnline) {
+          console.log('📴 [OFFLINE] Guardando servicio localmente...');
+          
+          // Generar ID temporal para el servicio offline
+          const tempId = `offline-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+          const offlineServiceData = {
+            ...transformedData,
+            id: tempId,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+            _isOffline: true
+          };
+
+          // Guardar acción pendiente para sincronizar después
+          await addOfflineAction({
+            type: 'CREATE',
+            table: 'services',
+            data: transformedData
+          });
+
+          // Agregar al cache local para mostrar en la lista
+          await addToLocalCache('services', offlineServiceData);
+
+          // Crear objeto Service para retornar
+          const offlineService: Service = {
+            id: tempId,
+            folio: transformedData.folio,
+            requestDate: transformedData.request_date || '',
+            serviceDate: transformedData.service_date || '',
+            client: {
+              id: transformedData.client_id || '',
+              name: 'Pendiente sincronización',
+              rut: '',
+              phone: '',
+              email: '',
+              address: '',
+              department: '',
+              isActive: true,
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString()
+            },
+            purchaseOrder: transformedData.purchase_order || '',
+            quoteNumber: transformedData.quote_number || '',
+            vehicleBrand: transformedData.vehicle_brand || '',
+            vehicleModel: transformedData.vehicle_model || '',
+            licensePlate: transformedData.license_plate || '',
+            origin: transformedData.origin || '',
+            destination: transformedData.destination || '',
+            serviceType: serviceTypeConfig ? {
+              id: serviceTypeConfig.id,
+              name: serviceTypeConfig.name,
+              description: serviceTypeConfig.description || '',
+              basePrice: serviceTypeConfig.base_price,
+              isActive: serviceTypeConfig.is_active,
+              vehicleInfoOptional: serviceTypeConfig.vehicle_info_optional,
+              purchaseOrderRequired: serviceTypeConfig.purchase_order_required,
+              originRequired: serviceTypeConfig.origin_required,
+              destinationRequired: serviceTypeConfig.destination_required,
+              craneRequired: serviceTypeConfig.crane_required,
+              operatorRequired: serviceTypeConfig.operator_required,
+              vehicleBrandRequired: serviceTypeConfig.vehicle_brand_required,
+              vehicleModelRequired: serviceTypeConfig.vehicle_model_required,
+              licensePlateRequired: serviceTypeConfig.license_plate_required,
+              createdAt: serviceTypeConfig.created_at,
+              updatedAt: serviceTypeConfig.updated_at
+            } : {
+              id: '',
+              name: 'Tipo no disponible',
+              description: '',
+              basePrice: null,
+              isActive: true,
+              vehicleInfoOptional: false,
+              purchaseOrderRequired: false,
+              originRequired: true,
+              destinationRequired: true,
+              craneRequired: true,
+              operatorRequired: true,
+              vehicleBrandRequired: true,
+              vehicleModelRequired: true,
+              licensePlateRequired: true,
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString()
+            },
+            value: transformedData.value,
+            crane: null,
+            operator: null,
+            operatorCommission: transformedData.operator_commission || 0,
+            status: transformedData.status,
+            observations: transformedData.observations || '',
+            hasExcess: transformedData.has_excess || false,
+            clientCoveredAmount: transformedData.client_covered_amount,
+            excessAmount: transformedData.excess_amount || 0,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+            createdBy: createdBy || undefined
+          };
+
+          toast.success('Servicio guardado localmente', {
+            description: 'Se sincronizará automáticamente cuando recuperes la conexión'
+          });
+
+          await queryClient.invalidateQueries({ queryKey: ['services'] });
+          return offlineService;
+        }
 
         const { data: newService, error: serviceError } = await supabase
           .from('services')

@@ -21,6 +21,7 @@ export interface OfflineAction {
 
 const DB_NAME = 'tms-offline-cache';
 const STORE_NAME = '_offlineActions';
+const DATA_CACHE_STORE = '_offlineDataCache';
 const MAX_RETRIES = 3;
 
 let dbInstance: IDBDatabase | null = null;
@@ -29,7 +30,7 @@ async function openDatabase(): Promise<IDBDatabase> {
   if (dbInstance) return dbInstance;
 
   return new Promise((resolve, reject) => {
-    const request = indexedDB.open(DB_NAME, 2);
+    const request = indexedDB.open(DB_NAME, 3); // Incrementar versión para nueva store
 
     request.onerror = () => reject(request.error);
     request.onsuccess = () => {
@@ -44,8 +45,75 @@ async function openDatabase(): Promise<IDBDatabase> {
         store.createIndex('timestamp', 'timestamp', { unique: false });
         store.createIndex('status', 'status', { unique: false });
       }
+      // Nueva store para cache de datos
+      if (!db.objectStoreNames.contains(DATA_CACHE_STORE)) {
+        const cacheStore = db.createObjectStore(DATA_CACHE_STORE, { keyPath: 'key' });
+        cacheStore.createIndex('table', 'table', { unique: false });
+        cacheStore.createIndex('updatedAt', 'updatedAt', { unique: false });
+      }
     };
   });
+}
+
+// Funciones para cache de datos local
+export async function cacheTableData(table: string, data: any[]): Promise<void> {
+  const db = await openDatabase();
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction(DATA_CACHE_STORE, 'readwrite');
+    const store = transaction.objectStore(DATA_CACHE_STORE);
+    
+    store.put({
+      key: table,
+      table,
+      data,
+      updatedAt: Date.now()
+    });
+
+    transaction.oncomplete = () => resolve();
+    transaction.onerror = () => reject(transaction.error);
+  });
+}
+
+export async function getCachedTableData<T>(table: string): Promise<{ data: T[] | null; updatedAt: number | null }> {
+  const db = await openDatabase();
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction(DATA_CACHE_STORE, 'readonly');
+    const store = transaction.objectStore(DATA_CACHE_STORE);
+    const request = store.get(table);
+
+    request.onsuccess = () => {
+      if (request.result) {
+        resolve({ data: request.result.data, updatedAt: request.result.updatedAt });
+      } else {
+        resolve({ data: null, updatedAt: null });
+      }
+    };
+    request.onerror = () => reject(request.error);
+  });
+}
+
+export async function addToLocalCache(table: string, record: any): Promise<void> {
+  const { data: existingData } = await getCachedTableData<any>(table);
+  const updatedData = existingData ? [...existingData, record] : [record];
+  await cacheTableData(table, updatedData);
+}
+
+export async function updateInLocalCache(table: string, id: string, updates: any): Promise<void> {
+  const { data: existingData } = await getCachedTableData<any>(table);
+  if (existingData) {
+    const updatedData = existingData.map((item: any) => 
+      item.id === id ? { ...item, ...updates } : item
+    );
+    await cacheTableData(table, updatedData);
+  }
+}
+
+export async function removeFromLocalCache(table: string, id: string): Promise<void> {
+  const { data: existingData } = await getCachedTableData<any>(table);
+  if (existingData) {
+    const updatedData = existingData.filter((item: any) => item.id !== id);
+    await cacheTableData(table, updatedData);
+  }
 }
 
 export function useOfflineSync() {

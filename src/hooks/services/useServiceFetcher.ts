@@ -1,18 +1,45 @@
-
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Service } from '@/types';
 import { toast } from 'sonner';
 import { useServiceTransformer } from './useServiceTransformer';
+import { useOfflineMode } from '@/contexts/OfflineModeContext';
+import { cacheTableData, getCachedTableData } from '@/hooks/useOfflineSync';
 
 export const useServiceFetcher = () => {
   const [loading, setLoading] = useState(true);
   const { transformRawServiceData } = useServiceTransformer();
+  const { effectiveIsOnline } = useOfflineMode();
 
   const fetchServices = async (): Promise<Service[]> => {
     try {
-      console.log('Fetching services...');
+      console.log('Fetching services... Online:', effectiveIsOnline);
       setLoading(true);
+
+      // Si estamos offline, intentar obtener del cache local
+      if (!effectiveIsOnline) {
+        console.log('[Offline] Intentando obtener servicios del cache local...');
+        try {
+          const { data: cachedData, updatedAt } = await getCachedTableData<any>('services');
+          if (cachedData && cachedData.length > 0) {
+            console.log(`[Offline] Encontrados ${cachedData.length} servicios en cache (actualizado: ${new Date(updatedAt || 0).toLocaleString()})`);
+            const formattedServices = transformRawServiceData(cachedData);
+            toast.info('Modo Offline', {
+              description: `Mostrando ${formattedServices.length} servicios del cache local`
+            });
+            return formattedServices;
+          } else {
+            console.log('[Offline] No hay datos en cache local');
+            toast.warning('Sin datos offline', {
+              description: 'No hay servicios guardados localmente'
+            });
+            return [];
+          }
+        } catch (cacheError) {
+          console.error('[Offline] Error leyendo cache:', cacheError);
+          return [];
+        }
+      }
       
       // Verificar autenticación primero
       const { data: { user } } = await supabase.auth.getUser();
@@ -60,6 +87,11 @@ export const useServiceFetcher = () => {
         console.log('Consulta simplificada exitosa, obteniendo datos relacionados...');
         if (simpleData && Array.isArray(simpleData) && simpleData.length > 0) {
           const enrichedData = await enrichServicesData(simpleData);
+          
+          // Guardar en cache para uso offline
+          await cacheTableData('services', enrichedData);
+          console.log('[Cache] Servicios guardados en cache local');
+          
           return transformRawServiceData(enrichedData);
         }
         
@@ -72,6 +104,10 @@ export const useServiceFetcher = () => {
         console.log('No services found');
         return [];
       }
+
+      // Guardar en cache para uso offline
+      await cacheTableData('services', data);
+      console.log('[Cache] Servicios guardados en cache local');
 
       const formattedServices = transformRawServiceData(data);
       console.log('Formatted services:', formattedServices);
