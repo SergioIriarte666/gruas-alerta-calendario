@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { usePayments } from '@/hooks/usePayments';
 import { useClients } from '@/hooks/useClients';
 import { PaymentWithDetails } from '@/types/payments';
@@ -6,16 +6,23 @@ import { PaymentApplicationModal } from './PaymentApplicationModal';
 import { SmartPaymentForm } from './SmartPaymentForm';
 import { PaymentHistory } from './PaymentHistory';
 import { SelectivePaymentModal } from './SelectivePaymentModal';
-import { Button } from '@/components/ui/button';
+import { PaymentReconciliationHeader } from './PaymentReconciliationHeader';
+import { PaymentMetricsCards } from './PaymentMetricsCards';
+import { PaymentQuickFilters, PaymentDateFilter } from './PaymentQuickFilters';
+import { PaymentStatusFilters, PaymentStatusFilter } from './PaymentStatusFilters';
+import { PaymentCardsView } from './PaymentCardsView';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Plus, Zap, Edit, DollarSign, AlertTriangle, History, RefreshCw, Eye } from 'lucide-react';
+import { Progress } from '@/components/ui/progress';
+import { Edit, AlertTriangle, Eye, X } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 import { toast } from 'sonner';
 import { PaymentApplicationsDetailModal } from './PaymentApplicationsDetailModal';
+import { startOfDay, startOfWeek, startOfMonth, isAfter } from 'date-fns';
 
 interface PaymentReconciliationProps {
   onClose?: () => void;
@@ -29,16 +36,6 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
     applyPaymentFIFO,
     applyPaymentSelective,
     getUnpaidInvoicesForClient,
-    checkPaymentSystemAvailability,
-    cleanupDuplicatePayments,
-    syncPaidInvoicesWithPayments,
-    getReconciliationStats,
-    fixPaymentInconsistencies,
-    validateSystemIntegrity,
-    performBackgroundMaintenance,
-    fixSystemInconsistencies,
-    removeDuplicateApplications,
-    getComprehensiveDiagnosis,
     refetch,
   } = usePayments();
   
@@ -49,27 +46,24 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
   const [availableInvoices, setAvailableInvoices] = useState<any[]>([]);
   const [showHistory, setShowHistory] = useState(false);
   const [selectivePaymentModalOpen, setSelectivePaymentModalOpen] = useState(false);
-  const [reconciliationStats, setReconciliationStats] = useState<any>(null);
-  const [systemDiagnosis, setSystemDiagnosis] = useState<any>(null);
-  const [isProcessing, setIsProcessing] = useState(false);
   const [showPaymentDetail, setShowPaymentDetail] = useState(false);
   const [selectedPaymentForDetail, setSelectedPaymentForDetail] = useState<PaymentWithDetails | null>(null);
+  
+  // New state for redesign
+  const [dateFilter, setDateFilter] = useState<PaymentDateFilter>('all');
+  const [statusFilter, setStatusFilter] = useState<PaymentStatusFilter>('all');
+  const [viewMode, setViewMode] = useState<'table' | 'cards'>('table');
+  const [showSensitiveData, setShowSensitiveData] = useState(() => {
+    const stored = localStorage.getItem('paymentReconciliation_showSensitiveData');
+    return stored !== null ? stored === 'true' : true;
+  });
 
   const { clients } = useClients();
 
+  // Persist sensitive data preference
   useEffect(() => {
-    loadReconciliationStats();
-    loadSystemDiagnosis();
-  }, []);
-
-  const handleAutoApply = async (payment: PaymentWithDetails) => {
-    try {
-      await applyPaymentFIFO(payment.id, payment.client_id);
-      toast.success('Pago aplicado automáticamente');
-    } catch (error) {
-      console.error('Error auto-applying payment:', error);
-    }
-  };
+    localStorage.setItem('paymentReconciliation_showSensitiveData', String(showSensitiveData));
+  }, [showSensitiveData]);
 
   const handleManualApplication = async (payment: PaymentWithDetails) => {
     try {
@@ -96,33 +90,77 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
     }
   };
 
-  const performAutomaticMaintenance = async () => {
-    setIsProcessing(true);
-    try {
-      await loadReconciliationStats();
-      await loadSystemDiagnosis();
-    } finally {
-      setIsProcessing(false);
-    }
+  const openSelectiveModal = (payment: PaymentWithDetails) => {
+    setSelectedPayment(payment);
+    setSelectivePaymentModalOpen(true);
   };
 
-  const loadReconciliationStats = async () => {
-    try {
-      const stats = await getReconciliationStats();
-      setReconciliationStats(stats);
-    } catch (error) {
-      console.error('Error loading reconciliation stats:', error);
-    }
+  const openDetailModal = (payment: PaymentWithDetails) => {
+    setSelectedPaymentForDetail(payment);
+    setShowPaymentDetail(true);
   };
 
-  const loadSystemDiagnosis = async () => {
-    try {
-      const diagnosis = await getComprehensiveDiagnosis();
-      setSystemDiagnosis(diagnosis);
-    } catch (error) {
-      console.error('Error loading system diagnosis:', error);
+  // Filter payments by date
+  const getDateFilteredPayments = (payments: PaymentWithDetails[]) => {
+    if (dateFilter === 'all') return payments;
+    
+    const now = new Date();
+    let startDate: Date;
+    
+    switch (dateFilter) {
+      case 'today':
+        startDate = startOfDay(now);
+        break;
+      case 'week':
+        startDate = startOfWeek(now, { weekStartsOn: 1 });
+        break;
+      case 'month':
+        startDate = startOfMonth(now);
+        break;
+      default:
+        return payments;
     }
+    
+    return payments.filter(payment => {
+      const paymentDate = new Date(payment.payment_date);
+      return isAfter(paymentDate, startDate) || paymentDate.getTime() === startDate.getTime();
+    });
   };
+
+  // Filter payments by status
+  const getStatusFilteredPayments = (payments: PaymentWithDetails[]) => {
+    if (statusFilter === 'all') return payments;
+    return payments.filter(payment => payment.status === statusFilter);
+  };
+
+  // Filter payments by client
+  const getClientFilteredPayments = (payments: PaymentWithDetails[]) => {
+    if (selectedClient === 'all') return payments;
+    return payments.filter(payment => payment.client_id === selectedClient);
+  };
+
+  // Apply all filters
+  const filteredPayments = useMemo(() => {
+    let result = payments;
+    result = getDateFilteredPayments(result);
+    result = getStatusFilteredPayments(result);
+    result = getClientFilteredPayments(result);
+    return result;
+  }, [payments, dateFilter, statusFilter, selectedClient]);
+
+  // Calculate status counts for filters
+  const statusCounts = useMemo(() => {
+    const dateFiltered = getDateFilteredPayments(getClientFilteredPayments(payments));
+    return {
+      pending: dateFiltered.filter(p => p.status === 'pending').length,
+      partial: dateFiltered.filter(p => p.status === 'partial').length,
+      applied: dateFiltered.filter(p => p.status === 'applied').length,
+    };
+  }, [payments, dateFilter, selectedClient]);
+
+  const pendingCount = useMemo(() => {
+    return payments.filter(p => p.status === 'pending').length;
+  }, [payments]);
 
   const getStatusBadgeVariant = (status: string) => {
     switch (status) {
@@ -142,9 +180,13 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
     }
   };
 
-  const filteredPayments = selectedClient === 'all' 
-    ? payments 
-    : payments.filter(payment => payment.client_id === selectedClient);
+  const clearFilters = () => {
+    setSelectedClient('all');
+    setDateFilter('all');
+    setStatusFilter('all');
+  };
+
+  const hasActiveFilters = selectedClient !== 'all' || dateFilter !== 'all' || statusFilter !== 'all';
 
   if (!paymentSystemAvailable) {
     return (
@@ -159,90 +201,40 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
 
   return (
     <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold">Conciliación de Pagos</h2>
-        <div className="flex gap-2">
-          <Button
-            onClick={() => refetch()}
-            variant="outline"
-            size="sm"
-            disabled={paymentsLoading}
-          >
-            <RefreshCw className={`h-4 w-4 mr-2 ${paymentsLoading ? 'animate-spin' : ''}`} />
-            Actualizar
-          </Button>
-          <Button
-            onClick={() => setShowPaymentForm(true)}
-            size="sm"
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Registrar Pago
-          </Button>
-          <Button
-            onClick={() => setShowHistory(true)}
-            variant="outline"
-            size="sm"
-          >
-            <History className="h-4 w-4 mr-2" />
-            Historial
-          </Button>
-        </div>
-      </div>
+      {/* Header */}
+      <PaymentReconciliationHeader
+        onRegisterPayment={() => setShowPaymentForm(true)}
+        onShowHistory={() => setShowHistory(true)}
+        onRefresh={refetch}
+        isLoading={paymentsLoading}
+        viewMode={viewMode}
+        onViewModeChange={setViewMode}
+        activeDateFilter={dateFilter}
+        showSensitiveData={showSensitiveData}
+        onToggleSensitiveData={() => setShowSensitiveData(!showSensitiveData)}
+      />
 
-      {/* Estadísticas */}
-      {reconciliationStats && (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Pendientes</p>
-                  <p className="text-2xl font-bold">{reconciliationStats.pending_payments || 0}</p>
-                </div>
-                <DollarSign className="h-8 w-8 text-blue-500" />
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Aplicados</p>
-                  <p className="text-2xl font-bold">{reconciliationStats.applied_payments || 0}</p>
-                </div>
-                <DollarSign className="h-8 w-8 text-green-500" />
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Parciales</p>
-                  <p className="text-2xl font-bold">{reconciliationStats.partial_payments || 0}</p>
-                </div>
-                <DollarSign className="h-8 w-8 text-amber-500" />
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Total Monto</p>
-                  <p className="text-2xl font-bold">{formatCurrency(reconciliationStats.total_amount || 0)}</p>
-                </div>
-                <DollarSign className="h-8 w-8 text-purple-500" />
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
+      {/* Quick Date Filters */}
+      <PaymentQuickFilters
+        selected={dateFilter}
+        onChange={setDateFilter}
+        pendingCount={pendingCount}
+      />
 
-      {/* Filtros */}
+      {/* Status Filters */}
+      <PaymentStatusFilters
+        selected={statusFilter}
+        onChange={setStatusFilter}
+        counts={statusCounts}
+      />
+
+      {/* Metrics Cards */}
+      <PaymentMetricsCards
+        payments={filteredPayments}
+        showSensitiveData={showSensitiveData}
+      />
+
+      {/* Client Filter & Clear Button */}
       <div className="flex gap-4 items-center">
         <Select value={selectedClient} onValueChange={setSelectedClient}>
           <SelectTrigger className="w-[300px]">
@@ -264,112 +256,140 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
             ))}
           </SelectContent>
         </Select>
+
+        {hasActiveFilters && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={clearFilters}
+            className="text-muted-foreground hover:text-foreground"
+          >
+            <X className="h-4 w-4 mr-1" />
+            Limpiar filtros
+          </Button>
+        )}
       </div>
 
-      {/* Tabla de pagos */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Pagos Registrados</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {paymentsLoading ? (
-            <div className="text-center py-8">Cargando pagos...</div>
-          ) : filteredPayments.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              No hay pagos registrados
-            </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Cliente</TableHead>
-                  <TableHead>Monto</TableHead>
-                  <TableHead>Fecha</TableHead>
-                  <TableHead>Estado</TableHead>
-                  <TableHead>Aplicado</TableHead>
-                  <TableHead>Pendiente</TableHead>
-                  <TableHead>Acciones</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredPayments.map((payment) => (
-                  <TableRow key={payment.id}>
-                    <TableCell>
-                      <div>
-                        <div className="font-medium">{payment.client?.name}</div>
-                        <div className="text-sm text-muted-foreground">
-                          {payment.bank_reference}
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell className="font-medium">
-                      {formatCurrency(payment.amount)}
-                    </TableCell>
-                    <TableCell>
-                      {new Date(payment.payment_date).toLocaleDateString()}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={getStatusBadgeVariant(payment.status)}>
-                        {getStatusLabel(payment.status)}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>{formatCurrency(payment.applied_amount)}</TableCell>
-                    <TableCell>{formatCurrency(payment.remaining_amount)}</TableCell>
-                    <TableCell>
-                      <div className="flex gap-2">
-                        {payment.status === 'pending' || payment.remaining_amount > 0 ? (
-                          <>
-                            <Button
-                              onClick={() => handleManualApplication(payment)}
-                              size="sm"
-                              variant="default"
-                              className="bg-blue-600 hover:bg-blue-700"
-                            >
-                              <Edit className="h-4 w-4 mr-1" />
-                              Aplicar Manualmente
-                            </Button>
-                            <Button
-                              onClick={() => {
-                                setSelectedPayment(payment);
-                                setSelectivePaymentModalOpen(true);
-                              }}
-                              size="sm"
-                              variant="outline"
-                              className="text-purple-600 border-purple-300 hover:bg-purple-50"
-                            >
-                              Selectivo
-                            </Button>
-                          </>
-                        ) : payment.status === 'applied' && payment.applied_amount > 0 ? (
-                          <span className="text-sm text-muted-foreground">Aplicado</span>
-                        ) : null}
-                        
-                        {/* Botón Ver Detalle */}
-                        {payment.applied_amount > 0 && (
-                          <Button
-                            onClick={() => {
-                              setSelectedPaymentForDetail(payment);
-                              setShowPaymentDetail(true);
-                            }}
-                            size="sm"
-                            variant="ghost"
-                            className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-950"
-                          >
-                            <Eye className="h-4 w-4 mr-1" />
-                            Ver Detalle
-                          </Button>
-                        )}
-                      </div>
-                    </TableCell>
+      {/* Content: Table or Cards */}
+      {viewMode === 'cards' ? (
+        <PaymentCardsView
+          payments={filteredPayments}
+          onManualApplication={handleManualApplication}
+          onSelectiveApplication={openSelectiveModal}
+          onViewDetail={openDetailModal}
+          showSensitiveData={showSensitiveData}
+        />
+      ) : (
+        <Card>
+          <CardHeader className="bg-gradient-to-r from-violet-600 to-violet-700 text-white rounded-t-lg">
+            <CardTitle className="text-lg font-semibold">Pagos Registrados</CardTitle>
+          </CardHeader>
+          <CardContent className="p-0">
+            {paymentsLoading ? (
+              <div className="text-center py-8">Cargando pagos...</div>
+            ) : filteredPayments.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                No hay pagos registrados
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-muted/50">
+                    <TableHead>Cliente</TableHead>
+                    <TableHead>Monto</TableHead>
+                    <TableHead>Fecha</TableHead>
+                    <TableHead>Estado</TableHead>
+                    <TableHead>Progreso</TableHead>
+                    <TableHead>Acciones</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
+                </TableHeader>
+                <TableBody>
+                  {filteredPayments.map((payment) => {
+                    const progressPercent = payment.amount > 0 
+                      ? (payment.applied_amount / payment.amount) * 100 
+                      : 0;
+                    
+                    return (
+                      <TableRow 
+                        key={payment.id}
+                        className="hover:bg-violet-50/50 dark:hover:bg-violet-950/20 transition-colors"
+                      >
+                        <TableCell>
+                          <div>
+                            <div className="font-medium">{payment.client?.name}</div>
+                            <div className="text-sm text-muted-foreground">
+                              {payment.bank_reference}
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell className="font-semibold text-violet-600">
+                          {showSensitiveData ? formatCurrency(payment.amount) : '••••••'}
+                        </TableCell>
+                        <TableCell>
+                          {new Date(payment.payment_date).toLocaleDateString('es-CL')}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={getStatusBadgeVariant(payment.status)}>
+                            {getStatusLabel(payment.status)}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <div className="w-32 space-y-1">
+                            <Progress value={progressPercent} className="h-2" />
+                            <div className="flex justify-between text-xs text-muted-foreground">
+                              <span>{showSensitiveData ? formatCurrency(payment.applied_amount) : '••••'}</span>
+                              <span>{Math.round(progressPercent)}%</span>
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex gap-2">
+                            {(payment.status === 'pending' || payment.remaining_amount > 0) && (
+                              <>
+                                <Button
+                                  onClick={() => handleManualApplication(payment)}
+                                  size="sm"
+                                  variant="default"
+                                  className="bg-blue-600 hover:bg-blue-700"
+                                >
+                                  <Edit className="h-4 w-4 mr-1" />
+                                  Aplicar
+                                </Button>
+                                <Button
+                                  onClick={() => openSelectiveModal(payment)}
+                                  size="sm"
+                                  variant="outline"
+                                  className="text-violet-600 border-violet-300 hover:bg-violet-50"
+                                >
+                                  Selectivo
+                                </Button>
+                              </>
+                            )}
+                            
+                            {payment.applied_amount > 0 && (
+                              <Button
+                                onClick={() => openDetailModal(payment)}
+                                size="sm"
+                                variant="ghost"
+                                className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-950"
+                              >
+                                <Eye className="h-4 w-4 mr-1" />
+                                Ver Detalle
+                              </Button>
+                            )}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
-      {/* Modales */}
+      {/* Modals */}
       {showPaymentForm && (
         <SmartPaymentForm
           onClose={() => {
@@ -416,7 +436,6 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
         />
       )}
 
-      {/* Modal de Detalle de Aplicaciones de Pago */}
       {showPaymentDetail && selectedPaymentForDetail && (
         <PaymentApplicationsDetailModal
           payment={selectedPaymentForDetail}
