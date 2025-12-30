@@ -7,6 +7,7 @@ import { VehicleFullHistoryData, VehicleHistoryRecord } from '@/hooks/useVehicle
 const TMS_GREEN = [0, 150, 136] as [number, number, number];
 const LIGHT_GRAY = [245, 245, 245] as [number, number, number];
 const WHITE = [255, 255, 255] as [number, number, number];
+const DARK_TEXT = [33, 33, 33] as [number, number, number];
 
 const loadImageAsBase64 = async (url: string): Promise<string | null> => {
   try {
@@ -69,7 +70,7 @@ const getTypeLabel = (type: string): string => {
   const labels: Record<string, string> = {
     service: 'Servicio',
     quote: 'Cotización',
-    purchase_order: 'Orden Compra',
+    purchase_order: 'OC',
     invoice: 'Factura'
   };
   return labels[type] || type;
@@ -78,61 +79,70 @@ const getTypeLabel = (type: string): string => {
 export const generateVehicleHistoryPDF = async (
   data: VehicleFullHistoryData
 ): Promise<Blob> => {
-  const doc = new jsPDF();
+  // Usar orientación horizontal para mejor visualización
+  const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
   const pageWidth = doc.internal.pageSize.width;
+  const pageHeight = doc.internal.pageSize.height;
+  const margin = 15;
   
   // 1. Obtener datos de la empresa
   const companyData = await fetchCompanyData();
   
-  let yPosition = 15;
+  let yPosition = margin;
 
-  // 2. Header con logo
+  // ============ HEADER ============
+  // Logo a la izquierda
   try {
     const logoBase64 = await loadImageAsBase64('/logo-gruas-5-norte.png');
     if (logoBase64) {
       const { width: origW, height: origH } = await getImageDimensions(logoBase64);
-      const maxW = 45, maxH = 25;
+      const maxH = 18;
       const ratio = origW / origH;
-      let logoW = maxW, logoH = maxW / ratio;
-      if (logoH > maxH) { logoH = maxH; logoW = maxH * ratio; }
-      doc.addImage(logoBase64, 'PNG', 15, yPosition, logoW, logoH);
-      yPosition += Math.max(logoH + 5, 20);
+      const logoH = maxH;
+      const logoW = maxH * ratio;
+      doc.addImage(logoBase64, 'PNG', margin, yPosition, logoW, logoH);
     }
   } catch (e) {
     console.warn('No se pudo cargar el logo:', e);
   }
 
-  // 3. Título del documento
-  doc.setFontSize(18);
+  // Título centrado
+  doc.setFontSize(16);
   doc.setTextColor(...TMS_GREEN);
-  doc.text('HISTORIAL COMPLETO DEL VEHÍCULO', pageWidth / 2, yPosition, { align: 'center' });
-  yPosition += 10;
-
-  // 4. Información de la empresa
-  doc.setFontSize(12);
-  doc.setTextColor(0, 0, 0);
-  doc.text(companyData.businessName, pageWidth / 2, yPosition, { align: 'center' });
-  yPosition += 6;
+  doc.setFont('helvetica', 'bold');
+  doc.text('HISTORIAL COMPLETO DEL VEHÍCULO', pageWidth / 2, yPosition + 8, { align: 'center' });
   
-  doc.setFontSize(9);
-  doc.setTextColor(80, 80, 80);
-  doc.text(`RUT: ${companyData.rut} | Tel: ${companyData.phone}`, pageWidth / 2, yPosition, { align: 'center' });
-  yPosition += 5;
-  doc.text(companyData.address, pageWidth / 2, yPosition, { align: 'center' });
-  yPosition += 10;
+  // Datos empresa a la derecha
+  doc.setFontSize(8);
+  doc.setTextColor(...DARK_TEXT);
+  doc.setFont('helvetica', 'normal');
+  doc.text(companyData.businessName, pageWidth - margin, yPosition + 3, { align: 'right' });
+  doc.text(`RUT: ${companyData.rut}`, pageWidth - margin, yPosition + 7, { align: 'right' });
+  doc.text(`Tel: ${companyData.phone}`, pageWidth - margin, yPosition + 11, { align: 'right' });
+  doc.text(companyData.email, pageWidth - margin, yPosition + 15, { align: 'right' });
+  
+  yPosition += 22;
 
-  // 5. Línea separadora
+  // Línea separadora
   doc.setDrawColor(...TMS_GREEN);
   doc.setLineWidth(0.8);
-  doc.line(15, yPosition, pageWidth - 15, yPosition);
-  yPosition += 12;
+  doc.line(margin, yPosition, pageWidth - margin, yPosition);
+  yPosition += 8;
 
-  // 6. Información del vehículo
-  doc.setFontSize(12);
+  // ============ INFORMACIÓN DEL VEHÍCULO Y RESUMEN EN 2 COLUMNAS ============
+  const colWidth = (pageWidth - margin * 3) / 2;
+  
+  // Columna izquierda: Datos del vehículo
+  doc.setFontSize(11);
   doc.setTextColor(...TMS_GREEN);
-  doc.text('DATOS DEL VEHÍCULO', 15, yPosition);
-  yPosition += 7;
+  doc.setFont('helvetica', 'bold');
+  doc.text('DATOS DEL VEHÍCULO', margin, yPosition);
+  
+  // Columna derecha: Resumen
+  doc.text('RESUMEN', margin + colWidth + margin, yPosition);
+  yPosition += 5;
 
+  // Tabla de vehículo (columna izquierda)
   const vehicleInfo = [
     ['Patente:', data.licensePlate.toUpperCase()],
     ['Marca:', data.vehicleBrand || 'No especificada'],
@@ -142,147 +152,167 @@ export const generateVehicleHistoryPDF = async (
   autoTable(doc, {
     startY: yPosition,
     body: vehicleInfo,
-    theme: 'grid',
+    theme: 'plain',
+    tableWidth: colWidth,
     columnStyles: {
-      0: { cellWidth: 35, fontStyle: 'bold', fillColor: LIGHT_GRAY },
-      1: { cellWidth: 60 }
+      0: { cellWidth: 25, fontStyle: 'bold', textColor: DARK_TEXT },
+      1: { cellWidth: colWidth - 25, textColor: DARK_TEXT }
     },
-    styles: { fontSize: 9, cellPadding: 3, textColor: [0, 0, 0] },
-    margin: { left: 15, right: 15 }
+    styles: { fontSize: 9, cellPadding: 2 },
+    margin: { left: margin }
   });
 
-  yPosition = (doc as any).lastAutoTable.finalY + 12;
-
-  // 7. Resumen
-  doc.setFontSize(12);
-  doc.setTextColor(...TMS_GREEN);
-  doc.text('RESUMEN', 15, yPosition);
-  yPosition += 7;
-
+  // Tabla de resumen (columna derecha)
   const summaryData = [
     ['Total Servicios:', String(data.summary.totalServices)],
-    ['Servicios Completados:', String(data.summary.completedServices)],
-    ['Servicios Cancelados:', String(data.summary.cancelledServices)],
+    ['Completados:', String(data.summary.completedServices)],
+    ['Cancelados:', String(data.summary.cancelledServices)],
     ['Cotizaciones:', String(data.summary.totalQuotes)],
     ['Órdenes de Compra:', String(data.summary.totalPurchaseOrders)],
-    ['Facturas Emitidas:', String(data.summary.totalInvoices)],
-    ['Valor Total Acumulado:', formatCurrency(data.summary.totalValue)]
+    ['Facturas:', String(data.summary.totalInvoices)],
+    ['VALOR TOTAL:', formatCurrency(data.summary.totalValue)]
   ];
 
   autoTable(doc, {
     startY: yPosition,
     body: summaryData,
-    theme: 'grid',
+    theme: 'plain',
+    tableWidth: colWidth,
     columnStyles: {
-      0: { cellWidth: 55, fontStyle: 'bold', fillColor: LIGHT_GRAY },
-      1: { cellWidth: 40, halign: 'right' }
+      0: { cellWidth: 40, fontStyle: 'bold', textColor: DARK_TEXT },
+      1: { cellWidth: colWidth - 40, halign: 'right', textColor: DARK_TEXT }
     },
-    styles: { fontSize: 9, cellPadding: 3, textColor: [0, 0, 0] },
-    margin: { left: 15, right: 15 },
+    styles: { fontSize: 9, cellPadding: 2 },
+    margin: { left: margin + colWidth + margin },
     didParseCell: (hookData) => {
       // Destacar el valor total
       if (hookData.row.index === summaryData.length - 1) {
         hookData.cell.styles.fillColor = TMS_GREEN;
         hookData.cell.styles.textColor = WHITE;
         hookData.cell.styles.fontStyle = 'bold';
+        hookData.cell.styles.fontSize = 10;
       }
     }
   });
 
-  yPosition = (doc as any).lastAutoTable.finalY + 15;
+  yPosition = Math.max(
+    (doc as any).lastAutoTable?.finalY || yPosition + 30,
+    yPosition + 35
+  );
+  yPosition += 10;
 
-  // 8. Verificar si necesitamos nueva página para el historial
-  if (yPosition > 200) {
-    doc.addPage();
-    yPosition = 20;
-  }
-
-  // 9. Historial detallado
-  doc.setFontSize(12);
+  // ============ HISTORIAL DETALLADO ============
+  doc.setFontSize(11);
   doc.setTextColor(...TMS_GREEN);
-  doc.text('HISTORIAL DETALLADO', 15, yPosition);
-  yPosition += 7;
+  doc.setFont('helvetica', 'bold');
+  doc.text('HISTORIAL DETALLADO', margin, yPosition);
+  yPosition += 5;
 
   if (data.records.length === 0) {
     doc.setFontSize(10);
     doc.setTextColor(100, 100, 100);
-    doc.text('No se encontraron registros para este vehículo.', 15, yPosition);
-    yPosition += 10;
+    doc.setFont('helvetica', 'italic');
+    doc.text('No se encontraron registros para este vehículo.', margin, yPosition + 5);
   } else {
-    // Tabla con el historial
-    const tableData = data.records.map((record: VehicleHistoryRecord) => [
-      formatDate(record.date),
-      getTypeLabel(record.type),
-      record.folio,
-      record.type === 'service' ? (record.serviceTypeName || '-') : '-',
-      getStatusLabel(record.status),
-      record.clientName,
-      formatCurrency(record.value),
-      record.quoteNumber || record.purchaseOrder || record.invoiceNumeroFiscal || '-'
-    ]);
+    // Preparar datos de la tabla - simplificado para mejor legibilidad
+    const tableData = data.records.map((record: VehicleHistoryRecord) => {
+      let reference = '-';
+      if (record.quoteNumber) reference = `COT: ${record.quoteNumber}`;
+      else if (record.purchaseOrder) reference = `OC: ${record.purchaseOrder}`;
+      else if (record.invoiceNumeroFiscal) reference = `NF: ${record.invoiceNumeroFiscal}`;
+      
+      return [
+        formatDate(record.date),
+        getTypeLabel(record.type),
+        record.folio,
+        record.type === 'service' ? (record.serviceTypeName || '-') : '-',
+        getStatusLabel(record.status),
+        record.clientName.length > 25 ? record.clientName.substring(0, 25) + '...' : record.clientName,
+        formatCurrency(record.value),
+        reference
+      ];
+    });
 
+    // Calcular anchos de columna proporcionalmente al espacio disponible
+    const tableWidth = pageWidth - margin * 2;
+    
     autoTable(doc, {
       startY: yPosition,
-      head: [['Fecha', 'Tipo', 'Folio', 'Servicio', 'Estado', 'Cliente', 'Valor', 'Ref.']],
+      head: [['Fecha', 'Tipo', 'Folio', 'Tipo Servicio', 'Estado', 'Cliente', 'Valor', 'Referencia']],
       body: tableData,
       theme: 'striped',
+      tableWidth: tableWidth,
       headStyles: {
         fillColor: TMS_GREEN,
         textColor: WHITE,
         fontStyle: 'bold',
-        fontSize: 8
+        fontSize: 9,
+        halign: 'center',
+        cellPadding: 3
       },
-      styles: { 
-        fontSize: 7, 
-        cellPadding: 2,
-        overflow: 'ellipsize'
+      bodyStyles: {
+        fontSize: 8,
+        cellPadding: 2.5,
+        textColor: DARK_TEXT
+      },
+      alternateRowStyles: {
+        fillColor: [250, 250, 250]
       },
       columnStyles: {
-        0: { cellWidth: 20 },
-        1: { cellWidth: 18 },
-        2: { cellWidth: 22 },
-        3: { cellWidth: 28 },
-        4: { cellWidth: 22 },
-        5: { cellWidth: 30 },
-        6: { cellWidth: 22, halign: 'right' },
-        7: { cellWidth: 18 }
+        0: { cellWidth: 22, halign: 'center' },    // Fecha
+        1: { cellWidth: 20, halign: 'center' },    // Tipo
+        2: { cellWidth: 28, halign: 'left' },      // Folio
+        3: { cellWidth: 45, halign: 'left' },      // Tipo Servicio
+        4: { cellWidth: 25, halign: 'center' },    // Estado
+        5: { cellWidth: 55, halign: 'left' },      // Cliente
+        6: { cellWidth: 30, halign: 'right' },     // Valor
+        7: { cellWidth: 42, halign: 'left' }       // Referencia
       },
-      margin: { left: 15, right: 15 },
+      margin: { left: margin, right: margin },
       didDrawPage: (hookData) => {
         // Footer en cada página
         const pageCount = (doc as any).internal.getNumberOfPages();
-        doc.setFontSize(8);
+        doc.setFontSize(7);
         doc.setTextColor(128, 128, 128);
+        doc.setFont('helvetica', 'normal');
+        
+        // Número de página
         doc.text(
           `Página ${hookData.pageNumber} de ${pageCount}`,
-          pageWidth - 25,
-          doc.internal.pageSize.height - 10
+          pageWidth - margin,
+          pageHeight - 8,
+          { align: 'right' }
         );
+        
+        // Fecha de generación
         doc.text(
           `Generado: ${new Date().toLocaleString('es-CL')}`,
-          15,
-          doc.internal.pageSize.height - 10
+          margin,
+          pageHeight - 8
+        );
+        
+        // Patente centrada
+        doc.text(
+          `Patente: ${data.licensePlate.toUpperCase()}`,
+          pageWidth / 2,
+          pageHeight - 8,
+          { align: 'center' }
         );
       }
     });
   }
 
-  // 10. Notas finales
+  // ============ NOTAS FINALES ============
   const finalY = (doc as any).lastAutoTable?.finalY || yPosition + 20;
   
-  if (finalY < 260) {
-    doc.setFontSize(8);
-    doc.setTextColor(100, 100, 100);
+  if (finalY < pageHeight - 25) {
+    doc.setFontSize(7);
+    doc.setTextColor(120, 120, 120);
+    doc.setFont('helvetica', 'italic');
     doc.text(
-      'Este documento es un informe generado automáticamente por el sistema TMS.',
+      'Este documento es un informe generado automáticamente. Para consultas: ' + companyData.email,
       pageWidth / 2,
-      finalY + 15,
-      { align: 'center' }
-    );
-    doc.text(
-      'Para consultas: ' + companyData.email,
-      pageWidth / 2,
-      finalY + 20,
+      finalY + 8,
       { align: 'center' }
     );
   }
