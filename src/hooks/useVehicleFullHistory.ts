@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { ServiceStatus } from '@/types';
 import { getServiceValueForClosure } from '@/utils/serviceValueCalculations';
+import { normalizeLicensePlate, buildFuzzyLicensePlatePattern } from '@/utils/licensePlate';
 
 export interface VehicleFullHistoryEntry {
   id: string;
@@ -61,8 +62,9 @@ export interface VehicleFullHistorySummary {
 const fetchVehicleFullHistory = async (licensePlate: string): Promise<VehicleFullHistoryEntry[]> => {
   if (!licensePlate) return [];
 
-  const normalizedPlate = licensePlate.toUpperCase().replace(/[^A-Z0-9]/g, '');
-  console.log('Fetching full vehicle history for:', normalizedPlate);
+  const normalizedPlate = normalizeLicensePlate(licensePlate);
+  const fuzzyPattern = buildFuzzyLicensePlatePattern(normalizedPlate);
+  console.log('Fetching full vehicle history for:', normalizedPlate, 'with pattern:', fuzzyPattern);
 
   // Obtener servicios con datos completos
   const { data: servicesData, error: servicesError } = await supabase
@@ -88,7 +90,7 @@ const fetchVehicleFullHistory = async (licensePlate: string): Promise<VehicleFul
       service_types(name),
       clients!services_client_id_fkey(name, rut, department)
     `)
-    .ilike('license_plate', `%${normalizedPlate}%`)
+    .ilike('license_plate', fuzzyPattern)
     .order('service_date', { ascending: false });
 
   if (servicesError) {

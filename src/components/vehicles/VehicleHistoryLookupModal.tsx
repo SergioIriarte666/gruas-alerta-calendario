@@ -11,6 +11,7 @@ import { Search, Eye, EyeOff, X, Car } from 'lucide-react';
 import { useVehicleFullHistory } from '@/hooks/useVehicleFullHistory';
 import { VehicleFullHistory } from './VehicleFullHistory';
 import { downloadVehicleHistoryPDF } from '@/utils/pdf/vehicleHistoryPdfGenerator';
+import { normalizeLicensePlate } from '@/utils/licensePlate';
 import { toast } from 'sonner';
 
 interface VehicleHistoryLookupModalProps {
@@ -35,7 +36,7 @@ export const VehicleHistoryLookupModal: React.FC<VehicleHistoryLookupModalProps>
   const { history, summary, isLoading, error, refetch } = useVehicleFullHistory(searchedPlate);
 
   const handleSearch = useCallback(() => {
-    const normalized = licensePlate.toUpperCase().replace(/[^A-Z0-9]/g, '');
+    const normalized = normalizeLicensePlate(licensePlate);
     if (normalized.length < 4) {
       toast.error('Ingrese al menos 4 caracteres de la patente');
       return;
