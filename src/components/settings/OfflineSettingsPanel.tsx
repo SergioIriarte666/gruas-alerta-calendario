@@ -27,12 +27,14 @@ import {
   CloudOff,
   Loader2,
   FlaskConical,
-  AlertTriangle
+  AlertTriangle,
+  CloudDownload
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useOfflineSync } from '@/hooks/useOfflineSync';
 import { usePWAInstall } from '@/hooks/usePWAInstall';
 import { useOfflineMode } from '@/contexts/OfflineModeContext';
+import { useOfflinePreload } from '@/hooks/useOfflinePreload';
 import {
   getAllCacheMetadata,
   getCacheSize,
@@ -61,7 +63,16 @@ export const OfflineSettingsPanel: React.FC = () => {
   } = useOfflineSync();
   
   const { isInstallable, isInstalled, promptInstall } = usePWAInstall();
-  const { isForceOffline, toggleForceOffline } = useOfflineMode();
+  const { isForceOffline, toggleForceOffline, effectiveIsOnline } = useOfflineMode();
+  const { 
+    isPreloading, 
+    lastPreload, 
+    currentTable, 
+    progress, 
+    totalTables,
+    totalRecords,
+    forcePreload 
+  } = useOfflinePreload();
   
   const [cacheMetadata, setCacheMetadata] = useState<CacheMetadata[]>([]);
   const [cacheSize, setCacheSize] = useState(0);
@@ -195,6 +206,66 @@ export const OfflineSettingsPanel: React.FC = () => {
                   </p>
                 </div>
               </div>
+            )}
+          </div>
+        </div>
+
+        <Separator />
+
+        {/* Preparar Datos Offline */}
+        <div className="space-y-3">
+          <h4 className="text-sm font-medium text-foreground flex items-center gap-2">
+            <CloudDownload className="w-4 h-4" />
+            Preparar Datos Offline
+          </h4>
+          <div className="p-4 rounded-lg bg-muted/50 space-y-4">
+            <div className="space-y-1">
+              <p className="text-sm text-foreground">
+                Descarga todos los datos necesarios para trabajar sin conexión
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Incluye clientes, operadores, grúas, servicios, costos, inventario y más
+              </p>
+            </div>
+
+            {isPreloading ? (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">
+                    Descargando: <span className="text-foreground font-medium">{currentTable}</span>
+                  </span>
+                  <span className="text-foreground font-medium">{progress}%</span>
+                </div>
+                <Progress value={progress} className="h-2" />
+                <p className="text-xs text-muted-foreground text-center">
+                  Por favor no cierre la aplicación...
+                </p>
+              </div>
+            ) : (
+              <>
+                {lastPreload && (
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <CheckCircle className="w-3 h-3 text-green-400" />
+                    <span>
+                      Última descarga: {format(lastPreload, "d 'de' MMMM, HH:mm", { locale: es })}
+                      {totalRecords > 0 && ` • ${totalRecords.toLocaleString()} registros`}
+                    </span>
+                  </div>
+                )}
+                <Button
+                  onClick={forcePreload}
+                  disabled={!effectiveIsOnline}
+                  className="w-full bg-primary hover:bg-primary/90"
+                >
+                  <Download className="w-4 h-4 mr-2" />
+                  {lastPreload ? 'Actualizar datos offline' : 'Descargar datos ahora'}
+                </Button>
+                {!effectiveIsOnline && (
+                  <p className="text-xs text-amber-400 text-center">
+                    Necesitas conexión a internet para descargar datos
+                  </p>
+                )}
+              </>
             )}
           </div>
         </div>
