@@ -3,31 +3,18 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { VehicleBrandsManager } from '@/components/vehicles/VehicleBrandsManager';
 import { VehicleModelsManager } from '@/components/vehicles/VehicleModelsManager';
 import { PatentLookup } from '@/components/vehicles/PatentLookup';
-import { VehicleHistoryLookupModal } from '@/components/vehicles/VehicleHistoryLookupModal';
-import { Button } from '@/components/ui/button';
-import { History } from 'lucide-react';
 
 const Vehicles: React.FC = () => {
   const [activeTab, setActiveTab] = useState('brands');
   const [searchTerm, setSearchTerm] = useState('');
-  const [historyModalOpen, setHistoryModalOpen] = useState(false);
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Gestión de Vehículos</h1>
-          <p className="text-muted-foreground">
-            Administra las marcas y modelos de vehículos del sistema.
-          </p>
-        </div>
-        <Button 
-          onClick={() => setHistoryModalOpen(true)}
-          className="bg-violet-600 hover:bg-violet-700 text-white"
-        >
-          <History className="h-4 w-4 mr-2" />
-          Historial Completo
-        </Button>
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight">Gestión de Vehículos</h1>
+        <p className="text-muted-foreground">
+          Administra las marcas y modelos de vehículos del sistema.
+        </p>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
@@ -49,11 +36,6 @@ const Vehicles: React.FC = () => {
           <PatentLookup />
         </TabsContent>
       </Tabs>
-
-      <VehicleHistoryLookupModal 
-        open={historyModalOpen} 
-        onOpenChange={setHistoryModalOpen} 
-      />
     </div>
   );
 };

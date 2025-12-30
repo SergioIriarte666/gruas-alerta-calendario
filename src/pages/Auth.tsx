@@ -3,7 +3,6 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUser } from '@/contexts/UserContext';
-import { useOfflineMode } from '@/contexts/OfflineModeContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { AuthBackground } from '@/components/auth/AuthBackground';
@@ -11,7 +10,6 @@ import { AuthTabs } from '@/components/auth/AuthTabs';
 import { LoginForm } from '@/components/auth/LoginForm';
 import { RegisterForm } from '@/components/auth/RegisterForm';
 import { validatePassword } from '@/utils/passwordValidation';
-import { WifiOff } from 'lucide-react';
 
 const Auth = () => {
   const [searchParams] = useSearchParams();
@@ -30,15 +28,6 @@ const Auth = () => {
   const { user: authUser, loading: authLoading } = useAuth();
   const { user: profileUser, loading: profileLoading } = useUser();
   const navigate = useNavigate();
-  
-  // Get offline status
-  let effectiveIsOnline = true;
-  try {
-    const offlineMode = useOfflineMode();
-    effectiveIsOnline = offlineMode.effectiveIsOnline;
-  } catch {
-    effectiveIsOnline = navigator.onLine;
-  }
 
   // Mostrar mensajes de invitación o registro
   useEffect(() => {
@@ -84,14 +73,6 @@ const Auth = () => {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (loading) return;
-    
-    // Block login attempt when offline
-    if (!effectiveIsOnline) {
-      toast.error('Sin conexión', {
-        description: 'No puedes iniciar sesión sin conexión a internet.'
-      });
-      return;
-    }
     
     setLoading(true);
     
@@ -142,14 +123,6 @@ const Auth = () => {
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     if (loading) return;
-    
-    // Block signup attempt when offline
-    if (!effectiveIsOnline) {
-      toast.error('Sin conexión', {
-        description: 'No puedes registrarte sin conexión a internet.'
-      });
-      return;
-    }
     
     setLoading(true);
     
@@ -231,19 +204,6 @@ const Auth = () => {
             </p>
           </div>
         )}
-
-        {!effectiveIsOnline && (
-          <div className="mb-6 p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
-            <div className="flex items-center gap-2 mb-2">
-              <WifiOff className="w-5 h-5 text-yellow-400" />
-              <h3 className="text-yellow-400 font-semibold">Sin conexión</h3>
-            </div>
-            <p className="text-white text-sm">
-              No puedes iniciar sesión sin conexión a internet. Si ya habías iniciado sesión, 
-              abre la aplicación desde el menú principal.
-            </p>
-          </div>
-        )}
         
         <AuthTabs activeTab={activeTab} setActiveTab={setActiveTab} />
 
@@ -251,7 +211,7 @@ const Auth = () => {
           <LoginForm
             email={email}
             password={password}
-            loading={loading || !effectiveIsOnline}
+            loading={loading}
             setEmail={setEmail}
             setPassword={setPassword}
             onSubmit={handleLogin}
@@ -262,7 +222,7 @@ const Auth = () => {
           <RegisterForm
             email={email}
             password={password}
-            loading={loading || !effectiveIsOnline}
+            loading={loading}
             setEmail={setEmail}
             setPassword={setPassword}
             onSubmit={handleSignUp}

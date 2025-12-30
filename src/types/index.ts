@@ -117,7 +117,6 @@ export interface Client {
   defaultPaymentTermId?: string;
   createdBy?: string;
   creatorName?: string;
-  _isOffline?: boolean;
 }
 
 export interface Crane {
@@ -134,7 +133,6 @@ export interface Crane {
   updatedAt: string;
   createdBy?: string;
   creatorName?: string;
-  _isOffline?: boolean;
 }
 
 export interface Operator {
@@ -152,7 +150,6 @@ export interface Operator {
   updatedAt: string;
   createdBy?: string;
   creatorName?: string;
-  _isOffline?: boolean;
 }
 
 export interface ServiceType {
@@ -196,7 +193,7 @@ export interface CompanyData {
 export interface Invoice {
   id: string;
   folio: string;
-  closureId?: string | null;
+  closureId: string;
   clientId: string;
   client?: {
     id: string;

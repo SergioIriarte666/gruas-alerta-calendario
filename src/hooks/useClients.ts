@@ -1,49 +1,9 @@
+
 import * as React from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Client } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { useOfflineMode } from '@/contexts/OfflineModeContext';
-import { 
-  offlineCreate, 
-  offlineUpdate, 
-  offlineDelete, 
-  offlineFetch,
-  generateTempId,
-  markAsOffline 
-} from '@/services/offlineOperations';
-
-// Transformaciones DB <-> App
-const transformFromDb = (client: any): Client => ({
-  id: client.id,
-  name: client.name,
-  rut: client.rut,
-  phone: client.phone || '',
-  email: client.email || '',
-  address: client.address || '',
-  department: client.department || '',
-  contactName: client.contact_name || '',
-  isActive: client.is_active ?? false,
-  createdAt: client.created_at,
-  updatedAt: client.updated_at,
-  createdBy: client.created_by,
-  creatorName: client.creator?.full_name || client.creator?.email || undefined,
-  _isOffline: client._isOffline || false
-});
-
-const transformToDb = (client: Partial<Client>) => {
-  const data: any = {};
-  if (client.name !== undefined) data.name = client.name;
-  if (client.rut !== undefined) data.rut = client.rut;
-  if (client.phone !== undefined) data.phone = client.phone;
-  if (client.email !== undefined) data.email = client.email;
-  if (client.address !== undefined) data.address = client.address;
-  if (client.department !== undefined) data.department = client.department;
-  if (client.contactName !== undefined) data.contact_name = client.contactName;
-  if (client.isActive !== undefined) data.is_active = client.isActive;
-  if (client.defaultPaymentTermId !== undefined) data.default_payment_term_id = client.defaultPaymentTermId;
-  return data;
-};
 
 const fetchClients = async (): Promise<Client[]> => {
   const { data, error } = await supabase
@@ -59,48 +19,51 @@ const fetchClients = async (): Promise<Client[]> => {
     .order('name', { ascending: true });
 
   if (error) throw error;
-  return (data || []).map(transformFromDb);
+
+  const formattedClients: Client[] = (data || []).map((client: any) => ({
+    id: client.id,
+    name: client.name,
+    rut: client.rut,
+    phone: client.phone || '',
+    email: client.email || '',
+    address: client.address || '',
+    department: client.department || '',
+    contactName: client.contact_name || '',
+    isActive: client.is_active ?? false,
+    createdAt: client.created_at,
+    updatedAt: client.updated_at,
+    createdBy: client.created_by,
+    creatorName: client.creator?.full_name || client.creator?.email || undefined,
+    // Nuevos campos de facturación diferida
+    billingCycleType: client.billing_cycle_type || 'immediate',
+    billingDelayDays: client.billing_delay_days || 0,
+    billingCycleDay: client.billing_cycle_day || undefined,
+    autoInvoiceGeneration: client.auto_invoice_generation || false,
+    billingNotes: client.billing_notes || ''
+  }));
+
+  return formattedClients;
 };
 
 export const useClients = () => {
   const queryClient = useQueryClient();
-  const { effectiveIsOnline } = useOfflineMode();
 
   const { data: clients = [], isLoading: loading, refetch } = useQuery<Client[]>({
     queryKey: ['clients'],
-    queryFn: async () => {
-      const { data, isFromCache } = await offlineFetch<Client>(
-        'clients',
-        effectiveIsOnline,
-        fetchClients,
-        (rawData) => {
-          // Si viene del cache ya transformado (tiene isActive), devolver directo
-          if (rawData.length > 0 && 'isActive' in rawData[0]) {
-            return rawData as Client[];
-          }
-          // Si viene del cache con formato DB (is_active), transformar
-          return rawData.map(transformFromDb);
-        }
-      );
-      
-      if (isFromCache && data.length > 0) {
-        console.log(`📴 [OFFLINE] ${data.length} clientes cargados desde cache`);
-      }
-      
-      return data;
-    },
-    retry: effectiveIsOnline ? 2 : 0,
-    staleTime: 5 * 60 * 1000,
+    queryFn: fetchClients,
+    retry: 2,
+    staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
   const createClientMutation = useMutation({
     mutationFn: async (clientData: (Omit<Client, 'id' | 'createdAt' | 'updatedAt'> & { departments?: string[] })) => {
+      // Get current user for created_by
       const { data: { user } } = await supabase.auth.getUser();
       
       const departments = clientData.departments;
       
-      if (departments && departments.length > 1 && effectiveIsOnline) {
-        // Múltiples departamentos solo funciona online
+      if (departments && departments.length > 1) {
+        // Crear múltiples registros para diferentes departamentos
         const clientsToCreate = departments.map(department => ({
           name: clientData.name,
           rut: clientData.rut,
@@ -121,39 +84,48 @@ export const useClients = () => {
         if (error) throw error;
 
         return {
-          clients: (data || []).map(transformFromDb),
+          clients: data || [],
           count: data?.length || 0
         };
       } else {
-        // Crear un solo cliente (funciona offline)
+        // Crear un solo cliente (modo normal o edición)
         const department = departments && departments.length > 0 ? departments[0] : clientData.department;
         
-        const dbData = {
-          name: clientData.name,
-          rut: clientData.rut,
-          phone: clientData.phone,
-          email: clientData.email,
-          address: clientData.address,
-          department: department,
-          contact_name: clientData.contactName,
-          is_active: clientData.isActive,
-          created_by: user?.id || null
+        const { data, error } = await supabase
+          .from('clients')
+          .insert({
+            name: clientData.name,
+            rut: clientData.rut,
+            phone: clientData.phone,
+            email: clientData.email,
+            address: clientData.address,
+            department: department,
+            contact_name: clientData.contactName,
+            is_active: clientData.isActive,
+            created_by: user?.id || null
+          })
+          .select()
+          .single();
+
+        if (error) throw error;
+
+        const newClient: Client = {
+          id: data.id,
+          name: data.name,
+          rut: data.rut,
+          phone: data.phone || '',
+          email: data.email || '',
+          address: data.address || '',
+          department: data.department || '',
+          contactName: data.contact_name || '',
+          isActive: data.is_active || false,
+          createdAt: data.created_at,
+          updatedAt: data.updated_at
         };
-
-        const result = await offlineCreate<Client>(
-          'clients',
-          dbData as any,
-          effectiveIsOnline,
-          undefined,
-          transformFromDb
-        );
-
-        if (result.error) throw result.error;
         
         return {
-          clients: result.data ? [result.data] : [],
-          count: 1,
-          isOffline: result.isOffline
+          clients: [newClient],
+          count: 1
         };
       }
     },
@@ -173,6 +145,7 @@ export const useClients = () => {
     onError: (error: any) => {
       console.error('Error creating client:', error);
       
+      // Check for duplicate errors
       if (error?.code === '23505' || error?.message?.includes('duplicate key value')) {
         if (error?.message?.includes('rut_department')) {
           toast.error("Cliente duplicado", {
@@ -190,17 +163,25 @@ export const useClients = () => {
 
   const updateClientMutation = useMutation({
     mutationFn: async ({ id, clientData }: { id: string, clientData: Partial<Client> }) => {
-      const result = await offlineUpdate<Client>(
-        'clients',
-        id,
-        clientData,
-        effectiveIsOnline,
-        transformToDb,
-        transformFromDb
-      );
+      const updateData: any = {};
+      
+      if (clientData.name !== undefined) updateData.name = clientData.name;
+      if (clientData.rut !== undefined) updateData.rut = clientData.rut;
+      if (clientData.phone !== undefined) updateData.phone = clientData.phone;
+      if (clientData.email !== undefined) updateData.email = clientData.email;
+      if (clientData.address !== undefined) updateData.address = clientData.address;
+      if (clientData.department !== undefined) updateData.department = clientData.department;
+      if (clientData.contactName !== undefined) updateData.contact_name = clientData.contactName;
+      if (clientData.isActive !== undefined) updateData.is_active = clientData.isActive;
+      if (clientData.defaultPaymentTermId !== undefined) updateData.default_payment_term_id = clientData.defaultPaymentTermId;
 
-      if (result.error) throw result.error;
-      return result;
+      const { error } = await supabase
+        .from('clients')
+        .update(updateData)
+        .eq('id', id);
+
+      if (error) throw error;
+      return { id, ...clientData };
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['clients'] });
@@ -218,8 +199,12 @@ export const useClients = () => {
 
   const deleteClientMutation = useMutation({
     mutationFn: async (id: string) => {
-      const result = await offlineDelete('clients', id, effectiveIsOnline);
-      if (result.error) throw result.error;
+      const { error } = await supabase
+        .from('clients')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['clients'] });
@@ -240,16 +225,12 @@ export const useClients = () => {
       const client = clients.find(c => c.id === id);
       if (!client) throw new Error('Client not found');
       
-      const result = await offlineUpdate<Client>(
-        'clients',
-        id,
-        { isActive: !client.isActive },
-        effectiveIsOnline,
-        transformToDb,
-        transformFromDb
-      );
+      const { error } = await supabase
+        .from('clients')
+        .update({ is_active: !client.isActive })
+        .eq('id', id);
 
-      if (result.error) throw result.error;
+      if (error) throw error;
       return client;
     },
     onSuccess: (client) => {

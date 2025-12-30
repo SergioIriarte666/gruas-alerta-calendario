@@ -2,31 +2,8 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { ServiceType } from '@/types';
-import { useOfflineMode } from '@/contexts/OfflineModeContext';
-import { offlineFetch } from '@/services/offlineOperations';
-import { toast } from 'sonner';
 
-// Transformar datos de DB (snake_case) a formato app (camelCase)
-const transformFromDb = (serviceType: any): ServiceType => ({
-  id: serviceType.id,
-  name: serviceType.name,
-  description: serviceType.description,
-  basePrice: serviceType.base_price,
-  isActive: serviceType.is_active,
-  vehicleInfoOptional: serviceType.vehicle_info_optional || false,
-  purchaseOrderRequired: serviceType.purchase_order_required || false,
-  originRequired: serviceType.origin_required !== false,
-  destinationRequired: serviceType.destination_required !== false,
-  craneRequired: serviceType.crane_required !== false,
-  operatorRequired: serviceType.operator_required !== false,
-  vehicleBrandRequired: serviceType.vehicle_brand_required !== false,
-  vehicleModelRequired: serviceType.vehicle_model_required !== false,
-  licensePlateRequired: serviceType.license_plate_required !== false,
-  createdAt: serviceType.created_at,
-  updatedAt: serviceType.updated_at
-});
-
-const fetchServiceTypesFromDb = async (): Promise<any[]> => {
+const fetchServiceTypes = async (): Promise<ServiceType[]> => {
   const { data, error } = await supabase
     .from('service_types')
     .select('*')
@@ -38,45 +15,41 @@ const fetchServiceTypesFromDb = async (): Promise<any[]> => {
     throw new Error('Error loading service types');
   }
 
-  return data || [];
+  const formattedServiceTypes: ServiceType[] = (data || []).map(serviceType => ({
+    id: serviceType.id,
+    name: serviceType.name,
+    description: serviceType.description,
+    basePrice: serviceType.base_price,
+    isActive: serviceType.is_active,
+    vehicleInfoOptional: serviceType.vehicle_info_optional || false,
+    purchaseOrderRequired: serviceType.purchase_order_required || false,
+    originRequired: serviceType.origin_required !== false, // Default true
+    destinationRequired: serviceType.destination_required !== false, // Default true
+    craneRequired: serviceType.crane_required !== false, // Default true
+    operatorRequired: serviceType.operator_required !== false, // Default true
+    vehicleBrandRequired: serviceType.vehicle_brand_required !== false, // Default true
+    vehicleModelRequired: serviceType.vehicle_model_required !== false, // Default true
+    licensePlateRequired: serviceType.license_plate_required !== false, // Default true
+    createdAt: serviceType.created_at,
+    updatedAt: serviceType.updated_at
+  }));
+
+  return formattedServiceTypes;
 };
 
 export const useServiceTypes = () => {
-  const { effectiveIsOnline } = useOfflineMode();
-
   const { 
     data: serviceTypes = [], 
     isLoading: loading, 
     refetch: loadServiceTypes 
   } = useQuery<ServiceType[]>({
     queryKey: ['serviceTypes'],
-    queryFn: async () => {
-      const { data, isFromCache } = await offlineFetch<ServiceType>(
-        'service_types',
-        effectiveIsOnline,
-        fetchServiceTypesFromDb,
-        (rawData) => {
-          // Si viene del cache ya transformado (tiene isActive), devolver directo
-          if (rawData.length > 0 && 'isActive' in rawData[0]) {
-            return rawData as ServiceType[];
-          }
-          // Si viene del cache con formato DB (is_active), transformar
-          return rawData.map(transformFromDb);
-        }
-      );
-
-      if (isFromCache && data.length > 0) {
-        console.log(`📴 [OFFLINE] ${data.length} tipos de servicio cargados desde cache`);
-      }
-
-      return data;
-    },
+    queryFn: fetchServiceTypes,
     staleTime: 0,
-    gcTime: 0,
+    gcTime: 0, // No cache
     refetchOnMount: 'always',
-    refetchOnWindowFocus: effectiveIsOnline,
-    refetchOnReconnect: true,
-    retry: effectiveIsOnline ? 2 : 0
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true
   });
 
   return {

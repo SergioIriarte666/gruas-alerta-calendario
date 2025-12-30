@@ -11,22 +11,16 @@ import {
   DollarSign, 
   FileText, 
   AlertTriangle,
-  TrendingUp,
-  WifiOff,
-  Download
+  TrendingUp
 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { ServiceDetailsModal } from '@/components/services/ServiceDetailsModal';
 import { useServiceDetails } from '@/hooks/useServiceDetails';
-import { useNavigate } from 'react-router-dom';
 
 const Dashboard: React.FC = () => {
-  const { metrics, recentServices, upcomingEvents, loading: dashboardLoading, isOfflineData, noCache } = useDashboardData();
+  const { metrics, recentServices, upcomingEvents, loading: dashboardLoading } = useDashboardData();
   const [selectedServiceId, setSelectedServiceId] = useState<string | null>(null);
-  const navigate = useNavigate();
 
   const { data: selectedService, isLoading: detailsLoading } = useServiceDetails(selectedServiceId);
 
@@ -80,43 +74,7 @@ const Dashboard: React.FC = () => {
     );
   }
 
-  // CRITICAL: Handle no data case - show helpful message instead of blank screen
-  if (!metrics) {
-    return (
-      <div className="min-h-screen bg-white p-4 sm:p-6">
-        <div className="max-w-2xl mx-auto mt-20">
-          <Card className="border-amber-200 bg-amber-50">
-            <CardHeader className="text-center">
-              <div className="mx-auto mb-4 w-16 h-16 rounded-full bg-amber-100 flex items-center justify-center">
-                <WifiOff className="w-8 h-8 text-amber-600" />
-              </div>
-              <CardTitle className="text-amber-800">
-                {noCache ? 'Sin datos offline disponibles' : 'Error al cargar datos'}
-              </CardTitle>
-              <CardDescription className="text-amber-700">
-                {noCache 
-                  ? 'No se encontraron datos en el cache local. Para usar el modo offline, primero descarga los datos cuando tengas conexión.'
-                  : 'Hubo un problema al cargar los datos del dashboard.'
-                }
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="text-center">
-              <Button 
-                onClick={() => navigate('/settings')}
-                className="bg-amber-600 hover:bg-amber-700 text-white"
-              >
-                <Download className="w-4 h-4 mr-2" />
-                Ir a Configuración Offline
-              </Button>
-              <p className="text-sm text-amber-600 mt-4">
-                En Configuración → Modo Offline, usa "Descargar datos ahora" para preparar el modo sin conexión.
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    );
-  }
+  if (!metrics) return null;
 
   return (
     <div className="min-h-screen bg-white">
@@ -127,21 +85,13 @@ const Dashboard: React.FC = () => {
             <h1 className="text-2xl sm:text-3xl font-bold text-black">
               Dashboard Principal
             </h1>
-            {isOfflineData ? (
-              <Badge className="bg-amber-500/20 text-amber-600 border border-amber-500/30 flex items-center px-3 py-1 w-fit">
-                <WifiOff className="w-3 h-3 mr-2" />
-                Datos Offline
-              </Badge>
-            ) : (
-              <Badge className="bg-emerald-500/20 text-emerald-600 border border-emerald-500/30 flex items-center px-3 py-1 w-fit">
-                <span className="w-2 h-2 rounded-full bg-emerald-600 mr-2 animate-pulse"></span>
-                En vivo
-              </Badge>
-            )}
+            <Badge className="bg-emerald-500/20 text-emerald-600 border border-emerald-500/30 flex items-center px-3 py-1 w-fit">
+              <span className="w-2 h-2 rounded-full bg-emerald-600 mr-2 animate-pulse"></span>
+              En vivo
+            </Badge>
           </div>
           <p className="text-sm sm:text-base text-gray-600">
             Vista general del sistema de gestión de grúas
-            {isOfflineData && <span className="text-amber-600 ml-2">(mostrando datos guardados localmente)</span>}
           </p>
         </div>
 
@@ -177,10 +127,10 @@ const Dashboard: React.FC = () => {
           
           <MetricCard
             title="Facturas Vencidas"
-            value={isOfflineData ? 'N/D' : metrics.overdueInvoices}
-            changeType={!isOfflineData && metrics.overdueInvoices > 0 ? "negative" : "neutral"}
+            value={metrics.overdueInvoices}
+            changeType={metrics.overdueInvoices > 0 ? "negative" : "neutral"}
             icon={AlertTriangle}
-            description={isOfflineData ? "No disponible offline" : "Requieren atención inmediata"}
+            description="Requieren atención inmediata"
             linkTo="/invoices?status=overdue"
           />
         </div>
@@ -212,26 +162,10 @@ const Dashboard: React.FC = () => {
           />
         </div>
 
-        {/* Invoice Alerts Dashboard - Only show when online */}
-        {!isOfflineData && (
-          <div className="mb-6">
-            <InvoiceAlertsDashboard />
-          </div>
-        )}
-        
-        {/* Offline notice for invoice alerts */}
-        {isOfflineData && (
-          <Card className="border-amber-200 bg-amber-50 mb-6">
-            <CardContent className="py-4">
-              <div className="flex items-center gap-3">
-                <WifiOff className="w-5 h-5 text-amber-600" />
-                <p className="text-sm text-amber-700">
-                  Las alertas de facturas no están disponibles en modo offline. Conecta a internet para ver el estado de las facturas.
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        )}
+        {/* Invoice Alerts Dashboard */}
+        <div className="mb-6">
+          <InvoiceAlertsDashboard />
+        </div>
 
         {/* Main Content Grid */}
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 sm:gap-6">

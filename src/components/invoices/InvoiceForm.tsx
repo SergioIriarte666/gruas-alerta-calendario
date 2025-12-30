@@ -5,10 +5,9 @@ import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Invoice, InvoiceStatus } from '@/types';
-import { useClosuresForInvoices } from '@/hooks/useClosuresForInvoices';
+import { useClosuresForInvoices, ClosureWithClient } from '@/hooks/useClosuresForInvoices';
 import { useInvoiceFormData } from '@/hooks/invoices/useInvoiceFormData';
 import { usePaymentTerms } from '@/hooks/usePaymentTerms';
-import { useClients } from '@/hooks/useClients';
 import { ChevronLeft, ChevronRight, Save, X, Receipt } from 'lucide-react';
 import { InvoiceFormStepNavigation, getInvoiceFormSteps, InvoiceFormStep } from './form/InvoiceFormStepNavigation';
 import { InvoiceSummaryPanel } from './form/InvoiceSummaryPanel';
@@ -17,7 +16,7 @@ import { InvoiceFormStep2 } from './form/InvoiceFormStep2';
 import { InvoiceFormStep3 } from './form/InvoiceFormStep3';
 
 const invoiceSchema = z.object({
-  closureId: z.string().optional(),
+  closureId: z.string().min(1, 'Debe seleccionar un cierre'),
   issueDate: z.string().min(1, 'Fecha de emisión es requerida'),
   dueDate: z.string().min(1, 'Fecha de vencimiento es requerida'),
   status: z.enum(['draft', 'sent', 'paid', 'overdue', 'cancelled'] as const),
@@ -44,15 +43,10 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
   isLoading = false
 }) => {
   const [currentStep, setCurrentStep] = useState(1);
-  const [directInvoiceMode, setDirectInvoiceMode] = useState(false);
-  const [directClientId, setDirectClientId] = useState('');
-  const [directSubtotal, setDirectSubtotal] = useState(0);
-  
   const isEditing = !!invoice;
   const { formData, shouldReset } = useInvoiceFormData({ invoice, preselectedClosureId });
   const { closures } = useClosuresForInvoices({ includeInvoiced: isEditing });
   const { paymentTerms, loading: loadingTerms } = usePaymentTerms();
-  const { clients } = useClients();
   
   const { watch, setValue, formState: { errors, isSubmitting }, reset, handleSubmit } = useForm<InvoiceFormData>({
     resolver: zodResolver(invoiceSchema),
@@ -80,13 +74,6 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
         numeroFiscal: ''
       };
       reset(resetFormData);
-      
-      // Si editando factura sin cierre, activar modo directo
-      if (invoice && !invoice.closureId) {
-        setDirectInvoiceMode(true);
-        setDirectClientId(invoice.clientId || '');
-        setDirectSubtotal(invoice.subtotal || 0);
-      }
     }
   }, [shouldReset, invoice?.id, preselectedClosureId, reset]);
 
@@ -102,48 +89,19 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
     canEditClosure: true, canEditDates: true, canEditNumeroFiscal: true, canEditStatus: true, canEditPaymentDate: false
   };
 
-  const selectedClosureId = watch('closureId') || '';
+  const selectedClosureId = watch('closureId');
   const selectedClosure = useMemo(() => closures.find(c => c.id === selectedClosureId), [closures, selectedClosureId]);
   
-  // Calcular montos según modo
-  const { subtotal, vat, total, clientId } = useMemo(() => {
-    if (directInvoiceMode) {
-      const vatValue = Math.round(directSubtotal * 0.19);
-      return { 
-        subtotal: directSubtotal, 
-        vat: vatValue, 
-        total: directSubtotal + vatValue,
-        clientId: directClientId
-      };
-    } else {
-      const subtotalValue = Math.round(selectedClosure?.total || 0);
-      const vatValue = Math.round(subtotalValue * 0.19);
-      return { 
-        subtotal: subtotalValue, 
-        vat: vatValue, 
-        total: subtotalValue + vatValue,
-        clientId: selectedClosure?.clientId || ''
-      };
-    }
-  }, [directInvoiceMode, directSubtotal, directClientId, selectedClosure?.total, selectedClosure?.clientId]);
+  const { subtotal, vat, total } = useMemo(() => {
+    const subtotalValue = Math.round(selectedClosure?.total || 0);
+    const vatValue = Math.round(subtotalValue * 0.19);
+    return { subtotal: subtotalValue, vat: vatValue, total: subtotalValue + vatValue };
+  }, [selectedClosure?.total]);
 
   const handleFormSubmit = useCallback(async (data: InvoiceFormData) => {
-    if (directInvoiceMode) {
-      if (!directClientId) throw new Error('Debe seleccionar un cliente');
-      if (directSubtotal <= 0) throw new Error('Debe ingresar un monto válido');
-      await onSubmit({ 
-        ...data, 
-        closureId: undefined, 
-        subtotal, 
-        vat, 
-        total, 
-        clientId: directClientId 
-      });
-    } else {
-      if (!selectedClosure) throw new Error('Debe seleccionar un cierre');
-      await onSubmit({ ...data, subtotal, vat, total, clientId: selectedClosure.clientId });
-    }
-  }, [directInvoiceMode, directClientId, directSubtotal, selectedClosure, subtotal, vat, total, onSubmit]);
+    if (!selectedClosure) throw new Error('Debe seleccionar un cierre');
+    await onSubmit({ ...data, subtotal, vat, total, clientId: selectedClosure.clientId });
+  }, [selectedClosure, subtotal, vat, total, onSubmit]);
 
   useEffect(() => {
     const termId = watch('paymentTermId');
@@ -162,26 +120,13 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
     switch (step) {
       case 1: return true;
       case 2: return watch('issueDate') !== '' && watch('dueDate') !== '';
-      case 3: 
-        if (directInvoiceMode) {
-          return directClientId !== '' && directSubtotal > 0;
-        }
-        return selectedClosureId !== '';
+      case 3: return watch('closureId') !== '';
       default: return true;
     }
   };
 
   const canGoNext = validateStep(currentStep);
   const canSubmit = validateStep(1) && validateStep(2) && validateStep(3);
-
-  // Obtener nombre del cliente para el panel de resumen
-  const clientName = useMemo(() => {
-    if (directInvoiceMode) {
-      const client = clients.find(c => c.id === directClientId);
-      return client?.name || '';
-    }
-    return selectedClosure?.clientName || '';
-  }, [directInvoiceMode, directClientId, clients, selectedClosure?.clientName]);
 
   const steps: InvoiceFormStep[] = getInvoiceFormSteps().map(step => ({
     ...step,
@@ -196,32 +141,7 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
       case 2:
         return <InvoiceFormStep2 issueDate={watch('issueDate')} dueDate={watch('dueDate')} paymentDate={watch('paymentDate') || ''} paymentTermId={watch('paymentTermId') || ''} status={watch('status')} canEditDates={editableFields.canEditDates} canEditPaymentDate={editableFields.canEditPaymentDate} paymentTerms={paymentTerms} loadingTerms={loadingTerms} onIssueDateChange={(v) => setValue('issueDate', v)} onDueDateChange={(v) => setValue('dueDate', v)} onPaymentDateChange={(v) => setValue('paymentDate', v)} onPaymentTermIdChange={(v) => setValue('paymentTermId', v)} errors={{ issueDate: errors.issueDate?.message, dueDate: errors.dueDate?.message, paymentDate: errors.paymentDate?.message }} />;
       case 3:
-        return (
-          <InvoiceFormStep3 
-            selectedClosureId={selectedClosureId} 
-            isEditing={isEditing} 
-            currentInvoice={invoice ? { id: invoice.id, closureId: invoice.closureId || null } : undefined} 
-            canEditClosure={editableFields.canEditClosure} 
-            subtotal={subtotal} 
-            vat={vat} 
-            total={total} 
-            showSummary={!!selectedClosure && !directInvoiceMode} 
-            onClosureChange={(v) => setValue('closureId', v)} 
-            // Props para facturación directa
-            directInvoiceMode={directInvoiceMode}
-            onDirectInvoiceModeChange={setDirectInvoiceMode}
-            clients={clients}
-            directClientId={directClientId}
-            directSubtotal={directSubtotal}
-            onDirectClientChange={setDirectClientId}
-            onDirectSubtotalChange={setDirectSubtotal}
-            errors={{ 
-              closureId: errors.closureId?.message,
-              clientId: directInvoiceMode && !directClientId ? 'Debe seleccionar un cliente' : undefined,
-              subtotal: directInvoiceMode && directSubtotal <= 0 ? 'Debe ingresar un monto válido' : undefined
-            }} 
-          />
-        );
+        return <InvoiceFormStep3 selectedClosureId={selectedClosureId} isEditing={isEditing} currentInvoice={invoice ? { id: invoice.id, closureId: invoice.closureId } : undefined} canEditClosure={editableFields.canEditClosure} subtotal={subtotal} vat={vat} total={total} showSummary={!!selectedClosure} onClosureChange={(v) => setValue('closureId', v)} errors={{ closureId: errors.closureId?.message }} />;
       default: return null;
     }
   };
@@ -233,9 +153,6 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
           <CardTitle className="text-white flex items-center gap-2">
             <Receipt className="h-5 w-5" />
             {isEditing ? 'Editar Factura' : 'Nueva Factura'}
-            {directInvoiceMode && !isEditing && (
-              <span className="text-xs bg-orange-500 px-2 py-0.5 rounded-full">Sin Cierre</span>
-            )}
           </CardTitle>
           <Button variant="ghost" size="sm" onClick={onCancel} className="text-white/80 hover:text-white hover:bg-white/20">
             <X className="h-4 w-4" />
@@ -249,19 +166,7 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 p-6">
               <div className="lg:col-span-1 space-y-4">
                 <InvoiceFormStepNavigation steps={steps} currentStep={currentStep} onStepClick={setCurrentStep} />
-                <InvoiceSummaryPanel 
-                  status={watch('status')} 
-                  numeroFiscal={watch('numeroFiscal') || ''} 
-                  issueDate={watch('issueDate')} 
-                  dueDate={watch('dueDate')} 
-                  paymentDate={watch('paymentDate') || ''} 
-                  clientName={clientName} 
-                  closureFolio={directInvoiceMode ? '(Sin cierre)' : selectedClosure?.folio || ''} 
-                  subtotal={subtotal} 
-                  vat={vat} 
-                  total={total} 
-                  isEditing={isEditing} 
-                />
+                <InvoiceSummaryPanel status={watch('status')} numeroFiscal={watch('numeroFiscal') || ''} issueDate={watch('issueDate')} dueDate={watch('dueDate')} paymentDate={watch('paymentDate') || ''} clientName={selectedClosure?.clientName || ''} closureFolio={selectedClosure?.folio || ''} subtotal={subtotal} vat={vat} total={total} isEditing={isEditing} />
               </div>
               <div className="lg:col-span-2">{renderStepContent()}</div>
             </div>

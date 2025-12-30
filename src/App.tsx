@@ -1,7 +1,6 @@
 
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { OfflineModeProvider } from '@/contexts/OfflineModeContext';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { UserProvider } from '@/contexts/UserContext';
 import { NotificationProvider } from '@/contexts/NotificationContext';
@@ -9,7 +8,6 @@ import { useNotificationTriggers } from '@/hooks/useNotificationTriggers';
 import { ToastProvider } from '@/components/ui/custom-toast';
 import { SessionTimeoutProvider } from '@/components/auth/SessionTimeoutProvider';
 import { Toaster } from '@/components/ui/sonner';
-import { PWAWrapper } from '@/components/pwa/PWAWrapper';
 import { Layout } from '@/components/layout/Layout';
 import { OperatorLayout } from '@/components/layout/OperatorLayout';
 import { PortalLayout } from '@/components/portal/layout/PortalLayout';
@@ -47,7 +45,6 @@ import NotFound from '@/pages/NotFound';
 import DailyReport from '@/pages/DailyReport';
 import Incomes from '@/pages/Incomes';
 import ServiceRates from '@/pages/ServiceRates';
-import Notifications from '@/pages/Notifications';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -245,14 +242,6 @@ function AppContent() {
           <Route index element={<Suppliers />} />
         </Route>
 
-        <Route path="/notifications" element={
-          <ProtectedRoute allowedRoles={['admin', 'viewer', 'operator']}>
-            <Layout />
-          </ProtectedRoute>
-        }>
-          <Route index element={<Notifications />} />
-        </Route>
-
         <Route path="/daily-report" element={
           <ProtectedRoute allowedRoles={['admin', 'viewer']}>
             <Layout />
@@ -304,23 +293,19 @@ function AppContent() {
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <OfflineModeProvider>
-        <AuthProvider>
-          <SessionTimeoutProvider>
-            <UserProvider>
-              <NotificationProvider>
-                <ToastProvider>
-                  <Router>
-                    <PWAWrapper>
-                      <AppContent />
-                    </PWAWrapper>
-                  </Router>
-                </ToastProvider>
-              </NotificationProvider>
-            </UserProvider>
-          </SessionTimeoutProvider>
-        </AuthProvider>
-      </OfflineModeProvider>
+      <AuthProvider>
+        <SessionTimeoutProvider warningMinutes={25} timeoutMinutes={30}>
+          <UserProvider>
+            <NotificationProvider>
+              <ToastProvider>
+                <Router>
+                  <AppContent />
+                </Router>
+              </ToastProvider>
+            </NotificationProvider>
+          </UserProvider>
+        </SessionTimeoutProvider>
+      </AuthProvider>
     </QueryClientProvider>
   );
 }

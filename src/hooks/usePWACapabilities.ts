@@ -1,14 +1,30 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { useUser } from '@/contexts/UserContext';
-import { useOfflineMode } from '@/contexts/OfflineModeContext';
-import type { BeforeInstallPromptEvent } from '@/types/pwa';
-import { openOfflineDatabase } from '@/services/offlineDb';
+import type { BeforeInstallPromptEvent, ServiceWorkerRegistrationWithSync } from '@/types/pwa';
+
+interface InstallPrompt {
+  canInstall: boolean;
+  install: () => Promise<void>;
+  isInstalled: boolean;
+}
+
+interface NotificationStatus {
+  permission: NotificationPermission;
+  request: () => Promise<NotificationPermission>;
+  isSupported: boolean;
+}
 
 interface SyncStatus {
   isOnline: boolean;
   pendingActions: number;
   lastSync: Date | null;
+}
+
+interface OfflineCapabilities {
+  canWorkOffline: boolean;
+  hasOfflineData: boolean;
+  syncInProgress: boolean;
 }
 
 interface PWACapabilities {
@@ -24,21 +40,39 @@ interface PWACapabilities {
 
 export const usePWACapabilities = (): PWACapabilities => {
   const { user } = useUser();
-  const { effectiveIsOnline, isForceOffline } = useOfflineMode();
-  const [isOnline, setIsOnline] = useState(effectiveIsOnline);
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [isInstalled, setIsInstalled] = useState(false);
   const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>('default');
   const [pendingActions, setPendingActions] = useState(0);
   const [lastSync, setLastSync] = useState<Date | null>(null);
+  const [syncInProgress, setSyncInProgress] = useState(false);
 
-  // Sincronizar con effectiveIsOnline del contexto
+  // Detectar estado online/offline
   useEffect(() => {
-    setIsOnline(effectiveIsOnline);
+    const handleOnline = () => {
+      setIsOnline(true);
+      // Trigger background sync cuando vuelve la conexión
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.ready.then(registration => {
+          const syncRegistration = registration as ServiceWorkerRegistrationWithSync;
+          if ('sync' in syncRegistration && syncRegistration.sync) {
+            syncRegistration.sync.register('offline-action');
+          }
+        });
+      }
+    };
     
-    // NOTE: We no longer trigger background sync from here
-    // Data sync is handled by useOfflineSync with user's JWT
-  }, [effectiveIsOnline, isForceOffline]);
+    const handleOffline = () => setIsOnline(false);
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
 
   // Detectar install prompt
   useEffect(() => {
@@ -67,39 +101,43 @@ export const usePWACapabilities = (): PWACapabilities => {
     }
   }, []);
 
-  // Monitorear acciones pendientes offline - using the CORRECT database
+  // Monitorear acciones pendientes offline
   useEffect(() => {
     const checkPendingActions = async () => {
-      try {
-        // Use the unified offline database
-        const db = await openOfflineDatabase();
-        
-        if (db.objectStoreNames.contains('_offlineActions')) {
-          const transaction = db.transaction('_offlineActions', 'readonly');
-          const store = transaction.objectStore('_offlineActions');
-          
-          const count = await new Promise<number>((resolve) => {
-            const request = store.getAll();
-            request.onsuccess = () => {
-              // Count only pending/failed actions
-              const actions = request.result || [];
-              const pendingCount = actions.filter(
-                (a: any) => a.status === 'pending' || a.status === 'failed'
-              ).length;
-              resolve(pendingCount);
-            };
-            request.onerror = () => resolve(0);
+      if ('indexedDB' in window) {
+        try {
+          const db = await new Promise<IDBDatabase>((resolve, reject) => {
+            const request = indexedDB.open('TMSOfflineDB', 1);
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = () => reject(request.error);
           });
-          
-          setPendingActions(count);
+
+          const stores = ['pendingServiceUpdates', 'pendingInspections', 'offlineActions'];
+          let totalPending = 0;
+
+          for (const storeName of stores) {
+            if (db.objectStoreNames.contains(storeName)) {
+              const transaction = db.transaction([storeName], 'readonly');
+              const store = transaction.objectStore(storeName);
+              const count = await new Promise<number>((resolve) => {
+                const countRequest = store.count();
+                countRequest.onsuccess = () => resolve(countRequest.result);
+                countRequest.onerror = () => resolve(0);
+              });
+              totalPending += count;
+            }
+          }
+
+          setPendingActions(totalPending);
+          db.close();
+        } catch (error) {
+          console.error('Error checking pending actions:', error);
         }
-      } catch (error) {
-        console.error('Error checking pending actions:', error);
       }
     };
 
     checkPendingActions();
-    const interval = setInterval(checkPendingActions, 10000); // Check every 10 seconds
+    const interval = setInterval(checkPendingActions, 30000); // Check every 30 seconds
 
     return () => clearInterval(interval);
   }, [isOnline]);
@@ -108,9 +146,8 @@ export const usePWACapabilities = (): PWACapabilities => {
   useEffect(() => {
     if ('serviceWorker' in navigator) {
       const handleMessage = (event: MessageEvent) => {
-        if (event.data.type === 'SYNC_COMPLETED') {
-          // Refresh pending count after sync
-          setPendingActions(0);
+        if (event.data.type === 'INSPECTION_SYNCED') {
+          setPendingActions(prev => Math.max(0, prev - 1));
           setLastSync(new Date());
         }
       };
@@ -190,10 +227,9 @@ export const usePWACapabilities = (): PWACapabilities => {
 
   const clearOfflineData = async (): Promise<void> => {
     try {
-      // Clear the unified offline database
       if ('indexedDB' in window) {
         await new Promise<void>((resolve, reject) => {
-          const deleteRequest = indexedDB.deleteDatabase('tms-offline-cache');
+          const deleteRequest = indexedDB.deleteDatabase('TMSOfflineDB');
           deleteRequest.onsuccess = () => resolve();
           deleteRequest.onerror = () => reject(deleteRequest.error);
         });

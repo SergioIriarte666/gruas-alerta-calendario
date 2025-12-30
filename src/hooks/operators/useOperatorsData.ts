@@ -1,27 +1,7 @@
+
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Operator } from '@/types';
-import { useOfflineMode } from '@/contexts/OfflineModeContext';
-import { offlineFetch } from '@/services/offlineOperations';
-import { toast } from 'sonner';
-
-const transformFromDb = (operator: any): Operator => ({
-  id: operator.id,
-  name: operator.name,
-  rut: operator.rut,
-  phone: operator.phone || '',
-  operatorType: (operator.operator_type as 'crane_operator' | 'administrative') || 'crane_operator',
-  department: operator.department || '',
-  position: operator.position || '',
-  licenseNumber: operator.license_number || '',
-  examExpiry: operator.exam_expiry || '',
-  isActive: operator.is_active || false,
-  createdAt: operator.created_at,
-  updatedAt: operator.updated_at,
-  createdBy: operator.created_by,
-  creatorName: operator.creator?.full_name || operator.creator?.email || undefined,
-  _isOffline: operator._isOffline || false
-});
 
 const fetchOperators = async (): Promise<Operator[]> => {
   const { data, error } = await supabase
@@ -40,37 +20,27 @@ const fetchOperators = async (): Promise<Operator[]> => {
     throw new Error(error.message);
   }
 
-  return data.map(transformFromDb);
+  return data.map((operator: any) => ({
+    id: operator.id,
+    name: operator.name,
+    rut: operator.rut,
+    phone: operator.phone || '',
+    operatorType: (operator.operator_type as 'crane_operator' | 'administrative') || 'crane_operator',
+    department: operator.department || '',
+    position: operator.position || '',
+    licenseNumber: operator.license_number || '',
+    examExpiry: operator.exam_expiry || '',
+    isActive: operator.is_active || false,
+    createdAt: operator.created_at,
+    updatedAt: operator.updated_at,
+    createdBy: operator.created_by,
+    creatorName: operator.creator?.full_name || operator.creator?.email || undefined
+  }));
 };
 
 export const useOperatorsData = () => {
-  const { effectiveIsOnline } = useOfflineMode();
-
   return useQuery<Operator[], Error>({
     queryKey: ['operators'],
-    queryFn: async () => {
-      const { data, isFromCache } = await offlineFetch<Operator>(
-        'operators',
-        effectiveIsOnline,
-        fetchOperators,
-        (rawData) => {
-          // Si viene del cache ya transformado (tiene isActive), devolver directo
-          if (rawData.length > 0 && 'isActive' in rawData[0]) {
-            return rawData as Operator[];
-          }
-          // Si viene del cache con formato DB (is_active), transformar
-          return rawData.map(transformFromDb);
-        }
-      );
-      
-      if (isFromCache && data.length > 0) {
-        console.log(`📴 [OFFLINE] ${data.length} operadores cargados desde cache`);
-      }
-      
-      return data;
-    },
-    retry: effectiveIsOnline ? 2 : 0,
+    queryFn: fetchOperators,
   });
 };
-
-export { transformFromDb as transformOperatorFromDb };

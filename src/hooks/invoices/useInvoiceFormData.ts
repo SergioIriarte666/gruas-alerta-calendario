@@ -22,10 +22,7 @@ export const useInvoiceFormData = ({ invoice, preselectedClosureId }: UseInvoice
         status: invoice.status || 'draft' as InvoiceStatus,
         paymentTermId: invoice.paymentTermId || undefined,
         paymentDate: invoice.paymentDate || '',
-        numeroFiscal: invoice.numeroFiscal || '',
-        // Para facturas sin cierre
-        directClientId: !invoice.closureId ? invoice.clientId : '',
-        directSubtotal: !invoice.closureId ? invoice.subtotal : 0
+        numeroFiscal: invoice.numeroFiscal || ''
       };
     }
     

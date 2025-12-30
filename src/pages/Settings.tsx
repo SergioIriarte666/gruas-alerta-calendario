@@ -13,8 +13,7 @@ import { NotificationSettingsTab } from '@/components/settings/NotificationSetti
 import { InvoiceAlertSettings } from '@/components/invoices/InvoiceAlertSettings';
 import { UserManagementTab } from '@/components/settings/UserManagementTab';
 import { PaymentTermsSettings } from '@/components/settings/PaymentTermsSettings';
-import { OfflineSettingsPanel } from '@/components/settings/OfflineSettingsPanel';
-import { Building2, User, Settings as SettingsIcon, Bell, Users, Globe, CreditCard, Tag, CloudOff } from 'lucide-react';
+import { Building2, User, Settings as SettingsIcon, Bell, Users, Globe, CreditCard, Tag } from 'lucide-react';
 import { TimezoneSettingsTab } from '@/components/settings/TimezoneSettingsTab';
 import { CategoriesTab } from '@/components/settings/CategoriesTab';
 
@@ -80,7 +79,7 @@ const Settings = () => {
       <SettingsHeader onReset={resetSettings} />
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 lg:grid-cols-8 bg-card border h-auto p-1 gap-1">
+        <TabsList className="grid w-full grid-cols-2 md:grid-cols-3 lg:grid-cols-7 bg-card border h-auto p-1 gap-1">
           <TabsTrigger 
             value="company" 
             className="flex flex-col md:flex-row items-center justify-center space-y-1 md:space-y-0 md:space-x-2 text-foreground data-[state=active]:text-primary-foreground data-[state=active]:bg-primary hover:bg-muted p-2 md:p-3 h-auto min-h-[60px] text-xs md:text-sm"
@@ -130,13 +129,6 @@ const Settings = () => {
             <Tag className="w-4 h-4 flex-shrink-0" />
             <span className="text-center">Categorías</span>
           </TabsTrigger>
-          <TabsTrigger 
-            value="offline" 
-            className="flex flex-col md:flex-row items-center justify-center space-y-1 md:space-y-0 md:space-x-2 text-foreground data-[state=active]:text-primary-foreground data-[state=active]:bg-primary hover:bg-muted p-2 md:p-3 h-auto min-h-[60px] text-xs md:text-sm"
-          >
-            <CloudOff className="w-4 h-4 flex-shrink-0" />
-            <span className="text-center">Offline</span>
-          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="company">
@@ -173,10 +165,6 @@ const Settings = () => {
 
         <TabsContent value="categories">
           <CategoriesTab />
-        </TabsContent>
-
-        <TabsContent value="offline">
-          <OfflineSettingsPanel />
         </TabsContent>
       </Tabs>
     </div>

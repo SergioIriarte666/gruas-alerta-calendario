@@ -2,27 +2,12 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useNotifications } from '@/contexts/NotificationContext';
 import { InvoiceAlertSettings, OverdueInvoice, InvoiceDueSoon } from '@/types/notifications';
-import { useOfflineModeOptional } from '@/contexts/OfflineModeContext';
-
-// Check if we're effectively online
-const checkIsOnline = (): boolean => {
-  try {
-    const forceOffline = localStorage.getItem('tms-force-offline-mode') === 'true';
-    return navigator.onLine && !forceOffline;
-  } catch {
-    return navigator.onLine;
-  }
-};
 
 export const useInvoiceAlerts = () => {
   const { addNotification } = useNotifications();
   const queryClient = useQueryClient();
-  const offlineContext = useOfflineModeOptional();
-  
-  // Use context if available, otherwise check directly
-  const isOnline = offlineContext?.effectiveIsOnline ?? checkIsOnline();
 
-  // Obtener facturas vencidas - DISABLED when offline
+  // Obtener facturas vencidas
   const { data: overdueInvoices, isLoading: loadingOverdue } = useQuery({
     queryKey: ['overdue-invoices'],
     queryFn: async (): Promise<OverdueInvoice[]> => {
@@ -31,10 +16,9 @@ export const useInvoiceAlerts = () => {
       return data || [];
     },
     refetchInterval: 5 * 60 * 1000, // Cada 5 minutos
-    enabled: isOnline, // CRITICAL: Only fetch when online
   });
 
-  // Obtener facturas próximas a vencer - DISABLED when offline
+  // Obtener facturas próximas a vencer
   const { data: invoicesDueSoon, isLoading: loadingDueSoon } = useQuery({
     queryKey: ['invoices-due-soon'],
     queryFn: async (): Promise<InvoiceDueSoon[]> => {
@@ -43,10 +27,9 @@ export const useInvoiceAlerts = () => {
       return data || [];
     },
     refetchInterval: 60 * 60 * 1000, // Cada hora
-    enabled: isOnline, // CRITICAL: Only fetch when online
   });
 
-  // Obtener configuración de alertas - DISABLED when offline
+  // Obtener configuración de alertas
   const { data: alertSettings, isLoading: loadingSettings } = useQuery({
     queryKey: ['invoice-alert-settings'],
     queryFn: async (): Promise<InvoiceAlertSettings | null> => {
@@ -58,16 +41,11 @@ export const useInvoiceAlerts = () => {
       if (error && error.code !== 'PGRST116') throw error;
       return data;
     },
-    enabled: isOnline, // CRITICAL: Only fetch when online
   });
 
   // Actualizar configuración de alertas
   const updateAlertSettings = useMutation({
     mutationFn: async (settings: Partial<InvoiceAlertSettings>) => {
-      if (!isOnline) {
-        throw new Error('No disponible en modo offline');
-      }
-      
       const { data: existingSettings } = await supabase
         .from('invoice_alert_settings')
         .select('id')
@@ -115,10 +93,6 @@ export const useInvoiceAlerts = () => {
   // Forzar actualización de facturas vencidas
   const forceUpdateOverdueInvoices = useMutation({
     mutationFn: async () => {
-      if (!isOnline) {
-        throw new Error('No disponible en modo offline');
-      }
-      
       const { error } = await supabase.rpc('update_overdue_invoices');
       if (error) throw error;
     },
@@ -143,8 +117,7 @@ export const useInvoiceAlerts = () => {
       email_notifications: false,
       push_notifications: true,
     },
-    loading: !isOnline ? false : (loadingOverdue || loadingDueSoon || loadingSettings),
-    isOffline: !isOnline,
+    loading: loadingOverdue || loadingDueSoon || loadingSettings,
     updateAlertSettings: updateAlertSettings.mutate,
     forceUpdateOverdueInvoices: forceUpdateOverdueInvoices.mutate,
     isUpdating: updateAlertSettings.isPending || forceUpdateOverdueInvoices.isPending,
