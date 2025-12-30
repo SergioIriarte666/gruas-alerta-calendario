@@ -73,14 +73,18 @@ export const useClients = () => {
         'clients',
         effectiveIsOnline,
         fetchClients,
-        (rawData) => rawData.map(transformFromDb)
+        (rawData) => {
+          // Si viene del cache ya transformado (tiene isActive), devolver directo
+          if (rawData.length > 0 && 'isActive' in rawData[0]) {
+            return rawData as Client[];
+          }
+          // Si viene del cache con formato DB (is_active), transformar
+          return rawData.map(transformFromDb);
+        }
       );
       
       if (isFromCache && data.length > 0) {
-        toast.info('Datos desde cache local', { 
-          description: `${data.length} clientes cargados offline`,
-          duration: 2000
-        });
+        console.log(`📴 [OFFLINE] ${data.length} clientes cargados desde cache`);
       }
       
       return data;

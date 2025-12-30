@@ -53,14 +53,18 @@ export const useOperatorsData = () => {
         'operators',
         effectiveIsOnline,
         fetchOperators,
-        (rawData) => rawData.map(transformFromDb)
+        (rawData) => {
+          // Si viene del cache ya transformado (tiene isActive), devolver directo
+          if (rawData.length > 0 && 'isActive' in rawData[0]) {
+            return rawData as Operator[];
+          }
+          // Si viene del cache con formato DB (is_active), transformar
+          return rawData.map(transformFromDb);
+        }
       );
       
       if (isFromCache && data.length > 0) {
-        toast.info('Datos desde cache local', { 
-          description: `${data.length} operadores cargados offline`,
-          duration: 2000
-        });
+        console.log(`📴 [OFFLINE] ${data.length} operadores cargados desde cache`);
       }
       
       return data;

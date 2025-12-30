@@ -51,20 +51,25 @@ export const useServiceTypes = () => {
   } = useQuery<ServiceType[]>({
     queryKey: ['serviceTypes'],
     queryFn: async () => {
-      const { data, isFromCache } = await offlineFetch<any[]>(
+      const { data, isFromCache } = await offlineFetch<ServiceType>(
         'service_types',
         effectiveIsOnline,
         fetchServiceTypesFromDb,
-        (rawData) => rawData // Cache guarda raw, transformamos después
+        (rawData) => {
+          // Si viene del cache ya transformado (tiene isActive), devolver directo
+          if (rawData.length > 0 && 'isActive' in rawData[0]) {
+            return rawData as ServiceType[];
+          }
+          // Si viene del cache con formato DB (is_active), transformar
+          return rawData.map(transformFromDb);
+        }
       );
 
-      const transformed = (data || []).map(transformFromDb);
-
-      if (isFromCache && transformed.length > 0) {
-        console.log(`📴 [OFFLINE] ${transformed.length} tipos de servicio cargados desde cache`);
+      if (isFromCache && data.length > 0) {
+        console.log(`📴 [OFFLINE] ${data.length} tipos de servicio cargados desde cache`);
       }
 
-      return transformed;
+      return data;
     },
     staleTime: 0,
     gcTime: 0,

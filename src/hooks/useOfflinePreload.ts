@@ -13,6 +13,7 @@ interface TableConfig {
   name: string;
   label: string;
   query: () => PromiseLike<{ data: any[] | null; error: any }>;
+  transformForCache?: (data: any[]) => any[];
 }
 
 interface PreloadStatus {
@@ -29,22 +30,106 @@ interface PreloadStatus {
 const PRELOAD_INTERVAL = 10 * 60 * 1000; // 10 minutos
 const PRELOAD_KEY = 'tms-last-preload';
 
+// Transformadores para normalizar datos a formato app (camelCase)
+const transformClientForCache = (client: any) => ({
+  id: client.id,
+  name: client.name,
+  rut: client.rut,
+  phone: client.phone || '',
+  email: client.email || '',
+  address: client.address || '',
+  department: client.department || '',
+  contactName: client.contact_name || '',
+  isActive: client.is_active ?? false,
+  createdAt: client.created_at,
+  updatedAt: client.updated_at,
+  createdBy: client.created_by
+});
+
+const transformOperatorForCache = (operator: any) => ({
+  id: operator.id,
+  name: operator.name,
+  rut: operator.rut,
+  phone: operator.phone || '',
+  operatorType: operator.operator_type || 'crane_operator',
+  department: operator.department || '',
+  position: operator.position || '',
+  licenseNumber: operator.license_number || '',
+  examExpiry: operator.exam_expiry || '',
+  isActive: operator.is_active ?? false,
+  createdAt: operator.created_at,
+  updatedAt: operator.updated_at,
+  createdBy: operator.created_by
+});
+
+const transformCraneForCache = (crane: any) => ({
+  id: crane.id,
+  licensePlate: crane.license_plate,
+  brand: crane.brand,
+  model: crane.model,
+  type: crane.type,
+  circulationPermitExpiry: crane.circulation_permit_expiry,
+  insuranceExpiry: crane.insurance_expiry,
+  technicalReviewExpiry: crane.technical_review_expiry,
+  isActive: crane.is_active ?? false,
+  createdAt: crane.created_at,
+  updatedAt: crane.updated_at,
+  createdBy: crane.created_by
+});
+
+const transformServiceTypeForCache = (st: any) => ({
+  id: st.id,
+  name: st.name,
+  description: st.description,
+  basePrice: st.base_price,
+  isActive: st.is_active,
+  vehicleInfoOptional: st.vehicle_info_optional || false,
+  purchaseOrderRequired: st.purchase_order_required || false,
+  originRequired: st.origin_required !== false,
+  destinationRequired: st.destination_required !== false,
+  craneRequired: st.crane_required !== false,
+  operatorRequired: st.operator_required !== false,
+  vehicleBrandRequired: st.vehicle_brand_required !== false,
+  vehicleModelRequired: st.vehicle_model_required !== false,
+  licensePlateRequired: st.license_plate_required !== false,
+  createdAt: st.created_at,
+  updatedAt: st.updated_at
+});
+
+const transformVehicleBrandForCache = (brand: any) => ({
+  id: brand.id,
+  name: brand.name,
+  isActive: brand.is_active ?? true,
+  createdAt: brand.created_at
+});
+
+const transformVehicleModelForCache = (model: any) => ({
+  id: model.id,
+  name: model.name,
+  brandId: model.brand_id,
+  isActive: model.is_active ?? true,
+  createdAt: model.created_at
+});
+
 // Configuración de tablas a pre-cargar
 const getTableConfigs = (): TableConfig[] => [
   {
     name: 'clients',
     label: 'Clientes',
-    query: () => supabase.from('clients').select('*').eq('is_active', true).order('name')
+    query: () => supabase.from('clients').select('*').eq('is_active', true).order('name'),
+    transformForCache: (data) => data.map(transformClientForCache)
   },
   {
     name: 'operators',
     label: 'Operadores',
-    query: () => supabase.from('operators').select('*').eq('is_active', true).order('name')
+    query: () => supabase.from('operators').select('*').eq('is_active', true).order('name'),
+    transformForCache: (data) => data.map(transformOperatorForCache)
   },
   {
     name: 'cranes',
     label: 'Grúas',
-    query: () => supabase.from('cranes').select('*').eq('is_active', true).order('license_plate')
+    query: () => supabase.from('cranes').select('*').eq('is_active', true).order('license_plate'),
+    transformForCache: (data) => data.map(transformCraneForCache)
   },
   {
     name: 'cost_categories',
@@ -94,12 +179,25 @@ const getTableConfigs = (): TableConfig[] => [
   {
     name: 'service_types',
     label: 'Tipos de servicio',
-    query: () => supabase.from('service_types').select('*').eq('is_active', true).order('name')
+    query: () => supabase.from('service_types').select('*').eq('is_active', true).order('name'),
+    transformForCache: (data) => data.map(transformServiceTypeForCache)
   },
   {
     name: 'service_resources',
     label: 'Recursos de servicios',
     query: () => supabase.from('service_resources').select('*').order('created_at', { ascending: false }).limit(500)
+  },
+  {
+    name: 'vehicle_brands',
+    label: 'Marcas de vehículos',
+    query: () => supabase.from('vehicle_brands').select('*').eq('is_active', true).order('name'),
+    transformForCache: (data) => data.map(transformVehicleBrandForCache)
+  },
+  {
+    name: 'vehicle_models',
+    label: 'Modelos de vehículos',
+    query: () => supabase.from('vehicle_models').select('*').eq('is_active', true).order('name'),
+    transformForCache: (data) => data.map(transformVehicleModelForCache)
   }
 ];
 
@@ -177,7 +275,9 @@ export function useOfflinePreload() {
         }
 
         if (data) {
-          await cacheTableData(config.name, data);
+          // Aplicar transformación si está definida
+          const dataToCache = config.transformForCache ? config.transformForCache(data) : data;
+          await cacheTableData(config.name, dataToCache);
           tablesLoaded.push(config.name);
           totalRecords += data.length;
         }
