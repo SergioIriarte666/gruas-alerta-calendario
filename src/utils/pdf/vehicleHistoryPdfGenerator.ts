@@ -257,15 +257,15 @@ export const generateVehicleHistoryPDF = async (
         fillColor: [250, 250, 250]
       },
       columnStyles: {
-        0: { cellWidth: 20, halign: 'center' },    // Fecha
-        1: { cellWidth: 22, halign: 'left' },      // Folio
-        2: { cellWidth: 22, halign: 'left' },      // N° Fiscal
-        3: { cellWidth: 35, halign: 'left' },      // Tipo Servicio
+        0: { cellWidth: 18, halign: 'center' },    // Fecha
+        1: { cellWidth: 20, halign: 'left' },      // Folio
+        2: { cellWidth: 20, halign: 'left' },      // N° Fiscal
+        3: { cellWidth: 'auto', halign: 'left' },  // Tipo Servicio - auto para expandir
         4: { cellWidth: 20, halign: 'center' },    // Estado
-        5: { cellWidth: 45, halign: 'left' },      // Cliente
-        6: { cellWidth: 25, halign: 'right' },     // Valor
-        7: { cellWidth: 35, halign: 'left' },      // COT / OC
-        8: { cellWidth: 35, halign: 'left' }       // Factura
+        5: { cellWidth: 40, halign: 'left' },      // Cliente
+        6: { cellWidth: 22, halign: 'right' },     // Valor
+        7: { cellWidth: 30, halign: 'left' },      // COT / OC
+        8: { cellWidth: 22, halign: 'left' }       // Factura
       },
       margin: { left: margin, right: margin },
       didDrawPage: (hookData) => {
