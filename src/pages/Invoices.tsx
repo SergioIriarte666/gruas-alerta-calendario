@@ -9,10 +9,12 @@ import { InvoiceCancellationsHistory } from '@/components/invoices/InvoiceCancel
 import { Invoice } from '@/types';
 import { toast } from 'sonner';
 import InvoicesHeader from '@/components/invoices/InvoicesHeader';
-import InvoicesStats from '@/components/invoices/InvoicesStats';
+import InvoicesMetricsCards from '@/components/invoices/InvoicesMetricsCards';
+import InvoicesQuickFilters, { DateFilterType } from '@/components/invoices/InvoicesQuickFilters';
 import InvoicesSearch from '@/components/invoices/InvoicesSearch';
 import { InvoicesPipelineView } from '@/components/invoices/InvoicesPipelineView';
 import InvoicesTable from '@/components/invoices/InvoicesTable';
+import InvoicesCardsView from '@/components/invoices/InvoicesCardsView';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
@@ -20,6 +22,7 @@ import { AppPagination } from '@/components/shared/AppPagination';
 import InvoiceBatchActions from '@/components/invoices/InvoiceBatchActions';
 import InvoiceExportModal from '@/components/invoices/InvoiceExportModal';
 import { BatchProgressModal, useBatchProgress } from '@/components/ui/batch-progress-modal';
+import { startOfDay, startOfWeek, startOfMonth, endOfDay, endOfWeek, endOfMonth, isWithinInterval } from 'date-fns';
 
 const INVOICE_STATUS_MAP: { [key: string]: string } = {
   all: 'Todas',
@@ -39,6 +42,12 @@ const Invoices = () => {
 
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState(statusFromQuery || 'all');
+  const [dateFilter, setDateFilter] = useState<DateFilterType>('all');
+  const [viewMode, setViewMode] = useState<'table' | 'cards'>('table');
+  const [showSensitiveData, setShowSensitiveData] = useState(() => {
+    const stored = localStorage.getItem('invoices-show-sensitive-data');
+    return stored !== 'false';
+  });
   const [showForm, setShowForm] = useState(false);
   const [editingInvoice, setEditingInvoice] = useState<Invoice | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -51,12 +60,20 @@ const Invoices = () => {
   const batchProgress = useBatchProgress();
   const ITEMS_PER_PAGE = 10;
 
+  // Toggle sensitive data visibility
+  const handleToggleSensitiveData = () => {
+    setShowSensitiveData(prev => {
+      const newValue = !prev;
+      localStorage.setItem('invoices-show-sensitive-data', String(newValue));
+      return newValue;
+    });
+  };
+
   // Check for preselected closure from navigation state
   useEffect(() => {
     if (location.state?.preselectedClosureId) {
       setPreselectedClosureId(location.state.preselectedClosureId);
       setShowForm(true);
-      // Clear the state to prevent it from persisting on page refresh
       window.history.replaceState({}, document.title);
     }
   }, [location.state]);
@@ -64,7 +81,7 @@ const Invoices = () => {
   // Clear selection when filters change
   useEffect(() => {
     setSelectedInvoiceIds([]);
-  }, [searchTerm, statusFilter]);
+  }, [searchTerm, statusFilter, dateFilter]);
 
   // Clear selection when page changes
   useEffect(() => {
@@ -78,11 +95,43 @@ const Invoices = () => {
       setSortField(field);
       setSortDirection('asc');
     }
-    setCurrentPage(1); // Reset to first page when sorting
-    setSelectedInvoiceIds([]); // Clear selection when sorting
+    setCurrentPage(1);
+    setSelectedInvoiceIds([]);
   };
 
-  const filteredInvoices = invoices.filter(invoice => {
+  // Filter by date range
+  const getDateFilteredInvoices = (invoiceList: Invoice[]) => {
+    if (dateFilter === 'all') return invoiceList;
+    
+    const today = new Date();
+    let start: Date;
+    let end: Date;
+    
+    switch (dateFilter) {
+      case 'today':
+        start = startOfDay(today);
+        end = endOfDay(today);
+        break;
+      case 'week':
+        start = startOfWeek(today, { weekStartsOn: 1 });
+        end = endOfWeek(today, { weekStartsOn: 1 });
+        break;
+      case 'month':
+        start = startOfMonth(today);
+        end = endOfMonth(today);
+        break;
+      default:
+        return invoiceList;
+    }
+    
+    return invoiceList.filter(invoice => {
+      if (!invoice.issueDate) return false;
+      const invoiceDate = new Date(invoice.issueDate);
+      return isWithinInterval(invoiceDate, { start, end });
+    });
+  };
+
+  const filteredInvoices = getDateFilteredInvoices(invoices).filter(invoice => {
     const invoiceWithDetails = getInvoiceWithDetails(invoice);
     const matchesSearch = (
       invoice.folio.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -153,6 +202,11 @@ const Invoices = () => {
     currentPage * ITEMS_PER_PAGE
   );
 
+  // Count overdue invoices for badge
+  const overdueCount = useMemo(() => {
+    return invoices.filter(inv => inv.status === 'overdue').length;
+  }, [invoices]);
+
   const handleCreateInvoice = async (data: any) => {
     try {
       await createInvoice(data);
@@ -174,11 +228,9 @@ const Invoices = () => {
         setEditingInvoice(null);
         setShowForm(false);
         setPreselectedClosureId(null);
-        // Don't show success toast here as it's handled in the operations hook
         console.log('Invoices page - Invoice updated successfully');
       } catch (error) {
         console.error('Invoices page - Error updating invoice:', error);
-        // Error toast is handled in the operations hook
       }
     }
   };
@@ -199,7 +251,6 @@ const Invoices = () => {
   const handleMarkAsPaid = async (id: string) => {
     try {
       await markAsPaid(id);
-      // Manual refresh after marking as paid
       setTimeout(() => {
         refetch();
       }, 500);
@@ -298,7 +349,6 @@ const Invoices = () => {
   };
 
   const handleBatchExport = (invoiceIds: string[]) => {
-    // TODO: Implement batch export functionality
     toast.success(`Exportando ${invoiceIds.length} facturas...`);
   };
 
@@ -364,22 +414,22 @@ const Invoices = () => {
     <div className="space-y-6">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-6 max-w-4xl mx-auto bg-card border-border">
-          <TabsTrigger value="invoices" className="text-foreground data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+          <TabsTrigger value="invoices" className="text-foreground data-[state=active]:bg-violet-600 data-[state=active]:text-white">
             Facturas
           </TabsTrigger>
-          <TabsTrigger value="pipeline" className="text-foreground data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+          <TabsTrigger value="pipeline" className="text-foreground data-[state=active]:bg-violet-600 data-[state=active]:text-white">
             Pipeline
           </TabsTrigger>
-          <TabsTrigger value="alerts" className="text-foreground data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+          <TabsTrigger value="alerts" className="text-foreground data-[state=active]:bg-violet-600 data-[state=active]:text-white">
             Alertas
           </TabsTrigger>
-          <TabsTrigger value="payments" className="text-foreground data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+          <TabsTrigger value="payments" className="text-foreground data-[state=active]:bg-violet-600 data-[state=active]:text-white">
             Conciliación
           </TabsTrigger>
-          <TabsTrigger value="history" className="text-foreground data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+          <TabsTrigger value="history" className="text-foreground data-[state=active]:bg-violet-600 data-[state=active]:text-white">
             Historial
           </TabsTrigger>
-          <TabsTrigger value="cancellations" className="text-foreground data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+          <TabsTrigger value="cancellations" className="text-foreground data-[state=active]:bg-violet-600 data-[state=active]:text-white">
             Anulaciones
           </TabsTrigger>
         </TabsList>
@@ -388,9 +438,23 @@ const Invoices = () => {
           <InvoicesHeader 
             onCreateInvoice={() => setShowForm(true)} 
             onOpenExportModal={() => setExportModalOpen(true)}
+            viewMode={viewMode}
+            onViewModeChange={setViewMode}
+            activeDateFilter={dateFilter}
+            showSensitiveData={showSensitiveData}
+            onToggleSensitiveData={handleToggleSensitiveData}
           />
           
-          <InvoicesStats invoices={invoices} />
+          <InvoicesMetricsCards 
+            invoices={invoices} 
+            showSensitiveData={showSensitiveData}
+          />
+          
+          <InvoicesQuickFilters
+            activeDateFilter={dateFilter}
+            onDateFilterChange={setDateFilter}
+            overdueCount={overdueCount}
+          />
           
           <div className="flex flex-col md:flex-row items-center gap-4">
             <div className="flex-grow">
@@ -408,7 +472,7 @@ const Invoices = () => {
                   onClick={() => setStatusFilter(statusKey)}
                   className={cn(
                     'capitalize text-muted-foreground hover:text-foreground px-3 py-1 text-sm',
-                    statusFilter === statusKey && 'bg-primary text-primary-foreground'
+                    statusFilter === statusKey && 'bg-violet-600 text-white hover:bg-violet-700 hover:text-white'
                   )}
                 >
                   {statusValue}
@@ -427,20 +491,30 @@ const Invoices = () => {
             />
           )}
           
-          <InvoicesTable
-            invoices={paginatedInvoices}
-            onEdit={handleEditInvoice}
-            onDelete={handleDeleteInvoice}
-            onMarkAsPaid={handleMarkAsPaid}
-            getInvoiceWithDetails={getInvoiceWithDetails}
-            onRefresh={handleRefresh}
-            sortField={sortField}
-            sortDirection={sortDirection}
-            onSort={handleSort}
-            selectedInvoiceIds={selectedInvoiceIds}
-            onInvoiceToggle={handleInvoiceToggle}
-            onSelectAllToggle={handleSelectAllToggle}
-          />
+          {viewMode === 'table' ? (
+            <InvoicesTable
+              invoices={paginatedInvoices}
+              onEdit={handleEditInvoice}
+              onDelete={handleDeleteInvoice}
+              onMarkAsPaid={handleMarkAsPaid}
+              getInvoiceWithDetails={getInvoiceWithDetails}
+              onRefresh={handleRefresh}
+              sortField={sortField}
+              sortDirection={sortDirection}
+              onSort={handleSort}
+              selectedInvoiceIds={selectedInvoiceIds}
+              onInvoiceToggle={handleInvoiceToggle}
+              onSelectAllToggle={handleSelectAllToggle}
+            />
+          ) : (
+            <InvoicesCardsView
+              invoices={paginatedInvoices}
+              onEdit={handleEditInvoice}
+              onDelete={handleDeleteInvoice}
+              onMarkAsPaid={handleMarkAsPaid}
+              getInvoiceWithDetails={getInvoiceWithDetails}
+            />
+          )}
 
           <AppPagination
             currentPage={currentPage}
