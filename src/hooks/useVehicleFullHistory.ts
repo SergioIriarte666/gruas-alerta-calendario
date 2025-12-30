@@ -99,7 +99,12 @@ const fetchVehicleFullHistory = async (licensePlate: string): Promise<VehicleFul
     return servicePlate === normalizedPlate;
   });
 
-  console.log(`Found ${matchingServices.length} services for plate ${licensePlate}`);
+  console.log(`📋 Total services in DB: ${servicesData?.length || 0}`);
+  console.log(`📋 Found ${matchingServices.length} services for plate ${licensePlate}`);
+  console.log('📋 Services by status:', matchingServices.reduce((acc: any, s: any) => {
+    acc[s.status] = (acc[s.status] || 0) + 1;
+    return acc;
+  }, {}));
 
   if (matchingServices.length === 0) {
     return {
