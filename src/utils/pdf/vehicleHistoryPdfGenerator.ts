@@ -227,7 +227,8 @@ export const generateVehicleHistoryPDF = async (
       
       return [
         formatDate(service.date),
-        service.relatedInvoice?.numeroFiscal || service.folio,
+        service.folio,
+        service.relatedInvoice?.numeroFiscal || '-',
         service.serviceTypeName || '-',
         getStatusLabel(service.status),
         service.clientName.length > 30 ? service.clientName.substring(0, 30) + '...' : service.clientName,
@@ -239,7 +240,7 @@ export const generateVehicleHistoryPDF = async (
 
     autoTable(doc, {
       startY: yPosition,
-      head: [['Fecha', 'N° Fiscal', 'Tipo Servicio', 'Estado', 'Cliente', 'Valor', 'COT / OC', 'Factura']],
+      head: [['Fecha', 'Folio', 'N° Fiscal', 'Tipo Servicio', 'Estado', 'Cliente', 'Valor', 'COT / OC', 'Factura']],
       body: tableData,
       theme: 'striped',
       headStyles: {
@@ -259,14 +260,15 @@ export const generateVehicleHistoryPDF = async (
         fillColor: [250, 250, 250]
       },
       columnStyles: {
-        0: { cellWidth: 22, halign: 'center' },    // Fecha
-        1: { cellWidth: 25, halign: 'left' },      // N° Fiscal
-        2: { cellWidth: 40, halign: 'left' },      // Tipo Servicio
-        3: { cellWidth: 22, halign: 'center' },    // Estado
-        4: { cellWidth: 50, halign: 'left' },      // Cliente
-        5: { cellWidth: 28, halign: 'right' },     // Valor
-        6: { cellWidth: 40, halign: 'left' },      // COT / OC
-        7: { cellWidth: 40, halign: 'left' }       // Factura
+        0: { cellWidth: 20, halign: 'center' },    // Fecha
+        1: { cellWidth: 22, halign: 'left' },      // Folio
+        2: { cellWidth: 22, halign: 'left' },      // N° Fiscal
+        3: { cellWidth: 35, halign: 'left' },      // Tipo Servicio
+        4: { cellWidth: 20, halign: 'center' },    // Estado
+        5: { cellWidth: 45, halign: 'left' },      // Cliente
+        6: { cellWidth: 25, halign: 'right' },     // Valor
+        7: { cellWidth: 35, halign: 'left' },      // COT / OC
+        8: { cellWidth: 35, halign: 'left' }       // Factura
       },
       margin: { left: margin, right: margin },
       didDrawPage: (hookData) => {
