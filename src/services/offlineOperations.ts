@@ -271,8 +271,10 @@ export async function offlineFetch<T>(
   const { data: cachedData } = await getCachedTableData<T>(table);
   
   if (cachedData && cachedData.length > 0) {
-    console.log(`[OfflineOps] Using cached data for ${table}: ${cachedData.length} records`);
-    return { data: cachedData, isFromCache: true };
+    // APLICAR TRANSFORM también al leer del cache para normalizar formato
+    const transformed = transform ? transform(cachedData) : cachedData;
+    console.log(`[OfflineOps] Using cached data for ${table}: ${transformed.length} records (transformed)`);
+    return { data: transformed, isFromCache: true };
   }
 
   return { data: [], isFromCache: true };
