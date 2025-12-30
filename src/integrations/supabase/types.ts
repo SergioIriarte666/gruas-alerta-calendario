@@ -2159,6 +2159,75 @@ export type Database = {
           },
         ]
       }
+      notifications: {
+        Row: {
+          action_data: Json | null
+          action_type: string | null
+          action_url: string | null
+          category: string
+          created_at: string
+          dismissed_at: string | null
+          entity_id: string | null
+          entity_type: string | null
+          expires_at: string | null
+          group_count: number | null
+          group_key: string | null
+          id: string
+          message: string
+          priority: number
+          read_at: string | null
+          snoozed_until: string | null
+          title: string
+          type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          action_data?: Json | null
+          action_type?: string | null
+          action_url?: string | null
+          category?: string
+          created_at?: string
+          dismissed_at?: string | null
+          entity_id?: string | null
+          entity_type?: string | null
+          expires_at?: string | null
+          group_count?: number | null
+          group_key?: string | null
+          id?: string
+          message: string
+          priority?: number
+          read_at?: string | null
+          snoozed_until?: string | null
+          title: string
+          type?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          action_data?: Json | null
+          action_type?: string | null
+          action_url?: string | null
+          category?: string
+          created_at?: string
+          dismissed_at?: string | null
+          entity_id?: string | null
+          entity_type?: string | null
+          expires_at?: string | null
+          group_count?: number | null
+          group_key?: string | null
+          id?: string
+          message?: string
+          priority?: number
+          read_at?: string | null
+          snoozed_until?: string | null
+          title?: string
+          type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       operators: {
         Row: {
           created_at: string | null
@@ -3455,6 +3524,9 @@ export type Database = {
           maintenance_mode: boolean
           overdue_notifications: boolean
           service_reminders: boolean
+          session_timeout_enabled: boolean | null
+          session_timeout_minutes: number | null
+          session_warning_minutes: number | null
           system_updates: boolean
           updated_at: string
         }
@@ -3469,6 +3541,9 @@ export type Database = {
           maintenance_mode?: boolean
           overdue_notifications?: boolean
           service_reminders?: boolean
+          session_timeout_enabled?: boolean | null
+          session_timeout_minutes?: number | null
+          session_warning_minutes?: number | null
           system_updates?: boolean
           updated_at?: string
         }
@@ -3483,6 +3558,9 @@ export type Database = {
           maintenance_mode?: boolean
           overdue_notifications?: boolean
           service_reminders?: boolean
+          session_timeout_enabled?: boolean | null
+          session_timeout_minutes?: number | null
+          session_warning_minutes?: number | null
           system_updates?: boolean
           updated_at?: string
         }
@@ -3877,6 +3955,22 @@ export type Database = {
           invoice_id: string
         }[]
       }
+      create_notification: {
+        Args: {
+          p_action_data?: Json
+          p_action_url?: string
+          p_category?: string
+          p_entity_id?: string
+          p_entity_type?: string
+          p_group_key?: string
+          p_message: string
+          p_priority?: number
+          p_title: string
+          p_type?: string
+          p_user_id: string
+        }
+        Returns: string
+      }
       create_payment_from_existing_income: {
         Args: { p_income_id: string }
         Returns: Json
@@ -4090,6 +4184,15 @@ export type Database = {
           maintenance_status: string
         }[]
       }
+      get_notification_summary: {
+        Args: never
+        Returns: {
+          categories: Json
+          critical_count: number
+          total_count: number
+          unread_count: number
+        }[]
+      }
       get_operator_id_by_user: { Args: { p_user_id: string }; Returns: string }
       get_overdue_invoices_for_alerts: {
         Args: never
@@ -4220,6 +4323,11 @@ export type Database = {
           p_service_id: string
         }
         Returns: undefined
+      }
+      mark_all_notifications_read: { Args: never; Returns: number }
+      mark_notification_read: {
+        Args: { p_notification_id: string }
+        Returns: boolean
       }
       mark_supplier_payment_as_paid: {
         Args: { p_paid_date?: string; p_payment_id: string }
