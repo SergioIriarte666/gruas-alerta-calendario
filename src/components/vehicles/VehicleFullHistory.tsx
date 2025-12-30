@@ -209,7 +209,7 @@ export const VehicleFullHistory: React.FC<VehicleFullHistoryProps> = ({ data, is
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-[100px]">Fecha</TableHead>
-                  <TableHead>Folio</TableHead>
+                  <TableHead>N° Fiscal</TableHead>
                   <TableHead>Tipo Servicio</TableHead>
                   <TableHead>Estado</TableHead>
                   <TableHead>Cliente</TableHead>
@@ -228,7 +228,7 @@ export const VehicleFullHistory: React.FC<VehicleFullHistoryProps> = ({ data, is
                         {formatDate(service.date)}
                       </TableCell>
                       <TableCell className="font-mono text-sm font-medium">
-                        {service.folio}
+                        {service.relatedInvoice?.numeroFiscal || service.folio}
                       </TableCell>
                       <TableCell className="text-sm max-w-[150px] truncate">
                         {service.serviceTypeName || '-'}
