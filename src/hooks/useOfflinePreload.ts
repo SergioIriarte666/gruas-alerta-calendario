@@ -112,23 +112,25 @@ const transformVehicleModelForCache = (model: any) => ({
 });
 
 // Configuración de tablas a pre-cargar
+// IMPORTANTE: Tablas base sin filtro is_active para garantizar datos offline
 const getTableConfigs = (): TableConfig[] => [
   {
     name: 'clients',
     label: 'Clientes',
-    query: () => supabase.from('clients').select('*').eq('is_active', true).order('name'),
+    // SIN filtro is_active para asegurar datos offline
+    query: () => supabase.from('clients').select('*').order('name'),
     transformForCache: (data) => data.map(transformClientForCache)
   },
   {
     name: 'operators',
     label: 'Operadores',
-    query: () => supabase.from('operators').select('*').eq('is_active', true).order('name'),
+    query: () => supabase.from('operators').select('*').order('name'),
     transformForCache: (data) => data.map(transformOperatorForCache)
   },
   {
     name: 'cranes',
     label: 'Grúas',
-    query: () => supabase.from('cranes').select('*').eq('is_active', true).order('license_plate'),
+    query: () => supabase.from('cranes').select('*').order('license_plate'),
     transformForCache: (data) => data.map(transformCraneForCache)
   },
   {
@@ -144,22 +146,22 @@ const getTableConfigs = (): TableConfig[] => [
   {
     name: 'services',
     label: 'Servicios',
-    query: () => supabase.from('services').select('*').order('created_at', { ascending: false }).limit(200)
+    query: () => supabase.from('services').select('*').order('created_at', { ascending: false }).limit(300)
   },
   {
     name: 'costs',
     label: 'Costos',
-    query: () => supabase.from('costs').select('*').order('created_at', { ascending: false }).limit(200)
+    query: () => supabase.from('costs').select('*').order('created_at', { ascending: false }).limit(300)
   },
   {
     name: 'invoices',
     label: 'Facturas',
-    query: () => supabase.from('invoices').select('*').in('status', ['draft', 'sent', 'partial']).order('created_at', { ascending: false }).limit(100)
+    query: () => supabase.from('invoices').select('*').order('created_at', { ascending: false }).limit(200)
   },
   {
     name: 'inventory_items',
     label: 'Items de inventario',
-    query: () => supabase.from('inventory_items').select('*').eq('is_active', true).order('name')
+    query: () => supabase.from('inventory_items').select('*').order('name')
   },
   {
     name: 'inventory_stock',
@@ -169,17 +171,17 @@ const getTableConfigs = (): TableConfig[] => [
   {
     name: 'inventory_categories',
     label: 'Categorías inventario',
-    query: () => supabase.from('inventory_categories').select('*').eq('is_active', true)
+    query: () => supabase.from('inventory_categories').select('*')
   },
   {
     name: 'income_categories',
     label: 'Categorías ingresos',
-    query: () => supabase.from('income_categories').select('*').eq('is_active', true)
+    query: () => supabase.from('income_categories').select('*')
   },
   {
     name: 'service_types',
     label: 'Tipos de servicio',
-    query: () => supabase.from('service_types').select('*').eq('is_active', true).order('name'),
+    query: () => supabase.from('service_types').select('*').order('name'),
     transformForCache: (data) => data.map(transformServiceTypeForCache)
   },
   {
@@ -190,13 +192,13 @@ const getTableConfigs = (): TableConfig[] => [
   {
     name: 'vehicle_brands',
     label: 'Marcas de vehículos',
-    query: () => supabase.from('vehicle_brands').select('*').eq('is_active', true).order('name'),
+    query: () => supabase.from('vehicle_brands').select('*').order('name'),
     transformForCache: (data) => data.map(transformVehicleBrandForCache)
   },
   {
     name: 'vehicle_models',
     label: 'Modelos de vehículos',
-    query: () => supabase.from('vehicle_models').select('*').eq('is_active', true).order('name'),
+    query: () => supabase.from('vehicle_models').select('*').order('name'),
     transformForCache: (data) => data.map(transformVehicleModelForCache)
   }
 ];

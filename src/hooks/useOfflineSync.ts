@@ -7,6 +7,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useOfflineMode } from '@/contexts/OfflineModeContext';
+import { openOfflineDatabase } from '@/services/offlineDb';
 
 export interface OfflineAction {
   id: string;
@@ -19,40 +20,13 @@ export interface OfflineAction {
   errorMessage?: string;
 }
 
-const DB_NAME = 'tms-offline-cache';
 const STORE_NAME = '_offlineActions';
 const DATA_CACHE_STORE = '_offlineDataCache';
 const MAX_RETRIES = 3;
 
-let dbInstance: IDBDatabase | null = null;
-
+// Usar la función unificada de openDatabase
 async function openDatabase(): Promise<IDBDatabase> {
-  if (dbInstance) return dbInstance;
-
-  return new Promise((resolve, reject) => {
-    const request = indexedDB.open(DB_NAME, 3); // Incrementar versión para nueva store
-
-    request.onerror = () => reject(request.error);
-    request.onsuccess = () => {
-      dbInstance = request.result;
-      resolve(request.result);
-    };
-
-    request.onupgradeneeded = (event) => {
-      const db = (event.target as IDBOpenDBRequest).result;
-      if (!db.objectStoreNames.contains(STORE_NAME)) {
-        const store = db.createObjectStore(STORE_NAME, { keyPath: 'id' });
-        store.createIndex('timestamp', 'timestamp', { unique: false });
-        store.createIndex('status', 'status', { unique: false });
-      }
-      // Nueva store para cache de datos
-      if (!db.objectStoreNames.contains(DATA_CACHE_STORE)) {
-        const cacheStore = db.createObjectStore(DATA_CACHE_STORE, { keyPath: 'key' });
-        cacheStore.createIndex('table', 'table', { unique: false });
-        cacheStore.createIndex('updatedAt', 'updatedAt', { unique: false });
-      }
-    };
-  });
+  return openOfflineDatabase();
 }
 
 // Funciones para cache de datos local
