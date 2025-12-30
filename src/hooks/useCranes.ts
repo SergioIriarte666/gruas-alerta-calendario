@@ -69,14 +69,18 @@ export const useCranes = () => {
         'cranes',
         effectiveIsOnline,
         fetchCranes,
-        (rawData) => rawData.map(transformFromDb)
+        (rawData) => {
+          // Si viene del cache ya transformado (tiene isActive), devolver directo
+          if (rawData.length > 0 && 'isActive' in rawData[0]) {
+            return rawData as Crane[];
+          }
+          // Si viene del cache con formato DB (is_active), transformar
+          return rawData.map(transformFromDb);
+        }
       );
       
       if (isFromCache && data.length > 0) {
-        toast.info('Datos desde cache local', { 
-          description: `${data.length} grúas cargadas offline`,
-          duration: 2000
-        });
+        console.log(`📴 [OFFLINE] ${data.length} grúas cargadas desde cache`);
       }
       
       return data;
