@@ -8,6 +8,7 @@ import { useNotificationTriggers } from '@/hooks/useNotificationTriggers';
 import { ToastProvider } from '@/components/ui/custom-toast';
 import { SessionTimeoutProvider } from '@/components/auth/SessionTimeoutProvider';
 import { Toaster } from '@/components/ui/sonner';
+import { PWAWrapper } from '@/components/pwa/PWAWrapper';
 import { Layout } from '@/components/layout/Layout';
 import { OperatorLayout } from '@/components/layout/OperatorLayout';
 import { PortalLayout } from '@/components/portal/layout/PortalLayout';
@@ -308,7 +309,9 @@ export default function App() {
             <NotificationProvider>
               <ToastProvider>
                 <Router>
-                  <AppContent />
+                  <PWAWrapper>
+                    <AppContent />
+                  </PWAWrapper>
                 </Router>
               </ToastProvider>
             </NotificationProvider>
