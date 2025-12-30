@@ -20,8 +20,8 @@ export const ConnectionStatus = () => {
   // Modo offline forzado (prueba)
   if (isForceOffline) {
     return (
-      <div className="fixed top-4 right-4 z-50 space-y-2">
-        <Badge 
+      <div className="fixed top-20 right-4 z-50 space-y-2">
+        <Badge
           className="bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center gap-1 cursor-pointer hover:bg-amber-500/30 transition-colors"
           onClick={toggleForceOffline}
           title="Click para desactivar modo prueba"
@@ -47,7 +47,7 @@ export const ConnectionStatus = () => {
   // Sin conexión real
   if (!isOnline) {
     return (
-      <div className="fixed top-4 right-4 z-50 space-y-2">
+      <div className="fixed top-20 right-4 z-50 space-y-2">
         <Badge className="bg-red-500/20 text-red-400 border border-red-500/30 flex items-center gap-1 animate-pulse">
           <WifiOff className="w-3 h-3" />
           Sin conexión
@@ -65,7 +65,7 @@ export const ConnectionStatus = () => {
   // Conectado con acciones pendientes (sincronizando)
   if (isOnline && pendingActions > 0) {
     return (
-      <div className="fixed top-4 right-4 z-50">
+      <div className="fixed top-20 right-4 z-50">
         <Badge className="bg-blue-500/20 text-blue-400 border border-blue-500/30 flex items-center gap-1">
           <RefreshCw className="w-3 h-3 animate-spin" />
           Sincronizando... {pendingActions}
