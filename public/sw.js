@@ -353,9 +353,19 @@ async function syncOfflineActions() {
 
 function openOfflineDB() {
   return new Promise((resolve, reject) => {
-    const request = indexedDB.open('tms-offline-cache', 2);
+    const request = indexedDB.open('tms-offline-cache', 3);
     request.onerror = () => resolve(null);
     request.onsuccess = () => resolve(request.result);
+    request.onupgradeneeded = (event) => {
+      const db = event.target.result;
+      // Create stores if they don't exist
+      if (!db.objectStoreNames.contains('_offlineActions')) {
+        db.createObjectStore('_offlineActions', { keyPath: 'id' });
+      }
+      if (!db.objectStoreNames.contains('_offlineDataCache')) {
+        db.createObjectStore('_offlineDataCache', { keyPath: 'key' });
+      }
+    };
   });
 }
 

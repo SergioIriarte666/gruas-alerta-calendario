@@ -4,6 +4,9 @@ import { useUser } from '@/contexts/UserContext';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useUserModulePermissions } from '@/hooks/useUserModulePermissions';
 import { getModuleByRoute } from '@/constants/modules';
+import { useOfflineMode } from '@/contexts/OfflineModeContext';
+import { WifiOff, RefreshCw } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -19,6 +22,15 @@ const ProtectedRoute = ({ children, allowedRoles, requireRole, moduleKey }: Prot
   const location = useLocation();
   const [waitTime, setWaitTime] = React.useState(0);
   const [hasTriedRefresh, setHasTriedRefresh] = React.useState(false);
+  
+  // Get offline status
+  let effectiveIsOnline = true;
+  try {
+    const offlineMode = useOfflineMode();
+    effectiveIsOnline = offlineMode.effectiveIsOnline;
+  } catch {
+    effectiveIsOnline = navigator.onLine;
+  }
 
   console.log('ProtectedRoute - Auth user:', authUser?.email);
   console.log('ProtectedRoute - Profile user role:', profileUser?.role);
@@ -45,10 +57,37 @@ const ProtectedRoute = ({ children, allowedRoles, requireRole, moduleKey }: Prot
   }
 
   // Enhanced handling for missing profile with retry logic
+  // IMPORTANT: If offline and no profile, don't redirect - show offline message
   if (!profileUser && !profileLoading) {
-    console.error('ProtectedRoute - Auth user exists but no profile found');
+    console.error('ProtectedRoute - Auth user exists but no profile found. Offline:', !effectiveIsOnline);
     
-    // Try to refresh profile once before giving up
+    // If offline, don't try to refresh or redirect to auth
+    if (!effectiveIsOnline) {
+      return (
+        <div className="flex items-center justify-center h-screen bg-background text-foreground">
+          <div className="text-center max-w-md px-6">
+            <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-muted flex items-center justify-center">
+              <WifiOff className="w-8 h-8 text-muted-foreground" />
+            </div>
+            <h2 className="text-xl font-semibold mb-2">Sin conexión</h2>
+            <p className="text-muted-foreground mb-6">
+              No hay conexión a internet y no se encontró un perfil en caché. 
+              Conéctate a internet para acceder al sistema.
+            </p>
+            <Button 
+              variant="outline" 
+              onClick={() => window.location.reload()}
+              className="gap-2"
+            >
+              <RefreshCw className="w-4 h-4" />
+              Reintentar conexión
+            </Button>
+          </div>
+        </div>
+      );
+    }
+    
+    // Try to refresh profile once before giving up (only when online)
     if (!hasTriedRefresh) {
       console.log('ProtectedRoute - Attempting profile refresh...');
       setHasTriedRefresh(true);
