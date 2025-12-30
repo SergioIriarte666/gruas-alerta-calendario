@@ -227,7 +227,7 @@ export const generateVehicleHistoryPDF = async (
       
       return [
         formatDate(service.date),
-        service.folio,
+        service.relatedInvoice?.numeroFiscal || service.folio,
         service.serviceTypeName || '-',
         getStatusLabel(service.status),
         service.clientName.length > 30 ? service.clientName.substring(0, 30) + '...' : service.clientName,
@@ -239,7 +239,7 @@ export const generateVehicleHistoryPDF = async (
 
     autoTable(doc, {
       startY: yPosition,
-      head: [['Fecha', 'Folio', 'Tipo Servicio', 'Estado', 'Cliente', 'Valor', 'COT / OC', 'Factura']],
+      head: [['Fecha', 'N° Fiscal', 'Tipo Servicio', 'Estado', 'Cliente', 'Valor', 'COT / OC', 'Factura']],
       body: tableData,
       theme: 'striped',
       headStyles: {
@@ -260,7 +260,7 @@ export const generateVehicleHistoryPDF = async (
       },
       columnStyles: {
         0: { cellWidth: 22, halign: 'center' },    // Fecha
-        1: { cellWidth: 25, halign: 'left' },      // Folio
+        1: { cellWidth: 25, halign: 'left' },      // N° Fiscal
         2: { cellWidth: 40, halign: 'left' },      // Tipo Servicio
         3: { cellWidth: 22, halign: 'center' },    // Estado
         4: { cellWidth: 50, halign: 'left' },      // Cliente
