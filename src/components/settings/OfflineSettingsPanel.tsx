@@ -52,6 +52,118 @@ const formatBytes = (bytes: number): string => {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 };
 
+// Componente para verificación rápida del cache
+const CacheVerificationPanel: React.FC = () => {
+  const [verification, setVerification] = useState<{
+    table: string;
+    count: number;
+    updatedAt: number | null;
+  }[]>([]);
+  const [isVerifying, setIsVerifying] = useState(false);
+
+  const CRITICAL_TABLES = [
+    { key: 'clients', label: 'Clientes' },
+    { key: 'operators', label: 'Operadores' },
+    { key: 'cranes', label: 'Grúas' },
+    { key: 'service_types', label: 'Tipos de Servicio' },
+    { key: 'vehicle_brands', label: 'Marcas' },
+    { key: 'vehicle_models', label: 'Modelos' },
+    { key: 'services', label: 'Servicios' },
+    { key: 'costs', label: 'Costos' }
+  ];
+
+  const verifyCache = async () => {
+    setIsVerifying(true);
+    try {
+      const { getCachedTableData } = await import('@/hooks/useOfflineSync');
+      
+      const results = await Promise.all(
+        CRITICAL_TABLES.map(async (t) => {
+          try {
+            const { data, updatedAt } = await getCachedTableData(t.key);
+            return {
+              table: t.label,
+              count: data?.length || 0,
+              updatedAt
+            };
+          } catch {
+            return { table: t.label, count: 0, updatedAt: null };
+          }
+        })
+      );
+      
+      setVerification(results);
+      
+      const emptyTables = results.filter(r => r.count === 0);
+      if (emptyTables.length > 0) {
+        toast.warning('Tablas sin datos', {
+          description: `${emptyTables.map(t => t.table).join(', ')} están vacías. Descarga los datos offline.`
+        });
+      } else {
+        toast.success('Cache verificado', {
+          description: 'Todas las tablas críticas tienen datos'
+        });
+      }
+    } catch (error) {
+      console.error('Error verifying cache:', error);
+      toast.error('Error al verificar cache');
+    } finally {
+      setIsVerifying(false);
+    }
+  };
+
+  return (
+    <div className="space-y-3">
+      <h4 className="text-sm font-medium text-foreground flex items-center gap-2">
+        <Database className="w-4 h-4" />
+        Verificación Rápida
+      </h4>
+      <div className="p-4 rounded-lg bg-muted/50 space-y-3">
+        <p className="text-xs text-muted-foreground">
+          Verifica que las tablas críticas tengan datos para uso offline
+        </p>
+        
+        {verification.length > 0 && (
+          <div className="grid grid-cols-2 gap-2">
+            {verification.map((v) => (
+              <div 
+                key={v.table}
+                className="flex items-center justify-between p-2 rounded bg-background/50 text-xs"
+              >
+                <span className="text-foreground">{v.table}</span>
+                <Badge 
+                  variant="outline"
+                  className={v.count > 0 
+                    ? 'text-green-400 border-green-400/50' 
+                    : 'text-red-400 border-red-400/50'
+                  }
+                >
+                  {v.count}
+                </Badge>
+              </div>
+            ))}
+          </div>
+        )}
+        
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={verifyCache}
+          disabled={isVerifying}
+          className="w-full"
+        >
+          {isVerifying ? (
+            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+          ) : (
+            <RefreshCw className="w-4 h-4 mr-2" />
+          )}
+          Verificar ahora
+        </Button>
+      </div>
+    </div>
+  );
+};
+
 export const OfflineSettingsPanel: React.FC = () => {
   const { 
     isOnline, 
@@ -271,6 +383,9 @@ export const OfflineSettingsPanel: React.FC = () => {
         </div>
 
         <Separator />
+
+        {/* Verificación Rápida de Cache */}
+        <CacheVerificationPanel />
 
         {/* Estado de instalación PWA */}
         <div className="space-y-3">

@@ -3,8 +3,7 @@
  * Mantiene un "espejo" local de los datos de Supabase en IndexedDB
  */
 
-const DB_NAME = 'tms-offline-cache';
-const DB_VERSION = 3;
+import { openOfflineDatabase, CACHEABLE_TABLES, CacheableTable as BaseCacheableTable } from './offlineDb';
 
 export interface CacheMetadata {
   tableName: string;
@@ -12,69 +11,14 @@ export interface CacheMetadata {
   recordCount: number;
 }
 
-const CACHEABLE_TABLES = [
-  'services',
-  'clients',
-  'operators',
-  'cranes',
-  'service_types',
-  'invoices',
-  'costs',
-  'cost_categories'
-] as const;
+export type CacheableTable = BaseCacheableTable;
 
-export type CacheableTable = typeof CACHEABLE_TABLES[number];
-
-let dbInstance: IDBDatabase | null = null;
-
+// Usar la función unificada de apertura de DB
 async function openDatabase(): Promise<IDBDatabase> {
-  if (dbInstance) return dbInstance;
-
-  return new Promise((resolve, reject) => {
-    const request = indexedDB.open(DB_NAME, DB_VERSION);
-
-    request.onerror = () => {
-      console.error('[OfflineCache] Error opening database:', request.error);
-      reject(request.error);
-    };
-
-    request.onsuccess = () => {
-      dbInstance = request.result;
-      resolve(request.result);
-    };
-
-    request.onupgradeneeded = (event) => {
-      const db = (event.target as IDBOpenDBRequest).result;
-      
-      // Create stores for each cacheable table
-      CACHEABLE_TABLES.forEach(tableName => {
-        if (!db.objectStoreNames.contains(tableName)) {
-          const store = db.createObjectStore(tableName, { keyPath: 'id' });
-          store.createIndex('updated_at', 'updated_at', { unique: false });
-        }
-      });
-
-      // Metadata store for tracking sync times
-      if (!db.objectStoreNames.contains('_metadata')) {
-        db.createObjectStore('_metadata', { keyPath: 'tableName' });
-      }
-
-      // Offline actions queue
-      if (!db.objectStoreNames.contains('_offlineActions')) {
-        const actionsStore = db.createObjectStore('_offlineActions', { keyPath: 'id' });
-        actionsStore.createIndex('timestamp', 'timestamp', { unique: false });
-        actionsStore.createIndex('status', 'status', { unique: false });
-      }
-
-      // Nueva store para cache de datos del hook useOfflineSync
-      if (!db.objectStoreNames.contains('_offlineDataCache')) {
-        const cacheStore = db.createObjectStore('_offlineDataCache', { keyPath: 'key' });
-        cacheStore.createIndex('table', 'table', { unique: false });
-        cacheStore.createIndex('updatedAt', 'updatedAt', { unique: false });
-      }
-    };
-  });
+  return openOfflineDatabase();
 }
+
+export { CACHEABLE_TABLES };
 
 /**
  * Guarda un snapshot completo de una tabla en cache
@@ -346,5 +290,4 @@ export async function isCacheReady(): Promise<boolean> {
   }
 }
 
-// Export cacheable tables list
-export { CACHEABLE_TABLES };
+// CACHEABLE_TABLES ya se exporta al inicio del archivo desde offlineDb

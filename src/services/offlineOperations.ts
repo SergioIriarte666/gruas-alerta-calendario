@@ -45,15 +45,12 @@ export function markAsOffline<T extends object>(record: T): T & { _isOffline: bo
   return { ...record, _isOffline: true };
 }
 
-const DB_NAME = 'tms-offline-cache';
+import { openOfflineDatabase } from '@/services/offlineDb';
+
 const STORE_NAME = '_offlineActions';
 
 async function openDatabase(): Promise<IDBDatabase> {
-  return new Promise((resolve, reject) => {
-    const request = indexedDB.open(DB_NAME, 3);
-    request.onerror = () => reject(request.error);
-    request.onsuccess = () => resolve(request.result);
-  });
+  return openOfflineDatabase();
 }
 
 async function addOfflineAction(action: {

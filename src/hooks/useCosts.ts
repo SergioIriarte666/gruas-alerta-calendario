@@ -50,6 +50,65 @@ const fetchCosts = async (): Promise<Cost[]> => {
   return (data as any) || [];
 };
 
+// Función para hidratar costos con datos de cache
+async function hydrateCostsFromCache(rawCosts: any[]): Promise<Cost[]> {
+  const { getCachedTableData } = await import('@/hooks/useOfflineSync');
+  
+  const [categoriesResult, cranesResult, operatorsResult, servicesResult, clientsResult] = await Promise.all([
+    getCachedTableData<any>('cost_categories'),
+    getCachedTableData<any>('cranes'),
+    getCachedTableData<any>('operators'),
+    getCachedTableData<any>('services'),
+    getCachedTableData<any>('clients')
+  ]);
+
+  const categories = categoriesResult.data || [];
+  const cranes = cranesResult.data || [];
+  const operators = operatorsResult.data || [];
+  const services = servicesResult.data || [];
+  const clients = clientsResult.data || [];
+
+  // Crear mapas para búsqueda rápida
+  const categoryMap = new Map(categories.map(c => [c.id, c]));
+  const craneMap = new Map(cranes.map(c => [c.id, c]));
+  const operatorMap = new Map(operators.map(o => [o.id, o]));
+  const serviceMap = new Map(services.map(s => [s.id, s]));
+  const clientMap = new Map(clients.map(c => [c.id, c]));
+
+  return rawCosts.map(cost => {
+    const category = categoryMap.get(cost.category_id);
+    const crane = craneMap.get(cost.crane_id);
+    const operator = operatorMap.get(cost.operator_id);
+    const service = serviceMap.get(cost.service_id);
+    const client = service ? clientMap.get(service.client_id) : null;
+
+    return {
+      ...cost,
+      cost_categories: category || null,
+      cranes: crane ? {
+        id: crane.id,
+        license_plate: crane.licensePlate || crane.license_plate,
+        brand: crane.brand,
+        model: crane.model,
+        type: crane.type
+      } : null,
+      operators: operator ? {
+        id: operator.id,
+        name: operator.name,
+        rut: operator.rut
+      } : null,
+      services: service ? {
+        ...service,
+        folio: service.folio,
+        clients: client ? {
+          id: client.id,
+          name: client.name
+        } : null
+      } : null
+    };
+  }) as Cost[];
+}
+
 export const useCosts = () => {
   const { effectiveIsOnline } = useOfflineMode();
 
@@ -60,14 +119,19 @@ export const useCosts = () => {
         'costs',
         effectiveIsOnline,
         fetchCosts,
-        (rawData) => rawData // Los datos ya están transformados
+        (rawData) => rawData
       );
       
+      // Si viene de cache, hidratar con asociaciones
       if (isFromCache && data.length > 0) {
         toast.info('Datos desde cache local', { 
           description: `${data.length} costos cargados offline`,
           duration: 2000
         });
+        
+        // Hidratar costos con relaciones
+        const hydratedCosts = await hydrateCostsFromCache(data);
+        return hydratedCosts;
       }
       
       return data;
