@@ -1,10 +1,11 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useErrorHandler } from '@/hooks/useErrorHandler';
 import { Cost, CostFormData, PartsExpenseData } from '@/types/costs';
 import { toast } from 'sonner';
 import { useUniversalSync } from './useUniversalSync';
+import { useOfflineMode } from '@/contexts/OfflineModeContext';
+import { offlineFetch, offlineCreate, offlineUpdate, offlineDelete, generateTempId, markAsOffline } from '@/services/offlineOperations';
 
 const fetchCosts = async (): Promise<Cost[]> => {
   const { data, error } = await supabase
@@ -50,13 +51,32 @@ const fetchCosts = async (): Promise<Cost[]> => {
 };
 
 export const useCosts = () => {
+  const { effectiveIsOnline } = useOfflineMode();
+
   return useQuery({
     queryKey: ['costs'],
-    queryFn: fetchCosts,
-    staleTime: 0, // Always fresh data for reports
-    refetchOnWindowFocus: true,
+    queryFn: async () => {
+      const { data, isFromCache } = await offlineFetch<Cost>(
+        'costs',
+        effectiveIsOnline,
+        fetchCosts,
+        (rawData) => rawData // Los datos ya están transformados
+      );
+      
+      if (isFromCache && data.length > 0) {
+        toast.info('Datos desde cache local', { 
+          description: `${data.length} costos cargados offline`,
+          duration: 2000
+        });
+      }
+      
+      return data;
+    },
+    staleTime: 0,
+    refetchOnWindowFocus: effectiveIsOnline,
     refetchOnMount: true,
-    refetchInterval: 30000, // Refetch every 30 seconds to ensure fresh data
+    refetchInterval: effectiveIsOnline ? 30000 : false,
+    retry: effectiveIsOnline ? 2 : 0,
   });
 };
 
@@ -194,19 +214,53 @@ export const useAddCost = () => {
   const queryClient = useQueryClient();
   const { createMutationErrorHandler } = useErrorHandler();
   const { invalidateAll } = useUniversalSync();
+  const { effectiveIsOnline } = useOfflineMode();
   
   return useMutation({
-    mutationFn: addCost,
+    mutationFn: async (costData: CostFormData) => {
+      // Si está online, usar la función original
+      if (effectiveIsOnline) {
+        return addCost(costData);
+      }
+      
+      // MODO OFFLINE: Guardar localmente
+      console.log('[useAddCost] Offline mode - saving locally');
+      const tempId = generateTempId();
+      
+      const offlineCost = {
+        id: tempId,
+        ...costData,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        _isOffline: true,
+      };
+
+      const result = await offlineCreate<any>(
+        'costs',
+        offlineCost,
+        false
+      );
+
+      return [result.data];
+    },
     onSuccess: (data, variables) => {
       console.log('[useAddCost] Mutation success with data:', data);
+      
+      const isOffline = (data?.[0] as any)?._isOffline;
+      if (isOffline) {
+        toast.success('Costo guardado localmente', {
+          description: 'Se sincronizará automáticamente al reconectar'
+        });
+      } else {
+        toast.success('Costo registrado correctamente');
+      }
+      
       invalidateAll();
-      toast.success('Costo registrado correctamente');
       
       if (data?.[0]?.service_id) {
         queryClient.invalidateQueries({ queryKey: ['service-costs', data[0].service_id] });
       }
 
-      // Retornar información para triggear el diálogo de distribución si es necesario
       return {
         cost: data[0],
         shouldShowDistribution: variables.immediate_consumption && 
@@ -299,14 +353,41 @@ const updateCost = async ({ id, ...costData }: { id: string } & any) => {
 export const useUpdateCost = () => {
   const queryClient = useQueryClient();
   const { createMutationErrorHandler } = useErrorHandler();
-  const { invalidateAll } = useUniversalSync();  // FASE 5: Sincronización universal
+  const { invalidateAll } = useUniversalSync();
+  const { effectiveIsOnline } = useOfflineMode();
   
   return useMutation({
-    mutationFn: updateCost,
+    mutationFn: async (params: { id: string } & any) => {
+      // Si está online, usar la función original
+      if (effectiveIsOnline) {
+        return updateCost(params);
+      }
+      
+      // MODO OFFLINE: Actualizar localmente
+      console.log('[useUpdateCost] Offline mode - updating locally');
+      const { id, ...costData } = params;
+      
+      const result = await offlineUpdate<any>(
+        'costs',
+        id,
+        { ...costData, _isOffline: true },
+        false
+      );
+
+      return [result.data];
+    },
     onSuccess: (data) => {
       console.log('[useUpdateCost] Mutation success with data:', data);
       
-      // FASE 5: Invalidar todas las queries relacionadas
+      const isOffline = (data?.[0] as any)?._isOffline;
+      if (isOffline) {
+        toast.success('Cambios guardados localmente', {
+          description: 'Se sincronizarán automáticamente al reconectar'
+        });
+      } else {
+        toast.success('Costo actualizado correctamente');
+      }
+      
       invalidateAll();
       
       if (data?.[0]?.service_id) {
@@ -346,10 +427,36 @@ const deleteCost = async (id: string) => {
 export const useDeleteCost = () => {
   const queryClient = useQueryClient();
   const { createMutationErrorHandler } = useErrorHandler();
+  const { effectiveIsOnline } = useOfflineMode();
+  
   return useMutation({
-    mutationFn: deleteCost,
+    mutationFn: async (id: string) => {
+      // Si está online, usar la función original
+      if (effectiveIsOnline) {
+        return deleteCost(id);
+      }
+      
+      // MODO OFFLINE: Eliminar localmente
+      console.log('[useDeleteCost] Offline mode - deleting locally');
+      
+      const result = await offlineDelete(
+        'costs',
+        id,
+        false
+      );
+
+      return result.data;
+    },
     onSuccess: (serviceId) => {
       console.log('[useDeleteCost] Cost deleted successfully, service_id:', serviceId);
+      
+      if (!effectiveIsOnline) {
+        toast.success('Eliminación guardada localmente', {
+          description: 'Se sincronizará automáticamente al reconectar'
+        });
+      } else {
+        toast.success('Costo eliminado correctamente');
+      }
       
       // Invalidate general queries
       queryClient.invalidateQueries({ queryKey: ['costs'] });
@@ -360,7 +467,6 @@ export const useDeleteCost = () => {
       queryClient.invalidateQueries({ queryKey: ['services'] });
       queryClient.invalidateQueries({ queryKey: ['service-costs'] });
       
-      // If the deleted cost was associated with a service, invalidate that specific service's costs
       if (serviceId) {
         console.log('[useDeleteCost] Invalidating service-costs for service:', serviceId);
         queryClient.invalidateQueries({ queryKey: ['service-costs', serviceId] });
