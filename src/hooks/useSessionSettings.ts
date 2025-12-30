@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 
 export interface SessionSettings {
   enabled: boolean;
@@ -14,10 +15,20 @@ const DEFAULT_SETTINGS: SessionSettings = {
 };
 
 export const useSessionSettings = () => {
+  const { user: authUser, loading: authLoading } = useAuth();
   const [settings, setSettings] = useState<SessionSettings>(DEFAULT_SETTINGS);
   const [loading, setLoading] = useState(true);
 
   const fetchSettings = useCallback(async () => {
+    // Evitar consultas sin sesión (RLS devolverá vacío y quedaremos con defaults)
+    if (!authUser) {
+      setSettings(DEFAULT_SETTINGS);
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
+
     try {
       const { data, error } = await supabase
         .from('system_settings')
@@ -42,21 +53,26 @@ export const useSessionSettings = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [authUser]);
 
   useEffect(() => {
+    if (authLoading) return;
     fetchSettings();
 
-    // Escuchar cambios en la configuración
     const handleSettingsUpdate = () => {
       fetchSettings();
     };
 
-    window.addEventListener('settings-updated', handleSettingsUpdate);
-    return () => {
-      window.removeEventListener('settings-updated', handleSettingsUpdate);
-    };
-  }, [fetchSettings]);
+    // Solo escuchar cambios cuando hay usuario autenticado
+    if (authUser) {
+      window.addEventListener('settings-updated', handleSettingsUpdate);
+      return () => {
+        window.removeEventListener('settings-updated', handleSettingsUpdate);
+      };
+    }
+
+    return;
+  }, [fetchSettings, authLoading, authUser]);
 
   return { settings, loading, refetch: fetchSettings };
 };
