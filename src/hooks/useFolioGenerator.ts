@@ -2,18 +2,58 @@
 import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useSettings } from '@/hooks/useSettings';
+import { useOfflineMode } from '@/contexts/OfflineModeContext';
+import { getCachedTableData } from '@/hooks/useOfflineSync';
+import { getOfflineFolioCounter, saveOfflineFolioCounter } from '@/services/offlineDb';
 import { toast } from 'sonner';
 
 export const useFolioGenerator = () => {
   const { settings } = useSettings();
+  const { effectiveIsOnline } = useOfflineMode();
   const [loading, setLoading] = useState(false);
 
   const generateNextFolio = useCallback(async (): Promise<string> => {
     setLoading(true);
     try {
-      console.log('🔄 Generating new folio with correlative numbering...');
+      console.log('🔄 Generating new folio...', effectiveIsOnline ? '(ONLINE)' : '(OFFLINE)');
       
-      // Obtener el formato de folio y próximo número de la configuración de la empresa
+      // === MODO OFFLINE ===
+      if (!effectiveIsOnline) {
+        console.log('📴 Using offline folio generation...');
+        
+        // Obtener company_data del cache
+        const { data: cachedCompanyData } = await getCachedTableData<any>('company_data');
+        const companyData = cachedCompanyData?.[0];
+        
+        if (!companyData) {
+          console.warn('⚠️ No cached company data, using timestamp fallback');
+          const fallbackFolio = `SRV-OFF-${Date.now().toString().slice(-6)}`;
+          return fallbackFolio;
+        }
+        
+        // Obtener formato y base del contador
+        const folioFormat = companyData.folioFormat || companyData.folio_format || 'SRV-{number}';
+        const baseNumber = companyData.nextServiceFolioNumber || companyData.next_service_folio_number || 1000;
+        
+        // Obtener contador offline actual
+        const offlineCounter = await getOfflineFolioCounter();
+        
+        // Usar el mayor entre el base y el contador offline
+        const nextNumber = Math.max(baseNumber, offlineCounter) + (offlineCounter > 0 ? 1 : 0);
+        
+        console.log('📊 Offline folio generation:', { folioFormat, baseNumber, offlineCounter, nextNumber });
+        
+        // Generar folio
+        const newFolio = folioFormat.replace('{number}', String(nextNumber).padStart(4, '0'));
+        console.log('✅ Generated offline folio:', newFolio);
+        
+        // Guardar nuevo contador offline
+        await saveOfflineFolioCounter(nextNumber + 1);
+        
+        return newFolio;
+      }
+      
+      // === MODO ONLINE (lógica original) ===
       const folioFormat = settings.company?.folioFormat || 'SRV-{number}';
       let nextNumber = settings.company?.nextServiceFolioNumber || 1000;
       
@@ -68,9 +108,12 @@ export const useFolioGenerator = () => {
       return newFolio;
     } catch (error: any) {
       console.error('❌ Error generating folio:', error);
-      toast.error("Error", {
-        description: "No se pudo generar el folio automáticamente.",
-      });
+      // Solo mostrar toast de error si estamos online (offline es esperado que falle Supabase)
+      if (effectiveIsOnline) {
+        toast.error("Error", {
+          description: "No se pudo generar el folio automáticamente.",
+        });
+      }
       // Retornar un folio por defecto basado en timestamp como fallback
       const timestamp = Date.now();
       const fallbackFolio = `SRV-${String(timestamp).slice(-4)}`;
@@ -79,7 +122,7 @@ export const useFolioGenerator = () => {
     } finally {
       setLoading(false);
     }
-  }, [settings.company]);
+  }, [settings.company, effectiveIsOnline]);
 
   const validateFolioUniqueness = useCallback(async (folio: string): Promise<boolean> => {
     try {
