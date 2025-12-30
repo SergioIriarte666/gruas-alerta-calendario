@@ -2,6 +2,44 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Crane } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useOfflineMode } from '@/contexts/OfflineModeContext';
+import { 
+  offlineCreate, 
+  offlineUpdate, 
+  offlineDelete, 
+  offlineFetch 
+} from '@/services/offlineOperations';
+
+// Transformaciones DB <-> App
+const transformFromDb = (crane: any): Crane => ({
+  id: crane.id,
+  licensePlate: crane.license_plate,
+  brand: crane.brand,
+  model: crane.model,
+  type: crane.type as Crane['type'],
+  circulationPermitExpiry: crane.circulation_permit_expiry,
+  insuranceExpiry: crane.insurance_expiry,
+  technicalReviewExpiry: crane.technical_review_expiry,
+  isActive: crane.is_active ?? false,
+  createdAt: crane.created_at,
+  updatedAt: crane.updated_at,
+  createdBy: crane.created_by,
+  creatorName: crane.creator?.full_name || crane.creator?.email || undefined,
+  _isOffline: crane._isOffline || false
+});
+
+const transformToDb = (crane: Partial<Crane>) => {
+  const data: any = {};
+  if (crane.licensePlate !== undefined) data.license_plate = crane.licensePlate;
+  if (crane.brand !== undefined) data.brand = crane.brand;
+  if (crane.model !== undefined) data.model = crane.model;
+  if (crane.type !== undefined) data.type = crane.type;
+  if (crane.circulationPermitExpiry !== undefined) data.circulation_permit_expiry = crane.circulationPermitExpiry;
+  if (crane.insuranceExpiry !== undefined) data.insurance_expiry = crane.insuranceExpiry;
+  if (crane.technicalReviewExpiry !== undefined) data.technical_review_expiry = crane.technicalReviewExpiry;
+  if (crane.isActive !== undefined) data.is_active = crane.isActive;
+  return data;
+};
 
 const fetchCranes = async (): Promise<Crane[]> => {
   const { data, error } = await supabase
@@ -17,69 +55,61 @@ const fetchCranes = async (): Promise<Crane[]> => {
     .order('license_plate', { ascending: true });
 
   if (error) throw error;
-
-  const formattedCranes: Crane[] = data.map((crane: any) => ({
-    id: crane.id,
-    licensePlate: crane.license_plate,
-    brand: crane.brand,
-    model: crane.model,
-    type: crane.type as Crane['type'],
-    circulationPermitExpiry: crane.circulation_permit_expiry,
-    insuranceExpiry: crane.insurance_expiry,
-    technicalReviewExpiry: crane.technical_review_expiry,
-    isActive: crane.is_active ?? false,
-    createdAt: crane.created_at,
-    updatedAt: crane.updated_at,
-    createdBy: crane.created_by,
-    creatorName: crane.creator?.full_name || crane.creator?.email || undefined
-  }));
-
-  return formattedCranes;
+  return data.map(transformFromDb);
 };
 
 export const useCranes = () => {
   const queryClient = useQueryClient();
+  const { effectiveIsOnline } = useOfflineMode();
 
   const { data: cranes = [], isLoading: loading, refetch } = useQuery<Crane[]>({
     queryKey: ['cranes'],
-    queryFn: fetchCranes,
+    queryFn: async () => {
+      const { data, isFromCache } = await offlineFetch<Crane>(
+        'cranes',
+        effectiveIsOnline,
+        fetchCranes,
+        (rawData) => rawData.map(transformFromDb)
+      );
+      
+      if (isFromCache && data.length > 0) {
+        toast.info('Datos desde cache local', { 
+          description: `${data.length} grúas cargadas offline`,
+          duration: 2000
+        });
+      }
+      
+      return data;
+    },
+    retry: effectiveIsOnline ? 2 : 0,
   });
 
   const createCraneMutation = useMutation({
     mutationFn: async (craneData: Omit<Crane, 'id' | 'createdAt' | 'updatedAt'>) => {
-      // Get current user for created_by
       const { data: { user } } = await supabase.auth.getUser();
       
-      const { data, error } = await supabase
-        .from('cranes')
-        .insert({
-          license_plate: craneData.licensePlate,
-          brand: craneData.brand,
-          model: craneData.model,
-          type: craneData.type,
-          circulation_permit_expiry: craneData.circulationPermitExpiry,
-          insurance_expiry: craneData.insuranceExpiry,
-          technical_review_expiry: craneData.technicalReviewExpiry,
-          is_active: craneData.isActive,
-          created_by: user?.id || null
-        })
-        .select()
-        .single();
-      if (error) throw error;
-      const newCrane: Crane = {
-        id: data.id,
-        licensePlate: data.license_plate,
-        brand: data.brand,
-        model: data.model,
-        type: data.type as Crane['type'],
-        circulationPermitExpiry: data.circulation_permit_expiry,
-        insuranceExpiry: data.insurance_expiry,
-        technicalReviewExpiry: data.technical_review_expiry,
-        isActive: data.is_active || false,
-        createdAt: data.created_at,
-        updatedAt: data.updated_at
+      const dbData = {
+        license_plate: craneData.licensePlate,
+        brand: craneData.brand,
+        model: craneData.model,
+        type: craneData.type,
+        circulation_permit_expiry: craneData.circulationPermitExpiry,
+        insurance_expiry: craneData.insuranceExpiry,
+        technical_review_expiry: craneData.technicalReviewExpiry,
+        is_active: craneData.isActive,
+        created_by: user?.id || null
       };
-      return newCrane;
+
+      const result = await offlineCreate<Crane>(
+        'cranes',
+        dbData as any,
+        effectiveIsOnline,
+        undefined,
+        transformFromDb
+      );
+
+      if (result.error) throw result.error;
+      return result.data!;
     },
     onSuccess: (newCrane) => {
       queryClient.invalidateQueries({ queryKey: ['cranes'] });
@@ -91,7 +121,6 @@ export const useCranes = () => {
     onError: (error: any) => {
       console.error('Error creating crane:', error);
       
-      // Check for duplicate errors
       if (error?.code === '23505' || error?.message?.includes('duplicate key value')) {
         if (error?.message?.includes('license_plate')) {
           toast.error("Grúa duplicada", {
@@ -109,98 +138,21 @@ export const useCranes = () => {
 
   const updateCraneMutation = useMutation({
     mutationFn: async ({ id, craneData }: { id: string, craneData: Partial<Crane> }) => {
-      console.log('🔧 INICIANDO ACTUALIZACIÓN DE GRÚA');
-      console.log('ID de grúa:', id);
-      console.log('Datos a actualizar:', craneData);
-      
-      // Verificar autenticación
-      const { data: { user }, error: authError } = await supabase.auth.getUser();
-      if (authError || !user) {
-        console.error('❌ Error de autenticación:', authError);
-        throw new Error('Usuario no autenticado');
-      }
-      console.log('✅ Usuario autenticado:', user.id);
+      const result = await offlineUpdate<Crane>(
+        'cranes',
+        id,
+        craneData,
+        effectiveIsOnline,
+        transformToDb,
+        transformFromDb
+      );
 
-      // Verificar que la grúa existe antes de actualizar
-      const { data: existingCrane, error: fetchError } = await supabase
-        .from('cranes')
-        .select('*')
-        .eq('id', id)
-        .single();
-
-      if (fetchError) {
-        console.error('❌ Error al buscar grúa existente:', fetchError);
-        throw fetchError;
-      }
-
-      if (!existingCrane) {
-        console.error('❌ Grúa no encontrada con ID:', id);
-        throw new Error('Grúa no encontrada');
-      }
-
-      console.log('✅ Grúa existente encontrada:', existingCrane);
-
-      const updateData: any = {};
-      if (craneData.licensePlate !== undefined) updateData.license_plate = craneData.licensePlate;
-      if (craneData.brand !== undefined) updateData.brand = craneData.brand;
-      if (craneData.model !== undefined) updateData.model = craneData.model;
-      if (craneData.type !== undefined) updateData.type = craneData.type;
-      if (craneData.circulationPermitExpiry !== undefined) updateData.circulation_permit_expiry = craneData.circulationPermitExpiry;
-      if (craneData.insuranceExpiry !== undefined) updateData.insurance_expiry = craneData.insuranceExpiry;
-      if (craneData.technicalReviewExpiry !== undefined) updateData.technical_review_expiry = craneData.technicalReviewExpiry;
-      if (craneData.isActive !== undefined) updateData.is_active = craneData.isActive;
-
-      console.log('📝 Datos de actualización preparados:', updateData);
-
-      // Realizar la actualización
-      const { data: updatedData, error: updateError } = await supabase
-        .from('cranes')
-        .update(updateData)
-        .eq('id', id)
-        .select()
-        .single();
-
-      if (updateError) {
-        console.error('❌ Error en la actualización:', updateError);
-        console.error('Código de error:', updateError.code);
-        console.error('Mensaje:', updateError.message);
-        console.error('Detalles:', updateError.details);
-        throw updateError;
-      }
-
-      if (!updatedData) {
-        console.error('❌ No se recibieron datos actualizados');
-        throw new Error('No se recibieron datos actualizados');
-      }
-
-      console.log('✅ Actualización exitosa. Datos recibidos:', updatedData);
-
-      // Verificar que la actualización se aplicó correctamente
-      const { data: verificationData, error: verifyError } = await supabase
-        .from('cranes')
-        .select('*')
-        .eq('id', id)
-        .single();
-
-      if (verifyError) {
-        console.error('❌ Error al verificar actualización:', verifyError);
-      } else {
-        console.log('🔍 Verificación post-actualización:', verificationData);
-      }
-
-      return updatedData;
+      if (result.error) throw result.error;
+      return result.data;
     },
-    onSuccess: (updatedData) => {
-      console.log('🎉 Actualización completada exitosamente');
-      console.log('Datos actualizados:', updatedData);
-      
-      // Invalidar y refrescar caches
-      console.log('🔄 Invalidando caches...');
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['cranes'] });
       queryClient.invalidateQueries({ queryKey: ['services'] });
-      
-      // Forzar refetch inmediato
-      console.log('🔄 Forzando refetch de servicios...');
       queryClient.refetchQueries({ queryKey: ['services'] });
       
       toast.success("Grúa actualizada", {
@@ -208,9 +160,7 @@ export const useCranes = () => {
       });
     },
     onError: (error: any) => {
-      console.error('💥 Error en updateCraneMutation:', error);
-      console.error('Tipo de error:', typeof error);
-      console.error('Error completo:', JSON.stringify(error, null, 2));
+      console.error('Error updating crane:', error);
       
       let errorMessage = "No se pudo actualizar la grúa.";
       
@@ -230,8 +180,8 @@ export const useCranes = () => {
 
   const deleteCraneMutation = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from('cranes').delete().eq('id', id);
-      if (error) throw error;
+      const result = await offlineDelete('cranes', id, effectiveIsOnline);
+      if (result.error) throw result.error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['cranes'] });
@@ -253,14 +203,16 @@ export const useCranes = () => {
       const crane = cranes.find(c => c.id === id);
       if (!crane) throw new Error('Crane not found');
 
-      const { data, error } = await supabase
-        .from('cranes')
-        .update({ is_active: !crane.isActive })
-        .eq('id', id)
-        .select()
-        .single();
+      const result = await offlineUpdate<Crane>(
+        'cranes',
+        id,
+        { isActive: !crane.isActive },
+        effectiveIsOnline,
+        transformToDb,
+        transformFromDb
+      );
 
-      if (error) throw error;
+      if (result.error) throw result.error;
       return { ...crane, isActive: !crane.isActive };
     },
     onSuccess: (crane) => {
