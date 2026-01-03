@@ -1,0 +1,248 @@
+
+import React, { useMemo } from 'react';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Slider } from '@/components/ui/slider';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Separator } from '@/components/ui/separator';
+import { RefreshCw, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { 
+  ReportColumnsConfig, 
+  ColumnKey, 
+  defaultReportColumnConfig, 
+  columnOrder 
+} from '@/types/reportColumnConfig';
+
+interface ReportColumnsSettingsProps {
+  config: ReportColumnsConfig;
+  onChange: (config: ReportColumnsConfig) => void;
+}
+
+export const ReportColumnsSettings: React.FC<ReportColumnsSettingsProps> = ({
+  config,
+  onChange
+}) => {
+  const { visibleColumns, totalWidth, isValid } = useMemo(() => {
+    const visible = columnOrder.filter(key => config.columns[key].visible);
+    const total = visible.reduce((sum, key) => sum + config.columns[key].width, 0);
+    return {
+      visibleColumns: visible,
+      totalWidth: total,
+      isValid: Math.abs(total - 100) < 1
+    };
+  }, [config]);
+
+  const handleVisibilityChange = (key: ColumnKey, checked: boolean) => {
+    const newConfig = {
+      ...config,
+      columns: {
+        ...config.columns,
+        [key]: { ...config.columns[key], visible: checked }
+      }
+    };
+    onChange(newConfig);
+  };
+
+  const handleWidthChange = (key: ColumnKey, width: number) => {
+    const newConfig = {
+      ...config,
+      columns: {
+        ...config.columns,
+        [key]: { ...config.columns[key], width }
+      }
+    };
+    onChange(newConfig);
+  };
+
+  const handleAutoBalance = () => {
+    const visible = columnOrder.filter(key => config.columns[key].visible);
+    if (visible.length === 0) return;
+
+    const baseWidth = Math.floor(100 / visible.length);
+    const remainder = 100 - (baseWidth * visible.length);
+
+    const newColumns = { ...config.columns };
+    visible.forEach((key, index) => {
+      newColumns[key] = {
+        ...newColumns[key],
+        width: baseWidth + (index < remainder ? 1 : 0)
+      };
+    });
+
+    onChange({ ...config, columns: newColumns });
+  };
+
+  const handleResetDefaults = () => {
+    onChange(defaultReportColumnConfig);
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Header con indicador de total */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <span className="text-sm text-gray-600">
+            Columnas visibles: <span className="font-medium text-black">{visibleColumns.length}/{columnOrder.length}</span>
+          </span>
+          <Separator orientation="vertical" className="h-4" />
+          <span className="text-sm text-gray-600">
+            Total anchos: 
+            <span className={`font-medium ml-1 ${isValid ? 'text-tms-green' : 'text-amber-600'}`}>
+              {totalWidth}%
+            </span>
+          </span>
+          {isValid ? (
+            <CheckCircle2 className="w-4 h-4 text-tms-green" />
+          ) : (
+            <AlertTriangle className="w-4 h-4 text-amber-600" />
+          )}
+        </div>
+      </div>
+
+      {!isValid && (
+        <div className="flex items-center gap-2 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+          <AlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0" />
+          <span className="text-sm text-amber-800">
+            El total de anchos debe sumar 100%. Actual: {totalWidth}%
+          </span>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleAutoBalance}
+            className="ml-auto text-xs"
+          >
+            <RefreshCw className="w-3 h-3 mr-1" />
+            Auto-balancear
+          </Button>
+        </div>
+      )}
+
+      {/* Lista de columnas */}
+      <div className="space-y-3">
+        {columnOrder.map((key) => {
+          const column = config.columns[key];
+          return (
+            <div 
+              key={key} 
+              className={`flex items-center gap-4 p-3 rounded-lg border transition-colors ${
+                column.visible 
+                  ? 'bg-white border-gray-200' 
+                  : 'bg-gray-50 border-gray-100'
+              }`}
+            >
+              {/* Checkbox */}
+              <Checkbox
+                id={`col-${key}`}
+                checked={column.visible}
+                onCheckedChange={(checked) => 
+                  handleVisibilityChange(key, checked === true)
+                }
+              />
+              
+              {/* Label */}
+              <Label 
+                htmlFor={`col-${key}`}
+                className={`w-28 font-medium ${
+                  column.visible ? 'text-black' : 'text-gray-400'
+                }`}
+              >
+                {column.label}
+              </Label>
+
+              {/* Slider */}
+              <div className="flex-1">
+                <Slider
+                  value={[column.width]}
+                  onValueChange={([value]) => handleWidthChange(key, value)}
+                  min={3}
+                  max={25}
+                  step={1}
+                  disabled={!column.visible}
+                  className={column.visible ? '' : 'opacity-40'}
+                />
+              </div>
+
+              {/* Input numérico */}
+              <div className="flex items-center gap-1">
+                <Input
+                  type="number"
+                  min={3}
+                  max={25}
+                  value={column.width}
+                  onChange={(e) => {
+                    const val = parseInt(e.target.value);
+                    if (!isNaN(val) && val >= 3 && val <= 25) {
+                      handleWidthChange(key, val);
+                    }
+                  }}
+                  disabled={!column.visible}
+                  className={`w-16 text-center h-8 text-sm ${
+                    column.visible 
+                      ? 'bg-white border-gray-300' 
+                      : 'bg-gray-100 border-gray-200 text-gray-400'
+                  }`}
+                />
+                <span className={`text-sm ${column.visible ? 'text-gray-600' : 'text-gray-400'}`}>
+                  %
+                </span>
+              </div>
+
+              {/* Badge de estado */}
+              {!column.visible && (
+                <Badge variant="secondary" className="text-xs">
+                  Oculta
+                </Badge>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Vista previa visual */}
+      <div className="space-y-2">
+        <Label className="text-black text-sm">Vista previa de columnas</Label>
+        <div className="flex h-8 rounded-lg overflow-hidden border border-gray-200">
+          {visibleColumns.map((key, index) => {
+            const column = config.columns[key];
+            const colors = [
+              'bg-blue-500', 'bg-tms-green', 'bg-purple-500', 'bg-amber-500',
+              'bg-pink-500', 'bg-indigo-500', 'bg-cyan-500', 'bg-orange-500',
+              'bg-teal-500', 'bg-rose-500', 'bg-violet-500', 'bg-lime-500', 'bg-sky-500'
+            ];
+            return (
+              <div
+                key={key}
+                className={`${colors[index % colors.length]} flex items-center justify-center text-white text-xs font-medium overflow-hidden`}
+                style={{ width: `${column.width}%` }}
+                title={`${column.label}: ${column.width}%`}
+              >
+                {column.width >= 5 ? column.label.substring(0, 3) : ''}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Botones de acción */}
+      <div className="flex gap-3">
+        <Button
+          variant="outline"
+          onClick={handleAutoBalance}
+          className="flex-1"
+        >
+          <RefreshCw className="w-4 h-4 mr-2" />
+          Auto-balancear
+        </Button>
+        <Button
+          variant="outline"
+          onClick={handleResetDefaults}
+          className="flex-1"
+        >
+          Restaurar valores por defecto
+        </Button>
+      </div>
+    </div>
+  );
+};

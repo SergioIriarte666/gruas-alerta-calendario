@@ -7,10 +7,64 @@ import { es } from 'date-fns/locale';
 import { ExportServiceReportArgs } from './reportTypes';
 import { createExportFileName, addCompanyHeader } from './reportUtils';
 import { getDisplayServiceValue } from '../serviceValueCalculations';
+import { Service } from '@/types';
+import { defaultReportColumnConfig, ColumnKey, columnOrder, ReportColumnsConfig } from '@/types/reportColumnConfig';
 
-export const exportServiceReport = async ({ format, services, settings, appliedFilters, logoUrl, customFileName }: ExportServiceReportArgs & { customFileName?: string }) => {
+// Función para obtener el valor de una columna dado un servicio
+const getColumnValue = (service: Service, key: ColumnKey): string => {
+  switch (key) {
+    case 'fecha':
+      return formatDate(new Date(service.serviceDate + 'T00:00:00'), 'dd/MM/yy');
+    case 'folio':
+      return service.folio;
+    case 'cliente':
+      return truncate(service.client.name, 14);
+    case 'asegurado':
+      return truncate((service as any).insuredName || '-', 14);
+    case 'cotizacion':
+      return truncate(service.quoteNumber || '-', 8);
+    case 'oc':
+      return truncate(service.purchaseOrder || '-', 6);
+    case 'factura':
+      return truncate(service.invoiceFolio || '-', 5);
+    case 'tipoServicio':
+      return truncate(service.serviceType.name, 8);
+    case 'patente':
+      return service.licensePlate || 'N/A';
+    case 'origen':
+      return truncate(service.origin || 'N/A', 10);
+    case 'destino':
+      return truncate(service.destination || 'N/A', 10);
+    case 'estado':
+      return service.status;
+    case 'valor':
+      return `$${getDisplayServiceValue(service).toLocaleString('es-CL')}`;
+    default:
+      return '-';
+  }
+};
+
+const truncate = (str: string, maxLength: number): string => {
+  return str.length > maxLength ? str.substring(0, maxLength) + '...' : str;
+};
+
+export const exportServiceReport = async ({ 
+  format, 
+  services, 
+  settings, 
+  appliedFilters, 
+  logoUrl, 
+  customFileName,
+  reportColumnConfig 
+}: ExportServiceReportArgs & { customFileName?: string }) => {
   const { company } = settings;
   const exportFileDefaultName = customFileName || createExportFileName('informe-servicios', appliedFilters.dateRange.from, appliedFilters.dateRange.to);
+  
+  // Usar configuración proporcionada o valores por defecto
+  const config = reportColumnConfig || defaultReportColumnConfig;
+  
+  // Obtener solo las columnas visibles en el orden correcto
+  const visibleColumns = columnOrder.filter(key => config.columns[key].visible);
   
   // Ordenar servicios por fecha (más antiguas primero)
   const sortedServices = [...services].sort((a, b) => {
@@ -26,73 +80,61 @@ export const exportServiceReport = async ({ format, services, settings, appliedF
   if (format === 'pdf') {
     try {
       console.log('📄 [PDF Export] Iniciando generación de PDF con', services.length, 'servicios');
-      console.log('📄 [PDF-EXPORT] Generando PDF con logo:', logoUrl);
+      console.log('📄 [PDF Export] Columnas visibles:', visibleColumns.length);
       
       const doc = new jsPDF('landscape', 'mm', 'a4');
       const pageWidth = doc.internal.pageSize.width;
       let startY = await addCompanyHeader(doc, company, 15, logoUrl);
 
-    doc.setFontSize(14);
-    doc.text('Informe de Servicios', 14, startY);
-    startY += 10;
-    
-    const filterLabels = [
-      ['Período', `${formatDate(new Date(appliedFilters.dateRange.from + 'T00:00:00'), 'P', { locale: es })} - ${formatDate(new Date(appliedFilters.dateRange.to + 'T00:00:00'), 'P', { locale: es })}`],
-      ['Cliente', appliedFilters.client]
-    ];
-    doc.setFontSize(11);
-    autoTable(doc, { body: filterLabels, startY, theme: 'plain', styles: { fontSize: 9 } });
+      doc.setFontSize(14);
+      doc.text('Informe de Servicios', 14, startY);
+      startY += 10;
+      
+      const filterLabels = [
+        ['Período', `${formatDate(new Date(appliedFilters.dateRange.from + 'T00:00:00'), 'P', { locale: es })} - ${formatDate(new Date(appliedFilters.dateRange.to + 'T00:00:00'), 'P', { locale: es })}`],
+        ['Cliente', appliedFilters.client]
+      ];
+      doc.setFontSize(11);
+      autoTable(doc, { body: filterLabels, startY, theme: 'plain', styles: { fontSize: 9 } });
 
-    let lastY = (doc as any).lastAutoTable.finalY;
+      let lastY = (doc as any).lastAutoTable.finalY;
 
-    const summaryData = [
-      ['Total Servicios', sortedServices.length.toString()],
-      ['Valor Total', `$${totalValue.toLocaleString('es-CL')}`]
-    ];
-    doc.setFontSize(11);
-    autoTable(doc, { head: [['Resumen', '']], body: summaryData, startY: lastY + 5, theme: 'grid' });
-    lastY = (doc as any).lastAutoTable.finalY;
+      const summaryData = [
+        ['Total Servicios', sortedServices.length.toString()],
+        ['Valor Total', `$${totalValue.toLocaleString('es-CL')}`]
+      ];
+      doc.setFontSize(11);
+      autoTable(doc, { head: [['Resumen', '']], body: summaryData, startY: lastY + 5, theme: 'grid' });
+      lastY = (doc as any).lastAutoTable.finalY;
 
-    // Tabla optimizada - SIN operador, con origen-destino más claro, con Asegurado
-    const availableWidth = pageWidth - 28; // Márgenes izquierdo y derecho
-    autoTable(doc, {
-      head: [['Fecha', 'Folio', 'Cliente', 'Asegurado', 'Cotización', 'OC', 'Factura', 'Tipo Servicio', 'Patente Veh.', 'Origen', 'Destino', 'Estado', 'Valor']],
-      body: sortedServices.map(s => [
-        formatDate(new Date(s.serviceDate + 'T00:00:00'), 'dd/MM/yy'),
-        s.folio,
-        s.client.name.length > 14 ? s.client.name.substring(0, 14) + '...' : s.client.name,
-        ((s as any).insuredName || '-').length > 14 ? ((s as any).insuredName || '-').substring(0, 14) + '...' : ((s as any).insuredName || '-'),
-        (s.quoteNumber || '-').length > 8 ? (s.quoteNumber || '-').substring(0, 8) + '...' : (s.quoteNumber || '-'),
-        (s.purchaseOrder || '-').length > 6 ? (s.purchaseOrder || '-').substring(0, 6) + '...' : (s.purchaseOrder || '-'),
-        (s.invoiceFolio || '-').length > 5 ? (s.invoiceFolio || '-').substring(0, 5) + '...' : (s.invoiceFolio || '-'),
-        s.serviceType.name.length > 8 ? s.serviceType.name.substring(0, 8) + '...' : s.serviceType.name,
-        s.licensePlate || 'N/A',
-        (s.origin || 'N/A').length > 10 ? (s.origin || 'N/A').substring(0, 10) + '...' : (s.origin || 'N/A'),
-        (s.destination || 'N/A').length > 10 ? (s.destination || 'N/A').substring(0, 10) + '...' : (s.destination || 'N/A'),
-        s.status,
-        `$${getDisplayServiceValue(s).toLocaleString('es-CL')}`
-      ]),
-      startY: lastY + 10,
-      headStyles: { fillColor: [41, 128, 185], fontSize: 7 },
-      styles: { fontSize: 6, cellPadding: 1 },
-      tableWidth: availableWidth,
-      columnStyles: {
-        0: { cellWidth: availableWidth * 0.06 },  // Fecha - 6%
-        1: { cellWidth: availableWidth * 0.06 },  // Folio - 6%
-        2: { cellWidth: availableWidth * 0.11 },  // Cliente - 11%
-        3: { cellWidth: availableWidth * 0.11 },  // Asegurado - 11%
-        4: { cellWidth: availableWidth * 0.06 },  // Cotización - 6%
-        5: { cellWidth: availableWidth * 0.05 },  // OC - 5%
-        6: { cellWidth: availableWidth * 0.04 },  // Factura - 4%
-        7: { cellWidth: availableWidth * 0.07 },  // Tipo Servicio - 7%
-        8: { cellWidth: availableWidth * 0.07 },  // Patente Veh. - 7%
-        9: { cellWidth: availableWidth * 0.12 },  // Origen - 12%
-        10: { cellWidth: availableWidth * 0.12 }, // Destino - 12%
-        11: { cellWidth: availableWidth * 0.06 }, // Estado - 6%
-        12: { cellWidth: availableWidth * 0.07 }  // Valor - 7%
-      }
-    });
-    
+      // Generar headers dinámicamente basado en columnas visibles
+      const headers = visibleColumns.map(key => config.columns[key].label);
+      
+      // Generar body dinámicamente
+      const body = sortedServices.map(service => 
+        visibleColumns.map(key => getColumnValue(service, key))
+      );
+
+      // Calcular anchos de columnas proporcionalmente
+      const totalWidth = visibleColumns.reduce((sum, key) => sum + config.columns[key].width, 0);
+      const availableWidth = pageWidth - 28;
+      
+      const columnStyles: Record<number, { cellWidth: number }> = {};
+      visibleColumns.forEach((key, index) => {
+        const widthPercent = config.columns[key].width / totalWidth;
+        columnStyles[index] = { cellWidth: availableWidth * widthPercent };
+      });
+
+      autoTable(doc, {
+        head: [headers],
+        body,
+        startY: lastY + 10,
+        headStyles: { fillColor: [41, 128, 185], fontSize: 7 },
+        styles: { fontSize: 6, cellPadding: 1 },
+        tableWidth: availableWidth,
+        columnStyles
+      });
+      
       console.log('✅ [PDF Export] PDF generado exitosamente');
       doc.save(`${exportFileDefaultName}.pdf`);
     } catch (error) {

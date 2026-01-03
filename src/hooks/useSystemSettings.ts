@@ -3,6 +3,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import type { SystemSettings, NotificationSettings } from '@/types/settings';
+import { ReportColumnsConfig, defaultReportColumnConfig } from '@/types/reportColumnConfig';
+import type { Json } from '@/integrations/supabase/types';
 
 interface SystemSettingsFromDB {
   id: string;
@@ -15,6 +17,7 @@ interface SystemSettingsFromDB {
   invoice_alerts: boolean;
   overdue_notifications: boolean;
   system_updates: boolean;
+  report_column_config?: any;
 }
 
 export const useSystemSettings = () => {
@@ -23,6 +26,7 @@ export const useSystemSettings = () => {
     backupFrequency: 'daily',
     dataRetention: 12,
     maintenanceMode: false,
+    reportColumnConfig: defaultReportColumnConfig,
   });
 
   const [notificationSettings, setNotificationSettings] = useState<NotificationSettings>({
@@ -50,11 +54,24 @@ export const useSystemSettings = () => {
       }
 
       if (data) {
+        // Parse report column config
+        let reportColumnConfig = defaultReportColumnConfig;
+        if (data.report_column_config) {
+          try {
+            reportColumnConfig = typeof data.report_column_config === 'string' 
+              ? JSON.parse(data.report_column_config) 
+              : data.report_column_config;
+          } catch (e) {
+            console.warn('Error parsing report_column_config, using defaults');
+          }
+        }
+
         setSystemSettings({
           autoBackup: data.auto_backup,
           backupFrequency: data.backup_frequency as 'daily' | 'weekly' | 'monthly',
           dataRetention: data.data_retention,
           maintenanceMode: data.maintenance_mode,
+          reportColumnConfig,
         });
 
         setNotificationSettings({
@@ -100,6 +117,7 @@ export const useSystemSettings = () => {
         invoice_alerts: notificationSettings.invoiceAlerts,
         overdue_notifications: notificationSettings.overdueNotifications,
         system_updates: notificationSettings.systemUpdates,
+        report_column_config: JSON.parse(JSON.stringify(systemSettings.reportColumnConfig)) as Json,
         updated_at: new Date().toISOString(),
       };
 
