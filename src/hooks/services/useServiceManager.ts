@@ -166,6 +166,7 @@ const transformToService = (data: any): Service => {
     custodyDiscountPercentage: data.custody_discount_percentage || undefined,
     custodyTotalAmount: data.custody_total_amount || undefined,
     custodyNotes: data.custody_notes || undefined,
+    insuredName: data.insured_name || undefined,
     createdAt: data.created_at,
     updatedAt: data.updated_at,
     createdBy: data.created_by || undefined,
@@ -286,6 +287,7 @@ export const useServiceManager = () => {
           custody_discount_percentage: serviceData.custodyDiscountPercentage || null,
           custody_total_amount: serviceData.custodyTotalAmount || null,
           custody_notes: serviceData.custodyNotes || null,
+          insured_name: serviceData.insuredName || null,
           created_by: createdBy
         };
 
@@ -621,6 +623,9 @@ export const useServiceManager = () => {
           }),
           ...(serviceData.custodyNotes !== undefined && {
             custody_notes: serviceData.custodyNotes
+          }),
+          ...(serviceData.insuredName !== undefined && {
+            insured_name: serviceData.insuredName
           })
         };
       }

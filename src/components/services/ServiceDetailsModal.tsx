@@ -293,6 +293,9 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose, onDuplicate }: S
                   <DetailSection title="Cliente" icon={User}>
                       <DetailItem icon={User} label="Nombre / Razón Social" value={serviceData.client.name} valueClass="text-lg" />
                       <DetailItem icon={Building} label="Departamento" value={serviceData.client.department} />
+                      {serviceData.insuredName && (
+                        <DetailItem icon={Shield} label="Asegurado" value={serviceData.insuredName} />
+                      )}
                       <DetailItem icon={IdCard} label="RUT" value={serviceData.client.rut} />
                       <DetailItem icon={Phone} label="Teléfono" value={serviceData.client.phone} />
                       <DetailItem icon={Mail} label="Email" value={serviceData.client.email} />

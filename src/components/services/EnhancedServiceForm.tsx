@@ -120,7 +120,8 @@ export const EnhancedServiceForm = ({
     custodyVehicleType: service?.custodyVehicleType || (service as any)?.custody_vehicle_type || '',
     custodyDiscountPercentage: (service?.custodyDiscountPercentage !== undefined ? service.custodyDiscountPercentage : (service as any)?.custody_discount_percentage) || 0,
     custodyTotalAmount: service?.custodyTotalAmount || (service as any)?.custody_total_amount || undefined,
-    custodyNotes: service?.custodyNotes || (service as any)?.custody_notes || ''
+    custodyNotes: service?.custodyNotes || (service as any)?.custody_notes || '',
+    insuredName: service?.insuredName || (service as any)?.insured_name || ''
   });
 
   // Map prefilledData to formData when duplicating
@@ -161,7 +162,8 @@ export const EnhancedServiceForm = ({
         custodyVehicleType: '',
         custodyDiscountPercentage: 0,
         custodyTotalAmount: prefilledData.custodyDetails?.totalAmount,
-        custodyNotes: ''
+        custodyNotes: '',
+        insuredName: ''
       });
       
       setEnableCustody(prefilledData.inCustody || false);
@@ -308,7 +310,8 @@ export const EnhancedServiceForm = ({
         custodyVehicleType: service.custodyVehicleType || (service as any)?.custody_vehicle_type || '',
         custodyDiscountPercentage: (service.custodyDiscountPercentage !== undefined ? service.custodyDiscountPercentage : (service as any)?.custody_discount_percentage) || 0,
         custodyTotalAmount: service.custodyTotalAmount || (service as any)?.custody_total_amount || undefined,
-        custodyNotes: service.custodyNotes || (service as any)?.custody_notes || ''
+        custodyNotes: service.custodyNotes || (service as any)?.custody_notes || '',
+        insuredName: service.insuredName || (service as any)?.insured_name || ''
       });
       setIsManualFolio(true);
     }
@@ -750,6 +753,8 @@ export const EnhancedServiceForm = ({
                     onPurchaseOrderChange={(value) => setFormData(prev => ({ ...prev, purchaseOrder: value }))}
                     quoteNumber={formData.quoteNumber}
                     onQuoteNumberChange={(value) => setFormData(prev => ({ ...prev, quoteNumber: value }))}
+                    insuredName={formData.insuredName}
+                    onInsuredNameChange={(value) => setFormData(prev => ({ ...prev, insuredName: value }))}
                     serviceTypeId={formData.serviceType}
                     onServiceTypeChange={(value) => setFormData(prev => ({ ...prev, serviceType: value }))}
                     serviceTypes={serviceTypes}

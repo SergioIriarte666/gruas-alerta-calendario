@@ -85,6 +85,7 @@ const transformToService = (data: any): Service => {
     excessAmount: data.excess_amount,
     invoiceFolio: data.invoice_folio,
     invoiceNumeroFiscal: data.invoice_numero_fiscal,
+    insuredName: data.insured_name || undefined,
     createdAt: data.created_at,
     updatedAt: data.updated_at
   };

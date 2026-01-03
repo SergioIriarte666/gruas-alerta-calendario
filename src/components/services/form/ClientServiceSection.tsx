@@ -12,6 +12,8 @@ interface ClientServiceSectionProps {
   onPurchaseOrderChange: (value: string) => void;
   quoteNumber?: string;
   onQuoteNumberChange?: (value: string) => void;
+  insuredName?: string;
+  onInsuredNameChange?: (value: string) => void;
   serviceTypeId: string;
   onServiceTypeChange: (serviceTypeId: string) => void;
   serviceTypes: ServiceType[];
@@ -30,6 +32,8 @@ export const ClientServiceSection = ({
   onPurchaseOrderChange,
   quoteNumber = '',
   onQuoteNumberChange,
+  insuredName = '',
+  onInsuredNameChange,
   serviceTypeId,
   onServiceTypeChange,
   serviceTypes,
@@ -84,6 +88,18 @@ export const ClientServiceSection = ({
           value={quoteNumber}
           onChange={(e) => onQuoteNumberChange?.(e.target.value)}
           placeholder="Ej: COT-24-001"
+          disabled={disabled}
+        />
+      </div>
+
+      {/* Asegurado - Cliente de la aseguradora */}
+      <div className="space-y-2">
+        <Label htmlFor="insuredName">Asegurado (Opcional)</Label>
+        <Input
+          id="insuredName"
+          value={insuredName}
+          onChange={(e) => onInsuredNameChange?.(e.target.value)}
+          placeholder="Nombre del asegurado"
           disabled={disabled}
         />
       </div>
