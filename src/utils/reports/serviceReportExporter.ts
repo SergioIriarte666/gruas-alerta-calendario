@@ -53,45 +53,43 @@ export const exportServiceReport = async ({ format, services, settings, appliedF
     autoTable(doc, { head: [['Resumen', '']], body: summaryData, startY: lastY + 5, theme: 'grid' });
     lastY = (doc as any).lastAutoTable.finalY;
 
-    // Tabla optimizada - SIN operador, con origen-destino más claro
+    // Tabla optimizada - SIN operador, con origen-destino más claro, con Asegurado
     const availableWidth = pageWidth - 28; // Márgenes izquierdo y derecho
     autoTable(doc, {
-      head: [['Fecha', 'Folio', 'Cliente', 'Cotización', 'OC', 'Factura', 'Tipo Servicio', 'Marca Veh.', 'Modelo Veh.', 'Patente Veh.', 'Origen', 'Destino', 'Estado', 'Valor']],
+      head: [['Fecha', 'Folio', 'Cliente', 'Asegurado', 'Cotización', 'OC', 'Factura', 'Tipo Servicio', 'Patente Veh.', 'Origen', 'Destino', 'Estado', 'Valor']],
       body: sortedServices.map(s => [
         formatDate(new Date(s.serviceDate + 'T00:00:00'), 'dd/MM/yy'),
         s.folio,
         s.client.name.length > 10 ? s.client.name.substring(0, 10) + '...' : s.client.name,
+        ((s as any).insuredName || '-').length > 10 ? ((s as any).insuredName || '-').substring(0, 10) + '...' : ((s as any).insuredName || '-'),
         (s.quoteNumber || '-').length > 8 ? (s.quoteNumber || '-').substring(0, 8) + '...' : (s.quoteNumber || '-'),
         (s.purchaseOrder || '-').length > 10 ? (s.purchaseOrder || '-').substring(0, 10) + '...' : (s.purchaseOrder || '-'),
         (s.invoiceFolio || '-').length > 8 ? (s.invoiceFolio || '-').substring(0, 8) + '...' : (s.invoiceFolio || '-'),
         s.serviceType.name.length > 8 ? s.serviceType.name.substring(0, 8) + '...' : s.serviceType.name,
-        (s.vehicleBrand || 'N/A').length > 6 ? (s.vehicleBrand || 'N/A').substring(0, 6) + '...' : (s.vehicleBrand || 'N/A'),
-        (s.vehicleModel || 'N/A').length > 6 ? (s.vehicleModel || 'N/A').substring(0, 6) + '...' : (s.vehicleModel || 'N/A'),
         s.licensePlate || 'N/A',
-        (s.origin || 'N/A').length > 12 ? (s.origin || 'N/A').substring(0, 12) + '...' : (s.origin || 'N/A'),
-        (s.destination || 'N/A').length > 12 ? (s.destination || 'N/A').substring(0, 12) + '...' : (s.destination || 'N/A'),
+        (s.origin || 'N/A').length > 10 ? (s.origin || 'N/A').substring(0, 10) + '...' : (s.origin || 'N/A'),
+        (s.destination || 'N/A').length > 10 ? (s.destination || 'N/A').substring(0, 10) + '...' : (s.destination || 'N/A'),
         s.status,
         `$${getDisplayServiceValue(s).toLocaleString('es-CL')}`
       ]),
       startY: lastY + 10,
-      headStyles: { fillColor: [41, 128, 185], fontSize: 8 },
-      styles: { fontSize: 7, cellPadding: 1.5 },
+      headStyles: { fillColor: [41, 128, 185], fontSize: 7 },
+      styles: { fontSize: 6, cellPadding: 1 },
       tableWidth: availableWidth,
       columnStyles: {
         0: { cellWidth: availableWidth * 0.06 },  // Fecha - 6%
         1: { cellWidth: availableWidth * 0.06 },  // Folio - 6%
         2: { cellWidth: availableWidth * 0.09 },  // Cliente - 9%
-        3: { cellWidth: availableWidth * 0.06 },  // Cotización - 6%
-        4: { cellWidth: availableWidth * 0.07 },  // OC - 7%
-        5: { cellWidth: availableWidth * 0.06 },  // Factura - 6%
-        6: { cellWidth: availableWidth * 0.07 },  // Tipo Servicio - 7%
-        7: { cellWidth: availableWidth * 0.06 },  // Marca Veh. - 6%
-        8: { cellWidth: availableWidth * 0.06 },  // Modelo Veh. - 6%
-        9: { cellWidth: availableWidth * 0.07 },  // Patente Veh. - 7%
-        10: { cellWidth: availableWidth * 0.11 }, // Origen - 11%
-        11: { cellWidth: availableWidth * 0.11 }, // Destino - 11%
-        12: { cellWidth: availableWidth * 0.05 }, // Estado - 5%
-        13: { cellWidth: availableWidth * 0.07 }  // Valor - 7%
+        3: { cellWidth: availableWidth * 0.09 },  // Asegurado - 9%
+        4: { cellWidth: availableWidth * 0.06 },  // Cotización - 6%
+        5: { cellWidth: availableWidth * 0.07 },  // OC - 7%
+        6: { cellWidth: availableWidth * 0.06 },  // Factura - 6%
+        7: { cellWidth: availableWidth * 0.07 },  // Tipo Servicio - 7%
+        8: { cellWidth: availableWidth * 0.07 },  // Patente Veh. - 7%
+        9: { cellWidth: availableWidth * 0.12 },  // Origen - 12%
+        10: { cellWidth: availableWidth * 0.12 }, // Destino - 12%
+        11: { cellWidth: availableWidth * 0.06 }, // Estado - 6%
+        12: { cellWidth: availableWidth * 0.07 }  // Valor - 7%
       }
     });
     
@@ -105,7 +103,7 @@ export const exportServiceReport = async ({ format, services, settings, appliedF
   } else if (format === 'excel') {
     const wb = XLSX.utils.book_new();
 
-    // Hoja principal: Detalle completo de servicios - SIN operador
+    // Hoja principal: Detalle completo de servicios - con Asegurado
     const services_data = sortedServices.map(s => ({
       'Fecha Servicio': formatDate(new Date(s.serviceDate + 'T00:00:00'), 'yyyy-MM-dd'),
       'Hora Inicio': s.startTime || '-',
@@ -114,6 +112,7 @@ export const exportServiceReport = async ({ format, services, settings, appliedF
       'Folio': s.folio,
       'Cliente': s.client.name,
       'RUT Cliente': s.client.rut,
+      'Asegurado': (s as any).insuredName || '-',
       'Cotización': s.quoteNumber || '-',
       'Orden de Compra': s.purchaseOrder || '-',
       'Factura': s.invoiceFolio || '-',

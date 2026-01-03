@@ -3104,6 +3104,7 @@ export type Database = {
           folio: string
           has_excess: boolean
           id: string
+          insured_name: string | null
           invoice_folio: string | null
           invoice_numero_fiscal: string | null
           license_plate: string | null
@@ -3150,6 +3151,7 @@ export type Database = {
           folio: string
           has_excess?: boolean
           id?: string
+          insured_name?: string | null
           invoice_folio?: string | null
           invoice_numero_fiscal?: string | null
           license_plate?: string | null
@@ -3196,6 +3198,7 @@ export type Database = {
           folio?: string
           has_excess?: boolean
           id?: string
+          insured_name?: string | null
           invoice_folio?: string | null
           invoice_numero_fiscal?: string | null
           license_plate?: string | null

@@ -42,6 +42,8 @@ export interface Service {
   custodyDiscountPercentage?: number;
   custodyTotalAmount?: number;
   custodyNotes?: string;
+  // Insured client name (for insurance companies)
+  insuredName?: string;
   createdAt: string;
   updatedAt: string;
   createdBy?: string;
@@ -100,6 +102,8 @@ export interface ServiceFormData {
   custodyDiscountPercentage?: number;
   custodyTotalAmount?: number;
   custodyNotes?: string;
+  // Insured client name (for insurance companies)
+  insuredName?: string;
 }
 
 export interface Client {
