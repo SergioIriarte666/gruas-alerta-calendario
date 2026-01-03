@@ -60,11 +60,11 @@ export const exportServiceReport = async ({ format, services, settings, appliedF
       body: sortedServices.map(s => [
         formatDate(new Date(s.serviceDate + 'T00:00:00'), 'dd/MM/yy'),
         s.folio,
-        s.client.name.length > 10 ? s.client.name.substring(0, 10) + '...' : s.client.name,
-        ((s as any).insuredName || '-').length > 10 ? ((s as any).insuredName || '-').substring(0, 10) + '...' : ((s as any).insuredName || '-'),
+        s.client.name.length > 14 ? s.client.name.substring(0, 14) + '...' : s.client.name,
+        ((s as any).insuredName || '-').length > 14 ? ((s as any).insuredName || '-').substring(0, 14) + '...' : ((s as any).insuredName || '-'),
         (s.quoteNumber || '-').length > 8 ? (s.quoteNumber || '-').substring(0, 8) + '...' : (s.quoteNumber || '-'),
-        (s.purchaseOrder || '-').length > 10 ? (s.purchaseOrder || '-').substring(0, 10) + '...' : (s.purchaseOrder || '-'),
-        (s.invoiceFolio || '-').length > 8 ? (s.invoiceFolio || '-').substring(0, 8) + '...' : (s.invoiceFolio || '-'),
+        (s.purchaseOrder || '-').length > 6 ? (s.purchaseOrder || '-').substring(0, 6) + '...' : (s.purchaseOrder || '-'),
+        (s.invoiceFolio || '-').length > 5 ? (s.invoiceFolio || '-').substring(0, 5) + '...' : (s.invoiceFolio || '-'),
         s.serviceType.name.length > 8 ? s.serviceType.name.substring(0, 8) + '...' : s.serviceType.name,
         s.licensePlate || 'N/A',
         (s.origin || 'N/A').length > 10 ? (s.origin || 'N/A').substring(0, 10) + '...' : (s.origin || 'N/A'),
@@ -79,11 +79,11 @@ export const exportServiceReport = async ({ format, services, settings, appliedF
       columnStyles: {
         0: { cellWidth: availableWidth * 0.06 },  // Fecha - 6%
         1: { cellWidth: availableWidth * 0.06 },  // Folio - 6%
-        2: { cellWidth: availableWidth * 0.09 },  // Cliente - 9%
-        3: { cellWidth: availableWidth * 0.09 },  // Asegurado - 9%
+        2: { cellWidth: availableWidth * 0.11 },  // Cliente - 11%
+        3: { cellWidth: availableWidth * 0.11 },  // Asegurado - 11%
         4: { cellWidth: availableWidth * 0.06 },  // Cotización - 6%
-        5: { cellWidth: availableWidth * 0.07 },  // OC - 7%
-        6: { cellWidth: availableWidth * 0.06 },  // Factura - 6%
+        5: { cellWidth: availableWidth * 0.05 },  // OC - 5%
+        6: { cellWidth: availableWidth * 0.04 },  // Factura - 4%
         7: { cellWidth: availableWidth * 0.07 },  // Tipo Servicio - 7%
         8: { cellWidth: availableWidth * 0.07 },  // Patente Veh. - 7%
         9: { cellWidth: availableWidth * 0.12 },  // Origen - 12%
