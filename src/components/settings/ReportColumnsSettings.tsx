@@ -214,7 +214,7 @@ export const ReportColumnsSettings: React.FC<ReportColumnsSettingsProps> = ({
             return (
               <div
                 key={key}
-                className={`${colors[index % colors.length]} flex items-center justify-center text-white text-xs font-medium overflow-hidden`}
+                className={`${colors[index % colors.length]} flex items-center justify-center text-foreground text-xs font-medium overflow-hidden`}
                 style={{ width: `${column.width}%` }}
                 title={`${column.label}: ${column.width}%`}
               >
