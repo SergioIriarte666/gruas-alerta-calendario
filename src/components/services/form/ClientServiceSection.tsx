@@ -1,8 +1,8 @@
-
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Client, ServiceType } from '@/types';
+import { InsuredNameCombobox } from './InsuredNameCombobox';
 
 interface ClientServiceSectionProps {
   clientId: string;
@@ -95,11 +95,9 @@ export const ClientServiceSection = ({
       {/* Asegurado - Cliente de la aseguradora */}
       <div className="space-y-2">
         <Label htmlFor="insuredName">Asegurado (Opcional)</Label>
-        <Input
-          id="insuredName"
+        <InsuredNameCombobox
           value={insuredName}
-          onChange={(e) => onInsuredNameChange?.(e.target.value)}
-          placeholder="Nombre del asegurado"
+          onValueChange={(value) => onInsuredNameChange?.(value)}
           disabled={disabled}
         />
       </div>
