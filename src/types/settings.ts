@@ -1,3 +1,4 @@
+import { ReportColumnsConfig } from './reportColumnConfig';
 
 export interface CompanySettings {
   name: string;
@@ -9,6 +10,8 @@ export interface CompanySettings {
   folioFormat: string;
   nextServiceFolioNumber?: number; // Nuevo campo para controlar numeración
 }
+
+export type { ReportColumnsConfig } from './reportColumnConfig';
 
 export interface UserSettings {
   language: 'es' | 'en';
@@ -33,6 +36,7 @@ export interface SystemSettings {
   backupFrequency: 'daily' | 'weekly' | 'monthly';
   dataRetention: number;
   maintenanceMode: boolean;
+  reportColumnConfig?: ReportColumnsConfig;
 }
 
 export interface NotificationSettings {

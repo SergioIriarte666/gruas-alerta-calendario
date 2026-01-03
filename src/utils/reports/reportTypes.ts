@@ -5,6 +5,7 @@ import { Service } from '@/types';
 import { CostCategory, Cost } from '@/types/costs';
 import { MaintenanceReportData, MaintenanceReportFilters } from '@/hooks/reports/useMaintenanceReport';
 import { Commission } from '@/types/commissions';
+import { ReportColumnsConfig } from '@/types/reportColumnConfig';
 
 export interface ExportReportArgs {
   format: 'pdf' | 'excel';
@@ -29,6 +30,7 @@ export interface ExportServiceReportArgs {
   settings: Settings;
   appliedFilters: AppliedServiceFilters;
   logoUrl?: string;
+  reportColumnConfig?: ReportColumnsConfig;
 }
 
 export interface AppliedCostFilters {

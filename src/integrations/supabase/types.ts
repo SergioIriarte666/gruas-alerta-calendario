@@ -3526,6 +3526,7 @@ export type Database = {
           invoice_alerts: boolean
           maintenance_mode: boolean
           overdue_notifications: boolean
+          report_column_config: Json | null
           service_reminders: boolean
           session_timeout_enabled: boolean | null
           session_timeout_minutes: number | null
@@ -3543,6 +3544,7 @@ export type Database = {
           invoice_alerts?: boolean
           maintenance_mode?: boolean
           overdue_notifications?: boolean
+          report_column_config?: Json | null
           service_reminders?: boolean
           session_timeout_enabled?: boolean | null
           session_timeout_minutes?: number | null
@@ -3560,6 +3562,7 @@ export type Database = {
           invoice_alerts?: boolean
           maintenance_mode?: boolean
           overdue_notifications?: boolean
+          report_column_config?: Json | null
           service_reminders?: boolean
           session_timeout_enabled?: boolean | null
           session_timeout_minutes?: number | null

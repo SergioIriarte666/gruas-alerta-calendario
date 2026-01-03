@@ -4,6 +4,7 @@ import { exportServiceReport } from './reportExporter';
 import { Service } from '@/types';
 import { Settings } from '@/types/settings';
 import { format as formatDate } from 'date-fns';
+import { ReportColumnsConfig, defaultReportColumnConfig } from '@/types/reportColumnConfig';
 
 interface GenerateReportArgs {
   format: 'pdf' | 'excel';
@@ -182,10 +183,35 @@ const fetchClientName = async (clientId: string): Promise<string> => {
     return data.name;
 }
 
+const fetchReportColumnConfig = async (): Promise<ReportColumnsConfig> => {
+  try {
+    const { data, error } = await supabase
+      .from('system_settings')
+      .select('report_column_config')
+      .limit(1)
+      .maybeSingle();
+
+    if (error) {
+      console.warn('Error fetching report column config:', error);
+      return defaultReportColumnConfig;
+    }
+
+    if (data?.report_column_config) {
+      return data.report_column_config as unknown as ReportColumnsConfig;
+    }
+    
+    return defaultReportColumnConfig;
+  } catch (e) {
+    console.warn('Error fetching report column config:', e);
+    return defaultReportColumnConfig;
+  }
+};
+
 export const generateServiceReport = async ({ format, filters }: GenerateReportArgs) => {
   try {
     const services = await fetchServicesForReport(filters);
     const settings = await fetchSettings();
+    const reportColumnConfig = await fetchReportColumnConfig();
     
     let clientName: string | undefined;
     if (filters.clientId) {
@@ -193,12 +219,14 @@ export const generateServiceReport = async ({ format, filters }: GenerateReportA
     }
 
     console.log('📄 [SERVICE-REPORT] Logo URL de settings:', settings.company.logo);
+    console.log('📄 [SERVICE-REPORT] Report column config loaded');
 
     await exportServiceReport({
       format,
       services,
       settings,
       logoUrl: settings.company.logo,
+      reportColumnConfig,
       appliedFilters: {
         dateRange: {
           from: filters.dateFrom,

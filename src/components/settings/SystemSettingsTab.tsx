@@ -8,10 +8,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Database, Save, AlertTriangle } from 'lucide-react';
+import { Database, Save, AlertTriangle, FileText } from 'lucide-react';
 import type { SystemSettings } from '@/types/settings';
 import { BackupManagementSection } from './BackupManagementSection';
-
+import { ReportColumnsSettings } from './ReportColumnsSettings';
+import { defaultReportColumnConfig, ReportColumnsConfig } from '@/types/reportColumnConfig';
 interface SystemSettingsTabProps {
   settings: SystemSettings;
   saving: boolean;
@@ -128,6 +129,34 @@ export const SystemSettingsTab: React.FC<SystemSettingsTabProps> = ({
 
       {/* Gestión de Respaldos */}
       <BackupManagementSection />
+
+      {/* Configuración de Columnas de Reportes PDF */}
+      <Card className="bg-white border-gray-200">
+        <CardHeader className="bg-white border-b border-gray-200">
+          <CardTitle className="flex items-center space-x-2 text-black">
+            <FileText className="w-5 h-5 text-tms-green" />
+            <span>Personalización de Reportes PDF</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-6 bg-white p-6">
+          <p className="text-sm text-gray-600">
+            Configura qué columnas mostrar y sus anchos en los reportes PDF de servicios.
+          </p>
+          <ReportColumnsSettings
+            config={settings.reportColumnConfig || defaultReportColumnConfig}
+            onChange={(config: ReportColumnsConfig) => onUpdateSettings({ reportColumnConfig: config })}
+          />
+          
+          <Button 
+            onClick={onSave}
+            disabled={saving}
+            className="bg-tms-green text-black font-medium hover:bg-tms-green/80"
+          >
+            <Save className="w-4 h-4 mr-2" />
+            {saving ? 'Guardando...' : 'Guardar Configuración de Reportes'}
+          </Button>
+        </CardContent>
+      </Card>
     </div>
   );
 };
