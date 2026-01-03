@@ -39,6 +39,10 @@ const fetchServicesForReport = async (filters: GenerateReportArgs['filters']): P
       license_plate,
       observations,
       insured_name,
+      quote_number,
+      purchase_order,
+      invoice_folio,
+      invoice_numero_fiscal,
       client:clients!services_client_id_fkey(
         id,
         name,
@@ -87,6 +91,10 @@ const fetchServicesForReport = async (filters: GenerateReportArgs['filters']): P
     vehicleModel: s.vehicle_model,
     licensePlate: s.license_plate,
     insuredName: s.insured_name,
+    quoteNumber: s.quote_number || '',
+    purchaseOrder: s.purchase_order || '',
+    invoiceFolio: s.invoice_folio || '',
+    invoiceNumeroFiscal: s.invoice_numero_fiscal || '',
     client: s.client,
     crane: {
       ...s.crane,
