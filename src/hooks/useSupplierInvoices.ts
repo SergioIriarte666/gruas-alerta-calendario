@@ -34,13 +34,10 @@ export const useSupplierInvoices = (supplierId?: string) => {
   // Fetch all invoices or filter by supplier
   const invoicesQuery = useQuery({
     queryKey: ['supplier-invoices', supplierId],
-    queryFn: async (): Promise<SupplierInvoiceWithSupplier[]> => {
+    queryFn: async (): Promise<SupplierInvoice[]> => {
       let query = supabase
         .from('supplier_invoices')
-        .select(`
-          *,
-          supplier:suppliers!inner(id, name)
-        `)
+        .select('*')
         .order('due_date', { ascending: true });
 
       if (supplierId) {
@@ -50,31 +47,30 @@ export const useSupplierInvoices = (supplierId?: string) => {
       const { data, error } = await query;
 
       if (error) throw error;
-      
-      // Transform the data to match our interface
-      return (data || []).map(item => ({
-        ...item,
-        supplier: Array.isArray(item.supplier) ? item.supplier[0] : item.supplier
-      })) as SupplierInvoiceWithSupplier[];
+      return (data || []) as SupplierInvoice[];
     }
   });
-
   // Get pending invoices for a specific supplier
   const pendingInvoicesQuery = useQuery({
     queryKey: ['supplier-invoices-pending', supplierId],
     queryFn: async (): Promise<SupplierInvoice[]> => {
       if (!supplierId) return [];
 
+      // Get invoices that are not fully paid (balance > 0 or status != paid)
       const { data, error } = await supabase
         .from('supplier_invoices')
         .select('*')
         .eq('supplier_id', supplierId)
         .neq('status', 'paid')
-        .gt('balance', 0)
         .order('due_date', { ascending: true });
 
       if (error) throw error;
-      return (data || []) as SupplierInvoice[];
+      
+      // Filter client-side for invoices with remaining balance
+      return ((data || []) as SupplierInvoice[]).filter(inv => {
+        const balance = inv.balance ?? (inv.amount - (inv.paid_amount || 0));
+        return balance > 0;
+      });
     },
     enabled: !!supplierId
   });
