@@ -59,7 +59,7 @@ export const Suppliers: React.FC = () => {
             </Button>
             <Button 
               onClick={() => setShowRegisterPayment(true)}
-              className="flex items-center gap-2 bg-violet-600 hover:bg-violet-700 text-white"
+              className="flex items-center gap-2 bg-violet-500 hover:bg-violet-600 text-white"
             >
               <Receipt className="w-4 h-4" />
               Registrar Pago
