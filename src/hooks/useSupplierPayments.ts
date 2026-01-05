@@ -43,6 +43,8 @@ export const useSupplierPayments = () => {
 
   const createPaymentMutation = useMutation({
     mutationFn: async (data: PaymentFormData): Promise<SupplierPayment> => {
+      const userId = (await supabase.auth.getUser()).data.user?.id;
+      
       const { data: payment, error } = await supabase
         .from('supplier_payments')
         .insert({
@@ -59,17 +61,50 @@ export const useSupplierPayments = () => {
           part_unit_price: data.part_unit_price || null,
           crane_id: data.crane_id || null,
           add_to_inventory: data.add_to_inventory || false,
-          created_by: (await supabase.auth.getUser()).data.user?.id
+          supplier_invoice_id: data.supplier_invoice_id || null,
+          created_by: userId
         } as any)
         .select()
         .single();
 
       if (error) throw error;
+
+      // If there are selected invoices and payment is marked as paid, update invoice paid_amount
+      if (data.selected_invoice_ids && data.selected_invoice_ids.length > 0 && data.status === 'paid') {
+        for (const invoiceId of data.selected_invoice_ids) {
+          // Get current invoice data
+          const { data: invoice } = await supabase
+            .from('supplier_invoices')
+            .select('paid_amount, amount')
+            .eq('id', invoiceId)
+            .single();
+
+          if (invoice) {
+            // Calculate proportional payment for this invoice
+            const invoiceBalance = invoice.amount - (invoice.paid_amount || 0);
+            const paymentForInvoice = Math.min(invoiceBalance, data.amount);
+            const newPaidAmount = (invoice.paid_amount || 0) + paymentForInvoice;
+            const newStatus = newPaidAmount >= invoice.amount ? 'paid' : 'partial';
+
+            await supabase
+              .from('supplier_invoices')
+              .update({
+                paid_amount: newPaidAmount,
+                status: newStatus,
+                updated_at: new Date().toISOString()
+              })
+              .eq('id', invoiceId);
+          }
+        }
+      }
+
       return payment as SupplierPayment;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['supplier-payments'] });
       queryClient.invalidateQueries({ queryKey: ['supplier-stats'] });
+      queryClient.invalidateQueries({ queryKey: ['supplier-invoices'] });
+      queryClient.invalidateQueries({ queryKey: ['supplier-invoices-pending'] });
       toast.success('Pago creado exitosamente');
     },
     onError: (error) => {

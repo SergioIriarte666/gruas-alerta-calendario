@@ -66,6 +66,9 @@ export interface PaymentFormData {
   // Campos para cuando se marca como pagado
   paid_date?: string;
   paid_amount?: number;
+  // Campo para vincular con factura(s)
+  supplier_invoice_id?: string;
+  selected_invoice_ids?: string[];
 }
 
 // Remove duplicate SupplierStats - now defined at the top
