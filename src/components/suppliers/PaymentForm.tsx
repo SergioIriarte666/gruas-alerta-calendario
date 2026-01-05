@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -9,7 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
-import { X, Save, Loader2, Calendar, DollarSign } from 'lucide-react';
+import { X, Save, Loader2, Calendar, DollarSign, FileText } from 'lucide-react';
 import DatePickerInput from '@/components/common/DatePickerInput';
 import { useSupplierPayments, getStatusLabel } from '@/hooks/useSupplierPayments';
 import { useSuppliers } from '@/hooks/useSuppliers';
@@ -17,6 +17,7 @@ import { useSupplierCategoryManager } from '@/hooks/useSupplierCategoryManager';
 import { PaymentFormData, SupplierPayment, SupplierPaymentStatus } from '@/types/suppliers';
 import { useCranes } from '@/hooks/useCranes';
 import { Wrench, Package } from 'lucide-react';
+import { SupplierInvoiceSelector } from './form/SupplierInvoiceSelector';
 
 const paymentSchema = z.object({
   supplier_id: z.string().min(1, 'El proveedor es requerido'),
@@ -53,6 +54,9 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
   const { suppliers } = useSuppliers();
   const { cranes } = useCranes();
   const { activeCategories, isLoading: categoriesLoading } = useSupplierCategoryManager();
+  
+  // State for invoice selection
+  const [selectedInvoiceIds, setSelectedInvoiceIds] = useState<string[]>([]);
 
   const statusOptions: SupplierPaymentStatus[] = ['pending', 'paid', 'overdue', 'cancelled'];
 
@@ -76,16 +80,38 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
     }
   });
 
+  const watchedSupplierId = form.watch('supplier_id');
+  
+  // Reset invoice selection when supplier changes
+  useEffect(() => {
+    setSelectedInvoiceIds([]);
+  }, [watchedSupplierId]);
+
+  // Handle invoice selection change
+  const handleInvoiceSelectionChange = (invoiceIds: string[], totalAmount: number) => {
+    setSelectedInvoiceIds(invoiceIds);
+    if (invoiceIds.length > 0) {
+      form.setValue('amount', totalAmount);
+    }
+  };
+
   const onSubmit = (data: PaymentFormData) => {
+    // Add selected invoice IDs to data
+    const paymentData = {
+      ...data,
+      selected_invoice_ids: selectedInvoiceIds.length > 0 ? selectedInvoiceIds : undefined,
+      supplier_invoice_id: selectedInvoiceIds.length === 1 ? selectedInvoiceIds[0] : undefined
+    };
+    
     if (payment) {
-      updatePayment({ id: payment.id, data }, {
+      updatePayment({ id: payment.id, data: paymentData }, {
         onSuccess: () => {
           onSave?.();
           onClose();
         }
       });
     } else {
-      createPayment(data, {
+      createPayment(paymentData, {
         onSuccess: () => {
           onSave?.();
           onClose();
@@ -151,6 +177,26 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
                   </p>
                 )}
               </div>
+
+              {/* Invoice Selector - only show when supplier is selected */}
+              {watchedSupplierId && (
+                <div className="md:col-span-2">
+                  <div className="flex items-center gap-2 mb-2">
+                    <FileText className="h-4 w-4 text-primary" />
+                    <Label className="text-foreground">Facturas Pendientes (opcional)</Label>
+                  </div>
+                  <div className="border rounded-lg p-3 bg-muted/20">
+                    <SupplierInvoiceSelector
+                      supplierId={watchedSupplierId}
+                      selectedInvoices={selectedInvoiceIds}
+                      onSelectionChange={handleInvoiceSelectionChange}
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Selecciona facturas para vincular este pago. El monto se actualizará automáticamente.
+                  </p>
+                </div>
+              )}
 
               <div>
                 <Label className="text-foreground">Monto *</Label>

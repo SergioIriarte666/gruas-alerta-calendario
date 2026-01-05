@@ -3324,6 +3324,7 @@ export type Database = {
       supplier_invoices: {
         Row: {
           amount: number
+          balance: number | null
           created_at: string | null
           currency: string | null
           description: string | null
@@ -3332,6 +3333,7 @@ export type Database = {
           invoice_number: string
           issue_date: string
           net_amount: number
+          paid_amount: number | null
           payment_terms: number | null
           status: string | null
           supplier_id: string | null
@@ -3340,6 +3342,7 @@ export type Database = {
         }
         Insert: {
           amount: number
+          balance?: number | null
           created_at?: string | null
           currency?: string | null
           description?: string | null
@@ -3348,6 +3351,7 @@ export type Database = {
           invoice_number: string
           issue_date: string
           net_amount: number
+          paid_amount?: number | null
           payment_terms?: number | null
           status?: string | null
           supplier_id?: string | null
@@ -3356,6 +3360,7 @@ export type Database = {
         }
         Update: {
           amount?: number
+          balance?: number | null
           created_at?: string | null
           currency?: string | null
           description?: string | null
@@ -3364,6 +3369,7 @@ export type Database = {
           invoice_number?: string
           issue_date?: string
           net_amount?: number
+          paid_amount?: number | null
           payment_terms?: number | null
           status?: string | null
           supplier_id?: string | null
@@ -3400,6 +3406,7 @@ export type Database = {
           reference_number: string | null
           status: string
           supplier_id: string
+          supplier_invoice_id: string | null
           updated_at: string | null
           updated_by: string | null
         }
@@ -3422,6 +3429,7 @@ export type Database = {
           reference_number?: string | null
           status?: string
           supplier_id: string
+          supplier_invoice_id?: string | null
           updated_at?: string | null
           updated_by?: string | null
         }
@@ -3444,6 +3452,7 @@ export type Database = {
           reference_number?: string | null
           status?: string
           supplier_id?: string
+          supplier_invoice_id?: string | null
           updated_at?: string | null
           updated_by?: string | null
         }
@@ -3460,6 +3469,13 @@ export type Database = {
             columns: ["supplier_id"]
             isOneToOne: false
             referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supplier_payments_supplier_invoice_id_fkey"
+            columns: ["supplier_invoice_id"]
+            isOneToOne: false
+            referencedRelation: "supplier_invoices"
             referencedColumns: ["id"]
           },
         ]
