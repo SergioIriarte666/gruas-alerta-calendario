@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Building2, Upload, Plus, FileText, CreditCard, Calendar, Settings } from 'lucide-react';
+import { Building2, Upload, Plus, FileText, CreditCard, Calendar, Settings, Receipt } from 'lucide-react';
 import { CustomTabs, CustomTabsList, CustomTabsTrigger, CustomTabsContent } from '@/components/ui/custom-tabs';
 import { XMLDocumentUpload } from '@/components/suppliers/XMLDocumentUpload';
 import { SupplierList } from '@/components/suppliers/SupplierList';
@@ -10,6 +10,7 @@ import { SupplierPaymentCalendar } from '@/components/suppliers/SupplierPaymentC
 import { SupplierCategoryList } from '@/components/suppliers/categories/SupplierCategoryList';
 import { SupplierForm } from '@/components/suppliers/SupplierForm';
 import { PaymentForm } from '@/components/suppliers/PaymentForm';
+import { RegisterPaymentModal } from '@/components/suppliers/RegisterPaymentModal';
 import { useSupplierStats } from '@/hooks/useSupplierStats';
 
 export const Suppliers: React.FC = () => {
@@ -17,6 +18,7 @@ export const Suppliers: React.FC = () => {
   const [showXMLUpload, setShowXMLUpload] = useState(false);
   const [showSupplierForm, setShowSupplierForm] = useState(false);
   const [showPaymentForm, setShowPaymentForm] = useState(false);
+  const [showRegisterPayment, setShowRegisterPayment] = useState(false);
   const { data: stats, isLoading: statsLoading } = useSupplierStats();
 
   const handleXMLUploadSuccess = (count: number) => {
@@ -54,6 +56,13 @@ export const Suppliers: React.FC = () => {
             >
               <Upload className="w-4 h-4" />
               Importar XML
+            </Button>
+            <Button 
+              onClick={() => setShowRegisterPayment(true)}
+              className="flex items-center gap-2 bg-violet-600 hover:bg-violet-700 text-white"
+            >
+              <Receipt className="w-4 h-4" />
+              Registrar Pago
             </Button>
             <Button 
               variant="outline"
@@ -219,6 +228,13 @@ export const Suppliers: React.FC = () => {
           <PaymentForm
             onClose={() => setShowPaymentForm(false)}
             onSave={handlePaymentCreated}
+          />
+        )}
+
+        {showRegisterPayment && (
+          <RegisterPaymentModal
+            onClose={() => setShowRegisterPayment(false)}
+            onSuccess={() => setShowRegisterPayment(false)}
           />
         )}
       </div>
