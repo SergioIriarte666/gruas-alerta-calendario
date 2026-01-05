@@ -56,19 +56,30 @@ export const usePendingPayments = (supplierId?: string) => {
       paymentMethod?: string;
       notes?: string;
     }) => {
-      // Update all selected payments to paid status
-      const { error } = await supabase
-        .from('supplier_payments')
-        .update({
-          status: 'paid',
-          paid_date: paymentDate,
-          paid_reference: bankReference || null,
-          payment_method: paymentMethod || null,
-          notes: notes ? `${notes}` : undefined
-        })
-        .in('id', paymentIds);
+      // Build notes string with payment method info
+      const paymentNotes = [
+        paymentMethod ? `Método: ${paymentMethod}` : null,
+        notes || null
+      ].filter(Boolean).join(' | ');
 
-      if (error) throw error;
+      // Get payments data before updating
+      const paymentsData = pendingPaymentsQuery.data?.filter(p => paymentIds.includes(p.id)) || [];
+
+      // Update each payment individually to set correct paid_amount
+      for (const payment of paymentsData) {
+        const { error } = await supabase
+          .from('supplier_payments')
+          .update({
+            status: 'paid',
+            paid_date: paymentDate,
+            reference_number: bankReference || null,
+            notes: paymentNotes || null,
+            paid_amount: payment.amount
+          })
+          .eq('id', payment.id);
+
+        if (error) throw error;
+      }
 
       return paymentIds.length;
     },
