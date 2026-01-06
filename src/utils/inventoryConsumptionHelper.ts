@@ -164,3 +164,94 @@ export const createDirectInventoryConsumption = async ({
     return false;
   }
 };
+
+/**
+ * Syncs costs with immediate_consumption=true that don't have inventory movements.
+ * This is used to retroactively fix records created before the fix was applied.
+ */
+export const syncUnsyncedImmediateConsumptions = async (): Promise<{
+  synced: number;
+  errors: number;
+}> => {
+  console.log('[InventorySync] Starting retroactive sync...');
+  
+  let synced = 0;
+  let errors = 0;
+  
+  try {
+    // Find costs with immediate_consumption that have crane_id but no inventory movements
+    const { data: unsyncedCosts, error: queryError } = await supabase
+      .from('costs')
+      .select('id, description, purchase_quantity, purchase_unit_cost, crane_id, date, supplier_id')
+      .eq('immediate_consumption', true)
+      .not('crane_id', 'is', null)
+      .not('purchase_quantity', 'is', null)
+      .not('purchase_unit_cost', 'is', null);
+    
+    if (queryError) {
+      console.error('[InventorySync] Error querying unsynced costs:', queryError);
+      throw queryError;
+    }
+    
+    if (!unsyncedCosts?.length) {
+      console.log('[InventorySync] No costs with immediate consumption found');
+      return { synced: 0, errors: 0 };
+    }
+    
+    console.log('[InventorySync] Found', unsyncedCosts.length, 'costs with immediate consumption');
+    
+    // Check each cost to see if it already has movements
+    for (const cost of unsyncedCosts) {
+      const { data: existingMovements } = await supabase
+        .from('inventory_movements')
+        .select('id')
+        .eq('cost_id', cost.id)
+        .limit(1);
+      
+      if (existingMovements && existingMovements.length > 0) {
+        console.log('[InventorySync] Cost', cost.id, 'already has movements, skipping');
+        continue;
+      }
+      
+      console.log('[InventorySync] Syncing cost:', cost.id, '-', cost.description);
+      
+      try {
+        const success = await createDirectInventoryConsumption({
+          costId: cost.id,
+          itemName: cost.description,
+          quantity: cost.purchase_quantity!,
+          unitCost: cost.purchase_unit_cost!,
+          craneId: cost.crane_id!,
+          date: cost.date,
+          supplierId: cost.supplier_id,
+        });
+        
+        if (success) {
+          synced++;
+          console.log('[InventorySync] Successfully synced cost:', cost.id);
+        } else {
+          errors++;
+        }
+      } catch (err) {
+        console.error('[InventorySync] Error syncing cost:', cost.id, err);
+        errors++;
+      }
+    }
+    
+    console.log('[InventorySync] Sync completed. Synced:', synced, 'Errors:', errors);
+    
+    if (synced > 0) {
+      toast.success('Sincronización Completada', {
+        description: `Se sincronizaron ${synced} costo(s) con inventario`,
+      });
+    }
+    
+    return { synced, errors };
+  } catch (error) {
+    console.error('[InventorySync] Fatal error during sync:', error);
+    toast.error('Error en Sincronización', {
+      description: 'No se pudo completar la sincronización retroactiva',
+    });
+    return { synced, errors: errors + 1 };
+  }
+};
