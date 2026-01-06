@@ -24,6 +24,7 @@ import { toast } from 'sonner';
 import { getCurrentChileDateString, formatForInput } from '@/utils/timezoneUtils';
 import { useQueryClient } from '@tanstack/react-query';
 import { ChevronLeft, ChevronRight, Save, Loader2 } from 'lucide-react';
+import { createDirectInventoryConsumption } from '@/utils/inventoryConsumptionHelper';
 
 interface CostFormProps {
     isOpen: boolean;
@@ -313,7 +314,7 @@ export const CostForm = ({ isOpen, onClose, cost, prefilledData, onInventoryCost
         
             if (cost && cost.id) {
                 updateCost({ id: cost.id, ...submissionData }, {
-                    onSuccess: (data) => {
+                    onSuccess: async (data) => {
                         toast.success("Costo Actualizado", { description: "El costo se ha actualizado correctamente." });
                         queryClient.invalidateQueries({ queryKey: ['costs'] });
                         queryClient.invalidateQueries({ queryKey: ['cost-centers-stats'] });
@@ -323,17 +324,34 @@ export const CostForm = ({ isOpen, onClose, cost, prefilledData, onInventoryCost
                                                    submissionData.purchase_unit_cost &&
                                                    submissionData.immediate_consumption;
                         const hasNoCraneSelected = !submissionData.crane_id || submissionData.crane_id === 'none';
+                        const hasCraneSelected = submissionData.crane_id && submissionData.crane_id !== 'none';
                         
                         onClose();
                         
-                        if (isInventoryPurchase && hasNoCraneSelected && onInventoryCostCreated) {
-                            onInventoryCostCreated({
-                                costId: cost.id,
-                                description: submissionData.description,
-                                quantity: submissionData.purchase_quantity!,
-                                unitCost: submissionData.purchase_unit_cost!,
-                                date: submissionData.date,
-                            });
+                        if (isInventoryPurchase) {
+                            if (hasNoCraneSelected && onInventoryCostCreated) {
+                                // Multi-crane distribution dialog
+                                onInventoryCostCreated({
+                                    costId: cost.id,
+                                    description: submissionData.description,
+                                    quantity: submissionData.purchase_quantity!,
+                                    unitCost: submissionData.purchase_unit_cost!,
+                                    date: submissionData.date,
+                                });
+                            } else if (hasCraneSelected) {
+                                // Direct consumption to specific crane
+                                await createDirectInventoryConsumption({
+                                    costId: cost.id,
+                                    itemName: submissionData.description,
+                                    quantity: submissionData.purchase_quantity!,
+                                    unitCost: submissionData.purchase_unit_cost!,
+                                    craneId: submissionData.crane_id!,
+                                    date: submissionData.date,
+                                    supplierId: submissionData.supplier_id,
+                                });
+                                queryClient.invalidateQueries({ queryKey: ['inventory'] });
+                                queryClient.invalidateQueries({ queryKey: ['crane-parts'] });
+                            }
                         }
                     },
                     onError: (error) => {
@@ -345,7 +363,7 @@ export const CostForm = ({ isOpen, onClose, cost, prefilledData, onInventoryCost
                 });
             } else {
                 addCost(submissionData, {
-                    onSuccess: (data) => {
+                    onSuccess: async (data) => {
                         toast.success("Costo Agregado", { description: "El nuevo costo se ha registrado correctamente." });
                         queryClient.invalidateQueries({ queryKey: ['costs'] });
                         queryClient.invalidateQueries({ queryKey: ['cost-centers-stats'] });
@@ -355,15 +373,32 @@ export const CostForm = ({ isOpen, onClose, cost, prefilledData, onInventoryCost
                                                    submissionData.purchase_unit_cost &&
                                                    submissionData.immediate_consumption;
                         const hasNoCraneSelected = !submissionData.crane_id || submissionData.crane_id === 'none';
+                        const hasCraneSelected = submissionData.crane_id && submissionData.crane_id !== 'none';
                         
-                        if (isInventoryPurchase && hasNoCraneSelected && onInventoryCostCreated && data?.[0]) {
-                            onInventoryCostCreated({
-                                costId: data[0].id,
-                                description: submissionData.description,
-                                quantity: submissionData.purchase_quantity!,
-                                unitCost: submissionData.purchase_unit_cost!,
-                                date: submissionData.date,
-                            });
+                        if (isInventoryPurchase && data?.[0]) {
+                            if (hasNoCraneSelected && onInventoryCostCreated) {
+                                // Multi-crane distribution dialog
+                                onInventoryCostCreated({
+                                    costId: data[0].id,
+                                    description: submissionData.description,
+                                    quantity: submissionData.purchase_quantity!,
+                                    unitCost: submissionData.purchase_unit_cost!,
+                                    date: submissionData.date,
+                                });
+                            } else if (hasCraneSelected) {
+                                // Direct consumption to specific crane
+                                await createDirectInventoryConsumption({
+                                    costId: data[0].id,
+                                    itemName: submissionData.description,
+                                    quantity: submissionData.purchase_quantity!,
+                                    unitCost: submissionData.purchase_unit_cost!,
+                                    craneId: submissionData.crane_id!,
+                                    date: submissionData.date,
+                                    supplierId: submissionData.supplier_id,
+                                });
+                                queryClient.invalidateQueries({ queryKey: ['inventory'] });
+                                queryClient.invalidateQueries({ queryKey: ['crane-parts'] });
+                            }
                         }
                         
                         onClose();
