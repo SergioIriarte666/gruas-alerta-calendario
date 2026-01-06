@@ -9,10 +9,13 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { useInventoryItems, useInventoryLocations, useCreateInventoryMovement, useCreateInventoryItem, useInventoryCategories } from '@/hooks/useInventory';
+import { Switch } from '@/components/ui/switch';
+import { useInventoryItems, useInventoryLocations, useCreateInventoryItem, useInventoryCategories } from '@/hooks/useInventory';
 import { useSuppliers } from '@/hooks/useSuppliers';
+import { useCranes } from '@/hooks/useCranes';
+import { useUnifiedPurchase } from '@/hooks/useUnifiedPurchase';
 import { QuickSupplierModal } from '@/components/suppliers/QuickSupplierModal';
-import { Building2 } from 'lucide-react';
+import { Building2, Truck } from 'lucide-react';
 import { CalendarIcon, Package, Plus, X } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -21,7 +24,8 @@ import { toast } from 'sonner';
 import { Card } from '@/components/ui/card';
 
 const entrySchema = z.object({
-  item_id: z.string().min(1, 'Selecciona un producto'),
+  item_id: z.string().optional(),
+  item_name: z.string().min(1, 'El nombre del producto es requerido'),
   location_id: z.string().min(1, 'Selecciona una ubicación'),
   quantity: z.number().min(1, 'La cantidad debe ser mayor a 0'),
   unit_cost: z.number().min(0, 'El costo debe ser mayor o igual a 0'),
@@ -30,6 +34,9 @@ const entrySchema = z.object({
   reference_document: z.string().optional(),
   batch_number: z.string().optional(),
   observations: z.string().optional(),
+  // New: Immediate consumption options
+  immediate_consumption: z.boolean().default(false),
+  crane_id: z.string().optional(),
 });
 
 type EntryFormData = z.infer<typeof entrySchema>;
@@ -43,7 +50,8 @@ export const SimpleEntryForm: React.FC<SimpleEntryFormProps> = ({ onSuccess }) =
   const { data: locations = [] } = useInventoryLocations();
   const { data: categories = [] } = useInventoryCategories();
   const { suppliers } = useSuppliers();
-  const createMovement = useCreateInventoryMovement();
+  const { cranes } = useCranes();
+  const { registerPurchase, isPending } = useUnifiedPurchase();
   const createItem = useCreateInventoryItem();
   
   const [showNewProductForm, setShowNewProductForm] = useState(false);
@@ -68,6 +76,8 @@ export const SimpleEntryForm: React.FC<SimpleEntryFormProps> = ({ onSuccess }) =
       movement_date: new Date(),
       quantity: 1,
       unit_cost: 0,
+      item_name: '',
+      immediate_consumption: false,
     },
   });
 
@@ -120,24 +130,34 @@ export const SimpleEntryForm: React.FC<SimpleEntryFormProps> = ({ onSuccess }) =
 
   const onSubmit = async (data: EntryFormData) => {
     try {
-      const totalCost = data.quantity * data.unit_cost;
+      // Get supplier name if selected
+      const selectedSupplier = suppliers.find(s => s.id === data.supplier_id);
 
-      await createMovement.mutateAsync({
-        item_id: data.item_id,
-        location_id: data.location_id,
-        movement_type: 'entry',
+      // Use unified purchase service
+      const result = await registerPurchase({
+        itemName: data.item_name,
+        itemId: data.item_id,
         quantity: data.quantity,
-        unit_cost: data.unit_cost,
-        total_cost: totalCost,
-        movement_date: data.movement_date.toISOString(),
-        supplier_id: data.supplier_id || null,
-        reference_document: data.reference_document || null,
-        batch_number: data.batch_number || null,
+        unitCost: data.unit_cost,
+        date: format(data.movement_date, 'yyyy-MM-dd'),
+        supplierId: data.supplier_id || null,
+        supplierName: selectedSupplier?.name || null,
+        locationId: data.location_id,
+        referenceDocument: data.reference_document || null,
+        batchNumber: data.batch_number || null,
         observations: data.observations || null,
+        immediateConsumption: data.immediate_consumption || false,
+        craneId: data.immediate_consumption ? (data.crane_id || null) : null,
       });
 
-      toast.success('Entrada registrada exitosamente');
-      onSuccess?.();
+      if (result.success) {
+        if (result.requiresDistribution) {
+          toast.info('Distribución Pendiente', {
+            description: 'Puedes distribuir los items a grúas desde el módulo de Costos',
+          });
+        }
+        onSuccess?.();
+      }
     } catch (error) {
       console.error('Error creating entry:', error);
       toast.error('Error al registrar la entrada');
@@ -179,13 +199,16 @@ export const SimpleEntryForm: React.FC<SimpleEntryFormProps> = ({ onSuccess }) =
                   onValueChange={(value) => {
                     setValue('item_id', value);
                     const item = items.find(i => i.id === value);
-                    if (item && item.unit_cost) {
-                      setValue('unit_cost', item.unit_cost);
+                    if (item) {
+                      setValue('item_name', item.name);
+                      if (item.unit_cost) {
+                        setValue('unit_cost', item.unit_cost);
+                      }
                     }
                   }}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Seleccionar producto" />
+                    <SelectValue placeholder="Seleccionar producto existente o escribir nombre" />
                   </SelectTrigger>
                   <SelectContent>
                     {items.filter(item => item.is_active).map((item) => (
@@ -195,8 +218,17 @@ export const SimpleEntryForm: React.FC<SimpleEntryFormProps> = ({ onSuccess }) =
                     ))}
                   </SelectContent>
                 </Select>
-                {errors.item_id && (
-                  <p className="text-sm text-destructive">{errors.item_id.message}</p>
+                <Input
+                  placeholder="O escribe el nombre del producto nuevo"
+                  value={watchedValues.item_name}
+                  onChange={(e) => {
+                    setValue('item_name', e.target.value);
+                    setValue('item_id', undefined);
+                  }}
+                  className="mt-2"
+                />
+                {errors.item_name && (
+                  <p className="text-sm text-destructive">{errors.item_name.message}</p>
                 )}
               </>
             ) : (
@@ -412,6 +444,53 @@ export const SimpleEntryForm: React.FC<SimpleEntryFormProps> = ({ onSuccess }) =
         </div>
       </div>
 
+      {/* Consumo Inmediato */}
+      <div className="space-y-4 p-4 rounded-lg border border-violet-200 bg-violet-50/50 dark:border-violet-800 dark:bg-violet-950/20">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Truck className="w-5 h-5 text-violet-600" />
+            <div>
+              <Label className="text-base font-medium">Consumo Inmediato</Label>
+              <p className="text-xs text-muted-foreground">
+                Registrar entrada y salida automática hacia una grúa
+              </p>
+            </div>
+          </div>
+          <Switch
+            checked={watchedValues.immediate_consumption}
+            onCheckedChange={(checked) => setValue('immediate_consumption', checked)}
+          />
+        </div>
+        
+        {watchedValues.immediate_consumption && (
+          <div className="space-y-2 pt-2">
+            <Label>Grúa destino</Label>
+            <Select
+              value={watchedValues.crane_id || 'none'}
+              onValueChange={(value) => setValue('crane_id', value === 'none' ? undefined : value)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Seleccionar grúa (opcional)" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">Sin grúa específica (distribución posterior)</SelectItem>
+                {cranes.filter(c => c.isActive !== false).map((crane) => (
+                  <SelectItem key={crane.id} value={crane.id}>
+                    {crane.licensePlate} - {crane.brand} {crane.model}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              {watchedValues.crane_id 
+                ? '✓ Se registrará entrada + salida automática a esta grúa'
+                : '→ Podrás distribuir a múltiples grúas después'
+              }
+            </p>
+          </div>
+        )}
+      </div>
+
       {/* Información Adicional (Colapsable) */}
       <details className="space-y-4">
         <summary className="cursor-pointer text-sm font-medium text-muted-foreground hover:text-foreground">
@@ -499,8 +578,8 @@ export const SimpleEntryForm: React.FC<SimpleEntryFormProps> = ({ onSuccess }) =
         <Button type="button" variant="outline" onClick={onSuccess}>
           Cancelar
         </Button>
-        <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? 'Registrando...' : 'Registrar Entrada'}
+        <Button type="submit" disabled={isSubmitting || isPending}>
+          {(isSubmitting || isPending) ? 'Registrando...' : 'Registrar Entrada'}
         </Button>
       </div>
 

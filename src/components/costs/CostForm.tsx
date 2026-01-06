@@ -24,7 +24,7 @@ import { toast } from 'sonner';
 import { getCurrentChileDateString, formatForInput } from '@/utils/timezoneUtils';
 import { useQueryClient } from '@tanstack/react-query';
 import { ChevronLeft, ChevronRight, Save, Loader2 } from 'lucide-react';
-import { createDirectInventoryConsumption } from '@/utils/inventoryConsumptionHelper';
+import { UnifiedPurchaseService } from '@/services/UnifiedPurchaseService';
 
 interface CostFormProps {
     isOpen: boolean;
@@ -339,15 +339,15 @@ export const CostForm = ({ isOpen, onClose, cost, prefilledData, onInventoryCost
                                     date: submissionData.date,
                                 });
                             } else if (hasCraneSelected) {
-                                // Direct consumption to specific crane
-                                await createDirectInventoryConsumption({
-                                    costId: cost.id,
+                                // Direct consumption to specific crane - create inventory movements
+                                await UnifiedPurchaseService.registerPurchase({
                                     itemName: submissionData.description,
                                     quantity: submissionData.purchase_quantity!,
                                     unitCost: submissionData.purchase_unit_cost!,
-                                    craneId: submissionData.crane_id!,
                                     date: submissionData.date,
                                     supplierId: submissionData.supplier_id,
+                                    immediateConsumption: true,
+                                    craneId: submissionData.crane_id!,
                                 });
                                 queryClient.invalidateQueries({ queryKey: ['inventory'] });
                                 queryClient.invalidateQueries({ queryKey: ['crane-parts'] });
@@ -386,15 +386,15 @@ export const CostForm = ({ isOpen, onClose, cost, prefilledData, onInventoryCost
                                     date: submissionData.date,
                                 });
                             } else if (hasCraneSelected) {
-                                // Direct consumption to specific crane
-                                await createDirectInventoryConsumption({
-                                    costId: data[0].id,
+                                // Direct consumption to specific crane - create inventory movements
+                                await UnifiedPurchaseService.registerPurchase({
                                     itemName: submissionData.description,
                                     quantity: submissionData.purchase_quantity!,
                                     unitCost: submissionData.purchase_unit_cost!,
-                                    craneId: submissionData.crane_id!,
                                     date: submissionData.date,
                                     supplierId: submissionData.supplier_id,
+                                    immediateConsumption: true,
+                                    craneId: submissionData.crane_id!,
                                 });
                                 queryClient.invalidateQueries({ queryKey: ['inventory'] });
                                 queryClient.invalidateQueries({ queryKey: ['crane-parts'] });
