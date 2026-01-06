@@ -1,0 +1,516 @@
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+
+export interface UnifiedPurchaseData {
+  // Item information
+  itemName: string;
+  itemId?: string; // If item already exists
+  quantity: number;
+  unitCost: number;
+  
+  // Purchase details
+  date: string;
+  supplierId?: string | null;
+  supplierName?: string | null;
+  locationId?: string | null;
+  
+  // Document references
+  referenceDocument?: string | null;
+  batchNumber?: string | null;
+  expirationDate?: string | null;
+  observations?: string | null;
+  
+  // Consumption options
+  immediateConsumption: boolean;
+  craneId?: string | null; // If specified → direct consumption to crane
+  // If no craneId but immediateConsumption=true → caller should open multi-crane distribution dialog
+}
+
+export interface UnifiedPurchaseResult {
+  success: boolean;
+  costId: string | null;
+  inventoryItemId: string | null;
+  entryMovementId: string | null;
+  exitMovementId: string | null; // Only if immediate consumption
+  cranePartId: string | null;    // Only if assigned to crane
+  requiresDistribution: boolean; // If true, caller should open multi-crane dialog
+  error?: string;
+}
+
+/**
+ * Unified Purchase Service
+ * 
+ * This is the SINGLE entry point for all inventory purchases.
+ * It ensures data synchronization between:
+ * - Costs (financial tracking)
+ * - Inventory (stock management)
+ * - Cranes (parts/consumption tracking)
+ * 
+ * Flow:
+ * 1. Find or create inventory_item
+ * 2. Get active warehouse location
+ * 3. Create cost entry (category: Mantenimiento > Piezas y Repuestos)
+ * 4. Create entry movement in inventory_movements with cost_id
+ * 5. Update cost with inventory_movement_id (bidirectional link)
+ * 6. If immediateConsumption=true:
+ *    - If craneId specified → Create exit movement + crane_parts record
+ *    - If no craneId → Return flag for multi-crane distribution dialog
+ */
+export class UnifiedPurchaseService {
+  
+  /**
+   * Main method to register a purchase
+   */
+  static async registerPurchase(data: UnifiedPurchaseData): Promise<UnifiedPurchaseResult> {
+    const result: UnifiedPurchaseResult = {
+      success: false,
+      costId: null,
+      inventoryItemId: null,
+      entryMovementId: null,
+      exitMovementId: null,
+      cranePartId: null,
+      requiresDistribution: false,
+    };
+
+    try {
+      console.log('[UnifiedPurchase] Starting purchase registration:', data.itemName);
+      
+      // Step 1: Find or create inventory item
+      result.inventoryItemId = await this.findOrCreateInventoryItem(data);
+      console.log('[UnifiedPurchase] Inventory item ID:', result.inventoryItemId);
+      
+      // Step 2: Get active warehouse location
+      const locationId = data.locationId || await this.getDefaultLocation();
+      if (!locationId) {
+        throw new Error('No hay ubicación de inventario activa');
+      }
+      console.log('[UnifiedPurchase] Location ID:', locationId);
+      
+      // Step 3: Create cost entry
+      result.costId = await this.createCostEntry(data);
+      console.log('[UnifiedPurchase] Cost ID:', result.costId);
+      
+      // Step 4: Create entry movement with cost_id
+      result.entryMovementId = await this.createEntryMovement({
+        ...data,
+        inventoryItemId: result.inventoryItemId,
+        locationId,
+        costId: result.costId,
+      });
+      console.log('[UnifiedPurchase] Entry movement ID:', result.entryMovementId);
+      
+      // Step 5: Update cost with inventory_movement_id (bidirectional link)
+      await this.linkCostToMovement(result.costId, result.entryMovementId);
+      
+      // Step 6: Handle immediate consumption
+      if (data.immediateConsumption) {
+        if (data.craneId) {
+          // Direct consumption to specific crane
+          const consumptionResult = await this.createDirectConsumption({
+            inventoryItemId: result.inventoryItemId,
+            locationId,
+            costId: result.costId,
+            craneId: data.craneId,
+            quantity: data.quantity,
+            unitCost: data.unitCost,
+            date: data.date,
+            itemName: data.itemName,
+            supplierId: data.supplierId,
+            supplierName: data.supplierName,
+          });
+          result.exitMovementId = consumptionResult.exitMovementId;
+          result.cranePartId = consumptionResult.cranePartId;
+          console.log('[UnifiedPurchase] Direct consumption completed');
+        } else {
+          // Flag for multi-crane distribution dialog
+          result.requiresDistribution = true;
+          console.log('[UnifiedPurchase] Requires multi-crane distribution');
+        }
+      }
+      
+      result.success = true;
+      console.log('[UnifiedPurchase] Purchase registration completed successfully');
+      
+      toast.success('Compra Registrada', {
+        description: `${data.itemName}: ${data.quantity} unidad(es) por $${(data.quantity * data.unitCost).toLocaleString('es-CL')}`,
+      });
+      
+      return result;
+      
+    } catch (error) {
+      console.error('[UnifiedPurchase] Error:', error);
+      result.error = error instanceof Error ? error.message : 'Error desconocido';
+      
+      // Attempt rollback if possible
+      await this.attemptRollback(result);
+      
+      toast.error('Error en Registro', {
+        description: result.error,
+      });
+      
+      return result;
+    }
+  }
+
+  /**
+   * Find existing inventory item or create new one
+   */
+  private static async findOrCreateInventoryItem(data: UnifiedPurchaseData): Promise<string> {
+    // If itemId already provided, use it
+    if (data.itemId) {
+      return data.itemId;
+    }
+
+    const normalizedName = data.itemName.trim().toLowerCase();
+    
+    // Try to find existing item by normalized name
+    const { data: existingItem } = await supabase
+      .from('inventory_items')
+      .select('id')
+      .ilike('name', normalizedName)
+      .eq('is_active', true)
+      .limit(1)
+      .single();
+    
+    if (existingItem) {
+      return existingItem.id;
+    }
+    
+    // Create new inventory item
+    const { data: newItem, error } = await supabase
+      .from('inventory_items')
+      .insert({
+        name: data.itemName.trim(),
+        unit_of_measure: 'unidad',
+        unit_cost: data.unitCost,
+        is_active: true,
+      })
+      .select('id')
+      .single();
+    
+    if (error || !newItem) {
+      throw new Error(`No se pudo crear el ítem de inventario: ${error?.message || 'Error desconocido'}`);
+    }
+    
+    return newItem.id;
+  }
+
+  /**
+   * Get default active warehouse location
+   */
+  private static async getDefaultLocation(): Promise<string | null> {
+    const { data: location } = await supabase
+      .from('inventory_locations')
+      .select('id')
+      .eq('is_active', true)
+      .order('created_at', { ascending: true })
+      .limit(1)
+      .single();
+    
+    return location?.id || null;
+  }
+
+  /**
+   * Create cost entry (category: Mantenimiento > Piezas y Repuestos)
+   */
+  private static async createCostEntry(data: UnifiedPurchaseData): Promise<string> {
+    // Find "Mantenimiento" category
+    const { data: category } = await supabase
+      .from('cost_categories')
+      .select('id')
+      .ilike('name', '%mantenimiento%')
+      .limit(1)
+      .single();
+    
+    if (!category) {
+      throw new Error('Categoría "Mantenimiento" no encontrada');
+    }
+    
+    const totalCost = data.quantity * data.unitCost;
+    
+    const { data: cost, error } = await supabase
+      .from('costs')
+      .insert({
+        amount: totalCost,
+        category_id: category.id,
+        date: data.date,
+        description: data.itemName.trim(),
+        subcategory: 'Piezas y Repuestos',
+        notes: data.observations || null,
+        crane_id: data.craneId || null,
+        supplier_id: data.supplierId || null,
+        purchase_quantity: data.quantity,
+        purchase_unit_cost: data.unitCost,
+        immediate_consumption: data.immediateConsumption,
+      })
+      .select('id')
+      .single();
+    
+    if (error || !cost) {
+      throw new Error(`No se pudo crear el costo: ${error?.message || 'Error desconocido'}`);
+    }
+    
+    return cost.id;
+  }
+
+  /**
+   * Create entry movement in inventory
+   */
+  private static async createEntryMovement(params: {
+    inventoryItemId: string;
+    locationId: string;
+    costId: string;
+    quantity: number;
+    unitCost: number;
+    date: string;
+    supplierId?: string | null;
+    supplierName?: string | null;
+    referenceDocument?: string | null;
+    batchNumber?: string | null;
+    expirationDate?: string | null;
+    observations?: string | null;
+    itemName: string;
+  }): Promise<string> {
+    const totalCost = params.quantity * params.unitCost;
+    
+    const { data: movement, error } = await supabase
+      .from('inventory_movements')
+      .insert({
+        item_id: params.inventoryItemId,
+        location_id: params.locationId,
+        movement_type: 'entry',
+        quantity: params.quantity,
+        unit_cost: params.unitCost,
+        total_cost: totalCost,
+        movement_date: params.date,
+        reason: 'Compra de inventario',
+        observations: params.observations || `Compra registrada: ${params.itemName}`,
+        status: 'active',
+        cost_id: params.costId,
+        supplier_id: params.supplierId || null,
+        supplier_name: params.supplierName || null,
+        reference_document: params.referenceDocument || null,
+        batch_number: params.batchNumber || null,
+        expiration_date: params.expirationDate || null,
+      })
+      .select('id')
+      .single();
+    
+    if (error || !movement) {
+      throw new Error(`No se pudo crear el movimiento de entrada: ${error?.message || 'Error desconocido'}`);
+    }
+    
+    return movement.id;
+  }
+
+  /**
+   * Link cost to inventory movement (bidirectional)
+   */
+  private static async linkCostToMovement(costId: string, movementId: string): Promise<void> {
+    const { error } = await supabase
+      .from('costs')
+      .update({ inventory_movement_id: movementId })
+      .eq('id', costId);
+    
+    if (error) {
+      console.warn('[UnifiedPurchase] Warning: Could not link cost to movement:', error.message);
+      // Non-fatal, continue
+    }
+  }
+
+  /**
+   * Create direct consumption (exit movement + crane_parts)
+   */
+  private static async createDirectConsumption(params: {
+    inventoryItemId: string;
+    locationId: string;
+    costId: string;
+    craneId: string;
+    quantity: number;
+    unitCost: number;
+    date: string;
+    itemName: string;
+    supplierId?: string | null;
+    supplierName?: string | null;
+  }): Promise<{ exitMovementId: string; cranePartId: string | null }> {
+    const totalCost = params.quantity * params.unitCost;
+    
+    // Create exit movement
+    const { data: exitMovement, error: exitError } = await supabase
+      .from('inventory_movements')
+      .insert({
+        item_id: params.inventoryItemId,
+        location_id: params.locationId,
+        movement_type: 'exit',
+        quantity: params.quantity,
+        unit_cost: params.unitCost,
+        total_cost: totalCost,
+        movement_date: params.date,
+        reason: 'Consumo inmediato',
+        observations: `Consumo directo a grúa desde costo ID: ${params.costId}`,
+        status: 'active',
+        crane_id: params.craneId,
+        cost_id: params.costId,
+      })
+      .select('id')
+      .single();
+    
+    if (exitError || !exitMovement) {
+      throw new Error(`No se pudo crear el movimiento de salida: ${exitError?.message || 'Error desconocido'}`);
+    }
+    
+    // Get supplier name for crane_parts
+    let supplierName = params.supplierName || 'Sin proveedor';
+    if (params.supplierId && !params.supplierName) {
+      const { data: supplier } = await supabase
+        .from('suppliers')
+        .select('name')
+        .eq('id', params.supplierId)
+        .single();
+      if (supplier) {
+        supplierName = supplier.name;
+      }
+    }
+    
+    // Create crane_parts record
+    const { data: cranePart, error: cranePartError } = await supabase
+      .from('crane_parts')
+      .insert({
+        crane_id: params.craneId,
+        part_name: params.itemName.trim(),
+        quantity: params.quantity,
+        unit_price: params.unitCost,
+        total_value: totalCost,
+        date: params.date,
+        supplier: supplierName,
+        supplier_id: params.supplierId || null,
+        cost_id: params.costId,
+        inventory_movement_id: exitMovement.id,
+        notes: 'Registrado desde compra unificada',
+      })
+      .select('id')
+      .single();
+    
+    if (cranePartError) {
+      console.warn('[UnifiedPurchase] Warning: Could not create crane_part:', cranePartError.message);
+      // Non-fatal, continue
+    }
+    
+    return {
+      exitMovementId: exitMovement.id,
+      cranePartId: cranePart?.id || null,
+    };
+  }
+
+  /**
+   * Attempt to rollback partially created records
+   */
+  private static async attemptRollback(result: UnifiedPurchaseResult): Promise<void> {
+    try {
+      // Cancel movements if created
+      if (result.exitMovementId) {
+        await supabase
+          .from('inventory_movements')
+          .update({ status: 'cancelled' })
+          .eq('id', result.exitMovementId);
+      }
+      
+      if (result.entryMovementId) {
+        await supabase
+          .from('inventory_movements')
+          .update({ status: 'cancelled' })
+          .eq('id', result.entryMovementId);
+      }
+      
+      // Note: We don't delete cost because it might have other dependencies
+      // Instead, we log for manual review
+      if (result.costId) {
+        console.warn('[UnifiedPurchase] Rollback: Cost created but may need manual review:', result.costId);
+      }
+    } catch (rollbackError) {
+      console.error('[UnifiedPurchase] Rollback failed:', rollbackError);
+    }
+  }
+
+  /**
+   * Create consumption from inventory (exit movement + crane_parts)
+   * Used when distributing purchased items to cranes
+   */
+  static async createConsumption(params: {
+    inventoryItemId: string;
+    locationId: string;
+    craneId: string;
+    quantity: number;
+    unitCost: number;
+    date: string;
+    itemName: string;
+    costId?: string; // Original cost if linking
+    supplierId?: string | null;
+  }): Promise<{ exitMovementId: string; cranePartId: string | null }> {
+    const totalCost = params.quantity * params.unitCost;
+    
+    // Check available stock
+    const { data: stockData } = await supabase
+      .from('inventory_stock')
+      .select('current_quantity')
+      .eq('item_id', params.inventoryItemId)
+      .eq('location_id', params.locationId)
+      .single();
+    
+    if (!stockData || stockData.current_quantity < params.quantity) {
+      throw new Error(`Stock insuficiente. Disponible: ${stockData?.current_quantity || 0}, Solicitado: ${params.quantity}`);
+    }
+    
+    // Create exit movement
+    const { data: exitMovement, error: exitError } = await supabase
+      .from('inventory_movements')
+      .insert({
+        item_id: params.inventoryItemId,
+        location_id: params.locationId,
+        movement_type: 'exit',
+        quantity: params.quantity,
+        unit_cost: params.unitCost,
+        total_cost: totalCost,
+        movement_date: params.date,
+        reason: 'Consumo a grúa',
+        observations: 'Distribución desde inventario',
+        status: 'active',
+        crane_id: params.craneId,
+        cost_id: params.costId || null,
+      })
+      .select('id')
+      .single();
+    
+    if (exitError || !exitMovement) {
+      throw new Error(`No se pudo crear el movimiento de salida: ${exitError?.message || 'Error desconocido'}`);
+    }
+    
+    // Create crane_parts record
+    const { data: cranePart, error: cranePartError } = await supabase
+      .from('crane_parts')
+      .insert({
+        crane_id: params.craneId,
+        part_name: params.itemName,
+        quantity: params.quantity,
+        unit_price: params.unitCost,
+        total_value: totalCost,
+        date: params.date,
+        supplier: 'Desde inventario',
+        supplier_id: params.supplierId || null,
+        cost_id: params.costId || null,
+        inventory_movement_id: exitMovement.id,
+        notes: 'Distribución desde inventario',
+      })
+      .select('id')
+      .single();
+    
+    if (cranePartError) {
+      console.warn('[UnifiedPurchase] Warning: Could not create crane_part:', cranePartError.message);
+    }
+    
+    return {
+      exitMovementId: exitMovement.id,
+      cranePartId: cranePart?.id || null,
+    };
+  }
+}
