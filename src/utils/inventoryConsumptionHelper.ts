@@ -91,14 +91,14 @@ export const createDirectInventoryConsumption = async ({
       .insert({
         item_id: inventoryItemId,
         location_id: locationId,
-        movement_type: 'entrada',
+        movement_type: 'entry',
         quantity: quantity,
         unit_cost: unitCost,
         total_cost: quantity * unitCost,
         movement_date: date,
         reason: 'Compra con consumo inmediato',
         observations: `Compra registrada desde costo ID: ${costId}`,
-        status: 'completed',
+        status: 'active',
         cost_id: costId,
         supplier_id: supplierId || null,
       })
@@ -118,14 +118,14 @@ export const createDirectInventoryConsumption = async ({
       .insert({
         item_id: inventoryItemId,
         location_id: locationId,
-        movement_type: 'salida',
+        movement_type: 'exit',
         quantity: quantity,
         unit_cost: unitCost,
         total_cost: quantity * unitCost,
         movement_date: date,
         reason: 'Consumo inmediato',
         observations: `Consumo directo a grúa desde costo ID: ${costId}`,
-        status: 'completed',
+        status: 'active',
         crane_id: craneId,
         cost_id: costId,
       })
