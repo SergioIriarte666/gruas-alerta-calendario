@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Menu, User, Settings } from 'lucide-react';
+import { Menu, User, Settings, Truck, Receipt, ClipboardCheck, FileText } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -88,8 +88,51 @@ export const Header = ({
           </div>
         </div>
         
-        <div className="hidden lg:block">
+        <div className="hidden lg:flex items-center gap-3">
           <GlobalSearch />
+          
+          {/* Botones de Acceso Rápido */}
+          <div className="flex items-center gap-1">
+            <Button 
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate('/services')}
+              className="text-violet-600 hover:bg-violet-50 hover:text-violet-700"
+            >
+              <Truck className="w-4 h-4 mr-1.5" />
+              Servicios
+            </Button>
+            
+            <Button 
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate('/costs')}
+              className="text-violet-600 hover:bg-violet-50 hover:text-violet-700"
+            >
+              <Receipt className="w-4 h-4 mr-1.5" />
+              Costos
+            </Button>
+            
+            <Button 
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate('/closures')}
+              className="text-violet-600 hover:bg-violet-50 hover:text-violet-700"
+            >
+              <ClipboardCheck className="w-4 h-4 mr-1.5" />
+              Cierres
+            </Button>
+            
+            <Button 
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate('/invoices')}
+              className="text-violet-600 hover:bg-violet-50 hover:text-violet-700"
+            >
+              <FileText className="w-4 h-4 mr-1.5" />
+              Facturas
+            </Button>
+          </div>
         </div>
       </div>
 
