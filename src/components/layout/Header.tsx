@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Menu, User, Settings, Truck, Receipt, ClipboardCheck, FileText } from 'lucide-react';
+import { Menu, User, Settings, Truck, Receipt, ClipboardCheck, FileText, Users } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -131,6 +131,15 @@ export const Header = ({
             >
               <FileText className="w-4 h-4 mr-1.5" />
               Facturas
+            </Button>
+            <Button 
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate('/clients')}
+              className="text-violet-600 hover:bg-violet-50 hover:text-violet-700"
+            >
+              <Users className="w-4 h-4 mr-1.5" />
+              Clientes
             </Button>
           </div>
         </div>
