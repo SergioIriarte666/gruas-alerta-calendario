@@ -61,7 +61,8 @@ const ClosureForm = ({
     loading: servicesLoading,
     completeService,
     completeMultipleServices,
-    refetch
+    refetch,
+    isGlobalSearch
   } = useServicesForClosures({
     dateFrom: formData.dateFrom,
     dateTo: formData.dateTo
@@ -167,6 +168,16 @@ const ClosureForm = ({
       serviceIds: [],
       total: 0
     }));
+  };
+
+  const handleAutoFillDates = (dateFrom: Date, dateTo: Date) => {
+    setFormData(prev => ({
+      ...prev,
+      dateFrom,
+      dateTo
+    }));
+    // Navigate to step 1 to show the auto-filled dates
+    setCurrentStep(1);
   };
 
   const handleNextStep = () => {
@@ -278,6 +289,8 @@ const ClosureForm = ({
                             onCompleteMultipleServices={completeMultipleServices}
                             totalCompleted={totalCompleted}
                             usedServiceIds={usedServiceIds}
+                            isGlobalSearch={isGlobalSearch}
+                            onAutoFillDates={handleAutoFillDates}
                           />
                         </ColoredSectionCard>
                       </div>

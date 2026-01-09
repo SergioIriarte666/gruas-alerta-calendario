@@ -27,11 +27,23 @@ export const useServicesForClosures = (options: UseServicesForClosuresOptions = 
   const { transformRawServiceData } = useServiceTransformer();
   const { toast } = useToast();
   const { dateFrom, dateTo } = options;
+  
+  // Flag to indicate if this is a global search (no date filter)
+  const isGlobalSearch = !dateFrom && !dateTo;
 
   const fetchServicesData = async () => {
     try {
       setLoading(true);
-      console.log('🔍 Fetching services data for closures with date filter:', { dateFrom, dateTo });
+      console.log('🔍 Fetching services data for closures with date filter:', { dateFrom, dateTo, isGlobalSearch });
+      
+      // If no dates provided, use last 90 days as default for performance
+      let effectiveDateFrom = dateFrom;
+      if (isGlobalSearch) {
+        const ninetyDaysAgo = new Date();
+        ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
+        effectiveDateFrom = ninetyDaysAgo;
+        console.log('🔍 Global search mode: using last 90 days from', effectiveDateFrom);
+      }
       
       // Build the query for billable services (completed and with purchase order)
       // SIMPLIFIED QUERY: Remove inner join that was filtering out services
@@ -62,10 +74,10 @@ export const useServicesForClosures = (options: UseServicesForClosuresOptions = 
         .eq('status', 'pending')
         .order('folio', { ascending: true });
 
-      // Add date range filter if provided
-      if (dateFrom) {
-        billableQuery = billableQuery.gte('service_date', dateFrom.toISOString().split('T')[0]);
-        pendingQuery = pendingQuery.gte('service_date', dateFrom.toISOString().split('T')[0]);
+      // Add date range filter (either user-provided or 90-day default)
+      if (effectiveDateFrom) {
+        billableQuery = billableQuery.gte('service_date', effectiveDateFrom.toISOString().split('T')[0]);
+        pendingQuery = pendingQuery.gte('service_date', effectiveDateFrom.toISOString().split('T')[0]);
       }
       if (dateTo) {
         billableQuery = billableQuery.lte('service_date', dateTo.toISOString().split('T')[0]);
@@ -226,6 +238,7 @@ export const useServicesForClosures = (options: UseServicesForClosuresOptions = 
     loading,
     completeService,
     completeMultipleServices,
-    refetch: refetchWithDebug
+    refetch: refetchWithDebug,
+    isGlobalSearch
   };
 };
