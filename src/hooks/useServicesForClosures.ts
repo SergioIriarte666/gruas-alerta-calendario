@@ -16,6 +16,21 @@ interface ServicesForClosuresData {
   totalCompleted: number;
 }
 
+// Interface for processed services (already in closures/invoiced)
+export interface ProcessedServiceInfo {
+  serviceId: string;
+  serviceFolio: string;
+  purchaseOrder: string | null;
+  purchaseOrderNumber: string | null;
+  clientName: string;
+  closureId: string;
+  closureFolio: string;
+  invoiceId: string | null;
+  invoiceFolio: string | null;
+  invoiceNumeroFiscal: string | null;
+  invoiceStatus: string | null;
+}
+
 export const useServicesForClosures = (options: UseServicesForClosuresOptions = {}) => {
   const [data, setData] = useState<ServicesForClosuresData>({
     availableServices: [],
@@ -24,6 +39,8 @@ export const useServicesForClosures = (options: UseServicesForClosuresOptions = 
     totalCompleted: 0
   });
   const [loading, setLoading] = useState(false);
+  const [processedServices, setProcessedServices] = useState<ProcessedServiceInfo[]>([]);
+  const [searchingProcessed, setSearchingProcessed] = useState(false);
   const { transformRawServiceData } = useServiceTransformer();
   const { toast } = useToast();
   const { dateFrom, dateTo } = options;
@@ -230,6 +247,91 @@ export const useServicesForClosures = (options: UseServicesForClosuresOptions = 
     await fetchServicesData();
   };
 
+  // Search for services that are already processed (in closures/invoiced)
+  const searchProcessedServices = async (searchTerm: string) => {
+    if (!searchTerm.trim()) {
+      setProcessedServices([]);
+      return;
+    }
+
+    try {
+      setSearchingProcessed(true);
+      console.log('🔍 Searching processed services for:', searchTerm);
+
+      const searchPattern = `%${searchTerm.trim()}%`;
+
+      // Query services that are already in closures
+      const { data: processedData, error } = await supabase
+        .from('services')
+        .select(`
+          id,
+          folio,
+          purchase_order,
+          purchase_order_number,
+          license_plate,
+          client:clients!services_client_id_fkey(id, name),
+          closure_services!inner(
+            closure:service_closures!inner(
+              id,
+              folio,
+              invoice_closures(
+                invoice:invoices(
+                  id,
+                  folio,
+                  numero_fiscal,
+                  status
+                )
+              )
+            )
+          )
+        `)
+        .or(`purchase_order.ilike.${searchPattern},purchase_order_number.ilike.${searchPattern},folio.ilike.${searchPattern},license_plate.ilike.${searchPattern}`)
+        .limit(10);
+
+      if (error) {
+        console.error('Error searching processed services:', error);
+        setProcessedServices([]);
+        return;
+      }
+
+      console.log('🔍 Processed services found:', processedData?.length || 0, processedData);
+
+      // Transform data to ProcessedServiceInfo format
+      const transformed: ProcessedServiceInfo[] = (processedData || []).map((service: any) => {
+        const closureService = service.closure_services?.[0];
+        const closure = closureService?.closure;
+        const invoiceClosure = closure?.invoice_closures?.[0];
+        const invoice = invoiceClosure?.invoice;
+
+        return {
+          serviceId: service.id,
+          serviceFolio: service.folio,
+          purchaseOrder: service.purchase_order,
+          purchaseOrderNumber: service.purchase_order_number,
+          clientName: service.client?.name || 'Cliente desconocido',
+          closureId: closure?.id || '',
+          closureFolio: closure?.folio || '',
+          invoiceId: invoice?.id || null,
+          invoiceFolio: invoice?.folio || null,
+          invoiceNumeroFiscal: invoice?.numero_fiscal || null,
+          invoiceStatus: invoice?.status || null
+        };
+      });
+
+      setProcessedServices(transformed);
+    } catch (error) {
+      console.error('Error in searchProcessedServices:', error);
+      setProcessedServices([]);
+    } finally {
+      setSearchingProcessed(false);
+    }
+  };
+
+  // Clear processed services
+  const clearProcessedServices = () => {
+    setProcessedServices([]);
+  };
+
   return {
     services: data.availableServices,
     pendingServices: data.pendingServices,
@@ -239,6 +341,11 @@ export const useServicesForClosures = (options: UseServicesForClosuresOptions = 
     completeService,
     completeMultipleServices,
     refetch: refetchWithDebug,
-    isGlobalSearch
+    isGlobalSearch,
+    // New: processed services search
+    processedServices,
+    searchingProcessed,
+    searchProcessedServices,
+    clearProcessedServices
   };
 };
