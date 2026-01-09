@@ -1,13 +1,14 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Service } from '@/types';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { InfoIcon, CheckCircle, Clock, AlertTriangle, Zap, Search, X, CalendarDays } from 'lucide-react';
+import { InfoIcon, CheckCircle, Clock, AlertTriangle, Zap, Search, X, CalendarDays, FileText, Receipt } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { getServiceValueForClosure } from '@/utils/serviceValueCalculations';
+import { ProcessedServiceInfo } from '@/hooks/useServicesForClosures';
 
 interface EnhancedServicesSelectorProps {
   services: Service[];
@@ -22,6 +23,11 @@ interface EnhancedServicesSelectorProps {
   usedServiceIds: Set<string>;
   isGlobalSearch?: boolean;
   onAutoFillDates?: (dateFrom: Date, dateTo: Date) => void;
+  // New props for processed services
+  processedServices?: ProcessedServiceInfo[];
+  searchingProcessed?: boolean;
+  onSearchProcessed?: (searchTerm: string) => void;
+  onClearProcessed?: () => void;
 }
 
 const EnhancedServicesSelector = ({
@@ -36,7 +42,11 @@ const EnhancedServicesSelector = ({
   totalCompleted,
   usedServiceIds,
   isGlobalSearch = false,
-  onAutoFillDates
+  onAutoFillDates,
+  processedServices = [],
+  searchingProcessed = false,
+  onSearchProcessed,
+  onClearProcessed
 }: EnhancedServicesSelectorProps) => {
   const [showPending, setShowPending] = useState(false);
   const [selectedPendingIds, setSelectedPendingIds] = useState<string[]>([]);
@@ -44,7 +54,7 @@ const EnhancedServicesSelector = ({
 
   console.log('EnhancedServicesSelector render - services:', services.length, 'pendingServices:', pendingServices.length, 'loading:', loading, 'clientId:', clientId);
 
-  // Function to filter services by search term
+  // Function to filter services by search term (defined before useEffect that uses it)
   const filterServicesBySearch = (serviceList: Service[]) => {
     if (!searchTerm.trim()) return serviceList;
     
@@ -78,6 +88,34 @@ const EnhancedServicesSelector = ({
       return false;
     });
   };
+
+  // Effect to search for processed services when no results are found
+  useEffect(() => {
+    const trimmedSearch = searchTerm.trim();
+    
+    // Only search processed if:
+    // 1. There's a search term
+    // 2. No available services match
+    // 3. No pending services match
+    // 4. onSearchProcessed is available
+    if (trimmedSearch && onSearchProcessed) {
+      const hasAvailableResults = filterServicesBySearch(services).length > 0;
+      const hasPendingResults = filterServicesBySearch(pendingServices).length > 0;
+      
+      if (!hasAvailableResults && !hasPendingResults) {
+        // Debounce the search
+        const timeoutId = setTimeout(() => {
+          onSearchProcessed(trimmedSearch);
+        }, 300);
+        return () => clearTimeout(timeoutId);
+      } else {
+        // Clear processed results if we have available results
+        onClearProcessed?.();
+      }
+    } else if (!trimmedSearch && onClearProcessed) {
+      onClearProcessed();
+    }
+  }, [searchTerm, services, pendingServices, onSearchProcessed, onClearProcessed]);
 
   const filteredServices = filterServicesBySearch(
     services.filter(service => {
@@ -334,6 +372,95 @@ const EnhancedServicesSelector = ({
             </div>
           </div>
         </Alert>
+      )}
+
+      {/* Processed Services Section - Shows when searching for already processed services */}
+      {searchTerm.trim() && filteredServices.length === 0 && filteredPendingServices.length === 0 && (
+        <>
+          {searchingProcessed ? (
+            <Alert className="border border-blue-500/30 bg-blue-500/5">
+              <div className="flex items-center gap-2">
+                <div className="animate-spin h-4 w-4 border-2 border-blue-600 border-t-transparent rounded-full"></div>
+                <AlertDescription className="text-foreground">
+                  Buscando en servicios ya procesados...
+                </AlertDescription>
+              </div>
+            </Alert>
+          ) : processedServices.length > 0 ? (
+            <Alert className="border border-blue-500/30 bg-blue-500/5">
+              <div className="flex items-start gap-2">
+                <FileText className="h-4 w-4 text-blue-600 mt-0.5" />
+                <div className="flex-1">
+                  <AlertDescription className="text-foreground">
+                    <div className="font-medium text-blue-700 mb-2">
+                      Servicio encontrado (ya procesado)
+                    </div>
+                    <div className="space-y-3">
+                      {processedServices.map(ps => (
+                        <div key={ps.serviceId} className="text-sm bg-background/50 rounded-md p-3 border border-blue-200/50">
+                          <div className="grid grid-cols-2 gap-2">
+                            <div className="flex items-center gap-2">
+                              <span className="text-muted-foreground">📋 Servicio:</span>
+                              <span className="font-medium">{ps.serviceFolio}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-muted-foreground">👤 Cliente:</span>
+                              <span className="font-medium">{ps.clientName}</span>
+                            </div>
+                            {(ps.purchaseOrder || ps.purchaseOrderNumber) && (
+                              <div className="flex items-center gap-2">
+                                <span className="text-muted-foreground">🛒 OC:</span>
+                                <span className="font-medium">{ps.purchaseOrder || ps.purchaseOrderNumber}</span>
+                              </div>
+                            )}
+                            <div className="flex items-center gap-2">
+                              <span className="text-muted-foreground">📦 Cierre:</span>
+                              <span className="font-medium text-primary">{ps.closureFolio}</span>
+                            </div>
+                          </div>
+                          
+                          {ps.invoiceFolio ? (
+                            <div className="mt-2 pt-2 border-t border-blue-200/50 flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                <Receipt className="h-4 w-4 text-green-600" />
+                                <span className="text-muted-foreground">Factura:</span>
+                                <span className="font-medium">{ps.invoiceFolio}</span>
+                                {ps.invoiceNumeroFiscal && (
+                                  <span className="text-muted-foreground">(N° Fiscal: {ps.invoiceNumeroFiscal})</span>
+                                )}
+                              </div>
+                              <Badge 
+                                variant={
+                                  ps.invoiceStatus === 'paid' ? 'default' :
+                                  ps.invoiceStatus === 'sent' ? 'secondary' :
+                                  ps.invoiceStatus === 'overdue' ? 'destructive' :
+                                  'outline'
+                                }
+                                className="text-xs"
+                              >
+                                {ps.invoiceStatus === 'paid' ? 'Pagada' :
+                                 ps.invoiceStatus === 'sent' ? 'Enviada' :
+                                 ps.invoiceStatus === 'overdue' ? 'Vencida' :
+                                 ps.invoiceStatus === 'draft' ? 'Borrador' :
+                                 ps.invoiceStatus === 'cancelled' ? 'Anulada' :
+                                 ps.invoiceStatus || 'Pendiente'}
+                              </Badge>
+                            </div>
+                          ) : (
+                            <div className="mt-2 pt-2 border-t border-blue-200/50 flex items-center gap-2">
+                              <Clock className="h-4 w-4 text-amber-600" />
+                              <span className="text-amber-700 text-sm">Sin facturar aún</span>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </AlertDescription>
+                </div>
+              </div>
+            </Alert>
+          ) : null}
+        </>
       )}
 
       {/* Pending Services Section */}

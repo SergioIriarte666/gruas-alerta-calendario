@@ -62,7 +62,11 @@ const ClosureForm = ({
     completeService,
     completeMultipleServices,
     refetch,
-    isGlobalSearch
+    isGlobalSearch,
+    processedServices,
+    searchingProcessed,
+    searchProcessedServices,
+    clearProcessedServices
   } = useServicesForClosures({
     dateFrom: formData.dateFrom,
     dateTo: formData.dateTo
@@ -305,6 +309,10 @@ const ClosureForm = ({
                             usedServiceIds={usedServiceIds}
                             isGlobalSearch={isGlobalSearch}
                             onAutoFillDates={handleAutoFillDates}
+                            processedServices={processedServices}
+                            searchingProcessed={searchingProcessed}
+                            onSearchProcessed={searchProcessedServices}
+                            onClearProcessed={clearProcessedServices}
                           />
                         </ColoredSectionCard>
                       </div>
