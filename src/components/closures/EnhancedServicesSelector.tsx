@@ -102,25 +102,38 @@ const EnhancedServicesSelector = ({
   useEffect(() => {
     const trimmedSearch = searchTerm.trim();
     
-    // Only search processed if there's a search term and no available results
-    if (trimmedSearch && onSearchProcessedRef.current) {
-      const hasAvailableResults = filterServicesBySearch(services).length > 0;
-      const hasPendingResults = filterServicesBySearch(pendingServices).length > 0;
-      
-      if (!hasAvailableResults && !hasPendingResults) {
-        // Debounce the search
-        const timeoutId = setTimeout(() => {
-          onSearchProcessedRef.current?.(trimmedSearch);
-        }, 300);
-        return () => clearTimeout(timeoutId);
-      } else {
-        // Clear processed results if we have available results
-        onClearProcessedRef.current?.();
-      }
-    } else if (!trimmedSearch && onClearProcessedRef.current) {
-      onClearProcessedRef.current();
+    // Only search processed if there's a search term
+    if (!trimmedSearch) {
+      onClearProcessedRef.current?.();
+      return;
     }
-  }, [searchTerm, services.length, pendingServices.length, filterServicesBySearch]);
+    
+    // Check if we have any available results
+    const clientFilteredServices = services.filter(service => {
+      if (!clientId) return true;
+      return service.client?.id === clientId;
+    });
+    
+    const clientFilteredPending = pendingServices.filter(service => {
+      if (!clientId) return true;
+      return service.client?.id === clientId;
+    });
+    
+    const hasAvailableResults = filterServicesBySearch(clientFilteredServices).length > 0;
+    const hasPendingResults = filterServicesBySearch(clientFilteredPending).length > 0;
+    
+    if (!hasAvailableResults && !hasPendingResults && onSearchProcessedRef.current) {
+      // Debounce the search
+      const timeoutId = setTimeout(() => {
+        console.log('🔍 Triggering processed services search for:', trimmedSearch);
+        onSearchProcessedRef.current?.(trimmedSearch);
+      }, 500);
+      return () => clearTimeout(timeoutId);
+    } else {
+      // Clear processed results if we have available results
+      onClearProcessedRef.current?.();
+    }
+  }, [searchTerm, services, pendingServices, clientId, filterServicesBySearch]);
 
   const filteredServices = filterServicesBySearch(
     services.filter(service => {
