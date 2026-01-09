@@ -256,9 +256,10 @@ export const useServicesForClosures = (options: UseServicesForClosuresOptions = 
 
     try {
       setSearchingProcessed(true);
-      console.log('🔍 Searching processed services for:', searchTerm);
+      console.log('🔍 [Hook] Searching processed services for:', searchTerm);
 
       const searchPattern = `%${searchTerm.trim()}%`;
+      console.log('🔍 [Hook] Search pattern:', searchPattern);
 
       // Query services that are already in closures - using explicit FK relationship
       const { data: processedData, error } = await supabase
@@ -289,12 +290,12 @@ export const useServicesForClosures = (options: UseServicesForClosuresOptions = 
         .limit(10);
 
       if (error) {
-        console.error('Error searching processed services:', error);
+        console.error('❌ [Hook] Error searching processed services:', error);
         setProcessedServices([]);
         return;
       }
 
-      console.log('🔍 Processed services found:', processedData?.length || 0, processedData);
+      console.log('✅ [Hook] Processed services found:', processedData?.length || 0, processedData);
 
       // Transform data to ProcessedServiceInfo format
       const transformed: ProcessedServiceInfo[] = (processedData || []).map((service: any) => {
