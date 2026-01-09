@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Service } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/custom-toast';
@@ -248,7 +248,7 @@ export const useServicesForClosures = (options: UseServicesForClosuresOptions = 
   };
 
   // Search for services that are already processed (in closures/invoiced)
-  const searchProcessedServices = async (searchTerm: string) => {
+  const searchProcessedServices = useCallback(async (searchTerm: string) => {
     if (!searchTerm.trim()) {
       setProcessedServices([]);
       return;
@@ -260,7 +260,7 @@ export const useServicesForClosures = (options: UseServicesForClosuresOptions = 
 
       const searchPattern = `%${searchTerm.trim()}%`;
 
-      // Query services that are already in closures
+      // Query services that are already in closures - using explicit FK relationship
       const { data: processedData, error } = await supabase
         .from('services')
         .select(`
@@ -274,7 +274,7 @@ export const useServicesForClosures = (options: UseServicesForClosuresOptions = 
             closure:service_closures!inner(
               id,
               folio,
-              invoice_closures(
+              invoice_closures!fk_invoice_closures_closure_id(
                 invoice:invoices(
                   id,
                   folio,
@@ -325,12 +325,12 @@ export const useServicesForClosures = (options: UseServicesForClosuresOptions = 
     } finally {
       setSearchingProcessed(false);
     }
-  };
+  }, []);
 
   // Clear processed services
-  const clearProcessedServices = () => {
+  const clearProcessedServices = useCallback(() => {
     setProcessedServices([]);
-  };
+  }, []);
 
   return {
     services: data.availableServices,
