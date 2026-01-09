@@ -134,11 +134,25 @@ const ClosureForm = ({
       const total = calculateClosureTotal(selectedServices);
       const detectedPO = detectPurchaseOrders(selectedServices);
       
+      // Detectar cliente único de los servicios seleccionados
+      let detectedClientId = prev.clientId;
+      if (selectedServices.length > 0) {
+        const clientIds = [...new Set(selectedServices.map(s => s.client?.id).filter(Boolean))];
+        // Si todos los servicios tienen el mismo cliente, auto-rellenar
+        if (clientIds.length === 1 && clientIds[0]) {
+          detectedClientId = clientIds[0];
+        }
+      } else {
+        // Si no hay servicios seleccionados, limpiar cliente
+        detectedClientId = '';
+      }
+      
       return {
         ...prev,
         serviceIds: newServiceIds,
         total,
-        purchaseOrder: detectedPO
+        purchaseOrder: detectedPO,
+        clientId: detectedClientId
       };
     });
   };
