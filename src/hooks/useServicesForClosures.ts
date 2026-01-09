@@ -276,7 +276,7 @@ export const useServicesForClosures = (options: UseServicesForClosuresOptions = 
               id,
               folio,
               invoice_closures!fk_invoice_closures_closure_id(
-                invoice:invoices(
+                invoice:invoices!fk_invoice_closures_invoice_id(
                   id,
                   folio,
                   numero_fiscal,
