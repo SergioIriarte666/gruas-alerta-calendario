@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Service } from '@/types';
@@ -51,11 +51,20 @@ const EnhancedServicesSelector = ({
   const [showPending, setShowPending] = useState(false);
   const [selectedPendingIds, setSelectedPendingIds] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
+  
+  // Use refs to avoid stale closures in useEffect
+  const onSearchProcessedRef = useRef(onSearchProcessed);
+  const onClearProcessedRef = useRef(onClearProcessed);
+  
+  useEffect(() => {
+    onSearchProcessedRef.current = onSearchProcessed;
+    onClearProcessedRef.current = onClearProcessed;
+  }, [onSearchProcessed, onClearProcessed]);
 
   console.log('EnhancedServicesSelector render - services:', services.length, 'pendingServices:', pendingServices.length, 'loading:', loading, 'clientId:', clientId);
 
-  // Function to filter services by search term (defined before useEffect that uses it)
-  const filterServicesBySearch = (serviceList: Service[]) => {
+  // Function to filter services by search term
+  const filterServicesBySearch = useCallback((serviceList: Service[]) => {
     if (!searchTerm.trim()) return serviceList;
     
     const searchLower = searchTerm.toLowerCase().trim();
@@ -87,35 +96,31 @@ const EnhancedServicesSelector = ({
       
       return false;
     });
-  };
+  }, [searchTerm]);
 
   // Effect to search for processed services when no results are found
   useEffect(() => {
     const trimmedSearch = searchTerm.trim();
     
-    // Only search processed if:
-    // 1. There's a search term
-    // 2. No available services match
-    // 3. No pending services match
-    // 4. onSearchProcessed is available
-    if (trimmedSearch && onSearchProcessed) {
+    // Only search processed if there's a search term and no available results
+    if (trimmedSearch && onSearchProcessedRef.current) {
       const hasAvailableResults = filterServicesBySearch(services).length > 0;
       const hasPendingResults = filterServicesBySearch(pendingServices).length > 0;
       
       if (!hasAvailableResults && !hasPendingResults) {
         // Debounce the search
         const timeoutId = setTimeout(() => {
-          onSearchProcessed(trimmedSearch);
+          onSearchProcessedRef.current?.(trimmedSearch);
         }, 300);
         return () => clearTimeout(timeoutId);
       } else {
         // Clear processed results if we have available results
-        onClearProcessed?.();
+        onClearProcessedRef.current?.();
       }
-    } else if (!trimmedSearch && onClearProcessed) {
-      onClearProcessed();
+    } else if (!trimmedSearch && onClearProcessedRef.current) {
+      onClearProcessedRef.current();
     }
-  }, [searchTerm, services, pendingServices, onSearchProcessed, onClearProcessed]);
+  }, [searchTerm, services.length, pendingServices.length, filterServicesBySearch]);
 
   const filteredServices = filterServicesBySearch(
     services.filter(service => {
