@@ -241,7 +241,14 @@ const EnhancedServicesSelector = ({
   const getStatusMessage = () => {
     const hasActiveSearch = searchTerm.trim().length > 0;
     
+    // Don't show "not found" message if there are processed services found
+    // This avoids redundancy when processedServices panel is shown below
     if (filteredServices.length === 0 && filteredPendingServices.length === 0) {
+      // If searching and there are processed services or currently searching for them, don't show this message
+      if (hasActiveSearch && (processedServices.length > 0 || searchingProcessed)) {
+        return null;
+      }
+      
       return {
         type: 'info' as const,
         title: hasActiveSearch 
