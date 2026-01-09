@@ -27,7 +27,7 @@ export const ClosureFormStepNavigation = ({
       {steps.map((step) => {
         const isActive = step.id === currentStep;
         const isPast = step.id < currentStep;
-        const isClickable = step.id <= currentStep || step.isCompleted;
+        const isClickable = true; // Allow free navigation between all steps
 
         return (
           <button

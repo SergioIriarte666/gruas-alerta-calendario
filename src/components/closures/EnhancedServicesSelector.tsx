@@ -3,7 +3,7 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Service } from '@/types';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { InfoIcon, CheckCircle, Clock, AlertTriangle, Zap, Search, X } from 'lucide-react';
+import { InfoIcon, CheckCircle, Clock, AlertTriangle, Zap, Search, X, CalendarDays } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
@@ -20,6 +20,8 @@ interface EnhancedServicesSelectorProps {
   onCompleteMultipleServices: (serviceIds: string[]) => void;
   totalCompleted: number;
   usedServiceIds: Set<string>;
+  isGlobalSearch?: boolean;
+  onAutoFillDates?: (dateFrom: Date, dateTo: Date) => void;
 }
 
 const EnhancedServicesSelector = ({
@@ -32,7 +34,9 @@ const EnhancedServicesSelector = ({
   onCompleteService,
   onCompleteMultipleServices,
   totalCompleted,
-  usedServiceIds
+  usedServiceIds,
+  isGlobalSearch = false,
+  onAutoFillDates
 }: EnhancedServicesSelectorProps) => {
   const [showPending, setShowPending] = useState(false);
   const [selectedPendingIds, setSelectedPendingIds] = useState<string[]>([]);
@@ -141,6 +145,25 @@ const EnhancedServicesSelector = ({
     }
   };
 
+  // Calculate date range from selected services for auto-fill
+  const handleAutoFillDates = () => {
+    if (!onAutoFillDates || selectedServiceIds.length === 0) return;
+    
+    const selectedServices = services.filter(s => selectedServiceIds.includes(s.id));
+    if (selectedServices.length === 0) return;
+    
+    const dates = selectedServices
+      .map(s => new Date(s.serviceDate))
+      .filter(d => !isNaN(d.getTime()));
+    
+    if (dates.length === 0) return;
+    
+    const minDate = new Date(Math.min(...dates.map(d => d.getTime())));
+    const maxDate = new Date(Math.max(...dates.map(d => d.getTime())));
+    
+    onAutoFillDates(minDate, maxDate);
+  };
+
   if (loading) {
     return (
       <div className="space-y-2">
@@ -228,6 +251,35 @@ const EnhancedServicesSelector = ({
           </div>
         )}
       </div>
+
+      {/* Global Search Banner */}
+      {isGlobalSearch && (
+        <Alert className="border border-amber-500/30 bg-amber-500/5">
+          <div className="flex items-start gap-2">
+            <AlertTriangle className="h-4 w-4 text-amber-600 mt-0.5" />
+            <div className="flex-1">
+              <AlertDescription className="text-foreground">
+                <div className="font-medium text-amber-700">Búsqueda Global Activa</div>
+                <div className="text-sm mt-1 text-muted-foreground">
+                  Mostrando servicios de los últimos 90 días. Busca por OC, folio o patente.
+                </div>
+                {selectedServiceIds.length > 0 && onAutoFillDates && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleAutoFillDates}
+                    className="mt-2 text-amber-700 border-amber-500/30 hover:bg-amber-500/10"
+                  >
+                    <CalendarDays className="h-4 w-4 mr-2" />
+                    Auto-rellenar fechas ({selectedServiceIds.length} servicio{selectedServiceIds.length !== 1 ? 's' : ''})
+                  </Button>
+                )}
+              </AlertDescription>
+            </div>
+          </div>
+        </Alert>
+      )}
 
       {/* Search Input */}
       <div className="space-y-2">
