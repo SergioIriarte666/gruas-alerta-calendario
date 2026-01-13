@@ -3,9 +3,23 @@ import { createLogger } from '@/lib/logger';
 
 const logger = createLogger('CommissionSync');
 
+// Operadores excluidos de comisiones según reglas de negocio
+const EXCLUDED_OPERATOR_NAMES = ['Jorge Iriarte', 'Sergio Iriarte', 'Jorge Ignacio Iriarte'];
+
+/**
+ * Valida si un operador está excluido de comisiones
+ */
+const isOperatorExcluded = (operatorName: string | null | undefined): boolean => {
+  if (!operatorName) return false;
+  return EXCLUDED_OPERATOR_NAMES.some(excluded => 
+    operatorName.toLowerCase().includes(excluded.toLowerCase())
+  );
+};
+
 /**
  * Utility to synchronize commissions from service_resources to costs table
- * This fixes existing services that have commissions in service_resources but not in costs
+ * IMPORTANTE: Solo sincroniza si el servicio tiene operator_commission > 0
+ * y el operador no está excluido
  */
 export const syncCommissionsForService = async (serviceId: string): Promise<{ success: boolean; message: string }> => {
   try {
@@ -13,6 +27,24 @@ export const syncCommissionsForService = async (serviceId: string): Promise<{ su
     
     const commissionCategoryId = '440296d4-09c2-4f3a-b02b-835f861df4c4';
     
+    // PRIMERO: Verificar que el servicio tiene operator_commission > 0
+    const { data: service, error: serviceError } = await supabase
+      .from('services')
+      .select('folio, service_date, crane_id, operator_commission')
+      .eq('id', serviceId)
+      .single();
+
+    if (serviceError) {
+      logger.error('❌ [SYNC_SINGLE] Error fetching service:', serviceError);
+      return { success: false, message: `Error al obtener servicio: ${serviceError.message}` };
+    }
+
+    // Si el servicio no tiene comisión configurada, no hay nada que sincronizar
+    if (!service.operator_commission || service.operator_commission <= 0) {
+      logger.info('ℹ️ [SYNC_SINGLE] Service has no commission configured (operator_commission = 0)');
+      return { success: true, message: 'El servicio no tiene comisión configurada' };
+    }
+
     // Get service_resources with commissions
     const { data: serviceResources, error: resourcesError } = await supabase
       .from('service_resources')
@@ -31,21 +63,14 @@ export const syncCommissionsForService = async (serviceId: string): Promise<{ su
       return { success: false, message: `Error al obtener recursos: ${resourcesError.message}` };
     }
 
-    if (!serviceResources || serviceResources.length === 0) {
-      logger.info('ℹ️ [SYNC_SINGLE] No commissions found in service_resources');
-      return { success: true, message: 'No hay comisiones para sincronizar' };
-    }
+    // Filtrar operadores excluidos
+    const validResources = serviceResources?.filter(r => 
+      !isOperatorExcluded(r.operators?.name)
+    ) || [];
 
-    // Get service data
-    const { data: service, error: serviceError } = await supabase
-      .from('services')
-      .select('folio, service_date, crane_id')
-      .eq('id', serviceId)
-      .single();
-
-    if (serviceError) {
-      logger.error('❌ [SYNC_SINGLE] Error fetching service:', serviceError);
-      return { success: false, message: `Error al obtener servicio: ${serviceError.message}` };
+    if (validResources.length === 0) {
+      logger.info('ℹ️ [SYNC_SINGLE] No valid commissions found (all operators excluded or no commissions)');
+      return { success: true, message: 'No hay comisiones válidas para sincronizar' };
     }
 
     // Delete existing commission costs
@@ -60,8 +85,8 @@ export const syncCommissionsForService = async (serviceId: string): Promise<{ su
       return { success: false, message: `Error al eliminar comisiones existentes: ${deleteError.message}` };
     }
 
-    // Create new commission costs
-    const commissionCosts = serviceResources.map(resource => ({
+    // Create new commission costs only for valid (non-excluded) operators
+    const commissionCosts = validResources.map(resource => ({
       amount: resource.commission_amount,
       category_id: commissionCategoryId,
       service_id: serviceId,
