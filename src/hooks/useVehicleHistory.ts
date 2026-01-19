@@ -8,6 +8,8 @@ export interface VehicleHistoryEntry {
   id: string;
   folio: string;
   serviceDate: string;
+  createdAt: string;
+  startTime?: string;
   status: ServiceStatus;
   serviceType: {
     name: string;
@@ -31,6 +33,8 @@ const fetchVehicleHistory = async (licensePlate: string): Promise<VehicleHistory
       id,
       folio,
       service_date,
+      created_at,
+      start_time,
       status,
       value,
       origin,
@@ -43,7 +47,8 @@ const fetchVehicleHistory = async (licensePlate: string): Promise<VehicleHistory
       third_party_client:clients!services_third_party_client_id_fkey(name)
     `)
     .eq('license_plate', licensePlate)
-    .order('service_date', { ascending: false });
+    .order('service_date', { ascending: false })
+    .order('created_at', { ascending: false });
 
   if (error) {
     console.error('Error fetching vehicle history:', error);
@@ -56,6 +61,8 @@ const fetchVehicleHistory = async (licensePlate: string): Promise<VehicleHistory
     id: item.id,
     folio: item.folio,
     serviceDate: item.service_date,
+    createdAt: item.created_at,
+    startTime: item.start_time,
     status: item.status,
     serviceType: item.service_types || { name: 'Desconocido' },
     client: (item.client || item.third_party_client) || { name: 'Desconocido' },
