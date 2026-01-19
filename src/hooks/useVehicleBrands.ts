@@ -118,6 +118,7 @@ export const useVehicleBrands = () => {
     loading: isLoading,
     error,
     createBrand: createMutation.mutate,
+    createBrandAsync: createMutation.mutateAsync,
     updateBrand: updateMutation.mutate,
     deleteBrand: deleteMutation.mutate,
     isCreating: createMutation.isPending,
