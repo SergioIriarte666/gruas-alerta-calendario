@@ -790,6 +790,7 @@ export const EnhancedServiceForm = ({
                     vehicleBrandError={isFieldInvalid('vehicleBrand')}
                     vehicleModelError={isFieldInvalid('vehicleModel')}
                     licensePlateError={isFieldInvalid('licensePlate')}
+                    isEditing={!!service}
                   />
                 </ColoredSectionCard>
 
