@@ -129,6 +129,7 @@ export const useVehicleModels = (brandId?: string) => {
     loading: isLoading,
     error,
     createModel: createMutation.mutate,
+    createModelAsync: createMutation.mutateAsync,
     updateModel: updateMutation.mutate,
     deleteModel: deleteMutation.mutate,
     isCreating: createMutation.isPending,
