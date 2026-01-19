@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
@@ -18,7 +18,10 @@ import {
 } from '@/components/ui/dialog';
 import { useVehicleBrands } from '@/hooks/useVehicleBrands';
 import { useVehicleModels } from '@/hooks/useVehicleModels';
-import { AlertTriangle, Plus } from 'lucide-react';
+import { useVehicleHistory } from '@/hooks/useVehicleHistory';
+import { AlertTriangle, Plus, AlertCircle, Calendar, MapPin, User, FileText, Car } from 'lucide-react';
+import { format } from 'date-fns';
+import { es } from 'date-fns/locale';
 
 interface VehicleSectionProps {
   vehicleBrand: string;
@@ -34,6 +37,7 @@ interface VehicleSectionProps {
   vehicleBrandError?: boolean;
   vehicleModelError?: boolean;
   licensePlateError?: boolean;
+  isEditing?: boolean;
 }
 
 export const VehicleSection = ({
@@ -49,17 +53,62 @@ export const VehicleSection = ({
   disabled = false,
   vehicleBrandError = false,
   vehicleModelError = false,
-  licensePlateError = false
+  licensePlateError = false,
+  isEditing = false
 }: VehicleSectionProps) => {
   const { brands, loading: brandsLoading, createBrandAsync, isCreating: isCreatingBrand } = useVehicleBrands();
   const [selectedBrandId, setSelectedBrandId] = useState<string>('');
   const { models, loading: modelsLoading, createModelAsync, isCreating: isCreatingModel } = useVehicleModels(selectedBrandId);
 
-  // Dialog states
+  // Dialog states for new brand/model
   const [isNewBrandDialogOpen, setIsNewBrandDialogOpen] = useState(false);
   const [isNewModelDialogOpen, setIsNewModelDialogOpen] = useState(false);
   const [newBrandName, setNewBrandName] = useState('');
   const [newModelName, setNewModelName] = useState('');
+
+  // License plate history validation states
+  const [debouncedPlate, setDebouncedPlate] = useState('');
+  const [showHistoryDialog, setShowHistoryDialog] = useState(false);
+  const [historyConfirmed, setHistoryConfirmed] = useState(false);
+  const confirmedPlatesRef = useRef<Set<string>>(new Set());
+  
+  // Fetch vehicle history for the debounced plate
+  const { history, isLoading: historyLoading } = useVehicleHistory(
+    debouncedPlate.length >= 4 ? debouncedPlate : ''
+  );
+
+  // Debounce license plate input
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (licensePlate.length >= 4) {
+        setDebouncedPlate(licensePlate.toUpperCase());
+      } else {
+        setDebouncedPlate('');
+      }
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [licensePlate]);
+
+  // Show history dialog when plate has services (only for new services)
+  useEffect(() => {
+    if (
+      !isEditing &&
+      history &&
+      history.length > 0 &&
+      debouncedPlate === licensePlate.toUpperCase() &&
+      !historyConfirmed &&
+      !confirmedPlatesRef.current.has(debouncedPlate)
+    ) {
+      setShowHistoryDialog(true);
+    }
+  }, [history, debouncedPlate, licensePlate, isEditing, historyConfirmed]);
+
+  // Reset confirmation when plate changes
+  useEffect(() => {
+    if (licensePlate.toUpperCase() !== debouncedPlate) {
+      setHistoryConfirmed(false);
+    }
+  }, [licensePlate, debouncedPlate]);
 
   // Find brand ID from brand name when component loads
   useEffect(() => {
@@ -70,6 +119,18 @@ export const VehicleSection = ({
       }
     }
   }, [vehicleBrand, brands]);
+
+  const handleConfirmContinue = () => {
+    setHistoryConfirmed(true);
+    confirmedPlatesRef.current.add(debouncedPlate);
+    setShowHistoryDialog(false);
+  };
+
+  const handleCancelHistory = () => {
+    setShowHistoryDialog(false);
+    onLicensePlateChange('');
+    setHistoryConfirmed(false);
+  };
 
   const handleBrandChange = (brandId: string) => {
     const brand = brands.find(b => b.id === brandId);
@@ -328,6 +389,81 @@ export const VehicleSection = ({
                 {isCreatingModel ? 'Creando...' : 'Crear Modelo'}
               </Button>
             </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog de historial del vehículo */}
+      <Dialog open={showHistoryDialog} onOpenChange={setShowHistoryDialog}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-amber-600">
+              <AlertCircle className="h-5 w-5" />
+              Vehículo con Historial
+            </DialogTitle>
+            <DialogDescription>
+              El vehículo <span className="font-semibold">{licensePlate}</span> ya tiene servicios registrados en el sistema.
+            </DialogDescription>
+          </DialogHeader>
+          
+          {history && history.length > 0 && (
+            <div className="bg-muted/50 rounded-lg p-4 space-y-3">
+              <p className="text-sm font-medium text-muted-foreground">
+                Último servicio registrado:
+              </p>
+              <div className="space-y-2 text-sm">
+                <div className="flex items-center gap-2">
+                  <Calendar className="h-4 w-4 text-muted-foreground" />
+                  <span>
+                    {format(new Date(history[0].serviceDate), "dd 'de' MMMM 'de' yyyy", { locale: es })}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <MapPin className="h-4 w-4 text-green-600" />
+                  <span className="text-muted-foreground">Origen:</span>
+                  <span>{history[0].origin || 'No especificado'}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <MapPin className="h-4 w-4 text-red-600" />
+                  <span className="text-muted-foreground">Destino:</span>
+                  <span>{history[0].destination || 'No especificado'}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <User className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-muted-foreground">Cliente:</span>
+                  <span>{history[0].client?.name || 'No especificado'}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <FileText className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-muted-foreground">Folio:</span>
+                  <span className="font-mono">{history[0].folio}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Car className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-muted-foreground">Tipo:</span>
+                  <span>{history[0].serviceType?.name || 'No especificado'}</span>
+                </div>
+              </div>
+              
+              {history.length > 1 && (
+                <p className="text-xs text-muted-foreground pt-2 border-t">
+                  Este vehículo tiene {history.length} servicios en total.
+                </p>
+              )}
+            </div>
+          )}
+          
+          <p className="text-sm text-muted-foreground">
+            ¿Desea continuar creando un nuevo servicio para este vehículo?
+          </p>
+          
+          <div className="flex justify-end gap-2 pt-2">
+            <Button type="button" variant="outline" onClick={handleCancelHistory}>
+              Cancelar
+            </Button>
+            <Button type="button" onClick={handleConfirmContinue}>
+              Sí, Continuar
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
