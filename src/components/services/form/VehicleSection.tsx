@@ -19,9 +19,10 @@ import {
 import { useVehicleBrands } from '@/hooks/useVehicleBrands';
 import { useVehicleModels } from '@/hooks/useVehicleModels';
 import { useVehicleHistory } from '@/hooks/useVehicleHistory';
-import { AlertTriangle, Plus, AlertCircle, Calendar, MapPin, User, FileText, Car } from 'lucide-react';
-import { format } from 'date-fns';
+import { AlertTriangle, Plus, AlertCircle, Calendar, MapPin, User, FileText, Car, Clock } from 'lucide-react';
+import { format, formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { parseFromDatabase } from '@/utils/timezoneUtils';
 
 interface VehicleSectionProps {
   vehicleBrand: string;
@@ -415,9 +416,22 @@ export const VehicleSection = ({
                 <div className="flex items-center gap-2">
                   <Calendar className="h-4 w-4 text-muted-foreground" />
                   <span>
-                    {format(new Date(history[0].serviceDate), "dd 'de' MMMM 'de' yyyy", { locale: es })}
+                    {format(parseFromDatabase(history[0].serviceDate), "dd 'de' MMMM 'de' yyyy", { locale: es })}
+                    {history[0].startTime && (
+                      <span className="text-muted-foreground ml-1">
+                        a las {history[0].startTime.substring(0, 5)}
+                      </span>
+                    )}
                   </span>
                 </div>
+                {history[0].createdAt && (
+                  <div className="flex items-center gap-2">
+                    <Clock className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-muted-foreground">
+                      Registrado {formatDistanceToNow(new Date(history[0].createdAt), { addSuffix: true, locale: es })}
+                    </span>
+                  </div>
+                )}
                 <div className="flex items-center gap-2">
                   <MapPin className="h-4 w-4 text-green-600" />
                   <span className="text-muted-foreground">Origen:</span>
