@@ -60,6 +60,7 @@ html {
 body {
   background-color: hsl(var(--background));
   color: hsl(var(--foreground));
+  font-family: 'Montserrat', system-ui, sans-serif;
   font-feature-settings: "rlig" 1, "calt" 1;
 }
 
