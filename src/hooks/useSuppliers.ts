@@ -42,7 +42,14 @@ export const useSuppliers = () => {
       if (error) throw error;
       return result;
     },
-    onSuccess: () => {
+    onSuccess: (newSupplier) => {
+      // Optimistic cache update so newly created supplier appears immediately in dropdowns/lists
+      queryClient.setQueryData<Supplier[]>(['suppliers'], (old) => {
+        const prev = old || [];
+        if (prev.some((s) => s.id === newSupplier.id)) return prev;
+        return [...prev, newSupplier].sort((a, b) => a.name.localeCompare(b.name, 'es'));
+      });
+
       queryClient.invalidateQueries({ queryKey: ['suppliers'] });
       queryClient.invalidateQueries({ queryKey: ['supplier-stats'] });
       toast.success('Proveedor creado exitosamente');
