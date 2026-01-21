@@ -149,6 +149,7 @@ export const useSuppliers = () => {
     isLoading,
     error,
     createSupplier: createSupplierMutation.mutate,
+    createSupplierAsync: createSupplierMutation.mutateAsync,
     updateSupplier: updateSupplierMutation.mutate,
     deleteSupplier: deleteSupplierMutation.mutate,
     toggleSupplierStatus: toggleSupplierStatusMutation.mutate,

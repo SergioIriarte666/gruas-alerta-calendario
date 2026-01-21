@@ -21,9 +21,9 @@ export const QuickSupplierModal: React.FC<QuickSupplierModalProps> = ({
 }) => {
   const [name, setName] = useState('');
   const [rut, setRut] = useState('');
-  const { createSupplier, isCreating } = useSuppliers();
+  const { createSupplierAsync, isCreating } = useSuppliers();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!name.trim()) {
@@ -31,32 +31,27 @@ export const QuickSupplierModal: React.FC<QuickSupplierModalProps> = ({
       return;
     }
 
-    createSupplier(
-      { 
+    try {
+      const data = await createSupplierAsync({ 
         name: name.trim(), 
         rut: rut.trim() || undefined,
         category: 'general',
         is_active: true 
-      } as SupplierFormData,
-      {
-        onSuccess: (data: any) => {
-          toast.success('Proveedor creado exitosamente');
-          onSuccess(data.id);
-          setName('');
-          setRut('');
-          onClose();
-        },
-        onError: (error: any) => {
-          const errorMessage = error?.message || '';
-          if (errorMessage.includes('suppliers_rut_key') || errorMessage.includes('duplicate key')) {
-            toast.error('Ya existe un proveedor con este RUT');
-          } else {
-            toast.error('Error al crear proveedor');
-          }
-          console.error(error);
-        }
+      } as SupplierFormData);
+      
+      onSuccess(data.id);
+      setName('');
+      setRut('');
+      onClose();
+    } catch (error: any) {
+      const errorMessage = error?.message || '';
+      if (errorMessage.includes('suppliers_rut_key') || errorMessage.includes('duplicate key')) {
+        toast.error('Ya existe un proveedor con este RUT');
+      } else {
+        toast.error('Error al crear proveedor');
       }
-    );
+      console.error(error);
+    }
   };
 
   const handleClose = () => {
