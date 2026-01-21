@@ -2967,6 +2967,7 @@ export type Database = {
           destination_required: boolean
           id: string
           is_active: boolean | null
+          is_outsourced: boolean
           license_plate_required: boolean
           name: string
           operator_required: boolean
@@ -2986,6 +2987,7 @@ export type Database = {
           destination_required?: boolean
           id?: string
           is_active?: boolean | null
+          is_outsourced?: boolean
           license_plate_required?: boolean
           name: string
           operator_required?: boolean
@@ -3005,6 +3007,7 @@ export type Database = {
           destination_required?: boolean
           id?: string
           is_active?: boolean | null
+          is_outsourced?: boolean
           license_plate_required?: boolean
           name?: string
           operator_required?: boolean
@@ -3112,6 +3115,9 @@ export type Database = {
           operator_commission: number | null
           operator_id: string | null
           origin: string | null
+          outsourced_cost: number | null
+          outsourced_notes: string | null
+          outsourced_provider_id: string | null
           purchase_order: string | null
           purchase_order_number: string | null
           quote_number: string | null
@@ -3159,6 +3165,9 @@ export type Database = {
           operator_commission?: number | null
           operator_id?: string | null
           origin?: string | null
+          outsourced_cost?: number | null
+          outsourced_notes?: string | null
+          outsourced_provider_id?: string | null
           purchase_order?: string | null
           purchase_order_number?: string | null
           quote_number?: string | null
@@ -3206,6 +3215,9 @@ export type Database = {
           operator_commission?: number | null
           operator_id?: string | null
           origin?: string | null
+          outsourced_cost?: number | null
+          outsourced_notes?: string | null
+          outsourced_provider_id?: string | null
           purchase_order?: string | null
           purchase_order_number?: string | null
           quote_number?: string | null
@@ -3249,6 +3261,13 @@ export type Database = {
             columns: ["operator_id"]
             isOneToOne: false
             referencedRelation: "operators"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "services_outsourced_provider_id_fkey"
+            columns: ["outsourced_provider_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
             referencedColumns: ["id"]
           },
           {

@@ -11,6 +11,7 @@ interface CreateServiceTypeData {
   base_price?: number;
   is_active?: boolean;
   vehicle_info_optional?: boolean;
+  is_outsourced?: boolean;
   purchase_order_required?: boolean;
   origin_required?: boolean;
   destination_required?: boolean;
@@ -29,6 +30,7 @@ const transformToDbFormat = (data: ServiceTypeFormData): CreateServiceTypeData =
     base_price: data.basePrice || undefined,
     is_active: data.isActive,
     vehicle_info_optional: data.vehicleInfoOptional,
+    is_outsourced: data.isOutsourced,
     purchase_order_required: data.purchaseOrderRequired,
     origin_required: data.originRequired,
     destination_required: data.destinationRequired,
@@ -63,6 +65,7 @@ export const useServiceTypesManagement = () => {
         basePrice: item.base_price || 0,
         isActive: item.is_active,
         vehicleInfoOptional: item.vehicle_info_optional || false,
+        isOutsourced: item.is_outsourced || false,
         purchaseOrderRequired: item.purchase_order_required || false,
         originRequired: item.origin_required !== false,
         destinationRequired: item.destination_required !== false,

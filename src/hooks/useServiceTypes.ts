@@ -22,6 +22,7 @@ const fetchServiceTypes = async (): Promise<ServiceType[]> => {
     basePrice: serviceType.base_price,
     isActive: serviceType.is_active,
     vehicleInfoOptional: serviceType.vehicle_info_optional || false,
+    isOutsourced: serviceType.is_outsourced || false,
     purchaseOrderRequired: serviceType.purchase_order_required || false,
     originRequired: serviceType.origin_required !== false, // Default true
     destinationRequired: serviceType.destination_required !== false, // Default true
