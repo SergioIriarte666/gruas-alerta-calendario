@@ -49,17 +49,17 @@ const fetchServicesForReport = async (filters: GenerateReportArgs['filters']): P
         name,
         rut
       ),
-      crane:cranes!inner(
+      crane:cranes(
         id,
         license_plate,
         brand,
         model
       ),
-      operator:operators!inner(
+      operator:operators(
         id,
         name
       ),
-      serviceType:service_types!inner(
+      serviceType:service_types(
         id,
         name
       )
@@ -97,12 +97,12 @@ const fetchServicesForReport = async (filters: GenerateReportArgs['filters']): P
     invoiceFolio: s.invoice_folio || '',
     invoiceNumeroFiscal: s.invoice_numero_fiscal || '',
     client: s.client,
-    crane: {
+    crane: s.crane ? {
       ...s.crane,
       licensePlate: s.crane.license_plate
-    },
-    operator: s.operator,
-    serviceType: s.serviceType
+    } : { id: '', licensePlate: 'N/A', brand: '', model: '' },
+    operator: s.operator || { id: '', name: 'Sin operador' },
+    serviceType: s.serviceType || { id: '', name: 'N/A' }
   }));
 
   return formattedServices;
