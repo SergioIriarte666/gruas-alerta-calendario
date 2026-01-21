@@ -18,7 +18,7 @@ const getColumnValue = (service: Service, key: ColumnKey): string => {
     case 'folio':
       return service.folio;
     case 'cliente':
-      return truncate(service.client.name, 14);
+      return truncate(service.client?.name || 'N/A', 14);
     case 'asegurado':
       return truncate((service as any).insuredName || '-', 14);
     case 'cotizacion':
@@ -28,7 +28,7 @@ const getColumnValue = (service: Service, key: ColumnKey): string => {
     case 'factura':
       return truncate(service.invoiceFolio || '-', 5);
     case 'tipoServicio':
-      return truncate(service.serviceType.name, 8);
+      return truncate(service.serviceType?.name || 'N/A', 8);
     case 'patente':
       return service.licensePlate || 'N/A';
     case 'origen':
@@ -152,20 +152,20 @@ export const exportServiceReport = async ({
       'Hora Término': s.endTime || '-',
       'Kilómetros Recorridos': s.craneMileage || '-',
       'Folio': s.folio,
-      'Cliente': s.client.name,
-      'RUT Cliente': s.client.rut,
+      'Cliente': s.client?.name || 'N/A',
+      'RUT Cliente': s.client?.rut || 'N/A',
       'Asegurado': (s as any).insuredName || '-',
       'Cotización': s.quoteNumber || '-',
       'Orden de Compra': s.purchaseOrder || '-',
       'Factura': s.invoiceFolio || '-',
       'Número Fiscal': s.invoiceNumeroFiscal || '-',
-      'Tipo de Servicio': s.serviceType.name,
+      'Tipo de Servicio': s.serviceType?.name || 'N/A',
       'Marca Vehículo': s.vehicleBrand || 'N/A',
       'Modelo Vehículo': s.vehicleModel || 'N/A',
       'Patente Vehículo': s.licensePlate || 'N/A',
       'Origen': s.origin || 'N/A',
       'Destino': s.destination || 'N/A',
-      'Patente Grúa': s.crane.licensePlate || 'N/A',
+      'Patente Grúa': s.crane?.licensePlate || 'N/A',
       'Estado': s.status,
       'Valor': getDisplayServiceValue(s),
       'Observaciones': s.observations,
