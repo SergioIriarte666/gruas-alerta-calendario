@@ -230,6 +230,10 @@ const fetchEnhancedServiceDetails = async (serviceId: string): Promise<EnhancedS
     custodyDiscountPercentage: serviceData.custody_discount_percentage,
     custodyTotalAmount: serviceData.custody_total_amount,
     custodyNotes: serviceData.custody_notes,
+    // Outsourced/Third-party service fields
+    outsourcedProviderId: serviceData.outsourced_provider_id,
+    outsourcedCost: serviceData.outsourced_cost,
+    outsourcedNotes: serviceData.outsourced_notes,
     createdAt: serviceData.created_at,
     updatedAt: serviceData.updated_at,
     createdBy: serviceData.created_by || undefined,
