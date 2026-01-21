@@ -21,6 +21,7 @@ const defaultFormData: ServiceTypeFormData = {
   basePrice: 0,
   isActive: true,
   vehicleInfoOptional: false,
+  isOutsourced: false,
   purchaseOrderRequired: false,
   originRequired: true,
   destinationRequired: true,
@@ -43,6 +44,7 @@ export const ServiceTypeForm = ({ serviceType, onSubmit, onCancel }: ServiceType
         basePrice: serviceType.basePrice || 0,
         isActive: serviceType.isActive,
         vehicleInfoOptional: serviceType.vehicleInfoOptional,
+        isOutsourced: serviceType.isOutsourced || false,
         purchaseOrderRequired: serviceType.purchaseOrderRequired,
         originRequired: serviceType.originRequired,
         destinationRequired: serviceType.destinationRequired,
@@ -132,6 +134,29 @@ export const ServiceTypeForm = ({ serviceType, onSubmit, onCancel }: ServiceType
                 <Label htmlFor="vehicleInfoOptional" className="text-muted-foreground text-sm">
                   Información de vehículo opcional (campo legacy)
                 </Label>
+              </div>
+
+              <div className="flex items-center space-x-3 py-2 bg-amber-500/10 rounded-lg px-3 border border-amber-500/20">
+                <Switch
+                  id="isOutsourced"
+                  checked={formData.isOutsourced}
+                  onCheckedChange={(checked) => {
+                    updateField('isOutsourced', checked);
+                    // Si es tercerizado, desactivar grúa y operador requeridos
+                    if (checked) {
+                      updateField('craneRequired', false);
+                      updateField('operatorRequired', false);
+                    }
+                  }}
+                />
+                <div className="flex-1">
+                  <Label htmlFor="isOutsourced" className="text-foreground text-sm font-medium">
+                    Servicio Subcontratado (Tercero)
+                  </Label>
+                  <p className="text-muted-foreground text-xs">
+                    Indica que este tipo de servicio es ejecutado por un proveedor externo
+                  </p>
+                </div>
               </div>
             </CardContent>
           </Card>

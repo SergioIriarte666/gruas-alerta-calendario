@@ -17,6 +17,7 @@ export interface ServiceTypeConfig extends ServiceTypeRequirements {
   basePrice?: number;
   isActive: boolean;
   vehicleInfoOptional: boolean;
+  isOutsourced: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -27,6 +28,7 @@ export interface ServiceTypeFormData {
   basePrice: number;
   isActive: boolean;
   vehicleInfoOptional: boolean;
+  isOutsourced: boolean;
   purchaseOrderRequired: boolean;
   originRequired: boolean;
   destinationRequired: boolean;

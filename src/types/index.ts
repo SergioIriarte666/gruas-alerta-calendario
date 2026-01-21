@@ -44,6 +44,10 @@ export interface Service {
   custodyNotes?: string;
   // Insured client name (for insurance companies)
   insuredName?: string;
+  // Outsourced/Third-party service fields
+  outsourcedProviderId?: string;
+  outsourcedCost?: number;
+  outsourcedNotes?: string;
   createdAt: string;
   updatedAt: string;
   createdBy?: string;
@@ -104,6 +108,10 @@ export interface ServiceFormData {
   custodyNotes?: string;
   // Insured client name (for insurance companies)
   insuredName?: string;
+  // Outsourced/Third-party service fields
+  outsourcedProviderId?: string;
+  outsourcedCost?: number;
+  outsourcedNotes?: string;
 }
 
 export interface Client {
@@ -163,6 +171,7 @@ export interface ServiceType {
   basePrice?: number;
   isActive: boolean;
   vehicleInfoOptional: boolean;
+  isOutsourced?: boolean;
   // Campos de configuración de requerimientos
   purchaseOrderRequired: boolean;
   originRequired: boolean;
