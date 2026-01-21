@@ -1,11 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Building2, DollarSign, TrendingUp, AlertTriangle, FileText } from 'lucide-react';
+import { Building2, DollarSign, TrendingUp, AlertTriangle, FileText, Plus } from 'lucide-react';
 import { Supplier } from '@/types/suppliers';
+import { QuickSupplierModal } from '@/components/suppliers/QuickSupplierModal';
 
 interface OutsourcedProviderSectionProps {
   providerId?: string;
@@ -30,6 +31,8 @@ export const OutsourcedProviderSection = ({
   suppliers,
   disabled = false
 }: OutsourcedProviderSectionProps) => {
+  const [showQuickModal, setShowQuickModal] = useState(false);
+
   // Calcular margen
   const margin = serviceValue - cost;
   const marginPercentage = serviceValue > 0 ? (margin / serviceValue) * 100 : 0;
@@ -45,6 +48,19 @@ export const OutsourcedProviderSection = ({
       minimumFractionDigits: 0,
       maximumFractionDigits: 0
     }).format(value);
+  };
+
+  const handleValueChange = (value: string) => {
+    if (value === 'new_supplier') {
+      setShowQuickModal(true);
+    } else {
+      onProviderChange(value);
+    }
+  };
+
+  const handleSupplierCreated = (supplierId: string) => {
+    onProviderChange(supplierId);
+    setShowQuickModal(false);
   };
 
   return (
@@ -68,7 +84,7 @@ export const OutsourcedProviderSection = ({
             </Label>
             <Select 
               value={providerId || ''} 
-              onValueChange={onProviderChange}
+              onValueChange={handleValueChange}
               disabled={disabled}
             >
               <SelectTrigger>
@@ -85,13 +101,14 @@ export const OutsourcedProviderSection = ({
                     )}
                   </SelectItem>
                 ))}
+                <SelectItem value="new_supplier">
+                  <div className="flex items-center gap-2 text-primary font-medium">
+                    <Plus className="h-4 w-4" />
+                    Crear nuevo proveedor...
+                  </div>
+                </SelectItem>
               </SelectContent>
             </Select>
-            {activeSuppliers.length === 0 && (
-              <p className="text-sm text-muted-foreground">
-                No hay proveedores activos. Crea uno en el módulo de Proveedores.
-              </p>
-            )}
           </div>
 
           {/* Costo del Tercero */}
@@ -169,10 +186,16 @@ export const OutsourcedProviderSection = ({
                 <AlertTriangle className="h-3 w-3" />
                 ¡Atención! El costo del tercero supera el valor del servicio. Revisa los montos.
               </div>
-            )}
-          </div>
+          )}
+        </div>
         )}
       </CardContent>
+
+      <QuickSupplierModal
+        isOpen={showQuickModal}
+        onClose={() => setShowQuickModal(false)}
+        onSuccess={handleSupplierCreated}
+      />
     </Card>
   );
 };
