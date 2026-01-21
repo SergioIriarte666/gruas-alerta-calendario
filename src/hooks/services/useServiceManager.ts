@@ -288,6 +288,12 @@ export const useServiceManager = () => {
           custody_total_amount: serviceData.custodyTotalAmount || null,
           custody_notes: serviceData.custodyNotes || null,
           insured_name: serviceData.insuredName || null,
+          // Outsourced/Third-party service fields
+          outsourced_provider_id: serviceData.outsourcedProviderId && serviceData.outsourcedProviderId.trim() !== '' 
+            ? serviceData.outsourcedProviderId 
+            : null,
+          outsourced_cost: serviceData.outsourcedCost || 0,
+          outsourced_notes: serviceData.outsourcedNotes || null,
           created_by: createdBy
         };
 
@@ -388,7 +394,58 @@ export const useServiceManager = () => {
           await Promise.all(costPromises);
         }
 
+        // Si es servicio subcontratado, crear el costo del tercero automáticamente
+        if (serviceTypeConfig?.is_outsourced && serviceData.outsourcedProviderId && serviceData.outsourcedCost && serviceData.outsourcedCost > 0) {
+          console.log('🏢 Creating outsourced service cost automatically...');
+          
+          // Buscar o crear categoría de Subcontrataciones
+          let categoryId: string | null = null;
+          const { data: existingCategory } = await supabase
+            .from('cost_categories')
+            .select('id')
+            .eq('name', 'Subcontrataciones')
+            .single();
+
+          if (existingCategory) {
+            categoryId = existingCategory.id;
+          } else {
+            // Usar categoría de Gastos de Servicios como fallback
+            const { data: fallbackCategory } = await supabase
+              .from('cost_categories')
+              .select('id')
+              .eq('name', 'Gastos de Servicios')
+              .single();
+            categoryId = fallbackCategory?.id || null;
+          }
+
+          if (categoryId) {
+            const outsourcedCostData = {
+              service_id: newService.id,
+              amount: serviceData.outsourcedCost,
+              description: `Servicio tercerizado: ${newService.folio}`,
+              date: transformedData.service_date,
+              notes: serviceData.outsourcedNotes || 'Costo de proveedor tercero creado automáticamente',
+              category_id: categoryId,
+              subcategory: 'Servicios Terceros',
+              supplier_id: serviceData.outsourcedProviderId,
+              service_folio: newService.folio
+            };
+
+            const { error: outsourcedCostError } = await supabase
+              .from('costs')
+              .insert(outsourcedCostData);
+
+            if (outsourcedCostError) {
+              console.error('Error creating outsourced cost:', outsourcedCostError);
+              // No lanzar error, solo log - el servicio ya se creó
+            } else {
+              console.log('✅ Outsourced cost created successfully');
+            }
+          }
+        }
+
         await queryClient.invalidateQueries({ queryKey: ['services'] });
+        await queryClient.invalidateQueries({ queryKey: ['costs'] });
         
         const transformedService = transformToService(newService);
         return transformedService;

@@ -7,6 +7,7 @@ import { ClientServiceSection } from './form/ClientServiceSection';
 import { VehicleSection } from './form/VehicleSection';
 import { EnhancedLocationSection } from './form/EnhancedLocationSection';
 import { MultipleOperatorsSection } from './form/MultipleOperatorsSection';
+import { OutsourcedProviderSection } from './form/OutsourcedProviderSection';
 import { ServiceCostDetailsSection } from './form/ServiceCostDetailsSection';
 import { ProductSalesSection } from './form/ProductSalesSection';
 import { EnhancedFinancialSection } from './form/EnhancedFinancialSection';
@@ -24,6 +25,7 @@ import { useClients } from '@/hooks/useClients';
 import { useCranes } from '@/hooks/useCranes';
 import { useOperatorsData } from '@/hooks/operators/useOperatorsData';
 import { useServiceTypes } from '@/hooks/useServiceTypes';
+import { useSuppliers } from '@/hooks/useSuppliers';
 import { useServiceDetailsForForm } from '@/hooks/useServiceDetailsGlobal';
 import { useEnhancedFolioGeneration } from '@/hooks/services/useEnhancedFolioGeneration';
 import { useServiceFormValidation } from '@/hooks/services/useServiceFormValidation';
@@ -34,7 +36,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { Truck, FileText, Shield, Copy, AlertTriangle, ChevronLeft, ChevronRight, Sparkles, Users, DollarSign, MapPin } from 'lucide-react';
+import { Truck, FileText, Shield, Copy, AlertTriangle, ChevronLeft, ChevronRight, Sparkles, Users, DollarSign, MapPin, Building2 } from 'lucide-react';
 import { getCurrentChileDateString } from '@/utils/timezoneUtils';
 import { isCustodyService } from '@/utils/serviceValueCalculations';
 import { toast } from 'sonner';
@@ -59,6 +61,7 @@ export const EnhancedServiceForm = ({
   const { cranes } = useCranes();
   const { data: operators = [] } = useOperatorsData();
   const { serviceTypes, loading: serviceTypesLoading } = useServiceTypes();
+  const { suppliers } = useSuppliers();
   const { user } = useUser();
   const { createService, updateService, isCreating, isUpdating } = useServiceManager();
   const { processInventoryDeduction } = useInventoryDeduction();
@@ -121,7 +124,11 @@ export const EnhancedServiceForm = ({
     custodyDiscountPercentage: (service?.custodyDiscountPercentage !== undefined ? service.custodyDiscountPercentage : (service as any)?.custody_discount_percentage) || 0,
     custodyTotalAmount: service?.custodyTotalAmount || (service as any)?.custody_total_amount || undefined,
     custodyNotes: service?.custodyNotes || (service as any)?.custody_notes || '',
-    insuredName: service?.insuredName || (service as any)?.insured_name || ''
+    insuredName: service?.insuredName || (service as any)?.insured_name || '',
+    // Outsourced/Third-party service fields
+    outsourcedProviderId: service?.outsourcedProviderId || (service as any)?.outsourced_provider_id || '',
+    outsourcedCost: service?.outsourcedCost || (service as any)?.outsourced_cost || 0,
+    outsourcedNotes: service?.outsourcedNotes || (service as any)?.outsourced_notes || ''
   });
 
   // Map prefilledData to formData when duplicating
@@ -163,7 +170,10 @@ export const EnhancedServiceForm = ({
         custodyDiscountPercentage: 0,
         custodyTotalAmount: prefilledData.custodyDetails?.totalAmount,
         custodyNotes: '',
-        insuredName: ''
+        insuredName: '',
+        outsourcedProviderId: '',
+        outsourcedCost: 0,
+        outsourcedNotes: ''
       });
       
       setEnableCustody(prefilledData.inCustody || false);
@@ -311,7 +321,10 @@ export const EnhancedServiceForm = ({
         custodyDiscountPercentage: (service.custodyDiscountPercentage !== undefined ? service.custodyDiscountPercentage : (service as any)?.custody_discount_percentage) || 0,
         custodyTotalAmount: service.custodyTotalAmount || (service as any)?.custody_total_amount || undefined,
         custodyNotes: service.custodyNotes || (service as any)?.custody_notes || '',
-        insuredName: service.insuredName || (service as any)?.insured_name || ''
+        insuredName: service.insuredName || (service as any)?.insured_name || '',
+        outsourcedProviderId: service.outsourcedProviderId || (service as any)?.outsourced_provider_id || '',
+        outsourcedCost: service.outsourcedCost || (service as any)?.outsourced_cost || 0,
+        outsourcedNotes: service.outsourcedNotes || (service as any)?.outsourced_notes || ''
       });
       setIsManualFolio(true);
     }
@@ -818,70 +831,98 @@ export const EnhancedServiceForm = ({
             {/* Step 3: Recursos Asignados */}
             {currentStep === 3 && (
               <div className="space-y-4 animate-fade-in">
-                <ColoredSectionCard
-                  title="Grúa Asignada"
-                  icon={<Truck className="h-5 w-5" />}
-                  color="amber"
-                  hasError={isFieldInvalid('crane')}
-                  required={selectedServiceType?.craneRequired}
-                >
-                  <div className="space-y-2">
-                    <Label htmlFor="crane">
-                      Grúa {selectedServiceType?.craneRequired && <span className="text-red-500">*</span>}
-                      {!selectedServiceType?.craneRequired && <span className="text-muted-foreground text-sm">(Opcional)</span>}
-                    </Label>
-                    <Select 
-                      value={formData.crane} 
-                      onValueChange={(value) => setFormData(prev => ({ ...prev, crane: value === "unassigned" ? "" : value }))} 
+                {/* Sección de Proveedor Tercero - Solo para servicios subcontratados */}
+                {selectedServiceType?.isOutsourced && (
+                  <ColoredSectionCard
+                    title="Proveedor Tercero"
+                    icon={<Building2 className="h-5 w-5" />}
+                    color="orange"
+                    required={true}
+                  >
+                    <OutsourcedProviderSection
+                      providerId={formData.outsourcedProviderId}
+                      cost={formData.outsourcedCost}
+                      notes={formData.outsourcedNotes}
+                      onProviderChange={(providerId) => setFormData(prev => ({ ...prev, outsourcedProviderId: providerId }))}
+                      onCostChange={(cost) => setFormData(prev => ({ ...prev, outsourcedCost: cost }))}
+                      onNotesChange={(notes) => setFormData(prev => ({ ...prev, outsourcedNotes: notes }))}
+                      serviceValue={formData.value}
+                      suppliers={suppliers}
                       disabled={false}
-                    >
-                      <SelectTrigger className={isFieldInvalid('crane') ? 'border-destructive' : ''}>
-                        <SelectValue placeholder="Seleccionar grúa" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="unassigned">Sin asignar</SelectItem>
-                        {cranes.filter(c => c.isActive).map((crane) => (
-                          <SelectItem key={crane.id} value={crane.id}>
-                            {crane.licensePlate} - {crane.brand} {crane.model}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    {isFieldInvalid('crane') && (
-                      <p className="text-sm text-destructive flex items-center gap-1">
-                        <AlertTriangle className="h-3 w-3" />
-                        {getFieldError('crane')?.message}
-                      </p>
-                    )}
-                  </div>
-                </ColoredSectionCard>
+                    />
+                  </ColoredSectionCard>
+                )}
 
-                <ColoredSectionCard
-                  title="Operadores"
-                  icon={<Users className="h-5 w-5" />}
-                  color="pink"
-                  hasError={isFieldInvalid('operators')}
-                  required={selectedServiceType?.operatorRequired}
-                >
-                  <MultipleOperatorsSection
-                    operators={formData.operators || []}
-                    onOperatorsChange={(operators) => setFormData(prev => ({ 
-                      ...prev, 
-                      operators: operators.map(op => ({
-                        id: op.id,
-                        operatorId: op.operatorId,
-                        commission: op.commission || 0,
-                        role: op.role || 'Principal',
-                        hours: op.hours || 8
-                      }))
-                    }))}
-                    availableOperators={operators}
-                    operatorRequired={selectedServiceType?.operatorRequired || false}
-                    disabled={false}
-                    hasValidationError={isFieldInvalid('operators')}
-                    validationMessage={getFieldError('operators')?.message}
-                  />
-                </ColoredSectionCard>
+                {/* Grúa - Solo para servicios NO subcontratados */}
+                {!selectedServiceType?.isOutsourced && (
+                  <ColoredSectionCard
+                    title="Grúa Asignada"
+                    icon={<Truck className="h-5 w-5" />}
+                    color="amber"
+                    hasError={isFieldInvalid('crane')}
+                    required={selectedServiceType?.craneRequired}
+                  >
+                    <div className="space-y-2">
+                      <Label htmlFor="crane">
+                        Grúa {selectedServiceType?.craneRequired && <span className="text-destructive">*</span>}
+                        {!selectedServiceType?.craneRequired && <span className="text-muted-foreground text-sm">(Opcional)</span>}
+                      </Label>
+                      <Select 
+                        value={formData.crane} 
+                        onValueChange={(value) => setFormData(prev => ({ ...prev, crane: value === "unassigned" ? "" : value }))} 
+                        disabled={false}
+                      >
+                        <SelectTrigger className={isFieldInvalid('crane') ? 'border-destructive' : ''}>
+                          <SelectValue placeholder="Seleccionar grúa" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="unassigned">Sin asignar</SelectItem>
+                          {cranes.filter(c => c.isActive).map((crane) => (
+                            <SelectItem key={crane.id} value={crane.id}>
+                              {crane.licensePlate} - {crane.brand} {crane.model}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {isFieldInvalid('crane') && (
+                        <p className="text-sm text-destructive flex items-center gap-1">
+                          <AlertTriangle className="h-3 w-3" />
+                          {getFieldError('crane')?.message}
+                        </p>
+                      )}
+                    </div>
+                  </ColoredSectionCard>
+                )}
+
+                {/* Operadores - Solo para servicios NO subcontratados */}
+                {!selectedServiceType?.isOutsourced && (
+                  <ColoredSectionCard
+                    title="Operadores"
+                    icon={<Users className="h-5 w-5" />}
+                    color="pink"
+                    hasError={isFieldInvalid('operators')}
+                    required={selectedServiceType?.operatorRequired}
+                  >
+                    <MultipleOperatorsSection
+                      operators={formData.operators || []}
+                      onOperatorsChange={(operators) => setFormData(prev => ({ 
+                        ...prev, 
+                        operators: operators.map(op => ({
+                          id: op.id,
+                          operatorId: op.operatorId,
+                          commission: op.commission || 0,
+                          role: op.role || 'Principal',
+                          hours: op.hours || 8
+                        }))
+                      }))}
+                      availableOperators={operators}
+                      operatorRequired={selectedServiceType?.operatorRequired || false}
+                      disabled={false}
+                      hasValidationError={isFieldInvalid('operators')}
+                      validationMessage={getFieldError('operators')?.message}
+                    />
+                  </ColoredSectionCard>
+                )}
 
                 {/* Product Sales Section */}
                 {selectedServiceType?.name === 'Venta de Productos' && (
