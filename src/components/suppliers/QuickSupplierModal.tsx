@@ -46,8 +46,13 @@ export const QuickSupplierModal: React.FC<QuickSupplierModalProps> = ({
           setRut('');
           onClose();
         },
-        onError: (error) => {
-          toast.error('Error al crear proveedor');
+        onError: (error: any) => {
+          const errorMessage = error?.message || '';
+          if (errorMessage.includes('suppliers_rut_key') || errorMessage.includes('duplicate key')) {
+            toast.error('Ya existe un proveedor con este RUT');
+          } else {
+            toast.error('Error al crear proveedor');
+          }
           console.error(error);
         }
       }
