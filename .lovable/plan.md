@@ -1,134 +1,127 @@
 
 
-## Plan: Reordenar Pasos del Formulario de Nuevo Cierre
+## Plan: Reordenar Pasos del Formulario de Nueva Factura
 
 ### Objetivo
-Cambiar el orden de los pasos en el formulario "Nuevo Cierre de Servicios" para que comience con la búsqueda de servicios (actualmente paso 2), haciendo el flujo más rápido e intuitivo.
+Cambiar el orden de los pasos en el formulario "Nueva Factura" para que comience con la selección del cierre a facturar, siguiendo la misma lógica que aplicamos al formulario de Cierres.
 
 ---
 
-### Nuevo Orden de Pasos
+### Orden Actual vs Propuesto
 
-| Antes | Después |
-|-------|---------|
-| 1. Período (Rango de fechas) | 1. Cliente y Servicios (Buscador) |
-| 2. Cliente y Servicios | 2. Período (Rango de fechas) |
-| 3. Detalles (OC y estado) | 3. Detalles (OC y estado) |
+| Actual | Propuesto |
+|--------|-----------|
+| 1. Estado y Configuración (Estado, N° Fiscal) | 1. Selección de Cierre (Cierre a facturar) |
+| 2. Fechas y Condiciones (Emisión, Vencimiento) | 2. Fechas y Condiciones (Emisión, Vencimiento) |
+| 3. Selección de Cierre (Cierre a facturar) | 3. Estado y Configuración (Estado, N° Fiscal) |
 
 ---
 
-### Archivos a Modificar
+### Justificación
 
-#### 1. `src/components/closures/ClosureFormStepNavigation.tsx`
+1. **Decisión principal primero**: Lo más importante es elegir qué cierre facturar
+2. **Datos derivados**: Una vez seleccionado el cierre, se conoce el cliente y montos
+3. **Configuración al final**: El estado y número fiscal son detalles finales antes de guardar
+4. **Consistencia con Cierres**: Mismo patrón que aplicamos al formulario de Nuevo Cierre
 
-Reordenar los pasos en la función `getClosureFormSteps()`:
+---
+
+### Cambios a Realizar
+
+#### 1. `src/components/invoices/form/InvoiceFormStepNavigation.tsx`
+
+Reordenar los pasos:
 
 ```typescript
-export const getClosureFormSteps = (): Omit<ClosureFormStep, 'isCompleted' | 'hasError'>[] => [
+export const getInvoiceFormSteps = (): Omit<InvoiceFormStep, 'isCompleted' | 'hasError'>[] => [
   {
     id: 1,
-    title: 'Cliente y Servicios',  // Antes era paso 2
-    description: 'Seleccionar servicios',
-    icon: <ListChecks className="h-4 w-4" />,
+    title: 'Selección de Cierre',      // Antes era paso 3
+    description: 'Cierre a facturar',
+    icon: <FileCheck className="h-4 w-4" />,
   },
   {
     id: 2,
-    title: 'Período',  // Antes era paso 1
-    description: 'Rango de fechas',
+    title: 'Fechas y Condiciones',     // Se mantiene igual
+    description: 'Emisión, vencimiento y pago',
     icon: <Calendar className="h-4 w-4" />,
   },
   {
     id: 3,
-    title: 'Detalles',
-    description: 'OC y estado',
-    icon: <FileText className="h-4 w-4" />,
+    title: 'Estado y Configuración',   // Antes era paso 1
+    description: 'Estado y número fiscal',
+    icon: <Settings className="h-4 w-4" />,
   },
 ];
 ```
 
 ---
 
-#### 2. `src/components/closures/ClosureForm.tsx`
+#### 2. `src/components/invoices/InvoiceForm.tsx`
 
-Ajustar la lógica de validación y renderizado de pasos:
+**a) Ajustar validación de pasos:**
 
-**a) Orden de validación de pasos completados:**
 ```typescript
-// Antes:
-const step1Complete = !!formData.dateFrom && !!formData.dateTo;
-const step2Complete = formData.serviceIds.length > 0;
-
-// Después:
-const step1Complete = formData.serviceIds.length > 0;  // Servicios primero
-const step2Complete = !!formData.dateFrom && !!formData.dateTo;  // Fechas segundo
+const validateStep = (step: number): boolean => {
+  switch (step) {
+    case 1: return watch('closureId') !== '';  // Cierre primero
+    case 2: return watch('issueDate') !== '' && watch('dueDate') !== '';  // Fechas
+    case 3: return true;  // Estado siempre válido (tiene default)
+    default: return true;
+  }
+};
 ```
 
-**b) Renderizado condicional de pasos:**
-```tsx
-// Paso 1: Ahora es Cliente y Servicios
-{currentStep === 1 && (
-  <div className="space-y-4">
-    <ColoredSectionCard title="Cliente (Opcional)" ... />
-    <ColoredSectionCard title="Servicios Disponibles" ... />
-  </div>
-)}
+**b) Reordenar renderizado de pasos:**
 
-// Paso 2: Ahora es Período
-{currentStep === 2 && (
-  <div className="space-y-4">
-    <Alert ... />
-    <ColoredSectionCard title="Período del Cierre" ... />
-  </div>
-)}
-
-// Paso 3: Detalles (sin cambios)
-{currentStep === 3 && ( ... )}
-```
-
-**c) Ajustar `handleAutoFillDates` para navegar al paso correcto:**
 ```typescript
-const handleAutoFillDates = (dateFrom: Date, dateTo: Date) => {
-  setFormData(prev => ({
-    ...prev,
-    dateFrom,
-    dateTo
-  }));
-  // Navegar al paso 2 (Período) para mostrar las fechas auto-rellenadas
-  setCurrentStep(2);  // Antes era 1
+const renderStepContent = () => {
+  switch (currentStep) {
+    case 1:
+      // Paso 1: Ahora es Selección de Cierre (antes Step3)
+      return <InvoiceFormStep3 ... />;
+    case 2:
+      // Paso 2: Fechas y Condiciones (sin cambios)
+      return <InvoiceFormStep2 ... />;
+    case 3:
+      // Paso 3: Ahora es Estado y Configuración (antes Step1)
+      return <InvoiceFormStep1 ... />;
+    default: return null;
+  }
 };
 ```
 
 ---
 
-### Flujo Mejorado
+### Nuevo Flujo Visual
 
 ```text
 ┌─────────────────────────────────────────────────────────────────┐
-│                   NUEVO FLUJO DE CIERRE                         │
+│                   NUEVO FLUJO DE FACTURA                        │
 ├─────────────────────────────────────────────────────────────────┤
 │                                                                 │
-│  PASO 1: CLIENTE Y SERVICIOS                                   │
+│  PASO 1: SELECCIÓN DE CIERRE                                   │
 │  ┌─────────────────────────────────────────────────────────┐   │
-│  │ • Búsqueda global activa (últimos 90 días)              │   │
-│  │ • Buscar por OC, folio, patente, cliente                │   │
-│  │ • Seleccionar servicios a incluir en el cierre          │   │
-│  │ • Auto-detectar cliente único                           │   │
+│  │ • Ver cierres disponibles para facturar                 │   │
+│  │ • Filtrar por cliente, fecha, folio                     │   │
+│  │ • Ver resumen de montos (Subtotal, IVA, Total)          │   │
+│  │ • Auto-detectar cliente desde cierre                    │   │
 │  └─────────────────────────────────────────────────────────┘   │
 │                          │                                      │
 │                          ▼                                      │
-│  PASO 2: PERÍODO                                               │
+│  PASO 2: FECHAS Y CONDICIONES                                  │
 │  ┌─────────────────────────────────────────────────────────┐   │
-│  │ • Botón "Auto-completar fechas" disponible              │   │
-│  │ • Fechas basadas en servicios seleccionados             │   │
-│  │ • O selección manual del rango                          │   │
+│  │ • Seleccionar condición de pago (Contado, 30 días, etc) │   │
+│  │ • Fecha de emisión (hoy por defecto)                    │   │
+│  │ • Fecha de vencimiento (auto-calculada)                 │   │
 │  └─────────────────────────────────────────────────────────┘   │
 │                          │                                      │
 │                          ▼                                      │
-│  PASO 3: DETALLES                                              │
+│  PASO 3: ESTADO Y CONFIGURACIÓN                                │
 │  ┌─────────────────────────────────────────────────────────┐   │
-│  │ • OC auto-detectada de servicios                        │   │
-│  │ • Total calculado automáticamente                       │   │
-│  │ • Selección de estado                                   │   │
+│  │ • Estado inicial (Borrador por defecto)                 │   │
+│  │ • Número fiscal SII (opcional)                          │   │
+│  │ • Confirmar y crear factura                             │   │
 │  └─────────────────────────────────────────────────────────┘   │
 │                                                                 │
 └─────────────────────────────────────────────────────────────────┘
@@ -136,19 +129,19 @@ const handleAutoFillDates = (dateFrom: Date, dateTo: Date) => {
 
 ---
 
-### Beneficios
-
-1. **Flujo más natural**: Primero buscar qué servicios cerrar, luego confirmar fechas
-2. **Buscador accesible**: El buscador global está disponible desde el primer momento
-3. **Auto-completado inteligente**: Las fechas pueden auto-llenarse basándose en los servicios seleccionados
-4. **Menos fricción**: No es necesario definir un rango de fechas antes de buscar
-
----
-
-### Archivos Afectados
+### Archivos a Modificar
 
 | Archivo | Cambios |
 |---------|---------|
-| `src/components/closures/ClosureFormStepNavigation.tsx` | Reordenar array de pasos |
-| `src/components/closures/ClosureForm.tsx` | Ajustar validación, renderizado y navegación |
+| `src/components/invoices/form/InvoiceFormStepNavigation.tsx` | Reordenar array de pasos |
+| `src/components/invoices/InvoiceForm.tsx` | Ajustar validación y renderizado |
+
+---
+
+### Beneficios
+
+1. **Flujo más intuitivo**: Primero eliges QUÉ facturar, luego CUÁNDO, finalmente CÓMO
+2. **Información visible desde el inicio**: Cliente y montos aparecen inmediatamente
+3. **Consistencia UX**: Mismo patrón que el formulario de Cierres
+4. **Menos fricción**: El cierre es la decisión principal, no un paso final
 
