@@ -2660,6 +2660,77 @@ export type Database = {
           },
         ]
       }
+      service_change_history: {
+        Row: {
+          change_context: string | null
+          change_summary: string | null
+          change_type: string
+          changed_at: string
+          changed_by: string | null
+          field_name: string
+          id: string
+          new_value: string | null
+          old_value: string | null
+          service_folio: string
+          service_id: string
+        }
+        Insert: {
+          change_context?: string | null
+          change_summary?: string | null
+          change_type: string
+          changed_at?: string
+          changed_by?: string | null
+          field_name: string
+          id?: string
+          new_value?: string | null
+          old_value?: string | null
+          service_folio: string
+          service_id: string
+        }
+        Update: {
+          change_context?: string | null
+          change_summary?: string | null
+          change_type?: string
+          changed_at?: string
+          changed_by?: string | null
+          field_name?: string
+          id?: string
+          new_value?: string | null
+          old_value?: string | null
+          service_folio?: string
+          service_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_change_history_changed_by_fkey"
+            columns: ["changed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_change_history_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_change_history_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services_with_excess_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_change_history_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services_with_excess_summary"
+            referencedColumns: ["related_service_id_actual"]
+          },
+        ]
+      }
       service_closures: {
         Row: {
           client_id: string | null

@@ -27,6 +27,7 @@ import {
 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { VehicleHistory } from './VehicleHistory';
+import { ServiceChangeHistory } from './ServiceChangeHistory';
 import { ServiceCostsSection } from './ServiceCostsSection';
 import { useServiceDetailsForView } from '@/hooks/useServiceDetailsGlobal';
 import { shouldShowVehicleInfo, formatVehicleInfo, getServiceStatusBadge, formatCurrency } from '@/utils/statusHelpers';
@@ -281,11 +282,12 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose, onDuplicate }: S
 
         <ScrollArea className="flex-1 px-6">
           <Tabs defaultValue="general" className="w-full">
-            <TabsList className="grid w-full grid-cols-4 mb-6">
-              <TabsTrigger value="general">Información General</TabsTrigger>
-              <TabsTrigger value="details">Detalles del Servicio</TabsTrigger>
-              <TabsTrigger value="costs">Costos y Gastos</TabsTrigger>
-              <TabsTrigger value="history">Historial Vehículo</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-5 mb-6">
+              <TabsTrigger value="general">General</TabsTrigger>
+              <TabsTrigger value="details">Detalles</TabsTrigger>
+              <TabsTrigger value="costs">Costos</TabsTrigger>
+              <TabsTrigger value="history">Historial</TabsTrigger>
+              <TabsTrigger value="changes">Cambios</TabsTrigger>
             </TabsList>
             
             <TabsContent value="general" className="mt-0">
@@ -498,6 +500,10 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose, onDuplicate }: S
                  clientId={serviceData.client.id}
                  clientName={serviceData.client.name}
                />
+            </TabsContent>
+
+            <TabsContent value="changes" className="mt-0">
+              <ServiceChangeHistory serviceId={serviceData.id} />
             </TabsContent>
           </Tabs>
 
