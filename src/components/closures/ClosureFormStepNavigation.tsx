@@ -93,15 +93,15 @@ export const ClosureFormStepNavigation = ({
 export const getClosureFormSteps = (): Omit<ClosureFormStep, 'isCompleted' | 'hasError'>[] => [
   {
     id: 1,
-    title: 'Período',
-    description: 'Rango de fechas',
-    icon: <Calendar className="h-4 w-4" />,
-  },
-  {
-    id: 2,
     title: 'Cliente y Servicios',
     description: 'Seleccionar servicios',
     icon: <ListChecks className="h-4 w-4" />,
+  },
+  {
+    id: 2,
+    title: 'Período',
+    description: 'Rango de fechas',
+    icon: <Calendar className="h-4 w-4" />,
   },
   {
     id: 3,
