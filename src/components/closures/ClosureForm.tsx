@@ -78,8 +78,8 @@ const ClosureForm = ({
   const steps = useMemo((): ClosureFormStep[] => {
     const baseSteps = getClosureFormSteps();
     
-    const step1Complete = !!formData.dateFrom && !!formData.dateTo;
-    const step2Complete = formData.serviceIds.length > 0;
+    const step1Complete = formData.serviceIds.length > 0;
+    const step2Complete = !!formData.dateFrom && !!formData.dateTo;
     const step3Complete = true; // Details are optional
 
     const completionStatus = [step1Complete, step2Complete, step3Complete];
@@ -194,8 +194,8 @@ const ClosureForm = ({
       dateFrom,
       dateTo
     }));
-    // Navigate to step 1 to show the auto-filled dates
-    setCurrentStep(1);
+    // Navigate to step 2 (Período) to show the auto-filled dates
+    setCurrentStep(2);
   };
 
   const handleNextStep = () => {
@@ -250,34 +250,8 @@ const ClosureForm = ({
               <div className="lg:col-span-3 flex flex-col overflow-hidden">
                 <div className="flex flex-col h-full">
                   <div className="flex-1 overflow-y-auto p-6">
-                    {/* Step 1: Período */}
+                    {/* Step 1: Cliente y Servicios */}
                     {currentStep === 1 && (
-                      <div className="space-y-4">
-                        <Alert className="border border-violet-500/30 bg-violet-500/5">
-                          <AlertCircle className="h-4 w-4 text-violet-600" />
-                          <AlertDescription className="text-muted-foreground">
-                            Solo se pueden incluir servicios completados del rango de fechas seleccionado que no hayan sido facturados previamente.
-                          </AlertDescription>
-                        </Alert>
-
-                        <ColoredSectionCard
-                          title="Período del Cierre"
-                          icon={<AlertCircle className="h-4 w-4" />}
-                          color="purple"
-                          required
-                        >
-                          <DateRangePicker 
-                            dateFrom={formData.dateFrom} 
-                            dateTo={formData.dateTo} 
-                            onDateFromChange={handleDateFromChange} 
-                            onDateToChange={handleDateToChange} 
-                          />
-                        </ColoredSectionCard>
-                      </div>
-                    )}
-
-                    {/* Step 2: Cliente y Servicios */}
-                    {currentStep === 2 && (
                       <div className="space-y-4">
                         <ColoredSectionCard
                           title="Cliente (Opcional)"
@@ -313,6 +287,32 @@ const ClosureForm = ({
                             searchingProcessed={searchingProcessed}
                             onSearchProcessed={searchProcessedServices}
                             onClearProcessed={clearProcessedServices}
+                          />
+                        </ColoredSectionCard>
+                      </div>
+                    )}
+
+                    {/* Step 2: Período */}
+                    {currentStep === 2 && (
+                      <div className="space-y-4">
+                        <Alert className="border border-violet-500/30 bg-violet-500/5">
+                          <AlertCircle className="h-4 w-4 text-violet-600" />
+                          <AlertDescription className="text-muted-foreground">
+                            Solo se pueden incluir servicios completados del rango de fechas seleccionado que no hayan sido facturados previamente.
+                          </AlertDescription>
+                        </Alert>
+
+                        <ColoredSectionCard
+                          title="Período del Cierre"
+                          icon={<AlertCircle className="h-4 w-4" />}
+                          color="purple"
+                          required
+                        >
+                          <DateRangePicker 
+                            dateFrom={formData.dateFrom} 
+                            dateTo={formData.dateTo} 
+                            onDateFromChange={handleDateFromChange} 
+                            onDateToChange={handleDateToChange} 
                           />
                         </ColoredSectionCard>
                       </div>
