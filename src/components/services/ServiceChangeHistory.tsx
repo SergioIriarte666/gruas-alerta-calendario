@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { History, Plus, Pencil, Trash2, User } from 'lucide-react';
+import { History, Plus, Pencil, Trash2, User, Camera } from 'lucide-react';
 
 interface ServiceChangeHistoryProps {
   serviceId: string;
@@ -56,7 +56,7 @@ const formatValue = (fieldName: string, value: string | null): string => {
   return value;
 };
 
-const getChangeTypeConfig = (changeType: 'CREATE' | 'UPDATE' | 'DELETE') => {
+const getChangeTypeConfig = (changeType: 'CREATE' | 'UPDATE' | 'DELETE' | 'SNAPSHOT') => {
   switch (changeType) {
     case 'CREATE':
       return {
@@ -70,9 +70,9 @@ const getChangeTypeConfig = (changeType: 'CREATE' | 'UPDATE' | 'DELETE') => {
       return {
         icon: Pencil,
         label: 'Modificación',
-        bgColor: 'bg-blue-100',
-        textColor: 'text-blue-800',
-        borderColor: 'border-blue-300',
+        bgColor: 'bg-amber-100',
+        textColor: 'text-amber-800',
+        borderColor: 'border-amber-300',
       };
     case 'DELETE':
       return {
@@ -81,6 +81,14 @@ const getChangeTypeConfig = (changeType: 'CREATE' | 'UPDATE' | 'DELETE') => {
         bgColor: 'bg-red-100',
         textColor: 'text-red-800',
         borderColor: 'border-red-300',
+      };
+    case 'SNAPSHOT':
+      return {
+        icon: Camera,
+        label: 'Estado Inicial',
+        bgColor: 'bg-blue-100',
+        textColor: 'text-blue-800',
+        borderColor: 'border-blue-300',
       };
   }
 };
@@ -170,35 +178,74 @@ export const ServiceChangeHistory: React.FC<ServiceChangeHistoryProps> = ({ serv
 
                 {/* Lista de cambios */}
                 <div className="space-y-1.5">
-                  {group.changes.map((change) => (
-                    <div
-                      key={change.id}
-                      className="flex items-start gap-2 text-xs bg-white/50 rounded px-2 py-1.5"
-                    >
-                      <span className="font-medium text-foreground min-w-[140px]">
-                        {FIELD_LABELS[change.fieldName] || change.fieldName}:
-                      </span>
-                      {change.changeType === 'CREATE' ? (
-                        <span className="text-muted-foreground italic">
-                          {change.changeSummary || 'Servicio creado'}
+                  {group.changes.map((change) => {
+                    // Renderizado especial para SNAPSHOT
+                    if (change.changeType === 'SNAPSHOT') {
+                      try {
+                        const snapshotData = JSON.parse(change.newValue || '{}');
+                        const snapshotFields = Object.entries(snapshotData).filter(
+                          ([_, value]) => value !== null && value !== ''
+                        );
+                        
+                        return (
+                          <div key={change.id} className="space-y-1">
+                            <p className="text-xs text-muted-foreground italic mb-2">
+                              {change.changeSummary}
+                            </p>
+                            {snapshotFields.map(([fieldName, value]) => (
+                              <div
+                                key={fieldName}
+                                className="flex items-start gap-2 text-xs bg-white/50 rounded px-2 py-1"
+                              >
+                                <span className="font-medium text-foreground min-w-[140px]">
+                                  {FIELD_LABELS[fieldName] || fieldName}:
+                                </span>
+                                <span className="text-foreground">
+                                  {formatValue(fieldName, String(value))}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        );
+                      } catch {
+                        return (
+                          <div key={change.id} className="text-xs text-muted-foreground italic">
+                            {change.changeSummary || 'Estado inicial registrado'}
+                          </div>
+                        );
+                      }
+                    }
+
+                    return (
+                      <div
+                        key={change.id}
+                        className="flex items-start gap-2 text-xs bg-white/50 rounded px-2 py-1.5"
+                      >
+                        <span className="font-medium text-foreground min-w-[140px]">
+                          {FIELD_LABELS[change.fieldName] || change.fieldName}:
                         </span>
-                      ) : change.changeType === 'DELETE' ? (
-                        <span className="text-muted-foreground italic">
-                          {change.changeSummary || 'Servicio eliminado'}
-                        </span>
-                      ) : (
-                        <span className="text-muted-foreground">
-                          <span className="line-through opacity-60">
-                            {formatValue(change.fieldName, change.oldValue)}
+                        {change.changeType === 'CREATE' ? (
+                          <span className="text-muted-foreground italic">
+                            {change.changeSummary || 'Servicio creado'}
                           </span>
-                          <span className="mx-1.5">→</span>
-                          <span className="font-medium text-foreground">
-                            {formatValue(change.fieldName, change.newValue)}
+                        ) : change.changeType === 'DELETE' ? (
+                          <span className="text-muted-foreground italic">
+                            {change.changeSummary || 'Servicio eliminado'}
                           </span>
-                        </span>
-                      )}
-                    </div>
-                  ))}
+                        ) : (
+                          <span className="text-muted-foreground">
+                            <span className="line-through opacity-60">
+                              {formatValue(change.fieldName, change.oldValue)}
+                            </span>
+                            <span className="mx-1.5">→</span>
+                            <span className="font-medium text-foreground">
+                              {formatValue(change.fieldName, change.newValue)}
+                            </span>
+                          </span>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             );

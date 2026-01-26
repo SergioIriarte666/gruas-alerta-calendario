@@ -9,7 +9,7 @@ export interface ServiceChangeEntry {
   changerName: string | null;
   changerEmail: string | null;
   changedAt: string;
-  changeType: 'CREATE' | 'UPDATE' | 'DELETE';
+  changeType: 'CREATE' | 'UPDATE' | 'DELETE' | 'SNAPSHOT';
   fieldName: string;
   oldValue: string | null;
   newValue: string | null;
@@ -66,7 +66,7 @@ export const useServiceChangeHistory = (serviceId: string | null) => {
         changerName: entry.profiles?.full_name || null,
         changerEmail: entry.profiles?.email || null,
         changedAt: entry.changed_at,
-        changeType: entry.change_type as 'CREATE' | 'UPDATE' | 'DELETE',
+        changeType: entry.change_type as 'CREATE' | 'UPDATE' | 'DELETE' | 'SNAPSHOT',
         fieldName: entry.field_name,
         oldValue: entry.old_value,
         newValue: entry.new_value,
