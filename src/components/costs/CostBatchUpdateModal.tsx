@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -21,9 +22,8 @@ import { useCostSubcategories } from '@/hooks/useCostSubcategories';
 import { useCostCenters } from '@/hooks/useCostCenters';
 import { useInventorySuppliers } from '@/hooks/useInventory';
 import { BatchProgressModal, useBatchProgress } from '@/components/ui/batch-progress-modal';
-import { BarChart3, Calendar, Tag, Building2, User, FileText } from 'lucide-react';
+import { BarChart3, Calendar, Tag, Building2, User, FileText, Plus, Loader2 } from 'lucide-react';
 import DatePickerInput from '@/components/common/DatePickerInput';
-
 interface CostBatchUpdateModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -60,8 +60,15 @@ export const CostBatchUpdateModal = ({
   const [notes, setNotes] = useState<string>('');
   const [appendNotes, setAppendNotes] = useState(false);
 
+  // Estado para crear nueva subcategoría
+  const [newSubcategoryName, setNewSubcategoryName] = useState('');
+
   // Hook para obtener subcategorías basadas en la categoría seleccionada
-  const { subcategories: availableSubcategories = [] } = useCostSubcategories(
+  const { 
+    subcategories: availableSubcategories = [],
+    createSubcategory,
+    isCreating: isCreatingSubcategory 
+  } = useCostSubcategories(
     enableCategory && categoryId ? categoryId : undefined
   );
 
@@ -69,8 +76,29 @@ export const CostBatchUpdateModal = ({
   React.useEffect(() => {
     if (enableCategory && categoryId) {
       setSubcategory('');
+      setNewSubcategoryName('');
     }
   }, [categoryId, enableCategory]);
+
+  // Función para crear nueva subcategoría
+  const handleCreateSubcategory = () => {
+    if (!newSubcategoryName.trim() || !categoryId) return;
+    
+    const maxOrder = availableSubcategories.reduce(
+      (max, sub) => Math.max(max, sub.display_order || 0), 0
+    );
+    
+    createSubcategory({
+      category_id: categoryId,
+      name: newSubcategoryName.trim(),
+      display_order: maxOrder + 1,
+    }, {
+      onSuccess: (data) => {
+        setSubcategory(data.name);
+        setNewSubcategoryName('');
+      }
+    });
+  };
 
   const totalAmount = useMemo(() => {
     return selectedCosts.reduce((sum, cost) => sum + Number(cost.amount), 0);
@@ -130,6 +158,7 @@ export const CostBatchUpdateModal = ({
     setEnableNotes(false);
     setCategoryId('');
     setSubcategory('');
+    setNewSubcategoryName('');
     setDate('');
     setPaymentDate('');
     setCostCenterId('');
@@ -229,29 +258,65 @@ export const CostBatchUpdateModal = ({
                   />
                 </div>
                 {enableSubcategory && (
-                  <div className="space-y-2">
+                  <div className="space-y-3">
                     {(!enableCategory || !categoryId) ? (
                       <p className="text-sm text-muted-foreground italic">
                         Primero debes seleccionar una categoría
                       </p>
-                    ) : availableSubcategories.length === 0 ? (
-                      <p className="text-sm text-muted-foreground italic">
-                        No hay subcategorías configuradas para esta categoría
-                      </p>
                     ) : (
-                      <Select value={subcategory} onValueChange={setSubcategory}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Seleccionar subcategoría" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="__NONE__">Sin subcategoría (limpiar)</SelectItem>
-                          {availableSubcategories.map((sub) => (
-                            <SelectItem key={sub.id} value={sub.name}>
-                              {sub.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <>
+                        {availableSubcategories.length === 0 ? (
+                          <p className="text-sm text-muted-foreground italic">
+                            No hay subcategorías configuradas para esta categoría
+                          </p>
+                        ) : (
+                          <Select value={subcategory} onValueChange={setSubcategory}>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Seleccionar subcategoría" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="__NONE__">Sin subcategoría (limpiar)</SelectItem>
+                              {availableSubcategories.map((sub) => (
+                                <SelectItem key={sub.id} value={sub.name}>
+                                  {sub.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        )}
+                        
+                        {/* Creación rápida de subcategoría */}
+                        <div className="flex gap-2">
+                          <Input
+                            placeholder="Nueva subcategoría..."
+                            value={newSubcategoryName}
+                            onChange={(e) => setNewSubcategoryName(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault();
+                                handleCreateSubcategory();
+                              }
+                            }}
+                            disabled={isCreatingSubcategory}
+                            className="flex-1"
+                          />
+                          <Button
+                            type="button"
+                            size="sm"
+                            onClick={handleCreateSubcategory}
+                            disabled={isCreatingSubcategory || !newSubcategoryName.trim()}
+                          >
+                            {isCreatingSubcategory ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <>
+                                <Plus className="h-4 w-4 mr-1" />
+                                Agregar
+                              </>
+                            )}
+                          </Button>
+                        </div>
+                      </>
                     )}
                   </div>
                 )}
