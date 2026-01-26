@@ -34,7 +34,7 @@ import { useServiceDetailsPDF } from '@/hooks/useServiceDetailsPDF';
 import { Button } from '@/components/ui/button';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { getServiceValueForClosure, getDisplayServiceValue, getServiceValueBreakdown, isCustodyService, getCustodyInfo, isEquipmentRentalService } from '@/utils/serviceValueCalculations';
+import { getDisplayServiceValue, getServiceValueBreakdown, isCustodyService, getCustodyInfo, isEquipmentRentalService } from '@/utils/serviceValueCalculations';
 import { formatForDisplay, formatForDisplayWithTime } from '@/utils/timezoneUtils';
 
 interface ServiceDetailsModalProps {
@@ -235,9 +235,9 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose, onDuplicate }: S
   // Obtener desglose de valores
   const serviceBreakdown = getServiceValueBreakdown(serviceData);
   
-  // Para cálculos de ganancia neta, usar getServiceValueForClosure (valor facturable)
-  const closureValue = getServiceValueForClosure(serviceData);
-  const netProfit = closureValue - totalCosts;
+  // Para cálculos de ganancia neta, usar el valor TOTAL del servicio
+  // (tanto el monto cubierto como el excedente son utilidad para la empresa)
+  const netProfit = displayServiceValue - totalCosts;
   
   // Handler para descargar PDF
   const handleDownloadPDF = () => {

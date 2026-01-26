@@ -95,6 +95,27 @@ export const getServiceValueForClosure = (service: any): number => {
 };
 
 /**
+ * Calculates the value that should be used for profit/net gain calculations.
+ * 
+ * IMPORTANT: For services with excess (excedente), BOTH the client covered amount
+ * AND the excess amount are income for the company. Therefore, profit calculations
+ * should use the TOTAL service value, not just the client covered amount.
+ * 
+ * This is different from getServiceValueForClosure which returns only the billable
+ * amount (what the client pays).
+ * 
+ * @param service - Service object
+ * @returns The total service value for profit calculations
+ */
+export const getServiceValueForProfit = (service: any): number => {
+  if (!service) return 0;
+  
+  // For profit calculations, always use the complete service value
+  // Both client covered amount and excess are company income
+  return getCompleteServiceValue(service);
+};
+
+/**
  * Checks if a service is a custody service (supports both camelCase and snake_case)
  */
 export const isCustodyService = (service: any): boolean => {
