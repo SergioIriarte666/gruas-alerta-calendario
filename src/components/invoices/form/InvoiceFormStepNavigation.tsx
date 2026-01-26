@@ -93,9 +93,9 @@ export const InvoiceFormStepNavigation = ({
 export const getInvoiceFormSteps = (): Omit<InvoiceFormStep, 'isCompleted' | 'hasError'>[] => [
   {
     id: 1,
-    title: 'Estado y Configuración',
-    description: 'Estado y número fiscal',
-    icon: <Settings className="h-4 w-4" />,
+    title: 'Selección de Cierre',
+    description: 'Cierre a facturar',
+    icon: <FileCheck className="h-4 w-4" />,
   },
   {
     id: 2,
@@ -105,8 +105,8 @@ export const getInvoiceFormSteps = (): Omit<InvoiceFormStep, 'isCompleted' | 'ha
   },
   {
     id: 3,
-    title: 'Selección de Cierre',
-    description: 'Cierre a facturar',
-    icon: <FileCheck className="h-4 w-4" />,
+    title: 'Estado y Configuración',
+    description: 'Estado y número fiscal',
+    icon: <Settings className="h-4 w-4" />,
   },
 ];
