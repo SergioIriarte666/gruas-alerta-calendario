@@ -1,138 +1,154 @@
 
 
-## Plan: Snapshot Inicial de Servicios Existentes
+## Plan: Reordenar Pasos del Formulario de Nuevo Cierre
 
 ### Objetivo
-Crear un registro inicial en `service_change_history` para todos los servicios existentes, estableciendo el estado actual de cada campo como punto de partida para el historial de cambios.
+Cambiar el orden de los pasos en el formulario "Nuevo Cierre de Servicios" para que comience con la búsqueda de servicios (actualmente paso 2), haciendo el flujo más rápido e intuitivo.
 
 ---
 
-### Estrategia
+### Nuevo Orden de Pasos
 
-El snapshot registrará cada servicio con tipo `SNAPSHOT` (agregaremos este tipo) y guardará el valor actual de cada campo trackeado. Esto permitirá:
-1. Ver los valores que tenía el servicio al momento del snapshot
-2. Tener una referencia base para comparar cambios futuros
-3. Identificar claramente qué registros son históricos vs automáticos
-
----
-
-### Cambios a Realizar
-
-#### 1. Modificar restricción de `change_type`
-Agregar `SNAPSHOT` como tipo válido de cambio:
-
-```sql
-ALTER TABLE service_change_history 
-DROP CONSTRAINT service_change_history_change_type_check;
-
-ALTER TABLE service_change_history 
-ADD CONSTRAINT service_change_history_change_type_check 
-CHECK (change_type IN ('CREATE', 'UPDATE', 'DELETE', 'SNAPSHOT'));
-```
-
-#### 2. Insertar snapshot de todos los servicios
-Para cada servicio existente, crear un registro por cada campo con valor no nulo:
-
-```sql
-INSERT INTO service_change_history (
-  service_id, 
-  service_folio, 
-  changed_by, 
-  changed_at, 
-  change_type, 
-  field_name, 
-  old_value, 
-  new_value, 
-  change_context, 
-  change_summary
-)
-SELECT 
-  s.id,
-  s.folio,
-  s.created_by,  -- Usar el creador original del servicio
-  s.created_at,  -- Usar la fecha de creación original
-  'SNAPSHOT',
-  'servicio',
-  NULL,
-  jsonb_build_object(
-    'value', s.value,
-    'purchase_order', s.purchase_order,
-    'quote_number', s.quote_number,
-    'status', s.status,
-    'operator_commission', s.operator_commission,
-    'client_covered_amount', s.client_covered_amount,
-    'excess_amount', s.excess_amount,
-    'insured_name', s.insured_name,
-    'origin', s.origin,
-    'destination', s.destination,
-    'observations', s.observations,
-    'vehicle_brand', s.vehicle_brand,
-    'vehicle_model', s.vehicle_model,
-    'license_plate', s.license_plate
-  )::TEXT,
-  'snapshot_inicial',
-  'Snapshot inicial - Estado del servicio al momento de activar el historial'
-FROM services s
-WHERE NOT EXISTS (
-  SELECT 1 FROM service_change_history h 
-  WHERE h.service_id = s.id
-);
-```
-
-#### 3. Actualizar componente visual
-Modificar `ServiceChangeHistory.tsx` para mostrar el badge de SNAPSHOT con un color distintivo (azul):
-
-```typescript
-const getChangeTypeBadge = (changeType: string) => {
-  switch (changeType) {
-    case 'CREATE':
-      return <Badge className="bg-green-100 text-green-800">Creado</Badge>;
-    case 'UPDATE':
-      return <Badge className="bg-yellow-100 text-yellow-800">Modificado</Badge>;
-    case 'DELETE':
-      return <Badge className="bg-red-100 text-red-800">Eliminado</Badge>;
-    case 'SNAPSHOT':
-      return <Badge className="bg-blue-100 text-blue-800">Estado Inicial</Badge>;
-    default:
-      return <Badge>{changeType}</Badge>;
-  }
-};
-```
-
-#### 4. Formato especial para visualizar snapshot
-Los snapshots se mostrarán de forma diferente, mostrando todos los valores en un formato de lista:
-
-```text
-┌───────────────────────────────────────────────────────────────┐
-│  📸 Estado Inicial                                            │
-│  ┌─────────────────────────────────────────────────────────┐  │
-│  │  🔵 24/01/2026 09:00 - Juan Pérez                       │  │
-│  │  Estado Inicial del Servicio                            │  │
-│  │  ├── Valor: $1.200.000                                  │  │
-│  │  ├── OC: OC-12345                                       │  │
-│  │  ├── Estado: completed                                  │  │
-│  │  ├── Origen: Santiago Centro                           │  │
-│  │  └── Destino: Viña del Mar                              │  │
-│  └─────────────────────────────────────────────────────────┘  │
-└───────────────────────────────────────────────────────────────┘
-```
+| Antes | Después |
+|-------|---------|
+| 1. Período (Rango de fechas) | 1. Cliente y Servicios (Buscador) |
+| 2. Cliente y Servicios | 2. Período (Rango de fechas) |
+| 3. Detalles (OC y estado) | 3. Detalles (OC y estado) |
 
 ---
 
 ### Archivos a Modificar
 
-| Archivo | Acción | Descripción |
-|---------|--------|-------------|
-| Migración SQL | Crear | Modificar constraint y ejecutar snapshot |
-| `src/components/services/ServiceChangeHistory.tsx` | Modificar | Agregar badge y visualización para SNAPSHOT |
-| `src/hooks/useServiceChangeHistory.ts` | Modificar | Agregar tipo SNAPSHOT a la interfaz |
+#### 1. `src/components/closures/ClosureFormStepNavigation.tsx`
+
+Reordenar los pasos en la función `getClosureFormSteps()`:
+
+```typescript
+export const getClosureFormSteps = (): Omit<ClosureFormStep, 'isCompleted' | 'hasError'>[] => [
+  {
+    id: 1,
+    title: 'Cliente y Servicios',  // Antes era paso 2
+    description: 'Seleccionar servicios',
+    icon: <ListChecks className="h-4 w-4" />,
+  },
+  {
+    id: 2,
+    title: 'Período',  // Antes era paso 1
+    description: 'Rango de fechas',
+    icon: <Calendar className="h-4 w-4" />,
+  },
+  {
+    id: 3,
+    title: 'Detalles',
+    description: 'OC y estado',
+    icon: <FileText className="h-4 w-4" />,
+  },
+];
+```
 
 ---
 
-### Resultado Esperado
+#### 2. `src/components/closures/ClosureForm.tsx`
 
-1. Todos los servicios existentes tendrán un registro `SNAPSHOT` con sus valores actuales
-2. El historial mostrará "Estado Inicial" como primer registro de cada servicio
-3. Los cambios futuros se compararán contra este baseline
-4. La fecha del snapshot será la fecha de creación original del servicio
+Ajustar la lógica de validación y renderizado de pasos:
+
+**a) Orden de validación de pasos completados:**
+```typescript
+// Antes:
+const step1Complete = !!formData.dateFrom && !!formData.dateTo;
+const step2Complete = formData.serviceIds.length > 0;
+
+// Después:
+const step1Complete = formData.serviceIds.length > 0;  // Servicios primero
+const step2Complete = !!formData.dateFrom && !!formData.dateTo;  // Fechas segundo
+```
+
+**b) Renderizado condicional de pasos:**
+```tsx
+// Paso 1: Ahora es Cliente y Servicios
+{currentStep === 1 && (
+  <div className="space-y-4">
+    <ColoredSectionCard title="Cliente (Opcional)" ... />
+    <ColoredSectionCard title="Servicios Disponibles" ... />
+  </div>
+)}
+
+// Paso 2: Ahora es Período
+{currentStep === 2 && (
+  <div className="space-y-4">
+    <Alert ... />
+    <ColoredSectionCard title="Período del Cierre" ... />
+  </div>
+)}
+
+// Paso 3: Detalles (sin cambios)
+{currentStep === 3 && ( ... )}
+```
+
+**c) Ajustar `handleAutoFillDates` para navegar al paso correcto:**
+```typescript
+const handleAutoFillDates = (dateFrom: Date, dateTo: Date) => {
+  setFormData(prev => ({
+    ...prev,
+    dateFrom,
+    dateTo
+  }));
+  // Navegar al paso 2 (Período) para mostrar las fechas auto-rellenadas
+  setCurrentStep(2);  // Antes era 1
+};
+```
+
+---
+
+### Flujo Mejorado
+
+```text
+┌─────────────────────────────────────────────────────────────────┐
+│                   NUEVO FLUJO DE CIERRE                         │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  PASO 1: CLIENTE Y SERVICIOS                                   │
+│  ┌─────────────────────────────────────────────────────────┐   │
+│  │ • Búsqueda global activa (últimos 90 días)              │   │
+│  │ • Buscar por OC, folio, patente, cliente                │   │
+│  │ • Seleccionar servicios a incluir en el cierre          │   │
+│  │ • Auto-detectar cliente único                           │   │
+│  └─────────────────────────────────────────────────────────┘   │
+│                          │                                      │
+│                          ▼                                      │
+│  PASO 2: PERÍODO                                               │
+│  ┌─────────────────────────────────────────────────────────┐   │
+│  │ • Botón "Auto-completar fechas" disponible              │   │
+│  │ • Fechas basadas en servicios seleccionados             │   │
+│  │ • O selección manual del rango                          │   │
+│  └─────────────────────────────────────────────────────────┘   │
+│                          │                                      │
+│                          ▼                                      │
+│  PASO 3: DETALLES                                              │
+│  ┌─────────────────────────────────────────────────────────┐   │
+│  │ • OC auto-detectada de servicios                        │   │
+│  │ • Total calculado automáticamente                       │   │
+│  │ • Selección de estado                                   │   │
+│  └─────────────────────────────────────────────────────────┘   │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+### Beneficios
+
+1. **Flujo más natural**: Primero buscar qué servicios cerrar, luego confirmar fechas
+2. **Buscador accesible**: El buscador global está disponible desde el primer momento
+3. **Auto-completado inteligente**: Las fechas pueden auto-llenarse basándose en los servicios seleccionados
+4. **Menos fricción**: No es necesario definir un rango de fechas antes de buscar
+
+---
+
+### Archivos Afectados
+
+| Archivo | Cambios |
+|---------|---------|
+| `src/components/closures/ClosureFormStepNavigation.tsx` | Reordenar array de pasos |
+| `src/components/closures/ClosureForm.tsx` | Ajustar validación, renderizado y navegación |
 
