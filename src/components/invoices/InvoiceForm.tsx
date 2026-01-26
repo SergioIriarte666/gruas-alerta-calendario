@@ -118,9 +118,9 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
 
   const validateStep = (step: number): boolean => {
     switch (step) {
-      case 1: return true;
+      case 1: return watch('closureId') !== '';
       case 2: return watch('issueDate') !== '' && watch('dueDate') !== '';
-      case 3: return watch('closureId') !== '';
+      case 3: return true;
       default: return true;
     }
   };
@@ -137,11 +137,11 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
   const renderStepContent = () => {
     switch (currentStep) {
       case 1:
-        return <InvoiceFormStep1 status={watch('status')} numeroFiscal={watch('numeroFiscal') || ''} canEditStatus={editableFields.canEditStatus} canEditNumeroFiscal={editableFields.canEditNumeroFiscal} onStatusChange={(v) => setValue('status', v)} onNumeroFiscalChange={(v) => setValue('numeroFiscal', v)} errors={{ status: errors.status?.message, numeroFiscal: errors.numeroFiscal?.message }} />;
+        return <InvoiceFormStep3 selectedClosureId={selectedClosureId} isEditing={isEditing} currentInvoice={invoice ? { id: invoice.id, closureId: invoice.closureId } : undefined} canEditClosure={editableFields.canEditClosure} subtotal={subtotal} vat={vat} total={total} showSummary={!!selectedClosure} onClosureChange={(v) => setValue('closureId', v)} errors={{ closureId: errors.closureId?.message }} />;
       case 2:
         return <InvoiceFormStep2 issueDate={watch('issueDate')} dueDate={watch('dueDate')} paymentDate={watch('paymentDate') || ''} paymentTermId={watch('paymentTermId') || ''} status={watch('status')} canEditDates={editableFields.canEditDates} canEditPaymentDate={editableFields.canEditPaymentDate} paymentTerms={paymentTerms} loadingTerms={loadingTerms} onIssueDateChange={(v) => setValue('issueDate', v)} onDueDateChange={(v) => setValue('dueDate', v)} onPaymentDateChange={(v) => setValue('paymentDate', v)} onPaymentTermIdChange={(v) => setValue('paymentTermId', v)} errors={{ issueDate: errors.issueDate?.message, dueDate: errors.dueDate?.message, paymentDate: errors.paymentDate?.message }} />;
       case 3:
-        return <InvoiceFormStep3 selectedClosureId={selectedClosureId} isEditing={isEditing} currentInvoice={invoice ? { id: invoice.id, closureId: invoice.closureId } : undefined} canEditClosure={editableFields.canEditClosure} subtotal={subtotal} vat={vat} total={total} showSummary={!!selectedClosure} onClosureChange={(v) => setValue('closureId', v)} errors={{ closureId: errors.closureId?.message }} />;
+        return <InvoiceFormStep1 status={watch('status')} numeroFiscal={watch('numeroFiscal') || ''} canEditStatus={editableFields.canEditStatus} canEditNumeroFiscal={editableFields.canEditNumeroFiscal} onStatusChange={(v) => setValue('status', v)} onNumeroFiscalChange={(v) => setValue('numeroFiscal', v)} errors={{ status: errors.status?.message, numeroFiscal: errors.numeroFiscal?.message }} />;
       default: return null;
     }
   };
