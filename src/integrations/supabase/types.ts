@@ -4399,7 +4399,9 @@ export type Database = {
         }
         Returns: undefined
       }
-      is_admin_user: { Args: never; Returns: boolean }
+      is_admin_user:
+        | { Args: never; Returns: boolean }
+        | { Args: { check_user_id: string }; Returns: boolean }
       is_admin_user_safe: { Args: never; Returns: boolean }
       is_authenticated_admin: { Args: never; Returns: boolean }
       is_authenticated_operator: { Args: never; Returns: boolean }
