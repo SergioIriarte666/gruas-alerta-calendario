@@ -19,10 +19,13 @@ import {
 import { useVehicleBrands } from '@/hooks/useVehicleBrands';
 import { useVehicleModels } from '@/hooks/useVehicleModels';
 import { useVehicleHistory } from '@/hooks/useVehicleHistory';
-import { AlertTriangle, Plus, AlertCircle, Calendar, MapPin, User, FileText, Car, Clock } from 'lucide-react';
+import { usePatentLookup } from '@/hooks/usePatentLookup';
+import { AlertTriangle, Plus, AlertCircle, Calendar, MapPin, User, FileText, Car, Clock, Loader2, Lightbulb } from 'lucide-react';
 import { format, formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { parseFromDatabase } from '@/utils/timezoneUtils';
+import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
 
 interface VehicleSectionProps {
   vehicleBrand: string;
@@ -72,6 +75,13 @@ export const VehicleSection = ({
   const [showHistoryDialog, setShowHistoryDialog] = useState(false);
   const [historyConfirmed, setHistoryConfirmed] = useState(false);
   const confirmedPlatesRef = useRef<Set<string>>(new Set());
+
+  // Patent lookup suggestion states
+  const { data: patentData, loading: patentLoading, lookupPatent, reset: resetPatent } = usePatentLookup();
+  const [showSuggestionDialog, setShowSuggestionDialog] = useState(false);
+  const [isApplyingSuggestion, setIsApplyingSuggestion] = useState(false);
+  const appliedPlatesRef = useRef<Set<string>>(new Set());
+  const [pendingModel, setPendingModel] = useState<string | null>(null);
   
   // Fetch vehicle history for the debounced plate
   const { history, isLoading: historyLoading } = useVehicleHistory(
@@ -89,6 +99,74 @@ export const VehicleSection = ({
     }, 500);
     return () => clearTimeout(timer);
   }, [licensePlate]);
+
+  // Patent lookup when plate changes (debounced, 800ms)
+  useEffect(() => {
+    const cleanPlate = licensePlate.replace(/[-\s]/g, '').toUpperCase();
+    
+    // Only lookup if:
+    // - Plate is long enough (Chilean plates: 6 characters)
+    // - Not already applied for this plate
+    // - No brand already selected (user hasn't filled manually)
+    // - Not in editing mode
+    if (
+      cleanPlate.length >= 6 &&
+      !appliedPlatesRef.current.has(cleanPlate) &&
+      !vehicleBrand &&
+      !isEditing
+    ) {
+      const timer = setTimeout(() => {
+        lookupPatent(cleanPlate);
+      }, 800);
+      return () => clearTimeout(timer);
+    }
+  }, [licensePlate, vehicleBrand, isEditing, lookupPatent]);
+
+  // Show suggestion dialog when patent data arrives
+  useEffect(() => {
+    const cleanPlate = licensePlate.replace(/[-\s]/g, '').toUpperCase();
+    if (
+      patentData &&
+      patentData.marca !== 'No disponible' &&
+      !appliedPlatesRef.current.has(cleanPlate) &&
+      !vehicleBrand &&
+      !isEditing
+    ) {
+      setShowSuggestionDialog(true);
+    }
+  }, [patentData, licensePlate, vehicleBrand, isEditing]);
+
+  // Handle pending model after brand is set
+  useEffect(() => {
+    const applyPendingModel = async () => {
+      if (pendingModel && selectedBrandId && models.length > 0 && !modelsLoading) {
+        // Find existing model
+        const existingModel = models.find(
+          m => m.name.toLowerCase() === pendingModel.toLowerCase()
+        );
+
+        if (existingModel) {
+          onVehicleModelChange(existingModel.name);
+        } else if (pendingModel !== 'No disponible') {
+          // Create new model
+          try {
+            const newModel = await createModelAsync({
+              name: pendingModel,
+              brand_id: selectedBrandId,
+            });
+            if (newModel) {
+              onVehicleModelChange(newModel.name);
+            }
+          } catch (error) {
+            console.error('Error creating model from suggestion:', error);
+          }
+        }
+        setPendingModel(null);
+      }
+    };
+
+    applyPendingModel();
+  }, [pendingModel, selectedBrandId, models, modelsLoading, onVehicleModelChange, createModelAsync]);
 
   // Show history dialog when plate has services (only for new services)
   useEffect(() => {
@@ -183,6 +261,51 @@ export const VehicleSection = ({
     } catch (error) {
       console.error('Error creating model:', error);
     }
+  };
+
+  const handleApplySuggestion = async () => {
+    if (!patentData) return;
+    
+    const cleanPlate = licensePlate.replace(/[-\s]/g, '').toUpperCase();
+    setIsApplyingSuggestion(true);
+    
+    try {
+      // 1. Find or create the brand
+      let brandId = brands.find(
+        b => b.name.toLowerCase() === patentData.marca.toLowerCase()
+      )?.id;
+      
+      if (!brandId && patentData.marca !== 'No disponible') {
+        const newBrand = await createBrandAsync({ name: patentData.marca });
+        brandId = newBrand.id;
+      }
+      
+      if (brandId) {
+        setSelectedBrandId(brandId);
+        onVehicleBrandChange(patentData.marca);
+        
+        // Set pending model to be applied once models load
+        if (patentData.modelo && patentData.modelo !== 'No disponible') {
+          setPendingModel(patentData.modelo);
+        }
+      }
+      
+      appliedPlatesRef.current.add(cleanPlate);
+      setShowSuggestionDialog(false);
+      toast.success('Datos del vehículo aplicados');
+    } catch (error) {
+      console.error('Error applying suggestion:', error);
+      toast.error('Error al aplicar sugerencia');
+    } finally {
+      setIsApplyingSuggestion(false);
+    }
+  };
+
+  const handleIgnoreSuggestion = () => {
+    const cleanPlate = licensePlate.replace(/[-\s]/g, '').toUpperCase();
+    appliedPlatesRef.current.add(cleanPlate);
+    setShowSuggestionDialog(false);
+    resetPatent();
   };
 
   return (
@@ -294,15 +417,25 @@ export const VehicleSection = ({
           {!licensePlateRequired && !licensePlateError && (
             <p className="text-xs text-gray-400">Opcional para este tipo de servicio</p>
           )}
-          <Input
-            id="licensePlate"
-            value={licensePlate}
-            onChange={(e) => onLicensePlateChange(e.target.value.toUpperCase())}
-            placeholder="Ej: AB-CD-12"
-            required={licensePlateRequired}
-            disabled={disabled}
-            className={licensePlateError ? 'border-destructive' : ''}
-          />
+          <div className="relative">
+            <Input
+              id="licensePlate"
+              value={licensePlate}
+              onChange={(e) => onLicensePlateChange(e.target.value.toUpperCase())}
+              placeholder="Ej: AB-CD-12"
+              required={licensePlateRequired}
+              disabled={disabled}
+              className={cn(
+                licensePlateError ? 'border-destructive' : '',
+                patentLoading ? 'pr-10' : ''
+              )}
+            />
+            {patentLoading && (
+              <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -477,6 +610,63 @@ export const VehicleSection = ({
             </Button>
             <Button type="button" onClick={handleConfirmContinue}>
               Sí, Continuar
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog de sugerencia de patente */}
+      <Dialog open={showSuggestionDialog} onOpenChange={setShowSuggestionDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-primary">
+              <Lightbulb className="h-5 w-5" />
+              Datos del Vehículo Encontrados
+            </DialogTitle>
+            <DialogDescription>
+              Encontramos información para la patente <span className="font-semibold">{licensePlate}</span>
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="bg-primary/5 rounded-lg p-4 space-y-3">
+            <div className="grid grid-cols-2 gap-3 text-sm">
+              <div>
+                <span className="text-muted-foreground">Marca:</span>
+                <p className="font-medium">{patentData?.marca}</p>
+              </div>
+              <div>
+                <span className="text-muted-foreground">Modelo:</span>
+                <p className="font-medium">{patentData?.modelo}</p>
+              </div>
+              {patentData?.año && (
+                <div>
+                  <span className="text-muted-foreground">Año:</span>
+                  <p className="font-medium">{patentData.año}</p>
+                </div>
+              )}
+              {patentData?.color && (
+                <div>
+                  <span className="text-muted-foreground">Color:</span>
+                  <p className="font-medium">{patentData.color}</p>
+                </div>
+              )}
+            </div>
+          </div>
+          
+          <p className="text-sm text-muted-foreground">
+            ¿Desea aplicar esta información al formulario?
+          </p>
+          
+          <div className="flex justify-end gap-2 pt-2">
+            <Button type="button" variant="outline" onClick={handleIgnoreSuggestion}>
+              Ignorar
+            </Button>
+            <Button 
+              type="button" 
+              onClick={handleApplySuggestion}
+              disabled={isApplyingSuggestion}
+            >
+              {isApplyingSuggestion ? 'Aplicando...' : 'Aplicar Sugerencia'}
             </Button>
           </div>
         </DialogContent>
