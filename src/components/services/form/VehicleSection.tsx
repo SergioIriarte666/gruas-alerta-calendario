@@ -81,6 +81,7 @@ export const VehicleSection = ({
   const [showSuggestionDialog, setShowSuggestionDialog] = useState(false);
   const [isApplyingSuggestion, setIsApplyingSuggestion] = useState(false);
   const appliedPlatesRef = useRef<Set<string>>(new Set());
+  const searchedPlatesRef = useRef<Set<string>>(new Set()); // Track plates we've already searched
   const [pendingModel, setPendingModel] = useState<string | null>(null);
   
   // Fetch vehicle history for the debounced plate
@@ -106,21 +107,25 @@ export const VehicleSection = ({
     
     // Only lookup if:
     // - Plate is long enough (Chilean plates: 6 characters)
-    // - Not already applied for this plate
+    // - Not already searched or applied for this plate
     // - No brand already selected (user hasn't filled manually)
     // - Not in editing mode
+    // - Not currently loading
     if (
       cleanPlate.length >= 6 &&
+      !searchedPlatesRef.current.has(cleanPlate) &&
       !appliedPlatesRef.current.has(cleanPlate) &&
       !vehicleBrand &&
-      !isEditing
+      !isEditing &&
+      !patentLoading
     ) {
       const timer = setTimeout(() => {
+        searchedPlatesRef.current.add(cleanPlate);
         lookupPatent(cleanPlate);
       }, 800);
       return () => clearTimeout(timer);
     }
-  }, [licensePlate, vehicleBrand, isEditing, lookupPatent]);
+  }, [licensePlate, vehicleBrand, isEditing, patentLoading]);
 
   // Show suggestion dialog when patent data arrives
   useEffect(() => {
@@ -129,12 +134,13 @@ export const VehicleSection = ({
       patentData &&
       patentData.marca !== 'No disponible' &&
       !appliedPlatesRef.current.has(cleanPlate) &&
+      !showSuggestionDialog && // Don't re-show if already open
       !vehicleBrand &&
       !isEditing
     ) {
       setShowSuggestionDialog(true);
     }
-  }, [patentData, licensePlate, vehicleBrand, isEditing]);
+  }, [patentData, licensePlate, vehicleBrand, isEditing, showSuggestionDialog]);
 
   // Handle pending model after brand is set
   useEffect(() => {
