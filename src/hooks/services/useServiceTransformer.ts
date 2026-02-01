@@ -18,33 +18,43 @@ export const useServiceTransformer = () => {
         custody_vehicle_type: item.custody_vehicle_type
       });
       
+      // PostgREST embedded relations can arrive with different keys depending on the query
+      // (e.g. `clients` vs `client` alias). Normalize to avoid UI showing "Cliente no disponible".
+      const normalizeEmbedded = <T,>(value: T | T[] | null | undefined): T | null => {
+        if (!value) return null;
+        return Array.isArray(value) ? (value[0] ?? null) : value;
+      };
+
+      const embeddedClient = normalizeEmbedded(item.client ?? item.clients);
+      const embeddedThirdPartyClient = normalizeEmbedded(item.third_party_client ?? item.third_party_clients);
+
       const transformedService: Service = {
         id: item.id,
         folio: item.folio,
         requestDate: item.request_date,
         serviceDate: item.service_date,
-        client: item.client ? {
-          id: item.client.id,
-          name: item.client.name,
-          rut: item.client.rut || '',
-          phone: item.client.phone || '',
-          email: item.client.email || '',
-          address: item.client.address || '',
-          department: item.client.department || '',
-          isActive: item.client.is_active ?? true,
-          createdAt: item.client.created_at || new Date().toISOString(),
-          updatedAt: item.client.updated_at || new Date().toISOString()
-        } : item.third_party_client ? {
-          id: item.third_party_client.id,
-          name: item.third_party_client.name,
-          rut: item.third_party_client.rut || '',
-          phone: item.third_party_client.phone || '',
-          email: item.third_party_client.email || '',
-          address: item.third_party_client.address || '',
-          department: item.third_party_client.department || '',
-          isActive: item.third_party_client.is_active ?? true,
-          createdAt: item.third_party_client.created_at || new Date().toISOString(),
-          updatedAt: item.third_party_client.updated_at || new Date().toISOString()
+        client: embeddedClient ? {
+          id: embeddedClient.id,
+          name: embeddedClient.name,
+          rut: embeddedClient.rut || '',
+          phone: embeddedClient.phone || '',
+          email: embeddedClient.email || '',
+          address: embeddedClient.address || '',
+          department: embeddedClient.department || '',
+          isActive: embeddedClient.is_active ?? true,
+          createdAt: embeddedClient.created_at || new Date().toISOString(),
+          updatedAt: embeddedClient.updated_at || new Date().toISOString()
+        } : embeddedThirdPartyClient ? {
+          id: embeddedThirdPartyClient.id,
+          name: embeddedThirdPartyClient.name,
+          rut: embeddedThirdPartyClient.rut || '',
+          phone: embeddedThirdPartyClient.phone || '',
+          email: embeddedThirdPartyClient.email || '',
+          address: embeddedThirdPartyClient.address || '',
+          department: embeddedThirdPartyClient.department || '',
+          isActive: embeddedThirdPartyClient.is_active ?? true,
+          createdAt: embeddedThirdPartyClient.created_at || new Date().toISOString(),
+          updatedAt: embeddedThirdPartyClient.updated_at || new Date().toISOString()
         } : {
           id: item.client_id || '',
           name: 'Cliente no disponible',

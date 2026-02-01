@@ -131,11 +131,10 @@ export const useOperatorServices = (userId?: string) => {
   const { transformRawServiceData } = useServiceTransformer();
 
   return useQuery<Service[], Error>({
-    queryKey: ['operator-services', userId],
+    // NOTE: include a minor version tag to avoid stale selected-cache issues when the transformer changes.
+    queryKey: ['operator-services', userId, 'v2'],
     queryFn: () => fetchOperatorServices(userId!),
     enabled: !!userId,
-    staleTime: 0,
-    gcTime: 0,
     select: (data) => {
       try {
         return transformRawServiceData(data).filter(Boolean) as Service[];
