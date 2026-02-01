@@ -1,24 +1,18 @@
-
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.50.0';
-import { Resend } from "npm:resend@2.0.0";
-import { UserInvitationRequest } from './types.ts';
-import { translateRole } from './roleTranslator.ts';
-import { generateRegistrationUrl } from './urlGenerator.ts';
-import { generateEmailHtml } from './emailTemplate.ts';
-import { fetchCompanyData } from './companyDataFetcher.ts';
-import { sendInvitationEmail } from './emailSender.ts';
-import { updateInvitationStatus } from './invitationUpdater.ts';
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const supabase = createClient(
-  Deno.env.get('SUPABASE_URL') ?? '',
-  Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-);
+interface InviteUserRequest {
+  email: string;
+  fullName: string;
+  role: 'admin' | 'operator' | 'viewer' | 'client';
+  clientId?: string | null;
+  operatorId?: string | null;
+}
 
 const handler = async (req: Request): Promise<Response> => {
   console.log('🚀 send-user-invitation function called');
@@ -28,102 +22,160 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    // Verificar que el API key de Resend esté configurado
-    const resendApiKey = Deno.env.get("RESEND_API_KEY");
-    if (!resendApiKey) {
-      console.error('❌ RESEND_API_KEY not configured');
-      throw new Error('API key de Resend no configurado');
+    const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+    
+    if (!supabaseServiceKey) {
+      throw new Error('SUPABASE_SERVICE_ROLE_KEY not configured');
     }
 
-    console.log('✅ RESEND_API_KEY configured');
-    const resend = new Resend(resendApiKey);
-
-    const { userId, email, fullName, role, clientName }: UserInvitationRequest = await req.json();
-
-    console.log('📧 Processing invitation for:', { 
-      userId, 
-      email, 
-      fullName, 
-      role, 
-      clientName,
-      timestamp: new Date().toISOString()
+    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
+      }
     });
 
-    // Validar email
+    // Verify caller is admin
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      throw new Error('No authorization header');
+    }
+
+    const token = authHeader.replace('Bearer ', '');
+    const { data: { user: callerUser }, error: authError } = await supabaseAdmin.auth.getUser(token);
+    
+    if (authError || !callerUser) {
+      throw new Error('Invalid authentication');
+    }
+
+    // Check if caller is admin
+    const { data: callerProfile } = await supabaseAdmin
+      .from('profiles')
+      .select('role')
+      .eq('id', callerUser.id)
+      .single();
+
+    if (callerProfile?.role !== 'admin') {
+      throw new Error('Only admins can invite users');
+    }
+
+    const { email, fullName, role, clientId, operatorId }: InviteUserRequest = await req.json();
+
+    console.log('📧 Processing invitation for:', { email, fullName, role, clientId, operatorId });
+
+    // Validate email
     if (!email || !email.includes('@')) {
-      console.error('❌ Invalid email address:', email);
-      throw new Error('Email inválido');
+      throw new Error('Invalid email address');
     }
 
-    // Obtener datos de la empresa
-    console.log('🏢 Fetching company data...');
-    const companyData = await fetchCompanyData(supabase);
-    const businessName = companyData.business_name || 'TMS Grúas';
-    const supportEmail = companyData.email || 'soporte@gruas5norte.com';
+    // Get company data for redirect URL
+    const { data: companyData } = await supabaseAdmin
+      .from('company_data')
+      .select('business_name')
+      .single();
 
-    console.log('✅ Company data retrieved:', { businessName, supportEmail });
+    const businessName = companyData?.business_name || 'TMS Grúas';
 
-    // Traducir rol al español
-    const roleLabel = translateRole(role);
-    console.log('👤 Role translated:', { role, roleLabel });
+    // Build redirect URL - user will be redirected here after accepting invitation
+    const origin = req.headers.get('origin') || 'https://gruas5norte.com';
+    const redirectTo = `${origin}/auth?invited=true&setup_password=true`;
 
-    // Generar URL de registro
-    const registerUrl = generateRegistrationUrl(req, email);
-    console.log('🔗 Generated registration URL:', registerUrl);
+    console.log('🔗 Inviting user via Supabase Auth Admin API with redirect:', redirectTo);
 
-    // Generar el HTML del email
-    console.log('📝 Generating email HTML...');
-    const emailHtml = generateEmailHtml({
-      businessName,
-      supportEmail,
-      fullName,
-      email,
-      roleLabel,
-      clientName,
-      registerUrl,
-      role,
-      companyPhone: companyData.phone
+    // Use Supabase Admin API to invite user
+    // This creates the user in auth.users AND sends the invitation email via Supabase's built-in email system
+    const { data: inviteData, error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
+      redirectTo,
+      data: {
+        full_name: fullName,
+        role: role,
+        invited: true
+      }
     });
 
-    console.log('✅ Email HTML generated successfully');
-
-    // Configurar el payload del email
-    const emailPayload = {
-      from: `${businessName} <noreply@gruas5norte.com>`,
-      to: [email],
-      subject: `🎉 Invitación al sistema ${businessName} - Rol: ${roleLabel}`,
-      html: emailHtml,
-    };
-
-    console.log('📬 Email payload configured:', {
-      from: emailPayload.from,
-      to: emailPayload.to,
-      subject: emailPayload.subject
-    });
-
-    // Enviar el email
-    console.log('📤 Attempting to send email via Resend...');
-    const emailResponse = await sendInvitationEmail(resend, emailPayload);
-
-    if (!emailResponse.data?.id) {
-      console.error('❌ Email response missing ID:', emailResponse);
-      throw new Error('Error enviando email: respuesta inválida');
+    if (inviteError) {
+      console.error('❌ Error inviting user:', inviteError);
+      
+      // Handle specific error cases
+      if (inviteError.message.includes('already been registered')) {
+        throw new Error('Este email ya está registrado en el sistema');
+      }
+      
+      throw new Error(`Error al invitar usuario: ${inviteError.message}`);
     }
 
-    console.log('✅ Email sent successfully:', {
-      emailId: emailResponse.data.id,
-      timestamp: new Date().toISOString()
-    });
+    if (!inviteData.user) {
+      throw new Error('No user returned from invite');
+    }
 
-    // Actualizar el registro de invitación
-    console.log('📊 Updating invitation status...');
-    await updateInvitationStatus(supabase, userId);
-    console.log('✅ Invitation status updated successfully');
+    const newUserId = inviteData.user.id;
+    console.log('✅ User invited successfully with ID:', newUserId);
+
+    // Create profile with the same ID as the auth user
+    console.log('📝 Creating profile for invited user...');
+    const { error: profileError } = await supabaseAdmin
+      .from('profiles')
+      .upsert({
+        id: newUserId,
+        email: email,
+        full_name: fullName,
+        role: role,
+        client_id: clientId || null,
+        is_active: true,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      }, {
+        onConflict: 'id'
+      });
+
+    if (profileError) {
+      console.error('❌ Error creating profile:', profileError);
+      // Don't fail the whole operation, user is created
+    } else {
+      console.log('✅ Profile created successfully');
+    }
+
+    // If role is operator and operatorId provided, link the operator record
+    if (role === 'operator' && operatorId) {
+      console.log('🔗 Linking operator record:', operatorId, 'to user:', newUserId);
+      const { error: linkError } = await supabaseAdmin
+        .from('operators')
+        .update({ user_id: newUserId })
+        .eq('id', operatorId);
+
+      if (linkError) {
+        console.error('❌ Error linking operator:', linkError);
+      } else {
+        console.log('✅ Operator linked successfully');
+      }
+    }
+
+    // Create/update invitation record for tracking
+    console.log('📊 Creating invitation record...');
+    const { error: invitationError } = await supabaseAdmin
+      .from('user_invitations')
+      .upsert({
+        user_id: newUserId,
+        email: email,
+        status: 'sent',
+        sent_at: new Date().toISOString(),
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      }, {
+        onConflict: 'user_id'
+      });
+
+    if (invitationError) {
+      console.error('❌ Error creating invitation record:', invitationError);
+    } else {
+      console.log('✅ Invitation record created');
+    }
 
     const successResponse = {
-      success: true, 
-      emailId: emailResponse.data.id,
-      message: 'Invitación enviada correctamente',
+      success: true,
+      userId: newUserId,
+      message: `Invitación enviada a ${email}`,
       timestamp: new Date().toISOString()
     };
 
