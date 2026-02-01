@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { CheckCircle, Clock, FileText } from 'lucide-react';
+import { CheckCircle, Clock, FileText, Download } from 'lucide-react';
 import { InspectionPhaseMetadata } from '@/hooks/useInspectionPersistence';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -10,12 +10,16 @@ interface InspectionStatusCardProps {
   metadata: InspectionPhaseMetadata;
   onContinueToDelivery: () => void;
   onGeneratePartialPDF: () => void;
+  onGenerateInitialPDF?: () => void;
+  isGeneratingInitialPDF?: boolean;
 }
 
 export const InspectionStatusCard = ({
   metadata,
   onContinueToDelivery,
   onGeneratePartialPDF,
+  onGenerateInitialPDF,
+  isGeneratingInitialPDF = false,
 }: InspectionStatusCardProps) => {
   const isInitialCompleted = metadata.inspection_phase === 'initial' && 
                             metadata.signatures_status.operator && 
@@ -64,7 +68,21 @@ export const InspectionStatusCard = ({
           </div>
         </div>
 
-        <div className="flex gap-2 pt-2">
+        <div className="flex flex-wrap gap-2 pt-2">
+          {/* Botón para generar PDF de Inspección Inicial (pre-servicio) - siempre visible si hay firmas */}
+          {isInitialCompleted && onGenerateInitialPDF && (
+            <Button 
+              onClick={onGenerateInitialPDF}
+              variant="outline"
+              size="sm"
+              className="flex items-center gap-1 border-violet-300 text-violet-700 hover:bg-violet-50"
+              disabled={isGeneratingInitialPDF}
+            >
+              <Download className="h-4 w-4" />
+              {isGeneratingInitialPDF ? 'Generando...' : 'PDF Inspección Inicial'}
+            </Button>
+          )}
+          
           {isInitialCompleted && metadata.inspection_phase === 'initial' && (
             <>
               <Button 

@@ -12,6 +12,7 @@ import { InspectionStatusCard } from './InspectionStatusCard';
 import { Download, FileText, CheckCircle } from 'lucide-react';
 import { useToast } from '@/components/ui/custom-toast';
 import { Service } from '@/types';
+import { useInitialInspectionPDF } from '@/hooks/inspection/useInitialInspectionPDF';
 
 interface InspectionFormProps {
   service: Service;
@@ -36,6 +37,9 @@ export const InspectionForm = ({
   const [currentPhase, setCurrentPhase] = useState<'initial' | 'final'>('initial');
   const [isInitialized, setIsInitialized] = useState(false);
   const toastShownRef = useRef(false);
+  
+  // Hook para generar PDF de inspección inicial
+  const { generateInitialPDF, isGeneratingInitialPDF } = useInitialInspectionPDF();
   
   const form = useForm<InspectionFormValues>({
     resolver: zodResolver(inspectionFormSchema),
@@ -267,6 +271,12 @@ export const InspectionForm = ({
     });
   };
 
+  const handleGenerateInitialPDF = () => {
+    const values = form.getValues();
+    console.log('📄 [INITIAL] Generating initial inspection PDF with photos:', values.photographicSet?.length || 0);
+    generateInitialPDF({ service, values });
+  };
+
   return (
     <Form {...form}>
       {metadata && isInitialPhaseCompleted() && currentPhase === 'initial' && (
@@ -274,6 +284,8 @@ export const InspectionForm = ({
           metadata={metadata}
           onContinueToDelivery={handleContinueToDelivery}
           onGeneratePartialPDF={handleGeneratePartialPDF}
+          onGenerateInitialPDF={handleGenerateInitialPDF}
+          isGeneratingInitialPDF={isGeneratingInitialPDF}
         />
       )}
       
