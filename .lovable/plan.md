@@ -1,90 +1,146 @@
 
 
-## Plan: Mostrar Número de Cotización Existente en BatchUpdateModal
+## Plan: Preservar COT/OC Existentes en Actualización por Lotes
 
-### Objetivo
-Mostrar en la lista de servicios del modal de actualización por lotes el número de cotización actual (si existe), para que el usuario pueda identificar fácilmente qué servicios ya tienen cotización asignada y evitar sobrescribirlos accidentalmente.
+### Problema Actual
+Cuando el usuario asigna números de cotización u orden de compra en lote, el sistema sobrescribe TODOS los servicios seleccionados, incluyendo los que ya tienen número asignado. Esto puede causar pérdida accidental de datos.
+
+---
+
+### Solución Propuesta
+
+Implementar lógica de **preservación por defecto**, donde los servicios con datos existentes se excluyen automáticamente de la actualización, con opción de sobrescribir.
 
 ---
 
 ### Cambios a Realizar
 
-#### Archivo: `src/components/vip/BatchUpdateModal.tsx`
+#### 1. Agregar Estado y Toggle para Sobrescribir
 
-**Modificar la visualización de cada servicio en la lista (líneas 317-336):**
-
-Agregar debajo del folio y estado, una línea que muestre:
-- Número de cotización existente (si tiene)
-- Número de orden de compra existente (si tiene)
-
-```tsx
-<div className="flex-1 min-w-0">
-  <div className="flex items-center gap-2">
-    <span className="font-medium text-sm text-foreground truncate">
-      {service.folio}
-    </span>
-    <Badge variant="secondary" className={`text-[10px] ...`}>
-      {STATUS_LABELS[String(service.status)] || service.status}
-    </Badge>
-  </div>
-  
-  {/* NUEVO: Mostrar COT y OC existentes */}
-  {(service.quoteNumber || service.purchaseOrderNumber) && (
-    <div className="flex items-center gap-2 mt-1">
-      {service.quoteNumber && (
-        <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-amber-500/10 text-amber-500 border-amber-500/30">
-          COT: {service.quoteNumber}
-        </Badge>
-      )}
-      {service.purchaseOrderNumber && (
-        <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-green-500/10 text-green-500 border-green-500/30">
-          OC: {service.purchaseOrderNumber}
-        </Badge>
-      )}
-    </div>
-  )}
-  
-  <div className="text-xs text-muted-foreground mt-1 truncate">
-    {service.serviceType?.name || 'Sin tipo'} • {format(...)}
-  </div>
-</div>
+```typescript
+const [overwriteExisting, setOverwriteExisting] = useState(false);
 ```
 
----
+#### 2. Calcular Servicios con Datos Existentes
 
-### Vista Previa del Resultado
+```typescript
+const servicesWithQuote = useMemo(() => 
+  selectedServices.filter(s => s.quoteNumber), 
+  [selectedServices]
+);
+
+const servicesWithPO = useMemo(() => 
+  selectedServices.filter(s => s.purchaseOrderNumber), 
+  [selectedServices]
+);
+```
+
+#### 3. Modificar Visualización de Servicios
+
+Mostrar el número existente de forma prominente y con estilo "protegido":
 
 ```text
 ┌─────────────────────────────────────────────────────────────────┐
-│ Servicios                                    │ 5 de 5           │
+│ Servicios                                                       │
 ├─────────────────────────────────────────────────────────────────┤
 │                                                                 │
-│ ☑ SRV-0012                    [Cotizado]                       │
-│   ┌──────────────────────────────────────┐                     │
-│   │ COT: COT-2024001                     │  ← Badge ámbar      │
-│   └──────────────────────────────────────┘                     │
-│   Rescate • 15/01/26                                           │
+│ ☑ SRV-0012          [Cotizado]        [COT: 2024001] 🔒        │
+│   └─ Rescate • 15/01/26                                        │
+│   └─ ⚠️ Ya tiene COT - se mantendrá (o indicar sobrescribirá)  │
 │                                                                 │
-│ ☑ SRV-0013                    [Con O.C.]                       │
-│   ┌──────────────────────────────────────┐                     │
-│   │ COT: COT-2024001 │ OC: OC-5501       │  ← Ambos badges     │
-│   └──────────────────────────────────────┘                     │
-│   Traslado • 16/01/26                                          │
+│ ☑ SRV-0013          [Con O.C.]   [COT: 2024001] [OC: 5501] 🔒  │
+│   └─ Traslado • 16/01/26                                       │
+│   └─ ⚠️ Ya tiene COT y OC - se mantendrán                      │
 │                                                                 │
-│ ☑ SRV-0014                    [Nuevo]                          │
-│   Grúa liviana • 17/01/26                   ← Sin badges       │
+│ ☑ SRV-0014          [Nuevo]            ← Sin datos existentes  │
+│   └─ Grúa liviana • 17/01/26                                   │
 │                                                                 │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
+#### 4. Agregar Toggle "Sobrescribir Existentes" en Cards
+
+En cada card (Cotizaciones / Órdenes de Compra), mostrar:
+
+```tsx
+{servicesWithQuote.length > 0 && enableQuote && (
+  <div className="mt-3 p-3 rounded-lg bg-amber-500/10 border border-amber-500/30">
+    <div className="flex items-center justify-between">
+      <div className="flex items-center gap-2">
+        <AlertTriangle className="w-4 h-4 text-amber-500" />
+        <span className="text-xs text-amber-500">
+          {servicesWithQuote.length} servicio(s) ya tienen COT asignado
+        </span>
+      </div>
+      <div className="flex items-center gap-2">
+        <Label className="text-xs text-muted-foreground">Sobrescribir</Label>
+        <Switch 
+          checked={overwriteQuote} 
+          onCheckedChange={setOverwriteQuote}
+          className="scale-75"
+        />
+      </div>
+    </div>
+    {!overwriteQuote && (
+      <p className="text-[10px] text-muted-foreground mt-1">
+        Se mantendrán los números existentes
+      </p>
+    )}
+  </div>
+)}
+```
+
+#### 5. Modificar Lógica de Envío
+
+Al generar los datos, respetar la configuración de sobrescritura:
+
+```typescript
+const services = activeServices.map((service, index) => {
+  const serviceData: any = { id: service.id };
+
+  if (enableQuote) {
+    // Solo asignar si NO tiene COT o si el usuario eligió sobrescribir
+    const shouldAssignQuote = !service.quoteNumber || overwriteQuote;
+    if (shouldAssignQuote) {
+      serviceData.quote_number = generateQuoteNumber(index);
+    }
+  }
+
+  if (enablePurchaseOrder) {
+    // Solo asignar si NO tiene OC o si el usuario eligió sobrescribir
+    const shouldAssignPO = !service.purchaseOrderNumber || overwritePO;
+    if (shouldAssignPO) {
+      serviceData.purchase_order_number = generatePONumber(index);
+    }
+  }
+
+  return serviceData;
+});
+```
+
 ---
 
-### Beneficios
+### Flujo Visual Actualizado
 
-1. **Visibilidad inmediata**: El usuario ve de un vistazo qué servicios ya tienen cotización
-2. **Prevención de errores**: Evita sobrescribir accidentalmente números existentes
-3. **Información contextual**: Muestra tanto COT como OC cuando corresponde
-4. **Consistencia visual**: Usa los mismos colores que el resto del sistema (ámbar para COT, verde para OC)
+```text
+                  ┌──────────────────────────────────────┐
+                  │       MODAL BATCH UPDATE             │
+                  └──────────────────────────────────────┘
+                               │
+         ┌─────────────────────┼─────────────────────┐
+         ▼                     ▼                     ▼
+  ┌──────────────┐     ┌──────────────┐     ┌──────────────┐
+  │  SRV SIN COT │     │  SRV CON COT │     │  SRV CON OC  │
+  │              │     │   (🔒)       │     │   (🔒)       │
+  └──────────────┘     └──────────────┘     └──────────────┘
+         │                     │                     │
+         ▼                     ▼                     ▼
+    ┌─────────┐         ┌─────────────────┐    ┌──────────┐
+    │ ASIGNAR │         │ ¿Sobrescribir?  │    │ PRESERVAR│
+    │ NUEVO   │         │   SI → Asignar  │    │ EXISTENTE│
+    └─────────┘         │   NO → Mantener │    └──────────┘
+                        └─────────────────┘
+```
 
 ---
 
@@ -92,5 +148,14 @@ Agregar debajo del folio y estado, una línea que muestre:
 
 | Archivo | Cambios |
 |---------|---------|
-| `src/components/vip/BatchUpdateModal.tsx` | Agregar badges de COT/OC en la lista de servicios |
+| `src/components/vip/BatchUpdateModal.tsx` | Agregar estados `overwriteQuote`/`overwritePO`, conteo de existentes, toggle en cards, modificar lógica de envío |
+
+---
+
+### Beneficios
+
+1. **Seguridad por defecto**: Los datos existentes se preservan automáticamente
+2. **Control explícito**: El usuario debe activar conscientemente la sobrescritura
+3. **Visibilidad clara**: Indicadores visuales muestran qué servicios tienen datos
+4. **Flexibilidad**: Se puede elegir sobrescribir COT, OC, o ambos independientemente
 
