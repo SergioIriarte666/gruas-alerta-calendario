@@ -55,7 +55,7 @@ const fetchOperatorServices = async (userId: string): Promise<any[]> => {
         purchase_order,
         created_at,
         updated_at,
-        clients!services_client_id_fkey (
+        client:clients!services_client_id_fkey (
           id,
           name,
           rut,
