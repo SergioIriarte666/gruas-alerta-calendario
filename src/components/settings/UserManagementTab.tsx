@@ -18,6 +18,7 @@ export const UserManagementTab = () => {
   const { 
     users, 
     clients, 
+    operators,
     loading, 
     updating, 
     creating, 
@@ -378,6 +379,7 @@ export const UserManagementTab = () => {
         open={isCreateUserOpen}
         onOpenChange={setIsCreateUserOpen}
         clients={clients}
+        operators={operators}
         onUserCreated={handleUserCreated}
         creating={creating}
         createUser={createUser}
