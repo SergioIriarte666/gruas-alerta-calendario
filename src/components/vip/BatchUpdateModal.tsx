@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { FileText, ShoppingCart, Check, X, AlertCircle, Layers, RefreshCw, CheckSquare, Square } from 'lucide-react';
+import { FileText, ShoppingCart, Check, X, AlertCircle, Layers, RefreshCw, CheckSquare, Square, AlertTriangle, Lock } from 'lucide-react';
 import { Service } from '@/types';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -54,6 +54,8 @@ export const BatchUpdateModal: React.FC<BatchUpdateModalProps> = ({
   const [enableQuote, setEnableQuote] = useState(true);
   const [enablePurchaseOrder, setEnablePurchaseOrder] = useState(false);
   const [autoUpdateStatus, setAutoUpdateStatus] = useState(true);
+  const [overwriteQuote, setOverwriteQuote] = useState(false);
+  const [overwritePO, setOverwritePO] = useState(false);
   const [batchData, setBatchData] = useState({
     quote: {
       baseNumber: '',
@@ -73,6 +75,17 @@ export const BatchUpdateModal: React.FC<BatchUpdateModalProps> = ({
   const activeServices = useMemo(() => 
     selectedServices.filter(s => !excludedServices.has(s.id)),
     [selectedServices, excludedServices]
+  );
+
+  // Servicios con datos existentes
+  const servicesWithQuote = useMemo(() => 
+    activeServices.filter(s => s.quoteNumber), 
+    [activeServices]
+  );
+
+  const servicesWithPO = useMemo(() => 
+    activeServices.filter(s => s.purchaseOrderNumber), 
+    [activeServices]
   );
 
   // Función para determinar el estado objetivo (OC prevalece)
@@ -130,24 +143,38 @@ export const BatchUpdateModal: React.FC<BatchUpdateModalProps> = ({
 
     setIsLoading(true);
     try {
-      const services: BatchUpdateData['services'] = activeServices.map((service, index) => {
+      // Contador para numeración secuencial (solo servicios que recibirán nuevo número)
+      let quoteIndex = 0;
+      let poIndex = 0;
+      
+      const services: BatchUpdateData['services'] = activeServices.map((service) => {
         const serviceData: any = { id: service.id };
 
         if (enableQuote) {
-          if (quoteData.baseNumber) {
-            serviceData.quote_number = `${quoteData.prefix}${quoteData.baseNumber}`;
-          } else if (quoteData.startingNumber) {
-            const startNum = parseInt(quoteData.startingNumber);
-            serviceData.quote_number = `${quoteData.prefix}${startNum + index}`;
+          // Solo asignar si NO tiene COT o si el usuario eligió sobrescribir
+          const shouldAssignQuote = !service.quoteNumber || overwriteQuote;
+          if (shouldAssignQuote) {
+            if (quoteData.baseNumber) {
+              serviceData.quote_number = `${quoteData.prefix}${quoteData.baseNumber}`;
+            } else if (quoteData.startingNumber) {
+              const startNum = parseInt(quoteData.startingNumber);
+              serviceData.quote_number = `${quoteData.prefix}${startNum + quoteIndex}`;
+              quoteIndex++;
+            }
           }
         }
 
         if (enablePurchaseOrder) {
-          if (poData.baseNumber) {
-            serviceData.purchase_order_number = `${poData.prefix}${poData.baseNumber}`;
-          } else if (poData.startingNumber) {
-            const startNum = parseInt(poData.startingNumber);
-            serviceData.purchase_order_number = `${poData.prefix}${startNum + index}`;
+          // Solo asignar si NO tiene OC o si el usuario eligió sobrescribir
+          const shouldAssignPO = !service.purchaseOrderNumber || overwritePO;
+          if (shouldAssignPO) {
+            if (poData.baseNumber) {
+              serviceData.purchase_order_number = `${poData.prefix}${poData.baseNumber}`;
+            } else if (poData.startingNumber) {
+              const startNum = parseInt(poData.startingNumber);
+              serviceData.purchase_order_number = `${poData.prefix}${startNum + poIndex}`;
+              poIndex++;
+            }
           }
         }
 
@@ -184,6 +211,8 @@ export const BatchUpdateModal: React.FC<BatchUpdateModalProps> = ({
       setEnablePurchaseOrder(false);
       setAutoUpdateStatus(true);
       setExcludedServices(new Set());
+      setOverwriteQuote(false);
+      setOverwritePO(false);
     } catch (error) {
       console.error('Error en actualización por lotes:', error);
       toast.error('Error al actualizar los servicios');
@@ -331,16 +360,26 @@ export const BatchUpdateModal: React.FC<BatchUpdateModalProps> = ({
                               {STATUS_LABELS[String(service.status)] || service.status}
                             </Badge>
                           </div>
-                          {/* Mostrar COT y OC existentes */}
+                          {/* Mostrar COT y OC existentes con indicador de protección */}
                           {(service.quoteNumber || service.purchaseOrderNumber) && (
-                            <div className="flex items-center gap-2 mt-1">
+                            <div className="flex items-center gap-2 mt-1 flex-wrap">
                               {service.quoteNumber && (
-                                <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-amber-500/10 text-amber-500 border-amber-500/30">
+                                <Badge variant="outline" className={`text-[10px] px-1.5 py-0 flex items-center gap-1 ${
+                                  enableQuote && !overwriteQuote 
+                                    ? 'bg-amber-500/10 text-amber-500 border-amber-500/30' 
+                                    : 'bg-muted text-muted-foreground border-border'
+                                }`}>
+                                  {enableQuote && !overwriteQuote && <Lock className="w-2.5 h-2.5" />}
                                   COT: {service.quoteNumber}
                                 </Badge>
                               )}
                               {service.purchaseOrderNumber && (
-                                <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-green-500/10 text-green-500 border-green-500/30">
+                                <Badge variant="outline" className={`text-[10px] px-1.5 py-0 flex items-center gap-1 ${
+                                  enablePurchaseOrder && !overwritePO 
+                                    ? 'bg-green-500/10 text-green-500 border-green-500/30' 
+                                    : 'bg-muted text-muted-foreground border-border'
+                                }`}>
+                                  {enablePurchaseOrder && !overwritePO && <Lock className="w-2.5 h-2.5" />}
                                   OC: {service.purchaseOrderNumber}
                                 </Badge>
                               )}
@@ -428,8 +467,35 @@ export const BatchUpdateModal: React.FC<BatchUpdateModalProps> = ({
                         {batchData.quote.startingNumber && activeServices.length > 0 && (
                           <div className="col-span-3">
                             <p className="text-xs text-blue-400">
-                              Se numerarán: {batchData.quote.prefix}{batchData.quote.startingNumber} → {batchData.quote.prefix}{parseInt(batchData.quote.startingNumber) + activeServices.length - 1}
+                              Se numerarán: {batchData.quote.prefix}{batchData.quote.startingNumber} → {batchData.quote.prefix}{parseInt(batchData.quote.startingNumber) + (overwriteQuote ? activeServices.length : activeServices.length - servicesWithQuote.length) - 1}
                             </p>
+                          </div>
+                        )}
+                        
+                        {/* Alerta de servicios con COT existente */}
+                        {servicesWithQuote.length > 0 && (
+                          <div className="col-span-3 mt-2 p-3 rounded-lg bg-amber-500/10 border border-amber-500/30">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                <AlertTriangle className="w-4 h-4 text-amber-500" />
+                                <span className="text-xs text-amber-500">
+                                  {servicesWithQuote.length} servicio(s) ya tienen COT asignado
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <Label className="text-xs text-muted-foreground">Sobrescribir</Label>
+                                <Switch 
+                                  checked={overwriteQuote} 
+                                  onCheckedChange={setOverwriteQuote}
+                                  className="scale-75"
+                                />
+                              </div>
+                            </div>
+                            {!overwriteQuote && (
+                              <p className="text-[10px] text-muted-foreground mt-1">
+                                Se mantendrán los números existentes
+                              </p>
+                            )}
                           </div>
                         )}
                       </div>
@@ -499,8 +565,35 @@ export const BatchUpdateModal: React.FC<BatchUpdateModalProps> = ({
                         {batchData.purchase_order.startingNumber && activeServices.length > 0 && (
                           <div className="col-span-3">
                             <p className="text-xs text-green-400">
-                              Se numerarán: {batchData.purchase_order.prefix}{batchData.purchase_order.startingNumber} → {batchData.purchase_order.prefix}{parseInt(batchData.purchase_order.startingNumber) + activeServices.length - 1}
+                              Se numerarán: {batchData.purchase_order.prefix}{batchData.purchase_order.startingNumber} → {batchData.purchase_order.prefix}{parseInt(batchData.purchase_order.startingNumber) + (overwritePO ? activeServices.length : activeServices.length - servicesWithPO.length) - 1}
                             </p>
+                          </div>
+                        )}
+                        
+                        {/* Alerta de servicios con OC existente */}
+                        {servicesWithPO.length > 0 && (
+                          <div className="col-span-3 mt-2 p-3 rounded-lg bg-green-500/10 border border-green-500/30">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                <AlertTriangle className="w-4 h-4 text-green-500" />
+                                <span className="text-xs text-green-500">
+                                  {servicesWithPO.length} servicio(s) ya tienen OC asignado
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <Label className="text-xs text-muted-foreground">Sobrescribir</Label>
+                                <Switch 
+                                  checked={overwritePO} 
+                                  onCheckedChange={setOverwritePO}
+                                  className="scale-75"
+                                />
+                              </div>
+                            </div>
+                            {!overwritePO && (
+                              <p className="text-[10px] text-muted-foreground mt-1">
+                                Se mantendrán los números existentes
+                              </p>
+                            )}
                           </div>
                         )}
                       </div>
