@@ -7,10 +7,11 @@ import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { FileText, ShoppingCart, Check, X, AlertCircle, Layers, RefreshCw, CheckSquare, Square, AlertTriangle, Lock } from 'lucide-react';
+import { FileText, ShoppingCart, Check, X, AlertCircle, Layers, RefreshCw, CheckSquare, Square, AlertTriangle, Lock, DollarSign } from 'lucide-react';
 import { Service } from '@/types';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { getDisplayServiceValue } from '@/utils/serviceValueCalculations';
 import { toast } from 'sonner';
 
 interface BatchUpdateModalProps {
@@ -85,6 +86,12 @@ export const BatchUpdateModal: React.FC<BatchUpdateModalProps> = ({
 
   const servicesWithPO = useMemo(() => 
     activeServices.filter(s => s.purchaseOrderNumber), 
+    [activeServices]
+  );
+
+  // Calcular suma total de servicios activos
+  const activeTotalValue = useMemo(() => 
+    activeServices.reduce((sum, s) => sum + getDisplayServiceValue(s), 0),
     [activeServices]
   );
 
@@ -301,6 +308,18 @@ export const BatchUpdateModal: React.FC<BatchUpdateModalProps> = ({
                   {activeServices.length} de {selectedServices.length}
                 </Badge>
               </div>
+              
+              {/* Suma total de servicios activos */}
+              <div className="flex items-center justify-between mb-3 py-2 px-3 rounded-lg bg-violet-500/10 border border-violet-500/20">
+                <div className="flex items-center gap-1.5">
+                  <DollarSign className="w-3.5 h-3.5 text-violet-500" />
+                  <span className="text-xs text-muted-foreground">Valor Total:</span>
+                </div>
+                <span className="text-sm font-semibold text-violet-600">
+                  ${activeTotalValue.toLocaleString('es-CL')}
+                </span>
+              </div>
+              
               <div className="flex gap-2">
                 <Button 
                   variant="ghost" 
