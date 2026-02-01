@@ -59,8 +59,8 @@ export const SignaturePad = forwardRef<SignaturePadRef, SignaturePadProps>(({
   return <div className="space-y-4">
         <div className="text-center">
           <h4 className="text-lg font-semibold text-foreground">{label}</h4>
-          {personName && <p className="text-sm mt-1 text-zinc-950">
-              Nombre: <span className="text-primary font-medium">{personName}</span>
+          {personName && <p className="text-sm mt-1 text-muted-foreground">
+              Nombre: <span className="text-violet-600 font-medium">{personName}</span>
             </p>}
         </div>
         
