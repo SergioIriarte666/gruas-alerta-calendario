@@ -134,6 +134,8 @@ export const useOperatorServices = (userId?: string) => {
     queryKey: ['operator-services', userId],
     queryFn: () => fetchOperatorServices(userId!),
     enabled: !!userId,
+    staleTime: 0,
+    gcTime: 0,
     select: (data) => {
       try {
         return transformRawServiceData(data).filter(Boolean) as Service[];
