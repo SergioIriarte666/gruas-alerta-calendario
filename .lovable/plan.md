@@ -1,212 +1,109 @@
 
+# Plan: Corregir Valores del Reporte de Servicios
 
-# Plan: Actualizar Documentación con Controles ToggleGroup
+## Problema Identificado
 
-## Objetivo
-Actualizar el archivo `docs/technical/pre-service-inspection-specification.md` para incluir la implementación de los controles visuales de selección (ToggleGroup) para Combustible, Llaves y Documentación del vehículo.
+El reporte PDF muestra valores incorrectos porque la consulta de base de datos no incluye el campo `custody_total_amount`. 
+
+**Datos Reales en BD:**
+| Folio | value | custody_total_amount | Total Correcto |
+|-------|-------|---------------------|----------------|
+| SRV-6304 | $40,000 | $49,000 | **$89,000** |
+| SRV-6305 | $40,000 | $49,000 | **$89,000** |
+| SRV-6321 | $0 | $18,000 | **$18,000** |
+| SRV-6332 | $0 | $70,000 | **$70,000** |
+| SRV-6356 | $0 | $63,000 | **$63,000** |
+| SRV-6357 | $50,000 | $0 | **$50,000** |
+| **Total** | | | **$379,000** |
+
+El reporte muestra solo el campo `value` ($130,000) en lugar del total correcto ($379,000).
 
 ---
 
-## Cambios a Realizar
+## Causa Raiz
 
-### 1. Sección 4 - Esquema de Validación (Zod)
+En `src/utils/serviceReportGenerator.ts`, la funcion `fetchServicesForReport` no incluye `custody_total_amount` en su SELECT query.
 
-Actualizar el esquema para reflejar los nuevos tipos `z.enum`:
+La funcion `getDisplayServiceValue()` calcula: `value + custody_total_amount`, pero como `custody_total_amount` no existe en los datos obtenidos, retorna solo `value`.
+
+---
+
+## Solucion
+
+### Archivo: `src/utils/serviceReportGenerator.ts`
+
+**Agregar `custody_total_amount` al SELECT de la consulta (linea 35):**
 
 ```typescript
-// Antes (líneas 98-101):
-kilometraje: z.string().min(1, 'El kilometraje es requerido'),
-combustible: z.string().min(1, 'El nivel de combustible es requerido'),
-llaves: z.string().min(1, 'El estado de las llaves es requerido'),
-documentacion: z.string().min(1, 'El estado de la documentación es requerido'),
+// Antes (lineas 23-66):
+let query = supabase
+  .from('services')
+  .select(`
+    id,
+    folio,
+    service_date,
+    ...
+    value,
+    has_excess,
+    client_covered_amount,
+    // FALTA custody_total_amount
+    ...
+  `)
 
-// Después:
-kilometraje: z.string().min(1, 'El kilometraje es requerido'),
-combustible: z.enum(['0', '1/4', '1/2', '3/4', 'full'], {
-  required_error: 'El nivel de combustible es requerido',
-}),
-llaves: z.enum(['si', 'no'], {
-  required_error: 'El estado de las llaves es requerido',
-}),
-documentacion: z.enum(['si', 'no'], {
-  required_error: 'El estado de la documentación es requerido',
-}),
+// Despues:
+let query = supabase
+  .from('services')
+  .select(`
+    id,
+    folio,
+    service_date,
+    ...
+    value,
+    custody_total_amount,  // AGREGAR
+    has_excess,
+    client_covered_amount,
+    ...
+  `)
 ```
 
----
-
-### 2. Nueva Sección 6.7 - Controles de Registro del Vehículo
-
-Agregar documentación detallada de los nuevos componentes ToggleGroup:
-
-```text
-### 6.7 Controles de Registro del Vehículo (ToggleGroups)
-
-Los campos de registro del vehículo utilizan controles ToggleGroup 
-de Radix UI para una experiencia táctil optimizada en móviles.
-
-#### Nivel de Combustible
-- Componente: `ToggleGroup` con `type="single"`
-- Opciones: `0`, `1/4`, `1/2`, `3/4`, `Full`
-- Estilo seleccionado: `bg-violet-600 text-white border-violet-600`
-- Estilo no seleccionado: `bg-background border-border text-foreground`
-
-#### Llaves del Vehículo
-- Componente: `ToggleGroup` con `type="single"`
-- Opciones: `SÍ` (con icono Check), `NO` (con icono X)
-- Estilo SÍ seleccionado: `bg-emerald-500 text-white border-emerald-500`
-- Estilo NO seleccionado: `bg-red-500 text-white border-red-500`
-
-#### Documentación del Vehículo
-- Misma implementación que Llaves del Vehículo
-- Valores: `si` | `no`
-
-**Diseño Visual:**
-┌──────────────────────────────────────────────────────────────────┐
-│  Registro del Vehículo                                           │
-├──────────────┬─────────────────────┬────────────┬───────────────┤
-│ Kilometraje  │ Nivel Combustible   │ Llaves     │ Documentación │
-│ ┌──────────┐ │ ┌──┬────┬────┬────┬────┐ │ ┌────┬────┐ │ ┌────┬────┐ │
-│ │ 125000   │ │ │0 │1/4 │1/2 │3/4 │Full│ │ │ SÍ │ NO │ │ │ SÍ │ NO │ │
-│ └──────────┘ │ └──┴────┴────┴────┴────┘ │ └────┴────┘ │ └────┴────┘ │
-└──────────────┴─────────────────────┴────────────┴───────────────┘
-
-**Comportamiento:**
-- Solo una opción puede estar seleccionada a la vez
-- Validación Zod asegura selección obligatoria
-- Persistencia en localStorage igual que otros campos
-- Exportación a PDF como texto legible ("3/4", "Sí", "No")
-```
-
----
-
-### 3. Actualizar Sección 15 - Dependencias
-
-Agregar la dependencia de ToggleGroup:
-
-```json
-{
-  "dependencies": {
-    "@hookform/resolvers": "^3.9.0",
-    "@radix-ui/react-tabs": "^1.1.0",
-    "@radix-ui/react-toggle-group": "^1.1.0",  // NUEVO
-    "jspdf": "^3.0.1",
-    "jspdf-autotable": "^5.0.2",
-    "lucide-react": "^0.462.0",
-    "react-hook-form": "^7.53.0",
-    "react-signature-canvas": "^1.1.0-alpha.2",
-    "zod": "^3.23.8"
-  }
-}
-```
-
----
-
-### 4. Agregar Sección de Implementación de Controles
-
-Insertar código de referencia para los ToggleGroups:
+**Agregar mapeo del campo en el objeto formateado (linea 90):**
 
 ```typescript
-// Ejemplo de implementación del campo Combustible
-<FormField
-  control={form.control}
-  name="combustible"
-  render={({ field }) => (
-    <FormItem>
-      <FormLabel className="flex items-center gap-2 text-foreground">
-        <Fuel className="w-4 h-4" />
-        Nivel de Combustible
-      </FormLabel>
-      <FormControl>
-        <ToggleGroup 
-          type="single" 
-          value={field.value} 
-          onValueChange={(value) => value && field.onChange(value)}
-          className="flex flex-wrap gap-1"
-        >
-          {['0', '1/4', '1/2', '3/4', 'full'].map((level) => (
-            <ToggleGroupItem
-              key={level}
-              value={level}
-              className={`px-3 py-2 text-sm font-medium border rounded-md transition-colors ${
-                field.value === level
-                  ? 'bg-violet-600 text-white border-violet-600'
-                  : 'bg-background border-border text-foreground hover:bg-muted'
-              }`}
-            >
-              {level === 'full' ? 'Full' : level}
-            </ToggleGroupItem>
-          ))}
-        </ToggleGroup>
-      </FormControl>
-      <FormMessage />
-    </FormItem>
-  )}
-/>
+// Antes (lineas 83-106):
+const formattedServices: Service[] = (data || []).map((s: any) => ({
+  ...s,
+  serviceDate: s.service_date,
+  ...
+  clientCoveredAmount: s.client_covered_amount,
+  // FALTA custodyTotalAmount
+  ...
+}));
 
-// Ejemplo de implementación del campo Llaves
-<FormField
-  control={form.control}
-  name="llaves"
-  render={({ field }) => (
-    <FormItem>
-      <FormLabel className="flex items-center gap-2 text-foreground">
-        <Key className="w-4 h-4" />
-        Llaves del Vehículo
-      </FormLabel>
-      <FormControl>
-        <ToggleGroup 
-          type="single" 
-          value={field.value} 
-          onValueChange={(value) => value && field.onChange(value)}
-          className="flex gap-2"
-        >
-          <ToggleGroupItem
-            value="si"
-            className={`px-4 py-2 text-sm font-medium border rounded-md transition-colors flex items-center gap-2 ${
-              field.value === 'si'
-                ? 'bg-emerald-500 text-white border-emerald-500'
-                : 'bg-background border-border text-foreground hover:bg-muted'
-            }`}
-          >
-            <Check className="w-4 h-4" />
-            SÍ
-          </ToggleGroupItem>
-          <ToggleGroupItem
-            value="no"
-            className={`px-4 py-2 text-sm font-medium border rounded-md transition-colors flex items-center gap-2 ${
-              field.value === 'no'
-                ? 'bg-red-500 text-white border-red-500'
-                : 'bg-background border-border text-foreground hover:bg-muted'
-            }`}
-          >
-            <X className="w-4 h-4" />
-            NO
-          </ToggleGroupItem>
-        </ToggleGroup>
-      </FormControl>
-      <FormMessage />
-    </FormItem>
-  )}
-/>
+// Despues:
+const formattedServices: Service[] = (data || []).map((s: any) => ({
+  ...s,
+  serviceDate: s.service_date,
+  ...
+  clientCoveredAmount: s.client_covered_amount,
+  custodyTotalAmount: s.custody_total_amount || 0,  // AGREGAR
+  ...
+}));
 ```
-
----
-
-## Archivos a Modificar
-
-| Archivo | Cambio |
-|---------|--------|
-| `docs/technical/pre-service-inspection-specification.md` | Actualizar esquema Zod, agregar sección 6.7, actualizar dependencias, agregar ejemplos de código |
 
 ---
 
 ## Resultado Esperado
 
-El documento técnico quedará completamente actualizado con:
-1. Esquema Zod con tipos `z.enum` para combustible, llaves y documentación
-2. Nueva sección documentando los controles ToggleGroup
-3. Diseño visual ASCII del layout
-4. Ejemplos de código completos para replicar la implementación
-5. Dependencia `@radix-ui/react-toggle-group` incluida
+Despues de aplicar el fix:
 
+| Folio | Valor en Reporte |
+|-------|-----------------|
+| SRV-6304 | $89,000 |
+| SRV-6305 | $89,000 |
+| SRV-6321 | $18,000 |
+| SRV-6332 | $70,000 |
+| SRV-6356 | $63,000 |
+| SRV-6357 | $50,000 |
+| **Total** | **$379,000** |
+
+Los valores coincidiran con lo que muestra la interfaz de la aplicacion.
