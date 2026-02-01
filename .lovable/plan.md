@@ -1,63 +1,65 @@
 
 
-## Plan: Ordenar Elementos del Inventario Alfabéticamente
+## Plan: Reordenar Sección "Registro del Vehículo"
 
 ### Objetivo
-Ordenar los elementos del checklist de equipamiento del vehículo en orden alfabético para facilitar la búsqueda y mejorar la experiencia del usuario.
+Mover la sección "Registro del Vehículo" (Kilometraje, Combustible, Llaves, Documentación) para que aparezca **entre** "Detalles del Servicio" e "Inventario del Vehículo".
+
+### Orden Actual
+1. Detalles del Servicio
+2. Inventario del Vehículo
+3. **Registro del Vehículo** ← Posición actual
+4. Set Fotográfico
+5. Observaciones y Firmas
+
+### Nuevo Orden Propuesto
+1. Detalles del Servicio
+2. **Registro del Vehículo** ← Nueva posición
+3. Inventario del Vehículo
+4. Set Fotográfico
+5. Observaciones y Firmas
 
 ### Cambios a Realizar
 
-#### Archivo: `src/data/equipmentData.ts`
+#### Archivo: `src/components/operator/InspectionFormSections.tsx`
 
-Reordenar manualmente los items del array en orden alfabético por el campo `name`:
+Reorganizar el orden de los componentes dentro del JSX:
 
-**Orden actual (sin ordenar):**
-- Espejo Interno, Piso Goma, Espejo Exterior, Rueda Del.Der., Batería...
+```text
+ANTES:
+<>
+  <VehicleEquipmentChecklist />
+  <Card>Registro del Vehículo</Card>
+  <PhotographicSet />
+  <Card>Observaciones y Firmas</Card>
+</>
 
-**Nuevo orden (alfabético A-Z):**
-1. Antena
-2. Baliza
-3. Batería
-4. Botiquín
-5. Caja Invierno
-6. Cenicero
-7. Chaleco Reflectante
-8. Cint. Seguridad
-9. Consola
-10. Cuñas
-11. Emblemas
-12. Encendedor
-13. Espejo Exterior
-14. Espejo Interno
-15. Extintor
-16. Extintor 10 K.
-17. Gata
-18. Limp. Parab.
-19. Llave Rueda
-20. Neblineros
-21. Parlantes
-22. Pertiga
-23. Piso Goma
-24. Radio
-25. Rueda Del Izq.
-26. Rueda Del.Der.
-27. Rueda Rpto.
-28. Rueda Tra.Der.
-29. Rueda Tra.Izq.
-30. Sombrilla
-31. TAG
-32. Tapa Bencina
-33. Tapa Radiador
-34. Tapa Ruedas
-35. Triángulos
+DESPUÉS:
+<>
+  <Card>Registro del Vehículo</Card>     ← Mover primero
+  <VehicleEquipmentChecklist />           ← Segundo
+  <PhotographicSet />
+  <Card>Observaciones y Firmas</Card>
+</>
+```
+
+### Flujo Visual Resultante
+
+| Paso | Sección | Descripción |
+|------|---------|-------------|
+| 1 | Detalles del Servicio | Información del folio, cliente, origen/destino |
+| 2 | Registro del Vehículo | Kilometraje, combustible, llaves, documentación |
+| 3 | Inventario del Vehículo | Checklist de equipamiento (35 items alfabéticos) |
+| 4 | Set Fotográfico | Captura de fotos por categoría |
+| 5 | Observaciones y Firmas | Notas finales y firmas digitales |
 
 ### Impacto
-- **UI del Operador**: El checklist mostrará los elementos ordenados alfabéticamente
-- **PDF de Inspección**: La tabla en el PDF también reflejará el orden alfabético (usa la misma fuente de datos)
-- **Sin breaking changes**: Los IDs de los elementos permanecen iguales, por lo que los datos existentes siguen siendo compatibles
+- **UI del Operador**: Flujo más lógico - primero registrar datos básicos del vehículo, luego el inventario detallado
+- **Sin breaking changes**: Solo reordenamiento visual, no afecta datos ni validaciones
+- **PDF**: El PDF mantiene su propia estructura independiente
 
 ### Archivos Afectados
 | Archivo | Cambio |
 |---------|--------|
-| `src/data/equipmentData.ts` | Reordenar el array `items` alfabéticamente |
+| `src/components/operator/InspectionFormSections.tsx` | Reordenar bloques JSX |
 
