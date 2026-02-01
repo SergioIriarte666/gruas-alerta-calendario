@@ -5,10 +5,28 @@ import { User, Truck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useUser } from '@/contexts/UserContext';
 import { useToast } from '@/components/ui/custom-toast';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 
 export const OperatorLayout = () => {
   const { user, logout } = useUser();
   const { toast } = useToast();
+
+  // Fetch company data for logo and name
+  const { data: companyData } = useQuery({
+    queryKey: ['company-data-operator'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('company_data')
+        .select('business_name, logo_url')
+        .limit(1)
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    staleTime: 1000 * 60 * 30, // 30 minutes
+  });
 
   const handleLogout = async () => {
     try {
@@ -35,11 +53,21 @@ export const OperatorLayout = () => {
       <header className="bg-card border-b border-border px-4 py-3 shadow-sm">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 bg-violet-600 rounded-lg flex items-center justify-center">
-              <Truck className="w-5 h-5 text-white" />
-            </div>
+            {companyData?.logo_url ? (
+              <img 
+                src={companyData.logo_url} 
+                alt={companyData.business_name || 'Logo empresa'} 
+                className="w-10 h-10 rounded-lg object-contain"
+              />
+            ) : (
+              <div className="w-10 h-10 bg-violet-600 rounded-lg flex items-center justify-center">
+                <Truck className="w-6 h-6 text-white" />
+              </div>
+            )}
             <div>
-              <h1 className="text-lg font-bold text-foreground">Gruas 5 Norte</h1>
+              <h1 className="text-lg font-bold text-foreground">
+                {companyData?.business_name || 'Panel del Operador'}
+              </h1>
               <p className="text-xs text-muted-foreground">Panel del Operador</p>
             </div>
           </div>
