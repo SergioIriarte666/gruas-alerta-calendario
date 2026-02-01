@@ -331,6 +331,21 @@ export const BatchUpdateModal: React.FC<BatchUpdateModalProps> = ({
                               {STATUS_LABELS[String(service.status)] || service.status}
                             </Badge>
                           </div>
+                          {/* Mostrar COT y OC existentes */}
+                          {(service.quoteNumber || service.purchaseOrderNumber) && (
+                            <div className="flex items-center gap-2 mt-1">
+                              {service.quoteNumber && (
+                                <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-amber-500/10 text-amber-500 border-amber-500/30">
+                                  COT: {service.quoteNumber}
+                                </Badge>
+                              )}
+                              {service.purchaseOrderNumber && (
+                                <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-green-500/10 text-green-500 border-green-500/30">
+                                  OC: {service.purchaseOrderNumber}
+                                </Badge>
+                              )}
+                            </div>
+                          )}
                           <div className="text-xs text-muted-foreground mt-1 truncate">
                             {service.serviceType?.name || 'Sin tipo'} • {format(new Date(service.serviceDate), 'dd/MM/yy')}
                           </div>
