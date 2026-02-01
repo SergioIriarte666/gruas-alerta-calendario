@@ -21,11 +21,18 @@ interface Client {
   email: string | null;
 }
 
+interface Operator {
+  id: string;
+  name: string;
+  rut: string;
+}
+
 interface CreateUserData {
   email: string;
   full_name: string;
   role: 'admin' | 'operator' | 'viewer' | 'client';
   client_id?: string | null;
+  operator_id?: string | null;
 }
 
 interface UserInvitation {
@@ -41,6 +48,7 @@ interface UserInvitation {
 export const useUserManagement = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
+  const [operators, setOperators] = useState<Operator[]>([]);
   const [invitations, setInvitations] = useState<UserInvitation[]>([]);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState<string | null>(null);
@@ -105,6 +113,23 @@ export const useUserManagement = () => {
     }
   };
 
+  const fetchOperators = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('operators')
+        .select('id, name, rut')
+        .eq('is_active', true)
+        .is('user_id', null) // Solo operadores sin usuario vinculado
+        .order('name');
+      
+      if (error) throw error;
+      
+      setOperators(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error('Error fetching operators:', error);
+    }
+  };
+
   const createUser = async (userData: CreateUserData) => {
     try {
       setCreating(true);
@@ -123,17 +148,36 @@ export const useUserManagement = () => {
       const newUserId = data;
       console.log('User created successfully with ID:', newUserId);
 
+      // Si el rol es operador, vincular con el registro de operador
+      if (userData.role === 'operator' && userData.operator_id) {
+        console.log('Linking operator record to user:', { operatorId: userData.operator_id, userId: newUserId });
+        const { error: linkError } = await supabase
+          .from('operators')
+          .update({ user_id: newUserId })
+          .eq('id', userData.operator_id);
+        
+        if (linkError) {
+          console.error('Error linking operator to user:', linkError);
+          toast.warning('Usuario creado, pero hubo un problema vinculando el operador');
+        } else {
+          console.log('Operator linked successfully');
+        }
+      }
+
       // Enviar invitación por email
       try {
         const clientName = userData.client_id ? 
           clients.find(c => c.id === userData.client_id)?.name : undefined;
+        const operatorName = userData.operator_id ?
+          operators.find(o => o.id === userData.operator_id)?.name : undefined;
 
         console.log('📧 Enviando invitación por email para usuario:', {
           userId: newUserId,
           email: userData.email,
           fullName: userData.full_name,
           role: userData.role,
-          clientName
+          clientName,
+          operatorName
         });
 
         const { data: invitationData, error: invitationError } = await supabase.functions.invoke('send-user-invitation', {
@@ -165,6 +209,7 @@ export const useUserManagement = () => {
 
       await fetchUsers();
       await fetchInvitations();
+      await fetchOperators(); // Refrescar operadores disponibles
       return { success: true };
     } catch (error: any) {
       console.error('Error creating user:', error);
@@ -316,12 +361,14 @@ export const useUserManagement = () => {
   useEffect(() => {
     fetchUsers();
     fetchClients();
+    fetchOperators();
     fetchInvitations();
   }, []);
 
   return {
     users,
     clients,
+    operators,
     invitations,
     loading,
     updating,

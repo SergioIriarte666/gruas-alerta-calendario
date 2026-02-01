@@ -5,10 +5,16 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, User, Mail, UserCog, Building } from 'lucide-react';
+import { Loader2, User, Mail, UserCog, Building, HardHat } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface Client {
+  id: string;
+  name: string;
+  rut: string;
+}
+
+interface Operator {
   id: string;
   name: string;
   rut: string;
@@ -18,6 +24,7 @@ interface CreateUserDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   clients: Client[];
+  operators?: Operator[];
   onUserCreated: () => void;
   creating: boolean;
   createUser: (userData: any) => Promise<{ success: boolean; error?: string }>;
@@ -29,6 +36,7 @@ export const CreateUserDialog = ({
   open, 
   onOpenChange, 
   clients, 
+  operators = [],
   onUserCreated, 
   creating, 
   createUser 
@@ -37,7 +45,8 @@ export const CreateUserDialog = ({
     email: '',
     full_name: '',
     role: '' as AppRole | '',
-    client_id: ''
+    client_id: '',
+    operator_id: ''
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -61,11 +70,18 @@ export const CreateUserDialog = ({
       return;
     }
 
+    // Validar que si el rol es operador, se haya seleccionado un operador
+    if (formData.role === 'operator' && !formData.operator_id) {
+      toast.error('Para usuarios tipo operador, debes seleccionar un operador asociado');
+      return;
+    }
+
     const result = await createUser({
       email: formData.email,
       full_name: formData.full_name,
       role: formData.role,
-      client_id: formData.role === 'client' ? formData.client_id : null
+      client_id: formData.role === 'client' ? formData.client_id : null,
+      operator_id: formData.role === 'operator' ? formData.operator_id : null
     });
 
     if (result.success) {
@@ -78,7 +94,8 @@ export const CreateUserDialog = ({
         email: '',
         full_name: '',
         role: '',
-        client_id: ''
+        client_id: '',
+        operator_id: ''
       });
 
       // Cerrar dialog y refrescar lista
@@ -94,7 +111,8 @@ export const CreateUserDialog = ({
       email: '',
       full_name: '',
       role: '',
-      client_id: ''
+      client_id: '',
+      operator_id: ''
     });
     onOpenChange(false);
   };
@@ -152,7 +170,8 @@ export const CreateUserDialog = ({
               onValueChange={(value: AppRole) => setFormData(prev => ({ 
                 ...prev, 
                 role: value,
-                client_id: value !== 'client' ? '' : prev.client_id
+                client_id: value !== 'client' ? '' : prev.client_id,
+                operator_id: value !== 'operator' ? '' : prev.operator_id
               }))}
             >
               <SelectTrigger className="border-gray-300">
@@ -184,6 +203,30 @@ export const CreateUserDialog = ({
                   {clients.map((client) => (
                     <SelectItem key={client.id} value={client.id}>
                       {client.name} ({client.rut})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
+          {formData.role === 'operator' && (
+            <div className="space-y-2">
+              <Label htmlFor="operator_id" className="text-black flex items-center gap-2">
+                <HardHat className="w-4 h-4" />
+                Operador Asociado *
+              </Label>
+              <Select 
+                value={formData.operator_id} 
+                onValueChange={(value) => setFormData(prev => ({ ...prev, operator_id: value }))}
+              >
+                <SelectTrigger className="border-gray-300">
+                  <SelectValue placeholder="Seleccionar operador" />
+                </SelectTrigger>
+                <SelectContent>
+                  {operators.map((operator) => (
+                    <SelectItem key={operator.id} value={operator.id}>
+                      {operator.name} ({operator.rut})
                     </SelectItem>
                   ))}
                 </SelectContent>
