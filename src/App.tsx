@@ -260,9 +260,9 @@ function AppContent() {
           <Route index element={<VipClientPipeline />} />
         </Route>
 
-        {/* Operator routes - restricted to operators only */}
+        {/* Operator routes - accessible by operators and admins */}
         <Route path="/operator" element={
-          <ProtectedRoute requireRole="operator">
+          <ProtectedRoute allowedRoles={['operator', 'admin']}>
             <OperatorLayout />
           </ProtectedRoute>
         }>
