@@ -30,8 +30,6 @@ export const InspectionFormSections = ({
 
   return (
     <>
-      <VehicleEquipmentChecklist form={form} />
-      
       {/* Sección de Kilometraje y Combustible */}
       <Card className="bg-card border-border">
         <CardHeader>
@@ -129,6 +127,8 @@ export const InspectionFormSections = ({
           </div>
         </CardContent>
       </Card>
+
+      <VehicleEquipmentChecklist form={form} />
       
       {/* Sección de Set Fotográfico */}
       <FormField
