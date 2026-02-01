@@ -16,13 +16,13 @@ export const AssignedServiceCard = ({
   const getStatusChip = (status: Service['status']) => {
     switch (status) {
       case 'pending':
-        return <span className="px-2 py-1 text-xs font-semibold rounded-full bg-yellow-500/20 text-zinc-950">Pendiente</span>;
+        return <span className="px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-700">Pendiente</span>;
       case 'in_progress':
-        return <span className="px-2 py-1 text-xs font-semibold rounded-full bg-blue-500/20 text-blue-300">En Progreso</span>;
+        return <span className="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-700">En Progreso</span>;
       case 'inspection_completed':
-        return <span className="px-2 py-1 text-xs font-semibold rounded-full bg-orange-500/20 text-orange-300">Listo para Entrega</span>;
+        return <span className="px-2 py-1 text-xs font-semibold rounded-full bg-orange-100 text-orange-700">Listo para Entrega</span>;
       case 'completed':
-        return <span className="px-2 py-1 text-xs font-semibold rounded-full bg-green-500/20 text-green-300">Completado</span>;
+        return <span className="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-700">Completado</span>;
       default:
         return null;
     }
@@ -84,27 +84,27 @@ export const AssignedServiceCard = ({
         </CardHeader>
         <CardContent className="space-y-3 pt-2">
           <div className="flex items-center gap-3">
-            <Truck className="w-4 h-4 text-gray-400" />
+            <Truck className="w-4 h-4 text-muted-foreground" />
             <span>{service.serviceType?.name ?? 'Tipo de servicio no especificado'}</span>
           </div>
           <div className="flex items-center gap-3">
-            <User className="w-4 h-4 text-gray-400" />
+            <User className="w-4 h-4 text-muted-foreground" />
             <span>{service.client?.name ?? 'Cliente no especificado'}</span>
           </div>
           <div className="flex items-center gap-3">
-            <Calendar className="w-4 h-4 text-gray-400" />
+            <Calendar className="w-4 h-4 text-muted-foreground" />
             <span>{format(new Date(service.serviceDate), "eeee, dd 'de' MMMM", {
               locale: es
             })}</span>
           </div>
           <div className="flex items-center gap-3">
-            <MapPin className="w-4 h-4 text-gray-400" />
+            <MapPin className="w-4 h-4 text-muted-foreground" />
             <div className="text-sm">
               <p><span className="font-semibold">Origen:</span> {service.origin}</p>
               <p><span className="font-semibold">Destino:</span> {service.destination}</p>
             </div>
           </div>
-          <div className="text-center text-sm text-blue-500 font-medium mt-4">
+          <div className="text-center text-sm text-blue-600 font-medium mt-4">
             <Play className="w-4 h-4 inline mr-2" />
             Servicio en progreso
           </div>
@@ -125,21 +125,21 @@ export const AssignedServiceCard = ({
           </CardHeader>
           <CardContent className="space-y-3 pt-2">
             <div className="flex items-center gap-3">
-              <Truck className="w-4 h-4 text-gray-400" />
+              <Truck className="w-4 h-4 text-muted-foreground" />
               <span>{service.serviceType?.name ?? 'Tipo de servicio no especificado'}</span>
             </div>
             <div className="flex items-center gap-3">
-              <User className="w-4 h-4 text-gray-400" />
+              <User className="w-4 h-4 text-muted-foreground" />
               <span>{service.client?.name ?? 'Cliente no especificado'}</span>
             </div>
             <div className="flex items-center gap-3">
-              <Calendar className="w-4 h-4 text-gray-400" />
+              <Calendar className="w-4 h-4 text-muted-foreground" />
               <span>{format(new Date(service.serviceDate), "eeee, dd 'de' MMMM", {
                 locale: es
               })}</span>
             </div>
             <div className="flex items-center gap-3">
-              <MapPin className="w-4 h-4 text-gray-400" />
+              <MapPin className="w-4 h-4 text-muted-foreground" />
               <div className="text-sm">
                 <p><span className="font-semibold">Origen:</span> {service.origin}</p>
                 <p><span className="font-semibold">Destino:</span> {service.destination}</p>

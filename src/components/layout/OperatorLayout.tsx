@@ -30,13 +30,13 @@ export const OperatorLayout = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-muted/50 to-background">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="bg-card/20 backdrop-blur-lg border-b border-border px-4 py-3">
+      <header className="bg-card border-b border-border px-4 py-3 shadow-sm">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-              <Truck className="w-5 h-5 text-primary-foreground" />
+            <div className="w-8 h-8 bg-violet-600 rounded-lg flex items-center justify-center">
+              <Truck className="w-5 h-5 text-white" />
             </div>
             <div>
               <h1 className="text-lg font-bold text-foreground">Gruas 5 Norte</h1>

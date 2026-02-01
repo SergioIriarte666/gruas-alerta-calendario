@@ -159,9 +159,9 @@ export const PhotographicSet = ({ photos, onPhotosChange }: PhotographicSetProps
   };
 
   return (
-    <Card className="bg-slate-800 border-slate-700">
+    <Card className="bg-card border-border">
       <CardHeader>
-        <CardTitle className="text-white flex items-center justify-between">
+        <CardTitle className="text-foreground flex items-center justify-between">
           <span>Set Fotográfico</span>
           <div className="flex items-center gap-2">
             <Badge variant="secondary">
@@ -172,7 +172,7 @@ export const PhotographicSet = ({ photos, onPhotosChange }: PhotographicSetProps
       </CardHeader>
       <CardContent>
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-6 bg-slate-700 h-auto p-1">
+          <TabsList className="grid w-full grid-cols-6 bg-muted h-auto p-1">
             {PHOTO_CATEGORIES.map((category) => {
               const hasPhoto = getPhotoForCategory(category.id);
               return (
@@ -180,7 +180,7 @@ export const PhotographicSet = ({ photos, onPhotosChange }: PhotographicSetProps
                   key={category.id}
                   value={category.id}
                   className={`flex flex-col items-center gap-1 p-2 text-xs h-auto min-h-[60px] ${
-                    hasPhoto ? 'bg-green-600 text-white' : 'text-slate-300'
+                    hasPhoto ? 'bg-green-600 text-white' : 'text-muted-foreground'
                   }`}
                 >
                   <span className="text-base">{category.icon}</span>
@@ -201,7 +201,7 @@ export const PhotographicSet = ({ photos, onPhotosChange }: PhotographicSetProps
               <TabsContent key={category.id} value={category.id} className="mt-4">
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-semibold text-white">
+                    <h3 className="text-lg font-semibold text-foreground">
                       {category.icon} Vista {category.label}
                     </h3>
                     {!photo && (
@@ -222,7 +222,7 @@ export const PhotographicSet = ({ photos, onPhotosChange }: PhotographicSetProps
                       <img
                         src={photoData.dataUrl}
                         alt={`Vista ${category.label}`}
-                        className="w-full max-w-md h-64 object-cover rounded-lg border border-slate-600"
+                        className="w-full max-w-md h-64 object-cover rounded-lg border border-border"
                       />
                       <div className="absolute top-2 right-2 flex gap-2">
                         <Button
@@ -233,14 +233,14 @@ export const PhotographicSet = ({ photos, onPhotosChange }: PhotographicSetProps
                           <Trash2 className="w-4 h-4" />
                         </Button>
                       </div>
-                      <div className="mt-2 text-sm text-gray-400">
+                      <div className="mt-2 text-sm text-muted-foreground">
                         Archivo: {photo!.fileName}
                       </div>
                     </div>
                   ) : photo ? (
                     // Photo exists in form data but not loaded from storage
-                    <div className="border border-red-600 rounded-lg p-4 bg-red-900/20">
-                      <p className="text-red-300 text-sm mb-2">
+                    <div className="border border-red-500 rounded-lg p-4 bg-red-50">
+                      <p className="text-red-600 text-sm mb-2">
                         ⚠️ Foto registrada pero no disponible: {photo.fileName}
                       </p>
                       <div className="flex gap-2">
@@ -257,7 +257,6 @@ export const PhotographicSet = ({ photos, onPhotosChange }: PhotographicSetProps
                           size="sm"
                           onClick={() => document.getElementById(`camera-${category.id}`)?.click()}
                           disabled={isLoading}
-                          className="border-slate-600 text-slate-300"
                         >
                           <Camera className="w-4 h-4 mr-1" />
                           Tomar nueva
@@ -266,16 +265,15 @@ export const PhotographicSet = ({ photos, onPhotosChange }: PhotographicSetProps
                     </div>
                   ) : (
                     // No photo for this category
-                    <div className="border-2 border-dashed border-slate-600 rounded-lg p-8 text-center">
-                      <Camera className="w-12 h-12 mx-auto mb-4 text-slate-400" />
-                      <p className="text-slate-400 mb-4">
+                    <div className="border-2 border-dashed border-border rounded-lg p-8 text-center">
+                      <Camera className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+                      <p className="text-muted-foreground mb-4">
                         Toma una foto de la vista {category.label.toLowerCase()}
                       </p>
                       <Button
                         variant="outline"
                         onClick={() => document.getElementById(`camera-${category.id}`)?.click()}
                         disabled={isLoading}
-                        className="border-slate-600 text-slate-300"
                       >
                         <Camera className="w-4 h-4 mr-2" />
                         {isLoading ? 'Procesando...' : 'Tomar Fotografía'}
@@ -289,8 +287,8 @@ export const PhotographicSet = ({ photos, onPhotosChange }: PhotographicSetProps
         </Tabs>
 
         {photos.length === 0 && (
-          <div className="mt-4 p-4 bg-red-900/20 border border-red-700 rounded-lg">
-            <p className="text-red-300 text-sm">
+          <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+            <p className="text-red-600 text-sm">
               ⚠️ Debes tomar al menos 1 fotografía para completar el set fotográfico
             </p>
           </div>

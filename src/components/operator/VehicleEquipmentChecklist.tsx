@@ -34,7 +34,7 @@ export const VehicleEquipmentChecklist = ({ form }: VehicleEquipmentChecklistPro
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <h3 className="text-lg font-semibold text-white">Inventario del Vehículo</h3>
+        <h3 className="text-lg font-semibold text-foreground">Inventario del Vehículo</h3>
         <div className="flex gap-2">
           <Button type="button" size="sm" variant="outline" onClick={handleSelectAll}>
             Marcar Todo
@@ -45,7 +45,7 @@ export const VehicleEquipmentChecklist = ({ form }: VehicleEquipmentChecklistPro
         </div>
       </div>
       
-      <div className="bg-slate-800/50 rounded-md p-4">
+      <div className="bg-card border border-border rounded-md p-4">
         <FormField
           control={form.control}
           name="equipment"
@@ -64,7 +64,7 @@ export const VehicleEquipmentChecklist = ({ form }: VehicleEquipmentChecklistPro
                         <div
                           key={item.id}
                           onClick={() => handleItemToggle(item.id)}
-                          className="flex items-center justify-between p-3 border border-slate-600 rounded-lg cursor-pointer hover:bg-slate-700/50 transition-colors"
+                          className="flex items-center justify-between p-3 border border-border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors"
                         >
                           <span className="text-foreground text-sm font-medium flex-1">
                             {item.name}
@@ -85,7 +85,7 @@ export const VehicleEquipmentChecklist = ({ form }: VehicleEquipmentChecklistPro
                     })}
                   </div>
                 </div>
-                <FormMessage className="text-red-400" />
+                <FormMessage className="text-red-500" />
               </FormItem>
             );
           }}
