@@ -8,10 +8,15 @@ export const inspectionFormSchema = z.object({
   vehicleObservations: z.string().optional(),
   // Campos existentes
   kilometraje: z.string().min(1, 'El kilometraje es requerido'),
-  combustible: z.string().min(1, 'El nivel de combustible es requerido'),
-  // Nuevos campos para llaves y documentación
-  llaves: z.string().min(1, 'El estado de las llaves es requerido'),
-  documentacion: z.string().min(1, 'El estado de la documentación es requerido'),
+  combustible: z.enum(['0', '1/4', '1/2', '3/4', 'full'], {
+    required_error: 'El nivel de combustible es requerido',
+  }),
+  llaves: z.enum(['si', 'no'], {
+    required_error: 'El estado de las llaves es requerido',
+  }),
+  documentacion: z.enum(['si', 'no'], {
+    required_error: 'El estado de la documentación es requerido',
+  }),
   operatorSignature: z.string().min(1, 'La firma del operador es requerida'),
   clientSignature: z.string().optional(),
   clientName: z.string().optional(),

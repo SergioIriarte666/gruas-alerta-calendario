@@ -10,7 +10,8 @@ import { PhotographicSet } from '@/components/operator/PhotographicSet';
 import { SignaturePad, SignaturePadRef } from '@/components/operator/SignaturePad';
 import { InspectionFormValues } from '@/schemas/inspectionSchema';
 import { useUser } from '@/contexts/UserContext';
-import { User, Gauge, Fuel, Key, FileText, PenTool } from 'lucide-react';
+import { User, Gauge, Fuel, Key, FileText, PenTool, Check, X } from 'lucide-react';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 
 interface InspectionFormSectionsProps {
   form: UseFormReturn<InspectionFormValues>;
@@ -72,11 +73,26 @@ export const InspectionFormSections = ({
                     Nivel de Combustible
                   </FormLabel>
                   <FormControl>
-                    <Input 
-                      placeholder="Ej: 3/4, 1/2, Lleno" 
-                      {...field} 
-                      className="bg-background border-input focus:border-violet-500" 
-                    />
+                    <ToggleGroup 
+                      type="single" 
+                      value={field.value} 
+                      onValueChange={(value) => value && field.onChange(value)}
+                      className="flex flex-wrap gap-1"
+                    >
+                      {['0', '1/4', '1/2', '3/4', 'full'].map((level) => (
+                        <ToggleGroupItem
+                          key={level}
+                          value={level}
+                          className={`px-3 py-2 text-sm font-medium border rounded-md transition-colors ${
+                            field.value === level
+                              ? 'bg-violet-600 text-white border-violet-600'
+                              : 'bg-background border-border text-foreground hover:bg-muted'
+                          }`}
+                        >
+                          {level === 'full' ? 'Full' : level}
+                        </ToggleGroupItem>
+                      ))}
+                    </ToggleGroup>
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -93,11 +109,35 @@ export const InspectionFormSections = ({
                     Llaves del Vehículo
                   </FormLabel>
                   <FormControl>
-                    <Input 
-                      placeholder="Ej: Entregadas, No disponibles" 
-                      {...field} 
-                      className="bg-background border-input focus:border-violet-500" 
-                    />
+                    <ToggleGroup 
+                      type="single" 
+                      value={field.value} 
+                      onValueChange={(value) => value && field.onChange(value)}
+                      className="flex gap-2"
+                    >
+                      <ToggleGroupItem
+                        value="si"
+                        className={`px-4 py-2 text-sm font-medium border rounded-md transition-colors flex items-center gap-2 ${
+                          field.value === 'si'
+                            ? 'bg-emerald-500 text-white border-emerald-500'
+                            : 'bg-background border-border text-foreground hover:bg-muted'
+                        }`}
+                      >
+                        <Check className="w-4 h-4" />
+                        SÍ
+                      </ToggleGroupItem>
+                      <ToggleGroupItem
+                        value="no"
+                        className={`px-4 py-2 text-sm font-medium border rounded-md transition-colors flex items-center gap-2 ${
+                          field.value === 'no'
+                            ? 'bg-red-500 text-white border-red-500'
+                            : 'bg-background border-border text-foreground hover:bg-muted'
+                        }`}
+                      >
+                        <X className="w-4 h-4" />
+                        NO
+                      </ToggleGroupItem>
+                    </ToggleGroup>
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -114,11 +154,35 @@ export const InspectionFormSections = ({
                     Documentación del Vehículo
                   </FormLabel>
                   <FormControl>
-                    <Input 
-                      placeholder="Ej: Completa, Incompleta" 
-                      {...field} 
-                      className="bg-background border-input focus:border-violet-500" 
-                    />
+                    <ToggleGroup 
+                      type="single" 
+                      value={field.value} 
+                      onValueChange={(value) => value && field.onChange(value)}
+                      className="flex gap-2"
+                    >
+                      <ToggleGroupItem
+                        value="si"
+                        className={`px-4 py-2 text-sm font-medium border rounded-md transition-colors flex items-center gap-2 ${
+                          field.value === 'si'
+                            ? 'bg-emerald-500 text-white border-emerald-500'
+                            : 'bg-background border-border text-foreground hover:bg-muted'
+                        }`}
+                      >
+                        <Check className="w-4 h-4" />
+                        SÍ
+                      </ToggleGroupItem>
+                      <ToggleGroupItem
+                        value="no"
+                        className={`px-4 py-2 text-sm font-medium border rounded-md transition-colors flex items-center gap-2 ${
+                          field.value === 'no'
+                            ? 'bg-red-500 text-white border-red-500'
+                            : 'bg-background border-border text-foreground hover:bg-muted'
+                        }`}
+                      >
+                        <X className="w-4 h-4" />
+                        NO
+                      </ToggleGroupItem>
+                    </ToggleGroup>
                   </FormControl>
                   <FormMessage />
                 </FormItem>
