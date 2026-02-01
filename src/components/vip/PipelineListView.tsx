@@ -37,6 +37,7 @@ import { differenceInDays } from 'date-fns';
 import { formatForDisplay, parseFromDatabase } from '@/utils/timezoneUtils';
 import { BatchUpdateModal, BatchUpdateData } from './BatchUpdateModal';
 import { PipelineExportModal } from './PipelineExportModal';
+import { PipelineBatchActionBar } from './PipelineBatchActionBar';
 import { usePipelineServiceExport } from '@/hooks/vip/usePipelineServiceExport';
 import { toast } from 'sonner';
 import { getDisplayServiceValue } from '@/utils/serviceValueCalculations';
@@ -356,6 +357,12 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
 
   const selectedServicesArray = services.filter(s => selectedServices.has(s.id));
 
+  // Calcular suma total de servicios seleccionados
+  const selectedTotalValue = useMemo(() => 
+    selectedServicesArray.reduce((sum, s) => sum + getDisplayServiceValue(s), 0),
+    [selectedServicesArray]
+  );
+
   const handleSort = (field: SortField) => {
     if (sortField === field) {
       setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
@@ -411,6 +418,16 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
 
   return (
     <div className="space-y-4 vip-pipeline-scope">
+      {/* Barra de acciones para servicios seleccionados */}
+      {selectedServices.size > 0 && (
+        <PipelineBatchActionBar
+          selectedCount={selectedServices.size}
+          totalAmount={selectedTotalValue}
+          onBatchUpdate={() => setShowBatchModal(true)}
+          onClearSelection={() => setSelectedServices(new Set())}
+        />
+      )}
+
       {/* Header and Search */}
       <Card className="bg-card border">
         <CardHeader>
