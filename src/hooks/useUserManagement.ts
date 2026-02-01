@@ -133,83 +133,42 @@ export const useUserManagement = () => {
   const createUser = async (userData: CreateUserData) => {
     try {
       setCreating(true);
-      console.log('Creating user with data:', userData);
+      console.log('📧 Creating and inviting user via edge function:', userData);
       
-      // Crear el usuario
-      const { data, error } = await (supabase as any).rpc('admin_create_user', {
-        p_email: userData.email,
-        p_full_name: userData.full_name,
-        p_role: userData.role,
-        p_client_id: userData.client_id || null
-      });
-
-      if (error) throw error;
-
-      const newUserId = data;
-      console.log('User created successfully with ID:', newUserId);
-
-      // Si el rol es operador, vincular con el registro de operador
-      if (userData.role === 'operator' && userData.operator_id) {
-        console.log('Linking operator record to user:', { operatorId: userData.operator_id, userId: newUserId });
-        const { error: linkError } = await supabase
-          .from('operators')
-          .update({ user_id: newUserId })
-          .eq('id', userData.operator_id);
-        
-        if (linkError) {
-          console.error('Error linking operator to user:', linkError);
-          toast.warning('Usuario creado, pero hubo un problema vinculando el operador');
-        } else {
-          console.log('Operator linked successfully');
-        }
-      }
-
-      // Enviar invitación por email
-      try {
-        const clientName = userData.client_id ? 
-          clients.find(c => c.id === userData.client_id)?.name : undefined;
-        const operatorName = userData.operator_id ?
-          operators.find(o => o.id === userData.operator_id)?.name : undefined;
-
-        console.log('📧 Enviando invitación por email para usuario:', {
-          userId: newUserId,
+      // Call the edge function which handles everything:
+      // 1. Creates user in Supabase Auth via admin.inviteUserByEmail
+      // 2. Creates profile with matching ID
+      // 3. Links operator if applicable
+      // 4. Creates invitation record
+      // 5. Sends invitation email via Supabase native email
+      const { data: invitationData, error: invitationError } = await supabase.functions.invoke('send-user-invitation', {
+        body: {
           email: userData.email,
           fullName: userData.full_name,
           role: userData.role,
-          clientName,
-          operatorName
-        });
-
-        const { data: invitationData, error: invitationError } = await supabase.functions.invoke('send-user-invitation', {
-          body: {
-            userId: newUserId,
-            email: userData.email,
-            fullName: userData.full_name,
-            role: userData.role,
-            clientName
-          }
-        });
-
-        console.log('Invitation result:', { data: invitationData, error: invitationError });
-
-        if (invitationError) {
-          console.error('Error sending invitation:', invitationError);
-          toast.warning('Usuario creado, pero hubo un problema enviando la invitación por email');
-        } else if (invitationData?.error) {
-          console.error('Error in invitation function:', invitationData.error);
-          toast.warning('Usuario creado, pero hubo un problema enviando la invitación por email');
-        } else {
-          console.log('✅ Invitación enviada exitosamente:', invitationData);
-          toast.success('Usuario creado e invitación enviada correctamente');
+          clientId: userData.client_id || null,
+          operatorId: userData.operator_id || null
         }
-      } catch (inviteError) {
-        console.error('Error sending invitation:', inviteError);
-        toast.warning('Usuario creado, pero no se pudo enviar la invitación por email');
+      });
+
+      console.log('Invitation result:', { data: invitationData, error: invitationError });
+
+      if (invitationError) {
+        console.error('Error in invitation function:', invitationError);
+        throw new Error(invitationError.message || 'Error al crear usuario');
       }
+      
+      if (invitationData?.error) {
+        console.error('Error from invitation function:', invitationData.error);
+        throw new Error(invitationData.error);
+      }
+
+      console.log('✅ Usuario creado e invitación enviada:', invitationData);
+      toast.success('Usuario creado e invitación enviada por email');
 
       await fetchUsers();
       await fetchInvitations();
-      await fetchOperators(); // Refrescar operadores disponibles
+      await fetchOperators();
       return { success: true };
     } catch (error: any) {
       console.error('Error creating user:', error);

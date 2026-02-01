@@ -9,6 +9,7 @@ import { AuthBackground } from '@/components/auth/AuthBackground';
 import { AuthTabs } from '@/components/auth/AuthTabs';
 import { LoginForm } from '@/components/auth/LoginForm';
 import { RegisterForm } from '@/components/auth/RegisterForm';
+import { SetPasswordForm } from '@/components/auth/SetPasswordForm';
 import { validatePassword } from '@/utils/passwordValidation';
 
 const Auth = () => {
@@ -17,10 +18,12 @@ const Auth = () => {
   const tabParam = searchParams.get('tab');
   const isInvited = searchParams.get('invited') === 'true';
   const isRegistered = searchParams.get('registered') === 'true';
+  const needsPasswordSetup = searchParams.get('setup_password') === 'true';
   
   const [email, setEmail] = useState(emailParam || '');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showSetPassword, setShowSetPassword] = useState(false);
   const [activeTab, setActiveTab] = useState<'login' | 'register'>(
     (tabParam as 'login' | 'register') || (isInvited ? 'register' : 'login')
   );
@@ -29,25 +32,36 @@ const Auth = () => {
   const { user: profileUser, loading: profileLoading } = useUser();
   const navigate = useNavigate();
 
+  // Check if user needs to set password (invited user who just clicked the link)
+  useEffect(() => {
+    if (authUser && needsPasswordSetup && !profileLoading) {
+      console.log('Auth: User needs to set password');
+      setShowSetPassword(true);
+    }
+  }, [authUser, needsPasswordSetup, profileLoading]);
+
   // Mostrar mensajes de invitación o registro
   useEffect(() => {
-    if (isInvited && emailParam) {
+    if (isInvited && emailParam && !needsPasswordSetup) {
       setActiveTab('register');
       toast.info('¡Bienvenido! Completa tu registro para acceder al sistema.');
     }
     if (isRegistered) {
       toast.success('¡Cuenta confirmada exitosamente!');
     }
-  }, [isInvited, isRegistered, emailParam]);
+  }, [isInvited, isRegistered, emailParam, needsPasswordSetup]);
 
-  // Redirigir usuarios autenticados - usar la misma lógica simple que el operador
+  // Redirigir usuarios autenticados - pero solo si no necesitan configurar contraseña
   useEffect(() => {
     if (authLoading || profileLoading) return;
+    
+    // Si el usuario necesita configurar contraseña, no redirigir
+    if (showSetPassword) return;
     
     if (authUser && profileUser) {
       console.log(`Auth: User authenticated with role: ${profileUser.role}`);
       
-      // Redirección directa basada en rol - igual que funciona para admin@admin.com
+      // Redirección directa basada en rol
       switch (profileUser.role) {
         case 'client':
           console.log('Auth: Redirecting client to /portal');
@@ -68,7 +82,15 @@ const Auth = () => {
           break;
       }
     }
-  }, [authUser, profileUser, authLoading, profileLoading, navigate]);
+  }, [authUser, profileUser, authLoading, profileLoading, navigate, showSetPassword]);
+
+  const handlePasswordSetupSuccess = () => {
+    setShowSetPassword(false);
+    // Clear the URL params and let the normal redirect logic handle it
+    navigate('/auth', { replace: true });
+    // Force a profile refresh to trigger redirect
+    window.location.reload();
+  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -184,10 +206,21 @@ const Auth = () => {
     );
   }
 
+  // Show set password form for invited users
+  if (showSetPassword) {
+    return (
+      <AuthBackground>
+        <div className="w-[400px]">
+          <SetPasswordForm onSuccess={handlePasswordSetupSuccess} />
+        </div>
+      </AuthBackground>
+    );
+  }
+
   return (
     <AuthBackground>
       <div className="w-[400px]">
-        {isInvited && (
+        {isInvited && !needsPasswordSetup && (
           <div className="mb-6 p-4 bg-tms-green/10 border border-tms-green/30 rounded-lg">
             <h3 className="text-tms-green font-semibold mb-2">¡Has sido invitado!</h3>
             <p className="text-white text-sm">
