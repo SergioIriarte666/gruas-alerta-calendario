@@ -6,7 +6,7 @@ import { format as formatDate } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { ExportServiceReportArgs } from './reportTypes';
 import { createExportFileName, addCompanyHeader } from './reportUtils';
-import { getDisplayServiceValue } from '../serviceValueCalculations';
+import { getDisplayServiceValue, getServiceValueBreakdown } from '../serviceValueCalculations';
 import { Service } from '@/types';
 import { defaultReportColumnConfig, ColumnKey, columnOrder, ReportColumnsConfig } from '@/types/reportColumnConfig';
 
@@ -41,6 +41,16 @@ const getColumnValue = (service: Service, key: ColumnKey, config: ReportColumnsC
       return truncate(service.destination || 'N/A', maxChars);
     case 'estado':
       return service.status;
+    case 'valorBase':
+      const breakdownBase = getServiceValueBreakdown(service);
+      return breakdownBase.baseValue > 0 
+        ? `$${breakdownBase.baseValue.toLocaleString('es-CL')}` 
+        : '-';
+    case 'valorCustodia':
+      const breakdownCustody = getServiceValueBreakdown(service);
+      return breakdownCustody.custodyValue > 0 
+        ? `$${breakdownCustody.custodyValue.toLocaleString('es-CL')}` 
+        : '-';
     case 'valor':
       return `$${getDisplayServiceValue(service).toLocaleString('es-CL')}`;
     default:
@@ -149,31 +159,36 @@ export const exportServiceReport = async ({
   } else if (format === 'excel') {
     const wb = XLSX.utils.book_new();
 
-    // Hoja principal: Detalle completo de servicios - con Asegurado
-    const services_data = sortedServices.map(s => ({
-      'Fecha Servicio': formatDate(new Date(s.serviceDate + 'T00:00:00'), 'yyyy-MM-dd'),
-      'Hora Inicio': s.startTime || '-',
-      'Hora Término': s.endTime || '-',
-      'Kilómetros Recorridos': s.craneMileage || '-',
-      'Folio': s.folio,
-      'Cliente': s.client?.name || 'N/A',
-      'RUT Cliente': s.client?.rut || 'N/A',
-      'Asegurado': (s as any).insuredName || '-',
-      'Cotización': s.quoteNumber || '-',
-      'Orden de Compra': s.purchaseOrder || '-',
-      'Factura': s.invoiceFolio || '-',
-      'Número Fiscal': s.invoiceNumeroFiscal || '-',
-      'Tipo de Servicio': s.serviceType?.name || 'N/A',
-      'Marca Vehículo': s.vehicleBrand || 'N/A',
-      'Modelo Vehículo': s.vehicleModel || 'N/A',
-      'Patente Vehículo': s.licensePlate || 'N/A',
-      'Origen': s.origin || 'N/A',
-      'Destino': s.destination || 'N/A',
-      'Patente Grúa': s.crane?.licensePlate || 'N/A',
-      'Estado': s.status,
-      'Valor': getDisplayServiceValue(s),
-      'Observaciones': s.observations,
-    }));
+    // Hoja principal: Detalle completo de servicios - con Asegurado y desglose de valores
+    const services_data = sortedServices.map(s => {
+      const breakdown = getServiceValueBreakdown(s);
+      return {
+        'Fecha Servicio': formatDate(new Date(s.serviceDate + 'T00:00:00'), 'yyyy-MM-dd'),
+        'Hora Inicio': s.startTime || '-',
+        'Hora Término': s.endTime || '-',
+        'Kilómetros Recorridos': s.craneMileage || '-',
+        'Folio': s.folio,
+        'Cliente': s.client?.name || 'N/A',
+        'RUT Cliente': s.client?.rut || 'N/A',
+        'Asegurado': (s as any).insuredName || '-',
+        'Cotización': s.quoteNumber || '-',
+        'Orden de Compra': s.purchaseOrder || '-',
+        'Factura': s.invoiceFolio || '-',
+        'Número Fiscal': s.invoiceNumeroFiscal || '-',
+        'Tipo de Servicio': s.serviceType?.name || 'N/A',
+        'Marca Vehículo': s.vehicleBrand || 'N/A',
+        'Modelo Vehículo': s.vehicleModel || 'N/A',
+        'Patente Vehículo': s.licensePlate || 'N/A',
+        'Origen': s.origin || 'N/A',
+        'Destino': s.destination || 'N/A',
+        'Patente Grúa': s.crane?.licensePlate || 'N/A',
+        'Estado': s.status,
+        'Valor Servicio': breakdown.baseValue,
+        'Valor Custodia': breakdown.custodyValue,
+        'Valor Total': getDisplayServiceValue(s),
+        'Observaciones': s.observations,
+      };
+    });
     const services_ws = XLSX.utils.json_to_sheet(services_data);
     XLSX.utils.book_append_sheet(wb, services_ws, 'Detalle de Servicios');
 
