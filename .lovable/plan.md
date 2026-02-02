@@ -1,199 +1,130 @@
 
-
-# Plan: Corrección de Vista Móvil de la Aplicación
-
-## Resumen del Análisis
-
-Tras una revisión exhaustiva del código y pruebas en vista móvil (390x844px), he identificado múltiples problemas de responsividad que afectan la experiencia del usuario en dispositivos móviles.
-
----
+# Plan: Corrección de Vista Móvil - Clientes y Pipeline VIP
 
 ## Problemas Identificados
 
-### 1. Página de Login/Auth - Ancho Fijo Problemático
+### 1. ClientsMobileView - Colores de Tema Oscuro en Tema Claro
 
-**Archivo:** `src/pages/Auth.tsx` (líneas 213, 222)
+**Archivo:** `src/components/clients/ClientsMobileView.tsx`
 
-**Problema:** El contenedor usa `w-[400px]` que es mayor que el ancho de pantalla de móviles pequeños (390px), causando:
-- Texto truncado ("Ingresa tus credenciales para acceder a tu cuen...")
-- Contenido que se sale de la pantalla
-- Scroll horizontal innecesario
+**Problema Principal:** El componente usa clases de tema oscuro que son invisibles en el tema claro actual:
 
-**Solución:** Cambiar a `w-full max-w-[400px]` para que sea responsivo
+| Línea | Clase Actual | Problema |
+|-------|--------------|----------|
+| 46, 63, 80, 88 | `text-white` | Texto blanco invisible sobre fondo blanco |
+| 45, 48, 90, 91 | `text-gray-400`, `text-gray-500` | Bajo contraste |
+| 46, 63 | `glass-card` | Funciona pero cards internas no contrastan |
+| 151, 177 | `text-purple-400`, `text-tms-green` | Colores muy claros para tema claro |
 
----
-
-### 2. Padding Excesivo en AuthBackground
-
-**Archivo:** `src/components/auth/AuthBackground.tsx` (línea 23)
-
-**Problema:** `p-8 md:p-12` es demasiado padding en móviles pequeños
-
-**Solución:** Cambiar a `p-4 sm:p-8 md:p-12`
+**Esto explica la captura donde NO se ve el nombre del cliente** - el texto es blanco sobre fondo blanco.
 
 ---
 
-### 3. Portal del Operador - Tabs No Responsivos
+### 2. VipClientPipeline - Header No Responsive
 
-**Archivo:** `src/pages/OperatorDashboard.tsx` (línea 116)
+**Archivo:** `src/pages/VipClientPipeline.tsx`
 
-**Problema:** `grid-cols-4` en los tabs hace que el texto se corte en móviles porque los 4 tabs no caben
-
-**Solución:** 
-- Usar `grid-cols-2 sm:grid-cols-4` 
-- O convertir a scroll horizontal en móvil
-- Ocultar texto de tabs y mostrar solo iconos en móvil
+**Problema:** El header (líneas 186-222) no tiene ajustes móviles:
+- `flex items-center justify-between` no envuelve en móvil
+- El nombre del cliente y badge "VIP Pipeline" no se ven cuando se corta
+- Los tabs usan `grid-cols-4` sin variante móvil
 
 ---
 
-### 4. Portal Sidebar No Responsivo
+## Cambios a Implementar
 
-**Archivo:** `src/components/portal/layout/PortalLayout.tsx`
+### Archivo 1: `src/components/clients/ClientsMobileView.tsx`
 
-**Problema:** El sidebar del portal de clientes (`w-64`) siempre está visible, sin menú móvil
-
-**Solución:** Implementar patrón de sidebar móvil como en Layout.tsx
-
----
-
-### 5. Header del Operador - Overflow en Móvil
-
-**Archivo:** `src/components/layout/OperatorLayout.tsx` (línea 53)
-
-**Problema:** El header no tiene manejo de overflow cuando el nombre de usuario es largo
-
-**Solución:** Agregar `truncate` y mejor distribución del espacio
-
----
-
-### 6. Costos - Sin Vista Móvil Dedicada
-
-**Archivo:** `src/pages/Costs.tsx`
-
-**Problema:** A diferencia de Servicios y Grúas que tienen `ServicesMobileView` y `CranesMobileView`, Costos no tiene una vista móvil optimizada
-
-**Solución:** El modo "cards" (`CostList`) funciona razonablemente, pero podría mejorarse la detección automática de vista móvil
-
----
-
-### 7. Componentes con Anchos Fijos
-
-**Archivos varios:**
-
-| Componente | Archivo | Problema |
-|------------|---------|----------|
-| CostCombobox | `src/components/costs/form/CostCombobox.tsx` | `w-[400px]` en PopoverContent |
-| PaymentReconciliation | `src/components/invoices/PaymentReconciliation.tsx` | `w-[300px]` en SelectTrigger |
-| ClosureSelector | `src/components/invoices/ClosureSelector.css` | `min-width: 600px !important` |
-
----
-
-## Archivos a Modificar
-
-| # | Archivo | Tipo de Cambio | Prioridad |
-|---|---------|----------------|-----------|
-| 1 | `src/pages/Auth.tsx` | Cambiar `w-[400px]` a `w-full max-w-[400px]` | Alta |
-| 2 | `src/components/auth/AuthBackground.tsx` | Ajustar padding móvil | Alta |
-| 3 | `src/pages/OperatorDashboard.tsx` | Hacer tabs responsivos | Alta |
-| 4 | `src/components/portal/layout/PortalLayout.tsx` | Implementar sidebar móvil | Media |
-| 5 | `src/components/portal/layout/PortalSidebar.tsx` | Agregar props de control móvil | Media |
-| 6 | `src/components/layout/OperatorLayout.tsx` | Mejorar header móvil | Media |
-| 7 | `src/components/costs/form/CostCombobox.tsx` | Hacer popover responsivo | Baja |
-| 8 | `src/components/invoices/PaymentReconciliation.tsx` | Hacer select responsivo | Baja |
-| 9 | `src/components/invoices/ClosureSelector.css` | Eliminar min-width fijo | Baja |
-
----
-
-## Cambios Técnicos Detallados
-
-### Auth.tsx - Líneas 213 y 222
+Actualizar todas las clases de color para usar variables CSS del tema:
 
 ```tsx
-// Antes:
-<div className="w-[400px]">
+// Antes (línea 80):
+<h3 className="text-lg font-semibold text-white">Clientes ({totalClients})</h3>
 
 // Después:
-<div className="w-full max-w-[400px]">
+<h3 className="text-lg font-semibold text-foreground">Clientes ({totalClients})</h3>
 ```
 
-### AuthBackground.tsx - Línea 23
+**Cambios específicos:**
+
+| Línea | Antes | Después |
+|-------|-------|---------|
+| 46 | `text-white` | `text-foreground` |
+| 63 | `text-white` | `text-foreground` |
+| 80 | `text-white` | `text-foreground` |
+| 88 | `text-white` | `text-foreground` |
+| 90 | `text-tms-green` | `text-primary` |
+| 91 | `text-gray-500` | `text-muted-foreground` |
+| 103-104 | `bg-tms-green text-black` / `bg-gray-600 text-white` | Usar clases semánticas |
+| 114-137 | `text-white` en todos los campos | `text-foreground` |
+| 115, 122, 129, 136 | `text-gray-400` en iconos | `text-muted-foreground` |
+| 45, 64 | `text-gray-400` en empty states | `text-muted-foreground` |
+| 48 | `text-gray-400` en párrafos | `text-muted-foreground` |
+
+---
+
+### Archivo 2: `src/pages/VipClientPipeline.tsx`
+
+Hacer el header responsive para móvil:
 
 ```tsx
-// Antes:
-<div className="relative z-10 flex items-center justify-center min-h-screen p-8 md:p-12">
+// Antes (línea 186):
+<div className="flex items-center justify-between">
 
 // Después:
-<div className="relative z-10 flex items-center justify-center min-h-screen p-4 sm:p-8 md:p-12">
+<div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
 ```
 
-### OperatorDashboard.tsx - Línea 116
+**Cambios específicos:**
 
-```tsx
-// Antes:
-<TabsList className="grid w-full grid-cols-4 bg-muted border border-border">
-  <TabsTrigger ...>
-    <Clock className="w-4 h-4 mr-2" />
-    Asignados
-  </TabsTrigger>
-  ...
-</TabsList>
+| Ubicación | Antes | Después |
+|-----------|-------|---------|
+| Línea 186 | `flex items-center justify-between` | `flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4` |
+| Línea 187 | `gap-4` interno | Agregar `flex-wrap` |
+| Línea 198 | Título `text-2xl` | `text-xl sm:text-2xl` |
+| Línea 229 | TabsList `grid-cols-4` | `grid-cols-2 sm:grid-cols-4` |
 
-// Después - con scroll horizontal:
-<TabsList className="flex w-full overflow-x-auto bg-muted border border-border">
-  <TabsTrigger className="flex-shrink-0 ...">
-    <Clock className="w-4 h-4 sm:mr-2" />
-    <span className="hidden sm:inline">Asignados</span>
-  </TabsTrigger>
-  ...
-</TabsList>
+---
+
+### Archivo 3: `src/index.css`
+
+Agregar scope para clientes (siguiendo patrón existente):
+
+```css
+/* Clients Module Scope */
+.clients-scope {
+  color: hsl(var(--foreground));
+}
+
+.clients-scope .text-white {
+  color: hsl(var(--foreground)) !important;
+}
+
+.clients-scope .text-gray-400 {
+  color: hsl(var(--muted-foreground)) !important;
+}
+
+.clients-scope .text-gray-500 {
+  color: hsl(var(--muted-foreground)) !important;
+}
 ```
 
-### PortalLayout.tsx - Estructura Móvil
+---
 
-```tsx
-// Agregar estado y props para menú móvil similar a Layout.tsx
-const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+## Resumen de Archivos a Modificar
 
-return (
-  <div className="flex h-screen bg-gray-900 text-white">
-    {/* Backdrop móvil */}
-    {isMobileMenuOpen && (
-      <div 
-        className="fixed inset-0 z-40 lg:hidden bg-black bg-opacity-50" 
-        onClick={() => setIsMobileMenuOpen(false)} 
-      />
-    )}
-    
-    {/* Sidebar con transformación móvil */}
-    <PortalSidebar 
-      isMobileMenuOpen={isMobileMenuOpen}
-      setIsMobileMenuOpen={setIsMobileMenuOpen}
-    />
-    ...
-  </div>
-);
-```
+| # | Archivo | Tipo de Cambio |
+|---|---------|----------------|
+| 1 | `src/components/clients/ClientsMobileView.tsx` | Actualizar clases de color a variables semánticas |
+| 2 | `src/pages/VipClientPipeline.tsx` | Hacer header y tabs responsivos |
+| 3 | `src/index.css` | Agregar clients-scope como fallback |
 
 ---
 
 ## Resultado Esperado
 
-Después de implementar estos cambios:
+Después de los cambios:
 
-1. **Login**: Se verá correctamente en cualquier ancho de pantalla
-2. **Portal Operador**: Los tabs serán navegables en móvil con scroll o iconos
-3. **Portal Cliente**: Tendrá menú hamburguesa como el admin
-4. **Formularios**: Los combos y selects no forzarán scroll horizontal
-
----
-
-## Componentes ya Bien Implementados (Referencia)
-
-Estos componentes ya manejan correctamente la vista móvil y pueden usarse como referencia:
-
-- `src/components/services/ServicesMobileView.tsx` ✅
-- `src/components/cranes/CranesMobileView.tsx` ✅
-- `src/components/layout/Layout.tsx` (manejo de sidebar móvil) ✅
-- `src/components/dashboard/MetricCard.tsx` (usa useDeviceType) ✅
-- `src/components/layout/Header.tsx` (adaptación de tamaños) ✅
-
+1. **Vista de Clientes Móvil**: El nombre del cliente será visible (texto oscuro sobre fondo claro)
+2. **Pipeline VIP**: El header con nombre del cliente se verá correctamente y los tabs serán usables en 2 columnas en móvil
+3. **Consistencia**: Los colores seguirán el sistema de diseño unificado del resto de la app
