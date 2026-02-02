@@ -74,11 +74,19 @@ export const exportServiceReport = async ({
   const { company } = settings;
   const exportFileDefaultName = customFileName || createExportFileName('informe-servicios', appliedFilters.dateRange.from, appliedFilters.dateRange.to);
   
-  // Usar configuración proporcionada o valores por defecto
-  const config = reportColumnConfig || defaultReportColumnConfig;
+  // Usar configuración proporcionada, mezclando con defaults para columnas faltantes
+  const config: ReportColumnsConfig = {
+    columns: {
+      ...defaultReportColumnConfig.columns,
+      ...(reportColumnConfig?.columns || {})
+    }
+  };
   
-  // Obtener solo las columnas visibles en el orden correcto
-  const visibleColumns = columnOrder.filter(key => config.columns[key].visible);
+  // Obtener solo las columnas visibles en el orden correcto (con fallback para columnas faltantes)
+  const visibleColumns = columnOrder.filter(key => {
+    const columnConfig = config.columns[key];
+    return columnConfig?.visible ?? false;
+  });
   
   // Ordenar servicios por fecha (más antiguas primero)
   const sortedServices = [...services].sort((a, b) => {
