@@ -1,116 +1,156 @@
 
-# Plan: Corregir Truncado Dinámico de Columnas en Informe de Servicios
+# Plan: Agregar Desglose de Cobros en Informe de Servicios
 
 ## Problema
 
-La imagen muestra que las columnas del PDF tienen texto truncado ("Grua Liv...", "Arriendo...", "Custodia...", "Salfa Frei...", "Custodia G...") a pesar de que la configuracion de columnas permite ajustar los anchos.
+El informe PDF muestra solo el valor total ($89,000) pero no indica cómo está compuesto. Para servicios con múltiples prestaciones (ej: Remolque + Custodia), se necesita ver el desglose:
 
-**Causa raiz**: La funcion `getColumnValue()` en `serviceReportExporter.ts` usa valores de truncado fijos (hardcoded) que ignoran la configuracion de ancho de columnas del usuario:
-
-```typescript
-// Valores actuales (fijos):
-case 'cliente': return truncate(..., 14);
-case 'tipoServicio': return truncate(..., 8);
-case 'origen': return truncate(..., 10);
-case 'destino': return truncate(..., 10);
-```
+| Actual | Deseado |
+|--------|---------|
+| Valor: $89,000 | Servicio: $40,000, Custodia: $49,000, Total: $89,000 |
 
 ---
 
 ## Solucion
 
-Calcular dinamicamente la cantidad maxima de caracteres basandose en el ancho porcentual de cada columna configurado por el usuario.
+Agregar 2 columnas nuevas al sistema de reportes:
+1. **valorBase**: Valor del servicio base (Remolque, Arriendo, etc.)
+2. **valorCustodia**: Valor de custodia (si aplica)
 
-### Logica de calculo:
+La columna "valor" existente seguira mostrando el total.
 
-```text
-Ancho disponible PDF (landscape A4) = ~269mm
-Ancho por 1% = 2.69mm
-Tamano fuente = 6pt (aproximadamente 1.5mm por caracter)
-Caracteres por 1% ancho ≈ 1.79
+---
 
-Formula: maxChars = Math.floor(columnWidth% * 1.8)
+## Cambios Requeridos
+
+### 1. Actualizar tipos de columnas
+
+**Archivo:** `src/types/reportColumnConfig.ts`
+
+Agregar las nuevas columnas al tipo `ReportColumnsConfig`:
+
+```typescript
+export interface ReportColumnsConfig {
+  columns: {
+    fecha: ReportColumnConfig;
+    folio: ReportColumnConfig;
+    cliente: ReportColumnConfig;
+    asegurado: ReportColumnConfig;
+    cotizacion: ReportColumnConfig;
+    oc: ReportColumnConfig;
+    factura: ReportColumnConfig;
+    tipoServicio: ReportColumnConfig;
+    patente: ReportColumnConfig;
+    origen: ReportColumnConfig;
+    destino: ReportColumnConfig;
+    estado: ReportColumnConfig;
+    valorBase: ReportColumnConfig;     // NUEVO
+    valorCustodia: ReportColumnConfig; // NUEVO
+    valor: ReportColumnConfig;
+  };
+}
+```
+
+Actualizar `defaultReportColumnConfig`:
+
+```typescript
+export const defaultReportColumnConfig: ReportColumnsConfig = {
+  columns: {
+    // ... columnas existentes ...
+    valorBase: { visible: true, width: 6, label: 'Servicio' },
+    valorCustodia: { visible: true, width: 6, label: 'Custodia' },
+    valor: { visible: true, width: 6, label: 'Total' }
+  }
+};
+```
+
+Actualizar `columnOrder`:
+
+```typescript
+export const columnOrder: ColumnKey[] = [
+  'fecha', 'folio', 'cliente', 'asegurado', 'cotizacion', 'oc', 'factura',
+  'tipoServicio', 'patente', 'origen', 'destino', 'estado', 
+  'valorBase', 'valorCustodia', 'valor'  // NUEVO orden
+];
 ```
 
 ---
 
-## Cambios en `src/utils/reports/serviceReportExporter.ts`
+### 2. Actualizar exportador de reportes
 
-### 1. Modificar funcion `getColumnValue` para recibir configuracion
+**Archivo:** `src/utils/reports/serviceReportExporter.ts`
 
-```typescript
-// Antes:
-const getColumnValue = (service: Service, key: ColumnKey): string => {
-
-// Despues:
-const getColumnValue = (
-  service: Service, 
-  key: ColumnKey, 
-  config: ReportColumnsConfig
-): string => {
-  // Calcular maxChars basado en el ancho configurado
-  const columnWidth = config.columns[key].width;
-  const maxChars = Math.max(5, Math.floor(columnWidth * 1.8));
-```
-
-### 2. Actualizar cada case para usar truncado dinamico
+Agregar casos para las nuevas columnas en `getColumnValue`:
 
 ```typescript
-case 'cliente':
-  return truncate(service.client?.name || 'N/A', maxChars);
-case 'asegurado':
-  return truncate((service as any).insuredName || '-', maxChars);
-case 'tipoServicio':
-  return truncate(service.serviceType?.name || 'N/A', maxChars);
-case 'origen':
-  return truncate(service.origin || 'N/A', maxChars);
-case 'destino':
-  return truncate(service.destination || 'N/A', maxChars);
-// etc.
-```
+import { getServiceValueBreakdown, getDisplayServiceValue } from '../serviceValueCalculations';
 
-### 3. Actualizar llamadas a getColumnValue
+// Dentro de getColumnValue:
+case 'valorBase':
+  const breakdown = getServiceValueBreakdown(service);
+  return breakdown.baseValue > 0 
+    ? `$${breakdown.baseValue.toLocaleString('es-CL')}` 
+    : '-';
 
-```typescript
-// Antes (linea 115):
-const body = sortedServices.map(service => 
-  visibleColumns.map(key => getColumnValue(service, key))
-);
+case 'valorCustodia':
+  const custodyBreakdown = getServiceValueBreakdown(service);
+  return custodyBreakdown.custodyValue > 0 
+    ? `$${custodyBreakdown.custodyValue.toLocaleString('es-CL')}` 
+    : '-';
 
-// Despues:
-const body = sortedServices.map(service => 
-  visibleColumns.map(key => getColumnValue(service, key, config))
-);
+case 'valor':
+  return `$${getDisplayServiceValue(service).toLocaleString('es-CL')}`;
 ```
 
 ---
 
-## Ejemplo de resultado
+### 3. Actualizar Excel export
 
-Con la configuracion por defecto:
+En la misma función, actualizar el mapeo para Excel:
 
-| Columna | Ancho % | Caracteres max |
-|---------|---------|----------------|
-| Cliente | 11% | 19 chars |
-| Tipo Servicio | 7% | 12 chars |
-| Origen | 12% | 21 chars |
-| Destino | 12% | 21 chars |
-
-Si el usuario aumenta "Tipo Servicio" a 15%, se mostraran hasta 27 caracteres.
+```typescript
+const services_data = sortedServices.map(s => {
+  const breakdown = getServiceValueBreakdown(s);
+  return {
+    // ... campos existentes ...
+    'Valor Servicio': breakdown.baseValue,
+    'Valor Custodia': breakdown.custodyValue,
+    'Valor Total': getDisplayServiceValue(s),
+    // ...
+  };
+});
+```
 
 ---
 
-## Archivo a modificar
+## Resultado Esperado
+
+### PDF (con columnas visibles):
+
+| Cliente | Tipo | Origen | Destino | Servicio | Custodia | Total |
+|---------|------|--------|---------|----------|----------|-------|
+| ICASS SpA | Grua Livianos | Salfa Freire | Custodia G5N | $40,000 | $49,000 | $89,000 |
+| ICASS SpA | Grua Livianos | Salfa Freire | Custodia G5N | $40,000 | $49,000 | $89,000 |
+
+### Para servicios sin custodia:
+
+| Cliente | Tipo | Servicio | Custodia | Total |
+|---------|------|----------|----------|-------|
+| Cliente X | Arriendo | $50,000 | - | $50,000 |
+
+---
+
+## Archivos a Modificar
 
 | Archivo | Cambio |
 |---------|--------|
-| `src/utils/reports/serviceReportExporter.ts` | Actualizar funcion `getColumnValue` para calcular truncado dinamico basado en configuracion de ancho |
+| `src/types/reportColumnConfig.ts` | Agregar tipos `valorBase` y `valorCustodia`, actualizar defaults y orden |
+| `src/utils/reports/serviceReportExporter.ts` | Agregar casos para nuevas columnas, importar `getServiceValueBreakdown`, actualizar Excel |
 
 ---
 
-## Resultado esperado
+## Compatibilidad
 
-- El texto de cada columna se ajustara automaticamente al ancho configurado
-- Con anchos mayores se mostrara texto mas completo
-- La configuracion en "Selector de informes y balance" tendra efecto real en el PDF
-- Compatibilidad hacia atras: funciona con valores por defecto si no hay configuracion
+- Usuarios existentes verán las nuevas columnas automáticamente con valores por defecto
+- Las columnas pueden ocultarse desde Configuración > Selector de informes
+- El ancho total se rebalanceará para mantener 100%
