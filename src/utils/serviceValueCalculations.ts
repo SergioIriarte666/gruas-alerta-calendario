@@ -168,19 +168,39 @@ export const getServiceValueBreakdown = (service: any) => {
     return { baseValue: 0, custodyValue: 0, totalValue: 0, hasBothValues: false };
   }
 
-  // service.value ES el valor base del servicio
-  const baseValue = service.value || 0;
+  const rawBaseValue = service.value || 0;
+  const rawCustodyValue = getCustodyTotalAmount(service);
   
-  // custody_total_amount es el valor adicional de custodia
-  const custodyValue = getCustodyTotalAmount(service);
+  // Lógica de display:
+  // - Si hay AMBOS valores: baseValue = value, custodyValue = custody (servicio con adicional)
+  // - Si solo hay value: baseValue = value, custodyValue = 0 (servicio simple)
+  // - Si solo hay custody: baseValue = custody, custodyValue = 0 (arriendo/otros es el servicio principal)
   
-  // El total es la suma de ambos
-  const totalValue = baseValue + custodyValue;
+  const hasBothValues = rawBaseValue > 0 && rawCustodyValue > 0;
+  
+  let baseValue: number;
+  let custodyValue: number;
+  
+  if (hasBothValues) {
+    // Servicio con adicional (ej: grúa + custodia)
+    baseValue = rawBaseValue;
+    custodyValue = rawCustodyValue;
+  } else if (rawBaseValue > 0) {
+    // Solo servicio base
+    baseValue = rawBaseValue;
+    custodyValue = 0;
+  } else {
+    // Solo custody (arriendo, venta, etc.) - ES el servicio principal
+    baseValue = rawCustodyValue;
+    custodyValue = 0;
+  }
+  
+  const totalValue = rawBaseValue + rawCustodyValue;
 
   return {
     baseValue,
     custodyValue,
     totalValue,
-    hasBothValues: baseValue > 0 && custodyValue > 0
+    hasBothValues
   };
 };
