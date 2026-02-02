@@ -1,11 +1,17 @@
 
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, History, Plus } from 'lucide-react';
+import { LayoutDashboard, History, Plus, X } from 'lucide-react';
 import { useSettings } from '@/hooks/useSettings';
 import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
 
-const PortalSidebar: React.FC = () => {
+interface PortalSidebarProps {
+  onClose?: () => void;
+  showCloseButton?: boolean;
+}
+
+const PortalSidebar: React.FC<PortalSidebarProps> = ({ onClose, showCloseButton = false }) => {
   const { settings } = useSettings();
   const location = useLocation();
   const companyName = settings?.company?.name || 'Grúas Alerta';
@@ -34,21 +40,39 @@ const PortalSidebar: React.FC = () => {
     // },
   ];
 
+  const handleNavClick = () => {
+    if (onClose) {
+      onClose();
+    }
+  };
+
   return (
-    <aside className="w-64 bg-gray-900 border-r border-gray-800 p-4 flex flex-col">
+    <aside className="w-64 h-full bg-gray-900 border-r border-gray-800 p-4 flex flex-col">
       <div className="mb-8">
-        <div className="flex items-center space-x-3 mb-2">
-          {settings?.company?.logo && (
-            <img 
-              src={settings.company.logo} 
-              alt="Logo empresa" 
-              className="h-10 w-10 object-contain" 
-            />
-          )}
-          <div>
-            <h2 className="text-2xl font-bold text-tms-green">{companyName}</h2>
-            <p className="text-sm text-gray-400">Portal de Clientes</p>
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center space-x-3">
+            {settings?.company?.logo && (
+              <img 
+                src={settings.company.logo} 
+                alt="Logo empresa" 
+                className="h-10 w-10 object-contain" 
+              />
+            )}
+            <div>
+              <h2 className="text-2xl font-bold text-tms-green">{companyName}</h2>
+              <p className="text-sm text-gray-400">Portal de Clientes</p>
+            </div>
           </div>
+          {showCloseButton && (
+            <Button 
+              variant="ghost" 
+              size="icon"
+              onClick={onClose}
+              className="text-gray-400 hover:text-white hover:bg-gray-800"
+            >
+              <X className="h-5 w-5" />
+            </Button>
+          )}
         </div>
       </div>
       <nav className="flex flex-col space-y-2">
@@ -58,6 +82,7 @@ const PortalSidebar: React.FC = () => {
             <Link
               key={item.name}
               to={item.href}
+              onClick={handleNavClick}
               className={cn(
                 "flex items-center space-x-3 px-3 py-2 rounded-md transition-colors",
                 isActive 

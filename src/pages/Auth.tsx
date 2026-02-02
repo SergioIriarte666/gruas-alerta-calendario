@@ -210,7 +210,7 @@ const Auth = () => {
   if (showSetPassword) {
     return (
       <AuthBackground>
-        <div className="w-[400px]">
+        <div className="w-full max-w-[400px]">
           <SetPasswordForm onSuccess={handlePasswordSetupSuccess} />
         </div>
       </AuthBackground>
@@ -219,7 +219,7 @@ const Auth = () => {
 
   return (
     <AuthBackground>
-      <div className="w-[400px]">
+      <div className="w-full max-w-[400px]">
         {isInvited && !needsPasswordSetup && (
           <div className="mb-6 p-4 bg-tms-green/10 border border-tms-green/30 rounded-lg">
             <h3 className="text-tms-green font-semibold mb-2">¡Has sido invitado!</h3>
