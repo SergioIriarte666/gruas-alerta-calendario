@@ -1,109 +1,116 @@
 
-# Plan: Corregir Valores del Reporte de Servicios
+# Plan: Corregir Truncado Dinámico de Columnas en Informe de Servicios
 
-## Problema Identificado
+## Problema
 
-El reporte PDF muestra valores incorrectos porque la consulta de base de datos no incluye el campo `custody_total_amount`. 
+La imagen muestra que las columnas del PDF tienen texto truncado ("Grua Liv...", "Arriendo...", "Custodia...", "Salfa Frei...", "Custodia G...") a pesar de que la configuracion de columnas permite ajustar los anchos.
 
-**Datos Reales en BD:**
-| Folio | value | custody_total_amount | Total Correcto |
-|-------|-------|---------------------|----------------|
-| SRV-6304 | $40,000 | $49,000 | **$89,000** |
-| SRV-6305 | $40,000 | $49,000 | **$89,000** |
-| SRV-6321 | $0 | $18,000 | **$18,000** |
-| SRV-6332 | $0 | $70,000 | **$70,000** |
-| SRV-6356 | $0 | $63,000 | **$63,000** |
-| SRV-6357 | $50,000 | $0 | **$50,000** |
-| **Total** | | | **$379,000** |
+**Causa raiz**: La funcion `getColumnValue()` en `serviceReportExporter.ts` usa valores de truncado fijos (hardcoded) que ignoran la configuracion de ancho de columnas del usuario:
 
-El reporte muestra solo el campo `value` ($130,000) en lugar del total correcto ($379,000).
-
----
-
-## Causa Raiz
-
-En `src/utils/serviceReportGenerator.ts`, la funcion `fetchServicesForReport` no incluye `custody_total_amount` en su SELECT query.
-
-La funcion `getDisplayServiceValue()` calcula: `value + custody_total_amount`, pero como `custody_total_amount` no existe en los datos obtenidos, retorna solo `value`.
+```typescript
+// Valores actuales (fijos):
+case 'cliente': return truncate(..., 14);
+case 'tipoServicio': return truncate(..., 8);
+case 'origen': return truncate(..., 10);
+case 'destino': return truncate(..., 10);
+```
 
 ---
 
 ## Solucion
 
-### Archivo: `src/utils/serviceReportGenerator.ts`
+Calcular dinamicamente la cantidad maxima de caracteres basandose en el ancho porcentual de cada columna configurado por el usuario.
 
-**Agregar `custody_total_amount` al SELECT de la consulta (linea 35):**
+### Logica de calculo:
 
-```typescript
-// Antes (lineas 23-66):
-let query = supabase
-  .from('services')
-  .select(`
-    id,
-    folio,
-    service_date,
-    ...
-    value,
-    has_excess,
-    client_covered_amount,
-    // FALTA custody_total_amount
-    ...
-  `)
+```text
+Ancho disponible PDF (landscape A4) = ~269mm
+Ancho por 1% = 2.69mm
+Tamano fuente = 6pt (aproximadamente 1.5mm por caracter)
+Caracteres por 1% ancho ≈ 1.79
 
-// Despues:
-let query = supabase
-  .from('services')
-  .select(`
-    id,
-    folio,
-    service_date,
-    ...
-    value,
-    custody_total_amount,  // AGREGAR
-    has_excess,
-    client_covered_amount,
-    ...
-  `)
-```
-
-**Agregar mapeo del campo en el objeto formateado (linea 90):**
-
-```typescript
-// Antes (lineas 83-106):
-const formattedServices: Service[] = (data || []).map((s: any) => ({
-  ...s,
-  serviceDate: s.service_date,
-  ...
-  clientCoveredAmount: s.client_covered_amount,
-  // FALTA custodyTotalAmount
-  ...
-}));
-
-// Despues:
-const formattedServices: Service[] = (data || []).map((s: any) => ({
-  ...s,
-  serviceDate: s.service_date,
-  ...
-  clientCoveredAmount: s.client_covered_amount,
-  custodyTotalAmount: s.custody_total_amount || 0,  // AGREGAR
-  ...
-}));
+Formula: maxChars = Math.floor(columnWidth% * 1.8)
 ```
 
 ---
 
-## Resultado Esperado
+## Cambios en `src/utils/reports/serviceReportExporter.ts`
 
-Despues de aplicar el fix:
+### 1. Modificar funcion `getColumnValue` para recibir configuracion
 
-| Folio | Valor en Reporte |
-|-------|-----------------|
-| SRV-6304 | $89,000 |
-| SRV-6305 | $89,000 |
-| SRV-6321 | $18,000 |
-| SRV-6332 | $70,000 |
-| SRV-6356 | $63,000 |
-| SRV-6357 | $50,000 |
-| **Total** | **$379,000** |
+```typescript
+// Antes:
+const getColumnValue = (service: Service, key: ColumnKey): string => {
 
-Los valores coincidiran con lo que muestra la interfaz de la aplicacion.
+// Despues:
+const getColumnValue = (
+  service: Service, 
+  key: ColumnKey, 
+  config: ReportColumnsConfig
+): string => {
+  // Calcular maxChars basado en el ancho configurado
+  const columnWidth = config.columns[key].width;
+  const maxChars = Math.max(5, Math.floor(columnWidth * 1.8));
+```
+
+### 2. Actualizar cada case para usar truncado dinamico
+
+```typescript
+case 'cliente':
+  return truncate(service.client?.name || 'N/A', maxChars);
+case 'asegurado':
+  return truncate((service as any).insuredName || '-', maxChars);
+case 'tipoServicio':
+  return truncate(service.serviceType?.name || 'N/A', maxChars);
+case 'origen':
+  return truncate(service.origin || 'N/A', maxChars);
+case 'destino':
+  return truncate(service.destination || 'N/A', maxChars);
+// etc.
+```
+
+### 3. Actualizar llamadas a getColumnValue
+
+```typescript
+// Antes (linea 115):
+const body = sortedServices.map(service => 
+  visibleColumns.map(key => getColumnValue(service, key))
+);
+
+// Despues:
+const body = sortedServices.map(service => 
+  visibleColumns.map(key => getColumnValue(service, key, config))
+);
+```
+
+---
+
+## Ejemplo de resultado
+
+Con la configuracion por defecto:
+
+| Columna | Ancho % | Caracteres max |
+|---------|---------|----------------|
+| Cliente | 11% | 19 chars |
+| Tipo Servicio | 7% | 12 chars |
+| Origen | 12% | 21 chars |
+| Destino | 12% | 21 chars |
+
+Si el usuario aumenta "Tipo Servicio" a 15%, se mostraran hasta 27 caracteres.
+
+---
+
+## Archivo a modificar
+
+| Archivo | Cambio |
+|---------|--------|
+| `src/utils/reports/serviceReportExporter.ts` | Actualizar funcion `getColumnValue` para calcular truncado dinamico basado en configuracion de ancho |
+
+---
+
+## Resultado esperado
+
+- El texto de cada columna se ajustara automaticamente al ancho configurado
+- Con anchos mayores se mostrara texto mas completo
+- La configuracion en "Selector de informes y balance" tendra efecto real en el PDF
+- Compatibilidad hacia atras: funciona con valores por defecto si no hay configuracion
