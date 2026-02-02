@@ -72,7 +72,7 @@ export const ReportFilters = ({
             <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
                     <div>
-                        <Label htmlFor="from-date" className="text-white">Fecha Inicio</Label>
+                        <Label htmlFor="from-date" className="text-foreground">Fecha Inicio</Label>
                         <DatePickerInput
                             id="from-date"
                             value={filters.dateRange.from}
@@ -81,7 +81,7 @@ export const ReportFilters = ({
                         />
                     </div>
                     <div>
-                        <Label htmlFor="to-date" className="text-white">Fecha Fin</Label>
+                        <Label htmlFor="to-date" className="text-foreground">Fecha Fin</Label>
                         <DatePickerInput
                             id="to-date"
                             value={filters.dateRange.to}
@@ -91,7 +91,7 @@ export const ReportFilters = ({
                     </div>
                     
                     <div>
-                        <Label htmlFor="client-filter" className="text-white">Cliente</Label>
+                        <Label htmlFor="client-filter" className="text-foreground">Cliente</Label>
                         <Select value={filters.clientId} onValueChange={(v) => onFilterChange('clientId', v)} disabled={clientsLoading}>
                             <SelectTrigger 
                                 id="client-filter" 
@@ -184,7 +184,7 @@ export const ReportFilters = ({
                     </div>
                     
                     <div>
-                        <Label htmlFor="operator-filter" className="text-white">Operador</Label>
+                        <Label htmlFor="operator-filter" className="text-foreground">Operador</Label>
                         <Select value={filters.operatorId} onValueChange={(v) => onFilterChange('operatorId', v)} disabled={operatorsLoading}>
                             <SelectTrigger 
                                 id="operator-filter" 
@@ -282,7 +282,7 @@ export const ReportFilters = ({
             <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-end">
                     <div>
-                        <Label htmlFor="sr-from-date" className="text-white">Fecha Inicio</Label>
+                        <Label htmlFor="sr-from-date" className="text-foreground">Fecha Inicio</Label>
                         <DatePickerInput
                             id="sr-from-date"
                             value={serviceReportFilters.dateRange.from}
@@ -291,7 +291,7 @@ export const ReportFilters = ({
                         />
                     </div>
                     <div>
-                        <Label htmlFor="sr-to-date" className="text-white">Fecha Fin</Label>
+                        <Label htmlFor="sr-to-date" className="text-foreground">Fecha Fin</Label>
                         <DatePickerInput
                             id="sr-to-date"
                             value={serviceReportFilters.dateRange.to}
@@ -300,7 +300,7 @@ export const ReportFilters = ({
                         />
                     </div>
                     <div>
-                        <Label htmlFor="sr-client-filter" className="text-white">Cliente</Label>
+                        <Label htmlFor="sr-client-filter" className="text-foreground">Cliente</Label>
                         <Select value={serviceReportFilters.clientId} onValueChange={(v) => onServiceReportFilterChange('clientId', v)} disabled={clientsLoading}>
                             <SelectTrigger 
                                 id="sr-client-filter" 
@@ -343,7 +343,7 @@ export const ReportFilters = ({
             <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
                     <div>
-                        <Label htmlFor="cr-from-date" className="text-white">Fecha Inicio</Label>
+                        <Label htmlFor="cr-from-date" className="text-foreground">Fecha Inicio</Label>
                         <DatePickerInput
                             id="cr-from-date"
                             value={costReportFilters.dateRange.from}
@@ -352,7 +352,7 @@ export const ReportFilters = ({
                         />
                     </div>
                     <div>
-                        <Label htmlFor="cr-to-date" className="text-white">Fecha Fin</Label>
+                        <Label htmlFor="cr-to-date" className="text-foreground">Fecha Fin</Label>
                         <DatePickerInput
                             id="cr-to-date"
                             value={costReportFilters.dateRange.to}
@@ -361,7 +361,7 @@ export const ReportFilters = ({
                         />
                     </div>
                     <div>
-                        <Label htmlFor="cr-category-filter" className="text-white">Categoría</Label>
+                        <Label htmlFor="cr-category-filter" className="text-foreground">Categoría</Label>
                         <Select value={costReportFilters.categoryId} onValueChange={(v) => onCostReportFilterChange('categoryId', v)} disabled={costCategoriesLoading}>
                             <SelectTrigger 
                                 id="cr-category-filter" 
@@ -392,7 +392,7 @@ export const ReportFilters = ({
                         </Select>
                     </div>
                     <div>
-                        <Label htmlFor="cr-crane-filter" className="text-white">Grúa</Label>
+                        <Label htmlFor="cr-crane-filter" className="text-foreground">Grúa</Label>
                         <Select value={costReportFilters.craneId} onValueChange={(v) => onCostReportFilterChange('craneId', v)} disabled={cranesLoading}>
                             <SelectTrigger 
                                 id="cr-crane-filter" 
@@ -422,7 +422,7 @@ export const ReportFilters = ({
                         </Select>
                     </div>
                     <div>
-                        <Label htmlFor="cr-operator-filter" className="text-white">Operador</Label>
+                        <Label htmlFor="cr-operator-filter" className="text-foreground">Operador</Label>
                         <Select value={costReportFilters.operatorId} onValueChange={(v) => onCostReportFilterChange('operatorId', v)} disabled={operatorsLoading}>
                             <SelectTrigger 
                                 id="cr-operator-filter" 

@@ -6,6 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ServiceClosure } from '@/types';
 import { Client } from '@/types';
 import { formatForDisplay } from '@/utils/timezoneUtils';
+import { useDeviceType } from '@/hooks/useDeviceType';
+import { ClosuresMobileView } from './ClosuresMobileView';
 
 export type ClosureSortField = 'folio' | 'dateFrom' | 'clientId' | 'serviceCount' | 'total' | 'status';
 export type SortDirection = 'asc' | 'desc';
@@ -36,6 +38,21 @@ const SortIcon = ({ field, currentSortField, sortDirection }: {
 };
 
 const ClosuresTable = ({ closures, clients, onEdit, onDelete, onClose, onViewDetails, sortField, sortDirection, onSort }: ClosuresTableProps) => {
+  const { isMobile } = useDeviceType();
+
+  if (isMobile) {
+    return (
+      <ClosuresMobileView
+        closures={closures}
+        clients={clients}
+        onEdit={onEdit}
+        onDelete={onDelete}
+        onClose={onClose}
+        onViewDetails={onViewDetails}
+      />
+    );
+  }
+
   const getClientName = (clientId?: string) => {
     if (!clientId) return 'Todos los clientes';
     const client = clients.find(c => c.id === clientId);

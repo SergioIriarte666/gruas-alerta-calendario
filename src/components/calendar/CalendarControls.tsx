@@ -30,7 +30,7 @@ export const CalendarControls = ({
             >
               <ChevronLeft className="w-4 h-4" />
             </Button>
-            <h2 className="text-xl font-semibold text-white min-w-64 text-center">
+            <h2 className="text-xl font-semibold text-foreground min-w-48 sm:min-w-64 text-center">
               {viewTitle}
             </h2>
             <Button 

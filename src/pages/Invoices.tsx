@@ -363,24 +363,28 @@ const Invoices = () => {
   return (
     <div className="space-y-6">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-6 max-w-4xl mx-auto bg-card border-border">
-          <TabsTrigger value="invoices" className="text-foreground data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-            Facturas
+        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 max-w-4xl mx-auto bg-card border-border gap-1">
+          <TabsTrigger value="invoices" className="text-xs sm:text-sm text-foreground data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+            <span className="hidden sm:inline">Facturas</span>
+            <span className="sm:hidden">Fact.</span>
           </TabsTrigger>
-          <TabsTrigger value="pipeline" className="text-foreground data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+          <TabsTrigger value="pipeline" className="text-xs sm:text-sm text-foreground data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
             Pipeline
           </TabsTrigger>
-          <TabsTrigger value="alerts" className="text-foreground data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+          <TabsTrigger value="alerts" className="text-xs sm:text-sm text-foreground data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
             Alertas
           </TabsTrigger>
-          <TabsTrigger value="payments" className="text-foreground data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-            Conciliación
+          <TabsTrigger value="payments" className="text-xs sm:text-sm text-foreground data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+            <span className="hidden sm:inline">Conciliación</span>
+            <span className="sm:hidden">Conc.</span>
           </TabsTrigger>
-          <TabsTrigger value="history" className="text-foreground data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-            Historial
+          <TabsTrigger value="history" className="text-xs sm:text-sm text-foreground data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+            <span className="hidden sm:inline">Historial</span>
+            <span className="sm:hidden">Hist.</span>
           </TabsTrigger>
-          <TabsTrigger value="cancellations" className="text-foreground data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-            Anulaciones
+          <TabsTrigger value="cancellations" className="text-xs sm:text-sm text-foreground data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+            <span className="hidden sm:inline">Anulaciones</span>
+            <span className="sm:hidden">Anul.</span>
           </TabsTrigger>
         </TabsList>
 

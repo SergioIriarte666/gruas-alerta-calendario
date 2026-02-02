@@ -100,10 +100,10 @@ const Inventory = () => {
 
       {/* Main Content Tabs */}
       <Tabs defaultValue="stock" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="stock">📦 Stock</TabsTrigger>
-          <TabsTrigger value="movements">📝 Movimientos</TabsTrigger>
-          <TabsTrigger value="reports">📊 Reportes</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-3 sm:w-auto sm:inline-flex">
+          <TabsTrigger value="stock" className="text-xs sm:text-sm">📦 <span className="hidden sm:inline ml-1">Stock</span></TabsTrigger>
+          <TabsTrigger value="movements" className="text-xs sm:text-sm">📝 <span className="hidden sm:inline ml-1">Movimientos</span></TabsTrigger>
+          <TabsTrigger value="reports" className="text-xs sm:text-sm">📊 <span className="hidden sm:inline ml-1">Reportes</span></TabsTrigger>
         </TabsList>
 
         <TabsContent value="stock" className="space-y-4">

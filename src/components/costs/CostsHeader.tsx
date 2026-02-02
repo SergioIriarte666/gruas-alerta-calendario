@@ -204,7 +204,7 @@ export const CostsHeader = ({
           />
         </div>
         
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           {/* Toggle de vista */}
           {onViewModeChange && (
             <div className="flex border rounded-md">
@@ -237,9 +237,10 @@ export const CostsHeader = ({
           )}
           
           {onExport && (
-            <Button variant="outline" size="sm" onClick={onExport}>
-              <Download className="w-4 h-4 mr-2" />
-              Exportar Excel
+            <Button variant="outline" size="sm" onClick={onExport} className="whitespace-nowrap">
+              <Download className="w-4 h-4 sm:mr-2" />
+              <span className="hidden sm:inline">Exportar Excel</span>
+              <span className="sm:hidden">Excel</span>
             </Button>
           )}
         </div>
