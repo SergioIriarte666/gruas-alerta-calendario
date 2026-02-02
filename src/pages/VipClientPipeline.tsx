@@ -183,25 +183,26 @@ export default function VipClientPipeline() {
   return (
     <div className="container mx-auto p-6 space-y-6 vip-pipeline-scope">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="flex flex-wrap items-center gap-4">
           <Button 
             variant="ghost" 
             onClick={() => navigate('/clients')}
             className="text-muted-foreground hover:text-foreground"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
-            Volver a Clientes
+            <span className="hidden sm:inline">Volver a Clientes</span>
+            <span className="sm:hidden">Volver</span>
           </Button>
-          <div className="h-8 w-px bg-border" />
+          <div className="hidden sm:block h-8 w-px bg-border" />
           <div>
-            <h1 className="text-2xl font-bold text-foreground flex items-center gap-3">
+            <h1 className="text-xl sm:text-2xl font-bold text-foreground flex flex-wrap items-center gap-2 sm:gap-3">
               {client.name}
-            <Badge variant="secondary">
-              VIP Pipeline
-            </Badge>
+              <Badge variant="secondary" className="text-xs sm:text-sm">
+                VIP Pipeline
+              </Badge>
             </h1>
-            <p className="text-muted-foreground flex items-center gap-2">
+            <p className="text-muted-foreground flex flex-wrap items-center gap-2 text-sm">
               RUT: {client.rut} • 
               <DepartmentBadge
                 department={client.department}
@@ -214,9 +215,10 @@ export default function VipClientPipeline() {
         </div>
 
         <div className="flex items-center gap-2">
-          <Badge variant="outline">
+          <Badge variant="outline" className="text-xs">
             <CheckCircle className="w-3 h-3 mr-1" />
-            Sistema Activo
+            <span className="hidden sm:inline">Sistema Activo</span>
+            <span className="sm:hidden">Activo</span>
           </Badge>
         </div>
       </div>
@@ -226,17 +228,17 @@ export default function VipClientPipeline() {
 
       {/* Main Content Tabs */}
       <Tabs defaultValue="pipeline" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4 bg-card border">
-          <TabsTrigger value="pipeline" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 bg-card border">
+          <TabsTrigger value="pipeline" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-xs sm:text-sm">
             Pipeline
           </TabsTrigger>
-          <TabsTrigger value="purchase-orders" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+          <TabsTrigger value="purchase-orders" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-xs sm:text-sm">
             O.C.
           </TabsTrigger>
-          <TabsTrigger value="analytics" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+          <TabsTrigger value="analytics" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-xs sm:text-sm">
             Analytics
           </TabsTrigger>
-          <TabsTrigger value="reports" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+          <TabsTrigger value="reports" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-xs sm:text-sm">
             Reportes
           </TabsTrigger>
         </TabsList>

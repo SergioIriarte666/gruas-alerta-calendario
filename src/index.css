@@ -612,6 +612,31 @@ body {
   background-color: hsl(var(--muted) / 0.5);
 }
 
+/* Clients Mobile View Scope */
+.clients-scope {
+  color: hsl(var(--foreground));
+}
+
+.clients-scope .text-white {
+  color: hsl(var(--foreground)) !important;
+}
+
+.clients-scope .text-gray-400 {
+  color: hsl(var(--muted-foreground)) !important;
+}
+
+.clients-scope .text-gray-500 {
+  color: hsl(var(--muted-foreground)) !important;
+}
+
+.clients-scope .text-purple-400 {
+  color: hsl(271 81% 56%) !important;
+}
+
+.clients-scope .text-blue-400 {
+  color: hsl(217 91% 60%) !important;
+}
+
 /* Media queries para responsive */
 @media (max-width: 768px) {
   .responsive-grid {

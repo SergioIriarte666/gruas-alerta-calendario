@@ -42,12 +42,12 @@ export const ClientsMobileView = ({
     return (
       <Card className="glass-card">
         <CardContent className="p-6 text-center">
-          <Users className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-          <h3 className="text-lg font-medium text-white mb-2">No se encontraron clientes</h3>
-          <p className="text-gray-400 mb-4">
+          <Users className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+          <h3 className="text-lg font-medium text-foreground mb-2">No se encontraron clientes</h3>
+          <p className="text-muted-foreground mb-4">
             No hay clientes que coincidan con "{searchTerm}"
           </p>
-          <Button onClick={onNewClient} className="bg-tms-green hover:bg-tms-green/80 text-black">
+          <Button onClick={onNewClient} className="bg-primary hover:bg-primary/80 text-primary-foreground">
             <Plus className="w-4 h-4 mr-2" />
             Agregar Cliente
           </Button>
@@ -60,12 +60,12 @@ export const ClientsMobileView = ({
     return (
       <Card className="glass-card">
         <CardContent className="p-6 text-center">
-          <Users className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-          <h3 className="text-lg font-medium text-white mb-2">No hay clientes registrados</h3>
-          <p className="text-gray-400 mb-4">
+          <Users className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+          <h3 className="text-lg font-medium text-foreground mb-2">No hay clientes registrados</h3>
+          <p className="text-muted-foreground mb-4">
             Comienza agregando tu primer cliente al sistema
           </p>
-          <Button onClick={onNewClient} className="bg-tms-green hover:bg-tms-green/80 text-black">
+          <Button onClick={onNewClient} className="bg-primary hover:bg-primary/80 text-primary-foreground">
             <Plus className="w-4 h-4 mr-2" />
             Agregar Primer Cliente
           </Button>
@@ -77,7 +77,7 @@ export const ClientsMobileView = ({
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-white">Clientes ({totalClients})</h3>
+        <h3 className="text-lg font-semibold text-foreground">Clientes ({totalClients})</h3>
       </div>
       
       {clients.map((client) => (
@@ -85,10 +85,10 @@ export const ClientsMobileView = ({
           <CardContent className="p-4">
             <div className="flex items-start justify-between mb-3">
               <div className="flex-1">
-                <h4 className="font-semibold text-white text-lg">{client.name}</h4>
+                <h4 className="font-semibold text-foreground text-lg">{client.name}</h4>
                 <div className="flex items-center gap-2 flex-wrap">
-                  <p className="text-tms-green text-sm font-medium">{client.rut}</p>
-                  <span className="text-gray-500">•</span>
+                  <p className="text-primary text-sm font-medium">{client.rut}</p>
+                  <span className="text-muted-foreground">•</span>
                   <DepartmentBadge
                     department={client.department}
                     clientRut={client.rut}
@@ -101,8 +101,8 @@ export const ClientsMobileView = ({
               <Badge
                 variant={client.isActive ? "default" : "secondary"}
                 className={client.isActive 
-                  ? "bg-tms-green text-black" 
-                  : "bg-gray-600 text-white"
+                  ? "bg-primary text-primary-foreground" 
+                  : "bg-muted text-muted-foreground"
                 }
               >
                 {client.isActive ? 'Activo' : 'Inactivo'}
@@ -111,29 +111,29 @@ export const ClientsMobileView = ({
 
             <div className="space-y-2 mb-4">
               {client.email && (
-                <div className="flex items-center text-white text-sm">
-                  <Mail className="w-4 h-4 mr-2 text-gray-400 flex-shrink-0" />
+                <div className="flex items-center text-foreground text-sm">
+                  <Mail className="w-4 h-4 mr-2 text-muted-foreground flex-shrink-0" />
                   <span className="truncate">{client.email}</span>
                 </div>
               )}
               
               {client.phone && (
-                <div className="flex items-center text-white text-sm">
-                  <Phone className="w-4 h-4 mr-2 text-gray-400 flex-shrink-0" />
+                <div className="flex items-center text-foreground text-sm">
+                  <Phone className="w-4 h-4 mr-2 text-muted-foreground flex-shrink-0" />
                   <span>{client.phone}</span>
                 </div>
               )}
               
               {client.contactName && (
-                <div className="flex items-center text-white text-sm">
-                  <User className="w-4 h-4 mr-2 text-gray-400 flex-shrink-0" />
+                <div className="flex items-center text-foreground text-sm">
+                  <User className="w-4 h-4 mr-2 text-muted-foreground flex-shrink-0" />
                   <span className="truncate">{client.contactName}</span>
                 </div>
               )}
               
               {client.address && (
-                <div className="flex items-center text-white text-sm">
-                  <MapPin className="w-4 h-4 mr-2 text-gray-400 flex-shrink-0" />
+                <div className="flex items-center text-foreground text-sm">
+                  <MapPin className="w-4 h-4 mr-2 text-muted-foreground flex-shrink-0" />
                   <span className="text-xs truncate">{client.address}</span>
                 </div>
               )}
