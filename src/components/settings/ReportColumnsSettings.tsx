@@ -24,22 +24,30 @@ export const ReportColumnsSettings: React.FC<ReportColumnsSettingsProps> = ({
   config,
   onChange
 }) => {
+  // Merge user config with defaults to ensure all columns exist
+  const safeConfig: ReportColumnsConfig = useMemo(() => ({
+    columns: {
+      ...defaultReportColumnConfig.columns,
+      ...config.columns
+    }
+  }), [config]);
+
   const { visibleColumns, totalWidth, isValid } = useMemo(() => {
-    const visible = columnOrder.filter(key => config.columns[key].visible);
-    const total = visible.reduce((sum, key) => sum + config.columns[key].width, 0);
+    const visible = columnOrder.filter(key => safeConfig.columns[key]?.visible ?? false);
+    const total = visible.reduce((sum, key) => sum + (safeConfig.columns[key]?.width ?? 5), 0);
     return {
       visibleColumns: visible,
       totalWidth: total,
       isValid: Math.abs(total - 100) < 1
     };
-  }, [config]);
+  }, [safeConfig]);
 
   const handleVisibilityChange = (key: ColumnKey, checked: boolean) => {
     const newConfig = {
-      ...config,
+      ...safeConfig,
       columns: {
-        ...config.columns,
-        [key]: { ...config.columns[key], visible: checked }
+        ...safeConfig.columns,
+        [key]: { ...safeConfig.columns[key], visible: checked }
       }
     };
     onChange(newConfig);
@@ -47,23 +55,23 @@ export const ReportColumnsSettings: React.FC<ReportColumnsSettingsProps> = ({
 
   const handleWidthChange = (key: ColumnKey, width: number) => {
     const newConfig = {
-      ...config,
+      ...safeConfig,
       columns: {
-        ...config.columns,
-        [key]: { ...config.columns[key], width }
+        ...safeConfig.columns,
+        [key]: { ...safeConfig.columns[key], width }
       }
     };
     onChange(newConfig);
   };
 
   const handleAutoBalance = () => {
-    const visible = columnOrder.filter(key => config.columns[key].visible);
+    const visible = columnOrder.filter(key => safeConfig.columns[key]?.visible ?? false);
     if (visible.length === 0) return;
 
     const baseWidth = Math.floor(100 / visible.length);
     const remainder = 100 - (baseWidth * visible.length);
 
-    const newColumns = { ...config.columns };
+    const newColumns = { ...safeConfig.columns };
     visible.forEach((key, index) => {
       newColumns[key] = {
         ...newColumns[key],
@@ -71,7 +79,7 @@ export const ReportColumnsSettings: React.FC<ReportColumnsSettingsProps> = ({
       };
     });
 
-    onChange({ ...config, columns: newColumns });
+    onChange({ ...safeConfig, columns: newColumns });
   };
 
   const handleResetDefaults = () => {
@@ -122,7 +130,8 @@ export const ReportColumnsSettings: React.FC<ReportColumnsSettingsProps> = ({
       {/* Lista de columnas */}
       <div className="space-y-3">
         {columnOrder.map((key) => {
-          const column = config.columns[key];
+          const column = safeConfig.columns[key];
+          if (!column) return null;
           return (
             <div 
               key={key} 
@@ -205,7 +214,8 @@ export const ReportColumnsSettings: React.FC<ReportColumnsSettingsProps> = ({
         <Label className="text-black text-sm">Vista previa de columnas</Label>
         <div className="flex h-8 rounded-lg overflow-hidden border border-gray-200">
           {visibleColumns.map((key, index) => {
-            const column = config.columns[key];
+            const column = safeConfig.columns[key];
+            if (!column) return null;
             const colors = [
               'bg-blue-500', 'bg-tms-green', 'bg-purple-500', 'bg-amber-500',
               'bg-pink-500', 'bg-indigo-500', 'bg-cyan-500', 'bg-orange-500',
