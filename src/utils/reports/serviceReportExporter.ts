@@ -11,30 +11,34 @@ import { Service } from '@/types';
 import { defaultReportColumnConfig, ColumnKey, columnOrder, ReportColumnsConfig } from '@/types/reportColumnConfig';
 
 // Función para obtener el valor de una columna dado un servicio
-const getColumnValue = (service: Service, key: ColumnKey): string => {
+const getColumnValue = (service: Service, key: ColumnKey, config: ReportColumnsConfig): string => {
+  // Calcular maxChars dinámicamente basado en el ancho configurado
+  const columnWidth = config.columns[key].width;
+  const maxChars = Math.max(5, Math.floor(columnWidth * 1.8));
+  
   switch (key) {
     case 'fecha':
       return formatDate(new Date(service.serviceDate + 'T00:00:00'), 'dd/MM/yy');
     case 'folio':
       return service.folio;
     case 'cliente':
-      return truncate(service.client?.name || 'N/A', 14);
+      return truncate(service.client?.name || 'N/A', maxChars);
     case 'asegurado':
-      return truncate((service as any).insuredName || '-', 14);
+      return truncate((service as any).insuredName || '-', maxChars);
     case 'cotizacion':
-      return truncate(service.quoteNumber || '-', 8);
+      return truncate(service.quoteNumber || '-', maxChars);
     case 'oc':
-      return truncate(service.purchaseOrder || '-', 6);
+      return truncate(service.purchaseOrder || '-', maxChars);
     case 'factura':
-      return truncate(service.invoiceFolio || '-', 5);
+      return truncate(service.invoiceFolio || '-', maxChars);
     case 'tipoServicio':
-      return truncate(service.serviceType?.name || 'N/A', 8);
+      return truncate(service.serviceType?.name || 'N/A', maxChars);
     case 'patente':
       return service.licensePlate || 'N/A';
     case 'origen':
-      return truncate(service.origin || 'N/A', 10);
+      return truncate(service.origin || 'N/A', maxChars);
     case 'destino':
-      return truncate(service.destination || 'N/A', 10);
+      return truncate(service.destination || 'N/A', maxChars);
     case 'estado':
       return service.status;
     case 'valor':
@@ -112,7 +116,7 @@ export const exportServiceReport = async ({
       
       // Generar body dinámicamente
       const body = sortedServices.map(service => 
-        visibleColumns.map(key => getColumnValue(service, key))
+        visibleColumns.map(key => getColumnValue(service, key, config))
       );
 
       // Calcular anchos de columnas proporcionalmente
