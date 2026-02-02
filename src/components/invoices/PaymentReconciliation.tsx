@@ -245,7 +245,7 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
       {/* Filtros */}
       <div className="flex gap-4 items-center">
         <Select value={selectedClient} onValueChange={setSelectedClient}>
-          <SelectTrigger className="w-[300px]">
+          <SelectTrigger className="w-full sm:w-[300px]">
             <SelectValue placeholder="Filtrar por cliente" />
           </SelectTrigger>
           <SelectContent>

@@ -38,7 +38,7 @@
 
 /* Content styling */
 .ClosureSelector-container [data-radix-select-content] {
-  min-width: 600px !important;
+  min-width: min(600px, 90vw) !important;
   max-width: 90vw !important;
   width: auto !important;
   background-color: #1f2937 !important;

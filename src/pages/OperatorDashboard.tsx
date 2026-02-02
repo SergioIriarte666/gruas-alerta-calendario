@@ -113,32 +113,32 @@ const OperatorDashboard = () => {
       
       <div className="space-y-4">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-4 bg-muted border border-border">
-            <TabsTrigger value="asignados" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-muted-foreground hover:text-foreground">
-              <Clock className="w-4 h-4 mr-2" />
-              Asignados
-              {serviceTabs.asignados.length > 0 && <Badge variant="secondary" className="ml-2">
+          <TabsList className="flex w-full overflow-x-auto bg-muted border border-border">
+            <TabsTrigger value="asignados" className="flex-1 min-w-0 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-muted-foreground hover:text-foreground">
+              <Clock className="w-4 h-4 sm:mr-2 flex-shrink-0" />
+              <span className="hidden sm:inline">Asignados</span>
+              {serviceTabs.asignados.length > 0 && <Badge variant="secondary" className="ml-1 sm:ml-2">
                   {serviceTabs.asignados.length}
                 </Badge>}
             </TabsTrigger>
-            <TabsTrigger value="pendientes_entrega" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-muted-foreground hover:text-foreground">
-              <Package className="w-4 h-4 mr-2" />
-              Por Entregar
-              {serviceTabs.pendientes_entrega.length > 0 && <Badge variant="secondary" className="ml-2">
+            <TabsTrigger value="pendientes_entrega" className="flex-1 min-w-0 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-muted-foreground hover:text-foreground">
+              <Package className="w-4 h-4 sm:mr-2 flex-shrink-0" />
+              <span className="hidden sm:inline">Por Entregar</span>
+              {serviceTabs.pendientes_entrega.length > 0 && <Badge variant="secondary" className="ml-1 sm:ml-2">
                   {serviceTabs.pendientes_entrega.length}
                 </Badge>}
             </TabsTrigger>
-            <TabsTrigger value="activos" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-muted-foreground hover:text-foreground">
-              <Play className="w-4 h-4 mr-2" />
-              Activos
-              {serviceTabs.activos.length > 0 && <Badge variant="secondary" className="ml-2">
+            <TabsTrigger value="activos" className="flex-1 min-w-0 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-muted-foreground hover:text-foreground">
+              <Play className="w-4 h-4 sm:mr-2 flex-shrink-0" />
+              <span className="hidden sm:inline">Activos</span>
+              {serviceTabs.activos.length > 0 && <Badge variant="secondary" className="ml-1 sm:ml-2">
                   {serviceTabs.activos.length}
                 </Badge>}
             </TabsTrigger>
-            <TabsTrigger value="completados" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-muted-foreground hover:text-foreground">
-              <CheckCircle className="w-4 h-4 mr-2" />
-              Completados
-              {serviceTabs.completados.length > 0 && <Badge variant="secondary" className="ml-2">
+            <TabsTrigger value="completados" className="flex-1 min-w-0 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-muted-foreground hover:text-foreground">
+              <CheckCircle className="w-4 h-4 sm:mr-2 flex-shrink-0" />
+              <span className="hidden sm:inline">Completados</span>
+              {serviceTabs.completados.length > 0 && <Badge variant="secondary" className="ml-1 sm:ml-2">
                   {serviceTabs.completados.length}
                 </Badge>}
             </TabsTrigger>

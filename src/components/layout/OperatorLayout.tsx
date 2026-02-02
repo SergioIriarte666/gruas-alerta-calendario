@@ -72,10 +72,10 @@ export const OperatorLayout = () => {
             </div>
           </div>
           
-          <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-2 text-foreground">
-              <User className="w-4 h-4" />
-              <span className="text-sm">{user?.name}</span>
+          <div className="flex items-center space-x-2 sm:space-x-4">
+            <div className="hidden sm:flex items-center space-x-2 text-foreground">
+              <User className="w-4 h-4 flex-shrink-0" />
+              <span className="text-sm truncate max-w-[120px]">{user?.name}</span>
             </div>
             <Button
               variant="ghost"
