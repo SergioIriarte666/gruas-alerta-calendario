@@ -80,7 +80,7 @@ const Calendar = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-96">
-        <div className="text-white">Cargando calendario...</div>
+        <div className="text-foreground">Cargando calendario...</div>
       </div>
     );
   }

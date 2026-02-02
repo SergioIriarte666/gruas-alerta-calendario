@@ -48,36 +48,44 @@ export const Suppliers: React.FC = () => {
               Administra proveedores, pagos y seguimiento de vencimientos
             </p>
           </div>
-          <div className="flex gap-3">
+          <div className="flex flex-wrap gap-2">
             <Button 
               variant="outline"
+              size="sm"
               onClick={() => setShowXMLUpload(true)}
               className="flex items-center gap-2"
             >
               <Upload className="w-4 h-4" />
-              Importar XML
+              <span className="hidden sm:inline">Importar XML</span>
+              <span className="sm:hidden">XML</span>
             </Button>
             <Button 
+              size="sm"
               onClick={() => setShowRegisterPayment(true)}
               className="flex items-center gap-2 bg-violet-500 hover:bg-violet-600 text-white"
             >
               <Receipt className="w-4 h-4" />
-              Registrar Pago
+              <span className="hidden sm:inline">Registrar Pago</span>
+              <span className="sm:hidden">Pago</span>
             </Button>
             <Button 
               variant="outline"
+              size="sm"
               onClick={() => setShowPaymentForm(true)}
               className="flex items-center gap-2"
             >
               <CreditCard className="w-4 h-4" />
-              Nuevo Pago
+              <span className="hidden sm:inline">Nuevo Pago</span>
+              <span className="sm:hidden">+ Pago</span>
             </Button>
             <Button 
+              size="sm"
               onClick={() => setShowSupplierForm(true)}
               className="flex items-center gap-2"
             >
               <Plus className="w-4 h-4" />
-              Nuevo Proveedor
+              <span className="hidden sm:inline">Nuevo Proveedor</span>
+              <span className="sm:hidden">+ Prov.</span>
             </Button>
           </div>
         </div>
@@ -151,26 +159,26 @@ export const Suppliers: React.FC = () => {
 
         {/* Main Content - Tabs */}
         <CustomTabs value={activeTab} onValueChange={setActiveTab}>
-          <CustomTabsList className="grid w-full grid-cols-5">
+          <CustomTabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-1">
             <CustomTabsTrigger value="suppliers">
-              <Building2 className="w-4 h-4 mr-2" />
-              Proveedores
+              <Building2 className="w-4 h-4 sm:mr-2" />
+              <span className="hidden sm:inline">Proveedores</span>
             </CustomTabsTrigger>
             <CustomTabsTrigger value="payments">
-              <CreditCard className="w-4 h-4 mr-2" />
-              Pagos
+              <CreditCard className="w-4 h-4 sm:mr-2" />
+              <span className="hidden sm:inline">Pagos</span>
             </CustomTabsTrigger>
             <CustomTabsTrigger value="categories">
-              <Settings className="w-4 h-4 mr-2" />
-              Categorías
+              <Settings className="w-4 h-4 sm:mr-2" />
+              <span className="hidden sm:inline">Categorías</span>
             </CustomTabsTrigger>
             <CustomTabsTrigger value="calendar">
-              <Calendar className="w-4 h-4 mr-2" />
-              Calendario
+              <Calendar className="w-4 h-4 sm:mr-2" />
+              <span className="hidden sm:inline">Calendario</span>
             </CustomTabsTrigger>
             <CustomTabsTrigger value="import">
-              <Upload className="w-4 h-4 mr-2" />
-              Importar
+              <Upload className="w-4 h-4 sm:mr-2" />
+              <span className="hidden sm:inline">Importar</span>
             </CustomTabsTrigger>
           </CustomTabsList>
 

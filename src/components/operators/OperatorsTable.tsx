@@ -1,10 +1,11 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Edit, Trash2, UserCheck, UserX, Plus, Users, ArrowUpDown, ArrowUp, ArrowDown, Eye } from 'lucide-react';
 import { Operator } from '@/types';
 import { formatForDisplay } from '@/utils/timezoneUtils';
+import { useDeviceType } from '@/hooks/useDeviceType';
+import { OperatorsMobileView } from './OperatorsMobileView';
 
 export type OperatorSortField = 'operatorType' | 'name' | 'rut' | 'phone' | 'license' | 'examExpiry' | 'isActive';
 export type SortDirection = 'asc' | 'desc';
@@ -49,6 +50,23 @@ export const OperatorsTable = ({
   sortDirection,
   onSort,
 }: OperatorsTableProps) => {
+  const { isMobile } = useDeviceType();
+
+  if (isMobile) {
+    return (
+      <OperatorsMobileView
+        operators={operators}
+        totalOperators={totalOperators}
+        onEdit={onEdit}
+        onDelete={onDelete}
+        onToggleStatus={onToggleStatus}
+        onViewDetails={onViewDetails}
+        onNewOperator={onNewOperator}
+        searchTerm={searchTerm}
+      />
+    );
+  }
+
   if (operators.length === 0 && searchTerm) {
     return (
       <Card className="bg-card border-border operators-scope">

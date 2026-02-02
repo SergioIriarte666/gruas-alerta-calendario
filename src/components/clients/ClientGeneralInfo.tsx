@@ -30,7 +30,7 @@ export const ClientGeneralInfo = ({ client }: ClientGeneralInfoProps) => {
     <div className="space-y-6">
       <Card className="glass-card">
         <CardHeader>
-          <CardTitle className="text-white flex items-center">
+          <CardTitle className="text-foreground flex items-center">
             <User className="mr-2 h-5 w-5" />
             Información del Cliente
           </CardTitle>

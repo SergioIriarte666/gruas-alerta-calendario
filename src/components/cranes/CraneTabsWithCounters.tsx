@@ -1,4 +1,3 @@
-
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { CraneServices } from './CraneServices';
@@ -10,6 +9,7 @@ import { CraneInventoryTab } from './CraneInventoryTab';
 import { Crane } from '@/types';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { BarChart3, Wrench, DollarSign, Package, Settings, Warehouse } from 'lucide-react';
 
 interface CraneTabsWithCountersProps {
   crane: Crane;
@@ -76,28 +76,34 @@ export const CraneTabsWithCounters = ({ crane }: CraneTabsWithCountersProps) => 
 
   return (
     <Tabs defaultValue="overview" className="w-full h-full flex flex-col">
-      <TabsList className="grid w-full grid-cols-5 lg:grid-cols-6 bg-muted border-b border-border">
-        <TabsTrigger value="overview" className="data-[state=active]:bg-primary/20 data-[state=active]:text-primary">
-          Resumen
+      <TabsList className="flex w-full overflow-x-auto bg-muted border-b border-border">
+        <TabsTrigger value="overview" className="flex-shrink-0 px-3 min-w-0 data-[state=active]:bg-primary/20 data-[state=active]:text-primary">
+          <BarChart3 className="w-4 h-4 sm:mr-2" />
+          <span className="hidden sm:inline">Resumen</span>
         </TabsTrigger>
-        <TabsTrigger value="services" className="data-[state=active]:bg-primary/20 data-[state=active]:text-primary">
-          Servicios
+        <TabsTrigger value="services" className="flex-shrink-0 px-3 min-w-0 data-[state=active]:bg-primary/20 data-[state=active]:text-primary">
+          <Wrench className="w-4 h-4 sm:mr-2" />
+          <span className="hidden sm:inline">Servicios</span>
           <CounterBadge count={counters?.services || 0} />
         </TabsTrigger>
-        <TabsTrigger value="costs" className="data-[state=active]:bg-primary/20 data-[state=active]:text-primary">
-          Costos Operativos
+        <TabsTrigger value="costs" className="flex-shrink-0 px-3 min-w-0 data-[state=active]:bg-primary/20 data-[state=active]:text-primary">
+          <DollarSign className="w-4 h-4 sm:mr-2" />
+          <span className="hidden sm:inline">Costos</span>
           <CounterBadge count={counters?.costs || 0} />
         </TabsTrigger>
-        <TabsTrigger value="parts" className="data-[state=active]:bg-primary/20 data-[state=active]:text-primary">
-          Piezas
+        <TabsTrigger value="parts" className="flex-shrink-0 px-3 min-w-0 data-[state=active]:bg-primary/20 data-[state=active]:text-primary">
+          <Package className="w-4 h-4 sm:mr-2" />
+          <span className="hidden sm:inline">Piezas</span>
           <CounterBadge count={counters?.parts || 0} />
         </TabsTrigger>
-        <TabsTrigger value="maintenance" className="data-[state=active]:bg-primary/20 data-[state=active]:text-primary">
-          Mantenimiento
+        <TabsTrigger value="maintenance" className="flex-shrink-0 px-3 min-w-0 data-[state=active]:bg-primary/20 data-[state=active]:text-primary">
+          <Settings className="w-4 h-4 sm:mr-2" />
+          <span className="hidden sm:inline">Mant.</span>
           <CounterBadge count={counters?.maintenance || 0} />
         </TabsTrigger>
-        <TabsTrigger value="inventory" className="data-[state=active]:bg-primary/20 data-[state=active]:text-primary hidden lg:flex">
-          Inventario
+        <TabsTrigger value="inventory" className="flex-shrink-0 px-3 min-w-0 data-[state=active]:bg-primary/20 data-[state=active]:text-primary hidden lg:flex">
+          <Warehouse className="w-4 h-4 sm:mr-2" />
+          <span className="hidden sm:inline">Inventario</span>
         </TabsTrigger>
       </TabsList>
 
