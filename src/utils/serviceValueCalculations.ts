@@ -168,20 +168,14 @@ export const getServiceValueBreakdown = (service: any) => {
     return { baseValue: 0, custodyValue: 0, totalValue: 0, hasBothValues: false };
   }
 
+  // service.value ES el valor base del servicio
+  const baseValue = service.value || 0;
+  
+  // custody_total_amount es el valor adicional de custodia
   const custodyValue = getCustodyTotalAmount(service);
-  const totalValue = service.value || 0;
   
-  // Para servicios con custodia:
-  // - service.value contiene el valor TOTAL del servicio (base + custodia)
-  // - custody_total_amount contiene el valor de la custodia
-  // - El valor base es service.value - custody_total_amount
-  
-  let baseValue = totalValue;
-  
-  // Si hay custodia, el valor base es el total menos la custodia
-  if (custodyValue > 0) {
-    baseValue = totalValue - custodyValue;
-  }
+  // El total es la suma de ambos
+  const totalValue = baseValue + custodyValue;
 
   return {
     baseValue,
