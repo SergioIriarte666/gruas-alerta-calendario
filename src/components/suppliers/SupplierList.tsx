@@ -20,11 +20,13 @@ import {
   Loader2,
   ArrowUpDown,
   ArrowUp,
-  ArrowDown
+  ArrowDown,
+  Eye
 } from 'lucide-react';
 import { useSuppliers } from '@/hooks/useSuppliers';
 import { useSupplierCategoryManager } from '@/hooks/useSupplierCategoryManager';
 import { SupplierForm } from './SupplierForm';
+import { SupplierDetailModal } from './SupplierDetailModal';
 import { SupplierWithStats } from '@/types/suppliers';
 import { formatCurrency } from '@/lib/utils';
 import { getCategoryLabel } from '@/utils/categoryUtils';
@@ -61,6 +63,7 @@ export const SupplierList: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [showForm, setShowForm] = useState(false);
   const [editingSupplier, setEditingSupplier] = useState<SupplierWithStats | null>(null);
+  const [selectedSupplier, setSelectedSupplier] = useState<SupplierWithStats | null>(null);
   const [sortField, setSortField] = useState<SupplierSortField>('name');
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
 
@@ -306,8 +309,12 @@ export const SupplierList: React.FC = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredAndSortedSuppliers.map((supplier) => (
-                    <TableRow key={supplier.id} className="border">
+                {filteredAndSortedSuppliers.map((supplier) => (
+                    <TableRow 
+                      key={supplier.id} 
+                      className="border cursor-pointer hover:bg-muted/50 transition-colors"
+                      onClick={() => setSelectedSupplier(supplier)}
+                    >
                       <TableCell>
                         <div className="space-y-1">
                           <div className="font-medium text-foreground">{supplier.name}</div>
@@ -372,8 +379,17 @@ export const SupplierList: React.FC = () => {
                         </Button>
                       </TableCell>
 
-                      <TableCell>
+                      <TableCell onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center space-x-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setSelectedSupplier(supplier)}
+                            className="text-primary hover:text-primary/80"
+                            title="Ver detalles"
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
                           <Button
                             variant="ghost"
                             size="sm"
@@ -434,6 +450,13 @@ export const SupplierList: React.FC = () => {
           onClose={handleCloseForm}
         />
       )}
+
+      {/* Detail Modal */}
+      <SupplierDetailModal
+        supplier={selectedSupplier}
+        isOpen={!!selectedSupplier}
+        onClose={() => setSelectedSupplier(null)}
+      />
     </div>
   );
 };
