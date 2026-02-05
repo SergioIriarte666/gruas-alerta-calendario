@@ -939,6 +939,7 @@ export const EnhancedServiceForm = ({
                     costDetails={formData.costDetails || []}
                     onCostDetailsChange={(costs) => setFormData(prev => ({ ...prev, costDetails: costs }))}
                     serviceId={service?.id}
+                    serviceDate={formData.serviceDate}
                     disabled={false}
                   />
                 )}

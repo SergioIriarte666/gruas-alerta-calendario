@@ -30,6 +30,7 @@ interface ServiceCostDetail {
 
 interface ServiceCostDetailsSectionProps {
   serviceId?: string;
+  serviceDate?: string;
   costDetails: ServiceCostDetail[];
   onCostDetailsChange: (costDetails: ServiceCostDetail[]) => void;
   disabled?: boolean;
@@ -37,6 +38,7 @@ interface ServiceCostDetailsSectionProps {
 
 export const ServiceCostDetailsSection = ({
   serviceId,
+  serviceDate,
   costDetails,
   onCostDetailsChange,
   disabled = false
@@ -207,7 +209,7 @@ export const ServiceCostDetailsSection = ({
       category_id: costDetail.category_id,
       description: costDetail.description.trim(),
       amount: costDetail.amount,
-      date: costDetail.isExisting && costDetail.date ? costDetail.date : getCurrentChileDateString(),
+      date: costDetail.isExisting && costDetail.date ? costDetail.date : (serviceDate || getCurrentChileDateString()),
       notes: costDetail.notes || '',
       subcategory: costDetail.subcategory || ''
     };
