@@ -9,6 +9,8 @@ import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { BatchProgressModal, useBatchProgress } from '@/components/ui/batch-progress-modal';
 import DatePickerInput from '@/components/common/DatePickerInput';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Label } from '@/components/ui/label';
 import { 
   Upload, 
   FileX,
@@ -22,7 +24,9 @@ import {
   Calendar,
   DollarSign,
   Wand2,
-  Pencil
+  Pencil,
+  CreditCard,
+  Banknote
 } from 'lucide-react';
 import { XMLCostParser } from '@/utils/xmlParser/xmlCostParser';
 import { XMLCostData, XMLParseResult } from '@/types/costs';
@@ -49,6 +53,12 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
   const [bulkDate, setBulkDate] = useState<string>('');
   const [bulkAmountAdjustment, setBulkAmountAdjustment] = useState<string>('');
   const [showAllRows, setShowAllRows] = useState(false);
+  
+  // Estados para fecha de pago
+  const [paymentDateMode, setPaymentDateMode] = useState<'immediate' | 'credit' | 'custom'>('immediate');
+  const [creditDays, setCreditDays] = useState<number>(30);
+  const [bulkPaymentDate, setBulkPaymentDate] = useState<string>('');
+  const [paymentDateOverrides, setPaymentDateOverrides] = useState<Record<number, string>>({});
   
   const batchProgress = useBatchProgress();
   
@@ -204,6 +214,41 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
     setBulkAmountAdjustment('');
   };
 
+  // Calcular fecha de pago según modo
+  const getPaymentDate = (index: number, emissionDate: string): string | null => {
+    // Si hay override individual, usarlo
+    if (paymentDateOverrides[index]) {
+      return paymentDateOverrides[index];
+    }
+    
+    // Según modo seleccionado
+    if (paymentDateMode === 'immediate') {
+      return emissionDate;
+    } else if (paymentDateMode === 'credit') {
+      const date = new Date(emissionDate);
+      date.setDate(date.getDate() + creditDays);
+      return format(date, 'yyyy-MM-dd');
+    } else if (paymentDateMode === 'custom' && bulkPaymentDate) {
+      return bulkPaymentDate;
+    }
+    
+    return emissionDate; // fallback to emission date
+  };
+
+  // Aplicar fecha de pago masiva
+  const handleBulkPaymentDateChange = () => {
+    if (!bulkPaymentDate || selectedRows.size === 0) return;
+    
+    const updates: Record<number, string> = {};
+    selectedRows.forEach(index => {
+      updates[index] = bulkPaymentDate;
+    });
+    
+    setPaymentDateOverrides(prev => ({ ...prev, ...updates }));
+    toast.success(`Fecha de pago actualizada en ${selectedRows.size} registros`);
+  };
+  };
+
   const getDefaultCategoryId = (categoria?: string): string => {
     if (!categoria) return categories[0]?.id || '';
     
@@ -268,8 +313,11 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
         
         const categoryId = categoryMappings[`${index}-categoria`] || getDefaultCategoryId(xmlCost.categoria);
         
+        const emissionDateStr = typeof finalDate === 'string' ? finalDate : format(finalDate, 'yyyy-MM-dd');
+        const paymentDate = getPaymentDate(index, emissionDateStr);
+        
         const costData = {
-          date: typeof finalDate === 'string' ? finalDate : format(finalDate, 'yyyy-MM-dd'),
+          date: emissionDateStr,
           description: String(finalDescripcion),
           amount: Number(finalMonto),
           category_id: categoryId,
@@ -281,7 +329,8 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
             xmlCost.telefono ? `Tel: ${xmlCost.telefono}` : '',
             xmlCost.notas || ''
           ].filter(Boolean).join(' | ') || null,
-          service_folio: xmlCost.numeroFactura || null
+          service_folio: xmlCost.numeroFactura || null,
+          payment_date: paymentDate
         };
 
         await new Promise<void>((resolve) => {
@@ -344,6 +393,10 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
     setBulkDate('');
     setBulkAmountAdjustment('');
     setShowAllRows(false);
+    setPaymentDateMode('immediate');
+    setCreditDays(30);
+    setBulkPaymentDate('');
+    setPaymentDateOverrides({});
   };
 
   // Calcular datos visibles
@@ -567,6 +620,89 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
                         Aplicar ajuste
                       </Button>
                     </div>
+
+                    {/* Separador */}
+                    <div className="border-t pt-3 mt-3">
+                      <h4 className="text-sm font-medium text-muted-foreground mb-3 flex items-center gap-2">
+                        <Banknote className="w-4 h-4" />
+                        Condiciones de Pago
+                      </h4>
+                      
+                      {/* Modo de fecha de pago */}
+                      <RadioGroup 
+                        value={paymentDateMode} 
+                        onValueChange={(value) => setPaymentDateMode(value as 'immediate' | 'credit' | 'custom')}
+                        className="flex flex-wrap gap-4 mb-3"
+                      >
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="immediate" id="payment-immediate" />
+                          <Label htmlFor="payment-immediate" className="text-sm cursor-pointer">
+                            Pagado Inmediato (misma fecha)
+                          </Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="credit" id="payment-credit" />
+                          <Label htmlFor="payment-credit" className="text-sm cursor-pointer">
+                            A Crédito
+                          </Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="custom" id="payment-custom" />
+                          <Label htmlFor="payment-custom" className="text-sm cursor-pointer">
+                            Fecha Específica
+                          </Label>
+                        </div>
+                      </RadioGroup>
+
+                      {/* Opciones según modo */}
+                      {paymentDateMode === 'credit' && (
+                        <div className="flex items-center gap-3 flex-wrap pl-6">
+                          <span className="text-sm text-muted-foreground">Días de crédito:</span>
+                          <div className="flex items-center gap-2">
+                            {[30, 45, 60, 90].map(days => (
+                              <Button
+                                key={days}
+                                variant={creditDays === days ? 'default' : 'outline'}
+                                size="sm"
+                                onClick={() => setCreditDays(days)}
+                                className="w-12"
+                              >
+                                {days}
+                              </Button>
+                            ))}
+                            <Input
+                              type="number"
+                              value={creditDays}
+                              onChange={(e) => setCreditDays(parseInt(e.target.value) || 30)}
+                              className="w-20"
+                              min={1}
+                              max={365}
+                            />
+                            <span className="text-sm text-muted-foreground">días</span>
+                          </div>
+                        </div>
+                      )}
+
+                      {paymentDateMode === 'custom' && (
+                        <div className="flex items-center gap-3 flex-wrap pl-6">
+                          <span className="text-sm text-muted-foreground">Fecha de pago:</span>
+                          <DatePickerInput
+                            value={bulkPaymentDate}
+                            onChange={setBulkPaymentDate}
+                            placeholder="Seleccionar fecha"
+                            className="w-40"
+                          />
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={handleBulkPaymentDateChange}
+                            disabled={!bulkPaymentDate || selectedRows.size === 0}
+                          >
+                            Aplicar a seleccionados
+                          </Button>
+                        </div>
+                      )}
+                    </div>
                   </CardContent>
                 </Card>
               )}
@@ -613,11 +749,12 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
                                 onCheckedChange={toggleAllSelection}
                               />
                             </TableHead>
-                            <TableHead className="w-36">Fecha</TableHead>
-                            <TableHead className="min-w-[200px]">Descripción</TableHead>
-                            <TableHead className="w-32">Monto</TableHead>
-                            <TableHead className="w-40">Proveedor</TableHead>
-                            <TableHead className="w-48">Categoría</TableHead>
+                            <TableHead className="w-36">Fecha Emisión</TableHead>
+                            <TableHead className="min-w-[180px]">Descripción</TableHead>
+                            <TableHead className="w-28">Monto</TableHead>
+                            <TableHead className="w-32">Proveedor</TableHead>
+                            <TableHead className="w-40">Categoría</TableHead>
+                            <TableHead className="w-36">F. Pago</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -705,7 +842,7 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
                                     value={categoryMappings[`${actualIndex}-categoria`] || getDefaultCategoryId(item.categoria)}
                                     onValueChange={(value) => handleCategoryChange(actualIndex, value)}
                                   >
-                                    <SelectTrigger className="w-44">
+                                    <SelectTrigger className="w-36">
                                       <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent>
@@ -716,6 +853,31 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
                                       ))}
                                     </SelectContent>
                                   </Select>
+                                </TableCell>
+                                <TableCell>
+                                  {(() => {
+                                    const emissionDateStr = formatDateForInput(editedFecha);
+                                    const computedPaymentDate = paymentDateOverrides[actualIndex] || getPaymentDate(actualIndex, emissionDateStr);
+                                    const isImmediate = computedPaymentDate === emissionDateStr;
+                                    
+                                    return (
+                                      <div className="relative flex items-center gap-1">
+                                        <DatePickerInput
+                                          value={computedPaymentDate || ''}
+                                          onChange={(date) => setPaymentDateOverrides(prev => ({...prev, [actualIndex]: date}))}
+                                          className="w-32"
+                                        />
+                                        {isImmediate && (
+                                          <CheckCircle className="w-3.5 h-3.5 text-green-500 flex-shrink-0" title="Pago inmediato" />
+                                        )}
+                                        {paymentDateOverrides[actualIndex] && (
+                                          <Badge variant="secondary" className="absolute -top-2 -right-2 text-[10px] px-1 py-0 bg-violet-200">
+                                            mod
+                                          </Badge>
+                                        )}
+                                      </div>
+                                    );
+                                  })()}
                                 </TableCell>
                               </TableRow>
                             );
