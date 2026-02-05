@@ -247,7 +247,6 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
     setPaymentDateOverrides(prev => ({ ...prev, ...updates }));
     toast.success(`Fecha de pago actualizada en ${selectedRows.size} registros`);
   };
-  };
 
   const getDefaultCategoryId = (categoria?: string): string => {
     if (!categoria) return categories[0]?.id || '';
@@ -868,7 +867,7 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
                                           className="w-32"
                                         />
                                         {isImmediate && (
-                                          <CheckCircle className="w-3.5 h-3.5 text-green-500 flex-shrink-0" title="Pago inmediato" />
+                                          <CheckCircle className="w-3.5 h-3.5 text-green-500 flex-shrink-0" />
                                         )}
                                         {paymentDateOverrides[actualIndex] && (
                                           <Badge variant="secondary" className="absolute -top-2 -right-2 text-[10px] px-1 py-0 bg-violet-200">
