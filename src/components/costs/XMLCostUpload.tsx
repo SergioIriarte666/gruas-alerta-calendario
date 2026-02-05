@@ -29,7 +29,9 @@ import {
   Pencil,
   CreditCard,
   Banknote,
-  ShieldAlert
+  ShieldAlert,
+  Info,
+  Package
 } from 'lucide-react';
 import { XMLCostParser } from '@/utils/xmlParser/xmlCostParser';
 import { XMLCostData, XMLParseResult } from '@/types/costs';
@@ -38,6 +40,9 @@ import { useCostCategories } from '@/hooks/useCostCategories';
 import { useCostDuplicateCheck, CostDuplicateResult } from '@/hooks/useDuplicateCheck';
 import { toast } from 'sonner';
 import { format, parse } from 'date-fns';
+import { supabase } from '@/integrations/supabase/client';
+import { Switch } from '@/components/ui/switch';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface XMLCostUploadProps {
   isOpen: boolean;
@@ -68,6 +73,9 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
   const [duplicateResults, setDuplicateResults] = useState<CostDuplicateResult[]>([]);
   const [isCheckingDuplicates, setIsCheckingDuplicates] = useState(false);
   const [showDuplicateWarning, setShowDuplicateWarning] = useState(false);
+  
+  // Estado para sincronización con inventario
+  const [syncToInventory, setSyncToInventory] = useState(false);
   
   const batchProgress = useBatchProgress();
   
@@ -328,6 +336,32 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
     return format(fecha, 'yyyy-MM-dd');
   };
 
+  // Función para buscar proveedor por RUT o nombre
+  const findSupplierByRutOrName = async (rut: string, name: string): Promise<string | null> => {
+    // Primero buscar por RUT
+    if (rut && rut.trim()) {
+      const { data } = await supabase
+        .from('suppliers')
+        .select('id')
+        .eq('rut', rut.trim())
+        .maybeSingle();
+      if (data) return data.id;
+    }
+    
+    // Luego buscar por nombre (similarity)
+    if (name && name.trim()) {
+      const { data } = await supabase
+        .from('suppliers')
+        .select('id, name')
+        .ilike('name', `%${name.trim()}%`)
+        .limit(1)
+        .maybeSingle();
+      if (data) return data.id;
+    }
+    
+    return null;
+  };
+
   const handleUploadCosts = async () => {
     if (!parseResult || !parseResult.success || selectedRows.size === 0) return;
     
@@ -357,6 +391,9 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
         const emissionDateStr = typeof finalDate === 'string' ? finalDate : format(finalDate, 'yyyy-MM-dd');
         const paymentDate = getPaymentDate(index, emissionDateStr);
         
+        // NUEVO: Buscar proveedor por RUT o nombre para vincular
+        const supplierId = await findSupplierByRutOrName(xmlCost.rut || '', finalProveedor || '');
+        
         const costData = {
           date: emissionDateStr,
           description: String(finalDescripcion),
@@ -371,7 +408,15 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
             xmlCost.notas || ''
           ].filter(Boolean).join(' | ') || null,
           service_folio: xmlCost.numeroFactura || null,
-          payment_date: paymentDate
+          payment_date: paymentDate,
+          // NUEVO: Vinculación con proveedor para trigger de sincronización
+          supplier_id: supplierId,
+          // NUEVO: Datos para sincronización con inventario (si está habilitado)
+          ...(syncToInventory && {
+            purchase_quantity: xmlCost.cantidad || 1,
+            purchase_unit_cost: Number(finalMonto) / (xmlCost.cantidad || 1),
+            immediate_consumption: false
+          })
         };
 
         await new Promise<void>((resolve) => {
@@ -440,6 +485,7 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
     setPaymentDateOverrides({});
     setDuplicateResults([]);
     setShowDuplicateWarning(false);
+    setSyncToInventory(false);
   };
   
   // Helper para obtener info de duplicado por índice
@@ -791,6 +837,35 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
                             Aplicar a seleccionados
                           </Button>
                         </div>
+                      )}
+                    </div>
+
+                    {/* Sincronización con Inventario */}
+                    <div className="border-t pt-3 mt-3">
+                      <div className="flex items-center gap-3">
+                        <Switch
+                          checked={syncToInventory}
+                          onCheckedChange={setSyncToInventory}
+                        />
+                        <Label className="text-sm flex items-center gap-2">
+                          <Package className="w-4 h-4" />
+                          Sincronizar con Bodega/Inventario
+                        </Label>
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Info className="w-4 h-4 text-muted-foreground cursor-help" />
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Los costos se registrarán como entradas de inventario automáticamente</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      </div>
+                      {syncToInventory && (
+                        <p className="text-xs text-green-600 mt-2 ml-8">
+                          ✓ Los costos se sincronizarán con el módulo de Bodega
+                        </p>
                       )}
                     </div>
                   </CardContent>

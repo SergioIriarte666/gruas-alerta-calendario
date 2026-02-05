@@ -3481,6 +3481,7 @@ export type Database = {
           add_to_inventory: boolean | null
           amount: number
           category: string
+          cost_id: string | null
           crane_id: string | null
           created_at: string | null
           created_by: string | null
@@ -3504,6 +3505,7 @@ export type Database = {
           add_to_inventory?: boolean | null
           amount: number
           category: string
+          cost_id?: string | null
           crane_id?: string | null
           created_at?: string | null
           created_by?: string | null
@@ -3527,6 +3529,7 @@ export type Database = {
           add_to_inventory?: boolean | null
           amount?: number
           category?: string
+          cost_id?: string | null
           crane_id?: string | null
           created_at?: string | null
           created_by?: string | null
@@ -3547,6 +3550,13 @@ export type Database = {
           updated_by?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "supplier_payments_cost_id_fkey"
+            columns: ["cost_id"]
+            isOneToOne: false
+            referencedRelation: "costs"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "supplier_payments_crane_id_fkey"
             columns: ["crane_id"]
