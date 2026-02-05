@@ -167,6 +167,10 @@ const transformToService = (data: any): Service => {
     custodyTotalAmount: data.custody_total_amount || undefined,
     custodyNotes: data.custody_notes || undefined,
     insuredName: data.insured_name || undefined,
+    // Outsourced/Third-party service fields
+    outsourcedProviderId: data.outsourced_provider_id || undefined,
+    outsourcedCost: data.outsourced_cost ?? undefined,
+    outsourcedNotes: data.outsourced_notes || undefined,
     createdAt: data.created_at,
     updatedAt: data.updated_at,
     createdBy: data.created_by || undefined,
@@ -1186,7 +1190,10 @@ export const useServiceManager = () => {
         queryClient.invalidateQueries({ queryKey: ['service-costs', id] }),
         queryClient.invalidateQueries({ queryKey: ['costs'] }),
         queryClient.invalidateQueries({ queryKey: ['commissions'] }),
-        queryClient.invalidateQueries({ queryKey: ['supplier-payments'] })
+        queryClient.invalidateQueries({ queryKey: ['supplier-payments'] }),
+        // ✅ Detalle proveedor (modal) usa estas keys, si no, queda cache viejo
+        queryClient.invalidateQueries({ queryKey: ['supplier-detail-payments'] }),
+        queryClient.invalidateQueries({ queryKey: ['supplier-stats'] })
       ]);
       
       return transformToService(updatedService);
