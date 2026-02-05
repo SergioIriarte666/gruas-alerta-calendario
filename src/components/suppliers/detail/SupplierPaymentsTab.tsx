@@ -7,7 +7,8 @@ import { es } from 'date-fns/locale';
 import { formatCurrency } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useCostCategories } from '@/hooks/useCostCategories';
-
+import { useSupplierCategoryManager } from '@/hooks/useSupplierCategoryManager';
+import { resolveSupplierPaymentCategoryLabel } from '@/utils/suppliers/resolveSupplierPaymentCategory';
 interface SupplierPayment {
   id: string;
   description: string | null;
@@ -62,6 +63,7 @@ const getPaymentTypeLabel = (type: string | null) => {
 
 export const SupplierPaymentsTab: React.FC<SupplierPaymentsTabProps> = ({ payments, isLoading }) => {
   const { data: costCategories = [] } = useCostCategories();
+  const { categories: supplierCategories = [] } = useSupplierCategoryManager();
 
   if (isLoading) {
     return (
@@ -118,10 +120,11 @@ export const SupplierPaymentsTab: React.FC<SupplierPaymentsTabProps> = ({ paymen
                 }
               </TableCell>
               <TableCell className="text-foreground">
-                {payment.category 
-                  ? (costCategories.find(c => c.id === payment.category)?.name || '-')
-                  : '-'
-                }
+                {resolveSupplierPaymentCategoryLabel(payment.category, {
+                  supplierCategories,
+                  costCategories,
+                  fallback: '-',
+                })}
               </TableCell>
               <TableCell className="text-foreground">
                 {payment.paid_date 

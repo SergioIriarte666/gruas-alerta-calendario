@@ -6,6 +6,7 @@ import { format, addDays, isBefore, isAfter } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { fetchCompanyData } from '@/utils/pdf/companyDataFetcher';
 import { addCompanyHeader } from '@/utils/reports/reportUtils';
+import { isUuid } from '@/utils/suppliers/resolveSupplierPaymentCategory';
 
 export const exportSupplierPaymentReport = async ({
   format,
@@ -35,11 +36,14 @@ const generatePDF = async (payments: any[], suppliers: any[], categories: any[],
   // Helper function to get category label
   const getCategoryLabel = (categoryId: string | null) => {
     if (!categoryId) return 'Sin categoría';
-    console.log('getCategoryLabel - categoryId:', categoryId);
-    console.log('getCategoryLabel - categories:', categories);
-    const category = categories.find(c => c.id === categoryId);
-    console.log('getCategoryLabel - found category:', category);
-    return category?.label || 'N/A';
+
+    const category = categories.find((c: any) => c.id === categoryId);
+    if (category) return category.label || category.name || 'Sin categoría';
+
+    // Categoría legacy guardada como texto
+    if (!isUuid(categoryId)) return categoryId;
+
+    return 'Sin categoría';
   };
   
   // Obtener datos de empresa
@@ -219,11 +223,14 @@ const generateExcel = async (payments: any[], suppliers: any[], categories: any[
   // Helper function to get category label
   const getCategoryLabel = (categoryId: string | null) => {
     if (!categoryId) return 'Sin categoría';
-    console.log('Excel getCategoryLabel - categoryId:', categoryId);
-    console.log('Excel getCategoryLabel - categories:', categories);
-    const category = categories.find(c => c.id === categoryId);
-    console.log('Excel getCategoryLabel - found category:', category);
-    return category?.label || 'N/A';
+
+    const category = categories.find((c: any) => c.id === categoryId);
+    if (category) return category.label || category.name || 'Sin categoría';
+
+    // Categoría legacy guardada como texto
+    if (!isUuid(categoryId)) return categoryId;
+
+    return 'Sin categoría';
   };
   
   const getDateTypeLabel = (type: string) => {

@@ -28,7 +28,7 @@ import { useSupplierPayments, getStatusLabel, getStatusColor } from '@/hooks/use
 import { useSuppliers } from '@/hooks/useSuppliers';
 import { useSupplierCategoryManager } from '@/hooks/useSupplierCategoryManager';
 import { useCostCategories } from '@/hooks/useCostCategories';
-import { getCategoryLabel } from '@/utils/categoryUtils';
+import { resolveSupplierPaymentCategoryLabel } from '@/utils/suppliers/resolveSupplierPaymentCategory';
 import { PaymentForm } from './PaymentForm';
 import { SupplierPaymentExportButton } from './SupplierPaymentExportButton';
 import { SupplierPayment, SupplierPaymentStatus } from '@/types/suppliers';
@@ -71,9 +71,16 @@ export const PaymentList: React.FC = () => {
   } = useSupplierPayments();
   
   const { suppliers } = useSuppliers();
-  const { activeCategories } = useSupplierCategoryManager();
+  const { categories: supplierCategories = [] } = useSupplierCategoryManager();
   const { data: costCategories = [] } = useCostCategories();
 
+  const exportCategories = useMemo(
+    () => [
+      ...supplierCategories,
+      ...costCategories.map((c) => ({ id: c.id, label: c.name })),
+    ],
+    [supplierCategories, costCategories]
+  );
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
   const [selectedSupplier, setSelectedSupplier] = useState<string>('all');
@@ -274,7 +281,7 @@ export const PaymentList: React.FC = () => {
           <SupplierPaymentExportButton 
             payments={filteredAndSortedPayments}
             suppliers={suppliers}
-            categories={activeCategories || []}
+            categories={exportCategories}
             filters={{
               searchTerm,
               status: selectedStatus,
@@ -626,7 +633,11 @@ export const PaymentList: React.FC = () => {
                           <div className="text-foreground">{payment.description}</div>
                           {payment.category && (
                             <Badge variant="outline">
-                              {costCategories.find(c => c.id === payment.category)?.name || payment.category}
+                              {resolveSupplierPaymentCategoryLabel(payment.category, {
+                                supplierCategories,
+                                costCategories,
+                                fallback: 'Sin categoría',
+                              })}
                             </Badge>
                           )}
                         </div>
