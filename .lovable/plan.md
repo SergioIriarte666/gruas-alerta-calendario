@@ -1,260 +1,282 @@
 
 
-# Plan: Mejorar UX de Vista Previa Editable en XMLCostUpload
+# Plan: Sincronización Bidireccional Completa entre Costos, Proveedores e Inventario
 
 ## Problema Identificado
 
-La sección "Vista Previa Editable" tiene los siguientes problemas de usabilidad:
+Cuando se registra un costo desde el módulo de Costos (como "MANGUERAS HIDRAULICAS" por $25,479), la información **no se sincroniza** con:
 
-| Problema | Impacto |
-|----------|---------|
-| Inputs horizontales muy apretados | Difícil ver el contenido completo |
-| Descripción truncada | No se puede leer el texto completo |
-| Selectores truncados | No se ve el proveedor/categoría completo |
-| Sin etiquetas visibles en móvil | Confuso saber qué campo es cual |
-| Falta de espacio visual | Todo se ve comprimido |
+1. **Proveedores > Pagos**: Debería aparecer como un pago pendiente (o pagado según la fecha de pago)
+2. **Bodega > Movimientos**: Debería aparecer como una entrada de inventario
+
+### Análisis del Estado Actual
+
+| Dirección | Trigger Existe | Funciona |
+|-----------|----------------|----------|
+| Supplier Payments → Costs | Sí | Sí (cuando status='paid') |
+| Supplier Payments → Inventory | Sí | Sí (si tiene part_name, part_quantity) |
+| Costs → Inventory | Sí | **Parcial** (requiere purchase_quantity + purchase_unit_cost) |
+| Costs → Supplier Payments | **NO** | No existe |
+| Inventory → Costs | Sí | Sí (si tiene supplier_id) |
+
+### Brechas Detectadas en XML Upload
+
+El cargador XML actual:
+- **No vincula proveedor**: Guarda el nombre en `notes`, no usa `supplier_id`
+- **No envía datos de compra**: No incluye `purchase_quantity` ni `purchase_unit_cost`
+- **No crea pago a proveedor**: No hay trigger para crear el registro en `supplier_payments`
 
 ---
 
-## Solución: Diseño en Tarjetas por Registro
+## Solución Propuesta
 
-Cambiar de una tabla horizontal a un layout de **tarjetas expandibles** donde cada registro tenga espacio para editar cómodamente:
+### Fase 1: Nuevo Trigger - Costs → Supplier Payments
+
+Crear un trigger que, cuando se inserta un costo con `supplier_id` y `payment_date`, automáticamente cree un registro en `supplier_payments`.
+
+```sql
+CREATE OR REPLACE FUNCTION create_supplier_payment_from_cost()
+RETURNS TRIGGER AS $$
+BEGIN
+  -- Solo procesar si tiene supplier_id y no fue creado desde un payment
+  IF NEW.supplier_id IS NOT NULL 
+     AND NEW.supplier_payment_id IS NULL THEN
+    
+    INSERT INTO supplier_payments (
+      supplier_id,
+      amount,
+      due_date,
+      description,
+      status,
+      cost_id,
+      created_by
+    ) VALUES (
+      NEW.supplier_id,
+      NEW.amount,
+      COALESCE(NEW.payment_date, NEW.date),
+      NEW.description,
+      CASE 
+        WHEN NEW.payment_date <= CURRENT_DATE THEN 'paid'
+        ELSE 'pending'
+      END,
+      NEW.id,
+      NEW.created_by
+    );
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+```
+
+### Fase 2: Modificar XMLCostUpload para Vincular Proveedor
+
+Actualizar el componente para:
+1. Buscar el proveedor por RUT o nombre
+2. Enviar `supplier_id` al crear el costo
+3. Enviar `purchase_quantity = 1` y `purchase_unit_cost = monto` para activar sincronización con inventario
+
+### Fase 3: Agregar Selector de Categoría de Inventario
+
+Agregar opción en la UI del XML upload para indicar si los costos deben sincronizarse con inventario (categoría "Inventario" o "Mantenimiento").
+
+---
+
+## Cambios Técnicos Detallados
+
+### 1. Migración SQL - Nuevo Trigger Bidireccional
+
+```sql
+-- Trigger: Costs → Supplier Payments (NUEVO)
+CREATE OR REPLACE FUNCTION public.create_supplier_payment_from_cost()
+RETURNS TRIGGER AS $$
+DECLARE
+  v_payment_id UUID;
+BEGIN
+  -- Verificar condiciones
+  IF NEW.supplier_id IS NULL THEN
+    RETURN NEW;
+  END IF;
+  
+  -- No crear si ya fue creado desde un payment
+  IF NEW.supplier_payment_id IS NOT NULL THEN
+    RETURN NEW;
+  END IF;
+  
+  -- Verificar si ya existe un payment para este costo
+  IF EXISTS (SELECT 1 FROM supplier_payments WHERE cost_id = NEW.id) THEN
+    RETURN NEW;
+  END IF;
+  
+  -- Crear el pago a proveedor
+  INSERT INTO supplier_payments (
+    supplier_id,
+    amount,
+    due_date,
+    paid_date,
+    description,
+    status,
+    cost_id,
+    category,
+    created_by
+  ) VALUES (
+    NEW.supplier_id,
+    NEW.amount,
+    COALESCE(NEW.payment_date, NEW.date),
+    CASE WHEN NEW.payment_date <= CURRENT_DATE THEN NEW.payment_date ELSE NULL END,
+    NEW.description,
+    CASE 
+      WHEN NEW.payment_date IS NOT NULL AND NEW.payment_date <= CURRENT_DATE THEN 'paid'
+      ELSE 'pending'
+    END,
+    NEW.id,
+    NEW.category_id::TEXT,
+    NEW.created_by
+  ) RETURNING id INTO v_payment_id;
+  
+  -- Actualizar el costo con la referencia al pago
+  UPDATE costs 
+  SET supplier_payment_id = v_payment_id 
+  WHERE id = NEW.id;
+  
+  RAISE NOTICE '✅ [Cost→SupplierPayment] Pago creado: %', v_payment_id;
+  
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Trigger
+DROP TRIGGER IF EXISTS create_supplier_payment_from_cost_trigger ON public.costs;
+CREATE TRIGGER create_supplier_payment_from_cost_trigger
+  AFTER INSERT ON public.costs
+  FOR EACH ROW
+  EXECUTE FUNCTION public.create_supplier_payment_from_cost();
+```
+
+### 2. Agregar Columna cost_id en supplier_payments
+
+```sql
+ALTER TABLE public.supplier_payments 
+ADD COLUMN IF NOT EXISTS cost_id UUID REFERENCES public.costs(id);
+
+CREATE INDEX IF NOT EXISTS idx_supplier_payments_cost_id 
+ON public.supplier_payments(cost_id);
+```
+
+### 3. Modificar XMLCostUpload.tsx
+
+```typescript
+// Función para buscar proveedor por RUT o nombre
+const findSupplierByRutOrName = async (rut: string, name: string): Promise<string | null> => {
+  // Primero buscar por RUT
+  if (rut) {
+    const { data } = await supabase
+      .from('suppliers')
+      .select('id')
+      .eq('rut', rut.trim())
+      .single();
+    if (data) return data.id;
+  }
+  
+  // Luego buscar por nombre (similarity)
+  if (name) {
+    const { data } = await supabase
+      .from('suppliers')
+      .select('id, name')
+      .ilike('name', `%${name.trim()}%`)
+      .limit(1)
+      .single();
+    if (data) return data.id;
+  }
+  
+  return null;
+};
+
+// En handleUploadCosts, modificar costData:
+const supplierId = await findSupplierByRutOrName(xmlCost.rut || '', finalProveedor || '');
+
+const costData = {
+  date: emissionDateStr,
+  description: String(finalDescripcion),
+  amount: Number(finalMonto),
+  category_id: categoryId,
+  subcategory: xmlCost.subcategoria || null,
+  notes: [...].filter(Boolean).join(' | ') || null,
+  service_folio: xmlCost.numeroFactura || null,
+  payment_date: paymentDate,
+  // NUEVO: Vinculación con proveedor
+  supplier_id: supplierId,
+  // NUEVO: Datos para sincronización con inventario
+  purchase_quantity: xmlCost.cantidad || 1,
+  purchase_unit_cost: Number(finalMonto) / (xmlCost.cantidad || 1),
+  immediate_consumption: false
+};
+```
+
+### 4. Toggle de Sincronización en UI
+
+Agregar control en la sección de acciones masivas:
+
+```tsx
+<div className="flex items-center gap-3">
+  <Switch
+    checked={syncToInventory}
+    onCheckedChange={setSyncToInventory}
+  />
+  <Label className="text-sm">
+    Sincronizar con Bodega/Inventario
+  </Label>
+  <TooltipProvider>
+    <Tooltip>
+      <TooltipTrigger>
+        <Info className="w-4 h-4 text-muted-foreground" />
+      </TooltipTrigger>
+      <TooltipContent>
+        Los costos se registrarán como entradas de inventario
+      </TooltipContent>
+    </Tooltip>
+  </TooltipProvider>
+</div>
+```
+
+---
+
+## Diagrama de Sincronización Final
 
 ```text
-┌─────────────────────────────────────────────────────────────────┐
-│ Vista Previa Editable                    [Deseleccionar todos] │
-├─────────────────────────────────────────────────────────────────┤
-│ ┌─────────────────────────────────────────────────────────────┐ │
-│ │ [✓] Registro 1 de 15                                    $25K │ │
-│ ├─────────────────────────────────────────────────────────────┤ │
-│ │ Descripción:                                                │ │
-│ │ [MANGUERAS HIDRAULICAS E INCENDIO PARA GRUA___________   ] │ │
-│ │                                                             │ │
-│ │ Proveedor:                                                  │ │
-│ │ [IMPORTADORA Y COMERCIAL JOMIAL LIMITADA              ▼ ] │ │
-│ │                                                             │ │
-│ │ ┌──────────────────┐ ┌──────────────────┐ ┌─────────────┐  │ │
-│ │ │ Fecha Emisión    │ │ Categoría        │ │ Monto       │  │ │
-│ │ │ [📅 03/02/2026]  │ │ [Administrativo▼]│ │ [$25,479  ] │  │ │
-│ │ └──────────────────┘ └──────────────────┘ └─────────────┘  │ │
-│ │                                                             │ │
-│ │ ┌──────────────────┐                                       │ │
-│ │ │ Fecha de Pago    │  ✓ Pago inmediato                     │ │
-│ │ │ [📅 03/02/2026]  │                                       │ │
-│ │ └──────────────────┘                                       │ │
-│ └─────────────────────────────────────────────────────────────┘ │
-│                                                                 │
-│ ┌─────────────────────────────────────────────────────────────┐ │
-│ │ [✓] Registro 2 de 15                                   $12K │ │
-│ │ ... (colapsado o expandido)                                 │ │
-│ └─────────────────────────────────────────────────────────────┘ │
-└─────────────────────────────────────────────────────────────────┘
+              ┌─────────────────────┐
+              │   XML Upload        │
+              │   (Costos)          │
+              └─────────┬───────────┘
+                        │
+                        ▼
+              ┌─────────────────────┐
+              │      costs          │◄─────────────────┐
+              │                     │                  │
+              └─────────┬───────────┘                  │
+                        │                              │
+         ┌──────────────┼──────────────┐               │
+         │              │              │               │
+         ▼              ▼              ▼               │
+┌─────────────┐  ┌─────────────┐  ┌─────────────┐      │
+│ supplier_   │  │ inventory_  │  │ crane_      │      │
+│ payments    │──│ movements   │  │ parts       │      │
+│             │  │             │  │             │      │
+└─────────────┘  └─────────────┘  └─────────────┘      │
+         │              │                              │
+         │              │                              │
+         └──────────────┴──────────────────────────────┘
+              (triggers bidireccionales)
 ```
 
 ---
 
-## Cambios Técnicos
-
-### 1. Crear Componente `XMLCostPreviewCard`
-
-Nuevo componente dedicado para cada registro editable:
-
-```typescript
-interface XMLCostPreviewCardProps {
-  item: XMLCostData;
-  index: number;
-  isSelected: boolean;
-  onToggleSelection: () => void;
-  editedValues: Partial<XMLCostData>;
-  onFieldChange: (field: keyof XMLCostData, value: any) => void;
-  categoryValue: string;
-  onCategoryChange: (value: string) => void;
-  categories: CostCategory[];
-  paymentDate: string;
-  onPaymentDateChange: (date: string) => void;
-  isImmediate: boolean;
-}
-```
-
-### 2. Diseño del Card
-
-Cada card tendrá:
-
-- **Header**: Checkbox + número de registro + monto (badge)
-- **Cuerpo organizado en grid**:
-  - Descripción (ancho completo, textarea para textos largos)
-  - Proveedor (ancho completo)
-  - Grid 3 columnas: Fecha Emisión | Categoría | Monto
-  - Fecha de Pago + indicador de pago inmediato
-
-### 3. Vista Compacta/Expandida
-
-Opción para alternar entre:
-- **Vista expandida**: Todos los campos visibles (para edición detallada)
-- **Vista compacta**: Solo header con resumen (para navegar rápido)
-
-```typescript
-const [expandedCards, setExpandedCards] = useState<Set<number>>(new Set());
-const [viewMode, setViewMode] = useState<'expanded' | 'compact'>('expanded');
-```
-
-### 4. Mejoras Adicionales
-
-- **Labels claros** sobre cada input
-- **Inputs de ancho completo** para descripción y proveedor
-- **Formato de moneda** visual en el input de monto
-- **Indicador visual** de campos modificados (badge "editado")
-- **Scroll virtual** para listas largas (opcional)
-
----
-
-## Archivos a Modificar
+## Archivos a Crear/Modificar
 
 | # | Archivo | Cambio |
 |---|---------|--------|
-| 1 | `src/components/costs/XMLCostUpload.tsx` | Reemplazar tabla por layout de cards |
-| 2 | `src/components/costs/XMLCostPreviewCard.tsx` | Crear nuevo componente (opcional, o inline) |
-
----
-
-## Detalle de Implementación
-
-### Reemplazar la Tabla (líneas 740-886) con:
-
-```tsx
-{/* Cards View */}
-<div className="space-y-3 max-h-[500px] overflow-y-auto pr-2">
-  {visibleData.map((item, idx) => {
-    const actualIndex = parseResult.data.indexOf(item);
-    const isSelected = selectedRows.has(actualIndex);
-    const editedFecha = getEditedValue(actualIndex, 'fecha', item.fecha);
-    const editedMonto = getEditedValue(actualIndex, 'monto', item.monto);
-    const editedDescripcion = getEditedValue(actualIndex, 'descripcion', item.descripcion);
-    const editedProveedor = getEditedValue(actualIndex, 'proveedor', item.proveedor);
-    const emissionDateStr = formatDateForInput(editedFecha);
-    const computedPaymentDate = paymentDateOverrides[actualIndex] || getPaymentDate(actualIndex, emissionDateStr);
-    const isImmediate = computedPaymentDate === emissionDateStr;
-    
-    return (
-      <Card 
-        key={actualIndex} 
-        className={cn(
-          "border transition-all",
-          isSelected 
-            ? "border-violet-300 bg-violet-50/30" 
-            : "border-gray-200 bg-white"
-        )}
-      >
-        {/* Card Header */}
-        <div className="flex items-center justify-between p-3 border-b bg-gray-50/50">
-          <div className="flex items-center gap-3">
-            <Checkbox 
-              checked={isSelected}
-              onCheckedChange={() => toggleRowSelection(actualIndex)}
-            />
-            <span className="text-sm font-medium text-gray-600">
-              Registro {actualIndex + 1} de {parseResult.data.length}
-            </span>
-            {(isFieldModified(actualIndex, 'fecha') || 
-              isFieldModified(actualIndex, 'descripcion') || 
-              isFieldModified(actualIndex, 'monto') ||
-              isFieldModified(actualIndex, 'proveedor')) && (
-              <Badge variant="secondary" className="bg-violet-100 text-violet-700 text-xs">
-                Editado
-              </Badge>
-            )}
-          </div>
-          <Badge className="bg-green-100 text-green-800 font-semibold">
-            ${Number(editedMonto).toLocaleString('es-CL')}
-          </Badge>
-        </div>
-        
-        {/* Card Body */}
-        <div className="p-4 space-y-4">
-          {/* Descripción - Ancho completo */}
-          <div>
-            <Label className="text-xs text-gray-500 mb-1.5 block">Descripción</Label>
-            <Textarea
-              value={String(editedDescripcion)}
-              onChange={(e) => handleFieldChange(actualIndex, 'descripcion', e.target.value)}
-              className="w-full resize-none"
-              rows={2}
-            />
-          </div>
-          
-          {/* Proveedor - Ancho completo */}
-          <div>
-            <Label className="text-xs text-gray-500 mb-1.5 block">Proveedor</Label>
-            <Input
-              value={String(editedProveedor || '')}
-              onChange={(e) => handleFieldChange(actualIndex, 'proveedor', e.target.value)}
-              placeholder="Sin proveedor"
-              className="w-full"
-            />
-          </div>
-          
-          {/* Grid: Fecha Emisión | Categoría | Monto */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div>
-              <Label className="text-xs text-gray-500 mb-1.5 block">Fecha Emisión</Label>
-              <DatePickerInput
-                value={formatDateForInput(editedFecha)}
-                onChange={(date) => handleFieldChange(actualIndex, 'fecha', date)}
-                className="w-full"
-              />
-            </div>
-            <div>
-              <Label className="text-xs text-gray-500 mb-1.5 block">Categoría</Label>
-              <Select
-                value={categoryMappings[`${actualIndex}-categoria`] || getDefaultCategoryId(item.categoria)}
-                onValueChange={(value) => handleCategoryChange(actualIndex, value)}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {categories.map(category => (
-                    <SelectItem key={category.id} value={category.id}>
-                      {category.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label className="text-xs text-gray-500 mb-1.5 block">Monto</Label>
-              <Input
-                type="number"
-                value={editedMonto}
-                onChange={(e) => handleFieldChange(actualIndex, 'monto', parseFloat(e.target.value) || 0)}
-                className="w-full"
-              />
-            </div>
-          </div>
-          
-          {/* Fecha de Pago */}
-          <div className="flex items-end gap-4 pt-2 border-t">
-            <div className="flex-1 max-w-[200px]">
-              <Label className="text-xs text-gray-500 mb-1.5 block">Fecha de Pago</Label>
-              <DatePickerInput
-                value={computedPaymentDate || ''}
-                onChange={(date) => setPaymentDateOverrides(prev => ({...prev, [actualIndex]: date}))}
-                className="w-full"
-              />
-            </div>
-            {isImmediate && (
-              <div className="flex items-center gap-1.5 text-green-600 text-sm pb-2">
-                <CheckCircle className="w-4 h-4" />
-                <span>Pago inmediato</span>
-              </div>
-            )}
-          </div>
-        </div>
-      </Card>
-    );
-  })}
-</div>
-```
+| 1 | Nueva migración SQL | Trigger Costs → Supplier Payments + columna cost_id |
+| 2 | `src/components/costs/XMLCostUpload.tsx` | Vincular supplier_id + datos de compra |
+| 3 | `src/integrations/supabase/types.ts` | Regenerar tipos (automático) |
 
 ---
 
@@ -262,12 +284,17 @@ const [viewMode, setViewMode] = useState<'expanded' | 'compact'>('expanded');
 
 Después de la implementación:
 
-1. Cada registro se muestra en una **tarjeta clara y espaciada**
-2. Los campos tienen **etiquetas visibles** 
-3. La descripción tiene **espacio suficiente** (textarea)
-4. El proveedor se muestra **completo**
-5. Los campos numéricos están **bien formateados**
-6. El indicador de "Pago inmediato" es **visible y claro**
-7. Se mantiene la funcionalidad de **selección múltiple**
-8. Compatible con **móvil** (grid responsive)
+1. **Al cargar XML de costos** con proveedor identificable:
+   - Se crea el costo
+   - Se crea automáticamente el pago a proveedor (pendiente o pagado según fecha)
+   - Se crea el movimiento de inventario (si está habilitado)
+
+2. **En el módulo de Proveedores > Pagos**:
+   - Aparecerá el pago de "MANGUERAS HIDRAULICAS" por $25,479
+
+3. **En Bodega > Movimientos**:
+   - Aparecerá la entrada de "MANGUERAS HIDRAULICAS"
+
+4. **Trazabilidad completa**:
+   - Cada registro tendrá referencias cruzadas para auditoría
 
