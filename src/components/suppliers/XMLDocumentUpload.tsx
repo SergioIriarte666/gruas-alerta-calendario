@@ -14,7 +14,7 @@ import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
-import { Upload, FileText, AlertCircle, CheckCircle, Loader2, X, FileSpreadsheet, Users, Receipt, DollarSign, Calendar, Building, CalendarIcon, Banknote, CreditCard } from 'lucide-react';
+import { Upload, FileText, AlertCircle, CheckCircle, Loader2, X, FileSpreadsheet, Users, Receipt, DollarSign, Calendar, Building, CalendarIcon, Banknote, CreditCard, ShieldAlert } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { XMLCompleteParseResult, XMLDocumentData, XMLSupplierData, XMLSupplierPaymentData } from '@/types/suppliers';
@@ -22,7 +22,9 @@ import { useSuppliers } from '@/hooks/useSuppliers';
 import { useSupplierCategoryManager } from '@/hooks/useSupplierCategoryManager';
 import { getCategoryLabel } from '@/utils/categoryUtils';
 import { useSupplierPayments } from '@/hooks/useSupplierPayments';
+import { useSupplierInvoiceDuplicateCheck, SupplierInvoiceDuplicateResult } from '@/hooks/useDuplicateCheck';
 import { toast } from 'sonner';
+
 interface XMLDocumentUploadProps {
   isOpen: boolean;
   onClose: () => void;
@@ -50,6 +52,12 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
   const [bulkPaidDate, setBulkPaidDate] = useState<string>(format(new Date(), 'yyyy-MM-dd'));
   const [paidDateOverrides, setPaidDateOverrides] = useState<Record<string, string>>({});
   const [statusOverrides, setStatusOverrides] = useState<Record<string, 'pending' | 'paid'>>({});
+  
+  // Estados para duplicados
+  const [duplicateResults, setDuplicateResults] = useState<SupplierInvoiceDuplicateResult[]>([]);
+  const [isCheckingDuplicates, setIsCheckingDuplicates] = useState(false);
+  const [showDuplicateWarning, setShowDuplicateWarning] = useState(false);
+  
   const {
     suppliers,
     createSupplier
@@ -57,6 +65,7 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
   const {
     createPayment
   } = useSupplierPayments();
+  const { checkDuplicates } = useSupplierInvoiceDuplicateCheck();
   const { activeCategories } = useSupplierCategoryManager();
   const onDrop = useCallback((acceptedFiles: File[]) => {
     const file = acceptedFiles[0];
@@ -112,10 +121,47 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
         categoryMap[supplier.rut] = supplier.category;
       });
       setSupplierCategoryMapping(categoryMap);
+      
       if (!result.success) {
         toast.error('Se encontraron errores en el archivo XML');
       } else {
-        toast.success(`Análisis completado: ${result.totalSuppliers} proveedores, ${result.totalDocuments} documentos encontrados`);
+        toast.success(`Análisis completado: ${result.totalSuppliers} proveedores, ${result.totalDocuments} documentos. Verificando duplicados...`);
+        
+        // Verificar duplicados de documentos
+        if (result.documents.length > 0) {
+          setIsCheckingDuplicates(true);
+          try {
+            const itemsToCheck = result.documents.map((doc, index) => ({
+              folio: doc.folio,
+              supplier_rut: doc.supplier_rut,
+              amount: doc.total_amount
+            }));
+            
+            const duplicates = await checkDuplicates(itemsToCheck);
+            setDuplicateResults(duplicates);
+            
+            // Auto-deseleccionar duplicados exactos por folio
+            if (duplicates.length > 0) {
+              const exactDuplicates = duplicates.filter(d => d.matchType === 'exact_folio');
+              if (exactDuplicates.length > 0) {
+                const newSelection = new Set(validDocuments);
+                exactDuplicates.forEach(d => {
+                  const doc = result.documents[d.index];
+                  if (doc) newSelection.delete(doc.folio);
+                });
+                setSelectedDocuments(newSelection);
+                setShowDuplicateWarning(true);
+                toast.warning(`Se detectaron ${duplicates.length} posibles duplicados. ${exactDuplicates.length} por folio fueron deseleccionados.`);
+              } else {
+                toast.warning(`Se detectaron ${duplicates.length} posibles duplicados. Revísalos antes de importar.`);
+              }
+            }
+          } catch (dupError) {
+            console.error('Error checking duplicates:', dupError);
+          } finally {
+            setIsCheckingDuplicates(false);
+          }
+        }
       }
     } catch (error) {
       console.error('Error analyzing XML:', error);
@@ -259,6 +305,16 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
     setBulkPaidDate(format(new Date(), 'yyyy-MM-dd'));
     setPaidDateOverrides({});
     setStatusOverrides({});
+    setDuplicateResults([]);
+    setShowDuplicateWarning(false);
+  };
+  
+  // Helper para obtener info de duplicado por folio
+  const getDuplicateInfoByFolio = (folio: string): SupplierInvoiceDuplicateResult | undefined => {
+    return duplicateResults.find(d => {
+      const doc = parseResult?.documents[d.index];
+      return doc?.folio === folio;
+    });
   };
 
   const handleDueDateChange = (documentFolio: string, date: Date | undefined) => {
@@ -569,6 +625,44 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
                 </CardContent>
               </Card>
 
+              {/* Duplicate Warning Banner */}
+              {duplicateResults.length > 0 && showDuplicateWarning && (
+                <Alert className="border-amber-300 bg-amber-50">
+                  <ShieldAlert className="h-4 w-4 text-amber-600" />
+                  <AlertDescription className="text-amber-800">
+                    <strong>⚠️ Se detectaron {duplicateResults.length} posibles duplicados de facturas.</strong>
+                    <span className="ml-2">
+                      {duplicateResults.filter(d => d.matchType === 'exact_folio').length > 0 && (
+                        <Badge variant="destructive" className="mr-2">
+                          {duplicateResults.filter(d => d.matchType === 'exact_folio').length} por folio
+                        </Badge>
+                      )}
+                      {duplicateResults.filter(d => d.matchType === 'similar').length > 0 && (
+                        <Badge className="bg-yellow-100 text-yellow-800">
+                          {duplicateResults.filter(d => d.matchType === 'similar').length} similares
+                        </Badge>
+                      )}
+                    </span>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="ml-4 text-amber-700 hover:text-amber-900"
+                      onClick={() => setShowDuplicateWarning(false)}
+                    >
+                      Ocultar
+                    </Button>
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              {/* Checking duplicates indicator */}
+              {isCheckingDuplicates && (
+                <div className="flex items-center gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                  <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
+                  <span className="text-sm text-blue-700">Verificando duplicados en la base de datos...</span>
+                </div>
+              )}
+
               {/* Errors and Warnings */}
               {(parseResult.errors.length > 0 || parseResult.warnings.length > 0) && <div className="space-y-2">
                   {parseResult.errors.length > 0 && <Alert className="border-destructive bg-destructive/10">
@@ -656,8 +750,32 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
                           })();
                         const hasCustomDate = !!dueDateOverrides[document.folio];
                         
+                        // Obtener info de duplicado
+                        const duplicateInfo = getDuplicateInfoByFolio(document.folio);
+                        const isDuplicate = !!duplicateInfo;
+                        
                         return (
-                          <div key={index} className="flex items-center justify-between p-3 bg-muted/50 rounded gap-3">
+                          <div key={index} className={cn(
+                            "flex flex-col p-3 rounded gap-2",
+                            isDuplicate && duplicateInfo.matchType === 'exact_folio'
+                              ? "bg-red-50 border border-red-200"
+                              : isDuplicate && duplicateInfo.matchType === 'similar'
+                              ? "bg-yellow-50 border border-yellow-200"
+                              : "bg-muted/50"
+                          )}>
+                            {/* Duplicate warning */}
+                            {isDuplicate && duplicateInfo.existingPayment && (
+                              <div className={cn(
+                                "text-xs px-2 py-1 rounded",
+                                duplicateInfo.matchType === 'exact_folio' ? "bg-red-100 text-red-800" : "bg-yellow-100 text-yellow-800"
+                              )}>
+                                <strong>
+                                  {duplicateInfo.matchType === 'exact_folio' ? '⚠️ Folio ya registrado:' : '🔍 Similar:'}
+                                </strong>
+                                {' '}{duplicateInfo.existingPayment.supplier_name} - ${duplicateInfo.existingPayment.amount.toLocaleString('es-CL')}
+                              </div>
+                            )}
+                            <div className="flex items-center justify-between gap-3">
                             <div className="flex items-center space-x-3 flex-1 min-w-0">
                               <Checkbox 
                                 checked={selectedDocuments.has(document.folio)} 
@@ -728,6 +846,7 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
                               <Badge variant="outline" className="whitespace-nowrap">
                                 {document.document_type}
                               </Badge>
+                            </div>
                             </div>
                           </div>
                         );
