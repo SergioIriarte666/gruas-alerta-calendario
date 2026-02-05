@@ -107,6 +107,9 @@ const addCost = async (costData: CostFormData) => {
       purchase_unit_cost: costData.purchase_unit_cost,
       immediate_consumption: costData.immediate_consumption || false,
       created_by: user?.id || null,
+      // FASE 3: Campos para sincronización con proveedores
+      supplier_id: costData.supplier_id || null,
+      payment_date: costData.payment_date || null,
     };
     
     console.log('[useCosts - addCost] Validated cost data (only costs fields):', validCostFields);
