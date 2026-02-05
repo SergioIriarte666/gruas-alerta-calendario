@@ -27,6 +27,7 @@ import {
 import { useSupplierPayments, getStatusLabel, getStatusColor } from '@/hooks/useSupplierPayments';
 import { useSuppliers } from '@/hooks/useSuppliers';
 import { useSupplierCategoryManager } from '@/hooks/useSupplierCategoryManager';
+import { useCostCategories } from '@/hooks/useCostCategories';
 import { getCategoryLabel } from '@/utils/categoryUtils';
 import { PaymentForm } from './PaymentForm';
 import { SupplierPaymentExportButton } from './SupplierPaymentExportButton';
@@ -71,6 +72,7 @@ export const PaymentList: React.FC = () => {
   
   const { suppliers } = useSuppliers();
   const { activeCategories } = useSupplierCategoryManager();
+  const { data: costCategories = [] } = useCostCategories();
 
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
@@ -622,9 +624,11 @@ export const PaymentList: React.FC = () => {
                       <TableCell>
                         <div className="space-y-1">
                           <div className="text-foreground">{payment.description}</div>
-                          <Badge variant="outline">
-                            {getCategoryLabel(activeCategories, payment.category)}
-                          </Badge>
+                          {payment.category && (
+                            <Badge variant="outline">
+                              {costCategories.find(c => c.id === payment.category)?.name || payment.category}
+                            </Badge>
+                          )}
                         </div>
                       </TableCell>
 

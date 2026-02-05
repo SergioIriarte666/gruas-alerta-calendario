@@ -6,6 +6,7 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { formatCurrency } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useCostCategories } from '@/hooks/useCostCategories';
 
 interface SupplierPayment {
   id: string;
@@ -60,6 +61,8 @@ const getPaymentTypeLabel = (type: string | null) => {
 };
 
 export const SupplierPaymentsTab: React.FC<SupplierPaymentsTabProps> = ({ payments, isLoading }) => {
+  const { data: costCategories = [] } = useCostCategories();
+
   if (isLoading) {
     return (
       <div className="space-y-3">
@@ -115,7 +118,10 @@ export const SupplierPaymentsTab: React.FC<SupplierPaymentsTabProps> = ({ paymen
                 }
               </TableCell>
               <TableCell className="text-foreground">
-                {payment.category || '-'}
+                {payment.category 
+                  ? (costCategories.find(c => c.id === payment.category)?.name || '-')
+                  : '-'
+                }
               </TableCell>
               <TableCell className="text-foreground">
                 {payment.paid_date 
