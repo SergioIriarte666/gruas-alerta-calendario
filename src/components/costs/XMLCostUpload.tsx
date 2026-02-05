@@ -3,14 +3,15 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { BatchProgressModal, useBatchProgress } from '@/components/ui/batch-progress-modal';
 import DatePickerInput from '@/components/common/DatePickerInput';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
+import { cn } from '@/lib/utils';
 import { 
   Upload, 
   FileX,
@@ -738,110 +739,97 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
                     </div>
                   </CardHeader>
                   <CardContent>
-                    <div className="overflow-x-auto border rounded-lg max-h-[400px] overflow-y-auto">
-                      <Table>
-                        <TableHeader className="sticky top-0 bg-background z-10">
-                          <TableRow>
-                            <TableHead className="w-10">
-                              <Checkbox 
-                                checked={selectedRows.size === parseResult.data.length}
-                                onCheckedChange={toggleAllSelection}
-                              />
-                            </TableHead>
-                            <TableHead className="w-36">Fecha Emisión</TableHead>
-                            <TableHead className="min-w-[180px]">Descripción</TableHead>
-                            <TableHead className="w-28">Monto</TableHead>
-                            <TableHead className="w-32">Proveedor</TableHead>
-                            <TableHead className="w-40">Categoría</TableHead>
-                            <TableHead className="w-36">F. Pago</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {visibleData.map((item, idx) => {
-                            const index = showAllRows ? idx : idx;
-                            const actualIndex = parseResult.data.indexOf(item);
-                            const isSelected = selectedRows.has(actualIndex);
+                    {/* Cards View */}
+                    <div className="space-y-3 max-h-[500px] overflow-y-auto pr-2">
+                      {visibleData.map((item, idx) => {
+                        const actualIndex = parseResult.data.indexOf(item);
+                        const isSelected = selectedRows.has(actualIndex);
+                        const editedFecha = getEditedValue(actualIndex, 'fecha', item.fecha);
+                        const editedMonto = getEditedValue(actualIndex, 'monto', item.monto);
+                        const editedDescripcion = getEditedValue(actualIndex, 'descripcion', item.descripcion);
+                        const editedProveedor = getEditedValue(actualIndex, 'proveedor', item.proveedor);
+                        const emissionDateStr = formatDateForInput(editedFecha);
+                        const computedPaymentDate = paymentDateOverrides[actualIndex] || getPaymentDate(actualIndex, emissionDateStr);
+                        const isImmediate = computedPaymentDate === emissionDateStr;
+                        
+                        const isModified = isFieldModified(actualIndex, 'fecha') || 
+                          isFieldModified(actualIndex, 'descripcion') || 
+                          isFieldModified(actualIndex, 'monto') ||
+                          isFieldModified(actualIndex, 'proveedor') ||
+                          paymentDateOverrides[actualIndex];
+                        
+                        return (
+                          <div 
+                            key={actualIndex} 
+                            className={cn(
+                              "border rounded-lg transition-all",
+                              isSelected 
+                                ? "border-violet-300 bg-violet-50/30" 
+                                : "border-gray-200 bg-white"
+                            )}
+                          >
+                            {/* Card Header */}
+                            <div className="flex items-center justify-between p-3 border-b bg-gray-50/50 rounded-t-lg">
+                              <div className="flex items-center gap-3">
+                                <Checkbox 
+                                  checked={isSelected}
+                                  onCheckedChange={() => toggleRowSelection(actualIndex)}
+                                />
+                                <span className="text-sm font-medium text-gray-600">
+                                  Registro {actualIndex + 1} de {parseResult.data.length}
+                                </span>
+                                {isModified && (
+                                  <Badge variant="secondary" className="bg-violet-100 text-violet-700 text-xs">
+                                    Editado
+                                  </Badge>
+                                )}
+                              </div>
+                              <Badge className="bg-green-100 text-green-800 font-semibold">
+                                ${Number(editedMonto).toLocaleString('es-CL')}
+                              </Badge>
+                            </div>
                             
-                            const editedFecha = getEditedValue(actualIndex, 'fecha', item.fecha);
-                            const editedMonto = getEditedValue(actualIndex, 'monto', item.monto);
-                            const editedDescripcion = getEditedValue(actualIndex, 'descripcion', item.descripcion);
-                            const editedProveedor = getEditedValue(actualIndex, 'proveedor', item.proveedor);
-                            
-                            return (
-                              <TableRow 
-                                key={actualIndex} 
-                                className={isSelected ? 'bg-violet-50/50' : ''}
-                              >
-                                <TableCell>
-                                  <Checkbox 
-                                    checked={isSelected}
-                                    onCheckedChange={() => toggleRowSelection(actualIndex)}
+                            {/* Card Body */}
+                            <div className="p-4 space-y-4">
+                              {/* Descripción - Ancho completo */}
+                              <div>
+                                <Label className="text-xs text-gray-500 mb-1.5 block">Descripción</Label>
+                                <Textarea
+                                  value={String(editedDescripcion)}
+                                  onChange={(e) => handleFieldChange(actualIndex, 'descripcion', e.target.value)}
+                                  className="w-full resize-none"
+                                  rows={2}
+                                />
+                              </div>
+                              
+                              {/* Proveedor - Ancho completo */}
+                              <div>
+                                <Label className="text-xs text-gray-500 mb-1.5 block">Proveedor</Label>
+                                <Input
+                                  value={String(editedProveedor || '')}
+                                  onChange={(e) => handleFieldChange(actualIndex, 'proveedor', e.target.value)}
+                                  placeholder="Sin proveedor"
+                                  className="w-full"
+                                />
+                              </div>
+                              
+                              {/* Grid: Fecha Emisión | Categoría | Monto */}
+                              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                <div>
+                                  <Label className="text-xs text-gray-500 mb-1.5 block">Fecha Emisión</Label>
+                                  <DatePickerInput
+                                    value={formatDateForInput(editedFecha)}
+                                    onChange={(date) => handleFieldChange(actualIndex, 'fecha', date)}
+                                    className="w-full"
                                   />
-                                </TableCell>
-                                <TableCell>
-                                  <div className="relative">
-                                    <DatePickerInput
-                                      value={formatDateForInput(editedFecha)}
-                                      onChange={(date) => handleFieldChange(actualIndex, 'fecha', date)}
-                                      className="w-32"
-                                    />
-                                    {isFieldModified(actualIndex, 'fecha') && (
-                                      <Badge variant="secondary" className="absolute -top-2 -right-2 text-[10px] px-1 py-0 bg-violet-200">
-                                        mod
-                                      </Badge>
-                                    )}
-                                  </div>
-                                </TableCell>
-                                <TableCell>
-                                  <div className="relative">
-                                    <Input
-                                      value={String(editedDescripcion)}
-                                      onChange={(e) => handleFieldChange(actualIndex, 'descripcion', e.target.value)}
-                                      className="min-w-[180px]"
-                                    />
-                                    {isFieldModified(actualIndex, 'descripcion') && (
-                                      <Badge variant="secondary" className="absolute -top-2 -right-2 text-[10px] px-1 py-0 bg-violet-200">
-                                        mod
-                                      </Badge>
-                                    )}
-                                  </div>
-                                </TableCell>
-                                <TableCell>
-                                  <div className="relative">
-                                    <Input
-                                      type="number"
-                                      value={editedMonto}
-                                      onChange={(e) => handleFieldChange(actualIndex, 'monto', parseFloat(e.target.value) || 0)}
-                                      className="w-28"
-                                    />
-                                    {isFieldModified(actualIndex, 'monto') && (
-                                      <Badge variant="secondary" className="absolute -top-2 -right-2 text-[10px] px-1 py-0 bg-violet-200">
-                                        mod
-                                      </Badge>
-                                    )}
-                                  </div>
-                                </TableCell>
-                                <TableCell>
-                                  <div className="relative">
-                                    <Input
-                                      value={String(editedProveedor || '')}
-                                      onChange={(e) => handleFieldChange(actualIndex, 'proveedor', e.target.value)}
-                                      placeholder="-"
-                                      className="w-36"
-                                    />
-                                    {isFieldModified(actualIndex, 'proveedor') && (
-                                      <Badge variant="secondary" className="absolute -top-2 -right-2 text-[10px] px-1 py-0 bg-violet-200">
-                                        mod
-                                      </Badge>
-                                    )}
-                                  </div>
-                                </TableCell>
-                                <TableCell>
+                                </div>
+                                <div>
+                                  <Label className="text-xs text-gray-500 mb-1.5 block">Categoría</Label>
                                   <Select
                                     value={categoryMappings[`${actualIndex}-categoria`] || getDefaultCategoryId(item.categoria)}
                                     onValueChange={(value) => handleCategoryChange(actualIndex, value)}
                                   >
-                                    <SelectTrigger className="w-36">
+                                    <SelectTrigger className="w-full">
                                       <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent>
@@ -852,40 +840,42 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
                                       ))}
                                     </SelectContent>
                                   </Select>
-                                </TableCell>
-                                <TableCell>
-                                  {(() => {
-                                    const emissionDateStr = formatDateForInput(editedFecha);
-                                    const computedPaymentDate = paymentDateOverrides[actualIndex] || getPaymentDate(actualIndex, emissionDateStr);
-                                    const isImmediate = computedPaymentDate === emissionDateStr;
-                                    
-                                    return (
-                                      <div className="relative flex items-center gap-1">
-                                        <DatePickerInput
-                                          value={computedPaymentDate || ''}
-                                          onChange={(date) => setPaymentDateOverrides(prev => ({...prev, [actualIndex]: date}))}
-                                          className="w-32"
-                                        />
-                                        {isImmediate && (
-                                          <CheckCircle className="w-3.5 h-3.5 text-green-500 flex-shrink-0" />
-                                        )}
-                                        {paymentDateOverrides[actualIndex] && (
-                                          <Badge variant="secondary" className="absolute -top-2 -right-2 text-[10px] px-1 py-0 bg-violet-200">
-                                            mod
-                                          </Badge>
-                                        )}
-                                      </div>
-                                    );
-                                  })()}
-                                </TableCell>
-                              </TableRow>
-                            );
-                          })}
-                        </TableBody>
-                      </Table>
+                                </div>
+                                <div>
+                                  <Label className="text-xs text-gray-500 mb-1.5 block">Monto</Label>
+                                  <Input
+                                    type="number"
+                                    value={editedMonto}
+                                    onChange={(e) => handleFieldChange(actualIndex, 'monto', parseFloat(e.target.value) || 0)}
+                                    className="w-full"
+                                  />
+                                </div>
+                              </div>
+                              
+                              {/* Fecha de Pago */}
+                              <div className="flex flex-wrap items-end gap-4 pt-3 border-t">
+                                <div className="flex-1 min-w-[180px] max-w-[220px]">
+                                  <Label className="text-xs text-gray-500 mb-1.5 block">Fecha de Pago</Label>
+                                  <DatePickerInput
+                                    value={computedPaymentDate || ''}
+                                    onChange={(date) => setPaymentDateOverrides(prev => ({...prev, [actualIndex]: date}))}
+                                    className="w-full"
+                                  />
+                                </div>
+                                {isImmediate && (
+                                  <div className="flex items-center gap-1.5 text-green-600 text-sm pb-2">
+                                    <CheckCircle className="w-4 h-4" />
+                                    <span>Pago inmediato</span>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
                     {!showAllRows && parseResult.data.length > 20 && (
-                      <p className="text-sm text-muted-foreground mt-2 text-center">
+                      <p className="text-sm text-muted-foreground mt-3 text-center">
                         Mostrando 20 de {parseResult.data.length} registros - 
                         <button 
                           onClick={() => setShowAllRows(true)}
