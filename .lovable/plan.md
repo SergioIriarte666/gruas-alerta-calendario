@@ -1,321 +1,212 @@
 
 
-# Plan: Previsualización Editable para Carga de XML
+# Plan: Agregar Opción de Fecha de Pago en Carga XML
 
 ## Problema Identificado
 
-El componente `XMLCostUpload.tsx` actualmente muestra una tabla de previsualización donde solo se puede editar la **categoría**, pero los demás campos son de solo lectura:
+Cuando se carga un documento XML, el sistema asume automáticamente que el pago es a **30 días** desde la fecha de emisión. El usuario necesita:
 
-| Campo | Estado Actual | Necesidad |
-|-------|--------------|-----------|
-| Fecha | Solo lectura | Editable |
-| Descripción | Solo lectura | Editable |
-| Monto | Solo lectura | Editable |
-| Proveedor | Solo lectura | Editable |
-| Categoría | Editable (Select) | Ya funciona |
-| Subcategoría | No existe | Agregar |
+1. **Opción de marcar como "Pagado" (Contado)** - El documento ya fue pagado
+2. **Seleccionar días de crédito** (30, 45, 60, 90) - Crédito con vencimiento
+3. **Ingresar fecha de pago específica** - Para casos particulares
 
-**Caso de uso real:** El usuario carga facturas XML de enero pero las está procesando en febrero. Necesita ajustar las fechas antes de importar para que los costos queden en el mes correcto.
+### Componentes Afectados
+
+| Componente | Estado Actual | Mejora Necesaria |
+|------------|---------------|------------------|
+| `XMLDocumentUpload` (Proveedores) | Tiene días + fecha individual | Agregar toggle "Pagado/Contado" |
+| `XMLCostUpload` (Costos) | Sin fecha de pago | Agregar fecha de pago completa |
 
 ---
 
-## Solución Propuesta
+## Solución para XMLDocumentUpload (Proveedores)
 
-### Vista General del Componente Mejorado
+### Cambios en UI
 
 ```text
 ┌─────────────────────────────────────────────────────────────────┐
-│  Cargar Gastos desde XML                                    [X] │
+│ CONDICIONES DE PAGO                                             │
 ├─────────────────────────────────────────────────────────────────┤
-│  ┌─────────────────────────────────────────────────────────┐   │
-│  │ 📂 archivo_facturas.xml (45 KB)   [Analizar] [Limpiar]  │   │
-│  └─────────────────────────────────────────────────────────┘   │
-├─────────────────────────────────────────────────────────────────┤
-│  ACCIONES MASIVAS                                               │
-│  ┌──────────────────────────────────────────────────────────┐  │
-│  │ Ajustar todas las fechas:                                │  │
-│  │ [📅 27/01/2026]  [Aplicar a seleccionados]              │  │
-│  │                                                          │  │
-│  │ Ajustar todos los montos: [ +/- % ] [Aplicar]           │  │
-│  └──────────────────────────────────────────────────────────┘  │
-├─────────────────────────────────────────────────────────────────┤
-│  Vista Previa (15 gastos)                      [✓] Seleccionar │
-│  ┌──────────────────────────────────────────────────────────┐  │
-│  │ [✓] │ 27/01  📅│ Combustible Copec    │ $45,000 │ ▼Cat. │  │
-│  │ [✓] │ 27/01  📅│ Peaje Ruta 5         │ $12,000 │ ▼Cat. │  │
-│  │ [✓] │ 28/01  📅│ Viáticos operador    │ $35,000 │ ▼Cat. │  │
-│  └──────────────────────────────────────────────────────────┘  │
-│  Cada fila es editable inline                                   │
-├─────────────────────────────────────────────────────────────────┤
-│  [Cancelar]                   [Cargar 15 Gastos Seleccionados] │
+│                                                                 │
+│ Tipo de pago: ( ) Crédito   (•) Contado/Pagado                 │
+│                                                                 │
+│ ┌─ Si es Crédito ───────────────────────────────────────────┐  │
+│ │ Días de crédito: [30] [45] [60] [90] [Otro: ___]          │  │
+│ │ [Aplicar a todos los documentos seleccionados]            │  │
+│ └───────────────────────────────────────────────────────────┘  │
+│                                                                 │
+│ ┌─ Si es Contado ───────────────────────────────────────────┐  │
+│ │ Fecha de pago: [📅 05/02/2026]                             │  │
+│ │ [Aplicar a todos los documentos seleccionados]            │  │
+│ └───────────────────────────────────────────────────────────┘  │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Cambios en Documentos Individuales
+
+```text
+┌─────────────────────────────────────────────────────────────────┐
+│ [✓] Factura #12345                          $450,000            │
+│     Proveedor: Copec S.A.  |  Emisión: 27/01/2026               │
+│                                                                 │
+│     Estado: [Pendiente ▼]  Vencimiento: [📅 26/02/2026]         │
+│                           ó                                     │
+│     Estado: [Pagado ▼]     Fecha Pago: [📅 27/01/2026]          │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## Cambios Técnicos Detallados
+## Solución para XMLCostUpload (Costos)
 
-### 1. Agregar Estado para Datos Editados
+### Agregar Sección de Fecha de Pago
 
-Actualmente solo existe `categoryMappings`. Agregar estado para todos los campos editables:
+Además de los campos editables actuales (fecha, descripción, monto), agregar:
 
+```text
+┌─────────────────────────────────────────────────────────────────┐
+│ ACCIONES MASIVAS                                                │
+├─────────────────────────────────────────────────────────────────┤
+│ Cambiar fecha emisión: [📅 ___]  [Aplicar]                     │
+│ Cambiar fecha pago:    [📅 ___]  [Aplicar]                     │
+│ Ajustar montos:        [+/- %]   [Aplicar]                     │
+│                                                                 │
+│ [○ Pagado Inmediato] - Usa la misma fecha de emisión           │
+│ [○ A Crédito] - Calcular desde emisión: [30▼] días             │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Columna Adicional en Tabla
+
+```text
+│ [✓] │ Emisión 📅 │ Descripción │ Monto │ Categoría │ F.Pago 📅 │
+│ [✓] │ 27/01     │ Combustible │ $45K  │ ▼ Cat.    │ 26/02     │
+│ [✓] │ 27/01     │ Peajes      │ $12K  │ ▼ Cat.    │ 27/01 ✓   │
+```
+
+Donde `✓` indica que es pago inmediato (misma fecha).
+
+---
+
+## Cambios Técnicos
+
+### 1. XMLDocumentUpload.tsx
+
+**Nuevos estados:**
 ```typescript
-// Estado actual
-const [categoryMappings, setCategoryMappings] = useState<{ [key: string]: string }>({});
-
-// Estados nuevos
-const [editedData, setEditedData] = useState<{ [key: string]: Partial<XMLCostData> }>({});
-const [selectedRows, setSelectedRows] = useState<Set<number>>(new Set());
-const [bulkDate, setBulkDate] = useState<string>('');
-const [bulkAmountAdjustment, setBulkAmountAdjustment] = useState<number>(0);
+const [paymentType, setPaymentType] = useState<'credit' | 'paid'>('credit');
+const [paidDateOverrides, setPaidDateOverrides] = useState<Record<string, string>>({});
+const [bulkPaidDate, setBulkPaidDate] = useState<string>(format(new Date(), 'yyyy-MM-dd'));
+const [statusOverrides, setStatusOverrides] = useState<Record<string, 'pending' | 'paid'>>({});
 ```
 
-### 2. Crear Función para Obtener Valor Final
+**Nueva UI:**
+- RadioGroup para seleccionar tipo de pago (Crédito/Contado)
+- DatePicker para fecha de pago masivo
+- Selector de estado individual por documento (Pendiente/Pagado)
+- Botón "Aplicar a todos" para fecha de pago
 
+**Modificar función `handleUploadData`:**
 ```typescript
-const getEditedValue = <K extends keyof XMLCostData>(
-  index: number, 
-  field: K, 
-  original: XMLCostData[K]
-): XMLCostData[K] => {
-  return (editedData[index]?.[field] ?? original) as XMLCostData[K];
-};
+// Usar statusOverrides para determinar el status del pago
+const status = statusOverrides[document.folio] || 
+               (paymentType === 'paid' ? 'paid' : 'pending');
+
+// Usar paidDateOverrides para la fecha de pago si es 'paid'
+const paymentDate = status === 'paid' 
+  ? paidDateOverrides[document.folio] || bulkPaidDate
+  : undefined;
+
+await createPayment({
+  // ... campos existentes
+  status: status,
+  payment_date: paymentDate, // Nuevo campo
+});
 ```
 
-### 3. Crear Funciones de Edición Individual
+### 2. XMLCostUpload.tsx
 
+**Nuevos estados:**
 ```typescript
-const handleFieldChange = (
-  index: number, 
-  field: keyof XMLCostData, 
-  value: any
-) => {
-  setEditedData(prev => ({
-    ...prev,
-    [index]: {
-      ...prev[index],
-      [field]: value
-    }
-  }));
-};
+const [paymentDateMode, setPaymentDateMode] = useState<'immediate' | 'credit' | 'custom'>('immediate');
+const [creditDays, setCreditDays] = useState<number>(30);
+const [bulkPaymentDate, setBulkPaymentDate] = useState<string>('');
+const [paymentDateOverrides, setPaymentDateOverrides] = useState<Record<number, string>>({});
 ```
 
-### 4. Crear Funciones de Edición Masiva
+**Nueva UI en acciones masivas:**
+- RadioGroup: Pagado Inmediato / A Crédito / Fecha Específica
+- Input para días de crédito (si es "A Crédito")
+- DatePicker para fecha específica (si es "Fecha Específica")
 
+**Nueva columna en tabla:**
+- Columna "F.Pago" editable con DatePickerInput
+
+**Modificar función `handleUploadCosts`:**
 ```typescript
-const handleBulkDateChange = () => {
-  if (!bulkDate) return;
-  
-  const updates: typeof editedData = {};
-  selectedRows.forEach(index => {
-    updates[index] = {
-      ...editedData[index],
-      fecha: bulkDate
-    };
-  });
-  
-  setEditedData(prev => ({ ...prev, ...updates }));
-  toast.success(`Fecha actualizada en ${selectedRows.size} registros`);
-};
-
-const handleBulkAmountAdjustment = () => {
-  if (bulkAmountAdjustment === 0) return;
-  
-  const updates: typeof editedData = {};
-  selectedRows.forEach(index => {
-    const original = parseResult.data[index];
-    const currentAmount = getEditedValue(index, 'monto', original.monto);
-    const newAmount = currentAmount * (1 + bulkAmountAdjustment / 100);
-    
-    updates[index] = {
-      ...editedData[index],
-      monto: Math.round(newAmount)
-    };
-  });
-  
-  setEditedData(prev => ({ ...prev, ...updates }));
-};
-```
-
-### 5. Actualizar Tabla con Campos Editables
-
-Reemplazar la tabla de solo lectura con inputs editables:
-
-```tsx
-<TableBody>
-  {parseResult.data.slice(0, 20).map((item, index) => {
-    const isSelected = selectedRows.has(index);
-    const editedFecha = getEditedValue(index, 'fecha', item.fecha);
-    const editedMonto = getEditedValue(index, 'monto', item.monto);
-    const editedDescripcion = getEditedValue(index, 'descripcion', item.descripcion);
-    
-    return (
-      <TableRow key={index} className={isSelected ? 'bg-muted/50' : ''}>
-        {/* Checkbox de selección */}
-        <TableCell>
-          <Checkbox 
-            checked={isSelected}
-            onCheckedChange={() => toggleRowSelection(index)}
-          />
-        </TableCell>
-        
-        {/* Fecha editable */}
-        <TableCell>
-          <DatePickerInput
-            value={typeof editedFecha === 'string' ? editedFecha : format(editedFecha, 'yyyy-MM-dd')}
-            onChange={(date) => handleFieldChange(index, 'fecha', date)}
-            className="w-32"
-          />
-        </TableCell>
-        
-        {/* Descripción editable */}
-        <TableCell>
-          <Input
-            value={editedDescripcion}
-            onChange={(e) => handleFieldChange(index, 'descripcion', e.target.value)}
-            className="min-w-[200px]"
-          />
-        </TableCell>
-        
-        {/* Monto editable */}
-        <TableCell>
-          <Input
-            type="number"
-            value={editedMonto}
-            onChange={(e) => handleFieldChange(index, 'monto', parseFloat(e.target.value) || 0)}
-            className="w-28"
-          />
-        </TableCell>
-        
-        {/* Categoría (ya existe) */}
-        <TableCell>
-          <Select ...>
-        </TableCell>
-      </TableRow>
-    );
-  })}
-</TableBody>
-```
-
-### 6. Agregar Panel de Acciones Masivas
-
-Nuevo componente antes de la tabla:
-
-```tsx
-{parseResult && parseResult.data.length > 0 && (
-  <Card className="border-violet-200 bg-violet-50/50">
-    <CardHeader className="py-3">
-      <CardTitle className="text-sm flex items-center gap-2">
-        <Wand2 className="w-4 h-4" />
-        Acciones Masivas ({selectedRows.size} seleccionados)
-      </CardTitle>
-    </CardHeader>
-    <CardContent className="space-y-3">
-      {/* Ajuste de fecha */}
-      <div className="flex items-center gap-3">
-        <span className="text-sm text-muted-foreground w-32">Cambiar fecha:</span>
-        <DatePickerInput
-          value={bulkDate}
-          onChange={setBulkDate}
-          placeholder="Nueva fecha"
-          className="w-40"
-        />
-        <Button 
-          variant="outline" 
-          size="sm"
-          onClick={handleBulkDateChange}
-          disabled={!bulkDate || selectedRows.size === 0}
-        >
-          Aplicar
-        </Button>
-      </div>
-      
-      {/* Ajuste de monto */}
-      <div className="flex items-center gap-3">
-        <span className="text-sm text-muted-foreground w-32">Ajustar montos:</span>
-        <Input
-          type="number"
-          value={bulkAmountAdjustment}
-          onChange={(e) => setBulkAmountAdjustment(parseFloat(e.target.value) || 0)}
-          placeholder="+/- %"
-          className="w-24"
-        />
-        <span className="text-xs text-muted-foreground">%</span>
-        <Button 
-          variant="outline" 
-          size="sm"
-          onClick={handleBulkAmountAdjustment}
-          disabled={bulkAmountAdjustment === 0 || selectedRows.size === 0}
-        >
-          Aplicar
-        </Button>
-      </div>
-    </CardContent>
-  </Card>
-)}
-```
-
-### 7. Actualizar Función de Upload
-
-Modificar `handleUploadCosts` para usar los valores editados:
-
-```typescript
-const handleUploadCosts = async () => {
-  // ...
-  
-  for (let i = 0; i < parseResult.data.length; i++) {
-    if (!selectedRows.has(i)) continue; // Solo subir seleccionados
-    
-    const xmlCost = parseResult.data[i];
-    const edited = editedData[i] || {};
-    
-    const finalDate = edited.fecha ?? xmlCost.fecha;
-    const finalMonto = edited.monto ?? xmlCost.monto;
-    const finalDescripcion = edited.descripcion ?? xmlCost.descripcion;
-    
-    const costData = {
-      date: typeof finalDate === 'string' ? finalDate : finalDate.toISOString().split('T')[0],
-      description: finalDescripcion,
-      amount: finalMonto,
-      category_id: categoryMappings[`${i}-categoria`] || getDefaultCategoryId(xmlCost.categoria),
-      // ... resto igual
-    };
-    
-    // ... subir
+// Calcular fecha de pago según modo
+const getPaymentDate = (index: number, emissionDate: string): string | null => {
+  // Si hay override individual, usarlo
+  if (paymentDateOverrides[index]) {
+    return paymentDateOverrides[index];
   }
+  
+  // Según modo seleccionado
+  if (paymentDateMode === 'immediate') {
+    return emissionDate;
+  } else if (paymentDateMode === 'credit') {
+    const date = new Date(emissionDate);
+    date.setDate(date.getDate() + creditDays);
+    return format(date, 'yyyy-MM-dd');
+  } else if (paymentDateMode === 'custom' && bulkPaymentDate) {
+    return bulkPaymentDate;
+  }
+  
+  return null;
+};
+
+const costData = {
+  // ... campos existentes
+  payment_date: getPaymentDate(index, finalDate),
 };
 ```
+
+### 3. Tipos (costs.ts)
+
+Verificar que `payment_date` ya existe en el tipo `CostFormData` (ya confirmado que sí existe en la tabla `costs`).
 
 ---
 
 ## Archivos a Modificar
 
-| # | Archivo | Cambio |
-|---|---------|--------|
-| 1 | `src/components/costs/XMLCostUpload.tsx` | Agregar estados, UI editable, acciones masivas |
-| 2 | `src/types/costs.ts` | Agregar tipo `EditedXMLCostData` (opcional) |
-
----
-
-## Mejoras Adicionales Incluidas
-
-1. **Checkbox de selección por fila** - Permite elegir qué registros importar
-2. **"Seleccionar todos / Ninguno"** - Toggle rápido
-3. **Indicador visual de cambios** - Badge cuando un campo fue modificado
-4. **Contador dinámico** - "Cargar X de Y gastos seleccionados"
-5. **Mostrar más registros** - Paginación o "Ver todos" en lugar de límite de 10
+| # | Archivo | Cambios |
+|---|---------|---------|
+| 1 | `src/components/suppliers/XMLDocumentUpload.tsx` | Agregar toggle Crédito/Pagado, fecha de pago, estado individual |
+| 2 | `src/components/costs/XMLCostUpload.tsx` | Agregar modo de pago, días crédito, fecha pago masiva, columna F.Pago |
+| 3 | `src/hooks/useSupplierPayments.ts` | Verificar que acepta `payment_date` (probablemente ya lo hace) |
 
 ---
 
 ## Resultado Esperado
 
-Después de la implementación:
+### Escenario 1: Cargar facturas ya pagadas
+1. Usuario sube XML con 10 facturas
+2. Selecciona "Contado/Pagado"
+3. Ingresa fecha de pago (o usa la de hoy)
+4. Clic en "Aplicar a todos"
+5. Las 10 facturas se importan con estado "Pagado" y fecha de pago
 
-1. El usuario carga un XML con 50 facturas de enero
-2. Ve la previsualización con todos los datos
-3. Selecciona las 50 filas con "Seleccionar todos"
-4. Usa "Cambiar fecha" para poner todas en 27/01/2026
-5. Opcionalmente ajusta montos individuales
-6. Hace clic en "Cargar 50 Gastos"
-7. Los costos se crean con las fechas y montos corregidos
+### Escenario 2: Cargar facturas a crédito
+1. Usuario sube XML con 10 facturas
+2. Selecciona "Crédito"
+3. Elige 45 días
+4. Clic en "Aplicar a todos"
+5. Las 10 facturas se importan con vencimiento calculado
+
+### Escenario 3: Mezcla de pagadas y pendientes
+1. Usuario sube XML con 10 facturas
+2. Cambia estado individualmente en cada documento
+3. Para las pagadas, selecciona fecha de pago
+4. Importa con estados mixtos
 
