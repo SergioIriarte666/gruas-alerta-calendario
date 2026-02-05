@@ -3996,6 +3996,24 @@ export type Database = {
       }
       check_auth_health: { Args: never; Returns: Json }
       check_bidirectional_sync_status: { Args: never; Returns: Json }
+      check_cost_duplicates: {
+        Args: {
+          p_amount: number
+          p_date: string
+          p_description: string
+          p_folio?: string
+          p_tolerance_percent?: number
+        }
+        Returns: {
+          amount: number
+          created_at: string
+          date: string
+          description: string
+          id: string
+          match_type: string
+          service_folio: string
+        }[]
+      }
       check_for_duplicate_payment: {
         Args: {
           p_amount: number
@@ -4009,6 +4027,38 @@ export type Database = {
       check_security_compliance: { Args: never; Returns: Json }
       check_security_status: { Args: never; Returns: string }
       check_service_invoice_consistency: { Args: never; Returns: Json }
+      check_supplier_duplicates: {
+        Args: { p_name?: string; p_rut: string }
+        Returns: {
+          created_at: string
+          email: string
+          id: string
+          is_active: boolean
+          match_type: string
+          name: string
+          phone: string
+          rut: string
+        }[]
+      }
+      check_supplier_invoice_duplicates: {
+        Args: {
+          p_amount?: number
+          p_folio: string
+          p_supplier_rut?: string
+          p_tolerance_percent?: number
+        }
+        Returns: {
+          amount: number
+          created_at: string
+          due_date: string
+          id: string
+          match_type: string
+          reference_number: string
+          supplier_id: string
+          supplier_name: string
+          supplier_rut: string
+        }[]
+      }
       cleanup_duplicate_inventory_costs: { Args: never; Returns: Json }
       cleanup_duplicate_payments: { Args: never; Returns: Json }
       cleanup_duplicate_profiles: { Args: never; Returns: undefined }

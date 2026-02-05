@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { 
@@ -19,14 +20,17 @@ import {
   Building2,
   Users,
   Phone,
-  Mail
+  Mail,
+  ShieldAlert
 } from 'lucide-react';
 import { XMLSupplierParser } from '@/utils/xmlParser/xmlSupplierParser';
 import { XMLSupplierData, XMLSupplierParseResult } from '@/types/suppliers';
 import { useSuppliers } from '@/hooks/useSuppliers';
 import { useSupplierCategoryManager } from '@/hooks/useSupplierCategoryManager';
 import { getCategoryLabel } from '@/utils/categoryUtils';
+import { useSupplierDuplicateCheck, SupplierDuplicateResult } from '@/hooks/useDuplicateCheck';
 import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
 
 interface XMLSupplierUploadProps {
   isOpen: boolean;
@@ -41,8 +45,15 @@ export const XMLSupplierUpload = ({ isOpen, onClose, onSuccess }: XMLSupplierUpl
   const [uploadProgress, setUploadProgress] = useState(0);
   const [categoryMappings, setCategoryMappings] = useState<{ [key: string]: string }>({});
   
+  // Estado para duplicados
+  const [duplicateResults, setDuplicateResults] = useState<SupplierDuplicateResult[]>([]);
+  const [isCheckingDuplicates, setIsCheckingDuplicates] = useState(false);
+  const [showDuplicateWarning, setShowDuplicateWarning] = useState(false);
+  const [selectedSuppliers, setSelectedSuppliers] = useState<Set<number>>(new Set());
+  
   const { createSupplier } = useSuppliers();
   const { activeCategories } = useSupplierCategoryManager();
+  const { checkDuplicates } = useSupplierDuplicateCheck();
   const parser = new XMLSupplierParser();
 
   const handleFileSelect = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
@@ -78,7 +89,41 @@ export const XMLSupplierUpload = ({ isOpen, onClose, onSuccess }: XMLSupplierUpl
       setParseResult(result);
       
       if (result.success) {
-        toast.success(`XML analizado correctamente: ${result.validRows} proveedores encontrados`);
+        // Seleccionar todos por defecto
+        const allIndices = new Set(result.data.map((_, i) => i));
+        setSelectedSuppliers(allIndices);
+        
+        toast.success(`XML analizado: ${result.validRows} proveedores encontrados. Verificando duplicados...`);
+        
+        // Verificar duplicados
+        setIsCheckingDuplicates(true);
+        try {
+          const itemsToCheck = result.data.map(supplier => ({
+            rut: supplier.rut,
+            name: supplier.name
+          }));
+          
+          const duplicates = await checkDuplicates(itemsToCheck);
+          setDuplicateResults(duplicates);
+          
+          // Auto-deseleccionar duplicados exactos por RUT
+          if (duplicates.length > 0) {
+            const exactDuplicates = duplicates.filter(d => d.matchType === 'exact_rut');
+            if (exactDuplicates.length > 0) {
+              const newSelection = new Set(allIndices);
+              exactDuplicates.forEach(d => newSelection.delete(d.index));
+              setSelectedSuppliers(newSelection);
+              setShowDuplicateWarning(true);
+              toast.warning(`Se detectaron ${duplicates.length} posibles duplicados. ${exactDuplicates.length} con RUT existente fueron deseleccionados.`);
+            } else {
+              toast.warning(`Se detectaron ${duplicates.length} posibles duplicados. Revísalos antes de importar.`);
+            }
+          }
+        } catch (dupError) {
+          console.error('Error checking duplicates:', dupError);
+        } finally {
+          setIsCheckingDuplicates(false);
+        }
       } else {
         toast.error(`Error analizando XML: ${result.errors.join(', ')}`);
       }
@@ -89,19 +134,21 @@ export const XMLSupplierUpload = ({ isOpen, onClose, onSuccess }: XMLSupplierUpl
   };
 
   const handleUploadSuppliers = async () => {
-    if (!parseResult || !parseResult.success) return;
+    if (!parseResult || !parseResult.success || selectedSuppliers.size === 0) return;
     
     setIsUploading(true);
     setUploadProgress(0);
     
     let successCount = 0;
-    const total = parseResult.data.length;
+    const selectedIndices = Array.from(selectedSuppliers).sort((a, b) => a - b);
+    const total = selectedIndices.length;
 
     try {
-      for (let i = 0; i < parseResult.data.length; i++) {
-        const xmlSupplier = parseResult.data[i];
+      for (let i = 0; i < selectedIndices.length; i++) {
+        const index = selectedIndices[i];
+        const xmlSupplier = parseResult.data[index];
         
-        const category = categoryMappings[`${i}-category`] || xmlSupplier.category;
+        const category = categoryMappings[`${index}-category`] || xmlSupplier.category;
         
         const supplierData = {
           name: xmlSupplier.name,
@@ -147,6 +194,28 @@ export const XMLSupplierUpload = ({ isOpen, onClose, onSuccess }: XMLSupplierUpl
     }
   };
 
+  const toggleSupplierSelection = (index: number) => {
+    setSelectedSuppliers(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(index)) {
+        newSet.delete(index);
+      } else {
+        newSet.add(index);
+      }
+      return newSet;
+    });
+  };
+
+  const toggleAllSelection = () => {
+    if (!parseResult) return;
+    
+    if (selectedSuppliers.size === parseResult.data.length) {
+      setSelectedSuppliers(new Set());
+    } else {
+      setSelectedSuppliers(new Set(parseResult.data.map((_, i) => i)));
+    }
+  };
+
   const handleCategoryChange = (index: number, categoryId: string) => {
     setCategoryMappings(prev => ({
       ...prev,
@@ -167,6 +236,14 @@ export const XMLSupplierUpload = ({ isOpen, onClose, onSuccess }: XMLSupplierUpl
     setParseResult(null);
     setCategoryMappings({});
     setUploadProgress(0);
+    setDuplicateResults([]);
+    setShowDuplicateWarning(false);
+    setSelectedSuppliers(new Set());
+  };
+  
+  // Helper para obtener info de duplicado por índice
+  const getDuplicateInfo = (index: number): SupplierDuplicateResult | undefined => {
+    return duplicateResults.find(d => d.index === index);
   };
 
   return (
@@ -312,6 +389,44 @@ export const XMLSupplierUpload = ({ isOpen, onClose, onSuccess }: XMLSupplierUpl
                   </div>
                 </div>
 
+                {/* Duplicate Warning Banner */}
+                {duplicateResults.length > 0 && showDuplicateWarning && (
+                  <Alert className="border-amber-300 bg-amber-50">
+                    <ShieldAlert className="h-4 w-4 text-amber-600" />
+                    <AlertDescription className="text-amber-800">
+                      <strong>⚠️ Se detectaron {duplicateResults.length} posibles proveedores duplicados.</strong>
+                      <span className="ml-2">
+                        {duplicateResults.filter(d => d.matchType === 'exact_rut').length > 0 && (
+                          <Badge variant="destructive" className="mr-2">
+                            {duplicateResults.filter(d => d.matchType === 'exact_rut').length} por RUT
+                          </Badge>
+                        )}
+                        {duplicateResults.filter(d => d.matchType === 'exact_name' || d.matchType === 'similar_name').length > 0 && (
+                          <Badge className="bg-yellow-100 text-yellow-800">
+                            {duplicateResults.filter(d => d.matchType === 'exact_name' || d.matchType === 'similar_name').length} por nombre
+                          </Badge>
+                        )}
+                      </span>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="ml-4 text-amber-700 hover:text-amber-900"
+                        onClick={() => setShowDuplicateWarning(false)}
+                      >
+                        Ocultar
+                      </Button>
+                    </AlertDescription>
+                  </Alert>
+                )}
+
+                {/* Checking duplicates indicator */}
+                {isCheckingDuplicates && (
+                  <div className="flex items-center gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
+                    <span className="text-sm text-blue-700">Verificando duplicados en la base de datos...</span>
+                  </div>
+                )}
+
                 {/* Errors and Warnings */}
                 {(parseResult.errors.length > 0 || parseResult.warnings.length > 0) && (
                   <div className="space-y-2">
@@ -341,76 +456,111 @@ export const XMLSupplierUpload = ({ isOpen, onClose, onSuccess }: XMLSupplierUpl
                 {/* Preview Table */}
                 {parseResult.data.length > 0 && (
                   <div>
-                    <h4 className="font-medium mb-3 flex items-center gap-2">
-                      <Building2 className="w-4 h-4" />
-                      Vista Previa y Mapeo de Categorías
-                    </h4>
-                    <div className="overflow-x-auto border rounded-lg">
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>Nombre</TableHead>
-                            <TableHead>RUT</TableHead>
-                            <TableHead>Email</TableHead>
-                            <TableHead>Teléfono</TableHead>
-                            <TableHead>Categoría</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {parseResult.data.slice(0, 10).map((supplier, index) => (
-                            <TableRow key={index}>
-                              <TableCell className="font-medium">
-                                <div className="flex items-center gap-2">
-                                  <Building2 className="w-4 h-4 text-muted-foreground" />
-                                  {supplier.name}
-                                </div>
-                              </TableCell>
-                              <TableCell className="font-mono text-sm">
-                                {supplier.rut || '-'}
-                              </TableCell>
-                              <TableCell>
-                                {supplier.email ? (
-                                  <div className="flex items-center gap-1">
-                                    <Mail className="w-3 h-3" />
-                                    <span className="text-sm">{supplier.email}</span>
-                                  </div>
-                                ) : '-'}
-                              </TableCell>
-                              <TableCell>
-                                {supplier.phone ? (
-                                  <div className="flex items-center gap-1">
-                                    <Phone className="w-3 h-3" />
-                                    <span className="text-sm">{supplier.phone}</span>
-                                  </div>
-                                ) : '-'}
-                              </TableCell>
-                              <TableCell>
-                                <Select
-                                  value={categoryMappings[`${index}-category`] || supplier.category}
-                                  onValueChange={(value) => handleCategoryChange(index, value)}
-                                >
-                                  <SelectTrigger className="w-48">
-                                    <SelectValue />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    {activeCategories?.map(category => (
-                                      <SelectItem key={category.id} value={category.name}>
-                                        {getCategoryLabel(activeCategories, category.name)}
-                                      </SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
+                    <div className="flex items-center justify-between mb-3">
+                      <h4 className="font-medium flex items-center gap-2">
+                        <Building2 className="w-4 h-4" />
+                        Vista Previa ({selectedSuppliers.size} de {parseResult.data.length} seleccionados)
+                      </h4>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={toggleAllSelection}
+                        className="text-xs"
+                      >
+                        {selectedSuppliers.size === parseResult.data.length ? 'Deseleccionar todos' : 'Seleccionar todos'}
+                      </Button>
                     </div>
-                    {parseResult.data.length > 10 && (
-                      <p className="text-sm text-muted-foreground mt-2">
-                        Mostrando 10 de {parseResult.data.length} registros
-                      </p>
-                    )}
+                    <div className="space-y-2 max-h-80 overflow-y-auto">
+                      {parseResult.data.map((supplier, index) => {
+                        const duplicateInfo = getDuplicateInfo(index);
+                        const isDuplicate = !!duplicateInfo;
+                        const isSelected = selectedSuppliers.has(index);
+                        
+                        return (
+                          <div 
+                            key={index} 
+                            className={cn(
+                              "p-3 rounded-lg border",
+                              isDuplicate && duplicateInfo.matchType === 'exact_rut'
+                                ? "bg-red-50 border-red-200"
+                                : isDuplicate
+                                ? "bg-yellow-50 border-yellow-200"
+                                : isSelected
+                                ? "bg-violet-50 border-violet-200"
+                                : "bg-muted/50 border-transparent"
+                            )}
+                          >
+                            <div className="flex items-center justify-between gap-3">
+                              <div className="flex items-center gap-3 flex-1 min-w-0">
+                                <input
+                                  type="checkbox"
+                                  checked={isSelected}
+                                  onChange={() => toggleSupplierSelection(index)}
+                                  className="w-4 h-4 rounded border-gray-300"
+                                />
+                                <div className="min-w-0 flex-1">
+                                  <div className="flex items-center gap-2">
+                                    <Building2 className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                                    <span className="font-medium truncate">{supplier.name}</span>
+                                    {isDuplicate && (
+                                      <Badge 
+                                        variant={duplicateInfo.matchType === 'exact_rut' ? 'destructive' : 'secondary'}
+                                        className={cn(
+                                          "text-xs flex-shrink-0",
+                                          duplicateInfo.matchType !== 'exact_rut' && "bg-yellow-100 text-yellow-800"
+                                        )}
+                                      >
+                                        {duplicateInfo.matchType === 'exact_rut' && '⚠️ RUT Existente'}
+                                        {duplicateInfo.matchType === 'exact_name' && '📝 Nombre Igual'}
+                                        {duplicateInfo.matchType === 'similar_name' && '🔍 Nombre Similar'}
+                                      </Badge>
+                                    )}
+                                  </div>
+                                  <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1">
+                                    <span className="font-mono">{supplier.rut || '-'}</span>
+                                    {supplier.email && (
+                                      <span className="flex items-center gap-1">
+                                        <Mail className="w-3 h-3" />
+                                        {supplier.email}
+                                      </span>
+                                    )}
+                                    {supplier.phone && (
+                                      <span className="flex items-center gap-1">
+                                        <Phone className="w-3 h-3" />
+                                        {supplier.phone}
+                                      </span>
+                                    )}
+                                  </div>
+                                  {isDuplicate && duplicateInfo.existingSupplier && (
+                                    <div className={cn(
+                                      "text-xs mt-2 p-2 rounded",
+                                      duplicateInfo.matchType === 'exact_rut' ? "bg-red-100 text-red-700" : "bg-yellow-100 text-yellow-700"
+                                    )}>
+                                      <strong>Ya existe:</strong> {duplicateInfo.existingSupplier.name} ({duplicateInfo.existingSupplier.rut})
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                              <Select
+                                value={categoryMappings[`${index}-category`] || supplier.category}
+                                onValueChange={(value) => handleCategoryChange(index, value)}
+                              >
+                                <SelectTrigger className="w-40 flex-shrink-0">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {activeCategories?.map(category => (
+                                    <SelectItem key={category.id} value={category.name}>
+                                      {getCategoryLabel(activeCategories, category.name)}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
                 )}
 
@@ -426,7 +576,7 @@ export const XMLSupplierUpload = ({ isOpen, onClose, onSuccess }: XMLSupplierUpl
                     </Button>
                     <Button 
                       onClick={handleUploadSuppliers}
-                      disabled={isUploading}
+                      disabled={isUploading || selectedSuppliers.size === 0}
                     >
                       {isUploading ? (
                         <>
@@ -436,7 +586,7 @@ export const XMLSupplierUpload = ({ isOpen, onClose, onSuccess }: XMLSupplierUpl
                       ) : (
                         <>
                           <Users className="w-4 h-4 mr-2" />
-                          Crear {parseResult.validRows} Proveedores
+                          Crear {selectedSuppliers.size} Proveedores
                         </>
                       )}
                     </Button>

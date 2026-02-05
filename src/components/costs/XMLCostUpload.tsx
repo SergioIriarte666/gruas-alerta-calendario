@@ -11,6 +11,7 @@ import { BatchProgressModal, useBatchProgress } from '@/components/ui/batch-prog
 import DatePickerInput from '@/components/common/DatePickerInput';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { cn } from '@/lib/utils';
 import { 
   Upload, 
@@ -27,12 +28,14 @@ import {
   Wand2,
   Pencil,
   CreditCard,
-  Banknote
+  Banknote,
+  ShieldAlert
 } from 'lucide-react';
 import { XMLCostParser } from '@/utils/xmlParser/xmlCostParser';
 import { XMLCostData, XMLParseResult } from '@/types/costs';
 import { useAddCost } from '@/hooks/useCosts';
 import { useCostCategories } from '@/hooks/useCostCategories';
+import { useCostDuplicateCheck, CostDuplicateResult } from '@/hooks/useDuplicateCheck';
 import { toast } from 'sonner';
 import { format, parse } from 'date-fns';
 
@@ -61,10 +64,16 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
   const [bulkPaymentDate, setBulkPaymentDate] = useState<string>('');
   const [paymentDateOverrides, setPaymentDateOverrides] = useState<Record<number, string>>({});
   
+  // Estado para duplicados
+  const [duplicateResults, setDuplicateResults] = useState<CostDuplicateResult[]>([]);
+  const [isCheckingDuplicates, setIsCheckingDuplicates] = useState(false);
+  const [showDuplicateWarning, setShowDuplicateWarning] = useState(false);
+  
   const batchProgress = useBatchProgress();
   
   const { mutate: addCost } = useAddCost();
   const { data: categories = [] } = useCostCategories();
+  const { checkDuplicates } = useCostDuplicateCheck();
   const parser = new XMLCostParser();
 
   // Validación mejorada de archivos XML
@@ -114,7 +123,39 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
       if (result.success && result.data.length > 0) {
         const allIndices = new Set(result.data.map((_, i) => i));
         setSelectedRows(allIndices);
-        toast.success(`XML analizado: ${result.validRows} gastos encontrados y seleccionados`);
+        toast.success(`XML analizado: ${result.validRows} gastos encontrados. Verificando duplicados...`);
+        
+        // Verificar duplicados automáticamente
+        setIsCheckingDuplicates(true);
+        try {
+          const itemsToCheck = result.data.map(item => ({
+            date: typeof item.fecha === 'string' ? item.fecha : format(item.fecha, 'yyyy-MM-dd'),
+            amount: item.monto,
+            description: item.descripcion,
+            folio: item.numeroFactura || undefined
+          }));
+          
+          const duplicates = await checkDuplicates(itemsToCheck);
+          setDuplicateResults(duplicates);
+          
+          // Auto-deseleccionar duplicados exactos
+          if (duplicates.length > 0) {
+            const exactDuplicates = duplicates.filter(d => d.matchType === 'exact');
+            if (exactDuplicates.length > 0) {
+              const newSelection = new Set(allIndices);
+              exactDuplicates.forEach(d => newSelection.delete(d.index));
+              setSelectedRows(newSelection);
+              setShowDuplicateWarning(true);
+              toast.warning(`Se detectaron ${duplicates.length} posibles duplicados. ${exactDuplicates.length} exactos fueron deseleccionados.`);
+            } else {
+              toast.warning(`Se detectaron ${duplicates.length} posibles duplicados. Revísalos antes de importar.`);
+            }
+          }
+        } catch (dupError) {
+          console.error('Error checking duplicates:', dupError);
+        } finally {
+          setIsCheckingDuplicates(false);
+        }
       } else {
         toast.error(`Error analizando XML: ${result.errors.join(', ')}`);
       }
@@ -397,6 +438,13 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
     setCreditDays(30);
     setBulkPaymentDate('');
     setPaymentDateOverrides({});
+    setDuplicateResults([]);
+    setShowDuplicateWarning(false);
+  };
+  
+  // Helper para obtener info de duplicado por índice
+  const getDuplicateInfo = (index: number): CostDuplicateResult | undefined => {
+    return duplicateResults.find(d => d.index === index);
   };
 
   // Calcular datos visibles
@@ -569,7 +617,49 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
                 </div>
               )}
 
-              {/* Bulk Actions Panel */}
+              {/* Duplicate Warning Banner */}
+              {duplicateResults.length > 0 && showDuplicateWarning && (
+                <Alert variant="destructive" className="border-amber-300 bg-amber-50">
+                  <ShieldAlert className="h-4 w-4 text-amber-600" />
+                  <AlertDescription className="text-amber-800">
+                    <strong>⚠️ Se detectaron {duplicateResults.length} posibles duplicados.</strong>
+                    <span className="ml-2">
+                      {duplicateResults.filter(d => d.matchType === 'exact').length > 0 && (
+                        <Badge variant="destructive" className="mr-2">
+                          {duplicateResults.filter(d => d.matchType === 'exact').length} exactos
+                        </Badge>
+                      )}
+                      {duplicateResults.filter(d => d.matchType === 'folio').length > 0 && (
+                        <Badge className="bg-orange-100 text-orange-800 mr-2">
+                          {duplicateResults.filter(d => d.matchType === 'folio').length} por folio
+                        </Badge>
+                      )}
+                      {duplicateResults.filter(d => d.matchType === 'similar').length > 0 && (
+                        <Badge className="bg-yellow-100 text-yellow-800">
+                          {duplicateResults.filter(d => d.matchType === 'similar').length} similares
+                        </Badge>
+                      )}
+                    </span>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="ml-4 text-amber-700 hover:text-amber-900"
+                      onClick={() => setShowDuplicateWarning(false)}
+                    >
+                      Ocultar
+                    </Button>
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              {/* Checking duplicates indicator */}
+              {isCheckingDuplicates && (
+                <div className="flex items-center gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                  <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
+                  <span className="text-sm text-blue-700">Verificando duplicados en la base de datos...</span>
+                </div>
+              )}
+
               {parseResult.data.length > 0 && (
                 <Card className="border-violet-200 bg-violet-50/50">
                   <CardHeader className="py-3">
@@ -758,18 +848,37 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
                           isFieldModified(actualIndex, 'proveedor') ||
                           paymentDateOverrides[actualIndex];
                         
+                        // Obtener info de duplicado
+                        const duplicateInfo = getDuplicateInfo(actualIndex);
+                        const isDuplicate = !!duplicateInfo;
+                        
                         return (
                           <div 
                             key={actualIndex} 
                             className={cn(
                               "border rounded-lg transition-all",
-                              isSelected 
+                              isDuplicate && duplicateInfo.matchType === 'exact'
+                                ? "border-red-300 bg-red-50/30"
+                                : isDuplicate && duplicateInfo.matchType === 'folio'
+                                ? "border-orange-300 bg-orange-50/30"
+                                : isDuplicate && duplicateInfo.matchType === 'similar'
+                                ? "border-yellow-300 bg-yellow-50/30"
+                                : isSelected 
                                 ? "border-violet-300 bg-violet-50/30" 
                                 : "border-gray-200 bg-white"
                             )}
                           >
                             {/* Card Header */}
-                            <div className="flex items-center justify-between p-3 border-b bg-gray-50/50 rounded-t-lg">
+                            <div className={cn(
+                              "flex items-center justify-between p-3 border-b rounded-t-lg",
+                              isDuplicate && duplicateInfo.matchType === 'exact'
+                                ? "bg-red-50"
+                                : isDuplicate && duplicateInfo.matchType === 'folio'
+                                ? "bg-orange-50"
+                                : isDuplicate && duplicateInfo.matchType === 'similar'
+                                ? "bg-yellow-50"
+                                : "bg-gray-50/50"
+                            )}>
                               <div className="flex items-center gap-3">
                                 <Checkbox 
                                   checked={isSelected}
@@ -778,7 +887,21 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
                                 <span className="text-sm font-medium text-gray-600">
                                   Registro {actualIndex + 1} de {parseResult.data.length}
                                 </span>
-                                {isModified && (
+                                {isDuplicate && (
+                                  <Badge 
+                                    variant={duplicateInfo.matchType === 'exact' ? 'destructive' : 'secondary'}
+                                    className={cn(
+                                      "text-xs",
+                                      duplicateInfo.matchType === 'folio' && "bg-orange-100 text-orange-800",
+                                      duplicateInfo.matchType === 'similar' && "bg-yellow-100 text-yellow-800"
+                                    )}
+                                  >
+                                    {duplicateInfo.matchType === 'exact' && '⚠️ Duplicado Exacto'}
+                                    {duplicateInfo.matchType === 'folio' && '📄 Folio Existente'}
+                                    {duplicateInfo.matchType === 'similar' && '🔍 Similar'}
+                                  </Badge>
+                                )}
+                                {isModified && !isDuplicate && (
                                   <Badge variant="secondary" className="bg-violet-100 text-violet-700 text-xs">
                                     Editado
                                   </Badge>
@@ -788,6 +911,27 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
                                 ${Number(editedMonto).toLocaleString('es-CL')}
                               </Badge>
                             </div>
+                            
+                            {/* Duplicate Alert */}
+                            {isDuplicate && duplicateInfo.existingCost && (
+                              <div className={cn(
+                                "px-4 py-2 text-sm border-b",
+                                duplicateInfo.matchType === 'exact' ? "bg-red-100 text-red-800" :
+                                duplicateInfo.matchType === 'folio' ? "bg-orange-100 text-orange-800" :
+                                "bg-yellow-100 text-yellow-800"
+                              )}>
+                                <strong>
+                                  {duplicateInfo.matchType === 'exact' && 'Ya existe un gasto idéntico:'}
+                                  {duplicateInfo.matchType === 'folio' && 'Factura ya registrada:'}
+                                  {duplicateInfo.matchType === 'similar' && 'Gasto similar encontrado:'}
+                                </strong>
+                                <span className="ml-2">
+                                  {format(new Date(duplicateInfo.existingCost.date), 'dd/MM/yyyy')} - 
+                                  ${duplicateInfo.existingCost.amount.toLocaleString('es-CL')} - 
+                                  "{duplicateInfo.existingCost.description.substring(0, 50)}..."
+                                </span>
+                              </div>
+                            )}
                             
                             {/* Card Body */}
                             <div className="p-4 space-y-4">
