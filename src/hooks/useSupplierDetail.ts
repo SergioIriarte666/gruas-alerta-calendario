@@ -12,7 +12,9 @@ interface SupplierDetailStats {
   cranePartsCount: number;
 }
 
-export const useSupplierDetail = (supplierId: string | null) => {
+export const useSupplierDetail = (supplierId: string | null, enabled = true) => {
+  const isEnabled = !!supplierId && enabled;
+
   // Fetch supplier payments
   const { data: payments = [], isLoading: paymentsLoading } = useQuery({
     queryKey: ['supplier-detail-payments', supplierId],
@@ -27,7 +29,7 @@ export const useSupplierDetail = (supplierId: string | null) => {
       if (error) throw error;
       return data || [];
     },
-    enabled: !!supplierId,
+    enabled: isEnabled,
   });
 
   // Fetch supplier invoices
@@ -44,7 +46,7 @@ export const useSupplierDetail = (supplierId: string | null) => {
       if (error) throw error;
       return data || [];
     },
-    enabled: !!supplierId,
+    enabled: isEnabled,
   });
 
   // Fetch inventory movements
@@ -65,7 +67,7 @@ export const useSupplierDetail = (supplierId: string | null) => {
       if (error) throw error;
       return data || [];
     },
-    enabled: !!supplierId,
+    enabled: isEnabled,
   });
 
   // Fetch crane parts
@@ -85,7 +87,7 @@ export const useSupplierDetail = (supplierId: string | null) => {
       if (error) throw error;
       return data || [];
     },
-    enabled: !!supplierId,
+    enabled: isEnabled,
   });
 
   // Calculate stats

@@ -68,7 +68,7 @@ export const SupplierDetailModal: React.FC<SupplierDetailModalProps> = ({
   onClose,
 }) => {
   const [activeTab, setActiveTab] = useState('general');
-  const { payments, invoices, inventoryMovements, craneParts, stats, isLoading } = useSupplierDetail(supplier?.id ?? null);
+  const { payments, invoices, inventoryMovements, craneParts, stats, isLoading } = useSupplierDetail(supplier?.id ?? null, isOpen);
 
   if (!supplier) return null;
 
