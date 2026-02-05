@@ -1103,8 +1103,8 @@ export const useServiceManager = () => {
       console.log('🎉 FIN ACTUALIZACIÓN DE SERVICIO');
       console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
-      // ✅ SINCRONIZACIÓN DE COSTO OUTSOURCED
-      // Si el servicio tiene proveedor tercerizado, actualizar el costo asociado
+      // ✅ SINCRONIZACIÓN DE COSTO OUTSOURCED Y SUPPLIER_PAYMENTS
+      // Si el servicio tiene proveedor tercerizado, actualizar el costo y el pago asociado
       if (serviceData.outsourcedProviderId !== undefined) {
         console.log('🔄 [OUTSOURCED SYNC] Sincronizando costo de proveedor tercerizado');
         
@@ -1119,14 +1119,16 @@ export const useServiceManager = () => {
         if (findCostError) {
           console.error('[OUTSOURCED SYNC] Error buscando costo existente:', findCostError);
         } else if (existingOutsourcedCost) {
+          const newSupplierId = serviceData.outsourcedProviderId && serviceData.outsourcedProviderId.trim() !== '' 
+            ? serviceData.outsourcedProviderId 
+            : null;
+
           // Actualizar el costo existente con el nuevo proveedor y monto
           const { error: updateCostError } = await supabase
             .from('costs')
             .update({
               amount: serviceData.outsourcedCost || 0,
-              supplier_id: serviceData.outsourcedProviderId && serviceData.outsourcedProviderId.trim() !== '' 
-                ? serviceData.outsourcedProviderId 
-                : null,
+              supplier_id: newSupplierId,
               notes: serviceData.outsourcedNotes || null,
               updated_at: new Date().toISOString()
             })
@@ -1138,8 +1140,39 @@ export const useServiceManager = () => {
             console.log('✅ [OUTSOURCED SYNC] Costo de proveedor tercerizado actualizado:', {
               costId: existingOutsourcedCost.id,
               newAmount: serviceData.outsourcedCost,
-              newSupplierId: serviceData.outsourcedProviderId
+              newSupplierId
             });
+
+            // ✅ TAMBIÉN actualizar el supplier_payment asociado a este costo
+            const { data: existingPayment, error: findPaymentError } = await supabase
+              .from('supplier_payments')
+              .select('id')
+              .eq('cost_id', existingOutsourcedCost.id)
+              .maybeSingle();
+
+            if (findPaymentError) {
+              console.error('[OUTSOURCED SYNC] Error buscando payment existente:', findPaymentError);
+            } else if (existingPayment) {
+              const { error: updatePaymentError } = await supabase
+                .from('supplier_payments')
+                .update({
+                  amount: serviceData.outsourcedCost || 0,
+                  supplier_id: newSupplierId,
+                  updated_at: new Date().toISOString()
+                })
+                .eq('id', existingPayment.id);
+
+              if (updatePaymentError) {
+                console.error('[OUTSOURCED SYNC] Error actualizando supplier_payment:', updatePaymentError);
+              } else {
+                console.log('✅ [OUTSOURCED SYNC] Supplier payment actualizado:', {
+                  paymentId: existingPayment.id,
+                  newSupplierId
+                });
+              }
+            } else {
+              console.log('[OUTSOURCED SYNC] No se encontró supplier_payment asociado al costo');
+            }
           }
         } else {
           console.log('[OUTSOURCED SYNC] No se encontró costo outsourced existente para este servicio');
