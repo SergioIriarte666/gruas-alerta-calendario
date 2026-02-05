@@ -12,7 +12,9 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Upload, FileText, AlertCircle, CheckCircle, Loader2, X, FileSpreadsheet, Users, Receipt, DollarSign, Calendar, Building, CalendarIcon } from 'lucide-react';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Label } from '@/components/ui/label';
+import { Upload, FileText, AlertCircle, CheckCircle, Loader2, X, FileSpreadsheet, Users, Receipt, DollarSign, Calendar, Building, CalendarIcon, Banknote, CreditCard } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { XMLCompleteParseResult, XMLDocumentData, XMLSupplierData, XMLSupplierPaymentData } from '@/types/suppliers';
@@ -42,6 +44,12 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
   const [createPayments, setCreatePayments] = useState(true);
   const [dueDateOverrides, setDueDateOverrides] = useState<Record<string, string>>({});
   const [defaultDaysToAdd, setDefaultDaysToAdd] = useState<number>(30);
+  
+  // Estados para tipo de pago (Crédito vs Contado)
+  const [paymentType, setPaymentType] = useState<'credit' | 'paid'>('credit');
+  const [bulkPaidDate, setBulkPaidDate] = useState<string>(format(new Date(), 'yyyy-MM-dd'));
+  const [paidDateOverrides, setPaidDateOverrides] = useState<Record<string, string>>({});
+  const [statusOverrides, setStatusOverrides] = useState<Record<string, 'pending' | 'paid'>>({});
   const {
     suppliers,
     createSupplier
@@ -166,6 +174,14 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
           try {
             const supplierId = createdSupplierMap.get(paymentData.supplier_rut);
             if (!supplierId) continue;
+            
+            // Determinar status y fecha de pago
+            const docFolio = paymentData.reference_number || '';
+            const status = statusOverrides[docFolio] || (paymentType === 'paid' ? 'paid' : 'pending');
+            const paidDate = status === 'paid' 
+              ? paidDateOverrides[docFolio] || bulkPaidDate
+              : undefined;
+            
             await new Promise<void>((resolve, reject) => {
               createPayment({
                 supplier_id: supplierId,
@@ -175,7 +191,9 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
                 category: paymentData.category,
                 reference_number: paymentData.reference_number,
                 notes: paymentData.notes,
-                status: paymentData.status
+                status: status,
+                paid_date: paidDate,
+                paid_amount: status === 'paid' ? paymentData.amount : undefined
               }, {
                 onSuccess: () => resolve(),
                 onError: reject
@@ -237,6 +255,10 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
     setCreatePayments(true);
     setDueDateOverrides({});
     setDefaultDaysToAdd(30);
+    setPaymentType('credit');
+    setBulkPaidDate(format(new Date(), 'yyyy-MM-dd'));
+    setPaidDateOverrides({});
+    setStatusOverrides({});
   };
 
   const handleDueDateChange = (documentFolio: string, date: Date | undefined) => {
@@ -415,50 +437,133 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
                   </div>
                   
                   {createPayments && parseResult.documents.length > 0 && (
-                    <div className="space-y-3 pt-3 border-t">
-                      <h4 className="text-sm font-medium text-foreground">Configuración de Fechas de Vencimiento</h4>
-                      <div className="flex items-end gap-3">
-                        <div className="flex-1">
-                          <label className="text-sm text-muted-foreground mb-1 block">
-                            Días hasta vencimiento por defecto
-                          </label>
-                          <div className="flex gap-2">
-                            <Input
-                              type="number"
-                              min="0"
-                              max="365"
-                              value={defaultDaysToAdd}
-                              onChange={(e) => {
-                                const value = e.target.value;
-                                if (value === '' || value === '0') {
-                                  setDefaultDaysToAdd(0);
-                                } else {
-                                  setDefaultDaysToAdd(parseInt(value) || 0);
-                                }
-                              }}
-                              className="w-32"
-                            />
+                    <div className="space-y-4 pt-3 border-t">
+                      {/* Tipo de pago */}
+                      <div className="space-y-3">
+                        <h4 className="text-sm font-medium text-foreground flex items-center gap-2">
+                          <CreditCard className="w-4 h-4" />
+                          Tipo de Pago
+                        </h4>
+                        <RadioGroup 
+                          value={paymentType} 
+                          onValueChange={(value) => setPaymentType(value as 'credit' | 'paid')}
+                          className="flex gap-6"
+                        >
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="credit" id="payment-type-credit" />
+                            <Label htmlFor="payment-type-credit" className="cursor-pointer">
+                              A Crédito (Pendiente)
+                            </Label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="paid" id="payment-type-paid" />
+                            <Label htmlFor="payment-type-paid" className="cursor-pointer">
+                              Contado / Ya Pagado
+                            </Label>
+                          </div>
+                        </RadioGroup>
+                      </div>
+
+                      {/* Si es Crédito: configurar días */}
+                      {paymentType === 'credit' && (
+                        <div className="space-y-3 pl-6 border-l-2 border-muted">
+                          <h4 className="text-sm font-medium text-foreground">Configuración de Fechas de Vencimiento</h4>
+                          <div className="flex items-end gap-3">
+                            <div className="flex-1">
+                              <label className="text-sm text-muted-foreground mb-1 block">
+                                Días hasta vencimiento por defecto
+                              </label>
+                              <div className="flex gap-2">
+                                {[30, 45, 60, 90].map(days => (
+                                  <Button
+                                    key={days}
+                                    variant={defaultDaysToAdd === days ? 'default' : 'outline'}
+                                    size="sm"
+                                    onClick={() => setDefaultDaysToAdd(days)}
+                                    className="w-12"
+                                  >
+                                    {days}
+                                  </Button>
+                                ))}
+                                <Input
+                                  type="number"
+                                  min="0"
+                                  max="365"
+                                  value={defaultDaysToAdd}
+                                  onChange={(e) => setDefaultDaysToAdd(parseInt(e.target.value) || 0)}
+                                  className="w-20"
+                                />
+                                <span className="text-sm text-muted-foreground self-center">días</span>
+                              </div>
+                            </div>
                             <Button
                               variant="outline"
-                              onClick={() => setDefaultDaysToAdd(0)}
-                              className="whitespace-nowrap"
+                              onClick={applyDefaultDaysToAll}
+                              disabled={selectedDocuments.size === 0}
                             >
-                              Contado
+                              Aplicar a todos
                             </Button>
                           </div>
                         </div>
-                        <Button
-                          variant="outline"
-                          onClick={applyDefaultDaysToAll}
-                          disabled={selectedDocuments.size === 0}
-                        >
-                          Aplicar a todos los documentos
-                        </Button>
-                      </div>
-                      <p className="text-xs text-muted-foreground">
-                        Las fechas de vencimiento se calcularán desde la fecha de emisión de cada documento. 
-                        También puedes editarlas individualmente en la lista de documentos.
-                      </p>
+                      )}
+
+                      {/* Si es Pagado: configurar fecha de pago */}
+                      {paymentType === 'paid' && (
+                        <div className="space-y-3 pl-6 border-l-2 border-green-200">
+                          <h4 className="text-sm font-medium text-foreground flex items-center gap-2">
+                            <Banknote className="w-4 h-4 text-green-600" />
+                            Fecha de Pago
+                          </h4>
+                          <div className="flex items-center gap-3">
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  className={cn(
+                                    "w-[200px] justify-start text-left font-normal",
+                                    !bulkPaidDate && "text-muted-foreground"
+                                  )}
+                                >
+                                  <CalendarIcon className="mr-2 h-4 w-4" />
+                                  {bulkPaidDate ? format(new Date(bulkPaidDate), 'dd/MM/yyyy') : 'Seleccionar fecha'}
+                                </Button>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-auto p-0" align="start">
+                                <CalendarComponent
+                                  mode="single"
+                                  selected={bulkPaidDate ? new Date(bulkPaidDate) : undefined}
+                                  onSelect={(date) => date && setBulkPaidDate(format(date, 'yyyy-MM-dd'))}
+                                  initialFocus
+                                  className="pointer-events-auto"
+                                />
+                              </PopoverContent>
+                            </Popover>
+                            <Button
+                              variant="outline"
+                              onClick={() => {
+                                const updates: Record<string, string> = {};
+                                selectedDocuments.forEach(folio => {
+                                  updates[folio] = bulkPaidDate;
+                                });
+                                setPaidDateOverrides(updates);
+                                // También marcar todos como pagados
+                                const statusUpdates: Record<string, 'paid'> = {};
+                                selectedDocuments.forEach(folio => {
+                                  statusUpdates[folio] = 'paid';
+                                });
+                                setStatusOverrides(statusUpdates);
+                                toast.success(`Fecha de pago aplicada a ${selectedDocuments.size} documentos`);
+                              }}
+                              disabled={selectedDocuments.size === 0}
+                            >
+                              Aplicar a todos
+                            </Button>
+                          </div>
+                          <p className="text-xs text-muted-foreground">
+                            Los documentos se importarán con estado "Pagado" y la fecha indicada.
+                          </p>
+                        </div>
+                      )}
                     </div>
                   )}
                 </CardContent>
