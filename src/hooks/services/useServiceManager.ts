@@ -683,6 +683,18 @@ export const useServiceManager = () => {
           }),
           ...(serviceData.insuredName !== undefined && {
             insured_name: serviceData.insuredName
+          }),
+          // ✅ CAMPOS OUTSOURCED - Proveedor tercerizado
+          ...(serviceData.outsourcedProviderId !== undefined && {
+            outsourced_provider_id: serviceData.outsourcedProviderId && serviceData.outsourcedProviderId.trim() !== '' 
+              ? serviceData.outsourcedProviderId 
+              : null
+          }),
+          ...(serviceData.outsourcedCost !== undefined && {
+            outsourced_cost: serviceData.outsourcedCost || 0
+          }),
+          ...(serviceData.outsourcedNotes !== undefined && {
+            outsourced_notes: serviceData.outsourcedNotes || null
           })
         };
       }
@@ -1091,13 +1103,57 @@ export const useServiceManager = () => {
       console.log('🎉 FIN ACTUALIZACIÓN DE SERVICIO');
       console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
+      // ✅ SINCRONIZACIÓN DE COSTO OUTSOURCED
+      // Si el servicio tiene proveedor tercerizado, actualizar el costo asociado
+      if (serviceData.outsourcedProviderId !== undefined) {
+        console.log('🔄 [OUTSOURCED SYNC] Sincronizando costo de proveedor tercerizado');
+        
+        // Buscar el costo existente del servicio tercerizado
+        const { data: existingOutsourcedCost, error: findCostError } = await supabase
+          .from('costs')
+          .select('id')
+          .eq('service_id', id)
+          .ilike('description', 'Servicio tercerizado:%')
+          .maybeSingle();
+
+        if (findCostError) {
+          console.error('[OUTSOURCED SYNC] Error buscando costo existente:', findCostError);
+        } else if (existingOutsourcedCost) {
+          // Actualizar el costo existente con el nuevo proveedor y monto
+          const { error: updateCostError } = await supabase
+            .from('costs')
+            .update({
+              amount: serviceData.outsourcedCost || 0,
+              supplier_id: serviceData.outsourcedProviderId && serviceData.outsourcedProviderId.trim() !== '' 
+                ? serviceData.outsourcedProviderId 
+                : null,
+              notes: serviceData.outsourcedNotes || null,
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', existingOutsourcedCost.id);
+
+          if (updateCostError) {
+            console.error('[OUTSOURCED SYNC] Error actualizando costo outsourced:', updateCostError);
+          } else {
+            console.log('✅ [OUTSOURCED SYNC] Costo de proveedor tercerizado actualizado:', {
+              costId: existingOutsourcedCost.id,
+              newAmount: serviceData.outsourcedCost,
+              newSupplierId: serviceData.outsourcedProviderId
+            });
+          }
+        } else {
+          console.log('[OUTSOURCED SYNC] No se encontró costo outsourced existente para este servicio');
+        }
+      }
+
       // Invalidar todas las queries relacionadas para asegurar datos actualizados
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['services'] }),
         queryClient.invalidateQueries({ queryKey: ['enhanced-service-details', id] }),
         queryClient.invalidateQueries({ queryKey: ['service-costs', id] }),
         queryClient.invalidateQueries({ queryKey: ['costs'] }),
-        queryClient.invalidateQueries({ queryKey: ['commissions'] })
+        queryClient.invalidateQueries({ queryKey: ['commissions'] }),
+        queryClient.invalidateQueries({ queryKey: ['supplier-payments'] })
       ]);
       
       return transformToService(updatedService);
