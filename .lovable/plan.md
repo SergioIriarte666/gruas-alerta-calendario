@@ -1,89 +1,103 @@
 
+# Plan: Corregir Eliminación de Servicios
 
-# Plan: Corregir Guardado y Sincronización de Proveedor Tercerizado
+## Problema Identificado
 
-## Problemas Identificados
+La UI muestra avisos de éxito pero el servicio **NO se elimina** de la base de datos.
 
-1. **Campos outsourced no se guardan al editar**: En `useServiceManager.ts`, la función `updateService` NO incluye los campos `outsourced_provider_id`, `outsourced_cost`, ni `outsourced_notes` en el objeto `transformedData`. Por eso cuando editas el servicio y cambias el proveedor, no se guarda.
+### Causa Raíz
+El código tiene **dos sistemas de eliminación** diferentes:
 
-2. **Costo no se sincroniza al editar**: Cuando se crea un servicio tercerizado, se genera automáticamente un registro en `costs`. Pero cuando se edita el servicio y se cambia el proveedor, el costo existente no se actualiza.
+| Hook | Método | ¿Funciona? |
+|------|--------|------------|
+| `useServiceDeletion.ts` | `supabase.rpc('delete_service_cascade')` | ✅ Sí - elimina en cascada |
+| `useServiceManager.ts` | `supabase.from('services').delete()` | ❌ No - falla por foreign keys |
 
-3. **Proveedor actual**: El servicio SRV-6324 tiene guardado `Aliexpress` como proveedor (por error o prueba anterior).
+**El problema**: `useServices.ts` (línea 12) usa `useServiceManager`, no `useServiceDeletion`. Cuando hay registros relacionados en otras tablas, el DELETE simple falla silenciosamente porque las **foreign key constraints** lo bloquean:
+
+```
+services ← invoice_services
+services ← closure_services  
+services ← costs
+services ← inspections
+services ← service_resources
+services ← calendar_events
+services ← service_costs
+services ← service_update_error_logs
+services ← service_change_history
+```
 
 ---
 
 ## Solución
 
-### 1. Agregar campos outsourced al updateService
+### Modificar `useServiceManager.ts`
 
-Modificar `src/hooks/services/useServiceManager.ts` para incluir los campos en la actualización completa:
+Cambiar la mutación de eliminación para usar el RPC `delete_service_cascade` en lugar del DELETE simple:
 
+**Antes (líneas 1241-1257):**
 ```typescript
-// Después de los campos de custody/insuredName, agregar:
-...(serviceData.outsourcedProviderId !== undefined && {
-  outsourced_provider_id: serviceData.outsourcedProviderId && serviceData.outsourcedProviderId.trim() !== '' 
-    ? serviceData.outsourcedProviderId 
-    : null
-}),
-...(serviceData.outsourcedCost !== undefined && {
-  outsourced_cost: serviceData.outsourcedCost || 0
-}),
-...(serviceData.outsourcedNotes !== undefined && {
-  outsourced_notes: serviceData.outsourcedNotes || null
-}),
-```
-
-### 2. Sincronizar costo del proveedor tercerizado al editar
-
-Después de actualizar el servicio, si es un servicio tercerizado, actualizar el costo asociado:
-
-```typescript
-// Después de la actualización del servicio, si es outsourced:
-if (serviceData.outsourcedProviderId !== undefined) {
-  // Buscar el costo existente del servicio tercerizado
-  const { data: existingCost } = await supabase
-    .from('costs')
-    .select('id')
-    .eq('service_id', id)
-    .ilike('description', 'Servicio tercerizado:%')
-    .single();
-
-  if (existingCost) {
-    // Actualizar el costo existente
-    await supabase
-      .from('costs')
-      .update({
-        amount: serviceData.outsourcedCost || 0,
-        supplier_id: serviceData.outsourcedProviderId || null,
-        notes: serviceData.outsourcedNotes || null
-      })
-      .eq('id', existingCost.id);
+const deleteServiceMutation = useMutation({
+  mutationFn: async (id: string) => {
+    const { error } = await supabase
+      .from('services')
+      .delete()
+      .eq('id', id);
+    // ...
   }
-}
+});
 ```
+
+**Después:**
+```typescript
+const deleteServiceMutation = useMutation({
+  mutationFn: async (id: string) => {
+    console.log('🗑️ Eliminando servicio con cascada:', id);
+    
+    const { error } = await supabase.rpc('delete_service_cascade', {
+      p_service_id: id
+    });
+
+    if (error) {
+      console.error('Error eliminando servicio:', error);
+      throw new Error(`Error al eliminar el servicio: ${error.message}`);
+    }
+    
+    console.log('✅ Servicio eliminado exitosamente:', id);
+    await queryClient.invalidateQueries({ queryKey: ['services'] });
+    await queryClient.invalidateQueries({ queryKey: ['costs'] });
+  },
+  onSuccess: () => {
+    toast.success('Servicio eliminado correctamente');
+  },
+  onError: (error: Error) => {
+    console.error('Error eliminando servicio:', error);
+    toast.error(error.message || 'Error al eliminar el servicio');
+  }
+});
+```
+
+### Actualizar función RPC (si es necesario)
+
+La función `delete_service_cascade` ya existe pero le faltan 2 tablas:
+- `service_update_error_logs`
+- `service_change_history`
+
+Si la eliminación aún falla, se agregará un DELETE para estas tablas en la función RPC.
 
 ---
 
-## Archivos a Modificar
+## Archivo a Modificar
 
 | Archivo | Cambio |
 |---------|--------|
-| `src/hooks/services/useServiceManager.ts` | 1. Agregar campos outsourced al transformedData en updateService (líneas ~685)<br>2. Agregar sincronización del costo outsourced después de actualizar servicio |
-
----
-
-## Corrección del Dato Existente
-
-Para corregir el servicio SRV-6324 actual, después de implementar los cambios:
-1. Editar el servicio desde el formulario
-2. Seleccionar el proveedor correcto (que sí hace remolques)
-3. Guardar - el costo se actualizará automáticamente
+| `src/hooks/services/useServiceManager.ts` | Cambiar `deleteServiceMutation` para usar RPC `delete_service_cascade` |
+| (Opcional) Migración SQL | Agregar DELETE de tablas faltantes si aún falla |
 
 ---
 
 ## Resultado Esperado
 
-1. Al editar un servicio tercerizado, el proveedor se guarda correctamente
-2. El costo asociado se sincroniza con el nuevo proveedor
-3. El selector de proveedor muestra el valor actual correctamente
-
+1. Al eliminar un servicio, se eliminan **todos** los registros relacionados
+2. El servicio desaparece de la UI y de la base de datos
+3. Los toast de éxito/error reflejan correctamente el resultado real
