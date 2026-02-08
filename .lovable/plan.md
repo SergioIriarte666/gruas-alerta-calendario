@@ -1,103 +1,51 @@
 
-# Plan: Corregir Eliminación de Servicios
+# Plan: Agregar Orden de Compra en Selector de Cierre
 
-## Problema Identificado
+## Objetivo
+Mostrar el número de Orden de Compra (OC) en el selector de cierre del formulario de facturas para identificar fácilmente qué cierre facturar.
 
-La UI muestra avisos de éxito pero el servicio **NO se elimina** de la base de datos.
+## Análisis Actual
 
-### Causa Raíz
-El código tiene **dos sistemas de eliminación** diferentes:
+El selector ya muestra:
+- Folio del cierre (CIE-293)
+- Rango de fechas
+- Cliente
+- Monto total
 
-| Hook | Método | ¿Funciona? |
-|------|--------|------------|
-| `useServiceDeletion.ts` | `supabase.rpc('delete_service_cascade')` | ✅ Sí - elimina en cascada |
-| `useServiceManager.ts` | `supabase.from('services').delete()` | ❌ No - falla por foreign keys |
+El campo `purchaseOrder` **ya existe** en el tipo `ServiceClosure` y se mapea desde la base de datos, pero no se muestra en la UI.
 
-**El problema**: `useServices.ts` (línea 12) usa `useServiceManager`, no `useServiceDeletion`. Cuando hay registros relacionados en otras tablas, el DELETE simple falla silenciosamente porque las **foreign key constraints** lo bloquean:
+## Cambios Propuestos
 
+### Archivo: `src/components/invoices/EnhancedClosureSelector.tsx`
+
+**1. Agregar icono para OC**
+Importar el icono `ShoppingCart` de lucide-react (siguiendo el estilo visual del módulo de costos).
+
+**2. Mostrar OC en el botón de selección (cuando hay cierre seleccionado)**
+Agregar la OC en la línea de detalles junto a fecha, cliente y monto:
 ```
-services ← invoice_services
-services ← closure_services  
-services ← costs
-services ← inspections
-services ← service_resources
-services ← calendar_events
-services ← service_costs
-services ← service_update_error_logs
-services ← service_change_history
-```
-
----
-
-## Solución
-
-### Modificar `useServiceManager.ts`
-
-Cambiar la mutación de eliminación para usar el RPC `delete_service_cascade` en lugar del DELETE simple:
-
-**Antes (líneas 1241-1257):**
-```typescript
-const deleteServiceMutation = useMutation({
-  mutationFn: async (id: string) => {
-    const { error } = await supabase
-      .from('services')
-      .delete()
-      .eq('id', id);
-    // ...
-  }
-});
+30/01/2026 - 30/01/2026 • Arrendadora S.A. • OC: 12345 • $80,000
 ```
 
-**Después:**
-```typescript
-const deleteServiceMutation = useMutation({
-  mutationFn: async (id: string) => {
-    console.log('🗑️ Eliminando servicio con cascada:', id);
-    
-    const { error } = await supabase.rpc('delete_service_cascade', {
-      p_service_id: id
-    });
-
-    if (error) {
-      console.error('Error eliminando servicio:', error);
-      throw new Error(`Error al eliminar el servicio: ${error.message}`);
-    }
-    
-    console.log('✅ Servicio eliminado exitosamente:', id);
-    await queryClient.invalidateQueries({ queryKey: ['services'] });
-    await queryClient.invalidateQueries({ queryKey: ['costs'] });
-  },
-  onSuccess: () => {
-    toast.success('Servicio eliminado correctamente');
-  },
-  onError: (error: Error) => {
-    console.error('Error eliminando servicio:', error);
-    toast.error(error.message || 'Error al eliminar el servicio');
-  }
-});
+**3. Mostrar OC en cada item del dropdown**
+Agregar una fila nueva entre Cliente y Monto:
+```
+📄 CIE-293
+📅 30/01/2026 - 30/01/2026
+👤 Arrendadora S.A.
+🛒 OC: 12345          <-- Nueva fila
+💲 $80,000
 ```
 
-### Actualizar función RPC (si es necesario)
+Si no hay OC, mostrar "Sin OC" en gris para mantener consistencia visual.
 
-La función `delete_service_cascade` ya existe pero le faltan 2 tablas:
-- `service_update_error_logs`
-- `service_change_history`
+**4. Actualizar la búsqueda**
+Permitir buscar también por número de OC agregándolo al valor del `CommandItem`.
 
-Si la eliminación aún falla, se agregará un DELETE para estas tablas en la función RPC.
+## Resultado Visual
 
----
-
-## Archivo a Modificar
-
-| Archivo | Cambio |
-|---------|--------|
-| `src/hooks/services/useServiceManager.ts` | Cambiar `deleteServiceMutation` para usar RPC `delete_service_cascade` |
-| (Opcional) Migración SQL | Agregar DELETE de tablas faltantes si aún falla |
-
----
-
-## Resultado Esperado
-
-1. Al eliminar un servicio, se eliminan **todos** los registros relacionados
-2. El servicio desaparece de la UI y de la base de datos
-3. Los toast de éxito/error reflejan correctamente el resultado real
+| Campo | Antes | Después |
+|-------|-------|---------|
+| Botón | `30/01/2026 • Cliente • $80,000` | `30/01/2026 • Cliente • OC: 12345 • $80,000` |
+| Dropdown | 4 filas | 5 filas (incluye OC) |
+| Búsqueda | folio, cliente, fecha | folio, cliente, fecha, **OC** |
