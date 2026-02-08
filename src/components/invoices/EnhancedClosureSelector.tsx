@@ -7,7 +7,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { useClosuresForInvoices } from '@/hooks/useClosuresForInvoices';
 import { useClients } from '@/hooks/useClients';
 import { formatForDisplay } from '@/utils/timezoneUtils';
-import { Check, ChevronDown, FileText, Calendar, User, DollarSign } from 'lucide-react';
+import { Check, ChevronDown, FileText, Calendar, User, DollarSign, ShoppingCart } from 'lucide-react';
 import { cn } from '@/lib/utils';
 interface EnhancedClosureSelectorProps {
   selectedClosureId: string;
@@ -73,7 +73,7 @@ const EnhancedClosureSelector: React.FC<EnhancedClosureSelectorProps> = ({
                   {selectedClosure.folio}
                 </div>
                 <div className="text-xs text-muted-foreground mt-1">
-                  {formatDateRange(selectedClosure.dateRange)} • {getClientName(selectedClosure.clientId)} • ${Math.round(selectedClosure.total).toLocaleString()}
+                  {formatDateRange(selectedClosure.dateRange)} • {getClientName(selectedClosure.clientId)} • {selectedClosure.purchaseOrder ? `OC: ${selectedClosure.purchaseOrder}` : 'Sin OC'} • ${Math.round(selectedClosure.total).toLocaleString()}
                 </div>
               </div> : <span className="text-muted-foreground">Seleccionar cierre...</span>}
             <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -88,7 +88,7 @@ const EnhancedClosureSelector: React.FC<EnhancedClosureSelectorProps> = ({
                 No se encontraron cierres.
               </CommandEmpty>
               <CommandGroup>
-                {closures.map(closure => <CommandItem key={closure.id} value={`${closure.folio} ${getClientName(closure.clientId)} ${formatDateRange(closure.dateRange)}`} onSelect={() => {
+                {closures.map(closure => <CommandItem key={closure.id} value={`${closure.folio} ${getClientName(closure.clientId)} ${formatDateRange(closure.dateRange)} ${closure.purchaseOrder || ''}`} onSelect={() => {
                 onClosureChange(closure.id);
                 setOpen(false);
               }} className="p-0 cursor-pointer">
@@ -111,6 +111,14 @@ const EnhancedClosureSelector: React.FC<EnhancedClosureSelectorProps> = ({
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <User className="w-4 h-4 text-muted-foreground" />
                         <span className="truncate">{getClientName(closure.clientId)}</span>
+                      </div>
+                      
+                      {/* Orden de Compra */}
+                      <div className="flex items-center gap-2 text-sm">
+                        <ShoppingCart className="w-4 h-4 text-muted-foreground" />
+                        <span className={closure.purchaseOrder ? "text-foreground" : "text-muted-foreground"}>
+                          {closure.purchaseOrder ? `OC: ${closure.purchaseOrder}` : 'Sin OC'}
+                        </span>
                       </div>
                       
                       {/* Monto */}
