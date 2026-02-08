@@ -1237,22 +1237,30 @@ export const useServiceManager = () => {
     }
   });
 
-  // ELIMINAR SERVICIO
+  // ELIMINAR SERVICIO - Usa RPC delete_service_cascade para eliminar en cascada
   const deleteServiceMutation = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase
-        .from('services')
-        .delete()
-        .eq('id', id);
+      console.log('🗑️ Eliminando servicio con cascada:', id);
+      
+      const { error } = await supabase.rpc('delete_service_cascade', {
+        p_service_id: id
+      });
 
       if (error) {
-        throw error;
+        console.error('Error eliminando servicio:', error);
+        throw new Error(`Error al eliminar el servicio: ${error.message}`);
       }
-
+      
+      console.log('✅ Servicio eliminado exitosamente:', id);
       await queryClient.invalidateQueries({ queryKey: ['services'] });
+      await queryClient.invalidateQueries({ queryKey: ['costs'] });
     },
-    onError: (error) => {
+    onSuccess: () => {
+      toast.success('Servicio eliminado correctamente');
+    },
+    onError: (error: Error) => {
       console.error('Error eliminando servicio:', error);
+      toast.error(error.message || 'Error al eliminar el servicio');
     }
   });
 
