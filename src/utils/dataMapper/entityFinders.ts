@@ -1,6 +1,15 @@
 
 import { Client, Crane, Operator, ServiceType } from '@/types';
 
+// Función auxiliar para normalizar texto (quitar acentos y espacios)
+const normalizeText = (text: string): string => {
+  return text
+    .toLowerCase()
+    .trim()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, ''); // Quita acentos
+};
+
 export class EntityFinders {
   constructor(
     private clients: Client[],
@@ -52,12 +61,10 @@ export class EntityFinders {
   }
 
   findServiceTypeByName(name: string): ServiceType | null {
-    const cleanName = name.toLowerCase().trim();
-    return this.serviceTypes.find(serviceType => 
-      serviceType.name && (
-        serviceType.name.toLowerCase().includes(cleanName) ||
-        cleanName.includes(serviceType.name.toLowerCase())
-      )
-    ) || null;
+    const cleanName = normalizeText(name);
+    return this.serviceTypes.find(serviceType => {
+      const typeName = normalizeText(serviceType.name || '');
+      return typeName.includes(cleanName) || cleanName.includes(typeName);
+    }) || null;
   }
 }
