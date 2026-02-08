@@ -255,20 +255,20 @@ export const useServiceManager = () => {
           value: serviceData.value,
           
           // VALIDACIÓN INTEGRAL DE GRÚA
-          // Tipos especiales: Custodia, Lavado, Servicios Mecánicos (crane_required false)
+          // Si el tipo de servicio no requiere grúa Y no se proporciona grúa, guardar null
+          // Si se proporciona grúa (ej: carga masiva), guardarla aunque no sea requerida
           // ✅ FIX: Validar UUID fields - convertir cadenas vacías a null
-          crane_id: !serviceTypeConfig?.crane_required 
-            ? null 
-            : (serviceData.crane && serviceData.crane.trim() !== '' ? serviceData.crane : null),
+          crane_id: serviceData.crane && serviceData.crane.trim() !== '' 
+            ? serviceData.crane 
+            : null,
             
           // VALIDACIÓN INTEGRAL DE OPERADOR
-          // Tipos especiales: Custodia, Lavado, Servicios Mecánicos (operator_required false)
+          // Si el tipo de servicio no requiere operador Y no se proporciona, guardar null
+          // Si se proporciona operador (ej: carga masiva), guardarlo aunque no sea requerido
           // ✅ FIX: Validar UUID fields - convertir cadenas vacías a null
-          operator_id: !serviceTypeConfig?.operator_required 
-            ? null 
-            : (serviceData.operators?.[0]?.operatorId && serviceData.operators[0].operatorId.trim() !== '' 
-               ? serviceData.operators[0].operatorId 
-               : null),
+          operator_id: serviceData.operators?.[0]?.operatorId && serviceData.operators[0].operatorId.trim() !== '' 
+            ? serviceData.operators[0].operatorId 
+            : null,
             
           operator_commission: serviceData.operators?.[0]?.commission || 0,
           status: serviceData.status,
