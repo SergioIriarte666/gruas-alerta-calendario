@@ -62,9 +62,7 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
     suppliers,
     createSupplier
   } = useSuppliers();
-  const {
-    createPayment
-  } = useSupplierPayments();
+  const { createPayment, updatePayment } = useSupplierPayments();
   const { checkDuplicates } = useSupplierInvoiceDuplicateCheck();
   const { activeCategories } = useSupplierCategoryManager();
   const onDrop = useCallback((acceptedFiles: File[]) => {
@@ -216,6 +214,10 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
           parseResult.suppliers,
           dueDateOverrides
         );
+
+        let exactFolioUpdated = 0;
+        let exactFolioSkipped = 0;
+
         for (const paymentData of paymentsData) {
           try {
             const supplierId = createdSupplierMap.get(paymentData.supplier_rut);
@@ -227,6 +229,35 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
             const paidDate = status === 'paid' 
               ? paidDateOverrides[docFolio] || bulkPaidDate
               : undefined;
+
+            const duplicateInfo = docFolio ? getDuplicateInfoByFolio(docFolio) : undefined;
+
+            // If the folio already exists (exact match), never create a new row.
+            // If user is importing as paid, update the existing payment to paid.
+            if (duplicateInfo?.matchType === 'exact_folio' && duplicateInfo.existingPayment?.id) {
+              if (status === 'paid') {
+                await new Promise<void>((resolve, reject) => {
+                  updatePayment({
+                    id: duplicateInfo.existingPayment!.id,
+                    data: {
+                      status: 'paid',
+                      paid_date: paidDate,
+                      paid_amount: paymentData.amount,
+                    }
+                  }, {
+                    onSuccess: () => resolve(),
+                    onError: reject
+                  });
+                });
+                exactFolioUpdated++;
+              } else {
+                exactFolioSkipped++;
+              }
+
+              processed++;
+              setUploadProgress(processed / totalItems * 100);
+              continue;
+            }
             
             await new Promise<void>((resolve, reject) => {
               createPayment({
@@ -250,6 +281,10 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
           } catch (error) {
             console.error(`Error creating payment:`, error);
           }
+        }
+
+        if (exactFolioUpdated > 0 || exactFolioSkipped > 0) {
+          toast.message(`Duplicados por folio: ${exactFolioUpdated} actualizado(s), ${exactFolioSkipped} omitido(s)`);
         }
       }
       toast.success(`Importación completada: ${selectedSuppliers.size} proveedores${createPayments ? ` y ${selectedDocuments.size} pagos` : ''} procesados`);
