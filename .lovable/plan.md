@@ -1,113 +1,131 @@
 
 
-# Plan: Eliminar Duplicados y Prevenir Futuros en Pagos de Proveedores
+# Plan: Corrección de Errores en Carga Masiva de Servicios
 
-## Problema Detectado
+## Problemas Detectados
 
-Se encontraron registros duplicados en la tabla `supplier_payments` con el mismo `reference_number` (folio 504448). La causa es que:
+Después de analizar el archivo Excel, el código y la base de datos, identifiqué los siguientes problemas:
 
-1. La detección de duplicados **solo se aplica en importación XML**
-2. **No hay validación** al crear pagos manualmente desde el formulario
-3. El sistema permite crear pagos con el mismo número de referencia múltiples veces
+### 1. Grúas Inexistentes en la Base de Datos
+El archivo Excel contiene patentes de grúas que **no existen** en el sistema:
+- **VBPH-58** ✓ (única que existe)
+- **VBPH-59** ✗ No existe
+- **VBPH-60** ✗ No existe
+- **VBPH-61** ✗ No existe
+- **VBPH-62** ✗ No existe
+- **VBPH-63** ✗ No existe
+- **VBPH-64** ✗ No existe
+- **VBPH-65** ✗ No existe
 
-### Datos Actuales
-| Registro | Creado | Estado | Referencia |
-|----------|--------|--------|------------|
-| Original | 05/11/2025 | Vencido | 504448 |
-| Duplicado | 08/02/2026 | Pagado | 504448 |
+**Solución**: Debes crear estas grúas en el sistema antes de cargar los servicios, o modificar el Excel para usar grúas existentes.
 
-Hay **4 grupos de duplicados** en total en la base de datos.
+### 2. Error de Visualización "N/A" en Mensajes de Error
+El mensaje "Grúa no encontrada: N/A" es incorrecto. Debería mostrar la patente real que no se encontró (ej: "Grúa no encontrada: VBPH-59").
 
----
+**Causa técnica**: El error se genera en `rowMapper.ts` usando el valor de `rowData.craneLicensePlate`, pero hay un problema donde ese valor no está siendo correctamente mapeado desde los headers del Excel.
 
-## Solución
+### 3. Problema con Acentos en Tipo de Servicio
+El Excel tiene "Servicios Mecánicos y De Apoyo" con acentos, pero la comparación actual usa `.includes()` sin normalizar caracteres especiales.
 
-### Parte 1: Limpiar Duplicados Existentes
-
-Crear una herramienta en el panel de proveedores para detectar y resolver duplicados existentes.
-
-**Archivo:** `src/components/suppliers/DuplicatePaymentsDetector.tsx`
-
-- Botón en PaymentList para "Detectar Duplicados"
-- Modal que muestra grupos de pagos con el mismo `reference_number`
-- Opciones para cada grupo:
-  - Conservar el más reciente (eliminar antiguos)
-  - Conservar el más antiguo (eliminar nuevos)
-  - Fusionar: conservar uno y marcar los otros como cancelados
-  - Ignorar (no hacer nada)
-
-### Parte 2: Prevenir Duplicados en Creación Manual
-
-**Archivo:** `src/components/suppliers/PaymentForm.tsx`
-
-Agregar validación antes de guardar:
-
-1. Verificar si ya existe un pago con el mismo `reference_number` para el mismo proveedor
-2. Si existe, mostrar advertencia con opciones:
-   - "Ya existe un pago con referencia 504448 para este proveedor. ¿Desea continuar?"
-   - Mostrar detalles del pago existente (monto, fecha, estado)
-3. Permitir al usuario decidir si crear de todas formas o cancelar
-
-### Parte 3: Mejorar la Detección en Importación XML
-
-**Archivo:** `src/components/suppliers/XMLDocumentUpload.tsx`
-
-- Hacer la detección de duplicados más visible
-- Bloquear importación de documentos con duplicados exactos (actualmente solo los deselecciona)
-- Agregar badge rojo más prominente en cada tarjeta de documento duplicado
+**Causa técnica**: La función `findServiceTypeByName` en `entityFinders.ts` no normaliza acentos antes de comparar.
 
 ---
 
-## Cambios Técnicos
+## Solución Técnica
 
-### 1. Hook para Detección de Duplicados
+### Archivo 1: `src/utils/dataMapper/entityFinders.ts`
+
+**Cambios:**
+1. Agregar función auxiliar para normalizar texto (quitar acentos)
+2. Modificar `findServiceTypeByName` para normalizar antes de comparar
 
 ```typescript
-// src/hooks/usePaymentDuplicateCheck.ts
-export const usePaymentDuplicateCheck = () => {
-  const checkDuplicate = async (referenceNumber: string, supplierId: string) => {
-    const { data } = await supabase
-      .from('supplier_payments')
-      .select('*')
-      .eq('reference_number', referenceNumber)
-      .eq('supplier_id', supplierId);
-    
-    return data && data.length > 0 ? data[0] : null;
-  };
-  
-  return { checkDuplicate };
+// Nueva función auxiliar
+const normalizeText = (text: string): string => {
+  return text
+    .toLowerCase()
+    .trim()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, ''); // Quita acentos
 };
+
+// Modificar findServiceTypeByName
+findServiceTypeByName(name: string): ServiceType | null {
+  const cleanName = normalizeText(name);
+  return this.serviceTypes.find(serviceType => {
+    const typeName = normalizeText(serviceType.name || '');
+    return typeName.includes(cleanName) || cleanName.includes(typeName);
+  }) || null;
+}
 ```
 
-### 2. Modificar PaymentForm.tsx
+### Archivo 2: `src/utils/dataMapper/rowMapper.ts`
 
-- Antes del `onSubmit`, llamar a `checkDuplicate`
-- Si hay duplicado, mostrar `AlertDialog` de confirmación
-- Mostrar detalles del pago existente
+**Cambios:**
+1. Mejorar el mensaje de error para mostrar el valor original de la patente
 
-### 3. Componente Detector de Duplicados
+```typescript
+// Línea ~89: Mejorar mensaje de error
+errors.push(`Grúa no encontrada: ${rowData.craneLicensePlate || 'valor vacío'}`);
+```
 
-- Query para encontrar todos los grupos con `COUNT(*) > 1`
-- Interfaz para seleccionar acción por grupo
-- Ejecutar eliminaciones/actualizaciones en batch
+### Archivo 3: `src/utils/dataMapper/headerMapping.ts`
+
+**Cambios:**
+1. Normalizar los headers al mapear para manejar problemas de acentos/codificación
+
+```typescript
+// En mapHeaders(), normalizar los headers antes de buscar en el mapa
+const normalizedHeader = header.trim()
+  .normalize('NFD')
+  .replace(/[\u0300-\u036f]/g, '');
+```
+
+2. Agregar variaciones de headers sin acentos:
+```typescript
+'Grua Patente': 'craneLicensePlate',  // Sin tilde en Grúa
+'Tipo Servicio': 'serviceType',
+```
 
 ---
 
-## Archivos a Crear/Modificar
+## Acciones Adicionales Requeridas (Por el Usuario)
 
-| Archivo | Acción |
+Antes de cargar los servicios exitosamente, necesitas:
+
+1. **Crear las grúas faltantes** en el módulo de Grúas:
+   - VBPH-59
+   - VBPH-60
+   - VBPH-61
+   - VBPH-62
+   - VBPH-63
+   - VBPH-64
+   - VBPH-65
+
+   O modificar el archivo Excel para usar grúas existentes:
+   - DCBV-94
+   - FYTR-49
+   - GHKD-60
+   - TDCJ-46
+   - TLYF-23
+   - VBPH-58
+
+---
+
+## Archivos a Modificar
+
+| Archivo | Cambio |
 |---------|--------|
-| `src/hooks/usePaymentDuplicateCheck.ts` | Crear |
-| `src/components/suppliers/PaymentForm.tsx` | Modificar - agregar validación |
-| `src/components/suppliers/DuplicatePaymentsDetector.tsx` | Crear |
-| `src/components/suppliers/PaymentList.tsx` | Modificar - agregar botón "Detectar Duplicados" |
+| `src/utils/dataMapper/entityFinders.ts` | Agregar normalización de acentos |
+| `src/utils/dataMapper/rowMapper.ts` | Mejorar mensajes de error |
+| `src/utils/dataMapper/headerMapping.ts` | Agregar variaciones de headers sin acentos |
 
 ---
 
 ## Resultado Esperado
 
-1. Los duplicados existentes se pueden limpiar desde la UI
-2. La creación manual de pagos advierte si ya existe uno con la misma referencia
-3. Menor probabilidad de duplicados accidentales
-4. Integridad de datos mejorada
+Después de aplicar estos cambios:
+1. Los tipos de servicio se encontrarán aunque haya diferencias de acentos
+2. Los mensajes de error mostrarán las patentes reales que faltan
+3. Los headers del Excel funcionarán aunque tengan o no tengan acentos
 
