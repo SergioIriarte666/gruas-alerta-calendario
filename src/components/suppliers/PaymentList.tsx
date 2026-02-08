@@ -22,8 +22,7 @@ import {
   Loader2,
   ArrowUpDown,
   ArrowUp,
-  ArrowDown,
-  Copy
+  ArrowDown
 } from 'lucide-react';
 import { useSupplierPayments, getStatusLabel, getStatusColor } from '@/hooks/useSupplierPayments';
 import { useSuppliers } from '@/hooks/useSuppliers';
@@ -32,7 +31,6 @@ import { useCostCategories } from '@/hooks/useCostCategories';
 import { resolveSupplierPaymentCategoryLabel } from '@/utils/suppliers/resolveSupplierPaymentCategory';
 import { PaymentForm } from './PaymentForm';
 import { SupplierPaymentExportButton } from './SupplierPaymentExportButton';
-import { DuplicatePaymentsDetector } from './DuplicatePaymentsDetector';
 import { SupplierPayment, SupplierPaymentStatus } from '@/types/suppliers';
 import { formatCurrency, cn } from '@/lib/utils';
 import { format } from 'date-fns';
@@ -91,7 +89,6 @@ export const PaymentList: React.FC = () => {
   const [dateType, setDateType] = useState<'due_date' | 'created_at' | 'paid_date'>('due_date');
   const [showForm, setShowForm] = useState(false);
   const [editingPayment, setEditingPayment] = useState<SupplierPayment | null>(null);
-  const [showDuplicateDetector, setShowDuplicateDetector] = useState(false);
   const [sortField, setSortField] = useState<PaymentSortField>('dueDate');
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
 
@@ -281,15 +278,7 @@ export const PaymentList: React.FC = () => {
         </div>
 
         <div className="flex gap-2">
-          <Button
-            onClick={() => setShowDuplicateDetector(true)}
-            variant="outline"
-            className="text-amber-600 hover:text-amber-700 border-amber-300 hover:border-amber-400"
-          >
-            <Copy className="h-4 w-4 mr-2" />
-            Detectar Duplicados
-          </Button>
-          <SupplierPaymentExportButton 
+          <SupplierPaymentExportButton
             payments={filteredAndSortedPayments}
             suppliers={suppliers}
             categories={exportCategories}
@@ -763,12 +752,6 @@ export const PaymentList: React.FC = () => {
           onClose={handleCloseForm}
         />
       )}
-
-      {/* Duplicate Detector Modal */}
-      <DuplicatePaymentsDetector
-        isOpen={showDuplicateDetector}
-        onClose={() => setShowDuplicateDetector(false)}
-      />
     </div>
   );
 };

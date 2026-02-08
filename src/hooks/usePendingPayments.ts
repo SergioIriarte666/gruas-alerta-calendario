@@ -56,8 +56,9 @@ export const usePendingPayments = (supplierId?: string) => {
       paymentMethod?: string;
       notes?: string;
     }) => {
-      // Build notes string with payment method info
+      // Build notes string with payment info
       const paymentNotes = [
+        bankReference ? `Ref bancaria: ${bankReference}` : null,
         paymentMethod ? `Método: ${paymentMethod}` : null,
         notes || null
       ].filter(Boolean).join(' | ');
@@ -72,7 +73,6 @@ export const usePendingPayments = (supplierId?: string) => {
           .update({
             status: 'paid',
             paid_date: paymentDate,
-            reference_number: bankReference || null,
             notes: paymentNotes || null,
             paid_amount: payment.amount
           })
