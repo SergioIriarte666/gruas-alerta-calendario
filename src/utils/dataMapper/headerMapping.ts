@@ -1,4 +1,12 @@
 
+// Función auxiliar para normalizar texto (quitar acentos)
+const normalizeForComparison = (text: string): string => {
+  return text
+    .trim()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+};
+
 export class HeaderMapper {
   // Mapeo completo de headers en español a campos internos
   private headerMap: { [key: string]: string } = {
@@ -96,16 +104,19 @@ export class HeaderMapper {
     'Servicio': 'serviceType',
     'servicio': 'serviceType',
     
-    // Grúa
+    // Grúa (con y sin acentos)
     'GRÚA PATENTE': 'craneLicensePlate',
     'grúa patente': 'craneLicensePlate',
     'Grúa patente': 'craneLicensePlate',
     'Grua Patente': 'craneLicensePlate',
     'grua patente': 'craneLicensePlate',
+    'GRUA PATENTE': 'craneLicensePlate',
     'Patente Grúa': 'craneLicensePlate',
     'patente grúa': 'craneLicensePlate',
     'Patente Grua': 'craneLicensePlate',
     'patente grua': 'craneLicensePlate',
+    'Crane Plate': 'craneLicensePlate',
+    'crane plate': 'craneLicensePlate',
     
     // Operador
     'OPERADOR RUT': 'operatorRut',
@@ -151,7 +162,21 @@ export class HeaderMapper {
     
     const mappedHeaders = headers.map(header => {
       const trimmedHeader = header.trim();
-      const mapped = this.headerMap[trimmedHeader];
+      
+      // Primero buscar el header exacto
+      let mapped = this.headerMap[trimmedHeader];
+      
+      // Si no se encuentra, buscar con normalización (sin acentos)
+      if (!mapped) {
+        const normalizedHeader = normalizeForComparison(trimmedHeader);
+        // Buscar en el mapa comparando versiones normalizadas
+        for (const [key, value] of Object.entries(this.headerMap)) {
+          if (normalizeForComparison(key) === normalizedHeader) {
+            mapped = value;
+            break;
+          }
+        }
+      }
       
       if (mapped) {
         console.log(`✅ Header mapped: "${trimmedHeader}" → "${mapped}"`);

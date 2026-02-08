@@ -82,11 +82,12 @@ export class RowMapper {
       }
 
       // Find crane
-      console.log('🚛 Finding crane by license plate:', rowData.craneLicensePlate);
-      const crane = this.entityFinders.findCraneByPlate(rowData.craneLicensePlate);
+      const cranePlate = rowData.craneLicensePlate || '';
+      console.log('🚛 Finding crane by license plate:', cranePlate);
+      const crane = this.entityFinders.findCraneByPlate(cranePlate);
       if (!crane) {
-        console.log('❌ Crane not found:', rowData.craneLicensePlate);
-        errors.push(`Grúa no encontrada: ${rowData.craneLicensePlate}`);
+        console.log('❌ Crane not found:', cranePlate);
+        errors.push(`Grúa no encontrada: ${cranePlate || 'valor vacío'}`);
       } else {
         console.log('✅ Crane found:', crane.brand, crane.model, '(', crane.id, ')');
       }
