@@ -276,9 +276,12 @@ export class EnhancedCSVUploader {
         });
       }
 
-      if (headerValidation.extra.length > 0) {
-        console.log('⚠️ Extra headers found:', headerValidation.extra);
-        headerValidation.extra.forEach(extra => {
+      // Filtrar columnas vacías antes de advertir
+      const nonEmptyExtras = headerValidation.extra.filter(extra => extra && extra.trim() !== '');
+      
+      if (nonEmptyExtras.length > 0) {
+        console.log('⚠️ Extra headers found:', nonEmptyExtras);
+        nonEmptyExtras.forEach(extra => {
           errors.push({
             row: -1,
             field: 'headers',
@@ -287,7 +290,7 @@ export class EnhancedCSVUploader {
             severity: 'warning'
           });
         });
-        warningCount += headerValidation.extra.length;
+        warningCount += nonEmptyExtras.length;
       }
     }
 
