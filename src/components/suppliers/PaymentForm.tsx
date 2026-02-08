@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -9,14 +9,27 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
-import { X, Save, Loader2, Calendar, DollarSign } from 'lucide-react';
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { X, Save, Loader2, Calendar, DollarSign, AlertTriangle, Wrench, Package } from 'lucide-react';
 import DatePickerInput from '@/components/common/DatePickerInput';
-import { useSupplierPayments, getStatusLabel } from '@/hooks/useSupplierPayments';
+import { useSupplierPayments, getStatusLabel, getStatusColor } from '@/hooks/useSupplierPayments';
 import { useSuppliers } from '@/hooks/useSuppliers';
 import { useSupplierCategoryManager } from '@/hooks/useSupplierCategoryManager';
+import { usePaymentDuplicateCheck, DuplicatePayment } from '@/hooks/usePaymentDuplicateCheck';
 import { PaymentFormData, SupplierPayment, SupplierPaymentStatus } from '@/types/suppliers';
 import { useCranes } from '@/hooks/useCranes';
-import { Wrench, Package } from 'lucide-react';
+import { formatCurrency } from '@/lib/utils';
+import { parseFromDatabase, formatForDisplay } from '@/utils/timezoneUtils';
+import { Badge } from '@/components/ui/badge';
 
 const paymentSchema = z.object({
   supplier_id: z.string().min(1, 'El proveedor es requerido'),
@@ -53,7 +66,12 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
   const { suppliers } = useSuppliers();
   const { cranes } = useCranes();
   const { activeCategories, isLoading: categoriesLoading } = useSupplierCategoryManager();
-
+  const { checkDuplicate } = usePaymentDuplicateCheck();
+  
+  const [showDuplicateWarning, setShowDuplicateWarning] = useState(false);
+  const [duplicatePayment, setDuplicatePayment] = useState<DuplicatePayment | null>(null);
+  const [pendingFormData, setPendingFormData] = useState<PaymentFormData | null>(null);
+  const [isCheckingDuplicate, setIsCheckingDuplicate] = useState(false);
   const statusOptions: SupplierPaymentStatus[] = ['pending', 'paid', 'overdue', 'cancelled'];
 
   const form = useForm<PaymentFormData>({
@@ -76,7 +94,30 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
     }
   });
 
-  const onSubmit = (data: PaymentFormData) => {
+  const handleSubmit = async (data: PaymentFormData) => {
+    // Only check for duplicates if reference_number is provided and creating a new payment
+    if (!payment && data.reference_number && data.supplier_id) {
+      setIsCheckingDuplicate(true);
+      try {
+        const existingPayment = await checkDuplicate(data.reference_number, data.supplier_id);
+        if (existingPayment) {
+          setDuplicatePayment(existingPayment);
+          setPendingFormData(data);
+          setShowDuplicateWarning(true);
+          setIsCheckingDuplicate(false);
+          return;
+        }
+      } catch (error) {
+        console.error('Error checking duplicate:', error);
+      }
+      setIsCheckingDuplicate(false);
+    }
+    
+    // Proceed with save
+    savePayment(data);
+  };
+
+  const savePayment = (data: PaymentFormData) => {
     if (payment) {
       updatePayment({ id: payment.id, data }, {
         onSuccess: () => {
@@ -94,7 +135,26 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
     }
   };
 
-  const isSubmitting = isCreating || isUpdating;
+  const handleConfirmDuplicate = () => {
+    if (pendingFormData) {
+      savePayment(pendingFormData);
+    }
+    setShowDuplicateWarning(false);
+    setPendingFormData(null);
+    setDuplicatePayment(null);
+  };
+
+  const handleCancelDuplicate = () => {
+    setShowDuplicateWarning(false);
+    setPendingFormData(null);
+    setDuplicatePayment(null);
+  };
+
+  const getSupplierNameById = (id: string) => {
+    return suppliers.find(s => s.id === id)?.name || 'Proveedor desconocido';
+  };
+
+  const isSubmitting = isCreating || isUpdating || isCheckingDuplicate;
   const selectedCategory = form.watch('category');
   // Solo mostrar detalles de piezas para categoría "Mantenimiento"
   const selectedCategoryData = activeCategories.find(cat => cat.id === selectedCategory);
@@ -122,7 +182,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
         </CardHeader>
         
         <CardContent className="p-6">
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
             {/* Información básica del pago */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
@@ -391,6 +451,65 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
           </form>
         </CardContent>
       </Card>
+
+      {/* Duplicate Warning Dialog */}
+      <AlertDialog open={showDuplicateWarning} onOpenChange={setShowDuplicateWarning}>
+        <AlertDialogContent className="max-w-md">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-foreground">
+              <AlertTriangle className="h-5 w-5 text-amber-500" />
+              Pago Duplicado Detectado
+            </AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-3">
+                <p className="text-muted-foreground">
+                  Ya existe un pago con la referencia <strong className="text-foreground">{pendingFormData?.reference_number}</strong> para este proveedor.
+                </p>
+                
+                {duplicatePayment && (
+                  <div className="p-3 bg-muted/50 rounded-lg border border-border space-y-2">
+                    <div className="text-sm font-medium text-foreground">Pago existente:</div>
+                    <div className="text-sm text-muted-foreground space-y-1">
+                      <div className="flex justify-between">
+                        <span>Monto:</span>
+                        <span className="font-medium text-foreground">{formatCurrency(duplicatePayment.amount)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Vencimiento:</span>
+                        <span>{formatForDisplay(parseFromDatabase(duplicatePayment.due_date))}</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span>Estado:</span>
+                        <Badge className={`${getStatusColor(duplicatePayment.status)} text-black text-xs`}>
+                          {getStatusLabel(duplicatePayment.status)}
+                        </Badge>
+                      </div>
+                      <div className="text-xs pt-1 border-t border-border mt-2">
+                        {duplicatePayment.description}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <p className="text-sm text-muted-foreground">
+                  ¿Desea crear este pago de todas formas?
+                </p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={handleCancelDuplicate}>
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleConfirmDuplicate}
+              className="bg-amber-500 hover:bg-amber-600 text-black"
+            >
+              Crear de Todas Formas
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
