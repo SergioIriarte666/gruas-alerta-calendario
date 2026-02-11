@@ -56,12 +56,18 @@ export function QuickPhotoCapture({ onPhotosChange, maxPhotos = 3 }: QuickPhotoC
           continue;
         }
 
-        // Get public URL
-        const { data: { publicUrl } } = supabase.storage
+        // Get signed URL (bucket is private)
+        const { data: signedUrlData, error: signedUrlError } = await supabase.storage
           .from('quick-entry-photos')
-          .getPublicUrl(data.path);
+          .createSignedUrl(data.path, 31536000); // 1 year expiry
 
-        newPhotoUrls.push(publicUrl);
+        if (signedUrlError || !signedUrlData?.signedUrl) {
+          console.error('Signed URL error:', signedUrlError);
+          toast.error('Error al obtener URL de la foto');
+          continue;
+        }
+
+        newPhotoUrls.push(signedUrlData.signedUrl);
       }
 
       const updatedPhotos = [...photos, ...newPhotoUrls];

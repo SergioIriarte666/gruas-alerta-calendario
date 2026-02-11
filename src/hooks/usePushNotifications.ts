@@ -78,7 +78,7 @@ export const usePushNotifications = (): PushNotificationHook => {
         }
 
         // Check for existing subscription
-        const subscription = await registration.pushManager.getSubscription();
+        const subscription = await (registration as any).pushManager.getSubscription();
         const subscribed = !!subscription;
         console.log('[PushNotifications] Subscription status:', subscribed);
         setIsSubscribed(subscribed);
@@ -181,7 +181,7 @@ export const usePushNotifications = (): PushNotificationHook => {
       console.log('[PushNotifications] Service Worker ready');
       
       // Check for existing subscription
-      const existingSubscription = await registration.pushManager.getSubscription();
+      const existingSubscription = await (registration as any).pushManager.getSubscription();
       if (existingSubscription) {
         console.log('[PushNotifications] Already subscribed, updating status');
         setIsSubscribed(true);
@@ -192,7 +192,7 @@ export const usePushNotifications = (): PushNotificationHook => {
       const vapidPublicKey = 'BCgV2cFaHf2z1mhsxvWf7ul2lugBGh9xyrn9HT7foKzL3QFSE9bbO5sbl1zbCJ65qTZNoCuorQ8UtCHWbZ6wvNU';
       
       console.log('[PushNotifications] Creating subscription...');
-      const subscription = await registration.pushManager.subscribe({
+      const subscription = await (registration as any).pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: vapidPublicKey
       });
@@ -260,7 +260,7 @@ export const usePushNotifications = (): PushNotificationHook => {
     try {
       // Unsubscribe locally first
       const registration = await navigator.serviceWorker.ready;
-      const subscription = await registration.pushManager.getSubscription();
+      const subscription = await (registration as any).pushManager.getSubscription();
       if (subscription) {
         await subscription.unsubscribe();
         console.log('[PushNotifications] Local unsubscription successful');
@@ -320,7 +320,7 @@ export const usePushNotifications = (): PushNotificationHook => {
     if (isSupported && user) {
       try {
         const registration = await navigator.serviceWorker.ready;
-        const subscription = await registration.pushManager.getSubscription();
+        const subscription = await (registration as any).pushManager.getSubscription();
         setIsSubscribed(!!subscription);
       } catch (error) {
         console.error('[PushNotifications] Error during retry check:', error);

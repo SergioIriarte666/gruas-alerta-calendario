@@ -73,10 +73,15 @@ export const useCraneDocuments = (craneId: string) => {
 
         if (uploadError) throw uploadError;
 
-        // Get public URL
-        const { data: { publicUrl } } = supabase.storage
+        // Get signed URL (bucket is private)
+        const { data: signedUrlData, error: signedUrlError } = await supabase.storage
           .from('crane-documents')
-          .getPublicUrl(fileName);
+          .createSignedUrl(fileName, 31536000); // 1 year expiry
+
+        if (signedUrlError || !signedUrlData?.signedUrl) {
+          throw signedUrlError || new Error('Failed to create signed URL');
+        }
+        const fileUrl = signedUrlData.signedUrl;
 
         // Get current user
         const { data: { user } } = await supabase.auth.getUser();
@@ -87,7 +92,7 @@ export const useCraneDocuments = (craneId: string) => {
           .upsert({
             crane_id: craneId,
             document_type: documentType,
-            file_url: publicUrl,
+            file_url: fileUrl,
             file_name: file.name,
             file_size: file.size,
             content_type: file.type,

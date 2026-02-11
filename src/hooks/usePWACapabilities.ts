@@ -208,7 +208,7 @@ export const usePWACapabilities = (): PWACapabilities => {
         
         if ('pushManager' in registration) {
           try {
-            await registration.pushManager.subscribe({
+            await (registration as any).pushManager.subscribe({
               userVisibleOnly: true,
               applicationServerKey: null // Configurar con VAPID key si es necesario
             });
