@@ -6,6 +6,7 @@ import { PaymentReconciliation } from '@/components/invoices/PaymentReconciliati
 import { PaymentHistory } from '@/components/invoices/PaymentHistory';
 import { InvoiceAlertsDashboard } from '@/components/invoices/InvoiceAlertsDashboard';
 import { InvoiceCancellationsHistory } from '@/components/invoices/InvoiceCancellationsHistory';
+import { MarkAsPaidModal } from '@/components/invoices/MarkAsPaidModal';
 import { Invoice } from '@/types';
 import { toast } from 'sonner';
 import InvoicesHeader from '@/components/invoices/InvoicesHeader';
@@ -48,6 +49,7 @@ const Invoices = () => {
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const [selectedInvoiceIds, setSelectedInvoiceIds] = useState<string[]>([]);
   const [exportModalOpen, setExportModalOpen] = useState(false);
+  const [markAsPaidInvoice, setMarkAsPaidInvoice] = useState<Invoice | null>(null);
   const batchProgress = useBatchProgress();
   const ITEMS_PER_PAGE = 10;
 
@@ -196,19 +198,21 @@ const Invoices = () => {
     }
   };
 
-  const handleMarkAsPaid = async (id: string) => {
-    try {
-      await markAsPaid(id);
-      // Manual refresh after marking as paid
-      setTimeout(() => {
-        refetch();
-      }, 500);
-      toast.success("Factura marcada como pagada", {
-        description: "El estado de la factura ha sido actualizado.",
-      });
-    } catch (error) {
-      console.error('Error marking invoice as paid:', error);
+  const handleMarkAsPaid = (id: string) => {
+    const invoice = invoices.find(inv => inv.id === id);
+    if (invoice) {
+      setMarkAsPaidInvoice(invoice);
     }
+  };
+
+  const handleConfirmMarkAsPaid = async (invoiceId: string, paymentDate: string) => {
+    await markAsPaid(invoiceId, paymentDate);
+    setTimeout(() => {
+      refetch();
+    }, 500);
+    toast.success("Factura marcada como pagada", {
+      description: "El estado de la factura ha sido actualizado.",
+    });
   };
 
   const handleEditInvoice = (invoice: Invoice) => {
@@ -491,6 +495,13 @@ const Invoices = () => {
       <BatchProgressModal
         state={batchProgress.state}
         onClose={batchProgress.close}
+      />
+
+      <MarkAsPaidModal
+        invoice={markAsPaidInvoice}
+        isOpen={!!markAsPaidInvoice}
+        onClose={() => setMarkAsPaidInvoice(null)}
+        onConfirm={handleConfirmMarkAsPaid}
       />
     </div>
   );
