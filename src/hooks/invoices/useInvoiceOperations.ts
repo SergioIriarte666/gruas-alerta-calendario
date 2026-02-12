@@ -521,13 +521,16 @@ export const useInvoiceOperations = () => {
     }
   };
 
-  const markAsPaid = async (id: string) => {
+  const markAsPaid = async (id: string, paymentDate?: string) => {
     try {
-      console.log('Marcando factura como pagada:', id);
+      console.log('Marcando factura como pagada:', id, 'fecha:', paymentDate);
       
-      const { data, error } = await supabase.rpc('create_automatic_payment_for_invoice', {
-        p_invoice_id: id
-      });
+      const rpcParams: any = { p_invoice_id: id };
+      if (paymentDate) {
+        rpcParams.p_payment_date = paymentDate;
+      }
+      
+      const { data, error } = await supabase.rpc('create_automatic_payment_for_invoice', rpcParams);
 
       if (error) {
         console.error('Error en create_automatic_payment_for_invoice:', error);

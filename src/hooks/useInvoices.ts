@@ -100,9 +100,9 @@ export const useInvoices = () => {
     createInvoice,
     updateInvoice,
     deleteInvoice,
-    markAsPaid: async (id: string) => {
+    markAsPaid: async (id: string, paymentDate?: string) => {
       try {
-        const result = await markAsPaid(id);
+        const result = await markAsPaid(id, paymentDate);
         // Refrescar datos después del pago
         refetch();
         return result;

@@ -4079,10 +4079,12 @@ export type Database = {
         Returns: Json
       }
       comprehensive_payment_diagnosis: { Args: never; Returns: Json }
-      create_automatic_payment_for_invoice: {
-        Args: { p_invoice_id: string }
-        Returns: Json
-      }
+      create_automatic_payment_for_invoice:
+        | { Args: { p_invoice_id: string }; Returns: Json }
+        | {
+            Args: { p_invoice_id: string; p_payment_date?: string }
+            Returns: Json
+          }
       create_cost_with_payment_link: {
         Args: {
           p_amount: number
