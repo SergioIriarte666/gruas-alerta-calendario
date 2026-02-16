@@ -1,76 +1,126 @@
 
 
-# Propuestas de Mejora UI - Gestion de Clientes
+# Plan: Optimizacion Global de Rendimiento
 
-## Diagnostico actual
+## Diagnostico
 
-La pagina de Clientes tiene una estructura basica: titulo + barra de busqueda + tabla plana. Comparado con el modulo de Costos (dashboard de metricas, filtros avanzados, toggle de vistas tabla/cards, gradientes violeta) y el VIP Pipeline (metricas con iconos coloridos, tabs con contenido rico), la pagina de Clientes se siente incompleta.
+La app muestra "Cargando..." por mas de 3 segundos en todas las paginas. Las causas raiz identificadas son:
 
-## Propuesta 1: Dashboard de metricas en la cabecera
+### Causa 1: N+1 en `useClosureData.ts` (CRITICA)
+El hook obtiene hasta 500 cierres y luego ejecuta una consulta individual a `closure_services` por CADA cierre. En las network requests se observan decenas de llamadas simultaneas a `closure_services?closure_id=eq.XXXX`. Esto genera hasta 500 requests secuenciales.
 
-Agregar una grilla de 4 tarjetas de metricas al inicio, similar al `CostsDashboard`, con:
+### Causa 2: Console.log masivo en `NotificationContext.tsx` (ALTA)
+Cada vez que se renderiza el contexto de notificaciones (en cada navegacion), se imprime el array completo de notificaciones en consola (`console.log('useNotifications context:', context)`), lo cual incluye objetos JSON enormes que bloquean el hilo principal.
 
-- **Total Clientes Activos** - con gradiente violeta (card primaria) e icono `Users`
-- **Empresas Unicas** - conteo por RUT unico, icono `Building2`
-- **Servicios Activos** - total de servicios en pipeline de todos los clientes, icono `TrendingUp`
-- **Facturacion Pendiente** - monto pendiente de pago agregado, icono `DollarSign`
+### Causa 3: Queries secuenciales en `useNotificationsData.ts` (ALTA)
+Este hook ejecuta ~10 consultas de forma secuencial (una tras otra) en cada carga de pagina porque esta montado globalmente en `NotificationProvider`. Las consultas podrian ejecutarse en paralelo con `Promise.all`.
 
-Cada tarjeta con el mismo patron visual del CostsDashboard: icono en circulo coloreado, valor grande, subtitulo descriptivo.
-
-## Propuesta 2: Acceso rapido al Pipeline VIP desde la tabla
-
-Dado que Pipeline VIP es la funcionalidad mas usada, elevar su acceso:
-
-- Hacer que el **nombre del cliente sea clickeable** y lleve directo al Pipeline VIP (el flujo mas comun)
-- El nombre mostraria un cursor pointer y un hover con subrayado sutil
-- Mover el boton "Ver detalles" (ojo) al area de acciones donde queda actualmente
-- Esto elimina un clic extra para el flujo principal
-
-## Propuesta 3: Filtros rapidos por estado y departamento
-
-Reemplazar el filtro actual (solo busqueda de texto) por una barra de filtros mas completa:
-
-- **Filtro por estado**: badges/chips clickeables "Todos", "Activos", "Inactivos" con contadores
-- **Filtro por departamento**: dropdown o chips con los departamentos mas frecuentes
-- Mantener la barra de busqueda integrada en la misma fila
-- Estilo: chips con borde y fondo sutil al estilo de los `UnifiedCostFilters`
-
-## Propuesta 4: Columna de "Servicios en Pipeline" en la tabla
-
-Agregar una columna visual que muestre cuantos servicios tiene cada cliente activos en el pipeline:
-
-- Mini badge con numero de servicios activos (ej. "5 activos")
-- Color indicativo: verde si tiene servicios recientes, gris si no tiene actividad
-- Al hacer clic lleva al Pipeline VIP de ese cliente
-
-## Propuesta 5: Simplificar columnas de acciones
-
-Las acciones actualmente muestran 5 botones por fila (Pipeline, Ver, Editar, Activar/Desactivar, Eliminar), lo cual es excesivo. Propuesta:
-
-- **Pipeline VIP** se mueve al nombre clickeable (Propuesta 2)
-- **Ver detalles** y **Editar** se mantienen como iconos
-- **Activar/Desactivar** y **Eliminar** se agrupan en un menu desplegable "..." (DropdownMenu)
-- Esto deja 3 elementos en la columna de acciones: ojo, lapiz, menu
+### Causa 4: 2,035 console.log en 73 archivos de hooks (MEDIA)
+Contamina el hilo principal con serialization de objetos complejos en cada operacion.
 
 ---
 
-## Detalle Tecnico
+## Solucion
 
-### Archivos a crear
-- `src/components/clients/ClientsDashboard.tsx` - Grilla de metricas (patron de CostsDashboard)
+### Cambio 1: `src/hooks/closures/useClosureData.ts`
+Reemplazar el bucle N+1 por una unica consulta batch. En vez de hacer `Promise.all` con 500 queries individuales, obtener TODOS los `closure_services` de una vez con `.in('closure_id', allClosureIds)` y luego agrupar en memoria.
 
-### Archivos a modificar
-- `src/pages/Clients.tsx` - Integrar dashboard, filtros de estado/departamento
-- `src/components/clients/ClientsFilters.tsx` - Agregar chips de estado y departamento junto a la busqueda
-- `src/components/clients/ClientsTable.tsx` - Nombre clickeable hacia Pipeline VIP, columna de servicios, acciones agrupadas
-- `src/components/clients/ClientsMobileView.tsx` - Nombre clickeable, acciones simplificadas
+```
+// ANTES: 500 queries individuales
+const closuresWithServices = await Promise.all(
+  basicClosures.map(async (closure) => {
+    const { data } = await supabase
+      .from('closure_services')
+      .select('service_id')
+      .eq('closure_id', closure.id);
+    ...
+  })
+);
 
-### Patron de datos para metricas
-Reutilizar los datos existentes del hook `useClients()` para contar activos/inactivos y RUTs unicos. Para servicios activos y facturacion pendiente, agregar una consulta ligera con `.select('id, status')` desde `services` agrupada por `client_id`, y otra a `invoices` para pendientes. Estas consultas se encapsularian en un nuevo hook `useClientsDashboardMetrics`.
+// DESPUES: 1 sola query
+const allClosureIds = basicClosures.map(c => c.id);
+const { data: allClosureServices } = await supabase
+  .from('closure_services')
+  .select('closure_id, service_id')
+  .in('closure_id', allClosureIds);
 
-### Patron visual
-- Gradiente violeta en la card primaria (como `CostsDashboard`)
-- Iconos en circulos con fondo coloreado `bg-violet-600/10`, `bg-blue-100`, etc.
-- Tipografia: `text-2xl font-bold` para valores, `text-sm text-muted-foreground` para etiquetas
-- Chips de filtro con `border rounded-full px-3 py-1` y estado activo con `bg-primary text-primary-foreground`
+// Agrupar en memoria
+const servicesByClosureId = new Map();
+(allClosureServices || []).forEach(cs => {
+  if (!servicesByClosureId.has(cs.closure_id)) {
+    servicesByClosureId.set(cs.closure_id, []);
+  }
+  servicesByClosureId.get(cs.closure_id).push(cs);
+});
+```
+
+Tambien eliminar los `console.log` de debug del archivo.
+
+### Cambio 2: `src/contexts/NotificationContext.tsx`
+Eliminar los 6 `console.log` de debug que imprimen el contexto completo de notificaciones en cada renderizado. Estos son logs de desarrollo que no deberian estar en produccion.
+
+### Cambio 3: `src/hooks/useNotificationsData.ts`
+Paralelizar las ~10 queries usando `Promise.all` en vez de ejecutarlas secuencialmente. Agrupar las consultas independientes:
+
+```
+// ANTES: secuencial
+const { data: urgentServices } = await supabase...
+const { data: weekServices } = await supabase...
+const { data: overdueData } = await supabase.rpc(...)
+const { data: invoicesDueSoon } = await supabase.rpc(...)
+// ... 6 mas
+
+// DESPUES: paralelo
+const [
+  urgentServicesRes,
+  weekServicesRes,
+  overdueRes,
+  dueSoonRes,
+  oldDraftRes,
+  expiringCranesRes,
+  expiringOperatorsRes,
+  closedServiceIdsRes,
+  invoicedClosureIdsRes
+] = await Promise.all([
+  supabase.from('services')...,
+  supabase.from('services')...,
+  supabase.rpc('get_overdue_invoices_for_alerts'),
+  supabase.rpc('get_invoices_due_soon', { days_ahead: 7 }),
+  supabase.from('invoices')...,
+  supabase.from('cranes')...,
+  supabase.from('operators')...,
+  supabase.from('closure_services').select('service_id'),
+  supabase.from('invoice_closures').select('closure_id')
+]);
+```
+
+Nota: Las 2 queries finales que dependen de `closedIds` (servicios pendientes de cierre >30 dias y >60 dias) se ejecutaran despues del `Promise.all` ya que dependen del resultado.
+
+### Cambio 4: Limpieza masiva de console.log en hooks
+Eliminar los `console.log` de debug de los hooks mas criticos que se ejecutan en cada pagina:
+
+- `src/hooks/closures/useClosureData.ts` - 6 logs
+- `src/hooks/useClosuresForInvoices.ts` - 5 logs
+- `src/hooks/useDailyReport.ts` - 1 log restante
+- `src/hooks/services/useServiceManager.ts` - ~15 logs pesados
+- `src/hooks/useOperatorServicesTabs.ts` - 5 logs
+
+---
+
+## Resultado esperado
+
+- De ~500+ requests N+1 a 1 sola query batch para cierres
+- De ~10 queries secuenciales a ~9 en paralelo para notificaciones
+- Eliminacion de logs que serializan objetos grandes en cada renderizado
+- Tiempo de carga estimado: de 3+ segundos a menos de 1 segundo
+
+## Archivos a modificar
+
+1. `src/hooks/closures/useClosureData.ts` - Batch query + limpieza logs
+2. `src/contexts/NotificationContext.tsx` - Limpieza logs
+3. `src/hooks/useNotificationsData.ts` - Paralelizar queries
+4. `src/hooks/useClosuresForInvoices.ts` - Limpieza logs
+5. `src/hooks/useDailyReport.ts` - Limpieza log restante
+6. `src/hooks/services/useServiceManager.ts` - Limpieza logs pesados
+7. `src/hooks/useOperatorServicesTabs.ts` - Limpieza logs
 
