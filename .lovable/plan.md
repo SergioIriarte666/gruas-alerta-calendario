@@ -1,74 +1,79 @@
 
 
-# Plan: Agregar selector de fecha de pago al marcar factura como pagada
+# Plan: Optimizar carga del Informe Diario (N+1 queries)
 
 ## Problema
 
-Al hacer clic en "Marcar como pagada" en una factura, el sistema usa automáticamente la fecha actual (`CURRENT_DATE`) sin dar la opción de elegir otra fecha. Esto es un problema cuando el pago se recibió en una fecha anterior.
+El hook `useDailyReport.ts` tiene dos bucles `for` que ejecutan una consulta individual a `invoice_services` por cada servicio completado para verificar si ya fue facturado. Si hay 50 servicios completados, son 100 consultas secuenciales adicionales a la base de datos, causando tiempos de carga de varios segundos.
 
-## Solución
+## Solucion
 
-Agregar un modal de confirmación que incluya un selector de fecha de pago antes de ejecutar la acción, siguiendo los patrones de diseño del módulo de Costos.
+Reemplazar las consultas individuales por una sola consulta batch que obtiene todos los `service_id` de `invoice_services` de una vez, y luego filtra en memoria.
 
-## Cambios
+## Detalle Tecnico
 
-### 1. Nuevo componente: Modal de confirmación con fecha
-**Archivo: `src/components/invoices/MarkAsPaidModal.tsx`**
+### Archivo: `src/hooks/useDailyReport.ts`
 
-Un Dialog que muestra:
-- Titulo: "Marcar como Pagada"
-- Info de la factura (folio, total)
-- DatePickerInput para seleccionar la fecha de pago (por defecto hoy)
-- Botones "Cancelar" y "Confirmar Pago"
+**Cambio 1 - Lineas 149-166 (primer bucle N+1):**
 
-### 2. Modificar la función SQL para aceptar fecha
-**Nueva migración SQL**
-
-Actualizar `create_automatic_payment_for_invoice` para aceptar un parámetro opcional `p_payment_date DATE DEFAULT CURRENT_DATE`. Este parámetro se usará en el `INSERT` del pago y en el `UPDATE` de la factura en lugar de `CURRENT_DATE`.
-
-### 3. Actualizar hook de operaciones
-**Archivo: `src/hooks/invoices/useInvoiceOperations.ts`**
-
-Modificar `markAsPaid` para aceptar un segundo parámetro `paymentDate: string` y pasarlo al RPC.
-
-### 4. Actualizar hook principal
-**Archivo: `src/hooks/useInvoices.ts`**
-
-Propagar el parámetro `paymentDate` en el wrapper de `markAsPaid`.
-
-### 5. Integrar modal en las vistas
-**Archivos:**
-- `src/pages/Invoices.tsx` - estado para controlar el modal, pasar fecha al `markAsPaid`
-- `src/components/invoices/InvoicesTable.tsx` - abrir modal en vez de llamar directamente
-- `src/components/invoices/InvoicesPipelineView.tsx` - mismo cambio
-
-El botón de "marcar como pagada" abrirá el modal en lugar de ejecutar la acción directamente. Para acciones batch, se usará un solo modal con la fecha aplicada a todas las facturas seleccionadas.
-
-## Detalle Técnico
-
-### Migración SQL
-```sql
-DROP FUNCTION IF EXISTS public.create_automatic_payment_for_invoice(uuid);
-
-CREATE OR REPLACE FUNCTION public.create_automatic_payment_for_invoice(
-  p_invoice_id uuid,
-  p_payment_date date DEFAULT CURRENT_DATE
-) RETURNS jsonb AS $$ ...
--- Usar p_payment_date en lugar de CURRENT_DATE en INSERT y UPDATE
-```
-
-### Llamada RPC actualizada
+Antes (una query por servicio):
 ```typescript
-await supabase.rpc('create_automatic_payment_for_invoice', {
-  p_invoice_id: id,
-  p_payment_date: paymentDate // formato 'YYYY-MM-DD'
-});
+for (const service of allServices) {
+  if (service.status === 'completed') {
+    const { data: existsInInvoice } = await supabase
+      .from('invoice_services')
+      .select('service_id')
+      .eq('service_id', service.id)
+      .maybeSingle();
+    // ...
+  }
+}
 ```
 
-### Flujo del modal
-1. Usuario hace clic en el icono de check (marcar pagada)
-2. Se abre modal con DatePickerInput (fecha default: hoy)
-3. Usuario puede cambiar la fecha o dejar la actual
-4. Al confirmar, se ejecuta `markAsPaid(id, fecha)`
-5. Modal se cierra y la tabla se refresca
+Despues (una sola query batch):
+```typescript
+const completedServiceIds = allServices
+  .filter(s => s.status === 'completed')
+  .map(s => s.id);
+
+const { data: invoicedServices } = completedServiceIds.length > 0
+  ? await supabase
+      .from('invoice_services')
+      .select('service_id')
+      .in('service_id', completedServiceIds)
+  : { data: [] };
+
+const invoicedServiceIds = new Set(
+  (invoicedServices || []).map(is => is.service_id)
+);
+
+// Filtrar en memoria
+for (const service of allServices) {
+  if (service.status === 'completed' && !invoicedServiceIds.has(service.id)) {
+    if (service.purchase_order_number) {
+      pendingInvoicingWithPO.push(service);
+    } else {
+      pendingInvoicingWithoutPO.push(service);
+    }
+  }
+}
+```
+
+**Cambio 2 - Lineas 255-303 (segundo bucle N+1):**
+
+Mismo patron: obtener todos los `service_id` facturados en una sola consulta y filtrar en memoria en vez de consultar uno por uno.
+
+**Cambio 3 - Eliminar logs de debug:**
+
+Remover los `console.log` extensos de debug de supplier payments (lineas 215-251) que agregan ruido innecesario.
+
+### Resultado esperado
+
+- De ~100+ consultas secuenciales a ~9 consultas paralelas (las 7 originales del `Promise.all` + 2 batch de `invoice_services`)
+- Tiempo de carga reducido drasticamente (de varios segundos a menos de 1 segundo)
+- Sin cambios en la funcionalidad ni en la UI
+
+### Archivo adicional: build error
+
+Corregir el error de build en `supabase/functions/send-inspection-email/index.ts` que importa `npm:resend@2.0.0` sin tenerlo en las dependencias de Deno. Se ajustara el import para usar el patron correcto de importacion en edge functions.
 
