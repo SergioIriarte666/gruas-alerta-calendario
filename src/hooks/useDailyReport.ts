@@ -145,22 +145,29 @@ const fetchDailyReportData = async (selectedDate: string): Promise<DailyReportDa
   const pendingInvoicingWithPO: any[] = [];
   const pendingInvoicingWithoutPO: any[] = [];
   
-  // Filtrar servicios completados que NO estén facturados
-  for (const service of allServices) {
-    if (service.status === 'completed') {
-      const { data: existsInInvoice } = await supabase
+  // Batch query: obtener todos los service_id ya facturados de una vez
+  const completedServiceIds = allServices
+    .filter(s => s.status === 'completed')
+    .map(s => s.id);
+
+  const { data: invoicedServicesData } = completedServiceIds.length > 0
+    ? await supabase
         .from('invoice_services')
         .select('service_id')
-        .eq('service_id', service.id)
-        .maybeSingle();
-      
-      if (!existsInInvoice) {
-        // Separar según tengan o no Orden de Compra
-        if (service.purchase_order_number) {
-          pendingInvoicingWithPO.push(service);
-        } else {
-          pendingInvoicingWithoutPO.push(service);
-        }
+        .in('service_id', completedServiceIds)
+    : { data: [] };
+
+  const invoicedServiceIds = new Set(
+    (invoicedServicesData || []).map((is: any) => is.service_id)
+  );
+
+  // Filtrar en memoria
+  for (const service of allServices) {
+    if (service.status === 'completed' && !invoicedServiceIds.has(service.id)) {
+      if (service.purchase_order_number) {
+        pendingInvoicingWithPO.push(service);
+      } else {
+        pendingInvoicingWithoutPO.push(service);
       }
     }
   }
@@ -212,25 +219,6 @@ const fetchDailyReportData = async (selectedDate: string): Promise<DailyReportDa
   // Process supplier payments
   const supplierPayments = supplierPaymentsRes.data || [];
   
-  console.log('🔍 SUPPLIER PAYMENTS DEBUG:');
-  console.log('- Raw supplier payments:', JSON.stringify(supplierPayments, null, 2));
-  console.log('- Supplier payments error:', supplierPaymentsRes.error);
-  console.log('- Selected date (dateForDB):', dateForDB);
-  console.log('- Current date:', currentDate);
-  console.log('- Supplier payments length:', supplierPayments.length);
-  
-  // Log each supplier payment individually
-  supplierPayments.forEach((sp, index) => {
-    console.log(`Payment ${index}:`, {
-      id: sp.id,
-      supplier_id: sp.supplier_id,
-      suppliers: sp.suppliers,
-      description: sp.description,
-      amount: sp.amount,
-      due_date: sp.due_date
-    });
-  });
-  
   const supplierPaymentsDueToday = supplierPayments.filter(sp => sp.due_date === dateForDB);
   const supplierPaymentsOverdue = supplierPayments.filter(sp => new Date(sp.due_date) < currentDate);
   const supplierPaymentsDueWeek = supplierPayments.filter(sp => {
@@ -238,20 +226,11 @@ const fetchDailyReportData = async (selectedDate: string): Promise<DailyReportDa
     return dueDate > currentDate && dueDate <= new Date(currentDate.getTime() + 7 * 24 * 60 * 60 * 1000);
   });
   
-  console.log('- Due today:', supplierPaymentsDueToday.length, supplierPaymentsDueToday);
-  console.log('- Overdue:', supplierPaymentsOverdue.length, supplierPaymentsOverdue);
-  console.log('- Due this week:', supplierPaymentsDueWeek.length, supplierPaymentsDueWeek);
-  
   const supplierTotalDueToday = supplierPaymentsDueToday.reduce((sum, sp) => sum + (sp.amount || 0), 0);
   const supplierTotalOverdue = supplierPaymentsOverdue.reduce((sum, sp) => sum + (sp.amount || 0), 0);
   const supplierTotalDueWeek = supplierPaymentsDueWeek.reduce((sum, sp) => sum + (sp.amount || 0), 0);
   
-  console.log('- Total due today:', supplierTotalDueToday);
-  console.log('- Total overdue:', supplierTotalOverdue);
-  console.log('- Total due week:', supplierTotalDueWeek);
-  
   // Get services ready for invoicing including failed services
-  console.log('Fetching services ready for invoicing...');
   const invoicesToIssueRes = await supabase
     .from('services')
     .select(`
@@ -260,12 +239,6 @@ const fetchDailyReportData = async (selectedDate: string): Promise<DailyReportDa
     .in('status', ['completed', 'failed'])
     .lte('service_date', dateForDB);
 
-  console.log('Services query result:', invoicesToIssueRes.data?.length, 'services found');
-
-  if (invoicesToIssueRes.error) {
-    console.error('Error fetching services for invoicing:', invoicesToIssueRes.error);
-  }
-
   // Get unique client IDs and fetch clients separately
   const serviceClientIds = [...new Set(invoicesToIssueRes.data?.map(s => s.client_id).filter(Boolean) || [])];
   const clientsRes = serviceClientIds.length > 0 
@@ -273,36 +246,35 @@ const fetchDailyReportData = async (selectedDate: string): Promise<DailyReportDa
     : { data: [] };
   
   const clientsMap = new Map<string, any>();
-  
-  // Populate clients map
   if (clientsRes.data) {
     for (const client of clientsRes.data) {
       clientsMap.set(client.id, client);
     }
   }
 
-  // Wait for all async filters to complete
-  const filteredServices = [];
-  for (const service of invoicesToIssueRes.data || []) {
-    const { data: existsInInvoice } = await supabase
-      .from('invoice_services')
-      .select('service_id')
-      .eq('service_id', service.id)
-      .maybeSingle();
-    if (!existsInInvoice) {
-      // Ensure client data is properly structured
-      const serviceWithClient = {
-        ...service,
-        client: clientsMap.get(service.client_id) ? {
-          id: clientsMap.get(service.client_id).id,
-          name: clientsMap.get(service.client_id).name
-        } : null
-      };
-      filteredServices.push(serviceWithClient);
-    }
-  }
+  // Batch query: obtener todos los service_id facturados de una vez
+  const allInvoiceServiceIds = (invoicesToIssueRes.data || []).map(s => s.id);
+  const { data: invoicedServices2 } = allInvoiceServiceIds.length > 0
+    ? await supabase
+        .from('invoice_services')
+        .select('service_id')
+        .in('service_id', allInvoiceServiceIds)
+    : { data: [] };
 
-  console.log('Final filtered services with client data:', filteredServices.length, filteredServices);
+  const invoicedSet2 = new Set(
+    (invoicedServices2 || []).map((is: any) => is.service_id)
+  );
+
+  // Filtrar en memoria
+  const filteredServices = (invoicesToIssueRes.data || [])
+    .filter(service => !invoicedSet2.has(service.id))
+    .map(service => ({
+      ...service,
+      client: clientsMap.get(service.client_id) ? {
+        id: clientsMap.get(service.client_id).id,
+        name: clientsMap.get(service.client_id).name
+      } : null
+    }));
 
   // Process cranes and generate detailed alerts
   const cranes = cranesRes.data || [];
