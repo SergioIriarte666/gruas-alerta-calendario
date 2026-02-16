@@ -62,9 +62,6 @@ export const useServiceCosts = (serviceId: string | null) => {
     queryKey: ['service-costs', serviceId],
     queryFn: () => fetchServiceCosts(serviceId!),
     enabled: !!serviceId,
-    refetchOnWindowFocus: true,
-    staleTime: 0, // Siempre refetch para asegurar datos actualizados
-    gcTime: 0, // No mantener en caché
-    refetchOnMount: 'always',
+    staleTime: 60 * 1000, // 1 minute cache
   });
 };

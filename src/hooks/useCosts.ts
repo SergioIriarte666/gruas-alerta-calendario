@@ -53,10 +53,7 @@ export const useCosts = () => {
   return useQuery({
     queryKey: ['costs'],
     queryFn: fetchCosts,
-    staleTime: 0, // Always fresh data for reports
-    refetchOnWindowFocus: true,
-    refetchOnMount: true,
-    refetchInterval: 30000, // Refetch every 30 seconds to ensure fresh data
+    staleTime: 2 * 60 * 1000, // 2 minutes cache
   });
 };
 
