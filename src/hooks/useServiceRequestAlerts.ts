@@ -5,7 +5,6 @@ import { useNotifications } from '@/contexts/NotificationContext';
 import { useUser } from '@/contexts/UserContext';
 
 export const useServiceRequestAlerts = () => {
-  console.log('useServiceRequestAlerts called - about to call useNotifications');
   const { addNotification } = useNotifications();
   const { user } = useUser();
 

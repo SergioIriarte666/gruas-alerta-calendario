@@ -12,19 +12,15 @@ export const useServiceFetcher = () => {
 
   const fetchServices = async (): Promise<Service[]> => {
     try {
-      console.log('Fetching services...');
       setLoading(true);
       
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        console.error('Usuario no autenticado');
-        toast.error("Error de autenticación", {
-          description: "Necesitas iniciar sesión para ver los servicios.",
-        });
+        toast.error("Error de autenticación", { description: "Necesitas iniciar sesión para ver los servicios." });
         return [];
       }
 
-      console.log('Usuario autenticado:', user.id);
+      
 
       const { data, error } = await supabase
         .from('services')
@@ -42,8 +38,6 @@ export const useServiceFetcher = () => {
 
       if (error) {
         console.error('Error fetching services:', error);
-        
-        console.log('Intentando consulta simplificada...');
         const { data: simpleData, error: simpleError } = await supabase
           .from('services')
           .select('*')
@@ -51,32 +45,25 @@ export const useServiceFetcher = () => {
           .limit(MAX_ROWS);
           
         if (simpleError) {
-          console.error('Error en consulta simplificada:', simpleError);
           toast.error("Error de acceso", {
             description: "No se pudieron cargar los servicios. Verifica los permisos.",
           });
           return [];
         }
 
-        console.log('Consulta simplificada exitosa, obteniendo datos relacionados...');
         if (simpleData && Array.isArray(simpleData) && simpleData.length > 0) {
-          const enrichedData = await enrichServicesData(simpleData);
-          return transformRawServiceData(enrichedData);
+          return transformRawServiceData(await enrichServicesData(simpleData));
         }
-        
         throw error;
       }
 
-      console.log('Raw services data:', data);
+      
 
       if (!data || !Array.isArray(data) || data.length === 0) {
-        console.log('No services found');
         return [];
       }
 
-      const formattedServices = transformRawServiceData(data);
-      console.log('Formatted services:', formattedServices);
-      return formattedServices;
+      return transformRawServiceData(data);
 
     } catch (error: any) {
       console.error('Error in fetchServices:', error);
