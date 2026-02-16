@@ -520,7 +520,7 @@ export const useServicesPage = () => {
   return {
     // State
     services,
-    loading: loadingAll || loadingPaged,
+    loading: (loadingAll && services.length === 0) || (loadingPaged && !pagedData),
     selectedService,
     isFormOpen,
     isDetailsOpen,

@@ -27,8 +27,7 @@ const SERVICE_SELECT = `
 const MAX_ROWS = 1000;
 
 const fetchServicesFromDB = async (transformFn: (data: any[]) => Service[]): Promise<Service[]> => {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return [];
+  // RLS handles auth — no need to call getUser() which adds ~200-500ms latency
 
   const { data, error } = await supabase
     .from('services')
