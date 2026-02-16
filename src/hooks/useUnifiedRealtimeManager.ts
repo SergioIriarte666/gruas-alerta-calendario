@@ -61,10 +61,6 @@ export const useUnifiedRealtimeManager = () => {
     // Invalidaciones globales
     queryClient.invalidateQueries({ queryKey: ['reports'] });
     queryClient.invalidateQueries({ queryKey: ['dashboardData'] });
-    
-    // Refetch específico para datos críticos
-    queryClient.refetchQueries({ queryKey: ['services'] });
-    queryClient.refetchQueries({ queryKey: ['costs'] });
   }, [queryClient]);
 
   /**
