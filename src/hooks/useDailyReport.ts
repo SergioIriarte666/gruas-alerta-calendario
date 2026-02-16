@@ -427,8 +427,6 @@ export const useDailyReport = (selectedDate: string) => {
     };
   }, [queryClient, selectedDate]);
 
-  console.log('Daily Report Data:', data); // Debug temporal
-
   return {
     data: data ?? null,
     loading: isLoading,

@@ -11,8 +11,6 @@ export const useClosureData = () => {
 
   const fetchClosures = async () => {
     try {
-      console.log('Fetching closures...');
-      
       const { data: basicClosures, error: basicError } = await supabase
         .from('service_closures')
         .select(`
@@ -27,59 +25,44 @@ export const useClosureData = () => {
         .limit(MAX_CLOSURES);
 
       if (basicError) {
-        console.error('Error fetching basic closures:', basicError);
         throw basicError;
       }
 
-      console.log('Basic closures data:', basicClosures);
-
       if (!basicClosures || basicClosures.length === 0) {
-        console.log('No closures found in database');
         setClosures([]);
         setLoading(false);
         return;
       }
 
-      // Now try to get the closure services for each closure
-      const closuresWithServices = await Promise.all(
-        basicClosures.map(async (closure) => {
-          try {
-            const { data: closureServices, error: servicesError } = await supabase
-              .from('closure_services')
-              .select('service_id')
-              .eq('closure_id', closure.id);
+      // Batch query: get ALL closure_services in a single request
+      const allClosureIds = basicClosures.map(c => c.id);
+      const { data: allClosureServices, error: servicesError } = await supabase
+        .from('closure_services')
+        .select('closure_id, service_id')
+        .in('closure_id', allClosureIds);
 
-            if (servicesError) {
-              console.warn(`Error fetching services for closure ${closure.id}:`, servicesError);
-              // Continue with empty services array
-              return {
-                ...closure,
-                closure_services: []
-              };
-            }
+      if (servicesError) {
+        console.warn('Error fetching closure services batch:', servicesError);
+      }
 
-            return {
-              ...closure,
-              closure_services: closureServices || []
-            };
-          } catch (error) {
-            console.warn(`Error processing closure ${closure.id}:`, error);
-            return {
-              ...closure,
-              closure_services: []
-            };
-          }
-        })
-      );
+      // Group services by closure_id in memory
+      const servicesByClosureId = new Map<string, { service_id: string }[]>();
+      (allClosureServices || []).forEach(cs => {
+        if (!servicesByClosureId.has(cs.closure_id)) {
+          servicesByClosureId.set(cs.closure_id, []);
+        }
+        servicesByClosureId.get(cs.closure_id)!.push(cs);
+      });
 
-      console.log('Closures with services:', closuresWithServices);
+      const closuresWithServices = basicClosures.map(closure => ({
+        ...closure,
+        closure_services: servicesByClosureId.get(closure.id) || []
+      }));
 
       const formattedClosures: ServiceClosure[] = closuresWithServices.map((closure) => {
         try {
           return formatClosureData(closure);
         } catch (formatError) {
-          console.error('Error formatting closure:', closure, formatError);
-          // Return a basic formatted closure in case of error
           return {
             id: closure.id,
             folio: closure.folio || 'N/A',
@@ -97,14 +80,12 @@ export const useClosureData = () => {
         }
       });
 
-      console.log('Formatted closures:', formattedClosures);
       setClosures(formattedClosures);
     } catch (error: any) {
       console.error('Error fetching closures:', error);
       toast.error("Error", {
         description: `No se pudieron cargar los cierres: ${error.message}`,
       });
-      // Set empty array on error so the page doesn't stay loading
       setClosures([]);
     } finally {
       setLoading(false);

@@ -21,7 +21,7 @@ const detectExistingCommissions = async (serviceId: string, newOperators: any[])
     return { toCreate: [], toUpdate: [], toDelete: [], existingCommissions: [] };
   }
 
-  console.log('🔍 [SMART SYNC] Existing commissions:', existingCommissions);
+  
   
   // Filtrar operadores adicionales (excluyendo el principal)
   const mainOperator = newOperators.find(op => op.role === 'Principal') || newOperators[0];
@@ -67,18 +67,13 @@ const detectExistingCommissions = async (serviceId: string, newOperators: any[])
     }
   }
 
-  console.log('🔍 [SMART SYNC] Analysis result:', {
-    toCreate: toCreate.length,
-    toUpdate: toUpdate.length,
-    toDelete: toDelete.length
-  });
 
   return { toCreate, toUpdate, toDelete, existingCommissions };
 };
 
 // Función para transformar datos de Supabase a Service con manejo robusto de campos opcionales
 const transformToService = (data: any): Service => {
-  console.log('🔄 Transforming service data:', { folio: data.folio, hasClient: !!data.client, hasServiceType: !!data.serviceType });
+  
   
   // Buscar operador principal en service_resources
   let primaryOperator = data.operator || null; // Legacy fallback
@@ -186,12 +181,6 @@ export const useServiceManager = () => {
   const createServiceMutation = useMutation({
     mutationFn: async (serviceData: ServiceFormData): Promise<Service> => {
       try {
-        console.log('🔄 Creating service with data:', { 
-          folio: serviceData.folio, 
-          serviceType: serviceData.serviceType,
-          hasOperators: !!serviceData.operators?.length,
-          hasCrane: !!serviceData.crane
-        });
 
         // Obtener configuración del tipo de servicio para validaciones condicionales
         const { data: serviceTypeConfig } = await supabase
@@ -200,7 +189,7 @@ export const useServiceManager = () => {
           .eq('id', serviceData.serviceType)
           .single();
 
-        console.log('📋 Service type config:', serviceTypeConfig);
+        
 
         // Obtener el usuario actual para created_by
         const { data: { user } } = await supabase.auth.getUser();
@@ -301,20 +290,6 @@ export const useServiceManager = () => {
           created_by: createdBy
         };
 
-        console.log('📤 [INTEGRAL] Transformed data for ALL special service types:', {
-          serviceType: serviceTypeConfig?.name,
-          config: {
-            vehicle_brand_required: serviceTypeConfig?.vehicle_brand_required,
-            vehicle_model_required: serviceTypeConfig?.vehicle_model_required,
-            license_plate_required: serviceTypeConfig?.license_plate_required,
-            origin_required: serviceTypeConfig?.origin_required,
-            destination_required: serviceTypeConfig?.destination_required,
-            crane_required: serviceTypeConfig?.crane_required,
-            operator_required: serviceTypeConfig?.operator_required,
-            vehicle_info_optional: serviceTypeConfig?.vehicle_info_optional
-          },
-          finalData: transformedData
-        });
 
         const { data: newService, error: serviceError } = await supabase
           .from('services')
@@ -400,7 +375,7 @@ export const useServiceManager = () => {
 
         // Si es servicio subcontratado, crear el costo del tercero automáticamente
         if (serviceTypeConfig?.is_outsourced && serviceData.outsourcedProviderId && serviceData.outsourcedCost && serviceData.outsourcedCost > 0) {
-          console.log('🏢 Creating outsourced service cost automatically...');
+          
           
           // Buscar o crear categoría de Subcontrataciones
           let categoryId: string | null = null;
@@ -443,7 +418,7 @@ export const useServiceManager = () => {
               console.error('Error creating outsourced cost:', outsourcedCostError);
               // No lanzar error, solo log - el servicio ya se creó
             } else {
-              console.log('✅ Outsourced cost created successfully');
+              
             }
           }
         }
@@ -475,32 +450,19 @@ export const useServiceManager = () => {
       serviceData: Partial<ServiceFormData> & { purchaseOrderNumber?: string } 
     }): Promise<Service> => {
       // Transformar datos para Supabase con validación de fechas y UUIDs
-      console.log('🔧 Datos de servicio recibidos en useServiceManager:', {
-        id: id,
-        keys: Object.keys(serviceData),
-        folio: serviceData.folio,
-        vehicleModel: serviceData.vehicleModel,
-        vehicleBrand: serviceData.vehicleBrand,
-        licensePlate: serviceData.licensePlate,
-        client: serviceData.client,
-        serviceType: serviceData.serviceType,
-        crane: serviceData.crane,
-        quoteNumber: serviceData.quoteNumber,
-        purchaseOrder: serviceData.purchaseOrder
-      });
 
       // 🚀 DETECTAR ACTUALIZACIÓN PARCIAL (batch update)
       const isPartialUpdate = Object.keys(serviceData).length <= 4 && 
                             (serviceData.quoteNumber !== undefined || serviceData.purchaseOrder !== undefined || serviceData.purchaseOrderNumber !== undefined || serviceData.status !== undefined) &&
                             !serviceData.requestDate && !serviceData.serviceDate;
 
-      console.log('📊 Update type detection:', { isPartialUpdate, fieldsCount: Object.keys(serviceData).length });
+      
 
       let transformedData: any = {};
 
       if (isPartialUpdate) {
         // ✅ ACTUALIZACIÓN PARCIAL - Solo procesar campos específicos enviados
-        console.log('🎯 Processing PARTIAL update - only specific fields');
+        
         
         if (serviceData.quoteNumber !== undefined) {
           transformedData.quote_number = serviceData.quoteNumber;
@@ -513,11 +475,11 @@ export const useServiceManager = () => {
         }
         if (serviceData.status !== undefined) {
           transformedData.status = serviceData.status;
-          console.log('✅ useServiceManager - Procesando campo status:', serviceData.status);
+          
         }
       } else {
         // ✅ ACTUALIZACIÓN COMPLETA - Procesar todos los campos con validación
-        console.log('🔄 Processing FULL update - all fields with validation');
+        
         
         // Extraer operador principal para operator_id y operator_commission
         let primaryOperatorId = null;
@@ -527,7 +489,7 @@ export const useServiceManager = () => {
           const primaryOperator = serviceData.operators[0];
           primaryOperatorId = primaryOperator.operatorId || null;
           primaryOperatorCommission = primaryOperator.commission || 0;
-          console.log('✅ Extracted primary operator:', { primaryOperatorId, primaryOperatorCommission });
+          
         }
         
         transformedData = {
@@ -711,7 +673,7 @@ export const useServiceManager = () => {
       delete transformedData.costDetails;
       delete transformedData.operators;
       
-      console.log('✅ Final transformedData being sent to database:', transformedData);
+      
 
       // ✅ MODIFICADO: Handle service costs (gastos) update con prevención de duplicación
       if (serviceData.costDetails && Array.isArray(serviceData.costDetails)) {
@@ -720,7 +682,7 @@ export const useServiceManager = () => {
       const isFromServiceModal = (serviceData as any)._source === 'service_modal';
       
       if (isFromMainForm) {
-        console.log('[updateService] Processing service costs from main form:', serviceData.costDetails);
+        
         
         const commissionCategoryId = '440296d4-09c2-4f3a-b02b-835f861df4c4';
         
@@ -734,7 +696,7 @@ export const useServiceManager = () => {
         if (deleteCostsError) {
           console.error('[updateService] Error deleting existing service costs:', deleteCostsError);
         } else {
-          console.log('[updateService] Existing service costs (non-commission) deleted');
+          
         }
       
         // Filter valid cost details
@@ -763,7 +725,7 @@ export const useServiceManager = () => {
             created_by: null
           }));
       
-          console.log('[updateService] Inserting updated service costs:', serviceCosts);
+          
       
           const { error: insertCostsError } = await supabase
             .from('costs')
@@ -772,19 +734,19 @@ export const useServiceManager = () => {
           if (insertCostsError) {
             console.error('[updateService] Error inserting updated service costs:', insertCostsError);
           } else {
-            console.log('[updateService] Service costs updated successfully');
+            
           }
         }
       } else if (isFromServiceModal) {
-        console.log('[updateService] Skipping cost processing - handled by ServiceDetailsModal components');
+        
       } else {
-        console.log('[updateService] Skipping cost processing - no source flag or not from main form');
+        
       }
       }
 
       // ✅ NEW: Handle operators update
       if (serviceData.operators && Array.isArray(serviceData.operators)) {
-        console.log('[updateService] Updating service operators:', serviceData.operators);
+        
         
         const commissionCategoryId = '440296d4-09c2-4f3a-b02b-835f861df4c4';
         
@@ -799,7 +761,7 @@ export const useServiceManager = () => {
         }
         
         // 2. DETECCIÓN INTELIGENTE DE COMISIONES - Evitar eliminación/creación innecesaria
-        console.log('🚀 [SMART SYNC] Starting intelligent commission detection for service:', id);
+        
         
         const { toCreate, toUpdate, toDelete } = await detectExistingCommissions(id, serviceData.operators);
         
@@ -812,7 +774,7 @@ export const useServiceManager = () => {
 
         // 3. ELIMINAR solo las comisiones que ya no existen
         if (toDelete.length > 0) {
-          console.log('🗑️ [SMART SYNC] Deleting obsolete commissions:', toDelete.map(c => c.id));
+          
           
           const { error: deleteCommissionsError } = await supabase
             .from('costs')
@@ -822,13 +784,13 @@ export const useServiceManager = () => {
           if (deleteCommissionsError) {
             console.error('[SMART SYNC] Error deleting obsolete commissions:', deleteCommissionsError);
           } else {
-            console.log('✅ [SMART SYNC] Obsolete commission costs deleted successfully');
+            
           }
         }
 
         // 4. ACTUALIZAR comisiones existentes que cambiaron
         if (toUpdate.length > 0) {
-          console.log('✏️ [SMART SYNC] Updating existing commissions:', toUpdate.length);
+          
           
           for (const updateData of toUpdate) {
             const { error: updateError } = await supabase
@@ -844,12 +806,12 @@ export const useServiceManager = () => {
               console.error('[SMART SYNC] Error updating commission:', updateError);
             }
           }
-          console.log('✅ [SMART SYNC] Commission costs updated successfully');
+          
         }
 
         // 5. CREAR solo las nuevas comisiones
         if (toCreate.length > 0) {
-          console.log('➕ [SMART SYNC] Creating new commissions:', toCreate.length);
+          
           
           const newCommissionCosts = toCreate.map(operator => ({
             amount: operator.amount,
@@ -888,14 +850,14 @@ export const useServiceManager = () => {
               }
             }
           } else {
-            console.log('✅ [SMART SYNC] New commission costs created successfully');
+            
           }
         }
         
-        console.log('🎉 [SMART SYNC] Intelligent commission sync completed successfully');
+        
         
         // 6. SINCRONIZAR service_resources - Actualizar/crear/eliminar registros de operadores
-        console.log('🔄 [SERVICE_RESOURCES] Starting sync for operators');
+        
         
         // Obtener registros actuales de service_resources para este servicio
         const { data: currentResources } = await supabase
@@ -904,7 +866,7 @@ export const useServiceManager = () => {
           .eq('service_id', id)
           .eq('resource_type', 'operator');
         
-        console.log('📋 [SERVICE_RESOURCES] Current resources:', currentResources);
+        
         
         // Crear un set de operator_ids de los operadores nuevos
         const newOperatorIds = new Set(serviceData.operators.map(op => op.operatorId).filter(Boolean));
@@ -924,7 +886,7 @@ export const useServiceManager = () => {
             if (deleteResourcesError) {
               console.error('[SERVICE_RESOURCES] Error deleting obsolete resources:', deleteResourcesError);
             } else {
-              console.log('✅ [SERVICE_RESOURCES] Deleted obsolete operator resources:', resourcesToDelete.length);
+              
             }
           }
         }
@@ -952,7 +914,7 @@ export const useServiceManager = () => {
             if (updateResourceError) {
               console.error('[SERVICE_RESOURCES] Error updating resource:', updateResourceError);
             } else {
-              console.log('✅ [SERVICE_RESOURCES] Updated operator resource:', operator.operatorId);
+              
             }
           } else {
             // Crear nuevo registro
@@ -970,33 +932,17 @@ export const useServiceManager = () => {
             if (createResourceError) {
               console.error('[SERVICE_RESOURCES] Error creating resource:', createResourceError);
             } else {
-              console.log('✅ [SERVICE_RESOURCES] Created new operator resource:', operator.operatorId);
+              
             }
           }
         }
         
-        console.log('🎉 [SERVICE_RESOURCES] Operator sync completed successfully');
+        
       }
 
       // Remove costDetails and operators after processing
       delete (transformedData as any).costDetails;
       delete (transformedData as any).operators;
-
-      // 🔍 LOGGING EXHAUSTIVO - Parte 1: Antes de la actualización
-      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-      console.log('🚀 INICIO ACTUALIZACIÓN DE SERVICIO');
-      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-      console.log('📋 Service ID:', id);
-      console.log('📦 Transformed Data being sent to Supabase:', JSON.stringify(transformedData, null, 2));
-      console.log('🔑 Critical Fields:', {
-        folio: transformedData.folio,
-        vehicle_brand: transformedData.vehicle_brand,
-        vehicle_model: transformedData.vehicle_model,
-        license_plate: transformedData.license_plate,
-        operator_id: transformedData.operator_id,
-        crane_id: transformedData.crane_id,
-        status: transformedData.status
-      });
 
       const { data: updatedService, error } = await supabase
         .from('services')
@@ -1023,94 +969,19 @@ export const useServiceManager = () => {
         `)
         .single();
 
-      // 🔍 LOGGING EXHAUSTIVO - Parte 2: Después de la actualización
-      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-      console.log('📥 RESPUESTA DE SUPABASE');
-      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-      console.log('❓ Error:', error ? JSON.stringify(error, null, 2) : 'No error');
-      console.log('✅ Data returned:', updatedService ? 'YES' : 'NO');
-      
-      if (updatedService) {
-        console.log('📋 Updated Service - Critical Fields:', {
-          id: updatedService.id,
-          folio: updatedService.folio,
-          vehicle_brand: updatedService.vehicle_brand,
-          vehicle_model: updatedService.vehicle_model,
-          license_plate: updatedService.license_plate,
-          operator_id: updatedService.operator_id,
-          crane_id: updatedService.crane_id,
-          status: updatedService.status
-        });
-      }
-
       if (error) {
-        console.error('❌ ERROR CRÍTICO EN ACTUALIZACIÓN:', {
-          code: error.code,
-          message: error.message,
-          details: error.details,
-          hint: error.hint
-        });
+        console.error('Error updating service:', error);
         throw new Error(`Error al actualizar servicio: ${error.message || 'Error desconocido'}`);
       }
 
       if (!updatedService) {
-        console.error('❌ ERROR: No se retornó data después de la actualización');
         throw new Error('No se recibió confirmación de la actualización del servicio');
       }
-
-      // ✅ VERIFICACIÓN POST-ACTUALIZACIÓN - Confirmar que los cambios se guardaron
-      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-      console.log('🔍 VERIFICACIÓN POST-ACTUALIZACIÓN');
-      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-      
-      const { data: verifiedService, error: verifyError } = await supabase
-        .from('services')
-        .select('id, folio, vehicle_brand, vehicle_model, license_plate, operator_id, crane_id, status')
-        .eq('id', id)
-        .single();
-
-      if (verifyError) {
-        console.error('⚠️ Error en verificación post-actualización:', verifyError);
-      } else if (verifiedService) {
-        console.log('✅ Datos verificados en BD:', verifiedService);
-        
-        // Comparar campos críticos enviados vs guardados
-        const criticalFields = ['folio', 'vehicle_brand', 'vehicle_model', 'license_plate', 'operator_id', 'crane_id', 'status'];
-        const mismatches = [];
-        
-        for (const field of criticalFields) {
-          const sent = transformedData[field];
-          const saved = verifiedService[field];
-          
-          if (sent !== undefined && sent !== saved) {
-            mismatches.push({
-              field,
-              sent,
-              saved,
-              match: false
-            });
-            console.warn(`⚠️ MISMATCH en campo ${field}:`, { sent, saved });
-          } else if (sent !== undefined) {
-            console.log(`✅ Campo ${field} verificado:`, { sent, saved, match: true });
-          }
-        }
-        
-        if (mismatches.length > 0) {
-          console.error('❌ CAMPOS NO SE GUARDARON CORRECTAMENTE:', mismatches);
-          toast.error(`Advertencia: Algunos campos no se guardaron correctamente. Revisa: ${mismatches.map(m => m.field).join(', ')}`);
-        } else {
-          console.log('✅ TODOS LOS CAMPOS VERIFICADOS CORRECTAMENTE');
-        }
-      }
-
-      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-      console.log('🎉 FIN ACTUALIZACIÓN DE SERVICIO');
-      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
       // ✅ SINCRONIZACIÓN DE COSTO OUTSOURCED Y SUPPLIER_PAYMENTS
       // Si el servicio tiene proveedor tercerizado, actualizar el costo y el pago asociado
       if (serviceData.outsourcedProviderId !== undefined) {
-        console.log('🔄 [OUTSOURCED SYNC] Sincronizando costo de proveedor tercerizado');
+        
         
         // Buscar el costo existente del servicio tercerizado
         const { data: existingOutsourcedCost, error: findCostError } = await supabase
@@ -1141,11 +1012,6 @@ export const useServiceManager = () => {
           if (updateCostError) {
             console.error('[OUTSOURCED SYNC] Error actualizando costo outsourced:', updateCostError);
           } else {
-            console.log('✅ [OUTSOURCED SYNC] Costo de proveedor tercerizado actualizado:', {
-              costId: existingOutsourcedCost.id,
-              newAmount: serviceData.outsourcedCost,
-              newSupplierId
-            });
 
             // ✅ TAMBIÉN actualizar el supplier_payment asociado a este costo
             const { data: existingPayment, error: findPaymentError } = await supabase
@@ -1169,17 +1035,13 @@ export const useServiceManager = () => {
               if (updatePaymentError) {
                 console.error('[OUTSOURCED SYNC] Error actualizando supplier_payment:', updatePaymentError);
               } else {
-                console.log('✅ [OUTSOURCED SYNC] Supplier payment actualizado:', {
-                  paymentId: existingPayment.id,
-                  newSupplierId
-                });
               }
             } else {
-              console.log('[OUTSOURCED SYNC] No se encontró supplier_payment asociado al costo');
+              
             }
           }
         } else {
-          console.log('[OUTSOURCED SYNC] No se encontró costo outsourced existente para este servicio');
+          
         }
       }
 
@@ -1202,12 +1064,7 @@ export const useServiceManager = () => {
       toast.success('Servicio actualizado exitosamente');
     },
     onError: (error: any) => {
-      console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-      console.error('❌ ERROR EN MUTACIÓN DE ACTUALIZACIÓN');
-      console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-      console.error('Error completo:', error);
-      console.error('Error tipo:', typeof error);
-      console.error('Error keys:', Object.keys(error || {}));
+      console.error('Error updating service:', error);
       
       let errorMessage = 'Error al actualizar servicio';
       
@@ -1230,8 +1087,6 @@ export const useServiceManager = () => {
         errorMessage = `Error (${error.code}): ${error.details || error.hint || 'Error desconocido'}`;
       }
       
-      console.error('📝 Mensaje de error procesado:', errorMessage);
-      console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
       
       toast.error(errorMessage);
     }
@@ -1240,7 +1095,7 @@ export const useServiceManager = () => {
   // ELIMINAR SERVICIO - Usa RPC delete_service_cascade para eliminar en cascada
   const deleteServiceMutation = useMutation({
     mutationFn: async (id: string) => {
-      console.log('🗑️ Eliminando servicio con cascada:', id);
+      
       
       const { error } = await supabase.rpc('delete_service_cascade', {
         p_service_id: id
@@ -1251,7 +1106,7 @@ export const useServiceManager = () => {
         throw new Error(`Error al eliminar el servicio: ${error.message}`);
       }
       
-      console.log('✅ Servicio eliminado exitosamente:', id);
+      
       await queryClient.invalidateQueries({ queryKey: ['services'] });
       await queryClient.invalidateQueries({ queryKey: ['costs'] });
     },

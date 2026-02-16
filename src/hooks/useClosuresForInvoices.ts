@@ -22,10 +22,8 @@ export const useClosuresForInvoices = (options: UseClosuresForInvoicesProps = {}
 
   const fetchClosures = async () => {
     try {
-      console.log('Fetching closures for invoices, includeInvoiced:', includeInvoiced);
       setLoading(true);
       
-      // Build query based on mode - include client relation
       let query = supabase
         .from('service_closures')
         .select(`
@@ -38,14 +36,10 @@ export const useClosuresForInvoices = (options: UseClosuresForInvoicesProps = {}
           )
         `);
 
-      // For editing mode, include both closed and invoiced closures
-      // For creation mode, only include closed closures
       if (includeInvoiced) {
         query = query.in('status', ['closed', 'invoiced']);
-        console.log('Edit mode: fetching closed AND invoiced closures');
       } else {
         query = query.eq('status', 'closed');
-        console.log('Create mode: fetching only closed closures');
       }
 
       const { data: closuresData, error: closuresError } = await query
@@ -53,7 +47,6 @@ export const useClosuresForInvoices = (options: UseClosuresForInvoicesProps = {}
         .limit(MAX_CLOSURES_FOR_INVOICES);
 
       if (closuresError) {
-        console.error('Error fetching closures:', closuresError);
         if (closuresError.message.includes('permission denied') || closuresError.message.includes('row-level security')) {
           toast.error("Permisos insuficientes", {
             description: "No tienes permisos para ver los cierres. Contacta a un administrador.",
@@ -64,9 +57,6 @@ export const useClosuresForInvoices = (options: UseClosuresForInvoicesProps = {}
         throw closuresError;
       }
 
-      console.log('Fetched closures data:', closuresData?.length || 0, 'closures');
-
-      // Format all closures and include client name
       const formattedClosures: ClosureWithClient[] = (closuresData || []).map(data => ({
         ...formatClosureData(data),
         clientName: (data.clients as any)?.name || ''
@@ -74,7 +64,6 @@ export const useClosuresForInvoices = (options: UseClosuresForInvoicesProps = {}
       setAllClosures(formattedClosures);
       
     } catch (error: any) {
-      console.error('Error fetching closures for invoices:', error);
       if (!error.message?.includes('permission denied')) {
         toast.error("Error", {
           description: "No se pudieron cargar los cierres disponibles para facturación.",
@@ -88,29 +77,24 @@ export const useClosuresForInvoices = (options: UseClosuresForInvoicesProps = {}
 
   useEffect(() => {
     fetchClosures();
-  }, [includeInvoiced]); // Re-fetch when mode changes
+  }, [includeInvoiced]);
 
   const [filteredClosures, setFilteredClosures] = useState<ClosureWithClient[]>([]);
 
-  // Filter closures based on mode
   useEffect(() => {
     const filterClosures = async () => {
       if (includeInvoiced) {
-        // For editing, return all closures (already invoiced or not)
-        console.log('Edit mode: including all closures', allClosures.length);
         setFilteredClosures(allClosures);
         return;
       }
 
-      // For creating new invoices, filter out already invoiced closures
       try {
         const { data: invoicedClosures, error: invoicedError } = await supabase
           .from('invoice_closures')
           .select('closure_id');
 
         if (invoicedError && !invoicedError.message.includes('permission denied')) {
-          console.warn('Could not fetch invoiced closures:', invoicedError);
-          setFilteredClosures(allClosures); // Return all if we can't check
+          setFilteredClosures(allClosures);
           return;
         }
 
@@ -122,10 +106,8 @@ export const useClosuresForInvoices = (options: UseClosuresForInvoicesProps = {}
           closure => !invoicedClosureIds.has(closure.id)
         );
 
-        console.log('Available closures for new invoicing:', availableClosures.length);
         setFilteredClosures(availableClosures);
       } catch (error) {
-        console.error('Error filtering closures:', error);
         setFilteredClosures(allClosures);
       }
     };

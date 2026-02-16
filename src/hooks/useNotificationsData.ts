@@ -13,24 +13,72 @@ const fetchNotificationsData = async (): Promise<Omit<Notification, 'read'>[]> =
   const alertDays = companyData?.alert_days ?? 30;
   const alertDateLimit = addDays(today, alertDays);
   
-  // Thresholds for different alert types
-  const serviceClosureThreshold = addDays(today, -30); // 30 days ago
-  const closureInvoiceThreshold = addDays(today, -15); // 15 days ago
-  const criticalServiceThreshold = addDays(today, -60); // 60 days ago
-  const urgentDocumentThreshold = addDays(today, 7); // 7 days ahead
-  const warningDocumentThreshold = addDays(today, 30); // 30 days ahead
+  const serviceClosureThreshold = addDays(today, -30);
+  const closureInvoiceThreshold = addDays(today, -15);
+  const criticalServiceThreshold = addDays(today, -60);
 
   const notifications: Omit<Notification, 'read'>[] = [];
 
-  // 1A. Services today/tomorrow (urgent)
-  const { data: urgentServices } = await supabase
-    .from('services')
-    .select('id, folio, service_date, client:clients(name)')
-    .in('status', ['pending', 'in_progress'])
-    .gte('service_date', format(today, 'yyyy-MM-dd'))
-    .lte('service_date', format(tomorrow, 'yyyy-MM-dd'));
+  // Execute all independent queries in parallel
+  const [
+    urgentServicesRes,
+    weekServicesRes,
+    overdueRes,
+    dueSoonRes,
+    oldDraftInvoicesRes,
+    expiringCranesRes,
+    expiringOperatorsRes,
+    closedServiceIdsRes,
+    invoicedClosureIdsRes
+  ] = await Promise.all([
+    // 1A. Services today/tomorrow
+    supabase
+      .from('services')
+      .select('id, folio, service_date, client:clients(name)')
+      .in('status', ['pending', 'in_progress'])
+      .gte('service_date', format(today, 'yyyy-MM-dd'))
+      .lte('service_date', format(tomorrow, 'yyyy-MM-dd')),
+    // 1B. Services this week
+    supabase
+      .from('services')
+      .select('id, folio, service_date, client:clients(name)')
+      .in('status', ['pending', 'in_progress'])
+      .gt('service_date', format(tomorrow, 'yyyy-MM-dd'))
+      .lte('service_date', format(nextWeek, 'yyyy-MM-dd')),
+    // 2A. Overdue invoices
+    supabase.rpc('get_overdue_invoices_for_alerts'),
+    // 2B. Invoices due soon
+    supabase.rpc('get_invoices_due_soon', { days_ahead: 7 }),
+    // 2C. Old draft invoices
+    supabase
+      .from('invoices')
+      .select('id, folio, created_at, client:clients(name)')
+      .eq('status', 'draft')
+      .lte('created_at', format(addDays(today, -30), 'yyyy-MM-dd')),
+    // 3A. Expiring crane documents
+    supabase
+      .from('cranes')
+      .select('id, license_plate, circulation_permit_expiry, insurance_expiry, technical_review_expiry')
+      .eq('is_active', true)
+      .or(`circulation_permit_expiry.lte.${format(alertDateLimit, 'yyyy-MM-dd')},insurance_expiry.lte.${format(alertDateLimit, 'yyyy-MM-dd')},technical_review_expiry.lte.${format(alertDateLimit, 'yyyy-MM-dd')}`),
+    // 3B. Expiring operator exams
+    supabase
+      .from('operators')
+      .select('id, name, exam_expiry')
+      .eq('is_active', true)
+      .lte('exam_expiry', format(alertDateLimit, 'yyyy-MM-dd')),
+    // 4. Closed service IDs
+    supabase
+      .from('closure_services')
+      .select('service_id'),
+    // 6. Invoiced closure IDs
+    supabase
+      .from('invoice_closures')
+      .select('closure_id')
+  ]);
 
-  (urgentServices || []).forEach((service: any) => {
+  // Process urgent services
+  (urgentServicesRes.data || []).forEach((service: any) => {
     const isToday = service.service_date === format(today, 'yyyy-MM-dd');
     notifications.push({
       id: `service-urgent-${service.id}`,
@@ -44,15 +92,8 @@ const fetchNotificationsData = async (): Promise<Omit<Notification, 'read'>[]> =
     });
   });
 
-  // 1B. Services this week (informative)
-  const { data: weekServices } = await supabase
-    .from('services')
-    .select('id, folio, service_date, client:clients(name)')
-    .in('status', ['pending', 'in_progress'])
-    .gt('service_date', format(tomorrow, 'yyyy-MM-dd'))
-    .lte('service_date', format(nextWeek, 'yyyy-MM-dd'));
-
-  (weekServices || []).forEach((service: any) => {
+  // Process week services
+  (weekServicesRes.data || []).forEach((service: any) => {
     notifications.push({
       id: `service-week-${service.id}`,
       title: 'Servicio Esta Semana',
@@ -65,70 +106,41 @@ const fetchNotificationsData = async (): Promise<Omit<Notification, 'read'>[]> =
     });
   });
 
-  // 2A. Facturas vencidas usando la nueva función que detecta automáticamente
-  try {
-    const { data: overdueData, error: overdueError } = await supabase.rpc('get_overdue_invoices_for_alerts');
-    
-    if (overdueError) {
-      console.error('Error fetching overdue invoices:', overdueError);
-    } else if (overdueData && overdueData.length > 0) {
-      overdueData.forEach((invoice: any) => {
-        notifications.push({
-          id: `invoice-overdue-${invoice.id}`,
-          title: 'Factura Vencida',
-          message: `Factura ${invoice.folio} de ${invoice.client_name} está vencida por ${invoice.days_overdue} días. Total: $${invoice.total.toLocaleString()}`,
-          type: 'error',
-          timestamp: parseISO(invoice.due_date),
-          actionType: 'navigate',
-          actionUrl: '/invoices',
-          actionData: { 
-            entityId: invoice.id,
-            filter: 'overdue'
-          },
-        });
+  // Process overdue invoices
+  if (!overdueRes.error && overdueRes.data && overdueRes.data.length > 0) {
+    overdueRes.data.forEach((invoice: any) => {
+      notifications.push({
+        id: `invoice-overdue-${invoice.id}`,
+        title: 'Factura Vencida',
+        message: `Factura ${invoice.folio} de ${invoice.client_name} está vencida por ${invoice.days_overdue} días. Total: $${invoice.total.toLocaleString()}`,
+        type: 'error',
+        timestamp: parseISO(invoice.due_date),
+        actionType: 'navigate',
+        actionUrl: '/invoices',
+        actionData: { entityId: invoice.id, filter: 'overdue' },
       });
-    }
-  } catch (error) {
-    console.error('Error in overdue invoices detection:', error);
+    });
   }
 
-  // 2B. Facturas próximas a vencer (usando la nueva función RPC)
-  try {
-    const { data: invoicesDueSoon, error: dueSoonError } = await supabase.rpc('get_invoices_due_soon', { days_ahead: 7 });
-    
-    if (dueSoonError) {
-      console.error('Error fetching invoices due soon:', dueSoonError);
-    } else if (invoicesDueSoon && invoicesDueSoon.length > 0) {
-      invoicesDueSoon.forEach((invoice: any) => {
-        const urgencyLevel = invoice.days_until_due <= 2 ? 'error' : 'warning';
-        notifications.push({
-          id: `invoice-due-soon-${invoice.id}`,
-          title: invoice.days_until_due <= 2 ? 'Factura Vence Muy Pronto' : 'Factura Vence Pronto',
-          message: `Factura ${invoice.folio} de ${invoice.client_name} vence en ${invoice.days_until_due} días. Total: $${invoice.total.toLocaleString()}`,
-          type: urgencyLevel,
-          timestamp: parseISO(invoice.due_date),
-          actionType: 'navigate',
-          actionUrl: '/invoices',
-          actionData: { 
-            entityId: invoice.id,
-            filter: 'sent'
-          },
-        });
+  // Process invoices due soon
+  if (!dueSoonRes.error && dueSoonRes.data && dueSoonRes.data.length > 0) {
+    dueSoonRes.data.forEach((invoice: any) => {
+      const urgencyLevel = invoice.days_until_due <= 2 ? 'error' : 'warning';
+      notifications.push({
+        id: `invoice-due-soon-${invoice.id}`,
+        title: invoice.days_until_due <= 2 ? 'Factura Vence Muy Pronto' : 'Factura Vence Pronto',
+        message: `Factura ${invoice.folio} de ${invoice.client_name} vence en ${invoice.days_until_due} días. Total: $${invoice.total.toLocaleString()}`,
+        type: urgencyLevel,
+        timestamp: parseISO(invoice.due_date),
+        actionType: 'navigate',
+        actionUrl: '/invoices',
+        actionData: { entityId: invoice.id, filter: 'sent' },
       });
-    }
-  } catch (error) {
-    console.error('Error in due soon invoices detection:', error);
+    });
   }
 
-  // 2C. Old draft invoices (more than 30 days)
-  const oldDraftThreshold = addDays(today, -30);
-  const { data: oldDraftInvoices } = await supabase
-    .from('invoices')
-    .select('id, folio, created_at, client:clients(name)')
-    .eq('status', 'draft')
-    .lte('created_at', format(oldDraftThreshold, 'yyyy-MM-dd'));
-
-  (oldDraftInvoices || []).forEach((invoice: any) => {
+  // Process old draft invoices
+  (oldDraftInvoicesRes.data || []).forEach((invoice: any) => {
     const daysSince = Math.floor((today.getTime() - new Date(invoice.created_at).getTime()) / (1000 * 60 * 60 * 24));
     notifications.push({
       id: `invoice-old-draft-${invoice.id}`,
@@ -142,14 +154,8 @@ const fetchNotificationsData = async (): Promise<Omit<Notification, 'read'>[]> =
     });
   });
 
-  // 3A. Expiring crane documents (with urgency levels)
-  const { data: expiringCranes } = await supabase
-    .from('cranes')
-    .select('id, license_plate, circulation_permit_expiry, insurance_expiry, technical_review_expiry')
-    .eq('is_active', true)
-    .or(`circulation_permit_expiry.lte.${format(alertDateLimit, 'yyyy-MM-dd')},insurance_expiry.lte.${format(alertDateLimit, 'yyyy-MM-dd')},technical_review_expiry.lte.${format(alertDateLimit, 'yyyy-MM-dd')}`);
-
-  (expiringCranes || []).forEach((crane: any) => {
+  // Process expiring crane documents
+  (expiringCranesRes.data || []).forEach((crane: any) => {
     const checks = [
       { type: 'Permiso de Circulación', date: crane.circulation_permit_expiry },
       { type: 'Seguro', date: crane.insurance_expiry },
@@ -188,14 +194,8 @@ const fetchNotificationsData = async (): Promise<Omit<Notification, 'read'>[]> =
     });
   });
 
-  // 3B. Expiring operator exams
-  const { data: expiringOperators } = await supabase
-    .from('operators')
-    .select('id, name, exam_expiry')
-    .eq('is_active', true)
-    .lte('exam_expiry', format(alertDateLimit, 'yyyy-MM-dd'));
-
-  (expiringOperators || []).forEach((operator: any) => {
+  // Process expiring operator exams
+  (expiringOperatorsRes.data || []).forEach((operator: any) => {
     const expiryDate = parseISO(operator.exam_expiry);
     if (isBefore(today, expiryDate) || expiryDate.toDateString() === today.toDateString()) {
       const daysUntilExpiry = Math.ceil((expiryDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
@@ -224,13 +224,8 @@ const fetchNotificationsData = async (): Promise<Omit<Notification, 'read'>[]> =
     }
   });
 
-  // 4. Services completed >30 days without closure
-  // Get all service IDs that are already in closures
-  const { data: closedServiceIds } = await supabase
-    .from('closure_services')
-    .select('service_id');
-  
-  const closedIds = (closedServiceIds || []).map(item => item.service_id);
+  // 4. Services completed >30 days without closure (depends on closedServiceIds)
+  const closedIds = (closedServiceIdsRes.data || []).map(item => item.service_id);
   
   let pendingServicesQuery = supabase
     .from('services')
@@ -241,9 +236,39 @@ const fetchNotificationsData = async (): Promise<Omit<Notification, 'read'>[]> =
   if (closedIds.length > 0) {
     pendingServicesQuery = pendingServicesQuery.not('id', 'in', `(${closedIds.join(',')})`);
   }
-  
-  const { data: pendingServices } = await pendingServicesQuery;
 
+  // 5. Critical services >60 days (also depends on closedIds)
+  let criticalServicesQuery = supabase
+    .from('services')
+    .select('id, folio, service_date, client:clients(name)')
+    .eq('status', 'completed')
+    .lte('service_date', format(criticalServiceThreshold, 'yyyy-MM-dd'));
+  
+  if (closedIds.length > 0) {
+    criticalServicesQuery = criticalServicesQuery.not('id', 'in', `(${closedIds.join(',')})`);
+  }
+
+  // 6. Closures >15 days without invoicing (depends on invoicedClosureIds)
+  const invoicedIds = (invoicedClosureIdsRes.data || []).map(item => item.closure_id);
+  
+  let pendingClosuresQuery = supabase
+    .from('service_closures')
+    .select('id, folio, created_at, total, client:clients(name)')
+    .eq('status', 'closed')
+    .lte('created_at', format(closureInvoiceThreshold, 'yyyy-MM-dd'));
+  
+  if (invoicedIds.length > 0) {
+    pendingClosuresQuery = pendingClosuresQuery.not('id', 'in', `(${invoicedIds.join(',')})`);
+  }
+
+  // Execute dependent queries in parallel
+  const [pendingServicesRes, criticalServicesRes, pendingClosuresRes] = await Promise.all([
+    pendingServicesQuery,
+    criticalServicesQuery,
+    pendingClosuresQuery
+  ]);
+
+  const pendingServices = pendingServicesRes.data;
   if (pendingServices && pendingServices.length > 0) {
     notifications.push({
       id: 'services-pending-closure',
@@ -257,19 +282,7 @@ const fetchNotificationsData = async (): Promise<Omit<Notification, 'read'>[]> =
     });
   }
 
-  // 5. Critical services >60 days without closure
-  let criticalServicesQuery = supabase
-    .from('services')
-    .select('id, folio, service_date, client:clients(name)')
-    .eq('status', 'completed')
-    .lte('service_date', format(criticalServiceThreshold, 'yyyy-MM-dd'));
-  
-  if (closedIds.length > 0) {
-    criticalServicesQuery = criticalServicesQuery.not('id', 'in', `(${closedIds.join(',')})`);
-  }
-  
-  const { data: criticalServices } = await criticalServicesQuery;
-
+  const criticalServices = criticalServicesRes.data;
   if (criticalServices && criticalServices.length > 0) {
     notifications.push({
       id: 'services-critical-old',
@@ -283,27 +296,7 @@ const fetchNotificationsData = async (): Promise<Omit<Notification, 'read'>[]> =
     });
   }
 
-  // 6. Closures >15 days without invoicing
-  // Get all closure IDs that are already invoiced
-  const { data: invoicedClosureIds } = await supabase
-    .from('invoice_closures')
-    .select('closure_id');
-  
-  const invoicedIds = (invoicedClosureIds || []).map(item => item.closure_id);
-  
-  let pendingClosuresQuery = supabase
-    .from('service_closures')
-    .select('id, folio, created_at, total, client:clients(name)')
-    .eq('status', 'closed')
-    .lte('created_at', format(closureInvoiceThreshold, 'yyyy-MM-dd'));
-  
-  if (invoicedIds.length > 0) {
-    pendingClosuresQuery = pendingClosuresQuery.not('id', 'in', `(${invoicedIds.join(',')})`);
-  }
-  
-  const { data: pendingClosures } = await pendingClosuresQuery;
-
-  (pendingClosures || []).forEach((closure: any) => {
+  (pendingClosuresRes.data || []).forEach((closure: any) => {
     const daysSince = Math.floor((today.getTime() - new Date(closure.created_at).getTime()) / (1000 * 60 * 60 * 24));
     notifications.push({
       id: `closure-pending-invoice-${closure.id}`,
