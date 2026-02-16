@@ -4,10 +4,8 @@ import { useAuth } from './AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { cleanupAuthState, performGlobalSignOut } from '@/utils/authCleanup';
 
-const debugLog = (...args: unknown[]) => {
-  if (import.meta.env.DEV) {
-    console.log(...args);
-  }
+const debugLog = (..._args: unknown[]) => {
+  // Debug logging disabled for performance
 };
 
 interface UserProfile {
@@ -120,7 +118,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
           role: profileData.role,
           client_id: profileData.client_id,
         };
-        console.log('UserContext - Profile found:', userProfile);
+        debugLog('UserContext - Profile found:', userProfile);
         setUser(userProfile);
         retryCountRef.current = 0; // Reset retry count on success
       }
