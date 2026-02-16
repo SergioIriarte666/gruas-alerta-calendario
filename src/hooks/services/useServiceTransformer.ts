@@ -15,6 +15,8 @@ export const useServiceTransformer = () => {
 
       const embeddedClient = normalizeEmbedded(item.client ?? item.clients);
       const embeddedThirdPartyClient = normalizeEmbedded(item.third_party_client ?? item.third_party_clients);
+      const embeddedCrane = normalizeEmbedded(item.cranes ?? item.crane);
+      const embeddedOperator = normalizeEmbedded(item.operators ?? item.operator);
 
       const transformedService: Service = {
         id: item.id,
@@ -90,32 +92,32 @@ export const useServiceTransformer = () => {
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString()
         },
-        crane: item.cranes ? {
-          id: item.cranes.id,
-          licensePlate: item.cranes.license_plate,
-          brand: item.cranes.brand,
-          model: item.cranes.model,
-          type: item.cranes.type,
-          isActive: item.cranes.is_active,
-          circulationPermitExpiry: item.cranes.circulation_permit_expiry,
-          insuranceExpiry: item.cranes.insurance_expiry,
-          technicalReviewExpiry: item.cranes.technical_review_expiry,
-          createdAt: item.cranes.created_at,
-          updatedAt: item.cranes.updated_at
+        crane: embeddedCrane ? {
+          id: embeddedCrane.id,
+          licensePlate: embeddedCrane.license_plate,
+          brand: embeddedCrane.brand,
+          model: embeddedCrane.model,
+          type: embeddedCrane.type,
+          isActive: embeddedCrane.is_active,
+          circulationPermitExpiry: embeddedCrane.circulation_permit_expiry,
+          insuranceExpiry: embeddedCrane.insurance_expiry,
+          technicalReviewExpiry: embeddedCrane.technical_review_expiry,
+          createdAt: embeddedCrane.created_at,
+          updatedAt: embeddedCrane.updated_at
         } : null,
-        operator: item.operators ? {
-          id: item.operators.id,
-          name: item.operators.name,
-          rut: item.operators.rut,
-          phone: item.operators.phone,
-          operatorType: (item.operators.operator_type as 'crane_operator' | 'administrative') || 'crane_operator',
-          department: item.operators.department,
-          position: item.operators.position,
-          licenseNumber: item.operators.license_number,
-          isActive: item.operators.is_active,
-          examExpiry: item.operators.exam_expiry,
-          createdAt: item.operators.created_at,
-          updatedAt: item.operators.updated_at
+        operator: embeddedOperator ? {
+          id: embeddedOperator.id,
+          name: embeddedOperator.name,
+          rut: embeddedOperator.rut,
+          phone: embeddedOperator.phone,
+          operatorType: (embeddedOperator.operator_type as 'crane_operator' | 'administrative') || 'crane_operator',
+          department: embeddedOperator.department,
+          position: embeddedOperator.position,
+          licenseNumber: embeddedOperator.license_number,
+          isActive: embeddedOperator.is_active,
+          examExpiry: embeddedOperator.exam_expiry,
+          createdAt: embeddedOperator.created_at,
+          updatedAt: embeddedOperator.updated_at
         } : null,
         vehicleBrand: item.vehicle_brand || '',
         vehicleModel: item.vehicle_model || '',
