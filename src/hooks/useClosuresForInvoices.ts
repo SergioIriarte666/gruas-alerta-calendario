@@ -6,12 +6,14 @@ import { toast } from 'sonner';
 import { formatClosureData } from '@/utils/closureUtils';
 
 interface UseClosuresForInvoicesProps {
-  includeInvoiced?: boolean; // For editing existing invoices
+  includeInvoiced?: boolean;
 }
 
 export interface ClosureWithClient extends ServiceClosure {
   clientName?: string;
 }
+
+const MAX_CLOSURES_FOR_INVOICES = 500;
 
 export const useClosuresForInvoices = (options: UseClosuresForInvoicesProps = {}) => {
   const [allClosures, setAllClosures] = useState<ClosureWithClient[]>([]);
@@ -47,7 +49,8 @@ export const useClosuresForInvoices = (options: UseClosuresForInvoicesProps = {}
       }
 
       const { data: closuresData, error: closuresError } = await query
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(MAX_CLOSURES_FOR_INVOICES);
 
       if (closuresError) {
         console.error('Error fetching closures:', closuresError);

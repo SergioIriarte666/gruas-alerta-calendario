@@ -144,6 +144,41 @@ export const useInventoryItems = () => {
   });
 };
 
+export const usePagedInventoryItems = (page: number, pageSize: number) => {
+  return useQuery({
+    queryKey: ['inventory-items', 'paged', page, pageSize],
+    queryFn: async () => {
+      const from = (page - 1) * pageSize;
+      const to = from + pageSize - 1;
+
+      const { data, error, count } = await supabase
+        .from('inventory_items')
+        .select(
+          `
+          *,
+          category:inventory_categories(id, name, code)
+        `,
+          { count: 'exact' }
+        )
+        .eq('is_active', true)
+        .order('name')
+        .range(from, to);
+
+      if (error) throw error;
+
+      const items = (data || []) as InventoryItem[];
+
+      return {
+        items,
+        total: typeof count === 'number' ? count : items.length,
+      };
+    },
+    enabled: page > 0 && pageSize > 0,
+    staleTime: 30000,
+    refetchOnWindowFocus: false,
+  });
+};
+
 // Hooks for inventory stock
 export const useInventoryStock = () => {
   return useQuery({
@@ -212,6 +247,44 @@ export const useInventoryMovements = (limit = 50) => {
       if (error) throw error;
       return data as InventoryMovement[];
     },
+  });
+};
+
+export const usePagedInventoryMovements = (page: number, pageSize: number) => {
+  return useQuery({
+    queryKey: ['inventory-movements', 'paged', page, pageSize],
+    queryFn: async () => {
+      const from = (page - 1) * pageSize;
+      const to = from + pageSize - 1;
+
+      const { data, error, count } = await supabase
+        .from('inventory_movements')
+        .select(
+          `
+          *,
+          item:inventory_items(id, name),
+          location:inventory_locations(id, name, code),
+          supplier:suppliers(id, name),
+          crane:cranes(id, license_plate)
+        `,
+          { count: 'exact' }
+        )
+        .eq('status', 'active')
+        .order('movement_date', { ascending: false })
+        .range(from, to);
+
+      if (error) throw error;
+
+      const movements = (data || []) as InventoryMovement[];
+
+      return {
+        movements,
+        total: typeof count === 'number' ? count : movements.length,
+      };
+    },
+    enabled: page > 0 && pageSize > 0,
+    staleTime: 30000,
+    refetchOnWindowFocus: false,
   });
 };
 

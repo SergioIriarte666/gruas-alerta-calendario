@@ -10,9 +10,11 @@ import { isFutureDate, parseFromDatabase } from '@/utils/timezoneUtils';
 import { supabase } from '@/integrations/supabase/client';
 import { prepareServiceForDuplication } from '@/utils/serviceHelpers';
 import { AdvancedFilters } from '@/hooks/useAdvancedFilters';
+import { useServiceQueries } from './useServiceQueries';
 
 export const useServicesPage = () => {
-  const { services, loading, deleteService: legacyDeleteService, refetch } = useServices();
+  const { services, loading: loadingAll, deleteService: legacyDeleteService, refetch } = useServices();
+  const { usePagedServices } = useServiceQueries();
   const { createService, updateService, deleteService } = useServiceManager();
   const { user } = useUser();
   const location = useLocation();
@@ -43,6 +45,21 @@ export const useServicesPage = () => {
 
   const isAdmin = user?.role === 'admin';
   const ITEMS_PER_PAGE = 10;
+
+  const isBasicView =
+    searchTerm === '' &&
+    (statusFilter === 'all' || !statusFilter) &&
+    !advancedFilters &&
+    futureParam !== 'true' &&
+    !sortField;
+
+  const {
+    data: pagedData,
+    isLoading: loadingPaged,
+    refetch: refetchPaged,
+  } = usePagedServices(currentPage, ITEMS_PER_PAGE);
+
+  const baseServices = isBasicView && pagedData?.services ? pagedData.services : services;
 
   // Handle pre-filled data from calendar events
   useEffect(() => {
@@ -85,7 +102,7 @@ export const useServicesPage = () => {
 
     const normalizedSearchTerm = normalizeSearchTerm(searchTerm);
     
-    const filtered = services.filter(service => {
+    const filtered = baseServices.filter(service => {
       // 1. Basic search filter
       const matchesSearch = normalizedSearchTerm === '' || (
         normalizeSearchTerm(service.folio || '').includes(normalizedSearchTerm) ||
@@ -239,11 +256,16 @@ export const useServicesPage = () => {
     return filtered;
   })();
 
-  const totalPages = Math.ceil(filteredAndSortedServices.length / ITEMS_PER_PAGE);
-  const paginatedServices = filteredAndSortedServices.slice(
-    (currentPage - 1) * ITEMS_PER_PAGE,
-    currentPage * ITEMS_PER_PAGE
-  );
+  const totalPages = isBasicView && pagedData
+    ? Math.max(1, Math.ceil(pagedData.total / ITEMS_PER_PAGE))
+    : Math.ceil(filteredAndSortedServices.length / ITEMS_PER_PAGE || 1);
+
+  const paginatedServices = isBasicView
+    ? filteredAndSortedServices
+    : filteredAndSortedServices.slice(
+        (currentPage - 1) * ITEMS_PER_PAGE,
+        currentPage * ITEMS_PER_PAGE
+      );
 
   // Calculate selected services data for batch action bar
   const selectedServicesData = services.filter(s => selectedServiceIds.has(s.id));
@@ -498,7 +520,7 @@ export const useServicesPage = () => {
   return {
     // State
     services,
-    loading,
+    loading: loadingAll || loadingPaged,
     selectedService,
     isFormOpen,
     isDetailsOpen,

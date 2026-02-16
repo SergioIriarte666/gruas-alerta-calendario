@@ -1,6 +1,5 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import * as XLSX from 'xlsx';
 import { format as formatDate } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { ExportCostReportArgs } from './reportTypes';
@@ -74,6 +73,7 @@ export const exportCostReport = async ({ format, costs, settings, appliedFilters
     doc.save(`${exportFileDefaultName}.pdf`);
 
   } else if (format === 'excel') {
+    const XLSX = await import('xlsx');
     const wb = XLSX.utils.book_new();
 
     // Hoja principal: Detalle completo de costos

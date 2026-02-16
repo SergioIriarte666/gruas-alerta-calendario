@@ -1,6 +1,6 @@
 
 import * as React from 'react';
-import { useClients } from '@/hooks/useClients';
+import { useClients, usePagedClients } from '@/hooks/useClients';
 import { Client } from '@/types';
 import { toast } from 'sonner';
 import { ClientDetailsModal } from '@/components/clients/ClientDetailsModal';
@@ -21,6 +21,19 @@ const Clients = () => {
   const [sortDirection, setSortDirection] = React.useState<SortDirection>('asc');
   const ITEMS_PER_PAGE = 10;
 
+  const isBasicView = searchTerm === '';
+
+  const { data: pagedData, isLoading: pagedLoading } = usePagedClients(
+    currentPage,
+    ITEMS_PER_PAGE
+  );
+
+  const baseClients = isBasicView && pagedData?.clients ? pagedData.clients : clients;
+
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
+
   const handleSort = React.useCallback((field: ClientSortField) => {
     if (sortField === field) {
       setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
@@ -31,7 +44,7 @@ const Clients = () => {
   }, [sortField, sortDirection]);
 
   const filteredAndSortedClients = React.useMemo(() => {
-    const filtered = clients.filter(client =>
+    const filtered = baseClients.filter(client =>
       client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       client.rut.includes(searchTerm) ||
       client.email.toLowerCase().includes(searchTerm.toLowerCase())
@@ -68,15 +81,25 @@ const Clients = () => {
       
       return sortDirection === 'asc' ? comparison : -comparison;
     });
-  }, [clients, searchTerm, sortField, sortDirection]);
+  }, [baseClients, searchTerm, sortField, sortDirection]);
 
-  const totalPages = Math.ceil(filteredAndSortedClients.length / ITEMS_PER_PAGE);
-  const paginatedClients = React.useMemo(() => 
-    filteredAndSortedClients.slice(
+  const totalPages = React.useMemo(() => {
+    if (isBasicView && pagedData) {
+      return Math.ceil(pagedData.total / ITEMS_PER_PAGE);
+    }
+    return Math.ceil(filteredAndSortedClients.length / ITEMS_PER_PAGE);
+  }, [isBasicView, pagedData, filteredAndSortedClients.length, ITEMS_PER_PAGE]);
+
+  const paginatedClients = React.useMemo(() => {
+    if (isBasicView && pagedData?.clients) {
+      return filteredAndSortedClients;
+    }
+
+    return filteredAndSortedClients.slice(
       (currentPage - 1) * ITEMS_PER_PAGE,
       currentPage * ITEMS_PER_PAGE
-    ), [filteredAndSortedClients, currentPage, ITEMS_PER_PAGE]
-  );
+    );
+  }, [isBasicView, pagedData, filteredAndSortedClients, currentPage, ITEMS_PER_PAGE]);
 
   const handleCreateClient = React.useCallback((clientData: Omit<Client, 'id' | 'createdAt' | 'updatedAt'>) => {
     createClient(clientData);
@@ -156,7 +179,7 @@ const Clients = () => {
     setSelectedClientForDetails(null);
   }, []);
 
-  if (loading) {
+  if (loading || (isBasicView && pagedLoading && !pagedData)) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-white">Cargando clientes...</div>

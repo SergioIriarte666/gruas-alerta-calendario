@@ -1,7 +1,6 @@
 
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import * as XLSX from 'xlsx';
 import { format as formatDate } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { ExportServiceReportArgs } from './reportTypes';
@@ -165,6 +164,7 @@ export const exportServiceReport = async ({
     }
 
   } else if (format === 'excel') {
+    const XLSX = await import('xlsx');
     const wb = XLSX.utils.book_new();
 
     // Hoja principal: Detalle completo de servicios - con Asegurado y desglose de valores

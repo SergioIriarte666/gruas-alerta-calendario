@@ -1,4 +1,5 @@
 
+import { Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from '@/contexts/AuthContext';
@@ -12,39 +13,40 @@ import { Layout } from '@/components/layout/Layout';
 import { OperatorLayout } from '@/components/layout/OperatorLayout';
 import { PortalLayout } from '@/components/portal/layout/PortalLayout';
 import ProtectedRoute from '@/components/layout/ProtectedRoute';
-import Index from '@/pages/Index';
-import Dashboard from '@/pages/Dashboard';
-import Auth from '@/pages/Auth';
-import Services from '@/pages/Services';
-import Clients from '@/pages/Clients';
-import Operators from '@/pages/Operators';
-import Cranes from '@/pages/Cranes';
-import ServiceTypes from '@/pages/ServiceTypes';
-import Vehicles from '@/pages/Vehicles';
-import Closures from '@/pages/Closures';
-import Invoices from '@/pages/Invoices';
-import IncomeProjections from '@/pages/IncomeProjections';
-import Costs from '@/pages/Costs';
-import CostCenters from '@/pages/CostCenters';
-import Inventory from '@/pages/Inventory';
-import Reports from '@/pages/Reports';
-import Commissions from '@/pages/Commissions';
-import Settings from '@/pages/Settings';
-import OperatorDashboard from '@/pages/OperatorDashboard';
-import ServiceInspection from '@/pages/operator/ServiceInspection';
-import PortalDashboard from '@/pages/portal/PortalDashboard';
-import PortalServices from '@/pages/portal/PortalServices';
-import PortalInvoices from '@/pages/portal/PortalInvoices';
-import PortalRequestService from '@/pages/portal/PortalRequestService';
-import Calendar from '@/pages/Calendar';
-import QuickEntries from '@/pages/QuickEntries';
-import { BackupPage } from '@/pages/BackupPage';
-import { Suppliers } from '@/pages/Suppliers';
-import VipClientPipeline from '@/pages/VipClientPipeline';
-import NotFound from '@/pages/NotFound';
-import DailyReport from '@/pages/DailyReport';
-import Incomes from '@/pages/Incomes';
-import ServiceRates from '@/pages/ServiceRates';
+
+const Index = lazy(() => import('@/pages/Index'));
+const Dashboard = lazy(() => import('@/pages/Dashboard'));
+const Auth = lazy(() => import('@/pages/Auth'));
+const Services = lazy(() => import('@/pages/Services'));
+const Clients = lazy(() => import('@/pages/Clients'));
+const Operators = lazy(() => import('@/pages/Operators'));
+const Cranes = lazy(() => import('@/pages/Cranes'));
+const ServiceTypes = lazy(() => import('@/pages/ServiceTypes'));
+const Vehicles = lazy(() => import('@/pages/Vehicles'));
+const Closures = lazy(() => import('@/pages/Closures'));
+const Invoices = lazy(() => import('@/pages/Invoices'));
+const IncomeProjections = lazy(() => import('@/pages/IncomeProjections'));
+const Costs = lazy(() => import('@/pages/Costs'));
+const CostCenters = lazy(() => import('@/pages/CostCenters'));
+const Inventory = lazy(() => import('@/pages/Inventory'));
+const Reports = lazy(() => import('@/pages/Reports'));
+const Commissions = lazy(() => import('@/pages/Commissions'));
+const Settings = lazy(() => import('@/pages/Settings'));
+const OperatorDashboard = lazy(() => import('@/pages/OperatorDashboard'));
+const ServiceInspection = lazy(() => import('@/pages/operator/ServiceInspection'));
+const PortalDashboard = lazy(() => import('@/pages/portal/PortalDashboard'));
+const PortalServices = lazy(() => import('@/pages/portal/PortalServices'));
+const PortalInvoices = lazy(() => import('@/pages/portal/PortalInvoices'));
+const PortalRequestService = lazy(() => import('@/pages/portal/PortalRequestService'));
+const Calendar = lazy(() => import('@/pages/Calendar'));
+const QuickEntries = lazy(() => import('@/pages/QuickEntries'));
+const BackupPage = lazy(() => import('@/pages/BackupPage').then(m => ({ default: m.BackupPage })));
+const Suppliers = lazy(() => import('@/pages/Suppliers').then(m => ({ default: m.Suppliers })));
+const VipClientPipeline = lazy(() => import('@/pages/VipClientPipeline'));
+const NotFound = lazy(() => import('@/pages/NotFound'));
+const DailyReport = lazy(() => import('@/pages/DailyReport'));
+const Incomes = lazy(() => import('@/pages/Incomes'));
+const ServiceRates = lazy(() => import('@/pages/ServiceRates'));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -61,7 +63,8 @@ function AppContent() {
   
   return (
     <div className="min-h-screen bg-black text-white">
-      <Routes>
+      <Suspense fallback={<div className="flex items-center justify-center h-screen">Cargando...</div>}>
+        <Routes>
         <Route path="/auth" element={<Auth />} />
         <Route path="/" element={<Index />} />
 
@@ -285,6 +288,7 @@ function AppContent() {
 
         <Route path="*" element={<NotFound />} />
       </Routes>
+      </Suspense>
       <Toaster />
     </div>
   );

@@ -4,6 +4,12 @@ import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { cleanupAuthState, performGlobalSignOut } from '@/utils/authCleanup';
 
+const debugLog = (...args: unknown[]) => {
+  if (import.meta.env.DEV) {
+    console.log(...args);
+  }
+};
+
 interface AuthContextType {
   session: Session | null;
   user: User | null;
@@ -25,7 +31,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     // Get initial session with enhanced error handling and retries
     const getInitialSession = async () => {
       try {
-        console.log('AuthContext: Getting initial session...');
+        debugLog('AuthContext: Getting initial session...');
         
         // First, verify Supabase connectivity
         const { data: { session: initialSession }, error } = await supabase.auth.getSession();
@@ -35,7 +41,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           
           // If JWT is expired or invalid, clean up
           if (error.message?.includes('JWT') || error.message?.includes('expired')) {
-            console.log('AuthContext: JWT expired/invalid, cleaning up...');
+            debugLog('AuthContext: JWT expired/invalid, cleaning up...');
             cleanupAuthState();
             setSession(null);
             setUser(null);
@@ -47,14 +53,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
         
         if (mounted) {
-          console.log('AuthContext: Initial session retrieved:', !!initialSession);
+          debugLog('AuthContext: Initial session retrieved:', !!initialSession);
           setSession(initialSession);
           setUser(initialSession?.user ?? null);
           
           // If we have a session, verify it can access the database
           if (initialSession) {
             try {
-              console.log('AuthContext: Verifying database connectivity...');
+              debugLog('AuthContext: Verifying database connectivity...');
               const { error: dbError } = await supabase
                 .from('profiles')
                 .select('id')
@@ -65,24 +71,24 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 
                 // If RLS policy fails, it might be a stale session
                 if (dbError.code === 'PGRST116' || dbError.message?.includes('RLS')) {
-                  console.log('AuthContext: RLS policy failed, session may be stale');
+                  debugLog('AuthContext: RLS policy failed, session may be stale');
                   // Try to refresh the session
                   const { data: { session: refreshedSession }, error: refreshError } = 
                     await supabase.auth.refreshSession();
                     
                   if (refreshError || !refreshedSession) {
-                    console.log('AuthContext: Session refresh failed, cleaning up');
+                    debugLog('AuthContext: Session refresh failed, cleaning up');
                     cleanupAuthState();
                     setSession(null);
                     setUser(null);
                   } else {
-                    console.log('AuthContext: Session refreshed successfully');
+                    debugLog('AuthContext: Session refreshed successfully');
                     setSession(refreshedSession);
                     setUser(refreshedSession.user);
                   }
                 }
               } else {
-                console.log('AuthContext: Database connectivity verified');
+                debugLog('AuthContext: Database connectivity verified');
               }
             } catch (dbError) {
               console.error('AuthContext: Database verification failed:', dbError);
@@ -112,11 +118,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         if (mounted) {
-          console.log('AuthContext: Auth state change:', event, 'Session valid:', !!session);
+          debugLog('AuthContext: Auth state change:', event, 'Session valid:', !!session);
           
           // Enhanced session validation
           if (session) {
-            console.log('AuthContext: Session details - User ID:', session.user?.id, 'Expires at:', session.expires_at);
+            debugLog('AuthContext: Session details - User ID:', session.user?.id, 'Expires at:', session.expires_at);
             
             // Check if session is close to expiring (within 5 minutes)
             if (session.expires_at) {
@@ -125,7 +131,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
               const fiveMinutes = 5 * 60 * 1000;
               
               if (expiresAt.getTime() - now.getTime() < fiveMinutes) {
-                console.log('AuthContext: Session expires soon, refreshing...');
+                debugLog('AuthContext: Session expires soon, refreshing...');
                 // Defer refresh to avoid blocking the auth state change
                 setTimeout(async () => {
                   try {
@@ -159,7 +165,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const signOut = async () => {
     try {
-      console.log('AuthContext: Starting sign out process...');
+      debugLog('AuthContext: Starting sign out process...');
       
       // Step 1: Clean up auth state first
       cleanupAuthState();
@@ -171,7 +177,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setSession(null);
       setUser(null);
       
-      console.log('AuthContext: Sign out completed, forcing redirect...');
+      debugLog('AuthContext: Sign out completed, forcing redirect...');
       
       // Step 4: Force complete page reload to ensure clean state
       window.location.href = '/auth';
@@ -188,7 +194,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const refreshSession = async () => {
     try {
-      console.log('AuthContext: Refreshing session...');
+      debugLog('AuthContext: Refreshing session...');
       const { data: { session }, error } = await supabase.auth.refreshSession();
       
       if (error) {
@@ -199,7 +205,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         throw error;
       }
       
-      console.log('AuthContext: Session refreshed successfully', !!session);
+      debugLog('AuthContext: Session refreshed successfully', !!session);
       setSession(session);
       setUser(session?.user ?? null);
     } catch (error) {

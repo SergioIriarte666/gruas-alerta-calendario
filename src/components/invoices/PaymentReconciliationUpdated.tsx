@@ -6,12 +6,13 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { usePayments } from '@/hooks/usePayments';
+import { usePayments, usePagedPayments } from '@/hooks/usePayments';
 import { useClients } from '@/hooks/useClients';
 import { PaymentWithDetails } from '@/types/payments';
 import { PaymentApplicationModal } from './PaymentApplicationModal';
 import { SystemHealthIndicator } from './SystemHealthIndicator';
 import { toast } from 'sonner';
+import { AppPagination } from '@/components/shared/AppPagination';
 import { 
   Coins, 
   RefreshCw, 
@@ -63,6 +64,17 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
   const [diagnosisLoading, setDiagnosisLoading] = useState(false);
   const [showMaintenancePanel, setShowMaintenancePanel] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [historyPage, setHistoryPage] = useState(1);
+  const HISTORY_PAGE_SIZE = 10;
+
+  const { data: pagedHistory, isLoading: historyLoading } = usePagedPayments(
+    historyPage,
+    HISTORY_PAGE_SIZE,
+    {
+      clientId: selectedClient !== 'all' ? selectedClient : undefined,
+      status: 'all'
+    }
+  );
 
   useEffect(() => {
     if (paymentSystemAvailable) {
@@ -71,6 +83,10 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
       performAutomaticMaintenance();
     }
   }, [paymentSystemAvailable]);
+
+  useEffect(() => {
+    setHistoryPage(1);
+  }, [selectedClient]);
 
   const loadReconciliationStats = async () => {
     try {
@@ -207,9 +223,8 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
     );
   }
 
-  const filteredPayments = selectedClient && selectedClient !== 'all'
-    ? payments.filter(p => p.client_id === selectedClient)
-    : payments;
+  const filteredPayments = pagedHistory?.payments || [];
+  const totalPages = pagedHistory ? Math.ceil(pagedHistory.total / HISTORY_PAGE_SIZE) : 0;
 
   return (
     <div className="container mx-auto p-6 space-y-6">
@@ -441,7 +456,7 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
               </TableRow>
             </TableHeader>
             <TableBody>
-              {loading ? (
+              {historyLoading && !pagedHistory ? (
                 <TableRow>
                   <TableCell colSpan={7} className="text-center py-4">
                     Cargando pagos...
@@ -474,8 +489,71 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
               )}
             </TableBody>
           </Table>
+          <AppPagination
+            className="mt-4"
+            currentPage={historyPage}
+            totalPages={totalPages}
+            onPageChange={setHistoryPage}
+          />
         </CardContent>
       </Card>
+
+      {showPaymentHistory && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Historial de Pagos (paginado)</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Cliente</TableHead>
+                  <TableHead>Monto</TableHead>
+                  <TableHead>Fecha</TableHead>
+                  <TableHead>Estado</TableHead>
+                  <TableHead>Aplicado</TableHead>
+                  <TableHead>Pendiente</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {historyLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center py-4">
+                      Cargando historial...
+                    </TableCell>
+                  </TableRow>
+                ) : !pagedHistory || pagedHistory.payments.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center py-4">
+                      No hay pagos en el historial
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  pagedHistory.payments.map(payment => (
+                    <TableRow key={payment.id}>
+                      <TableCell>{payment.client?.name || 'Cliente no encontrado'}</TableCell>
+                      <TableCell>{formatCurrency(payment.amount)}</TableCell>
+                      <TableCell>{new Date(payment.payment_date).toLocaleDateString()}</TableCell>
+                      <TableCell>{getStatusBadge(payment.status)}</TableCell>
+                      <TableCell>{formatCurrency(payment.applied_amount)}</TableCell>
+                      <TableCell>{formatCurrency(payment.remaining_amount)}</TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+
+            <AppPagination
+              className="mt-4"
+              currentPage={historyPage}
+              totalPages={
+                pagedHistory ? Math.ceil(pagedHistory.total / HISTORY_PAGE_SIZE) : 0
+              }
+              onPageChange={setHistoryPage}
+            />
+          </CardContent>
+        </Card>
+      )}
 
       {/* Modales */}
       {showPaymentModal && selectedPayment && (

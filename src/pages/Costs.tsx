@@ -12,7 +12,7 @@ import { UnifiedCostFilters } from '@/components/costs/UnifiedCostFilters';
 import { CostsDashboard } from '@/components/costs/CostsDashboard';
 import { CostBatchUpdateModal } from '@/components/costs/CostBatchUpdateModal';
 import { DistributionAssistantDialog } from '@/components/costs/dialogs/DistributionAssistantDialog';
-import { useCosts, useDeleteCost } from '@/hooks/useCosts';
+import { useCosts, useDeleteCost, usePagedCosts } from '@/hooks/useCosts';
 import { useCostInvalidation } from '@/hooks/useCostInvalidation';
 import { useQueryClient } from '@tanstack/react-query';
 import { useDateFilters } from '@/hooks/useDateFilters';
@@ -69,6 +69,28 @@ const CostsPage = () => {
     const { invalidateAllCostQueries } = useCostInvalidation();
     const dateMetrics = useDateFilters(costs);
     const queryClient = useQueryClient();
+
+    const ITEMS_PER_PAGE = 10;
+
+    const isBasicView =
+        searchTerm === '' &&
+        filters.category === 'all' &&
+        filters.subcategory === 'all' &&
+        !filters.dateFrom &&
+        !filters.dateTo &&
+        filters.operatorId === 'all' &&
+        filters.craneId === 'all' &&
+        !filters.serviceId &&
+        !filters.minAmount &&
+        !filters.maxAmount &&
+        dateFilter === 'all';
+
+    const {
+        data: pagedData,
+        isLoading: loadingPaged,
+    } = usePagedCosts(1, ITEMS_PER_PAGE);
+
+    const baseCosts = isBasicView && pagedData?.costs ? pagedData.costs : costs;
 
     // Forzar invalidación automática al cargar la página
     useEffect(() => {
@@ -167,25 +189,25 @@ const CostsPage = () => {
 
     // Filtrar costos por fecha y término de búsqueda
     const filteredCostsByDate = useMemo(() => {
-        let filtered = costs;
+        let filtered = baseCosts;
         const today = new Date();
 
         switch (dateFilter) {
             case 'today':
-                filtered = costs.filter(cost => {
+                filtered = baseCosts.filter(cost => {
                     const costDate = new Date(cost.date + 'T00:00:00');
                     return costDate.toDateString() === today.toDateString();
                 });
                 break;
             case 'week':
                 const { start: weekStart, end: weekEnd } = getCurrentWeekRange();
-                filtered = costs.filter(cost => {
+                filtered = baseCosts.filter(cost => {
                     const costDate = new Date(cost.date + 'T00:00:00');
                     return costDate >= weekStart && costDate <= weekEnd;
                 });
                 break;
             case 'month':
-                filtered = costs.filter(cost => {
+                filtered = baseCosts.filter(cost => {
                     const costDate = new Date(cost.date + 'T00:00:00');
                     return costDate.getMonth() === today.getMonth() && 
                            costDate.getFullYear() === today.getFullYear();
@@ -193,7 +215,7 @@ const CostsPage = () => {
                 break;
             case 'all':
             default:
-                filtered = costs;
+                filtered = baseCosts;
                 break;
         }
 

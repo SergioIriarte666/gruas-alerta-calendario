@@ -1,7 +1,6 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { formatForDisplayShort } from '@/utils/timezoneUtils';
-import * as XLSX from 'xlsx';
 import { format as formatDate } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { ExportDailyReportArgs } from './reportTypes';
@@ -368,6 +367,7 @@ export const exportDailyReport = async ({ format, data, settings, appliedFilters
     doc.save(`${exportFileDefaultName}.pdf`);
 
   } else if (format === 'excel') {
+    const XLSX = await import('xlsx');
     const wb = XLSX.utils.book_new();
 
     // Hoja 1: Resumen Ejecutivo

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useInvoices } from '@/hooks/useInvoices';
+import { usePagedInvoices } from '@/hooks/invoices/useInvoiceData';
 import { InvoiceForm } from '@/components/invoices/InvoiceForm';
 import { PaymentReconciliation } from '@/components/invoices/PaymentReconciliation';
 import { PaymentHistory } from '@/components/invoices/PaymentHistory';
@@ -53,6 +54,17 @@ const Invoices = () => {
   const batchProgress = useBatchProgress();
   const ITEMS_PER_PAGE = 10;
 
+  const isBasicView =
+    searchTerm === '' &&
+    (statusFilter === 'all' || !statusFilter) &&
+    sortField === 'issueDate' &&
+    sortDirection === 'desc';
+
+  const {
+    data: pagedData,
+    isLoading: loadingPaged,
+  } = usePagedInvoices(currentPage, ITEMS_PER_PAGE);
+
   // Check for preselected closure from navigation state
   useEffect(() => {
     if (location.state?.preselectedClosureId) {
@@ -84,7 +96,9 @@ const Invoices = () => {
     setSelectedInvoiceIds([]); // Clear selection when sorting
   };
 
-  const filteredInvoices = invoices.filter(invoice => {
+  const baseInvoices = isBasicView && pagedData?.invoices ? pagedData.invoices : invoices;
+
+  const filteredInvoices = baseInvoices.filter(invoice => {
     const invoiceWithDetails = getInvoiceWithDetails(invoice);
     const matchesSearch = (
       invoice.folio.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -149,11 +163,16 @@ const Invoices = () => {
     }
   });
 
-  const totalPages = Math.ceil(filteredInvoices.length / ITEMS_PER_PAGE);
-  const paginatedInvoices = filteredInvoices.slice(
-    (currentPage - 1) * ITEMS_PER_PAGE,
-    currentPage * ITEMS_PER_PAGE
-  );
+  const totalPages = isBasicView && pagedData
+    ? Math.max(1, Math.ceil(pagedData.total / ITEMS_PER_PAGE))
+    : Math.ceil(filteredInvoices.length / ITEMS_PER_PAGE || 1);
+
+  const paginatedInvoices = isBasicView
+    ? filteredInvoices
+    : filteredInvoices.slice(
+        (currentPage - 1) * ITEMS_PER_PAGE,
+        currentPage * ITEMS_PER_PAGE
+      );
 
   const handleCreateInvoice = async (data: any) => {
     try {

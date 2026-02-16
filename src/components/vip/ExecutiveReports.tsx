@@ -40,7 +40,6 @@ import { es } from 'date-fns/locale';
 import { toast } from 'sonner';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import * as XLSX from 'xlsx';
 import { Service } from '@/types';
 import { getDisplayServiceValue } from '@/utils/serviceValueCalculations';
 
@@ -298,6 +297,7 @@ export const ExecutiveReports: React.FC<ExecutiveReportsProps> = ({
   };
 
   const exportToExcel = async (metrics: ServiceMetrics, fileName: string) => {
+    const XLSX = await import('xlsx');
     const wb = XLSX.utils.book_new();
 
     // Hoja 1: Resumen Ejecutivo

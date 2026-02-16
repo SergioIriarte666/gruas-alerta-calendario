@@ -8,13 +8,13 @@ import { useServiceTransformer } from './useServiceTransformer';
 export const useServiceFetcher = () => {
   const [loading, setLoading] = useState(true);
   const { transformRawServiceData } = useServiceTransformer();
+  const MAX_ROWS = 1000;
 
   const fetchServices = async (): Promise<Service[]> => {
     try {
       console.log('Fetching services...');
       setLoading(true);
       
-      // Verificar autenticación primero
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         console.error('Usuario no autenticado');
@@ -37,17 +37,18 @@ export const useServiceFetcher = () => {
           service_types!inner(id, name, description, is_active, base_price, vehicle_info_optional, purchase_order_required, origin_required, destination_required, crane_required, operator_required, vehicle_brand_required, vehicle_model_required, license_plate_required, created_at, updated_at),
           creator:profiles!services_created_by_fkey(id, full_name, email)
         `)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(MAX_ROWS);
 
       if (error) {
         console.error('Error fetching services:', error);
         
-        // Intentar con una consulta más simple si falla la compleja
         console.log('Intentando consulta simplificada...');
         const { data: simpleData, error: simpleError } = await supabase
           .from('services')
           .select('*')
-          .order('created_at', { ascending: false });
+          .order('created_at', { ascending: false })
+          .limit(MAX_ROWS);
           
         if (simpleError) {
           console.error('Error en consulta simplificada:', simpleError);
@@ -80,7 +81,6 @@ export const useServiceFetcher = () => {
     } catch (error: any) {
       console.error('Error in fetchServices:', error);
       
-      // Proporcionar mensajes de error más específicos
       if (error.code === 'PGRST116') {
         toast.error("Error de permisos", {
           description: "No tienes permisos para acceder a los servicios.",

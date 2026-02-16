@@ -11,14 +11,16 @@ export const useInvoices = () => {
   const { createInvoice: createInvoiceOp, updateInvoice: updateInvoiceOp, deleteInvoice: deleteInvoiceOp, markAsPaid } = useInvoiceOperations();
   const [closures, setClosures] = useState<any[]>([]);
   const [clients, setClients] = useState<any[]>([]);
+  const MAX_CLOSURES = 1000;
+  const MAX_CLIENTS = 2000;
 
   // Fetch related data with simple queries
   useEffect(() => {
     const fetchRelatedData = async () => {
       try {
         const [closuresData, clientsData] = await Promise.all([
-          supabase.from('service_closures').select('*'),
-          supabase.from('clients').select('*')
+          supabase.from('service_closures').select('*').limit(MAX_CLOSURES),
+          supabase.from('clients').select('*').limit(MAX_CLIENTS)
         ]);
 
         if (closuresData.error) throw closuresData.error;

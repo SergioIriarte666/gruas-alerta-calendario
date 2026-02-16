@@ -1,6 +1,5 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import * as XLSX from 'xlsx';
 import { format as formatDate } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { IncomeWithDetails } from '@/types/incomes';
@@ -100,6 +99,7 @@ export const exportIncomeReport = async ({
 
     doc.save(`${fileName}.pdf`);
   } else {
+    const XLSX = await import('xlsx');
     // Excel export
     const wsData = incomes.map(income => ({
       'Fecha': formatDate(new Date(income.income_date), 'dd/MM/yyyy', { locale: es }),

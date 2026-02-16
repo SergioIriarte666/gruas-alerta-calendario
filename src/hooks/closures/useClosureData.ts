@@ -7,12 +7,12 @@ import { formatClosureData } from '@/utils/closureUtils';
 export const useClosureData = () => {
   const [closures, setClosures] = useState<ServiceClosure[]>([]);
   const [loading, setLoading] = useState(true);
+  const MAX_CLOSURES = 500;
 
   const fetchClosures = async () => {
     try {
       console.log('Fetching closures...');
       
-      // First, let's try to fetch closures with creator info
       const { data: basicClosures, error: basicError } = await supabase
         .from('service_closures')
         .select(`
@@ -23,7 +23,8 @@ export const useClosureData = () => {
             email
           )
         `)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(MAX_CLOSURES);
 
       if (basicError) {
         console.error('Error fetching basic closures:', basicError);

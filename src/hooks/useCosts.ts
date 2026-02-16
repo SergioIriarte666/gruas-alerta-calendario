@@ -60,6 +60,69 @@ export const useCosts = () => {
   });
 };
 
+export const usePagedCosts = (page: number, pageSize: number) => {
+  return useQuery({
+    queryKey: ['costs', 'paged', page, pageSize],
+    queryFn: async (): Promise<{ costs: Cost[]; total: number }> => {
+      const from = (page - 1) * pageSize;
+      const to = from + pageSize - 1;
+
+      const { data, error, count } = await supabase
+        .from('costs')
+        .select(
+          `
+          *,
+          cost_categories (*),
+          cranes (*),
+          operators (*),
+          services (*, clients!services_client_id_fkey(*)),
+          crane_parts (
+            part_name,
+            supplier,
+            phone,
+            quantity,
+            unit_price,
+            total_value,
+            kilometraje
+          ),
+          crane_maintenance (
+            id,
+            description,
+            maintenance_type,
+            provider,
+            notes
+          ),
+          creator:profiles!costs_created_by_fkey (
+            id,
+            full_name,
+            email
+          )
+        `,
+          { count: 'exact' }
+        )
+        .order('payment_date', { ascending: false, nullsFirst: false })
+        .order('date', { ascending: false })
+        .order('created_at', { ascending: false })
+        .range(from, to);
+
+      if (error) {
+        console.error('Error fetching paged costs:', error);
+        throw new Error(error.message);
+      }
+
+      const total = typeof count === 'number' ? count : (data as any[])?.length || 0;
+
+      return {
+        costs: ((data as any) || []) as Cost[],
+        total,
+      };
+    },
+    enabled: page > 0 && pageSize > 0,
+    staleTime: 30000,
+    refetchOnWindowFocus: false,
+  });
+};
+
 const addCost = async (costData: CostFormData) => {
   console.log('[useCosts - addCost] Attempting to create cost with data:', costData);
   

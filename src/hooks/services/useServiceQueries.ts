@@ -93,7 +93,6 @@ const transformToService = (data: any): Service => {
 
 // ⚡ HOOK SIMPLE PARA CONSULTAS DE SERVICIOS
 export const useServiceQueries = () => {
-  // Fetch todos los servicios
   const useAllServices = () => {
     return useQuery({
       queryKey: ['services'],
@@ -219,9 +218,60 @@ export const useServiceQueries = () => {
     });
   };
 
+  const usePagedServices = (page: number, pageSize: number) => {
+    return useQuery({
+      queryKey: ['services', 'paged', page, pageSize],
+      queryFn: async (): Promise<{ services: Service[]; total: number }> => {
+        const from = (page - 1) * pageSize;
+        const to = from + pageSize - 1;
+
+        const { data, error, count } = await supabase
+          .from('services')
+          .select(
+            `
+            *,
+            client:clients!services_client_id_fkey(*),
+            third_party_client:clients!services_third_party_client_id_fkey(*),
+            crane:cranes(*),
+            operator:operators(*),
+            serviceType:service_types(*),
+            service_resources!service_resources_service_id_fkey(
+              id,
+              resource_type,
+              operator_id,
+              crane_id,
+              is_primary,
+              commission_amount,
+              role,
+              operator:operators(*),
+              crane:cranes(*)
+            )
+          `,
+            { count: 'exact' }
+          )
+          .order('created_at', { ascending: false })
+          .range(from, to);
+
+        if (error) {
+          console.error('❌ [QUERY] Error al obtener servicios paginados:', error);
+          throw new Error(error.message);
+        }
+
+        const services = (data || []).map(transformToService);
+        const total = typeof count === 'number' ? count : services.length;
+
+        return { services, total };
+      },
+      enabled: page > 0 && pageSize > 0,
+      staleTime: 30000,
+      refetchOnWindowFocus: false,
+    });
+  };
+
   return {
     useAllServices,
     useServiceById,
-    useServicesByOperator
+    useServicesByOperator,
+    usePagedServices
   };
 };

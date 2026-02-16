@@ -5,6 +5,27 @@ import { Client } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
+const mapClient = (client: any): any => ({
+  id: client.id,
+  name: client.name,
+  rut: client.rut,
+  phone: client.phone || '',
+  email: client.email || '',
+  address: client.address || '',
+  department: client.department || '',
+  contactName: client.contact_name || '',
+  isActive: client.is_active ?? false,
+  createdAt: client.created_at,
+  updatedAt: client.updated_at,
+  createdBy: client.created_by,
+  creatorName: client.creator?.full_name || client.creator?.email || undefined,
+  billingCycleType: client.billing_cycle_type || 'immediate',
+  billingDelayDays: client.billing_delay_days || 0,
+  billingCycleDay: client.billing_cycle_day || undefined,
+  autoInvoiceGeneration: client.auto_invoice_generation || false,
+  billingNotes: client.billing_notes || ''
+});
+
 const fetchClients = async (): Promise<Client[]> => {
   const { data, error } = await supabase
     .from('clients')
@@ -20,29 +41,51 @@ const fetchClients = async (): Promise<Client[]> => {
 
   if (error) throw error;
 
-  const formattedClients: Client[] = (data || []).map((client: any) => ({
-    id: client.id,
-    name: client.name,
-    rut: client.rut,
-    phone: client.phone || '',
-    email: client.email || '',
-    address: client.address || '',
-    department: client.department || '',
-    contactName: client.contact_name || '',
-    isActive: client.is_active ?? false,
-    createdAt: client.created_at,
-    updatedAt: client.updated_at,
-    createdBy: client.created_by,
-    creatorName: client.creator?.full_name || client.creator?.email || undefined,
-    // Nuevos campos de facturación diferida
-    billingCycleType: client.billing_cycle_type || 'immediate',
-    billingDelayDays: client.billing_delay_days || 0,
-    billingCycleDay: client.billing_cycle_day || undefined,
-    autoInvoiceGeneration: client.auto_invoice_generation || false,
-    billingNotes: client.billing_notes || ''
-  }));
+  const formattedClients = (data || []).map((client: any) => mapClient(client)) as Client[];
 
   return formattedClients;
+};
+
+export const fetchPagedClients = async (
+  page: number,
+  pageSize: number
+): Promise<{ clients: Client[]; total: number }> => {
+  const from = (page - 1) * pageSize;
+  const to = from + pageSize - 1;
+
+  const { data, error, count } = await supabase
+    .from('clients')
+    .select(
+      `
+      *,
+      creator:profiles!clients_created_by_fkey (
+        id,
+        full_name,
+        email
+      )
+    `,
+      { count: 'exact' }
+    )
+    .order('name', { ascending: true })
+    .range(from, to);
+
+  if (error) throw error;
+
+  const formattedClients = (data || []).map((client: any) => mapClient(client)) as Client[];
+
+  return {
+    clients: formattedClients,
+    total: typeof count === 'number' ? count : formattedClients.length,
+  };
+};
+
+export const usePagedClients = (page: number, pageSize: number) => {
+  return useQuery({
+    queryKey: ['clients', 'paged', page, pageSize],
+    queryFn: () => fetchPagedClients(page, pageSize),
+    enabled: page > 0 && pageSize > 0,
+    staleTime: 5 * 60 * 1000,
+  });
 };
 
 export const useClients = () => {

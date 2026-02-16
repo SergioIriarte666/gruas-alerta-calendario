@@ -4,6 +4,12 @@ import { useAuth } from './AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { cleanupAuthState, performGlobalSignOut } from '@/utils/authCleanup';
 
+const debugLog = (...args: unknown[]) => {
+  if (import.meta.env.DEV) {
+    console.log(...args);
+  }
+};
+
 interface UserProfile {
   id: string;
   email: string;
@@ -39,7 +45,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     fetchingRef.current = true;
     
     try {
-      console.log(`UserContext - Fetching profile for: ${authUser.email} (ID: ${authUser.id}), attempt: ${retryCount + 1}`);
+      debugLog(`UserContext - Fetching profile for: ${authUser.email} (ID: ${authUser.id}), attempt: ${retryCount + 1}`);
       
       const { data: profileData, error } = await supabase
         .from('profiles')
@@ -52,7 +58,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         // If no profile exists, create one
         if (error.code === 'PGRST116') {
-          console.log('UserContext - Creating new profile...');
+          debugLog('UserContext - Creating new profile...');
           
           const { data: newProfile, error: createError } = await supabase
             .from('profiles')
@@ -70,7 +76,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
             
             // Retry if we haven't exceeded max retries
             if (retryCount < maxRetries) {
-              console.log(`UserContext - Retrying profile creation (${retryCount + 1}/${maxRetries})`);
+              debugLog(`UserContext - Retrying profile creation (${retryCount + 1}/${maxRetries})`);
               setTimeout(() => {
                 fetchingRef.current = false;
                 fetchUserProfile(retryCount + 1);
@@ -87,14 +93,14 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
               role: newProfile.role,
               client_id: newProfile.client_id,
             };
-            console.log('UserContext - New profile created:', userProfile);
+            debugLog('UserContext - New profile created:', userProfile);
             setUser(userProfile);
             retryCountRef.current = 0; // Reset retry count on success
           }
         } else {
           // For other errors, retry if possible
           if (retryCount < maxRetries) {
-            console.log(`UserContext - Retrying profile fetch (${retryCount + 1}/${maxRetries}) after error:`, error.message);
+            debugLog(`UserContext - Retrying profile fetch (${retryCount + 1}/${maxRetries}) after error:`, error.message);
             setTimeout(() => {
               fetchingRef.current = false;
               fetchUserProfile(retryCount + 1);
@@ -124,7 +130,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       // Retry on exceptions if possible
       if (retryCount < maxRetries) {
-        console.log(`UserContext - Retrying after exception (${retryCount + 1}/${maxRetries})`);
+        debugLog(`UserContext - Retrying after exception (${retryCount + 1}/${maxRetries})`);
         setTimeout(() => {
           fetchingRef.current = false;
           fetchUserProfile(retryCount + 1);
@@ -140,7 +146,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const forceRefreshProfile = async () => {
-    console.log('UserContext - Force refresh profile requested');
+    debugLog('UserContext - Force refresh profile requested');
     fetchingRef.current = false;
     retryCountRef.current = 0;
     setUser(null);
@@ -167,7 +173,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const logout = async () => {
     try {
-      console.log('UserContext - Logout initiated...');
+      debugLog('UserContext - Logout initiated...');
       setUser(null);
       setLoading(false);
       fetchingRef.current = false;
@@ -185,12 +191,12 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     if (authLoading) {
-      console.log('UserContext - Auth still loading, waiting...');
+      debugLog('UserContext - Auth still loading, waiting...');
       return;
     }
     
     if (!authUser) {
-      console.log('UserContext - No auth user, clearing profile');
+      debugLog('UserContext - No auth user, clearing profile');
       setUser(null);
       setLoading(false);
       fetchingRef.current = false;
@@ -198,7 +204,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return;
     }
     
-    console.log('UserContext - Auth user available, fetching profile');
+    debugLog('UserContext - Auth user available, fetching profile');
     fetchUserProfile();
   }, [authUser, authLoading]);
 

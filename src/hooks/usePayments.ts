@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Payment, PaymentWithDetails, ManualApplication } from '@/types/payments';
+import { Payment, PaymentWithDetails, ManualApplication, PaymentStatus } from '@/types/payments';
 import { useErrorHandler } from '@/hooks/useErrorHandler';
 
 export const usePayments = () => {
@@ -1024,4 +1025,83 @@ export const usePayments = () => {
     getInvoicePaymentStatus,
     refetch: fetchPayments
   };
+};
+
+export const fetchPagedPayments = async (
+  page: number,
+  pageSize: number,
+  filters?: {
+    clientId?: string;
+    status?: PaymentStatus | 'all';
+  }
+): Promise<{ payments: PaymentWithDetails[]; total: number }> => {
+  const from = (page - 1) * pageSize;
+  const to = from + pageSize - 1;
+
+  let query = supabase
+    .from('payments')
+    .select(
+      `
+      *,
+      client:clients(id, name),
+      payment_applications(
+        invoice:invoices(numero_fiscal)
+      )
+    `,
+      { count: 'exact' }
+    )
+    .order('created_at', { ascending: false })
+    .range(from, to);
+
+  if (filters?.clientId) {
+    query = query.eq('client_id', filters.clientId);
+  }
+
+  if (filters?.status && filters.status !== 'all') {
+    query = query.eq('status', filters.status);
+  }
+
+  const { data, error, count } = await query;
+
+  if (error) {
+    throw error;
+  }
+
+  const processedPayments = (data || []).map(payment => ({
+    ...payment,
+    fiscal_numbers:
+      payment.payment_applications
+        ?.map((app: any) => app.invoice?.numero_fiscal)
+        .filter(Boolean) || []
+  })) as PaymentWithDetails[];
+
+  return {
+    payments: processedPayments,
+    total: typeof count === 'number' ? count : processedPayments.length
+  };
+};
+
+export const usePagedPayments = (
+  page: number,
+  pageSize: number,
+  filters?: {
+    clientId?: string;
+    status?: PaymentStatus | 'all';
+  }
+) => {
+  return useQuery({
+    queryKey: [
+      'payments',
+      'paged',
+      {
+        page,
+        pageSize,
+        clientId: filters?.clientId || 'all',
+        status: filters?.status || 'all'
+      }
+    ],
+    queryFn: () => fetchPagedPayments(page, pageSize, filters),
+    enabled: page > 0 && pageSize > 0,
+    staleTime: 5 * 60 * 1000
+  });
 };
