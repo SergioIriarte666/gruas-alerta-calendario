@@ -12,67 +12,63 @@ interface ProtectedRouteProps {
   moduleKey?: string;
 }
 
+const LoadingScreen = ({ message }: { message: string }) => (
+  <div className="flex items-center justify-center h-screen bg-background text-foreground">
+    <div className="text-center">
+      <div className="mb-4">{message}</div>
+      <div className="w-8 h-8 border-2 border-foreground border-t-transparent rounded-full animate-spin mx-auto"></div>
+    </div>
+  </div>
+);
+
 const ProtectedRoute = ({ children, allowedRoles, requireRole, moduleKey }: ProtectedRouteProps) => {
   const { user: authUser, loading: authLoading } = useAuth();
   const { user: profileUser, loading: profileLoading, forceRefreshProfile } = useUser();
   const { hasModuleAccess, loadingCurrentUser } = useUserModulePermissions();
   const location = useLocation();
-  const [waitTime, setWaitTime] = React.useState(0);
   const [hasTriedRefresh, setHasTriedRefresh] = React.useState(false);
+  const [waitingForProfile, setWaitingForProfile] = React.useState(false);
+  const [giveUp, setGiveUp] = React.useState(false);
+
+  // Handle profile refresh in useEffect to avoid setState during render
+  React.useEffect(() => {
+    if (!authLoading && authUser && !profileUser && !profileLoading && !hasTriedRefresh) {
+      setHasTriedRefresh(true);
+      setWaitingForProfile(true);
+      forceRefreshProfile();
+    }
+  }, [authLoading, authUser, profileUser, profileLoading, hasTriedRefresh, forceRefreshProfile]);
+
+  // Timeout for waiting
+  React.useEffect(() => {
+    if (!waitingForProfile) return;
+    const timer = setTimeout(() => {
+      setGiveUp(true);
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, [waitingForProfile]);
+
+  // Reset waiting when profile arrives
+  React.useEffect(() => {
+    if (profileUser && waitingForProfile) {
+      setWaitingForProfile(false);
+    }
+  }, [profileUser, waitingForProfile]);
 
   if (authLoading) {
-    return (
-      <div className="flex items-center justify-center h-screen bg-gray-900 text-white">
-        <div className="text-center">
-          <div className="mb-4">Verificando autenticación...</div>
-          <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin mx-auto"></div>
-        </div>
-      </div>
-    );
+    return <LoadingScreen message="Verificando autenticación..." />;
   }
 
   if (!authUser) {
     return <Navigate to="/auth" replace />;
   }
 
-  if (!profileUser && !profileLoading) {
-    if (!hasTriedRefresh) {
-      setHasTriedRefresh(true);
-      forceRefreshProfile();
-      return (
-        <div className="flex items-center justify-center h-screen bg-gray-900 text-white">
-          <div className="text-center">
-            <div className="mb-4">Recuperando perfil de usuario...</div>
-            <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin mx-auto"></div>
-          </div>
-        </div>
-      );
-    }
-    
-    if (waitTime < 3000) {
-      setTimeout(() => setWaitTime(waitTime + 1000), 1000);
-      return (
-        <div className="flex items-center justify-center h-screen bg-gray-900 text-white">
-          <div className="text-center">
-            <div className="mb-4">Cargando perfil de usuario...</div>
-            <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin mx-auto"></div>
-          </div>
-        </div>
-      );
-    }
-    
-    return <Navigate to="/auth" replace />;
+  if (profileLoading || (waitingForProfile && !giveUp)) {
+    return <LoadingScreen message="Cargando perfil..." />;
   }
 
-  if (profileLoading) {
-    return (
-      <div className="flex items-center justify-center h-screen bg-gray-900 text-white">
-        <div className="text-center">
-          <div className="mb-4">Cargando perfil...</div>
-          <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin mx-auto"></div>
-        </div>
-      </div>
-    );
+  if (!profileUser && giveUp) {
+    return <Navigate to="/auth" replace />;
   }
 
   if (authUser && !profileUser) {
@@ -80,7 +76,7 @@ const ProtectedRoute = ({ children, allowedRoles, requireRole, moduleKey }: Prot
       return <Navigate to="/auth" replace />;
     }
     return (
-      <div className="min-h-screen bg-gray-900">
+      <div className="min-h-screen bg-background">
         <div className="bg-yellow-600 text-white px-4 py-2 text-center text-sm">
           ⚠️ Perfil de usuario no disponible. Funcionalidad limitada.
         </div>
