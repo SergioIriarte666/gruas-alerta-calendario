@@ -3,91 +3,149 @@ import { supabase } from '@/integrations/supabase/client';
 import { Service } from '@/types';
 
 // Función para transformar datos de Supabase a Service
-const transformToService = (data: any): Service => {
-  console.log('🔄 [TRANSFORM] Transforming service data:', {
-    folio: data.folio,
-    crane: data.crane,
-    operator: data.operator,
-    service_resources: data.service_resources
-  });
+const transformCrane = (raw: any) => {
+  if (!raw) return null;
+  return {
+    id: raw.id,
+    licensePlate: raw.license_plate,
+    brand: raw.brand,
+    model: raw.model,
+    type: raw.type,
+    isActive: raw.is_active,
+    circulationPermitExpiry: raw.circulation_permit_expiry,
+    insuranceExpiry: raw.insurance_expiry,
+    technicalReviewExpiry: raw.technical_review_expiry,
+    createdAt: raw.created_at,
+    updatedAt: raw.updated_at,
+  };
+};
 
-  // Buscar operador principal en service_resources primero
+const transformOperator = (raw: any) => {
+  if (!raw) return null;
+  return {
+    id: raw.id,
+    name: raw.name,
+    rut: raw.rut,
+    phone: raw.phone,
+    operatorType: raw.operator_type || 'crane_operator',
+    department: raw.department,
+    position: raw.position,
+    licenseNumber: raw.license_number,
+    isActive: raw.is_active,
+    examExpiry: raw.exam_expiry,
+    createdAt: raw.created_at,
+    updatedAt: raw.updated_at,
+  };
+};
+
+const transformClient = (raw: any) => {
+  if (!raw) return null;
+  return {
+    id: raw.id,
+    name: raw.name,
+    rut: raw.rut || '',
+    phone: raw.phone || '',
+    email: raw.email || '',
+    address: raw.address || '',
+    department: raw.department || '',
+    isActive: raw.is_active ?? true,
+    createdAt: raw.created_at || new Date().toISOString(),
+    updatedAt: raw.updated_at || new Date().toISOString(),
+  };
+};
+
+const transformServiceType = (raw: any) => {
+  if (!raw) return { id: '', name: 'Tipo no disponible', description: '', basePrice: null, isActive: true, vehicleInfoOptional: false, purchaseOrderRequired: false, originRequired: true, destinationRequired: true, craneRequired: true, operatorRequired: true, vehicleBrandRequired: true, vehicleModelRequired: true, licensePlateRequired: true, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
+  return {
+    id: raw.id,
+    name: raw.name,
+    description: raw.description || '',
+    basePrice: raw.base_price || null,
+    isActive: raw.is_active ?? true,
+    vehicleInfoOptional: raw.vehicle_info_optional || false,
+    purchaseOrderRequired: raw.purchase_order_required || false,
+    originRequired: raw.origin_required !== false,
+    destinationRequired: raw.destination_required !== false,
+    craneRequired: raw.crane_required !== false,
+    operatorRequired: raw.operator_required !== false,
+    vehicleBrandRequired: raw.vehicle_brand_required !== false,
+    vehicleModelRequired: raw.vehicle_model_required !== false,
+    licensePlateRequired: raw.license_plate_required !== false,
+    createdAt: raw.created_at || new Date().toISOString(),
+    updatedAt: raw.updated_at || new Date().toISOString(),
+  };
+};
+
+const transformToService = (data: any): Service => {
+  // Buscar operador y grúa principal en service_resources
   let primaryOperator = null;
   let primaryCrane = null;
   
   if (data.service_resources && data.service_resources.length > 0) {
-    // Buscar operador principal
     const primaryOperatorResource = data.service_resources.find(
-      (resource: any) => resource.resource_type === 'operator' && resource.is_primary
-    );
+      (r: any) => r.resource_type === 'operator' && r.is_primary
+    ) || data.service_resources.find((r: any) => r.resource_type === 'operator');
     
-    if (primaryOperatorResource && primaryOperatorResource.operator) {
+    if (primaryOperatorResource?.operator) {
       primaryOperator = primaryOperatorResource.operator;
-    } else {
-      // Si no hay operador principal marcado, tomar el primero
-      const firstOperatorResource = data.service_resources.find(
-        (resource: any) => resource.resource_type === 'operator'
-      );
-      if (firstOperatorResource && firstOperatorResource.operator) {
-        primaryOperator = firstOperatorResource.operator;
-      }
     }
 
-    // Buscar grúa principal
     const primaryCraneResource = data.service_resources.find(
-      (resource: any) => resource.resource_type === 'crane' && resource.is_primary
-    );
+      (r: any) => r.resource_type === 'crane' && r.is_primary
+    ) || data.service_resources.find((r: any) => r.resource_type === 'crane');
     
-    if (primaryCraneResource && primaryCraneResource.crane) {
+    if (primaryCraneResource?.crane) {
       primaryCrane = primaryCraneResource.crane;
-    } else {
-      // Si no hay grúa principal marcada, tomar la primera
-      const firstCraneResource = data.service_resources.find(
-        (resource: any) => resource.resource_type === 'crane'
-      );
-      if (firstCraneResource && firstCraneResource.crane) {
-        primaryCrane = firstCraneResource.crane;
-      }
     }
   }
 
-  // Fallback a los campos legacy si no se encontró en service_resources
-  const finalOperator = primaryOperator || data.operator;
-  const finalCrane = primaryCrane || data.crane;
-
-  console.log('✅ [TRANSFORM] Final values:', {
-    folio: data.folio,
-    finalCrane: finalCrane?.licensePlate,
-    finalOperator: finalOperator?.name
-  });
+  // Fallback a campos legacy
+  const finalOperator = transformOperator(primaryOperator || data.operator);
+  const finalCrane = transformCrane(primaryCrane || data.crane);
 
   return {
     id: data.id,
     folio: data.folio,
     requestDate: data.request_date,
     serviceDate: data.service_date,
-    client: data.client || data.third_party_client || null,
-    purchaseOrder: data.purchase_order,
-    vehicleBrand: data.vehicle_brand,
-    vehicleModel: data.vehicle_model,
-    licensePlate: data.license_plate,
-    origin: data.origin,
-    destination: data.destination,
-    serviceType: data.serviceType,
-    value: data.value,
+    client: transformClient(data.client || data.third_party_client),
+    purchaseOrder: data.purchase_order || '',
+    purchaseOrderNumber: data.purchase_order_number || '',
+    quoteNumber: data.quote_number || '',
+    vehicleBrand: data.vehicle_brand || '',
+    vehicleModel: data.vehicle_model || '',
+    licensePlate: data.license_plate || '',
+    origin: data.origin || '',
+    destination: data.destination || '',
+    serviceType: transformServiceType(data.serviceType),
+    value: parseFloat(data.value) || 0,
     crane: finalCrane,
     operator: finalOperator,
-    operatorCommission: data.operator_commission,
-    status: data.status,
-    observations: data.observations,
-    hasExcess: data.has_excess,
-    clientCoveredAmount: data.client_covered_amount,
-    excessAmount: data.excess_amount,
-    invoiceFolio: data.invoice_folio,
-    invoiceNumeroFiscal: data.invoice_numero_fiscal,
+    operatorCommission: parseFloat(data.operator_commission) || 0,
+    status: data.status || 'pending',
+    observations: data.observations || '',
+    hasExcess: data.has_excess || false,
+    clientCoveredAmount: data.client_covered_amount ?? null,
+    excessAmount: data.excess_amount || 0,
+    invoiceFolio: data.invoice_folio || undefined,
+    invoiceNumeroFiscal: data.invoice_numero_fiscal || undefined,
     insuredName: data.insured_name || undefined,
+    startTime: data.start_time || undefined,
+    endTime: data.end_time || undefined,
+    craneMileage: data.crane_mileage || undefined,
+    outsourcedProviderId: data.outsourced_provider_id || undefined,
+    outsourcedCost: data.outsourced_cost ?? undefined,
+    outsourcedNotes: data.outsourced_notes || undefined,
+    custodyMode: data.custody_mode || 'none',
+    custodyDays: data.custody_days || 0,
+    custodyDailyRate: parseFloat(data.custody_daily_rate) || 0,
+    custodyTotalAmount: parseFloat(data.custody_total_amount) || 0,
+    custodyStartDate: data.custody_start_date || null,
+    custodyEndDate: data.custody_end_date || null,
+    custodyVehicleType: data.custody_vehicle_type || '',
     createdAt: data.created_at,
-    updatedAt: data.updated_at
+    updatedAt: data.updated_at,
+    createdBy: data.created_by || undefined,
   };
 };
 
@@ -97,7 +155,6 @@ export const useServiceQueries = () => {
     return useQuery({
       queryKey: ['services'],
       queryFn: async (): Promise<Service[]> => {
-        console.log('🔍 [QUERY] Obteniendo todos los servicios');
         
         const { data, error } = await supabase
           .from('services')
@@ -127,7 +184,6 @@ export const useServiceQueries = () => {
           throw new Error(error.message);
         }
 
-        console.log('✅ [QUERY] Servicios obtenidos:', data?.length || 0);
         return data?.map(transformToService) || [];
       },
       staleTime: 30000, // 30 segundos
@@ -141,8 +197,6 @@ export const useServiceQueries = () => {
       queryKey: ['services', id],
       queryFn: async (): Promise<Service | null> => {
         if (!id) return null;
-        
-        console.log('🔍 [QUERY] Obteniendo servicio por ID:', id);
         
         const { data, error } = await supabase
           .from('services')
@@ -173,7 +227,6 @@ export const useServiceQueries = () => {
           throw new Error(error.message);
         }
 
-        console.log('✅ [QUERY] Servicio obtenido:', data?.folio);
         return data ? transformToService(data) : null;
       },
       enabled: !!id,
@@ -188,8 +241,6 @@ export const useServiceQueries = () => {
       queryKey: ['operatorServices', operatorId],
       queryFn: async (): Promise<Service[]> => {
         if (!operatorId) return [];
-        
-        console.log('🔍 [QUERY] Obteniendo servicios por operador:', operatorId);
         
         const { data, error } = await supabase
           .from('services')
@@ -209,7 +260,6 @@ export const useServiceQueries = () => {
           throw new Error(error.message);
         }
 
-        console.log('✅ [QUERY] Servicios del operador obtenidos:', data?.length || 0);
         return data?.map(transformToService) || [];
       },
       enabled: !!operatorId,
