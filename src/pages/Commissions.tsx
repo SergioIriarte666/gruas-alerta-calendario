@@ -40,16 +40,7 @@ const Commissions = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Forzar invalidación automática al cargar la página
-  useEffect(() => {
-    const forceRefresh = async () => {
-      queryClient.invalidateQueries({ queryKey: ['commissions'] });
-      queryClient.invalidateQueries({ queryKey: ['costs'] });
-      queryClient.invalidateQueries({ queryKey: ['services'] });
-    };
-    
-    forceRefresh();
-  }, []); // Solo se ejecuta al montar el componente
+  // Cache is managed by React Query staleTime — no forced invalidation on mount
 
   // Función para forzar actualización de datos
   const handleRefreshData = async () => {
