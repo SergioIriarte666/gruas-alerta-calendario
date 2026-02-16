@@ -4,19 +4,7 @@ import { Service } from '@/types';
 
 export const useServiceTransformer = () => {
   const transformRawServiceData = useMemo(() => (data: any[]): Service[] => {
-    console.log('🔄 Transforming', data.length, 'services');
-    
     return data.map((item: any) => {
-      console.log('🔄 Processing service:', item.folio);
-      console.log('🔄 Custody data from DB:', {
-        custody_mode: item.custody_mode,
-        custody_days: item.custody_days,
-        custody_daily_rate: item.custody_daily_rate,
-        custody_total_amount: item.custody_total_amount,
-        custody_start_date: item.custody_start_date,
-        custody_end_date: item.custody_end_date,
-        custody_vehicle_type: item.custody_vehicle_type
-      });
       
       // PostgREST embedded relations can arrive with different keys depending on the query
       // (e.g. `clients` vs `client` alias). Normalize to avoid UI showing "Cliente no disponible".
@@ -170,14 +158,6 @@ export const useServiceTransformer = () => {
         creatorName: item.creator?.full_name || item.creator?.email || undefined
       };
       
-      console.log('✅ Service transformed:', {
-        folio: transformedService.folio,
-        createdBy: transformedService.createdBy,
-        creatorName: transformedService.creatorName,
-        hasCreatorData: !!item.creator,
-        creatorFullName: item.creator?.full_name,
-        creatorEmail: item.creator?.email
-      });
       return transformedService;
     });
   }, []);
