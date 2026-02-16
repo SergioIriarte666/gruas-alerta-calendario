@@ -65,9 +65,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         if (mounted) {
           setSession(session);
           setUser(session?.user ?? null);
-          if (loading) {
-            setLoading(false);
-          }
+          setLoading(false);
         }
       }
     );
@@ -78,7 +76,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       mounted = false;
       subscription.unsubscribe();
     };
-  }, [loading]);
+  }, []);
 
   const signOut = async () => {
     try {

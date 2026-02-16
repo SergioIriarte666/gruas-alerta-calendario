@@ -18,8 +18,8 @@ const SERVICE_SELECT = `
   created_by, created_at, updated_at,
   client:clients!services_client_id_fkey(id, name, rut, phone, email, address, department, is_active),
   third_party_client:clients!services_third_party_client_id_fkey(id, name),
-  cranes(id, license_plate, brand, model, type, is_active),
-  operators(id, name, rut, phone, license_number, is_active, exam_expiry),
+  cranes!services_crane_id_fkey(id, license_plate, brand, model, type, is_active),
+  operators!services_operator_id_fkey(id, name, rut, phone, license_number, is_active, exam_expiry),
   service_types!inner(id, name, description, is_active, base_price, vehicle_info_optional, purchase_order_required, origin_required, destination_required, crane_required, operator_required, vehicle_brand_required, vehicle_model_required, license_plate_required),
   creator:profiles!services_created_by_fkey(id, full_name, email)
 `;
@@ -37,7 +37,8 @@ const fetchServicesFromDB = async (transformFn: (data: any[]) => Service[]): Pro
     .limit(MAX_ROWS);
 
   if (error) {
-    console.error('Error fetching services:', error);
+    console.error('Error fetching services (main query):', error);
+    console.warn('[SERVICE_FETCHER] FALLING BACK to SELECT * - embedded relations (cranes, operators) will be missing!');
     // Fallback to simple query
     const { data: simpleData, error: simpleError } = await supabase
       .from('services')

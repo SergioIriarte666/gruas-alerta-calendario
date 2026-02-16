@@ -18,6 +18,19 @@ export const useServiceTransformer = () => {
       const embeddedCrane = normalizeEmbedded(item.cranes ?? item.crane);
       const embeddedOperator = normalizeEmbedded(item.operators ?? item.operator);
 
+      // Temporary debug: log first item's crane data to diagnose "Sin asignar"
+      if (data.indexOf(item) === 0) {
+        console.log('[CRANE_DEBUG] First service raw crane data:', {
+          folio: item.folio,
+          crane_id: item.crane_id,
+          cranes: item.cranes,
+          crane: item.crane,
+          embeddedCrane,
+          typeOfCranes: typeof item.cranes,
+          isArray: Array.isArray(item.cranes),
+        });
+      }
+
       const transformedService: Service = {
         id: item.id,
         folio: item.folio,
