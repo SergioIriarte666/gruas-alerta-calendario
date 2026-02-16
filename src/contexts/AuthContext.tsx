@@ -4,10 +4,6 @@ import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { cleanupAuthState, performGlobalSignOut } from '@/utils/authCleanup';
 
-const debugLog = (..._args: unknown[]) => {
-  // Debug logging disabled for performance
-};
-
 interface AuthContextType {
   session: Session | null;
   user: User | null;
@@ -26,26 +22,34 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     let mounted = true;
 
-    // Get initial session with enhanced error handling and retries
-    const getInitialSession = async () => {
+    // Listener for ONGOING auth changes — does NOT control loading
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, currentSession) => {
+        if (!mounted) return;
+        setSession(currentSession);
+        setUser(currentSession?.user ?? null);
+        // Do NOT setLoading here — only the initial load controls it
+      }
+    );
+
+    // INITIAL load — controls loading state
+    const initializeAuth = async () => {
       try {
         const { data: { session: initialSession }, error } = await supabase.auth.getSession();
-        
+
+        if (!mounted) return;
+
         if (error) {
           if (error.message?.includes('JWT') || error.message?.includes('expired')) {
             cleanupAuthState();
           }
-          if (mounted) {
-            setSession(null);
-            setUser(null);
-          }
+          setSession(null);
+          setUser(null);
           return;
         }
-        
-        if (mounted) {
-          setSession(initialSession);
-          setUser(initialSession?.user ?? null);
-        }
+
+        setSession(initialSession);
+        setUser(initialSession?.user ?? null);
       } catch (error) {
         console.error('AuthContext: Critical error:', error);
         if (mounted) {
@@ -59,18 +63,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
     };
 
-    // Set up auth state listener with enhanced handling
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        if (mounted) {
-          setSession(session);
-          setUser(session?.user ?? null);
-          setLoading(false);
-        }
-      }
-    );
-
-    getInitialSession();
+    initializeAuth();
 
     return () => {
       mounted = false;
@@ -80,26 +73,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const signOut = async () => {
     try {
-      debugLog('AuthContext: Starting sign out process...');
-      
-      // Step 1: Clean up auth state first
       cleanupAuthState();
-      
-      // Step 2: Perform global sign out
       await performGlobalSignOut(supabase);
-      
-      // Step 3: Clear local state immediately
       setSession(null);
       setUser(null);
-      
-      debugLog('AuthContext: Sign out completed, forcing redirect...');
-      
-      // Step 4: Force complete page reload to ensure clean state
       window.location.href = '/auth';
     } catch (error) {
       console.error('AuthContext: Error during sign out:', error);
-      
-      // Force cleanup and redirect even if there's an error
       cleanupAuthState();
       setSession(null);
       setUser(null);
@@ -109,36 +89,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const refreshSession = async () => {
     try {
-      debugLog('AuthContext: Refreshing session...');
-      const { data: { session }, error } = await supabase.auth.refreshSession();
-      
+      const { data: { session: refreshed }, error } = await supabase.auth.refreshSession();
       if (error) {
-        console.error('AuthContext: Session refresh error:', error);
-        // Clear invalid session
         setSession(null);
         setUser(null);
         throw error;
       }
-      
-      debugLog('AuthContext: Session refreshed successfully', !!session);
-      setSession(session);
-      setUser(session?.user ?? null);
+      setSession(refreshed);
+      setUser(refreshed?.user ?? null);
     } catch (error) {
       console.error('AuthContext: Failed to refresh session:', error);
       throw error;
     }
   };
 
-  const value = {
-    session,
-    user,
-    loading,
-    signOut,
-    refreshSession,
-  };
-
   return (
-    <AuthContext.Provider value={value}>
+    <AuthContext.Provider value={{ session, user, loading, signOut, refreshSession }}>
       {children}
     </AuthContext.Provider>
   );
