@@ -1,7 +1,6 @@
 
 import React, { Suspense, useState } from 'react';
 import { Outlet } from 'react-router-dom';
-import { Loader2 } from 'lucide-react';
 import { Header } from './Header';
 import { Sidebar } from './Sidebar';
 import { QuickEntryFAB } from '@/components/quick-entry/QuickEntryFAB';
@@ -37,11 +36,7 @@ export const Layout = () => {
             "flex-1 overflow-auto bg-white",
             isMobile ? "p-3" : isTablet ? "p-4" : "p-6"
           )}>
-            <Suspense fallback={
-              <div className="flex items-center justify-center h-64">
-                <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-              </div>
-            }>
+            <Suspense fallback={null}>
               <Outlet />
             </Suspense>
           </main>

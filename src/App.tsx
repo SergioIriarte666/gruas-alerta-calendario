@@ -1,5 +1,5 @@
 
-import { Suspense, lazy } from 'react';
+import { Suspense, lazy, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from '@/contexts/AuthContext';
@@ -15,39 +15,84 @@ import { PortalLayout } from '@/components/portal/layout/PortalLayout';
 import ProtectedRoute from '@/components/layout/ProtectedRoute';
 import AdminOnlyRoute from '@/components/layout/AdminOnlyRoute';
 
-const Index = lazy(() => import('@/pages/Index'));
-const Dashboard = lazy(() => import('@/pages/Dashboard'));
-const Auth = lazy(() => import('@/pages/Auth'));
-const Services = lazy(() => import('@/pages/Services'));
-const Clients = lazy(() => import('@/pages/Clients'));
-const Operators = lazy(() => import('@/pages/Operators'));
-const Cranes = lazy(() => import('@/pages/Cranes'));
-const ServiceTypes = lazy(() => import('@/pages/ServiceTypes'));
-const Vehicles = lazy(() => import('@/pages/Vehicles'));
-const Closures = lazy(() => import('@/pages/Closures'));
-const Invoices = lazy(() => import('@/pages/Invoices'));
-const IncomeProjections = lazy(() => import('@/pages/IncomeProjections'));
-const Costs = lazy(() => import('@/pages/Costs'));
-const CostCenters = lazy(() => import('@/pages/CostCenters'));
-const Inventory = lazy(() => import('@/pages/Inventory'));
-const Reports = lazy(() => import('@/pages/Reports'));
-const Commissions = lazy(() => import('@/pages/Commissions'));
-const Settings = lazy(() => import('@/pages/Settings'));
-const OperatorDashboard = lazy(() => import('@/pages/OperatorDashboard'));
-const ServiceInspection = lazy(() => import('@/pages/operator/ServiceInspection'));
-const PortalDashboard = lazy(() => import('@/pages/portal/PortalDashboard'));
-const PortalServices = lazy(() => import('@/pages/portal/PortalServices'));
-const PortalInvoices = lazy(() => import('@/pages/portal/PortalInvoices'));
-const PortalRequestService = lazy(() => import('@/pages/portal/PortalRequestService'));
-const Calendar = lazy(() => import('@/pages/Calendar'));
-const QuickEntries = lazy(() => import('@/pages/QuickEntries'));
-const BackupPage = lazy(() => import('@/pages/BackupPage').then(m => ({ default: m.BackupPage })));
-const Suppliers = lazy(() => import('@/pages/Suppliers').then(m => ({ default: m.Suppliers })));
-const VipClientPipeline = lazy(() => import('@/pages/VipClientPipeline'));
-const NotFound = lazy(() => import('@/pages/NotFound'));
-const DailyReport = lazy(() => import('@/pages/DailyReport'));
-const Incomes = lazy(() => import('@/pages/Incomes'));
-const ServiceRates = lazy(() => import('@/pages/ServiceRates'));
+// Route chunk imports - stored for preloading
+const routeImports = {
+  Index: () => import('@/pages/Index'),
+  Dashboard: () => import('@/pages/Dashboard'),
+  Auth: () => import('@/pages/Auth'),
+  Services: () => import('@/pages/Services'),
+  Clients: () => import('@/pages/Clients'),
+  Operators: () => import('@/pages/Operators'),
+  Cranes: () => import('@/pages/Cranes'),
+  ServiceTypes: () => import('@/pages/ServiceTypes'),
+  Vehicles: () => import('@/pages/Vehicles'),
+  Closures: () => import('@/pages/Closures'),
+  Invoices: () => import('@/pages/Invoices'),
+  IncomeProjections: () => import('@/pages/IncomeProjections'),
+  Costs: () => import('@/pages/Costs'),
+  CostCenters: () => import('@/pages/CostCenters'),
+  Inventory: () => import('@/pages/Inventory'),
+  Reports: () => import('@/pages/Reports'),
+  Commissions: () => import('@/pages/Commissions'),
+  Settings: () => import('@/pages/Settings'),
+  OperatorDashboard: () => import('@/pages/OperatorDashboard'),
+  ServiceInspection: () => import('@/pages/operator/ServiceInspection'),
+  PortalDashboard: () => import('@/pages/portal/PortalDashboard'),
+  PortalServices: () => import('@/pages/portal/PortalServices'),
+  PortalInvoices: () => import('@/pages/portal/PortalInvoices'),
+  PortalRequestService: () => import('@/pages/portal/PortalRequestService'),
+  Calendar: () => import('@/pages/Calendar'),
+  QuickEntries: () => import('@/pages/QuickEntries'),
+  BackupPage: () => import('@/pages/BackupPage'),
+  Suppliers: () => import('@/pages/Suppliers'),
+  VipClientPipeline: () => import('@/pages/VipClientPipeline'),
+  NotFound: () => import('@/pages/NotFound'),
+  DailyReport: () => import('@/pages/DailyReport'),
+  Incomes: () => import('@/pages/Incomes'),
+  ServiceRates: () => import('@/pages/ServiceRates'),
+};
+
+// Lazy components using the same import functions
+const Index = lazy(routeImports.Index);
+const Dashboard = lazy(routeImports.Dashboard);
+const Auth = lazy(routeImports.Auth);
+const Services = lazy(routeImports.Services);
+const Clients = lazy(routeImports.Clients);
+const Operators = lazy(routeImports.Operators);
+const Cranes = lazy(routeImports.Cranes);
+const ServiceTypes = lazy(routeImports.ServiceTypes);
+const Vehicles = lazy(routeImports.Vehicles);
+const Closures = lazy(routeImports.Closures);
+const Invoices = lazy(routeImports.Invoices);
+const IncomeProjections = lazy(routeImports.IncomeProjections);
+const Costs = lazy(routeImports.Costs);
+const CostCenters = lazy(routeImports.CostCenters);
+const Inventory = lazy(routeImports.Inventory);
+const Reports = lazy(routeImports.Reports);
+const Commissions = lazy(routeImports.Commissions);
+const Settings = lazy(routeImports.Settings);
+const OperatorDashboard = lazy(routeImports.OperatorDashboard);
+const ServiceInspection = lazy(routeImports.ServiceInspection);
+const PortalDashboard = lazy(routeImports.PortalDashboard);
+const PortalServices = lazy(routeImports.PortalServices);
+const PortalInvoices = lazy(routeImports.PortalInvoices);
+const PortalRequestService = lazy(routeImports.PortalRequestService);
+const Calendar = lazy(routeImports.Calendar);
+const QuickEntries = lazy(routeImports.QuickEntries);
+const BackupPage = lazy(() => routeImports.BackupPage().then(m => ({ default: m.BackupPage })));
+const Suppliers = lazy(() => routeImports.Suppliers().then(m => ({ default: m.Suppliers })));
+const VipClientPipeline = lazy(routeImports.VipClientPipeline);
+const NotFound = lazy(routeImports.NotFound);
+const DailyReport = lazy(routeImports.DailyReport);
+const Incomes = lazy(routeImports.Incomes);
+const ServiceRates = lazy(routeImports.ServiceRates);
+
+// Preload all route chunks after initial render
+const preloadAllRoutes = () => {
+  Object.values(routeImports).forEach(importFn => {
+    importFn().catch(() => {}); // Silently preload, ignore errors
+  });
+};
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -63,6 +108,12 @@ const queryClient = new QueryClient({
 function AppContent() {
   // Activar triggers de notificaciones
   useNotificationTriggers();
+
+  // Preload all route chunks after first render
+  useEffect(() => {
+    const timer = setTimeout(preloadAllRoutes, 1000);
+    return () => clearTimeout(timer);
+  }, []);
   
   return (
     <div className="min-h-screen bg-background text-foreground">
