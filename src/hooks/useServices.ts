@@ -13,9 +13,7 @@ export const useServices = () => {
   const queryClient = useQueryClient();
 
   const loadServices = async () => {
-    console.log('🔄 Loading services from Supabase...');
     const loadedServices = await fetchServices();
-    console.log(`📊 Loaded ${loadedServices.length} services from database`);
     setServices(loadedServices);
   };
 
@@ -24,14 +22,12 @@ export const useServices = () => {
 
     // Listen for invoice events to refresh services
     const handleInvoiceEvent = () => {
-      console.log('Invoice event detected, refreshing all service data...');
       refreshAllServiceData(queryClient);
       loadServices();
     };
 
     // Listen for global refresh events
     const handleGlobalRefresh = () => {
-      console.log('Global refresh event detected, reloading services...');
       loadServices();
     };
 
@@ -64,27 +60,14 @@ export const useServices = () => {
   };
 
   const createService = async (serviceData: ServiceFormData): Promise<Service> => {
-    console.log('🎯 useServices: Creating service with data:', serviceData.folio);
-    
     const newService = await createServiceMutation(serviceData);
-    console.log('✅ useServices: Service created successfully:', newService.folio);
-    
-    // Refresh services from database to ensure consistency
-    console.log('🔄 useServices: Refreshing services from database...');
     await loadServices();
-    
     return newService;
   };
 
   const updateService = async (id: string, serviceData: Partial<ServiceFormData>): Promise<Service> => {
-    console.log('🎯 useServices: Updating service:', id);
-    
     const updatedService = await updateServiceMutation(id, serviceData);
-    console.log('✅ useServices: Service updated successfully');
-    
-    // Refresh services from database to ensure consistency
     await loadServices();
-    
     return updatedService;
   };
 
@@ -94,7 +77,6 @@ export const useServices = () => {
   };
 
   const forceGlobalRefresh = async () => {
-    console.log('🔄 Forzando refresh global desde useServices...');
     await refreshAllServiceData(queryClient);
     await loadServices();
   };

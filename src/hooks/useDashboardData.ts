@@ -18,9 +18,14 @@ const getPreviousMonthRange = () => {
 
 const fetchDashboardData = async () => {
   const { start: startDate, end: endDate } = getCurrentMonthRange();
+  
+  // Only fetch services from the last 2 months (current + previous) instead of ALL
+  const twoMonthsAgo = subMonths(new Date(), 2);
+  const queryStartDate = startOfMonth(twoMonthsAgo).toISOString().split('T')[0];
 
   const [
     servicesRes,
+    totalServicesRes,
     invoicesRes,
     pendingInvoicesRes
   ] = await Promise.all([
@@ -34,7 +39,11 @@ const fetchDashboardData = async () => {
       license_plate,
       value,
       status
-    `).order('service_date', { ascending: false }),
+    `)
+    .gte('service_date', queryStartDate)
+    .order('service_date', { ascending: false }),
+    // Separate count for total services (all time)
+    supabase.from('services').select('id', { count: 'exact', head: true }),
     supabase.from('invoices').select('id, folio, due_date').eq('status', 'overdue'),
     supabase.from('invoices').select('id', { count: 'exact' }).eq('status', 'draft')
   ]);
@@ -94,7 +103,7 @@ const fetchDashboardData = async () => {
   }, { pending: 0, completed: 0, cancelled: 0 });
 
   const metrics: DashboardMetrics = {
-    totalServices: services.length,
+    totalServices: totalServicesRes.count ?? services.length,
     monthlyServices,
     futureServices,
     monthlyRevenue,
@@ -133,8 +142,7 @@ export const useDashboardData = () => {
   });
 
   useEffect(() => {
-    const handleChanges = (payload: any) => {
-      console.log('Real-time change received:', payload);
+    const handleChanges = () => {
       queryClient.invalidateQueries({ queryKey: ['dashboardData'] });
     };
 

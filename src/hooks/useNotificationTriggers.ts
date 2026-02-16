@@ -31,7 +31,6 @@ export const useNotificationTriggers = () => {
             filter: `operator_id=eq.${user.id}`
           },
           (payload) => {
-            console.log('Service updated for operator:', payload);
             
             // Invalidar cache de servicios del operador
             queryClient.invalidateQueries({ queryKey: ['operator-services'] });
@@ -56,7 +55,6 @@ export const useNotificationTriggers = () => {
             filter: `operator_id=eq.${user.id}`
           },
           (payload) => {
-            console.log('New service assigned to operator:', payload);
             
             queryClient.invalidateQueries({ queryKey: ['operator-services'] });
             
@@ -89,7 +87,6 @@ export const useNotificationTriggers = () => {
           },
           (payload) => {
             if (payload.old.status !== 'completed') {
-              console.log('Service completed:', payload);
               
               queryClient.invalidateQueries({ queryKey: ['services'] });
               
@@ -110,7 +107,6 @@ export const useNotificationTriggers = () => {
             table: 'invoices'
           },
           (payload) => {
-            console.log('New invoice created:', payload);
             
             queryClient.invalidateQueries({ queryKey: ['invoices'] });
             
@@ -142,7 +138,6 @@ export const useNotificationTriggers = () => {
             filter: `client_id=eq.${user.client_id}`
           },
           (payload) => {
-            console.log('Client service updated:', payload);
             
             queryClient.invalidateQueries({ queryKey: ['client-services'] });
             
