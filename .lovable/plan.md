@@ -1,79 +1,76 @@
 
 
-# Plan: Optimizar carga del Informe Diario (N+1 queries)
+# Propuestas de Mejora UI - Gestion de Clientes
 
-## Problema
+## Diagnostico actual
 
-El hook `useDailyReport.ts` tiene dos bucles `for` que ejecutan una consulta individual a `invoice_services` por cada servicio completado para verificar si ya fue facturado. Si hay 50 servicios completados, son 100 consultas secuenciales adicionales a la base de datos, causando tiempos de carga de varios segundos.
+La pagina de Clientes tiene una estructura basica: titulo + barra de busqueda + tabla plana. Comparado con el modulo de Costos (dashboard de metricas, filtros avanzados, toggle de vistas tabla/cards, gradientes violeta) y el VIP Pipeline (metricas con iconos coloridos, tabs con contenido rico), la pagina de Clientes se siente incompleta.
 
-## Solucion
+## Propuesta 1: Dashboard de metricas en la cabecera
 
-Reemplazar las consultas individuales por una sola consulta batch que obtiene todos los `service_id` de `invoice_services` de una vez, y luego filtra en memoria.
+Agregar una grilla de 4 tarjetas de metricas al inicio, similar al `CostsDashboard`, con:
+
+- **Total Clientes Activos** - con gradiente violeta (card primaria) e icono `Users`
+- **Empresas Unicas** - conteo por RUT unico, icono `Building2`
+- **Servicios Activos** - total de servicios en pipeline de todos los clientes, icono `TrendingUp`
+- **Facturacion Pendiente** - monto pendiente de pago agregado, icono `DollarSign`
+
+Cada tarjeta con el mismo patron visual del CostsDashboard: icono en circulo coloreado, valor grande, subtitulo descriptivo.
+
+## Propuesta 2: Acceso rapido al Pipeline VIP desde la tabla
+
+Dado que Pipeline VIP es la funcionalidad mas usada, elevar su acceso:
+
+- Hacer que el **nombre del cliente sea clickeable** y lleve directo al Pipeline VIP (el flujo mas comun)
+- El nombre mostraria un cursor pointer y un hover con subrayado sutil
+- Mover el boton "Ver detalles" (ojo) al area de acciones donde queda actualmente
+- Esto elimina un clic extra para el flujo principal
+
+## Propuesta 3: Filtros rapidos por estado y departamento
+
+Reemplazar el filtro actual (solo busqueda de texto) por una barra de filtros mas completa:
+
+- **Filtro por estado**: badges/chips clickeables "Todos", "Activos", "Inactivos" con contadores
+- **Filtro por departamento**: dropdown o chips con los departamentos mas frecuentes
+- Mantener la barra de busqueda integrada en la misma fila
+- Estilo: chips con borde y fondo sutil al estilo de los `UnifiedCostFilters`
+
+## Propuesta 4: Columna de "Servicios en Pipeline" en la tabla
+
+Agregar una columna visual que muestre cuantos servicios tiene cada cliente activos en el pipeline:
+
+- Mini badge con numero de servicios activos (ej. "5 activos")
+- Color indicativo: verde si tiene servicios recientes, gris si no tiene actividad
+- Al hacer clic lleva al Pipeline VIP de ese cliente
+
+## Propuesta 5: Simplificar columnas de acciones
+
+Las acciones actualmente muestran 5 botones por fila (Pipeline, Ver, Editar, Activar/Desactivar, Eliminar), lo cual es excesivo. Propuesta:
+
+- **Pipeline VIP** se mueve al nombre clickeable (Propuesta 2)
+- **Ver detalles** y **Editar** se mantienen como iconos
+- **Activar/Desactivar** y **Eliminar** se agrupan en un menu desplegable "..." (DropdownMenu)
+- Esto deja 3 elementos en la columna de acciones: ojo, lapiz, menu
+
+---
 
 ## Detalle Tecnico
 
-### Archivo: `src/hooks/useDailyReport.ts`
+### Archivos a crear
+- `src/components/clients/ClientsDashboard.tsx` - Grilla de metricas (patron de CostsDashboard)
 
-**Cambio 1 - Lineas 149-166 (primer bucle N+1):**
+### Archivos a modificar
+- `src/pages/Clients.tsx` - Integrar dashboard, filtros de estado/departamento
+- `src/components/clients/ClientsFilters.tsx` - Agregar chips de estado y departamento junto a la busqueda
+- `src/components/clients/ClientsTable.tsx` - Nombre clickeable hacia Pipeline VIP, columna de servicios, acciones agrupadas
+- `src/components/clients/ClientsMobileView.tsx` - Nombre clickeable, acciones simplificadas
 
-Antes (una query por servicio):
-```typescript
-for (const service of allServices) {
-  if (service.status === 'completed') {
-    const { data: existsInInvoice } = await supabase
-      .from('invoice_services')
-      .select('service_id')
-      .eq('service_id', service.id)
-      .maybeSingle();
-    // ...
-  }
-}
-```
+### Patron de datos para metricas
+Reutilizar los datos existentes del hook `useClients()` para contar activos/inactivos y RUTs unicos. Para servicios activos y facturacion pendiente, agregar una consulta ligera con `.select('id, status')` desde `services` agrupada por `client_id`, y otra a `invoices` para pendientes. Estas consultas se encapsularian en un nuevo hook `useClientsDashboardMetrics`.
 
-Despues (una sola query batch):
-```typescript
-const completedServiceIds = allServices
-  .filter(s => s.status === 'completed')
-  .map(s => s.id);
-
-const { data: invoicedServices } = completedServiceIds.length > 0
-  ? await supabase
-      .from('invoice_services')
-      .select('service_id')
-      .in('service_id', completedServiceIds)
-  : { data: [] };
-
-const invoicedServiceIds = new Set(
-  (invoicedServices || []).map(is => is.service_id)
-);
-
-// Filtrar en memoria
-for (const service of allServices) {
-  if (service.status === 'completed' && !invoicedServiceIds.has(service.id)) {
-    if (service.purchase_order_number) {
-      pendingInvoicingWithPO.push(service);
-    } else {
-      pendingInvoicingWithoutPO.push(service);
-    }
-  }
-}
-```
-
-**Cambio 2 - Lineas 255-303 (segundo bucle N+1):**
-
-Mismo patron: obtener todos los `service_id` facturados en una sola consulta y filtrar en memoria en vez de consultar uno por uno.
-
-**Cambio 3 - Eliminar logs de debug:**
-
-Remover los `console.log` extensos de debug de supplier payments (lineas 215-251) que agregan ruido innecesario.
-
-### Resultado esperado
-
-- De ~100+ consultas secuenciales a ~9 consultas paralelas (las 7 originales del `Promise.all` + 2 batch de `invoice_services`)
-- Tiempo de carga reducido drasticamente (de varios segundos a menos de 1 segundo)
-- Sin cambios en la funcionalidad ni en la UI
-
-### Archivo adicional: build error
-
-Corregir el error de build en `supabase/functions/send-inspection-email/index.ts` que importa `npm:resend@2.0.0` sin tenerlo en las dependencias de Deno. Se ajustara el import para usar el patron correcto de importacion en edge functions.
+### Patron visual
+- Gradiente violeta en la card primaria (como `CostsDashboard`)
+- Iconos en circulos con fondo coloreado `bg-violet-600/10`, `bg-blue-100`, etc.
+- Tipografia: `text-2xl font-bold` para valores, `text-sm text-muted-foreground` para etiquetas
+- Chips de filtro con `border rounded-full px-3 py-1` y estado activo con `bg-primary text-primary-foreground`
 
