@@ -52,8 +52,10 @@ const ServiceRates = lazy(() => import('@/pages/ServiceRates'));
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 5 * 60 * 1000,
+      staleTime: 2 * 60 * 1000, // 2 minutes - serve cached data without refetch
+      gcTime: 10 * 60 * 1000, // 10 minutes - keep cache in memory during navigation
       retry: 1,
+      refetchOnWindowFocus: false, // Don't refetch on tab focus
     },
   },
 });
