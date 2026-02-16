@@ -16,15 +16,10 @@ interface NotificationContextType {
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
 
 export const useNotifications = () => {
-  console.log('useNotifications called');
   const context = useContext(NotificationContext);
-  console.log('useNotifications context:', context);
-  
   if (context === undefined) {
-    console.error('useNotifications: context is undefined - not within NotificationProvider');
     throw new Error('useNotifications must be used within a NotificationProvider');
   }
-  
   return context;
 };
 
@@ -33,24 +28,18 @@ interface NotificationProviderProps {
 }
 
 export const NotificationProvider: React.FC<NotificationProviderProps> = ({ children }) => {
-  console.log('NotificationProvider rendering...');
   const [notifications, setNotifications] = useState<Notification[]>([]);
-  
-  console.log('About to call useNotificationsData...');
   const { notifications: fetchedNotifications, loading } = useNotificationsData();
-  console.log('useNotificationsData returned:', { fetchedNotifications, loading });
 
   useEffect(() => {
     if (fetchedNotifications && fetchedNotifications.length > 0) {
       try {
         const storedReadIds = JSON.parse(localStorage.getItem('read_notification_ids') || '[]');
         const readIds = new Set<string>(storedReadIds);
-        
         const mergedNotifications = fetchedNotifications.map(n => ({
             ...n,
             read: readIds.has(n.id)
         }));
-          
         setNotifications(mergedNotifications);
       } catch (error) {
         console.error('Error loading notifications:', error);
@@ -75,7 +64,6 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
       const readIds = new Set<string>(storedReadIds);
       readIds.add(id);
       localStorage.setItem('read_notification_ids', JSON.stringify(Array.from(readIds)));
-
       setNotifications(prev => 
         prev.map(notification => 
           notification.id === id ? { ...notification, read: true } : notification
