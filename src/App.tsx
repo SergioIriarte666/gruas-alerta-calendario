@@ -63,11 +63,10 @@ function AppContent() {
   useNotificationTriggers();
   
   return (
-    <div className="min-h-screen bg-black text-white">
-      <Suspense fallback={<div className="flex items-center justify-center h-screen">Cargando...</div>}>
+    <div className="min-h-screen bg-background text-foreground">
         <Routes>
-        <Route path="/auth" element={<Auth />} />
-        <Route path="/" element={<Index />} />
+        <Route path="/auth" element={<Suspense fallback={null}><Auth /></Suspense>} />
+        <Route path="/" element={<Suspense fallback={null}><Index /></Suspense>} />
 
         {/* All administrative routes share a single ProtectedRoute + Layout */}
         <Route element={
@@ -126,9 +125,8 @@ function AppContent() {
           <Route path="invoices" element={<PortalInvoices />} />
         </Route>
 
-        <Route path="*" element={<NotFound />} />
+        <Route path="*" element={<Suspense fallback={null}><NotFound /></Suspense>} />
       </Routes>
-      </Suspense>
       <Toaster />
     </div>
   );

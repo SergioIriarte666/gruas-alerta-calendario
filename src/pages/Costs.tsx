@@ -92,16 +92,7 @@ const CostsPage = () => {
 
     const baseCosts = isBasicView && pagedData?.costs ? pagedData.costs : costs;
 
-    // Forzar invalidación automática al cargar la página
-    useEffect(() => {
-        const forceRefresh = async () => {
-            queryClient.invalidateQueries({ queryKey: ['commissions'] });
-            queryClient.invalidateQueries({ queryKey: ['costs'] });
-            queryClient.invalidateQueries({ queryKey: ['services'] });
-        };
-        
-        forceRefresh();
-    }, []);
+    // Cache is managed by React Query staleTime — no forced invalidation on mount
 
     // Efecto para manejar el parámetro costId de la URL
     useEffect(() => {
