@@ -155,7 +155,7 @@ export const ClientsTable = ({
                     <td className="py-3 px-4">
                       <button
                         onClick={() => handleViewPipeline(client)}
-                        className="font-medium text-primary hover:underline text-left"
+                        className="font-medium text-violet-600 dark:text-violet-400 hover:underline text-left"
                         title="Ir al Pipeline VIP"
                       >
                         {client.name}
