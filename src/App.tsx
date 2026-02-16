@@ -13,6 +13,7 @@ import { Layout } from '@/components/layout/Layout';
 import { OperatorLayout } from '@/components/layout/OperatorLayout';
 import { PortalLayout } from '@/components/portal/layout/PortalLayout';
 import ProtectedRoute from '@/components/layout/ProtectedRoute';
+import AdminOnlyRoute from '@/components/layout/AdminOnlyRoute';
 
 const Index = lazy(() => import('@/pages/Index'));
 const Dashboard = lazy(() => import('@/pages/Dashboard'));
@@ -68,199 +69,38 @@ function AppContent() {
         <Route path="/auth" element={<Auth />} />
         <Route path="/" element={<Index />} />
 
-        {/* Administrative routes - restricted to admin and viewer only */}
-        <Route path="/dashboard" element={
+        {/* All administrative routes share a single ProtectedRoute + Layout */}
+        <Route element={
           <ProtectedRoute allowedRoles={['admin', 'viewer']}>
             <Layout />
           </ProtectedRoute>
         }>
-          <Route index element={<Dashboard />} />
-        </Route>
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/services" element={<Services />} />
+          <Route path="/calendar" element={<Calendar />} />
+          <Route path="/closures" element={<Closures />} />
+          <Route path="/clients" element={<Clients />} />
+          <Route path="/cranes" element={<Cranes />} />
+          <Route path="/invoices" element={<Invoices />} />
+          <Route path="/income-projections" element={<IncomeProjections />} />
+          <Route path="/costs" element={<Costs />} />
+          <Route path="/incomes" element={<Incomes />} />
+          <Route path="/reports" element={<Reports />} />
+          <Route path="/suppliers" element={<Suppliers />} />
+          <Route path="/daily-report" element={<DailyReport />} />
+          <Route path="/clients/:clientId/pipeline" element={<VipClientPipeline />} />
+          <Route path="/inventory" element={<Inventory />} />
 
-        <Route path="/services" element={
-          <ProtectedRoute allowedRoles={['admin', 'viewer']}>
-            <Layout />
-          </ProtectedRoute>
-        }>
-          <Route index element={<Services />} />
-        </Route>
-
-        <Route path="/calendar" element={
-          <ProtectedRoute allowedRoles={['admin', 'viewer']}>
-            <Layout />
-          </ProtectedRoute>
-        }>
-          <Route index element={<Calendar />} />
-        </Route>
-
-        <Route path="/closures" element={
-          <ProtectedRoute allowedRoles={['admin', 'viewer']}>
-            <Layout />
-          </ProtectedRoute>
-        }>
-          <Route index element={<Closures />} />
-        </Route>
-
-        <Route path="/clients" element={
-          <ProtectedRoute allowedRoles={['admin', 'viewer']}>
-            <Layout />
-          </ProtectedRoute>
-        }>
-          <Route index element={<Clients />} />
-        </Route>
-
-        <Route path="/operators" element={
-          <ProtectedRoute requireRole="admin">
-            <Layout />
-          </ProtectedRoute>
-        }>
-          <Route index element={<Operators />} />
-        </Route>
-
-        <Route path="/cranes" element={
-          <ProtectedRoute allowedRoles={['admin', 'viewer']}>
-            <Layout />
-          </ProtectedRoute>
-        }>
-          <Route index element={<Cranes />} />
-        </Route>
-
-        <Route path="/service-types" element={
-          <ProtectedRoute requireRole="admin">
-            <Layout />
-          </ProtectedRoute>
-        }>
-          <Route index element={<ServiceTypes />} />
-        </Route>
-
-        <Route path="/service-rates" element={
-          <ProtectedRoute requireRole="admin">
-            <Layout />
-          </ProtectedRoute>
-        }>
-          <Route index element={<ServiceRates />} />
-        </Route>
-
-        <Route path="/vehicles" element={
-          <ProtectedRoute requireRole="admin">
-            <Layout />
-          </ProtectedRoute>
-        }>
-          <Route index element={<Vehicles />} />
-        </Route>
-
-        <Route path="/invoices" element={
-          <ProtectedRoute allowedRoles={['admin', 'viewer']}>
-            <Layout />
-          </ProtectedRoute>
-        }>
-          <Route index element={<Invoices />} />
-        </Route>
-
-        <Route path="/income-projections" element={
-          <ProtectedRoute allowedRoles={['admin', 'viewer']}>
-            <Layout />
-          </ProtectedRoute>
-        }>
-          <Route index element={<IncomeProjections />} />
-        </Route>
-
-        <Route path="/costs" element={
-          <ProtectedRoute allowedRoles={['admin', 'viewer']}>
-            <Layout />
-          </ProtectedRoute>
-        }>
-          <Route index element={<Costs />} />
-        </Route>
-
-        <Route path="/incomes" element={
-          <ProtectedRoute allowedRoles={['admin', 'viewer']}>
-            <Layout />
-          </ProtectedRoute>
-        }>
-          <Route index element={<Incomes />} />
-        </Route>
-
-        <Route path="/commissions" element={
-          <ProtectedRoute requireRole="admin">
-            <Layout />
-          </ProtectedRoute>
-        }>
-          <Route index element={<Commissions />} />
-        </Route>
-
-        <Route path="/inventory" element={
-          <ProtectedRoute allowedRoles={['admin', 'operator', 'viewer']}>
-            <Layout />
-          </ProtectedRoute>
-        }>
-          <Route index element={<Inventory />} />
-        </Route>
-
-        <Route path="/reports" element={
-          <ProtectedRoute allowedRoles={['admin', 'viewer']}>
-            <Layout />
-          </ProtectedRoute>
-        }>
-          <Route index element={<Reports />} />
-        </Route>
-
-        <Route path="/cost-centers" element={
-          <ProtectedRoute requireRole="admin">
-            <Layout />
-          </ProtectedRoute>
-        }>
-          <Route index element={<CostCenters />} />
-        </Route>
-
-        <Route path="/settings" element={
-          <ProtectedRoute requireRole="admin">
-            <Layout />
-          </ProtectedRoute>
-        }>
-          <Route index element={<Settings />} />
-        </Route>
-
-        <Route path="/quick-entries" element={
-          <ProtectedRoute requireRole="admin">
-            <Layout />
-          </ProtectedRoute>
-        }>
-          <Route index element={<QuickEntries />} />
-        </Route>
-
-        <Route path="/backup" element={
-          <ProtectedRoute requireRole="admin">
-            <Layout />
-          </ProtectedRoute>
-        }>
-          <Route index element={<BackupPage />} />
-        </Route>
-
-        <Route path="/suppliers" element={
-          <ProtectedRoute allowedRoles={['admin', 'viewer']}>
-            <Layout />
-          </ProtectedRoute>
-        }>
-          <Route index element={<Suppliers />} />
-        </Route>
-
-        <Route path="/daily-report" element={
-          <ProtectedRoute allowedRoles={['admin', 'viewer']}>
-            <Layout />
-          </ProtectedRoute>
-        }>
-          <Route index element={<DailyReport />} />
-        </Route>
-
-
-        {/* VIP Client Pipeline - Fase 2 */}
-        <Route path="/clients/:clientId/pipeline" element={
-          <ProtectedRoute allowedRoles={['admin', 'viewer']}>
-            <Layout />
-          </ProtectedRoute>
-        }>
-          <Route index element={<VipClientPipeline />} />
+          {/* Admin-only routes */}
+          <Route path="/operators" element={<AdminOnlyRoute><Operators /></AdminOnlyRoute>} />
+          <Route path="/service-types" element={<AdminOnlyRoute><ServiceTypes /></AdminOnlyRoute>} />
+          <Route path="/service-rates" element={<AdminOnlyRoute><ServiceRates /></AdminOnlyRoute>} />
+          <Route path="/vehicles" element={<AdminOnlyRoute><Vehicles /></AdminOnlyRoute>} />
+          <Route path="/commissions" element={<AdminOnlyRoute><Commissions /></AdminOnlyRoute>} />
+          <Route path="/cost-centers" element={<AdminOnlyRoute><CostCenters /></AdminOnlyRoute>} />
+          <Route path="/settings" element={<AdminOnlyRoute><Settings /></AdminOnlyRoute>} />
+          <Route path="/quick-entries" element={<AdminOnlyRoute><QuickEntries /></AdminOnlyRoute>} />
+          <Route path="/backup" element={<AdminOnlyRoute><BackupPage /></AdminOnlyRoute>} />
         </Route>
 
         {/* Operator routes - accessible by operators and admins */}
