@@ -46,11 +46,7 @@ export const useServiceTypes = () => {
   } = useQuery<ServiceType[]>({
     queryKey: ['serviceTypes'],
     queryFn: fetchServiceTypes,
-    staleTime: 0,
-    gcTime: 0, // No cache
-    refetchOnMount: 'always',
-    refetchOnWindowFocus: true,
-    refetchOnReconnect: true
+    staleTime: 5 * 60 * 1000, // 5 minutes cache
   });
 
   return {

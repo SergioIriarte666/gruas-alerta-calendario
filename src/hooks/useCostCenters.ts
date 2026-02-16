@@ -74,9 +74,7 @@ export const useCostCenters = () => {
   return useQuery({
     queryKey: ['cost-centers'],
     queryFn: fetchCostCenters,
-    staleTime: 30 * 1000, // 30 seconds
-    refetchOnWindowFocus: true,
-    refetchInterval: 2 * 60 * 1000, // 2 minutes
+    staleTime: 2 * 60 * 1000, // 2 minutes cache
   });
 };
 
@@ -84,9 +82,7 @@ export const useCostCentersWithStats = () => {
   return useQuery({
     queryKey: ['cost-centers-stats'],
     queryFn: fetchCostCentersWithStats,
-    staleTime: 0, // Always fresh for cost centers with stats
-    refetchOnWindowFocus: true,
-    refetchInterval: 30 * 1000, // Refresh every 30 seconds
+    staleTime: 2 * 60 * 1000, // 2 minutes cache
   });
 };
 

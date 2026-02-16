@@ -429,7 +429,7 @@ export const useBidirectionalSyncStats = () => {
       
       return data;
     },
-    refetchInterval: 30000, // Refresh every 30 seconds
+    staleTime: 2 * 60 * 1000, // 2 minutes cache
   });
 };
 
