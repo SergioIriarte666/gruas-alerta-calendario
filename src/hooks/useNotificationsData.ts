@@ -29,7 +29,8 @@ const fetchNotificationsData = async (): Promise<Omit<Notification, 'read'>[]> =
     expiringCranesRes,
     expiringOperatorsRes,
     closedServiceIdsRes,
-    invoicedClosureIdsRes
+    invoicedClosureIdsRes,
+    servicesWithoutOCRes
   ] = await Promise.all([
     // 1A. Services today/tomorrow
     supabase
@@ -74,7 +75,15 @@ const fetchNotificationsData = async (): Promise<Omit<Notification, 'read'>[]> =
     // 6. Invoiced closure IDs
     supabase
       .from('invoice_closures')
-      .select('closure_id')
+      .select('closure_id'),
+    // 7. Services completed without purchase order
+    supabase
+      .from('services')
+      .select('id, folio, service_date, client:clients!services_client_id_fkey(name)')
+      .eq('status', 'completed')
+      .or('purchase_order.is.null,purchase_order.eq.')
+      .or('purchase_order_number.is.null,purchase_order_number.eq.')
+      .limit(100)
   ]);
 
   // Process urgent services
@@ -309,6 +318,21 @@ const fetchNotificationsData = async (): Promise<Omit<Notification, 'read'>[]> =
       actionData: { entityId: closure.id },
     });
   });
+
+  // Process services without purchase order
+  const servicesNoOC = servicesWithoutOCRes.data || [];
+  if (servicesNoOC.length > 0) {
+    notifications.push({
+      id: 'services-without-oc',
+      title: 'Servicios sin Orden de Compra',
+      message: `${servicesNoOC.length} servicios completados no tienen orden de compra registrada.`,
+      type: servicesNoOC.length > 10 ? 'error' : 'warning',
+      timestamp: new Date(),
+      actionType: 'navigate',
+      actionUrl: '/services',
+      actionData: { filter: 'without-oc' },
+    });
+  }
   
   return notifications.sort((a,b) => b.timestamp.getTime() - a.timestamp.getTime());
 };

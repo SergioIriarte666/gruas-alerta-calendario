@@ -5,6 +5,7 @@ import { MetricCard } from '@/components/dashboard/MetricCard';
 import { AlertsPanel } from '@/components/dashboard/AlertsPanel';
 import { RecentServicesTable } from '@/components/dashboard/RecentServicesTable';
 import { InvoiceAlertsDashboard } from '@/components/invoices/InvoiceAlertsDashboard';
+import { PendingSummaryModal } from '@/components/dashboard/PendingSummaryModal';
 import { 
   Truck, 
   Users, 
@@ -78,6 +79,7 @@ const Dashboard: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-white">
+      <PendingSummaryModal />
       <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6 animate-fade-in p-4 sm:p-6" style={{ background: '#ffffff', color: '#000000' }}>
         {/* Header Section */}
         <div className="mb-6 sm:mb-8">
