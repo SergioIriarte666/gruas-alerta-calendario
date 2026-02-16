@@ -76,6 +76,13 @@ const transformServiceType = (raw: any) => {
   };
 };
 
+// Normalize PostgREST embedded values (can be object, array, or null)
+const normalizeEmbedded = (value: any): any => {
+  if (!value) return null;
+  if (Array.isArray(value)) return value[0] ?? null;
+  return value;
+};
+
 const transformToService = (data: any): Service => {
   // Buscar operador y grúa principal en service_resources
   let primaryOperator = null;
@@ -87,7 +94,7 @@ const transformToService = (data: any): Service => {
     ) || data.service_resources.find((r: any) => r.resource_type === 'operator');
     
     if (primaryOperatorResource?.operator) {
-      primaryOperator = primaryOperatorResource.operator;
+      primaryOperator = normalizeEmbedded(primaryOperatorResource.operator);
     }
 
     const primaryCraneResource = data.service_resources.find(
@@ -95,13 +102,16 @@ const transformToService = (data: any): Service => {
     ) || data.service_resources.find((r: any) => r.resource_type === 'crane');
     
     if (primaryCraneResource?.crane) {
-      primaryCrane = primaryCraneResource.crane;
+      primaryCrane = normalizeEmbedded(primaryCraneResource.crane);
     }
   }
 
-  // Fallback a campos legacy
-  const finalOperator = transformOperator(primaryOperator || data.operator);
-  const finalCrane = transformCrane(primaryCrane || data.crane);
+  // Normalize and fallback: handle both aliased (crane) and table-name (cranes) keys
+  const rawCrane = normalizeEmbedded(data.crane ?? data.cranes);
+  const rawOperator = normalizeEmbedded(data.operator ?? data.operators);
+  
+  const finalOperator = transformOperator(primaryOperator || rawOperator);
+  const finalCrane = transformCrane(primaryCrane || rawCrane);
 
   return {
     id: data.id,
@@ -117,7 +127,7 @@ const transformToService = (data: any): Service => {
     licensePlate: data.license_plate || '',
     origin: data.origin || '',
     destination: data.destination || '',
-    serviceType: transformServiceType(data.serviceType),
+    serviceType: transformServiceType(normalizeEmbedded(data.serviceType ?? data.service_types)),
     value: parseFloat(data.value) || 0,
     crane: finalCrane,
     operator: finalOperator,
