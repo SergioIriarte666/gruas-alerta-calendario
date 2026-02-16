@@ -4,10 +4,6 @@ import { useAuth } from './AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { cleanupAuthState, performGlobalSignOut } from '@/utils/authCleanup';
 
-const debugLog = (..._args: unknown[]) => {
-  // Debug logging disabled for performance
-};
-
 interface UserProfile {
   id: string;
   email: string;
@@ -26,13 +22,23 @@ interface UserContextType {
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
+// Module-level cache to survive remounts
+let cachedProfile: UserProfile | null = null;
+let cachedForUserId: string | null = null;
+
 export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user: authUser, loading: authLoading, signOut } = useAuth();
-  const [user, setUser] = useState<UserProfile | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<UserProfile | null>(() => {
+    // Initialize from cache if available for the same user
+    if (authUser && cachedForUserId === authUser.id) return cachedProfile;
+    return null;
+  });
+  const [loading, setLoading] = useState(() => {
+    // If we have a cached profile for this user, skip loading
+    if (authUser && cachedForUserId === authUser.id && cachedProfile) return false;
+    return true;
+  });
   const fetchingRef = useRef(false);
-  const retryCountRef = useRef(0);
-  const maxRetries = 3;
 
   const fetchUserProfile = async (retryCount = 0) => {
     if (!authUser || fetchingRef.current) {
@@ -40,24 +46,27 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return;
     }
 
+    // Use cached profile if available
+    if (cachedForUserId === authUser.id && cachedProfile) {
+      setUser(cachedProfile);
+      setLoading(false);
+      return;
+    }
+
     fetchingRef.current = true;
     
     try {
-      debugLog(`UserContext - Fetching profile for: ${authUser.email} (ID: ${authUser.id}), attempt: ${retryCount + 1}`);
-      
       const { data: profileData, error } = await supabase
         .from('profiles')
-        .select('*')
+        .select('id, email, full_name, role, client_id')
         .eq('id', authUser.id)
         .single();
 
       if (error) {
         console.error('UserContext - Error fetching profile:', error);
         
-        // If no profile exists, create one
         if (error.code === 'PGRST116') {
-          debugLog('UserContext - Creating new profile...');
-          
+          // Profile doesn't exist, create one
           const { data: newProfile, error: createError } = await supabase
             .from('profiles')
             .insert({
@@ -66,76 +75,54 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
               full_name: authUser.email,
               role: 'client'
             })
-            .select()
+            .select('id, email, full_name, role, client_id')
             .single();
 
           if (createError) {
-            console.error('UserContext - Error creating profile:', createError);
-            
-            // Retry if we haven't exceeded max retries
-            if (retryCount < maxRetries) {
-              debugLog(`UserContext - Retrying profile creation (${retryCount + 1}/${maxRetries})`);
-              setTimeout(() => {
-                fetchingRef.current = false;
-                fetchUserProfile(retryCount + 1);
-              }, 1000 * (retryCount + 1)); // Exponential backoff
+            if (retryCount < 2) {
+              fetchingRef.current = false;
+              setTimeout(() => fetchUserProfile(retryCount + 1), 1000 * (retryCount + 1));
               return;
             }
-            
             setUser(null);
           } else {
-            const userProfile = {
+            const userProfile: UserProfile = {
               id: newProfile.id,
               email: newProfile.email,
               name: newProfile.full_name || newProfile.email,
               role: newProfile.role,
               client_id: newProfile.client_id,
             };
-            debugLog('UserContext - New profile created:', userProfile);
+            cachedProfile = userProfile;
+            cachedForUserId = authUser.id;
             setUser(userProfile);
-            retryCountRef.current = 0; // Reset retry count on success
           }
+        } else if (retryCount < 2) {
+          fetchingRef.current = false;
+          setTimeout(() => fetchUserProfile(retryCount + 1), 1000 * (retryCount + 1));
+          return;
         } else {
-          // For other errors, retry if possible
-          if (retryCount < maxRetries) {
-            debugLog(`UserContext - Retrying profile fetch (${retryCount + 1}/${maxRetries}) after error:`, error.message);
-            setTimeout(() => {
-              fetchingRef.current = false;
-              fetchUserProfile(retryCount + 1);
-            }, 1000 * (retryCount + 1)); // Exponential backoff
-            return;
-          }
-          
-          console.error('UserContext - Max retries exceeded, setting user to null');
           setUser(null);
         }
       } else {
-        // Profile found successfully
-        const userProfile = {
+        const userProfile: UserProfile = {
           id: profileData.id,
           email: profileData.email,
           name: profileData.full_name || profileData.email,
           role: profileData.role,
           client_id: profileData.client_id,
         };
-        debugLog('UserContext - Profile found:', userProfile);
+        cachedProfile = userProfile;
+        cachedForUserId = authUser.id;
         setUser(userProfile);
-        retryCountRef.current = 0; // Reset retry count on success
       }
-
     } catch (error) {
       console.error('UserContext - Exception:', error);
-      
-      // Retry on exceptions if possible
-      if (retryCount < maxRetries) {
-        debugLog(`UserContext - Retrying after exception (${retryCount + 1}/${maxRetries})`);
-        setTimeout(() => {
-          fetchingRef.current = false;
-          fetchUserProfile(retryCount + 1);
-        }, 1000 * (retryCount + 1)); // Exponential backoff
+      if (retryCount < 2) {
+        fetchingRef.current = false;
+        setTimeout(() => fetchUserProfile(retryCount + 1), 1000 * (retryCount + 1));
         return;
       }
-      
       setUser(null);
     } finally {
       setLoading(false);
@@ -144,11 +131,11 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const forceRefreshProfile = async () => {
-    debugLog('UserContext - Force refresh profile requested');
     fetchingRef.current = false;
-    retryCountRef.current = 0;
-    setUser(null);
-    setLoading(true);
+    // Don't set loading to true if we have cached data
+    if (!cachedProfile || cachedForUserId !== authUser?.id) {
+      setLoading(true);
+    }
     await fetchUserProfile();
   };
 
@@ -165,17 +152,19 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       .eq('id', user.id);
 
     if (!error) {
-      setUser(prev => prev ? { ...prev, ...updates } : null);
+      const updatedUser = { ...user, ...updates };
+      cachedProfile = updatedUser;
+      setUser(updatedUser);
     }
   };
 
   const logout = async () => {
     try {
-      debugLog('UserContext - Logout initiated...');
+      cachedProfile = null;
+      cachedForUserId = null;
       setUser(null);
       setLoading(false);
       fetchingRef.current = false;
-      retryCountRef.current = 0;
       cleanupAuthState();
       await performGlobalSignOut(supabase);
       window.location.href = '/auth';
@@ -188,21 +177,24 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   useEffect(() => {
-    if (authLoading) {
-      debugLog('UserContext - Auth still loading, waiting...');
-      return;
-    }
+    if (authLoading) return;
     
     if (!authUser) {
-      debugLog('UserContext - No auth user, clearing profile');
+      cachedProfile = null;
+      cachedForUserId = null;
       setUser(null);
       setLoading(false);
       fetchingRef.current = false;
-      retryCountRef.current = 0;
+      return;
+    }
+
+    // If we already have a cached profile for this user, use it immediately
+    if (cachedForUserId === authUser.id && cachedProfile) {
+      setUser(cachedProfile);
+      setLoading(false);
       return;
     }
     
-    debugLog('UserContext - Auth user available, fetching profile');
     fetchUserProfile();
   }, [authUser, authLoading]);
 
