@@ -42,11 +42,64 @@ import { usePipelineServiceExport } from '@/hooks/vip/usePipelineServiceExport';
 import { toast } from 'sonner';
 import { getDisplayServiceValue } from '@/utils/serviceValueCalculations';
 
+interface SubGroupConfig {
+  fieldExtractor: (s: Service) => string;
+  emptyLabel: string;
+  prefix: string;
+  badgeColor: string;
+  badgeBg: string;
+}
+
+const getSubGroupConfig = (status: ServiceStatus): SubGroupConfig => {
+  switch (status) {
+    case 'quoted':
+    case 'purchase_order_pending':
+      return {
+        fieldExtractor: (s) => s.quoteNumber || '',
+        emptyLabel: 'Sin Cotización',
+        prefix: 'COT-',
+        badgeColor: 'text-violet-600',
+        badgeBg: 'bg-violet-500/10'
+      };
+    case 'invoiced':
+      return {
+        fieldExtractor: (s) => s.invoiceNumeroFiscal || '',
+        emptyLabel: 'Sin Factura',
+        prefix: '',
+        badgeColor: 'text-emerald-600',
+        badgeBg: 'bg-emerald-500/10'
+      };
+    default:
+      return {
+        fieldExtractor: (s) => s.purchaseOrderNumber || s.purchaseOrder || '',
+        emptyLabel: 'Sin O.C.',
+        prefix: 'OC-',
+        badgeColor: 'text-blue-600',
+        badgeBg: 'bg-blue-500/10'
+      };
+  }
+};
+
 interface POSubGroup {
   poNumber: string;
   services: Service[];
   totalValue: number;
 }
+
+const groupByField = (services: Service[], config: SubGroupConfig): POSubGroup[] => {
+  const map: Record<string, POSubGroup> = {};
+  services.forEach(s => {
+    const val = config.fieldExtractor(s) || config.emptyLabel;
+    if (!map[val]) map[val] = { poNumber: val, services: [], totalValue: 0 };
+    map[val].services.push(s);
+    map[val].totalValue += getDisplayServiceValue(s);
+  });
+  return Object.values(map).sort((a, b) => {
+    if (a.poNumber === config.emptyLabel) return 1;
+    if (b.poNumber === config.emptyLabel) return -1;
+    return a.poNumber.localeCompare(b.poNumber);
+  });
+};
 
 interface ServiceGroup {
   status: ServiceStatus;
@@ -59,21 +112,6 @@ interface ServiceGroup {
   sortingDate: Date | null;
   sortingDateLabel: string;
 }
-
-const groupByPurchaseOrder = (services: Service[]): POSubGroup[] => {
-  const map: Record<string, POSubGroup> = {};
-  services.forEach(s => {
-    const po = s.purchaseOrderNumber || s.purchaseOrder || 'Sin O.C.';
-    if (!map[po]) map[po] = { poNumber: po, services: [], totalValue: 0 };
-    map[po].services.push(s);
-    map[po].totalValue += getDisplayServiceValue(s);
-  });
-  return Object.values(map).sort((a, b) => {
-    if (a.poNumber === 'Sin O.C.') return 1;
-    if (b.poNumber === 'Sin O.C.') return -1;
-    return a.poNumber.localeCompare(b.poNumber);
-  });
-};
 
 interface PipelineListViewProps {
   services: Service[];
@@ -632,7 +670,8 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
                 <CollapsibleContent>
                   <CardContent className="pt-0">
                     {(() => {
-                      const poSubGroups = groupByPurchaseOrder(group.services);
+                      const subGroupConfig = getSubGroupConfig(group.status);
+                      const poSubGroups = groupByField(group.services, subGroupConfig);
                       const hasMultiplePOs = poSubGroups.length > 1;
 
                       const renderServiceRow = (service: Service) => {
@@ -801,11 +840,11 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
                                           ) : (
                                             <ChevronRight className="w-3.5 h-3.5 text-muted-foreground" />
                                           )}
-                                          {subGroup.poNumber === 'Sin O.C.' ? (
-                                            <span className="text-sm font-medium text-muted-foreground">Sin O.C.</span>
+                                          {subGroup.poNumber === subGroupConfig.emptyLabel ? (
+                                            <span className="text-sm font-medium text-muted-foreground">{subGroupConfig.emptyLabel}</span>
                                           ) : (
-                                            <code className="text-sm font-bold text-blue-600 bg-blue-500/10 px-2 py-0.5 rounded">
-                                              OC-{subGroup.poNumber}
+                                            <code className={`text-sm font-bold ${subGroupConfig.badgeColor} ${subGroupConfig.badgeBg} px-2 py-0.5 rounded`}>
+                                              {subGroupConfig.prefix}{subGroup.poNumber}
                                             </code>
                                           )}
                                         </div>
