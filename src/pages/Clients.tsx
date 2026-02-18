@@ -23,7 +23,7 @@ const Clients = () => {
   const [currentPage, setCurrentPage] = React.useState(1);
   const [sortField, setSortField] = React.useState<ClientSortField>('name');
   const [sortDirection, setSortDirection] = React.useState<SortDirection>('asc');
-  const ITEMS_PER_PAGE = 10;
+  const ITEMS_PER_PAGE = 50;
 
   const isBasicView = searchTerm === '' && statusFilter === 'all' && selectedDepartment === '';
 
