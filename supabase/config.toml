@@ -81,3 +81,6 @@ verify_jwt = false
 
 [functions.check-vehicle-patent]
 verify_jwt = false
+
+[functions.parse-purchase-order-pdf]
+verify_jwt = false
