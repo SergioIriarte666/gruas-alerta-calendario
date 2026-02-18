@@ -42,6 +42,12 @@ import { usePipelineServiceExport } from '@/hooks/vip/usePipelineServiceExport';
 import { toast } from 'sonner';
 import { getDisplayServiceValue } from '@/utils/serviceValueCalculations';
 
+interface POSubGroup {
+  poNumber: string;
+  services: Service[];
+  totalValue: number;
+}
+
 interface ServiceGroup {
   status: ServiceStatus;
   title: string;
@@ -53,6 +59,21 @@ interface ServiceGroup {
   sortingDate: Date | null;
   sortingDateLabel: string;
 }
+
+const groupByPurchaseOrder = (services: Service[]): POSubGroup[] => {
+  const map: Record<string, POSubGroup> = {};
+  services.forEach(s => {
+    const po = s.purchaseOrderNumber || s.purchaseOrder || 'Sin O.C.';
+    if (!map[po]) map[po] = { poNumber: po, services: [], totalValue: 0 };
+    map[po].services.push(s);
+    map[po].totalValue += getDisplayServiceValue(s);
+  });
+  return Object.values(map).sort((a, b) => {
+    if (a.poNumber === 'Sin O.C.') return 1;
+    if (b.poNumber === 'Sin O.C.') return -1;
+    return a.poNumber.localeCompare(b.poNumber);
+  });
+};
 
 interface PipelineListViewProps {
   services: Service[];
@@ -140,6 +161,7 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [expandedGroups, setExpandedGroups] = useState<Set<ServiceStatus>>(new Set());
+  const [expandedPOs, setExpandedPOs] = useState<Set<string>>(new Set(['__all__']));
   const [selectedServices, setSelectedServices] = useState<Set<string>>(new Set());
   const [showBatchModal, setShowBatchModal] = useState(false);
   const [showExportModal, setShowExportModal] = useState(false);
@@ -609,118 +631,203 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
 
                 <CollapsibleContent>
                   <CardContent className="pt-0">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead className="text-muted-foreground w-12">
-                            <CheckSquare className="w-4 h-4" />
-                          </TableHead>
-                           <SortableHeader field="folio">Folio</SortableHeader>
-                           <SortableHeader field="serviceType">Tipo de Servicio</SortableHeader>
-                           <SortableHeader field="serviceDate">Fecha</SortableHeader>
-                           <TableHead className="text-muted-foreground">Patente Vehículo</TableHead>
-                           <SortableHeader field="value">Valor</SortableHeader>
-                           <SortableHeader field="daysInStatus">Días en Estado</SortableHeader>
-                           <SortableHeader field="quoteNumber">Cotización</SortableHeader>
-                           <SortableHeader field="purchaseOrder">Orden de Compra</SortableHeader>
-                           <SortableHeader field="invoiceNumeroFiscal">N° Fiscal</SortableHeader>
-                           <TableHead className="text-muted-foreground">Acciones</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {group.services.map((service) => {
-                          const daysInStatus = differenceInDays(new Date(), parseFromDatabase(service.serviceDate));
-                          return (
-                        <TableRow key={service.id} className="border-muted">
-                          <TableCell>
-                            <Checkbox
-                              checked={selectedServices.has(service.id)}
-                              onCheckedChange={(checked) => handleServiceSelection(service.id, checked as boolean)}
-                            />
-                          </TableCell>
-                          <TableCell>
-                            <div className="font-medium text-foreground">{service.folio}</div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="text-foreground">{service.serviceType.name}</div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="text-sm text-muted-foreground">
-                              {formatForDisplay(parseFromDatabase(service.serviceDate))}
-                            </div>
-                          </TableCell>
-                               <TableCell>
-                                 <div className="flex items-center gap-1 text-muted-foreground">
-                                   <Car className="w-3 h-3" />
-                                   <span className="text-sm">
-                                     {service.licensePlate || 'Sin vehículo'}
-                                   </span>
-                                 </div>
-                               </TableCell>
-                                <TableCell>
-                                  <span className="font-medium text-foreground">
-                                    ${getDisplayServiceValue(service).toLocaleString()}
-                                  </span>
-                                </TableCell>
-                               <TableCell>
-                                 <Badge variant="outline" className="text-xs">
-                                   {daysInStatus} días
-                                 </Badge>
-                               </TableCell>
-                               <TableCell>
-                                 {service.quoteNumber ? (
-                                   <code className="text-xs bg-muted px-1 rounded text-violet-600 font-bold">
-                                     {service.quoteNumber}
-                                   </code>
-                                 ) : (
-                                   <span className="text-muted-foreground">-</span>
-                                 )}
-                               </TableCell>
-                               <TableCell>
-                                 {(service.purchaseOrderNumber || service.purchaseOrder) ? (
-                                   <code className="text-xs bg-muted px-1 rounded text-blue-600 font-bold">
-                                     {service.purchaseOrderNumber || service.purchaseOrder}
-                                   </code>
-                                 ) : (
-                                   <span className="text-muted-foreground">-</span>
-                                 )}
-                               </TableCell>
-                               <TableCell>
-                                 {service.invoiceNumeroFiscal ? (
-                                   <code className="text-xs bg-muted px-1 rounded text-emerald-600 font-bold">
-                                     {service.invoiceNumeroFiscal}
-                                   </code>
-                                 ) : (
-                                   <span className="text-muted-foreground">-</span>
-                                 )}
-                               </TableCell>
-                              <TableCell>
-                                <div className="flex gap-1">
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => onServiceSelect?.(service)}
-                                    className="h-8 w-8 p-0 text-blue-400 hover:text-blue-300"
-                                    title="Ver detalles del servicio"
+                    {(() => {
+                      const poSubGroups = groupByPurchaseOrder(group.services);
+                      const hasMultiplePOs = poSubGroups.length > 1;
+
+                      const renderServiceRow = (service: Service) => {
+                        const daysInStatus = differenceInDays(new Date(), parseFromDatabase(service.serviceDate));
+                        return (
+                          <TableRow key={service.id} className="border-muted">
+                            <TableCell>
+                              <Checkbox
+                                checked={selectedServices.has(service.id)}
+                                onCheckedChange={(checked) => handleServiceSelection(service.id, checked as boolean)}
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <div className="font-medium text-foreground">{service.folio}</div>
+                            </TableCell>
+                            <TableCell>
+                              <div className="text-foreground">{service.serviceType.name}</div>
+                            </TableCell>
+                            <TableCell>
+                              <div className="text-sm text-muted-foreground">
+                                {formatForDisplay(parseFromDatabase(service.serviceDate))}
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex items-center gap-1 text-muted-foreground">
+                                <Car className="w-3 h-3" />
+                                <span className="text-sm">
+                                  {service.licensePlate || 'Sin vehículo'}
+                                </span>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <span className="font-medium text-foreground">
+                                ${getDisplayServiceValue(service).toLocaleString()}
+                              </span>
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant="outline" className="text-xs">
+                                {daysInStatus} días
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              {service.quoteNumber ? (
+                                <code className="text-xs bg-muted px-1 rounded text-violet-600 font-bold">
+                                  {service.quoteNumber}
+                                </code>
+                              ) : (
+                                <span className="text-muted-foreground">-</span>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              {(service.purchaseOrderNumber || service.purchaseOrder) ? (
+                                <code className="text-xs bg-muted px-1 rounded text-blue-600 font-bold">
+                                  {service.purchaseOrderNumber || service.purchaseOrder}
+                                </code>
+                              ) : (
+                                <span className="text-muted-foreground">-</span>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              {service.invoiceNumeroFiscal ? (
+                                <code className="text-xs bg-muted px-1 rounded text-emerald-600 font-bold">
+                                  {service.invoiceNumeroFiscal}
+                                </code>
+                              ) : (
+                                <span className="text-muted-foreground">-</span>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex gap-1">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => onServiceSelect?.(service)}
+                                  className="h-8 w-8 p-0 text-blue-400 hover:text-blue-300"
+                                  title="Ver detalles del servicio"
+                                >
+                                  <Eye className="w-3 h-3" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => onServiceEdit?.(service)}
+                                  className="h-8 w-8 p-0 text-green-400 hover:text-green-300"
+                                  title="Editar servicio"
+                                >
+                                  <Edit className="w-3 h-3" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      };
+
+                      const tableHeader = (
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead className="text-muted-foreground w-12">
+                              <CheckSquare className="w-4 h-4" />
+                            </TableHead>
+                            <SortableHeader field="folio">Folio</SortableHeader>
+                            <SortableHeader field="serviceType">Tipo de Servicio</SortableHeader>
+                            <SortableHeader field="serviceDate">Fecha</SortableHeader>
+                            <TableHead className="text-muted-foreground">Patente Vehículo</TableHead>
+                            <SortableHeader field="value">Valor</SortableHeader>
+                            <SortableHeader field="daysInStatus">Días en Estado</SortableHeader>
+                            <SortableHeader field="quoteNumber">Cotización</SortableHeader>
+                            <SortableHeader field="purchaseOrder">Orden de Compra</SortableHeader>
+                            <SortableHeader field="invoiceNumeroFiscal">N° Fiscal</SortableHeader>
+                            <TableHead className="text-muted-foreground">Acciones</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                      );
+
+                      if (!hasMultiplePOs) {
+                        return (
+                          <Table>
+                            {tableHeader}
+                            <TableBody>
+                              {group.services.map(renderServiceRow)}
+                            </TableBody>
+                          </Table>
+                        );
+                      }
+
+                      const togglePO = (poKey: string) => {
+                        setExpandedPOs(prev => {
+                          const next = new Set(prev);
+                          // On first interaction, remove the __all__ marker and expand all individually
+                          if (next.has('__all__')) {
+                            next.delete('__all__');
+                            poSubGroups.forEach(sg => {
+                              const key = `${group.status}-${sg.poNumber}`;
+                              next.add(key);
+                            });
+                          }
+                          if (next.has(poKey)) {
+                            next.delete(poKey);
+                          } else {
+                            next.add(poKey);
+                          }
+                          return next;
+                        });
+                      };
+
+                      const isPOExpanded = (poKey: string) => expandedPOs.has('__all__') || expandedPOs.has(poKey);
+
+                      return (
+                        <Table>
+                          {tableHeader}
+                          <TableBody>
+                            {poSubGroups.map(subGroup => {
+                              const poKey = `${group.status}-${subGroup.poNumber}`;
+                              const isExpanded = isPOExpanded(poKey);
+                              return (
+                                <React.Fragment key={subGroup.poNumber}>
+                                  <TableRow 
+                                    className="bg-muted/30 hover:bg-muted/50 cursor-pointer border-muted"
+                                    onClick={() => togglePO(poKey)}
                                   >
-                                    <Eye className="w-3 h-3" />
-                                  </Button>
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => onServiceEdit?.(service)}
-                                    className="h-8 w-8 p-0 text-green-400 hover:text-green-300"
-                                    title="Editar servicio"
-                                  >
-                                    <Edit className="w-3 h-3" />
-                                  </Button>
-                                </div>
-                              </TableCell>
-                            </TableRow>
-                          );
-                        })}
-                      </TableBody>
-                    </Table>
+                                    <TableCell colSpan={11}>
+                                      <div className="flex items-center justify-between py-0.5">
+                                        <div className="flex items-center gap-2">
+                                          {isExpanded ? (
+                                            <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />
+                                          ) : (
+                                            <ChevronRight className="w-3.5 h-3.5 text-muted-foreground" />
+                                          )}
+                                          {subGroup.poNumber === 'Sin O.C.' ? (
+                                            <span className="text-sm font-medium text-muted-foreground">Sin O.C.</span>
+                                          ) : (
+                                            <code className="text-sm font-bold text-blue-600 bg-blue-500/10 px-2 py-0.5 rounded">
+                                              OC-{subGroup.poNumber}
+                                            </code>
+                                          )}
+                                        </div>
+                                        <div className="flex items-center gap-4 text-sm">
+                                          <span className="font-medium text-foreground">
+                                            ${subGroup.totalValue.toLocaleString()}
+                                          </span>
+                                          <span className="text-muted-foreground">
+                                            {subGroup.services.length} servicio{subGroup.services.length !== 1 ? 's' : ''}
+                                          </span>
+                                        </div>
+                                      </div>
+                                    </TableCell>
+                                  </TableRow>
+                                  {isExpanded && subGroup.services.map(renderServiceRow)}
+                                </React.Fragment>
+                              );
+                            })}
+                          </TableBody>
+                        </Table>
+                      );
+                    })()}
                   </CardContent>
                 </CollapsibleContent>
               </Card>
