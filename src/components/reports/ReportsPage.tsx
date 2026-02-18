@@ -53,13 +53,17 @@ const ReportsPage = () => {
     costsByCategoryConfig
   } = useReportCharts(metrics);
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-black">Generando reportes...</div>
-      </div>
-    );
-  }
+  const defaultMetrics: typeof metrics = {
+    totalServices: 0, totalRevenue: 0, averageServiceValue: 0,
+    pendingInvoices: 0, overdueInvoices: 0, activeClients: 0,
+    activeCranes: 0, activeOperators: 0, totalCosts: 0,
+    netProfit: 0, profitMargin: 0, servicesByMonth: [],
+    servicesByStatus: [], topClients: [], craneUtilization: [],
+    costsByCategory: [], costsByMonth: [], averageCostPerService: 0,
+    costRevenueRatio: 0,
+  };
+
+  const displayMetrics = metrics || defaultMetrics;
 
   return (
     <div className="space-y-6">
@@ -93,7 +97,7 @@ const ReportsPage = () => {
         </TabsList>
 
         <TabsContent value="dashboard" className="space-y-6">
-          {metrics && <ReportsDashboard metrics={metrics} />}
+          <ReportsDashboard metrics={displayMetrics} />
         </TabsContent>
 
         <TabsContent value="operational" className="space-y-6">
@@ -112,15 +116,13 @@ const ReportsPage = () => {
             sections={['services']}
           />
 
-          {metrics && (
-            <OperationalReports
-              metrics={metrics}
-              servicesByMonthConfig={servicesByMonthConfig}
-              revenueByMonthConfig={revenueByMonthConfig}
-              servicesByStatusConfig={servicesByStatusConfig}
-              craneUtilizationConfig={craneUtilizationConfig}
-            />
-          )}
+          <OperationalReports
+            metrics={displayMetrics}
+            servicesByMonthConfig={servicesByMonthConfig}
+            revenueByMonthConfig={revenueByMonthConfig}
+            servicesByStatusConfig={servicesByStatusConfig}
+            craneUtilizationConfig={craneUtilizationConfig}
+          />
         </TabsContent>
 
         <TabsContent value="costs" className="space-y-6">
@@ -139,12 +141,10 @@ const ReportsPage = () => {
             sections={['metrics', 'costs']}
           />
 
-          {metrics && (
-            <CostAnalysisReports
-              metrics={metrics}
-              costsByCategoryConfig={costsByCategoryConfig}
-            />
-          )}
+          <CostAnalysisReports
+            metrics={displayMetrics}
+            costsByCategoryConfig={costsByCategoryConfig}
+          />
         </TabsContent>
 
         <TabsContent value="maintenance" className="space-y-6">

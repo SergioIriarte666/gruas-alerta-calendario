@@ -56,10 +56,9 @@ export const useReports = (filters?: ReportFilters) => {
   const { data: costCategories = [] } = useCostCategories();
 
   useEffect(() => {
-    if (services.length > 0 && clients.length > 0 && cranes.length > 0 && operators.length > 0 && costs && costCategories) {
-      calculateMetrics();
-      setLastUpdate(new Date());
-    }
+    // Siempre calcular métricas una vez que los datos estén disponibles (incluso si están vacíos)
+    calculateMetrics();
+    setLastUpdate(new Date());
   }, [services, invoices, clients, cranes, operators, costs, costCategories, filters]);
 
   const calculateMetrics = async () => {
