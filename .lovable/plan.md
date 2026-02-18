@@ -1,101 +1,58 @@
 
-# Popup de Resumen de Pendientes al Iniciar Sesion
 
-## Problema
-Actualmente no existe un mecanismo que alerte al usuario sobre lo que esta pendiente cuando inicia sesion. Hay que revisar cliente por cliente para descubrir servicios sin orden de compra, cierres pendientes, etc. El sistema de notificaciones actual solo muestra alertas pasivas en el panel del dashboard, no un aviso proactivo al login.
+# Sub-agrupar por Orden de Compra en TODOS los estados del Pipeline VIP
 
-**Datos reales encontrados en la base de datos:**
-- 63 servicios completados sin orden de compra registrada
-- 9 servicios completados pendientes de cierre (mas de 30 dias)
-- 0 servicios en estado "purchase_order_pending"
+## Que se hara
 
-## Solucion
+Dentro de cada grupo de estado (Cotizados, Con Orden de Compra, Completados, Facturados, etc.), los servicios que tengan orden de compra se agruparan visualmente bajo su numero de O.C. Los servicios sin O.C. aparecen al final del grupo bajo "Sin O.C.".
 
-Crear un **modal popup** que aparece automaticamente al iniciar sesion (una vez por sesion) mostrando un resumen ejecutivo de todo lo pendiente, agrupado por categoria y con acciones directas.
-
-## Diseno del Popup
-
-Siguiendo los patrones del modulo de Costos (Dialog con header gradient, tipografia consistente, badges de colores):
+## Como se vera
 
 ```text
-+----------------------------------------------------------+
-|  HEADER (gradient violet/purple como CostForm)           |
-|  "Resumen de Pendientes"                                 |
-|  "Tienes elementos que requieren tu atencion"            |
-+----------------------------------------------------------+
-|                                                          |
-|  [!] Servicios sin O.C.                          63      |
-|  Servicios completados sin orden de compra               |
-|  [Ver detalle >]                                         |
-|                                                          |
-|  [!] Servicios Pendientes de Cierre               9      |
-|  Completados hace +30 dias sin incluir en cierre         |
-|  [Ver detalle >]                                         |
-|                                                          |
-|  [!] Facturas Vencidas                            0      |
-|  Sin facturas vencidas - todo al dia                     |
-|                                                          |
-|  [!] Documentos por Vencer                        X      |
-|  Permisos, seguros o examenes proximos a vencer          |
-|  [Ver detalle >]                                         |
-|                                                          |
-+----------------------------------------------------------+
-|  [ ] No mostrar de nuevo hoy     [Entendido]            |
-+----------------------------------------------------------+
+v Completados                              $2,500,000 | 15 servicios
+  +-------------------------------------------------+
+  | OC-10067477              $1,230,000 | 4 servicios |
+  |   10797572  Puente Bateria  07/02  $40,000       |
+  |   10794877  Grua Livianos   06/02  $1,000,000    |
+  +-------------------------------------------------+
+  | OC-10067476              $460,000 | 3 servicios   |
+  |   10790988  Grua Livianos   02/02  $100,000      |
+  +-------------------------------------------------+
+  | Sin O.C.                 $810,000 | 8 servicios   |
+  |   10785432  Grua Pesados    28/01  $200,000      |
+  +-------------------------------------------------+
+
+v Facturados                               $3,100,000 | 20 servicios
+  (misma estructura de sub-grupos por O.C.)
+
+v Cotizados                                $500,000 | 5 servicios
+  (misma estructura)
 ```
 
-Cada categoria con badge de color segun urgencia (rojo = critico, amarillo = atencion, verde = ok).
+Cada sub-grupo de O.C. tiene:
+- Fila separadora con fondo sutil (`bg-muted/30`)
+- Numero de O.C. en azul y bold
+- Subtotal y conteo de servicios a la derecha
+- Los sub-grupos son colapsables individualmente
 
 ## Detalle Tecnico
 
-### Archivos nuevos
+### Archivo modificado: `src/components/vip/PipelineListView.tsx`
 
-1. **`src/hooks/usePendingSummary.ts`**
-   - Hook con React Query que ejecuta consultas paralelas a Supabase:
-     - Servicios completados sin O.C. (agrupados por cliente)
-     - Servicios pendientes de cierre (+30 dias)
-     - Facturas vencidas (via RPC existente `get_overdue_invoices_for_alerts`)
-     - Documentos de gruas/operadores por vencer
-   - Retorna conteos y datos resumidos por categoria
-   - `staleTime: 5min` para no re-consultar innecesariamente
+1. **Agregar tipo `POSubGroup`** al inicio del archivo:
+   - `poNumber: string` (numero de O.C. o "Sin O.C.")
+   - `services: Service[]`
+   - `totalValue: number`
 
-2. **`src/components/dashboard/PendingSummaryModal.tsx`**
-   - Modal Dialog siguiendo el estilo del CostForm:
-     - Header con gradient `from-violet-500/10 to-purple-500/10`
-     - Categorias como cards con iconos, conteos en badges
-     - Cada categoria expandible para ver detalle (lista de folios/clientes)
-     - Botones "Ir a..." que navegan a la seccion correspondiente (/services, /closures, /invoices)
-   - Boton "No mostrar de nuevo hoy" que guarda flag en `sessionStorage`
-   - Se cierra con "Entendido" o click fuera
+2. **Funcion helper `groupByPurchaseOrder`**: Recibe un array de servicios y retorna un array de `POSubGroup[]`, ordenados con las O.C. nombradas primero y "Sin O.C." al final.
 
-3. **`src/components/dashboard/PendingCategoryCard.tsx`**
-   - Componente reutilizable para cada categoria de pendientes
-   - Muestra icono, titulo, conteo (badge), descripcion, y boton de accion
-   - Estado expandible para mostrar tabla con detalle (folio, cliente, fecha, dias)
+3. **Modificar el render dentro de `CollapsibleContent`** (lineas 610-724):
+   - En vez de iterar directamente `group.services`, primero calcular los sub-grupos con `groupByPurchaseOrder(group.services)`
+   - Si solo hay un sub-grupo (todos sin O.C. o todos con la misma O.C.), renderizar la tabla plana como esta actualmente (sin cambio visual)
+   - Si hay multiples sub-grupos, renderizar cada uno con:
+     - Una fila de header con `colSpan` completo mostrando el numero de O.C., subtotal y conteo
+     - Los servicios del sub-grupo debajo
+   - Usar `Collapsible` dentro de cada sub-grupo para poder expandir/contraer
 
-### Archivos modificados
+4. **Estado `expandedPOs`**: Un nuevo `useState<Set<string>>` para controlar que sub-grupos de O.C. estan expandidos (por defecto todos abiertos).
 
-4. **`src/pages/Dashboard.tsx`**
-   - Importar y renderizar `PendingSummaryModal`
-   - Logica: mostrar solo si `sessionStorage` no tiene flag `pending_summary_dismissed_[fecha]`
-   - Se muestra cuando `usePendingSummary` tiene datos y el dashboard ya cargo
-
-### Logica de visibilidad
-- El popup aparece **una vez por sesion** (controlado con `sessionStorage`)
-- Si el usuario marca "No mostrar hoy", se guarda con la fecha actual
-- Solo aparece si hay al menos 1 pendiente critico (servicios sin O.C., cierres pendientes, o facturas vencidas)
-- No bloquea la navegacion - se puede cerrar inmediatamente
-
-### Categorias de pendientes a consultar
-
-| Categoria | Query | Tipo |
-|---|---|---|
-| Servicios sin O.C. | `services` where completed + purchase_order empty, agrupado por cliente | warning/error segun antiguedad |
-| Pendientes de Cierre | `services` completed +30 dias, no en `closure_services` | warning |
-| Facturas Vencidas | RPC `get_overdue_invoices_for_alerts` | error |
-| Facturas por Vencer | RPC `get_invoices_due_soon` | warning |
-| Documentos por Vencer | `cranes` + `operators` con fechas proximas | warning/error |
-
-### Tambien se mejora `useNotificationsData.ts`
-- Agregar consulta de **servicios completados sin orden de compra** como nueva categoria de notificacion, que actualmente no existe
-- Esto alimenta tanto el popup como el panel de alertas del dashboard
