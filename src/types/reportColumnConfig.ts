@@ -20,6 +20,9 @@ export interface ReportColumnsConfig {
     destino: ReportColumnConfig;
     estado: ReportColumnConfig;
     valorBase: ReportColumnConfig;
+    custodiaInicio: ReportColumnConfig;
+    custodiaFin: ReportColumnConfig;
+    custodiaDias: ReportColumnConfig;
     valorCustodia: ReportColumnConfig;
     valor: ReportColumnConfig;
   };
@@ -38,16 +41,20 @@ export const defaultReportColumnConfig: ReportColumnsConfig = {
     factura: { visible: true, width: 4, label: 'Factura' },
     tipoServicio: { visible: true, width: 7, label: 'Tipo Servicio' },
     patente: { visible: true, width: 6, label: 'Patente' },
-    origen: { visible: true, width: 10, label: 'Origen' },
-    destino: { visible: true, width: 10, label: 'Destino' },
+    origen: { visible: true, width: 8, label: 'Origen' },
+    destino: { visible: true, width: 8, label: 'Destino' },
     estado: { visible: true, width: 5, label: 'Estado' },
-    valorBase: { visible: true, width: 6, label: 'Servicio' },
-    valorCustodia: { visible: true, width: 6, label: 'Custodia' },
-    valor: { visible: true, width: 7, label: 'Total' }
+    valorBase: { visible: true, width: 5, label: 'Servicio' },
+    custodiaInicio: { visible: true, width: 5, label: 'Inicio Custodia' },
+    custodiaFin: { visible: true, width: 5, label: 'Fin Custodia' },
+    custodiaDias: { visible: true, width: 4, label: 'Días Custodia' },
+    valorCustodia: { visible: true, width: 5, label: 'Custodia' },
+    valor: { visible: true, width: 6, label: 'Total' }
   }
 };
 
 export const columnOrder: ColumnKey[] = [
   'fecha', 'folio', 'cliente', 'asegurado', 'cotizacion', 'oc', 'factura',
-  'tipoServicio', 'patente', 'origen', 'destino', 'estado', 'valorBase', 'valorCustodia', 'valor'
+  'tipoServicio', 'patente', 'origen', 'destino', 'estado', 'valorBase',
+  'custodiaInicio', 'custodiaFin', 'custodiaDias', 'valorCustodia', 'valor'
 ];
