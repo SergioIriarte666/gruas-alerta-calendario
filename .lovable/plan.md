@@ -1,58 +1,100 @@
 
 
-# Sub-agrupar por Orden de Compra en TODOS los estados del Pipeline VIP
+# Sub-agrupamiento Contextual por Estado en Pipeline VIP
 
 ## Que se hara
 
-Dentro de cada grupo de estado (Cotizados, Con Orden de Compra, Completados, Facturados, etc.), los servicios que tengan orden de compra se agruparan visualmente bajo su numero de O.C. Los servicios sin O.C. aparecen al final del grupo bajo "Sin O.C.".
+Cambiar el sub-agrupamiento actual (que siempre agrupa por Orden de Compra) para que sea **inteligente segun el estado**:
+
+| Estado | Agrupar por | Campo | Color del badge |
+|---|---|---|---|
+| Cotizados | **Cotizacion** | `quoteNumber` | Violeta (`text-violet-600`) |
+| Esperando O.C. | **Cotizacion** | `quoteNumber` | Violeta |
+| Con Orden de Compra | **Orden de Compra** | `purchaseOrderNumber / purchaseOrder` | Azul (`text-blue-600`) |
+| Programados | **Orden de Compra** | `purchaseOrderNumber / purchaseOrder` | Azul |
+| En Progreso | **Orden de Compra** | `purchaseOrderNumber / purchaseOrder` | Azul |
+| Completados | **Orden de Compra** | `purchaseOrderNumber / purchaseOrder` | Azul |
+| Facturados | **N Fiscal (Factura)** | `invoiceNumeroFiscal` | Verde (`text-emerald-600`) |
+
+Los servicios sin el campo correspondiente se agrupan al final bajo "Sin Cotizacion", "Sin O.C." o "Sin Factura" segun el caso.
 
 ## Como se vera
 
 ```text
-v Completados                              $2,500,000 | 15 servicios
-  +-------------------------------------------------+
-  | OC-10067477              $1,230,000 | 4 servicios |
-  |   10797572  Puente Bateria  07/02  $40,000       |
-  |   10794877  Grua Livianos   06/02  $1,000,000    |
-  +-------------------------------------------------+
-  | OC-10067476              $460,000 | 3 servicios   |
-  |   10790988  Grua Livianos   02/02  $100,000      |
-  +-------------------------------------------------+
-  | Sin O.C.                 $810,000 | 8 servicios   |
-  |   10785432  Grua Pesados    28/01  $200,000      |
-  +-------------------------------------------------+
+v Cotizados                              $500,000 | 5 servicios
+  +------------------------------------------------------+
+  | COT-2024-001                 $300,000 | 3 servicios   |
+  |   10797572  Puente Bateria  07/02  $40,000            |
+  |   10794877  Grua Livianos   06/02  $260,000           |
+  +------------------------------------------------------+
+  | Sin Cotizacion               $200,000 | 2 servicios   |
+  +------------------------------------------------------+
 
-v Facturados                               $3,100,000 | 20 servicios
-  (misma estructura de sub-grupos por O.C.)
-
-v Cotizados                                $500,000 | 5 servicios
-  (misma estructura)
+v Facturados                             $3,100,000 | 20 servicios
+  +------------------------------------------------------+
+  | FAC-10051105                 $1,200,000 | 5 servicios  |
+  |   ...                                                  |
+  +------------------------------------------------------+
+  | FAC-10051745                 $800,000 | 4 servicios    |
+  |   ...                                                  |
+  +------------------------------------------------------+
 ```
-
-Cada sub-grupo de O.C. tiene:
-- Fila separadora con fondo sutil (`bg-muted/30`)
-- Numero de O.C. en azul y bold
-- Subtotal y conteo de servicios a la derecha
-- Los sub-grupos son colapsables individualmente
 
 ## Detalle Tecnico
 
 ### Archivo modificado: `src/components/vip/PipelineListView.tsx`
 
-1. **Agregar tipo `POSubGroup`** al inicio del archivo:
-   - `poNumber: string` (numero de O.C. o "Sin O.C.")
-   - `services: Service[]`
-   - `totalValue: number`
+1. **Renombrar y generalizar `groupByPurchaseOrder`** a una funcion `groupByField` que reciba el campo por el cual agrupar, el label para "sin valor", y el prefijo para mostrar:
 
-2. **Funcion helper `groupByPurchaseOrder`**: Recibe un array de servicios y retorna un array de `POSubGroup[]`, ordenados con las O.C. nombradas primero y "Sin O.C." al final.
+```typescript
+interface SubGroupConfig {
+  fieldExtractor: (s: Service) => string;
+  emptyLabel: string;
+  prefix: string;
+  badgeColor: string;
+  badgeBg: string;
+}
 
-3. **Modificar el render dentro de `CollapsibleContent`** (lineas 610-724):
-   - En vez de iterar directamente `group.services`, primero calcular los sub-grupos con `groupByPurchaseOrder(group.services)`
-   - Si solo hay un sub-grupo (todos sin O.C. o todos con la misma O.C.), renderizar la tabla plana como esta actualmente (sin cambio visual)
-   - Si hay multiples sub-grupos, renderizar cada uno con:
-     - Una fila de header con `colSpan` completo mostrando el numero de O.C., subtotal y conteo
-     - Los servicios del sub-grupo debajo
-   - Usar `Collapsible` dentro de cada sub-grupo para poder expandir/contraer
+const getSubGroupConfig = (status: ServiceStatus): SubGroupConfig => {
+  switch (status) {
+    case 'quoted':
+    case 'purchase_order_pending':
+      return {
+        fieldExtractor: (s) => s.quoteNumber || '',
+        emptyLabel: 'Sin Cotización',
+        prefix: 'COT-',
+        badgeColor: 'text-violet-600',
+        badgeBg: 'bg-violet-500/10'
+      };
+    case 'invoiced':
+      return {
+        fieldExtractor: (s) => s.invoiceNumeroFiscal || '',
+        emptyLabel: 'Sin Factura',
+        prefix: '',
+        badgeColor: 'text-emerald-600',
+        badgeBg: 'bg-emerald-500/10'
+      };
+    default:
+      return {
+        fieldExtractor: (s) => s.purchaseOrderNumber || s.purchaseOrder || '',
+        emptyLabel: 'Sin O.C.',
+        prefix: 'OC-',
+        badgeColor: 'text-blue-600',
+        badgeBg: 'bg-blue-500/10'
+      };
+  }
+};
+```
 
-4. **Estado `expandedPOs`**: Un nuevo `useState<Set<string>>` para controlar que sub-grupos de O.C. estan expandidos (por defecto todos abiertos).
+2. **Modificar `groupByPurchaseOrder`** para aceptar la configuracion:
+   - Recibe `services` y `config: SubGroupConfig`
+   - Usa `config.fieldExtractor` en vez de hardcodear purchaseOrder
+   - Usa `config.emptyLabel` para el grupo sin valor
+
+3. **Actualizar el render de sub-grupos** (lineas 790-825):
+   - Usar `config.prefix` + valor en vez de hardcodear `OC-`
+   - Usar `config.badgeColor` y `config.badgeBg` para los estilos del badge
+   - Usar `config.emptyLabel` en vez de hardcodear "Sin O.C."
+
+4. **Pasar `group.status`** al calcular los sub-grupos para seleccionar la configuracion correcta.
 
