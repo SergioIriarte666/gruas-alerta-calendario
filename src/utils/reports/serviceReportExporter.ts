@@ -45,6 +45,18 @@ const getColumnValue = (service: Service, key: ColumnKey, config: ReportColumnsC
       return breakdownBase.baseValue > 0 
         ? `$${breakdownBase.baseValue.toLocaleString('es-CL')}` 
         : '-';
+    case 'custodiaInicio':
+      return (service as any).custodyStartDate 
+        ? formatDate(new Date((service as any).custodyStartDate + 'T00:00:00'), 'dd/MM/yy') 
+        : '-';
+    case 'custodiaFin':
+      return (service as any).custodyEndDate 
+        ? formatDate(new Date((service as any).custodyEndDate + 'T00:00:00'), 'dd/MM/yy') 
+        : '-';
+    case 'custodiaDias':
+      return (service as any).custodyDays > 0 
+        ? (service as any).custodyDays.toString() 
+        : '-';
     case 'valorCustodia':
       const breakdownCustody = getServiceValueBreakdown(service);
       return breakdownCustody.custodyValue > 0 
@@ -192,6 +204,9 @@ export const exportServiceReport = async ({
         'Patente Grúa': s.crane?.licensePlate || 'N/A',
         'Estado': s.status,
         'Valor Servicio': breakdown.baseValue,
+        'Inicio Custodia': (s as any).custodyStartDate || '-',
+        'Fin Custodia': (s as any).custodyEndDate || '-',
+        'Días Custodia': (s as any).custodyDays || 0,
         'Valor Custodia': breakdown.custodyValue,
         'Valor Total': getDisplayServiceValue(s),
         'Observaciones': s.observations,
