@@ -162,6 +162,54 @@ export function usePurchaseOrderPDFImport(clientId: string | null, services: Ser
       for (const item of oc.items) {
         const patenteNorm = normalizePatente(item.patente);
 
+        // If patente is empty, use fallback matching by OC number or amount
+        if (!patenteNorm) {
+          const ocNorm = normalizeOC(oc.ocNumber);
+          
+          // Fallback 1: Find services with the same OC already assigned
+          const serviceWithSameOC = clientServices.find(s => 
+            normalizeOC(s.purchaseOrder) === ocNorm || normalizeOC(s.purchaseOrderNumber) === ocNorm
+          );
+          
+          if (serviceWithSameOC) {
+            matches.push({
+              parsedItem: item,
+              service: serviceWithSameOC,
+              ocNumber: oc.ocNumber,
+              fileName: oc.fileName,
+              status: 'same_oc',
+            });
+            continue;
+          }
+
+          // Fallback 2: Find services without OC that match by amount
+          if (item.amount > 0) {
+            const serviceByAmount = clientServices.find(s => 
+              !s.purchaseOrder && !s.purchaseOrderNumber && Math.abs(s.value - item.amount) < 1
+            );
+            if (serviceByAmount) {
+              matches.push({
+                parsedItem: item,
+                service: serviceByAmount,
+                ocNumber: oc.ocNumber,
+                fileName: oc.fileName,
+                status: 'matched',
+              });
+              continue;
+            }
+          }
+
+          // No fallback match found
+          matches.push({
+            parsedItem: item,
+            service: null,
+            ocNumber: oc.ocNumber,
+            fileName: oc.fileName,
+            status: 'no_match',
+          });
+          continue;
+        }
+
         // Find services matching this license plate (normalized comparison)
         const matchingServices = clientServices
           .filter(s => normalizePatente(s.licensePlate) === patenteNorm)
