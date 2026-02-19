@@ -1,77 +1,40 @@
 
+# Filtrar servicios no completados y abrir modal de detalles desde el importador de OC
 
-# Agregar matching por glosa de la OC
+## Problema
 
-## Problema actual
-
-Cuando un item del PDF no tiene patente, el sistema solo puede hacer match por:
-1. Numero de OC ya asignado (raro en items nuevos)
-2. Monto exacto (poco confiable si hay varios servicios con el mismo valor o valor $0)
-
-La **glosa/descripcion** del item siempre esta presente en la OC (ej: "Traslado de Vehiculos", "Custodia de Vehiculos") y puede compararse contra el **tipo de servicio** (`serviceType.name`) registrado en el sistema.
+1. El importador hace match con servicios que aun no estan finalizados (ej: estado "pending" o "in_progress"), lo cual genera confusiones porque pueden ser servicios en curso de la misma patente.
+2. No se puede verificar el servicio propuesto antes de aplicar la OC -- el folio no es clickeable.
 
 ## Solucion
 
-Agregar un nuevo paso de fallback que compare la glosa del PDF con el nombre del tipo de servicio, usando coincidencia por subcadena normalizada (sin tildes, minusculas).
+### 1. Filtrar solo servicios completados (archivo: `usePurchaseOrderPDFImport.ts`)
 
-### Orden de matching propuesto (cuando no hay patente)
+Agregar un filtro adicional en la linea donde ya se excluyen los facturados. Solo servicios con estado `completed` o `with_purchase_order` seran candidatos para asignar una OC nueva:
 
 ```text
-1. Fallback 1: Mismo numero de OC ya asignado
-2. Fallback 2: Match por glosa + monto (NUEVO)
-3. Fallback 3: Match solo por monto (existente, como ultimo recurso)
+// Excluir servicios no finalizados y facturados del matching
+clientServices = clientServices.filter(s => 
+  s.status !== 'invoiced' && 
+  (s.status === 'completed' || s.status === 'with_purchase_order')
+);
 ```
 
-## Detalle tecnico
+Esto descarta servicios en estados `pending`, `in_progress`, `quoted`, etc.
 
-### Archivo: `src/hooks/vip/usePurchaseOrderPDFImport.ts`
+### 2. Folio clickeable para abrir modal de detalles (archivo: `PurchaseOrderPDFImporter.tsx`)
 
-**Agregar funcion de normalizacion de texto** (sin tildes, minusculas, sin espacios extra):
+- Agregar un estado `previewService` para controlar que servicio mostrar en el modal.
+- Cambiar el folio de `<span>` a `<button>` con estilo de enlace (subrayado, color primary).
+- Importar y renderizar `ServiceDetailsModal` al final del componente.
 
-```typescript
-const normalizeText = (t: string) => 
-  (t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
-```
+Cambios puntuales:
+- Importar `ServiceDetailsModal` y `useServiceDetails`.
+- Estado: `const [previewServiceId, setPreviewServiceId] = useState<string | null>(null)`.
+- En la celda del folio: boton clickeable que llama `setPreviewServiceId(match.service.id)`.
+- Renderizar el modal condicionalmente al final, usando `useServiceDetails` para obtener datos enriquecidos del servicio.
 
-**Nuevo Fallback 2 - Match por glosa del servicio:**
+## Archivos a modificar
 
-Entre el fallback por OC existente y el fallback por monto, agregar:
-
-```typescript
-// Fallback 2: Match by description/glosa against service type name
-const glosaNorm = normalizeText(item.detail);
-if (glosaNorm) {
-  const serviceByGlosa = clientServices.find(s =>
-    !usedServiceIds.has(s.id) &&
-    !s.purchaseOrder && !s.purchaseOrderNumber &&
-    s.serviceType?.name &&
-    (normalizeText(s.serviceType.name).includes(glosaNorm) ||
-     glosaNorm.includes(normalizeText(s.serviceType.name)))
-  );
-  if (serviceByGlosa) {
-    usedServiceIds.add(serviceByGlosa.id);
-    matches.push({
-      parsedItem: item,
-      service: serviceByGlosa,
-      ocNumber: oc.ocNumber,
-      fileName: oc.fileName,
-      status: 'matched',
-    });
-    continue;
-  }
-}
-```
-
-La comparacion bidireccional (`includes` en ambas direcciones) permite que:
-- "Traslado de Vehiculos" (glosa) matchee con "Traslado Por Tierra" via "traslado"
-- "Custodia de Vehiculos" matchee con "Custodia de Vehiculos"
-
-**Refinamiento**: Si ademas el monto coincide, priorizar ese match. Si hay multiples candidatos por glosa, el que tenga monto mas cercano gana.
-
-### Archivo modificado
-- `src/hooks/vip/usePurchaseOrderPDFImport.ts`
-
-## Resultado esperado
-
-- Items sin patente pero con glosa "Traslado de Vehiculos" encontraran servicios del tipo "Traslado Por Tierra" automaticamente.
-- El matching sera mas preciso y reducira los "Sin match" en OCs sin patente visible.
+- `src/hooks/vip/usePurchaseOrderPDFImport.ts` -- filtro de estado
+- `src/components/vip/PurchaseOrderPDFImporter.tsx` -- folio clickeable + modal
