@@ -3,7 +3,6 @@ import { useDropzone } from 'react-dropzone';
 import { Service } from '@/types';
 import { usePurchaseOrderPDFImport, MatchedService } from '@/hooks/vip/usePurchaseOrderPDFImport';
 import { ServiceDetailsModal } from '@/components/services/ServiceDetailsModal';
-import { useServiceDetails } from '@/hooks/useServiceDetails';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -45,8 +44,7 @@ export const PurchaseOrderPDFImporter: React.FC<PurchaseOrderPDFImporterProps> =
 }) => {
   const { state, processFiles, applyMatches, reset } = usePurchaseOrderPDFImport(clientId, services);
   const [selectedMatches, setSelectedMatches] = useState<Set<number>>(new Set());
-  const [previewServiceId, setPreviewServiceId] = useState<string | null>(null);
-  const { data: previewServiceData } = useServiceDetails(previewServiceId);
+  const [previewService, setPreviewService] = useState<Service | null>(null);
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     const pdfFiles = acceptedFiles.filter(f => f.type === 'application/pdf');
@@ -205,7 +203,7 @@ export const PurchaseOrderPDFImporter: React.FC<PurchaseOrderPDFImporterProps> =
                       <TableCell className="text-xs">
                         {match.service ? (
                           <button
-                            onClick={() => setPreviewServiceId(match.service!.id)}
+                            onClick={(e) => { e.stopPropagation(); setPreviewService(match.service!); }}
                             className="text-violet-600 underline hover:text-violet-600/80 cursor-pointer font-medium"
                           >
                             {match.service.folio}
@@ -314,11 +312,11 @@ export const PurchaseOrderPDFImporter: React.FC<PurchaseOrderPDFImporterProps> =
         )}
       </CardContent>
 
-      {previewServiceData && (
+      {previewService && (
         <ServiceDetailsModal
-          service={previewServiceData}
-          isOpen={!!previewServiceId}
-          onClose={() => setPreviewServiceId(null)}
+          service={previewService}
+          isOpen={!!previewService}
+          onClose={() => setPreviewService(null)}
         />
       )}
     </Card>
