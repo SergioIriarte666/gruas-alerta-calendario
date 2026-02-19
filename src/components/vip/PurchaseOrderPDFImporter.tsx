@@ -222,7 +222,7 @@ export const PurchaseOrderPDFImporter: React.FC<PurchaseOrderPDFImporterProps> =
                       <TableCell className="font-mono text-xs">{match.ocNumber}</TableCell>
                       <TableCell>
                         {match.status === 'matched' && (
-                          <Badge variant="secondary" className="bg-primary/10 text-primary text-xs">
+                          <Badge variant="secondary" className="bg-violet-600/10 text-violet-600 text-xs">
                             <CheckCircle className="w-3 h-3 mr-1" />
                             Match
                           </Badge>
