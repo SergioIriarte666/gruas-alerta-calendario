@@ -148,7 +148,7 @@ export const PurchaseOrderPDFImporter: React.FC<PurchaseOrderPDFImporterProps> =
           <div className="space-y-4">
             {/* Summary badges */}
             <div className="flex flex-wrap items-center gap-2">
-              <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/20">
+              <Badge variant="secondary" className="bg-violet-600/10 text-violet-600 border-violet-600/20">
                 <CheckCircle className="w-3 h-3 mr-1" />
                 {matchedCount} coincidencias
               </Badge>
