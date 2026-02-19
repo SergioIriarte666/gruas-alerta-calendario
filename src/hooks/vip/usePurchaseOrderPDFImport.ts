@@ -99,10 +99,63 @@ export function usePurchaseOrderPDFImport(clientId: string | null, services: Ser
       return;
     }
 
-    // Now match against existing services
+    // Now match against existing services - fetch fresh data from DB
     setState(prev => ({ ...prev, step: 'matching', parsedOCs }));
 
-    const clientServices = services.filter(s => s.client?.id === clientId);
+    // Fresh fetch to avoid stale cache after OC deletions
+    let clientServices: Service[] = [];
+    try {
+      const { data: freshData, error: freshError } = await supabase
+        .from('services')
+        .select(`
+          *,
+          cranes(id, license_plate, brand, model, type, is_active),
+          operators(id, name, rut, phone, license_number, is_active),
+          service_types(id, name, description, base_price, is_active, vehicle_info_optional, purchase_order_required, origin_required, destination_required, crane_required, operator_required, vehicle_brand_required, vehicle_model_required, license_plate_required, created_at, updated_at)
+        `)
+        .eq('client_id', clientId)
+        .order('service_date', { ascending: false });
+
+      if (freshError) throw freshError;
+
+      const { data: clientData } = await supabase
+        .from('clients')
+        .select('id, name, rut, phone, email, address, department, is_active')
+        .eq('id', clientId)
+        .single();
+
+      clientServices = (freshData || []).map((service: any) => ({
+        id: service.id,
+        folio: service.folio,
+        requestDate: service.request_date,
+        serviceDate: service.service_date,
+        client: clientData ? {
+          id: clientData.id, name: clientData.name, rut: clientData.rut,
+          phone: clientData.phone || '', email: clientData.email || '',
+          address: clientData.address || '', department: clientData.department || 'General',
+          isActive: clientData.is_active, createdAt: '', updatedAt: ''
+        } : null,
+        purchaseOrder: service.purchase_order,
+        purchaseOrderNumber: service.purchase_order_number || '',
+        licensePlate: service.license_plate,
+        serviceType: service.service_types ? {
+          id: service.service_types.id, name: service.service_types.name,
+          description: service.service_types.description || '',
+          basePrice: service.service_types.base_price, isActive: service.service_types.is_active,
+        } : null,
+        value: Number(service.value),
+        crane: service.cranes ? { id: service.cranes.id, licensePlate: service.cranes.license_plate } : null,
+        operator: service.operators ? { id: service.operators.id, name: service.operators.name } : null,
+        status: service.status,
+        observations: service.observations,
+        createdAt: service.created_at,
+        updatedAt: service.updated_at,
+      })) as Service[];
+    } catch (err: any) {
+      console.error('Error fetching fresh services:', err);
+      // Fallback to prop services if fresh fetch fails
+      clientServices = services.filter(s => s.client?.id === clientId);
+    }
     const matches: MatchedService[] = [];
 
     for (const oc of parsedOCs) {
