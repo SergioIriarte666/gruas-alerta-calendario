@@ -156,7 +156,11 @@ export function usePurchaseOrderPDFImport(clientId: string | null, services: Ser
       // Fallback to prop services if fresh fetch fails
       clientServices = services.filter(s => s.client?.id === clientId);
     }
+    // Excluir servicios facturados del matching
+    clientServices = clientServices.filter(s => s.status !== 'invoiced');
+
     const matches: MatchedService[] = [];
+    const usedServiceIds = new Set<string>();
 
     for (const oc of parsedOCs) {
       for (const item of oc.items) {
@@ -168,10 +172,11 @@ export function usePurchaseOrderPDFImport(clientId: string | null, services: Ser
           
           // Fallback 1: Find services with the same OC already assigned
           const serviceWithSameOC = clientServices.find(s => 
-            normalizeOC(s.purchaseOrder) === ocNorm || normalizeOC(s.purchaseOrderNumber) === ocNorm
+            !usedServiceIds.has(s.id) && (normalizeOC(s.purchaseOrder) === ocNorm || normalizeOC(s.purchaseOrderNumber) === ocNorm)
           );
           
           if (serviceWithSameOC) {
+            usedServiceIds.add(serviceWithSameOC.id);
             matches.push({
               parsedItem: item,
               service: serviceWithSameOC,
@@ -185,9 +190,10 @@ export function usePurchaseOrderPDFImport(clientId: string | null, services: Ser
           // Fallback 2: Find services without OC that match by amount
           if (item.amount > 0) {
             const serviceByAmount = clientServices.find(s => 
-              !s.purchaseOrder && !s.purchaseOrderNumber && Math.abs(s.value - item.amount) < 1
+              !usedServiceIds.has(s.id) && !s.purchaseOrder && !s.purchaseOrderNumber && Math.abs(s.value - item.amount) < 1
             );
             if (serviceByAmount) {
+              usedServiceIds.add(serviceByAmount.id);
               matches.push({
                 parsedItem: item,
                 service: serviceByAmount,
@@ -212,7 +218,7 @@ export function usePurchaseOrderPDFImport(clientId: string | null, services: Ser
 
         // Find services matching this license plate (normalized comparison)
         const matchingServices = clientServices
-          .filter(s => normalizePatente(s.licensePlate) === patenteNorm)
+          .filter(s => normalizePatente(s.licensePlate) === patenteNorm && !usedServiceIds.has(s.id))
           .sort((a, b) => new Date(b.serviceDate).getTime() - new Date(a.serviceDate).getTime());
 
         if (matchingServices.length === 0) {
@@ -230,6 +236,7 @@ export function usePurchaseOrderPDFImport(clientId: string | null, services: Ser
           );
 
           if (serviceWithoutOC) {
+            usedServiceIds.add(serviceWithoutOC.id);
             matches.push({
               parsedItem: item,
               service: serviceWithoutOC,
@@ -241,6 +248,7 @@ export function usePurchaseOrderPDFImport(clientId: string | null, services: Ser
             // Check if the most recent service already has the same OC
             const topService = matchingServices[0];
             const hasSameOC = normalizeOC(topService.purchaseOrder) === normalizeOC(oc.ocNumber) || normalizeOC(topService.purchaseOrderNumber) === normalizeOC(oc.ocNumber);
+            usedServiceIds.add(topService.id);
             matches.push({
               parsedItem: item,
               service: topService,
