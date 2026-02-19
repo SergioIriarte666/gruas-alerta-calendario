@@ -269,8 +269,11 @@ export function usePurchaseOrderPDFImport(clientId: string | null, services: Ser
     for (let i = 0; i < validMatches.length; i++) {
       const match = validMatches[i];
       try {
+        const formattedOC = match.ocNumber.startsWith('OC-') 
+          ? match.ocNumber 
+          : `OC-${match.ocNumber}`;
         await updateService(match.service!.id, {
-          purchaseOrder: match.ocNumber,
+          purchaseOrder: formattedOC,
           status: 'with_purchase_order' as any,
         });
         successCount++;
