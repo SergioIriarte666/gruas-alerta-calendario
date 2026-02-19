@@ -35,6 +35,9 @@ interface ImportState {
   error: string | null;
 }
 
+const normalizePatente = (p: string | null | undefined) => (p || '').replace(/[-\s]/g, '').toUpperCase();
+const normalizeOC = (oc: string | null | undefined) => (oc || '').replace(/^OC-/i, '').trim();
+
 export function usePurchaseOrderPDFImport(clientId: string | null, services: Service[]) {
   const { updateService } = useServices();
   const [state, setState] = useState<ImportState>({
@@ -104,11 +107,11 @@ export function usePurchaseOrderPDFImport(clientId: string | null, services: Ser
 
     for (const oc of parsedOCs) {
       for (const item of oc.items) {
-        const patente = item.patente.toUpperCase();
+        const patenteNorm = normalizePatente(item.patente);
 
-        // Find services matching this license plate
+        // Find services matching this license plate (normalized comparison)
         const matchingServices = clientServices
-          .filter(s => s.licensePlate?.toUpperCase() === patente)
+          .filter(s => normalizePatente(s.licensePlate) === patenteNorm)
           .sort((a, b) => new Date(b.serviceDate).getTime() - new Date(a.serviceDate).getTime());
 
         if (matchingServices.length === 0) {
@@ -136,7 +139,7 @@ export function usePurchaseOrderPDFImport(clientId: string | null, services: Ser
           } else {
             // Check if the most recent service already has the same OC
             const topService = matchingServices[0];
-            const hasSameOC = topService.purchaseOrder === oc.ocNumber || topService.purchaseOrderNumber === oc.ocNumber;
+            const hasSameOC = normalizeOC(topService.purchaseOrder) === normalizeOC(oc.ocNumber) || normalizeOC(topService.purchaseOrderNumber) === normalizeOC(oc.ocNumber);
             matches.push({
               parsedItem: item,
               service: topService,
