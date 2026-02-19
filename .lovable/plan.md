@@ -1,41 +1,44 @@
 
-# Corregir matching de patentes y OC en el importador PDF
+# Corregir datos obsoletos al re-importar OC desde PDF
 
 ## Problema
 
-Dos diferencias de formato impiden el match:
-
-1. **Patentes**: La base de datos almacena con guion (`VJYG-13`) pero el PDF extrae sin guion (`VJYG13`). La comparacion directa falla.
-2. **Numero de OC**: La base de datos almacena con prefijo `OC-` (`OC-4701665309`) pero el PDF extrae solo el numero (`4701665309`). La comparacion de "misma OC" tambien falla.
+Cuando el usuario borra una OC de un servicio y luego sube el mismo PDF nuevamente, el importador sigue mostrando que la OC ya esta asignada. Esto ocurre porque el hook `usePurchaseOrderPDFImport` usa el array de `services` que recibe como prop, el cual esta desactualizado (cache del estado anterior).
 
 ## Solucion
 
-Normalizar ambos valores antes de comparar, eliminando guiones y el prefijo `OC-`.
+Antes de ejecutar el matching, hacer un refetch de los servicios del cliente directamente desde la base de datos dentro de `processFiles`, para tener siempre los datos mas recientes.
 
 ## Detalle tecnico
 
 ### Archivo: `src/hooks/vip/usePurchaseOrderPDFImport.ts`
 
-1. Agregar funcion de normalizacion de patentes que elimine guiones y espacios:
-   ```
-   normalizePatente("VJYG-13") -> "VJYG13"
-   normalizePatente("VJYG13")  -> "VJYG13"
-   ```
+1. Agregar una consulta directa a Supabase dentro de `processFiles`, justo antes de la fase de matching (linea ~105), para obtener los servicios frescos del cliente en lugar de usar el array `services` del prop.
 
-2. Agregar funcion de normalizacion de OC que elimine el prefijo `OC-`:
-   ```
-   normalizeOC("OC-4701665309") -> "4701665309"
-   normalizeOC("4701665309")    -> "4701665309"
-   ```
+2. Reemplazar `const clientServices = services.filter(...)` por una consulta fresca:
+   - Consultar `supabase.from('services').select(...)` filtrado por `client_id`
+   - Transformar los datos al formato `Service[]`
+   - Usar estos datos frescos para el matching
 
-3. En la logica de matching (linea ~97), cambiar la comparacion de patentes:
-   - Antes: `s.licensePlate?.toUpperCase() === patente`
-   - Despues: `normalizePatente(s.licensePlate) === normalizePatente(patente)`
+3. Alternativa mas simple: pasar una funcion `refetch` como parametro al hook y llamarla antes de matching, luego usar los servicios actualizados.
 
-4. En la deteccion de "misma OC" (linea ~115), cambiar la comparacion:
-   - Antes: `topService.purchaseOrder === oc.ocNumber`
-   - Despues: `normalizeOC(topService.purchaseOrder) === normalizeOC(oc.ocNumber)`
+La opcion mas limpia es recibir la funcion `refetch` del padre y llamarla antes de hacer el matching, ya que reutiliza la logica de transformacion existente.
 
-### Sin cambios en
-- Edge function (extrae correctamente los datos)
-- Componente UI (ya soporta todos los estados)
+### Archivo: `src/pages/VipClientPipeline.tsx`
+
+- Pasar la funcion `refetch` del hook `useClientServices` como prop al componente `PurchaseOrderPDFImporter`.
+
+### Archivo: `src/components/vip/PurchaseOrderPDFImporter.tsx`
+
+- Agregar prop `onRefreshServices` que devuelva los servicios frescos.
+- Pasarla al hook `usePurchaseOrderPDFImport`.
+
+### Flujo actualizado
+
+```text
+1. Usuario sube PDF
+2. Se procesan los PDFs con la Edge Function
+3. NUEVO: Se refetch de servicios del cliente desde la BD
+4. Se ejecuta el matching con datos frescos
+5. Se muestra la preview con estados correctos
+```
