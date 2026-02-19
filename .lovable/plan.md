@@ -1,45 +1,77 @@
 
 
-# Filtrar servicios facturados y evitar duplicados en el importador de OC
+# Agregar matching por glosa de la OC
 
-## Problema
+## Problema actual
 
-El importador de OC desde PDF presenta dos fallos:
+Cuando un item del PDF no tiene patente, el sistema solo puede hacer match por:
+1. Numero de OC ya asignado (raro en items nuevos)
+2. Monto exacto (poco confiable si hay varios servicios con el mismo valor o valor $0)
 
-1. **Servicios facturados como candidatos**: Servicios con estado `invoiced` no deben ser elegibles para asignar una OC nueva, ya que estan cerrados contablemente.
-2. **Mismo servicio duplicado**: Cuando el PDF tiene multiples items sin patente, el fallback por monto puede asignar el mismo servicio a varios items porque no se marca como "ya usado".
+La **glosa/descripcion** del item siempre esta presente en la OC (ej: "Traslado de Vehiculos", "Custodia de Vehiculos") y puede compararse contra el **tipo de servicio** (`serviceType.name`) registrado en el sistema.
 
 ## Solucion
 
-### Archivo: `src/hooks/vip/usePurchaseOrderPDFImport.ts`
+Agregar un nuevo paso de fallback que compare la glosa del PDF con el nombre del tipo de servicio, usando coincidencia por subcadena normalizada (sin tildes, minusculas).
 
-**Cambio 1 - Excluir servicios facturados del pool de candidatos**
-
-Despues de obtener `clientServices`, filtrar los que tengan `status === 'invoiced'`:
+### Orden de matching propuesto (cuando no hay patente)
 
 ```text
-// Excluir servicios facturados del matching
-clientServices = clientServices.filter(s => s.status !== 'invoiced');
+1. Fallback 1: Mismo numero de OC ya asignado
+2. Fallback 2: Match por glosa + monto (NUEVO)
+3. Fallback 3: Match solo por monto (existente, como ultimo recurso)
 ```
 
-**Cambio 2 - Deduplicar: evitar asignar el mismo servicio a multiples items**
+## Detalle tecnico
 
-Usar un `Set<string>` para rastrear los IDs de servicios ya asignados. Antes de hacer match, verificar que el servicio no este en el set. Al confirmar un match, agregarlo.
+### Archivo: `src/hooks/vip/usePurchaseOrderPDFImport.ts`
 
-```text
-const usedServiceIds = new Set<string>();
+**Agregar funcion de normalizacion de texto** (sin tildes, minusculas, sin espacios extra):
 
-// En cada punto donde se hace match exitoso:
-if (serviceByAmount && !usedServiceIds.has(serviceByAmount.id)) {
-  usedServiceIds.add(serviceByAmount.id);
-  matches.push({ ... });
+```typescript
+const normalizeText = (t: string) => 
+  (t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+```
+
+**Nuevo Fallback 2 - Match por glosa del servicio:**
+
+Entre el fallback por OC existente y el fallback por monto, agregar:
+
+```typescript
+// Fallback 2: Match by description/glosa against service type name
+const glosaNorm = normalizeText(item.detail);
+if (glosaNorm) {
+  const serviceByGlosa = clientServices.find(s =>
+    !usedServiceIds.has(s.id) &&
+    !s.purchaseOrder && !s.purchaseOrderNumber &&
+    s.serviceType?.name &&
+    (normalizeText(s.serviceType.name).includes(glosaNorm) ||
+     glosaNorm.includes(normalizeText(s.serviceType.name)))
+  );
+  if (serviceByGlosa) {
+    usedServiceIds.add(serviceByGlosa.id);
+    matches.push({
+      parsedItem: item,
+      service: serviceByGlosa,
+      ocNumber: oc.ocNumber,
+      fileName: oc.fileName,
+      status: 'matched',
+    });
+    continue;
+  }
 }
 ```
 
-Esto aplica a todos los caminos de matching: por patente, por OC existente y por monto.
+La comparacion bidireccional (`includes` en ambas direcciones) permite que:
+- "Traslado de Vehiculos" (glosa) matchee con "Traslado Por Tierra" via "traslado"
+- "Custodia de Vehiculos" matchee con "Custodia de Vehiculos"
+
+**Refinamiento**: Si ademas el monto coincide, priorizar ese match. Si hay multiples candidatos por glosa, el que tenga monto mas cercano gana.
+
+### Archivo modificado
+- `src/hooks/vip/usePurchaseOrderPDFImport.ts`
 
 ## Resultado esperado
 
-- Los servicios facturados ya no apareceran como candidatos.
-- Cada servicio solo podra asignarse a un item del PDF, evitando filas duplicadas.
-
+- Items sin patente pero con glosa "Traslado de Vehiculos" encontraran servicios del tipo "Traslado Por Tierra" automaticamente.
+- El matching sera mas preciso y reducira los "Sin match" en OCs sin patente visible.
