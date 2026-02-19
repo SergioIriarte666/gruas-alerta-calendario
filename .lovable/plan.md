@@ -1,31 +1,45 @@
 
 
-# Agregar prefijo "OC-" al aplicar Orden de Compra
+# Filtrar servicios facturados y evitar duplicados en el importador de OC
 
 ## Problema
 
-Al aplicar la OC desde el importador PDF, el numero se guarda sin el prefijo "OC-" (ej: `4200490558` en vez de `OC-4200490558`). Esto rompe la uniformidad visual en el pipeline donde los sub-grupos usan el prefijo "OC-".
+El importador de OC desde PDF presenta dos fallos:
+
+1. **Servicios facturados como candidatos**: Servicios con estado `invoiced` no deben ser elegibles para asignar una OC nueva, ya que estan cerrados contablemente.
+2. **Mismo servicio duplicado**: Cuando el PDF tiene multiples items sin patente, el fallback por monto puede asignar el mismo servicio a varios items porque no se marca como "ya usado".
 
 ## Solucion
 
-Modificar la funcion `applyMatches` en `usePurchaseOrderPDFImport.ts` para anteponer el prefijo `OC-` al numero de OC antes de guardarlo, solo si no lo tiene ya.
-
-## Detalle tecnico
-
 ### Archivo: `src/hooks/vip/usePurchaseOrderPDFImport.ts`
 
-En la funcion `applyMatches`, al llamar `updateService`, formatear el `ocNumber`:
+**Cambio 1 - Excluir servicios facturados del pool de candidatos**
 
-```typescript
-const formattedOC = match.ocNumber.startsWith('OC-') 
-  ? match.ocNumber 
-  : `OC-${match.ocNumber}`;
+Despues de obtener `clientServices`, filtrar los que tengan `status === 'invoiced'`:
 
-await updateService(match.service!.id, {
-  purchaseOrder: formattedOC,
-  status: 'with_purchase_order' as any,
-});
+```text
+// Excluir servicios facturados del matching
+clientServices = clientServices.filter(s => s.status !== 'invoiced');
 ```
 
-Esto asegura que siempre se almacene con el prefijo, sin duplicarlo si ya viene incluido.
+**Cambio 2 - Deduplicar: evitar asignar el mismo servicio a multiples items**
+
+Usar un `Set<string>` para rastrear los IDs de servicios ya asignados. Antes de hacer match, verificar que el servicio no este en el set. Al confirmar un match, agregarlo.
+
+```text
+const usedServiceIds = new Set<string>();
+
+// En cada punto donde se hace match exitoso:
+if (serviceByAmount && !usedServiceIds.has(serviceByAmount.id)) {
+  usedServiceIds.add(serviceByAmount.id);
+  matches.push({ ... });
+}
+```
+
+Esto aplica a todos los caminos de matching: por patente, por OC existente y por monto.
+
+## Resultado esperado
+
+- Los servicios facturados ya no apareceran como candidatos.
+- Cada servicio solo podra asignarse a un item del PDF, evitando filas duplicadas.
 
