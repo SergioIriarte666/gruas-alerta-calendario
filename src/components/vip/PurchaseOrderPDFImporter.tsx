@@ -206,7 +206,7 @@ export const PurchaseOrderPDFImporter: React.FC<PurchaseOrderPDFImporterProps> =
                         {match.service ? (
                           <button
                             onClick={() => setPreviewServiceId(match.service!.id)}
-                            className="text-primary underline hover:text-primary/80 cursor-pointer font-medium"
+                            className="text-violet-600 underline hover:text-violet-600/80 cursor-pointer font-medium"
                           >
                             {match.service.folio}
                             {match.service.serviceDate && (
