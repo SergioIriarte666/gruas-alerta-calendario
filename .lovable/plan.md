@@ -1,54 +1,41 @@
 
-# Refinamiento del Importador de OC desde PDF
+# Corregir matching de patentes y OC en el importador PDF
 
-## Mejoras propuestas
+## Problema
 
-### 1. Nuevo estado: "OC ya asignada" (misma OC)
-Cuando un servicio ya tiene asignada **la misma OC** que se esta importando, mostrar un estado especial "Ya asignada" en color azul/gris, indicando que no necesita accion. Esto se diferencia del caso donde tiene **otra OC distinta**.
+Dos diferencias de formato impiden el match:
 
-### 2. Estado "Ya tiene OC" mejorado (OC diferente)
-Cuando el servicio ya tiene una OC **diferente**, mostrar cual es la OC actual y permitir seleccionar el checkbox para sobrescribirla si el usuario lo desea.
+1. **Patentes**: La base de datos almacena con guion (`VJYG-13`) pero el PDF extrae sin guion (`VJYG13`). La comparacion directa falla.
+2. **Numero de OC**: La base de datos almacena con prefijo `OC-` (`OC-4701665309`) pero el PDF extrae solo el numero (`4701665309`). La comparacion de "misma OC" tambien falla.
 
-### 3. Columna "OC Actual" en la tabla
-Agregar una columna que muestre la OC que ya tiene asignada el servicio (si la tiene), para que el usuario pueda comparar antes de decidir.
+## Solucion
 
-### 4. Mostrar mas informacion del servicio
-En la columna "Servicio", ademas del folio, mostrar la fecha del servicio para facilitar la identificacion.
-
-### 5. Resumen mejorado con 4 badges
-- Coincidencias (verde) -- listos para asignar
-- Ya asignada (azul) -- misma OC, no requiere accion
-- OC diferente (amarillo) -- tiene otra OC, seleccionable para sobrescribir
-- Sin match (rojo) -- no se encontro servicio
+Normalizar ambos valores antes de comparar, eliminando guiones y el prefijo `OC-`.
 
 ## Detalle tecnico
 
 ### Archivo: `src/hooks/vip/usePurchaseOrderPDFImport.ts`
 
-- Agregar nuevo estado `'same_oc'` al tipo `MatchedService.status`
-- En la logica de matching, cuando el servicio ya tiene OC:
-  - Si `service.purchaseOrder === oc.ocNumber` -> estado `'same_oc'`
-  - Si tiene otra OC diferente -> estado `'already_has_oc'`
-- Permitir que `applyMatches` tambien procese items con estado `'already_has_oc'` (sobrescribir)
+1. Agregar funcion de normalizacion de patentes que elimine guiones y espacios:
+   ```
+   normalizePatente("VJYG-13") -> "VJYG13"
+   normalizePatente("VJYG13")  -> "VJYG13"
+   ```
 
-### Archivo: `src/components/vip/PurchaseOrderPDFImporter.tsx`
+2. Agregar funcion de normalizacion de OC que elimine el prefijo `OC-`:
+   ```
+   normalizeOC("OC-4701665309") -> "4701665309"
+   normalizeOC("4701665309")    -> "4701665309"
+   ```
 
-- Agregar columna "OC Actual" que muestre `match.service?.purchaseOrder` cuando existe
-- Agregar badge azul para estado `'same_oc'` con icono de check doble
-- Habilitar checkbox para items `'already_has_oc'` (permitir sobrescribir)
-- En columna "Servicio", mostrar folio + fecha: `SRV-1234 (15/02/2026)`
-- Agregar badge de resumen para `'same_oc'`
+3. En la logica de matching (linea ~97), cambiar la comparacion de patentes:
+   - Antes: `s.licensePlate?.toUpperCase() === patente`
+   - Despues: `normalizePatente(s.licensePlate) === normalizePatente(patente)`
 
-### Flujo visual actualizado
-
-```text
-Patente   | Servicio              | OC Actual    | N OC Nueva   | Estado
-VHZJ75    | SRV-1234 (15/02)      | 4701665314   | 4701665314   | Ya asignada (azul)
-VLSV92    | SRV-1235 (16/02)      | —            | 4701665314   | Match (verde)
-VLZF95    | SRV-1236 (14/02)      | 4701555000   | 4701665314   | OC diferente (amarillo)
-ABCD12    | —                     | —            | 4701665314   | Sin match (rojo)
-```
+4. En la deteccion de "misma OC" (linea ~115), cambiar la comparacion:
+   - Antes: `topService.purchaseOrder === oc.ocNumber`
+   - Despues: `normalizeOC(topService.purchaseOrder) === normalizeOC(oc.ocNumber)`
 
 ### Sin cambios en
-- Edge function (ya funciona correctamente)
-- Hook de servicios
+- Edge function (extrae correctamente los datos)
+- Componente UI (ya soporta todos los estados)
