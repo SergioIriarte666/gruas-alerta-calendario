@@ -1,40 +1,41 @@
 
-# Filtrar servicios no completados y abrir modal de detalles desde el importador de OC
+# Ampliar filtro de estados para incluir servicios cotizados en el importador de OC
 
 ## Problema
 
-1. El importador hace match con servicios que aun no estan finalizados (ej: estado "pending" o "in_progress"), lo cual genera confusiones porque pueden ser servicios en curso de la misma patente.
-2. No se puede verificar el servicio propuesto antes de aplicar la OC -- el folio no es clickeable.
+El filtro actual solo permite servicios `completed` o `with_purchase_order`, pero en el flujo real del Pipeline VIP, la Orden de Compra llega **despues** de cotizar. Servicios en estado `quoted` o `purchase_order_pending` son los principales candidatos para recibir una OC.
+
+En la captura se ve que la patente PFBF-94 fue detectada correctamente, hay 1 servicio "Cotizado" para ese cliente, pero el sistema muestra "Sin match" porque el estado `quoted` esta excluido.
 
 ## Solucion
 
-### 1. Filtrar solo servicios completados (archivo: `usePurchaseOrderPDFImport.ts`)
+### Archivo: `src/hooks/vip/usePurchaseOrderPDFImport.ts`
 
-Agregar un filtro adicional en la linea donde ya se excluyen los facturados. Solo servicios con estado `completed` o `with_purchase_order` seran candidatos para asignar una OC nueva:
+Ampliar el filtro de estados candidatos (linea 161-164) para incluir los estados relevantes del pipeline VIP:
 
 ```text
-// Excluir servicios no finalizados y facturados del matching
+Antes:  completed, with_purchase_order
+Ahora:  quoted, purchase_order_pending, completed, with_purchase_order
+```
+
+Se siguen excluyendo:
+- `pending` / `in_progress` (servicio aun no confirmado/cotizado)
+- `invoiced` (ya facturado, no deberia reasignarse)
+- `cancelled` / `failed`
+
+## Detalle tecnico
+
+Cambiar la linea del filtro a:
+
+```typescript
 clientServices = clientServices.filter(s => 
-  s.status !== 'invoiced' && 
-  (s.status === 'completed' || s.status === 'with_purchase_order')
+  s.status === 'quoted' || 
+  s.status === 'purchase_order_pending' || 
+  s.status === 'completed' || 
+  s.status === 'with_purchase_order'
 );
 ```
 
-Esto descarta servicios en estados `pending`, `in_progress`, `quoted`, etc.
+## Archivo a modificar
 
-### 2. Folio clickeable para abrir modal de detalles (archivo: `PurchaseOrderPDFImporter.tsx`)
-
-- Agregar un estado `previewService` para controlar que servicio mostrar en el modal.
-- Cambiar el folio de `<span>` a `<button>` con estilo de enlace (subrayado, color primary).
-- Importar y renderizar `ServiceDetailsModal` al final del componente.
-
-Cambios puntuales:
-- Importar `ServiceDetailsModal` y `useServiceDetails`.
-- Estado: `const [previewServiceId, setPreviewServiceId] = useState<string | null>(null)`.
-- En la celda del folio: boton clickeable que llama `setPreviewServiceId(match.service.id)`.
-- Renderizar el modal condicionalmente al final, usando `useServiceDetails` para obtener datos enriquecidos del servicio.
-
-## Archivos a modificar
-
-- `src/hooks/vip/usePurchaseOrderPDFImport.ts` -- filtro de estado
-- `src/components/vip/PurchaseOrderPDFImporter.tsx` -- folio clickeable + modal
+- `src/hooks/vip/usePurchaseOrderPDFImport.ts` (1 linea)
