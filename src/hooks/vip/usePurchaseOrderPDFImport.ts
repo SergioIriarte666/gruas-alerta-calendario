@@ -37,6 +37,8 @@ interface ImportState {
 
 const normalizePatente = (p: string | null | undefined) => (p || '').replace(/[-\s]/g, '').toUpperCase();
 const normalizeOC = (oc: string | null | undefined) => (oc || '').replace(/^OC-/i, '').trim();
+const normalizeText = (t: string | null | undefined) =>
+  (t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
 
 export function usePurchaseOrderPDFImport(clientId: string | null, services: Service[]) {
   const { updateService } = useServices();
@@ -187,7 +189,34 @@ export function usePurchaseOrderPDFImport(clientId: string | null, services: Ser
             continue;
           }
 
-          // Fallback 2: Find services without OC that match by amount
+          // Fallback 2: Match by glosa/description against service type name
+          const glosaNorm = normalizeText(item.detail);
+          if (glosaNorm) {
+            const candidatesByGlosa = clientServices.filter(s =>
+              !usedServiceIds.has(s.id) &&
+              !s.purchaseOrder && !s.purchaseOrderNumber &&
+              s.serviceType?.name &&
+              (normalizeText(s.serviceType.name).includes(glosaNorm) ||
+               glosaNorm.includes(normalizeText(s.serviceType.name)))
+            );
+            if (candidatesByGlosa.length > 0) {
+              // Prefer the one with closest amount match
+              const best = item.amount > 0
+                ? candidatesByGlosa.sort((a, b) => Math.abs(a.value - item.amount) - Math.abs(b.value - item.amount))[0]
+                : candidatesByGlosa[0];
+              usedServiceIds.add(best.id);
+              matches.push({
+                parsedItem: item,
+                service: best,
+                ocNumber: oc.ocNumber,
+                fileName: oc.fileName,
+                status: 'matched',
+              });
+              continue;
+            }
+          }
+
+          // Fallback 3: Match by amount only
           if (item.amount > 0) {
             const serviceByAmount = clientServices.find(s => 
               !usedServiceIds.has(s.id) && !s.purchaseOrder && !s.purchaseOrderNumber && Math.abs(s.value - item.amount) < 1
