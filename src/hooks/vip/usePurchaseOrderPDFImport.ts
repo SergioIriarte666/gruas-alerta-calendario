@@ -160,7 +160,10 @@ export function usePurchaseOrderPDFImport(clientId: string | null, services: Ser
     }
     // Solo servicios completados o con OC son candidatos (excluir pending, in_progress, quoted, invoiced, etc.)
     clientServices = clientServices.filter(s => 
-      s.status === 'completed' || s.status === 'with_purchase_order'
+      s.status === 'quoted' || 
+      s.status === 'purchase_order_pending' || 
+      s.status === 'completed' || 
+      s.status === 'with_purchase_order'
     );
 
     const matches: MatchedService[] = [];
