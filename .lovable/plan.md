@@ -1,44 +1,57 @@
 
-# Corregir datos obsoletos al re-importar OC desde PDF
+# Corregir extraccion de patentes vacias del PDF
 
 ## Problema
 
-Cuando el usuario borra una OC de un servicio y luego sube el mismo PDF nuevamente, el importador sigue mostrando que la OC ya esta asignada. Esto ocurre porque el hook `usePurchaseOrderPDFImport` usa el array de `services` que recibe como prop, el cual esta desactualizado (cache del estado anterior).
+Los logs de la edge function muestran que la IA extrae correctamente el numero de OC (`4200490558`) pero devuelve la patente vacia (`"patentes":[""]`). Sin patente, el matching contra los servicios falla y muestra "Sin match".
 
-## Solucion
+Esto ocurre porque algunos formatos de OC incluyen la patente dentro del texto descriptivo del item (por ejemplo, "Traslado grua VJYG-13 desde...") en lugar de tenerla como campo separado.
 
-Antes de ejecutar el matching, hacer un refetch de los servicios del cliente directamente desde la base de datos dentro de `processFiles`, para tener siempre los datos mas recientes.
+## Solucion en dos partes
+
+### 1. Mejorar el prompt de la Edge Function
+
+**Archivo: `supabase/functions/parse-purchase-order-pdf/index.ts`**
+
+Reforzar las instrucciones al modelo para que busque patentes dentro de las descripciones de los items:
+- Indicar que la patente puede estar embebida en el texto descriptivo
+- Dar ejemplos concretos de como aparecen (ej: "Traslado vehiculo VHZJ75", "Grua patente VJYG-13")
+- Incluir formato de patentes chilenas nuevas (2 letras + 4 numeros) y antiguas (4 letras + 2 numeros)
+
+### 2. Agregar fallback de matching por numero de OC
+
+**Archivo: `src/hooks/vip/usePurchaseOrderPDFImport.ts`**
+
+Cuando un item del PDF no tiene patente (string vacio), intentar un match alternativo:
+- Buscar servicios del cliente que ya tengan asignada la misma OC (normalizada)
+- Si se encuentra, marcarlo como `same_oc`
+- Si no se encuentra, buscar servicios sin OC que coincidan por monto (si esta disponible)
+- Solo si nada coincide, marcar como `no_match`
+
+Esto cubre el caso donde la OC ya fue asignada previamente y se re-importa el PDF.
 
 ## Detalle tecnico
 
-### Archivo: `src/hooks/vip/usePurchaseOrderPDFImport.ts`
+### Edge Function - Prompt mejorado
 
-1. Agregar una consulta directa a Supabase dentro de `processFiles`, justo antes de la fase de matching (linea ~105), para obtener los servicios frescos del cliente en lugar de usar el array `services` del prop.
+Agregar al system prompt:
+```
+- IMPORTANTE: La patente puede aparecer dentro de la descripcion del servicio, 
+  no siempre como campo separado. Busca patrones como "XXXX-99", "XXXX99", 
+  "XX-9999", "XX9999" dentro del texto de cada item.
+- Ejemplos: "Traslado vehiculo VHZJ75", "Grua para patente VJYG-13", 
+  "Servicio placa AB1234"
+- Si la OC tiene un solo item sin patente visible, revisa todo el texto 
+  del documento buscando patentes.
+```
 
-2. Reemplazar `const clientServices = services.filter(...)` por una consulta fresca:
-   - Consultar `supabase.from('services').select(...)` filtrado por `client_id`
-   - Transformar los datos al formato `Service[]`
-   - Usar estos datos frescos para el matching
+### Hook - Fallback de matching
 
-3. Alternativa mas simple: pasar una funcion `refetch` como parametro al hook y llamarla antes de matching, luego usar los servicios actualizados.
+En `processFiles`, despues del loop de matching por patente, agregar logica para items sin patente:
 
-La opcion mas limpia es recibir la funcion `refetch` del padre y llamarla antes de hacer el matching, ya que reutiliza la logica de transformacion existente.
-
-### Archivo: `src/pages/VipClientPipeline.tsx`
-
-- Pasar la funcion `refetch` del hook `useClientServices` como prop al componente `PurchaseOrderPDFImporter`.
-
-### Archivo: `src/components/vip/PurchaseOrderPDFImporter.tsx`
-
-- Agregar prop `onRefreshServices` que devuelva los servicios frescos.
-- Pasarla al hook `usePurchaseOrderPDFImport`.
-
-### Flujo actualizado
-
-```text
-1. Usuario sube PDF
-2. Se procesan los PDFs con la Edge Function
-3. NUEVO: Se refetch de servicios del cliente desde la BD
-4. Se ejecuta el matching con datos frescos
-5. Se muestra la preview con estados correctos
+```
+Para cada item con patente vacia:
+  1. Buscar servicios del cliente con la misma OC (normalizada) -> same_oc
+  2. Si no hay match por OC, buscar por monto similar -> matched (con menor confianza)
+  3. Si nada coincide -> no_match (pero mostrar el OC number para asignacion manual)
 ```
