@@ -24,7 +24,7 @@ export interface MatchedService {
   service: Service | null;
   ocNumber: string;
   fileName: string;
-  status: 'matched' | 'no_match' | 'already_has_oc';
+  status: 'matched' | 'no_match' | 'already_has_oc' | 'same_oc';
 }
 
 interface ImportState {
@@ -134,12 +134,15 @@ export function usePurchaseOrderPDFImport(clientId: string | null, services: Ser
               status: 'matched',
             });
           } else {
+            // Check if the most recent service already has the same OC
+            const topService = matchingServices[0];
+            const hasSameOC = topService.purchaseOrder === oc.ocNumber || topService.purchaseOrderNumber === oc.ocNumber;
             matches.push({
               parsedItem: item,
-              service: matchingServices[0],
+              service: topService,
               ocNumber: oc.ocNumber,
               fileName: oc.fileName,
-              status: 'already_has_oc',
+              status: hasSameOC ? 'same_oc' : 'already_has_oc',
             });
           }
         }
@@ -150,7 +153,7 @@ export function usePurchaseOrderPDFImport(clientId: string | null, services: Ser
   }, [clientId, services]);
 
   const applyMatches = useCallback(async (selectedMatches: MatchedService[]) => {
-    const validMatches = selectedMatches.filter(m => m.status === 'matched' && m.service);
+    const validMatches = selectedMatches.filter(m => (m.status === 'matched' || m.status === 'already_has_oc') && m.service);
     if (validMatches.length === 0) {
       toast.error('No hay servicios válidos para actualizar');
       return;
