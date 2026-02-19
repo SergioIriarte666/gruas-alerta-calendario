@@ -49,10 +49,15 @@ serve(async (req) => {
             content: `Eres un extractor de datos de Órdenes de Compra (OC) chilenas en formato PDF. 
 Debes extraer la información estructurada del documento usando la herramienta extract_purchase_order.
 - El número de OC suele aparecer como "N° de OC", "Orden de Compra", "Purchase Order" o similar, generalmente es un número de 10 dígitos.
-- Las patentes chilenas tienen formato de 4 letras + 2 dígitos (ej: VHZJ75) o 2 letras + 4 dígitos (ej: AB1234).
+- Las patentes chilenas tienen formato de 4 letras + 2 dígitos (ej: VHZJ75, VJYG13) o 2 letras + 4 dígitos (ej: AB1234). Pueden tener guión (VJYG-13) o no (VJYG13).
 - Los montos están en pesos chilenos (CLP), sin decimales.
 - Si no encuentras algún dato, devuelve string vacío o 0 según corresponda.
-- Extrae TODAS las patentes que aparezcan en el documento.`
+- Extrae TODAS las patentes que aparezcan en el documento.
+- IMPORTANTE: La patente frecuentemente aparece DENTRO de la descripción del servicio, NO como campo separado. Busca patrones de patente (XXXX-99, XXXX99, XX-9999, XX9999) dentro del texto de cada ítem.
+- Ejemplos reales: "Traslado grúa VJYG-13 desde...", "Servicio vehículo VHZJ75", "Grúa para patente AB1234", "Rescate camión BBDD50".
+- Si un ítem no tiene patente visible como campo separado, REVISA la descripción completa del ítem buscando estos patrones.
+- Si la OC tiene un solo ítem sin patente visible, revisa TODO el texto del documento buscando patentes.
+- NUNCA devuelvas patente vacía si hay una patente en la descripción del ítem.`
           },
           {
             role: 'user',
