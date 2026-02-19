@@ -24,7 +24,9 @@ import {
   Loader2,
   RotateCcw,
   ArrowRight,
+  CheckCheck,
 } from 'lucide-react';
+import { format } from 'date-fns';
 
 interface PurchaseOrderPDFImporterProps {
   clientId: string;
@@ -58,11 +60,11 @@ export const PurchaseOrderPDFImporter: React.FC<PurchaseOrderPDFImporterProps> =
   // Auto-select matched items when preview loads
   React.useEffect(() => {
     if (state.step === 'preview') {
-      const matchedIndices = new Set<number>();
+      const selectableIndices = new Set<number>();
       state.matches.forEach((m, i) => {
-        if (m.status === 'matched') matchedIndices.add(i);
+        if (m.status === 'matched') selectableIndices.add(i);
       });
-      setSelectedMatches(matchedIndices);
+      setSelectedMatches(selectableIndices);
     }
   }, [state.step, state.matches]);
 
@@ -86,6 +88,7 @@ export const PurchaseOrderPDFImporter: React.FC<PurchaseOrderPDFImporterProps> =
   };
 
   const matchedCount = state.matches.filter(m => m.status === 'matched').length;
+  const sameOCCount = state.matches.filter(m => m.status === 'same_oc').length;
   const noMatchCount = state.matches.filter(m => m.status === 'no_match').length;
   const alreadyHasOCCount = state.matches.filter(m => m.status === 'already_has_oc').length;
 
@@ -149,16 +152,22 @@ export const PurchaseOrderPDFImporter: React.FC<PurchaseOrderPDFImporterProps> =
                 <CheckCircle className="w-3 h-3 mr-1" />
                 {matchedCount} coincidencias
               </Badge>
-              {noMatchCount > 0 && (
-                <Badge variant="secondary" className="bg-destructive/10 text-destructive border-destructive/20">
-                  <XCircle className="w-3 h-3 mr-1" />
-                  {noMatchCount} sin match
+              {sameOCCount > 0 && (
+                <Badge variant="secondary" className="bg-blue-500/10 text-blue-500 border-blue-500/20">
+                  <CheckCheck className="w-3 h-3 mr-1" />
+                  {sameOCCount} ya asignada
                 </Badge>
               )}
               {alreadyHasOCCount > 0 && (
                 <Badge variant="secondary" className="bg-amber-500/10 text-amber-600 border-amber-500/20">
                   <AlertTriangle className="w-3 h-3 mr-1" />
-                  {alreadyHasOCCount} ya con OC
+                  {alreadyHasOCCount} OC diferente
+                </Badge>
+              )}
+              {noMatchCount > 0 && (
+                <Badge variant="secondary" className="bg-destructive/10 text-destructive border-destructive/20">
+                  <XCircle className="w-3 h-3 mr-1" />
+                  {noMatchCount} sin match
                 </Badge>
               )}
             </div>
@@ -171,9 +180,9 @@ export const PurchaseOrderPDFImporter: React.FC<PurchaseOrderPDFImporterProps> =
                     <TableHead className="w-10"></TableHead>
                     <TableHead className="text-xs">Patente</TableHead>
                     <TableHead className="text-xs">Servicio</TableHead>
-                    <TableHead className="text-xs">N° OC</TableHead>
+                    <TableHead className="text-xs">OC Actual</TableHead>
+                    <TableHead className="text-xs">N° OC Nueva</TableHead>
                     <TableHead className="text-xs">Estado</TableHead>
-                    <TableHead className="text-xs">Archivo</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -183,7 +192,7 @@ export const PurchaseOrderPDFImporter: React.FC<PurchaseOrderPDFImporterProps> =
                         <Checkbox
                           checked={selectedMatches.has(index)}
                           onCheckedChange={() => toggleMatch(index)}
-                          disabled={match.status !== 'matched'}
+                          disabled={match.status === 'no_match' || match.status === 'same_oc'}
                         />
                       </TableCell>
                       <TableCell className="font-mono text-xs font-medium">
@@ -191,9 +200,23 @@ export const PurchaseOrderPDFImporter: React.FC<PurchaseOrderPDFImporterProps> =
                       </TableCell>
                       <TableCell className="text-xs">
                         {match.service ? (
-                          <span className="text-foreground">{match.service.folio}</span>
+                          <span className="text-foreground">
+                            {match.service.folio}
+                            {match.service.serviceDate && (
+                              <span className="text-muted-foreground ml-1">
+                                ({format(new Date(match.service.serviceDate), 'dd/MM')})
+                              </span>
+                            )}
+                          </span>
                         ) : (
                           <span className="text-muted-foreground italic">—</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="font-mono text-xs">
+                        {match.service?.purchaseOrder || match.service?.purchaseOrderNumber ? (
+                          <span className="text-foreground">{match.service.purchaseOrder || match.service.purchaseOrderNumber}</span>
+                        ) : (
+                          <span className="text-muted-foreground">—</span>
                         )}
                       </TableCell>
                       <TableCell className="font-mono text-xs">{match.ocNumber}</TableCell>
@@ -204,21 +227,24 @@ export const PurchaseOrderPDFImporter: React.FC<PurchaseOrderPDFImporterProps> =
                             Match
                           </Badge>
                         )}
+                        {match.status === 'same_oc' && (
+                          <Badge variant="secondary" className="bg-blue-500/10 text-blue-500 text-xs">
+                            <CheckCheck className="w-3 h-3 mr-1" />
+                            Ya asignada
+                          </Badge>
+                        )}
+                        {match.status === 'already_has_oc' && (
+                          <Badge variant="secondary" className="bg-amber-500/10 text-amber-600 text-xs">
+                            <AlertTriangle className="w-3 h-3 mr-1" />
+                            OC diferente
+                          </Badge>
+                        )}
                         {match.status === 'no_match' && (
                           <Badge variant="secondary" className="bg-destructive/10 text-destructive text-xs">
                             <XCircle className="w-3 h-3 mr-1" />
                             Sin match
                           </Badge>
                         )}
-                        {match.status === 'already_has_oc' && (
-                          <Badge variant="secondary" className="bg-amber-500/10 text-amber-600 text-xs">
-                            <AlertTriangle className="w-3 h-3 mr-1" />
-                            Ya tiene OC
-                          </Badge>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-xs text-muted-foreground truncate max-w-[120px]">
-                        {match.fileName}
                       </TableCell>
                     </TableRow>
                   ))}
