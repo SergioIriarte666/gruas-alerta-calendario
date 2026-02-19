@@ -2,6 +2,8 @@ import React, { useState, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { Service } from '@/types';
 import { usePurchaseOrderPDFImport, MatchedService } from '@/hooks/vip/usePurchaseOrderPDFImport';
+import { ServiceDetailsModal } from '@/components/services/ServiceDetailsModal';
+import { useServiceDetails } from '@/hooks/useServiceDetails';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -43,6 +45,8 @@ export const PurchaseOrderPDFImporter: React.FC<PurchaseOrderPDFImporterProps> =
 }) => {
   const { state, processFiles, applyMatches, reset } = usePurchaseOrderPDFImport(clientId, services);
   const [selectedMatches, setSelectedMatches] = useState<Set<number>>(new Set());
+  const [previewServiceId, setPreviewServiceId] = useState<string | null>(null);
+  const { data: previewServiceData } = useServiceDetails(previewServiceId);
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     const pdfFiles = acceptedFiles.filter(f => f.type === 'application/pdf');
@@ -200,14 +204,17 @@ export const PurchaseOrderPDFImporter: React.FC<PurchaseOrderPDFImporterProps> =
                       </TableCell>
                       <TableCell className="text-xs">
                         {match.service ? (
-                          <span className="text-foreground">
+                          <button
+                            onClick={() => setPreviewServiceId(match.service!.id)}
+                            className="text-primary underline hover:text-primary/80 cursor-pointer font-medium"
+                          >
                             {match.service.folio}
                             {match.service.serviceDate && (
-                              <span className="text-muted-foreground ml-1">
+                              <span className="text-muted-foreground ml-1 no-underline">
                                 ({format(new Date(match.service.serviceDate), 'dd/MM')})
                               </span>
                             )}
-                          </span>
+                          </button>
                         ) : (
                           <span className="text-muted-foreground italic">—</span>
                         )}
@@ -306,6 +313,14 @@ export const PurchaseOrderPDFImporter: React.FC<PurchaseOrderPDFImporterProps> =
           </div>
         )}
       </CardContent>
+
+      {previewServiceData && (
+        <ServiceDetailsModal
+          service={previewServiceData}
+          isOpen={!!previewServiceId}
+          onClose={() => setPreviewServiceId(null)}
+        />
+      )}
     </Card>
   );
 };

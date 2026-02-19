@@ -158,8 +158,10 @@ export function usePurchaseOrderPDFImport(clientId: string | null, services: Ser
       // Fallback to prop services if fresh fetch fails
       clientServices = services.filter(s => s.client?.id === clientId);
     }
-    // Excluir servicios facturados del matching
-    clientServices = clientServices.filter(s => s.status !== 'invoiced');
+    // Solo servicios completados o con OC son candidatos (excluir pending, in_progress, quoted, invoiced, etc.)
+    clientServices = clientServices.filter(s => 
+      s.status === 'completed' || s.status === 'with_purchase_order'
+    );
 
     const matches: MatchedService[] = [];
     const usedServiceIds = new Set<string>();
