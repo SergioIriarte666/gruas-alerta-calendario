@@ -93,6 +93,9 @@ export const useReports = (filters?: ReportFilters) => {
       });
     }
 
+    // Excluir servicios cancelados de todos los cálculos
+    filteredServices = filteredServices.filter(s => s.status !== 'cancelled');
+
     // Calcular métricas básicas
     const totalServices = filteredServices.length;
     const totalRevenue = filteredServices.reduce((sum, service) => sum + getServiceValueForClosure(service), 0);

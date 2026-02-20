@@ -1,11 +1,13 @@
 import * as React from 'react';
 import { Button } from '@/components/ui/button';
-import { Download, FileText, FileSpreadsheet, RefreshCw } from 'lucide-react';
+import { Download, FileText, FileSpreadsheet, RefreshCw, BarChart3, Truck, DollarSign } from 'lucide-react';
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
   DropdownMenuItem, 
-  DropdownMenuTrigger 
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+  DropdownMenuLabel,
 } from '@/components/ui/dropdown-menu';
 
 interface ReportsHeaderProps {
@@ -21,10 +23,10 @@ export const ReportsHeader = ({ onExport, onExportServiceReport, onExportCostRep
   <div className="flex flex-col md:flex-row justify-between md:items-center gap-4">
     <div>
       <h1 className="text-3xl font-bold text-foreground">Reportes</h1>
-      <p className="text-foreground mt-1">
+      <p className="text-muted-foreground mt-1">
         Análisis detallado y métricas de rendimiento del negocio.
         {lastUpdate && (
-          <span className="block text-sm text-foreground mt-1">
+          <span className="block text-sm text-muted-foreground mt-1">
             Última actualización: {lastUpdate.toLocaleTimeString()}
           </span>
         )}
@@ -44,12 +46,16 @@ export const ReportsHeader = ({ onExport, onExportServiceReport, onExportCostRep
       )}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button className="bg-tms-green hover:bg-tms-green/90">
+          <Button className="bg-violet-600 hover:bg-violet-700 text-white">
             <Download className="w-4 h-4 mr-2" />
-            Exportar Métricas
+            Exportar
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
+        <DropdownMenuContent align="end" className="w-56 bg-popover border z-50">
+          <DropdownMenuLabel className="flex items-center gap-2 text-muted-foreground">
+            <BarChart3 className="w-3.5 h-3.5" />
+            Métricas Generales
+          </DropdownMenuLabel>
           <DropdownMenuItem onClick={() => onExport('pdf')}>
             <FileText className="w-4 h-4 mr-2" />
             Exportar como PDF
@@ -58,17 +64,13 @@ export const ReportsHeader = ({ onExport, onExportServiceReport, onExportCostRep
             <FileSpreadsheet className="w-4 h-4 mr-2" />
             Exportar como Excel
           </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button className="bg-blue-600 hover:bg-blue-700 text-white">
-            <Download className="w-4 h-4 mr-2" />
+          
+          <DropdownMenuSeparator />
+          
+          <DropdownMenuLabel className="flex items-center gap-2 text-muted-foreground">
+            <Truck className="w-3.5 h-3.5" />
             Informe de Servicios
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
+          </DropdownMenuLabel>
           <DropdownMenuItem onClick={() => onExportServiceReport('pdf')}>
             <FileText className="w-4 h-4 mr-2" />
             Exportar como PDF
@@ -77,17 +79,13 @@ export const ReportsHeader = ({ onExport, onExportServiceReport, onExportCostRep
             <FileSpreadsheet className="w-4 h-4 mr-2" />
             Exportar como Excel
           </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button className="bg-red-600 hover:bg-red-700 text-white">
-            <Download className="w-4 h-4 mr-2" />
+          
+          <DropdownMenuSeparator />
+          
+          <DropdownMenuLabel className="flex items-center gap-2 text-muted-foreground">
+            <DollarSign className="w-3.5 h-3.5" />
             Informe de Costos
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
+          </DropdownMenuLabel>
           <DropdownMenuItem onClick={() => onExportCostReport('pdf')}>
             <FileText className="w-4 h-4 mr-2" />
             Exportar como PDF
