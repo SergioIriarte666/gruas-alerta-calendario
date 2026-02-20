@@ -131,6 +131,17 @@ export const useServicesMetrics = (dateFilter: DateFilter = 'all') => {
     fetchData();
   }, [dateFilter]);
 
+  // Escuchar evento global de refresh para actualizar metricas
+  useEffect(() => {
+    const handleGlobalRefresh = () => {
+      console.log('🔄 [ServicesMetrics] Global refresh detectado, actualizando metricas...');
+      fetchData();
+    };
+    
+    window.addEventListener('global-data-refresh', handleGlobalRefresh);
+    return () => window.removeEventListener('global-data-refresh', handleGlobalRefresh);
+  }, [dateFilter]);
+
   const metrics = useMemo((): ServicesMetrics => {
     const activeServices = services.filter(s => s.status !== 'cancelled');
     const totalServices = activeServices.length;
