@@ -131,7 +131,7 @@ const ReportsPage = () => {
       from: format(periodDates.from, 'yyyy-MM-dd'),
       to: format(periodDates.to, 'yyyy-MM-dd'),
     },
-    clientId: activeTab === 'clientes' ? selectedClientId : appliedFilters.clientId,
+    clientId: (activeTab === 'clientes' || activeTab === 'servicios') ? selectedClientId : appliedFilters.clientId,
     costCategoryId: activeTab === 'costos' ? selectedCostCategoryId : 'all',
   }), [appliedFilters, periodDates, selectedClientId, selectedCostCategoryId, activeTab]);
 
@@ -544,7 +544,7 @@ const ReportsPage = () => {
               key={tab.id}
               onClick={() => {
                 setActiveTab(tab.id);
-                if (tab.id !== 'clientes') setSelectedClientId('all');
+                if (tab.id !== 'clientes' && tab.id !== 'servicios') setSelectedClientId('all');
               }}
               className={`flex flex-col items-center gap-1.5 p-3 rounded-lg border text-sm font-medium transition-all duration-200 ${
                 isActive
@@ -616,7 +616,7 @@ const ReportsPage = () => {
         )}
 
         {/* Client selector - only visible on Clientes tab */}
-        {activeTab === 'clientes' && (
+        {(activeTab === 'clientes' || activeTab === 'servicios') && (
           <Select value={selectedClientId} onValueChange={setSelectedClientId}>
             <SelectTrigger className="w-[220px] h-9 text-sm bg-card border">
               <Users className="h-3.5 w-3.5 mr-1.5 text-muted-foreground" />
