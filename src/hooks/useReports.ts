@@ -109,6 +109,12 @@ export const useReports = (filters?: ReportFilters) => {
         if (filters?.costCategoryId && filters.costCategoryId !== 'all' && cost.category_id !== filters.costCategoryId) {
             return false;
         }
+        // Filtrar costos por cliente: solo incluir costos cuyo servicio pertenezca al cliente
+        if (filters?.clientId && filters.clientId !== 'all') {
+            if (!cost.service_id) return false; // Costos sin servicio no son atribuibles
+            const relatedService = filteredServices.find(s => s.id === cost.service_id);
+            if (!relatedService) return false;
+        }
         return true;
     });
 
