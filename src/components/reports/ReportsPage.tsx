@@ -14,6 +14,7 @@ import { useCostReportActions } from '@/hooks/reports/useCostReportActions';
 import { useReportsRealtime } from '@/hooks/reports/useReportsRealtime';
 import { ReportFilters } from './shared/ReportFilters';
 import { useClients } from '@/hooks/useClients';
+import { useCostCategories } from '@/hooks/useCostCategories';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -107,6 +108,8 @@ const ReportsPage = () => {
   const [customTo, setCustomTo] = useState<Date | undefined>(new Date());
 
   const { clients } = useClients();
+  const { data: costCategories = [] } = useCostCategories();
+  const [selectedCostCategoryId, setSelectedCostCategoryId] = useState<string>('all');
 
   const periodDates = useMemo(() => {
     if (selectedPeriod === 'custom' && customFrom && customTo) {
@@ -129,7 +132,8 @@ const ReportsPage = () => {
       to: format(periodDates.to, 'yyyy-MM-dd'),
     },
     clientId: activeTab === 'clientes' ? selectedClientId : appliedFilters.clientId,
-  }), [appliedFilters, periodDates, selectedClientId, activeTab]);
+    costCategoryId: activeTab === 'costos' ? selectedCostCategoryId : 'all',
+  }), [appliedFilters, periodDates, selectedClientId, selectedCostCategoryId, activeTab]);
 
   const { metrics, loading, lastUpdate, forceRefresh } = useReports(effectiveFilters);
 
@@ -150,10 +154,10 @@ const ReportsPage = () => {
       from: format(periodDates.from, 'yyyy-MM-dd'),
       to: format(periodDates.to, 'yyyy-MM-dd'),
     },
-    categoryId: 'all',
+    categoryId: selectedCostCategoryId,
     craneId: 'all',
     operatorId: 'all',
-  }), [periodDates]);
+  }), [periodDates, selectedCostCategoryId]);
 
   const { handleExportCostReport } = useCostReportActions({ costReportFilters: effectiveCostFilters });
 
@@ -626,6 +630,22 @@ const ReportsPage = () => {
                 .map(client => (
                   <SelectItem key={client.id} value={client.id}>{client.name}</SelectItem>
                 ))}
+            </SelectContent>
+          </Select>
+        )}
+
+        {/* Cost category selector - only visible on Costos tab */}
+        {activeTab === 'costos' && (
+          <Select value={selectedCostCategoryId} onValueChange={setSelectedCostCategoryId}>
+            <SelectTrigger className="w-[220px] h-9 text-sm bg-card border">
+              <Receipt className="h-3.5 w-3.5 mr-1.5 text-muted-foreground" />
+              <SelectValue placeholder="Todas las categorías" />
+            </SelectTrigger>
+            <SelectContent className="bg-popover border z-50">
+              <SelectItem value="all">Todas las categorías</SelectItem>
+              {costCategories.map(cat => (
+                <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
+              ))}
             </SelectContent>
           </Select>
         )}
