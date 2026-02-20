@@ -73,7 +73,7 @@ export const useServicesMetrics = (dateFilter: DateFilter = 'all') => {
       // Fetch services
       let servicesQuery = supabase
         .from('services')
-        .select('id, value, service_date, status');
+        .select('id, value, custody_total_amount, service_date, status');
       
       if (dateFilterInfo) {
         if (dateFilterInfo.type === 'exact') {
@@ -132,8 +132,9 @@ export const useServicesMetrics = (dateFilter: DateFilter = 'all') => {
   }, [dateFilter]);
 
   const metrics = useMemo((): ServicesMetrics => {
-    const totalServices = services.length;
-    const totalRevenue = services.reduce((sum, service) => sum + getDisplayServiceValue(service), 0);
+    const activeServices = services.filter(s => s.status !== 'cancelled');
+    const totalServices = activeServices.length;
+    const totalRevenue = activeServices.reduce((sum, service) => sum + getDisplayServiceValue(service), 0);
     const totalCosts = costs.reduce((sum, cost) => sum + (cost.amount || 0), 0);
     const netProfit = totalRevenue - totalCosts;
     const profitMargin = totalRevenue > 0 ? (netProfit / totalRevenue) * 100 : 0;
