@@ -1,48 +1,54 @@
 
+# Fix: Eliminar filtros antiguos de Costos/Finanzas + Ranking de Operadores
 
-# Fix: Excel con columnas en ingles y logo como texto
+## Problema
 
-## Problemas
+1. **Costos y Finanzas** muestran los acordeones "Filtros de Metricas" y "Filtros de Costos" con sus propios date pickers independientes. Estos ignoran el selector de periodo global de arriba (01/02 - 20/02) y siempre muestran 01/02 - 28/02. Son redundantes y confusos.
 
-1. La hoja "Servicios por Mes" usa columnas crudas: `month`, `services`, `revenue` en vez de "Mes", "Servicios", "Ingresos"
-2. La hoja "Servicios por Estado" usa: `status`, `count`, `percentage` en vez de "Estado", "Cantidad", "Porcentaje (%)"
-3. En la hoja Resumen, se muestra la URL completa del logo como texto plano (no tiene sentido en Excel)
+2. **Costos - Exportacion**: `useCostReportActions` recibe `costReportFilters` (fechas antiguas) en vez de las fechas del periodo seleccionado.
 
-## Solucion
+3. **Operadores**: Solo muestra 2 tarjetas basicas sin ranking de operadores por servicios (como si existe para Flota y Clientes).
 
-### Archivo: `src/utils/reports/operationalReportExporter.ts`
+---
 
-**Cambio 1 - Servicios por Mes (lineas 120-123)**: Mapear campos a espanol
+## Cambios
 
-```typescript
-// Antes:
-const services_month_ws = XLSX.utils.json_to_sheet(metrics.servicesByMonth);
+### 1. `src/components/reports/ReportsPage.tsx`
 
-// Despues:
-const services_month_ws = XLSX.utils.json_to_sheet(metrics.servicesByMonth.map(s => ({
-  'Mes': formatDate(new Date(s.month + '-02T00:00:00'), "MMM yyyy", { locale: es }),
-  'Servicios': s.services,
-  'Ingresos': s.revenue
-})));
-```
+**Costos (lineas 497-513)**: Eliminar el componente `ReportFilters` completo. Solo dejar `CostAnalysisReports`.
 
-**Cambio 2 - Servicios por Estado (lineas 148-150)**: Mapear campos y traducir estados
+**Finanzas (lineas 474-496)**: Eliminar el componente `ReportFilters` completo. Solo dejar `OperationalReports`.
+
+**Cost export (linea 148)**: Crear `effectiveCostFilters` que inyecte `periodDates` y pasarlo a `useCostReportActions`:
 
 ```typescript
-// Antes:
-const services_status_ws = XLSX.utils.json_to_sheet(metrics.servicesByStatus);
+const effectiveCostFilters = useMemo(() => ({
+  dateRange: {
+    from: format(periodDates.from, 'yyyy-MM-dd'),
+    to: format(periodDates.to, 'yyyy-MM-dd'),
+  },
+  categoryId: 'all',
+  craneId: 'all',
+  operatorId: 'all',
+}), [periodDates]);
 
-// Despues:
-const statusLabels: Record<string, string> = {
-  completed: 'Completado', pending: 'Pendiente', cancelled: 'Cancelado',
-  in_progress: 'En Progreso', assigned: 'Asignado'
-};
-const services_status_ws = XLSX.utils.json_to_sheet(metrics.servicesByStatus.map(s => ({
-  'Estado': statusLabels[s.status] || s.status,
-  'Cantidad': s.count,
-  'Porcentaje (%)': Number(s.percentage.toFixed(1))
-})));
+const { handleExportCostReport } = useCostReportActions({ costReportFilters: effectiveCostFilters });
 ```
 
-**Cambio 3 - Quitar logo URL del Resumen (linea 99)**: Eliminar la linea `company.logo ? [Logo: ...] : []` de `resumen_ws_data` ya que una URL no aporta valor en un archivo Excel.
+**Operadores (lineas 409-430)**: Reemplazar las 2 tarjetas por un ranking con barras de progreso (mismo patron visual que Flota), agrupando servicios por operador desde `filteredServices` via los datos de metricas.
 
+### 2. `src/hooks/useReports.ts`
+
+Agregar `operatorUtilization` al tipo `ReportMetrics` y calcularla en `calculateMetrics`, con el mismo patron que `calculateCraneUtilization`:
+
+```typescript
+operatorUtilization: { operatorId: string; operatorName: string; services: number; utilization: number }[]
+```
+
+La funcion agrupa servicios por `service.operator?.id`, cuenta servicios por operador, y calcula el porcentaje de utilizacion.
+
+### Resultado esperado
+
+- Costos y Finanzas: Sin filtros antiguos redundantes, usan el periodo global
+- Exportacion de costos: Usa las fechas del periodo seleccionado
+- Operadores: Ranking visual con barras de progreso mostrando nombre, servicios y porcentaje
