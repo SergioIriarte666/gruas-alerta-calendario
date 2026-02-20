@@ -1,67 +1,60 @@
 
+# Fix: Filtros no se aplican al exportar informes
 
-# Exportar contextual por tab + filtro por cliente
+## Problema
 
-## Problemas detectados
+Cuando seleccionas un cliente y/o cambias el periodo, el PDF exportado muestra "Todos los clientes" y usa las fechas del sistema viejo de filtros. Esto ocurre porque:
 
-1. El dropdown "Exportar" muestra siempre las mismas 3 categorias (Metricas Generales, Informe de Servicios, Informe de Costos) sin importar en que tab estas navegando.
-2. En el tab "Clientes" no hay forma de seleccionar un cliente particular para generar un informe especifico.
-3. Los tabs Servicios, Ingresos, Clientes, Operadores y Flota renderizan todos el mismo componente `ReportsDashboard`, sin diferenciar contenido.
+1. `useReportActions` recibe `appliedFilters` (filtros viejos) en vez de `effectiveFilters` (que incluye las fechas del periodo seleccionado)
+2. El `selectedClientId` del selector de clientes nunca se pasa a la funcion de exportacion
+3. `serviceReportFilters` tambien usa sus propias fechas independientes, ignorando el periodo seleccionado
 
 ## Solucion
 
-### 1. Exportar contextual segun el tab activo
-
-Reemplazar el dropdown estatico de exportacion por uno dinamico que muestre solo las opciones relevantes al tab seleccionado:
-
-| Tab | Opciones de exportacion |
-|-----|------------------------|
-| Servicios | Informe de Servicios (PDF/Excel) |
-| Ingresos | Metricas Generales (PDF/Excel) |
-| Clientes | Informe de Clientes (PDF/Excel) |
-| Operadores | Metricas Generales (PDF/Excel) |
-| Flota | Metricas Generales (PDF/Excel) |
-| Finanzas | Metricas Generales (PDF/Excel) |
-| Costos | Informe de Costos (PDF/Excel) |
-
-### 2. Selector de cliente en tab "Clientes"
-
-Agregar un `Select` adicional en la barra de filtros (solo visible cuando `activeTab === 'clientes'`) que permita elegir un cliente especifico de la lista `topClients` del metrics o de todos los clientes disponibles. Al seleccionar uno, las metricas del tab se filtran a ese cliente y la exportacion genera un informe particular.
-
-### 3. Contenido diferenciado por tab
-
-Ajustar `renderContent()` para que cada tab muestre informacion relevante:
-
-- **Servicios**: Distribucion de servicios por estado + graficos de servicios por mes
-- **Ingresos**: Graficos de ingresos por mes + metricas de rentabilidad
-- **Clientes**: Top clientes con ranking + detalle del cliente seleccionado
-- **Operadores**: Lista de operadores con metricas (reutilizar datos de `metrics`)
-- **Flota**: Utilizacion de gruas con detalle
-- **Finanzas**: Mantener como esta (OperationalReports)
-- **Costos**: Mantener como esta (CostAnalysisReports)
-
----
-
-## Detalle tecnico
-
 ### Archivo: `src/components/reports/ReportsPage.tsx`
 
-**Cambio 1 - Dropdown contextual**: Extraer la logica del dropdown a una funcion `renderExportMenu()` que reciba `activeTab` y retorne solo las opciones correspondientes.
+Pasar `effectiveFilters` en vez de `appliedFilters` a `useReportActions`, e inyectar el `selectedClientId` en los filtros de servicio:
 
-**Cambio 2 - Selector de cliente**: Agregar un estado `selectedClientId` y un `Select` con los clientes disponibles (de `useClients` o de `m.topClients`). Este select solo se renderiza si `activeTab === 'clientes'`.
+```typescript
+// Linea 135-137: Cambiar de
+const { handleExport, handleExportServiceReport } = useReportActions({
+  appliedFilters, serviceReportFilters, metrics,
+});
 
-**Cambio 3 - KPIs de clientes contextuales**: Cuando hay un cliente seleccionado, los KPIs del tab Clientes muestran datos de ese cliente (servicios, ingresos, ticket promedio) en vez de los globales.
+// A
+const effectiveServiceFilters = useMemo(() => ({
+  dateRange: {
+    from: format(periodDates.from, 'yyyy-MM-dd'),
+    to: format(periodDates.to, 'yyyy-MM-dd'),
+  },
+  clientId: selectedClientId,
+}), [periodDates, selectedClientId]);
 
-**Cambio 4 - Contenido diferenciado**: Modificar `renderContent()` para que cada tab renderice un subconjunto distinto de la informacion del dashboard:
-- `servicios`: Card de distribucion por estado (de ReportsDashboard)
-- `ingresos`: Solo los graficos de ingresos y servicios por mes (PrimaryCharts)
-- `clientes`: Card de Top Clientes con detalle expandido
-- `operadores`: Metricas de operadores (servicios/operador)
-- `flota`: Card de utilizacion de gruas expandida
+const { handleExport, handleExportServiceReport } = useReportActions({
+  appliedFilters: effectiveFilters,
+  serviceReportFilters: effectiveServiceFilters,
+  metrics,
+});
+```
 
-Se importara `useClients` para tener la lista completa de clientes en el selector.
+### Archivo: `src/hooks/reports/useReportActions.ts`
 
-### Archivos a modificar:
+Actualizar `getAppliedFilterLabels` para que refleje correctamente el cliente seleccionado en el PDF (ya funciona porque lee de `appliedFilters.clientId`, que ahora recibira `effectiveFilters` con el clientId correcto si lo inyectamos).
 
-1. **`src/components/reports/ReportsPage.tsx`** - Dropdown contextual, selector de cliente, contenido diferenciado por tab
+Pero `effectiveFilters` no tiene `clientId` - viene de `appliedFilters` que siempre es 'all'. Necesitamos tambien inyectar el `selectedClientId` en `effectiveFilters`:
 
+```typescript
+const effectiveFilters = useMemo(() => ({
+  ...appliedFilters,
+  dateRange: {
+    from: format(periodDates.from, 'yyyy-MM-dd'),
+    to: format(periodDates.to, 'yyyy-MM-dd'),
+  },
+  clientId: activeTab === 'clientes' ? selectedClientId : appliedFilters.clientId,
+}), [appliedFilters, periodDates, selectedClientId, activeTab]);
+```
+
+Esto asegura que:
+- Las fechas del periodo seleccionado se usan en la exportacion
+- El cliente seleccionado en el tab Clientes se refleja tanto en las metricas como en el PDF
+- El label "Cliente: Nombre" aparece correcto en el PDF en vez de "Todos los clientes"
