@@ -145,7 +145,17 @@ const ReportsPage = () => {
     appliedFilters: effectiveFilters, serviceReportFilters: effectiveServiceFilters, metrics,
   });
 
-  const { handleExportCostReport } = useCostReportActions({ costReportFilters });
+  const effectiveCostFilters = useMemo(() => ({
+    dateRange: {
+      from: format(periodDates.from, 'yyyy-MM-dd'),
+      to: format(periodDates.to, 'yyyy-MM-dd'),
+    },
+    categoryId: 'all',
+    craneId: 'all',
+    operatorId: 'all',
+  }), [periodDates]);
+
+  const { handleExportCostReport } = useCostReportActions({ costReportFilters: effectiveCostFilters });
 
   const {
     servicesByMonthConfig, revenueByMonthConfig, craneUtilizationConfig,
@@ -158,8 +168,8 @@ const ReportsPage = () => {
     activeCranes: 0, activeOperators: 0, totalCosts: 0,
     netProfit: 0, profitMargin: 0, servicesByMonth: [],
     servicesByStatus: [], topClients: [], craneUtilization: [],
-    costsByCategory: [], costsByMonth: [], averageCostPerService: 0,
-    costRevenueRatio: 0,
+    operatorUtilization: [], costsByCategory: [], costsByMonth: [],
+    averageCostPerService: 0, costRevenueRatio: 0,
   };
 
   const m = metrics || defaultMetrics;
@@ -406,28 +416,55 @@ const ReportsPage = () => {
         );
       }
 
-      case 'operadores':
+      case 'operadores': {
+        const maxOperatorServices = m.operatorUtilization.length > 0 ? m.operatorUtilization[0].services : 1;
         return (
           <Card className="bg-card border">
             <CardHeader>
-              <CardTitle className="text-foreground">Métricas de Operadores</CardTitle>
+              <CardTitle className="text-foreground flex items-center gap-2">
+                <Trophy className="w-5 h-5 text-yellow-500" />
+                Ranking de Operadores
+              </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-sm text-muted-foreground">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="p-4 bg-muted/50 rounded-lg space-y-1">
-                    <div className="text-xs text-muted-foreground">Operadores Activos</div>
-                    <div className="text-2xl font-bold text-foreground">{m.activeOperators}</div>
-                  </div>
-                  <div className="p-4 bg-muted/50 rounded-lg space-y-1">
-                    <div className="text-xs text-muted-foreground">Servicios por Operador</div>
-                    <div className="text-2xl font-bold text-foreground">{m.activeOperators > 0 ? (m.totalServices / m.activeOperators).toFixed(1) : '0'}</div>
-                  </div>
-                </div>
+              <div className="space-y-4">
+                {m.operatorUtilization.map((op, index) => {
+                  const utilizationColor = op.utilization >= 30
+                    ? 'text-green-600 dark:text-green-400'
+                    : op.utilization >= 15
+                      ? 'text-yellow-600 dark:text-yellow-400'
+                      : 'text-red-600 dark:text-red-400';
+                  return (
+                    <div key={op.operatorId} className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className={`inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold shrink-0 ${index < 3 ? rankBadgeColors[index] : 'bg-muted text-muted-foreground'}`}>
+                            {index + 1}
+                          </span>
+                          <div className="font-medium text-foreground text-sm truncate">{op.operatorName}</div>
+                        </div>
+                        <div className="text-right shrink-0 ml-2">
+                          <span className={`text-sm font-bold ${utilizationColor}`}>
+                            {op.utilization.toFixed(1)}%
+                          </span>
+                          <div className="text-xs text-muted-foreground">{op.services} servicios</div>
+                        </div>
+                      </div>
+                      <Progress
+                        value={(op.services / maxOperatorServices) * 100}
+                        className="h-1.5"
+                      />
+                    </div>
+                  );
+                })}
+                {m.operatorUtilization.length === 0 && (
+                  <p className="text-sm text-muted-foreground text-center py-4">No hay datos de operadores para el período seleccionado.</p>
+                )}
               </div>
             </CardContent>
           </Card>
         );
+      }
 
       case 'flota': {
         const maxCraneServices = m.craneUtilization.length > 0 ? m.craneUtilization[0].services : 1;
@@ -473,43 +510,17 @@ const ReportsPage = () => {
 
       case 'finanzas':
         return (
-          <>
-            <ReportFilters
-              filters={filters} onDateChange={handleDateChange} onFilterChange={handleFilterChange}
-              onUpdate={handleUpdate} onClear={handleClearFilters}
-              serviceReportFilters={serviceReportFilters}
-              onServiceReportDateChange={handleServiceReportDateChange}
-              onServiceReportFilterChange={handleServiceReportFilterChange}
-              costReportFilters={costReportFilters}
-              onCostReportDateChange={handleCostReportDateChange}
-              onCostReportFilterChange={handleCostReportFilterChange}
-              sections={['services']}
-            />
-            <OperationalReports
-              metrics={m}
-              servicesByMonthConfig={servicesByMonthConfig}
-              revenueByMonthConfig={revenueByMonthConfig}
-              servicesByStatusConfig={servicesByStatusConfig}
-              craneUtilizationConfig={craneUtilizationConfig}
-            />
-          </>
+          <OperationalReports
+            metrics={m}
+            servicesByMonthConfig={servicesByMonthConfig}
+            revenueByMonthConfig={revenueByMonthConfig}
+            servicesByStatusConfig={servicesByStatusConfig}
+            craneUtilizationConfig={craneUtilizationConfig}
+          />
         );
       case 'costos':
         return (
-          <>
-            <ReportFilters
-              filters={filters} onDateChange={handleDateChange} onFilterChange={handleFilterChange}
-              onUpdate={handleUpdate} onClear={handleClearFilters}
-              serviceReportFilters={serviceReportFilters}
-              onServiceReportDateChange={handleServiceReportDateChange}
-              onServiceReportFilterChange={handleServiceReportFilterChange}
-              costReportFilters={costReportFilters}
-              onCostReportDateChange={handleCostReportDateChange}
-              onCostReportFilterChange={handleCostReportFilterChange}
-              sections={['metrics', 'costs']}
-            />
-            <CostAnalysisReports metrics={m} costsByCategoryConfig={costsByCategoryConfig} />
-          </>
+          <CostAnalysisReports metrics={m} costsByCategoryConfig={costsByCategoryConfig} />
         );
     }
   };
