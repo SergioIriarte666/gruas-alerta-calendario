@@ -83,7 +83,15 @@ const ReportsPage = () => {
     handleCostReportFilterChange, handleUpdate, handleClearFilters,
   } = useReportFilters();
 
-  const { metrics, loading, lastUpdate, forceRefresh } = useReports(appliedFilters);
+  const effectiveFilters = useMemo(() => ({
+    ...appliedFilters,
+    dateRange: {
+      from: format(periodDates.from, 'yyyy-MM-dd'),
+      to: format(periodDates.to, 'yyyy-MM-dd'),
+    },
+  }), [appliedFilters, periodDates]);
+
+  const { metrics, loading, lastUpdate, forceRefresh } = useReports(effectiveFilters);
 
   const { handleExport, handleExportServiceReport } = useReportActions({
     appliedFilters, serviceReportFilters, metrics,
