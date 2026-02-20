@@ -1,62 +1,88 @@
 
 
-# Optimizacion de Metricas del Modulo de Servicios
+# Rediseno del Modulo de Reportes
 
-## Problemas detectados
+## Problemas identificados
 
-### 1. Ingresos subreportados -- falta `custody_total_amount` en la consulta (CRITICO)
+### 1. Interfaz confusa
+- El header tiene 3 botones de exportacion separados (Metricas, Servicios, Costos) que saturan la barra superior
+- Los filtros son extensos y se repiten entre tabs (filtros de metricas, filtros de servicios, filtros de costos)
+- La navegacion por tabs es funcional pero la jerarquia visual no es clara
 
-La consulta actual solo trae `id, value, service_date, status`, pero la funcion `getDisplayServiceValue` necesita el campo `custody_total_amount` para calcular el valor completo del servicio. Hay **57 servicios con custodia** que suman **$4.430.000** de ingresos no contabilizados.
-
-- Pantalla muestra: **$197.686.760**
-- Valor real (con custodia): **$203.436.760**
-- Diferencia: **$5.750.000** aprox. no reportados
-
-### 2. Servicios cancelados incluidos en las metricas
-
-Hay 2 servicios cancelados por **$2.000.000** que se estan contando como servicios activos y como ingresos. Esto infla artificialmente el conteo (1000 deberian ser 998 aprox.) y los ingresos.
-
-### 3. Balance afectado en cascada
-
-Como el "Total Generado" es incorrecto, el "Balance" ($167.366.401) y el "Margen" (84.7%) tambien son inexactos.
+### 2. Metricas de Top Clientes y Utilizacion de Gruas incorrectas
+- **Top Clientes**: El calculo en `useReports.ts` NO excluye servicios cancelados. Incluye 2 servicios cancelados por ~$2M en los totales por cliente
+- **Utilizacion de Gruas**: El porcentaje se calcula como proporcion del total de servicios (incluyendo cancelados), no como utilizacion real. Ademas, no filtra servicios cancelados
+- El mismo problema afecta `calculateServicesByMonth` y `calculateServicesByStatus`
 
 ---
 
 ## Solucion
 
-### Archivo: `src/hooks/services/useServicesMetrics.ts`
+### Parte 1: Correccion de metricas en `useReports.ts`
 
-**Cambio 1** -- Agregar `custody_total_amount` al SELECT (linea 76):
-
-```
-Antes:  .select('id, value, service_date, status')
-Despues: .select('id, value, custody_total_amount, service_date, status')
-```
-
-Esto permite que `getDisplayServiceValue` calcule correctamente base + custodia.
-
-**Cambio 2** -- Excluir servicios cancelados del calculo de metricas (linea 134-136):
-
-Filtrar los servicios cancelados antes de calcular totales:
+Filtrar servicios cancelados **antes** de pasarlos a todas las funciones de calculo:
 
 ```typescript
-const activeServices = services.filter(s => s.status !== 'cancelled');
-const totalServices = activeServices.length;
-const totalRevenue = activeServices.reduce((sum, service) => sum + getDisplayServiceValue(service), 0);
+// En calculateMetrics(), despues de aplicar filtros del usuario:
+filteredServices = filteredServices.filter(s => s.status !== 'cancelled');
 ```
 
-Esto asegura que servicios cancelados no inflen las metricas de ingresos ni el conteo.
+Esto corrige automaticamente:
+- `calculateTopClients` -- excluye ingresos de servicios cancelados
+- `calculateCraneUtilization` -- excluye servicios cancelados del conteo
+- `calculateServicesByMonth` -- datos mensuales sin cancelados
+- `calculateServicesByStatus` -- distribucion sin cancelados
+- Metricas totales (totalServices, totalRevenue, averageServiceValue)
 
-### Impacto esperado
+### Parte 2: Rediseno de la interfaz
 
-| Metrica | Valor actual | Valor corregido |
-|---------|-------------|-----------------|
-| Total Servicios | ~1000 | ~1002 (sin cancelados) |
-| Total Generado | $197.686.760 | ~$201.436.760 |
-| Balance | $167.366.401 | ~$171.116.401 |
-| Margen | 84.7% | ~85.0% |
+**Archivo: `src/components/reports/shared/ReportsHeader.tsx`**
+- Simplificar el header: un solo boton "Exportar" con un dropdown que agrupe las 3 opciones (Metricas PDF/Excel, Servicios PDF/Excel, Costos PDF/Excel) usando secciones con separadores
+- Quitar los 3 botones individuales de colores distintos que generan confusion
 
-## Archivo a modificar
+**Archivo: `src/components/reports/ReportsPage.tsx`**
+- Mover los filtros dentro de cada tab como seccion colapsable (Accordion) en vez de componentes separados que ocupan espacio fijo
+- Cada tab gestiona sus propios filtros de forma mas limpia
 
-- `src/hooks/services/useServicesMetrics.ts` (2 cambios puntuales)
+**Archivo: `src/components/reports/dashboard/ReportsDashboard.tsx`**
+- Mejorar la seccion "Top 5 Clientes": agregar barra de progreso visual proporcional al ingreso maximo, numeracion con badges (1ro, 2do, 3ro...)
+- Mejorar "Utilizacion de Gruas": agregar barra de progreso visual con colores segun % de uso, mostrar cantidad de servicios junto al porcentaje
+- Mejorar "Distribucion de Servicios": usar badges con colores segun estado en vez de texto plano
+
+**Archivo: `src/components/reports/shared/ReportMetricCard.tsx`**
+- Ajustar para que use `text-muted-foreground` en las descripciones (actualmente todo es `text-foreground` dificultando la jerarquia visual)
+
+### Parte 3: Filtros simplificados por tab
+
+**Archivo: `src/components/reports/shared/ReportFilters.tsx`**
+- Convertir cada seccion de filtros en un Collapsible que se expande/contrae
+- Reducir la cantidad de controles visibles inicialmente
+- Mantener la misma funcionalidad pero con mejor organizacion visual
+
+---
+
+## Detalle tecnico de cambios
+
+### Archivos a modificar:
+
+1. **`src/hooks/useReports.ts`** (~linea 89) -- Agregar filtro de cancelados despues del bloque de filtros del usuario
+2. **`src/components/reports/shared/ReportsHeader.tsx`** -- Unificar 3 dropdowns en 1 con secciones agrupadas
+3. **`src/components/reports/dashboard/ReportsDashboard.tsx`** -- Redisenar Top Clientes y Utilizacion de Gruas con barras de progreso y badges
+4. **`src/components/reports/shared/ReportMetricCard.tsx`** -- Ajustar jerarquia de colores de texto
+
+### Datos reales para validar:
+
+| Cliente | Servicios | Ingresos |
+|---------|-----------|----------|
+| Auxilia Club | 199 | $91.398.400 |
+| Arrendadora S.A. | 291 | $27.506.500 |
+| Somacor S.A. | 17 | $10.840.000 |
+| Amphos 21 | 75 | $9.511.460 |
+| Salinas y Fabres | 255 | $8.620.000 |
+
+| Grua | Servicios |
+|------|-----------|
+| Chevrolet FRR (TDCJ-46) | 608 |
+| Chevrolet FRR (TLYF-23) | 226 |
+| Toyota Hilux (VBPH-58) | 53 |
 
