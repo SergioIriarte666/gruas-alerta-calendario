@@ -1,20 +1,29 @@
 
-# Fix: Scroll automatico en dropdowns Select
+# Agregar selector de clientes en Reportes/Servicios y sincronizar exportacion
 
 ## Problema
 
-Los Select dropdowns no se desplazan automaticamente al pasar el mouse sobre las flechas de scroll cuando estan dentro de Dialog/modales. Afecta Reportes (Costos, Finanzas) y cualquier otro modulo que use Select dentro de dialogos.
+El tab "Servicios" no tiene un selector de clientes como si lo tiene "Clientes". Ademas, al cambiar de tab se resetea la seleccion de cliente, y los filtros efectivos solo pasan el `clientId` seleccionado cuando el tab activo es "clientes".
 
-La causa es que Radix Dialog aplica `pointer-events: none` y los botones de scroll del Select no reciben el evento hover necesario para activar el auto-scroll.
+## Cambios
 
-## Solucion
+### Archivo: `src/components/reports/ReportsPage.tsx`
 
-### Archivo: `src/components/ui/select.tsx`
+1. **Selector de clientes visible en tab "Servicios"**: Agregar la condicion `activeTab === 'servicios'` junto a `activeTab === 'clientes'` para mostrar el selector de clientes en ambos tabs (linea 619).
 
-Agregar `pointer-events-auto` en 3 lugares:
+2. **No resetear cliente al ir a Servicios**: Modificar la logica de reset en linea 547 para que tampoco se resetee el cliente cuando se cambia al tab "servicios":
+   - Antes: `if (tab.id !== 'clientes') setSelectedClientId('all')`
+   - Despues: `if (tab.id !== 'clientes' && tab.id !== 'servicios') setSelectedClientId('all')`
 
-1. **SelectScrollUpButton** (clase CSS) - para que la flecha superior reciba hover
-2. **SelectScrollDownButton** (clase CSS) - para que la flecha inferior reciba hover  
-3. **SelectContent** (clase CSS) - para que todo el contenido del dropdown reciba eventos de puntero
+3. **Conectar filtros efectivos**: Actualizar `effectiveFilters` (linea 134) para que tambien pase el `selectedClientId` cuando el tab activo es "servicios":
+   - Antes: `clientId: activeTab === 'clientes' ? selectedClientId : appliedFilters.clientId`
+   - Despues: `clientId: (activeTab === 'clientes' || activeTab === 'servicios') ? selectedClientId : appliedFilters.clientId`
 
-Esto es el mismo patron que ya se aplico exitosamente al componente Calendar.
+4. **Sincronizar exportacion de servicios**: `effectiveServiceFilters` (linea 145) ya usa `selectedClientId`, por lo que la exportacion de servicios automaticamente respetara el cliente seleccionado sin cambios adicionales.
+
+### Resultado esperado
+
+- En el tab "Servicios" aparece el selector "Todos los clientes" junto al periodo (mismo patron visual que en "Clientes")
+- Las metricas (Total Servicios, Completados, Cancelados, Ingresos, Ticket Promedio) se filtran por el cliente seleccionado
+- La exportacion PDF/Excel de servicios genera el informe solo con los servicios del cliente seleccionado y el rango de fechas activo
+- Al cambiar a otros tabs (excepto Clientes), el cliente se resetea a "Todos"
