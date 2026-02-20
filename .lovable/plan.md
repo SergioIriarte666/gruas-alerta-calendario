@@ -1,63 +1,48 @@
 
 
-# Fix: Costos no se filtran por cliente en reportes
+# Fix: Excel con columnas en ingles y logo como texto
 
-## Problema encontrado
+## Problemas
 
-Al analizar el PDF generado, los **servicios SI estan filtrados correctamente** (28 servicios de Auxilia, $12.2M). Sin embargo, los **costos muestran el total global** ($18M) en vez de solo los costos asociados al cliente seleccionado. Esto genera un Beneficio Neto negativo falso de -$5.8M.
-
-La causa esta en `src/hooks/useReports.ts` lineas 105-113: el filtro de costos solo considera `dateRange` y `costCategoryId`, pero **ignora completamente el filtro de `clientId`**.
+1. La hoja "Servicios por Mes" usa columnas crudas: `month`, `services`, `revenue` en vez de "Mes", "Servicios", "Ingresos"
+2. La hoja "Servicios por Estado" usa: `status`, `count`, `percentage` en vez de "Estado", "Cantidad", "Porcentaje (%)"
+3. En la hoja Resumen, se muestra la URL completa del logo como texto plano (no tiene sentido en Excel)
 
 ## Solucion
 
-### Archivo: `src/hooks/useReports.ts`
+### Archivo: `src/utils/reports/operationalReportExporter.ts`
 
-Agregar filtrado por cliente en la seccion de costos. Muchos costos tienen un `service_id` que se relaciona con un servicio que tiene `client_id`. Cuando se filtra por cliente:
-
-1. Los costos que tienen `service_id` se filtran verificando que el servicio asociado pertenezca al cliente seleccionado
-2. Los costos **sin** `service_id` (gastos generales como sueldos, leasing) se excluyen cuando hay filtro de cliente activo, ya que no son atribuibles a un cliente especifico
-
-Cambio en la funcion `calculateMetrics`, seccion de filteredCosts:
+**Cambio 1 - Servicios por Mes (lineas 120-123)**: Mapear campos a espanol
 
 ```typescript
-// Antes (lineas 105-113):
-const filteredCosts = costs.filter(cost => {
-    if (filters?.dateRange.from && filters?.dateRange.to) {
-        if (cost.date < filters.dateRange.from || cost.date > filters.dateRange.to) return false;
-    }
-    if (filters?.costCategoryId && filters.costCategoryId !== 'all' && cost.category_id !== filters.costCategoryId) {
-        return false;
-    }
-    return true;
-});
+// Antes:
+const services_month_ws = XLSX.utils.json_to_sheet(metrics.servicesByMonth);
 
 // Despues:
-const filteredCosts = costs.filter(cost => {
-    if (filters?.dateRange.from && filters?.dateRange.to) {
-        if (cost.date < filters.dateRange.from || cost.date > filters.dateRange.to) return false;
-    }
-    if (filters?.costCategoryId && filters.costCategoryId !== 'all' && cost.category_id !== filters.costCategoryId) {
-        return false;
-    }
-    // Filtrar costos por cliente: solo incluir costos cuyo servicio pertenezca al cliente
-    if (filters?.clientId && filters.clientId !== 'all') {
-        if (!cost.service_id) return false; // Costos sin servicio no son atribuibles
-        const relatedService = filteredServices.find(s => s.id === cost.service_id);
-        if (!relatedService) return false;
-    }
-    return true;
-});
+const services_month_ws = XLSX.utils.json_to_sheet(metrics.servicesByMonth.map(s => ({
+  'Mes': formatDate(new Date(s.month + '-02T00:00:00'), "MMM yyyy", { locale: es }),
+  'Servicios': s.services,
+  'Ingresos': s.revenue
+})));
 ```
 
-Esta logica usa `filteredServices` (ya filtrado por cliente y fechas) para verificar que el costo esta vinculado a un servicio del cliente seleccionado. Costos generales sin servicio asociado se excluyen cuando hay filtro de cliente.
+**Cambio 2 - Servicios por Estado (lineas 148-150)**: Mapear campos y traducir estados
 
-### Resultado esperado
+```typescript
+// Antes:
+const services_status_ws = XLSX.utils.json_to_sheet(metrics.servicesByStatus);
 
-Al seleccionar Auxilia del 1 al 20 de febrero:
-- Servicios: 28 (sin cambio)
-- Ingresos: $12.2M (sin cambio)
-- Costos: Solo los vinculados a servicios de Auxilia (ej. comisiones de operador, gastos de servicio)
-- Beneficio Neto: Calculado correctamente contra los costos del cliente
+// Despues:
+const statusLabels: Record<string, string> = {
+  completed: 'Completado', pending: 'Pendiente', cancelled: 'Cancelado',
+  in_progress: 'En Progreso', assigned: 'Asignado'
+};
+const services_status_ws = XLSX.utils.json_to_sheet(metrics.servicesByStatus.map(s => ({
+  'Estado': statusLabels[s.status] || s.status,
+  'Cantidad': s.count,
+  'Porcentaje (%)': Number(s.percentage.toFixed(1))
+})));
+```
 
-### Archivo a modificar:
-1. `src/hooks/useReports.ts` - Agregar filtro de clientId en la seccion de costos
+**Cambio 3 - Quitar logo URL del Resumen (linea 99)**: Eliminar la linea `company.logo ? [Logo: ...] : []` de `resumen_ws_data` ya que una URL no aporta valor en un archivo Excel.
+
