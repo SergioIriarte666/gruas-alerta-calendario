@@ -27,6 +27,7 @@ export interface ReportMetrics {
   servicesByStatus: { status: string; count: number; percentage: number }[];
   topClients: { clientId: string; clientName: string; department: string; services: number; revenue: number }[];
   craneUtilization: { craneId: string; craneName: string; services: number; utilization: number }[];
+  operatorUtilization: { operatorId: string; operatorName: string; services: number; utilization: number }[];
   costsByCategory: { categoryId: string; categoryName: string; total: number; percentage: number }[];
   costsByMonth: { month: string; total: number }[];
   averageCostPerService: number;
@@ -147,6 +148,9 @@ export const useReports = (filters?: ReportFilters) => {
     // Utilización de grúas
     const craneUtilization = calculateCraneUtilization(filteredServices);
 
+    // Utilización de operadores
+    const operatorUtilization = calculateOperatorUtilization(filteredServices);
+
     const calculatedMetrics: ReportMetrics = {
       totalServices,
       totalRevenue,
@@ -163,6 +167,7 @@ export const useReports = (filters?: ReportFilters) => {
       servicesByStatus,
       topClients,
       craneUtilization,
+      operatorUtilization,
       costsByCategory,
       costsByMonth,
       averageCostPerService,
@@ -254,6 +259,32 @@ export const useReports = (filters?: ReportFilters) => {
         return {
           craneId,
           craneName: crane ? `${crane.brand} ${crane.model} (${crane.licensePlate})` : 'Grúa desconocida',
+          services: servicesNum,
+          utilization: totalServices > 0 ? (servicesNum / totalServices) * 100 : 0
+        };
+      })
+      .sort((a, b) => b.services - a.services);
+  };
+
+  const calculateOperatorUtilization = (services: Service[]) => {
+    const operatorData: { [key: string]: number } = {};
+    
+    services.forEach(service => {
+      if (service.operator?.id) {
+        const operatorId = service.operator.id;
+        operatorData[operatorId] = (operatorData[operatorId] || 0) + 1;
+      }
+    });
+
+    const totalServices = services.length;
+    
+    return Object.entries(operatorData)
+      .map(([operatorId, serviceCount]) => {
+        const operator = operators.find(o => o.id === operatorId);
+        const servicesNum = Number(serviceCount);
+        return {
+          operatorId,
+          operatorName: operator?.name || 'Operador desconocido',
           services: servicesNum,
           utilization: totalServices > 0 ? (servicesNum / totalServices) * 100 : 0
         };
