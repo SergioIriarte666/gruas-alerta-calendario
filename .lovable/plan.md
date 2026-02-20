@@ -1,42 +1,105 @@
 
 
-# Rediseno del Header y Navegacion del Modulo de Reportes
+# Rediseno completo de la UI del Modulo de Reportes
 
-## Problema actual
+## Objetivo
 
-La zona superior del modulo Reportes tiene una jerarquia visual debil:
-- El titulo "Reportes" y la descripcion no tienen suficiente contraste ni estructura
-- La barra de tabs ocupa demasiado espacio visual y no tiene relacion clara con el header
-- El subtitulo "Dashboard Ejecutivo" se repite debajo de los tabs, creando redundancia
-- No hay metricas de resumen rapido visibles al entrar (como si tiene el modulo de Costos)
+Transformar la interfaz actual (4 tabs pequenos + filtros colapsables + KPIs fijos) en un diseno limpio con navegacion por tarjetas grandes con iconos, barra de filtros inline y KPIs contextuales por seccion, tal como muestran las pantallas de referencia.
 
-## Solucion
+## Cambios principales
 
-Seguir los patrones del modulo de Costos para lograr una interfaz mas limpia y profesional.
+### 1. Navegacion por tarjetas grandes con iconos
 
-### Cambios en `src/components/reports/shared/ReportsHeader.tsx`
-- Ajustar tipografia: titulo `text-2xl font-bold` (no 3xl), subtitulo con color `text-gray-600 dark:text-gray-400`
-- Mantener botones "Actualizar" y "Exportar" alineados a la derecha
-- Agregar un badge informativo con la ultima actualizacion integrado en el subtitulo (similar al badge de periodo activo en Costos)
+Reemplazar el `TabsList` compacto de 4 tabs por una fila de 7 tarjetas grandes con icono + texto, estilo boton:
 
-### Cambios en `src/components/reports/ReportsPage.tsx`
-- Reducir el padding del TabsList y usar un estilo mas compacto
-- Mover el titulo de cada seccion (ej: "Dashboard Ejecutivo") dentro de cada TabsContent pero con tipografia reducida (`text-lg font-semibold` en vez de `text-2xl font-bold`)
-- Agregar las 4 tarjetas KPI (Ingresos, Beneficio, Servicios, Facturas Pendientes) directamente debajo de los tabs y antes del contenido de cada tab, como hace el modulo de Costos con sus metricas resumen
+- **Servicios** (icono BarChart3)
+- **Ingresos** (icono TrendingUp)
+- **Clientes** (icono Users)
+- **Operadores** (icono HardHat)
+- **Flota** (icono Truck)
+- **Finanzas** (icono DollarSign)
+- **Costos** (icono Receipt)
 
-### Cambios en `src/components/reports/dashboard/ReportsDashboard.tsx`
-- Eliminar el encabezado duplicado "Dashboard Ejecutivo" + descripcion (ya esta en el tab)
-- Reducir el titulo de seccion a una linea simple con tipografia mas liviana
-- Mantener las tarjetas KPI, distribucion de servicios, top clientes y utilizacion de gruas
+La tarjeta activa tendra fondo violeta con texto blanco. Las inactivas tendran fondo blanco con borde y texto oscuro.
 
-### Cambios en `src/components/reports/shared/ReportMetricCard.tsx`
-- Sin cambios adicionales (ya fue ajustado en la iteracion anterior)
+### 2. Barra de filtros inline
+
+Reemplazar los acordeones colapsables de filtros por una barra horizontal compacta con:
+
+- **Selector de periodo**: Dropdown con opciones predefinidas (Hoy, Ultimos 7 dias, Ultimos 30 dias, Este mes, Mes anterior, Ultimos 3 meses, Este ano)
+- **Rango de fechas**: Badge visual mostrando "01 feb - 28 feb 2026"
+- **Boton Exportar**: Dropdown unificado (ya existente)
+
+Todo en una sola linea, sin colapsar/expandir.
+
+### 3. KPIs contextuales por tab
+
+Cada tab mostrara sus propias metricas relevantes en tarjetas simples (sin icono, solo titulo + valor grande):
+
+- **Servicios**: Total Servicios, Completados, Cancelados, Ingresos, Ticket Promedio
+- **Ingresos**: Ingresos Totales, Ingreso Promedio, Mejor Mes, Crecimiento
+- **Clientes**: Total Clientes, Ingresos Totales, Ingreso Promedio, Pareto 80/20
+- **Operadores**: Total Operadores, Servicios por Operador, Mas Activo
+- **Flota**: Total Gruas, Utilizacion Promedio, Grua Mas Activa
+- **Finanzas**: Beneficio Neto, Margen, Facturas Pendientes, Vencidas
+- **Costos**: Total Costos, Costo por Servicio, Ratio Costo/Ingreso
+
+### 4. Eliminar KPIs globales fijos
+
+Remover las 4 tarjetas de KPI que estan actualmente sobre los tabs (Ingresos Totales, Beneficio Neto, Servicios, Facturas Pendientes). Los KPIs seran contextuales dentro de cada tab.
+
+---
 
 ## Detalle tecnico
 
 ### Archivos a modificar:
 
-1. **`src/components/reports/shared/ReportsHeader.tsx`** -- Ajustar tipografia y badge de actualizacion
-2. **`src/components/reports/ReportsPage.tsx`** -- Tabs mas compactos, KPIs visibles arriba
-3. **`src/components/reports/dashboard/ReportsDashboard.tsx`** -- Quitar encabezado duplicado, limpiar estructura
+1. **`src/components/reports/ReportsPage.tsx`**
+   - Reemplazar `TabsList` compacto por grid de tarjetas grandes con iconos (7 columnas)
+   - Agregar estado para periodo seleccionado y logica de calculo de rango de fechas
+   - Agregar barra de filtros inline (periodo + rango de fechas + exportar)
+   - Eliminar grid de 4 KPIs globales
+   - Expandir `TabsContent` a 7 secciones (Servicios, Ingresos, Clientes, Operadores, Flota, Finanzas, Costos)
+   - Las secciones nuevas (Ingresos, Clientes, Operadores, Flota, Finanzas) reutilizaran componentes existentes como `ReportsDashboard`, `OperationalReports`, `CostAnalysisReports` o mostraran subconjuntos de metricas con graficos relevantes
+
+2. **`src/components/reports/shared/ReportsHeader.tsx`**
+   - Simplificar: solo titulo "Reportes" y subtitulo "Analisis y estadisticas del negocio"
+   - Eliminar botones de Actualizar y Exportar del header (se mueven a la barra de filtros)
+
+3. **`src/components/reports/shared/ReportFilters.tsx`**
+   - Ya no se usara directamente en ReportsPage (la barra de filtros inline sera parte de ReportsPage)
+   - Se mantiene por si otros componentes lo necesitan
+
+4. **`src/components/reports/shared/ReportMetricCard.tsx`**
+   - Simplificar: quitar icono, mostrar solo titulo (texto pequeno muted) + valor grande + subtexto opcional
+   - Estilo limpio con borde redondeado, sin sombra
+
+### Estructura visual resultante:
+
+```text
++--------------------------------------------------+
+| Reportes                                          |
+| Analisis y estadisticas del negocio               |
++--------------------------------------------------+
+| [Servicios] [Ingresos] [Clientes] [Operadores]   |
+| [Flota]     [Finanzas] [Costos]                   |
++--------------------------------------------------+
+| [Este mes v] [01 feb - 28 feb 2026] [Exportar v] |
++--------------------------------------------------+
+| [KPI 1] [KPI 2] [KPI 3] [KPI 4] [KPI 5]         |
++--------------------------------------------------+
+| [Grafico 1]              [Grafico 2]              |
++--------------------------------------------------+
+```
+
+### Logica de periodos predefinidos:
+
+El selector de periodo calculara automaticamente las fechas `from` y `to`:
+- Hoy: fecha actual
+- Ultimos 7 dias: hoy - 7 dias
+- Ultimos 30 dias: hoy - 30 dias
+- Este mes: 1er dia del mes actual hasta ultimo dia
+- Mes anterior: 1er dia del mes anterior hasta ultimo dia
+- Ultimos 3 meses: hoy - 3 meses
+- Este ano: 1 enero hasta hoy
 
