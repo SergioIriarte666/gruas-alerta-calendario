@@ -128,12 +128,21 @@ const ReportsPage = () => {
       from: format(periodDates.from, 'yyyy-MM-dd'),
       to: format(periodDates.to, 'yyyy-MM-dd'),
     },
-  }), [appliedFilters, periodDates]);
+    clientId: activeTab === 'clientes' ? selectedClientId : appliedFilters.clientId,
+  }), [appliedFilters, periodDates, selectedClientId, activeTab]);
 
   const { metrics, loading, lastUpdate, forceRefresh } = useReports(effectiveFilters);
 
+  const effectiveServiceFilters = useMemo(() => ({
+    dateRange: {
+      from: format(periodDates.from, 'yyyy-MM-dd'),
+      to: format(periodDates.to, 'yyyy-MM-dd'),
+    },
+    clientId: selectedClientId,
+  }), [periodDates, selectedClientId]);
+
   const { handleExport, handleExportServiceReport } = useReportActions({
-    appliedFilters, serviceReportFilters, metrics,
+    appliedFilters: effectiveFilters, serviceReportFilters: effectiveServiceFilters, metrics,
   });
 
   const { handleExportCostReport } = useCostReportActions({ costReportFilters });
