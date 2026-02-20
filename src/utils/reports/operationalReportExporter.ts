@@ -96,7 +96,7 @@ export const exportOperationalReport = async ({ format, metrics, settings, appli
       [`RUT: ${company.taxId}`],
       [company.address],
       [`Tel: ${company.phone} | Email: ${company.email}`],
-      company.logo ? [`Logo: ${company.logo}`] : [],
+      [],
       [],
       ['Reporte de Operaciones'], [],
       ['Filtros Aplicados'],
@@ -118,7 +118,11 @@ export const exportOperationalReport = async ({ format, metrics, settings, appli
 
     // Add additional sheets
     if(metrics.servicesByMonth.length > 0) {
-      const services_month_ws = XLSX.utils.json_to_sheet(metrics.servicesByMonth);
+      const services_month_ws = XLSX.utils.json_to_sheet(metrics.servicesByMonth.map(s => ({
+        'Mes': formatDate(new Date(s.month + '-02T00:00:00'), "MMM yyyy", { locale: es }),
+        'Servicios': s.services,
+        'Ingresos': s.revenue
+      })));
       XLSX.utils.book_append_sheet(wb, services_month_ws, 'Servicios por Mes');
     }
 
@@ -146,7 +150,18 @@ export const exportOperationalReport = async ({ format, metrics, settings, appli
     }
 
     if(metrics.servicesByStatus.length > 0) {
-      const services_status_ws = XLSX.utils.json_to_sheet(metrics.servicesByStatus);
+      const statusLabels: Record<string, string> = {
+        completed: 'Completado', pending: 'Pendiente', cancelled: 'Cancelado',
+        in_progress: 'En Progreso', assigned: 'Asignado', invoiced: 'Facturado',
+        quoted: 'Cotizado', purchase_order_pending: 'Esperando O.C.',
+        with_purchase_order: 'Con Orden de Compra', failed: 'Fallido',
+        inspection_completed: 'Inspección Completada'
+      };
+      const services_status_ws = XLSX.utils.json_to_sheet(metrics.servicesByStatus.map(s => ({
+        'Estado': statusLabels[s.status] || s.status,
+        'Cantidad': s.count,
+        'Porcentaje (%)': Number(s.percentage.toFixed(1))
+      })));
       XLSX.utils.book_append_sheet(wb, services_status_ws, 'Servicios por Estado');
     }
 
