@@ -1,29 +1,32 @@
 
-# Agregar selector de clientes en Reportes/Servicios y sincronizar exportacion
+# Fix: Contador de servicios no se actualiza al crear un servicio
 
 ## Problema
 
-El tab "Servicios" no tiene un selector de clientes como si lo tiene "Clientes". Ademas, al cambiar de tab se resetea la seleccion de cliente, y los filtros efectivos solo pasan el `clientId` seleccionado cuando el tab activo es "clientes".
+El hook `useServicesMetrics` usa `useState`/`useEffect` directo con Supabase (no React Query). Despues de crear un servicio, no hay nada que dispare un refetch de las metricas. El hook expone una funcion `refetch`, pero nadie la llama. Tampoco escucha el evento `global-data-refresh` que se dispara tras mutaciones.
 
-## Cambios
+## Solucion
 
-### Archivo: `src/components/reports/ReportsPage.tsx`
+### Archivo: `src/hooks/services/useServicesMetrics.ts`
 
-1. **Selector de clientes visible en tab "Servicios"**: Agregar la condicion `activeTab === 'servicios'` junto a `activeTab === 'clientes'` para mostrar el selector de clientes en ambos tabs (linea 619).
+Agregar un `useEffect` que escuche el evento `global-data-refresh` del `window` y llame a `fetchData` cuando se dispare. Esto conecta el hook con el sistema existente de refresh global que ya se activa al crear/editar/eliminar servicios.
 
-2. **No resetear cliente al ir a Servicios**: Modificar la logica de reset en linea 547 para que tampoco se resetee el cliente cuando se cambia al tab "servicios":
-   - Antes: `if (tab.id !== 'clientes') setSelectedClientId('all')`
-   - Despues: `if (tab.id !== 'clientes' && tab.id !== 'servicios') setSelectedClientId('all')`
+Cambio concreto: despues del `useEffect` existente (linea 130-132), agregar:
 
-3. **Conectar filtros efectivos**: Actualizar `effectiveFilters` (linea 134) para que tambien pase el `selectedClientId` cuando el tab activo es "servicios":
-   - Antes: `clientId: activeTab === 'clientes' ? selectedClientId : appliedFilters.clientId`
-   - Despues: `clientId: (activeTab === 'clientes' || activeTab === 'servicios') ? selectedClientId : appliedFilters.clientId`
+```typescript
+// Escuchar evento global de refresh para actualizar metricas
+useEffect(() => {
+  const handleGlobalRefresh = () => {
+    console.log('🔄 [ServicesMetrics] Global refresh detectado, actualizando metricas...');
+    fetchData();
+  };
+  
+  window.addEventListener('global-data-refresh', handleGlobalRefresh);
+  return () => window.removeEventListener('global-data-refresh', handleGlobalRefresh);
+}, [dateFilter]);
+```
 
-4. **Sincronizar exportacion de servicios**: `effectiveServiceFilters` (linea 145) ya usa `selectedClientId`, por lo que la exportacion de servicios automaticamente respetara el cliente seleccionado sin cambios adicionales.
+### Resultado
 
-### Resultado esperado
-
-- En el tab "Servicios" aparece el selector "Todos los clientes" junto al periodo (mismo patron visual que en "Clientes")
-- Las metricas (Total Servicios, Completados, Cancelados, Ingresos, Ticket Promedio) se filtran por el cliente seleccionado
-- La exportacion PDF/Excel de servicios genera el informe solo con los servicios del cliente seleccionado y el rango de fechas activo
-- Al cambiar a otros tabs (excepto Clientes), el cliente se resetea a "Todos"
+- Al crear, editar o eliminar un servicio, el contador "Total Servicios" y las demas metricas se actualizan automaticamente
+- No requiere cambios en otros archivos porque el sistema de `global-data-refresh` ya se dispara desde `refreshAllServiceData` en las mutaciones existentes
