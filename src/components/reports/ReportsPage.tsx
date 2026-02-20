@@ -18,6 +18,9 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
+import { Calendar as CalendarComponent } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { cn } from '@/lib/utils';
 import {
   BarChart3, TrendingUp, Users, HardHat, Truck, DollarSign, Receipt,
   Download, FileText, FileSpreadsheet, Calendar, RefreshCw, Wrench, Trophy,
@@ -45,6 +48,7 @@ const tabs = [
 type TabId = typeof tabs[number]['id'];
 
 const periodOptions = [
+  { value: 'custom', label: 'Personalizado' },
   { value: 'today', label: 'Hoy' },
   { value: 'last7', label: 'Últimos 7 días' },
   { value: 'last30', label: 'Últimos 30 días' },
@@ -99,10 +103,17 @@ const ReportsPage = () => {
   const [activeTab, setActiveTab] = useState<TabId>('servicios');
   const [selectedPeriod, setSelectedPeriod] = useState('this_month');
   const [selectedClientId, setSelectedClientId] = useState<string>('all');
+  const [customFrom, setCustomFrom] = useState<Date | undefined>(startOfMonth(new Date()));
+  const [customTo, setCustomTo] = useState<Date | undefined>(new Date());
 
   const { clients } = useClients();
 
-  const periodDates = useMemo(() => getPeriodDates(selectedPeriod), [selectedPeriod]);
+  const periodDates = useMemo(() => {
+    if (selectedPeriod === 'custom' && customFrom && customTo) {
+      return { from: customFrom, to: customTo };
+    }
+    return getPeriodDates(selectedPeriod);
+  }, [selectedPeriod, customFrom, customTo]);
 
   const {
     filters, appliedFilters, serviceReportFilters, costReportFilters,
@@ -537,6 +548,48 @@ const ReportsPage = () => {
             ))}
           </SelectContent>
         </Select>
+
+        {/* Custom date pickers - only visible when 'Personalizado' is selected */}
+        {selectedPeriod === 'custom' && (
+          <>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" size="sm" className={cn("h-9 text-sm bg-card border justify-start font-normal w-[150px]", !customFrom && "text-muted-foreground")}>
+                  <Calendar className="h-3.5 w-3.5 mr-1.5" />
+                  {customFrom ? format(customFrom, 'dd/MM/yyyy') : 'Desde'}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0 bg-popover border z-50" align="start">
+                <CalendarComponent
+                  mode="single"
+                  selected={customFrom}
+                  onSelect={setCustomFrom}
+                  initialFocus
+                  className={cn("p-3 pointer-events-auto")}
+                  locale={es}
+                />
+              </PopoverContent>
+            </Popover>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" size="sm" className={cn("h-9 text-sm bg-card border justify-start font-normal w-[150px]", !customTo && "text-muted-foreground")}>
+                  <Calendar className="h-3.5 w-3.5 mr-1.5" />
+                  {customTo ? format(customTo, 'dd/MM/yyyy') : 'Hasta'}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0 bg-popover border z-50" align="start">
+                <CalendarComponent
+                  mode="single"
+                  selected={customTo}
+                  onSelect={setCustomTo}
+                  initialFocus
+                  className={cn("p-3 pointer-events-auto")}
+                  locale={es}
+                />
+              </PopoverContent>
+            </Popover>
+          </>
+        )}
 
         {/* Client selector - only visible on Clientes tab */}
         {activeTab === 'clientes' && (
