@@ -13,11 +13,14 @@ import { useReportCharts } from '@/hooks/reports/useReportCharts';
 import { useCostReportActions } from '@/hooks/reports/useCostReportActions';
 import { useReportsRealtime } from '@/hooks/reports/useReportsRealtime';
 import { ReportFilters } from './shared/ReportFilters';
+import { useClients } from '@/hooks/useClients';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
 import {
   BarChart3, TrendingUp, Users, HardHat, Truck, DollarSign, Receipt,
-  Download, FileText, FileSpreadsheet, Calendar, RefreshCw, Wrench,
+  Download, FileText, FileSpreadsheet, Calendar, RefreshCw, Wrench, Trophy,
 } from 'lucide-react';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
@@ -68,11 +71,36 @@ const getPeriodDates = (period: string) => {
   }
 };
 
+const statusColors: Record<string, string> = {
+  completed: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
+  pending: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400',
+  in_progress: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
+  cancelled: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
+  scheduled: 'bg-violet-100 text-violet-800 dark:bg-violet-900/30 dark:text-violet-400',
+};
+
+const statusLabels: Record<string, string> = {
+  completed: 'Completado',
+  pending: 'Pendiente',
+  in_progress: 'En Progreso',
+  cancelled: 'Cancelado',
+  scheduled: 'Programado',
+};
+
+const rankBadgeColors = [
+  'bg-yellow-500 text-white',
+  'bg-gray-400 text-white',
+  'bg-amber-700 text-white',
+];
+
 const ReportsPage = () => {
   useReportsRealtime();
 
   const [activeTab, setActiveTab] = useState<TabId>('servicios');
   const [selectedPeriod, setSelectedPeriod] = useState('this_month');
+  const [selectedClientId, setSelectedClientId] = useState<string>('all');
+
+  const { clients } = useClients();
 
   const periodDates = useMemo(() => getPeriodDates(selectedPeriod), [selectedPeriod]);
 
@@ -116,6 +144,12 @@ const ReportsPage = () => {
 
   const m = metrics || defaultMetrics;
 
+  // Client-specific metrics for Clientes tab
+  const selectedClientData = useMemo(() => {
+    if (selectedClientId === 'all' || !m.topClients.length) return null;
+    return m.topClients.find(c => c.clientId === selectedClientId) || null;
+  }, [selectedClientId, m.topClients]);
+
   const dateLabel = `${format(periodDates.from, 'dd MMM', { locale: es })} - ${format(periodDates.to, 'dd MMM yyyy', { locale: es })}`;
 
   const renderKPIs = () => {
@@ -140,6 +174,16 @@ const ReportsPage = () => {
           </div>
         );
       case 'clientes':
+        if (selectedClientData) {
+          return (
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+              <ReportMetricCard title="Cliente" value={selectedClientData.clientName} />
+              <ReportMetricCard title="Servicios" value={selectedClientData.services} />
+              <ReportMetricCard title="Ingresos" value={`$${selectedClientData.revenue.toLocaleString()}`} valueClassName="text-green-600 dark:text-green-400" />
+              <ReportMetricCard title="Ticket Promedio" value={`$${selectedClientData.services > 0 ? Math.round(selectedClientData.revenue / selectedClientData.services).toLocaleString() : 0}`} />
+            </div>
+          );
+        }
         return (
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
             <ReportMetricCard title="Total Clientes" value={m.activeClients} />
@@ -185,14 +229,228 @@ const ReportsPage = () => {
     }
   };
 
+  const renderExportMenu = () => {
+    switch (activeTab) {
+      case 'servicios':
+        return (
+          <>
+            <DropdownMenuLabel className="flex items-center gap-2 text-muted-foreground">
+              <Truck className="w-3.5 h-3.5" />
+              Informe de Servicios
+            </DropdownMenuLabel>
+            <DropdownMenuItem onClick={() => handleExportServiceReport('pdf')}>
+              <FileText className="w-4 h-4 mr-2" /> PDF
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => handleExportServiceReport('excel')}>
+              <FileSpreadsheet className="w-4 h-4 mr-2" /> Excel
+            </DropdownMenuItem>
+          </>
+        );
+      case 'costos':
+        return (
+          <>
+            <DropdownMenuLabel className="flex items-center gap-2 text-muted-foreground">
+              <DollarSign className="w-3.5 h-3.5" />
+              Informe de Costos
+            </DropdownMenuLabel>
+            <DropdownMenuItem onClick={() => handleExportCostReport('pdf')}>
+              <FileText className="w-4 h-4 mr-2" /> PDF
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => handleExportCostReport('excel')}>
+              <FileSpreadsheet className="w-4 h-4 mr-2" /> Excel
+            </DropdownMenuItem>
+          </>
+        );
+      case 'clientes':
+        return (
+          <>
+            <DropdownMenuLabel className="flex items-center gap-2 text-muted-foreground">
+              <Users className="w-3.5 h-3.5" />
+              {selectedClientData ? `Informe: ${selectedClientData.clientName}` : 'Informe de Clientes'}
+            </DropdownMenuLabel>
+            <DropdownMenuItem onClick={() => handleExport('pdf')}>
+              <FileText className="w-4 h-4 mr-2" /> PDF
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => handleExport('excel')}>
+              <FileSpreadsheet className="w-4 h-4 mr-2" /> Excel
+            </DropdownMenuItem>
+          </>
+        );
+      default: {
+        const tabLabel = tabs.find(t => t.id === activeTab)?.label || 'General';
+        const TabIcon = tabs.find(t => t.id === activeTab)?.icon || BarChart3;
+        return (
+          <>
+            <DropdownMenuLabel className="flex items-center gap-2 text-muted-foreground">
+              <TabIcon className="w-3.5 h-3.5" />
+              Métricas de {tabLabel}
+            </DropdownMenuLabel>
+            <DropdownMenuItem onClick={() => handleExport('pdf')}>
+              <FileText className="w-4 h-4 mr-2" /> PDF
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => handleExport('excel')}>
+              <FileSpreadsheet className="w-4 h-4 mr-2" /> Excel
+            </DropdownMenuItem>
+          </>
+        );
+      }
+    }
+  };
+
   const renderContent = () => {
     switch (activeTab) {
       case 'servicios':
+        return (
+          <Card className="bg-card border">
+            <CardHeader>
+              <CardTitle className="text-foreground">Distribución de Servicios</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {m.servicesByStatus.map((status) => (
+                  <div key={status.status} className="text-center p-4 bg-muted/50 rounded-lg space-y-2">
+                    <div className="text-2xl font-bold text-foreground">{status.count}</div>
+                    <Badge className={`${statusColors[status.status] || 'bg-muted text-foreground'} text-xs`}>
+                      {statusLabels[status.status] || status.status}
+                    </Badge>
+                    <div className="text-xs text-muted-foreground">{status.percentage.toFixed(1)}%</div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        );
+
       case 'ingresos':
-      case 'clientes':
+        return (
+          <OperationalReports
+            metrics={m}
+            servicesByMonthConfig={servicesByMonthConfig}
+            revenueByMonthConfig={revenueByMonthConfig}
+            servicesByStatusConfig={servicesByStatusConfig}
+            craneUtilizationConfig={craneUtilizationConfig}
+          />
+        );
+
+      case 'clientes': {
+        const maxClientRevenue = m.topClients.length > 0 ? m.topClients[0].revenue : 1;
+        const clientList = selectedClientData ? [selectedClientData] : m.topClients;
+        return (
+          <Card className="bg-card border">
+            <CardHeader>
+              <CardTitle className="text-foreground flex items-center gap-2">
+                <Trophy className="w-5 h-5 text-yellow-500" />
+                {selectedClientData ? `Detalle: ${selectedClientData.clientName}` : 'Ranking de Clientes'}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {clientList.map((client, index) => {
+                  const globalIndex = selectedClientData ? m.topClients.findIndex(c => c.clientId === client.clientId) : index;
+                  return (
+                    <div key={client.clientId} className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className={`inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold shrink-0 ${globalIndex < 3 ? rankBadgeColors[globalIndex] : 'bg-muted text-muted-foreground'}`}>
+                            {globalIndex + 1}
+                          </span>
+                          <div className="min-w-0">
+                            <div className="font-medium text-foreground text-sm truncate">
+                              {client.clientName}
+                            </div>
+                            {client.department && client.department !== 'General' && (
+                              <div className="text-xs text-muted-foreground truncate">{client.department}</div>
+                            )}
+                          </div>
+                        </div>
+                        <div className="text-right shrink-0 ml-2">
+                          <div className="text-sm font-bold text-violet-600 dark:text-violet-400">
+                            ${client.revenue.toLocaleString()}
+                          </div>
+                          <div className="text-xs text-muted-foreground">{client.services} servicios</div>
+                        </div>
+                      </div>
+                      <Progress
+                        value={(client.revenue / maxClientRevenue) * 100}
+                        className="h-1.5"
+                      />
+                    </div>
+                  );
+                })}
+                {clientList.length === 0 && (
+                  <p className="text-sm text-muted-foreground text-center py-4">No hay datos de clientes para el período seleccionado.</p>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        );
+      }
+
       case 'operadores':
-      case 'flota':
-        return <ReportsDashboard metrics={m} />;
+        return (
+          <Card className="bg-card border">
+            <CardHeader>
+              <CardTitle className="text-foreground">Métricas de Operadores</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-sm text-muted-foreground">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="p-4 bg-muted/50 rounded-lg space-y-1">
+                    <div className="text-xs text-muted-foreground">Operadores Activos</div>
+                    <div className="text-2xl font-bold text-foreground">{m.activeOperators}</div>
+                  </div>
+                  <div className="p-4 bg-muted/50 rounded-lg space-y-1">
+                    <div className="text-xs text-muted-foreground">Servicios por Operador</div>
+                    <div className="text-2xl font-bold text-foreground">{m.activeOperators > 0 ? (m.totalServices / m.activeOperators).toFixed(1) : '0'}</div>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        );
+
+      case 'flota': {
+        const maxCraneServices = m.craneUtilization.length > 0 ? m.craneUtilization[0].services : 1;
+        return (
+          <Card className="bg-card border">
+            <CardHeader>
+              <CardTitle className="text-foreground">Utilización de Grúas</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {m.craneUtilization.map((crane) => {
+                  const utilizationColor = crane.utilization >= 50
+                    ? 'text-green-600 dark:text-green-400'
+                    : crane.utilization >= 20
+                      ? 'text-yellow-600 dark:text-yellow-400'
+                      : 'text-red-600 dark:text-red-400';
+                  return (
+                    <div key={crane.craneId} className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <div className="min-w-0">
+                          <div className="font-medium text-foreground text-sm truncate">{crane.craneName}</div>
+                          <div className="text-xs text-muted-foreground">{crane.services} servicios</div>
+                        </div>
+                        <span className={`text-sm font-bold shrink-0 ml-2 ${utilizationColor}`}>
+                          {crane.utilization.toFixed(1)}%
+                        </span>
+                      </div>
+                      <Progress
+                        value={(crane.services / maxCraneServices) * 100}
+                        className="h-1.5"
+                      />
+                    </div>
+                  );
+                })}
+                {m.craneUtilization.length === 0 && (
+                  <p className="text-sm text-muted-foreground text-center py-4">No hay datos de utilización para el período seleccionado.</p>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        );
+      }
+
       case 'finanzas':
         return (
           <>
@@ -249,7 +507,10 @@ const ReportsPage = () => {
           return (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
+              onClick={() => {
+                setActiveTab(tab.id);
+                if (tab.id !== 'clientes') setSelectedClientId('all');
+              }}
               className={`flex flex-col items-center gap-1.5 p-3 rounded-lg border text-sm font-medium transition-all duration-200 ${
                 isActive
                   ? 'bg-violet-600 text-white border-violet-600 shadow-md'
@@ -277,6 +538,25 @@ const ReportsPage = () => {
           </SelectContent>
         </Select>
 
+        {/* Client selector - only visible on Clientes tab */}
+        {activeTab === 'clientes' && (
+          <Select value={selectedClientId} onValueChange={setSelectedClientId}>
+            <SelectTrigger className="w-[220px] h-9 text-sm bg-card border">
+              <Users className="h-3.5 w-3.5 mr-1.5 text-muted-foreground" />
+              <SelectValue placeholder="Todos los clientes" />
+            </SelectTrigger>
+            <SelectContent className="bg-popover border z-50">
+              <SelectItem value="all">Todos los clientes</SelectItem>
+              {clients
+                .filter(c => c.isActive)
+                .sort((a, b) => a.name.localeCompare(b.name))
+                .map(client => (
+                  <SelectItem key={client.id} value={client.id}>{client.name}</SelectItem>
+                ))}
+            </SelectContent>
+          </Select>
+        )}
+
         <Badge variant="outline" className="h-9 px-3 text-xs font-normal text-muted-foreground border-border bg-card">
           {dateLabel}
         </Badge>
@@ -301,38 +581,7 @@ const ReportsPage = () => {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56 bg-popover border z-50">
-              <DropdownMenuLabel className="flex items-center gap-2 text-muted-foreground">
-                <BarChart3 className="w-3.5 h-3.5" />
-                Métricas Generales
-              </DropdownMenuLabel>
-              <DropdownMenuItem onClick={() => handleExport('pdf')}>
-                <FileText className="w-4 h-4 mr-2" /> PDF
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleExport('excel')}>
-                <FileSpreadsheet className="w-4 h-4 mr-2" /> Excel
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuLabel className="flex items-center gap-2 text-muted-foreground">
-                <Truck className="w-3.5 h-3.5" />
-                Informe de Servicios
-              </DropdownMenuLabel>
-              <DropdownMenuItem onClick={() => handleExportServiceReport('pdf')}>
-                <FileText className="w-4 h-4 mr-2" /> PDF
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleExportServiceReport('excel')}>
-                <FileSpreadsheet className="w-4 h-4 mr-2" /> Excel
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuLabel className="flex items-center gap-2 text-muted-foreground">
-                <DollarSign className="w-3.5 h-3.5" />
-                Informe de Costos
-              </DropdownMenuLabel>
-              <DropdownMenuItem onClick={() => handleExportCostReport('pdf')}>
-                <FileText className="w-4 h-4 mr-2" /> PDF
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleExportCostReport('excel')}>
-                <FileSpreadsheet className="w-4 h-4 mr-2" /> Excel
-              </DropdownMenuItem>
+              {renderExportMenu()}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
