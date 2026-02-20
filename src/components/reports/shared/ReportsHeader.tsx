@@ -22,20 +22,23 @@ interface ReportsHeaderProps {
 export const ReportsHeader = ({ onExport, onExportServiceReport, onExportCostReport, onRefresh, isLoading, lastUpdate }: ReportsHeaderProps) => (
   <div className="flex flex-col md:flex-row justify-between md:items-center gap-4">
     <div>
-      <h1 className="text-3xl font-bold text-foreground">Reportes</h1>
-      <p className="text-muted-foreground mt-1">
-        Análisis detallado y métricas de rendimiento del negocio.
+      <h1 className="text-2xl font-bold text-foreground">Reportes</h1>
+      <div className="flex items-center gap-2 mt-1">
+        <p className="text-sm text-muted-foreground">
+          Análisis y métricas de rendimiento del negocio
+        </p>
         {lastUpdate && (
-          <span className="block text-sm text-muted-foreground mt-1">
-            Última actualización: {lastUpdate.toLocaleTimeString()}
+          <span className="inline-flex items-center rounded-full bg-violet-100 dark:bg-violet-900/30 px-2.5 py-0.5 text-xs font-medium text-violet-700 dark:text-violet-300">
+            Actualizado: {lastUpdate.toLocaleTimeString()}
           </span>
         )}
-      </p>
+      </div>
     </div>
     <div className="flex items-center gap-2">
       {onRefresh && (
         <Button 
           variant="outline" 
+          size="sm"
           onClick={onRefresh}
           disabled={isLoading}
           className="border-input text-foreground hover:bg-muted/50"
@@ -46,7 +49,7 @@ export const ReportsHeader = ({ onExport, onExportServiceReport, onExportCostRep
       )}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button className="bg-violet-600 hover:bg-violet-700 text-white">
+          <Button size="sm" className="bg-violet-600 hover:bg-violet-700 text-white">
             <Download className="w-4 h-4 mr-2" />
             Exportar
           </Button>
