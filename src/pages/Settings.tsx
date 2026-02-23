@@ -75,11 +75,11 @@ const Settings = () => {
   }
 
   return (
-    <div className="space-y-4 animate-fade-in bg-background min-h-screen settings-scope">
+    <div className="space-y-4 animate-fade-in bg-background min-h-screen settings-scope overflow-x-hidden">
       <SettingsHeader onReset={resetSettings} />
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <div className="overflow-x-auto -mx-1 px-1">
+        <div className="overflow-x-auto">
           <TabsList className="inline-flex w-auto min-w-full md:grid md:grid-cols-7 bg-card border h-auto p-1 gap-1">
             <TabsTrigger value="company" className="flex-shrink-0 flex flex-col items-center justify-center space-y-1 text-foreground data-[state=active]:text-primary-foreground data-[state=active]:bg-primary hover:bg-muted p-2 h-auto min-h-[52px] text-xs whitespace-nowrap">
               <Building2 className="w-4 h-4" />
