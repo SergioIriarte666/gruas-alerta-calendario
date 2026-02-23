@@ -1,5 +1,5 @@
 
-import { useEffect } from 'react';
+import { useEffect, useCallback } from 'react';
 import { useCalendarEvents } from './useCalendarEvents';
 import { useCalendarNavigation } from './useCalendarNavigation';
 import { getEventsForDate, getEventsForMonth } from '@/utils/calendarHelpers';
@@ -24,6 +24,16 @@ export const useCalendar = () => {
   useEffect(() => {
     loadEvents();
   }, []);
+
+  // Listen for global data refresh events (service/maintenance CRUD)
+  useEffect(() => {
+    const handleRefresh = () => {
+      loadEvents();
+    };
+
+    window.addEventListener('global-data-refresh', handleRefresh);
+    return () => window.removeEventListener('global-data-refresh', handleRefresh);
+  }, [loadEvents]);
 
   return {
     events,
