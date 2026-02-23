@@ -17,7 +17,7 @@ export const ServicesDateFilter = ({ selected, onChange }: ServicesDateFilterPro
   ];
 
   return (
-    <div className="flex space-x-2 bg-gray-100 p-1 rounded-lg">
+    <div className="flex space-x-1 sm:space-x-2 bg-gray-100 p-1 rounded-lg overflow-x-auto flex-shrink-0">
       {filters.map((filter) => (
         <Button
           key={filter.key}
@@ -25,7 +25,7 @@ export const ServicesDateFilter = ({ selected, onChange }: ServicesDateFilterPro
           size="sm"
           onClick={() => onChange(filter.key)}
           className={`
-            transition-colors
+            transition-colors whitespace-nowrap text-xs sm:text-sm
             ${selected === filter.key 
               ? 'bg-white text-tms-green shadow-sm font-medium' 
               : 'hover:bg-gray-200 text-gray-600'

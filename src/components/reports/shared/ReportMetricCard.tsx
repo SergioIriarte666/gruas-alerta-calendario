@@ -11,11 +11,11 @@ interface ReportMetricCardProps {
 }
 
 export const ReportMetricCard = ({ title, value, description, valueClassName }: ReportMetricCardProps) => (
-  <Card className="bg-card border">
-    <CardContent className="p-4">
-      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{title}</p>
-      <div className={`text-2xl font-bold mt-1 ${valueClassName || 'text-foreground'}`}>{value}</div>
-      {description && <p className="text-xs text-muted-foreground mt-0.5">{description}</p>}
+  <Card className="bg-card border overflow-hidden">
+    <CardContent className="p-3 sm:p-4">
+      <p className="text-[10px] sm:text-xs font-medium text-muted-foreground uppercase tracking-wide">{title}</p>
+      <div className={`text-lg sm:text-2xl font-bold mt-1 truncate ${valueClassName || 'text-foreground'}`}>{value}</div>
+      {description && <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5 truncate">{description}</p>}
     </CardContent>
   </Card>
 );
