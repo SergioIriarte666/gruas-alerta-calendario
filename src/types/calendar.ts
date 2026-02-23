@@ -14,6 +14,8 @@ export interface CalendarEvent {
   craneId?: string;
   createdAt: string;
   updatedAt: string;
+  /** Source of the event: 'manual' for calendar_events, 'service' for services, 'maintenance' for crane_maintenance */
+  source?: 'manual' | 'service' | 'maintenance';
 }
 
 export type CalendarViewMode = 'month' | 'week' | 'day';
