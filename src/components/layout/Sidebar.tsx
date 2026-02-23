@@ -362,6 +362,100 @@ export const Sidebar = ({
     </div>
   );
 
+  // Mobile version: force isCollapsed=false so labels always show
+  const MobileSidebarContent = () => (
+    <div className="flex flex-col h-full bg-background border-r tms-border">
+      {/* Header */}
+      <div className="flex items-center justify-between border-b tms-border bg-background p-4">
+        <div className="flex items-center space-x-3">
+          {companyLogo ? (
+            <img src={companyLogo} alt="Logo empresa" className="w-8 h-8 object-contain" />
+          ) : (
+            <Building2 className="w-8 h-8 text-primary" />
+          )}
+          <div>
+            <h1 className="font-bold text-foreground text-lg">{companyName}</h1>
+            <p className="text-xs font-bold text-violet-600">Sistema de Gestión</p>
+          </div>
+        </div>
+        <Button variant="ghost" size="sm" onClick={() => setIsMobileMenuOpen(false)} className="text-foreground hover:bg-primary hover:text-primary-foreground">
+          <X className="w-5 h-5 text-foreground" />
+        </Button>
+      </div>
+
+      {/* Navigation - always expanded */}
+      <nav className="flex-1 space-y-1 bg-background overflow-y-auto p-3">
+        {navigationGroups.map(group => {
+          const filteredItems = filterItems(group.items);
+          if (filteredItems.length === 0) return null;
+          const isExpanded = expandedGroups.includes(group.id) || group.alwaysExpanded;
+          const hasActiveItem = filteredItems.some(item => location.pathname === item.href);
+          return (
+            <div key={group.id} className="space-y-1">
+              <button
+                onClick={() => !group.alwaysExpanded && toggleGroup(group.id)}
+                className={cn(
+                  "w-full flex items-center justify-between px-3 py-2.5 text-xs font-bold uppercase tracking-wider transition-all rounded-lg mb-1",
+                  `sidebar-group-${group.color}`,
+                  hasActiveItem && "shadow-sm",
+                  group.alwaysExpanded ? "cursor-default" : "cursor-pointer hover:shadow-md"
+                )}
+              >
+                <div className="flex items-center gap-2">
+                  <group.icon className="w-4 h-4" />
+                  <span>{group.name}</span>
+                </div>
+                {!group.alwaysExpanded && (
+                  isExpanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />
+                )}
+              </button>
+              {isExpanded && (
+                <div className="space-y-1 ml-2">
+                  {filteredItems.map(item => {
+                    const isActive = location.pathname === item.href;
+                    return (
+                      <Link key={item.name} to={item.href}
+                        className={cn(
+                          "relative flex items-center rounded-lg font-medium transition-all duration-200 px-3 py-2 text-sm",
+                          `sidebar-item-${group.color}`,
+                          isActive && "active shadow-sm",
+                          !isActive && "hover:shadow-sm"
+                        )}
+                        onClick={() => setIsMobileMenuOpen(false)}
+                      >
+                        <div className="flex items-center justify-center rounded-lg w-7 h-7 mr-3">
+                          <item.icon className="w-4 h-4" strokeWidth={2.5} />
+                        </div>
+                        <span className="truncate">{item.name}</span>
+                      </Link>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </nav>
+
+      {/* User section */}
+      <div className="border-t tms-border bg-background p-4">
+        {user && (
+          <div className="mb-3">
+            <p className="text-sm font-medium text-foreground">{user.name}</p>
+            <p className="text-xs text-foreground">{user.email}</p>
+            <p className="text-xs capitalize text-primary">{user.role}</p>
+          </div>
+        )}
+        <Button variant="ghost" onClick={handleLogout} className="w-full text-foreground hover:bg-primary hover:text-primary-foreground justify-start">
+          <div className="flex items-center justify-center rounded-lg bg-primary/20 w-8 h-8 mr-2">
+            <LogOut className="w-4 h-4 text-foreground" strokeWidth={2.25} />
+          </div>
+          Cerrar Sesión
+        </Button>
+      </div>
+    </div>
+  );
+
   return <>
       {/* Mobile backdrop */}
       {isMobileMenuOpen && <div className="fixed inset-0 z-40 lg:hidden bg-black bg-opacity-50" onClick={() => setIsMobileMenuOpen(false)} />}
@@ -371,9 +465,9 @@ export const Sidebar = ({
         <SidebarContent />
       </div>
 
-      {/* Mobile Sidebar */}
-      <div className={cn("fixed inset-y-0 left-0 z-50 w-64 transform transition-transform duration-300 lg:hidden h-screen", isMobileMenuOpen ? "translate-x-0" : "-translate-x-full")}>
-        <SidebarContent />
+      {/* Mobile Sidebar - always shows labels */}
+      <div className={cn("fixed inset-y-0 left-0 z-50 w-72 transform transition-transform duration-300 lg:hidden h-screen", isMobileMenuOpen ? "translate-x-0" : "-translate-x-full")}>
+        <MobileSidebarContent />
       </div>
     </>;
 };
