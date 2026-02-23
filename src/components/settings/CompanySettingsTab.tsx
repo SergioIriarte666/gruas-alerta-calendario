@@ -53,11 +53,11 @@ export const CompanySettingsTab = () => {
 
   return (
     <div className="space-y-6">
-      <Card className="bg-white border border-gray-200">
-        <CardHeader>
-          <CardTitle className="text-black">Información de la Empresa</CardTitle>
+      <Card className="bg-card border">
+        <CardHeader className="p-4 sm:p-6">
+          <CardTitle className="text-foreground text-lg sm:text-xl">Información de la Empresa</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-4 p-4 sm:p-6 pt-0 sm:pt-0">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <Label htmlFor="businessName" className="text-black">Nombre de la Empresa</Label>
@@ -144,9 +144,9 @@ export const CompanySettingsTab = () => {
         </CardContent>
       </Card>
 
-      <Card className="bg-white border border-gray-200">
-        <CardHeader>
-          <CardTitle className="text-black">Logotipo de la Empresa</CardTitle>
+      <Card className="bg-card border">
+        <CardHeader className="p-4 sm:p-6">
+          <CardTitle className="text-foreground text-lg sm:text-xl">Logotipo de la Empresa</CardTitle>
         </CardHeader>
         <CardContent>
           <LogoUpload
