@@ -20,6 +20,7 @@ import { Cost } from '@/types/costs';
 import { prepareCostForDuplication } from '@/utils/costHelpers';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Zap, FileEdit } from 'lucide-react';
+import { useIsMobile } from '@/hooks/use-mobile';
 import * as XLSX from 'xlsx';
 import { 
   getCurrentChileDate, 
@@ -29,6 +30,7 @@ import {
 } from '@/utils/timezoneUtils';
 
 const CostsPage = () => {
+    const isMobile = useIsMobile();
     const [searchParams] = useSearchParams();
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [isQuickFormOpen, setIsQuickFormOpen] = useState(false);
@@ -297,6 +299,13 @@ const CostsPage = () => {
         XLSX.writeFile(wb, fileName);
     }, [finalFilteredCosts]);
 
+    // Auto-force cards view on mobile
+    useEffect(() => {
+        if (isMobile && viewMode === 'table') {
+            setViewMode('cards');
+        }
+    }, [isMobile]);
+
     const totalCosts = finalFilteredCosts.length;
     const totalAmount = finalFilteredCosts.reduce((sum, cost) => sum + Number(cost.amount), 0);
 
@@ -314,41 +323,46 @@ const CostsPage = () => {
     }
 
     return (
-        <div className="space-y-6 p-6">
+        <div className={`space-y-6 ${isMobile ? 'p-3' : 'p-6'}`}>
             {/* Header con botones de acción */}
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div className={`flex ${isMobile ? 'flex-col gap-3' : 'flex-col sm:flex-row justify-between items-start sm:items-center gap-4'}`}>
                 <div>
-                    <h1 className="text-2xl font-bold text-foreground">
+                    <h1 className={`${isMobile ? 'text-xl' : 'text-2xl'} font-bold text-foreground`}>
                         Gestión de Costos
                     </h1>
-                    <p className="text-muted-foreground mt-1">
-                        Administra y registra todos los costos operativos
-                    </p>
+                    {!isMobile && (
+                        <p className="text-muted-foreground mt-1">
+                            Administra y registra todos los costos operativos
+                        </p>
+                    )}
                 </div>
                 
                 <div className="flex gap-2 flex-wrap">
                     <Button 
                         onClick={() => setIsQuickFormOpen(true)}
                         className="bg-violet-600 hover:bg-violet-700 text-white"
+                        size={isMobile ? 'sm' : 'default'}
                     >
                         <Zap className="w-4 h-4 mr-2" />
-                        Costo Rápido
+                        {isMobile ? 'Rápido' : 'Costo Rápido'}
                     </Button>
                     
                     <Button 
                         onClick={() => handleOpenForm(null)}
                         variant="outline"
+                        size={isMobile ? 'sm' : 'default'}
                     >
                         <FileEdit className="w-4 h-4 mr-2" />
-                        Costo Completo
+                        {isMobile ? 'Completo' : 'Costo Completo'}
                     </Button>
                     
                     <Button 
                         onClick={handleOpenXMLUpload}
                         variant="outline"
+                        size={isMobile ? 'sm' : 'default'}
                         className="border-blue-500 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950"
                     >
-                        Cargar XML
+                        {isMobile ? 'XML' : 'Cargar XML'}
                     </Button>
                 </div>
             </div>
@@ -375,7 +389,7 @@ const CostsPage = () => {
             />
 
             {/* Barra de búsqueda */}
-            <div className="flex items-center gap-3">
+            <div className={`flex ${isMobile ? 'flex-col gap-2' : 'items-center gap-3'}`}>
                 <div className="flex-1 relative">
                     <input
                         type="text"
@@ -389,35 +403,39 @@ const CostsPage = () => {
                     </svg>
                 </div>
                 
-                <div className="flex items-center gap-2 border rounded-lg p-1">
-                    <Button
-                        variant={viewMode === 'table' ? 'default' : 'ghost'}
-                        size="sm"
-                        onClick={() => setViewMode('table')}
-                        className={viewMode === 'table' ? 'bg-violet-600 hover:bg-violet-700' : ''}
-                    >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                <div className="flex items-center gap-2">
+                    {!isMobile && (
+                        <div className="flex items-center gap-2 border rounded-lg p-1">
+                            <Button
+                                variant={viewMode === 'table' ? 'default' : 'ghost'}
+                                size="sm"
+                                onClick={() => setViewMode('table')}
+                                className={viewMode === 'table' ? 'bg-violet-600 hover:bg-violet-700' : ''}
+                            >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                </svg>
+                            </Button>
+                            <Button
+                                variant={viewMode === 'cards' ? 'default' : 'ghost'}
+                                size="sm"
+                                onClick={() => setViewMode('cards')}
+                                className={viewMode === 'cards' ? 'bg-violet-600 hover:bg-violet-700' : ''}
+                            >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                                </svg>
+                            </Button>
+                        </div>
+                    )}
+
+                    <Button variant="outline" onClick={handleExportToExcel} size={isMobile ? 'sm' : 'default'}>
+                        <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                         </svg>
-                    </Button>
-                    <Button
-                        variant={viewMode === 'cards' ? 'default' : 'ghost'}
-                        size="sm"
-                        onClick={() => setViewMode('cards')}
-                        className={viewMode === 'cards' ? 'bg-violet-600 hover:bg-violet-700' : ''}
-                    >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
-                        </svg>
+                        <span className="hidden sm:inline">Exportar</span>
                     </Button>
                 </div>
-
-                <Button variant="outline" onClick={handleExportToExcel}>
-                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                    <span className="hidden sm:inline">Exportar</span>
-                </Button>
             </div>
             
             {viewMode === 'table' ? (

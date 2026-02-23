@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { CustomTabs, CustomTabsList, CustomTabsTrigger, CustomTabsContent } from '@/components/ui/custom-tabs';
 import { Users, DollarSign, TrendingUp, Clock, RefreshCw } from 'lucide-react';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { useCommissions } from '@/hooks/commissions/useCommissions';
 import { useCreatePaymentBatch } from '@/hooks/commissions/usePaymentBatches';
 import { CreatePaymentBatchDialog } from '@/components/commissions/CreatePaymentBatchDialog';
@@ -304,25 +305,29 @@ const Commissions = () => {
     return <LoadingSpinner />;
   }
 
+  const isMobile = useIsMobile();
+
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
+    <div className={`${isMobile ? 'p-3 space-y-3' : 'p-6 space-y-6'}`}>
+      <div className={`flex ${isMobile ? 'flex-col gap-2' : 'items-center justify-between'}`}>
         <div>
-          <h1 className="text-3xl font-bold">Comisiones</h1>
-          <p className="text-muted-foreground">
-            Gestiona las comisiones de los operadores
-          </p>
+          <h1 className={`${isMobile ? 'text-xl' : 'text-3xl'} font-bold`}>Comisiones</h1>
+          {!isMobile && (
+            <p className="text-muted-foreground">
+              Gestiona las comisiones de los operadores
+            </p>
+          )}
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+      <div className={`grid ${isMobile ? 'grid-cols-2 gap-3' : 'grid-cols-1 md:grid-cols-4 gap-6'} mb-8`}>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Pendiente</CardTitle>
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className={`${isMobile ? 'text-lg' : 'text-2xl'} font-bold`}>
               {new Intl.NumberFormat('es-CL', {
                 style: 'currency',
                 currency: 'CLP',
@@ -330,7 +335,7 @@ const Commissions = () => {
               }).format(totalPending)}
             </div>
             <p className="text-xs text-muted-foreground">
-              {pendingCommissions.length} comisiones pendientes
+              {pendingCommissions.length} pendientes
             </p>
           </CardContent>
         </Card>
@@ -341,7 +346,7 @@ const Commissions = () => {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className={`${isMobile ? 'text-lg' : 'text-2xl'} font-bold`}>
               {new Intl.NumberFormat('es-CL', {
                 style: 'currency',
                 currency: 'CLP',
@@ -349,20 +354,20 @@ const Commissions = () => {
               }).format(totalPaid)}
             </div>
             <p className="text-xs text-muted-foreground">
-              {paidCommissions.length} comisiones pagadas
+              {paidCommissions.length} pagadas
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Operadores Activos</CardTitle>
+            <CardTitle className="text-sm font-medium">Operadores</CardTitle>
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{commissionsByOperator.length}</div>
+            <div className={`${isMobile ? 'text-lg' : 'text-2xl'} font-bold`}>{commissionsByOperator.length}</div>
             <p className="text-xs text-muted-foreground">
-              Con comisiones registradas
+              Con comisiones
             </p>
           </CardContent>
         </Card>
@@ -373,7 +378,7 @@ const Commissions = () => {
             <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className={`${isMobile ? 'text-lg' : 'text-2xl'} font-bold`}>
               {new Intl.NumberFormat('es-CL', {
                 style: 'currency',
                 currency: 'CLP',
@@ -381,19 +386,19 @@ const Commissions = () => {
               }).format(totalPending + totalPaid)}
             </div>
             <p className="text-xs text-muted-foreground">
-              {filteredCommissions.length} comisiones totales
+              {filteredCommissions.length} totales
             </p>
           </CardContent>
         </Card>
       </div>
 
       <div className="flex flex-col gap-4 mb-6">
-        <div className="flex items-center justify-between">
+        <div className={`flex ${isMobile ? 'flex-col gap-2' : 'items-center justify-between'}`}>
           <Input
-            placeholder="Buscar por operador, folio, cliente o descripción..."
+            placeholder="Buscar por operador, folio, cliente..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="max-w-md"
+            className={isMobile ? 'w-full' : 'max-w-md'}
           />
           
           <div className="flex items-center gap-2">
@@ -403,8 +408,8 @@ const Commissions = () => {
               onClick={handleRefreshData}
               disabled={isLoading}
             >
-              <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
-              Actualizar
+              <RefreshCw className={`h-4 w-4 ${isMobile ? '' : 'mr-2'} ${isLoading ? 'animate-spin' : ''}`} />
+              {!isMobile && 'Actualizar'}
             </Button>
             
             <CommissionExportButton

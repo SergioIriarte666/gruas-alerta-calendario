@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
@@ -25,18 +26,20 @@ const Inventory = () => {
   const { data: recentMovements, isLoading: movementsLoading } = useInventoryMovements(5);
   const { data: lowStockData, isLoading: lowStockLoading } = useLowStockItems();
 
+  const isMobile = useIsMobile();
+
   return (
-    <div className="p-6 space-y-6">
+    <div className={`${isMobile ? 'p-3 space-y-3' : 'p-6 space-y-6'}`}>
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Gestión de Bodega</h1>
-          <p className="text-muted-foreground">Control de inventario y stock de repuestos</p>
+          <h1 className={`${isMobile ? 'text-xl' : 'text-3xl'} font-bold`}>Gestión de Bodega</h1>
+          {!isMobile && <p className="text-muted-foreground">Control de inventario y stock de repuestos</p>}
         </div>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className={`grid ${isMobile ? 'grid-cols-2 gap-3' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6'}`}>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Productos</CardTitle>
