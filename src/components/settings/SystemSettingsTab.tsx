@@ -27,11 +27,11 @@ export const SystemSettingsTab: React.FC<SystemSettingsTabProps> = ({
   onUpdateSettings
 }) => {
   return (
-    <div className="space-y-6 bg-white min-h-screen">
+    <div className="space-y-6">
       {/* Configuración del Sistema */}
-      <Card className="bg-white border-gray-200">
-        <CardHeader className="bg-white border-b border-gray-200">
-          <CardTitle className="flex items-center space-x-2 text-black">
+      <Card className="bg-card border">
+        <CardHeader className="border-b p-4 sm:p-6">
+          <CardTitle className="flex items-center space-x-2 text-foreground text-lg sm:text-xl">
             <Database className="w-5 h-5 text-tms-green" />
             <span>Configuración del Sistema</span>
           </CardTitle>
@@ -131,14 +131,14 @@ export const SystemSettingsTab: React.FC<SystemSettingsTabProps> = ({
       <BackupManagementSection />
 
       {/* Configuración de Columnas de Reportes PDF */}
-      <Card className="bg-white border-gray-200">
-        <CardHeader className="bg-white border-b border-gray-200">
-          <CardTitle className="flex items-center space-x-2 text-black">
+      <Card className="bg-card border">
+        <CardHeader className="border-b p-4 sm:p-6">
+          <CardTitle className="flex items-center space-x-2 text-foreground text-lg sm:text-xl">
             <FileText className="w-5 h-5 text-tms-green" />
-            <span>Personalización de Reportes PDF</span>
+            <span>Reportes PDF</span>
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-6 bg-white p-4 sm:p-6">
+        <CardContent className="space-y-6 p-4 sm:p-6">
           <p className="text-sm text-gray-600">
             Configura qué columnas mostrar y sus anchos en los reportes PDF de servicios.
           </p>

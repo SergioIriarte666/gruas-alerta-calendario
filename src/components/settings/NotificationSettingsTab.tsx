@@ -36,9 +36,9 @@ export const NotificationSettingsTab = () => {
 
   return (
     <div className="space-y-6">
-      <Card className="bg-white border border-gray-200">
-        <CardHeader>
-          <CardTitle className="text-black">Configuración de Notificaciones</CardTitle>
+      <Card className="bg-card border">
+        <CardHeader className="p-4 sm:p-6">
+          <CardTitle className="text-foreground text-lg sm:text-xl">Configuración de Notificaciones</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4 sm:space-y-6 p-4 sm:p-6">
           <div className="flex items-center justify-between">
