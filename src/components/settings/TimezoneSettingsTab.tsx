@@ -98,16 +98,16 @@ export const TimezoneSettingsTab: React.FC = () => {
 
   return (
     <Card className="bg-card border">
-      <CardHeader>
-        <CardTitle className="flex items-center space-x-2 text-foreground">
+      <CardHeader className="p-4 sm:p-6">
+        <CardTitle className="flex items-center space-x-2 text-foreground text-lg sm:text-xl">
           <Globe className="w-5 h-5 text-primary" />
-          <span>Configuración de Zona Horaria</span>
+          <span>Zona Horaria</span>
         </CardTitle>
-        <CardDescription className="text-muted-foreground">
-          Configura la zona horaria y formato de fecha para tu aplicación
+        <CardDescription className="text-muted-foreground text-sm">
+          Configura la zona horaria y formato de fecha
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-6">
+      <CardContent className="space-y-6 p-4 sm:p-6 pt-0 sm:pt-0">
         {/* Información actual */}
         <div className="bg-muted/50 border rounded-lg p-4">
           <h3 className="text-foreground font-medium mb-2 flex items-center">

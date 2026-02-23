@@ -87,16 +87,16 @@ export const ReportColumnsSettings: React.FC<ReportColumnsSettingsProps> = ({
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header con indicador de total */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <span className="text-sm text-gray-600">
-            Columnas visibles: <span className="font-medium text-black">{visibleColumns.length}/{columnOrder.length}</span>
-          </span>
-          <Separator orientation="vertical" className="h-4" />
-          <span className="text-sm text-gray-600">
-            Total anchos: 
+      <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
+        <span className="text-xs sm:text-sm text-muted-foreground">
+          Visibles: <span className="font-medium text-foreground">{visibleColumns.length}/{columnOrder.length}</span>
+        </span>
+        <Separator orientation="vertical" className="h-4 hidden sm:block" />
+        <div className="flex items-center gap-1">
+          <span className="text-xs sm:text-sm text-muted-foreground">
+            Total: 
             <span className={`font-medium ml-1 ${isValid ? 'text-tms-green' : 'text-amber-600'}`}>
               {totalWidth}%
             </span>
@@ -135,72 +135,70 @@ export const ReportColumnsSettings: React.FC<ReportColumnsSettingsProps> = ({
           return (
             <div 
               key={key} 
-              className={`flex items-center gap-4 p-3 rounded-lg border transition-colors ${
+              className={`flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 p-3 rounded-lg border transition-colors ${
                 column.visible 
-                  ? 'bg-white border-gray-200' 
-                  : 'bg-gray-50 border-gray-100'
+                  ? 'bg-card border-border' 
+                  : 'bg-muted/50 border-muted'
               }`}
             >
-              {/* Checkbox */}
-              <Checkbox
-                id={`col-${key}`}
-                checked={column.visible}
-                onCheckedChange={(checked) => 
-                  handleVisibilityChange(key, checked === true)
-                }
-              />
-              
-              {/* Label */}
-              <Label 
-                htmlFor={`col-${key}`}
-                className={`w-28 font-medium ${
-                  column.visible ? 'text-black' : 'text-gray-400'
-                }`}
-              >
-                {column.label}
-              </Label>
-
-              {/* Slider */}
-              <div className="flex-1">
-                <Slider
-                  value={[column.width]}
-                  onValueChange={([value]) => handleWidthChange(key, value)}
-                  min={3}
-                  max={25}
-                  step={1}
-                  disabled={!column.visible}
-                  className={column.visible ? '' : 'opacity-40'}
+              <div className="flex items-center gap-2">
+                {/* Checkbox */}
+                <Checkbox
+                  id={`col-${key}`}
+                  checked={column.visible}
+                  onCheckedChange={(checked) => 
+                    handleVisibilityChange(key, checked === true)
+                  }
                 />
-              </div>
-
-              {/* Input numérico */}
-              <div className="flex items-center gap-1">
-                <Input
-                  type="number"
-                  min={3}
-                  max={25}
-                  value={column.width}
-                  onChange={(e) => {
-                    const val = parseInt(e.target.value);
-                    if (!isNaN(val) && val >= 3 && val <= 25) {
-                      handleWidthChange(key, val);
-                    }
-                  }}
-                  disabled={!column.visible}
-                  className={`w-16 text-center h-8 text-sm ${
-                    column.visible 
-                      ? 'bg-white border-gray-300' 
-                      : 'bg-gray-100 border-gray-200 text-gray-400'
+                {/* Label */}
+                <Label 
+                  htmlFor={`col-${key}`}
+                  className={`w-24 sm:w-28 font-medium text-sm ${
+                    column.visible ? 'text-foreground' : 'text-muted-foreground'
                   }`}
-                />
-                <span className={`text-sm ${column.visible ? 'text-gray-600' : 'text-gray-400'}`}>
-                  %
-                </span>
+                >
+                  {column.label}
+                </Label>
+                {!column.visible && (
+                  <Badge variant="secondary" className="text-xs sm:hidden">Oculta</Badge>
+                )}
               </div>
 
-              {/* Badge de estado */}
+              {column.visible && (
+                <div className="flex items-center gap-2 flex-1 pl-6 sm:pl-0">
+                  {/* Slider */}
+                  <div className="flex-1">
+                    <Slider
+                      value={[column.width]}
+                      onValueChange={([value]) => handleWidthChange(key, value)}
+                      min={3}
+                      max={25}
+                      step={1}
+                    />
+                  </div>
+                  {/* Input numérico */}
+                  <div className="flex items-center gap-1">
+                    <Input
+                      type="number"
+                      min={3}
+                      max={25}
+                      value={column.width}
+                      onChange={(e) => {
+                        const val = parseInt(e.target.value);
+                        if (!isNaN(val) && val >= 3 && val <= 25) {
+                          handleWidthChange(key, val);
+                        }
+                      }}
+                      className="w-14 text-center h-8 text-xs"
+                    />
+                    <span className="text-xs text-muted-foreground">%</span>
+                  </div>
+                </div>
+              )}
+
+              {/* Badge de estado - desktop only */}
               {!column.visible && (
-                <Badge variant="secondary" className="text-xs">
+                <Badge variant="secondary" className="text-xs hidden sm:inline-flex">
                   Oculta
                 </Badge>
               )}
@@ -236,11 +234,12 @@ export const ReportColumnsSettings: React.FC<ReportColumnsSettingsProps> = ({
       </div>
 
       {/* Botones de acción */}
-      <div className="flex gap-3">
+      <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
         <Button
           variant="outline"
           onClick={handleAutoBalance}
           className="flex-1"
+          size="sm"
         >
           <RefreshCw className="w-4 h-4 mr-2" />
           Auto-balancear
@@ -249,8 +248,9 @@ export const ReportColumnsSettings: React.FC<ReportColumnsSettingsProps> = ({
           variant="outline"
           onClick={handleResetDefaults}
           className="flex-1"
+          size="sm"
         >
-          Restaurar valores por defecto
+          Restaurar valores
         </Button>
       </div>
     </div>

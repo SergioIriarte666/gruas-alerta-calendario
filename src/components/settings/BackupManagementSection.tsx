@@ -22,24 +22,23 @@ export const BackupManagementSection = () => {
   const lastSuccessfulBackup = backupLogs?.find(log => log.status === 'completed');
 
   return (
-    <Card className="bg-white border-gray-200 mt-6" style={{ background: '#ffffff' }}>
-      <CardHeader className="bg-white border-b border-gray-200 p-6" style={{ background: '#ffffff' }}>
-        <CardTitle className="flex items-center justify-between text-black">
+    <Card className="bg-card border mt-6">
+      <CardHeader className="border-b p-4 sm:p-6">
+        <CardTitle className="flex items-center justify-between text-foreground">
           <div className="flex items-center space-x-2">
             <Database className="w-5 h-5 text-tms-green" />
-            <span>Gestión de Respaldos</span>
+            <span className="text-lg sm:text-xl">Gestión de Respaldos</span>
           </div>
           <Button 
             variant="ghost" 
             size="sm" 
             onClick={() => refetchLogs()} 
-            className="text-gray-600 hover:text-black hover:bg-gray-100"
           >
             <RefreshCw className="w-4 h-4" />
           </Button>
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-6 bg-white p-6" style={{ background: '#ffffff' }}>
+      <CardContent className="space-y-6 p-4 sm:p-6">
         <BackupStatusSection 
           lastSuccessfulBackup={lastSuccessfulBackup}
           hookError={hookError}

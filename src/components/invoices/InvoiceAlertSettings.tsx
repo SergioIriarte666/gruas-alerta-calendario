@@ -31,16 +31,16 @@ export const InvoiceAlertSettings = () => {
 
   return (
     <Card className="bg-card border">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-foreground">
+      <CardHeader className="p-4 sm:p-6">
+        <CardTitle className="flex items-center gap-2 text-foreground text-lg sm:text-xl">
           <Bell className="h-5 w-5" />
-          Configuración de Alertas de Facturas
+          Alertas de Facturas
         </CardTitle>
-        <CardDescription className="text-muted-foreground">
-          Configura cómo y cuándo recibir notificaciones sobre facturas vencidas
+        <CardDescription className="text-muted-foreground text-sm">
+          Configura notificaciones sobre facturas vencidas
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-6">
+      <CardContent className="space-y-6 p-4 sm:p-6 pt-0 sm:pt-0">
         {/* Alertas de Facturas Vencidas */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
@@ -132,22 +132,22 @@ export const InvoiceAlertSettings = () => {
         </div>
 
         {/* Acciones */}
-        <div className="flex gap-2 pt-4 border-t">
+        <div className="flex flex-col sm:flex-row gap-2 pt-4 border-t">
           <Button 
             onClick={handleSave} 
             disabled={isUpdating}
             className="flex-1"
           >
-            Guardar Configuración
+            Guardar
           </Button>
           <Button 
             variant="outline" 
             onClick={handleForceUpdate}
             disabled={isUpdating}
-            className="flex items-center gap-2"
+            className="flex items-center justify-center gap-2"
           >
             <RefreshCw className={`h-4 w-4 ${isUpdating ? 'animate-spin' : ''}`} />
-            Actualizar Estados
+            Actualizar
           </Button>
         </div>
       </CardContent>

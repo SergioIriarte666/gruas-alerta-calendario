@@ -8,6 +8,7 @@ import { useIncomeCategoryManager } from '@/hooks/useIncomeCategoryManager';
 import { IncomeCategory } from '@/types/incomes';
 import { IncomeCategoryForm } from './IncomeCategoryForm';
 import { IncomeSubcategoryManager } from './IncomeSubcategoryManager';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 type SortField = 'name' | 'description';
 type SortDirection = 'asc' | 'desc';
@@ -18,6 +19,7 @@ const SortIcon = ({ field, currentField, direction }: { field: SortField; curren
 };
 
 export const IncomeCategoryList = () => {
+  const isMobile = useIsMobile();
   const [showForm, setShowForm] = useState(false);
   const [editingCategory, setEditingCategory] = useState<IncomeCategory | undefined>();
   const [deletingCategoryId, setDeletingCategoryId] = useState<string | null>(null);
@@ -79,42 +81,60 @@ export const IncomeCategoryList = () => {
   return (
     <>
       <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle>Gestión de Categorías de Ingresos</CardTitle>
-            <Button onClick={() => setShowForm(true)}>
-              <Plus className="w-4 h-4 mr-2" />
-              Nueva Categoría
+        <CardHeader className="p-4 sm:p-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <CardTitle className="text-lg sm:text-xl">Categorías de Ingresos</CardTitle>
+            <Button onClick={() => setShowForm(true)} size={isMobile ? "sm" : "default"}>
+              <Plus className="w-4 h-4 mr-1" />
+              {isMobile ? "Nueva" : "Nueva Categoría"}
             </Button>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-4 sm:p-6 pt-0 sm:pt-0">
           {categories.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               No hay categorías de ingresos. Crea una nueva para comenzar.
             </div>
+          ) : isMobile ? (
+            /* Mobile Card View */
+            <div className="space-y-3">
+              {sortedCategories.map((category) => (
+                <Card key={category.id} className="border bg-card">
+                  <CardContent className="p-3">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-foreground text-sm">{category.name}</p>
+                        {category.description && (
+                          <p className="text-xs text-muted-foreground line-clamp-2">{category.description}</p>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-1 ml-2">
+                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleManageSubcategories(category)} title="Subcategorías">
+                          <Settings2 className="w-4 h-4" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(category)}>
+                          <Pencil className="w-4 h-4" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setDeletingCategoryId(category.id)} disabled={isDeleting}>
+                          <Trash2 className="w-4 h-4 text-destructive" />
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
           ) : (
+            /* Desktop Table */
             <div className="border rounded-lg overflow-hidden">
               <table className="w-full">
                 <thead className="bg-muted">
                   <tr>
-                    <th 
-                      className="text-left p-3 font-medium cursor-pointer hover:bg-muted/80"
-                      onClick={() => handleSort('name')}
-                    >
-                      <div className="flex items-center gap-2">
-                        Nombre
-                        <SortIcon field="name" currentField={sortField} direction={sortDirection} />
-                      </div>
+                    <th className="text-left p-3 font-medium cursor-pointer hover:bg-muted/80" onClick={() => handleSort('name')}>
+                      <div className="flex items-center gap-2">Nombre<SortIcon field="name" currentField={sortField} direction={sortDirection} /></div>
                     </th>
-                    <th 
-                      className="text-left p-3 font-medium cursor-pointer hover:bg-muted/80"
-                      onClick={() => handleSort('description')}
-                    >
-                      <div className="flex items-center gap-2">
-                        Descripción
-                        <SortIcon field="description" currentField={sortField} direction={sortDirection} />
-                      </div>
+                    <th className="text-left p-3 font-medium cursor-pointer hover:bg-muted/80" onClick={() => handleSort('description')}>
+                      <div className="flex items-center gap-2">Descripción<SortIcon field="description" currentField={sortField} direction={sortDirection} /></div>
                     </th>
                     <th className="text-center p-3 font-medium">Acciones</th>
                   </tr>
@@ -123,34 +143,12 @@ export const IncomeCategoryList = () => {
                   {sortedCategories.map((category) => (
                     <tr key={category.id} className="border-t hover:bg-muted/50">
                       <td className="p-3 font-medium">{category.name}</td>
-                      <td className="p-3 text-muted-foreground">
-                        {category.description || '-'}
-                      </td>
+                      <td className="p-3 text-muted-foreground">{category.description || '-'}</td>
                       <td className="p-3">
                         <div className="flex items-center justify-center gap-2">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleManageSubcategories(category)}
-                            title="Gestionar subcategorías"
-                          >
-                            <Settings2 className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleEdit(category)}
-                          >
-                            <Pencil className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => setDeletingCategoryId(category.id)}
-                            disabled={isDeleting}
-                          >
-                            <Trash2 className="w-4 h-4 text-destructive" />
-                          </Button>
+                          <Button variant="ghost" size="icon" onClick={() => handleManageSubcategories(category)} title="Subcategorías"><Settings2 className="w-4 h-4" /></Button>
+                          <Button variant="ghost" size="icon" onClick={() => handleEdit(category)}><Pencil className="w-4 h-4" /></Button>
+                          <Button variant="ghost" size="icon" onClick={() => setDeletingCategoryId(category.id)} disabled={isDeleting}><Trash2 className="w-4 h-4 text-destructive" /></Button>
                         </div>
                       </td>
                     </tr>
