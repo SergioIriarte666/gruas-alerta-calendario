@@ -20,21 +20,21 @@ export const ServiceValidationAlerts: React.FC<ServiceValidationAlertsProps> = (
   }
 
   return (
-    <div className={`space-y-3 ${className}`}>
+    <div className={`space-y-3 mb-4 ${className}`}>
       {criticalErrors.length > 0 && (
         <Alert variant="destructive" className="border-destructive/50 bg-destructive/10">
-          <XCircle className="h-5 w-5" />
-          <AlertTitle className="font-semibold">
-            Campos requeridos sin completar ({criticalErrors.length})
+          <XCircle className="h-4 w-4 flex-shrink-0" />
+          <AlertTitle className="font-semibold text-sm">
+            Campos requeridos ({criticalErrors.length})
           </AlertTitle>
           <AlertDescription>
-            <ul className="mt-2 space-y-1 list-disc list-inside text-sm">
+            <ul className="mt-1 space-y-0.5 list-disc list-inside text-xs">
               {criticalErrors.map((error, index) => (
-                <li key={index}>{error.message}</li>
+                <li key={index} className="break-words">{error.message}</li>
               ))}
             </ul>
-            <p className="mt-3 text-xs font-medium">
-              Complete estos campos para poder guardar el servicio
+            <p className="mt-2 text-xs font-medium">
+              Complete estos campos para guardar
             </p>
           </AlertDescription>
         </Alert>
@@ -42,14 +42,14 @@ export const ServiceValidationAlerts: React.FC<ServiceValidationAlertsProps> = (
 
       {warnings.length > 0 && (
         <Alert className="border-yellow-500/50 bg-yellow-50 dark:bg-yellow-950/20">
-          <AlertTriangle className="h-5 w-5 text-yellow-600" />
-          <AlertTitle className="font-semibold text-yellow-800 dark:text-yellow-200">
+          <AlertTriangle className="h-4 w-4 text-yellow-600 flex-shrink-0" />
+          <AlertTitle className="font-semibold text-yellow-800 dark:text-yellow-200 text-sm">
             Advertencias ({warnings.length})
           </AlertTitle>
           <AlertDescription className="text-yellow-700 dark:text-yellow-300">
-            <ul className="mt-2 space-y-1 list-disc list-inside text-sm">
+            <ul className="mt-1 space-y-0.5 list-disc list-inside text-xs">
               {warnings.map((warning, index) => (
-                <li key={index}>{warning.message}</li>
+                <li key={index} className="break-words">{warning.message}</li>
               ))}
             </ul>
           </AlertDescription>

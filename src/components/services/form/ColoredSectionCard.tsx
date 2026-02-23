@@ -80,10 +80,10 @@ export const ColoredSectionCard = ({
         className
       )}
     >
-      <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-3 text-base">
+      <CardHeader className="pb-3 px-3 sm:px-6">
+        <CardTitle className="flex flex-wrap items-center gap-2 text-sm sm:text-base">
           <div className={cn(
-            "p-2 rounded-lg",
+            "p-1.5 sm:p-2 rounded-lg flex-shrink-0",
             hasError ? "bg-destructive/10 text-destructive" : config.iconBg
           )}>
             {icon}
@@ -95,13 +95,13 @@ export const ColoredSectionCard = ({
             {title}
           </span>
           {required && (
-            <span className="text-xs bg-destructive/10 text-destructive px-2 py-0.5 rounded">
+            <span className="text-xs bg-destructive/10 text-destructive px-2 py-0.5 rounded flex-shrink-0">
               Requerido
             </span>
           )}
         </CardTitle>
       </CardHeader>
-      <CardContent>{children}</CardContent>
+      <CardContent className="px-3 sm:px-6">{children}</CardContent>
     </Card>
   );
 };
