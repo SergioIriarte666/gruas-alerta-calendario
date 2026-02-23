@@ -33,7 +33,7 @@ export const Layout = () => {
         )}>
           <Header setIsMobileMenuOpen={setIsMobileMenuOpen} />
           <main className={cn(
-            "flex-1 overflow-auto bg-white",
+            "flex-1 overflow-y-auto overflow-x-hidden bg-white",
             isMobile ? "p-3" : isTablet ? "p-4" : "p-6"
           )}>
             <Suspense fallback={null}>
