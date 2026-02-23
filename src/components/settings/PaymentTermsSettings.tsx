@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { PaymentTerm } from '@/types';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { usePaymentTerms } from '@/hooks/usePaymentTerms';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -9,6 +10,7 @@ import { Plus, Pencil } from 'lucide-react';
 import { PaymentTermFormModal } from './PaymentTermFormModal';
 
 export const PaymentTermsSettings = () => {
+  const isMobile = useIsMobile();
   const { paymentTerms, loading, updatePaymentTerm } = usePaymentTerms();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTerm, setEditingTerm] = useState<PaymentTerm | null>(null);
@@ -33,38 +35,38 @@ export const PaymentTermsSettings = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
         <div>
-          <h2 className="text-2xl font-semibold text-foreground">Condiciones de Pago</h2>
-          <p className="text-sm text-muted-foreground mt-1">
+          <h2 className="text-lg sm:text-2xl font-semibold text-foreground">Condiciones de Pago</h2>
+          <p className="text-xs sm:text-sm text-muted-foreground mt-1">
             Administra las condiciones de pago disponibles para las facturas
           </p>
         </div>
-        <Button onClick={handleCreate} className="gap-2">
+        <Button onClick={handleCreate} className="gap-2" size={isMobile ? "sm" : "default"}>
           <Plus className="h-4 w-4" />
-          Agregar Condición
+          {isMobile ? "Agregar" : "Agregar Condición"}
         </Button>
       </div>
 
       <div className="grid gap-4">
         {paymentTerms.map((term) => (
-          <Card key={term.id} className="p-4 border border-border bg-card">
-            <div className="flex items-center justify-between">
-              <div className="flex-1">
-                <div className="flex items-center gap-3">
-                  <h3 className="font-medium text-foreground">{term.name}</h3>
+          <Card key={term.id} className="p-3 sm:p-4 border border-border bg-card">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h3 className="font-medium text-foreground text-sm sm:text-base">{term.name}</h3>
                   <Badge
                     variant={term.is_active ? 'default' : 'secondary'}
                     className={
                       term.is_active
-                        ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-                        : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200'
+                        ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 text-xs'
+                        : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200 text-xs'
                     }
                   >
                     {term.is_active ? 'Activo' : 'Inactivo'}
                   </Badge>
                 </div>
-                <div className="mt-1 text-sm text-muted-foreground">
+                <div className="mt-1 text-xs sm:text-sm text-muted-foreground">
                   <span className="font-medium">Código:</span> {term.code}
                   {term.days > 0 && (
                     <>
@@ -74,14 +76,11 @@ export const PaymentTermsSettings = () => {
                   )}
                 </div>
                 {term.description && (
-                  <p className="mt-2 text-sm text-muted-foreground">{term.description}</p>
+                  <p className="mt-1 text-xs text-muted-foreground line-clamp-2">{term.description}</p>
                 )}
               </div>
               <div className="flex items-center gap-3">
                 <div className="flex items-center gap-2">
-                  <span className="text-sm text-muted-foreground">
-                    {term.is_active ? 'Activo' : 'Inactivo'}
-                  </span>
                   <Switch
                     checked={term.is_active}
                     onCheckedChange={() => handleToggleActive(term)}
@@ -91,10 +90,10 @@ export const PaymentTermsSettings = () => {
                   variant="outline"
                   size="sm"
                   onClick={() => handleEdit(term)}
-                  className="gap-2"
+                  className="gap-1"
                 >
                   <Pencil className="h-3 w-3" />
-                  Editar
+                  {!isMobile && "Editar"}
                 </Button>
               </div>
             </div>
