@@ -96,12 +96,12 @@ const Calendar = () => {
         onViewModeChange={setViewMode}
       />
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-4 gap-6">
         {/* Calendar View */}
         <div className="lg:col-span-3">
           <Card className="glass-card">
             <CardHeader>
-              <CardTitle className="flex items-center space-x-2 text-white">
+              <CardTitle className="flex items-center space-x-2 text-foreground">
                 <CalendarIcon className="w-5 h-5 text-green-500" />
                 <span>Vista {viewMode === 'day' ? 'Diaria' : viewMode === 'week' ? 'Semanal' : 'Mensual'}</span>
               </CardTitle>

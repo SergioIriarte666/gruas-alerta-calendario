@@ -535,7 +535,7 @@ const ReportsPage = () => {
       <ReportsHeader />
 
       {/* Card Navigation */}
-      <div className="grid grid-cols-4 lg:grid-cols-7 gap-2">
+      <div className="grid grid-cols-4 sm:grid-cols-4 lg:grid-cols-7 gap-2 overflow-x-auto">
         {tabs.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
@@ -546,23 +546,23 @@ const ReportsPage = () => {
                 setActiveTab(tab.id);
                 if (tab.id !== 'clientes' && tab.id !== 'servicios') setSelectedClientId('all');
               }}
-              className={`flex flex-col items-center gap-1.5 p-3 rounded-lg border text-sm font-medium transition-all duration-200 ${
+              className={`flex flex-col items-center gap-1.5 p-2 sm:p-3 rounded-lg border text-sm font-medium transition-all duration-200 min-w-0 ${
                 isActive
                   ? 'bg-violet-600 text-white border-violet-600 shadow-md'
                   : 'bg-card text-foreground border-border hover:bg-muted/50 hover:border-violet-300'
               }`}
             >
-              <Icon className="h-5 w-5" />
-              <span className="text-xs leading-tight">{tab.label}</span>
+              <Icon className="h-4 w-4 sm:h-5 sm:w-5" />
+              <span className="text-[10px] sm:text-xs leading-tight truncate w-full text-center">{tab.label}</span>
             </button>
           );
         })}
       </div>
 
       {/* Inline Filter Bar */}
-      <div className="flex items-center gap-2 flex-wrap">
+      <div className="flex items-center gap-2 flex-wrap overflow-x-auto">
         <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
-          <SelectTrigger className="w-[180px] h-9 text-sm bg-card border">
+          <SelectTrigger className="w-full sm:w-[180px] h-9 text-sm bg-card border">
             <Calendar className="h-3.5 w-3.5 mr-1.5 text-muted-foreground" />
             <SelectValue />
           </SelectTrigger>
@@ -578,7 +578,7 @@ const ReportsPage = () => {
           <>
             <Popover>
               <PopoverTrigger asChild>
-                <Button variant="outline" size="sm" className={cn("h-9 text-sm bg-card border justify-start font-normal w-[150px]", !customFrom && "text-muted-foreground")}>
+                <Button variant="outline" size="sm" className={cn("h-9 text-sm bg-card border justify-start font-normal w-full sm:w-[150px]", !customFrom && "text-muted-foreground")}>
                   <Calendar className="h-3.5 w-3.5 mr-1.5" />
                   {customFrom ? format(customFrom, 'dd/MM/yyyy') : 'Desde'}
                 </Button>
@@ -596,7 +596,7 @@ const ReportsPage = () => {
             </Popover>
             <Popover>
               <PopoverTrigger asChild>
-                <Button variant="outline" size="sm" className={cn("h-9 text-sm bg-card border justify-start font-normal w-[150px]", !customTo && "text-muted-foreground")}>
+                <Button variant="outline" size="sm" className={cn("h-9 text-sm bg-card border justify-start font-normal w-full sm:w-[150px]", !customTo && "text-muted-foreground")}>
                   <Calendar className="h-3.5 w-3.5 mr-1.5" />
                   {customTo ? format(customTo, 'dd/MM/yyyy') : 'Hasta'}
                 </Button>
@@ -618,7 +618,7 @@ const ReportsPage = () => {
         {/* Client selector - only visible on Clientes tab */}
         {(activeTab === 'clientes' || activeTab === 'servicios') && (
           <Select value={selectedClientId} onValueChange={setSelectedClientId}>
-            <SelectTrigger className="w-[220px] h-9 text-sm bg-card border">
+            <SelectTrigger className="w-full sm:w-[220px] h-9 text-sm bg-card border">
               <Users className="h-3.5 w-3.5 mr-1.5 text-muted-foreground" />
               <SelectValue placeholder="Todos los clientes" />
             </SelectTrigger>
@@ -637,7 +637,7 @@ const ReportsPage = () => {
         {/* Cost category selector - only visible on Costos tab */}
         {activeTab === 'costos' && (
           <Select value={selectedCostCategoryId} onValueChange={setSelectedCostCategoryId}>
-            <SelectTrigger className="w-[220px] h-9 text-sm bg-card border">
+            <SelectTrigger className="w-full sm:w-[220px] h-9 text-sm bg-card border">
               <Receipt className="h-3.5 w-3.5 mr-1.5 text-muted-foreground" />
               <SelectValue placeholder="Todas las categorías" />
             </SelectTrigger>

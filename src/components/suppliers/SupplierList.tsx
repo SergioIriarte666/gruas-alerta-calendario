@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -48,6 +49,7 @@ const SortIcon = ({ field, currentSortField, sortDirection }: {
 };
 
 export const SupplierList: React.FC = () => {
+  const isMobile = useIsMobile();
   const { 
     suppliers, 
     isLoading, 
@@ -263,172 +265,139 @@ export const SupplierList: React.FC = () => {
                 }
               </p>
             </div>
-          ) : (
+          ) : isMobile ? (
+              <div className="space-y-3">
+                {filteredAndSortedSuppliers.map((supplier) => (
+                  <Card key={supplier.id} className="bg-card border cursor-pointer" onClick={() => setSelectedSupplier(supplier)}>
+                    <CardContent className="p-4 space-y-3">
+                      <div className="flex items-start justify-between">
+                        <div className="space-y-1 min-w-0">
+                          <p className="font-medium text-foreground text-sm">{supplier.name}</p>
+                          <p className="text-xs text-muted-foreground">{supplier.rut}</p>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => { e.stopPropagation(); handleToggleStatus(supplier); }}
+                          className="p-0 h-auto shrink-0"
+                        >
+                          {supplier.is_active ? (
+                            <div className="flex items-center text-green-800">
+                              <ToggleRight className="h-4 w-4 mr-1" />
+                              <span className="text-xs">Activo</span>
+                            </div>
+                          ) : (
+                            <div className="flex items-center text-muted-foreground">
+                              <ToggleLeft className="h-4 w-4 mr-1" />
+                              <span className="text-xs">Inactivo</span>
+                            </div>
+                          )}
+                        </Button>
+                      </div>
+
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Badge variant="outline" className="text-xs">
+                          {getCategoryLabel(activeCategories || [], supplier.category)}
+                        </Badge>
+                        {supplier.contact_name && (
+                          <span className="text-xs text-muted-foreground">{supplier.contact_name}</span>
+                        )}
+                      </div>
+
+                      {(supplier.email || supplier.phone) && (
+                        <div className="text-xs text-muted-foreground space-y-0.5">
+                          {supplier.email && <div className="flex items-center gap-1"><Mail className="h-3 w-3" />{supplier.email}</div>}
+                          {supplier.phone && <div className="flex items-center gap-1"><Phone className="h-3 w-3" />{supplier.phone}</div>}
+                        </div>
+                      )}
+
+                      <div className="flex items-center justify-end gap-1 pt-1 border-t" onClick={(e) => e.stopPropagation()}>
+                        <Button variant="ghost" size="sm" onClick={() => setSelectedSupplier(supplier)} className="text-primary"><Eye className="h-4 w-4" /></Button>
+                        <Button variant="ghost" size="sm" onClick={() => handleEdit(supplier)} className="text-blue-400"><Edit2 className="h-4 w-4" /></Button>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="ghost" size="sm" className="text-red-400"><Trash2 className="h-4 w-4" /></Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>¿Eliminar proveedor?</AlertDialogTitle>
+                              <AlertDialogDescription>Esta acción no se puede deshacer. Se eliminará permanentemente el proveedor "{supplier.name}".</AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => handleDelete(supplier.id)} className="bg-red-600 hover:bg-red-700">Eliminar</AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : (
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow className="border">
-                    <TableHead 
-                      className="text-muted-foreground cursor-pointer hover:text-primary transition-colors" 
-                      onClick={() => handleSort('name')}
-                    >
-                      <div className="flex items-center">
-                        Proveedor
-                        <SortIcon field="name" currentSortField={sortField} sortDirection={sortDirection} />
-                      </div>
+                    <TableHead className="text-muted-foreground cursor-pointer hover:text-primary transition-colors" onClick={() => handleSort('name')}>
+                      <div className="flex items-center">Proveedor<SortIcon field="name" currentSortField={sortField} sortDirection={sortDirection} /></div>
                     </TableHead>
-                    <TableHead 
-                      className="text-muted-foreground cursor-pointer hover:text-primary transition-colors" 
-                      onClick={() => handleSort('contactName')}
-                    >
-                      <div className="flex items-center">
-                        Contacto
-                        <SortIcon field="contactName" currentSortField={sortField} sortDirection={sortDirection} />
-                      </div>
+                    <TableHead className="text-muted-foreground cursor-pointer hover:text-primary transition-colors" onClick={() => handleSort('contactName')}>
+                      <div className="flex items-center">Contacto<SortIcon field="contactName" currentSortField={sortField} sortDirection={sortDirection} /></div>
                     </TableHead>
-                    <TableHead 
-                      className="text-muted-foreground cursor-pointer hover:text-primary transition-colors" 
-                      onClick={() => handleSort('category')}
-                    >
-                      <div className="flex items-center">
-                        Categoría
-                        <SortIcon field="category" currentSortField={sortField} sortDirection={sortDirection} />
-                      </div>
+                    <TableHead className="text-muted-foreground cursor-pointer hover:text-primary transition-colors" onClick={() => handleSort('category')}>
+                      <div className="flex items-center">Categoría<SortIcon field="category" currentSortField={sortField} sortDirection={sortDirection} /></div>
                     </TableHead>
                     <TableHead className="text-muted-foreground">Pagos</TableHead>
-                    <TableHead 
-                      className="text-muted-foreground cursor-pointer hover:text-primary transition-colors" 
-                      onClick={() => handleSort('isActive')}
-                    >
-                      <div className="flex items-center">
-                        Estado
-                        <SortIcon field="isActive" currentSortField={sortField} sortDirection={sortDirection} />
-                      </div>
+                    <TableHead className="text-muted-foreground cursor-pointer hover:text-primary transition-colors" onClick={() => handleSort('isActive')}>
+                      <div className="flex items-center">Estado<SortIcon field="isActive" currentSortField={sortField} sortDirection={sortDirection} /></div>
                     </TableHead>
                     <TableHead className="text-muted-foreground">Acciones</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                 {filteredAndSortedSuppliers.map((supplier) => (
-                    <TableRow 
-                      key={supplier.id} 
-                      className="border cursor-pointer hover:bg-muted/50 transition-colors"
-                      onClick={() => setSelectedSupplier(supplier)}
-                    >
+                    <TableRow key={supplier.id} className="border cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => setSelectedSupplier(supplier)}>
                       <TableCell>
                         <div className="space-y-1">
                           <div className="font-medium text-foreground">{supplier.name}</div>
                           <div className="text-sm text-muted-foreground">{supplier.rut}</div>
                         </div>
                       </TableCell>
-                      
                       <TableCell>
                         <div className="space-y-1">
-                          {supplier.email && (
-                            <div className="flex items-center text-sm text-foreground">
-                              <Mail className="h-3 w-3 mr-1" />
-                              {supplier.email}
-                            </div>
-                          )}
-                          {supplier.phone && (
-                            <div className="flex items-center text-sm text-foreground">
-                              <Phone className="h-3 w-3 mr-1" />
-                              {supplier.phone}
-                            </div>
-                          )}
-                          {supplier.contact_name && (
-                            <div className="text-sm text-foreground font-medium">
-                              {supplier.contact_name}
-                            </div>
-                          )}
+                          {supplier.email && <div className="flex items-center text-sm text-foreground"><Mail className="h-3 w-3 mr-1" />{supplier.email}</div>}
+                          {supplier.phone && <div className="flex items-center text-sm text-foreground"><Phone className="h-3 w-3 mr-1" />{supplier.phone}</div>}
+                          {supplier.contact_name && <div className="text-sm text-foreground font-medium">{supplier.contact_name}</div>}
                         </div>
                       </TableCell>
-
+                      <TableCell><Badge variant="outline">{getCategoryLabel(activeCategories || [], supplier.category)}</Badge></TableCell>
+                      <TableCell><div className="text-sm text-foreground">0 pagos</div></TableCell>
                       <TableCell>
-                        <Badge variant="outline">
-                          {getCategoryLabel(activeCategories || [], supplier.category)}
-                        </Badge>
-                      </TableCell>
-
-                      <TableCell>
-                        <div className="space-y-1">
-                          <div className="text-sm text-foreground">
-                            0 pagos
-                          </div>
-                        </div>
-                      </TableCell>
-
-                      <TableCell>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleToggleStatus(supplier)}
-                          className="p-0 h-auto"
-                        >
+                        <Button variant="ghost" size="sm" onClick={() => handleToggleStatus(supplier)} className="p-0 h-auto">
                           {supplier.is_active ? (
-                            <div className="flex items-center text-green-800">
-                              <ToggleRight className="h-4 w-4 mr-1" />
-                              Activo
-                            </div>
+                            <div className="flex items-center text-green-800"><ToggleRight className="h-4 w-4 mr-1" />Activo</div>
                           ) : (
-                            <div className="flex items-center text-muted-foreground">
-                              <ToggleLeft className="h-4 w-4 mr-1" />
-                              Inactivo
-                            </div>
+                            <div className="flex items-center text-muted-foreground"><ToggleLeft className="h-4 w-4 mr-1" />Inactivo</div>
                           )}
                         </Button>
                       </TableCell>
-
                       <TableCell onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center space-x-2">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setSelectedSupplier(supplier)}
-                            className="text-primary hover:text-primary/80"
-                            title="Ver detalles"
-                          >
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleEdit(supplier)}
-                            className="text-blue-400 hover:text-blue-300"
-                          >
-                            <Edit2 className="h-4 w-4" />
-                          </Button>
-                          
+                          <Button variant="ghost" size="sm" onClick={() => setSelectedSupplier(supplier)} className="text-primary hover:text-primary/80" title="Ver detalles"><Eye className="h-4 w-4" /></Button>
+                          <Button variant="ghost" size="sm" onClick={() => handleEdit(supplier)} className="text-blue-400 hover:text-blue-300"><Edit2 className="h-4 w-4" /></Button>
                           <AlertDialog>
                             <AlertDialogTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="text-red-400 hover:text-red-300"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
+                              <Button variant="ghost" size="sm" className="text-red-400 hover:text-red-300"><Trash2 className="h-4 w-4" /></Button>
                             </AlertDialogTrigger>
-                            <AlertDialogContent className="bg-gray-800 border-gray-700">
+                            <AlertDialogContent className="bg-card border">
                               <AlertDialogHeader>
-                                <AlertDialogTitle className="text-white">
-                                  ¿Eliminar proveedor?
-                                </AlertDialogTitle>
-                                <AlertDialogDescription className="text-gray-300">
-                                  Esta acción no se puede deshacer. Se eliminará permanentemente
-                                  el proveedor "{supplier.name}" del sistema.
-                                </AlertDialogDescription>
+                                <AlertDialogTitle className="text-foreground">¿Eliminar proveedor?</AlertDialogTitle>
+                                <AlertDialogDescription className="text-muted-foreground">Esta acción no se puede deshacer. Se eliminará permanentemente el proveedor "{supplier.name}" del sistema.</AlertDialogDescription>
                               </AlertDialogHeader>
                               <AlertDialogFooter>
-                                <AlertDialogCancel className="border-gray-600 text-gray-300">
-                                  Cancelar
-                                </AlertDialogCancel>
-                                <AlertDialogAction
-                                  onClick={() => handleDelete(supplier.id)}
-                                  className="bg-red-600 hover:bg-red-700"
-                                >
-                                  Eliminar
-                                </AlertDialogAction>
+                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                <AlertDialogAction onClick={() => handleDelete(supplier.id)} className="bg-red-600 hover:bg-red-700">Eliminar</AlertDialogAction>
                               </AlertDialogFooter>
                             </AlertDialogContent>
                           </AlertDialog>
@@ -439,7 +408,8 @@ export const SupplierList: React.FC = () => {
                 </TableBody>
               </Table>
             </div>
-          )}
+            )
+          }
         </CardContent>
       </Card>
 
