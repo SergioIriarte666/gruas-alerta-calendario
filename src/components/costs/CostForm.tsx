@@ -466,7 +466,7 @@ export const CostForm = ({ isOpen, onClose, cost, prefilledData, onInventoryCost
                                 {/* Right Content - Form Steps */}
                                 <div className="lg:col-span-3 flex flex-col overflow-hidden">
                                     <Form {...form}>
-                                        <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col h-full">
+                                        <div className="flex flex-col h-full">
                                             {/* Step Content */}
                                             <div className="flex-1 overflow-y-auto p-6">
                                                 {currentStep === 1 && (
@@ -534,8 +534,9 @@ export const CostForm = ({ isOpen, onClose, cost, prefilledData, onInventoryCost
                                                         </Button>
                                                     ) : (
                                                         <Button
-                                                            type="submit"
+                                                            type="button"
                                                             disabled={isSubmitting}
+                                                            onClick={form.handleSubmit(onSubmit)}
                                                             className="gap-2 bg-violet-600 hover:bg-violet-700 text-white"
                                                         >
                                                             {isSubmitting ? (
@@ -553,7 +554,7 @@ export const CostForm = ({ isOpen, onClose, cost, prefilledData, onInventoryCost
                                                     )}
                                                 </div>
                                             </div>
-                                        </form>
+                                        </div>
                                     </Form>
                                 </div>
                             </div>
