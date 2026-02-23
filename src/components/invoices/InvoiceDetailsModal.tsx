@@ -5,7 +5,7 @@ import { Separator } from '@/components/ui/separator';
 import { Progress } from '@/components/ui/progress';
 import { Invoice } from '@/types';
 import { formatCurrency } from '@/lib/utils';
-import { format, isValid, parseISO } from 'date-fns';
+import { format, isValid, parseISO, differenceInDays } from 'date-fns';
 import { es } from 'date-fns/locale';
 import {
   FileText,
@@ -287,6 +287,49 @@ export const InvoiceDetailsModal = ({ invoice, isOpen, onClose }: InvoiceDetails
                 {paymentTermName && (
                   <DetailItem icon={Clock} label="Condición de Pago" value={paymentTermName} />
                 )}
+                {invoice.issueDate && (() => {
+                  try {
+                    const issued = typeof invoice.issueDate === 'string' ? parseISO(invoice.issueDate) : new Date(invoice.issueDate);
+                    if (!isValid(issued)) return null;
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+                    issued.setHours(0, 0, 0, 0);
+                    const daysSinceIssue = differenceInDays(today, issued);
+                    return (
+                      <DetailItem
+                        icon={Clock}
+                        label="Días desde Emisión"
+                        value={
+                          <Badge variant="outline" className="text-xs font-medium">
+                            {daysSinceIssue} día{daysSinceIssue !== 1 ? 's' : ''}
+                          </Badge>
+                        }
+                      />
+                    );
+                  } catch { return null; }
+                })()}
+                {invoice.dueDate && invoice.status !== 'paid' && (() => {
+                  try {
+                    const due = typeof invoice.dueDate === 'string' ? parseISO(invoice.dueDate) : new Date(invoice.dueDate);
+                    if (!isValid(due)) return null;
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+                    due.setHours(0, 0, 0, 0);
+                    const daysUntilDue = differenceInDays(due, today);
+                    const isOverdue = daysUntilDue < 0;
+                    return (
+                      <DetailItem
+                        icon={AlertTriangle}
+                        label={isOverdue ? 'Días de Atraso' : 'Días para Vencer'}
+                        value={
+                          <Badge className={`text-xs font-medium ${isOverdue ? 'bg-destructive text-destructive-foreground' : daysUntilDue <= 7 ? 'bg-yellow-500 text-white' : 'bg-primary text-primary-foreground'}`}>
+                            {isOverdue ? `${Math.abs(daysUntilDue)} día${Math.abs(daysUntilDue) !== 1 ? 's' : ''} vencida` : `${daysUntilDue} día${daysUntilDue !== 1 ? 's' : ''}`}
+                          </Badge>
+                        }
+                      />
+                    );
+                  } catch { return null; }
+                })()}
               </DetailSection>
 
               {invoice.notes && (
