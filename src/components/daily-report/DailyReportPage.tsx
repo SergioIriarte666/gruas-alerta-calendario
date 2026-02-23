@@ -191,7 +191,7 @@ const DailyReportPage = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Informe Diario</h1>
+          <h1 className="text-xl sm:text-3xl font-bold text-foreground">Informe Diario</h1>
           <p className="text-muted-foreground">
             Compromisos y tareas para {data?.selectedDate}
           </p>
@@ -221,7 +221,7 @@ const DailyReportPage = () => {
           <div className="flex items-center justify-between">
             <Button variant="outline" size="sm" onClick={handlePreviousDay}>
               <ChevronLeft className="w-4 h-4" />
-              Día Anterior
+              <span className="hidden sm:inline ml-1">Día Anterior</span>
             </Button>
 
             <div className="flex items-center gap-2">
@@ -236,7 +236,7 @@ const DailyReportPage = () => {
             </div>
 
             <Button variant="outline" size="sm" onClick={handleNextDay}>
-              Día Siguiente
+              <span className="hidden sm:inline mr-1">Día Siguiente</span>
               <ChevronRight className="w-4 h-4" />
             </Button>
           </div>
@@ -300,7 +300,7 @@ const DailyReportPage = () => {
 
       {/* Main Content Tabs */}
       <Tabs defaultValue="services" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-3 sm:grid-cols-5">
           <TabsTrigger value="services" className="flex items-center gap-2">
             <Truck className="w-4 h-4" />
             Servicios

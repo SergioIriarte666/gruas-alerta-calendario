@@ -36,15 +36,15 @@ export default function IncomeProjections() {
   };
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <div className="container mx-auto p-3 sm:p-6 space-y-4 sm:space-y-6">
       {/* Header */}
-      <div className="flex items-center gap-3 mb-6">
-        <div className="p-3 rounded-lg bg-primary/10">
-          <TrendingUp className="h-6 w-6 text-primary" />
+      <div className="flex items-center gap-3 mb-4 sm:mb-6">
+        <div className="p-2 sm:p-3 rounded-lg bg-primary/10">
+          <TrendingUp className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
         </div>
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Proyección de Ingresos</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-xl sm:text-3xl font-bold text-foreground">Proyección de Ingresos</h1>
+          <p className="text-muted-foreground text-sm">
             Análisis y proyección de cobros basado en facturas pendientes
           </p>
         </div>

@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -61,6 +62,7 @@ const SortIcon = ({ field, currentSortField, sortDirection }: {
 };
 
 export const PaymentList: React.FC = () => {
+  const isMobile = useIsMobile();
   const { 
     payments, 
     isLoading, 
@@ -550,64 +552,97 @@ export const PaymentList: React.FC = () => {
                 }
               </p>
             </div>
-          ) : (
+          ) : isMobile ? (
+              <div className="space-y-3">
+                {filteredAndSortedPayments.map((payment) => {
+                  const supplierName = suppliers.find(s => s.id === payment.supplier_id)?.name || 'No encontrado';
+                  return (
+                    <Card key={payment.id} className="bg-card border">
+                      <CardContent className="p-4 space-y-3">
+                        <div className="flex items-start justify-between">
+                          <div className="space-y-1 min-w-0">
+                            <p className="font-medium text-foreground text-sm">{supplierName}</p>
+                            <p className="text-xs text-muted-foreground truncate">{payment.description}</p>
+                            {payment.reference_number && (
+                              <p className="text-xs text-muted-foreground">Ref: {payment.reference_number}</p>
+                            )}
+                          </div>
+                          <Badge className={`${getStatusColor(payment.status)} text-black shrink-0 ml-2`}>
+                            {getStatusLabel(payment.status)}
+                          </Badge>
+                        </div>
+
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="font-bold text-foreground">{formatCurrency(payment.amount)}</span>
+                          <span className="text-xs text-muted-foreground">Vence: {formatForDisplay(parseFromDatabase(payment.due_date))}</span>
+                        </div>
+
+                        {payment.paid_date && (
+                          <div className="text-xs text-violet-600">
+                            Pagado: {formatForDisplay(parseFromDatabase(payment.paid_date))}
+                          </div>
+                        )}
+
+                        {payment.category && (
+                          <Badge variant="outline" className="text-xs">
+                            {resolveSupplierPaymentCategoryLabel(payment.category, {
+                              supplierCategories, costCategories, fallback: 'Sin categoría',
+                            })}
+                          </Badge>
+                        )}
+
+                        <div className="flex items-center justify-end gap-1 pt-1 border-t">
+                          {payment.status === 'pending' && (
+                            <Button variant="ghost" size="sm" onClick={() => handleMarkAsPaid(payment)} className="text-primary" title="Marcar como pagado">
+                              <CheckCircle className="h-4 w-4" />
+                            </Button>
+                          )}
+                          <Button variant="ghost" size="sm" onClick={() => handleEdit(payment)} className="text-primary">
+                            <Edit2 className="h-4 w-4" />
+                          </Button>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button variant="ghost" size="sm" className="text-destructive"><Trash2 className="h-4 w-4" /></Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent className="bg-card border">
+                              <AlertDialogHeader>
+                                <AlertDialogTitle className="text-foreground">¿Eliminar pago?</AlertDialogTitle>
+                                <AlertDialogDescription className="text-muted-foreground">Esta acción no se puede deshacer. Se eliminará permanentemente el pago "{payment.description}".</AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                <AlertDialogAction onClick={() => handleDelete(payment.id)} className="bg-destructive hover:bg-destructive/90 text-destructive-foreground">Eliminar</AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+            ) : (
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow className="border">
-                    <TableHead 
-                      className="text-muted-foreground cursor-pointer hover:text-primary transition-colors" 
-                      onClick={() => handleSort('supplier')}
-                    >
-                      <div className="flex items-center">
-                        Proveedor
-                        <SortIcon field="supplier" currentSortField={sortField} sortDirection={sortDirection} />
-                      </div>
+                    <TableHead className="text-muted-foreground cursor-pointer hover:text-primary transition-colors" onClick={() => handleSort('supplier')}>
+                      <div className="flex items-center">Proveedor<SortIcon field="supplier" currentSortField={sortField} sortDirection={sortDirection} /></div>
                     </TableHead>
-                    <TableHead 
-                      className="text-muted-foreground cursor-pointer hover:text-primary transition-colors" 
-                      onClick={() => handleSort('description')}
-                    >
-                      <div className="flex items-center">
-                        Descripción
-                        <SortIcon field="description" currentSortField={sortField} sortDirection={sortDirection} />
-                      </div>
+                    <TableHead className="text-muted-foreground cursor-pointer hover:text-primary transition-colors" onClick={() => handleSort('description')}>
+                      <div className="flex items-center">Descripción<SortIcon field="description" currentSortField={sortField} sortDirection={sortDirection} /></div>
                     </TableHead>
-                    <TableHead 
-                      className="text-muted-foreground cursor-pointer hover:text-primary transition-colors" 
-                      onClick={() => handleSort('amount')}
-                    >
-                      <div className="flex items-center">
-                        Monto
-                        <SortIcon field="amount" currentSortField={sortField} sortDirection={sortDirection} />
-                      </div>
+                    <TableHead className="text-muted-foreground cursor-pointer hover:text-primary transition-colors" onClick={() => handleSort('amount')}>
+                      <div className="flex items-center">Monto<SortIcon field="amount" currentSortField={sortField} sortDirection={sortDirection} /></div>
                     </TableHead>
-                    <TableHead 
-                      className="text-muted-foreground cursor-pointer hover:text-primary transition-colors" 
-                      onClick={() => handleSort('dueDate')}
-                    >
-                      <div className="flex items-center">
-                        Vencimiento
-                        <SortIcon field="dueDate" currentSortField={sortField} sortDirection={sortDirection} />
-                      </div>
+                    <TableHead className="text-muted-foreground cursor-pointer hover:text-primary transition-colors" onClick={() => handleSort('dueDate')}>
+                      <div className="flex items-center">Vencimiento<SortIcon field="dueDate" currentSortField={sortField} sortDirection={sortDirection} /></div>
                     </TableHead>
-                    <TableHead 
-                      className="text-muted-foreground cursor-pointer hover:text-primary transition-colors" 
-                      onClick={() => handleSort('paidDate')}
-                    >
-                      <div className="flex items-center">
-                        Fecha de Pago
-                        <SortIcon field="paidDate" currentSortField={sortField} sortDirection={sortDirection} />
-                      </div>
+                    <TableHead className="text-muted-foreground cursor-pointer hover:text-primary transition-colors" onClick={() => handleSort('paidDate')}>
+                      <div className="flex items-center">Fecha de Pago<SortIcon field="paidDate" currentSortField={sortField} sortDirection={sortDirection} /></div>
                     </TableHead>
-                    <TableHead 
-                      className="text-muted-foreground cursor-pointer hover:text-primary transition-colors" 
-                      onClick={() => handleSort('status')}
-                    >
-                      <div className="flex items-center">
-                        Estado
-                        <SortIcon field="status" currentSortField={sortField} sortDirection={sortDirection} />
-                      </div>
+                    <TableHead className="text-muted-foreground cursor-pointer hover:text-primary transition-colors" onClick={() => handleSort('status')}>
+                      <div className="flex items-center">Estado<SortIcon field="status" currentSortField={sortField} sortDirection={sortDirection} /></div>
                     </TableHead>
                     <TableHead className="text-muted-foreground">Acciones</TableHead>
                   </TableRow>
@@ -621,116 +656,61 @@ export const PaymentList: React.FC = () => {
                              {suppliers.find(s => s.id === payment.supplier_id)?.name || 'Proveedor no encontrado'}
                            </div>
                            {payment.reference_number && (
-                             <div className="text-sm text-muted-foreground">
-                               Ref: {payment.reference_number}
-                             </div>
+                             <div className="text-sm text-muted-foreground">Ref: {payment.reference_number}</div>
                            )}
                          </div>
                       </TableCell>
-                      
                       <TableCell>
                         <div className="space-y-1">
                           <div className="text-foreground">{payment.description}</div>
                           {payment.category && (
                             <Badge variant="outline">
-                              {resolveSupplierPaymentCategoryLabel(payment.category, {
-                                supplierCategories,
-                                costCategories,
-                                fallback: 'Sin categoría',
-                              })}
+                              {resolveSupplierPaymentCategoryLabel(payment.category, { supplierCategories, costCategories, fallback: 'Sin categoría' })}
                             </Badge>
                           )}
                         </div>
                       </TableCell>
-
                       <TableCell>
                         <div className="space-y-1">
-                          <div className="font-medium text-foreground">
-                            {formatCurrency(payment.amount)}
-                          </div>
+                          <div className="font-medium text-foreground">{formatCurrency(payment.amount)}</div>
                           {payment.paid_amount && payment.paid_amount !== payment.amount && (
-                            <div className="text-sm text-primary">
-                              Pagado: {formatCurrency(payment.paid_amount)}
-                            </div>
+                            <div className="text-sm text-primary">Pagado: {formatCurrency(payment.paid_amount)}</div>
                           )}
                         </div>
                       </TableCell>
-
-                      <TableCell>
-                        <div className="text-foreground">
-                          {formatForDisplay(parseFromDatabase(payment.due_date))}
-                        </div>
-                      </TableCell>
-
+                      <TableCell><div className="text-foreground">{formatForDisplay(parseFromDatabase(payment.due_date))}</div></TableCell>
                       <TableCell>
                         {payment.paid_date ? (
-                          <div className="text-violet-600">
-                            {formatForDisplay(parseFromDatabase(payment.paid_date))}
-                          </div>
+                          <div className="text-violet-600">{formatForDisplay(parseFromDatabase(payment.paid_date))}</div>
                         ) : (
                           <span className="text-muted-foreground">-</span>
                         )}
                       </TableCell>
-
                       <TableCell>
-                        <Badge className={`${getStatusColor(payment.status)} text-black`}>
-                          {getStatusLabel(payment.status)}
-                        </Badge>
+                        <Badge className={`${getStatusColor(payment.status)} text-black`}>{getStatusLabel(payment.status)}</Badge>
                       </TableCell>
-
                       <TableCell>
                         <div className="flex items-center space-x-2">
                           {payment.status === 'pending' && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleMarkAsPaid(payment)}
-                              className="text-primary hover:text-primary/80"
-                              title="Marcar como pagado"
-                            >
+                            <Button variant="ghost" size="sm" onClick={() => handleMarkAsPaid(payment)} className="text-primary hover:text-primary/80" title="Marcar como pagado">
                               <CheckCircle className="h-4 w-4" />
                             </Button>
                           )}
-                          
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleEdit(payment)}
-                            className="text-primary hover:text-primary/80"
-                          >
+                          <Button variant="ghost" size="sm" onClick={() => handleEdit(payment)} className="text-primary hover:text-primary/80">
                             <Edit2 className="h-4 w-4" />
                           </Button>
-                          
                           <AlertDialog>
                             <AlertDialogTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="text-destructive hover:text-destructive/80"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
+                              <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive/80"><Trash2 className="h-4 w-4" /></Button>
                             </AlertDialogTrigger>
                             <AlertDialogContent className="bg-card border">
                               <AlertDialogHeader>
-                                <AlertDialogTitle className="text-foreground">
-                                  ¿Eliminar pago?
-                                </AlertDialogTitle>
-                                <AlertDialogDescription className="text-muted-foreground">
-                                  Esta acción no se puede deshacer. Se eliminará permanentemente
-                                  el pago "{payment.description}".
-                                </AlertDialogDescription>
+                                <AlertDialogTitle className="text-foreground">¿Eliminar pago?</AlertDialogTitle>
+                                <AlertDialogDescription className="text-muted-foreground">Esta acción no se puede deshacer. Se eliminará permanentemente el pago "{payment.description}".</AlertDialogDescription>
                               </AlertDialogHeader>
                               <AlertDialogFooter>
-                                <AlertDialogCancel className="border text-muted-foreground">
-                                  Cancelar
-                                </AlertDialogCancel>
-                                <AlertDialogAction
-                                  onClick={() => handleDelete(payment.id)}
-                                  className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
-                                >
-                                  Eliminar
-                                </AlertDialogAction>
+                                <AlertDialogCancel className="border text-muted-foreground">Cancelar</AlertDialogCancel>
+                                <AlertDialogAction onClick={() => handleDelete(payment.id)} className="bg-destructive hover:bg-destructive/90 text-destructive-foreground">Eliminar</AlertDialogAction>
                               </AlertDialogFooter>
                             </AlertDialogContent>
                           </AlertDialog>
@@ -741,7 +721,8 @@ export const PaymentList: React.FC = () => {
                 </TableBody>
               </Table>
             </div>
-          )}
+            )
+          }
         </CardContent>
       </Card>
 

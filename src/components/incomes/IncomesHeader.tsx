@@ -7,6 +7,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface IncomesHeaderProps {
   onAddIncome: () => void;
@@ -18,17 +19,19 @@ interface IncomesHeaderProps {
 }
 
 export const IncomesHeader = ({ onAddIncome, onExport, totalAmount, totalCount, viewMode, onViewModeChange }: IncomesHeaderProps) => {
+  const isMobile = useIsMobile();
+
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Ingresos</h1>
-          <p className="text-muted-foreground mt-1">
+          <h1 className="text-xl sm:text-3xl font-bold text-foreground">Ingresos</h1>
+          <p className="text-muted-foreground text-sm mt-1">
             Gestión de ingresos bancarios y extraordinarios
           </p>
         </div>
         
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           {/* Toggle Vista */}
           <div className="flex items-center gap-1 border rounded-lg p-1">
             <Button
@@ -53,7 +56,7 @@ export const IncomesHeader = ({ onAddIncome, onExport, totalAmount, totalCount, 
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm">
                 <FileDown className="h-4 w-4 mr-2" />
-                Exportar
+                {isMobile ? 'PDF/Excel' : 'Exportar'}
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
@@ -68,12 +71,12 @@ export const IncomesHeader = ({ onAddIncome, onExport, totalAmount, totalCount, 
 
           <Button onClick={onAddIncome} size="sm">
             <Plus className="h-4 w-4 mr-2" />
-            Agregar Ingreso
+            {isMobile ? 'Nuevo' : 'Agregar Ingreso'}
           </Button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
         <ReportMetricCard
           icon={DollarSign}
           title="Total Ingresos"

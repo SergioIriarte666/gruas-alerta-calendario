@@ -1,7 +1,7 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { ArrowLeft, User, Mail, Phone, Lock, Save } from 'lucide-react';
+import { ArrowLeft, User, Lock, Save } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -49,7 +49,6 @@ const Profile = () => {
   });
 
   const onSubmit = (data: ProfileFormData) => {
-    // Update user info
     updateUser({
       name: data.name,
       email: data.email,
@@ -61,30 +60,30 @@ const Profile = () => {
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="max-w-4xl mx-auto space-y-6 p-4 sm:p-6">
       {/* Header */}
       <div className="flex items-center space-x-4">
         <Button
           variant="ghost"
           size="sm"
           onClick={() => navigate(-1)}
-          className="text-gray-400 hover:text-white"
+          className="text-muted-foreground hover:text-foreground"
         >
           <ArrowLeft className="w-4 h-4 mr-2" />
           Volver
         </Button>
         <div>
-          <h1 className="text-2xl font-bold text-white">Mi Perfil</h1>
-          <p className="text-gray-400">Gestiona tu información personal y configuración de seguridad</p>
+          <h1 className="text-xl sm:text-2xl font-bold text-foreground">Mi Perfil</h1>
+          <p className="text-muted-foreground text-sm">Gestiona tu información personal y configuración de seguridad</p>
         </div>
       </div>
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           {/* Personal Information */}
-          <Card className="bg-black/20 border-gray-800">
+          <Card className="bg-card border">
             <CardHeader>
-              <CardTitle className="text-white flex items-center">
+              <CardTitle className="text-foreground flex items-center">
                 <User className="w-5 h-5 mr-2" />
                 Información Personal
               </CardTitle>
@@ -99,11 +98,10 @@ const Profile = () => {
                   name="name"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-gray-300">Nombre completo</FormLabel>
+                      <FormLabel className="text-foreground">Nombre completo</FormLabel>
                       <FormControl>
                         <Input
                           {...field}
-                          className="bg-white/5 border-gray-700 text-white"
                           placeholder="Tu nombre completo"
                         />
                       </FormControl>
@@ -117,12 +115,11 @@ const Profile = () => {
                   name="email"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-gray-300">Email</FormLabel>
+                      <FormLabel className="text-foreground">Email</FormLabel>
                       <FormControl>
                         <Input
                           {...field}
                           type="email"
-                          className="bg-white/5 border-gray-700 text-white"
                           placeholder="tu@email.com"
                         />
                       </FormControl>
@@ -136,11 +133,10 @@ const Profile = () => {
                   name="phone"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-gray-300">Teléfono</FormLabel>
+                      <FormLabel className="text-foreground">Teléfono</FormLabel>
                       <FormControl>
                         <Input
                           {...field}
-                          className="bg-white/5 border-gray-700 text-white"
                           placeholder="+56 9 1234 5678"
                         />
                       </FormControl>
@@ -150,17 +146,17 @@ const Profile = () => {
                 />
 
                 <div className="flex items-center space-x-2">
-                  <span className="text-gray-300 text-sm">Rol:</span>
-                  <span className="text-tms-green font-medium capitalize">{user?.role}</span>
+                  <span className="text-muted-foreground text-sm">Rol:</span>
+                  <span className="text-primary font-medium capitalize">{user?.role}</span>
                 </div>
               </div>
             </CardContent>
           </Card>
 
           {/* Security */}
-          <Card className="bg-black/20 border-gray-800">
+          <Card className="bg-card border">
             <CardHeader>
-              <CardTitle className="text-white flex items-center">
+              <CardTitle className="text-foreground flex items-center">
                 <Lock className="w-5 h-5 mr-2" />
                 Seguridad
               </CardTitle>
@@ -175,12 +171,11 @@ const Profile = () => {
                   name="currentPassword"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-gray-300">Contraseña actual</FormLabel>
+                      <FormLabel className="text-foreground">Contraseña actual</FormLabel>
                       <FormControl>
                         <Input
                           {...field}
                           type="password"
-                          className="bg-white/5 border-gray-700 text-white"
                           placeholder="Contraseña actual"
                         />
                       </FormControl>
@@ -194,12 +189,11 @@ const Profile = () => {
                   name="newPassword"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-gray-300">Nueva contraseña</FormLabel>
+                      <FormLabel className="text-foreground">Nueva contraseña</FormLabel>
                       <FormControl>
                         <Input
                           {...field}
                           type="password"
-                          className="bg-white/5 border-gray-700 text-white"
                           placeholder="Nueva contraseña"
                         />
                       </FormControl>
@@ -213,12 +207,11 @@ const Profile = () => {
                   name="confirmPassword"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-gray-300">Confirmar contraseña</FormLabel>
+                      <FormLabel className="text-foreground">Confirmar contraseña</FormLabel>
                       <FormControl>
                         <Input
                           {...field}
                           type="password"
-                          className="bg-white/5 border-gray-700 text-white"
                           placeholder="Confirmar contraseña"
                         />
                       </FormControl>
@@ -231,19 +224,15 @@ const Profile = () => {
           </Card>
 
           {/* Actions */}
-          <div className="flex justify-end space-x-4">
+          <div className="flex flex-col-reverse sm:flex-row justify-end gap-3">
             <Button
               type="button"
               variant="outline"
               onClick={() => navigate(-1)}
-              className="border-gray-700 text-gray-300 hover:bg-white/5"
             >
               Cancelar
             </Button>
-            <Button
-              type="submit"
-              className="bg-tms-green hover:bg-tms-green/80 text-black"
-            >
+            <Button type="submit">
               <Save className="w-4 h-4 mr-2" />
               Guardar Cambios
             </Button>
