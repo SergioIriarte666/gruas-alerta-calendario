@@ -19,18 +19,18 @@ export const Layout = () => {
 
   return (
     <QuickEntryProvider>
-      <div className="min-h-screen bg-white text-black flex">
-        <Sidebar 
-          isCollapsed={isCollapsed}
-          setIsCollapsed={setIsCollapsed}
-          isMobileMenuOpen={isMobileMenuOpen}
-          setIsMobileMenuOpen={setIsMobileMenuOpen}
-        />
-        <div className={cn(
-          "flex-1 flex flex-col transition-all duration-300",
-          "lg:ml-64", // Default margin for expanded sidebar
-          isCollapsed && "lg:ml-16" // Reduced margin for collapsed sidebar
-        )}>
+        <div className="min-h-screen bg-white text-black flex overflow-hidden">
+          <Sidebar 
+            isCollapsed={isCollapsed}
+            setIsCollapsed={setIsCollapsed}
+            isMobileMenuOpen={isMobileMenuOpen}
+            setIsMobileMenuOpen={setIsMobileMenuOpen}
+          />
+          <div className={cn(
+            "flex-1 flex flex-col min-w-0 transition-all duration-300",
+            "lg:ml-64",
+            isCollapsed && "lg:ml-16"
+          )}>
           <Header setIsMobileMenuOpen={setIsMobileMenuOpen} />
           <main className={cn(
             "flex-1 overflow-y-auto overflow-x-hidden bg-white",
