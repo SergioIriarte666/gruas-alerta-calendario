@@ -27,6 +27,7 @@ const INVOICE_STATUS_MAP: { [key: string]: string } = {
   all: 'Todas',
   draft: 'Borrador',
   sent: 'Enviada',
+  due_this_week: 'Vence esta semana',
   paid: 'Pagada',
   overdue: 'Vencida',
   cancelled: 'Anulada',
@@ -105,7 +106,24 @@ const Invoices = () => {
       invoiceWithDetails.client?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (invoice.numeroFiscal && invoice.numeroFiscal.toLowerCase().includes(searchTerm.toLowerCase()))
     );
-    const matchesStatus = statusFilter === 'all' || invoice.status === statusFilter;
+    const matchesStatus = (() => {
+      if (statusFilter === 'all') return true;
+      if (statusFilter === 'due_this_week') {
+        if (invoice.status === 'paid' || invoice.status === 'cancelled') return false;
+        if (!invoice.dueDate) return false;
+        const today = new Date();
+        const day = today.getDay();
+        const monday = new Date(today);
+        monday.setDate(today.getDate() - (day === 0 ? 6 : day - 1));
+        monday.setHours(0, 0, 0, 0);
+        const sunday = new Date(monday);
+        sunday.setDate(monday.getDate() + 6);
+        sunday.setHours(23, 59, 59, 999);
+        const due = new Date(invoice.dueDate);
+        return due >= monday && due <= sunday;
+      }
+      return invoice.status === statusFilter;
+    })();
     return matchesSearch && matchesStatus;
   }).sort((a, b) => {
     let aValue: any;
