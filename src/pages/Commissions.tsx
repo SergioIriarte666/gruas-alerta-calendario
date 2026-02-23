@@ -40,6 +40,7 @@ const Commissions = () => {
   const createPaymentBatch = useCreatePaymentBatch();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const isMobile = useIsMobile();
 
   // Cache is managed by React Query staleTime — no forced invalidation on mount
 
@@ -304,8 +305,6 @@ const Commissions = () => {
   if (isLoading) {
     return <LoadingSpinner />;
   }
-
-  const isMobile = useIsMobile();
 
   return (
     <div className={`${isMobile ? 'p-3 space-y-3' : 'p-6 space-y-6'}`}>
