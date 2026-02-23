@@ -32,8 +32,8 @@ export const FolioSection: React.FC<FolioSectionProps> = ({
   onValidationChange
 }) => {
   return (
-    <div className="space-y-4 p-4 border rounded-lg bg-gray-50">
-      <h3 className="text-lg font-semibold">Identificación del Servicio</h3>
+    <div className="space-y-4 p-4 border rounded-lg bg-muted/30">
+      <h3 className="text-base font-semibold text-foreground">Identificación del Servicio</h3>
       
       {!isEditing && (
         <div className="flex items-center space-x-3">
@@ -49,7 +49,7 @@ export const FolioSection: React.FC<FolioSectionProps> = ({
         </div>
       )}
 
-      <div className="flex space-x-3">
+      <div className="flex flex-col sm:flex-row gap-3">
         <div className="flex-1">
           <FolioInput
             folio={folio}
@@ -68,7 +68,7 @@ export const FolioSection: React.FC<FolioSectionProps> = ({
             variant="outline"
             onClick={onGenerateNewFolio}
             disabled={isLoading || disabled}
-            className="mt-6"
+            className="self-end sm:mt-6 h-10"
           >
             <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
             Regenerar
