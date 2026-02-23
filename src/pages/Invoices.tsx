@@ -15,6 +15,7 @@ import InvoicesStats from '@/components/invoices/InvoicesStats';
 import InvoicesSearch from '@/components/invoices/InvoicesSearch';
 import { InvoicesPipelineView } from '@/components/invoices/InvoicesPipelineView';
 import InvoicesTable from '@/components/invoices/InvoicesTable';
+import { InvoicesMobileView } from '@/components/invoices/InvoicesMobileView';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
@@ -22,6 +23,7 @@ import { AppPagination } from '@/components/shared/AppPagination';
 import InvoiceBatchActions from '@/components/invoices/InvoiceBatchActions';
 import InvoiceExportModal from '@/components/invoices/InvoiceExportModal';
 import { BatchProgressModal, useBatchProgress } from '@/components/ui/batch-progress-modal';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const INVOICE_STATUS_MAP: { [key: string]: string } = {
   all: 'Todas',
@@ -35,6 +37,7 @@ const INVOICE_STATUS_MAP: { [key: string]: string } = {
 
 const Invoices = () => {
   const { invoices, loading, createInvoice, updateInvoice, deleteInvoice, markAsPaid, getInvoiceWithDetails, refetch } = useInvoices();
+  const isMobile = useIsMobile();
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
   const statusFromQuery = queryParams.get('status');
@@ -437,28 +440,30 @@ const Invoices = () => {
           
           <InvoicesStats invoices={invoices} />
           
-          <div className="flex flex-col md:flex-row items-center gap-4">
-            <div className="flex-grow">
+          <div className={`flex ${isMobile ? 'flex-col' : 'flex-row'} items-center gap-4`}>
+            <div className="flex-grow w-full">
               <InvoicesSearch
                 searchTerm={searchTerm}
                 onSearchChange={setSearchTerm}
               />
             </div>
-            <div className="flex items-center space-x-1 bg-muted p-1 rounded-lg">
-              {Object.entries(INVOICE_STATUS_MAP).map(([statusKey, statusValue]) => (
-                <Button
-                  key={statusKey}
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setStatusFilter(statusKey)}
-                  className={cn(
-                    'capitalize text-muted-foreground hover:text-foreground px-3 py-1 text-sm',
-                    statusFilter === statusKey && 'bg-primary text-primary-foreground'
-                  )}
-                >
-                  {statusValue}
-                </Button>
-              ))}
+            <div className="overflow-x-auto w-full">
+              <div className="flex items-center space-x-1 bg-muted p-1 rounded-lg whitespace-nowrap">
+                {Object.entries(INVOICE_STATUS_MAP).map(([statusKey, statusValue]) => (
+                  <Button
+                    key={statusKey}
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setStatusFilter(statusKey)}
+                    className={cn(
+                      'capitalize text-muted-foreground hover:text-foreground px-3 py-1 text-sm flex-shrink-0',
+                      statusFilter === statusKey && 'bg-primary text-primary-foreground'
+                    )}
+                  >
+                    {statusValue}
+                  </Button>
+                ))}
+              </div>
             </div>
           </div>
 
@@ -472,20 +477,31 @@ const Invoices = () => {
             />
           )}
           
-          <InvoicesTable
-            invoices={paginatedInvoices}
-            onEdit={handleEditInvoice}
-            onDelete={handleDeleteInvoice}
-            onMarkAsPaid={handleMarkAsPaid}
-            getInvoiceWithDetails={getInvoiceWithDetails}
-            onRefresh={handleRefresh}
-            sortField={sortField}
-            sortDirection={sortDirection}
-            onSort={handleSort}
-            selectedInvoiceIds={selectedInvoiceIds}
-            onInvoiceToggle={handleInvoiceToggle}
-            onSelectAllToggle={handleSelectAllToggle}
-          />
+          {isMobile ? (
+            <InvoicesMobileView
+              invoices={paginatedInvoices}
+              onEdit={handleEditInvoice}
+              onDelete={handleDeleteInvoice}
+              onMarkAsPaid={handleMarkAsPaid}
+              getInvoiceWithDetails={getInvoiceWithDetails}
+              onRefresh={handleRefresh}
+            />
+          ) : (
+            <InvoicesTable
+              invoices={paginatedInvoices}
+              onEdit={handleEditInvoice}
+              onDelete={handleDeleteInvoice}
+              onMarkAsPaid={handleMarkAsPaid}
+              getInvoiceWithDetails={getInvoiceWithDetails}
+              onRefresh={handleRefresh}
+              sortField={sortField}
+              sortDirection={sortDirection}
+              onSort={handleSort}
+              selectedInvoiceIds={selectedInvoiceIds}
+              onInvoiceToggle={handleInvoiceToggle}
+              onSelectAllToggle={handleSelectAllToggle}
+            />
+          )}
 
           <AppPagination
             currentPage={currentPage}
