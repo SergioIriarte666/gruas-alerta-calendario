@@ -15,7 +15,7 @@ interface ClientDetailsModalProps {
 export const ClientDetailsModal = ({ client, isOpen, onClose }: ClientDetailsModalProps) => {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-7xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-7xl w-[95vw] max-h-[90vh] overflow-y-auto p-3 sm:p-6">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold text-foreground mb-2">{client.name}</DialogTitle>
           <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
@@ -39,12 +39,12 @@ export const ClientDetailsModal = ({ client, isOpen, onClose }: ClientDetailsMod
         </div>
         
         {/* Footer con información de creación */}
-        <div className="flex justify-between text-sm text-muted-foreground pt-4 mt-4 border-t">
-          <span>
+        <div className="flex flex-col sm:flex-row sm:justify-between gap-1 text-xs sm:text-sm text-muted-foreground pt-4 mt-4 border-t">
+          <span className="truncate">
             Creado: {formatForDisplayWithTime(client.createdAt)}
             {client.creatorName && ` por ${client.creatorName}`}
           </span>
-          <span>Actualizado: {formatForDisplayWithTime(client.updatedAt)}</span>
+          <span className="truncate">Actualizado: {formatForDisplayWithTime(client.updatedAt)}</span>
         </div>
         
         {/* Footer con botón */}
