@@ -1055,24 +1055,25 @@ export const EnhancedServiceForm = ({
       </div>
 
       {/* Footer - Navigation & Actions */}
-      <div className="flex-shrink-0 pt-4 mt-4 border-t border-border/50">
-        <div className="flex items-center justify-between">
-          {/* Left - Context info */}
-          <div className="text-sm text-muted-foreground">
+      <div className="flex-shrink-0 pt-3 mt-3 border-t border-border/50">
+        <div className="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between gap-2">
+          {/* Context info - hidden on mobile to save space */}
+          <div className="hidden sm:block text-sm text-muted-foreground truncate max-w-[200px] lg:max-w-none">
             {selectedClient ? (
               <span>
-                {service ? 'Editando' : 'Creando'} servicio para <span className="font-medium text-foreground">{selectedClient.name}</span>
+                {service ? 'Editando' : 'Creando'} para <span className="font-medium text-foreground">{selectedClient.name}</span>
               </span>
             ) : (
-              <span>Selecciona un cliente para continuar</span>
+              <span>Selecciona un cliente</span>
             )}
           </div>
 
-          {/* Right - Navigation buttons */}
-          <div className="flex items-center gap-2">
+          {/* Navigation buttons */}
+          <div className="flex items-center gap-2 w-full sm:w-auto">
             <Button
               type="button"
               variant="outline"
+              size="sm"
               onClick={onCancel}
               disabled={isCreating || isUpdating}
             >
@@ -1083,6 +1084,7 @@ export const EnhancedServiceForm = ({
               <Button
                 type="button"
                 variant="outline"
+                size="sm"
                 onClick={handlePrevious}
                 disabled={isCreating || isUpdating}
               >
@@ -1091,9 +1093,12 @@ export const EnhancedServiceForm = ({
               </Button>
             )}
 
+            <div className="flex-1 sm:flex-none" />
+
             {currentStep < totalSteps ? (
               <Button
                 type="button"
+                size="sm"
                 onClick={handleNext}
                 disabled={!canGoNext()}
               >
@@ -1103,6 +1108,7 @@ export const EnhancedServiceForm = ({
             ) : (
               <Button
                 type="submit"
+                size="sm"
                 onClick={handleSubmit}
                 disabled={hasErrors || isCreating || isUpdating}
                 className="bg-green-600 hover:bg-green-700"
@@ -1110,7 +1116,7 @@ export const EnhancedServiceForm = ({
                 {isCreating || isUpdating ? (
                   'Guardando...'
                 ) : service ? (
-                  'Actualizar Servicio'
+                  'Actualizar'
                 ) : (
                   'Crear Servicio'
                 )}
