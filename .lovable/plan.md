@@ -1,97 +1,140 @@
 
+# Plan: Optimizacion Completa Mobile/Tablet - Todos los Modulos Pendientes
 
-# Optimizacion Integral de Vistas Moviles - Fase 1
+## Resumen
 
-## Problemas Identificados (desde las capturas de pantalla)
-
-Los screenshots muestran claramente estos problemas:
-
-1. **Servicios (IMG_2310)**: El header "Gestion de Servicios" ocupa demasiado espacio vertical. El titulo es enorme (text-3xl), los botones Tabla/Pipeline flotan desalineados, y las metricas se apilan en tarjetas individuales enormes que requieren mucho scroll.
-
-2. **Facturas (IMG_2311)**: La tabla completa con 7 columnas (Folio, N Fiscal, Cliente, Fecha Emision, Fecha Vencimiento, Dias para Vencimiento, Total) se muestra en pantalla pequena, causando texto cortado y columnas comprimidas. Los tabs de estado (Todas, Borrador, Enviada, etc.) no tienen scroll horizontal. Las stat cards se apilan verticalmente ocupando mucho espacio.
-
-3. **Dashboard (IMG_2309)**: La tabla "Servicios Recientes" muestra columnas que se cortan (Vehiculo truncado "Toyota Hilux VCLL-2..."), ocupando demasiado espacio vertical por fila.
-
-## Solucion Propuesta
-
-Implementar deteccion de dispositivo (`useDeviceType`) en las paginas criticas y reemplazar tablas por vistas de tarjetas compactas en movil, siguiendo el patron ya establecido en `ServicesMobileView`, `ClientsMobileView` y `CranesMobileView`.
+Auditoria completa de la aplicacion revela **14 componentes/paginas** que aun tienen problemas de visualizacion en movil y tablet. Los problemas principales son: tablas sin vista de tarjetas, headers con texto cortado, contenedores con padding fijo, selectores con ancho fijo, y la pagina de Perfil con colores hardcoded de tema oscuro.
 
 ---
 
-### Cambio 1: Servicios - Header compacto en movil
-**Archivo:** `src/components/services/ServicesHeader.tsx`
+## Modulos con Problemas Identificados
 
-- Reducir titulo de `text-3xl` a `text-xl` en movil
-- Apilar botones verticalmente, mostrar solo iconos en los secundarios
-- Reducir padding de `p-6` a `p-3` en movil
-- Metricas: grid `grid-cols-2` en movil en vez de `lg:grid-cols-4`
+### 1. Ingresos (IncomesTable + IncomesHeader)
+- **IncomesTable.tsx**: Tabla de 9 columnas sin mobile view. Se trunca completamente.
+- **IncomesHeader.tsx**: Titulo `text-3xl` fijo, botones sin wrap, ancho fijo en toggle de vista.
+- **Incomes.tsx (page)**: Container con `p-6` fijo sin ajuste mobile.
 
-### Cambio 2: Facturas - Vista de tarjetas movil
-**Archivos:** `src/pages/Invoices.tsx`, nuevo `src/components/invoices/InvoicesMobileView.tsx`
+### 2. Proveedores (SupplierList + PaymentList)
+- **SupplierList.tsx**: Tabla de 6 columnas sin mobile card view. Solo tiene `overflow-x-auto`.
+- **PaymentList.tsx**: Tabla de 7 columnas sin mobile card view.
 
-- Crear `InvoicesMobileView.tsx` siguiendo el patron de `ServicesMobileView`
-- Cada tarjeta mostrara: Folio, Cliente, Monto, Estado, Dias para vencimiento, y botones de accion
-- En `Invoices.tsx`: detectar `isMobile` y renderizar `InvoicesMobileView` en vez de `InvoicesTable`
-- Tabs de estado: agregar `overflow-x-auto` y `whitespace-nowrap` para scroll horizontal
-- Stats cards: cambiar grid a `grid-cols-2` en movil
+### 3. Comisiones (CommissionTable)
+- **CommissionTable.tsx**: Tabla de 10 columnas sin mobile card view. Se renderiza dentro de Cards en Commissions.tsx que ya tienen algo de mobile handling pero la tabla interna sigue siendo una `<Table>` densa.
 
-### Cambio 3: Dashboard - Tabla de servicios recientes adaptada
-**Archivo:** `src/components/dashboard/RecentServicesTable.tsx`
+### 4. Proyeccion de Ingresos (IncomeProjections + PendingInvoicesTable)
+- **IncomeProjections.tsx**: Header con `text-3xl` fijo, container `p-6` fijo, filtros no responsivos.
+- **PendingInvoicesTable.tsx**: Tabla de 7 columnas sin mobile view.
 
-- Detectar `isMobile` con `useIsMobile()`
-- En movil: reemplazar la tabla por tarjetas compactas mostrando Folio, Fecha, Cliente, Valor y Estado
-- Ocultar columna Vehiculo en movil (informacion secundaria)
+### 5. Reportes (ReportsPage)
+- **ReportsPage.tsx**: Los selectores del filter bar tienen ancho fijo (`w-[180px]`, `w-[220px]`, `w-[150px]`) que causan desbordamiento. La barra de tabs y filtros no tiene scroll horizontal.
 
-### Cambio 4: Facturas Stats compactas
-**Archivo:** `src/components/invoices/InvoicesStats.tsx`
+### 6. Calendario (Calendar)
+- **Calendar.tsx**: El `CardTitle` usa `text-white` hardcoded. El grid `lg:grid-cols-4` en pantallas medianas no tiene ajuste para tablet.
 
-- Cambiar grid de `grid-cols-1 md:grid-cols-4` a `grid-cols-2 md:grid-cols-4`
-- Reducir padding interno de las tarjetas en movil
+### 7. Perfil (Profile)
+- **Profile.tsx**: Completamente estilizado con colores de tema oscuro hardcoded (`text-white`, `text-gray-400`, `bg-black/20`, `border-gray-800`, `bg-white/5`). No es responsivo en padding ni layout.
 
-### Cambio 5: Facturas filtros de estado scrollables
-**Archivo:** `src/pages/Invoices.tsx` (seccion de filtros de estado)
+### 8. Reporte Diario (DailyReportPage)
+- Necesita verificar tabs y contenido interno para mobile.
 
-- Envolver los botones de filtro en `overflow-x-auto` con `flex-nowrap`
-- Asegurar que no se rompan en multiples lineas desordenadas
-
-### Cambio 6: Cierres - Usar vista movil existente
-**Archivo:** `src/pages/Closures.tsx`
-
-- Verificar que la pagina de Closures ya detecta `isMobile` y usa `ClosuresMobileView` (ya existe el componente)
-- Si no lo hace, agregar la deteccion y switch como en Services
+### 9. Entradas Rapidas (QuickEntries/PendingEntriesView)
+- Container `py-6` fijo, contenido interno pendiente de revision.
 
 ---
 
-## Detalle Tecnico
+## Cambios por Archivo
 
-### Patron a seguir (ya establecido en el proyecto):
+### A. `src/pages/Incomes.tsx`
+- Agregar `useIsMobile`, ajustar padding `p-3` vs `p-6`
+
+### B. `src/components/incomes/IncomesHeader.tsx`
+- Titulo responsivo `text-xl`/`text-3xl`
+- Botones con `flex-wrap`, labels condicionales en mobile
+- Toggle de vista compacto
+
+### C. `src/components/incomes/IncomesTable.tsx`
+- Agregar `useIsMobile` y renderizar tarjetas en mobile
+- Cada tarjeta: fecha, descripcion, categoria badge, cliente, monto, acciones
+
+### D. `src/components/suppliers/SupplierList.tsx`
+- Agregar `useIsMobile` y mobile card view
+- Tarjetas con: nombre, RUT, contacto, categoria, estado, acciones
+
+### E. `src/components/suppliers/PaymentList.tsx`
+- Agregar `useIsMobile` y mobile card view
+- Tarjetas con: proveedor, descripcion, monto, vencimiento, estado
+
+### F. `src/components/commissions/CommissionTable.tsx`
+- Agregar `useIsMobile` y mobile card view
+- Tarjetas con: operador, folio, cliente, valor servicio, comision, estado
+
+### G. `src/pages/IncomeProjections.tsx`
+- Titulo responsivo, padding adaptativo
+- Filtros en layout vertical en mobile
+
+### H. `src/components/projections/PendingInvoicesTable.tsx`
+- Mobile card view con: folio, cliente, vencimiento, monto, estado
+
+### I. `src/components/reports/ReportsPage.tsx`
+- Selectores con `w-full sm:w-[180px]` en vez de anchos fijos
+- Filter bar con `overflow-x-auto` y `flex-wrap`
+- Botones de exportar/actualizar compactos en mobile
+
+### J. `src/pages/Calendar.tsx`
+- Corregir `text-white` hardcoded a `text-foreground`
+- Grid responsivo para tablet: `md:grid-cols-1 lg:grid-cols-4`
+
+### K. `src/pages/Profile.tsx`
+- Reemplazar todos los colores hardcoded de tema oscuro por tokens semanticos
+- `text-white` -> `text-foreground`
+- `text-gray-400` -> `text-muted-foreground`
+- `bg-black/20` -> `bg-card`
+- `border-gray-800` -> `border`
+- `bg-white/5` -> `bg-background`
+- Padding adaptativo
+- Grid `md:grid-cols-3` -> `grid-cols-1 md:grid-cols-3` (ya esta, pero verificar)
+
+### L. `src/pages/QuickEntries.tsx`
+- Padding adaptativo en container
+
+### M. `src/components/daily-report/DailyReportPage.tsx`
+- Verificar y corregir tabs, botones y header para mobile
+
+---
+
+## Patron de Implementacion
+
+Todos los cambios siguen el patron ya establecido en el proyecto (ejemplo del modulo de Costos):
 
 ```text
-// En la pagina principal:
-import { useIsMobile } from '@/hooks/use-mobile';
-const isMobile = useIsMobile();
-
-// Render condicional:
-{isMobile ? (
-  <ModuleMobileView ... />
-) : (
-  <ModuleTable ... />
-)}
+1. Importar useIsMobile
+2. Detectar mobile: const isMobile = useIsMobile()
+3. Condicional: if (isMobile) return <CardView /> else return <Table />
+4. Tarjetas con: CardContent p-4, texto truncado, badges compactos
+5. Headers: text-xl en mobile, text-3xl en desktop
+6. Padding: p-3 en mobile, p-6 en desktop
+7. Botones: size="sm", labels condicionales
 ```
 
-### Archivos a crear:
-| Archivo | Proposito |
-|---------|-----------|
-| `src/components/invoices/InvoicesMobileView.tsx` | Vista de tarjetas para facturas en movil |
+---
 
-### Archivos a modificar:
-| Archivo | Cambio principal |
-|---------|-----------------|
-| `src/components/services/ServicesHeader.tsx` | Header compacto, titulo reducido, botones apilados |
-| `src/pages/Invoices.tsx` | Deteccion movil, filtros scrollables, render condicional |
-| `src/components/invoices/InvoicesStats.tsx` | Grid 2 columnas en movil |
-| `src/components/dashboard/RecentServicesTable.tsx` | Tarjetas en movil en vez de tabla |
-| `src/pages/Closures.tsx` | Verificar/agregar switch a vista movil |
+## Secuencia de Implementacion
 
-### Estimacion: 6 archivos modificados/creados. Impacto inmediato en las 4 pantallas mas usadas del sistema.
+1. Pagina de Perfil (corregir colores hardcoded - rapido)
+2. Calendario (fix `text-white`)
+3. IncomesTable + IncomesHeader + Incomes page
+4. SupplierList + PaymentList
+5. CommissionTable
+6. IncomeProjections + PendingInvoicesTable
+7. ReportsPage (filter bar)
+8. QuickEntries + DailyReport (ajustes menores)
 
+---
+
+## Detalles Tecnicos
+
+- Se estima modificar **13-15 archivos**
+- No se requieren nuevas dependencias
+- Se reutiliza `useIsMobile` de `@/hooks/use-mobile`
+- Se sigue el design system existente: violet-600, tokens semanticos, cards con `bg-card border`
+- Las tarjetas mobile incluiran acciones con `DropdownMenu` o botones inline segun el patron de cada modulo
