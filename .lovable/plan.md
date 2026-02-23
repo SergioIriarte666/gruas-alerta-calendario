@@ -1,32 +1,54 @@
 
-# Fix: Contador de servicios no se actualiza al crear un servicio
+# Fix: Autocompletado en modal de servicios y scroll en la app
 
-## Problema
+## Problemas
 
-El hook `useServicesMetrics` usa `useState`/`useEffect` directo con Supabase (no React Query). Despues de crear un servicio, no hay nada que dispare un refetch de las metricas. El hook expone una funcion `refetch`, pero nadie la llama. Tampoco escucha el evento `global-data-refresh` que se dispara tras mutaciones.
+1. **Autocompletado no funciona**: Los Combobox de ubicacion (origen/destino) y asegurado usan `Popover` + `Command` dentro de un `Dialog`. El Dialog de Radix aplica `pointer-events: none` al fondo, lo que bloquea la interaccion con el `PopoverContent` (no se puede escribir ni seleccionar).
+
+2. **Scroll no funciona en varios lugares**: Los `ScrollArea` dentro de Dialogs tambien se ven afectados por el mismo `pointer-events: none`, impidiendo el scroll con mouse/touch.
 
 ## Solucion
 
-### Archivo: `src/hooks/services/useServicesMetrics.ts`
+Aplicar `pointer-events-auto` en los componentes base (mismo patron que se aplico exitosamente en `select.tsx`).
 
-Agregar un `useEffect` que escuche el evento `global-data-refresh` del `window` y llame a `fetchData` cuando se dispare. Esto conecta el hook con el sistema existente de refresh global que ya se activa al crear/editar/eliminar servicios.
+### Archivo 1: `src/components/ui/popover.tsx`
 
-Cambio concreto: despues del `useEffect` existente (linea 130-132), agregar:
+Agregar `pointer-events-auto` al `PopoverContent` para que todos los Popover (incluidos los Combobox) funcionen dentro de Dialogs:
 
-```typescript
-// Escuchar evento global de refresh para actualizar metricas
-useEffect(() => {
-  const handleGlobalRefresh = () => {
-    console.log('🔄 [ServicesMetrics] Global refresh detectado, actualizando metricas...');
-    fetchData();
-  };
-  
-  window.addEventListener('global-data-refresh', handleGlobalRefresh);
-  return () => window.removeEventListener('global-data-refresh', handleGlobalRefresh);
-}, [dateFilter]);
+```tsx
+className={cn(
+  "z-50 w-72 rounded-md border bg-popover p-4 text-popover-foreground shadow-md outline-none pointer-events-auto ...",
+  className
+)}
 ```
 
-### Resultado
+### Archivo 2: `src/components/ui/scroll-area.tsx`
 
-- Al crear, editar o eliminar un servicio, el contador "Total Servicios" y las demas metricas se actualizan automaticamente
-- No requiere cambios en otros archivos porque el sistema de `global-data-refresh` ya se dispara desde `refreshAllServiceData` en las mutaciones existentes
+Agregar `pointer-events-auto` al `ScrollAreaPrimitive.Viewport` para que el scroll funcione dentro de Dialogs:
+
+```tsx
+<ScrollAreaPrimitive.Viewport className="h-full w-full rounded-[inherit] pointer-events-auto">
+```
+
+Y tambien al `ScrollBar`:
+
+```tsx
+className={cn(
+  "flex touch-none select-none transition-colors pointer-events-auto",
+  ...
+)}
+```
+
+### Archivo 3: `src/components/ui/command.tsx`
+
+Agregar `pointer-events-auto` al `CommandInput` para asegurar que el campo de texto reciba interacciones dentro de Dialogs:
+
+```tsx
+<div className="flex items-center border-b px-3 pointer-events-auto" cmdk-input-wrapper="">
+```
+
+## Resultado
+
+- Los campos de autocompletado (origen, destino, asegurado) funcionan correctamente dentro del modal de servicios
+- El scroll funciona en todos los modales y dialogos de la aplicacion (detalles de servicio, historial, filtros, etc.)
+- No se requieren cambios en los componentes individuales, la correccion es a nivel de componentes base
