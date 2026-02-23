@@ -36,7 +36,7 @@ export const SystemSettingsTab: React.FC<SystemSettingsTabProps> = ({
             <span>Configuración del Sistema</span>
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-6 bg-white p-6">
+        <CardContent className="space-y-6 bg-white p-4 sm:p-6">
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <div>
@@ -138,7 +138,7 @@ export const SystemSettingsTab: React.FC<SystemSettingsTabProps> = ({
             <span>Personalización de Reportes PDF</span>
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-6 bg-white p-6">
+        <CardContent className="space-y-6 bg-white p-4 sm:p-6">
           <p className="text-sm text-gray-600">
             Configura qué columnas mostrar y sus anchos en los reportes PDF de servicios.
           </p>

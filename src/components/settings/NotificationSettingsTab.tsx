@@ -40,7 +40,7 @@ export const NotificationSettingsTab = () => {
         <CardHeader>
           <CardTitle className="text-black">Configuración de Notificaciones</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-4 sm:space-y-6 p-4 sm:p-6">
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
               <Label htmlFor="emailNotifications" className="text-black">Notificaciones por Email</Label>
