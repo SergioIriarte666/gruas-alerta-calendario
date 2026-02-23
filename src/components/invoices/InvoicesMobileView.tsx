@@ -148,7 +148,7 @@ export const InvoicesMobileView = ({
                   variant="outline"
                   size="sm"
                   className="flex-1 text-xs"
-                  onClick={() => setViewingInvoice(invoice)}
+                  onClick={() => setViewingInvoice(getInvoiceWithDetails(invoice))}
                 >
                   <Eye className="w-3.5 h-3.5 mr-1" />
                   Ver
