@@ -1069,7 +1069,7 @@ export const EnhancedServiceForm = ({
           </div>
 
           {/* Navigation buttons */}
-          <div className="flex items-center gap-2 w-full sm:w-auto">
+          <div className="flex items-center gap-2 w-full justify-between sm:justify-end">
             <Button
               type="button"
               variant="outline"
@@ -1093,7 +1093,7 @@ export const EnhancedServiceForm = ({
               </Button>
             )}
 
-            <div className="flex-1 sm:flex-none" />
+            <div className="flex-1" />
 
             {currentStep < totalSteps ? (
               <Button
