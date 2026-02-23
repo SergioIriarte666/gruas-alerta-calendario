@@ -1,54 +1,29 @@
 
-# Fix: Autocompletado en modal de servicios y scroll en la app
 
-## Problemas
+# Agregar filtro "Vence esta semana" en Facturacion
 
-1. **Autocompletado no funciona**: Los Combobox de ubicacion (origen/destino) y asegurado usan `Popover` + `Command` dentro de un `Dialog`. El Dialog de Radix aplica `pointer-events: none` al fondo, lo que bloquea la interaccion con el `PopoverContent` (no se puede escribir ni seleccionar).
+## Que se hara
 
-2. **Scroll no funciona en varios lugares**: Los `ScrollArea` dentro de Dialogs tambien se ven afectados por el mismo `pointer-events: none`, impidiendo el scroll con mouse/touch.
+Agregar un nuevo boton de filtro en la barra de estados de facturas que muestre solo las facturas cuya fecha de vencimiento cae dentro de la semana en curso (lunes a domingo). Este filtro es independiente del estado -- mostrara facturas enviadas o borradores que vencen esta semana, no las ya pagadas ni anuladas.
 
-## Solucion
+## Cambios
 
-Aplicar `pointer-events-auto` en los componentes base (mismo patron que se aplico exitosamente en `select.tsx`).
+### Archivo: `src/pages/Invoices.tsx`
 
-### Archivo 1: `src/components/ui/popover.tsx`
+1. **Agregar entrada al mapa de filtros** (linea 26-33): Agregar la clave `due_this_week` con label "Vence esta semana" al objeto `INVOICE_STATUS_MAP`, posicionandola entre "Enviada" y "Pagada".
 
-Agregar `pointer-events-auto` al `PopoverContent` para que todos los Popover (incluidos los Combobox) funcionen dentro de Dialogs:
+2. **Actualizar logica de filtrado** (linea 108): Modificar la condicion `matchesStatus` para que cuando `statusFilter === 'due_this_week'`, filtre facturas cuya `dueDate` este entre el lunes y domingo de la semana actual, y cuyo estado no sea `paid` ni `cancelled`.
 
-```tsx
-className={cn(
-  "z-50 w-72 rounded-md border bg-popover p-4 text-popover-foreground shadow-md outline-none pointer-events-auto ...",
-  className
-)}
+```
+Logica del filtro:
+- Calcular inicio de semana (lunes) y fin de semana (domingo)
+- Incluir facturas donde: dueDate >= lunes AND dueDate <= domingo
+- Excluir facturas con estado "paid" o "cancelled"
 ```
 
-### Archivo 2: `src/components/ui/scroll-area.tsx`
+### Resultado
 
-Agregar `pointer-events-auto` al `ScrollAreaPrimitive.Viewport` para que el scroll funcione dentro de Dialogs:
+- Aparece un nuevo boton "Vence esta semana" en la barra de filtros, con el mismo estilo visual que los demas
+- Al hacer clic, muestra solo facturas activas (no pagadas/anuladas) con vencimiento en la semana en curso
+- Las metricas y paginacion se recalculan automaticamente con el filtro aplicado
 
-```tsx
-<ScrollAreaPrimitive.Viewport className="h-full w-full rounded-[inherit] pointer-events-auto">
-```
-
-Y tambien al `ScrollBar`:
-
-```tsx
-className={cn(
-  "flex touch-none select-none transition-colors pointer-events-auto",
-  ...
-)}
-```
-
-### Archivo 3: `src/components/ui/command.tsx`
-
-Agregar `pointer-events-auto` al `CommandInput` para asegurar que el campo de texto reciba interacciones dentro de Dialogs:
-
-```tsx
-<div className="flex items-center border-b px-3 pointer-events-auto" cmdk-input-wrapper="">
-```
-
-## Resultado
-
-- Los campos de autocompletado (origen, destino, asegurado) funcionan correctamente dentro del modal de servicios
-- El scroll funciona en todos los modales y dialogos de la aplicacion (detalles de servicio, historial, filtros, etc.)
-- No se requieren cambios en los componentes individuales, la correccion es a nivel de componentes base
