@@ -25,7 +25,7 @@ export const CostCentersHeader = ({
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-foreground flex items-center gap-2">
+          <h1 className="text-xl sm:text-3xl font-bold text-foreground flex items-center gap-2">
             <Target className="w-8 h-8 text-primary" />
             Centros de Costo
           </h1>
