@@ -72,7 +72,7 @@ export const ClientTabsWithCounters = ({ client }: ClientTabsWithCountersProps) 
         </div>
 
         <div className="flex-1 min-h-0 overflow-auto">
-          <div className="p-6 space-y-6">
+          <div className="p-2 sm:p-6 space-y-4 sm:space-y-6">
               <TabsContent value="overview" className="m-0">
                 <ClientMetricsOverview client={client} />
               </TabsContent>
