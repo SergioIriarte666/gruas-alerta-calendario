@@ -32,6 +32,22 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
+    // Authenticate the caller
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+      return new Response(JSON.stringify({ error: 'No autorizado' }), { status: 401, headers: { "Content-Type": "application/json", ...corsHeaders } });
+    }
+    const supabaseAuth = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      { global: { headers: { Authorization: authHeader } } }
+    );
+    const token = authHeader.replace('Bearer ', '');
+    const { data: claimsData, error: claimsError } = await supabaseAuth.auth.getClaims(token);
+    if (claimsError || !claimsData?.claims) {
+      return new Response(JSON.stringify({ error: 'Usuario no autenticado' }), { status: 401, headers: { "Content-Type": "application/json", ...corsHeaders } });
+    }
+
     console.log('Enviando factura por email...');
     
     const supabase = createClient(
