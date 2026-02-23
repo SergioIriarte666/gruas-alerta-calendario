@@ -1055,27 +1055,17 @@ export const EnhancedServiceForm = ({
       </div>
 
       {/* Footer - Navigation & Actions */}
-      <div className="flex-shrink-0 pt-3 mt-3 border-t border-border/50">
-        <div className="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between gap-2">
-          {/* Context info - hidden on mobile to save space */}
-          <div className="hidden sm:block text-sm text-muted-foreground truncate max-w-[200px] lg:max-w-none">
-            {selectedClient ? (
-              <span>
-                {service ? 'Editando' : 'Creando'} para <span className="font-medium text-foreground">{selectedClient.name}</span>
-              </span>
-            ) : (
-              <span>Selecciona un cliente</span>
-            )}
-          </div>
-
-          {/* Navigation buttons */}
-          <div className="flex items-center gap-2 w-full justify-between sm:justify-end">
+      <div className="flex-shrink-0 pt-3 mt-3 border-t border-border/50 overflow-hidden">
+        <div className="flex items-center justify-between gap-2">
+          {/* Left buttons */}
+          <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
             <Button
               type="button"
               variant="outline"
               size="sm"
               onClick={onCancel}
               disabled={isCreating || isUpdating}
+              className="text-xs sm:text-sm px-2 sm:px-3"
             >
               Cancelar
             </Button>
@@ -1087,23 +1077,26 @@ export const EnhancedServiceForm = ({
                 size="sm"
                 onClick={handlePrevious}
                 disabled={isCreating || isUpdating}
+                className="text-xs sm:text-sm px-2 sm:px-3"
               >
-                <ChevronLeft className="h-4 w-4 mr-1" />
+                <ChevronLeft className="h-4 w-4 mr-0.5 sm:mr-1" />
                 Anterior
               </Button>
             )}
+          </div>
 
-            <div className="flex-1" />
-
+          {/* Right button */}
+          <div className="flex-shrink-0">
             {currentStep < totalSteps ? (
               <Button
                 type="button"
                 size="sm"
                 onClick={handleNext}
                 disabled={!canGoNext()}
+                className="text-xs sm:text-sm px-2 sm:px-3"
               >
                 Siguiente
-                <ChevronRight className="h-4 w-4 ml-1" />
+                <ChevronRight className="h-4 w-4 ml-0.5 sm:ml-1" />
               </Button>
             ) : (
               <Button
@@ -1111,7 +1104,7 @@ export const EnhancedServiceForm = ({
                 size="sm"
                 onClick={handleSubmit}
                 disabled={hasErrors || isCreating || isUpdating}
-                className="bg-green-600 hover:bg-green-700"
+                className="bg-green-600 hover:bg-green-700 text-xs sm:text-sm px-2 sm:px-3"
               >
                 {isCreating || isUpdating ? (
                   'Guardando...'
