@@ -283,10 +283,10 @@ const InvoicesTable = ({
                     </td>
                     <td className="py-3 px-4" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center justify-center space-x-2">
-                          <Button
+          <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => setViewingInvoice(invoice)}
+                            onClick={() => setViewingInvoice(getInvoiceWithDetails(invoice))}
                             title="Ver detalles"
                           >
                             <Eye className="w-4 h-4" />
