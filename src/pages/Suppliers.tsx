@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { Button } from '@/components/ui/button';
 import { Building2, Upload, Plus, FileText, CreditCard, Calendar, Settings, Receipt } from 'lucide-react';
 import { CustomTabs, CustomTabsList, CustomTabsTrigger, CustomTabsContent } from '@/components/ui/custom-tabs';
@@ -20,6 +21,7 @@ export const Suppliers: React.FC = () => {
   const [showPaymentForm, setShowPaymentForm] = useState(false);
   const [showRegisterPayment, setShowRegisterPayment] = useState(false);
   const { data: stats, isLoading: statsLoading } = useSupplierStats();
+  const isMobile = useIsMobile();
 
   const handleXMLUploadSuccess = (count: number) => {
     console.log(`${count} proveedores importados exitosamente`);
@@ -35,18 +37,20 @@ export const Suppliers: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground p-6 suppliers-scope">
+    <div className={`min-h-screen bg-background text-foreground ${isMobile ? 'p-3' : 'p-6'} suppliers-scope`}>
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className={`flex ${isMobile ? 'flex-col gap-3' : 'items-center justify-between'}`}>
           <div>
-            <h1 className="text-3xl font-bold flex items-center gap-3">
-              <Building2 className="h-8 w-8 text-primary" />
+            <h1 className={`${isMobile ? 'text-xl' : 'text-3xl'} font-bold flex items-center gap-3`}>
+              <Building2 className={`${isMobile ? 'h-6 w-6' : 'h-8 w-8'} text-primary`} />
               Gestión de Proveedores
             </h1>
-            <p className="text-muted-foreground mt-2">
-              Administra proveedores, pagos y seguimiento de vencimientos
-            </p>
+            {!isMobile && (
+              <p className="text-muted-foreground mt-2">
+                Administra proveedores, pagos y seguimiento de vencimientos
+              </p>
+            )}
           </div>
           <div className="flex flex-wrap gap-2">
             <Button 
@@ -92,7 +96,7 @@ export const Suppliers: React.FC = () => {
 
         {/* Stats Cards */}
         {stats && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className={`grid ${isMobile ? 'grid-cols-2 gap-3' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6'}`}>
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">
