@@ -84,3 +84,12 @@ verify_jwt = false
 
 [functions.parse-purchase-order-pdf]
 verify_jwt = false
+
+[functions.send-invoice-email]
+verify_jwt = false
+
+[functions.send-operator-notification]
+verify_jwt = false
+
+[functions.send-payment-reminder]
+verify_jwt = false
