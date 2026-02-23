@@ -669,10 +669,10 @@ export const EnhancedServiceForm = ({
         </div>
       </div>
 
-      {/* Main content - Two columns */}
-      <div className="flex-1 flex gap-6 overflow-hidden">
-        {/* Left Panel - Navigation & Summary */}
-        <div className="w-72 flex-shrink-0 flex flex-col gap-4 overflow-y-auto pr-2">
+      {/* Main content - Two columns on desktop, single on mobile */}
+      <div className="flex-1 flex flex-col md:flex-row gap-4 md:gap-6 overflow-hidden">
+        {/* Left Panel - Navigation & Summary (hidden on mobile) */}
+        <div className="hidden md:flex w-72 flex-shrink-0 flex-col gap-4 overflow-y-auto pr-2">
           <FormStepNavigation
             steps={steps}
             currentStep={currentStep}
@@ -696,7 +696,7 @@ export const EnhancedServiceForm = ({
         </div>
 
         {/* Right Panel - Form Content */}
-        <div className="flex-1 overflow-y-auto pr-2">
+        <div className="flex-1 overflow-y-auto pr-0 md:pr-2 min-w-0">
           {/* Alertas de Validación */}
           {selectedServiceType && validationErrors.length > 0 && (
             <ServiceValidationAlerts errors={validationErrors} />
