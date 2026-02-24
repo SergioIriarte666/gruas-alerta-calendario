@@ -1,0 +1,1 @@
+UPDATE crane_consumption_rates SET base_consumption_per_km = 0.2222 WHERE crane_type = 'light' AND is_active = true;

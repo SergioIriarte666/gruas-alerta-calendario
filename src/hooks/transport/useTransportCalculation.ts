@@ -20,10 +20,9 @@ export const useTransportCalculation = (params: CalculationParams | null): Trans
     if (!rate) return null;
 
     const baseLitersPerKm = rate.base_consumption_per_km;
-    const loadFactor = rate.loaded_consumption_factor;
-    const towingFactor = params.vehicleCount === 2 ? rate.towing_consumption_factor : 1;
+    const rendimientoKmL = baseLitersPerKm > 0 ? Math.round((1 / baseLitersPerKm) * 100) / 100 : 0;
 
-    const totalLiters = params.distanceKm * baseLitersPerKm * params.consumptionFactor * loadFactor * towingFactor;
+    const totalLiters = params.distanceKm * baseLitersPerKm * params.consumptionFactor;
     const fuelCost = totalLiters * params.fuelPricePerLiter;
 
     const craneTolls = params.tollAmounts.reduce((sum, t) => sum + t.craneRate, 0);
@@ -33,16 +32,15 @@ export const useTransportCalculation = (params: CalculationParams | null): Trans
     const totalTolls = craneTolls + vehicleTolls;
 
     const operatorPerDiem = params.operatorPerDiem || 0;
-    const vehicleWear = Math.round(params.distanceKm * 50); // $50 CLP/km approx wear
+    const vehicleWear = Math.round(params.distanceKm * 50);
     const additionalTotal = operatorPerDiem + vehicleWear;
 
     return {
       fuelCost: {
         baseLitersPerKm,
+        rendimientoKmL,
         routeDistance: params.distanceKm,
         consumptionFactor: params.consumptionFactor,
-        loadFactor,
-        towingFactor,
         currentFuelPrice: params.fuelPricePerLiter,
         totalLiters: Math.round(totalLiters * 10) / 10,
         totalCost: Math.round(fuelCost),

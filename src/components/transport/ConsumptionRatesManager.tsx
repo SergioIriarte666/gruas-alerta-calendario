@@ -16,22 +16,25 @@ export const ConsumptionRatesManager: React.FC = () => {
 
   const getCraneLabel = (type: string) => CRANE_TYPE_LABELS.find(c => c.value === type)?.label || type;
 
-  const startEdit = (id: string, field: string, value: number) => {
+  const getRendimiento = (baseConsumption: number) => {
+    return baseConsumption > 0 ? Math.round((1 / baseConsumption) * 100) / 100 : 0;
+  };
+
+  const startEdit = (id: string, baseConsumption: number) => {
     setEditingId(id);
-    setEditValues(prev => ({ ...prev, [`${id}_${field}`]: String(value) }));
+    setEditValues({ [`${id}_rendimiento`]: String(getRendimiento(baseConsumption)) });
   };
 
   const handleSave = async (id: string) => {
-    const updates: Record<string, number> = {};
-    Object.entries(editValues).forEach(([key, val]) => {
-      if (key.startsWith(id + '_')) {
-        const field = key.replace(id + '_', '');
-        updates[field] = Number(val);
-      }
-    });
+    const rendimiento = Number(editValues[`${id}_rendimiento`]);
+    if (!rendimiento || rendimiento <= 0) {
+      toast.error('El rendimiento debe ser mayor a 0');
+      return;
+    }
+    const base_consumption_per_km = Math.round((1 / rendimiento) * 10000) / 10000;
     try {
-      await updateRate.mutateAsync({ id, ...updates } as any);
-      toast.success('Factor actualizado');
+      await updateRate.mutateAsync({ id, base_consumption_per_km } as any);
+      toast.success('Rendimiento actualizado');
       setEditingId(null);
       setEditValues({});
     } catch { toast.error('Error al actualizar'); }
@@ -42,7 +45,7 @@ export const ConsumptionRatesManager: React.FC = () => {
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-lg">
           <Gauge className="w-5 h-5 text-violet-600" />
-          Tasas de Consumo por Tipo de Grúa
+          Rendimiento por Tipo de Grúa
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -60,44 +63,22 @@ export const ConsumptionRatesManager: React.FC = () => {
 
                   <div className="space-y-2 text-sm">
                     <div className="flex items-center justify-between">
-                      <span className="text-muted-foreground">Consumo base</span>
+                      <span className="text-muted-foreground">Rendimiento</span>
                       {editingId === r.id ? (
-                        <Input
-                          type="number" step="0.01" className="w-24 h-7 text-xs"
-                          value={editValues[`${r.id}_base_consumption_per_km`] ?? r.base_consumption_per_km}
-                          onChange={e => setEditValues(v => ({ ...v, [`${r.id}_base_consumption_per_km`]: e.target.value }))}
-                        />
+                        <div className="flex items-center gap-1">
+                          <Input
+                            type="number" step="0.1" className="w-24 h-7 text-xs"
+                            value={editValues[`${r.id}_rendimiento`] ?? getRendimiento(r.base_consumption_per_km)}
+                            onChange={e => setEditValues(v => ({ ...v, [`${r.id}_rendimiento`]: e.target.value }))}
+                          />
+                          <span className="text-xs text-muted-foreground">km/L</span>
+                        </div>
                       ) : (
-                        <span className="font-medium cursor-pointer" onClick={() => startEdit(r.id, 'base_consumption_per_km', r.base_consumption_per_km)}>
-                          {r.base_consumption_per_km} L/km
-                        </span>
-                      )}
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-muted-foreground">Factor carga</span>
-                      {editingId === r.id ? (
-                        <Input
-                          type="number" step="0.1" className="w-24 h-7 text-xs"
-                          value={editValues[`${r.id}_loaded_consumption_factor`] ?? r.loaded_consumption_factor}
-                          onChange={e => setEditValues(v => ({ ...v, [`${r.id}_loaded_consumption_factor`]: e.target.value }))}
-                        />
-                      ) : (
-                        <span className="font-medium cursor-pointer" onClick={() => startEdit(r.id, 'loaded_consumption_factor', r.loaded_consumption_factor)}>
-                          ×{r.loaded_consumption_factor}
-                        </span>
-                      )}
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-muted-foreground">Factor arrastre</span>
-                      {editingId === r.id ? (
-                        <Input
-                          type="number" step="0.1" className="w-24 h-7 text-xs"
-                          value={editValues[`${r.id}_towing_consumption_factor`] ?? r.towing_consumption_factor}
-                          onChange={e => setEditValues(v => ({ ...v, [`${r.id}_towing_consumption_factor`]: e.target.value }))}
-                        />
-                      ) : (
-                        <span className="font-medium cursor-pointer" onClick={() => startEdit(r.id, 'towing_consumption_factor', r.towing_consumption_factor)}>
-                          ×{r.towing_consumption_factor}
+                        <span
+                          className="font-medium cursor-pointer hover:text-violet-600 transition-colors"
+                          onClick={() => startEdit(r.id, r.base_consumption_per_km)}
+                        >
+                          {getRendimiento(r.base_consumption_per_km)} km/L
                         </span>
                       )}
                     </div>
