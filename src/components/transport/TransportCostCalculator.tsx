@@ -12,7 +12,9 @@ import { useCraneConsumptionRates } from '@/hooks/transport/useCraneConsumptionR
 import { useRouteTolls, useTollRates } from '@/hooks/transport/useTollStations';
 import { useTransportCalculation } from '@/hooks/transport/useTransportCalculation';
 import { CRANE_TYPE_LABELS } from '@/types/transport';
-import { Fuel, DollarSign, Truck, MapPin, Calculator } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { Fuel, DollarSign, Truck, MapPin, Calculator, Save, Loader2, CheckCircle2 } from 'lucide-react';
+import { toast } from 'sonner';
 
 export const TransportCostCalculator: React.FC = () => {
   const [selectedRouteId, setSelectedRouteId] = useState<string>('');
@@ -20,6 +22,7 @@ export const TransportCostCalculator: React.FC = () => {
   const [vehicleCount, setVehicleCount] = useState<1 | 2>(1);
   const [manualDistance, setManualDistance] = useState<string>('');
   const [operatorPerDiem, setOperatorPerDiem] = useState<string>('45000');
+  const [isSaving, setIsSaving] = useState(false);
 
   const { data: routes = [] } = useRoutes();
   const { data: currentFuel } = useCurrentFuelPrice();
@@ -31,7 +34,6 @@ export const TransportCostCalculator: React.FC = () => {
   const distanceKm = selectedRoute ? selectedRoute.distance_km : Number(manualDistance) || 0;
   const consumptionFactor = selectedRoute ? selectedRoute.consumption_factor : 1.0;
 
-  // Build toll amounts from route tolls
   const tollAmounts = useMemo(() => {
     if (!routeTolls.length) return [];
     return routeTolls.map(rt => {
@@ -59,6 +61,81 @@ export const TransportCostCalculator: React.FC = () => {
   );
 
   const formatCLP = (n: number) => `$${n.toLocaleString('es-CL')}`;
+
+  const craneLabel = CRANE_TYPE_LABELS.find(c => c.value === craneType)?.label || craneType;
+  const routeLabel = selectedRoute ? selectedRoute.name : 'Manual';
+
+  const handleSaveAsCost = async () => {
+    if (!estimate) return;
+    setIsSaving(true);
+    try {
+      // Get or create "Transporte" category
+      const { data: categories } = await supabase
+        .from('cost_categories')
+        .select('id')
+        .ilike('name', '%transporte%')
+        .limit(1);
+
+      let categoryId = categories?.[0]?.id;
+      if (!categoryId) {
+        const { data: newCat } = await supabase
+          .from('cost_categories')
+          .insert({ name: 'Transporte', description: 'Costos de transporte y traslado' } as any)
+          .select('id')
+          .single();
+        categoryId = newCat?.id;
+      }
+
+      if (!categoryId) {
+        toast.error('No se pudo obtener la categoría de transporte');
+        return;
+      }
+
+      const description = `Transporte ${routeLabel} - Grúa ${craneLabel} (${distanceKm} km)`;
+
+      // Insert fuel cost
+      await supabase.from('costs').insert({
+        category_id: categoryId,
+        description: `${description} - Combustible`,
+        amount: estimate.fuelCost.totalCost,
+        date: new Date().toISOString().split('T')[0],
+        subcategory: 'Combustible',
+        notes: `${estimate.fuelCost.totalLiters}L a ${formatCLP(estimate.fuelCost.currentFuelPrice)}/L`,
+      } as any);
+
+      // Insert tolls if any
+      if (estimate.tollCosts.totalTolls > 0) {
+        await supabase.from('costs').insert({
+          category_id: categoryId,
+          description: `${description} - Peajes`,
+          amount: estimate.tollCosts.totalTolls,
+          date: new Date().toISOString().split('T')[0],
+          subcategory: 'Peajes',
+          notes: estimate.tollCosts.tolls.map(t => `${t.name}: ${formatCLP(t.amount)}`).join(', '),
+        } as any);
+      }
+
+      // Insert additional costs
+      if (estimate.additionalCosts.total > 0) {
+        await supabase.from('costs').insert({
+          category_id: categoryId,
+          description: `${description} - Viáticos y desgaste`,
+          amount: estimate.additionalCosts.total,
+          date: new Date().toISOString().split('T')[0],
+          subcategory: 'Viáticos',
+          notes: `Viáticos: ${formatCLP(estimate.additionalCosts.operatorPerDiem)}, Desgaste: ${formatCLP(estimate.additionalCosts.vehicleWear)}`,
+        } as any);
+      }
+
+      toast.success('Costos guardados exitosamente', {
+        description: `Total: ${formatCLP(estimate.totalEstimate)} registrado en módulo de costos`,
+      });
+    } catch (err) {
+      toast.error('Error al guardar los costos');
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-4">
@@ -244,6 +321,19 @@ export const TransportCostCalculator: React.FC = () => {
                   Combustible: {Math.round((estimate.fuelCost.totalCost / estimate.totalEstimate) * 100)}% del total
                 </p>
               </div>
+
+              {/* Save as Cost button */}
+              <Button
+                onClick={handleSaveAsCost}
+                disabled={isSaving}
+                className="w-full bg-emerald-600 hover:bg-emerald-700 text-white h-11"
+              >
+                {isSaving ? (
+                  <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Guardando...</>
+                ) : (
+                  <><Save className="w-4 h-4 mr-2" /> Guardar como Costo</>
+                )}
+              </Button>
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
