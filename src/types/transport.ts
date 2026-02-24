@@ -79,10 +79,9 @@ export interface CraneConsumptionRate {
 export interface TransportCostEstimate {
   fuelCost: {
     baseLitersPerKm: number;
+    rendimientoKmL: number;
     routeDistance: number;
     consumptionFactor: number;
-    loadFactor: number;
-    towingFactor: number;
     currentFuelPrice: number;
     totalLiters: number;
     totalCost: number;

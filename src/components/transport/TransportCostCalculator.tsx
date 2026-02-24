@@ -259,12 +259,8 @@ export const TransportCostCalculator: React.FC = () => {
                 </div>
                 <div className="grid grid-cols-2 gap-1 text-xs text-violet-600">
                   <span>Distancia: {estimate.fuelCost.routeDistance} km</span>
-                  <span>Consumo base: {estimate.fuelCost.baseLitersPerKm} L/km</span>
+                  <span>Rendimiento: {estimate.fuelCost.rendimientoKmL} km/L</span>
                   <span>Factor ruta: ×{estimate.fuelCost.consumptionFactor}</span>
-                  <span>Factor carga: ×{estimate.fuelCost.loadFactor}</span>
-                  {estimate.fuelCost.towingFactor > 1 && (
-                    <span>Factor arrastre: ×{estimate.fuelCost.towingFactor}</span>
-                  )}
                   <span className="font-medium">Total litros: {estimate.fuelCost.totalLiters} L</span>
                 </div>
               </div>
