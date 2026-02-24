@@ -8,8 +8,10 @@ import { Switch } from '@/components/ui/switch';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useRoutes, useCreateRoute, useUpdateRoute, useDeleteRoute } from '@/hooks/transport/useRoutes';
+import { useMapboxRoute } from '@/hooks/transport/useMapboxRoute';
+import { MapboxPlaceInput } from './MapboxPlaceInput';
 import { Route } from '@/types/transport';
-import { Plus, Pencil, Trash2, Route as RouteIcon } from 'lucide-react';
+import { Plus, Pencil, Trash2, Route as RouteIcon, Loader2, Navigation } from 'lucide-react';
 import { toast } from 'sonner';
 
 export const RoutesManager: React.FC = () => {
@@ -17,9 +19,12 @@ export const RoutesManager: React.FC = () => {
   const createRoute = useCreateRoute();
   const updateRoute = useUpdateRoute();
   const deleteRoute = useDeleteRoute();
+  const { getDirections, isLoading: isCalculating } = useMapboxRoute();
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingRoute, setEditingRoute] = useState<Route | null>(null);
+  const [originCoords, setOriginCoords] = useState<[number, number] | null>(null);
+  const [destCoords, setDestCoords] = useState<[number, number] | null>(null);
   const [form, setForm] = useState({
     name: '', origin: '', destination: '', distance_km: '',
     estimated_time_hours: '', consumption_factor: '1.0',
@@ -29,6 +34,8 @@ export const RoutesManager: React.FC = () => {
   const resetForm = () => {
     setForm({ name: '', origin: '', destination: '', distance_km: '', estimated_time_hours: '', consumption_factor: '1.0', route_type: 'highway', difficulty_level: 'normal', notes: '' });
     setEditingRoute(null);
+    setOriginCoords(null);
+    setDestCoords(null);
   };
 
   const openCreate = () => { resetForm(); setIsDialogOpen(true); };
@@ -40,7 +47,29 @@ export const RoutesManager: React.FC = () => {
       consumption_factor: String(r.consumption_factor), route_type: r.route_type,
       difficulty_level: r.difficulty_level, notes: r.notes || '',
     });
+    setOriginCoords(null);
+    setDestCoords(null);
     setIsDialogOpen(true);
+  };
+
+  const handleCalculateDistance = async () => {
+    if (!originCoords || !destCoords) {
+      toast.error('Selecciona origen y destino de las sugerencias');
+      return;
+    }
+    try {
+      const result = await getDirections(originCoords, destCoords);
+      if (result) {
+        setForm(f => ({
+          ...f,
+          distance_km: String(result.distance_km),
+          estimated_time_hours: String(result.estimated_time_hours),
+        }));
+        toast.success(`Distancia calculada: ${result.distance_km} km`);
+      }
+    } catch {
+      toast.error('Error al calcular la distancia');
+    }
   };
 
   const handleSave = async () => {
@@ -94,7 +123,11 @@ export const RoutesManager: React.FC = () => {
         {isLoading ? (
           <p className="text-sm text-muted-foreground">Cargando...</p>
         ) : routes.length === 0 ? (
-          <p className="text-sm text-muted-foreground text-center py-8">No hay rutas registradas</p>
+          <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+            <RouteIcon className="w-12 h-12 mb-3 opacity-30" />
+            <p className="text-sm">No hay rutas registradas</p>
+            <p className="text-xs mt-1">Crea tu primera ruta con cálculo automático de distancia</p>
+          </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -149,9 +182,42 @@ export const RoutesManager: React.FC = () => {
           <div className="space-y-3">
             <div><Label>Nombre *</Label><Input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="Ej: Copiapó - Santiago" /></div>
             <div className="grid grid-cols-2 gap-3">
-              <div><Label>Origen *</Label><Input value={form.origin} onChange={e => setForm(f => ({ ...f, origin: e.target.value }))} /></div>
-              <div><Label>Destino *</Label><Input value={form.destination} onChange={e => setForm(f => ({ ...f, destination: e.target.value }))} /></div>
+              <div>
+                <Label>Origen *</Label>
+                <MapboxPlaceInput
+                  value={form.origin}
+                  onChange={(v) => setForm(f => ({ ...f, origin: v }))}
+                  onCoordinatesChange={setOriginCoords}
+                  placeholder="Buscar ciudad origen..."
+                />
+              </div>
+              <div>
+                <Label>Destino *</Label>
+                <MapboxPlaceInput
+                  value={form.destination}
+                  onChange={(v) => setForm(f => ({ ...f, destination: v }))}
+                  onCoordinatesChange={setDestCoords}
+                  placeholder="Buscar ciudad destino..."
+                />
+              </div>
             </div>
+
+            {/* Auto-calculate button */}
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="w-full border-violet-300 text-violet-700 hover:bg-violet-50"
+              onClick={handleCalculateDistance}
+              disabled={!originCoords || !destCoords || isCalculating}
+            >
+              {isCalculating ? (
+                <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Calculando distancia...</>
+              ) : (
+                <><Navigation className="w-4 h-4 mr-2" /> Calcular distancia con Mapbox</>
+              )}
+            </Button>
+
             <div className="grid grid-cols-2 gap-3">
               <div><Label>Distancia (km) *</Label><Input type="number" value={form.distance_km} onChange={e => setForm(f => ({ ...f, distance_km: e.target.value }))} /></div>
               <div><Label>Tiempo estimado (hrs)</Label><Input type="number" value={form.estimated_time_hours} onChange={e => setForm(f => ({ ...f, estimated_time_hours: e.target.value }))} /></div>
