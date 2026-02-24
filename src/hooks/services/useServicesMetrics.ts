@@ -71,28 +71,39 @@ export const useServicesMetrics = (dateFilter: DateFilter = 'all') => {
       const dateFilterInfo = getDateFilterInfo(dateFilter);
       
       // Fetch services
-      let servicesQuery = supabase
-        .from('services')
-        .select('id, value, custody_total_amount, service_date, status');
+      // Fetch all services using pagination to avoid 1000-row limit
+      const allServices: any[] = [];
+      let from = 0;
+      const PAGE_SIZE = 1000;
       
-      if (dateFilterInfo) {
-        if (dateFilterInfo.type === 'exact') {
-          // Para "today", usar comparación exacta
-          servicesQuery = servicesQuery.eq('service_date', dateFilterInfo.date);
-        } else if (dateFilterInfo.type === 'range') {
-          // Para "week" y "month", usar rango
-          servicesQuery = servicesQuery
-            .gte('service_date', dateFilterInfo.start)
-            .lte('service_date', dateFilterInfo.end);
+      while (true) {
+        let servicesQuery = supabase
+          .from('services')
+          .select('id, value, custody_total_amount, service_date, status');
+        
+        if (dateFilterInfo) {
+          if (dateFilterInfo.type === 'exact') {
+            servicesQuery = servicesQuery.eq('service_date', dateFilterInfo.date);
+          } else if (dateFilterInfo.type === 'range') {
+            servicesQuery = servicesQuery
+              .gte('service_date', dateFilterInfo.start)
+              .lte('service_date', dateFilterInfo.end);
+          }
         }
+        
+        const { data: servicesData, error: servicesError } = await servicesQuery
+          .range(from, from + PAGE_SIZE - 1);
+        
+        if (servicesError) throw servicesError;
+        if (!servicesData || servicesData.length === 0) break;
+        
+        allServices.push(...servicesData);
+        if (servicesData.length < PAGE_SIZE) break;
+        from += PAGE_SIZE;
       }
       
-      const { data: servicesData, error: servicesError } = await servicesQuery;
-      
-      if (servicesError) throw servicesError;
-      
-      console.log(`🔍 Servicios encontrados para filtro "${dateFilter}":`, servicesData?.length || 0);
-      setServices(servicesData || []);
+      console.log(`🔍 Servicios encontrados para filtro "${dateFilter}":`, allServices.length);
+      setServices(allServices);
       
       // Fetch costs related to services
       let costsQuery = supabase
