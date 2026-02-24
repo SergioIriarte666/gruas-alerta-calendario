@@ -72,6 +72,7 @@ export const Sidebar = ({
     '/service-types': 'settings',
     '/service-rates': 'service-rates',
     '/cost-centers': 'costs',
+    '/transport-costs': 'costs',
     '/quick-entries': 'settings',
     '/settings': 'settings',
     '/payments': 'payments',
@@ -130,6 +131,7 @@ export const Sidebar = ({
       items: [
         
         { name: 'Costos', href: '/costs', icon: DollarSign, adminOnly: false },
+        { name: 'Costos Transporte', href: '/transport-costs', icon: Truck, adminOnly: false },
         { name: 'Comisiones', href: '/commissions', icon: Percent, adminOnly: true },
         { name: 'Cierres', href: '/closures', icon: FileText, adminOnly: false },
         { name: 'Facturas', href: '/invoices', icon: Receipt, adminOnly: false },
