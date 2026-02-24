@@ -694,6 +694,42 @@ export type Database = {
           },
         ]
       }
+      crane_consumption_rates: {
+        Row: {
+          base_consumption_per_km: number
+          crane_type: string
+          created_at: string
+          fuel_type: string
+          id: string
+          is_active: boolean
+          loaded_consumption_factor: number
+          towing_consumption_factor: number
+          updated_at: string
+        }
+        Insert: {
+          base_consumption_per_km: number
+          crane_type: string
+          created_at?: string
+          fuel_type?: string
+          id?: string
+          is_active?: boolean
+          loaded_consumption_factor?: number
+          towing_consumption_factor?: number
+          updated_at?: string
+        }
+        Update: {
+          base_consumption_per_km?: number
+          crane_type?: string
+          created_at?: string
+          fuel_type?: string
+          id?: string
+          is_active?: boolean
+          loaded_consumption_factor?: number
+          towing_consumption_factor?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       crane_documents: {
         Row: {
           content_type: string | null
@@ -1015,6 +1051,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      fuel_prices: {
+        Row: {
+          created_at: string
+          currency: string
+          fuel_type: string
+          id: string
+          is_current: boolean
+          price_date: string
+          price_per_liter: number
+          region: string | null
+          source: string | null
+          updated_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          currency?: string
+          fuel_type?: string
+          id?: string
+          is_current?: boolean
+          price_date?: string
+          price_per_liter: number
+          region?: string | null
+          source?: string | null
+          updated_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          currency?: string
+          fuel_type?: string
+          id?: string
+          is_current?: boolean
+          price_date?: string
+          price_per_liter?: number
+          region?: string | null
+          source?: string | null
+          updated_by?: string | null
+        }
+        Relationships: []
       }
       income_categories: {
         Row: {
@@ -2607,6 +2682,99 @@ export type Database = {
         }
         Relationships: []
       }
+      route_tolls: {
+        Row: {
+          created_at: string
+          id: string
+          is_optional: boolean
+          route_id: string
+          sequence_order: number
+          toll_station_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_optional?: boolean
+          route_id: string
+          sequence_order?: number
+          toll_station_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_optional?: boolean
+          route_id?: string
+          sequence_order?: number
+          toll_station_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "route_tolls_route_id_fkey"
+            columns: ["route_id"]
+            isOneToOne: false
+            referencedRelation: "routes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "route_tolls_toll_station_id_fkey"
+            columns: ["toll_station_id"]
+            isOneToOne: false
+            referencedRelation: "toll_stations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      routes: {
+        Row: {
+          consumption_factor: number
+          created_at: string
+          created_by: string | null
+          destination: string
+          difficulty_level: string
+          distance_km: number
+          estimated_time_hours: number
+          id: string
+          is_active: boolean
+          name: string
+          notes: string | null
+          origin: string
+          route_type: string
+          updated_at: string
+        }
+        Insert: {
+          consumption_factor?: number
+          created_at?: string
+          created_by?: string | null
+          destination: string
+          difficulty_level?: string
+          distance_km?: number
+          estimated_time_hours?: number
+          id?: string
+          is_active?: boolean
+          name: string
+          notes?: string | null
+          origin: string
+          route_type?: string
+          updated_at?: string
+        }
+        Update: {
+          consumption_factor?: number
+          created_at?: string
+          created_by?: string | null
+          destination?: string
+          difficulty_level?: string
+          distance_km?: number
+          estimated_time_hours?: number
+          id?: string
+          is_active?: boolean
+          name?: string
+          notes?: string | null
+          origin?: string
+          route_type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       scheduled_payments: {
         Row: {
           amount: number
@@ -3684,6 +3852,92 @@ export type Database = {
           session_timeout_minutes?: number | null
           session_warning_minutes?: number | null
           system_updates?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      toll_rates: {
+        Row: {
+          created_at: string
+          currency: string
+          id: string
+          is_active: boolean
+          rate_amount: number
+          toll_station_id: string
+          updated_at: string
+          valid_from: string
+          valid_until: string | null
+          vehicle_category: string
+        }
+        Insert: {
+          created_at?: string
+          currency?: string
+          id?: string
+          is_active?: boolean
+          rate_amount?: number
+          toll_station_id: string
+          updated_at?: string
+          valid_from?: string
+          valid_until?: string | null
+          vehicle_category: string
+        }
+        Update: {
+          created_at?: string
+          currency?: string
+          id?: string
+          is_active?: boolean
+          rate_amount?: number
+          toll_station_id?: string
+          updated_at?: string
+          valid_from?: string
+          valid_until?: string | null
+          vehicle_category?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "toll_rates_toll_station_id_fkey"
+            columns: ["toll_station_id"]
+            isOneToOne: false
+            referencedRelation: "toll_stations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      toll_stations: {
+        Row: {
+          created_at: string
+          highway: string | null
+          id: string
+          is_active: boolean
+          km_marker: number | null
+          location: string
+          name: string
+          operator_company: string | null
+          payment_methods: string[] | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          highway?: string | null
+          id?: string
+          is_active?: boolean
+          km_marker?: number | null
+          location: string
+          name: string
+          operator_company?: string | null
+          payment_methods?: string[] | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          highway?: string | null
+          id?: string
+          is_active?: boolean
+          km_marker?: number | null
+          location?: string
+          name?: string
+          operator_company?: string | null
+          payment_methods?: string[] | null
           updated_at?: string
         }
         Relationships: []
