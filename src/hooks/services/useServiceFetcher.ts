@@ -24,33 +24,47 @@ const SERVICE_SELECT = `
   creator:profiles!services_created_by_fkey(id, full_name, email)
 `;
 
-const MAX_ROWS = 1000;
+const PAGE_SIZE = 1000;
+
+const fetchAllPages = async (selectQuery: string, orderField: string = 'created_at'): Promise<any[]> => {
+  const allData: any[] = [];
+  let from = 0;
+  
+  while (true) {
+    const { data, error } = await supabase
+      .from('services')
+      .select(selectQuery)
+      .order(orderField, { ascending: false })
+      .range(from, from + PAGE_SIZE - 1);
+
+    if (error) throw error;
+    if (!data || data.length === 0) break;
+    
+    allData.push(...data);
+    if (data.length < PAGE_SIZE) break;
+    from += PAGE_SIZE;
+  }
+  
+  return allData;
+};
 
 const fetchServicesFromDB = async (transformFn: (data: any[]) => Service[]): Promise<Service[]> => {
-  // RLS handles auth — no need to call getUser() which adds ~200-500ms latency
-
-  const { data, error } = await supabase
-    .from('services')
-    .select(SERVICE_SELECT)
-    .order('created_at', { ascending: false })
-    .limit(MAX_ROWS);
-
-  if (error) {
+  try {
+    const data = await fetchAllPages(SERVICE_SELECT);
+    if (!data.length) return [];
+    return transformFn(data);
+  } catch (error) {
     console.error('Error fetching services (main query):', error);
-    console.warn('[SERVICE_FETCHER] FALLING BACK to SELECT * - embedded relations (cranes, operators) will be missing!');
-    // Fallback to simple query
-    const { data: simpleData, error: simpleError } = await supabase
-      .from('services')
-      .select('*')
-      .order('created_at', { ascending: false })
-      .limit(MAX_ROWS);
-      
-    if (simpleError || !simpleData?.length) return [];
-    return transformFn(simpleData);
+    console.warn('[SERVICE_FETCHER] FALLING BACK to SELECT * - embedded relations will be missing!');
+    try {
+      const simpleData = await fetchAllPages('*');
+      if (!simpleData.length) return [];
+      return transformFn(simpleData);
+    } catch (fallbackError) {
+      console.error('Fallback query also failed:', fallbackError);
+      return [];
+    }
   }
-
-  if (!data?.length) return [];
-  return transformFn(data);
 };
 
 export const useServiceFetcher = () => {
