@@ -160,14 +160,6 @@ export const ClientForm = ({ client, onSubmit, onCancel }: ClientFormProps) => {
             <Building2 className="h-5 w-5" />
             {isEditing ? 'Editar Cliente' : 'Nuevo Cliente'}
           </CardTitle>
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={onCancel}
-            className="text-white/80 hover:text-white hover:bg-white/20"
-          >
-            <X className="h-4 w-4" />
-          </Button>
         </div>
         <p className="text-violet-200 text-sm mt-1">
           {isEditing ? 'Modifica los datos del cliente' : 'Ingresa los datos del nuevo cliente'}
