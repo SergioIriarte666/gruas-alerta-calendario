@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { CreditCard } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { CreditCard, Search } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { formatCurrency } from '@/lib/utils';
@@ -9,6 +10,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useCostCategories } from '@/hooks/useCostCategories';
 import { useSupplierCategoryManager } from '@/hooks/useSupplierCategoryManager';
 import { resolveSupplierPaymentCategoryLabel } from '@/utils/suppliers/resolveSupplierPaymentCategory';
+
 interface SupplierPayment {
   id: string;
   description: string | null;
@@ -28,49 +30,41 @@ interface SupplierPaymentsTabProps {
 const getStatusColor = (status: string, dueDate: string | null) => {
   if (status === 'paid') return 'bg-green-600 text-white';
   if (status === 'overdue') return 'bg-red-600 text-white';
-  
-  // Check if pending but overdue
-  if (dueDate && new Date(dueDate) < new Date()) {
-    return 'bg-red-600 text-white';
-  }
-  
+  if (dueDate && new Date(dueDate) < new Date()) return 'bg-red-600 text-white';
   return 'bg-yellow-600 text-white';
 };
 
 const getStatusLabel = (status: string, dueDate: string | null) => {
   if (status === 'paid') return 'Pagado';
   if (status === 'overdue') return 'Vencido';
-  
-  if (dueDate && new Date(dueDate) < new Date()) {
-    return 'Vencido';
-  }
-  
+  if (dueDate && new Date(dueDate) < new Date()) return 'Vencido';
   return 'Pendiente';
-};
-
-const getPaymentTypeLabel = (type: string | null) => {
-  if (!type) return '-';
-  switch (type) {
-    case 'transfer': return 'Transferencia';
-    case 'check': return 'Cheque';
-    case 'cash': return 'Efectivo';
-    case 'credit_card': return 'Tarjeta';
-    case 'factura': return 'Factura';
-    case 'boleta': return 'Boleta';
-    default: return type;
-  }
 };
 
 export const SupplierPaymentsTab: React.FC<SupplierPaymentsTabProps> = ({ payments, isLoading }) => {
   const { data: costCategories = [] } = useCostCategories();
   const { categories: supplierCategories = [] } = useSupplierCategoryManager();
+  const [search, setSearch] = useState('');
+
+  const filtered = useMemo(() => {
+    if (!search) return payments;
+    const term = search.toLowerCase();
+    return payments.filter(p =>
+      p.description?.toLowerCase().includes(term) ||
+      p.reference_number?.toLowerCase().includes(term)
+    );
+  }, [payments, search]);
+
+  const totals = useMemo(() => ({
+    total: payments.reduce((s, p) => s + p.amount, 0),
+    paid: payments.filter(p => p.status === 'paid').reduce((s, p) => s + p.amount, 0),
+    pending: payments.filter(p => p.status !== 'paid' && p.status !== 'cancelled').reduce((s, p) => s + p.amount, 0),
+  }), [payments]);
 
   if (isLoading) {
     return (
       <div className="space-y-3">
-        {[1, 2, 3].map((i) => (
-          <Skeleton key={i} className="h-12 w-full" />
-        ))}
+        {[1, 2, 3].map((i) => <Skeleton key={i} className="h-12 w-full" />)}
       </div>
     );
   }
@@ -80,67 +74,81 @@ export const SupplierPaymentsTab: React.FC<SupplierPaymentsTabProps> = ({ paymen
       <div className="text-center py-12">
         <CreditCard className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
         <h3 className="text-lg font-medium text-foreground mb-2">Sin pagos</h3>
-        <p className="text-muted-foreground">
-          No hay pagos registrados para este proveedor
-        </p>
+        <p className="text-muted-foreground">No hay pagos registrados para este proveedor</p>
       </div>
     );
   }
 
   return (
-    <div className="overflow-x-auto">
-      <Table>
-        <TableHeader>
-          <TableRow className="border-border">
-            <TableHead className="text-muted-foreground">Descripción</TableHead>
-            <TableHead className="text-muted-foreground">Referencia</TableHead>
-            <TableHead className="text-muted-foreground text-right">Monto</TableHead>
-            <TableHead className="text-muted-foreground">Vencimiento</TableHead>
-            <TableHead className="text-muted-foreground">Categoría</TableHead>
-            <TableHead className="text-muted-foreground">F. Pago</TableHead>
-            <TableHead className="text-muted-foreground">Estado</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {payments.map((payment) => (
-            <TableRow key={payment.id} className="border-border">
-              <TableCell className="font-medium text-foreground max-w-[200px] truncate">
-                {payment.description || '-'}
-              </TableCell>
-              <TableCell className="text-foreground">
-                {payment.reference_number || '-'}
-              </TableCell>
-              <TableCell className="text-right text-foreground font-medium">
-                {formatCurrency(payment.amount)}
-              </TableCell>
-              <TableCell className="text-foreground">
-                {payment.due_date 
-                  ? format(new Date(payment.due_date), 'dd/MM/yyyy', { locale: es })
-                  : '-'
-                }
-              </TableCell>
-              <TableCell className="text-foreground">
-                {resolveSupplierPaymentCategoryLabel(payment.category, {
-                  supplierCategories,
-                  costCategories,
-                  fallback: '-',
-                })}
-              </TableCell>
-              <TableCell className="text-foreground">
-                {payment.paid_date 
-                  ? format(new Date(payment.paid_date), 'dd/MM/yyyy', { locale: es })
-                  : '-'
-                }
-              </TableCell>
-              <TableCell>
-                <Badge className={getStatusColor(payment.status, payment.due_date)}>
-                  {getStatusLabel(payment.status, payment.due_date)}
-                </Badge>
-              </TableCell>
+    <div className="space-y-3">
+      {/* Search + Summary */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        {payments.length > 3 && (
+          <div className="relative w-full sm:w-64">
+            <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Buscar descripción o ref..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-9 h-9 text-sm"
+            />
+          </div>
+        )}
+        <div className="flex items-center gap-4 text-xs text-muted-foreground ml-auto">
+          <span>Pagado: <strong className="text-green-600">{formatCurrency(totals.paid)}</strong></span>
+          <span>Pendiente: <strong className="text-yellow-600">{formatCurrency(totals.pending)}</strong></span>
+        </div>
+      </div>
+
+      {/* Table */}
+      <div className="overflow-x-auto">
+        <Table>
+          <TableHeader>
+            <TableRow className="border-border">
+              <TableHead className="text-muted-foreground text-xs">Descripción</TableHead>
+              <TableHead className="text-muted-foreground text-xs">Ref.</TableHead>
+              <TableHead className="text-muted-foreground text-xs text-right">Monto</TableHead>
+              <TableHead className="text-muted-foreground text-xs">Vencimiento</TableHead>
+              <TableHead className="text-muted-foreground text-xs">Categoría</TableHead>
+              <TableHead className="text-muted-foreground text-xs">F. Pago</TableHead>
+              <TableHead className="text-muted-foreground text-xs">Estado</TableHead>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+          </TableHeader>
+          <TableBody>
+            {filtered.map((payment) => (
+              <TableRow key={payment.id} className="border-border">
+                <TableCell className="font-medium text-foreground text-sm max-w-[200px] truncate">
+                  {payment.description || '-'}
+                </TableCell>
+                <TableCell className="text-foreground text-sm">{payment.reference_number || '-'}</TableCell>
+                <TableCell className="text-right font-bold text-violet-600 text-sm">
+                  {formatCurrency(payment.amount)}
+                </TableCell>
+                <TableCell className="text-foreground text-sm">
+                  {payment.due_date ? format(new Date(payment.due_date), 'dd/MM/yyyy', { locale: es }) : '-'}
+                </TableCell>
+                <TableCell className="text-foreground text-sm">
+                  {resolveSupplierPaymentCategoryLabel(payment.category, { supplierCategories, costCategories, fallback: '-' })}
+                </TableCell>
+                <TableCell className="text-foreground text-sm">
+                  {payment.paid_date ? format(new Date(payment.paid_date), 'dd/MM/yyyy', { locale: es }) : '-'}
+                </TableCell>
+                <TableCell>
+                  <Badge className={getStatusColor(payment.status, payment.due_date)}>
+                    {getStatusLabel(payment.status, payment.due_date)}
+                  </Badge>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+
+      {/* Total Footer */}
+      <div className="flex items-center justify-end gap-4 pt-2 border-t border-border">
+        <span className="text-sm text-muted-foreground">Total:</span>
+        <span className="text-base font-bold text-violet-600">{formatCurrency(totals.total)}</span>
+      </div>
     </div>
   );
 };

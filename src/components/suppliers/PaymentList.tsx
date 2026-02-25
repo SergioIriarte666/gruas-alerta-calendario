@@ -7,15 +7,14 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { Calendar } from '@/components/ui/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import DatePickerInput from '@/components/common/DatePickerInput';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { 
   Search, 
   Plus, 
   Edit2, 
   Trash2, 
   CreditCard, 
-  Calendar as CalendarIcon,
   CheckCircle,
   Clock,
   AlertTriangle,
@@ -23,7 +22,8 @@ import {
   Loader2,
   ArrowUpDown,
   ArrowUp,
-  ArrowDown
+  ArrowDown,
+  ChevronDown
 } from 'lucide-react';
 import { useSupplierPayments, getStatusLabel, getStatusColor } from '@/hooks/useSupplierPayments';
 import { useSuppliers } from '@/hooks/useSuppliers';
@@ -312,208 +312,125 @@ export const PaymentList: React.FC = () => {
         </div>
       </div>
 
-      {/* Filters */}
-      <Card className="bg-card border">
-        <CardContent className="p-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <label className="text-sm text-foreground">Buscar</label>
-              <div className="relative">
-                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Buscar por descripción, proveedor..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm text-foreground">Estado</label>
-              <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">
-                    Todos los estados
-                  </SelectItem>
-                  {statusOptions.map((status) => (
-                    <SelectItem 
-                      key={status} 
-                      value={status}
-                    >
-                      {getStatusLabel(status)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm text-foreground">Proveedor</label>
-              <Select value={selectedSupplier} onValueChange={setSelectedSupplier}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">
-                    Todos los proveedores
-                  </SelectItem>
-                  {suppliers.map((supplier) => (
-                    <SelectItem 
-                      key={supplier.id} 
-                      value={supplier.id}
-                    >
-                      {supplier.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Date Filters */}
-      <Card className="bg-card border">
-        <CardContent className="p-4">
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-sm font-medium text-foreground">Filtros por Fecha</h3>
-              {(dateFrom || dateTo) && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={clearDateFilters}
-                  className="text-muted-foreground hover:text-foreground"
-                >
-                  <X className="h-4 w-4 mr-1" />
-                  Limpiar
-                </Button>
-              )}
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <label className="text-sm text-foreground">Tipo de Fecha</label>
-                <Select value={dateType} onValueChange={(value: 'due_date' | 'created_at' | 'paid_date') => setDateType(value)}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="due_date">
-                      Fecha de Vencimiento
-                    </SelectItem>
-                    <SelectItem value="created_at">
-                      Fecha de Creación
-                    </SelectItem>
-                    <SelectItem value="paid_date">
-                      Fecha de Pago
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm text-foreground">Fecha Desde</label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className={cn(
-                        "w-full justify-start text-left font-normal",
-                        !dateFrom && "text-muted-foreground"
-                      )}
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {dateFrom ? formatForDisplay(dateFrom) : "Seleccionar fecha"}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={dateFrom}
-                      onSelect={handleDateFromSelect}
-                      initialFocus
-                      className="pointer-events-auto"
+      {/* Unified Filters */}
+      <Collapsible defaultOpen>
+        <Card className="bg-card border">
+          <CardContent className="p-4">
+            <CollapsibleTrigger className="flex items-center justify-between w-full mb-3">
+              <h3 className="text-sm font-medium text-foreground">Filtros</h3>
+              <ChevronDown className="h-4 w-4 text-muted-foreground" />
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
+                {/* Search */}
+                <div className="space-y-1">
+                  <label className="text-xs text-muted-foreground">Buscar</label>
+                  <div className="relative">
+                    <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Descripción, proveedor..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="pl-9 h-9 text-sm"
                     />
-                  </PopoverContent>
-                </Popover>
+                  </div>
+                </div>
+
+                {/* Status */}
+                <div className="space-y-1">
+                  <label className="text-xs text-muted-foreground">Estado</label>
+                  <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+                    <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todos</SelectItem>
+                      {statusOptions.map((status) => (
+                        <SelectItem key={status} value={status}>{getStatusLabel(status)}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Supplier */}
+                <div className="space-y-1">
+                  <label className="text-xs text-muted-foreground">Proveedor</label>
+                  <Select value={selectedSupplier} onValueChange={setSelectedSupplier}>
+                    <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todos</SelectItem>
+                      {suppliers.map((supplier) => (
+                        <SelectItem key={supplier.id} value={supplier.id}>{supplier.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Date Type */}
+                <div className="space-y-1">
+                  <label className="text-xs text-muted-foreground">Tipo Fecha</label>
+                  <Select value={dateType} onValueChange={(value: 'due_date' | 'created_at' | 'paid_date') => setDateType(value)}>
+                    <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="due_date">Vencimiento</SelectItem>
+                      <SelectItem value="created_at">Creación</SelectItem>
+                      <SelectItem value="paid_date">Pago</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Date From */}
+                <div className="space-y-1">
+                  <label className="text-xs text-muted-foreground">Desde</label>
+                  <DatePickerInput
+                    value={dateFrom ? formatForInput(dateFrom) : ''}
+                    onChange={(val) => {
+                      if (val) {
+                        const parts = val.split('-');
+                        setDateFrom(new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]), 0, 0, 0));
+                      } else {
+                        setDateFrom(undefined);
+                      }
+                    }}
+                    placeholder="Desde"
+                  />
+                </div>
+
+                {/* Date To */}
+                <div className="space-y-1">
+                  <label className="text-xs text-muted-foreground">Hasta</label>
+                  <DatePickerInput
+                    value={dateTo ? formatForInput(dateTo) : ''}
+                    onChange={(val) => {
+                      if (val) {
+                        const parts = val.split('-');
+                        setDateTo(new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]), 23, 59, 59));
+                      } else {
+                        setDateTo(undefined);
+                      }
+                    }}
+                    placeholder="Hasta"
+                  />
+                </div>
               </div>
 
-              <div className="space-y-2">
-                <label className="text-sm text-foreground">Fecha Hasta</label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className={cn(
-                        "w-full justify-start text-left font-normal",
-                        !dateTo && "text-muted-foreground"
-                      )}
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {dateTo ? formatForDisplay(dateTo) : "Seleccionar fecha"}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={dateTo}
-                      onSelect={handleDateToSelect}
-                      disabled={(date) => dateFrom ? date < dateFrom : false}
-                      initialFocus
-                      className="pointer-events-auto"
-                    />
-                  </PopoverContent>
-                </Popover>
-              </div>
-            </div>
-
-            {/* Quick Date Filters */}
-            <div className="flex flex-wrap gap-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => {
+              {/* Quick Presets + Clear */}
+              <div className="flex flex-wrap items-center gap-2 mt-3 pt-3 border-t border-border">
+                <span className="text-xs text-muted-foreground mr-1">Rápido:</span>
+                <Button variant="ghost" size="sm" className="text-xs h-7 px-2" onClick={() => {
                   const today = getCurrentChileDate();
                   setDateFrom(new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0));
                   setDateTo(new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59));
-                }}
-                className="text-xs text-muted-foreground hover:text-foreground"
-              >
-                Hoy
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => {
+                }}>Hoy</Button>
+                <Button variant="ghost" size="sm" className="text-xs h-7 px-2" onClick={() => {
                   const { start, end } = getCurrentWeekRange();
                   setDateFrom(start);
                   setDateTo(end);
-                }}
-                className="text-xs text-muted-foreground hover:text-foreground"
-              >
-                Esta Semana
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => {
+                }}>Semana</Button>
+                <Button variant="ghost" size="sm" className="text-xs h-7 px-2" onClick={() => {
                   const { start, end } = getCurrentMonthRange();
                   setDateFrom(new Date(start.getFullYear(), start.getMonth(), start.getDate(), 0, 0, 0));
                   setDateTo(new Date(end.getFullYear(), end.getMonth(), end.getDate(), 23, 59, 59));
-                }}
-                className="text-xs text-muted-foreground hover:text-foreground"
-              >
-                Este Mes
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => {
+                }}>Mes</Button>
+                <Button variant="ghost" size="sm" className="text-xs h-7 px-2" onClick={() => {
                   const today = getCurrentChileDate();
                   const thirtyDaysAgo = new Date(today);
                   thirtyDaysAgo.setDate(today.getDate() - 30);
@@ -521,15 +438,23 @@ export const PaymentList: React.FC = () => {
                   today.setHours(23, 59, 59, 999);
                   setDateFrom(thirtyDaysAgo);
                   setDateTo(today);
-                }}
-                className="text-xs text-muted-foreground hover:text-foreground"
-              >
-                Últimos 30 días
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+                }}>30 días</Button>
+                {(dateFrom || dateTo || searchTerm || selectedStatus !== 'all' || selectedSupplier !== 'all') && (
+                  <Button variant="ghost" size="sm" className="text-xs h-7 px-2 text-destructive ml-auto" onClick={() => {
+                    clearDateFilters();
+                    setSearchTerm('');
+                    setSelectedStatus('all');
+                    setSelectedSupplier('all');
+                  }}>
+                    <X className="h-3 w-3 mr-1" />
+                    Limpiar todo
+                  </Button>
+                )}
+              </div>
+            </CollapsibleContent>
+          </CardContent>
+        </Card>
+      </Collapsible>
 
       {/* Results */}
       <Card className="bg-card border">

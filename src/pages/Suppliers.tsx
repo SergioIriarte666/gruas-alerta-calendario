@@ -163,7 +163,7 @@ export const Suppliers: React.FC = () => {
 
         {/* Main Content - Tabs */}
         <CustomTabs value={activeTab} onValueChange={setActiveTab}>
-          <CustomTabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-1">
+          <CustomTabsList className="grid w-full grid-cols-2 sm:grid-cols-4 gap-1">
             <CustomTabsTrigger value="suppliers">
               <Building2 className="w-4 h-4 sm:mr-2" />
               <span className="hidden sm:inline">Proveedores</span>
@@ -172,17 +172,13 @@ export const Suppliers: React.FC = () => {
               <CreditCard className="w-4 h-4 sm:mr-2" />
               <span className="hidden sm:inline">Pagos</span>
             </CustomTabsTrigger>
-            <CustomTabsTrigger value="categories">
-              <Settings className="w-4 h-4 sm:mr-2" />
-              <span className="hidden sm:inline">Categorías</span>
-            </CustomTabsTrigger>
             <CustomTabsTrigger value="calendar">
               <Calendar className="w-4 h-4 sm:mr-2" />
               <span className="hidden sm:inline">Calendario</span>
             </CustomTabsTrigger>
-            <CustomTabsTrigger value="import">
-              <Upload className="w-4 h-4 sm:mr-2" />
-              <span className="hidden sm:inline">Importar</span>
+            <CustomTabsTrigger value="categories">
+              <Settings className="w-4 h-4 sm:mr-2" />
+              <span className="hidden sm:inline">Categorías</span>
             </CustomTabsTrigger>
           </CustomTabsList>
 
@@ -194,27 +190,12 @@ export const Suppliers: React.FC = () => {
             <PaymentList />
           </CustomTabsContent>
 
-          <CustomTabsContent value="categories" className="mt-6">
-            <SupplierCategoryList />
-          </CustomTabsContent>
-
           <CustomTabsContent value="calendar" className="mt-6">
             <SupplierPaymentCalendar />
           </CustomTabsContent>
 
-          <CustomTabsContent value="import" className="mt-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Importar Documentos XML</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <XMLDocumentUpload
-                  isOpen={true}
-                  onClose={() => setActiveTab('suppliers')}
-                  onSuccess={() => setActiveTab('suppliers')}
-                />
-              </CardContent>
-            </Card>
+          <CustomTabsContent value="categories" className="mt-6">
+            <SupplierCategoryList />
           </CustomTabsContent>
         </CustomTabs>
 
