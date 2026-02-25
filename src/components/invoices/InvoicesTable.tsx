@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -164,6 +164,22 @@ const InvoicesTable = ({
 }: InvoicesTableProps) => {
   const [viewingInvoice, setViewingInvoice] = useState<Invoice | null>(null);
   const [cancellingInvoice, setCancellingInvoice] = useState<Invoice | null>(null);
+
+  // Keep viewingInvoice in sync with fresh data from parent
+  useEffect(() => {
+    if (viewingInvoice) {
+      const fresh = invoices.find(inv => inv.id === viewingInvoice.id);
+      if (fresh) {
+        const detailed = getInvoiceWithDetails(fresh);
+        // Only update if data actually changed
+        if (detailed.status !== viewingInvoice.status || 
+            detailed.paidAmount !== viewingInvoice.paidAmount ||
+            detailed.remainingAmount !== viewingInvoice.remainingAmount) {
+          setViewingInvoice(detailed);
+        }
+      }
+    }
+  }, [invoices]);
 
   const handleCancellationSuccess = () => {
     if (onRefresh) {

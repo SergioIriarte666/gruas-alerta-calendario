@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Eye, Edit, CheckCircle, Ban, FileText, Calendar, User, DollarSign } from 'lucide-react';
 import { format, isValid, parseISO, differenceInDays } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { InvoiceDetailsModal } from './InvoiceDetailsModal';
 import { InvoiceCancellationModal } from './InvoiceCancellationModal';
 
@@ -76,6 +76,21 @@ export const InvoicesMobileView = ({
 }: InvoicesMobileViewProps) => {
   const [viewingInvoice, setViewingInvoice] = useState<Invoice | null>(null);
   const [cancellingInvoice, setCancellingInvoice] = useState<Invoice | null>(null);
+
+  // Keep viewingInvoice in sync with fresh data from parent
+  useEffect(() => {
+    if (viewingInvoice) {
+      const fresh = invoices.find(inv => inv.id === viewingInvoice.id);
+      if (fresh) {
+        const detailed = getInvoiceWithDetails(fresh);
+        if (detailed.status !== viewingInvoice.status || 
+            detailed.paidAmount !== viewingInvoice.paidAmount ||
+            detailed.remainingAmount !== viewingInvoice.remainingAmount) {
+          setViewingInvoice(detailed);
+        }
+      }
+    }
+  }, [invoices]);
 
   const getClientName = (invoice: Invoice): string => {
     const details = getInvoiceWithDetails(invoice);
