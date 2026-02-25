@@ -86,7 +86,7 @@ interface POSubGroup {
   totalValue: number;
 }
 
-const groupByField = (services: Service[], config: SubGroupConfig): POSubGroup[] => {
+const groupByField = (services: Service[], config: SubGroupConfig, sortField?: SortField, sortDirection?: SortDirection): POSubGroup[] => {
   const map: Record<string, POSubGroup> = {};
   services.forEach(s => {
     const val = config.fieldExtractor(s) || config.emptyLabel;
@@ -95,9 +95,40 @@ const groupByField = (services: Service[], config: SubGroupConfig): POSubGroup[]
     map[val].totalValue += getDisplayServiceValue(s);
   });
   return Object.values(map).sort((a, b) => {
+    // "Sin X" groups always go last
     if (a.poNumber === config.emptyLabel) return 1;
     if (b.poNumber === config.emptyLabel) return -1;
-    return a.poNumber.localeCompare(b.poNumber);
+
+    const dir = sortDirection === 'asc' ? 1 : -1;
+
+    switch (sortField) {
+      case 'serviceDate': {
+        const aDate = Math.max(...a.services.map(s => new Date(s.serviceDate).getTime()));
+        const bDate = Math.max(...b.services.map(s => new Date(s.serviceDate).getTime()));
+        return (aDate - bDate) * dir;
+      }
+      case 'value':
+        return (a.totalValue - b.totalValue) * dir;
+      case 'folio': {
+        const aFolio = a.services[0]?.folio || '';
+        const bFolio = b.services[0]?.folio || '';
+        return aFolio.localeCompare(bFolio) * dir;
+      }
+      case 'serviceType': {
+        const aType = String(a.services[0]?.serviceType || '');
+        const bType = String(b.services[0]?.serviceType || '');
+        return aType.localeCompare(bType) * dir;
+      }
+      case 'daysInStatus': {
+        const now = new Date().getTime();
+        const aAvg = a.services.reduce((sum, s) => sum + (now - new Date(s.serviceDate).getTime()), 0) / a.services.length;
+        const bAvg = b.services.reduce((sum, s) => sum + (now - new Date(s.serviceDate).getTime()), 0) / b.services.length;
+        return (aAvg - bAvg) * dir;
+      }
+      default:
+        // For quoteNumber, purchaseOrder, invoiceNumeroFiscal: alphabetical by group label
+        return a.poNumber.localeCompare(b.poNumber) * dir;
+    }
   });
 };
 
@@ -688,7 +719,7 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
                   <CardContent className="pt-0">
                     {(() => {
                       const subGroupConfig = getSubGroupConfig(group.status);
-                      const poSubGroups = groupByField(group.services, subGroupConfig);
+                      const poSubGroups = groupByField(group.services, subGroupConfig, sortField, sortDirection);
                       const hasMultiplePOs = poSubGroups.length > 1;
 
                       const renderServiceRow = (service: Service) => {
