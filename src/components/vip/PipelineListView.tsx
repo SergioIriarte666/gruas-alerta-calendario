@@ -57,7 +57,7 @@ const getSubGroupConfig = (status: ServiceStatus): SubGroupConfig => {
       return {
         fieldExtractor: (s) => s.quoteNumber || '',
         emptyLabel: 'Sin Cotización',
-        prefix: 'COT-',
+        prefix: '',
         badgeColor: 'text-violet-600',
         badgeBg: 'bg-violet-500/10'
       };
@@ -73,7 +73,7 @@ const getSubGroupConfig = (status: ServiceStatus): SubGroupConfig => {
       return {
         fieldExtractor: (s) => s.purchaseOrderNumber || s.purchaseOrder || '',
         emptyLabel: 'Sin O.C.',
-        prefix: 'OC-',
+        prefix: '',
         badgeColor: 'text-blue-600',
         badgeBg: 'bg-blue-500/10'
       };
