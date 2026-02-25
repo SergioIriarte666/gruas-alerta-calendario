@@ -327,7 +327,7 @@ const EnhancedServicesSelector = ({
               <AlertDescription className="text-foreground">
                 <div className="font-medium text-amber-700">Búsqueda Global Activa</div>
                 <div className="text-sm mt-1 text-muted-foreground">
-                  Mostrando servicios de los últimos 90 días. Busca por OC, folio o patente.
+                  Mostrando servicios sin límite de fecha. Busca por OC, folio o patente.
                 </div>
                 {selectedServiceIds.length > 0 && onAutoFillDates && (
                   <Button

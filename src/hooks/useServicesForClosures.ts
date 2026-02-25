@@ -53,14 +53,9 @@ export const useServicesForClosures = (options: UseServicesForClosuresOptions = 
       setLoading(true);
       console.log('🔍 Fetching services data for closures with date filter:', { dateFrom, dateTo, isGlobalSearch });
       
-      // If no dates provided, use last 90 days as default for performance
-      let effectiveDateFrom = dateFrom;
-      if (isGlobalSearch) {
-        const ninetyDaysAgo = new Date();
-        ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
-        effectiveDateFrom = ninetyDaysAgo;
-        console.log('🔍 Global search mode: using last 90 days from', effectiveDateFrom);
-      }
+      // In global search mode (no dates selected), do not enforce a default date window.
+      // This allows searching and closing older services by OC/folio/patente.
+
       
       // Build the query for billable services (completed and with purchase order)
       // SIMPLIFIED QUERY: Remove inner join that was filtering out services
@@ -91,10 +86,10 @@ export const useServicesForClosures = (options: UseServicesForClosuresOptions = 
         .eq('status', 'pending')
         .order('folio', { ascending: true });
 
-      // Add date range filter (either user-provided or 90-day default)
-      if (effectiveDateFrom) {
-        billableQuery = billableQuery.gte('service_date', effectiveDateFrom.toISOString().split('T')[0]);
-        pendingQuery = pendingQuery.gte('service_date', effectiveDateFrom.toISOString().split('T')[0]);
+      // Add explicit date range filter only when the user selects dates
+      if (dateFrom) {
+        billableQuery = billableQuery.gte('service_date', dateFrom.toISOString().split('T')[0]);
+        pendingQuery = pendingQuery.gte('service_date', dateFrom.toISOString().split('T')[0]);
       }
       if (dateTo) {
         billableQuery = billableQuery.lte('service_date', dateTo.toISOString().split('T')[0]);
