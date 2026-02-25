@@ -308,6 +308,9 @@ export type Database = {
           alert_days: number | null
           business_name: string
           created_at: string | null
+          daily_report_emails: string | null
+          daily_report_enabled: boolean | null
+          daily_report_hour: number | null
           email: string
           excess_folio_format: string | null
           folio_format: string | null
@@ -329,6 +332,9 @@ export type Database = {
           alert_days?: number | null
           business_name: string
           created_at?: string | null
+          daily_report_emails?: string | null
+          daily_report_enabled?: boolean | null
+          daily_report_hour?: number | null
           email: string
           excess_folio_format?: string | null
           folio_format?: string | null
@@ -350,6 +356,9 @@ export type Database = {
           alert_days?: number | null
           business_name?: string
           created_at?: string | null
+          daily_report_emails?: string | null
+          daily_report_enabled?: boolean | null
+          daily_report_hour?: number | null
           email?: string
           excess_folio_format?: string | null
           folio_format?: string | null

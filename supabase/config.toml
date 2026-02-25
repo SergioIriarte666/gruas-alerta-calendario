@@ -99,3 +99,6 @@ verify_jwt = false
 
 [functions.send-password-reset]
 verify_jwt = false
+
+[functions.send-daily-pending-report]
+verify_jwt = false
