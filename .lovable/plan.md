@@ -1,75 +1,77 @@
 
 
-# Plan: Unificar Zona Horaria como Fuente Unica de Verdad
+# Correccion del Flujo VIP Pipeline
 
-## Problema Detectado
+## Problema
 
-Hay 3 causas raiz que generan diferencias entre el PDF del Dashboard y el PDF por correo:
+El flujo real del negocio VIP es **post-servicio**: primero se realiza el trabajo, despues se factura administrativamente:
 
-1. **Dashboard usa hora del navegador**: `startOfToday()` usa el reloj del navegador, no la zona horaria configurada en Configuracion.
-2. **Correo usa "America/Santiago" hardcodeado**: La Edge Function fuerza `America/Santiago` sin consultar la configuracion del usuario.
-3. **Error silencioso en "Servicios del Dia"**: El Dashboard consulta una columna `service_type` que no existe en la tabla `services`, causando un error 400 que hace que esa seccion se muestre vacia (0 programados, 0 completados, etc.), mientras el correo funciona bien.
+```text
+Completado -> Cotizado -> Con O.C. -> Facturado
+```
+
+Pero el pipeline actual esta ordenado como un flujo **pre-servicio** (cotizar antes de ejecutar), lo que causa que servicios completados con cotizacion aparezcan en la seccion "Completados" en vez de moverse a "Cotizados".
+
+### Causas raiz encontradas:
+
+1. **Orden del pipeline incorrecto**: `PIPELINE_STATUSES` en `PipelineListView.tsx` lista los estados en orden pre-servicio (quoted primero, completed casi al final).
+
+2. **Transiciones invertidas**: `ServiceStatusTransition.tsx` define `quoted -> purchase_order_pending -> pending -> in_progress -> completed -> invoiced`, pero el flujo real es `completed -> quoted -> with_purchase_order -> invoiced`.
+
+3. **Sin cambio automatico de estado**: Cuando se asigna un numero de cotizacion a un servicio completado (individualmente, no batch), el status **no cambia** automaticamente a `quoted`. Solo el BatchUpdateModal tiene logica de `auto_update_status`.
 
 ## Solucion
 
-### 1. Crear funcion auxiliar de zona horaria en el PDF del Dashboard
+### 1. Reordenar `PIPELINE_STATUSES` en `PipelineListView.tsx`
 
-Modificar `src/utils/pdf/pendingReportPDF.ts`:
-
-- Antes de calcular `today`, obtener la zona horaria del usuario desde `user_settings` (via Supabase query directa).
-- Si el usuario tiene `use_system_timezone = true`, congelar la zona detectada del navegador (`Intl.DateTimeFormat().resolvedOptions().timeZone`).
-- Si tiene zona manual, usar esa.
-- Calcular `today` usando esa zona horaria con `date-fns-tz` para que sea identica a la que usa el correo.
-
-### 2. Edge Function: leer zona horaria de `user_settings`
-
-Modificar `supabase/functions/send-daily-pending-report/index.ts`:
-
-- Consultar la tabla `user_settings` para obtener la zona horaria configurada (se toma el primer registro encontrado ya que es una empresa de un solo usuario admin).
-- Si `use_system_timezone = true`, guardar la zona detectada en la tabla al momento de generar el reporte (o usar el valor previamente congelado). Como la Edge Function no tiene acceso al navegador, se usara el valor almacenado en `user_settings.timezone` como fallback.
-- Reemplazar el hardcode `America/Santiago` por la zona obtenida.
-
-### 3. Corregir error de columna `service_type`
-
-En `src/utils/pdf/pendingReportPDF.ts`, la funcion `fetchTodayServices` (linea 21) consulta `service_type` que no existe. Cambiar a `service_type_id` o eliminar ese campo de la consulta y de la tabla del PDF para que coincida con el correo (que solo muestra Folio, Cliente, Estado).
-
-### 4. Igualar estructura de tablas entre ambos PDFs
-
-Ambos PDFs deben tener exactamente las mismas columnas en cada seccion:
-- **Servicios del Dia**: Folio, Cliente, Estado (3 columnas, como el correo).
-- **Pendientes de Facturar**: Folio, Cliente, Fecha, Dias, Valor (5 columnas en Dashboard; el correo tiene 4 sin Valor - agregar Valor al correo).
-
-## Archivos a Modificar
-
-| Archivo | Cambio |
-|---------|--------|
-| `src/utils/pdf/pendingReportPDF.ts` | Usar zona horaria de configuracion; corregir columna `service_type`; igualar estructura de tablas |
-| `supabase/functions/send-daily-pending-report/index.ts` | Leer zona horaria de `user_settings` en lugar de hardcodear `America/Santiago`; igualar columna Valor en Pendientes de Facturar |
-
-## Detalle Tecnico
+Cambiar el orden para reflejar el flujo real post-servicio:
 
 ```text
-+---------------------------+       +---------------------------+
-|  Dashboard PDF            |       |  Email PDF (Edge Fn)      |
-|  pendingReportPDF.ts      |       |  send-daily-pending-report|
-+---------------------------+       +---------------------------+
-         |                                   |
-         v                                   v
-   Query user_settings              Query user_settings
-   (timezone, use_system_tz)        (timezone, use_system_tz)
-         |                                   |
-         v                                   v
-   Si use_system=true:               Si use_system=true:
-     Intl...timeZone                   Usa timezone guardado
-   Si no:                            Si no:
-     user_settings.timezone            user_settings.timezone
-         |                                   |
-         v                                   v
-   toLocaleDateString(tz)            toLocaleDateString(tz)
-   (misma fecha "hoy")              (misma fecha "hoy")
+Antes:  quoted -> purchase_order_pending -> with_purchase_order -> pending -> in_progress -> completed -> failed -> invoiced
+Despues: pending -> in_progress -> completed -> failed -> quoted -> purchase_order_pending -> with_purchase_order -> invoiced
 ```
 
-## Resultado Esperado
+Los estados operativos (pending, in_progress, completed, failed) van primero, seguidos de los estados administrativos/facturacion (quoted, with_purchase_order, invoiced). Se elimina `purchase_order_pending` como estado separado ya que es redundante con el flujo real.
 
-Ambos PDFs mostraran exactamente los mismos datos, mismas columnas, mismos conteos y mismas fechas, independientemente de donde se generen (boton Dashboard o correo automatico). La zona horaria configurada en Configuracion > Zona Horaria sera la unica fuente de verdad.
+### 2. Corregir transiciones en `ServiceStatusTransition.tsx`
+
+Actualizar el mapa de transiciones para reflejar el flujo post-servicio:
+
+| Estado actual | Siguiente estado |
+|---|---|
+| `completed` | `quoted` |
+| `quoted` | `purchase_order_pending` (solicitar OC) |
+| `purchase_order_pending` | `with_purchase_order` (confirmar OC) |
+| `with_purchase_order` | `invoiced` |
+| `failed` | `invoiced` |
+
+Agregar configuracion visual para `with_purchase_order` que actualmente falta en el componente.
+
+### 3. Auto-cambiar status al asignar cotizacion/OC individualmente
+
+En `useServiceManager.ts`, dentro de la actualizacion parcial: si se asigna un `quote_number` a un servicio en estado `completed`, cambiar automaticamente el status a `quoted`. Si se asigna `purchase_order_number` a un servicio en estado `quoted` o `purchase_order_pending`, cambiar a `with_purchase_order`.
+
+### 4. Actualizar etiquetas de transicion
+
+Ajustar las etiquetas de los botones de transicion para que reflejen el flujo real:
+
+- Completado: "Agregar Cotizacion"
+- Cotizado: "Solicitar O.C."
+- Esperando O.C.: "Confirmar O.C."
+- Con O.C.: "Facturar"
+
+## Archivos a modificar
+
+| Archivo | Cambio |
+|---|---|
+| `src/components/vip/PipelineListView.tsx` | Reordenar `PIPELINE_STATUSES` al flujo post-servicio |
+| `src/components/vip/ServiceStatusTransition.tsx` | Corregir mapa de transiciones y agregar `with_purchase_order` |
+| `src/hooks/services/useServiceManager.ts` | Auto-cambiar status al asignar quote/OC en update parcial |
+
+## Resultado esperado
+
+- Los servicios completados apareceran en "Completados" hasta que reciban cotizacion
+- Al asignar cotizacion, se moveran automaticamente a "Cotizados"
+- Al asignar O.C., se moveran a "Con O.C."
+- El pipeline mostrara el flujo en el orden correcto del negocio
 
