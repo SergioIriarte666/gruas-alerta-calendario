@@ -2,7 +2,7 @@
 import * as React from 'react';
 import { Client } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { User, Phone, Mail, MapPin, CheckCircle, XCircle, CalendarClock } from 'lucide-react';
+import { User, Phone, Mail, MapPin, CheckCircle, XCircle, CalendarClock, Receipt } from 'lucide-react';
 import { formatForDisplayLong, parseFromDatabase } from '@/utils/timezoneUtils';
 
 interface DetailItemProps {
@@ -48,6 +48,15 @@ export const ClientGeneralInfo = ({ client }: ClientGeneralInfoProps) => {
               value={
                 <span className={`px-2 py-1 rounded-full text-xs font-semibold ${client.isActive ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}>
                   {client.isActive ? 'Activo' : 'Inactivo'}
+                </span>
+              }
+            />
+             <DetailItem 
+              icon={Receipt} 
+              label="Tipo de Facturación" 
+              value={
+                <span className={`px-2 py-1 rounded-full text-xs font-semibold ${client.billingType === 'monthly' ? 'bg-blue-500/20 text-blue-400' : 'bg-muted text-muted-foreground'}`}>
+                  {client.billingType === 'monthly' ? 'Mensual (Mes Vencido)' : 'Estándar'}
                 </span>
               }
             />

@@ -192,6 +192,7 @@ export type Database = {
       clients: {
         Row: {
           address: string | null
+          billing_type: string
           contact_name: string | null
           created_at: string | null
           created_by: string | null
@@ -208,6 +209,7 @@ export type Database = {
         }
         Insert: {
           address?: string | null
+          billing_type?: string
           contact_name?: string | null
           created_at?: string | null
           created_by?: string | null
@@ -224,6 +226,7 @@ export type Database = {
         }
         Update: {
           address?: string | null
+          billing_type?: string
           contact_name?: string | null
           created_at?: string | null
           created_by?: string | null

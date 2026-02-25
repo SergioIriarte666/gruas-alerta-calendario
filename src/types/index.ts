@@ -123,6 +123,7 @@ export interface Client {
   address: string;
   department: string;
   contactName?: string;
+  billingType?: 'standard' | 'monthly';
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
