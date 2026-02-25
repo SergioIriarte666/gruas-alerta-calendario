@@ -109,7 +109,7 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
   useEffect(() => {
     if (watchedPaymentTermId && watchedIssueDate && !isEditing) {
       const term = paymentTerms.find(t => t.id === watchedPaymentTermId);
-      if (term && term.days > 0) {
+      if (term && term.days >= 0) {
         const dueDate = new Date(watchedIssueDate);
         dueDate.setDate(dueDate.getDate() + term.days);
         setValue('dueDate', dueDate.toISOString().split('T')[0]);
