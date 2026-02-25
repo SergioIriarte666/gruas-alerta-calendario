@@ -325,6 +325,8 @@ export type Database = {
           next_invoice_folio_number: number | null
           next_service_folio_number: number
           phone: string
+          report_timezone: string
+          report_use_system_timezone: boolean
           rut: string
           updated_at: string | null
           vat_percentage: number | null
@@ -349,6 +351,8 @@ export type Database = {
           next_invoice_folio_number?: number | null
           next_service_folio_number?: number
           phone: string
+          report_timezone?: string
+          report_use_system_timezone?: boolean
           rut: string
           updated_at?: string | null
           vat_percentage?: number | null
@@ -373,6 +377,8 @@ export type Database = {
           next_invoice_folio_number?: number | null
           next_service_folio_number?: number
           phone?: string
+          report_timezone?: string
+          report_use_system_timezone?: boolean
           rut?: string
           updated_at?: string | null
           vat_percentage?: number | null

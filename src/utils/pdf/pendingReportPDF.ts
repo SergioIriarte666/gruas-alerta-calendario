@@ -4,6 +4,14 @@ import autoTable from 'jspdf-autotable';
 import { supabase } from '@/integrations/supabase/client';
 import { format, addDays } from 'date-fns';
 import { fetchCompanyData } from '@/utils/pdf/companyDataFetcher';
+import { 
+  getBusinessTimezone, 
+  getTodayStringInTimezone, 
+  safeParseDateOnly, 
+  safeDaysSince, 
+  safeDateToDisplay, 
+  isSameYearMonth 
+} from '@/utils/timezoneUtils';
 
 interface DailyServiceSummary {
   scheduled: number;
@@ -12,35 +20,6 @@ interface DailyServiceSummary {
   cancelled: number;
   todayServices: Array<{ folio: string; client: string; status: string }>;
 }
-
-/** Get the configured timezone from user_settings (single source of truth) */
-const getUserTimezone = async (): Promise<string> => {
-  try {
-    const { data } = await supabase
-      .from('user_settings')
-      .select('timezone, use_system_timezone')
-      .limit(1)
-      .maybeSingle();
-
-    if (data) {
-      if (data.use_system_timezone) {
-        // Freeze the browser-detected timezone as the canonical one
-        return Intl.DateTimeFormat().resolvedOptions().timeZone;
-      }
-      return data.timezone || 'America/Santiago';
-    }
-  } catch (e) {
-    console.warn('Could not fetch user timezone, using browser default', e);
-  }
-  return Intl.DateTimeFormat().resolvedOptions().timeZone;
-};
-
-/** Get today's date string (yyyy-MM-dd) in the user's configured timezone */
-const getTodayInTimezone = (tz: string): { todayStr: string; today: Date } => {
-  const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: tz });
-  const today = new Date(todayStr + 'T00:00:00');
-  return { todayStr, today };
-};
 
 const fetchTodayServices = async (todayStr: string): Promise<DailyServiceSummary> => {
   const { data } = await supabase
@@ -75,14 +54,16 @@ const fetchTodayServices = async (todayStr: string): Promise<DailyServiceSummary
 };
 
 export const generatePendingReportPDF = async (): Promise<jsPDF> => {
-  const userTz = await getUserTimezone();
-  const { today, todayStr } = getTodayInTimezone(userTz);
-  const closureThreshold = addDays(today, -30);
+  // Get business timezone from company_data (single source of truth)
+  const businessTz = await getBusinessTimezone();
+  const todayStr = getTodayStringInTimezone(businessTz);
+  const todaySafe = safeParseDateOnly(todayStr);
+  const closureThreshold = addDays(todaySafe, -30);
   const closureStr = format(closureThreshold, 'yyyy-MM-dd');
 
   const { data: companySettings } = await supabase.from('company_data').select('alert_days').maybeSingle();
   const alertDays = companySettings?.alert_days ?? 30;
-  const alertDateLimit = addDays(today, alertDays);
+  const alertDateLimit = addDays(todaySafe, alertDays);
   const alertDateStr = format(alertDateLimit, 'yyyy-MM-dd');
 
   const companyData = await fetchCompanyData();
@@ -144,20 +125,16 @@ export const generatePendingReportPDF = async (): Promise<jsPDF> => {
     return c.department && c.department !== 'General' ? `${c.name} - ${c.department}` : c.name;
   };
 
-  const daysSince = (dateStr: string) =>
-    Math.floor((today.getTime() - new Date(dateStr).getTime()) / (1000 * 60 * 60 * 24));
-
   const invoicedSet = new Set((invoicedServiceIdsRes.data || []).map((r: any) => r.service_id));
 
-  // Helper: hide monthly-billing services only if they belong to the current month
+  // Helper: hide monthly-billing services only if they belong to the current month (safe date-only comparison)
   const isCurrentMonthMonthly = (s: any) => {
     const bt = (s.client as any)?.billing_type;
     if (bt !== 'monthly') return false;
-    const sd = new Date(s.service_date);
-    return sd.getFullYear() === today.getFullYear() && sd.getMonth() === today.getMonth();
+    return isSameYearMonth(s.service_date, todayStr);
   };
 
-  // Build monthly client summary (including clients with 0 services this month)
+  // Build monthly client summary
   const monthlyCurrentMonthServices = (allCompletedRes.data || []).filter((s: any) => isCurrentMonthMonthly(s));
   const monthlyByClient: Record<string, number> = {};
   monthlyCurrentMonthServices.forEach((s: any) => {
@@ -177,14 +154,14 @@ export const generatePendingReportPDF = async (): Promise<jsPDF> => {
     })
     .map((name) => [name, `${monthlyByClient[name] || 0} servicio(s)`]);
 
-  // Process data
+  // Process data using safe date helpers
   const allPendingInvoicing = (allCompletedRes.data || []).filter((s: any) => !invoicedSet.has(s.id));
   const pendingInvoicing = allPendingInvoicing
     .filter((s: any) => !isCurrentMonthMonthly(s))
     .map((s: any) => [
       s.folio, clientLabel(s.client),
-      new Date(s.service_date).toLocaleDateString('es-CL'),
-      daysSince(s.service_date).toString(),
+      safeDateToDisplay(s.service_date),
+      safeDaysSince(s.service_date, todayStr).toString(),
       s.value ? `$${Number(s.value).toLocaleString('es-CL')}` : '-',
     ]);
 
@@ -192,16 +169,16 @@ export const generatePendingReportPDF = async (): Promise<jsPDF> => {
     .filter((s: any) => !isCurrentMonthMonthly(s))
     .map((s: any) => [
       s.folio, clientLabel(s.client),
-      new Date(s.service_date).toLocaleDateString('es-CL'),
-      daysSince(s.service_date).toString(),
+      safeDateToDisplay(s.service_date),
+      safeDaysSince(s.service_date, todayStr).toString(),
     ]);
 
   const withoutQuote = (servicesWithoutQuoteRes.data || [])
     .filter((s: any) => !isCurrentMonthMonthly(s))
     .map((s: any) => [
       s.folio, clientLabel(s.client),
-      new Date(s.service_date).toLocaleDateString('es-CL'),
-      daysSince(s.service_date).toString(),
+      safeDateToDisplay(s.service_date),
+      safeDaysSince(s.service_date, todayStr).toString(),
     ]);
 
   const overdueInvoices = (!overdueRes.error && overdueRes.data || []).map((inv: any) => [
@@ -215,8 +192,8 @@ export const generatePendingReportPDF = async (): Promise<jsPDF> => {
     .filter((s: any) => !closedIds.has(s.id))
     .map((s: any) => [
       s.folio, clientLabel(s.client),
-      new Date(s.service_date).toLocaleDateString('es-CL'),
-      daysSince(s.service_date).toString(),
+      safeDateToDisplay(s.service_date),
+      safeDaysSince(s.service_date, todayStr).toString(),
     ]);
 
   const expiringDocs: string[][] = [];
@@ -227,11 +204,11 @@ export const generatePendingReportPDF = async (): Promise<jsPDF> => {
       { type: 'Revisión Técnica', date: crane.technical_review_expiry },
     ].forEach(c => {
       if (c.date) {
-        const d = Math.ceil((new Date(c.date).getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+        const d = safeDaysSince(todayStr, c.date); // days until expiry (positive = future)
         if (d <= alertDays) {
           expiringDocs.push([
             crane.license_plate, c.type,
-            new Date(c.date).toLocaleDateString('es-CL'),
+            safeDateToDisplay(c.date),
             d <= 0 ? `¡Vencido hace ${Math.abs(d)} días!` : `${d} días`,
           ]);
         }
@@ -240,11 +217,11 @@ export const generatePendingReportPDF = async (): Promise<jsPDF> => {
   });
   (expiringOperatorsRes.data || []).forEach((op: any) => {
     if (op.exam_expiry) {
-      const d = Math.ceil((new Date(op.exam_expiry).getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+      const d = safeDaysSince(todayStr, op.exam_expiry);
       if (d <= alertDays) {
         expiringDocs.push([
           op.name, 'Examen Médico',
-          new Date(op.exam_expiry).toLocaleDateString('es-CL'),
+          safeDateToDisplay(op.exam_expiry),
           d <= 0 ? `¡Vencido hace ${Math.abs(d)} días!` : `${d} días`,
         ]);
       }
@@ -268,7 +245,7 @@ export const generatePendingReportPDF = async (): Promise<jsPDF> => {
   y += 7;
   doc.setFontSize(10);
   doc.setTextColor(120, 120, 120);
-  doc.text(`Fecha: ${today.toLocaleDateString('es-CL')}`, pageWidth / 2, y, { align: 'center' });
+  doc.text(`Fecha: ${safeDateToDisplay(todayStr)} | TZ: ${businessTz}`, pageWidth / 2, y, { align: 'center' });
   y += 3;
   doc.setDrawColor(34, 197, 94);
   doc.setLineWidth(0.8);
@@ -435,7 +412,7 @@ export const generatePendingReportPDF = async (): Promise<jsPDF> => {
 
 export const downloadPendingReportPDF = async () => {
   const doc = await generatePendingReportPDF();
-  const userTz = await getUserTimezone();
-  const { todayStr } = getTodayInTimezone(userTz);
+  const businessTz = await getBusinessTimezone();
+  const todayStr = getTodayStringInTimezone(businessTz);
   doc.save(`Reporte_Pendientes_${todayStr}.pdf`);
 };

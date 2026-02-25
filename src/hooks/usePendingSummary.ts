@@ -1,7 +1,8 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { format, addDays, startOfToday, parseISO, isBefore } from 'date-fns';
+import { format, addDays, parseISO } from 'date-fns';
+import { getBusinessTimezone, getTodayStringInTimezone, safeParseDateOnly, safeDaysSince, isSameYearMonth } from '@/utils/timezoneUtils';
 
 export interface PendingServiceWithoutOC {
   id: string;
@@ -47,7 +48,10 @@ export interface PendingSummaryData {
 }
 
 const fetchPendingSummary = async (): Promise<PendingSummaryData> => {
-  const today = startOfToday();
+  // Use business timezone as single source of truth
+  const businessTz = await getBusinessTimezone();
+  const todayStr = getTodayStringInTimezone(businessTz);
+  const today = safeParseDateOnly(todayStr);
   const closureThreshold = addDays(today, -30);
 
   const { data: companyData } = await supabase.from('company_data').select('alert_days').maybeSingle();
@@ -62,7 +66,6 @@ const fetchPendingSummary = async (): Promise<PendingSummaryData> => {
     expiringCranesRes,
     expiringOperatorsRes
   ] = await Promise.all([
-    // Services completed without purchase order (exclude monthly billing clients)
     supabase
       .from('services')
       .select('id, folio, service_date, client:clients!services_client_id_fkey(id, name, billing_type)')
@@ -72,24 +75,19 @@ const fetchPendingSummary = async (): Promise<PendingSummaryData> => {
       .order('service_date', { ascending: true })
       .order('service_date', { ascending: true })
       .limit(200),
-    // Closed service IDs
     supabase.from('closure_services').select('service_id'),
-    // Old completed services for closure check
     supabase
       .from('services')
       .select('id, folio, service_date, client:clients!services_client_id_fkey(id, name)')
       .eq('status', 'completed')
       .lte('service_date', format(closureThreshold, 'yyyy-MM-dd'))
       .order('service_date', { ascending: true }),
-    // Overdue invoices
     supabase.rpc('get_overdue_invoices_for_alerts'),
-    // Expiring crane docs
     supabase
       .from('cranes')
       .select('id, license_plate, circulation_permit_expiry, insurance_expiry, technical_review_expiry')
       .eq('is_active', true)
       .or(`circulation_permit_expiry.lte.${format(alertDateLimit, 'yyyy-MM-dd')},insurance_expiry.lte.${format(alertDateLimit, 'yyyy-MM-dd')},technical_review_expiry.lte.${format(alertDateLimit, 'yyyy-MM-dd')}`),
-    // Expiring operator exams
     supabase
       .from('operators')
       .select('id, name, exam_expiry')
@@ -97,12 +95,10 @@ const fetchPendingSummary = async (): Promise<PendingSummaryData> => {
       .lte('exam_expiry', format(alertDateLimit, 'yyyy-MM-dd'))
   ]);
 
-  // Helper: hide monthly-billing services only if they belong to the current month
+  // Helper: hide monthly-billing services only if they belong to the current month (safe date-only)
   const isCurrentMonthMonthly = (service: any) => {
     if (service.client?.billing_type !== 'monthly') return false;
-    const serviceDate = new Date(service.service_date);
-    return serviceDate.getFullYear() === today.getFullYear() 
-        && serviceDate.getMonth() === today.getMonth();
+    return isSameYearMonth(service.service_date, todayStr);
   };
 
   // Process services without OC (exclude current-month monthly billing clients)
@@ -114,7 +110,7 @@ const fetchPendingSummary = async (): Promise<PendingSummaryData> => {
     serviceDate: s.service_date,
     clientName: s.client?.name ?? 'N/A',
     clientId: s.client?.id ?? '',
-    daysSince: Math.floor((today.getTime() - new Date(s.service_date).getTime()) / (1000 * 60 * 60 * 24)),
+    daysSince: safeDaysSince(s.service_date, todayStr),
   }));
 
   // Process pending closures
@@ -126,7 +122,7 @@ const fetchPendingSummary = async (): Promise<PendingSummaryData> => {
       folio: s.folio,
       serviceDate: s.service_date,
       clientName: s.client?.name ?? 'N/A',
-      daysSince: Math.floor((today.getTime() - new Date(s.service_date).getTime()) / (1000 * 60 * 60 * 24)),
+      daysSince: safeDaysSince(s.service_date, todayStr),
     }));
 
   // Process overdue invoices
