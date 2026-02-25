@@ -1,49 +1,52 @@
 
 
-# Facturacion Mensual - Excluir Clientes del Reporte de Pendientes
+# Aplicar filtro mensual a Sin OC y Sin Cotizacion (con logica de mes vencido)
 
-## Problema
-Algunos clientes se facturan una vez al mes (mes vencido), por lo que sus servicios completados siempre aparecen como "pendientes de facturar" en el resumen y reportes, generando ruido innecesario.
+## Contexto
+Actualmente el filtro de "facturacion mensual" solo se aplica a "Pendientes de Facturar" y excluye **todos** los servicios de clientes mensuales sin importar la fecha. El usuario necesita:
+1. Aplicar el mismo criterio a "Sin OC" y "Sin Cotizacion"
+2. Solo ocultar servicios del **mes en curso** -- al pasar el ultimo dia del mes, los servicios deben reaparecer como pendientes
 
-## Solucion
-Agregar un campo `billing_type` a la tabla `clients` que permita marcar si un cliente tiene facturacion mensual. Los servicios de estos clientes se excluiran automaticamente de las listas de "pendientes de facturar" en todos los puntos del sistema.
+## Logica del filtro
+Un servicio de cliente mensual se oculta solo si su `service_date` pertenece al mes actual. Servicios de meses anteriores siempre se muestran como pendientes.
 
-## Cambios
-
-### 1. Base de datos
-- Agregar columna `billing_type` (text, default `'standard'`) a la tabla `clients`
-- Valores posibles: `'standard'` (facturacion por servicio) y `'monthly'` (facturacion mensual vencida)
-
-### 2. Tipo TypeScript
-- Agregar `billingType?: 'standard' | 'monthly'` a la interfaz `Client` en `src/types/index.ts`
-
-### 3. Ficha del Cliente - `ClientGeneralInfo.tsx`
-- Agregar un toggle/selector visible en la informacion general del cliente con etiqueta "Facturacion Mensual"
-- Cuando se activa, se guarda `billing_type = 'monthly'` en la base de datos
-- Seguir el patron visual del modulo de Costos (badges, toggles)
-
-### 4. Formulario de Cliente
-- Agregar la opcion de facturacion mensual en el formulario de creacion/edicion de cliente (Step 3 o seccion de configuracion)
-
-### 5. Filtrado en Pendientes
-Excluir servicios de clientes con `billing_type = 'monthly'` en:
-- `src/hooks/usePendingSummary.ts` - Seccion "servicesWithoutOC" y logica de pendientes de facturacion
-- `src/utils/pdf/pendingReportPDF.ts` - Seccion "Servicios Pendientes de Facturar" del PDF manual
-- `supabase/functions/send-daily-pending-report/index.ts` - Seccion equivalente del reporte por email
-
-### 6. Indicador visual en tabla de clientes
-- Mostrar un badge pequeno "Mensual" junto al nombre del cliente en `ClientsTable.tsx` cuando tenga facturacion mensual, para que sea facilmente identificable
-
-## Detalle Tecnico
-
-### Migracion SQL
-```sql
-ALTER TABLE clients ADD COLUMN billing_type text NOT NULL DEFAULT 'standard';
+```text
+Ejemplo (hoy = 25 febrero 2026):
+- Servicio del 10/02/2026, cliente mensual --> OCULTO (mes actual)
+- Servicio del 15/01/2026, cliente mensual --> VISIBLE (mes anterior, ya vencio)
+- Servicio del 10/02/2026, cliente standard --> VISIBLE (siempre)
 ```
 
-### Filtrado en queries
-En cada consulta de servicios pendientes de facturar, se hara un JOIN con `clients` y se agregara la condicion `clients.billing_type != 'monthly'` (o se filtrara en el cliente despues del fetch, ya que la relacion ya existe en las queries).
+## Archivos a modificar
 
-### Hook useClients
-Mapear el nuevo campo `billing_type` desde la base de datos al tipo `Client`.
+### 1. `src/hooks/usePendingSummary.ts`
+- Cambiar el filtro existente en "servicesWithoutOC" (linea 101): en vez de excluir todos los `billing_type === 'monthly'`, solo excluir si el servicio es del mes actual
+- Aplicar la misma logica de filtro mensual a la seccion de pendientes de facturacion (consistencia)
+- No aplica a Sin Cotizacion porque este hook no tiene esa seccion
+
+### 2. `src/utils/pdf/pendingReportPDF.ts`
+- Agregar `billing_type` al select de las queries de Sin OC (linea 78) y Sin Cotizacion (linea 84)
+- Aplicar filtro de mes actual a las 3 secciones: Pendientes de Facturar, Sin OC, Sin Cotizacion
+- Cambiar el filtro existente de facturacion para usar la misma logica de mes actual
+
+### 3. `supabase/functions/send-daily-pending-report/index.ts`
+- Agregar `billing_type` al select de las queries de Sin OC (linea 88) y Sin Cotizacion (linea 97)
+- Aplicar filtro de mes actual a las 3 secciones
+- Redesplegar la funcion
+
+## Detalle tecnico
+
+### Funcion auxiliar de filtro (se agrega en cada archivo)
+```typescript
+// Retorna true si el servicio debe ocultarse (cliente mensual + servicio del mes actual)
+const isCurrentMonthMonthly = (service: any) => {
+  if (service.client?.billing_type !== 'monthly') return false;
+  const serviceDate = new Date(service.service_date);
+  const today = new Date();
+  return serviceDate.getFullYear() === today.getFullYear() 
+      && serviceDate.getMonth() === today.getMonth();
+};
+```
+
+Se usa como `.filter(s => !isCurrentMonthMonthly(s))` en las 3 secciones afectadas de cada archivo.
 
