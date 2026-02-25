@@ -215,8 +215,11 @@ export const InvoiceDetailsModal = ({ invoice, isOpen, onClose }: InvoiceDetails
 
   if (!invoice) return null;
 
-  const pendingAmount = (invoice.remainingAmount != null) ? invoice.remainingAmount : (invoice.total - (invoice.paidAmount || 0));
-  const paidAmount = invoice.paidAmount || 0;
+  const rawPaidAmount = invoice.paidAmount ?? 0;
+  const paidAmount = invoice.status === 'paid' && rawPaidAmount <= 0 ? invoice.total : rawPaidAmount;
+  const pendingAmount = invoice.status === 'paid'
+    ? 0
+    : (invoice.remainingAmount != null ? invoice.remainingAmount : Math.max(invoice.total - paidAmount, 0));
   const paymentPercentage = invoice.total > 0 ? Math.min(100, Math.round((paidAmount / invoice.total) * 100)) : 0;
   const statusConfig = getStatusConfig(invoice.status);
 
