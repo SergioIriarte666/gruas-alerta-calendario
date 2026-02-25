@@ -126,9 +126,10 @@ export const generatePendingReportPDF = async (): Promise<jsPDF> => {
     return sd.getFullYear() === today.getFullYear() && sd.getMonth() === today.getMonth();
   };
 
-  // Process data
-  const pendingInvoicing = (allCompletedRes.data || [])
-    .filter((s: any) => !invoicedSet.has(s.id))
+  // Process data — also count excluded monthly services for reference
+  const allPendingInvoicing = (allCompletedRes.data || []).filter((s: any) => !invoicedSet.has(s.id));
+  const monthlyExcludedInvoicing = allPendingInvoicing.filter((s: any) => isCurrentMonthMonthly(s)).length;
+  const pendingInvoicing = allPendingInvoicing
     .filter((s: any) => !isCurrentMonthMonthly(s))
     .map((s: any) => [
       s.folio, clientLabel(s.client),
@@ -137,7 +138,9 @@ export const generatePendingReportPDF = async (): Promise<jsPDF> => {
       s.service_value ? `$${Number(s.service_value).toLocaleString('es-CL')}` : '-',
     ]);
 
-  const withoutOC = (servicesWithoutOCRes.data || [])
+  const allWithoutOC = servicesWithoutOCRes.data || [];
+  const monthlyExcludedOC = allWithoutOC.filter((s: any) => isCurrentMonthMonthly(s)).length;
+  const withoutOC = allWithoutOC
     .filter((s: any) => !isCurrentMonthMonthly(s))
     .map((s: any) => [
       s.folio, clientLabel(s.client),
@@ -145,7 +148,9 @@ export const generatePendingReportPDF = async (): Promise<jsPDF> => {
       daysSince(s.service_date).toString(),
     ]);
 
-  const withoutQuote = (servicesWithoutQuoteRes.data || [])
+  const allWithoutQuote = servicesWithoutQuoteRes.data || [];
+  const monthlyExcludedQuote = allWithoutQuote.filter((s: any) => isCurrentMonthMonthly(s)).length;
+  const withoutQuote = allWithoutQuote
     .filter((s: any) => !isCurrentMonthMonthly(s))
     .map((s: any) => [
       s.folio, clientLabel(s.client),
@@ -224,7 +229,7 @@ export const generatePendingReportPDF = async (): Promise<jsPDF> => {
   doc.line(14, y, pageWidth - 14, y);
   y += 8;
 
-  const addSection = (title: string, count: number, headers: string[], data: string[][], colStyles?: any) => {
+  const addSection = (title: string, count: number, headers: string[], data: string[][], colStyles?: any, monthlyExcluded?: number) => {
     if (y > doc.internal.pageSize.getHeight() - 40) {
       doc.addPage();
       y = 15;
@@ -235,7 +240,7 @@ export const generatePendingReportPDF = async (): Promise<jsPDF> => {
     doc.text(`${title} (${count})`, 14, y);
     y += 2;
 
-    if (data.length === 0) {
+    if (data.length === 0 && (!monthlyExcluded || monthlyExcluded === 0)) {
       y += 4;
       doc.setFontSize(10);
       doc.setFont('helvetica', 'normal');
@@ -245,18 +250,36 @@ export const generatePendingReportPDF = async (): Promise<jsPDF> => {
       return;
     }
 
-    autoTable(doc, {
-      startY: y,
-      head: [headers],
-      body: data,
-      theme: 'striped',
-      headStyles: { fillColor: [34, 197, 94], textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 8 },
-      bodyStyles: { fontSize: 7.5, textColor: [51, 51, 51] },
-      alternateRowStyles: { fillColor: [245, 245, 245] },
-      margin: { left: 14, right: 14 },
-      columnStyles: colStyles || {},
-    });
-    y = (doc as any).lastAutoTable.finalY + 10;
+    if (data.length > 0) {
+      autoTable(doc, {
+        startY: y,
+        head: [headers],
+        body: data,
+        theme: 'striped',
+        headStyles: { fillColor: [34, 197, 94], textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 8 },
+        bodyStyles: { fontSize: 7.5, textColor: [51, 51, 51] },
+        alternateRowStyles: { fillColor: [245, 245, 245] },
+        margin: { left: 14, right: 14 },
+        columnStyles: colStyles || {},
+      });
+      y = (doc as any).lastAutoTable.finalY + 3;
+    } else {
+      y += 4;
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(100, 100, 100);
+      doc.text('✅ Sin pendientes en esta categoría', 18, y);
+      y += 4;
+    }
+
+    if (monthlyExcluded && monthlyExcluded > 0) {
+      doc.setFontSize(7.5);
+      doc.setFont('helvetica', 'italic');
+      doc.setTextColor(120, 120, 120);
+      doc.text(`ℹ ${monthlyExcluded} servicio(s) de facturación mensual excluido(s) (mes en curso)`, 18, y);
+      y += 3;
+    }
+    y += 7;
   };
 
   // Section 0: Today's Services Summary
@@ -294,11 +317,11 @@ export const generatePendingReportPDF = async (): Promise<jsPDF> => {
 
   // Pending sections
   addSection('1. Servicios Pendientes de Facturar', pendingInvoicing.length,
-    ['Folio', 'Cliente', 'Fecha', 'Días', 'Valor'], pendingInvoicing, { 0: { cellWidth: 25 }, 4: { halign: 'right' } });
+    ['Folio', 'Cliente', 'Fecha', 'Días', 'Valor'], pendingInvoicing, { 0: { cellWidth: 25 }, 4: { halign: 'right' } }, monthlyExcludedInvoicing);
   addSection('2. Servicios sin Orden de Compra', withoutOC.length,
-    ['Folio', 'Cliente', 'Fecha', 'Días'], withoutOC, { 0: { cellWidth: 25 } });
+    ['Folio', 'Cliente', 'Fecha', 'Días'], withoutOC, { 0: { cellWidth: 25 } }, monthlyExcludedOC);
   addSection('3. Servicios sin Cotización', withoutQuote.length,
-    ['Folio', 'Cliente', 'Fecha', 'Días'], withoutQuote, { 0: { cellWidth: 25 } });
+    ['Folio', 'Cliente', 'Fecha', 'Días'], withoutQuote, { 0: { cellWidth: 25 } }, monthlyExcludedQuote);
   addSection('4. Facturas Pendientes de Pago', overdueInvoices.length,
     ['Folio', 'Cliente', 'Atraso', 'Monto'], overdueInvoices, { 3: { halign: 'right' } });
   addSection('5. Servicios Pendientes de Cierre', pendingClosures.length,
