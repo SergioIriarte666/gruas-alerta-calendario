@@ -2,7 +2,7 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { supabase } from '@/integrations/supabase/client';
-import { format, startOfToday, addDays } from 'date-fns';
+import { format, addDays } from 'date-fns';
 import { fetchCompanyData } from '@/utils/pdf/companyDataFetcher';
 
 interface DailyServiceSummary {
@@ -10,16 +10,43 @@ interface DailyServiceSummary {
   completed: number;
   inProgress: number;
   cancelled: number;
-  todayServices: Array<{ folio: string; client: string; status: string; type: string }>;
+  todayServices: Array<{ folio: string; client: string; status: string }>;
 }
 
-const fetchTodayServices = async (): Promise<DailyServiceSummary> => {
-  const today = format(startOfToday(), 'yyyy-MM-dd');
-  
+/** Get the configured timezone from user_settings (single source of truth) */
+const getUserTimezone = async (): Promise<string> => {
+  try {
+    const { data } = await supabase
+      .from('user_settings')
+      .select('timezone, use_system_timezone')
+      .limit(1)
+      .maybeSingle();
+
+    if (data) {
+      if (data.use_system_timezone) {
+        // Freeze the browser-detected timezone as the canonical one
+        return Intl.DateTimeFormat().resolvedOptions().timeZone;
+      }
+      return data.timezone || 'America/Santiago';
+    }
+  } catch (e) {
+    console.warn('Could not fetch user timezone, using browser default', e);
+  }
+  return Intl.DateTimeFormat().resolvedOptions().timeZone;
+};
+
+/** Get today's date string (yyyy-MM-dd) in the user's configured timezone */
+const getTodayInTimezone = (tz: string): { todayStr: string; today: Date } => {
+  const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: tz });
+  const today = new Date(todayStr + 'T00:00:00');
+  return { todayStr, today };
+};
+
+const fetchTodayServices = async (todayStr: string): Promise<DailyServiceSummary> => {
   const { data } = await supabase
     .from('services')
-    .select('folio, status, service_type, client:clients!services_client_id_fkey(name, department)')
-    .eq('service_date', today);
+    .select('folio, status, client:clients!services_client_id_fkey(name, department)')
+    .eq('service_date', todayStr);
 
   const services = data || [];
   const statusMap: Record<string, string> = {
@@ -42,15 +69,14 @@ const fetchTodayServices = async (): Promise<DailyServiceSummary> => {
         folio: s.folio,
         client: clientLabel,
         status: statusMap[s.status] || s.status,
-        type: s.service_type || '-',
       };
     }),
   };
 };
 
 export const generatePendingReportPDF = async (): Promise<jsPDF> => {
-  const today = startOfToday();
-  const todayStr = format(today, 'yyyy-MM-dd');
+  const userTz = await getUserTimezone();
+  const { today, todayStr } = getTodayInTimezone(userTz);
   const closureThreshold = addDays(today, -30);
   const closureStr = format(closureThreshold, 'yyyy-MM-dd');
 
@@ -110,7 +136,7 @@ export const generatePendingReportPDF = async (): Promise<jsPDF> => {
       .select('name, department')
       .eq('billing_type', 'monthly')
       .order('name', { ascending: true }),
-    fetchTodayServices(),
+    fetchTodayServices(todayStr),
   ]);
 
   const clientLabel = (c: any) => {
@@ -301,8 +327,8 @@ export const generatePendingReportPDF = async (): Promise<jsPDF> => {
   if (ts.todayServices.length > 0) {
     autoTable(doc, {
       startY: y,
-      head: [['Folio', 'Cliente', 'Tipo', 'Estado']],
-      body: ts.todayServices.map(s => [s.folio, s.client, s.type, s.status]),
+      head: [['Folio', 'Cliente', 'Estado']],
+      body: ts.todayServices.map(s => [s.folio, s.client, s.status]),
       theme: 'striped',
       headStyles: { fillColor: [59, 130, 246], textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 8 },
       bodyStyles: { fontSize: 7.5, textColor: [51, 51, 51] },
@@ -409,6 +435,7 @@ export const generatePendingReportPDF = async (): Promise<jsPDF> => {
 
 export const downloadPendingReportPDF = async () => {
   const doc = await generatePendingReportPDF();
-  const todayStr = format(startOfToday(), 'yyyy-MM-dd');
+  const userTz = await getUserTimezone();
+  const { todayStr } = getTodayInTimezone(userTz);
   doc.save(`Reporte_Pendientes_${todayStr}.pdf`);
 };
