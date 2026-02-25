@@ -180,7 +180,7 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
               <div className="flex items-center gap-3">
                 <Button type="button" variant="outline" onClick={onCancel}>Cancelar</Button>
                 {currentStep < 3 ? (
-                  <Button type="button" onClick={() => canGoNext && setCurrentStep(currentStep + 1)} disabled={!canGoNext} className="bg-violet-600 hover:bg-violet-700 text-white gap-2">
+                  <Button type="button" onClick={() => setCurrentStep(prev => Math.min(prev + 1, 3))} disabled={!canGoNext} className="bg-violet-600 hover:bg-violet-700 text-white gap-2">
                     Siguiente <ChevronRight className="h-4 w-4" />
                   </Button>
                 ) : (
