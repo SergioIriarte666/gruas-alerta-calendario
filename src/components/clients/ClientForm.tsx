@@ -25,7 +25,8 @@ export const ClientForm = ({ client, onSubmit, onCancel }: ClientFormProps) => {
     address: client?.address || '',
     department: client?.department || '',
     contactName: client?.contactName || '',
-    isActive: client?.isActive ?? true
+    isActive: client?.isActive ?? true,
+    billingType: (client?.billingType as 'standard' | 'monthly') || 'standard',
   });
 
   const [departments, setDepartments] = React.useState<string[]>(
@@ -133,12 +134,14 @@ export const ClientForm = ({ client, onSubmit, onCancel }: ClientFormProps) => {
             department={formData.department}
             departments={departments}
             isActive={formData.isActive}
+            billingType={formData.billingType}
             isEditing={isEditing}
             isAddingDepartment={isAddingDepartment}
             newDepartmentName={newDepartmentName}
             onDepartmentChange={(value) => handleChange('department', value)}
             onDepartmentsChange={setDepartments}
             onIsActiveChange={(value) => handleChange('isActive', value)}
+            onBillingTypeChange={(value) => handleChange('billingType', value)}
             onIsAddingDepartmentChange={setIsAddingDepartment}
             onNewDepartmentNameChange={setNewDepartmentName}
           />

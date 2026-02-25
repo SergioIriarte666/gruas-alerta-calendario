@@ -153,13 +153,20 @@ export const ClientsTable = ({
                   <tr key={client.id} className="border-b hover:bg-muted/50">
                     {/* Clickable name -> Pipeline VIP */}
                     <td className="py-3 px-4">
-                      <button
-                        onClick={() => handleViewPipeline(client)}
-                        className="font-medium text-violet-600 dark:text-violet-400 hover:underline text-left"
-                        title="Ir al Pipeline VIP"
-                      >
-                        {client.name}
-                      </button>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => handleViewPipeline(client)}
+                          className="font-medium text-violet-600 dark:text-violet-400 hover:underline text-left"
+                          title="Ir al Pipeline VIP"
+                        >
+                          {client.name}
+                        </button>
+                        {client.billingType === 'monthly' && (
+                          <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-blue-500/50 text-blue-500">
+                            Mensual
+                          </Badge>
+                        )}
+                      </div>
                     </td>
                     <td className="py-3 px-4 text-foreground">{client.rut}</td>
                     <td className="py-3 px-4">

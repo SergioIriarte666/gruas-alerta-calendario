@@ -4,18 +4,20 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { ColoredSectionCard } from '@/components/services/form/ColoredSectionCard';
-import { FolderTree, Plus, X, Power } from 'lucide-react';
+import { FolderTree, Plus, X, Power, Receipt } from 'lucide-react';
 
 interface ClientFormStep3Props {
   department: string;
   departments: string[];
   isActive: boolean;
+  billingType: 'standard' | 'monthly';
   isEditing: boolean;
   isAddingDepartment: boolean;
   newDepartmentName: string;
   onDepartmentChange: (value: string) => void;
   onDepartmentsChange: (departments: string[]) => void;
   onIsActiveChange: (value: boolean) => void;
+  onBillingTypeChange: (value: 'standard' | 'monthly') => void;
   onIsAddingDepartmentChange: (value: boolean) => void;
   onNewDepartmentNameChange: (value: string) => void;
 }
@@ -24,12 +26,14 @@ export const ClientFormStep3 = ({
   department,
   departments,
   isActive,
+  billingType,
   isEditing,
   isAddingDepartment,
   newDepartmentName,
   onDepartmentChange,
   onDepartmentsChange,
   onIsActiveChange,
+  onBillingTypeChange,
   onIsAddingDepartmentChange,
   onNewDepartmentNameChange,
 }: ClientFormStep3Props) => {
@@ -147,6 +151,28 @@ export const ClientFormStep3 = ({
             </p>
           </div>
         )}
+      </ColoredSectionCard>
+
+      <ColoredSectionCard
+        title="Facturación"
+        icon={<Receipt className="h-5 w-5" />}
+        color="blue"
+      >
+        <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+          <div>
+            <Label htmlFor="billingType" className="text-foreground font-medium">
+              Facturación Mensual
+            </Label>
+            <p className="text-xs text-muted-foreground mt-1">
+              Activa si este cliente se factura una vez al mes (mes vencido). Sus servicios no aparecerán como pendientes de facturar.
+            </p>
+          </div>
+          <Switch
+            id="billingType"
+            checked={billingType === 'monthly'}
+            onCheckedChange={(checked) => onBillingTypeChange(checked ? 'monthly' : 'standard')}
+          />
+        </div>
       </ColoredSectionCard>
 
       <ColoredSectionCard

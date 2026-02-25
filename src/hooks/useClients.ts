@@ -14,6 +14,7 @@ const mapClient = (client: any): any => ({
   address: client.address || '',
   department: client.department || '',
   contactName: client.contact_name || '',
+  billingType: client.billing_type || 'standard',
   isActive: client.is_active ?? false,
   createdAt: client.created_at,
   updatedAt: client.updated_at,
@@ -216,6 +217,7 @@ export const useClients = () => {
       if (clientData.department !== undefined) updateData.department = clientData.department;
       if (clientData.contactName !== undefined) updateData.contact_name = clientData.contactName;
       if (clientData.isActive !== undefined) updateData.is_active = clientData.isActive;
+      if (clientData.billingType !== undefined) updateData.billing_type = clientData.billingType;
       if (clientData.defaultPaymentTermId !== undefined) updateData.default_payment_term_id = clientData.defaultPaymentTermId;
 
       const { error } = await supabase

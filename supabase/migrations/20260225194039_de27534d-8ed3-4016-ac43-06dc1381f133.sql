@@ -1,0 +1,1 @@
+ALTER TABLE clients ADD COLUMN billing_type text NOT NULL DEFAULT 'standard';

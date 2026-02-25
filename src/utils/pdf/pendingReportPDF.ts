@@ -82,7 +82,7 @@ export const generatePendingReportPDF = async (): Promise<jsPDF> => {
       .or('quote_number.is.null,quote_number.eq.')
       .order('service_date', { ascending: true }).limit(500),
     supabase.from('services')
-      .select('id, folio, service_date, service_value, client:clients!services_client_id_fkey(name)')
+      .select('id, folio, service_date, service_value, client:clients!services_client_id_fkey(name, billing_type)')
       .eq('status', 'completed')
       .order('service_date', { ascending: true }).limit(1000),
     supabase.from('closure_services').select('service_id'),
@@ -112,6 +112,7 @@ export const generatePendingReportPDF = async (): Promise<jsPDF> => {
   // Process data
   const pendingInvoicing = (allCompletedRes.data || [])
     .filter((s: any) => !invoicedSet.has(s.id))
+    .filter((s: any) => (s.client as any)?.billing_type !== 'monthly')
     .map((s: any) => [
       s.folio, (s.client as any)?.name ?? 'N/A',
       new Date(s.service_date).toLocaleDateString('es-CL'),

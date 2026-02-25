@@ -102,7 +102,7 @@ const handler = async (req: Request): Promise<Response> => {
       // Services pending invoicing (completed, not in invoice_services)
       supabase
         .from("services")
-        .select("id, folio, service_date, client:clients!services_client_id_fkey(name)")
+        .select("id, folio, service_date, client:clients!services_client_id_fkey(name, billing_type)")
         .eq("status", "completed")
         .order("service_date", { ascending: true })
         .limit(1000),
@@ -149,6 +149,7 @@ const handler = async (req: Request): Promise<Response> => {
     // 1. Pending invoicing
     const pendingInvoicing = (pendingInvoiceServicesRes.data || [])
       .filter((s: any) => !invoicedSet.has(s.id))
+      .filter((s: any) => s.client?.billing_type !== "monthly")
       .map((s: any) => [
         s.folio,
         s.client?.name ?? "N/A",

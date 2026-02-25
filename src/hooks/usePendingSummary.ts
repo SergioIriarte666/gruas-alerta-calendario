@@ -62,10 +62,10 @@ const fetchPendingSummary = async (): Promise<PendingSummaryData> => {
     expiringCranesRes,
     expiringOperatorsRes
   ] = await Promise.all([
-    // Services completed without purchase order
+    // Services completed without purchase order (exclude monthly billing clients)
     supabase
       .from('services')
-      .select('id, folio, service_date, client:clients!services_client_id_fkey(id, name)')
+      .select('id, folio, service_date, client:clients!services_client_id_fkey(id, name, billing_type)')
       .eq('status', 'completed')
       .or('purchase_order.is.null,purchase_order.eq.')
       .or('purchase_order_number.is.null,purchase_order_number.eq.')
@@ -96,8 +96,10 @@ const fetchPendingSummary = async (): Promise<PendingSummaryData> => {
       .lte('exam_expiry', format(alertDateLimit, 'yyyy-MM-dd'))
   ]);
 
-  // Process services without OC
-  const servicesWithoutOC: PendingServiceWithoutOC[] = (servicesWithoutOCRes.data || []).map((s: any) => ({
+  // Process services without OC (exclude monthly billing clients)
+  const servicesWithoutOC: PendingServiceWithoutOC[] = (servicesWithoutOCRes.data || [])
+    .filter((s: any) => s.client?.billing_type !== 'monthly')
+    .map((s: any) => ({
     id: s.id,
     folio: s.folio,
     serviceDate: s.service_date,
