@@ -81,6 +81,7 @@ const handler = async (req: Request): Promise<Response> => {
       overdueRes,
       expiringCranesRes,
       expiringOperatorsRes,
+      monthlyClientsRes,
       todayServicesRes,
     ] = await Promise.all([
       // Services without OC
@@ -130,6 +131,12 @@ const handler = async (req: Request): Promise<Response> => {
         .select("id, name, exam_expiry")
         .eq("is_active", true)
         .lte("exam_expiry", alertDateStr),
+      // Monthly clients base list
+      supabase
+        .from("clients")
+        .select("name, department")
+        .eq("billing_type", "monthly")
+        .order("name", { ascending: true }),
       // Today's services
       supabase
         .from("services")
@@ -158,16 +165,25 @@ const handler = async (req: Request): Promise<Response> => {
       return sd.getFullYear() === today.getFullYear() && sd.getMonth() === today.getMonth();
     };
 
-    // Build monthly client summary
+    // Build monthly client summary (including clients with 0 services this month)
     const monthlyCurrentMonthServices = (pendingInvoiceServicesRes.data || []).filter((s: any) => isCurrentMonthMonthly(s));
     const monthlyByClient: Record<string, number> = {};
     monthlyCurrentMonthServices.forEach((s: any) => {
       const name = clientLabel(s.client);
       monthlyByClient[name] = (monthlyByClient[name] || 0) + 1;
     });
-    const monthlyClientRows = Object.entries(monthlyByClient)
-      .sort((a, b) => b[1] - a[1])
-      .map(([name, count]) => [name, `${count} servicio(s)`]);
+
+    const monthlyClientNames = new Set<string>([
+      ...(monthlyClientsRes.data || []).map((c: any) => clientLabel(c)),
+      ...Object.keys(monthlyByClient),
+    ]);
+
+    const monthlyClientRows = Array.from(monthlyClientNames)
+      .sort((a, b) => {
+        const countDiff = (monthlyByClient[b] || 0) - (monthlyByClient[a] || 0);
+        return countDiff !== 0 ? countDiff : a.localeCompare(b, "es");
+      })
+      .map((name) => [name, `${monthlyByClient[name] || 0} servicio(s)`]);
 
     // 1. Pending invoicing
     const pendingInvoicing = (pendingInvoiceServicesRes.data || [])
