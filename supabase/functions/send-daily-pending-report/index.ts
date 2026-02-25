@@ -85,7 +85,7 @@ const handler = async (req: Request): Promise<Response> => {
       // Services without OC
       supabase
         .from("services")
-        .select("id, folio, service_date, client:clients!services_client_id_fkey(name, department)")
+        .select("id, folio, service_date, client:clients!services_client_id_fkey(name, department, billing_type)")
         .eq("status", "completed")
         .or("purchase_order.is.null,purchase_order.eq.")
         .or("purchase_order_number.is.null,purchase_order_number.eq.")
@@ -94,7 +94,7 @@ const handler = async (req: Request): Promise<Response> => {
       // Services without quote
       supabase
         .from("services")
-        .select("id, folio, service_date, client:clients!services_client_id_fkey(name, department)")
+        .select("id, folio, service_date, client:clients!services_client_id_fkey(name, department, billing_type)")
         .eq("status", "completed")
         .or("quote_number.is.null,quote_number.eq.")
         .order("service_date", { ascending: true })
@@ -150,10 +150,17 @@ const handler = async (req: Request): Promise<Response> => {
     const daysSince = (dateStr: string) =>
       Math.floor((today.getTime() - new Date(dateStr).getTime()) / 86400000);
 
+    // Helper: hide monthly-billing services only if they belong to the current month
+    const isCurrentMonthMonthly = (service: any) => {
+      if (service.client?.billing_type !== "monthly") return false;
+      const sd = new Date(service.service_date);
+      return sd.getFullYear() === today.getFullYear() && sd.getMonth() === today.getMonth();
+    };
+
     // 1. Pending invoicing
     const pendingInvoicing = (pendingInvoiceServicesRes.data || [])
       .filter((s: any) => !invoicedSet.has(s.id))
-      .filter((s: any) => s.client?.billing_type !== "monthly")
+      .filter((s: any) => !isCurrentMonthMonthly(s))
       .map((s: any) => [
         s.folio,
         clientLabel(s.client),
@@ -162,20 +169,24 @@ const handler = async (req: Request): Promise<Response> => {
       ]);
 
     // 2. Without OC
-    const withoutOC = (servicesWithoutOCRes.data || []).map((s: any) => [
-      s.folio,
-      clientLabel(s.client),
-      new Date(s.service_date).toLocaleDateString("es-CL"),
-      daysSince(s.service_date).toString(),
-    ]);
+    const withoutOC = (servicesWithoutOCRes.data || [])
+      .filter((s: any) => !isCurrentMonthMonthly(s))
+      .map((s: any) => [
+        s.folio,
+        clientLabel(s.client),
+        new Date(s.service_date).toLocaleDateString("es-CL"),
+        daysSince(s.service_date).toString(),
+      ]);
 
     // 3. Without quote
-    const withoutQuote = (servicesWithoutQuoteRes.data || []).map((s: any) => [
-      s.folio,
-      clientLabel(s.client),
-      new Date(s.service_date).toLocaleDateString("es-CL"),
-      daysSince(s.service_date).toString(),
-    ]);
+    const withoutQuote = (servicesWithoutQuoteRes.data || [])
+      .filter((s: any) => !isCurrentMonthMonthly(s))
+      .map((s: any) => [
+        s.folio,
+        clientLabel(s.client),
+        new Date(s.service_date).toLocaleDateString("es-CL"),
+        daysSince(s.service_date).toString(),
+      ]);
 
     // 4. Overdue invoices
     const overdueInvoices = (!overdueRes.error && overdueRes.data || []).map((inv: any) => [

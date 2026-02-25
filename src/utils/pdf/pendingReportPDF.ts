@@ -75,13 +75,13 @@ export const generatePendingReportPDF = async (): Promise<jsPDF> => {
     todayServicesSummary,
   ] = await Promise.all([
     supabase.from('services')
-      .select('id, folio, service_date, client:clients!services_client_id_fkey(name, department)')
+      .select('id, folio, service_date, client:clients!services_client_id_fkey(name, department, billing_type)')
       .eq('status', 'completed')
       .or('purchase_order.is.null,purchase_order.eq.')
       .or('purchase_order_number.is.null,purchase_order_number.eq.')
       .order('service_date', { ascending: true }).limit(500),
     supabase.from('services')
-      .select('id, folio, service_date, client:clients!services_client_id_fkey(name, department)')
+      .select('id, folio, service_date, client:clients!services_client_id_fkey(name, department, billing_type)')
       .eq('status', 'completed')
       .or('quote_number.is.null,quote_number.eq.')
       .order('service_date', { ascending: true }).limit(500),
@@ -118,10 +118,18 @@ export const generatePendingReportPDF = async (): Promise<jsPDF> => {
 
   const invoicedSet = new Set((invoicedServiceIdsRes.data || []).map((r: any) => r.service_id));
 
+  // Helper: hide monthly-billing services only if they belong to the current month
+  const isCurrentMonthMonthly = (s: any) => {
+    const bt = (s.client as any)?.billing_type;
+    if (bt !== 'monthly') return false;
+    const sd = new Date(s.service_date);
+    return sd.getFullYear() === today.getFullYear() && sd.getMonth() === today.getMonth();
+  };
+
   // Process data
   const pendingInvoicing = (allCompletedRes.data || [])
     .filter((s: any) => !invoicedSet.has(s.id))
-    .filter((s: any) => (s.client as any)?.billing_type !== 'monthly')
+    .filter((s: any) => !isCurrentMonthMonthly(s))
     .map((s: any) => [
       s.folio, clientLabel(s.client),
       new Date(s.service_date).toLocaleDateString('es-CL'),
@@ -129,17 +137,21 @@ export const generatePendingReportPDF = async (): Promise<jsPDF> => {
       s.service_value ? `$${Number(s.service_value).toLocaleString('es-CL')}` : '-',
     ]);
 
-  const withoutOC = (servicesWithoutOCRes.data || []).map((s: any) => [
-    s.folio, clientLabel(s.client),
-    new Date(s.service_date).toLocaleDateString('es-CL'),
-    daysSince(s.service_date).toString(),
-  ]);
+  const withoutOC = (servicesWithoutOCRes.data || [])
+    .filter((s: any) => !isCurrentMonthMonthly(s))
+    .map((s: any) => [
+      s.folio, clientLabel(s.client),
+      new Date(s.service_date).toLocaleDateString('es-CL'),
+      daysSince(s.service_date).toString(),
+    ]);
 
-  const withoutQuote = (servicesWithoutQuoteRes.data || []).map((s: any) => [
-    s.folio, clientLabel(s.client),
-    new Date(s.service_date).toLocaleDateString('es-CL'),
-    daysSince(s.service_date).toString(),
-  ]);
+  const withoutQuote = (servicesWithoutQuoteRes.data || [])
+    .filter((s: any) => !isCurrentMonthMonthly(s))
+    .map((s: any) => [
+      s.folio, clientLabel(s.client),
+      new Date(s.service_date).toLocaleDateString('es-CL'),
+      daysSince(s.service_date).toString(),
+    ]);
 
   const overdueInvoices = (!overdueRes.error && overdueRes.data || []).map((inv: any) => [
     inv.folio, inv.client_name,
