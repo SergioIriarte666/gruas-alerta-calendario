@@ -1,3 +1,4 @@
+// Service value calculation utilities - v2 (cache bust)
 import { Service } from '@/types';
 import { getCustodyDisplayInfo } from './custodyCalculations';
 
