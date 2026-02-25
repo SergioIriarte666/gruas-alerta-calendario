@@ -10,6 +10,7 @@ import { AuthTabs } from '@/components/auth/AuthTabs';
 import { LoginForm } from '@/components/auth/LoginForm';
 import { RegisterForm } from '@/components/auth/RegisterForm';
 import { SetPasswordForm } from '@/components/auth/SetPasswordForm';
+import { ForgotPasswordForm } from '@/components/auth/ForgotPasswordForm';
 import { validatePassword } from '@/utils/passwordValidation';
 
 const Auth = () => {
@@ -24,6 +25,7 @@ const Auth = () => {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [showSetPassword, setShowSetPassword] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [activeTab, setActiveTab] = useState<'login' | 'register'>(
     (tabParam as 'login' | 'register') || (isInvited ? 'register' : 'login')
   );
@@ -217,6 +219,16 @@ const Auth = () => {
     );
   }
 
+  if (showForgotPassword) {
+    return (
+      <AuthBackground>
+        <div className="w-full max-w-[400px]">
+          <ForgotPasswordForm onBack={() => setShowForgotPassword(false)} />
+        </div>
+      </AuthBackground>
+    );
+  }
+
   return (
     <AuthBackground>
       <div className="w-full max-w-[400px]">
@@ -248,6 +260,7 @@ const Auth = () => {
             setEmail={setEmail}
             setPassword={setPassword}
             onSubmit={handleLogin}
+            onForgotPassword={() => setShowForgotPassword(true)}
           />
         )}
 
