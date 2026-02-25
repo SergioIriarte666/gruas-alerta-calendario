@@ -361,13 +361,14 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     // Monthly clients section
+    if (y > doc.internal.pageSize.getHeight() - 40) { doc.addPage(); y = 15; }
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(51, 51, 51);
+    doc.text(`Clientes Facturación Mensual - Mes en Curso (${monthlyCurrentMonthServices.length} servicios)`, 14, y);
+    y += 2;
+
     if (monthlyClientRows.length > 0) {
-      if (y > doc.internal.pageSize.getHeight() - 40) { doc.addPage(); y = 15; }
-      doc.setFontSize(12);
-      doc.setFont("helvetica", "bold");
-      doc.setTextColor(51, 51, 51);
-      doc.text(`Clientes Facturación Mensual - Mes en Curso (${monthlyCurrentMonthServices.length} servicios)`, 14, y);
-      y += 2;
       (doc as any).autoTable({
         startY: y,
         head: [["Cliente", "Servicios del Mes"]],
@@ -379,6 +380,13 @@ const handler = async (req: Request): Promise<Response> => {
         margin: { left: 14, right: 14 },
       });
       y = (doc as any).lastAutoTable.finalY + 10;
+    } else {
+      y += 4;
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(100, 100, 100);
+      doc.text("Sin servicios de facturación mensual en el mes en curso", 18, y);
+      y += 10;
     }
 
     // Pending Sections
