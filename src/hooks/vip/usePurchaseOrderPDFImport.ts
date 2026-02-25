@@ -8,6 +8,7 @@ export interface ParsedOCItem {
   patente: string;
   detail: string;
   amount: number;
+  quantity?: number;
 }
 
 export interface ParsedOC {
@@ -15,6 +16,7 @@ export interface ParsedOC {
   date: string | null;
   items: ParsedOCItem[];
   totals: { neto: number; iva: number; total: number };
+  quoteReference: string;
   rawText: string;
   fileName: string;
 }
@@ -139,6 +141,7 @@ export function usePurchaseOrderPDFImport(clientId: string | null, services: Ser
         } : null,
         purchaseOrder: service.purchase_order,
         purchaseOrderNumber: service.purchase_order_number || '',
+        quoteNumber: service.quote_number || '',
         licensePlate: service.license_plate,
         serviceType: service.service_types ? {
           id: service.service_types.id, name: service.service_types.name,
@@ -173,7 +176,7 @@ export function usePurchaseOrderPDFImport(clientId: string | null, services: Ser
       for (const item of oc.items) {
         const patenteNorm = normalizePatente(item.patente);
 
-        // If patente is empty, use fallback matching by OC number or amount
+        // If patente is empty, use fallback matching
         if (!patenteNorm) {
           const ocNorm = normalizeOC(oc.ocNumber);
           
@@ -194,7 +197,34 @@ export function usePurchaseOrderPDFImport(clientId: string | null, services: Ser
             continue;
           }
 
-          // Fallback 2: Match by glosa/description against service type name
+          // Fallback 2 (NEW): Match by quote reference from OC observations
+          if (oc.quoteReference) {
+            const quoteRef = oc.quoteReference.replace(/\D/g, ''); // extract digits only
+            if (quoteRef) {
+              const servicesByQuote = clientServices.filter(s =>
+                !usedServiceIds.has(s.id) &&
+                s.quoteNumber &&
+                s.quoteNumber.replace(/\D/g, '') === quoteRef
+              );
+              
+              if (servicesByQuote.length > 0) {
+                // Match ALL services with this quote reference
+                for (const svc of servicesByQuote) {
+                  usedServiceIds.add(svc.id);
+                  matches.push({
+                    parsedItem: item,
+                    service: svc,
+                    ocNumber: oc.ocNumber,
+                    fileName: oc.fileName,
+                    status: 'matched',
+                  });
+                }
+                continue;
+              }
+            }
+          }
+
+          // Fallback 3: Match by glosa/description against service type name
           const glosaNorm = normalizeText(item.detail);
           if (glosaNorm) {
             const candidatesByGlosa = clientServices.filter(s =>
@@ -205,7 +235,6 @@ export function usePurchaseOrderPDFImport(clientId: string | null, services: Ser
                glosaNorm.includes(normalizeText(s.serviceType.name)))
             );
             if (candidatesByGlosa.length > 0) {
-              // Prefer the one with closest amount match
               const best = item.amount > 0
                 ? candidatesByGlosa.sort((a, b) => Math.abs(a.value - item.amount) - Math.abs(b.value - item.amount))[0]
                 : candidatesByGlosa[0];
@@ -221,10 +250,14 @@ export function usePurchaseOrderPDFImport(clientId: string | null, services: Ser
             }
           }
 
-          // Fallback 3: Match by amount only
+          // Fallback 4: Match by amount (also try unit price if quantity > 1)
           if (item.amount > 0) {
+            const unitPrice = (item.quantity && item.quantity > 1) ? item.amount / item.quantity : null;
             const serviceByAmount = clientServices.find(s => 
-              !usedServiceIds.has(s.id) && !s.purchaseOrder && !s.purchaseOrderNumber && Math.abs(s.value - item.amount) < 1
+              !usedServiceIds.has(s.id) && !s.purchaseOrder && !s.purchaseOrderNumber && (
+                Math.abs(s.value - item.amount) < 1 ||
+                (unitPrice !== null && Math.abs(s.value - unitPrice) < 1)
+              )
             );
             if (serviceByAmount) {
               usedServiceIds.add(serviceByAmount.id);
