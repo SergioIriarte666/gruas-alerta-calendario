@@ -38,8 +38,8 @@ export const ClientForm = ({ client, onSubmit, onCancel }: ClientFormProps) => {
 
   const isEditing = !!client;
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = (e?: React.FormEvent) => {
+    e?.preventDefault();
     
     if (client) {
       if (isAddingDepartment && newDepartmentName.trim()) {
@@ -152,7 +152,7 @@ export const ClientForm = ({ client, onSubmit, onCancel }: ClientFormProps) => {
   };
 
   return (
-    <Card className="bg-card border max-h-[90vh] overflow-hidden flex flex-col">
+    <Card className="bg-card border flex flex-col max-h-[85vh]">
       {/* Header */}
       <CardHeader className="bg-gradient-to-r from-violet-600 to-violet-500 text-white rounded-t-lg flex-shrink-0">
         <div className="flex items-center justify-between">
@@ -174,85 +174,84 @@ export const ClientForm = ({ client, onSubmit, onCancel }: ClientFormProps) => {
         </p>
       </CardHeader>
 
-      <CardContent className="flex-1 overflow-hidden p-0">
-        <form onSubmit={handleSubmit} className="h-full flex flex-col">
-          <div className="flex-1 overflow-auto">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 p-6">
-              {/* Left column - Navigation and Summary */}
-              <div className="lg:col-span-1 space-y-4">
-                <ClientFormStepNavigation
-                  steps={steps}
-                  currentStep={currentStep}
-                  onStepClick={setCurrentStep}
-                />
-                
-                <ClientSummaryPanel
-                  name={formData.name}
-                  rut={formData.rut}
-                  phone={formData.phone}
-                  email={formData.email}
-                  address={formData.address}
-                  contactName={formData.contactName}
-                  departments={isEditing ? [formData.department] : departments}
-                  isActive={formData.isActive}
-                  isEditing={isEditing}
-                />
-              </div>
+      <CardContent className="flex-1 overflow-hidden p-0 flex flex-col min-h-0">
+        <div className="flex-1 overflow-y-auto min-h-0">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 p-6">
+            {/* Left column - Navigation and Summary */}
+            <div className="lg:col-span-1 space-y-4">
+              <ClientFormStepNavigation
+                steps={steps}
+                currentStep={currentStep}
+                onStepClick={setCurrentStep}
+              />
+              
+              <ClientSummaryPanel
+                name={formData.name}
+                rut={formData.rut}
+                phone={formData.phone}
+                email={formData.email}
+                address={formData.address}
+                contactName={formData.contactName}
+                departments={isEditing ? [formData.department] : departments}
+                isActive={formData.isActive}
+                isEditing={isEditing}
+              />
+            </div>
 
-              {/* Right column - Step Content */}
-              <div className="lg:col-span-2">
-                {renderStepContent()}
-              </div>
+            {/* Right column - Step Content */}
+            <div className="lg:col-span-2">
+              {renderStepContent()}
             </div>
           </div>
+        </div>
 
-          {/* Footer */}
-          <div className="border-t bg-muted/30 p-4 flex-shrink-0">
-            <div className="flex items-center justify-between">
+        {/* Footer */}
+        <div className="border-t bg-muted/30 p-4 flex-shrink-0">
+          <div className="flex items-center justify-between">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={goToPreviousStep}
+              disabled={currentStep === 1}
+              className="gap-2"
+            >
+              <ChevronLeft className="h-4 w-4" />
+              Anterior
+            </Button>
+
+            <div className="flex items-center gap-2">
               <Button
                 type="button"
                 variant="outline"
-                onClick={goToPreviousStep}
-                disabled={currentStep === 1}
-                className="gap-2"
+                onClick={onCancel}
               >
-                <ChevronLeft className="h-4 w-4" />
-                Anterior
+                Cancelar
               </Button>
 
-              <div className="flex items-center gap-2">
+              {currentStep < 3 ? (
                 <Button
                   type="button"
-                  variant="outline"
-                  onClick={onCancel}
+                  onClick={goToNextStep}
+                  disabled={!canGoNext}
+                  className="bg-violet-600 hover:bg-violet-700 text-white gap-2"
                 >
-                  Cancelar
+                  Siguiente
+                  <ChevronRight className="h-4 w-4" />
                 </Button>
-
-                {currentStep < 3 ? (
-                  <Button
-                    type="button"
-                    onClick={goToNextStep}
-                    disabled={!canGoNext}
-                    className="bg-violet-600 hover:bg-violet-700 text-white gap-2"
-                  >
-                    Siguiente
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
-                ) : (
-                  <Button
-                    type="submit"
-                    disabled={!canSubmit}
-                    className="bg-violet-600 hover:bg-violet-700 text-white gap-2"
-                  >
-                    <Save className="h-4 w-4" />
-                    {isEditing ? 'Actualizar' : 'Crear'} Cliente
-                  </Button>
-                )}
-              </div>
+              ) : (
+                <Button
+                  type="button"
+                  onClick={handleSubmit}
+                  disabled={!canSubmit}
+                  className="bg-violet-600 hover:bg-violet-700 text-white gap-2"
+                >
+                  <Save className="h-4 w-4" />
+                  {isEditing ? 'Actualizar' : 'Crear'} Cliente
+                </Button>
+              )}
             </div>
           </div>
-        </form>
+        </div>
       </CardContent>
     </Card>
   );
