@@ -11,6 +11,37 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+// ──── SAFE DATE-ONLY HELPERS (same logic as frontend timezoneUtils) ────
+
+/** Parse YYYY-MM-DD safely without timezone shift */
+const safeParseDateOnly = (dateStr: string): Date => {
+  if (!dateStr) return new Date();
+  const match = dateStr.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (!match) return new Date(dateStr);
+  const [, y, m, d] = match;
+  return new Date(parseInt(y), parseInt(m) - 1, parseInt(d), 12, 0, 0);
+};
+
+/** Format YYYY-MM-DD to dd-MM-yyyy (pure string, no Date) */
+const safeDateToDisplay = (dateStr: string): string => {
+  if (!dateStr) return "N/A";
+  const match = dateStr.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (!match) return dateStr;
+  return `${match[3]}-${match[2]}-${match[1]}`;
+};
+
+/** Days between two YYYY-MM-DD strings */
+const safeDaysSince = (dateStr: string, todayStr: string): number => {
+  const d = safeParseDateOnly(dateStr);
+  const t = safeParseDateOnly(todayStr);
+  return Math.floor((t.getTime() - d.getTime()) / (1000 * 60 * 60 * 24));
+};
+
+/** Check if two YYYY-MM-DD strings share same year-month */
+const isSameYearMonth = (dateStr: string, refStr: string): boolean => {
+  return dateStr.substring(0, 7) === refStr.substring(0, 7);
+};
+
 const handler = async (req: Request): Promise<Response> => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -24,7 +55,7 @@ const handler = async (req: Request): Promise<Response> => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
-    // Check if daily report is enabled
+    // Check if daily report is enabled + get business timezone from company_data (single source of truth)
     const { data: companyData, error: companyError } = await supabase
       .from("company_data")
       .select("*")
@@ -59,30 +90,17 @@ const handler = async (req: Request): Promise<Response> => {
       });
     }
 
-    // Read timezone from user_settings (single source of truth)
-    let userTimezone = "America/Santiago"; // fallback
-    try {
-      const { data: userSettingsData } = await supabase
-        .from("user_settings")
-        .select("timezone, use_system_timezone")
-        .limit(1)
-        .maybeSingle();
-      if (userSettingsData) {
-        // Edge Function can't detect browser timezone, so always use the stored timezone value
-        userTimezone = userSettingsData.timezone || "America/Santiago";
-      }
-    } catch (e) {
-      console.warn("Could not fetch user timezone, using fallback:", e);
-    }
-    console.log(`🕐 Usando zona horaria: ${userTimezone}`);
+    // Business timezone from company_data (single source of truth)
+    const userTimezone = companyData.report_timezone || "America/Santiago";
+    console.log(`🕐 Usando zona horaria de negocio: ${userTimezone}`);
 
     const todayStr = new Date().toLocaleDateString("en-CA", { timeZone: userTimezone });
-    const today = new Date(todayStr + "T00:00:00");
-    const closureThresholdDate = new Date(today);
+    const todaySafe = safeParseDateOnly(todayStr);
+    const closureThresholdDate = new Date(todaySafe);
     closureThresholdDate.setDate(closureThresholdDate.getDate() - 30);
     const closureStr = closureThresholdDate.toISOString().split("T")[0];
     const alertDays = companyData.alert_days ?? 30;
-    const alertDate = new Date(today);
+    const alertDate = new Date(todaySafe);
     alertDate.setDate(alertDate.getDate() + alertDays);
     const alertDateStr = alertDate.toISOString().split("T")[0];
 
@@ -99,7 +117,6 @@ const handler = async (req: Request): Promise<Response> => {
       monthlyClientsRes,
       todayServicesRes,
     ] = await Promise.all([
-      // Services without OC
       supabase
         .from("services")
         .select("id, folio, service_date, client:clients!services_client_id_fkey(name, department, billing_type)")
@@ -108,7 +125,6 @@ const handler = async (req: Request): Promise<Response> => {
         .or("purchase_order_number.is.null,purchase_order_number.eq.")
         .order("service_date", { ascending: true })
         .limit(500),
-      // Services without quote
       supabase
         .from("services")
         .select("id, folio, service_date, client:clients!services_client_id_fkey(name, department, billing_type)")
@@ -116,43 +132,35 @@ const handler = async (req: Request): Promise<Response> => {
         .or("quote_number.is.null,quote_number.eq.")
         .order("service_date", { ascending: true })
         .limit(500),
-      // Services pending invoicing (completed, not in invoice_services)
       supabase
         .from("services")
         .select("id, folio, service_date, value, client:clients!services_client_id_fkey(name, department, billing_type)")
         .eq("status", "completed")
         .order("service_date", { ascending: true })
         .limit(1000),
-      // Closed service IDs for closure check
       supabase.from("closure_services").select("service_id"),
-      // Old completed services (>30 days) for closure
       supabase
         .from("services")
         .select("id, folio, service_date, client:clients!services_client_id_fkey(name, department)")
         .eq("status", "completed")
         .lte("service_date", closureStr)
         .order("service_date", { ascending: true }),
-      // Overdue invoices
       supabase.rpc("get_overdue_invoices_for_alerts"),
-      // Expiring crane docs
       supabase
         .from("cranes")
         .select("id, license_plate, circulation_permit_expiry, insurance_expiry, technical_review_expiry")
         .eq("is_active", true)
         .or(`circulation_permit_expiry.lte.${alertDateStr},insurance_expiry.lte.${alertDateStr},technical_review_expiry.lte.${alertDateStr}`),
-      // Expiring operator exams
       supabase
         .from("operators")
         .select("id, name, exam_expiry")
         .eq("is_active", true)
         .lte("exam_expiry", alertDateStr),
-      // Monthly clients base list
       supabase
         .from("clients")
         .select("name, department")
         .eq("billing_type", "monthly")
         .order("name", { ascending: true }),
-      // Today's services
       supabase
         .from("services")
         .select("folio, status, client:clients!services_client_id_fkey(name, department)")
@@ -170,17 +178,14 @@ const handler = async (req: Request): Promise<Response> => {
       if (!c) return "N/A";
       return c.department && c.department !== "General" ? `${c.name} - ${c.department}` : c.name;
     };
-    const daysSince = (dateStr: string) =>
-      Math.floor((today.getTime() - new Date(dateStr).getTime()) / 86400000);
 
-    // Helper: hide monthly-billing services only if they belong to the current month
+    // Helper: hide monthly-billing services only if they belong to the current month (safe date-only)
     const isCurrentMonthMonthly = (service: any) => {
       if (service.client?.billing_type !== "monthly") return false;
-      const sd = new Date(service.service_date);
-      return sd.getFullYear() === today.getFullYear() && sd.getMonth() === today.getMonth();
+      return isSameYearMonth(service.service_date, todayStr);
     };
 
-    // Build monthly client summary (including clients with 0 services this month)
+    // Build monthly client summary
     const monthlyCurrentMonthServices = (pendingInvoiceServicesRes.data || []).filter((s: any) => isCurrentMonthMonthly(s));
     const monthlyByClient: Record<string, number> = {};
     monthlyCurrentMonthServices.forEach((s: any) => {
@@ -200,15 +205,15 @@ const handler = async (req: Request): Promise<Response> => {
       })
       .map((name) => [name, `${monthlyByClient[name] || 0} servicio(s)`]);
 
-    // 1. Pending invoicing
+    // 1. Pending invoicing (with safe date helpers)
     const pendingInvoicing = (pendingInvoiceServicesRes.data || [])
       .filter((s: any) => !invoicedSet.has(s.id))
       .filter((s: any) => !isCurrentMonthMonthly(s))
       .map((s: any) => [
         s.folio,
         clientLabel(s.client),
-        new Date(s.service_date).toLocaleDateString("es-CL"),
-        daysSince(s.service_date).toString(),
+        safeDateToDisplay(s.service_date),
+        safeDaysSince(s.service_date, todayStr).toString(),
         s.value ? `$${Number(s.value).toLocaleString("es-CL")}` : "-",
       ]);
 
@@ -218,8 +223,8 @@ const handler = async (req: Request): Promise<Response> => {
       .map((s: any) => [
         s.folio,
         clientLabel(s.client),
-        new Date(s.service_date).toLocaleDateString("es-CL"),
-        daysSince(s.service_date).toString(),
+        safeDateToDisplay(s.service_date),
+        safeDaysSince(s.service_date, todayStr).toString(),
       ]);
 
     // 3. Without quote
@@ -228,8 +233,8 @@ const handler = async (req: Request): Promise<Response> => {
       .map((s: any) => [
         s.folio,
         clientLabel(s.client),
-        new Date(s.service_date).toLocaleDateString("es-CL"),
-        daysSince(s.service_date).toString(),
+        safeDateToDisplay(s.service_date),
+        safeDaysSince(s.service_date, todayStr).toString(),
       ]);
 
     // 4. Overdue invoices
@@ -247,11 +252,11 @@ const handler = async (req: Request): Promise<Response> => {
       .map((s: any) => [
         s.folio,
         clientLabel(s.client),
-        new Date(s.service_date).toLocaleDateString("es-CL"),
-        daysSince(s.service_date).toString(),
+        safeDateToDisplay(s.service_date),
+        safeDaysSince(s.service_date, todayStr).toString(),
       ]);
 
-    // 6. Expiring documents
+    // 6. Expiring documents (safe date helpers)
     const expiringDocs: string[][] = [];
     (expiringCranesRes.data || []).forEach((crane: any) => {
       const checks = [
@@ -261,12 +266,12 @@ const handler = async (req: Request): Promise<Response> => {
       ];
       checks.forEach((c) => {
         if (c.date) {
-          const d = Math.ceil((new Date(c.date).getTime() - today.getTime()) / 86400000);
+          const d = safeDaysSince(todayStr, c.date); // days until expiry
           if (d <= alertDays) {
             expiringDocs.push([
               crane.license_plate,
               c.type,
-              new Date(c.date).toLocaleDateString("es-CL"),
+              safeDateToDisplay(c.date),
               d <= 0 ? `¡Vencido hace ${Math.abs(d)} días!` : `${d} días`,
             ]);
           }
@@ -275,12 +280,12 @@ const handler = async (req: Request): Promise<Response> => {
     });
     (expiringOperatorsRes.data || []).forEach((op: any) => {
       if (op.exam_expiry) {
-        const d = Math.ceil((new Date(op.exam_expiry).getTime() - today.getTime()) / 86400000);
+        const d = safeDaysSince(todayStr, op.exam_expiry);
         if (d <= alertDays) {
           expiringDocs.push([
             op.name,
             "Examen Médico",
-            new Date(op.exam_expiry).toLocaleDateString("es-CL"),
+            safeDateToDisplay(op.exam_expiry),
             d <= 0 ? `¡Vencido hace ${Math.abs(d)} días!` : `${d} días`,
           ]);
         }
@@ -297,7 +302,7 @@ const handler = async (req: Request): Promise<Response> => {
     const todayInProgress = todayServices.filter((s: any) => s.status === "in_progress").length;
     const todayCompleted = todayServices.filter((s: any) => s.status === "completed").length;
     const todayCancelled = todayServices.filter((s: any) => s.status === "cancelled").length;
-     const todayServiceRows = todayServices.map((s: any) => [
+    const todayServiceRows = todayServices.map((s: any) => [
       s.folio, clientLabel(s.client), statusMap[s.status] || s.status,
     ]);
 
@@ -311,7 +316,7 @@ const handler = async (req: Request): Promise<Response> => {
     // Header
     doc.setFontSize(18);
     doc.setFont("helvetica", "bold");
-    doc.setTextColor(34, 197, 94); // green
+    doc.setTextColor(34, 197, 94);
     doc.text(companyName, pageWidth / 2, y, { align: "center" });
     y += 8;
     doc.setFontSize(14);
@@ -320,7 +325,7 @@ const handler = async (req: Request): Promise<Response> => {
     y += 7;
     doc.setFontSize(10);
     doc.setTextColor(120, 120, 120);
-    doc.text(`Fecha: ${today.toLocaleDateString("es-CL")}`, pageWidth / 2, y, { align: "center" });
+    doc.text(`Fecha: ${safeDateToDisplay(todayStr)} | TZ: ${userTimezone}`, pageWidth / 2, y, { align: "center" });
     y += 3;
     doc.setDrawColor(34, 197, 94);
     doc.setLineWidth(0.8);
@@ -422,52 +427,19 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     // Pending Sections
-    addSection(
-      "1. Servicios Pendientes de Facturar",
-      pendingInvoicing.length,
-      ["Folio", "Cliente", "Fecha", "Días", "Valor"],
-      pendingInvoicing,
-      { 0: { cellWidth: 25 }, 4: { halign: "right" } }
-    );
-
-    addSection(
-      "2. Servicios sin Orden de Compra",
-      withoutOC.length,
-      ["Folio", "Cliente", "Fecha", "Días"],
-      withoutOC,
-      { 0: { cellWidth: 25 } }
-    );
-
-    addSection(
-      "3. Servicios sin Cotización",
-      withoutQuote.length,
-      ["Folio", "Cliente", "Fecha", "Días"],
-      withoutQuote,
-      { 0: { cellWidth: 25 } }
-    );
-
-    addSection(
-      "4. Facturas Pendientes de Pago",
-      overdueInvoices.length,
-      ["Folio", "Cliente", "Atraso", "Monto"],
-      overdueInvoices,
-      { 3: { halign: "right" } }
-    );
-
-    addSection(
-      "5. Servicios Pendientes de Cierre",
-      pendingClosures.length,
-      ["Folio", "Cliente", "Fecha", "Días"],
-      pendingClosures,
-      { 0: { cellWidth: 25 } }
-    );
-
-    addSection(
-      "6. Documentación por Vencer",
-      expiringDocs.length,
-      ["Entidad", "Documento", "Vencimiento", "Plazo"],
-      expiringDocs
-    );
+    addSection("1. Servicios Pendientes de Facturar", pendingInvoicing.length,
+      ["Folio", "Cliente", "Fecha", "Días", "Valor"], pendingInvoicing,
+      { 0: { cellWidth: 25 }, 4: { halign: "right" } });
+    addSection("2. Servicios sin Orden de Compra", withoutOC.length,
+      ["Folio", "Cliente", "Fecha", "Días"], withoutOC, { 0: { cellWidth: 25 } });
+    addSection("3. Servicios sin Cotización", withoutQuote.length,
+      ["Folio", "Cliente", "Fecha", "Días"], withoutQuote, { 0: { cellWidth: 25 } });
+    addSection("4. Facturas Pendientes de Pago", overdueInvoices.length,
+      ["Folio", "Cliente", "Atraso", "Monto"], overdueInvoices, { 3: { halign: "right" } });
+    addSection("5. Servicios Pendientes de Cierre", pendingClosures.length,
+      ["Folio", "Cliente", "Fecha", "Días"], pendingClosures, { 0: { cellWidth: 25 } });
+    addSection("6. Documentación por Vencer", expiringDocs.length,
+      ["Entidad", "Documento", "Vencimiento", "Plazo"], expiringDocs);
 
     // Summary box
     if (y > doc.internal.pageSize.getHeight() - 50) {
@@ -487,6 +459,7 @@ const handler = async (req: Request): Promise<Response> => {
     doc.setTextColor(51, 51, 51);
     doc.setFont("helvetica", "normal");
     const summaryItems = [
+      `Servicios Hoy: ${todayServiceRows.length}`,
       `Pend. Facturar: ${pendingInvoicing.length}`,
       `Sin OC: ${withoutOC.length}`,
       `Sin Cotización: ${withoutQuote.length}`,
@@ -494,8 +467,8 @@ const handler = async (req: Request): Promise<Response> => {
       `Pend. Cierre: ${pendingClosures.length}`,
       `Doc. por Vencer: ${expiringDocs.length}`,
     ];
-    const col1 = summaryItems.slice(0, 3);
-    const col2 = summaryItems.slice(3);
+    const col1 = summaryItems.slice(0, 4);
+    const col2 = summaryItems.slice(4);
     col1.forEach((item, i) => {
       doc.text(`• ${item}`, 22, y + i * 6);
     });
@@ -544,12 +517,12 @@ const handler = async (req: Request): Promise<Response> => {
     const emailResponse = await resend.emails.send({
       from: `${companyName} <facturacion@gruas5norte.com>`,
       to: emails,
-      subject: `📋 Reporte Diario de Pendientes - ${today.toLocaleDateString("es-CL")} (${totalPendientes} pendientes)`,
+      subject: `📋 Reporte Diario de Pendientes - ${safeDateToDisplay(todayStr)} (${totalPendientes} pendientes)`,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
           <h2 style="color: #22c55e; text-align: center;">${companyName}</h2>
           <h3 style="text-align: center; color: #333;">Reporte Diario de Pendientes</h3>
-          <p style="text-align: center; color: #666;">${today.toLocaleDateString("es-CL")}</p>
+          <p style="text-align: center; color: #666;">${safeDateToDisplay(todayStr)} | TZ: ${userTimezone}</p>
           
           <div style="background: #eff6ff; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #3b82f6;">
             <h4 style="margin-top: 0; color: #1e40af;">🗓️ Servicios del Día:</h4>

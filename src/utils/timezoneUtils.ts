@@ -429,3 +429,119 @@ export const formatForDisplayWithTime = (date: Date | string): string => {
   
   return formatInTimeZone(dateObj, userTimezone, displayFormat, { locale: es });
 };
+
+// ===================== BUSINESS TIMEZONE (SINGLE SOURCE OF TRUTH) =====================
+
+// Cache for business timezone from company_data
+let businessTimezoneCache: {
+  timezone: string;
+  lastUpdate: number;
+} | null = null;
+
+const BUSINESS_TZ_CACHE_DURATION = 60000; // 60 seconds
+
+/**
+ * Get the business timezone from company_data.report_timezone (single source of truth).
+ * This is used for all report/business date calculations.
+ */
+export const getBusinessTimezone = async (): Promise<string> => {
+  const now = Date.now();
+  if (businessTimezoneCache && (now - businessTimezoneCache.lastUpdate) < BUSINESS_TZ_CACHE_DURATION) {
+    return businessTimezoneCache.timezone;
+  }
+
+  try {
+    if (typeof window !== 'undefined') {
+      const { supabase } = await import('@/integrations/supabase/client');
+      const { data } = await supabase
+        .from('company_data')
+        .select('report_timezone, report_use_system_timezone')
+        .limit(1)
+        .maybeSingle();
+
+      if (data) {
+        let tz: string;
+        if (data.report_use_system_timezone) {
+          tz = getSystemTimezone();
+        } else {
+          tz = data.report_timezone || CHILE_TIMEZONE;
+        }
+        businessTimezoneCache = { timezone: tz, lastUpdate: now };
+        return tz;
+      }
+    }
+  } catch (error) {
+    console.warn('Error fetching business timezone, using fallback:', error);
+  }
+
+  const fallback = CHILE_TIMEZONE;
+  businessTimezoneCache = { timezone: fallback, lastUpdate: now };
+  return fallback;
+};
+
+/** Invalidate business timezone cache */
+export const invalidateBusinessTimezoneCache = () => {
+  businessTimezoneCache = null;
+};
+
+// ===================== SAFE DATE-ONLY HELPERS =====================
+
+/**
+ * Safely parse a YYYY-MM-DD string without timezone shift.
+ * Returns components as { year, month, day } to avoid any Date object issues.
+ * Using noon local time to prevent DST edge cases.
+ */
+export const safeParseDateOnly = (dateStr: string): Date => {
+  if (!dateStr) return new Date();
+  const match = dateStr.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (!match) return new Date(dateStr);
+  const [, y, m, d] = match;
+  return new Date(parseInt(y), parseInt(m) - 1, parseInt(d), 12, 0, 0);
+};
+
+/**
+ * Format a YYYY-MM-DD string to dd-MM-yyyy for display (pure string operation, no Date).
+ */
+export const safeDateToDisplay = (dateStr: string): string => {
+  if (!dateStr) return 'N/A';
+  const match = dateStr.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (!match) return dateStr;
+  return `${match[3]}-${match[2]}-${match[1]}`;
+};
+
+/**
+ * Calculate days between a YYYY-MM-DD date string and a reference YYYY-MM-DD string.
+ * Pure date-only arithmetic — no timezone shift possible.
+ */
+export const safeDaysSince = (dateStr: string, todayStr: string): number => {
+  const d = safeParseDateOnly(dateStr);
+  const t = safeParseDateOnly(todayStr);
+  return Math.floor((t.getTime() - d.getTime()) / (1000 * 60 * 60 * 24));
+};
+
+/**
+ * Check if a YYYY-MM-DD date belongs to the same year-month as a reference YYYY-MM-DD.
+ */
+export const isSameYearMonth = (dateStr: string, refStr: string): boolean => {
+  return dateStr.substring(0, 7) === refStr.substring(0, 7);
+};
+
+/**
+ * Get today's date as YYYY-MM-DD in a specific timezone.
+ */
+export const getTodayStringInTimezone = (tz: string): string => {
+  return new Date().toLocaleDateString('en-CA', { timeZone: tz });
+};
+
+/**
+ * Get current time as HH:mm in the business timezone.
+ */
+export const getCurrentTimeInBusinessTZ = async (): Promise<string> => {
+  const tz = await getBusinessTimezone();
+  return new Date().toLocaleTimeString('en-GB', { 
+    timeZone: tz, 
+    hour: '2-digit', 
+    minute: '2-digit',
+    hour12: false 
+  });
+};

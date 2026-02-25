@@ -205,7 +205,7 @@ export const useServiceManager = () => {
           service_date: serviceData.serviceDate && serviceData.serviceDate.trim() !== '' 
             ? serviceData.serviceDate 
             : null,
-          start_time: serviceData.startTime || null,
+          start_time: serviceData.startTime || new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone }),
           end_time: serviceData.endTime || null,
           crane_mileage: serviceData.craneMileage || null,
           // ✅ FIX: Validar UUID fields - convertir cadenas vacías a null

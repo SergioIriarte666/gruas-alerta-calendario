@@ -67,10 +67,15 @@ export interface DailyReportData {
 }
 
 const fetchDailyReportData = async (selectedDate: string): Promise<DailyReportData> => {
-  const dateForDB = formatForDatabase(new Date(selectedDate));
+  // Safe date parsing - avoid new Date('YYYY-MM-DD') timezone bug
+  const selectedDateSafe = selectedDate.match(/^\d{4}-\d{2}-\d{2}$/) 
+    ? selectedDate 
+    : formatForDatabase(new Date(selectedDate));
+  const dateForDB = selectedDateSafe;
   
   // Usar funciones de zona horaria para cálculos de semana
-  const currentWeekStart = getWeekStart(new Date(selectedDate));
+  const selectedDateObj = new Date(parseInt(selectedDateSafe.substring(0, 4)), parseInt(selectedDateSafe.substring(5, 7)) - 1, parseInt(selectedDateSafe.substring(8, 10)), 12, 0, 0);
+  const currentWeekStart = getWeekStart(selectedDateObj);
   const currentWeekEnd = new Date(currentWeekStart.getTime() + 6 * 24 * 60 * 60 * 1000);
   const nextWeekEnd = new Date(currentWeekEnd.getTime() + 7 * 24 * 60 * 60 * 1000);
 
@@ -131,7 +136,7 @@ const fetchDailyReportData = async (selectedDate: string): Promise<DailyReportDa
 
   // Process services with better categorization
   const allServices = servicesRes.data || [];
-  const selectedDateObj = new Date(selectedDate);
+  const selectedDateObj2 = selectedDateObj;
   
   const scheduled = allServices.filter(s => 
     s.service_date === dateForDB && ['pending', 'in_progress'].includes(s.status)
@@ -172,12 +177,11 @@ const fetchDailyReportData = async (selectedDate: string): Promise<DailyReportDa
     }
   }
   const nextWeek = allServices.filter(s => {
-    const serviceDate = new Date(s.service_date);
-    const nextWeekStart = new Date(selectedDateObj);
-    nextWeekStart.setDate(nextWeekStart.getDate() + 1);
-    const nextWeekEnd = new Date(selectedDateObj);
-    nextWeekEnd.setDate(nextWeekEnd.getDate() + 7);
-    return serviceDate >= nextWeekStart && serviceDate <= nextWeekEnd;
+    // Safe date-only comparison using string slicing
+    const sDate = s.service_date;
+    if (!sDate || sDate <= dateForDB) return false;
+    const nextWeekEndStr = formatForDatabase(new Date(selectedDateObj.getTime() + 7 * 24 * 60 * 60 * 1000));
+    return sDate <= nextWeekEndStr;
   });
 
   // Process calendar events with better filtering
@@ -202,10 +206,10 @@ const fetchDailyReportData = async (selectedDate: string): Promise<DailyReportDa
   
   const invoicesDueToday = invoices.filter(i => i.due_date === dateForDB);
   const invoicesDueThisWeek = invoices.filter(i => {
-    const dueDate = new Date(i.due_date);
-    return dueDate > currentDate && dueDate <= new Date(currentDate.getTime() + 7 * 24 * 60 * 60 * 1000);
+    // Safe string comparison for date-only fields
+    return i.due_date > dateForDB && i.due_date <= formatForDatabase(new Date(currentDate.getTime() + 7 * 24 * 60 * 60 * 1000));
   });
-  const invoicesOverdue = invoices.filter(i => new Date(i.due_date) < currentDate);
+  const invoicesOverdue = invoices.filter(i => i.due_date < dateForDB);
   
   const totalDueToday = invoicesDueToday.reduce((sum, i) => sum + (i.total - (i.paid_amount || 0)), 0);
   const totalDueWeek = invoicesDueThisWeek.reduce((sum, i) => sum + (i.total - (i.paid_amount || 0)), 0);
@@ -220,10 +224,9 @@ const fetchDailyReportData = async (selectedDate: string): Promise<DailyReportDa
   const supplierPayments = supplierPaymentsRes.data || [];
   
   const supplierPaymentsDueToday = supplierPayments.filter(sp => sp.due_date === dateForDB);
-  const supplierPaymentsOverdue = supplierPayments.filter(sp => new Date(sp.due_date) < currentDate);
+  const supplierPaymentsOverdue = supplierPayments.filter(sp => sp.due_date < dateForDB);
   const supplierPaymentsDueWeek = supplierPayments.filter(sp => {
-    const dueDate = new Date(sp.due_date);
-    return dueDate > currentDate && dueDate <= new Date(currentDate.getTime() + 7 * 24 * 60 * 60 * 1000);
+    return sp.due_date > dateForDB && sp.due_date <= formatForDatabase(new Date(currentDate.getTime() + 7 * 24 * 60 * 60 * 1000));
   });
   
   const supplierTotalDueToday = supplierPaymentsDueToday.reduce((sum, sp) => sum + (sp.amount || 0), 0);
@@ -282,14 +285,18 @@ const fetchDailyReportData = async (selectedDate: string): Promise<DailyReportDa
   const todayDate = getCurrentChileDate();
 
   const documentAlerts = cranes.reduce((alerts: any[], crane) => {
-    const techReview = new Date(crane.technical_review_expiry);
-    const insurance = new Date(crane.insurance_expiry);
-    const permit = new Date(crane.circulation_permit_expiry);
+    const techReview = crane.technical_review_expiry;
+    const insurance = crane.insurance_expiry;
+    const permit = crane.circulation_permit_expiry;
     
-    const getDaysDiff = (date: Date) => Math.ceil((date.getTime() - todayDate.getTime()) / (1000 * 60 * 60 * 24));
+    const getDaysDiff = (dateStr: string) => {
+      if (!dateStr) return 999;
+      const d = new Date(parseInt(dateStr.substring(0, 4)), parseInt(dateStr.substring(5, 7)) - 1, parseInt(dateStr.substring(8, 10)), 12, 0, 0);
+      return Math.ceil((d.getTime() - todayDate.getTime()) / (1000 * 60 * 60 * 24));
+    };
     
-    const checkDocument = (expiryDate: Date, docType: string, docName: string) => {
-      const daysDiff = getDaysDiff(expiryDate);
+    const checkDocument = (expiryDateStr: string, docType: string, docName: string) => {
+      const daysDiff = getDaysDiff(expiryDateStr);
       if (daysDiff <= alertDays) {
         const urgency = daysDiff <= 0 ? 'VENCIDO' : daysDiff <= 7 ? 'CRÍTICO' : daysDiff <= 15 ? 'URGENTE' : 'PRÓXIMO';
         const daysText = daysDiff <= 0 ? `${Math.abs(daysDiff)} días vencido` : `${daysDiff} días restantes`;
@@ -302,7 +309,7 @@ const fetchDailyReportData = async (selectedDate: string): Promise<DailyReportDa
           daysRemaining: daysDiff,
           crane: `${crane.brand} ${crane.model}`,
           licensePlate: crane.license_plate,
-          expiryDate: expiryDate.toISOString().split('T')[0]
+          expiryDate: expiryDateStr
         });
       }
     };
@@ -341,7 +348,7 @@ const fetchDailyReportData = async (selectedDate: string): Promise<DailyReportDa
     (totalTasksWeek > criticalTasks ? 85 : 60); // Estimación basada en alertas
 
   return {
-    selectedDate: formatForDisplay(new Date(selectedDate)),
+    selectedDate: formatForDisplay(selectedDateObj),
     services: {
       scheduled,
       pending,
