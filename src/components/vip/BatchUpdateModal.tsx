@@ -52,8 +52,22 @@ export const BatchUpdateModal: React.FC<BatchUpdateModalProps> = ({
 }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [excludedServices, setExcludedServices] = useState<Set<string>>(new Set());
-  const [enableQuote, setEnableQuote] = useState(true);
-  const [enablePurchaseOrder, setEnablePurchaseOrder] = useState(false);
+  const allHaveQuote = useMemo(() =>
+    selectedServices.length > 0 && selectedServices.every(s => s.quoteNumber?.trim()),
+    [selectedServices]
+  );
+
+  const [enableQuote, setEnableQuote] = useState(!allHaveQuote);
+  const [enablePurchaseOrder, setEnablePurchaseOrder] = useState(allHaveQuote);
+
+  React.useEffect(() => {
+    if (open) {
+      const allQuoted = selectedServices.length > 0 &&
+        selectedServices.every(s => s.quoteNumber?.trim());
+      setEnableQuote(!allQuoted);
+      setEnablePurchaseOrder(allQuoted);
+    }
+  }, [open, selectedServices]);
   const [autoUpdateStatus, setAutoUpdateStatus] = useState(true);
   const [overwriteQuote, setOverwriteQuote] = useState(false);
   const [overwritePO, setOverwritePO] = useState(false);
