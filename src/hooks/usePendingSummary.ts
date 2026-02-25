@@ -70,6 +70,7 @@ const fetchPendingSummary = async (): Promise<PendingSummaryData> => {
       .or('purchase_order.is.null,purchase_order.eq.')
       .or('purchase_order_number.is.null,purchase_order_number.eq.')
       .order('service_date', { ascending: true })
+      .order('service_date', { ascending: true })
       .limit(200),
     // Closed service IDs
     supabase.from('closure_services').select('service_id'),
@@ -96,9 +97,17 @@ const fetchPendingSummary = async (): Promise<PendingSummaryData> => {
       .lte('exam_expiry', format(alertDateLimit, 'yyyy-MM-dd'))
   ]);
 
-  // Process services without OC (exclude monthly billing clients)
+  // Helper: hide monthly-billing services only if they belong to the current month
+  const isCurrentMonthMonthly = (service: any) => {
+    if (service.client?.billing_type !== 'monthly') return false;
+    const serviceDate = new Date(service.service_date);
+    return serviceDate.getFullYear() === today.getFullYear() 
+        && serviceDate.getMonth() === today.getMonth();
+  };
+
+  // Process services without OC (exclude current-month monthly billing clients)
   const servicesWithoutOC: PendingServiceWithoutOC[] = (servicesWithoutOCRes.data || [])
-    .filter((s: any) => s.client?.billing_type !== 'monthly')
+    .filter((s: any) => !isCurrentMonthMonthly(s))
     .map((s: any) => ({
     id: s.id,
     folio: s.folio,
