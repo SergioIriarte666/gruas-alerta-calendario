@@ -59,10 +59,25 @@ const handler = async (req: Request): Promise<Response> => {
       });
     }
 
-    // Use Chile timezone to ensure correct "today" date
-    const chileDateStr = new Date().toLocaleDateString("en-CA", { timeZone: "America/Santiago" });
-    const today = new Date(chileDateStr + "T00:00:00");
-    const todayStr = chileDateStr;
+    // Read timezone from user_settings (single source of truth)
+    let userTimezone = "America/Santiago"; // fallback
+    try {
+      const { data: userSettingsData } = await supabase
+        .from("user_settings")
+        .select("timezone, use_system_timezone")
+        .limit(1)
+        .maybeSingle();
+      if (userSettingsData) {
+        // Edge Function can't detect browser timezone, so always use the stored timezone value
+        userTimezone = userSettingsData.timezone || "America/Santiago";
+      }
+    } catch (e) {
+      console.warn("Could not fetch user timezone, using fallback:", e);
+    }
+    console.log(`🕐 Usando zona horaria: ${userTimezone}`);
+
+    const todayStr = new Date().toLocaleDateString("en-CA", { timeZone: userTimezone });
+    const today = new Date(todayStr + "T00:00:00");
     const closureThresholdDate = new Date(today);
     closureThresholdDate.setDate(closureThresholdDate.getDate() - 30);
     const closureStr = closureThresholdDate.toISOString().split("T")[0];
@@ -104,7 +119,7 @@ const handler = async (req: Request): Promise<Response> => {
       // Services pending invoicing (completed, not in invoice_services)
       supabase
         .from("services")
-        .select("id, folio, service_date, client:clients!services_client_id_fkey(name, department, billing_type)")
+        .select("id, folio, service_date, value, client:clients!services_client_id_fkey(name, department, billing_type)")
         .eq("status", "completed")
         .order("service_date", { ascending: true })
         .limit(1000),
@@ -194,6 +209,7 @@ const handler = async (req: Request): Promise<Response> => {
         clientLabel(s.client),
         new Date(s.service_date).toLocaleDateString("es-CL"),
         daysSince(s.service_date).toString(),
+        s.value ? `$${Number(s.value).toLocaleString("es-CL")}` : "-",
       ]);
 
     // 2. Without OC
@@ -409,9 +425,9 @@ const handler = async (req: Request): Promise<Response> => {
     addSection(
       "1. Servicios Pendientes de Facturar",
       pendingInvoicing.length,
-      ["Folio", "Cliente", "Fecha", "Días"],
+      ["Folio", "Cliente", "Fecha", "Días", "Valor"],
       pendingInvoicing,
-      { 0: { cellWidth: 25 } }
+      { 0: { cellWidth: 25 }, 4: { halign: "right" } }
     );
 
     addSection(
