@@ -99,7 +99,7 @@ export const useReports = (filters?: ReportFilters) => {
 
     // Calcular métricas básicas
     const totalServices = filteredServices.length;
-    const totalRevenue = filteredServices.reduce((sum, service) => sum + getServiceValueForClosure(service), 0);
+    const totalRevenue = Math.round(filteredServices.reduce((sum, service) => sum + getServiceValueForClosure(service), 0));
     const averageServiceValue = totalServices > 0 ? totalRevenue / totalServices : 0;
 
     // Métricas de costos y rentabilidad
@@ -119,8 +119,8 @@ export const useReports = (filters?: ReportFilters) => {
         return true;
     });
 
-    const totalCosts = filteredCosts.reduce((sum, cost) => sum + Number(cost.amount), 0);
-    const netProfit = totalRevenue - totalCosts;
+    const totalCosts = Math.round(filteredCosts.reduce((sum, cost) => sum + Number(cost.amount), 0));
+    const netProfit = Math.round(totalRevenue - totalCosts);
     const profitMargin = totalRevenue > 0 ? (netProfit / totalRevenue) * 100 : 0;
     const costsByCategory = await calculateCostsByCategory(filteredCosts, costCategories);
     const averageCostPerService = totalServices > 0 ? totalCosts / totalServices : 0;

@@ -40,7 +40,7 @@ export const useClosureOperations = () => {
           date_from: closureData.dateRange.from,
           date_to: closureData.dateRange.to,
           client_id: closureData.clientId || null,
-          total: closureData.total,
+          total: Math.round(closureData.total),
           status: closureData.status,
           purchase_order: closureData.purchaseOrder || null,
           created_by: user?.id || null

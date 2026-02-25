@@ -51,10 +51,10 @@ export const getCompleteServiceValue = (service: any): number => {
   
   // If both exist, sum them. Otherwise return whichever exists.
   if (baseValue > 0 && custodyValue > 0) {
-    return baseValue + custodyValue;
+    return Math.round(baseValue + custodyValue);
   }
   
-  return baseValue || custodyValue;
+  return Math.round(baseValue || custodyValue);
 };
 
 /**
@@ -87,7 +87,7 @@ export const getServiceValueForClosure = (service: any): number => {
   // - Service has excess flag enabled
   // - Client covered amount is not null and greater than 0
   if (service.hasExcess && clientCovered != null && clientCovered > 0) {
-    return clientCovered;
+    return Math.round(clientCovered);
   }
   
   // Priority 2: Complete service value (base + custody)
@@ -134,9 +134,6 @@ export const getCustodyInfo = (service: any) => {
 /**
  * Calculates the display value that should be shown in modals and reports.
  * Always returns the complete/total service value (base + custody).
- * 
- * @param service - Service object (supports both naming conventions)
- * @returns The total service value for display purposes
  */
 export const getDisplayServiceValue = (service: any): number => {
   return getCompleteServiceValue(service);
@@ -150,12 +147,12 @@ export const calculateClosureTotal = (services: Service[]): number => {
     return 0;
   }
   
-  return services.reduce((sum, service) => {
+  return Math.round(services.reduce((sum, service) => {
     if (!service) {
       return sum;
     }
     return sum + getServiceValueForClosure(service);
-  }, 0);
+  }, 0));
 };
 
 /**
