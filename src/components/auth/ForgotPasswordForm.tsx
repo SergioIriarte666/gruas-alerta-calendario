@@ -22,12 +22,12 @@ export const ForgotPasswordForm = ({ onBack }: ForgotPasswordFormProps) => {
 
     setLoading(true);
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
-        redirectTo: `${window.location.origin}/reset-password`,
+      const { data, error } = await supabase.functions.invoke('send-password-reset', {
+        body: { email: email.trim() },
       });
 
       if (error) {
-        console.error('Error sending reset email:', error);
+        console.error('Error calling send-password-reset:', error);
         toast.error('Error al enviar el correo de recuperación');
         return;
       }
