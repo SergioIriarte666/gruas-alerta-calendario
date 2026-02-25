@@ -10,6 +10,7 @@ interface LoginFormProps {
   setEmail: (email: string) => void;
   setPassword: (password: string) => void;
   onSubmit: (e: React.FormEvent) => void;
+  onForgotPassword?: () => void;
 }
 export const LoginForm: React.FC<LoginFormProps> = ({
   email,
@@ -17,7 +18,8 @@ export const LoginForm: React.FC<LoginFormProps> = ({
   loading,
   setEmail,
   setPassword,
-  onSubmit
+  onSubmit,
+  onForgotPassword
 }) => {
   return <Card className="bg-transparent border-white/20 shadow-none" style={{ background: 'transparent' }}>
       <CardHeader className="bg-transparent" style={{ background: 'transparent' }}>
@@ -34,6 +36,17 @@ export const LoginForm: React.FC<LoginFormProps> = ({
             <Label htmlFor="password-login" className="text-white">Contraseña</Label>
             <Input id="password-login" type="password" required value={password} onChange={e => setPassword(e.target.value)} className="bg-transparent border-white/50 text-white focus:border-white" />
           </div>
+          {onForgotPassword && (
+            <div className="text-right">
+              <button
+                type="button"
+                onClick={onForgotPassword}
+                className="text-sm text-white/70 hover:text-white underline underline-offset-2 transition-colors"
+              >
+                ¿Olvidaste tu contraseña?
+              </button>
+            </div>
+          )}
           <Button type="submit" disabled={loading} className="w-full text-white font-semibold bg-transparent border-white/50 hover:bg-white/10" style={{ background: 'transparent' }}>
             {loading ? 'Ingresando...' : 'Ingresar'}
           </Button>

@@ -50,6 +50,7 @@ const routeImports = {
   DailyReport: () => import('@/pages/DailyReport'),
   Incomes: () => import('@/pages/Incomes'),
   ServiceRates: () => import('@/pages/ServiceRates'),
+  ResetPassword: () => import('@/pages/ResetPassword'),
   
 };
 
@@ -87,6 +88,7 @@ const NotFound = lazy(routeImports.NotFound);
 const DailyReport = lazy(routeImports.DailyReport);
 const Incomes = lazy(routeImports.Incomes);
 const ServiceRates = lazy(routeImports.ServiceRates);
+const ResetPassword = lazy(routeImports.ResetPassword);
 
 
 // Preload all route chunks after initial render
@@ -121,6 +123,7 @@ function AppContent() {
     <div className="min-h-screen bg-background text-foreground">
         <Routes>
         <Route path="/auth" element={<Suspense fallback={null}><Auth /></Suspense>} />
+        <Route path="/reset-password" element={<Suspense fallback={null}><ResetPassword /></Suspense>} />
         <Route path="/" element={<Suspense fallback={null}><Index /></Suspense>} />
 
         {/* All administrative routes share a single ProtectedRoute + Layout */}
