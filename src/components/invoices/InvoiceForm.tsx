@@ -103,18 +103,19 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
     await onSubmit({ ...data, subtotal, vat, total, clientId: selectedClosure.clientId });
   }, [selectedClosure, subtotal, vat, total, onSubmit]);
 
+  const watchedPaymentTermId = watch('paymentTermId');
+  const watchedIssueDate = watch('issueDate');
+  
   useEffect(() => {
-    const termId = watch('paymentTermId');
-    const issueDate = watch('issueDate');
-    if (termId && issueDate && !isEditing) {
-      const term = paymentTerms.find(t => t.id === termId);
+    if (watchedPaymentTermId && watchedIssueDate && !isEditing) {
+      const term = paymentTerms.find(t => t.id === watchedPaymentTermId);
       if (term && term.days > 0) {
-        const dueDate = new Date(issueDate);
+        const dueDate = new Date(watchedIssueDate);
         dueDate.setDate(dueDate.getDate() + term.days);
         setValue('dueDate', dueDate.toISOString().split('T')[0]);
       }
     }
-  }, [watch('paymentTermId'), watch('issueDate'), paymentTerms, setValue, isEditing]);
+  }, [watchedPaymentTermId, watchedIssueDate, paymentTerms, setValue, isEditing]);
 
   const validateStep = (step: number): boolean => {
     switch (step) {
