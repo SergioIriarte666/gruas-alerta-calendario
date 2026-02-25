@@ -28,16 +28,6 @@ export const ServiceStatusTransition: React.FC<ServiceStatusTransitionProps> = (
 }) => {
   const getStatusConfig = (status: ServiceStatus) => {
     const configs = {
-      'quoted': {
-        label: 'Cotizado',
-        color: 'bg-amber-500/20 text-amber-300 border-amber-500/30',
-        icon: FileText
-      },
-      'purchase_order_pending': {
-        label: 'Esperando O.C.',
-        color: 'bg-orange-500/20 text-orange-300 border-orange-500/30',
-        icon: ShoppingCart
-      },
       'pending': {
         label: 'Programado',
         color: 'bg-blue-500/20 text-blue-300 border-blue-500/30',
@@ -52,6 +42,21 @@ export const ServiceStatusTransition: React.FC<ServiceStatusTransitionProps> = (
         label: 'Completado',
         color: 'bg-green-500/20 text-green-300 border-green-500/30',
         icon: CheckCircle
+      },
+      'quoted': {
+        label: 'Cotizado',
+        color: 'bg-amber-500/20 text-amber-300 border-amber-500/30',
+        icon: FileText
+      },
+      'purchase_order_pending': {
+        label: 'Esperando O.C.',
+        color: 'bg-orange-500/20 text-orange-300 border-orange-500/30',
+        icon: ShoppingCart
+      },
+      'with_purchase_order': {
+        label: 'Con O.C.',
+        color: 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30',
+        icon: ShoppingCart
       },
       'invoiced': {
         label: 'Facturado',
@@ -68,15 +73,15 @@ export const ServiceStatusTransition: React.FC<ServiceStatusTransitionProps> = (
   };
 
   const getNextStatus = (currentStatus: ServiceStatus): ServiceStatus | null => {
-    const transitions = {
+    // Flujo post-servicio: completed -> quoted -> purchase_order_pending -> with_purchase_order -> invoiced
+    const transitions: Record<string, ServiceStatus> = {
+      'completed': 'quoted',
       'quoted': 'purchase_order_pending',
-      'purchase_order_pending': 'pending',
-      'pending': 'in_progress',
-      'in_progress': 'completed',
-      'completed': 'invoiced',
-      'failed': 'invoiced' // Failed services can also be invoiced
+      'purchase_order_pending': 'with_purchase_order',
+      'with_purchase_order': 'invoiced',
+      'failed': 'invoiced'
     };
-    return transitions[currentStatus] as ServiceStatus || null;
+    return transitions[currentStatus] || null;
   };
 
   const canTransition = (currentStatus: ServiceStatus): boolean => {
@@ -88,12 +93,11 @@ export const ServiceStatusTransition: React.FC<ServiceStatusTransitionProps> = (
   };
 
   const getTransitionLabel = (currentStatus: ServiceStatus): string => {
-    const labels = {
+    const labels: Record<string, string> = {
+      'completed': 'Agregar Cotización',
       'quoted': 'Solicitar O.C.',
       'purchase_order_pending': 'Confirmar O.C.',
-      'pending': 'Iniciar Servicio',
-      'in_progress': 'Completar',
-      'completed': 'Facturar',
+      'with_purchase_order': 'Facturar',
       'failed': 'Facturar'
     };
     return labels[currentStatus] || 'Siguiente';
@@ -102,28 +106,6 @@ export const ServiceStatusTransition: React.FC<ServiceStatusTransitionProps> = (
   const handleStatusTransition = async () => {
     const nextStatus = getNextStatus(service.status);
     if (!nextStatus) return;
-
-    // Si está en quoted, cambiar a purchase_order_pending
-    if (service.status === 'quoted') {
-      try {
-        const { error } = await supabase
-          .from('services')
-          .update({ 
-            status: 'purchase_order_pending',
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', service.id);
-
-        if (error) throw error;
-        
-        toast.success('Servicio enviado para orden de compra');
-        onUpdate();
-      } catch (error) {
-        console.error('Error updating service status:', error);
-        toast.error('Error al actualizar el estado');
-      }
-      return;
-    }
 
     // Para purchase_order_pending, necesita O.C. registrada
     if (service.status === 'purchase_order_pending') {
