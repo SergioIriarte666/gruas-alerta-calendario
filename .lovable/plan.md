@@ -1,40 +1,35 @@
 
-# Corregir Importador de OC - Agregar matching por referencia de cotizacion
+# Corregir ordenamiento de sub-grupos en Pipeline VIP
 
 ## Problema
-La OC PDF tiene la referencia "PRESUPUESTOS 4090" en observaciones, y existen 2 servicios con COT-4090 (valor 80,000 c/u). Pero el sistema no extrae ni usa esta referencia para el matching. Ademas, la OC tiene 1 linea con cantidad 2 x 80,000 = 160,000 total, y el matcher compara 160,000 contra 80,000 (valor individual), sin coincidencia.
+Al hacer clic en los encabezados de columna (Fecha, Valor, Folio, etc.), solo se reordenan los servicios **dentro** de cada sub-grupo (cotizacion, OC, factura). Los sub-grupos mismos siempre se ordenan alfabeticamente por su numero, ignorando el campo de ordenamiento seleccionado por el usuario.
 
 ## Solucion
 
-### 1. Edge Function: Extraer referencia de presupuesto/cotizacion
-**Archivo:** `supabase/functions/parse-purchase-order-pdf/index.ts`
+### Archivo: `src/components/vip/PipelineListView.tsx`
 
-- Agregar campo `quoteReference` al schema de extraccion de la herramienta AI
-- Actualizar el prompt para instruir al modelo a buscar referencias como "PRESUPUESTOS XXXX", "COTIZACION XXXX", "COT-XXXX" en observaciones del documento
-- Devolver `quoteReference` en la respuesta junto con los items
+Modificar la funcion `groupByField` para que reciba el campo y direccion de ordenamiento actuales, y ordene los sub-grupos segun ese criterio:
 
-### 2. Hook: Agregar fallback de matching por referencia de cotizacion
-**Archivo:** `src/hooks/vip/usePurchaseOrderPDFImport.ts`
+1. **Cambiar la firma de `groupByField`** (linea 89): agregar parametros `sortField` y `sortDirection`
+2. **Cambiar la logica de ordenamiento de sub-grupos** (lineas 97-101): en lugar de `poNumber.localeCompare`, ordenar los sub-grupos segun el campo activo:
+   - `serviceDate`: por la fecha mas reciente/antigua del sub-grupo
+   - `value`: por el valor total del sub-grupo
+   - `folio`: por el primer folio del sub-grupo
+   - `daysInStatus`: por el promedio de dias del sub-grupo
+   - Default (incluyendo `quoteNumber`, `purchaseOrder`, `invoiceNumeroFiscal`): mantener el orden alfabetico actual por numero
+3. **Actualizar la llamada a `groupByField`** (linea 691): pasar `sortField` y `sortDirection` como argumentos
 
-- Agregar `quoteReference` al tipo `ParsedOC`
-- Nuevo fallback (prioridad alta, antes de glosa y monto): si la OC tiene `quoteReference`, buscar TODOS los servicios del cliente cuyo `quoteNumber` contenga ese numero (ej: COT-4090 contiene "4090")
-- Cuando se encuentran multiples servicios por cotizacion, crear un match por cada uno (no solo uno)
-- Mantener intactos todos los fallbacks existentes (patente, OC existente, glosa, monto)
+### Detalle tecnico
 
-### 3. Matching por monto: considerar precio unitario
-**Archivo:** `src/hooks/vip/usePurchaseOrderPDFImport.ts`
+```text
+groupByField(services, config)  -->  groupByField(services, config, sortField, sortDirection)
+```
 
-- Agregar campo `quantity` opcional al tipo `ParsedOCItem`
-- En el fallback de monto, si `item.amount` no coincide y `item.quantity > 1`, tambien probar `item.amount / item.quantity` contra el valor del servicio
-- Actualizar el schema de la edge function para incluir `quantity` en cada item
+Logica de ordenamiento de sub-grupos:
+- Los sub-grupos "Sin X" (vacios) siempre van al final
+- Para `serviceDate`: se toma la fecha max/min de cada sub-grupo segun direccion
+- Para `value`: se usa `totalValue` del sub-grupo
+- Para `folio`/`serviceType`: se usa el valor del primer servicio (ya ordenado)
+- Para `daysInStatus`: se calcula el promedio de dias del sub-grupo
 
-### Flujo resultante para esta OC
-1. PDF parseado: OC 4701666694, quoteReference="4090", 1 item sin patente
-2. Fallback por quoteReference: busca servicios con COT-4090
-3. Encuentra SRV-6387 y SRV-6388 (ambos con COT-4090, valor 80,000)
-4. Crea 2 matches (uno por servicio)
-5. Usuario revisa y aplica
-
-### Archivos a modificar
-1. `supabase/functions/parse-purchase-order-pdf/index.ts` - agregar quoteReference y quantity al schema
-2. `src/hooks/vip/usePurchaseOrderPDFImport.ts` - agregar fallback por cotizacion y monto unitario
+Un solo archivo, una funcion modificada.
