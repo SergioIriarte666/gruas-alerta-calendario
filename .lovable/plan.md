@@ -1,41 +1,65 @@
 
-# Plan: Simplificar Pestana de Consumos
 
-## Cambio principal
-Cambiar el concepto de **"litros por km"** (consumo) a **"km por litro"** (rendimiento), que es mas intuitivo. Ejemplo: grua liviana rinde **4.5 km/L** en vez de consumir 0.22 L/km. Eliminar los campos de "factor carga" y "factor arrastre" de la UI y del calculo.
+# Correccion de Decimales Flotantes en toda la App
 
-## Cambios por archivo
+## Problema
+Al sumar valores de servicios (ej: 650000), JavaScript produce errores de punto flotante como `650000.00000021`. Esto se muestra en formularios, tablas y metricas en toda la app.
 
-### 1. `ConsumptionRatesManager.tsx`
-- Mostrar solo **un campo editable**: "Rendimiento (km/L)" en vez de los 3 campos actuales (consumo base, factor carga, factor arrastre)
-- Al guardar, convertir internamente: `base_consumption_per_km = 1 / rendimiento_km_per_liter`
-- Quitar las filas de "Factor carga" y "Factor arrastre" del UI
+## Causa raiz
+Las funciones `calculateClosureTotal`, `getServiceValueForClosure`, y multiples `.reduce()` acumulan errores de precision de punto flotante de JavaScript. Ningun punto de la cadena aplica redondeo.
 
-### 2. `useTransportCalculation.ts`
-- Simplificar la formula eliminando `loadFactor` y `towingFactor`
-- Nueva formula: `Litros = Distancia * base_consumption_per_km * consumptionFactor`
-- (donde `base_consumption_per_km` ya viene convertido desde el rendimiento)
+## Solucion
+Aplicar `Math.round()` en los puntos centrales de calculo y formato, lo que corrige el problema en cascada para toda la app.
 
-### 3. `TransportCostCalculator.tsx` (panel de resultados)
-- Quitar las lineas de "Factor carga" y "Factor arrastre" del desglose de combustible
-- Mostrar "Rendimiento: X km/L" en lugar de "Consumo base: X L/km"
+## Cambios
 
-### 4. `src/types/transport.ts`
-- Quitar `loadFactor` y `towingFactor` del tipo `TransportCostEstimate.fuelCost`
-- Mantener `loaded_consumption_factor` y `towing_consumption_factor` en `CraneConsumptionRate` (existen en BD, simplemente no se usan)
+### 1. `src/utils/serviceValueCalculations.ts`
+- `calculateClosureTotal`: envolver el resultado del `.reduce()` con `Math.round()`
+- `getCompleteServiceValue`: aplicar `Math.round()` al resultado
+- `getServiceValueForClosure`: aplicar `Math.round()` al resultado
+- `getDisplayServiceValue`: aplicar `Math.round()` al resultado
+- `getServiceValueForProfit`: aplicar `Math.round()` al resultado
 
-### 5. Datos actuales en BD (actualizacion)
-- Grua liviana: actualmente 0.25 L/km (= 4 km/L). Se actualizara a 0.222 L/km (= **4.5 km/L** segun tu indicacion)
-- Resto se mantiene igual, solo se ignoran los factores
+### 2. `src/lib/utils.ts` - `formatCurrency`
+- Aplicar `Math.round(amount)` antes de formatear, ya que los montos en CLP no tienen centavos
+- Para USD/EUR mantener 2 decimales pero con redondeo limpio
+
+### 3. `src/components/closures/ClosureForm.tsx`
+- Linea 138: aplicar `Math.round()` al total calculado antes de guardarlo en formData
+
+### 4. `src/hooks/closures/useEditClosure.ts`
+- Linea 187: aplicar `Math.round()` al `newTotal` antes de guardarlo en la base de datos
+
+### 5. `src/hooks/closures/useClosureOperations.ts`
+- En la creacion del cierre, aplicar `Math.round()` al total
+
+### 6. `src/components/closures/automation/AutomatedClosureWorkflow.tsx`
+- Linea 85: aplicar `Math.round()` al total calculado
+
+### 7. `src/hooks/services/useServicesMetrics.ts`
+- Aplicar `Math.round()` a `totalRevenue`, `totalCosts`, `netProfit` en los calculos de metricas
+
+### 8. `src/hooks/useReports.ts`
+- Aplicar `Math.round()` a los totales calculados con reduce (totalRevenue, etc.)
 
 ## Seccion tecnica
 
-La conversion entre las dos metricas:
-- `rendimiento_km_L = 1 / base_consumption_per_km`
-- `base_consumption_per_km = 1 / rendimiento_km_L`
+La correccion principal esta en `serviceValueCalculations.ts` ya que es el modulo central. Al redondear ahi, la mayoria de los valores derivados quedan limpios automaticamente. Los demas cambios son defensivos para cubrir reduce() directo en otros archivos.
 
-La formula simplificada del calculo:
+Patron aplicado:
 ```text
-Litros = Distancia x (1 / Rendimiento) x FactorRuta
-CostoCombustible = Litros x PrecioDiesel
+// Antes
+return services.reduce((sum, s) => sum + getValue(s), 0);
+
+// Despues  
+return Math.round(services.reduce((sum, s) => sum + getValue(s), 0));
+```
+
+Para `formatCurrency` en CLP (sin centavos):
+```text
+// Antes
+new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(amount)
+
+// Despues
+new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(Math.round(amount))
 ```
