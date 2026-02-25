@@ -74,7 +74,9 @@ Debes extraer la información estructurada del documento usando la herramienta e
 - Ejemplos reales: "Traslado grúa VJYG-13 desde...", "Servicio vehículo VHZJ75", "Grúa para patente AB1234", "Rescate camión BBDD50".
 - Si un ítem no tiene patente visible como campo separado, REVISA la descripción completa del ítem buscando estos patrones.
 - Si la OC tiene un solo ítem sin patente visible, revisa TODO el texto del documento buscando patentes.
-- NUNCA devuelvas patente vacía si hay una patente en la descripción del ítem.`
+- NUNCA devuelvas patente vacía si hay una patente en la descripción del ítem.
+- IMPORTANTE: Busca referencias a presupuestos o cotizaciones en las observaciones, glosa, o cualquier parte del documento. Ejemplos: "PRESUPUESTOS 4090", "COTIZACION 4090", "COT-4090", "Presupuesto N° 4090". Extrae SOLO el número (ej: "4090").
+- Cada ítem puede tener una cantidad (quantity). Si la línea dice "2 x 80.000 = 160.000", el amount es 160.000 y quantity es 2.`
           },
           {
             role: 'user',
@@ -116,7 +118,8 @@ Debes extraer la información estructurada del documento usando la herramienta e
                       properties: {
                         patente: { type: 'string', description: 'Patente/placa del vehículo' },
                         detail: { type: 'string', description: 'Descripción del servicio' },
-                        amount: { type: 'number', description: 'Monto en CLP' }
+                        amount: { type: 'number', description: 'Monto total en CLP (cantidad x precio unitario)' },
+                        quantity: { type: 'number', description: 'Cantidad de unidades del ítem (default 1)' }
                       },
                       required: ['patente', 'detail', 'amount']
                     },
@@ -130,6 +133,10 @@ Debes extraer la información estructurada del documento usando la herramienta e
                       total: { type: 'number', description: 'Total' }
                     },
                     required: ['neto', 'iva', 'total']
+                  },
+                  quoteReference: {
+                    type: 'string',
+                    description: 'Número de referencia de presupuesto/cotización encontrado en observaciones (solo el número, ej: "4090")'
                   }
                 },
                 required: ['ocNumber', 'items', 'totals']
@@ -185,6 +192,7 @@ Debes extraer la información estructurada del documento usando la herramienta e
       date: parsed.date || null,
       items: parsed.items || [],
       totals: parsed.totals || { neto: 0, iva: 0, total: 0 },
+      quoteReference: parsed.quoteReference || '',
       rawText: `Extraído con IA - ${parsed.items?.length || 0} items encontrados`,
     };
 
