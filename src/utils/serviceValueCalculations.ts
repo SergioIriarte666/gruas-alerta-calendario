@@ -1,4 +1,4 @@
-// Service value calculation utilities - v2 (cache bust)
+/** Service value calculation utilities — rebuilt to clear Vite dep cache */
 import { Service } from '@/types';
 import { getCustodyDisplayInfo } from './custodyCalculations';
 
