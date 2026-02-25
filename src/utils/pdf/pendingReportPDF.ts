@@ -72,6 +72,7 @@ export const generatePendingReportPDF = async (): Promise<jsPDF> => {
     expiringCranesRes,
     expiringOperatorsRes,
     invoicedServiceIdsRes,
+    monthlyClientsRes,
     todayServicesSummary,
   ] = await Promise.all([
     supabase.from('services')
@@ -105,6 +106,10 @@ export const generatePendingReportPDF = async (): Promise<jsPDF> => {
       .eq('is_active', true)
       .lte('exam_expiry', alertDateStr),
     supabase.from('invoice_services').select('service_id'),
+    supabase.from('clients')
+      .select('name, department')
+      .eq('billing_type', 'monthly')
+      .order('name', { ascending: true }),
     fetchTodayServices(),
   ]);
 
@@ -126,16 +131,25 @@ export const generatePendingReportPDF = async (): Promise<jsPDF> => {
     return sd.getFullYear() === today.getFullYear() && sd.getMonth() === today.getMonth();
   };
 
-  // Build monthly client summary (current month services from monthly-billing clients)
+  // Build monthly client summary (including clients with 0 services this month)
   const monthlyCurrentMonthServices = (allCompletedRes.data || []).filter((s: any) => isCurrentMonthMonthly(s));
   const monthlyByClient: Record<string, number> = {};
   monthlyCurrentMonthServices.forEach((s: any) => {
     const name = clientLabel(s.client);
     monthlyByClient[name] = (monthlyByClient[name] || 0) + 1;
   });
-  const monthlyClientRows = Object.entries(monthlyByClient)
-    .sort((a, b) => b[1] - a[1])
-    .map(([name, count]) => [name, `${count} servicio(s)`]);
+
+  const monthlyClientNames = new Set<string>([
+    ...(monthlyClientsRes.data || []).map((c: any) => clientLabel(c)),
+    ...Object.keys(monthlyByClient),
+  ]);
+
+  const monthlyClientRows = Array.from(monthlyClientNames)
+    .sort((a, b) => {
+      const countDiff = (monthlyByClient[b] || 0) - (monthlyByClient[a] || 0);
+      return countDiff !== 0 ? countDiff : a.localeCompare(b, 'es');
+    })
+    .map((name) => [name, `${monthlyByClient[name] || 0} servicio(s)`]);
 
   // Process data
   const allPendingInvoicing = (allCompletedRes.data || []).filter((s: any) => !invoicedSet.has(s.id));
