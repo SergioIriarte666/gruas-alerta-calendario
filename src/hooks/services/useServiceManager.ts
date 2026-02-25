@@ -460,16 +460,28 @@ export const useServiceManager = () => {
 
       let transformedData: any = {};
 
-      if (isPartialUpdate) {
-        // ✅ ACTUALIZACIÓN PARCIAL - Solo procesar campos específicos enviados
-        
-        // Obtener estado actual del servicio para auto-transiciones
+      // Obtener estado real actual para auto-transiciones de flujo VIP
+      let currentStatus: Service['status'] | undefined;
+      const shouldResolveCurrentStatus =
+        serviceData.quoteNumber !== undefined ||
+        serviceData.purchaseOrderNumber !== undefined ||
+        serviceData.status !== undefined;
+
+      if (shouldResolveCurrentStatus) {
         const { data: currentService } = await supabase
           .from('services')
           .select('status')
           .eq('id', id)
           .single();
-        const currentStatus = currentService?.status;
+
+        currentStatus = currentService?.status as Service['status'] | undefined;
+      }
+
+      if (isPartialUpdate) {
+        // ✅ ACTUALIZACIÓN PARCIAL - Solo procesar campos específicos enviados
+        
+        // Usar estado actual precargado para auto-transiciones
+
         
         if (serviceData.quoteNumber !== undefined) {
           transformedData.quote_number = serviceData.quoteNumber;
@@ -677,6 +689,19 @@ export const useServiceManager = () => {
             outsourced_notes: serviceData.outsourcedNotes || null
           })
         };
+      }
+
+      // Auto-transiciones de flujo VIP también para actualizaciones completas
+      const isStatusUnchanged = serviceData.status === undefined || serviceData.status === currentStatus;
+      if (isStatusUnchanged && currentStatus === 'completed' && transformedData.quote_number) {
+        transformedData.status = 'quoted';
+      }
+      if (
+        isStatusUnchanged &&
+        (currentStatus === 'quoted' || currentStatus === 'purchase_order_pending') &&
+        transformedData.purchase_order_number
+      ) {
+        transformedData.status = 'with_purchase_order';
       }
 
       // ✅ CRÍTICO: Solo remover campos que NO pertenecen a la tabla services
