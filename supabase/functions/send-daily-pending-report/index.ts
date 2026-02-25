@@ -80,6 +80,7 @@ const handler = async (req: Request): Promise<Response> => {
       overdueRes,
       expiringCranesRes,
       expiringOperatorsRes,
+      todayServicesRes,
     ] = await Promise.all([
       // Services without OC
       supabase
@@ -128,6 +129,11 @@ const handler = async (req: Request): Promise<Response> => {
         .select("id, name, exam_expiry")
         .eq("is_active", true)
         .lte("exam_expiry", alertDateStr),
+      // Today's services
+      supabase
+        .from("services")
+        .select("folio, status, service_type, client:clients!services_client_id_fkey(name)")
+        .eq("service_date", todayStr),
     ]);
 
     // Check which services already have invoices
@@ -222,6 +228,20 @@ const handler = async (req: Request): Promise<Response> => {
       }
     });
 
+    // Process today's services
+    const todayServices = (todayServicesRes.data || []);
+    const statusMap: Record<string, string> = {
+      scheduled: "Programado", pending: "Pendiente", in_progress: "En Curso",
+      completed: "Completado", cancelled: "Cancelado",
+    };
+    const todayScheduled = todayServices.filter((s: any) => s.status === "scheduled" || s.status === "pending").length;
+    const todayInProgress = todayServices.filter((s: any) => s.status === "in_progress").length;
+    const todayCompleted = todayServices.filter((s: any) => s.status === "completed").length;
+    const todayCancelled = todayServices.filter((s: any) => s.status === "cancelled").length;
+    const todayServiceRows = todayServices.map((s: any) => [
+      s.folio, s.client?.name ?? "N/A", s.service_type || "-", statusMap[s.status] || s.status,
+    ]);
+
     // ──── GENERATE PDF ────
     console.log("📄 Generando PDF...");
     const doc = new jsPDF();
@@ -292,7 +312,36 @@ const handler = async (req: Request): Promise<Response> => {
       y = (doc as any).lastAutoTable.finalY + 10;
     };
 
-    // Sections
+    // Section 0: Today's Services
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(51, 51, 51);
+    doc.text("Servicios del Día", 14, y);
+    y += 6;
+    doc.setFontSize(9);
+    doc.setFont("helvetica", "normal");
+    doc.text(`Programados: ${todayScheduled}  |  En Curso: ${todayInProgress}  |  Completados: ${todayCompleted}  |  Cancelados: ${todayCancelled}`, 14, y);
+    y += 4;
+    if (todayServiceRows.length > 0) {
+      autoTable(doc, {
+        startY: y,
+        head: [["Folio", "Cliente", "Tipo", "Estado"]],
+        body: todayServiceRows,
+        theme: "striped",
+        headStyles: { fillColor: [59, 130, 246], textColor: [255, 255, 255], fontStyle: "bold", fontSize: 8 },
+        bodyStyles: { fontSize: 7.5, textColor: [51, 51, 51] },
+        alternateRowStyles: { fillColor: [239, 246, 255] },
+        margin: { left: 14, right: 14 },
+      });
+      y = (doc as any).lastAutoTable.finalY + 10;
+    } else {
+      y += 2;
+      doc.setTextColor(100, 100, 100);
+      doc.text("Sin servicios programados para hoy", 18, y);
+      y += 10;
+    }
+
+    // Pending Sections
     addSection(
       "1. Servicios Pendientes de Facturar",
       pendingInvoicing.length,
@@ -422,8 +471,13 @@ const handler = async (req: Request): Promise<Response> => {
           <h3 style="text-align: center; color: #333;">Reporte Diario de Pendientes</h3>
           <p style="text-align: center; color: #666;">${today.toLocaleDateString("es-CL")}</p>
           
+          <div style="background: #eff6ff; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #3b82f6;">
+            <h4 style="margin-top: 0; color: #1e40af;">🗓️ Servicios del Día:</h4>
+            <p style="margin: 5px 0;">Programados: <strong>${todayScheduled}</strong> | En Curso: <strong>${todayInProgress}</strong> | Completados: <strong>${todayCompleted}</strong> | Cancelados: <strong>${todayCancelled}</strong></p>
+          </div>
+          
           <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
-            <h4 style="margin-top: 0;">Resumen:</h4>
+            <h4 style="margin-top: 0;">Pendientes:</h4>
             <ul style="list-style: none; padding: 0;">
               <li>📄 Pendientes de Facturar: <strong>${pendingInvoicing.length}</strong></li>
               <li>📋 Sin Orden de Compra: <strong>${withoutOC.length}</strong></li>

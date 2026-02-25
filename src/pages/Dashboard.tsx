@@ -12,16 +12,33 @@ import {
   DollarSign, 
   FileText, 
   AlertTriangle,
-  TrendingUp
+  TrendingUp,
+  Download
 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { ServiceDetailsModal } from '@/components/services/ServiceDetailsModal';
 import { useServiceDetails } from '@/hooks/useServiceDetails';
+import { downloadPendingReportPDF } from '@/utils/pdf/pendingReportPDF';
+import { toast } from 'sonner';
 
 const Dashboard: React.FC = () => {
   const { metrics, recentServices, upcomingEvents, loading: dashboardLoading } = useDashboardData();
   const [selectedServiceId, setSelectedServiceId] = useState<string | null>(null);
+  const [downloadingReport, setDownloadingReport] = useState(false);
+
+  const handleDownloadReport = async () => {
+    setDownloadingReport(true);
+    try {
+      await downloadPendingReportPDF();
+      toast.success('Reporte de pendientes descargado');
+    } catch (e: any) {
+      toast.error(`Error al generar reporte: ${e.message}`);
+    } finally {
+      setDownloadingReport(false);
+    }
+  };
 
   const { data: selectedService, isLoading: detailsLoading } = useServiceDetails(selectedServiceId);
 
@@ -83,14 +100,26 @@ const Dashboard: React.FC = () => {
       <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6 animate-fade-in p-4 sm:p-6" style={{ background: '#ffffff', color: '#000000' }}>
         {/* Header Section */}
         <div className="mb-6 sm:mb-8">
-          <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-x-4 mb-3">
-            <h1 className="text-2xl sm:text-3xl font-bold text-black">
-              Dashboard Principal
-            </h1>
-            <Badge className="bg-emerald-500/20 text-emerald-600 border border-emerald-500/30 flex items-center px-3 py-1 w-fit">
-              <span className="w-2 h-2 rounded-full bg-emerald-600 mr-2 animate-pulse"></span>
-              En vivo
-            </Badge>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-x-4">
+              <h1 className="text-2xl sm:text-3xl font-bold text-black">
+                Dashboard Principal
+              </h1>
+              <Badge className="bg-emerald-500/20 text-emerald-600 border border-emerald-500/30 flex items-center px-3 py-1 w-fit">
+                <span className="w-2 h-2 rounded-full bg-emerald-600 mr-2 animate-pulse"></span>
+                En vivo
+              </Badge>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleDownloadReport}
+              disabled={downloadingReport}
+              className="w-fit"
+            >
+              <Download className="w-4 h-4 mr-2" />
+              {downloadingReport ? 'Generando...' : 'Reporte Pendientes'}
+            </Button>
           </div>
           <p className="text-sm sm:text-base text-gray-600">
             Vista general del sistema de gestión de grúas
