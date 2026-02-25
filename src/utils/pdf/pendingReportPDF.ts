@@ -87,7 +87,7 @@ export const generatePendingReportPDF = async (): Promise<jsPDF> => {
       .or('quote_number.is.null,quote_number.eq.')
       .order('service_date', { ascending: true }).limit(500),
     supabase.from('services')
-      .select('id, folio, service_date, service_value, client:clients!services_client_id_fkey(name, department, billing_type)')
+      .select('id, folio, service_date, value, client:clients!services_client_id_fkey(name, department, billing_type)')
       .eq('status', 'completed')
       .order('service_date', { ascending: true }).limit(1000),
     supabase.from('closure_services').select('service_id'),
@@ -159,7 +159,7 @@ export const generatePendingReportPDF = async (): Promise<jsPDF> => {
       s.folio, clientLabel(s.client),
       new Date(s.service_date).toLocaleDateString('es-CL'),
       daysSince(s.service_date).toString(),
-      s.service_value ? `$${Number(s.service_value).toLocaleString('es-CL')}` : '-',
+      s.value ? `$${Number(s.value).toLocaleString('es-CL')}` : '-',
     ]);
 
   const withoutOC = (servicesWithoutOCRes.data || [])
