@@ -130,27 +130,6 @@ type SortDirection = 'asc' | 'desc';
 // Definir los estados del pipeline con estilos neutros del sistema de diseño
 const PIPELINE_STATUSES = [
   {
-    id: 'quoted' as ServiceStatus,
-    title: 'Cotizados',
-    description: 'Servicios con cotización enviada',
-    color: 'bg-secondary text-secondary-foreground',
-    textColor: 'text-foreground'
-  },
-  {
-    id: 'purchase_order_pending' as ServiceStatus,
-    title: 'Esperando O.C.',
-    description: 'Aguardando orden de compra del cliente',
-    color: 'bg-secondary text-secondary-foreground',
-    textColor: 'text-foreground'
-  },
-  {
-    id: 'with_purchase_order' as ServiceStatus,
-    title: 'Con Orden de Compra',
-    description: 'Servicios con orden de compra recibida',
-    color: 'bg-secondary text-secondary-foreground',
-    textColor: 'text-foreground'
-  },
-  {
     id: 'pending' as ServiceStatus,
     title: 'Programados',
     description: 'Servicios confirmados y programados',
@@ -175,6 +154,27 @@ const PIPELINE_STATUSES = [
     id: 'failed' as ServiceStatus,
     title: 'Fallidos',
     description: 'Servicios que no pudieron completarse',
+    color: 'bg-secondary text-secondary-foreground',
+    textColor: 'text-foreground'
+  },
+  {
+    id: 'quoted' as ServiceStatus,
+    title: 'Cotizados',
+    description: 'Servicios con cotización enviada',
+    color: 'bg-secondary text-secondary-foreground',
+    textColor: 'text-foreground'
+  },
+  {
+    id: 'purchase_order_pending' as ServiceStatus,
+    title: 'Esperando O.C.',
+    description: 'Aguardando orden de compra del cliente',
+    color: 'bg-secondary text-secondary-foreground',
+    textColor: 'text-foreground'
+  },
+  {
+    id: 'with_purchase_order' as ServiceStatus,
+    title: 'Con Orden de Compra',
+    description: 'Servicios con orden de compra recibida',
     color: 'bg-secondary text-secondary-foreground',
     textColor: 'text-foreground'
   },

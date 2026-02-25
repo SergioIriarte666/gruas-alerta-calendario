@@ -463,19 +463,33 @@ export const useServiceManager = () => {
       if (isPartialUpdate) {
         // ✅ ACTUALIZACIÓN PARCIAL - Solo procesar campos específicos enviados
         
+        // Obtener estado actual del servicio para auto-transiciones
+        const { data: currentService } = await supabase
+          .from('services')
+          .select('status')
+          .eq('id', id)
+          .single();
+        const currentStatus = currentService?.status;
         
         if (serviceData.quoteNumber !== undefined) {
           transformedData.quote_number = serviceData.quoteNumber;
+          // Auto-transición: completed + quote_number -> quoted
+          if (currentStatus === 'completed' && serviceData.quoteNumber && !serviceData.status) {
+            transformedData.status = 'quoted';
+          }
         }
         if (serviceData.purchaseOrder !== undefined) {
           transformedData.purchase_order = serviceData.purchaseOrder;
         }
         if (serviceData.purchaseOrderNumber !== undefined) {
           transformedData.purchase_order_number = serviceData.purchaseOrderNumber;
+          // Auto-transición: quoted/purchase_order_pending + purchase_order_number -> with_purchase_order
+          if ((currentStatus === 'quoted' || currentStatus === 'purchase_order_pending') && serviceData.purchaseOrderNumber && !serviceData.status) {
+            transformedData.status = 'with_purchase_order';
+          }
         }
         if (serviceData.status !== undefined) {
           transformedData.status = serviceData.status;
-          
         }
       } else {
         // ✅ ACTUALIZACIÓN COMPLETA - Procesar todos los campos con validación
