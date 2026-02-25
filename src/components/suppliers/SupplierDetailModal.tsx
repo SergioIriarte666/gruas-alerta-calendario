@@ -2,14 +2,13 @@ import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Card, CardContent } from '@/components/ui/card';
 import { CustomTabs, CustomTabsList, CustomTabsTrigger, CustomTabsContent } from '@/components/ui/custom-tabs';
-import { Building2, FileText, CreditCard, Package, Wrench, DollarSign, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { Building2, FileText, CreditCard, Package, DollarSign, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { SupplierWithStats } from '@/types/suppliers';
 import { useSupplierDetail } from '@/hooks/useSupplierDetail';
 import { SupplierGeneralTab } from './detail/SupplierGeneralTab';
 import { SupplierDocumentsTab } from './detail/SupplierDocumentsTab';
 import { SupplierPaymentsTab } from './detail/SupplierPaymentsTab';
-import { SupplierInventoryTab } from './detail/SupplierInventoryTab';
-import { SupplierPartsTab } from './detail/SupplierPartsTab';
+import { SupplierInventoryAndPartsTab } from './detail/SupplierInventoryAndPartsTab';
 import { formatCurrency } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -30,13 +29,7 @@ interface StatCardProps {
 }
 
 const StatCard: React.FC<StatCardProps> = ({ 
-  title, 
-  value, 
-  count, 
-  countLabel, 
-  icon: Icon, 
-  iconColor,
-  isLoading 
+  title, value, count, countLabel, icon: Icon, iconColor, isLoading 
 }) => (
   <Card className="bg-card border">
     <CardContent className="p-4">
@@ -51,9 +44,7 @@ const StatCard: React.FC<StatCardProps> = ({
           <div>
             <p className="text-sm text-muted-foreground">{title}</p>
             <p className="text-2xl font-bold text-foreground">{value}</p>
-            <p className="text-xs text-muted-foreground mt-1">
-              {count} {countLabel}
-            </p>
+            <p className="text-xs text-muted-foreground mt-1">{count} {countLabel}</p>
           </div>
           <Icon className={`h-8 w-8 ${iconColor}`} />
         </div>
@@ -63,9 +54,7 @@ const StatCard: React.FC<StatCardProps> = ({
 );
 
 export const SupplierDetailModal: React.FC<SupplierDetailModalProps> = ({
-  supplier,
-  isOpen,
-  onClose,
+  supplier, isOpen, onClose,
 }) => {
   const [activeTab, setActiveTab] = useState('general');
   const { payments, invoices, inventoryMovements, craneParts, stats, isLoading } = useSupplierDetail(supplier?.id ?? null, isOpen);
@@ -122,9 +111,9 @@ export const SupplierDetailModal: React.FC<SupplierDetailModalProps> = ({
           />
         </div>
 
-        {/* Tabs */}
+        {/* Tabs - reduced from 5 to 4 */}
         <CustomTabs value={activeTab} onValueChange={setActiveTab} className="mt-6">
-          <CustomTabsList className="grid w-full grid-cols-5 gap-1">
+          <CustomTabsList className="grid w-full grid-cols-4 gap-1">
             <CustomTabsTrigger value="general">
               <Building2 className="w-4 h-4 mr-2" />
               <span className="hidden sm:inline">General</span>
@@ -141,10 +130,6 @@ export const SupplierDetailModal: React.FC<SupplierDetailModalProps> = ({
               <Package className="w-4 h-4 mr-2" />
               <span className="hidden sm:inline">Inventario</span>
             </CustomTabsTrigger>
-            <CustomTabsTrigger value="parts">
-              <Wrench className="w-4 h-4 mr-2" />
-              <span className="hidden sm:inline">Piezas</span>
-            </CustomTabsTrigger>
           </CustomTabsList>
 
           <CustomTabsContent value="general" className="mt-6">
@@ -160,11 +145,11 @@ export const SupplierDetailModal: React.FC<SupplierDetailModalProps> = ({
           </CustomTabsContent>
 
           <CustomTabsContent value="inventory" className="mt-6">
-            <SupplierInventoryTab movements={inventoryMovements} isLoading={isLoading} />
-          </CustomTabsContent>
-
-          <CustomTabsContent value="parts" className="mt-6">
-            <SupplierPartsTab parts={craneParts} isLoading={isLoading} />
+            <SupplierInventoryAndPartsTab
+              movements={inventoryMovements}
+              parts={craneParts}
+              isLoading={isLoading}
+            />
           </CustomTabsContent>
         </CustomTabs>
       </DialogContent>
