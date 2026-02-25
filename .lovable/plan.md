@@ -1,61 +1,49 @@
 
 
-# Reporte Diario de Pendientes por Email (9:00 AM)
+# Facturacion Mensual - Excluir Clientes del Reporte de Pendientes
 
-## Objetivo
-Enviar automaticamente cada dia a las 9:00 AM (hora de Chile) un email con un PDF adjunto que resuma todos los pendientes criticos del sistema.
+## Problema
+Algunos clientes se facturan una vez al mes (mes vencido), por lo que sus servicios completados siempre aparecen como "pendientes de facturar" en el resumen y reportes, generando ruido innecesario.
 
-## Contenido del Reporte PDF
-El PDF incluira las siguientes secciones con tablas detalladas:
+## Solucion
+Agregar un campo `billing_type` a la tabla `clients` que permita marcar si un cliente tiene facturacion mensual. Los servicios de estos clientes se excluiran automaticamente de las listas de "pendientes de facturar" en todos los puntos del sistema.
 
-1. **Servicios Pendientes de Facturar** - Servicios completados sin factura emitida
-2. **Servicios sin Orden de Compra (OC)** - Servicios completados sin OC registrada
-3. **Servicios sin Cotizacion** - Servicios sin numero de cotizacion
-4. **Facturas Pendientes de Pago** - Facturas vencidas o por vencer, con dias de atraso y montos
-5. **Servicios Pendientes de Cierre** - Servicios completados hace mas de 30 dias sin cierre
-6. **Documentacion por Vencer** - Permisos, seguros y examenes proximos a expirar
+## Cambios
 
-Cada seccion mostrara un contador y una tabla con folio, cliente, fecha, dias pendientes y monto cuando aplique. Al final, un resumen con totales por categoria.
+### 1. Base de datos
+- Agregar columna `billing_type` (text, default `'standard'`) a la tabla `clients`
+- Valores posibles: `'standard'` (facturacion por servicio) y `'monthly'` (facturacion mensual vencida)
 
-## Arquitectura Tecnica
+### 2. Tipo TypeScript
+- Agregar `billingType?: 'standard' | 'monthly'` a la interfaz `Client` en `src/types/index.ts`
 
-### 1. Edge Function: `send-daily-pending-report`
-Nueva funcion que:
-- Consulta directamente a Supabase (con service role) replicando la logica de `usePendingSummary` y `useDailyReport`
-- Genera un PDF en memoria usando `jspdf` + `jspdf-autotable` (mismas librerias ya usadas en el proyecto)
-- Obtiene el email del destinatario desde `company_data.email` (o un campo nuevo `notification_email`)
-- Envia el email via **Resend** con el PDF como attachment en base64
-- Usa el branding de la empresa (mismo estilo visual que los otros emails)
+### 3. Ficha del Cliente - `ClientGeneralInfo.tsx`
+- Agregar un toggle/selector visible en la informacion general del cliente con etiqueta "Facturacion Mensual"
+- Cuando se activa, se guarda `billing_type = 'monthly'` en la base de datos
+- Seguir el patron visual del modulo de Costos (badges, toggles)
 
-### 2. Cron Job con `pg_cron` + `pg_net`
-Programar la ejecucion diaria a las 9:00 AM Chile (12:00 UTC en horario normal, 13:00 UTC en horario de verano):
-- Usa `cron.schedule()` para invocar la Edge Function via `net.http_post()`
-- Se ejecuta de lunes a viernes (dias laborales)
+### 4. Formulario de Cliente
+- Agregar la opcion de facturacion mensual en el formulario de creacion/edicion de cliente (Step 3 o seccion de configuracion)
 
-### 3. Configuracion en Settings
-Agregar en la seccion de Configuracion del Sistema:
-- Toggle para activar/desactivar el reporte diario
-- Campo de email(s) destinatario(s) (puede ser mas de uno, separados por coma)
-- Selector de hora de envio (por defecto 9:00 AM)
-- Estos valores se guardaran en la tabla `company_data` o `system_settings`
+### 5. Filtrado en Pendientes
+Excluir servicios de clientes con `billing_type = 'monthly'` en:
+- `src/hooks/usePendingSummary.ts` - Seccion "servicesWithoutOC" y logica de pendientes de facturacion
+- `src/utils/pdf/pendingReportPDF.ts` - Seccion "Servicios Pendientes de Facturar" del PDF manual
+- `supabase/functions/send-daily-pending-report/index.ts` - Seccion equivalente del reporte por email
 
-## Detalle de Implementacion
+### 6. Indicador visual en tabla de clientes
+- Mostrar un badge pequeno "Mensual" junto al nombre del cliente en `ClientsTable.tsx` cuando tenga facturacion mensual, para que sea facilmente identificable
 
-### Archivos a crear:
-- `supabase/functions/send-daily-pending-report/index.ts` - Edge Function principal
+## Detalle Tecnico
 
-### Archivos a modificar:
-- `supabase/config.toml` - Registrar la nueva funcion con `verify_jwt = false`
-- `src/components/settings/SystemSettingsTab.tsx` - Agregar seccion de configuracion del reporte diario
+### Migracion SQL
+```sql
+ALTER TABLE clients ADD COLUMN billing_type text NOT NULL DEFAULT 'standard';
+```
 
-### Migracion SQL:
-- Agregar campos `daily_report_enabled`, `daily_report_emails`, `daily_report_hour` a `company_data`
-- Crear el cron job con `pg_cron` para la ejecucion automatica
+### Filtrado en queries
+En cada consulta de servicios pendientes de facturar, se hara un JOIN con `clients` y se agregara la condicion `clients.billing_type != 'monthly'` (o se filtrara en el cliente despues del fetch, ya que la relacion ya existe en las queries).
 
-### Estructura del PDF:
-- Encabezado con logo y nombre de la empresa
-- Fecha del reporte
-- Secciones con tablas (usando jspdf-autotable)
-- Resumen final con contadores por categoria
-- Pie de pagina con datos de contacto
+### Hook useClients
+Mapear el nuevo campo `billing_type` desde la base de datos al tipo `Client`.
 
