@@ -184,7 +184,7 @@ export const useEditClosure = ({ closure, onUpdate }: UseEditClosureProps) => {
       // Calculate new total using closure-specific value calculation (includes excess)
       const allServices = [...currentServices, ...availableServices];
       const selectedServices = allServices.filter(s => newServiceIds.includes(s.id));
-      const newTotal = calculateClosureTotal(selectedServices);
+      const newTotal = Math.round(calculateClosureTotal(selectedServices));
 
       // Update closure total
       const { error: updateError } = await supabase

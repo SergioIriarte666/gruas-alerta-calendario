@@ -156,9 +156,9 @@ export const useServicesMetrics = (dateFilter: DateFilter = 'all') => {
   const metrics = useMemo((): ServicesMetrics => {
     const activeServices = services.filter(s => s.status !== 'cancelled');
     const totalServices = activeServices.length;
-    const totalRevenue = activeServices.reduce((sum, service) => sum + getDisplayServiceValue(service), 0);
-    const totalCosts = costs.reduce((sum, cost) => sum + (cost.amount || 0), 0);
-    const netProfit = totalRevenue - totalCosts;
+    const totalRevenue = Math.round(activeServices.reduce((sum, service) => sum + getDisplayServiceValue(service), 0));
+    const totalCosts = Math.round(costs.reduce((sum, cost) => sum + (cost.amount || 0), 0));
+    const netProfit = Math.round(totalRevenue - totalCosts);
     const profitMargin = totalRevenue > 0 ? (netProfit / totalRevenue) * 100 : 0;
     const averageServiceValue = totalServices > 0 ? totalRevenue / totalServices : 0;
     const averageCostPerService = totalServices > 0 ? totalCosts / totalServices : 0;
