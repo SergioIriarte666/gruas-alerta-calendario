@@ -2,8 +2,8 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.50.0";
 import { Resend } from "npm:resend@2.0.0";
-import { jsPDF } from "npm:jspdf@2.5.2";
-import autoTable from "npm:jspdf-autotable@3.8.4";
+import jsPDF from "npm:jspdf@2.5.2";
+import "npm:jspdf-autotable@3.8.4";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -102,7 +102,7 @@ const handler = async (req: Request): Promise<Response> => {
       // Services pending invoicing (completed, not in invoice_services)
       supabase
         .from("services")
-        .select("id, folio, service_date, service_value, client:clients!services_client_id_fkey(name)")
+        .select("id, folio, service_date, client:clients!services_client_id_fkey(name)")
         .eq("status", "completed")
         .order("service_date", { ascending: true })
         .limit(1000),
@@ -132,7 +132,7 @@ const handler = async (req: Request): Promise<Response> => {
       // Today's services
       supabase
         .from("services")
-        .select("folio, status, service_type, client:clients!services_client_id_fkey(name)")
+        .select("folio, status, client:clients!services_client_id_fkey(name)")
         .eq("service_date", todayStr),
     ]);
 
@@ -154,7 +154,6 @@ const handler = async (req: Request): Promise<Response> => {
         s.client?.name ?? "N/A",
         new Date(s.service_date).toLocaleDateString("es-CL"),
         daysSince(s.service_date).toString(),
-        s.service_value ? `$${Number(s.service_value).toLocaleString("es-CL")}` : "-",
       ]);
 
     // 2. Without OC
@@ -238,13 +237,13 @@ const handler = async (req: Request): Promise<Response> => {
     const todayInProgress = todayServices.filter((s: any) => s.status === "in_progress").length;
     const todayCompleted = todayServices.filter((s: any) => s.status === "completed").length;
     const todayCancelled = todayServices.filter((s: any) => s.status === "cancelled").length;
-    const todayServiceRows = todayServices.map((s: any) => [
-      s.folio, s.client?.name ?? "N/A", s.service_type || "-", statusMap[s.status] || s.status,
+     const todayServiceRows = todayServices.map((s: any) => [
+      s.folio, s.client?.name ?? "N/A", statusMap[s.status] || s.status,
     ]);
 
     // ──── GENERATE PDF ────
     console.log("📄 Generando PDF...");
-    const doc = new jsPDF();
+    const doc = new jsPDF.default();
     const companyName = companyData.business_name || "Grúas 5 Norte";
     const pageWidth = doc.internal.pageSize.getWidth();
     let y = 15;
@@ -291,7 +290,7 @@ const handler = async (req: Request): Promise<Response> => {
         return;
       }
 
-      autoTable(doc, {
+      (doc as any).autoTable({
         startY: y,
         head: [headers],
         body: data,
@@ -323,9 +322,9 @@ const handler = async (req: Request): Promise<Response> => {
     doc.text(`Programados: ${todayScheduled}  |  En Curso: ${todayInProgress}  |  Completados: ${todayCompleted}  |  Cancelados: ${todayCancelled}`, 14, y);
     y += 4;
     if (todayServiceRows.length > 0) {
-      autoTable(doc, {
+      (doc as any).autoTable({
         startY: y,
-        head: [["Folio", "Cliente", "Tipo", "Estado"]],
+        head: [["Folio", "Cliente", "Estado"]],
         body: todayServiceRows,
         theme: "striped",
         headStyles: { fillColor: [59, 130, 246], textColor: [255, 255, 255], fontStyle: "bold", fontSize: 8 },
@@ -345,9 +344,9 @@ const handler = async (req: Request): Promise<Response> => {
     addSection(
       "1. Servicios Pendientes de Facturar",
       pendingInvoicing.length,
-      ["Folio", "Cliente", "Fecha", "Días", "Valor"],
+      ["Folio", "Cliente", "Fecha", "Días"],
       pendingInvoicing,
-      { 0: { cellWidth: 25 }, 4: { halign: "right" } }
+      { 0: { cellWidth: 25 } }
     );
 
     addSection(
