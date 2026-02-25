@@ -93,6 +93,9 @@ const SelectContent = React.forwardRef<
         color: '#000000',
         zIndex: 70
       }}
+      onWheelCapture={(event) => {
+        event.stopPropagation();
+      }}
       {...props}
     >
       <SelectScrollUpButton />
@@ -102,6 +105,13 @@ const SelectContent = React.forwardRef<
           position === "popper" &&
             "w-full min-w-[var(--radix-select-trigger-width)] max-w-[600px]"
         )}
+        onWheel={(event) => {
+          const viewport = event.currentTarget;
+          if (viewport.scrollHeight <= viewport.clientHeight) return;
+          event.preventDefault();
+          event.stopPropagation();
+          viewport.scrollTop += event.deltaY;
+        }}
       >
         {children}
       </SelectPrimitive.Viewport>
