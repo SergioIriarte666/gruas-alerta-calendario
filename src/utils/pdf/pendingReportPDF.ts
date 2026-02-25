@@ -18,7 +18,7 @@ const fetchTodayServices = async (): Promise<DailyServiceSummary> => {
   
   const { data } = await supabase
     .from('services')
-    .select('folio, status, service_type, client:clients!services_client_id_fkey(name)')
+    .select('folio, status, service_type, client:clients!services_client_id_fkey(name, department)')
     .eq('service_date', today);
 
   const services = data || [];
@@ -35,12 +35,16 @@ const fetchTodayServices = async (): Promise<DailyServiceSummary> => {
     completed: services.filter((s: any) => s.status === 'completed').length,
     inProgress: services.filter((s: any) => s.status === 'in_progress').length,
     cancelled: services.filter((s: any) => s.status === 'cancelled').length,
-    todayServices: services.map((s: any) => ({
-      folio: s.folio,
-      client: (s.client as any)?.name ?? 'N/A',
-      status: statusMap[s.status] || s.status,
-      type: s.service_type || '-',
-    })),
+    todayServices: services.map((s: any) => {
+      const clientObj = s.client as any;
+      const clientLabel = clientObj ? (clientObj.department && clientObj.department !== 'General' ? `${clientObj.name} - ${clientObj.department}` : clientObj.name) : 'N/A';
+      return {
+        folio: s.folio,
+        client: clientLabel,
+        status: statusMap[s.status] || s.status,
+        type: s.service_type || '-',
+      };
+    }),
   };
 };
 
@@ -71,23 +75,23 @@ export const generatePendingReportPDF = async (): Promise<jsPDF> => {
     todayServicesSummary,
   ] = await Promise.all([
     supabase.from('services')
-      .select('id, folio, service_date, client:clients!services_client_id_fkey(name)')
+      .select('id, folio, service_date, client:clients!services_client_id_fkey(name, department)')
       .eq('status', 'completed')
       .or('purchase_order.is.null,purchase_order.eq.')
       .or('purchase_order_number.is.null,purchase_order_number.eq.')
       .order('service_date', { ascending: true }).limit(500),
     supabase.from('services')
-      .select('id, folio, service_date, client:clients!services_client_id_fkey(name)')
+      .select('id, folio, service_date, client:clients!services_client_id_fkey(name, department)')
       .eq('status', 'completed')
       .or('quote_number.is.null,quote_number.eq.')
       .order('service_date', { ascending: true }).limit(500),
     supabase.from('services')
-      .select('id, folio, service_date, service_value, client:clients!services_client_id_fkey(name, billing_type)')
+      .select('id, folio, service_date, service_value, client:clients!services_client_id_fkey(name, department, billing_type)')
       .eq('status', 'completed')
       .order('service_date', { ascending: true }).limit(1000),
     supabase.from('closure_services').select('service_id'),
     supabase.from('services')
-      .select('id, folio, service_date, client:clients!services_client_id_fkey(name)')
+      .select('id, folio, service_date, client:clients!services_client_id_fkey(name, department)')
       .eq('status', 'completed')
       .lte('service_date', closureStr)
       .order('service_date', { ascending: true }),
@@ -104,6 +108,11 @@ export const generatePendingReportPDF = async (): Promise<jsPDF> => {
     fetchTodayServices(),
   ]);
 
+  const clientLabel = (c: any) => {
+    if (!c) return 'N/A';
+    return c.department && c.department !== 'General' ? `${c.name} - ${c.department}` : c.name;
+  };
+
   const daysSince = (dateStr: string) =>
     Math.floor((today.getTime() - new Date(dateStr).getTime()) / (1000 * 60 * 60 * 24));
 
@@ -114,20 +123,20 @@ export const generatePendingReportPDF = async (): Promise<jsPDF> => {
     .filter((s: any) => !invoicedSet.has(s.id))
     .filter((s: any) => (s.client as any)?.billing_type !== 'monthly')
     .map((s: any) => [
-      s.folio, (s.client as any)?.name ?? 'N/A',
+      s.folio, clientLabel(s.client),
       new Date(s.service_date).toLocaleDateString('es-CL'),
       daysSince(s.service_date).toString(),
       s.service_value ? `$${Number(s.service_value).toLocaleString('es-CL')}` : '-',
     ]);
 
   const withoutOC = (servicesWithoutOCRes.data || []).map((s: any) => [
-    s.folio, (s.client as any)?.name ?? 'N/A',
+    s.folio, clientLabel(s.client),
     new Date(s.service_date).toLocaleDateString('es-CL'),
     daysSince(s.service_date).toString(),
   ]);
 
   const withoutQuote = (servicesWithoutQuoteRes.data || []).map((s: any) => [
-    s.folio, (s.client as any)?.name ?? 'N/A',
+    s.folio, clientLabel(s.client),
     new Date(s.service_date).toLocaleDateString('es-CL'),
     daysSince(s.service_date).toString(),
   ]);
@@ -142,7 +151,7 @@ export const generatePendingReportPDF = async (): Promise<jsPDF> => {
   const pendingClosures = (completedOldRes.data || [])
     .filter((s: any) => !closedIds.has(s.id))
     .map((s: any) => [
-      s.folio, (s.client as any)?.name ?? 'N/A',
+      s.folio, clientLabel(s.client),
       new Date(s.service_date).toLocaleDateString('es-CL'),
       daysSince(s.service_date).toString(),
     ]);

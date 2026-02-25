@@ -85,7 +85,7 @@ const handler = async (req: Request): Promise<Response> => {
       // Services without OC
       supabase
         .from("services")
-        .select("id, folio, service_date, client:clients!services_client_id_fkey(name)")
+        .select("id, folio, service_date, client:clients!services_client_id_fkey(name, department)")
         .eq("status", "completed")
         .or("purchase_order.is.null,purchase_order.eq.")
         .or("purchase_order_number.is.null,purchase_order_number.eq.")
@@ -94,7 +94,7 @@ const handler = async (req: Request): Promise<Response> => {
       // Services without quote
       supabase
         .from("services")
-        .select("id, folio, service_date, client:clients!services_client_id_fkey(name)")
+        .select("id, folio, service_date, client:clients!services_client_id_fkey(name, department)")
         .eq("status", "completed")
         .or("quote_number.is.null,quote_number.eq.")
         .order("service_date", { ascending: true })
@@ -102,7 +102,7 @@ const handler = async (req: Request): Promise<Response> => {
       // Services pending invoicing (completed, not in invoice_services)
       supabase
         .from("services")
-        .select("id, folio, service_date, client:clients!services_client_id_fkey(name, billing_type)")
+        .select("id, folio, service_date, client:clients!services_client_id_fkey(name, department, billing_type)")
         .eq("status", "completed")
         .order("service_date", { ascending: true })
         .limit(1000),
@@ -111,7 +111,7 @@ const handler = async (req: Request): Promise<Response> => {
       // Old completed services (>30 days) for closure
       supabase
         .from("services")
-        .select("id, folio, service_date, client:clients!services_client_id_fkey(name)")
+        .select("id, folio, service_date, client:clients!services_client_id_fkey(name, department)")
         .eq("status", "completed")
         .lte("service_date", closureStr)
         .order("service_date", { ascending: true }),
@@ -132,7 +132,7 @@ const handler = async (req: Request): Promise<Response> => {
       // Today's services
       supabase
         .from("services")
-        .select("folio, status, client:clients!services_client_id_fkey(name)")
+        .select("folio, status, client:clients!services_client_id_fkey(name, department)")
         .eq("service_date", todayStr),
     ]);
 
@@ -143,6 +143,10 @@ const handler = async (req: Request): Promise<Response> => {
     const invoicedSet = new Set((invoicedServiceIds || []).map((r: any) => r.service_id));
 
     // ──── PROCESS DATA ────
+    const clientLabel = (c: any) => {
+      if (!c) return "N/A";
+      return c.department && c.department !== "General" ? `${c.name} - ${c.department}` : c.name;
+    };
     const daysSince = (dateStr: string) =>
       Math.floor((today.getTime() - new Date(dateStr).getTime()) / 86400000);
 
@@ -152,7 +156,7 @@ const handler = async (req: Request): Promise<Response> => {
       .filter((s: any) => s.client?.billing_type !== "monthly")
       .map((s: any) => [
         s.folio,
-        s.client?.name ?? "N/A",
+        clientLabel(s.client),
         new Date(s.service_date).toLocaleDateString("es-CL"),
         daysSince(s.service_date).toString(),
       ]);
@@ -160,7 +164,7 @@ const handler = async (req: Request): Promise<Response> => {
     // 2. Without OC
     const withoutOC = (servicesWithoutOCRes.data || []).map((s: any) => [
       s.folio,
-      s.client?.name ?? "N/A",
+      clientLabel(s.client),
       new Date(s.service_date).toLocaleDateString("es-CL"),
       daysSince(s.service_date).toString(),
     ]);
@@ -168,7 +172,7 @@ const handler = async (req: Request): Promise<Response> => {
     // 3. Without quote
     const withoutQuote = (servicesWithoutQuoteRes.data || []).map((s: any) => [
       s.folio,
-      s.client?.name ?? "N/A",
+      clientLabel(s.client),
       new Date(s.service_date).toLocaleDateString("es-CL"),
       daysSince(s.service_date).toString(),
     ]);
@@ -187,7 +191,7 @@ const handler = async (req: Request): Promise<Response> => {
       .filter((s: any) => !closedIds.has(s.id))
       .map((s: any) => [
         s.folio,
-        s.client?.name ?? "N/A",
+        clientLabel(s.client),
         new Date(s.service_date).toLocaleDateString("es-CL"),
         daysSince(s.service_date).toString(),
       ]);
@@ -239,7 +243,7 @@ const handler = async (req: Request): Promise<Response> => {
     const todayCompleted = todayServices.filter((s: any) => s.status === "completed").length;
     const todayCancelled = todayServices.filter((s: any) => s.status === "cancelled").length;
      const todayServiceRows = todayServices.map((s: any) => [
-      s.folio, s.client?.name ?? "N/A", statusMap[s.status] || s.status,
+      s.folio, clientLabel(s.client), statusMap[s.status] || s.status,
     ]);
 
     // ──── GENERATE PDF ────
