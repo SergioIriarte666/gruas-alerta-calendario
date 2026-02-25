@@ -1,65 +1,61 @@
 
 
-# Correccion de Decimales Flotantes en toda la App
+# Reporte Diario de Pendientes por Email (9:00 AM)
 
-## Problema
-Al sumar valores de servicios (ej: 650000), JavaScript produce errores de punto flotante como `650000.00000021`. Esto se muestra en formularios, tablas y metricas en toda la app.
+## Objetivo
+Enviar automaticamente cada dia a las 9:00 AM (hora de Chile) un email con un PDF adjunto que resuma todos los pendientes criticos del sistema.
 
-## Causa raiz
-Las funciones `calculateClosureTotal`, `getServiceValueForClosure`, y multiples `.reduce()` acumulan errores de precision de punto flotante de JavaScript. Ningun punto de la cadena aplica redondeo.
+## Contenido del Reporte PDF
+El PDF incluira las siguientes secciones con tablas detalladas:
 
-## Solucion
-Aplicar `Math.round()` en los puntos centrales de calculo y formato, lo que corrige el problema en cascada para toda la app.
+1. **Servicios Pendientes de Facturar** - Servicios completados sin factura emitida
+2. **Servicios sin Orden de Compra (OC)** - Servicios completados sin OC registrada
+3. **Servicios sin Cotizacion** - Servicios sin numero de cotizacion
+4. **Facturas Pendientes de Pago** - Facturas vencidas o por vencer, con dias de atraso y montos
+5. **Servicios Pendientes de Cierre** - Servicios completados hace mas de 30 dias sin cierre
+6. **Documentacion por Vencer** - Permisos, seguros y examenes proximos a expirar
 
-## Cambios
+Cada seccion mostrara un contador y una tabla con folio, cliente, fecha, dias pendientes y monto cuando aplique. Al final, un resumen con totales por categoria.
 
-### 1. `src/utils/serviceValueCalculations.ts`
-- `calculateClosureTotal`: envolver el resultado del `.reduce()` con `Math.round()`
-- `getCompleteServiceValue`: aplicar `Math.round()` al resultado
-- `getServiceValueForClosure`: aplicar `Math.round()` al resultado
-- `getDisplayServiceValue`: aplicar `Math.round()` al resultado
-- `getServiceValueForProfit`: aplicar `Math.round()` al resultado
+## Arquitectura Tecnica
 
-### 2. `src/lib/utils.ts` - `formatCurrency`
-- Aplicar `Math.round(amount)` antes de formatear, ya que los montos en CLP no tienen centavos
-- Para USD/EUR mantener 2 decimales pero con redondeo limpio
+### 1. Edge Function: `send-daily-pending-report`
+Nueva funcion que:
+- Consulta directamente a Supabase (con service role) replicando la logica de `usePendingSummary` y `useDailyReport`
+- Genera un PDF en memoria usando `jspdf` + `jspdf-autotable` (mismas librerias ya usadas en el proyecto)
+- Obtiene el email del destinatario desde `company_data.email` (o un campo nuevo `notification_email`)
+- Envia el email via **Resend** con el PDF como attachment en base64
+- Usa el branding de la empresa (mismo estilo visual que los otros emails)
 
-### 3. `src/components/closures/ClosureForm.tsx`
-- Linea 138: aplicar `Math.round()` al total calculado antes de guardarlo en formData
+### 2. Cron Job con `pg_cron` + `pg_net`
+Programar la ejecucion diaria a las 9:00 AM Chile (12:00 UTC en horario normal, 13:00 UTC en horario de verano):
+- Usa `cron.schedule()` para invocar la Edge Function via `net.http_post()`
+- Se ejecuta de lunes a viernes (dias laborales)
 
-### 4. `src/hooks/closures/useEditClosure.ts`
-- Linea 187: aplicar `Math.round()` al `newTotal` antes de guardarlo en la base de datos
+### 3. Configuracion en Settings
+Agregar en la seccion de Configuracion del Sistema:
+- Toggle para activar/desactivar el reporte diario
+- Campo de email(s) destinatario(s) (puede ser mas de uno, separados por coma)
+- Selector de hora de envio (por defecto 9:00 AM)
+- Estos valores se guardaran en la tabla `company_data` o `system_settings`
 
-### 5. `src/hooks/closures/useClosureOperations.ts`
-- En la creacion del cierre, aplicar `Math.round()` al total
+## Detalle de Implementacion
 
-### 6. `src/components/closures/automation/AutomatedClosureWorkflow.tsx`
-- Linea 85: aplicar `Math.round()` al total calculado
+### Archivos a crear:
+- `supabase/functions/send-daily-pending-report/index.ts` - Edge Function principal
 
-### 7. `src/hooks/services/useServicesMetrics.ts`
-- Aplicar `Math.round()` a `totalRevenue`, `totalCosts`, `netProfit` en los calculos de metricas
+### Archivos a modificar:
+- `supabase/config.toml` - Registrar la nueva funcion con `verify_jwt = false`
+- `src/components/settings/SystemSettingsTab.tsx` - Agregar seccion de configuracion del reporte diario
 
-### 8. `src/hooks/useReports.ts`
-- Aplicar `Math.round()` a los totales calculados con reduce (totalRevenue, etc.)
+### Migracion SQL:
+- Agregar campos `daily_report_enabled`, `daily_report_emails`, `daily_report_hour` a `company_data`
+- Crear el cron job con `pg_cron` para la ejecucion automatica
 
-## Seccion tecnica
+### Estructura del PDF:
+- Encabezado con logo y nombre de la empresa
+- Fecha del reporte
+- Secciones con tablas (usando jspdf-autotable)
+- Resumen final con contadores por categoria
+- Pie de pagina con datos de contacto
 
-La correccion principal esta en `serviceValueCalculations.ts` ya que es el modulo central. Al redondear ahi, la mayoria de los valores derivados quedan limpios automaticamente. Los demas cambios son defensivos para cubrir reduce() directo en otros archivos.
-
-Patron aplicado:
-```text
-// Antes
-return services.reduce((sum, s) => sum + getValue(s), 0);
-
-// Despues  
-return Math.round(services.reduce((sum, s) => sum + getValue(s), 0));
-```
-
-Para `formatCurrency` en CLP (sin centavos):
-```text
-// Antes
-new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(amount)
-
-// Despues
-new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(Math.round(amount))
-```
