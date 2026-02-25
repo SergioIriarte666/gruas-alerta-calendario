@@ -1,48 +1,21 @@
 
-# Auto-detectar cotizaciones existentes en Registro por Lotes
+# Eliminar prefijos duplicados en sub-grupos del Pipeline
 
 ## Problema
-Cuando todos los servicios seleccionados ya tienen numero de cotizacion (COT-xxxx), el toggle de "Cotizaciones" aparece activo por defecto. Esto no tiene sentido: si ya tienen COT, lo logico es que el usuario quiera asignar O.C., no volver a cotizar.
+Los numeros de cotizacion y OC ya vienen con su prefijo incluido en la base de datos (ej: "COT-3915", "OC-470166128"). Al renderizar los sub-grupos, el codigo agrega otro prefijo, resultando en "COT-COT-3915" y "OC-OC-xxx".
 
 ## Solucion
 
-### Archivo: `src/components/vip/BatchUpdateModal.tsx`
+### Archivo: `src/components/vip/PipelineListView.tsx`
 
-1. **Auto-detectar al abrir el modal**: Si TODOS los servicios seleccionados ya tienen `quoteNumber`, el toggle de Cotizaciones arranca **desactivado** y el de Ordenes de Compra arranca **activado**.
+Cambiar los prefijos en `getSubGroupConfig` a cadena vacia para los casos de cotizacion y OC, ya que los valores almacenados ya incluyen el prefijo:
 
-2. **Sincronizar con `useEffect`**: Cada vez que se abre el modal (`open` cambia a `true`), recalcular si todos tienen cotizacion y ajustar los toggles.
+- Linea 60: `prefix: 'COT-'` cambiar a `prefix: ''`
+- Linea 76: `prefix: 'OC-'` cambiar a `prefix: ''`
 
-3. **Permitir edicion manual**: El usuario puede reactivar el toggle de Cotizaciones manualmente si necesita editar/sobrescribir los numeros existentes.
+Esto aplica a los tres casos del switch:
+1. `quoted` / `purchase_order_pending`: el `quoteNumber` ya viene como "COT-3915"
+2. `invoiced`: ya tiene `prefix: ''` (correcto)
+3. Default (OC): el `purchaseOrderNumber` ya viene como "OC-470166128"
 
-### Cambio tecnico
-
-En las lineas 53-56, reemplazar los estados fijos:
-```typescript
-const [enableQuote, setEnableQuote] = useState(true);
-const [enablePurchaseOrder, setEnablePurchaseOrder] = useState(false);
-```
-
-Por logica inteligente:
-```typescript
-const allHaveQuote = useMemo(() =>
-  selectedServices.length > 0 && selectedServices.every(s => s.quoteNumber?.trim()),
-  [selectedServices]
-);
-
-const [enableQuote, setEnableQuote] = useState(!allHaveQuote);
-const [enablePurchaseOrder, setEnablePurchaseOrder] = useState(allHaveQuote);
-
-React.useEffect(() => {
-  if (open) {
-    const allQuoted = selectedServices.length > 0 &&
-      selectedServices.every(s => s.quoteNumber?.trim());
-    setEnableQuote(!allQuoted);
-    setEnablePurchaseOrder(allQuoted);
-  }
-}, [open, selectedServices]);
-```
-
-Esto hace que:
-- Si todos tienen COT: abre con COT off, OC on
-- Si ninguno o algunos tienen COT: abre con COT on, OC off (comportamiento actual)
-- El usuario siempre puede cambiar los toggles manualmente
+Un solo archivo, dos lineas.
