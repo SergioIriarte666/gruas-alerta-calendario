@@ -197,9 +197,24 @@ const Invoices = () => {
 
   const handleCreateInvoice = async (data: any) => {
     try {
-      await createInvoice(data);
+      const newInvoice = await createInvoice(data);
       setShowForm(false);
       setPreselectedClosureId(null);
+
+      // Si la factura se creó como pagada, registrar el pago automáticamente
+      if (data.status === 'paid' && newInvoice?.id) {
+        try {
+          const paymentDate = data.paymentDate || data.issueDate || new Date().toISOString().split('T')[0];
+          await markAsPaid(newInvoice.id, paymentDate);
+        } catch (payError) {
+          console.error('Error registering automatic payment:', payError);
+          toast.warning("Factura creada", {
+            description: "La factura se creó pero no se pudo registrar el pago automático.",
+          });
+          return;
+        }
+      }
+
       toast.success("Factura creada", {
         description: "La factura ha sido creada exitosamente.",
       });
