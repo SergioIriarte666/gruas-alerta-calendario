@@ -59,9 +59,10 @@ const handler = async (req: Request): Promise<Response> => {
       });
     }
 
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const todayStr = today.toISOString().split("T")[0];
+    // Use Chile timezone to ensure correct "today" date
+    const chileDateStr = new Date().toLocaleDateString("en-CA", { timeZone: "America/Santiago" });
+    const today = new Date(chileDateStr + "T00:00:00");
+    const todayStr = chileDateStr;
     const closureThresholdDate = new Date(today);
     closureThresholdDate.setDate(closureThresholdDate.getDate() - 30);
     const closureStr = closureThresholdDate.toISOString().split("T")[0];
