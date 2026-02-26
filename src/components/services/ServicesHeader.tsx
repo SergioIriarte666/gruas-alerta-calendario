@@ -119,7 +119,7 @@ export const ServicesHeader = ({
           {isAdmin && (
             <Button 
               size={isMobile ? 'default' : 'lg'}
-              className={`bg-purple-400 hover:bg-purple-500 text-white font-bold ${isMobile ? 'w-full text-base px-4 py-3' : 'text-lg px-8 py-6'} shadow-lg`}
+              className={`bg-violet-400 hover:bg-violet-500 text-white font-bold ${isMobile ? 'w-full text-base px-4 py-3' : 'text-lg px-8 py-6'} shadow-lg`}
               title="Crear un nuevo servicio"
               onClick={onNewService}
             >
