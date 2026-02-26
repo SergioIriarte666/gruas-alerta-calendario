@@ -90,7 +90,8 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
       part_quantity: payment?.part_quantity || undefined,
       part_unit_price: payment?.part_unit_price || undefined,
       crane_id: payment?.crane_id || '',
-      add_to_inventory: payment?.add_to_inventory || false
+      add_to_inventory: payment?.add_to_inventory || false,
+      paid_date: payment?.paid_date ? payment.paid_date.split('T')[0] : new Date().toISOString().split('T')[0]
     }
   });
 
@@ -155,6 +156,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
   };
 
   const isSubmitting = isCreating || isUpdating || isCheckingDuplicate;
+  const watchedStatus = form.watch('status');
   const selectedCategory = form.watch('category');
   // Solo mostrar detalles de piezas para categoría "Mantenimiento"
   const selectedCategoryData = activeCategories.find(cat => cat.id === selectedCategory);
@@ -271,6 +273,21 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
                   </p>
                 )}
               </div>
+
+              {/* Fecha de Pago - visible cuando estado es Pagado */}
+              {watchedStatus === 'paid' && (
+                <div>
+                  <Label className="text-foreground flex items-center gap-2">
+                    <Calendar className="h-4 w-4" />
+                    Fecha de Pago
+                  </Label>
+                  <DatePickerInput
+                    value={form.watch('paid_date') || new Date().toISOString().split('T')[0]}
+                    onChange={(value) => form.setValue('paid_date', value)}
+                    placeholder="Seleccionar fecha de pago"
+                  />
+                </div>
+              )}
             </div>
 
             <div>
