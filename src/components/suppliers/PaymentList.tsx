@@ -31,6 +31,7 @@ import { useSupplierCategoryManager } from '@/hooks/useSupplierCategoryManager';
 import { useCostCategories } from '@/hooks/useCostCategories';
 import { resolveSupplierPaymentCategoryLabel } from '@/utils/suppliers/resolveSupplierPaymentCategory';
 import { PaymentForm } from './PaymentForm';
+import { MarkSupplierPaymentPaidModal } from './MarkSupplierPaymentPaidModal';
 import { SupplierPaymentExportButton } from './SupplierPaymentExportButton';
 import { SupplierPayment, SupplierPaymentStatus } from '@/types/suppliers';
 import { formatCurrency, cn } from '@/lib/utils';
@@ -91,6 +92,7 @@ export const PaymentList: React.FC = () => {
   const [dateType, setDateType] = useState<'due_date' | 'created_at' | 'paid_date'>('due_date');
   const [showForm, setShowForm] = useState(false);
   const [editingPayment, setEditingPayment] = useState<SupplierPayment | null>(null);
+  const [markAsPaidPayment, setMarkAsPaidPayment] = useState<SupplierPayment | null>(null);
   const [sortField, setSortField] = useState<PaymentSortField>('dueDate');
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
 
@@ -215,11 +217,14 @@ export const PaymentList: React.FC = () => {
   };
 
   const handleMarkAsPaid = (payment: SupplierPayment) => {
-    // Por ahora, simplemente marcar como pagado sin detalles de piezas
-    // Los detalles de piezas se pasan desde el formulario de edición
+    setMarkAsPaidPayment(payment);
+  };
+
+  const handleConfirmMarkAsPaid = (payment: SupplierPayment, paymentDate: string) => {
     markPaymentAsPaid({ 
       id: payment.id, 
-      paid_amount: payment.amount 
+      paid_amount: payment.amount,
+      paid_date: paymentDate
     });
   };
 
@@ -658,6 +663,14 @@ export const PaymentList: React.FC = () => {
           onClose={handleCloseForm}
         />
       )}
+
+      {/* Mark as Paid Modal */}
+      <MarkSupplierPaymentPaidModal
+        payment={markAsPaidPayment}
+        isOpen={!!markAsPaidPayment}
+        onClose={() => setMarkAsPaidPayment(null)}
+        onConfirm={handleConfirmMarkAsPaid}
+      />
     </div>
   );
 };
