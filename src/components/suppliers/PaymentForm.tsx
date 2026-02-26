@@ -23,8 +23,8 @@ import { X, Save, Loader2, Calendar, DollarSign, AlertTriangle, Wrench, Package 
 import DatePickerInput from '@/components/common/DatePickerInput';
 import { useSupplierPayments, getStatusLabel, getStatusColor } from '@/hooks/useSupplierPayments';
 import { useSuppliers } from '@/hooks/useSuppliers';
-import { useSupplierCategoryManager } from '@/hooks/useSupplierCategoryManager';
 import { usePaymentDuplicateCheck, DuplicatePayment } from '@/hooks/usePaymentDuplicateCheck';
+import { useCostCategories } from '@/hooks/useCostCategories';
 import { PaymentFormData, SupplierPayment, SupplierPaymentStatus } from '@/types/suppliers';
 import { useCranes } from '@/hooks/useCranes';
 import { formatCurrency } from '@/lib/utils';
@@ -68,7 +68,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
   const { createPayment, updatePayment, markPaymentAsPaid, isCreating, isUpdating } = useSupplierPayments();
   const { suppliers } = useSuppliers();
   const { cranes } = useCranes();
-  const { activeCategories, isLoading: categoriesLoading } = useSupplierCategoryManager();
+  const { data: costCategories = [], isLoading: categoriesLoading } = useCostCategories();
   const { checkDuplicate } = usePaymentDuplicateCheck();
   
   const [showDuplicateWarning, setShowDuplicateWarning] = useState(false);
@@ -84,7 +84,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
       amount: payment?.amount || 0,
       due_date: payment?.due_date ? payment.due_date.split('T')[0] : '',
       description: payment?.description || '',
-      category: payment?.category || (activeCategories?.[0]?.id || ''),
+      category: payment?.category || (costCategories?.[0]?.id || ''),
       reference_number: payment?.reference_number || '',
       notes: payment?.notes || '',
       status: payment?.status || 'pending' as SupplierPaymentStatus,
@@ -162,10 +162,9 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
   const watchedStatus = form.watch('status');
   const selectedCategory = form.watch('category');
   // Solo mostrar detalles de piezas para categoría "Mantenimiento"
-  const selectedCategoryData = activeCategories.find(cat => cat.id === selectedCategory);
+  const selectedCategoryData = costCategories.find(cat => cat.id === selectedCategory);
   const isPiezasCategory = selectedCategoryData ? 
-    (selectedCategoryData.name?.toLowerCase().includes('mantenimiento') || 
-     selectedCategoryData.label?.toLowerCase().includes('mantenimiento')) : 
+    selectedCategoryData.name?.toLowerCase().includes('mantenimiento') : 
     false;
 
   return (
@@ -306,12 +305,12 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
                   {categoriesLoading ? (
                     <SelectItem value="loading" disabled>Cargando categorías...</SelectItem>
                   ) : (
-                    activeCategories.map((category) => (
+                    costCategories.map((category) => (
                       <SelectItem 
                         key={category.id} 
                         value={category.id}
                       >
-                        {category.label}
+                        {category.name}
                       </SelectItem>
                     ))
                   )}
