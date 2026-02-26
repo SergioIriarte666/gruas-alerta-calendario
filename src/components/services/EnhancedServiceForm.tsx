@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { playRetroSuccessSound, playRetroErrorSound } from '@/lib/sounds';
 import { Service } from '@/types';
 import { FolioSection } from './form/FolioSection';
@@ -471,15 +471,23 @@ export const EnhancedServiceForm = ({
     }
   };
 
+  const formContentRef = useRef<HTMLDivElement>(null);
+
+  const scrollFormToTop = () => {
+    formContentRef.current?.scrollTo({ top: 0, behavior: 'instant' });
+  };
+
   const handleNext = () => {
     if (currentStep < totalSteps && canGoNext()) {
       setCurrentStep(prev => prev + 1);
+      scrollFormToTop();
     }
   };
 
   const handlePrevious = () => {
     if (currentStep > 1) {
       setCurrentStep(prev => prev - 1);
+      scrollFormToTop();
     }
   };
 
@@ -676,7 +684,7 @@ export const EnhancedServiceForm = ({
           <FormStepNavigation
             steps={steps}
             currentStep={currentStep}
-            onStepClick={setCurrentStep}
+            onStepClick={(step) => { setCurrentStep(step); scrollFormToTop(); }}
           />
           
           <FormSummaryPanel
@@ -696,7 +704,7 @@ export const EnhancedServiceForm = ({
         </div>
 
         {/* Right Panel - Form Content */}
-        <div className="flex-1 overflow-y-auto pr-0 md:pr-2 min-w-0">
+        <div ref={formContentRef} className="flex-1 overflow-y-auto pr-0 md:pr-2 min-w-0">
           {/* Alertas de Validación */}
           {selectedServiceType && validationErrors.length > 0 && (
             <ServiceValidationAlerts errors={validationErrors} />
