@@ -46,7 +46,10 @@ const paymentSchema = z.object({
   part_unit_price: z.number().positive().optional(),
   crane_id: z.string().optional(),
   // Nuevo: checkbox para sincronización
-  add_to_inventory: z.boolean().optional()
+  add_to_inventory: z.boolean().optional(),
+  // Fecha de pago
+  paid_date: z.string().optional(),
+  paid_amount: z.number().optional()
 });
 
 interface PaymentFormProps {
