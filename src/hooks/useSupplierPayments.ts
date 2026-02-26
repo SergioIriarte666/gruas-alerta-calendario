@@ -297,11 +297,13 @@ export const useSupplierPayments = () => {
   const markPaymentAsPaidMutation = useMutation({
     mutationFn: async ({ 
       id, 
-      paid_amount, 
+      paid_amount,
+      paid_date,
       partDetails 
     }: { 
       id: string; 
-      paid_amount: number; 
+      paid_amount: number;
+      paid_date?: string;
       partDetails?: {
         part_name: string;
         part_quantity: number;
@@ -315,7 +317,7 @@ export const useSupplierPayments = () => {
         .from('supplier_payments')
         .update({
           status: 'paid',
-          paid_date: new Date().toISOString().split('T')[0],
+          paid_date: paid_date || new Date().toISOString().split('T')[0],
           paid_amount
         })
         .eq('id', id)
