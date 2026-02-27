@@ -58,8 +58,7 @@ export const useUnifiedRealtimeManager = () => {
       queryClient.invalidateQueries({ queryKey: ['cost-centers-stats'] });
     }
     
-    // Invalidaciones globales
-    queryClient.invalidateQueries({ queryKey: ['reports'] });
+    // Invalidaciones globales (lightweight only)
     queryClient.invalidateQueries({ queryKey: ['dashboardData'] });
   }, [queryClient]);
 
