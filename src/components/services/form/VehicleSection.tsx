@@ -110,6 +110,11 @@ export const VehicleSection = ({
   const { data: patentData, dataPlate, loading: patentLoading, lookupPatent, reset: resetPatent } = usePatentLookup();
   const [showSuggestionDialog, setShowSuggestionDialog] = useState(false);
   const [isApplyingSuggestion, setIsApplyingSuggestion] = useState(false);
+  const [suggestionStep, setSuggestionStep] = useState<'preview' | 'confirm'>('preview');
+  const [editBrandName, setEditBrandName] = useState('');
+  const [editModelName, setEditModelName] = useState('');
+  const [brandExistsFlag, setBrandExistsFlag] = useState(false);
+  const [modelExistsFlag, setModelExistsFlag] = useState(false);
   const appliedPlatesRef = useRef<Set<string>>(new Set());
   const searchedPlatesRef = useRef<Set<string>>(new Set()); // Track plates we've already searched
   const verifiedPlatesRef = useRef<Set<string>>(new Set()); // Track plates verified for cross-check -- kept for future use
@@ -352,32 +357,55 @@ export const VehicleSection = ({
   const handleApplySuggestion = async () => {
     if (!patentData) return;
     
+    // Check if brand exists
+    const existingBrand = brands.find(
+      b => b.name.toLowerCase() === patentData.marca.toLowerCase()
+    );
+    
+    // Check if model exists (only if brand exists)
+    let existingModel = false;
+    if (existingBrand) {
+      // Need to check models for this brand - use current models if same brand, otherwise check all
+      const brandModels = selectedBrandId === existingBrand.id ? models : [];
+      existingModel = brandModels.some(
+        m => m.name.toLowerCase() === patentData.modelo.toLowerCase()
+      );
+      
+      // If we can't check models yet (different brand selected), do a quick DB check
+      if (selectedBrandId !== existingBrand.id) {
+        // We'll assume model doesn't exist and let the user confirm
+        existingModel = false;
+      }
+    }
+    
+    const brandOk = !!existingBrand;
+    const modelOk = existingModel || patentData.modelo === 'No disponible';
+    
+    if (brandOk && modelOk) {
+      // Both exist, apply directly
+      await applyExistingSuggestion(existingBrand.id, patentData.marca, patentData.modelo);
+    } else {
+      // Show confirmation step
+      setBrandExistsFlag(brandOk);
+      setModelExistsFlag(modelOk);
+      setEditBrandName(patentData.marca);
+      setEditModelName(patentData.modelo);
+      setSuggestionStep('confirm');
+    }
+  };
+
+  const applyExistingSuggestion = async (brandId: string, brandName: string, modelName: string) => {
     const cleanPlate = licensePlate.replace(/[-\s]/g, '').toUpperCase();
     setIsApplyingSuggestion(true);
-    
     try {
-      // 1. Find or create the brand
-      let brandId = brands.find(
-        b => b.name.toLowerCase() === patentData.marca.toLowerCase()
-      )?.id;
-      
-      if (!brandId && patentData.marca !== 'No disponible') {
-        const newBrand = await createBrandAsync({ name: patentData.marca });
-        brandId = newBrand.id;
+      setSelectedBrandId(brandId);
+      onVehicleBrandChange(brandName);
+      if (modelName && modelName !== 'No disponible') {
+        setPendingModel(modelName);
       }
-      
-      if (brandId) {
-        setSelectedBrandId(brandId);
-        onVehicleBrandChange(patentData.marca);
-        
-        // Set pending model to be applied once models load
-        if (patentData.modelo && patentData.modelo !== 'No disponible') {
-          setPendingModel(patentData.modelo);
-        }
-      }
-      
       appliedPlatesRef.current.add(cleanPlate);
       setShowSuggestionDialog(false);
+      setSuggestionStep('preview');
       toast.success('Datos del vehículo aplicados');
     } catch (error) {
       console.error('Error applying suggestion:', error);
@@ -387,10 +415,48 @@ export const VehicleSection = ({
     }
   };
 
+  const handleConfirmCreate = async () => {
+    if (!patentData) return;
+    const cleanPlate = licensePlate.replace(/[-\s]/g, '').toUpperCase();
+    setIsApplyingSuggestion(true);
+    
+    try {
+      let brandId: string;
+      
+      if (brandExistsFlag) {
+        // Brand exists, just find it
+        const existing = brands.find(b => b.name.toLowerCase() === patentData.marca.toLowerCase());
+        brandId = existing!.id;
+      } else {
+        // Create brand with edited name
+        const newBrand = await createBrandAsync({ name: editBrandName.trim() });
+        brandId = newBrand.id;
+      }
+      
+      setSelectedBrandId(brandId);
+      onVehicleBrandChange(brandExistsFlag ? patentData.marca : editBrandName.trim());
+      
+      if (editModelName.trim() && editModelName !== 'No disponible') {
+        setPendingModel(editModelName.trim());
+      }
+      
+      appliedPlatesRef.current.add(cleanPlate);
+      setShowSuggestionDialog(false);
+      setSuggestionStep('preview');
+      toast.success('Datos del vehículo aplicados');
+    } catch (error) {
+      console.error('Error creating brand/model:', error);
+      toast.error('Error al crear marca/modelo');
+    } finally {
+      setIsApplyingSuggestion(false);
+    }
+  };
+
   const handleIgnoreSuggestion = () => {
     const cleanPlate = licensePlate.replace(/[-\s]/g, '').toUpperCase();
     appliedPlatesRef.current.add(cleanPlate);
     setShowSuggestionDialog(false);
+    setSuggestionStep('preview');
     resetPatent();
   };
 
@@ -777,59 +843,144 @@ export const VehicleSection = ({
       </Dialog>
 
       {/* Dialog de sugerencia de patente */}
-      <Dialog open={showSuggestionDialog} onOpenChange={setShowSuggestionDialog}>
+      <Dialog open={showSuggestionDialog} onOpenChange={(open) => {
+        setShowSuggestionDialog(open);
+        if (!open) setSuggestionStep('preview');
+      }}>
         <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-primary">
-              <Lightbulb className="h-5 w-5" />
-              Datos del Vehículo Encontrados
-            </DialogTitle>
-            <DialogDescription>
-              Encontramos información para la patente <span className="font-semibold">{licensePlate}</span>
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="bg-primary/5 rounded-lg p-4 space-y-3">
-            <div className="grid grid-cols-2 gap-3 text-sm">
-              <div>
-                <span className="text-muted-foreground">Marca:</span>
-                <p className="font-medium">{patentData?.marca}</p>
-              </div>
-              <div>
-                <span className="text-muted-foreground">Modelo:</span>
-                <p className="font-medium">{patentData?.modelo}</p>
-              </div>
-              {patentData?.año && (
-                <div>
-                  <span className="text-muted-foreground">Año:</span>
-                  <p className="font-medium">{patentData.año}</p>
+          {suggestionStep === 'preview' ? (
+            <>
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2 text-primary">
+                  <Lightbulb className="h-5 w-5" />
+                  Datos del Vehículo Encontrados
+                </DialogTitle>
+                <DialogDescription>
+                  Encontramos información para la patente <span className="font-semibold">{licensePlate}</span>
+                </DialogDescription>
+              </DialogHeader>
+              
+              <div className="bg-primary/5 rounded-lg p-4 space-y-3">
+                <div className="grid grid-cols-2 gap-3 text-sm">
+                  <div>
+                    <span className="text-muted-foreground">Marca:</span>
+                    <p className="font-medium">{patentData?.marca}</p>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Modelo:</span>
+                    <p className="font-medium">{patentData?.modelo}</p>
+                  </div>
+                  {patentData?.año && (
+                    <div>
+                      <span className="text-muted-foreground">Año:</span>
+                      <p className="font-medium">{patentData.año}</p>
+                    </div>
+                  )}
+                  {patentData?.color && (
+                    <div>
+                      <span className="text-muted-foreground">Color:</span>
+                      <p className="font-medium">{patentData.color}</p>
+                    </div>
+                  )}
                 </div>
-              )}
-              {patentData?.color && (
-                <div>
-                  <span className="text-muted-foreground">Color:</span>
-                  <p className="font-medium">{patentData.color}</p>
+              </div>
+              
+              <p className="text-sm text-muted-foreground">
+                ¿Desea aplicar esta información al formulario?
+              </p>
+              
+              <div className="flex justify-end gap-2 pt-2">
+                <Button type="button" variant="outline" onClick={handleIgnoreSuggestion}>
+                  Ignorar
+                </Button>
+                <Button 
+                  type="button" 
+                  onClick={handleApplySuggestion}
+                  disabled={isApplyingSuggestion}
+                >
+                  {isApplyingSuggestion ? 'Aplicando...' : 'Aplicar Sugerencia'}
+                </Button>
+              </div>
+            </>
+          ) : (
+            <>
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <Plus className="h-5 w-5" />
+                  Crear Marca / Modelo
+                </DialogTitle>
+                <DialogDescription>
+                  {!brandExistsFlag && !modelExistsFlag
+                    ? `No encontramos "${patentData?.marca}" ni "${patentData?.modelo}" en el sistema.`
+                    : !brandExistsFlag
+                    ? `No encontramos la marca "${patentData?.marca}" en el sistema.`
+                    : `No encontramos el modelo "${patentData?.modelo}" en el sistema.`
+                  }
+                  {' '}Puede editar los nombres antes de crear.
+                </DialogDescription>
+              </DialogHeader>
+              
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="edit-brand-name">Marca</Label>
+                  {brandExistsFlag ? (
+                    <Input
+                      id="edit-brand-name"
+                      value={editBrandName}
+                      disabled
+                      className="bg-muted"
+                    />
+                  ) : (
+                    <Input
+                      id="edit-brand-name"
+                      value={editBrandName}
+                      onChange={(e) => setEditBrandName(e.target.value)}
+                      placeholder="Nombre de la marca"
+                      autoFocus
+                    />
+                  )}
                 </div>
-              )}
-            </div>
-          </div>
-          
-          <p className="text-sm text-muted-foreground">
-            ¿Desea aplicar esta información al formulario?
-          </p>
-          
-          <div className="flex justify-end gap-2 pt-2">
-            <Button type="button" variant="outline" onClick={handleIgnoreSuggestion}>
-              Ignorar
-            </Button>
-            <Button 
-              type="button" 
-              onClick={handleApplySuggestion}
-              disabled={isApplyingSuggestion}
-            >
-              {isApplyingSuggestion ? 'Aplicando...' : 'Aplicar Sugerencia'}
-            </Button>
-          </div>
+                
+                {patentData?.modelo && patentData.modelo !== 'No disponible' && (
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-model-name">Modelo</Label>
+                    {modelExistsFlag ? (
+                      <Input
+                        id="edit-model-name"
+                        value={editModelName}
+                        disabled
+                        className="bg-muted"
+                      />
+                    ) : (
+                      <Input
+                        id="edit-model-name"
+                        value={editModelName}
+                        onChange={(e) => setEditModelName(e.target.value)}
+                        placeholder="Nombre del modelo"
+                      />
+                    )}
+                  </div>
+                )}
+              </div>
+              
+              <div className="flex justify-end gap-2 pt-2">
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={() => setSuggestionStep('preview')}
+                >
+                  Volver
+                </Button>
+                <Button 
+                  type="button" 
+                  onClick={handleConfirmCreate}
+                  disabled={isApplyingSuggestion || (!brandExistsFlag && !editBrandName.trim())}
+                >
+                  {isApplyingSuggestion ? 'Creando...' : 'Crear y Aplicar'}
+                </Button>
+              </div>
+            </>
+          )}
         </DialogContent>
       </Dialog>
     </>
