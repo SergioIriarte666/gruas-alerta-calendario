@@ -1,0 +1,15 @@
+UPDATE public.services
+SET invoice_folio = NULL, updated_at = now()
+WHERE id IN (
+  'f8a7e696-7414-41cd-b20c-d8d5b1e2017e',
+  '14535c8f-b85c-4bdd-a1a9-81744075d6cb',
+  '70a3f8eb-49b9-4a8b-a945-190dae13d235'
+);
+
+UPDATE public.services
+SET status = 'with_purchase_order', updated_at = now()
+WHERE id IN (
+  'f8a7e696-7414-41cd-b20c-d8d5b1e2017e',
+  '14535c8f-b85c-4bdd-a1a9-81744075d6cb',
+  '70a3f8eb-49b9-4a8b-a945-190dae13d235'
+);
