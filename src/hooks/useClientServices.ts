@@ -162,6 +162,18 @@ export const useClientServices = (clientId: string | null) => {
         }
     }, [clientId, fetchServicesByClient]);
 
+    // Escuchar evento global de refresco de datos
+    useEffect(() => {
+        const handleGlobalRefresh = () => {
+            if (clientId) {
+                fetchServicesByClient(clientId);
+            }
+        };
+
+        window.addEventListener('global-data-refresh', handleGlobalRefresh);
+        return () => window.removeEventListener('global-data-refresh', handleGlobalRefresh);
+    }, [clientId, fetchServicesByClient]);
+
     const serviceMetrics = {
         totalServices: services.length,
         totalBilled: services.reduce((acc, s) => acc + getDisplayServiceValue(s), 0),
