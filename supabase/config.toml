@@ -102,3 +102,6 @@ verify_jwt = false
 
 [functions.send-daily-pending-report]
 verify_jwt = false
+
+[functions.parse-quote-pdf]
+verify_jwt = false

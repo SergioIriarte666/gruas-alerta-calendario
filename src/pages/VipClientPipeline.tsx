@@ -14,6 +14,7 @@ import { PipelineListView } from '@/components/vip/PipelineListView';
 import { PipelineMetrics } from '@/components/vip/PipelineMetrics';
 import { PurchaseOrderManager } from '@/components/vip/PurchaseOrderManager';
 import { PurchaseOrderPDFImporter } from '@/components/vip/PurchaseOrderPDFImporter';
+import { QuotePDFImporter } from '@/components/vip/QuotePDFImporter';
 import { PurchaseOrderDialog } from '@/components/vip/PurchaseOrderDialog';
 import { ServiceDetailsModal } from '@/components/services/ServiceDetailsModal';
 import { ServicesDialogs } from '@/components/services/ServicesDialogs';
@@ -260,6 +261,12 @@ export default function VipClientPipeline() {
         </TabsContent>
 
         <TabsContent value="purchase-orders" className="space-y-6">
+          <QuotePDFImporter
+            clientId={clientId}
+            clientName={client.name}
+            services={services}
+            onComplete={() => refetch()}
+          />
           <PurchaseOrderPDFImporter
             clientId={clientId}
             clientName={client.name}
