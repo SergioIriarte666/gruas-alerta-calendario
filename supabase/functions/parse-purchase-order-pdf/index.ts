@@ -79,6 +79,7 @@ Debes extraer la información estructurada del documento usando la herramienta e
 - Si la OC tiene un solo ítem sin patente visible, revisa TODO el texto del documento buscando patentes.
 - NUNCA devuelvas patente vacía si hay una patente en la descripción del ítem.
 - Cada ítem puede tener una cantidad (quantity). Si la línea dice "2 x 80.000 = 160.000", el amount es 160.000 y quantity es 2.
+- VEHICULOS SIN PATENTE PERO CON VIN: Algunos vehiculos se identifican por su numero VIN (Vehicle Identification Number) de exactamente 17 caracteres alfanumericos en lugar de patente chilena. Ejemplo: "Sail LZWADAGA9SF003022" -> patente = "LZWADAGA9SF003022". Si no hay patente chilena pero hay un codigo de 17 caracteres alfanumericos, usalo como patente.
 
 *** CRÍTICO - REFERENCIAS A COTIZACIONES/PRESUPUESTOS (quoteReference): ***
 - Busca en TODO el documento (encabezado, items, observaciones, notas, glosas, pie de página) frases que referencien cotizaciones o presupuestos.

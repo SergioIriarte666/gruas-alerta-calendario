@@ -195,9 +195,11 @@ export function useQuotePDFImport(clientId: string | null, services: Service[]) 
     const matches: MatchedQuoteService[] = [];
     const usedServiceIds = new Set<string>();
 
+    // Collect all expanded items first, then sort: items with patente first
+    const allItems: { item: ParsedQuoteItem; quoteNumber: string; fileName: string }[] = [];
+
     for (const quote of validQuotes) {
       for (const rawItem of quote.items) {
-        // Split multiple patentes separated by "/" or ","
         const patenteRaw = (rawItem.patente || '').trim();
         const multiPatentes = patenteRaw.split(/[\/,]/).map(p => p.trim()).filter(p => p.length > 0);
         
@@ -210,6 +212,19 @@ export function useQuotePDFImport(clientId: string | null, services: Service[]) 
           : [rawItem];
 
         for (const item of expandedItems) {
+          allItems.push({ item, quoteNumber: quote.quoteNumber, fileName: quote.fileName });
+        }
+      }
+    }
+
+    // Sort: items with patente first, without patente last (priority matching)
+    allItems.sort((a, b) => {
+      const aHas = normalizePatente(a.item.patente) ? 0 : 1;
+      const bHas = normalizePatente(b.item.patente) ? 0 : 1;
+      return aHas - bHas;
+    });
+
+    for (const { item, quoteNumber, fileName } of allItems) {
         const patenteNorm = normalizePatente(item.patente);
 
         if (!patenteNorm) {
@@ -227,8 +242,8 @@ export function useQuotePDFImport(clientId: string | null, services: Service[]) 
               matches.push({
                 parsedItem: item,
                 service: serviceByAmount,
-                quoteNumber: quote.quoteNumber,
-                fileName: quote.fileName,
+                quoteNumber,
+                fileName,
                 status: 'matched',
               });
               continue;
@@ -237,8 +252,8 @@ export function useQuotePDFImport(clientId: string | null, services: Service[]) 
           matches.push({
             parsedItem: item,
             service: null,
-            quoteNumber: quote.quoteNumber,
-            fileName: quote.fileName,
+            quoteNumber,
+            fileName,
             status: 'no_match',
           });
           continue;
@@ -253,8 +268,8 @@ export function useQuotePDFImport(clientId: string | null, services: Service[]) 
           matches.push({
             parsedItem: item,
             service: null,
-            quoteNumber: quote.quoteNumber,
-            fileName: quote.fileName,
+            quoteNumber,
+            fileName,
             status: 'no_match',
           });
         } else {
@@ -265,25 +280,23 @@ export function useQuotePDFImport(clientId: string | null, services: Service[]) 
             matches.push({
               parsedItem: item,
               service: serviceWithoutQuote,
-              quoteNumber: quote.quoteNumber,
-              fileName: quote.fileName,
+              quoteNumber,
+              fileName,
               status: 'matched',
             });
           } else {
             const topService = matchingServices[0];
-            const hasSameQuote = normalizeQuote(topService.quoteNumber) === normalizeQuote(quote.quoteNumber);
+            const hasSameQuote = normalizeQuote(topService.quoteNumber) === normalizeQuote(quoteNumber);
             usedServiceIds.add(topService.id);
             matches.push({
               parsedItem: item,
               service: topService,
-              quoteNumber: quote.quoteNumber,
-              fileName: quote.fileName,
+              quoteNumber,
+              fileName,
               status: hasSameQuote ? 'same_quote' : 'already_has_quote',
             });
           }
         }
-        } // end for expandedItems
-      }
     }
 
     setState(prev => ({ ...prev, step: 'preview', matches }));
