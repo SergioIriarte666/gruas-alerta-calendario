@@ -200,12 +200,41 @@ export const useInvoiceCancellation = () => {
         }
       }
 
-      // 10. Invalidar queries
+      // 10b. También revertir servicios vinculados directamente via invoice_services
+      const { data: directServices } = await supabase
+        .from('invoice_services')
+        .select('service_id')
+        .eq('invoice_id', data.invoiceId);
+
+      if (directServices && directServices.length > 0) {
+        const directServiceIds = directServices.map(ds => ds.service_id);
+        await supabase
+          .from('services')
+          .update({ 
+            status: 'completed', 
+            invoice_folio: null,
+            invoice_numero_fiscal: null,
+            updated_at: new Date().toISOString() 
+          })
+          .in('id', directServiceIds)
+          .eq('status', 'invoiced');
+
+        await supabase
+          .from('invoice_services')
+          .delete()
+          .eq('invoice_id', data.invoiceId);
+        
+        console.log('✅ Servicios directos revertidos y relaciones eliminadas');
+      }
+
+      // 11. Invalidar queries
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['invoices'] }),
         queryClient.invalidateQueries({ queryKey: ['services'] }),
         queryClient.invalidateQueries({ queryKey: ['closures'] }),
-        queryClient.invalidateQueries({ queryKey: ['invoice-cancellations'] })
+        queryClient.invalidateQueries({ queryKey: ['invoice-cancellations'] }),
+        queryClient.invalidateQueries({ queryKey: ['enhanced-service-details'] }),
+        queryClient.invalidateQueries({ queryKey: ['serviceDetails'] })
       ]);
 
       toast.success("Factura anulada correctamente", {

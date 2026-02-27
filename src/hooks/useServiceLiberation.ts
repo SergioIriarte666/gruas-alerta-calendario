@@ -231,6 +231,7 @@ export const useServiceLiberation = () => {
           .update({ 
             status: 'with_purchase_order', 
             invoice_folio: null,
+            invoice_numero_fiscal: null,
             updated_at: new Date().toISOString() 
           })
           .in('id', serviceIds);
@@ -277,6 +278,7 @@ export const useServiceLiberation = () => {
           .update({ 
             status: 'with_purchase_order', 
             invoice_folio: null,
+            invoice_numero_fiscal: null,
             updated_at: new Date().toISOString() 
           })
           .in('id', serviceIds);

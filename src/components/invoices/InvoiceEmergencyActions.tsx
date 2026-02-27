@@ -64,16 +64,21 @@ const InvoiceEmergencyActions: React.FC<InvoiceEmergencyActionsProps> = ({
 
         const serviceIds = closureServices?.map(cs => cs.service_id) || [];
 
-        // 3. Revert services status from 'invoiced' to 'completed'
+        // 3. Revert services status from 'invoiced' to 'completed' and clear invoice data
         if (serviceIds.length > 0) {
           const { error: revertError } = await supabase
             .from('services')
-            .update({ status: 'completed', updated_at: new Date().toISOString() })
+            .update({ 
+              status: 'completed', 
+              invoice_folio: null,
+              invoice_numero_fiscal: null,
+              updated_at: new Date().toISOString() 
+            })
             .in('id', serviceIds)
             .eq('status', 'invoiced');
 
           if (revertError) throw revertError;
-          console.log('Emergency deletion - Reverted', serviceIds.length, 'services to completed');
+          console.log('Emergency deletion - Reverted', serviceIds.length, 'services to completed (cleared invoice data)');
         }
 
         // 4. Revert closure status from 'invoiced' to 'closed'
@@ -85,6 +90,33 @@ const InvoiceEmergencyActions: React.FC<InvoiceEmergencyActionsProps> = ({
 
         if (closureRevertError) throw closureRevertError;
         console.log('Emergency deletion - Reverted', closureIds.length, 'closures to closed');
+      }
+
+      // 4b. Also revert services linked directly via invoice_services
+      const { data: directServices } = await supabase
+        .from('invoice_services')
+        .select('service_id')
+        .eq('invoice_id', invoiceId);
+
+      if (directServices && directServices.length > 0) {
+        const directServiceIds = directServices.map(ds => ds.service_id);
+        await supabase
+          .from('services')
+          .update({ 
+            status: 'completed', 
+            invoice_folio: null,
+            invoice_numero_fiscal: null,
+            updated_at: new Date().toISOString() 
+          })
+          .in('id', directServiceIds)
+          .eq('status', 'invoiced');
+
+        await supabase
+          .from('invoice_services')
+          .delete()
+          .eq('invoice_id', invoiceId);
+        
+        console.log('Emergency deletion - Reverted', directServiceIds.length, 'direct services');
       }
 
       // 5. Delete invoice closure relationships
