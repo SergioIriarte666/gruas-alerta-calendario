@@ -18,6 +18,7 @@ import AdminOnlyRoute from '@/components/layout/AdminOnlyRoute';
 // Route chunk imports - stored for preloading
 const routeImports = {
   Index: () => import('@/pages/Index'),
+  Profile: () => import('@/pages/Profile'),
   Dashboard: () => import('@/pages/Dashboard'),
   Auth: () => import('@/pages/Auth'),
   Services: () => import('@/pages/Services'),
@@ -56,6 +57,7 @@ const routeImports = {
 
 // Lazy components using the same import functions
 const Index = lazy(routeImports.Index);
+const Profile = lazy(routeImports.Profile);
 const Dashboard = lazy(routeImports.Dashboard);
 const Auth = lazy(routeImports.Auth);
 const Services = lazy(routeImports.Services);
@@ -133,6 +135,7 @@ function AppContent() {
           </ProtectedRoute>
         }>
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/profile" element={<Profile />} />
           <Route path="/services" element={<Services />} />
           <Route path="/calendar" element={<Calendar />} />
           <Route path="/closures" element={<Closures />} />
