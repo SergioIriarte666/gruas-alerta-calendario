@@ -158,7 +158,9 @@ export function useQuotePDFImport(clientId: string | null, services: Service[]) 
     clientServices = clientServices.filter(s =>
       s.status === 'completed' ||
       s.status === 'purchase_order_pending' ||
-      s.status === 'quoted'
+      s.status === 'quoted' ||
+      s.status === 'with_purchase_order' ||
+      s.status === 'invoiced'
     );
 
     const matches: MatchedQuoteService[] = [];
