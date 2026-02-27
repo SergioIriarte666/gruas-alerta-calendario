@@ -20,7 +20,7 @@ import { useVehicleBrands } from '@/hooks/useVehicleBrands';
 import { useVehicleModels } from '@/hooks/useVehicleModels';
 import { useVehicleHistory } from '@/hooks/useVehicleHistory';
 import { usePatentLookup } from '@/hooks/usePatentLookup';
-import { AlertTriangle, Plus, AlertCircle, Calendar, MapPin, User, FileText, Car, Clock, Loader2, Lightbulb } from 'lucide-react';
+import { AlertTriangle, Plus, AlertCircle, Calendar, MapPin, User, FileText, Car, Clock, Loader2, Lightbulb, CheckCircle2, ShieldAlert } from 'lucide-react';
 import { format, formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { parseFromDatabase } from '@/utils/timezoneUtils';
@@ -82,7 +82,17 @@ export const VehicleSection = ({
   const [isApplyingSuggestion, setIsApplyingSuggestion] = useState(false);
   const appliedPlatesRef = useRef<Set<string>>(new Set());
   const searchedPlatesRef = useRef<Set<string>>(new Set()); // Track plates we've already searched
+  const verifiedPlatesRef = useRef<Set<string>>(new Set()); // Track plates verified for cross-check
   const [pendingModel, setPendingModel] = useState<string | null>(null);
+  
+  // Cross-verification states
+  const [mismatchWarning, setMismatchWarning] = useState<{
+    expectedBrand: string;
+    expectedModel: string;
+    enteredBrand: string;
+    enteredModel: string;
+  } | null>(null);
+  const [verificationSuccess, setVerificationSuccess] = useState(false);
   
   // Fetch vehicle history for the debounced plate
   const { history, isLoading: historyLoading } = useVehicleHistory(
@@ -101,21 +111,14 @@ export const VehicleSection = ({
     return () => clearTimeout(timer);
   }, [licensePlate]);
 
-  // Patent lookup when plate changes (debounced, 800ms)
+  // Patent lookup when plate changes (debounced, 800ms) - now fires regardless of brand
   useEffect(() => {
     const cleanPlate = licensePlate.replace(/[-\s]/g, '').toUpperCase();
     
-    // Only lookup if:
-    // - Plate is long enough (Chilean plates: 6 characters)
-    // - Not already searched or applied for this plate
-    // - No brand already selected (user hasn't filled manually)
-    // - Not in editing mode
-    // - Not currently loading
     if (
       cleanPlate.length >= 6 &&
       !searchedPlatesRef.current.has(cleanPlate) &&
       !appliedPlatesRef.current.has(cleanPlate) &&
-      !vehicleBrand &&
       !isEditing &&
       !patentLoading
     ) {
@@ -125,22 +128,47 @@ export const VehicleSection = ({
       }, 800);
       return () => clearTimeout(timer);
     }
-  }, [licensePlate, vehicleBrand, isEditing, patentLoading]);
+  }, [licensePlate, isEditing, patentLoading]);
 
-  // Show suggestion dialog when patent data arrives
+  // Show suggestion dialog OR cross-verify when patent data arrives
   useEffect(() => {
     const cleanPlate = licensePlate.replace(/[-\s]/g, '').toUpperCase();
     if (
       patentData &&
       patentData.marca !== 'No disponible' &&
       !appliedPlatesRef.current.has(cleanPlate) &&
-      !showSuggestionDialog && // Don't re-show if already open
-      !vehicleBrand &&
       !isEditing
     ) {
-      setShowSuggestionDialog(true);
+      if (!vehicleBrand) {
+        // No brand selected: show suggestion dialog
+        if (!showSuggestionDialog) {
+          setShowSuggestionDialog(true);
+        }
+      } else {
+        // Brand already selected: cross-verify silently
+        const verifyKey = `${cleanPlate}_${vehicleBrand}_${vehicleModel}`;
+        if (!verifiedPlatesRef.current.has(verifyKey)) {
+          verifiedPlatesRef.current.add(verifyKey);
+          
+          const brandMatch = patentData.marca.toLowerCase() === vehicleBrand.toLowerCase();
+          const modelMatch = !vehicleModel || patentData.modelo.toLowerCase() === vehicleModel.toLowerCase();
+          
+          if (brandMatch && modelMatch) {
+            setMismatchWarning(null);
+            setVerificationSuccess(true);
+          } else {
+            setVerificationSuccess(false);
+            setMismatchWarning({
+              expectedBrand: patentData.marca,
+              expectedModel: patentData.modelo,
+              enteredBrand: vehicleBrand,
+              enteredModel: vehicleModel || '(sin modelo)',
+            });
+          }
+        }
+      }
     }
-  }, [patentData, licensePlate, vehicleBrand, isEditing, showSuggestionDialog]);
+  }, [patentData, licensePlate, vehicleBrand, vehicleModel, isEditing, showSuggestionDialog]);
 
   // Handle pending model after brand is set
   useEffect(() => {
@@ -188,12 +216,20 @@ export const VehicleSection = ({
     }
   }, [history, debouncedPlate, licensePlate, isEditing, historyConfirmed]);
 
-  // Reset confirmation when plate changes
+  // Reset confirmation and mismatch warning when plate/brand/model changes
   useEffect(() => {
     if (licensePlate.toUpperCase() !== debouncedPlate) {
       setHistoryConfirmed(false);
     }
   }, [licensePlate, debouncedPlate]);
+
+  // Clear mismatch warning when user changes brand, model or plate
+  useEffect(() => {
+    setMismatchWarning(null);
+    setVerificationSuccess(false);
+    // Reset verified plates so re-verification can happen
+    verifiedPlatesRef.current.clear();
+  }, [vehicleBrand, vehicleModel, licensePlate]);
 
   // Find brand ID from brand name when component loads
   useEffect(() => {
@@ -444,6 +480,34 @@ export const VehicleSection = ({
           </div>
         </div>
       </div>
+
+      {/* Banner de verificación cruzada - advertencia */}
+      {mismatchWarning && (
+        <div className="flex items-start gap-3 rounded-lg border border-yellow-500/50 bg-yellow-50 dark:bg-yellow-950/20 p-4 mt-2">
+          <ShieldAlert className="h-5 w-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+          <div className="flex-1 text-sm">
+            <p className="font-semibold text-yellow-800 dark:text-yellow-200">
+              Verificación de patente: datos no coinciden
+            </p>
+            <p className="text-yellow-700 dark:text-yellow-300 mt-1">
+              Según el registro, la patente <span className="font-mono font-semibold">{licensePlate}</span> corresponde a{' '}
+              <span className="font-semibold">{mismatchWarning.expectedBrand} {mismatchWarning.expectedModel}</span>,
+              pero se ingresó <span className="font-semibold">{mismatchWarning.enteredBrand} {mismatchWarning.enteredModel}</span>.
+              Verifique los datos ingresados.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Banner de verificación exitosa */}
+      {verificationSuccess && !mismatchWarning && (
+        <div className="flex items-center gap-3 rounded-lg border border-green-500/30 bg-green-50 dark:bg-green-950/20 p-3 mt-2">
+          <CheckCircle2 className="h-5 w-5 text-green-600 flex-shrink-0" />
+          <p className="text-sm font-medium text-green-700 dark:text-green-300">
+            Patente verificada: los datos coinciden con el registro oficial
+          </p>
+        </div>
+      )}
 
       {/* Dialog para crear nueva marca */}
       <Dialog open={isNewBrandDialogOpen} onOpenChange={setIsNewBrandDialogOpen}>
