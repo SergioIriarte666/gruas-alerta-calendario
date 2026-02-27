@@ -224,7 +224,7 @@ export const Sidebar = ({
       {/* Profile header */}
       <div className={cn("flex items-center gap-3 border-b border-border", isCollapsed ? "justify-center p-3" : "p-4")}>
         <Avatar className="h-9 w-9 shrink-0 border border-border">
-          <AvatarImage src={undefined} />
+          <AvatarImage src={user?.avatar_url || undefined} />
           <AvatarFallback className="bg-primary/10 text-primary text-xs font-bold">
             {getUserInitials()}
           </AvatarFallback>
@@ -340,7 +340,7 @@ export const Sidebar = ({
       {/* Profile header */}
       <div className="flex items-center gap-3 p-4 border-b border-border">
         <Avatar className="h-9 w-9 shrink-0 border border-border">
-          <AvatarImage src={undefined} />
+          <AvatarImage src={user?.avatar_url || undefined} />
           <AvatarFallback className="bg-primary/10 text-primary text-xs font-bold">
             {getUserInitials()}
           </AvatarFallback>

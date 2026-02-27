@@ -10,6 +10,7 @@ interface UserProfile {
   name: string;
   role: 'admin' | 'operator' | 'viewer' | 'client';
   client_id?: string;
+  avatar_url?: string | null;
 }
 
 interface UserContextType {
@@ -58,7 +59,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const { data: profileData, error } = await supabase
         .from('profiles')
-        .select('id, email, full_name, role, client_id')
+        .select('id, email, full_name, role, client_id, avatar_url')
         .eq('id', authUser.id)
         .single();
 
@@ -75,7 +76,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
               full_name: authUser.email,
               role: 'client'
             })
-            .select('id, email, full_name, role, client_id')
+            .select('id, email, full_name, role, client_id, avatar_url')
             .single();
 
           if (createError) {
@@ -92,6 +93,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
               name: newProfile.full_name || newProfile.email,
               role: newProfile.role,
               client_id: newProfile.client_id,
+              avatar_url: newProfile.avatar_url,
             };
             cachedProfile = userProfile;
             cachedForUserId = authUser.id;
@@ -111,6 +113,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
           name: profileData.full_name || profileData.email,
           role: profileData.role,
           client_id: profileData.client_id,
+          avatar_url: profileData.avatar_url,
         };
         cachedProfile = userProfile;
         cachedForUserId = authUser.id;
@@ -145,9 +148,10 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const { error } = await supabase
       .from('profiles')
       .update({
-        full_name: updates.name,
-        email: updates.email,
-        updated_at: new Date().toISOString()
+      full_name: updates.name,
+      email: updates.email,
+      avatar_url: updates.avatar_url,
+      updated_at: new Date().toISOString()
       })
       .eq('id', user.id);
 
