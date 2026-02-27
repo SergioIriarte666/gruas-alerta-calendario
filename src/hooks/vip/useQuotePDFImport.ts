@@ -271,8 +271,11 @@ export function useQuotePDFImport(clientId: string | null, services: Service[]) 
     for (let i = 0; i < validMatches.length; i++) {
       const match = validMatches[i];
       try {
+        const formattedQuote = match.quoteNumber.startsWith('COT-')
+          ? match.quoteNumber
+          : `COT-${match.quoteNumber}`;
         await updateService(match.service!.id, {
-          quoteNumber: match.quoteNumber,
+          quoteNumber: formattedQuote,
           status: 'quoted' as any,
         });
         successCount++;
