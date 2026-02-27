@@ -196,7 +196,7 @@ export const Sidebar = ({
           collapsed ? "justify-center px-2 py-2" : "px-3 py-2",
           isActive
             ? "bg-muted font-semibold text-foreground"
-            : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+            : "text-violet-600 hover:bg-muted/50 hover:text-violet-800"
         )}
       >
         <item.icon className="h-4 w-4 shrink-0" strokeWidth={isActive ? 2.5 : 2} />
