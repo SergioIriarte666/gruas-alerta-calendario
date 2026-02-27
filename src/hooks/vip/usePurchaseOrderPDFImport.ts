@@ -201,13 +201,22 @@ export function usePurchaseOrderPDFImport(clientId: string | null, services: Ser
     const matches: MatchedService[] = [];
     const usedServiceIds = new Set<string>();
 
-    for (const oc of validOCs) {
-      for (const item of oc.items) {
+    // Collect all items into a flat list and sort: items WITH patente/VIN first
+    const allItems = validOCs.flatMap(oc => 
+      oc.items.map(item => ({ item, ocNumber: oc.ocNumber, fileName: oc.fileName, quoteReference: oc.quoteReference }))
+    );
+    allItems.sort((a, b) => {
+      const aHas = normalizePatente(a.item.patente) ? 0 : 1;
+      const bHas = normalizePatente(b.item.patente) ? 0 : 1;
+      return aHas - bHas;
+    });
+
+    for (const { item, ocNumber, fileName, quoteReference } of allItems) {
         const patenteNorm = normalizePatente(item.patente);
 
         // If patente is empty, use fallback matching
         if (!patenteNorm) {
-          const ocNorm = normalizeOC(oc.ocNumber);
+          const ocNorm = normalizeOC(ocNumber);
           
           // Fallback 1: Find services with the same OC already assigned
           const serviceWithSameOC = clientServices.find(s => 
@@ -219,16 +228,16 @@ export function usePurchaseOrderPDFImport(clientId: string | null, services: Ser
             matches.push({
               parsedItem: item,
               service: serviceWithSameOC,
-              ocNumber: oc.ocNumber,
-              fileName: oc.fileName,
+              ocNumber,
+              fileName,
               status: 'same_oc',
             });
             continue;
           }
 
-          // Fallback 2 (NEW): Match by quote reference from OC observations
-          if (oc.quoteReference) {
-            const quoteRef = oc.quoteReference.replace(/\D/g, ''); // extract digits only
+          // Fallback 2: Match by quote reference from OC observations
+          if (quoteReference) {
+            const quoteRef = quoteReference.replace(/\D/g, '');
             if (quoteRef) {
               const servicesByQuote = clientServices.filter(s =>
                 !usedServiceIds.has(s.id) &&
@@ -237,14 +246,13 @@ export function usePurchaseOrderPDFImport(clientId: string | null, services: Ser
               );
               
               if (servicesByQuote.length > 0) {
-                // Match ALL services with this quote reference
                 for (const svc of servicesByQuote) {
                   usedServiceIds.add(svc.id);
                   matches.push({
                     parsedItem: item,
                     service: svc,
-                    ocNumber: oc.ocNumber,
-                    fileName: oc.fileName,
+                    ocNumber,
+                    fileName,
                     status: 'matched',
                   });
                 }
@@ -271,15 +279,15 @@ export function usePurchaseOrderPDFImport(clientId: string | null, services: Ser
               matches.push({
                 parsedItem: item,
                 service: best,
-                ocNumber: oc.ocNumber,
-                fileName: oc.fileName,
+                ocNumber,
+                fileName,
                 status: 'matched',
               });
               continue;
             }
           }
 
-          // Fallback 4: Match by amount (also try unit price if quantity > 1)
+          // Fallback 4: Match by amount
           if (item.amount > 0) {
             const unitPrice = (item.quantity && item.quantity > 1) ? item.amount / item.quantity : null;
             const serviceByAmount = clientServices.find(s => 
@@ -293,8 +301,8 @@ export function usePurchaseOrderPDFImport(clientId: string | null, services: Ser
               matches.push({
                 parsedItem: item,
                 service: serviceByAmount,
-                ocNumber: oc.ocNumber,
-                fileName: oc.fileName,
+                ocNumber,
+                fileName,
                 status: 'matched',
               });
               continue;
@@ -305,8 +313,8 @@ export function usePurchaseOrderPDFImport(clientId: string | null, services: Ser
           matches.push({
             parsedItem: item,
             service: null,
-            ocNumber: oc.ocNumber,
-            fileName: oc.fileName,
+            ocNumber,
+            fileName,
             status: 'no_match',
           });
           continue;
@@ -321,12 +329,11 @@ export function usePurchaseOrderPDFImport(clientId: string | null, services: Ser
           matches.push({
             parsedItem: item,
             service: null,
-            ocNumber: oc.ocNumber,
-            fileName: oc.fileName,
+            ocNumber,
+            fileName,
             status: 'no_match',
           });
         } else {
-          // Find the most recent service without an OC
           const serviceWithoutOC = matchingServices.find(
             s => !s.purchaseOrderNumber && !s.purchaseOrder
           );
@@ -336,25 +343,23 @@ export function usePurchaseOrderPDFImport(clientId: string | null, services: Ser
             matches.push({
               parsedItem: item,
               service: serviceWithoutOC,
-              ocNumber: oc.ocNumber,
-              fileName: oc.fileName,
+              ocNumber,
+              fileName,
               status: 'matched',
             });
           } else {
-            // Check if the most recent service already has the same OC
             const topService = matchingServices[0];
-            const hasSameOC = normalizeOC(topService.purchaseOrder) === normalizeOC(oc.ocNumber) || normalizeOC(topService.purchaseOrderNumber) === normalizeOC(oc.ocNumber);
+            const hasSameOC = normalizeOC(topService.purchaseOrder) === normalizeOC(ocNumber) || normalizeOC(topService.purchaseOrderNumber) === normalizeOC(ocNumber);
             usedServiceIds.add(topService.id);
             matches.push({
               parsedItem: item,
               service: topService,
-              ocNumber: oc.ocNumber,
-              fileName: oc.fileName,
+              ocNumber,
+              fileName,
               status: hasSameOC ? 'same_oc' : 'already_has_oc',
             });
           }
         }
-      }
     }
 
     setState(prev => ({ ...prev, step: 'preview', matches }));

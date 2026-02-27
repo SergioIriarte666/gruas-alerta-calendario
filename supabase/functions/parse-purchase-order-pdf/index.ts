@@ -79,7 +79,13 @@ Debes extraer la información estructurada del documento usando la herramienta e
 - Si la OC tiene un solo ítem sin patente visible, revisa TODO el texto del documento buscando patentes.
 - NUNCA devuelvas patente vacía si hay una patente en la descripción del ítem.
 - Cada ítem puede tener una cantidad (quantity). Si la línea dice "2 x 80.000 = 160.000", el amount es 160.000 y quantity es 2.
-- VEHICULOS SIN PATENTE PERO CON VIN: Algunos vehiculos se identifican por su numero VIN (Vehicle Identification Number) de exactamente 17 caracteres alfanumericos en lugar de patente chilena. Ejemplo: "Sail LZWADAGA9SF003022" -> patente = "LZWADAGA9SF003022". Si no hay patente chilena pero hay un codigo de 17 caracteres alfanumericos, usalo como patente.
+- VEHICULOS SIN PATENTE PERO CON VIN: Algunos vehiculos se identifican por su numero VIN (Vehicle Identification Number) de 16-17 caracteres alfanumericos en lugar de patente chilena.
+  CRITICO: El VIN frecuentemente aparece PEGADO al nombre del modelo sin espacio. Los VINs brasileños empiezan con "9B" (ej: 9BG, 9BD).
+  Ejemplo: "Colorado9BG148K0TC427662" -> modelo="Colorado", patente="9BG148K0TC427662" (el VIN empieza en "9BG", NO en "BG")
+  Ejemplo: "Sail LZWADAGA9SF003022" -> patente="LZWADAGA9SF003022"
+  Ejemplo: "GrooveLZWADAGA3TN041614" -> patente="LZWADAGA3TN041614"
+  NUNCA incluyas letras del nombre del modelo como parte del VIN. NUNCA cortes el primer digito del VIN.
+  Si no hay patente chilena pero hay un codigo largo alfanumerico (16-17 chars), usalo como patente.
 
 *** CRÍTICO - REFERENCIAS A COTIZACIONES/PRESUPUESTOS (quoteReference): ***
 - Busca en TODO el documento (encabezado, items, observaciones, notas, glosas, pie de página) frases que referencien cotizaciones o presupuestos.
