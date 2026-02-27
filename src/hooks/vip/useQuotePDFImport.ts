@@ -37,6 +37,7 @@ interface ImportState {
 }
 
 const normalizePatente = (p: string | null | undefined) => (p || '').replace(/[-\s]/g, '').toUpperCase();
+const normalizeQuote = (q: string | null | undefined) => (q || '').trim().toUpperCase().replace(/^COT[-\s]*/, '').trim();
 
 export function useQuotePDFImport(clientId: string | null, services: Service[]) {
   const { updateService } = useServices();
@@ -242,7 +243,7 @@ export function useQuotePDFImport(clientId: string | null, services: Service[]) 
             });
           } else {
             const topService = matchingServices[0];
-            const hasSameQuote = topService.quoteNumber === quote.quoteNumber;
+            const hasSameQuote = normalizeQuote(topService.quoteNumber) === normalizeQuote(quote.quoteNumber);
             usedServiceIds.add(topService.id);
             matches.push({
               parsedItem: item,
@@ -273,9 +274,8 @@ export function useQuotePDFImport(clientId: string | null, services: Service[]) 
     for (let i = 0; i < validMatches.length; i++) {
       const match = validMatches[i];
       try {
-        const formattedQuote = match.quoteNumber.startsWith('COT-')
-          ? match.quoteNumber
-          : `COT-${match.quoteNumber}`;
+        const normalized = normalizeQuote(match.quoteNumber);
+        const formattedQuote = `COT-${normalized}`;
         await updateService(match.service!.id, {
           quoteNumber: formattedQuote,
           status: 'quoted' as any,
