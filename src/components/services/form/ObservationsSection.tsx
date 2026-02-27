@@ -1,10 +1,11 @@
 
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ServiceStatus } from '@/types';
 import { FileText } from 'lucide-react';
+import { AutocompleteInput } from '@/components/common/AutocompleteInput';
+import { useFrequentObservations } from '@/hooks/useFrequentFormData';
 
 interface ObservationsSectionProps {
   status: ServiceStatus;
@@ -21,6 +22,7 @@ export const ObservationsSection = ({
   onObservationsChange,
   disabled = false
 }: ObservationsSectionProps) => {
+  const observationSuggestions = useFrequentObservations();
   return (
     <Card>
       <CardHeader>
@@ -55,12 +57,12 @@ export const ObservationsSection = ({
         {/* Observaciones */}
         <div className="space-y-2">
           <Label htmlFor="observations">Observaciones</Label>
-          <Textarea
+          <AutocompleteInput
             id="observations"
             value={observations}
-            onChange={(e) => onObservationsChange(e.target.value)}
+            onValueChange={onObservationsChange}
+            suggestions={observationSuggestions}
             placeholder="Observaciones adicionales sobre el servicio..."
-            rows={3}
             disabled={disabled}
           />
         </div>

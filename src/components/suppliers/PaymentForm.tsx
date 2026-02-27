@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
@@ -30,6 +30,8 @@ import { useCranes } from '@/hooks/useCranes';
 import { formatCurrency } from '@/lib/utils';
 import { parseFromDatabase, formatForDisplay } from '@/utils/timezoneUtils';
 import { Badge } from '@/components/ui/badge';
+import { AutocompleteInput } from '@/components/common/AutocompleteInput';
+import { useFrequentSupplierData } from '@/hooks/useFrequentSupplierData';
 
 const paymentSchema = z.object({
   supplier_id: z.string().min(1, 'El proveedor es requerido'),
@@ -70,6 +72,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
   const { cranes } = useCranes();
   const { data: costCategories = [], isLoading: categoriesLoading } = useCostCategories();
   const { checkDuplicate } = usePaymentDuplicateCheck();
+  const { descriptionSuggestions, partNameSuggestions } = useFrequentSupplierData();
   
   const [showDuplicateWarning, setShowDuplicateWarning] = useState(false);
   const [duplicatePayment, setDuplicatePayment] = useState<DuplicatePayment | null>(null);
@@ -325,9 +328,17 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
 
             <div>
               <Label className="text-foreground">Descripción *</Label>
-              <Input
-                {...form.register('description')}
-                placeholder="Descripción del pago o servicio"
+              <Controller
+                name="description"
+                control={form.control}
+                render={({ field }) => (
+                  <AutocompleteInput
+                    value={field.value}
+                    onValueChange={field.onChange}
+                    suggestions={descriptionSuggestions}
+                    placeholder="Descripción del pago o servicio"
+                  />
+                )}
               />
               {form.formState.errors.description && (
                 <p className="text-destructive text-sm mt-1">
@@ -357,9 +368,17 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                   <div>
                     <Label className="text-foreground">Nombre de la Pieza</Label>
-                    <Input
-                      {...form.register('part_name')}
-                      placeholder="ej: Filtro de aceite"
+                    <Controller
+                      name="part_name"
+                      control={form.control}
+                      render={({ field }) => (
+                        <AutocompleteInput
+                          value={field.value || ''}
+                          onValueChange={field.onChange}
+                          suggestions={partNameSuggestions}
+                          placeholder="ej: Filtro de aceite"
+                        />
+                      )}
                     />
                   </div>
 

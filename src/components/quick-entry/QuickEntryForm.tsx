@@ -9,6 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useQuickEntry, QuickEntry } from '@/hooks/useQuickEntry';
 import { useDeviceType } from '@/hooks/useDeviceType';
 import { useQuickEntryContext } from '@/contexts/QuickEntryContext';
+import { AutocompleteInput } from '@/components/common/AutocompleteInput';
+import { useFrequentQuickEntryDescriptions } from '@/hooks/useFrequentFormData';
 
 interface QuickEntryFormProps {
   isOpen: boolean;
@@ -26,6 +28,7 @@ export function QuickEntryForm({ isOpen, onClose }: QuickEntryFormProps) {
   const { createQuickEntry, isLoading } = useQuickEntry();
   const { isMobile } = useDeviceType();
   const { triggerRefresh } = useQuickEntryContext();
+  const quickEntrySuggestions = useFrequentQuickEntryDescriptions();
   
   const [formData, setFormData] = useState<Omit<QuickEntry, 'id'>>({
     type: 'service',
@@ -96,12 +99,12 @@ export function QuickEntryForm({ isOpen, onClose }: QuickEntryFormProps) {
           {/* Description */}
           <div className="space-y-2">
             <Label htmlFor="description">Descripción</Label>
-            <Input
+            <AutocompleteInput
               id="description"
               value={formData.description}
-              onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+              onValueChange={(val) => setFormData(prev => ({ ...prev, description: val }))}
+              suggestions={quickEntrySuggestions}
               placeholder="Describe brevemente..."
-              required
             />
           </div>
 
