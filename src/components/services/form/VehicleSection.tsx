@@ -26,6 +26,7 @@ import { es } from 'date-fns/locale';
 import { parseFromDatabase } from '@/utils/timezoneUtils';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { supabase } from '@/integrations/supabase/client';
 import { isChileanPlate } from '@/utils/vehicleIdentifiers';
 
 // --- Normalization utilities ---
@@ -362,19 +363,21 @@ export const VehicleSection = ({
       b => b.name.toLowerCase() === patentData.marca.toLowerCase()
     );
     
-    // Check if model exists (only if brand exists)
+    // Check if model exists via direct DB query (works regardless of selected brand)
     let existingModel = false;
-    if (existingBrand) {
-      // Need to check models for this brand - use current models if same brand, otherwise check all
-      const brandModels = selectedBrandId === existingBrand.id ? models : [];
-      existingModel = brandModels.some(
-        m => m.name.toLowerCase() === patentData.modelo.toLowerCase()
-      );
+    let existingModelName = '';
+    if (existingBrand && patentData.modelo !== 'No disponible') {
+      const { data: modelData } = await supabase
+        .from('vehicle_models')
+        .select('id, name')
+        .eq('brand_id', existingBrand.id)
+        .eq('is_active', true)
+        .ilike('name', patentData.modelo)
+        .maybeSingle();
       
-      // If we can't check models yet (different brand selected), do a quick DB check
-      if (selectedBrandId !== existingBrand.id) {
-        // We'll assume model doesn't exist and let the user confirm
-        existingModel = false;
+      existingModel = !!modelData;
+      if (modelData) {
+        existingModelName = modelData.name; // nombre con casing correcto de la BD
       }
     }
     
@@ -382,14 +385,14 @@ export const VehicleSection = ({
     const modelOk = existingModel || patentData.modelo === 'No disponible';
     
     if (brandOk && modelOk) {
-      // Both exist, apply directly
-      await applyExistingSuggestion(existingBrand.id, patentData.marca, patentData.modelo);
+      // Both exist, apply directly using DB names (correct casing)
+      await applyExistingSuggestion(existingBrand.id, existingBrand.name, existingModelName || patentData.modelo);
     } else {
-      // Show confirmation step
+      // Show confirmation step - use DB names when available
       setBrandExistsFlag(brandOk);
       setModelExistsFlag(modelOk);
-      setEditBrandName(patentData.marca);
-      setEditModelName(patentData.modelo);
+      setEditBrandName(existingBrand ? existingBrand.name : patentData.marca);
+      setEditModelName(existingModel ? existingModelName : patentData.modelo);
       setSuggestionStep('confirm');
     }
   };
@@ -424,17 +427,18 @@ export const VehicleSection = ({
       let brandId: string;
       
       if (brandExistsFlag) {
-        // Brand exists, just find it
+        // Brand exists, just find it and use its DB name
         const existing = brands.find(b => b.name.toLowerCase() === patentData.marca.toLowerCase());
         brandId = existing!.id;
+        setSelectedBrandId(brandId);
+        onVehicleBrandChange(existing!.name);
       } else {
         // Create brand with edited name
         const newBrand = await createBrandAsync({ name: editBrandName.trim() });
         brandId = newBrand.id;
+        setSelectedBrandId(brandId);
+        onVehicleBrandChange(editBrandName.trim());
       }
-      
-      setSelectedBrandId(brandId);
-      onVehicleBrandChange(brandExistsFlag ? patentData.marca : editBrandName.trim());
       
       if (editModelName.trim() && editModelName !== 'No disponible') {
         setPendingModel(editModelName.trim());
