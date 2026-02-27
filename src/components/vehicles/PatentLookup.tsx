@@ -45,7 +45,7 @@ export const PatentLookup: React.FC = () => {
                 onChange={(e) => setLicensePlate(e.target.value.toUpperCase())}
                 disabled={loading}
                 className="flex-1"
-                maxLength={8}
+                maxLength={20}
               />
               <Button type="submit" disabled={loading || !licensePlate.trim()}>
                 {loading ? (

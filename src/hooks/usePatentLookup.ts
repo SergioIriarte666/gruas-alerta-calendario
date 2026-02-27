@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { isChileanPlate, isVIN } from '@/utils/vehicleIdentifiers';
 
 interface VehicleData {
   marca: string;
@@ -86,6 +87,18 @@ export const usePatentLookup = (): UsePatentLookupReturn => {
   const lookupPatent = async (licensePlate: string) => {
     if (!licensePlate || licensePlate.trim() === '') {
       toast.error('Por favor ingresa una patente válida');
+      return;
+    }
+
+    const cleanValue = licensePlate.trim().replace(/[-\s]/g, '').toUpperCase();
+
+    if (isVIN(cleanValue)) {
+      toast.info('Los VINs no pueden consultarse en la API de patentes. Ingresa los datos del vehículo manualmente.');
+      return;
+    }
+
+    if (!isChileanPlate(cleanValue)) {
+      toast.error('Formato no reconocido. Ingresa una patente chilena (6 caracteres) o un VIN (17 caracteres).');
       return;
     }
 

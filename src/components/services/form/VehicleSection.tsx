@@ -26,6 +26,7 @@ import { es } from 'date-fns/locale';
 import { parseFromDatabase } from '@/utils/timezoneUtils';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { isChileanPlate } from '@/utils/vehicleIdentifiers';
 
 // --- Normalization utilities ---
 const normalizeText = (text: string): string =>
@@ -147,7 +148,7 @@ export const VehicleSection = ({
     const cleanPlate = licensePlate.replace(/[-\s]/g, '').toUpperCase();
     
     if (
-      cleanPlate.length >= 6 &&
+      isChileanPlate(cleanPlate) &&
       !searchedPlatesRef.current.has(cleanPlate) &&
       !appliedPlatesRef.current.has(cleanPlate) &&
       !isEditing &&
@@ -507,7 +508,7 @@ export const VehicleSection = ({
               id="licensePlate"
               value={licensePlate}
               onChange={(e) => onLicensePlateChange(e.target.value.toUpperCase())}
-              placeholder="Ej: AB-CD-12"
+              placeholder="Ej: AB-CD-12 o VIN"
               required={licensePlateRequired}
               disabled={disabled}
               className={cn(
