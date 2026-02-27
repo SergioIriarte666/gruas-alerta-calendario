@@ -1,64 +1,78 @@
 
+Objetivo: eliminar de forma definitiva el congelamiento al finalizar cierre y emitir factura, atacando la causa raíz de carga masiva y bloqueos de UI tras la creación de factura.
 
-# Fix: VIN truncado y prioridad de matching en importador OC
+Resumen del diagnóstico (con evidencia):
+1) En el flujo “finalizar cierre → emitir factura”, al crear una factura se invalidan queries globales (incluyendo ['services']).
+2) La query ['services'] usa `useServiceFetcher` con paginación manual de toda la tabla (`fetchAllPages` de 1000 en 1000) y joins amplios; actualmente hay ~1040 servicios y seguirá creciendo.
+3) Esa recarga completa se dispara desde múltiples lugares (invoice create/update/delete + realtime + otros módulos), y mientras ocurre, la UI principal queda pesada/congelada.
+4) El problema no parece ser error SQL/timeout en backend (sin errores críticos recientes en logs), sino saturación del cliente por refetch global innecesario.
+5) En el wizard de factura, además hay un trigger secundario de carga pesada: `EnhancedClosureSelector` llama `useClients()` (trae todos los clientes) aunque ya se dispone de `clientName` en el closure; esto agrega costo al render del formulario.
 
-## Problema 1 - VINs truncados
-El PDF contiene items como `Colorado9BG148K0TC427662` donde el VIN real es `9BG148K0TC427662` (empieza con "9BG" - VIN brasileno de Chevrolet). La IA confunde el "9" como parte del nombre del modelo ("Colorado9") y extrae `BG148K0TC427662` (15-16 chars), que no coincide con el servicio almacenado.
+Causa raíz:
+- Acoplamiento excesivo entre facturación y refetch global del módulo de servicios (dataset grande + joins + múltiples invalidaciones).
+- Carga redundante en el paso de selección de cierre (clientes completos para resolver nombre).
 
-Casos afectados en el PDF:
-- `Colorado9BG148K0TC427662` -> AI extrajo `BG148K0TC427662` (incorrecto, deberia ser `9BG148K0TC427662`)
-- `Colorado9BG148PK0SC413076` -> AI extrajo `BG148PK0SC413076` (incorrecto, deberia ser `9BG148PK0SC413076`)
+Plan de corrección definitiva (implementación):
+Fase 1 — Contención inmediata del congelamiento en flujo factura
+1. Ajustar invalidaciones en `src/hooks/invoices/useInvoiceOperations.ts`:
+   - `createInvoice`: eliminar invalidación de `['services']`, `['operatorServices']`, `['crane-services']`.
+   - Mantener invalidación enfocada: `['invoices']`, `['closures']`.
+   - Razonamiento: en este flujo el usuario está en `/invoices`; no necesita recargar todo servicios al crear factura.
+2. `updateInvoice` y `deleteInvoice`:
+   - Mismo enfoque de invalidación mínima por contexto de facturación.
+   - Solo mantener invalidaciones de servicios cuando realmente cambie relación de cierre o haya reversión de estado de servicios.
+   - En esos casos, usar invalidación granular (si existe key por id) o una invalidación diferida/no bloqueante.
+3. Evitar refresh duplicado en `useInvoices.ts`:
+   - Actualmente se hace update optimista + `refetch()` inmediato.
+   - Cambiar a una sola estrategia (preferible invalidación React Query y confiar en cache update), para evitar doble trabajo de red/render.
 
-## Problema 2 - Sin prioridad de matching
-El importador de OC procesa items en orden secuencial. Si un item sin patente aparece antes que uno con patente, puede "consumir" servicios incorrectamente via fallback por monto (mismo bug ya corregido en el importador de cotizaciones).
+Fase 2 — Reducir carga del formulario de factura
+4. Optimizar `src/components/invoices/EnhancedClosureSelector.tsx`:
+   - Eliminar dependencia de `useClients()` para resolver nombre.
+   - Mostrar `closure.clientName` proveniente de `useClosuresForInvoices` (ya disponible).
+   - Resultado: menos query global y menos render costoso al abrir “Nueva Factura”.
+5. Corregir detalle visual/textual en ese componente:
+   - texto “incluye cierres texto facturados” → “incluye cierres facturados” (limpieza).
 
-## Solucion
+Fase 3 — Endurecimiento de arquitectura para no reintroducir el problema
+6. Blindar `useServiceFetcher` (`src/hooks/services/useServiceFetcher.ts`) para que no sea un “hot path” del flujo facturas:
+   - Mantener fetch full solo cuando el usuario está en módulos que realmente lo requieren (services/costs/reports).
+   - Para invalidaciones provenientes de facturas, usar “soft invalidate” (marcar stale sin refetch inmediato) o refetch bajo demanda en pantalla de servicios.
+7. Revisar `useUnifiedRealtimeManager` para evitar invalidaciones cruzadas agresivas:
+   - No disparar recargas globales de servicios por eventos de facturas si el usuario no está en pantallas dependientes de servicios.
 
-### 1. Mejorar prompt de la Edge Function OC
+Validación (criterio de aceptación):
+1. Desde /closures:
+   - Crear cierre → confirmar “crear factura” → completar wizard y guardar.
+2. Resultado esperado:
+   - No congelamiento ni bloqueo perceptible (>1–2 s de UI freeze).
+   - Navegación fluida al volver/listar facturas.
+   - Cierre pasa a “invoiced” y factura creada correctamente.
+3. Prueba de regresión:
+   - /services sigue mostrando estado correcto tras entrar manualmente o refrescar.
+   - /invoices mantiene datos coherentes (resumen, detalle, estado).
+4. Prueba de volumen:
+   - Repetir con cierres de muchos servicios para confirmar estabilidad.
 
-**Archivo: `supabase/functions/parse-purchase-order-pdf/index.ts`**
+Riesgos y mitigación:
+- Riesgo: que servicios no reflejen estado inmediatamente en otras vistas.
+  Mitigación: invalidación diferida en background al entrar a /services + botón refresh explícito ya existente.
+- Riesgo: dependencia oculta de `useClients()` en selector.
+  Mitigación: fallback “Cliente desconocido” si `clientName` no viene.
 
-Reemplazar la instruccion actual de VIN con una mas detallada que cubra el caso de VINs pegados al nombre del modelo:
+Archivos a intervenir:
+1) `src/hooks/invoices/useInvoiceOperations.ts`
+   - recorte de invalidaciones globales de servicios en create/update/delete.
+2) `src/hooks/useInvoices.ts`
+   - eliminar `refetch()` redundante post operación cuando ya se actualiza cache.
+3) `src/components/invoices/EnhancedClosureSelector.tsx`
+   - quitar `useClients`, usar `closure.clientName`, reducir costo de render.
+4) (Opcional endurecimiento) `src/hooks/services/useServiceFetcher.ts`
+   - estrategia de refetch menos agresiva para query ['services'] fuera de pantalla de servicios.
+5) (Opcional endurecimiento) `src/hooks/useUnifiedRealtimeManager.ts`
+   - desacoplar invalidaciones cruzadas no críticas.
 
-```
-- VEHICULOS SIN PATENTE PERO CON VIN: Algunos vehiculos se identifican por su numero VIN 
-  (Vehicle Identification Number) de 16-17 caracteres alfanumericos.
-  CRITICO: El VIN frecuentemente aparece PEGADO al nombre del modelo sin espacio. 
-  Los VINs brasileños empiezan con "9B" (ej: 9BG, 9BD). 
-  Ejemplo: "Colorado9BG148K0TC427662" -> modelo="Colorado", patente="9BG148K0TC427662"
-  Ejemplo: "Sail LZWADAGA9SF003022" -> patente="LZWADAGA9SF003022"
-  Ejemplo: "GrooveLZWADAGA3TN041614" -> patente="LZWADAGA3TN041614"
-  NUNCA incluyas letras del nombre del modelo como parte del VIN.
-  Si no hay patente chilena pero hay un codigo largo alfanumerico (16-17 chars), usalo como patente.
-```
-
-### 2. Mejorar prompt de la Edge Function Cotizaciones (consistencia)
-
-**Archivo: `supabase/functions/parse-quote-pdf/index.ts`**
-
-Aplicar la misma mejora al prompt de cotizaciones para mantener consistencia.
-
-### 3. Agregar prioridad de matching al importador OC
-
-**Archivo: `src/hooks/vip/usePurchaseOrderPDFImport.ts`**
-
-Aplicar el mismo patron de prioridad que ya tiene el importador de cotizaciones:
-1. Recolectar todos los items de todas las OCs en una lista plana
-2. Ordenar: items CON patente/VIN primero, items SIN patente despues
-3. Ejecutar el loop de matching sobre la lista ordenada
-
-Cambio en lineas ~204-358: reestructurar el loop de matching para usar la lista ordenada en lugar del loop anidado `for oc / for item`.
-
-## Archivos a modificar
-
-| Archivo | Cambio |
-|---|---|
-| `supabase/functions/parse-purchase-order-pdf/index.ts` | Mejorar instrucciones VIN en prompt (especialmente VINs brasileños pegados al modelo) |
-| `supabase/functions/parse-quote-pdf/index.ts` | Misma mejora de VIN para consistencia |
-| `src/hooks/vip/usePurchaseOrderPDFImport.ts` | Agregar prioridad de matching (patente primero, fallback despues) |
-
-## Resultado esperado
-- `Colorado9BG148K0TC427662` se extrae correctamente como patente `9BG148K0TC427662`
-- `Colorado9BG148PK0SC413076` se extrae como `9BG148PK0SC413076`
-- Ambos matchean con los servicios correctos en el sistema
-- Items con patente/VIN se procesan antes que items sin identificador
+Notas técnicas importantes:
+- Este enfoque corrige la causa sistémica (tormenta de refetch de servicios completos) y no solo “parcha” síntomas.
+- Respeta patrones existentes y minimiza impacto funcional.
+- El estilo UI no cambia; solo comportamiento y performance.
