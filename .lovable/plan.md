@@ -1,21 +1,53 @@
 
-# Plan: Hacer colapsable la seccion "Top Categorias"
+# Plan: Confirmar creacion de marca/modelo en sugerencia de patente
 
-## Cambio
-Convertir la Card de "Top Categorias" en un componente colapsable usando `Collapsible` de Radix UI (ya disponible en el proyecto). La seccion iniciara colapsada por defecto para ahorrar espacio.
+## Problema actual
+Cuando la API devuelve datos de un vehiculo (ej: KIA FRONTIER), el sistema crea automaticamente la marca y modelo en la base de datos sin preguntar al usuario. El usuario quiere poder revisar y editar los nombres antes de crearlos.
 
-## Archivo a modificar
-**`src/components/costs/CostsDashboard.tsx`** (lineas 228-258)
+## Solucion
 
-### Detalle
-- Importar `Collapsible`, `CollapsibleTrigger`, `CollapsibleContent` desde `@/components/ui/collapsible`
-- Importar `ChevronDown` de lucide-react (si no esta importado)
-- Envolver el contenido de la Card con `Collapsible` (defaultOpen={false})
-- El titulo "Top Categorias (periodo)" se convierte en `CollapsibleTrigger` con un icono chevron que rota al abrir
-- La lista de categorias va dentro de `CollapsibleContent`
-- Estilo del trigger: cursor pointer, flex con justify-between, chevron con transicion de rotacion
+### Archivo: `src/components/services/form/VehicleSection.tsx`
 
-### Resultado visual
-- Por defecto: se ve solo el titulo "Top Categorias (periodo)" con un chevron a la derecha
-- Al hacer clic: se expande mostrando las barras de progreso por categoria
-- Ocupa minimo espacio cuando esta cerrado
+**Modificar el dialogo de sugerencia** para que tenga dos estados:
+
+1. **Estado inicial (preview)**: Muestra los datos como ahora. Al hacer clic en "Aplicar Sugerencia":
+   - Si marca Y modelo ya existen en la BD → aplicar directamente (sin cambios)
+   - Si marca o modelo NO existen → pasar al estado de confirmacion
+
+2. **Estado de confirmacion (crear)**: Muestra un mensaje "La marca/modelo no existe en el sistema" con:
+   - Input editable para el nombre de la marca (pre-llenado con el valor de la API)
+   - Input editable para el nombre del modelo (pre-llenado con el valor de la API)
+   - Botones "Cancelar" y "Crear y Aplicar"
+
+### Cambios tecnicos
+
+- Agregar estado `suggestionStep: 'preview' | 'confirm'` (default: `'preview'`)
+- Agregar estados `editBrandName` y `editModelName` para los inputs editables
+- Agregar flags `brandExists` y `modelExists` para indicar que necesita creacion
+- Modificar `handleApplySuggestion`:
+  - Primero verificar si marca existe en `brands`
+  - Si existe, verificar si modelo existe en `models` para esa marca
+  - Si ambos existen: aplicar directo
+  - Si alguno no existe: setear `suggestionStep = 'confirm'` con los valores pre-llenados
+- Agregar funcion `handleConfirmCreate` que:
+  - Crea marca (si no existe) con el nombre editado
+  - Setea `pendingModel` con el nombre editado del modelo
+  - Aplica al formulario
+- Resetear `suggestionStep` a `'preview'` al cerrar el dialogo
+
+### UI del estado de confirmacion
+
+```text
++---------------------------------------+
+| Crear Marca/Modelo                    |
+| No encontramos "KIA" / "FRONTIER"     |
+| en el sistema.                        |
+|                                       |
+| Marca:  [KIA_____________]            |
+| Modelo: [FRONTIER________]            |
+|                                       |
+|          [Cancelar] [Crear y Aplicar] |
++---------------------------------------+
+```
+
+Solo se muestran editables los campos que no existen. Si la marca existe pero el modelo no, solo el modelo es editable.
