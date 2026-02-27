@@ -1,95 +1,65 @@
 
-Objetivo
-Corregir la validación de patente para que no “quede pegada” en advertencia y se comporte de forma confiable al cambiar patente, marca o modelo, incluso cuando existe historial del vehículo.
 
-Diagnóstico (con evidencia)
-1) La comparación actual es demasiado estricta:
-- Hoy se usa igualdad exacta en minúsculas:
-  - marca: patentData.marca.toLowerCase() === vehicleBrand.toLowerCase()
-  - modelo: patentData.modelo.toLowerCase() === vehicleModel.toLowerCase()
-- En tus datos reales, la API devolvió para TLYF23:
-  - marca: CHEVROLET
-  - modelo: FRR 1119 VD01
-- Si en el formulario tienes “Chevrolet / FRR 1119”, el sistema seguirá marcando no-coincidencia aunque semánticamente sí coincide.
+# Plan: Redisenar el Sidebar al Estilo del Referente
 
-2) Falta de “contexto de consulta” por patente:
-- El componente valida con patentData + licensePlate actual, pero no guarda explícitamente para qué patente llegó ese patentData.
-- Si el usuario cambia patente durante/recién después de una consulta, el estado visual puede quedar inconsistente.
+## Objetivo
+Transformar el sidebar actual (con grupos coloreados y bordes laterales por categoria) a un diseno limpio y moderno como el de la imagen de referencia: fondo claro, perfil de usuario en la parte superior con avatar, grupos como simples etiquetas uppercase ("MAIN", "SETTINGS"), items con hover/active sutiles, y modo colapsado con solo iconos + tooltips.
 
-3) El flujo de historial/sugerencia y validación cruzada conviven pero no están totalmente orquestados:
-- Se muestran modales y banners, pero no hay acciones de resolución rápidas en el banner (por ejemplo “aplicar datos oficiales” o “revalidar”), por eso se percibe como que “queda ahí”.
+## Cambios Visuales Principales
 
-Alcance de la solución
-Archivo principal:
-- src/components/services/form/VehicleSection.tsx
+### 1. Header del Sidebar -- Perfil de usuario con avatar
+- Reemplazar el header actual (logo + nombre empresa) por una seccion de perfil de usuario:
+  - Avatar circular (iniciales o foto si existe)
+  - Rol del usuario en texto pequeno uppercase (ej. "ADMINISTRADOR")
+  - Nombre del usuario
+  - Botones de colapsar/expandir (`<` / `>`) integrados junto al avatar
+- En modo colapsado: solo el avatar centrado con los botones de navegacion
 
-Ajuste de soporte:
-- src/hooks/usePatentLookup.ts
+### 2. Grupos simplificados
+- Eliminar los bordes laterales coloreados por grupo y fondos tintados
+- Reemplazar por etiquetas simples en uppercase gris claro (ej. "PRINCIPAL", "OPERACIONES", "CONFIGURACION")
+- En modo colapsado: una linea separadora sutil en vez de etiqueta
+- Los grupos se expanden/colapsan con chevron (como "Income" en la imagen)
 
-Plan de implementación
-1) Normalización robusta antes de comparar (marca y modelo)
-- Crear funciones utilitarias locales en VehicleSection:
-  - normalizeText: trim, uppercase, remover dobles espacios, opcional remover tildes.
-  - normalizeModel: además de normalizeText, remover separadores no alfanuméricos irrelevantes.
-- Reemplazar comparación exacta por comparación robusta:
-  - brandMatch: igualdad normalizada.
-  - modelMatch:
-    - true si iguales normalizados, o
-    - true si uno contiene al otro por tokens relevantes (ej. “FRR 1119” vs “FRR 1119 VD01”).
-- Resultado: evita falsos negativos como el que reportaste.
+### 3. Items de navegacion
+- Fondo limpio, sin bordes laterales de color
+- Hover: fondo gris sutil (`bg-muted/50`)
+- Activo: fondo gris mas marcado (`bg-muted`) con texto en negrita
+- Sub-items indentados (como Earnings, Refunds en la imagen)
+- En modo colapsado: solo icono centrado, con tooltip negro al hacer hover
 
-2) Asociar el resultado de API con la patente consultada
-- En usePatentLookup, devolver también la patente normalizada de la última respuesta, por ejemplo:
-  - dataPlate (o lastResolvedPlate)
-- En VehicleSection, validar solo si:
-  - normalize(licensePlate actual) === dataPlate
-- Resultado: al cambiar patente, no se aplica banner con datos “viejos”.
+### 4. Seccion inferior
+- Mover "Cerrar Sesion" al fondo con separador
+- Nombre de empresa pequeno en el footer
 
-3) Control de estado al cambiar patente (anti “queda pegado”)
-- Al detectar cambio real de patente:
-  - limpiar mismatchWarning y verificationSuccess,
-  - cerrar sugerencia/historial si corresponde,
-  - resetear patentData de manera controlada para no arrastrar estado.
-- Mantener cache anti-spam de consultas, pero permitir “revalidación forzada” si el usuario vuelve a la misma patente o corrige datos.
+## Archivos a Modificar
 
-4) Mejorar UX del banner para resolver de inmediato
-- Banner de advertencia (estilo consistente con módulo Cost: tipografía/espaciado/bordes):
-  - botón “Aplicar datos oficiales” (marca/modelo desde API),
-  - botón “Revalidar patente” (fuerza consulta nuevamente),
-  - botón “Descartar por ahora” (oculta aviso de esa combinación de patente+marca+modelo).
-- Banner de éxito:
-  - mostrar solo si la respuesta corresponde a la patente actual y comparación robusta da match.
+### `src/components/layout/Sidebar.tsx`
+- Reescribir `SidebarContent` y `MobileSidebarContent` con la nueva estructura visual
+- Header: perfil de usuario con avatar, rol, nombre, botones collapse
+- Nav: grupos como labels uppercase, items limpios sin bordes de color
+- Footer: logout + nombre empresa
+- Modo colapsado: iconos centrados con tooltips (usando Tooltip de Radix)
 
-5) Orquestación con historial de servicios
-- Si aparece modal de historial, no bloquear la verificación; solo evitar mensajes contradictorios simultáneos.
-- Definir prioridad visual:
-  1. Modal de historial (si aplica),
-  2. luego resultado de verificación (warning/success).
-- Al confirmar “Sí, continuar”, mantener validación activa y actualizable.
+### `src/index.css`
+- Simplificar o eliminar las clases `sidebar-group-*`, `sidebar-item-*`, `sidebar-indicator-*` (ya no se necesitan bordes coloreados por grupo)
+- Agregar clases nuevas minimas si es necesario para el estilo limpio
 
-6) Casos de prueba funcional (manuales)
-- Caso A: TLYF23 + Chevrolet + FRR 1119 => debe validar OK (aunque API entregue FRR 1119 VD01).
-- Caso B: TLYF23 + Chevrolet + Blazer => warning con mensaje claro.
-- Caso C: cambiar patente a otra distinta => warning anterior desaparece y se recalcula.
-- Caso D: volver a patente anterior => revalidación correcta (sin quedar pegado por cache).
-- Caso E: con historial abierto/cerrado => sin estados cruzados inconsistentes.
+### `src/components/layout/Layout.tsx`
+- Sin cambios estructurales, solo ajuste menor si cambia el ancho del sidebar
 
-Criterios de aceptación
-- La advertencia ya no queda fija al corregir datos o al cambiar patente.
-- Comparaciones marca/modelo toleran variantes comunes de formato.
-- No hay falsos negativos por sufijos de modelo (ej. VD01).
-- La validación siempre corresponde a la patente actualmente ingresada.
-- Flujo visual consistente con patrones del sistema (incluyendo estilo tipo módulo Cost).
+## Estilo Visual (basado en la imagen)
+- Fondo: `bg-white` (tema claro) / compatible con dark
+- Texto grupos: `text-muted-foreground text-xs font-semibold uppercase tracking-wider`
+- Items: `text-foreground text-sm`, hover `bg-muted/50`, active `bg-muted font-medium`
+- Avatar: circulo con iniciales o imagen, borde sutil
+- Separadores: lineas `border-b border-border` entre secciones
+- Tooltips colapsados: fondo oscuro con texto blanco (como en la imagen)
 
-Riesgos y mitigación
-- Riesgo: comparación demasiado permisiva en modelos.
-  - Mitigación: usar reglas por tokens (mínimo 2 tokens alfanuméricos relevantes) en vez de contains ciego.
-- Riesgo: más consultas API.
-  - Mitigación: mantener cache por patente + opción explícita de revalidar.
-- Riesgo: conflicto visual modal/banner.
-  - Mitigación: prioridad de UI definida y limpieza de estados en transiciones.
+## Funcionalidad Preservada
+- Permisos de modulo (`useUserModulePermissions`) -- sin cambios
+- Filtrado por rol (`adminOnly`) -- sin cambios
+- Responsive mobile/desktop -- sin cambios
+- Colapsar/expandir -- sin cambios en logica, solo visual
+- Grupos expandibles -- misma logica con `expandedGroups`
 
-Resultado esperado para tu caso reportado
-- Con patente TLYF23 y modelo interno “FRR 1119”, ya no debería quedar advertencia permanente por el sufijo “VD01”.
-- Si ingresas modelo incorrecto a propósito, mostrará advertencia.
-- Si cambias patente o corriges modelo/marca, el estado se actualizará inmediatamente y dejará de “quedarse ahí”.
