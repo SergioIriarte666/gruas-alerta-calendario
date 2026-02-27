@@ -31,26 +31,51 @@ export const BulkStatusRepairTool = () => {
     const found: Inconsistency[] = [];
 
     try {
-      // 1. Services marked as "invoiced" without invoice_services record
+      // 1. Services marked as "invoiced" without any invoice link
+      // Services can be linked via invoice_services OR via closure_services→invoice_closures
       const { data: invoicedServices } = await supabase
         .from('services')
         .select('id, folio, status')
         .eq('status', 'invoiced');
 
       if (invoicedServices && invoicedServices.length > 0) {
-        const { data: linkedInvServices } = await supabase
+        const svcIds = invoicedServices.map(s => s.id);
+
+        // Direct links via invoice_services
+        const { data: directLinks } = await supabase
           .from('invoice_services')
           .select('service_id')
-          .in('service_id', invoicedServices.map(s => s.id));
+          .in('service_id', svcIds);
+        const directLinkedIds = new Set((directLinks || []).map(r => r.service_id));
 
-        const linkedIds = new Set((linkedInvServices || []).map(r => r.service_id));
+        // Indirect links via closure_services → invoice_closures
+        const { data: closureLinks } = await supabase
+          .from('closure_services')
+          .select('service_id, closure_id')
+          .in('service_id', svcIds);
+
+        const indirectLinkedIds = new Set<string>();
+        if (closureLinks && closureLinks.length > 0) {
+          const closureIds = [...new Set(closureLinks.map(c => c.closure_id))];
+          const { data: invClosures } = await supabase
+            .from('invoice_closures')
+            .select('closure_id')
+            .in('closure_id', closureIds);
+          const invoicedClosureIds = new Set((invClosures || []).map(ic => ic.closure_id));
+          for (const cl of closureLinks) {
+            if (invoicedClosureIds.has(cl.closure_id)) {
+              indirectLinkedIds.add(cl.service_id);
+            }
+          }
+        }
+
         for (const svc of invoicedServices) {
-          if (!linkedIds.has(svc.id)) {
+          if (!directLinkedIds.has(svc.id) && !indirectLinkedIds.has(svc.id)) {
             found.push({
               id: svc.id,
               folio: svc.folio || 'Sin folio',
               type: 'invoiced_no_invoice',
-              description: `Servicio marcado como "facturado" sin factura vinculada`,
+              description: `Servicio marcado como "facturado" sin factura vinculada (ni directa ni vía cierre)`,
               currentStatus: 'invoiced',
             });
           }
