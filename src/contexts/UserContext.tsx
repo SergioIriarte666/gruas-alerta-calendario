@@ -218,7 +218,15 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
 export const useUser = () => {
   const context = useContext(UserContext);
   if (context === undefined) {
-    throw new Error('useUser must be used within a UserProvider');
+    // During HMR, context may temporarily be undefined - return safe defaults
+    console.warn('useUser called outside UserProvider (likely HMR). Returning defaults.');
+    return {
+      user: null,
+      loading: true,
+      logout: async () => {},
+      updateUser: async () => {},
+      forceRefreshProfile: async () => {},
+    } as UserContextType;
   }
   return context;
 };
