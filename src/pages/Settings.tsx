@@ -16,7 +16,7 @@ import { PaymentTermsSettings } from '@/components/settings/PaymentTermsSettings
 import { Building2, User, Settings as SettingsIcon, Bell, Users, Globe, CreditCard, Tag, Unlock } from 'lucide-react';
 import { TimezoneSettingsTab } from '@/components/settings/TimezoneSettingsTab';
 import { CategoriesTab } from '@/components/settings/CategoriesTab';
-import { ServiceLiberationTool } from '@/components/admin/ServiceLiberationTool';
+import { AdminEmergencyPanel } from '@/components/admin/AdminEmergencyPanel';
 import { useUserPermissions } from '@/hooks/useUserPermissions';
 
 const Settings = () => {
@@ -159,7 +159,7 @@ const Settings = () => {
 
         {isAdmin && (
           <TabsContent value="liberation">
-            <ServiceLiberationTool />
+            <AdminEmergencyPanel />
           </TabsContent>
         )}
       </Tabs>
