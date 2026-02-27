@@ -27,6 +27,35 @@ import { parseFromDatabase } from '@/utils/timezoneUtils';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
+// --- Normalization utilities ---
+const normalizeText = (text: string): string =>
+  text
+    .trim()
+    .toUpperCase()
+    .replace(/\s+/g, ' ')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+
+const tokenize = (text: string): string[] =>
+  normalizeText(text).split(/[\s\-_/]+/).filter(t => t.length > 0);
+
+const brandMatches = (a: string, b: string): boolean =>
+  normalizeText(a) === normalizeText(b);
+
+const modelMatches = (entered: string, official: string): boolean => {
+  const ne = normalizeText(entered);
+  const no = normalizeText(official);
+  if (ne === no) return true;
+  // Token-based: all tokens of entered must appear in official (allows suffix like VD01)
+  const enteredTokens = tokenize(entered);
+  const officialTokens = tokenize(official);
+  if (enteredTokens.length >= 2 && enteredTokens.every(t => officialTokens.includes(t))) return true;
+  if (officialTokens.length >= 2 && officialTokens.every(t => enteredTokens.includes(t))) return true;
+  // Contains check
+  if (no.includes(ne) || ne.includes(no)) return true;
+  return false;
+};
+
 interface VehicleSectionProps {
   vehicleBrand: string;
   onVehicleBrandChange: (value: string) => void;
@@ -77,7 +106,7 @@ export const VehicleSection = ({
   const confirmedPlatesRef = useRef<Set<string>>(new Set());
 
   // Patent lookup suggestion states
-  const { data: patentData, loading: patentLoading, lookupPatent, reset: resetPatent } = usePatentLookup();
+  const { data: patentData, dataPlate, loading: patentLoading, lookupPatent, reset: resetPatent } = usePatentLookup();
   const [showSuggestionDialog, setShowSuggestionDialog] = useState(false);
   const [isApplyingSuggestion, setIsApplyingSuggestion] = useState(false);
   const appliedPlatesRef = useRef<Set<string>>(new Set());
@@ -93,6 +122,8 @@ export const VehicleSection = ({
     enteredModel: string;
   } | null>(null);
   const [verificationSuccess, setVerificationSuccess] = useState(false);
+  const [warningDismissed, setWarningDismissed] = useState(false);
+  const prevPlateRef = useRef<string>('');
   
   // Fetch vehicle history for the debounced plate
   const { history, isLoading: historyLoading } = useVehicleHistory(
@@ -148,17 +179,20 @@ export const VehicleSection = ({
   // Cross-verify when patent data exists AND brand/model are already filled
   useEffect(() => {
     const cleanPlate = licensePlate.replace(/[-\s]/g, '').toUpperCase();
+    // Only validate if dataPlate matches current plate
     if (
       patentData &&
       patentData.marca !== 'No disponible' &&
+      dataPlate === cleanPlate &&
       vehicleBrand &&
       cleanPlate.length >= 6 &&
-      !isEditing
+      !isEditing &&
+      !warningDismissed
     ) {
-      const brandMatch = patentData.marca.toLowerCase() === vehicleBrand.toLowerCase();
-      const modelMatch = !vehicleModel || patentData.modelo.toLowerCase() === vehicleModel.toLowerCase();
+      const bMatch = brandMatches(vehicleBrand, patentData.marca);
+      const mMatch = !vehicleModel || modelMatches(vehicleModel, patentData.modelo);
 
-      if (brandMatch && modelMatch) {
+      if (bMatch && mMatch) {
         setMismatchWarning(null);
         setVerificationSuccess(true);
       } else {
@@ -171,7 +205,7 @@ export const VehicleSection = ({
         });
       }
     }
-  }, [patentData, vehicleBrand, vehicleModel, licensePlate, isEditing]);
+  }, [patentData, dataPlate, vehicleBrand, vehicleModel, licensePlate, isEditing, warningDismissed]);
 
   // Handle pending model after brand is set
   useEffect(() => {
@@ -226,10 +260,18 @@ export const VehicleSection = ({
     }
   }, [licensePlate, debouncedPlate]);
 
-  // Clear verification status only when plate changes (cross-verify effect handles brand/model changes)
+  // Clear verification status when plate changes — reset everything stale
   useEffect(() => {
-    setMismatchWarning(null);
-    setVerificationSuccess(false);
+    const cleanPlate = licensePlate.replace(/[-\s]/g, '').toUpperCase();
+    if (prevPlateRef.current && prevPlateRef.current !== cleanPlate) {
+      setMismatchWarning(null);
+      setVerificationSuccess(false);
+      setWarningDismissed(false);
+      resetPatent();
+      // Allow re-searching this plate
+      searchedPlatesRef.current.delete(prevPlateRef.current);
+    }
+    prevPlateRef.current = cleanPlate;
   }, [licensePlate]);
 
   // Find brand ID from brand name when component loads
@@ -483,19 +525,66 @@ export const VehicleSection = ({
       </div>
 
       {/* Banner de verificación cruzada - advertencia */}
-      {mismatchWarning && (
-        <div className="flex items-start gap-3 rounded-lg border border-yellow-500/50 bg-yellow-50 dark:bg-yellow-950/20 p-4 mt-2">
-          <ShieldAlert className="h-5 w-5 text-yellow-600 flex-shrink-0 mt-0.5" />
-          <div className="flex-1 text-sm">
-            <p className="font-semibold text-yellow-800 dark:text-yellow-200">
-              Verificación de patente: datos no coinciden
-            </p>
-            <p className="text-yellow-700 dark:text-yellow-300 mt-1">
-              Según el registro, la patente <span className="font-mono font-semibold">{licensePlate}</span> corresponde a{' '}
-              <span className="font-semibold">{mismatchWarning.expectedBrand} {mismatchWarning.expectedModel}</span>,
-              pero se ingresó <span className="font-semibold">{mismatchWarning.enteredBrand} {mismatchWarning.enteredModel}</span>.
-              Verifique los datos ingresados.
-            </p>
+      {mismatchWarning && !warningDismissed && (
+        <div className="flex flex-col gap-3 rounded-lg border border-yellow-500/50 bg-yellow-50 dark:bg-yellow-950/20 p-4 mt-2">
+          <div className="flex items-start gap-3">
+            <ShieldAlert className="h-5 w-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+            <div className="flex-1 text-sm">
+              <p className="font-semibold text-yellow-800 dark:text-yellow-200">
+                Verificación de patente: datos no coinciden
+              </p>
+              <p className="text-yellow-700 dark:text-yellow-300 mt-1">
+                Según el registro, la patente <span className="font-mono font-semibold">{licensePlate}</span> corresponde a{' '}
+                <span className="font-semibold">{mismatchWarning.expectedBrand} {mismatchWarning.expectedModel}</span>,
+                pero se ingresó <span className="font-semibold">{mismatchWarning.enteredBrand} {mismatchWarning.enteredModel}</span>.
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 ml-8">
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              className="text-xs h-7"
+              onClick={() => {
+                if (patentData) {
+                  handleApplySuggestion();
+                  setMismatchWarning(null);
+                  setVerificationSuccess(true);
+                }
+              }}
+            >
+              Aplicar datos oficiales
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              className="text-xs h-7"
+              onClick={() => {
+                const cleanPlate = licensePlate.replace(/[-\s]/g, '').toUpperCase();
+                searchedPlatesRef.current.delete(cleanPlate);
+                setMismatchWarning(null);
+                setVerificationSuccess(false);
+                resetPatent();
+                lookupPatent(cleanPlate);
+                searchedPlatesRef.current.add(cleanPlate);
+              }}
+            >
+              Revalidar patente
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant="ghost"
+              className="text-xs h-7 text-muted-foreground"
+              onClick={() => {
+                setWarningDismissed(true);
+                setMismatchWarning(null);
+              }}
+            >
+              Descartar
+            </Button>
           </div>
         </div>
       )}
