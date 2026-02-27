@@ -1,47 +1,72 @@
 
+# Plan: Importador de Cotizaciones desde PDF
 
-# Plan: Soporte para VIN en campo de Patente
+## Objetivo
+Agregar un importador de PDFs de cotizaciones en la pestana O.C. (junto al importador de OC existente), que extraiga numero de cotizacion, items con patentes y montos, y los asocie automaticamente a los servicios del cliente.
 
-## Problema
-Los vehiculos nuevos no tienen patente, solo VIN (17 caracteres alfanumericos). Actualmente:
-- El campo "Patente" en el formulario de servicio auto-consulta la API de patentes chilenas para cualquier input >= 6 caracteres
-- La API de GetAPI Chile solo acepta patentes (6 chars), no VINs, y retorna error
-- El campo en la pagina de Consulta de Patentes tiene `maxLength={8}`, impidiendo ingresar VINs
+## Formato de Cotizacion (basado en el modelo proporcionado)
+- **Numero**: "N 4120" en la esquina superior derecha
+- **Fecha**: "26-02-2026"
+- **Items**: tabla con Codigo, Descripcion (incluye patentes), Cantidad, Precio Unitario, Valor
+- **Patentes dentro de la descripcion**: "Remolque de Vehiculos Toyota Hilux TKFK-99 Norte a Franklin"
+- **Totales**: Neto, IVA, Total
 
-## Solucion
+## Cambios
 
-### 1. Detectar VIN vs Patente
-Crear una funcion utilitaria que distinga entre patente chilena (formato XXXX-99 o XX-XX-99, 6 caracteres alfanumericos) y VIN (17 caracteres alfanumericos):
+### 1. Edge Function: `parse-quote-pdf`
+**Archivo nuevo:** `supabase/functions/parse-quote-pdf/index.ts`
+- Misma estructura que `parse-purchase-order-pdf` pero con prompt adaptado para cotizaciones
+- Extrae: `quoteNumber`, `date`, `items[]` (patente, detail, amount, quantity), `totals`
+- Usa la misma llamada a Lovable AI Gateway con Gemini
+- Tool call `extract_quote` con schema adaptado
 
-```text
-isChileanPlate(value): true si tiene 6 chars (4 letras + 2 numeros o 2 letras + 2 letras + 2 numeros)
-isVIN(value): true si tiene 17 chars alfanumericos
-```
+### 2. Hook: `useQuotePDFImport`
+**Archivo nuevo:** `src/hooks/vip/useQuotePDFImport.ts`
+- Basado en `usePurchaseOrderPDFImport.ts` con las siguientes diferencias:
+  - Llama a `parse-quote-pdf` en vez de `parse-purchase-order-pdf`
+  - Filtra servicios candidatos: `completed` o `quoted` (sin cotizacion asignada)
+  - Al aplicar, actualiza `quoteNumber` y cambia status a `quoted`
+  - Matching por patente (principal), luego por monto como fallback
 
-### 2. VehicleSection.tsx - No consultar API para VINs
-- En el `useEffect` que dispara `lookupPatent` (linea ~146-162), agregar condicion: solo consultar si `isChileanPlate(cleanPlate)` es true
-- Esto evita el error "Error al consultar la patente" cuando se ingresa un VIN
-- Actualizar el placeholder del input a `"Ej: AB-CD-12 o VIN"`
-- Remover o aumentar el `maxLength` para permitir VINs de 17 caracteres (actualmente no tiene maxLength en VehicleSection, solo en PatentLookup)
+### 3. Componente: `QuotePDFImporter`
+**Archivo nuevo:** `src/components/vip/QuotePDFImporter.tsx`
+- Misma estructura visual que `PurchaseOrderPDFImporter`
+- Titulo: "Importar Cotizacion desde PDF"
+- Tabla de preview muestra: Patente, Servicio, Cotizacion Actual, N Cotizacion Nueva, Estado
+- Badges: coincidencias, ya asignada, sin match
+- Boton "Aplicar X Cotizaciones"
 
-### 3. PatentLookup.tsx - Permitir VINs mas largos
-- Cambiar `maxLength={8}` a `maxLength={20}` en el input de la pagina de Consulta de Patentes
-- Solo enviar a la API si es formato de patente chilena; si es VIN, mostrar mensaje informativo indicando que la consulta solo funciona con patentes chilenas
+### 4. Integrar en la pagina VipClientPipeline
+**Archivo:** `src/pages/VipClientPipeline.tsx`
+- Agregar `QuotePDFImporter` en la pestana `purchase-orders`, ANTES del `PurchaseOrderPDFImporter`
+- Ambos importadores coexisten en la misma pestana
 
-### 4. useVehicleHistory.ts - Historial por VIN
-- El historial de vehiculos ya busca por `license_plate` en la tabla `services`, por lo que si se guarda el VIN en ese campo, el historial funcionara automaticamente para VINs tambien
+## Flujo del usuario
+1. Sube un PDF de cotizacion en el dropzone
+2. La IA extrae numero de cotizacion, patentes, montos
+3. El sistema busca servicios del cliente que coincidan por patente
+4. Muestra tabla de preview con matches encontrados
+5. El usuario selecciona cuales aplicar y confirma
+6. Se actualiza `quote_number` y status a `quoted` en cada servicio
 
-## Archivos a modificar
+## Detalle tecnico
 
-| Archivo | Cambio |
+### Edge Function - Prompt de extraccion
+El prompt sera similar al de OC pero enfocado en cotizaciones chilenas:
+- Numero de cotizacion aparece como "N", "Cotizacion N", "Presupuesto N"
+- Patentes estan DENTRO de la descripcion de cada item (mismo patron que OC)
+- Montos en CLP
+
+### Matching - misma logica jerarquica
+1. **Patente**: coincidencia exacta normalizada
+2. **Monto**: fallback si no hay patente
+3. Servicios candidatos: status `completed` o `purchase_order_pending` (sin cotizacion)
+
+## Archivos a crear/modificar
+
+| Archivo | Accion |
 |---|---|
-| `src/components/services/form/VehicleSection.tsx` | Agregar deteccion VIN, skip API lookup para VINs, actualizar placeholder |
-| `src/components/vehicles/PatentLookup.tsx` | Aumentar maxLength, validar formato antes de consultar API |
-| `src/hooks/usePatentLookup.ts` | Agregar validacion de formato en `lookupPatent` para dar mensaje claro si es VIN |
-
-## Resultado esperado
-- VINs de 17 caracteres se pueden ingresar sin error
-- La API de patentes solo se consulta para patentes chilenas validas (6 chars)
-- El historial de vehiculos funciona tanto con patentes como con VINs
-- Mensajes claros al usuario cuando ingresa un VIN vs una patente
-
+| `supabase/functions/parse-quote-pdf/index.ts` | Crear - Edge function para parsear cotizaciones |
+| `src/hooks/vip/useQuotePDFImport.ts` | Crear - Hook de importacion de cotizaciones |
+| `src/components/vip/QuotePDFImporter.tsx` | Crear - Componente UI del importador |
+| `src/pages/VipClientPipeline.tsx` | Modificar - Agregar QuotePDFImporter en pestana O.C. |
