@@ -1,61 +1,92 @@
 
-Objetivo: corregir el importador de Cotizaciones para que detecte correctamente “Ya asignada” cuando en BD existe `COT-xxxx` y el PDF trae `xxxx` (sin prefijo), evitando falsos “Cot. diferente”.
 
-Diagnóstico confirmado:
-- El problema está en `src/hooks/vip/useQuotePDFImport.ts`.
-- Hoy se compara con igualdad estricta: `topService.quoteNumber === quote.quoteNumber`.
-- En tus casos reales (SRV-6393/SRV-6394), BD guarda `COT-4095` / `COT-4097`, mientras el parser entrega `4095` / `4097`.
-- Resultado: el estado cae en `already_has_quote` aunque sea la misma cotización.
+# Validacion de RUT del cliente en importadores de Cotizacion y OC
 
-Do I know what the issue is?
-Sí: la comparación de cotización no está normalizada (prefijo/formato), por eso el matching de estado es demasiado estricto.
+## Problema
+Si se sube un PDF de cotizacion u OC en el pipeline de un cliente diferente, el sistema lo procesa sin advertir. Las cotizaciones y ordenes de compra contienen el RUT del cliente emisor/destinatario, por lo que se puede validar automaticamente.
 
-Alcance de implementación (1 archivo):
-- `src/hooks/vip/useQuotePDFImport.ts`
+## Solucion
 
-Cambios propuestos:
+### 1. Edge Functions - Extraer RUT del cliente del PDF
 
-1) Agregar normalizador de número de cotización
-- Crear helper local similar al estilo de `normalizeOC` del importador de OC.
-- Normalización recomendada:
-  - trim + uppercase
-  - remover prefijo `COT`/`COT-`/variantes con espacios
-  - remover separadores no alfanuméricos para comparar de forma estable
-- Ejemplos equivalentes tras normalizar:
-  - `COT-4095` == `4095`
-  - `cot 4095` == `4095`
-  - `COT-24-001` == `24-001` (comparación robusta aun con separadores)
+**Archivo: `supabase/functions/parse-quote-pdf/index.ts`**
+- Agregar campo `clientRut` al schema de la herramienta `extract_quote`
+- Agregar instruccion al prompt del sistema para que extraiga el RUT del cliente (destinatario de la cotizacion)
+- Incluir `clientRut` en el resultado devuelto
 
-2) Usar normalización en la detección de estado
-- Reemplazar:
-  - `const hasSameQuote = topService.quoteNumber === quote.quoteNumber;`
-- Por comparación normalizada:
-  - `normalizeQuote(topService.quoteNumber) === normalizeQuote(quote.quoteNumber)`
-- Mantener el resto de la lógica de prioridades sin cambios (match por patente, luego estados).
+**Archivo: `supabase/functions/parse-purchase-order-pdf/index.ts`**
+- Agregar campo `clientRut` al schema de la herramienta `extract_purchase_order`
+- Agregar instruccion al prompt para extraer el RUT del emisor de la OC (la empresa que emite la orden de compra)
+- Incluir `clientRut` en el resultado devuelto
 
-3) Endurecer formateo al aplicar cotización
-- En `applyMatches`, evitar doble prefijo o formatos inconsistentes.
-- En vez de sólo `startsWith('COT-')`, aplicar normalización y reconstrucción controlada para guardar una sola versión canónica (`COT-...`).
-- Esto evita casos como `COT-COT-4095` o variaciones por espacios/mayúsculas.
+Instruccion de prompt agregada en ambos:
+```
+- Extrae el RUT del cliente/empresa que aparece en el documento (formato XX.XXX.XXX-X o similar).
+  En cotizaciones es el destinatario ("Señor(es)", "Cliente", "Razón Social").
+  En OC es el emisor de la orden.
+```
 
-4) (Opcional recomendado) Mostrar número “normalizado visualmente” en columna “N° Cot. Nueva”
-- No es obligatorio para resolver el bug, pero mejora claridad en preview.
-- Si se aplica, solo presentación; no cambia lógica base.
+Nuevo campo en el schema de ambas herramientas:
+```json
+"clientRut": {
+  "type": "string",
+  "description": "RUT del cliente/empresa (ej: 76.XXX.XXX-X)"
+}
+```
 
-Validación funcional (E2E manual):
-1. Subir PDF de cotización que entregue `4095`, con servicio existente `COT-4095`:
-   - Debe mostrar “Ya asignada” (no “Cot. diferente”).
-2. Subir PDF con cotización realmente distinta:
-   - Debe seguir mostrando “Cot. diferente”.
-3. Aplicar actualización en un caso “matched”:
-   - Debe guardar en BD con un único prefijo `COT-...`.
-4. Repetir con estado `invoiced` (ya habilitado en filtro):
-   - Debe seguir detectando correctamente.
+### 2. Interfaces TypeScript - Agregar `clientRut`
 
-Riesgo y mitigación:
-- Riesgo: sobre-normalizar y considerar iguales números que no correspondan.
-- Mitigación: normalizar sólo prefijo/separadores, manteniendo núcleo alfanumérico del número; no tocar otras reglas de matching.
+**Archivo: `src/hooks/vip/useQuotePDFImport.ts`**
+- Agregar `clientRut: string` a la interfaz `ParsedQuote`
 
-Resultado esperado:
-- El importador deja de marcar falsos “Cot. diferente” por tema de prefijo.
-- Estados más confiables en preview: “Ya asignada” cuando corresponde.
+**Archivo: `src/hooks/vip/usePurchaseOrderPDFImport.ts`**
+- Agregar `clientRut: string` a la interfaz `ParsedOC`
+
+### 3. Hooks de importacion - Validar RUT contra cliente actual
+
+En ambos hooks (`useQuotePDFImport` y `usePurchaseOrderPDFImport`), despues de parsear los PDFs y antes del matching:
+
+1. Obtener el RUT del cliente actual (ya se hace con `clientData.rut`)
+2. Comparar con el RUT extraido de cada PDF (normalizado: sin puntos, guiones ni espacios)
+3. Si no coincide, marcar el PDF como "cliente incorrecto" y mostrarlo como error via `toast.error`
+4. Excluir los PDFs con RUT incorrecto del proceso de matching
+
+Logica de validacion (igual en ambos hooks):
+```typescript
+const normalizeRut = (r: string) => (r || '').replace(/[.\s-]/g, '').toUpperCase();
+
+// Despues de parsear y obtener clientData:
+const clientRut = normalizeRut(clientData?.rut || '');
+
+// Filtrar PDFs que no corresponden al cliente
+const validParsed = parsedDocs.filter(doc => {
+  const docRut = normalizeRut(doc.clientRut);
+  if (docRut && clientRut && docRut !== clientRut) {
+    toast.error(
+      `${doc.fileName}: La cotizacion/OC pertenece a otro cliente (RUT: ${doc.clientRut}). ` +
+      `El cliente actual tiene RUT: ${clientData?.rut}`
+    );
+    return false;
+  }
+  return true;
+});
+
+if (validParsed.length === 0) {
+  setState(prev => ({ ...prev, step: 'idle', error: 'Ningun PDF corresponde a este cliente' }));
+  return;
+}
+```
+
+### 4. Archivos a modificar
+
+| Archivo | Cambio |
+|---|---|
+| `supabase/functions/parse-quote-pdf/index.ts` | Extraer `clientRut` del PDF via IA |
+| `supabase/functions/parse-purchase-order-pdf/index.ts` | Extraer `clientRut` del PDF via IA |
+| `src/hooks/vip/useQuotePDFImport.ts` | Agregar interfaz + validacion de RUT |
+| `src/hooks/vip/usePurchaseOrderPDFImport.ts` | Agregar interfaz + validacion de RUT |
+
+### Resultado esperado
+- Al subir un PDF de cotizacion/OC en el pipeline de un cliente incorrecto, se muestra un toast de error indicando que el documento pertenece a otro cliente y se detiene el proceso.
+- Si el RUT coincide o no se pudo extraer del PDF, el flujo continua normalmente.
+
