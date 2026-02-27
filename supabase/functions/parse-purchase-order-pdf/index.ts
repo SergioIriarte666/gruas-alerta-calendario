@@ -87,7 +87,8 @@ Debes extraer la información estructurada del documento usando la herramienta e
 - Ejemplo: "TRASLADO UNIDAD PLV SEGUN COTIZACION 4100" → quoteReference debe ser "4100".
 - Ejemplo: "PRESUPUESTOS 4090" → quoteReference debe ser "4090".
 - NUNCA devuelvas quoteReference vacío si hay una referencia a cotización o presupuesto en CUALQUIER parte del documento.
-- Extrae SOLO el número (ej: "4100", "4090").`
+- Extrae SOLO el número (ej: "4100", "4090").
+- Extrae el RUT de la empresa/entidad que EMITE la orden de compra (el comprador). Busca en campos como "RUT", "R.U.T.", encabezado de la empresa emisora. Formato XX.XXX.XXX-X o similar. Si no lo encuentras, devuelve string vacío.`
           },
           {
             role: 'user',
@@ -148,6 +149,10 @@ Debes extraer la información estructurada del documento usando la herramienta e
                   quoteReference: {
                     type: 'string',
                     description: 'Número de referencia de presupuesto/cotización encontrado en observaciones (solo el número, ej: "4090")'
+                  },
+                  clientRut: {
+                    type: 'string',
+                    description: 'RUT de la empresa/entidad que emite la orden de compra (ej: 76.XXX.XXX-X)'
                   }
                 },
                 required: ['ocNumber', 'items', 'totals']
@@ -204,6 +209,7 @@ Debes extraer la información estructurada del documento usando la herramienta e
       items: parsed.items || [],
       totals: parsed.totals || { neto: 0, iva: 0, total: 0 },
       quoteReference: parsed.quoteReference || '',
+      clientRut: parsed.clientRut || '',
       rawText: `Extraído con IA - ${parsed.items?.length || 0} items encontrados`,
     };
 

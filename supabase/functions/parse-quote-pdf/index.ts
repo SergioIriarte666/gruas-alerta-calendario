@@ -77,7 +77,8 @@ Debes extraer la información estructurada del documento usando la herramienta e
 - Extrae TODAS las patentes que aparezcan en el documento.
 - IMPORTANTE: Si un ítem tiene MÚLTIPLES patentes separadas por "/" o "," (ej: "TKFL-65/TKFL-67"), genera UN ÍTEM SEPARADO por cada patente, con el mismo detalle y dividiendo el monto proporcionalmente por la cantidad de patentes.
 - Ejemplo: "Remolque Toyota Hilux TKFL-65/TKFL-67" con valor $100.000 debe generar 2 items: uno con patente "TKFL-65" y monto $50.000, otro con patente "TKFL-67" y monto $50.000.
-- Lee TODAS las secciones del documento incluyendo observaciones, notas y glosas para extraer información completa.`
+- Lee TODAS las secciones del documento incluyendo observaciones, notas y glosas para extraer información completa.
+- Extrae el RUT del cliente/empresa destinatario de la cotización (formato XX.XXX.XXX-X o similar). Busca en campos como "Señor(es)", "Cliente", "Razón Social", "RUT", "R.U.T.". Si no lo encuentras, devuelve string vacío.`
           },
           {
             role: 'user',
@@ -125,6 +126,10 @@ Debes extraer la información estructurada del documento usando la herramienta e
                       required: ['patente', 'detail', 'amount']
                     },
                     description: 'Lista de items/líneas de la cotización con patentes'
+                  },
+                  clientRut: {
+                    type: 'string',
+                    description: 'RUT del cliente/empresa destinatario de la cotización (ej: 76.XXX.XXX-X)'
                   },
                   totals: {
                     type: 'object',
@@ -187,6 +192,7 @@ Debes extraer la información estructurada del documento usando la herramienta e
       date: parsed.date || null,
       items: parsed.items || [],
       totals: parsed.totals || { neto: 0, iva: 0, total: 0 },
+      clientRut: parsed.clientRut || '',
       rawText: `Extraído con IA - ${parsed.items?.length || 0} items encontrados`,
     };
 
