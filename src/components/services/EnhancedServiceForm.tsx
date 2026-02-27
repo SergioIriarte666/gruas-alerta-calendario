@@ -252,8 +252,25 @@ export const EnhancedServiceForm = ({
         isExisting: true
       })) || [];
 
+      const pickFirstNonEmpty = (...values: Array<string | null | undefined>) => {
+        for (const value of values) {
+          if (typeof value === 'string' && value.trim() !== '') return value;
+        }
+        return '';
+      };
+
       setFormData(prev => ({
         ...prev,
+        // 🔒 Sincronización robusta de campos críticos comerciales en edición
+        purchaseOrder: pickFirstNonEmpty(
+          enhancedService.purchaseOrderNumber,
+          enhancedService.purchaseOrder,
+          prev.purchaseOrder
+        ),
+        quoteNumber: pickFirstNonEmpty(
+          enhancedService.quoteNumber,
+          prev.quoteNumber
+        ),
         operators: enhancedService.operators || [],
         costDetails,
         startTime: enhancedService.startTime,
