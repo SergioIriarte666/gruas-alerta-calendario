@@ -1,4 +1,5 @@
-import { Edit, Trash2, FileText, ArrowUpDown, ArrowUp, ArrowDown, Eye } from 'lucide-react';
+import { useState } from 'react';
+import { Edit, Trash2, FileText, ArrowUpDown, ArrowUp, ArrowDown, Eye, Users, List } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -8,6 +9,7 @@ import { Client } from '@/types';
 import { formatForDisplay } from '@/utils/timezoneUtils';
 import { useDeviceType } from '@/hooks/useDeviceType';
 import { ClosuresMobileView } from './ClosuresMobileView';
+import ClosuresGroupedView from './ClosuresGroupedView';
 
 export type ClosureSortField = 'folio' | 'dateFrom' | 'clientId' | 'serviceCount' | 'total' | 'status';
 export type SortDirection = 'asc' | 'desc';
@@ -39,6 +41,7 @@ const SortIcon = ({ field, currentSortField, sortDirection }: {
 
 const ClosuresTable = ({ closures, clients, onEdit, onDelete, onClose, onViewDetails, sortField, sortDirection, onSort }: ClosuresTableProps) => {
   const { isMobile } = useDeviceType();
+  const [groupByClient, setGroupByClient] = useState(false);
 
   if (isMobile) {
     return (
@@ -89,12 +92,32 @@ const ClosuresTable = ({ closures, clients, onEdit, onDelete, onClose, onViewDet
 
   return (
     <Card className="bg-card border">
-      <CardHeader>
+      <CardHeader className="flex flex-row items-center justify-between space-y-0">
         <CardTitle className="text-foreground">
           Lista de Cierres ({closures.length})
         </CardTitle>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setGroupByClient(!groupByClient)}
+          className="gap-2"
+          title={groupByClient ? 'Vista plana' : 'Agrupar por cliente'}
+        >
+          {groupByClient ? <List className="h-4 w-4" /> : <Users className="h-4 w-4" />}
+          {groupByClient ? 'Vista plana' : 'Por cliente'}
+        </Button>
       </CardHeader>
       <CardContent>
+        {groupByClient ? (
+          <ClosuresGroupedView
+            closures={closures}
+            clients={clients}
+            onEdit={onEdit}
+            onDelete={onDelete}
+            onClose={onClose}
+            onViewDetails={onViewDetails}
+          />
+        ) : (
         <Table>
           <TableHeader>
             <TableRow className="border-border">
@@ -223,10 +246,11 @@ const ClosuresTable = ({ closures, clients, onEdit, onDelete, onClose, onViewDet
             ))}
           </TableBody>
         </Table>
+        )}
 
         {closures.length === 0 && (
           <div className="text-center py-8">
-            <p className="text-gray-400">No se encontraron cierres</p>
+            <p className="text-muted-foreground">No se encontraron cierres</p>
           </div>
         )}
       </CardContent>

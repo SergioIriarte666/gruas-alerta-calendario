@@ -31,6 +31,7 @@ const Closures = () => {
   const { clients } = useClients();
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
+  const [clientFilter, setClientFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showReportSheet, setShowReportSheet] = useState(false);
@@ -63,9 +64,11 @@ const Closures = () => {
   const filteredAndSortedClosures = useMemo(() => {
     const filtered = closures.filter(closure => {
       const matchesSearch = closure.folio.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           closure.status.toLowerCase().includes(searchTerm.toLowerCase());
+                           closure.status.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           getClientName(closure.clientId).toLowerCase().includes(searchTerm.toLowerCase());
       const matchesStatus = statusFilter === 'all' || closure.status === statusFilter;
-      return matchesSearch && matchesStatus;
+      const matchesClient = clientFilter === 'all' || closure.clientId === clientFilter;
+      return matchesSearch && matchesStatus && matchesClient;
     });
 
     return [...filtered].sort((a, b) => {
@@ -97,7 +100,7 @@ const Closures = () => {
       
       return sortDirection === 'asc' ? comparison : -comparison;
     });
-  }, [closures, searchTerm, statusFilter, sortField, sortDirection, clients]);
+  }, [closures, searchTerm, statusFilter, clientFilter, sortField, sortDirection, clients]);
 
   const handleDelete = (id: string, folio: string) => {
     if (window.confirm(`¿Está seguro de eliminar el cierre "${folio}"?`)) {
@@ -254,6 +257,9 @@ const Closures = () => {
         onSearchChange={setSearchTerm}
         statusFilter={statusFilter}
         onStatusFilterChange={setStatusFilter}
+        clientFilter={clientFilter}
+        onClientFilterChange={setClientFilter}
+        clients={clients}
       />
       
       <ClosuresTable
