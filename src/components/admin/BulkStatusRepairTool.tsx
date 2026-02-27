@@ -33,36 +33,56 @@ export const BulkStatusRepairTool = () => {
     try {
       // 1. Services marked as "invoiced" without any invoice link
       // Services can be linked via invoice_services OR via closure_services→invoice_closures
-      const { data: invoicedServices } = await supabase
+      const { data: invoicedServices, error: invoicedError } = await supabase
         .from('services')
         .select('id, folio, status')
         .eq('status', 'invoiced');
 
+      if (invoicedError) throw invoicedError;
+
       if (invoicedServices && invoicedServices.length > 0) {
         const svcIds = invoicedServices.map(s => s.id);
+        const chunkSize = 120;
+        const chunk = <T,>(arr: T[], size: number): T[][] =>
+          Array.from({ length: Math.ceil(arr.length / size) }, (_, i) => arr.slice(i * size, i * size + size));
 
-        // Direct links via invoice_services
-        const { data: directLinks } = await supabase
-          .from('invoice_services')
-          .select('service_id')
-          .in('service_id', svcIds);
-        const directLinkedIds = new Set((directLinks || []).map(r => r.service_id));
+        // Direct links via invoice_services (chunked to avoid URL/query-size 400 errors)
+        const directLinkedIds = new Set<string>();
+        for (const idsChunk of chunk(svcIds, chunkSize)) {
+          const { data: directLinks, error: directErr } = await supabase
+            .from('invoice_services')
+            .select('service_id')
+            .in('service_id', idsChunk);
+          if (directErr) throw directErr;
+          for (const row of directLinks || []) directLinkedIds.add(row.service_id);
+        }
 
-        // Indirect links via closure_services → invoice_closures
-        const { data: closureLinks } = await supabase
-          .from('closure_services')
-          .select('service_id, closure_id')
-          .in('service_id', svcIds);
+        // Indirect links via closure_services → invoice_closures (also chunked)
+        const closureLinksAll: Array<{ service_id: string; closure_id: string }> = [];
+        for (const idsChunk of chunk(svcIds, chunkSize)) {
+          const { data: closureLinks, error: closureErr } = await supabase
+            .from('closure_services')
+            .select('service_id, closure_id')
+            .in('service_id', idsChunk);
+          if (closureErr) throw closureErr;
+          closureLinksAll.push(...(closureLinks || []));
+        }
 
         const indirectLinkedIds = new Set<string>();
-        if (closureLinks && closureLinks.length > 0) {
-          const closureIds = [...new Set(closureLinks.map(c => c.closure_id))];
-          const { data: invClosures } = await supabase
-            .from('invoice_closures')
-            .select('closure_id')
-            .in('closure_id', closureIds);
-          const invoicedClosureIds = new Set((invClosures || []).map(ic => ic.closure_id));
-          for (const cl of closureLinks) {
+        if (closureLinksAll.length > 0) {
+          const closureIds = [...new Set(closureLinksAll.map(c => c.closure_id))];
+          const invoicedClosureIds = new Set<string>();
+
+          for (const closureIdsChunk of chunk(closureIds, chunkSize)) {
+            const { data: invClosures, error: invClosureErr } = await supabase
+              .from('invoice_closures')
+              .select('closure_id')
+              .in('closure_id', closureIdsChunk);
+            if (invClosureErr) throw invClosureErr;
+            for (const ic of invClosures || []) invoicedClosureIds.add(ic.closure_id);
+          }
+
+          for (const cl of closureLinksAll) {
             if (invoicedClosureIds.has(cl.closure_id)) {
               indirectLinkedIds.add(cl.service_id);
             }
@@ -149,7 +169,7 @@ export const BulkStatusRepairTool = () => {
           .from('invoices')
           .select('total')
           .eq('id', issue.id)
-          .single();
+          .maybeSingle();
         
         if (inv) {
           const remaining = inv.total - totalPaid;
