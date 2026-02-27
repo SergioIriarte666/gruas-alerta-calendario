@@ -121,14 +121,9 @@ export const useInvoiceOperations = () => {
         console.log('✅ Estado del cierre actualizado a "invoiced"');
       }
 
-      // Invalidar queries de React Query para refresh inmediato
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['services'] }),
-        queryClient.invalidateQueries({ queryKey: ['operatorServices'] }),
-        queryClient.invalidateQueries({ queryKey: ['crane-services'] }),
-        queryClient.invalidateQueries({ queryKey: ['invoices'] }),
-        queryClient.invalidateQueries({ queryKey: ['closures'] })
-      ]);
+      // Invalidar solo queries de facturación — NO servicios (evita congelamiento por refetch masivo)
+      queryClient.invalidateQueries({ queryKey: ['invoices'] });
+      queryClient.invalidateQueries({ queryKey: ['closures'] });
 
       // Dispatch del evento custom para otros listeners
       window.dispatchEvent(new CustomEvent('invoice-created', { 
@@ -392,12 +387,9 @@ export const useInvoiceOperations = () => {
         });
       }
 
-      // Step 7: Invalidate caches
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['invoices'] }),
-        queryClient.invalidateQueries({ queryKey: ['services'] }),
-        queryClient.invalidateQueries({ queryKey: ['closures'] })
-      ]);
+      // Invalidar solo queries de facturación — NO servicios (evita congelamiento)
+      queryClient.invalidateQueries({ queryKey: ['invoices'] });
+      queryClient.invalidateQueries({ queryKey: ['closures'] });
 
       console.log('✅ Invoice update transaction completed successfully');
       toast.success("Factura actualizada", {
@@ -499,12 +491,9 @@ export const useInvoiceOperations = () => {
         throw error;
       }
 
-      // 7. Invalidar queries para actualizar UI
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['invoices'] }),
-        queryClient.invalidateQueries({ queryKey: ['services'] }),
-        queryClient.invalidateQueries({ queryKey: ['closures'] })
-      ]);
+      // Invalidar solo queries de facturación — NO servicios (evita congelamiento)
+      queryClient.invalidateQueries({ queryKey: ['invoices'] });
+      queryClient.invalidateQueries({ queryKey: ['closures'] });
       
       toast.success("Factura anulada", {
         description: "La factura ha sido anulada y los servicios están disponibles para nueva facturación.",

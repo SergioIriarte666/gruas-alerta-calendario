@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { useClosuresForInvoices } from '@/hooks/useClosuresForInvoices';
-import { useClients } from '@/hooks/useClients';
 import { formatForDisplay } from '@/utils/timezoneUtils';
 import { Check, ChevronDown, FileText, Calendar, User, DollarSign, ShoppingCart } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -33,13 +32,8 @@ const EnhancedClosureSelector: React.FC<EnhancedClosureSelectorProps> = ({
   } = useClosuresForInvoices({
     includeInvoiced: isEditing
   });
-  const {
-    clients
-  } = useClients();
-  const getClientName = (clientId?: string) => {
-    if (!clientId) return 'Todos los clientes';
-    const client = clients.find(c => c.id === clientId);
-    return client?.name || 'Cliente desconocido';
+  const getClientName = (closure: any) => {
+    return closure.clientName || 'Todos los clientes';
   };
   const formatDateRange = (dateRange: {
     from: string;
@@ -61,7 +55,7 @@ const EnhancedClosureSelector: React.FC<EnhancedClosureSelectorProps> = ({
   return <div className="space-y-2">
       <Label className="text-foreground">
         Cierre
-        {isEditing && <span className="text-xs text-violet-600 ml-2">(Modo edición - incluye cierres texto facturados)</span>}
+        {isEditing && <span className="text-xs text-violet-600 ml-2">(Modo edición - incluye cierres facturados)</span>}
       </Label>
       
       <Popover open={open} onOpenChange={setOpen}>
@@ -73,7 +67,7 @@ const EnhancedClosureSelector: React.FC<EnhancedClosureSelectorProps> = ({
                   {selectedClosure.folio}
                 </div>
                 <div className="text-xs text-muted-foreground mt-1">
-                  {formatDateRange(selectedClosure.dateRange)} • {getClientName(selectedClosure.clientId)} • {selectedClosure.purchaseOrder ? `OC: ${selectedClosure.purchaseOrder}` : 'Sin OC'} • ${Math.round(selectedClosure.total).toLocaleString()}
+                  {formatDateRange(selectedClosure.dateRange)} • {getClientName(selectedClosure)} • {selectedClosure.purchaseOrder ? `OC: ${selectedClosure.purchaseOrder}` : 'Sin OC'} • ${Math.round(selectedClosure.total).toLocaleString()}
                 </div>
               </div> : <span className="text-muted-foreground">Seleccionar cierre...</span>}
             <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -88,7 +82,7 @@ const EnhancedClosureSelector: React.FC<EnhancedClosureSelectorProps> = ({
                 No se encontraron cierres.
               </CommandEmpty>
               <CommandGroup>
-                {closures.map(closure => <CommandItem key={closure.id} value={`${closure.folio} ${getClientName(closure.clientId)} ${formatDateRange(closure.dateRange)} ${closure.purchaseOrder || ''}`} onSelect={() => {
+                {closures.map(closure => <CommandItem key={closure.id} value={`${closure.folio} ${getClientName(closure)} ${formatDateRange(closure.dateRange)} ${closure.purchaseOrder || ''}`} onSelect={() => {
                 onClosureChange(closure.id);
                 setOpen(false);
               }} className="p-0 cursor-pointer">
@@ -110,7 +104,7 @@ const EnhancedClosureSelector: React.FC<EnhancedClosureSelectorProps> = ({
                       {/* Cliente */}
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <User className="w-4 h-4 text-muted-foreground" />
-                        <span className="truncate">{getClientName(closure.clientId)}</span>
+                        <span className="truncate">{getClientName(closure)}</span>
                       </div>
                       
                       {/* Orden de Compra */}

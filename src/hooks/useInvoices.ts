@@ -43,10 +43,7 @@ export const useInvoices = () => {
     try {
       const newInvoice = await createInvoiceOp(data);
       addInvoice(newInvoice);
-      
-      // Manual refresh instead of real-time
-      refetch();
-      
+      // No redundant refetch — React Query invalidation in useInvoiceOperations handles it
       return newInvoice;
     } catch (error) {
       console.error('Error creating invoice:', error);
@@ -58,10 +55,6 @@ export const useInvoices = () => {
     try {
       const updatedInvoice = await updateInvoiceOp(id, data);
       updateInvoiceData(id, updatedInvoice);
-      
-      // Manual refresh instead of real-time
-      refetch();
-      
       return updatedInvoice;
     } catch (error) {
       console.error('Error updating invoice:', error);
@@ -73,9 +66,6 @@ export const useInvoices = () => {
     try {
       await deleteInvoiceOp(id);
       removeInvoice(id);
-      
-      // Manual refresh instead of real-time
-      refetch();
     } catch (error) {
       console.error('Error deleting invoice:', error);
       throw error;
