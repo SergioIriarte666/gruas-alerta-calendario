@@ -71,7 +71,9 @@ Debes extraer la información estructurada del documento usando la herramienta e
 - Busca patrones de patente (XXXX-99, XXXX99, XX-9999, XX9999) dentro del texto de cada ítem.
 - Ejemplos reales: "Remolque de Vehiculos Toyota Hilux TKFK-99 Norte a Franklin", "Servicio grúa VJYG-13".
 - NUNCA devuelvas patente vacía si hay una patente en la descripción del ítem.
-- Extrae TODAS las patentes que aparezcan en el documento.`
+- Extrae TODAS las patentes que aparezcan en el documento.
+- IMPORTANTE: Si un ítem tiene MÚLTIPLES patentes separadas por "/" o "," (ej: "TKFL-65/TKFL-67"), genera UN ÍTEM SEPARADO por cada patente, con el mismo detalle y dividiendo el monto proporcionalmente por la cantidad de patentes.
+- Ejemplo: "Remolque Toyota Hilux TKFL-65/TKFL-67" con valor $100.000 debe generar 2 items: uno con patente "TKFL-65" y monto $50.000, otro con patente "TKFL-67" y monto $50.000.`
           },
           {
             role: 'user',

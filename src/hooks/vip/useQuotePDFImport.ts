@@ -165,7 +165,20 @@ export function useQuotePDFImport(clientId: string | null, services: Service[]) 
     const usedServiceIds = new Set<string>();
 
     for (const quote of parsedQuotes) {
-      for (const item of quote.items) {
+      for (const rawItem of quote.items) {
+        // Split multiple patentes separated by "/" or ","
+        const patenteRaw = (rawItem.patente || '').trim();
+        const multiPatentes = patenteRaw.split(/[\/,]/).map(p => p.trim()).filter(p => p.length > 0);
+        
+        const expandedItems: ParsedQuoteItem[] = multiPatentes.length > 1
+          ? multiPatentes.map(p => ({
+              ...rawItem,
+              patente: p,
+              amount: Math.round(rawItem.amount / multiPatentes.length),
+            }))
+          : [rawItem];
+
+        for (const item of expandedItems) {
         const patenteNorm = normalizePatente(item.patente);
 
         if (!patenteNorm) {
@@ -238,6 +251,7 @@ export function useQuotePDFImport(clientId: string | null, services: Service[]) 
             });
           }
         }
+        } // end for expandedItems
       }
     }
 
