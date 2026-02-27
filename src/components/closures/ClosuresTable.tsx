@@ -41,7 +41,7 @@ const SortIcon = ({ field, currentSortField, sortDirection }: {
 
 const ClosuresTable = ({ closures, clients, onEdit, onDelete, onClose, onViewDetails, sortField, sortDirection, onSort }: ClosuresTableProps) => {
   const { isMobile } = useDeviceType();
-  const [groupByClient, setGroupByClient] = useState(false);
+  const [groupByClient, setGroupByClient] = useState(true);
 
   if (isMobile) {
     return (
@@ -59,7 +59,10 @@ const ClosuresTable = ({ closures, clients, onEdit, onDelete, onClose, onViewDet
   const getClientName = (clientId?: string) => {
     if (!clientId) return 'Todos los clientes';
     const client = clients.find(c => c.id === clientId);
-    return client?.name || 'Cliente desconocido';
+    if (!client) return 'Cliente desconocido';
+    const dept = client.department;
+    if (!dept || dept === 'General') return client.name;
+    return `${client.name} - ${dept}`;
   };
 
   const getStatusBadge = (status: ServiceClosure['status']) => {
