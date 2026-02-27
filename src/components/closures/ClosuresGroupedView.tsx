@@ -32,7 +32,10 @@ const ClosuresGroupedView = ({ closures, clients, onEdit, onDelete, onClose, onV
   const getClientName = (clientId?: string) => {
     if (!clientId) return 'Sin cliente asignado';
     const client = clients.find(c => c.id === clientId);
-    return client?.name || 'Cliente desconocido';
+    if (!client) return 'Cliente desconocido';
+    const dept = client.department;
+    if (!dept || dept === 'General') return client.name;
+    return `${client.name} - ${dept}`;
   };
 
   const getStatusBadge = (status: ServiceClosure['status']) => {
