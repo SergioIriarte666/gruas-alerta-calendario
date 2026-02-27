@@ -35,7 +35,7 @@ export const BulkStatusRepairTool = () => {
       // Services can be linked via invoice_services OR via closure_services→invoice_closures
       const { data: invoicedServices, error: invoicedError } = await supabase
         .from('services')
-        .select('id, folio, status')
+        .select('id, folio, status, invoice_folio')
         .eq('status', 'invoiced');
 
       if (invoicedError) throw invoicedError;
@@ -90,12 +90,14 @@ export const BulkStatusRepairTool = () => {
         }
 
         for (const svc of invoicedServices) {
-          if (!directLinkedIds.has(svc.id) && !indirectLinkedIds.has(svc.id)) {
+          const hasInvoiceFolioField = typeof svc.invoice_folio === 'string' && svc.invoice_folio.trim().length > 0;
+
+          if (!directLinkedIds.has(svc.id) && !indirectLinkedIds.has(svc.id) && !hasInvoiceFolioField) {
             found.push({
               id: svc.id,
               folio: svc.folio || 'Sin folio',
               type: 'invoiced_no_invoice',
-              description: `Servicio marcado como "facturado" sin factura vinculada (ni directa ni vía cierre)`,
+              description: `Servicio marcado como "facturado" sin evidencia de factura (sin vínculo y sin folio factura)`,
               currentStatus: 'invoiced',
             });
           }
