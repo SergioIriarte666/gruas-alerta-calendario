@@ -330,12 +330,15 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose, onDuplicate }: S
                       {serviceData.quoteNumber && (
                         <DetailItem icon={FileText} label="Número de Cotización" value={serviceData.quoteNumber} />
                       )}
-                      {serviceData.invoiceFolio && (
-                        <DetailItem icon={FileText} label="Folio Factura" value={serviceData.invoiceFolio} />
-                      )}
-                      {serviceData.invoiceNumeroFiscal && (
-                        <DetailItem icon={FileText} label="Número Fiscal" value={serviceData.invoiceNumeroFiscal} />
-                      )}
+                       {(enhancedService?.resolvedInvoiceFolio || serviceData.invoiceFolio) && (
+                         <DetailItem icon={FileText} label="Folio Factura" value={enhancedService?.resolvedInvoiceFolio || serviceData.invoiceFolio} />
+                       )}
+                       {(enhancedService?.resolvedInvoiceNumeroFiscal || serviceData.invoiceNumeroFiscal) && (
+                         <DetailItem icon={FileText} label="Número Fiscal" value={enhancedService?.resolvedInvoiceNumeroFiscal || serviceData.invoiceNumeroFiscal} />
+                       )}
+                       {enhancedService?.resolvedClosureFolio && (
+                         <DetailItem icon={FileText} label="Cierre" value={enhancedService.resolvedClosureFolio} />
+                       )}
                       <DetailItem icon={Calendar} label="Fecha de Solicitud" value={formatForDisplay(serviceData.requestDate)} />
                       <DetailItem icon={Clock} label="Fecha y Hora de Servicio" value={formatForDisplayWithTime(serviceData.serviceDate)} />
                       {serviceData.startTime && (

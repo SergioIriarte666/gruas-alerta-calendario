@@ -121,9 +121,14 @@ export const useInvoiceOperations = () => {
         console.log('✅ Estado del cierre actualizado a "invoiced"');
       }
 
-      // Invalidar solo queries de facturación — NO servicios (evita congelamiento por refetch masivo)
+      // Invalidar queries de facturación + servicios enhanced para sincronizar modals
       queryClient.invalidateQueries({ queryKey: ['invoices'] });
       queryClient.invalidateQueries({ queryKey: ['closures'] });
+      // Invalidar enhanced-service-details para que modals reflejen factura recién creada
+      serviceIds.forEach(sid => {
+        queryClient.invalidateQueries({ queryKey: ['enhanced-service-details', sid] });
+      });
+      queryClient.invalidateQueries({ queryKey: ['serviceDetails'] });
 
       // Dispatch del evento custom para otros listeners
       window.dispatchEvent(new CustomEvent('invoice-created', { 
@@ -387,9 +392,11 @@ export const useInvoiceOperations = () => {
         });
       }
 
-      // Invalidar solo queries de facturación — NO servicios (evita congelamiento)
+      // Invalidar queries de facturación + enhanced details para sincronizar modals
       queryClient.invalidateQueries({ queryKey: ['invoices'] });
       queryClient.invalidateQueries({ queryKey: ['closures'] });
+      queryClient.invalidateQueries({ queryKey: ['enhanced-service-details'] });
+      queryClient.invalidateQueries({ queryKey: ['serviceDetails'] });
 
       console.log('✅ Invoice update transaction completed successfully');
       toast.success("Factura actualizada", {
