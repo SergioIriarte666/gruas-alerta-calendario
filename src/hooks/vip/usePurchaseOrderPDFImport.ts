@@ -166,7 +166,8 @@ export function usePurchaseOrderPDFImport(clientId: string | null, services: Ser
       s.status === 'quoted' || 
       s.status === 'purchase_order_pending' || 
       s.status === 'completed' || 
-      s.status === 'with_purchase_order'
+      s.status === 'with_purchase_order' ||
+      s.status === 'invoiced'
     );
 
     const matches: MatchedService[] = [];
