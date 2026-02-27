@@ -78,7 +78,8 @@ Debes extraer la información estructurada del documento usando la herramienta e
 - IMPORTANTE: Si un ítem tiene MÚLTIPLES patentes separadas por "/" o "," (ej: "TKFL-65/TKFL-67"), genera UN ÍTEM SEPARADO por cada patente, con el mismo detalle y dividiendo el monto proporcionalmente por la cantidad de patentes.
 - Ejemplo: "Remolque Toyota Hilux TKFL-65/TKFL-67" con valor $100.000 debe generar 2 items: uno con patente "TKFL-65" y monto $50.000, otro con patente "TKFL-67" y monto $50.000.
 - Lee TODAS las secciones del documento incluyendo observaciones, notas y glosas para extraer información completa.
-- Extrae el RUT del cliente/empresa destinatario de la cotización (formato XX.XXX.XXX-X o similar). Busca en campos como "Señor(es)", "Cliente", "Razón Social", "RUT", "R.U.T.". Si no lo encuentras, devuelve string vacío.`
+- Extrae el RUT del cliente/empresa destinatario de la cotización (formato XX.XXX.XXX-X o similar). Busca en campos como "Señor(es)", "Cliente", "Razón Social", "RUT", "R.U.T.". Si no lo encuentras, devuelve string vacío.
+- VEHICULOS SIN PATENTE PERO CON VIN: Algunos vehiculos se identifican por su numero VIN (Vehicle Identification Number) de exactamente 17 caracteres alfanumericos en lugar de patente chilena. Ejemplo: "Sail LZWADAGA9SF003022" -> patente = "LZWADAGA9SF003022". Si no hay patente chilena pero hay un codigo de 17 caracteres alfanumericos, usalo como patente.`
           },
           {
             role: 'user',
