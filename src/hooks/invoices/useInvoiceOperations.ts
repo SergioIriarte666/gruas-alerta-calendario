@@ -434,7 +434,7 @@ export const useInvoiceOperations = () => {
 
         const serviceIds = closureServices?.map(cs => cs.service_id) || [];
 
-        // 3. PRIMERO revertir estado de servicios de 'invoiced' a 'completed'
+        // 3. PRIMERO revertir estado de servicios de 'invoiced' a 'completed' y limpiar folio/fiscal
         if (serviceIds.length > 0) {
           const { data: servicesToRevert, error: checkError } = await supabase
             .from('services')
@@ -449,11 +449,16 @@ export const useInvoiceOperations = () => {
           if (servicesToRevert && servicesToRevert.length > 0) {
             const { error: revertError } = await supabase
               .from('services')
-              .update({ status: 'completed', updated_at: new Date().toISOString() })
+              .update({ 
+                status: 'completed', 
+                invoice_folio: null,
+                invoice_numero_fiscal: null,
+                updated_at: new Date().toISOString() 
+              })
               .in('id', servicesToRevert.map(s => s.id));
 
             if (revertError) throw revertError;
-            console.log('Revertidos', servicesToRevert.length, 'servicios a estado completed');
+            console.log('Revertidos', servicesToRevert.length, 'servicios a estado completed (folio/fiscal limpiados)');
           }
         }
 
@@ -466,6 +471,38 @@ export const useInvoiceOperations = () => {
 
         if (closureRevertError) throw closureRevertError;
         console.log('Revertidos', closureIds.length, 'cierres a estado closed');
+      }
+
+      // 4b. También revertir servicios vinculados directamente via invoice_services
+      const { data: directServices, error: directServicesError } = await supabase
+        .from('invoice_services')
+        .select('service_id')
+        .eq('invoice_id', id);
+
+      if (directServicesError) throw directServicesError;
+
+      if (directServices && directServices.length > 0) {
+        const directServiceIds = directServices.map(ds => ds.service_id);
+        const { error: revertDirectError } = await supabase
+          .from('services')
+          .update({ 
+            status: 'completed', 
+            invoice_folio: null,
+            invoice_numero_fiscal: null,
+            updated_at: new Date().toISOString() 
+          })
+          .in('id', directServiceIds)
+          .eq('status', 'invoiced');
+
+        if (revertDirectError) throw revertDirectError;
+        console.log('Revertidos', directServiceIds.length, 'servicios directos (invoice_services)');
+
+        // Eliminar relaciones invoice_services
+        const { error: deleteDirectError } = await supabase
+          .from('invoice_services')
+          .delete()
+          .eq('invoice_id', id);
+        if (deleteDirectError) throw deleteDirectError;
       }
 
       // 5. Eliminar relaciones invoice_closures
@@ -491,9 +528,12 @@ export const useInvoiceOperations = () => {
         throw error;
       }
 
-      // Invalidar solo queries de facturación — NO servicios (evita congelamiento)
+      // Invalidar queries de facturación Y servicios (datos de factura cambiaron)
       queryClient.invalidateQueries({ queryKey: ['invoices'] });
       queryClient.invalidateQueries({ queryKey: ['closures'] });
+      queryClient.invalidateQueries({ queryKey: ['enhanced-service-details'] });
+      queryClient.invalidateQueries({ queryKey: ['serviceDetails'] });
+      queryClient.invalidateQueries({ queryKey: ['services'] });
       
       toast.success("Factura anulada", {
         description: "La factura ha sido anulada y los servicios están disponibles para nueva facturación.",

@@ -89,15 +89,38 @@ export const BulkStatusRepairTool = () => {
           }
         }
 
+        // Check for orphaned invoice_folio (pointing to non-existent invoices)
+        const uniqueFolios = [...new Set(
+          invoicedServices
+            .filter(s => s.invoice_folio && s.invoice_folio.trim().length > 0)
+            .map(s => s.invoice_folio!.trim())
+        )];
+
+        const existingInvoiceFolios = new Set<string>();
+        if (uniqueFolios.length > 0) {
+          for (const folioChunk of chunk(uniqueFolios, chunkSize)) {
+            const { data: existingInvoices } = await supabase
+              .from('invoices')
+              .select('folio')
+              .in('folio', folioChunk);
+            for (const inv of existingInvoices || []) existingInvoiceFolios.add(inv.folio);
+          }
+        }
+
         for (const svc of invoicedServices) {
           const hasInvoiceFolioField = typeof svc.invoice_folio === 'string' && svc.invoice_folio.trim().length > 0;
+          const hasValidLink = directLinkedIds.has(svc.id) || indirectLinkedIds.has(svc.id);
+          const folioExistsInInvoices = hasInvoiceFolioField && existingInvoiceFolios.has(svc.invoice_folio!.trim());
 
-          if (!directLinkedIds.has(svc.id) && !indirectLinkedIds.has(svc.id) && !hasInvoiceFolioField) {
+          if (!hasValidLink && !folioExistsInInvoices) {
+            const isOrphaned = hasInvoiceFolioField && !folioExistsInInvoices;
             found.push({
               id: svc.id,
               folio: svc.folio || 'Sin folio',
               type: 'invoiced_no_invoice',
-              description: `Servicio marcado como "facturado" sin evidencia de factura (sin vínculo y sin folio factura)`,
+              description: isOrphaned
+                ? `Factura ${svc.invoice_folio} ya no existe — datos huérfanos`
+                : `Servicio marcado como "facturado" sin evidencia de factura`,
               currentStatus: 'invoiced',
             });
           }
@@ -152,10 +175,15 @@ export const BulkStatusRepairTool = () => {
       if (issue.type === 'invoiced_no_invoice') {
         const { error } = await supabase
           .from('services')
-          .update({ status: 'with_purchase_order', invoice_folio: null, updated_at: new Date().toISOString() })
+          .update({ 
+            status: 'completed', 
+            invoice_folio: null, 
+            invoice_numero_fiscal: null,
+            updated_at: new Date().toISOString() 
+          })
           .eq('id', issue.id);
         if (error) throw error;
-        return `✅ ${issue.folio}: Estado cambiado a "Con OC"`;
+        return `✅ ${issue.folio}: Estado → "completado", folio/fiscal limpiados`;
       }
 
       if (issue.type === 'negative_remaining' || issue.type === 'overpaid') {
