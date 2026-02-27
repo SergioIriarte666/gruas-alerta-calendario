@@ -17,6 +17,7 @@ export interface ParsedOC {
   items: ParsedOCItem[];
   totals: { neto: number; iva: number; total: number };
   quoteReference: string;
+  clientRut: string;
   rawText: string;
   fileName: string;
 }
@@ -41,6 +42,7 @@ const normalizePatente = (p: string | null | undefined) => (p || '').replace(/[-
 const normalizeOC = (oc: string | null | undefined) => (oc || '').replace(/^OC-/i, '').trim();
 const normalizeText = (t: string | null | undefined) =>
   (t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+const normalizeRut = (r: string | null | undefined) => (r || '').replace(/[.\s-]/g, '').toUpperCase();
 
 export function usePurchaseOrderPDFImport(clientId: string | null, services: Service[]) {
   const { updateService } = useServices();
@@ -103,8 +105,34 @@ export function usePurchaseOrderPDFImport(clientId: string | null, services: Ser
       return;
     }
 
+    // Fetch client data for RUT validation
+    const { data: clientData } = await supabase
+      .from('clients')
+      .select('id, name, rut')
+      .eq('id', clientId)
+      .single();
+
+    const clientRut = normalizeRut(clientData?.rut);
+
+    // Validate RUT: filter out PDFs that belong to a different client
+    const validOCs = parsedOCs.filter(doc => {
+      const docRut = normalizeRut(doc.clientRut);
+      if (docRut && clientRut && docRut !== clientRut) {
+        toast.error(
+          `${doc.fileName}: La OC pertenece a otro cliente (RUT: ${doc.clientRut}). El cliente actual tiene RUT: ${clientData?.rut}`
+        );
+        return false;
+      }
+      return true;
+    });
+
+    if (validOCs.length === 0) {
+      setState(prev => ({ ...prev, step: 'idle', error: 'Ningún PDF corresponde a este cliente' }));
+      return;
+    }
+
     // Now match against existing services - fetch fresh data from DB
-    setState(prev => ({ ...prev, step: 'matching', parsedOCs }));
+    setState(prev => ({ ...prev, step: 'matching', parsedOCs: validOCs }));
 
     // Fresh fetch to avoid stale cache after OC deletions
     let clientServices: Service[] = [];
@@ -122,7 +150,7 @@ export function usePurchaseOrderPDFImport(clientId: string | null, services: Ser
 
       if (freshError) throw freshError;
 
-      const { data: clientData } = await supabase
+      const { data: clientDataFresh } = await supabase
         .from('clients')
         .select('id, name, rut, phone, email, address, department, is_active')
         .eq('id', clientId)
@@ -133,11 +161,11 @@ export function usePurchaseOrderPDFImport(clientId: string | null, services: Ser
         folio: service.folio,
         requestDate: service.request_date,
         serviceDate: service.service_date,
-        client: clientData ? {
-          id: clientData.id, name: clientData.name, rut: clientData.rut,
-          phone: clientData.phone || '', email: clientData.email || '',
-          address: clientData.address || '', department: clientData.department || 'General',
-          isActive: clientData.is_active, createdAt: '', updatedAt: ''
+        client: clientDataFresh ? {
+          id: clientDataFresh.id, name: clientDataFresh.name, rut: clientDataFresh.rut,
+          phone: clientDataFresh.phone || '', email: clientDataFresh.email || '',
+          address: clientDataFresh.address || '', department: clientDataFresh.department || 'General',
+          isActive: clientDataFresh.is_active, createdAt: '', updatedAt: ''
         } : null,
         purchaseOrder: service.purchase_order,
         purchaseOrderNumber: service.purchase_order_number || '',
@@ -173,7 +201,7 @@ export function usePurchaseOrderPDFImport(clientId: string | null, services: Ser
     const matches: MatchedService[] = [];
     const usedServiceIds = new Set<string>();
 
-    for (const oc of parsedOCs) {
+    for (const oc of validOCs) {
       for (const item of oc.items) {
         const patenteNorm = normalizePatente(item.patente);
 
