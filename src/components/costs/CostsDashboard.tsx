@@ -1,7 +1,8 @@
 import React, { useMemo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { TrendingUp, TrendingDown, DollarSign, FileText, BarChart3 } from 'lucide-react';
+import { TrendingUp, TrendingDown, DollarSign, FileText, BarChart3, ChevronDown } from 'lucide-react';
+import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
 import { Cost } from '@/types/costs';
 import { cn } from '@/lib/utils';
 
@@ -227,34 +228,41 @@ export const CostsDashboard = ({ costs, dateFilter, allCosts }: CostsDashboardPr
       {/* Desglose por categorías */}
       {categoryBreakdown.length > 0 && (
         <Card>
-          <CardContent className="p-4">
-            <h3 className="text-sm font-medium text-muted-foreground mb-4">
-              Top Categorías ({getPeriodLabel()})
-            </h3>
-            <div className="space-y-3">
-              {categoryBreakdown.map((cat, index) => (
-                <div key={cat.name} className="space-y-1">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-foreground font-medium truncate max-w-[200px]">
-                      {cat.name}
-                    </span>
-                    <div className="flex items-center gap-3">
-                      <span className="text-muted-foreground">
-                        {cat.percentage.toFixed(1)}%
-                      </span>
-                      <span className="font-medium text-foreground min-w-[80px] text-right">
-                        {formatCompactCurrency(cat.amount)}
-                      </span>
+          <Collapsible defaultOpen={false}>
+            <CardContent className="p-4">
+              <CollapsibleTrigger className="flex items-center justify-between w-full cursor-pointer group">
+                <h3 className="text-sm font-medium text-muted-foreground">
+                  Top Categorías ({getPeriodLabel()})
+                </h3>
+                <ChevronDown className="w-4 h-4 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-180" />
+              </CollapsibleTrigger>
+              <CollapsibleContent className="mt-4">
+                <div className="space-y-3">
+                  {categoryBreakdown.map((cat, index) => (
+                    <div key={cat.name} className="space-y-1">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-foreground font-medium truncate max-w-[200px]">
+                          {cat.name}
+                        </span>
+                        <div className="flex items-center gap-3">
+                          <span className="text-muted-foreground">
+                            {cat.percentage.toFixed(1)}%
+                          </span>
+                          <span className="font-medium text-foreground min-w-[80px] text-right">
+                            {formatCompactCurrency(cat.amount)}
+                          </span>
+                        </div>
+                      </div>
+                      <Progress
+                        value={cat.percentage}
+                        className="h-2"
+                      />
                     </div>
-                  </div>
-                  <Progress
-                    value={cat.percentage}
-                    className="h-2"
-                  />
+                  ))}
                 </div>
-              ))}
-            </div>
-          </CardContent>
+              </CollapsibleContent>
+            </CardContent>
+          </Collapsible>
         </Card>
       )}
     </div>
