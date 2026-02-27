@@ -66,6 +66,59 @@ const fetchEnhancedServiceDetails = async (serviceId: string): Promise<EnhancedS
     throw new Error('No se pudieron cargar los costos del servicio');
   }
 
+  // 2.5. Resolver factura desde vínculos relacionales (FUENTE DE VERDAD)
+  let resolvedInvoiceFolio: string | null = null;
+  let resolvedInvoiceNumeroFiscal: string | null = null;
+  let resolvedClosureFolio: string | null = null;
+
+  // Prioridad 1: vínculo directo invoice_services
+  const { data: directInvoiceLink } = await supabase
+    .from('invoice_services')
+    .select('invoice_id, invoices(id, folio, numero_fiscal, status)')
+    .eq('service_id', serviceId)
+    .maybeSingle();
+
+  if (directInvoiceLink?.invoices && (directInvoiceLink.invoices as any).status !== 'cancelled') {
+    const inv = directInvoiceLink.invoices as any;
+    resolvedInvoiceFolio = inv.folio;
+    resolvedInvoiceNumeroFiscal = inv.numero_fiscal;
+    console.log('🔗 [ENHANCED_SERVICE] Factura resuelta por vínculo directo:', inv.folio);
+  }
+
+  // Prioridad 2: vínculo por cierre (closure_services → invoice_closures → invoices)
+  if (!resolvedInvoiceFolio) {
+    const { data: closureLink } = await supabase
+      .from('closure_services')
+      .select('closure_id, service_closures(id, folio, status)')
+      .eq('service_id', serviceId)
+      .maybeSingle();
+
+    if (closureLink?.service_closures) {
+      const closure = closureLink.service_closures as any;
+      resolvedClosureFolio = closure.folio;
+
+      const { data: invoiceClosureLink } = await supabase
+        .from('invoice_closures')
+        .select('invoice_id, invoices(id, folio, numero_fiscal, status)')
+        .eq('closure_id', closureLink.closure_id)
+        .maybeSingle();
+
+      if (invoiceClosureLink?.invoices && (invoiceClosureLink.invoices as any).status !== 'cancelled') {
+        const inv = invoiceClosureLink.invoices as any;
+        resolvedInvoiceFolio = inv.folio;
+        resolvedInvoiceNumeroFiscal = inv.numero_fiscal;
+        console.log('🔗 [ENHANCED_SERVICE] Factura resuelta por cierre:', inv.folio, 'via', closure.folio);
+      }
+    }
+  }
+
+  // Fallback: metadata del servicio (cache desnormalizada)
+  if (!resolvedInvoiceFolio && serviceData.invoice_folio) {
+    resolvedInvoiceFolio = serviceData.invoice_folio;
+    resolvedInvoiceNumeroFiscal = serviceData.invoice_numero_fiscal;
+    console.log('⚠️ [ENHANCED_SERVICE] Factura resuelta por metadata (fallback):', serviceData.invoice_folio);
+  }
+
   // 3. Separar costos de comisiones de operadores vs otros costos
   const commissionCosts = costsData?.filter(cost => 
     cost.subcategory === 'Comisiones' || 
@@ -242,7 +295,11 @@ const fetchEnhancedServiceDetails = async (serviceId: string): Promise<EnhancedS
     operators,
     serviceCosts: serviceCosts as Cost[],
     totalCosts,
-    totalCommissions
+    totalCommissions,
+    // Datos resueltos desde vínculos relacionales
+    resolvedInvoiceFolio,
+    resolvedInvoiceNumeroFiscal,
+    resolvedClosureFolio
   };
 
   console.log('✅ [ENHANCED_SERVICE] Enhanced service created:', {

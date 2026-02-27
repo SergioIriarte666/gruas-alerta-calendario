@@ -18,6 +18,10 @@ export interface EnhancedService extends Omit<Service, 'operator' | 'operatorCom
   serviceCosts: Cost[]; // Changed from costDetails to serviceCosts to align with costs table
   totalCosts: number;
   totalCommissions: number;
+  // Campos resueltos desde vínculos relacionales (fuente de verdad)
+  resolvedInvoiceFolio: string | null;
+  resolvedInvoiceNumeroFiscal: string | null;
+  resolvedClosureFolio: string | null;
 }
 
 // Tipos para el formulario
