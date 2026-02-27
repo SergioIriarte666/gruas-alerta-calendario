@@ -1,72 +1,37 @@
 
-# Plan: Importador de Cotizaciones desde PDF
 
-## Objetivo
-Agregar un importador de PDFs de cotizaciones en la pestana O.C. (junto al importador de OC existente), que extraiga numero de cotizacion, items con patentes y montos, y los asocie automaticamente a los servicios del cliente.
+# Plan: Soporte para multiples patentes por item en Cotizaciones
 
-## Formato de Cotizacion (basado en el modelo proporcionado)
-- **Numero**: "N 4120" en la esquina superior derecha
-- **Fecha**: "26-02-2026"
-- **Items**: tabla con Codigo, Descripcion (incluye patentes), Cantidad, Precio Unitario, Valor
-- **Patentes dentro de la descripcion**: "Remolque de Vehiculos Toyota Hilux TKFK-99 Norte a Franklin"
-- **Totales**: Neto, IVA, Total
+## Problema
+Cuando una linea de la cotizacion tiene multiples patentes separadas por "/" (ej: "Toyota Hilux TKFL-65/TKFL-67"), el sistema las trata como una sola patente y solo genera 1 match en vez de 2.
 
-## Cambios
+## Solucion (dos niveles de proteccion)
 
-### 1. Edge Function: `parse-quote-pdf`
-**Archivo nuevo:** `supabase/functions/parse-quote-pdf/index.ts`
-- Misma estructura que `parse-purchase-order-pdf` pero con prompt adaptado para cotizaciones
-- Extrae: `quoteNumber`, `date`, `items[]` (patente, detail, amount, quantity), `totals`
-- Usa la misma llamada a Lovable AI Gateway con Gemini
-- Tool call `extract_quote` con schema adaptado
+### 1. Edge Function: Mejorar prompt para separar items con multiples patentes
+**Archivo:** `supabase/functions/parse-quote-pdf/index.ts`
 
-### 2. Hook: `useQuotePDFImport`
-**Archivo nuevo:** `src/hooks/vip/useQuotePDFImport.ts`
-- Basado en `usePurchaseOrderPDFImport.ts` con las siguientes diferencias:
-  - Llama a `parse-quote-pdf` en vez de `parse-purchase-order-pdf`
-  - Filtra servicios candidatos: `completed` o `quoted` (sin cotizacion asignada)
-  - Al aplicar, actualiza `quoteNumber` y cambia status a `quoted`
-  - Matching por patente (principal), luego por monto como fallback
+Agregar al prompt del sistema:
+- "Si un item tiene MULTIPLES patentes separadas por '/' o ',' (ej: TKFL-65/TKFL-67), genera UN ITEM SEPARADO por cada patente, con el mismo detalle y dividiendo el monto proporcionalmente por la cantidad."
+- Esto hace que la IA devuelva items ya separados desde la extraccion.
 
-### 3. Componente: `QuotePDFImporter`
-**Archivo nuevo:** `src/components/vip/QuotePDFImporter.tsx`
-- Misma estructura visual que `PurchaseOrderPDFImporter`
-- Titulo: "Importar Cotizacion desde PDF"
-- Tabla de preview muestra: Patente, Servicio, Cotizacion Actual, N Cotizacion Nueva, Estado
-- Badges: coincidencias, ya asignada, sin match
-- Boton "Aplicar X Cotizaciones"
+### 2. Hook: Fallback para separar patentes multiples en el matching
+**Archivo:** `src/hooks/vip/useQuotePDFImport.ts`
 
-### 4. Integrar en la pagina VipClientPipeline
-**Archivo:** `src/pages/VipClientPipeline.tsx`
-- Agregar `QuotePDFImporter` en la pestana `purchase-orders`, ANTES del `PurchaseOrderPDFImporter`
-- Ambos importadores coexisten en la misma pestana
+En el loop de matching (linea ~168), antes de normalizar la patente:
+- Detectar si `item.patente` contiene "/" o ","
+- Si es asi, dividir en multiples patentes y crear un match entry por cada una
+- Dividir el monto proporcionalmente (amount / cantidad de patentes)
+- Esto actua como red de seguridad si la IA no separa los items correctamente
 
-## Flujo del usuario
-1. Sube un PDF de cotizacion en el dropzone
-2. La IA extrae numero de cotizacion, patentes, montos
-3. El sistema busca servicios del cliente que coincidan por patente
-4. Muestra tabla de preview con matches encontrados
-5. El usuario selecciona cuales aplicar y confirma
-6. Se actualiza `quote_number` y status a `quoted` en cada servicio
+## Archivos a modificar
 
-## Detalle tecnico
-
-### Edge Function - Prompt de extraccion
-El prompt sera similar al de OC pero enfocado en cotizaciones chilenas:
-- Numero de cotizacion aparece como "N", "Cotizacion N", "Presupuesto N"
-- Patentes estan DENTRO de la descripcion de cada item (mismo patron que OC)
-- Montos en CLP
-
-### Matching - misma logica jerarquica
-1. **Patente**: coincidencia exacta normalizada
-2. **Monto**: fallback si no hay patente
-3. Servicios candidatos: status `completed` o `purchase_order_pending` (sin cotizacion)
-
-## Archivos a crear/modificar
-
-| Archivo | Accion |
+| Archivo | Cambio |
 |---|---|
-| `supabase/functions/parse-quote-pdf/index.ts` | Crear - Edge function para parsear cotizaciones |
-| `src/hooks/vip/useQuotePDFImport.ts` | Crear - Hook de importacion de cotizaciones |
-| `src/components/vip/QuotePDFImporter.tsx` | Crear - Componente UI del importador |
-| `src/pages/VipClientPipeline.tsx` | Modificar - Agregar QuotePDFImporter en pestana O.C. |
+| `supabase/functions/parse-quote-pdf/index.ts` | Agregar instruccion al prompt para separar items con multiples patentes |
+| `src/hooks/vip/useQuotePDFImport.ts` | Agregar logica de split de patentes multiples en el matching loop |
+
+## Resultado esperado
+- Un item con "TKFL-65/TKFL-67" genera 2 matches separados (uno por patente)
+- El monto se divide proporcionalmente entre las patentes
+- Los 4 servicios aparecen correctamente en la tabla de preview
+
