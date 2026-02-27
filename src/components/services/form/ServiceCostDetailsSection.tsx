@@ -14,6 +14,8 @@ import { toast } from 'sonner';
 import { getCurrentChileDateString } from '@/utils/timezoneUtils';
 import { debounce } from 'lodash';
 import { supabase } from '@/integrations/supabase/client';
+import { AutocompleteInput } from '@/components/common/AutocompleteInput';
+import { useFrequentCostDescriptions } from '@/hooks/useFrequentFormData';
 
 interface ServiceCostDetail {
   id: string;
@@ -49,6 +51,7 @@ export const ServiceCostDetailsSection = ({
   
   const [nextId, setNextId] = useState(1);
   const { data: categories = [] } = useCostCategories();
+  const costDescriptionSuggestions = useFrequentCostDescriptions();
   const { data: existingCosts, isLoading: existingCostsLoading, refetch: refetchCosts } = useServiceCosts(serviceId || null);
   const { mutate: addCost } = useAddCost();
   const { mutate: updateCost } = useUpdateCost();
@@ -406,9 +409,10 @@ export const ServiceCostDetailsSection = ({
               {/* Descripción */}
               <div className="space-y-2">
                 <Label>Descripción *</Label>
-                <Input
+                <AutocompleteInput
                   value={cost.description}
-                  onChange={(e) => updateCostDetail(cost.id, 'description', e.target.value)}
+                  onValueChange={(val) => updateCostDetail(cost.id, 'description', val)}
+                  suggestions={costDescriptionSuggestions}
                   placeholder="Ej: Combustible, peajes, etc."
                   disabled={disabled}
                 />

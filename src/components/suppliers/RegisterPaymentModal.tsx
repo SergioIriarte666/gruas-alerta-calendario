@@ -1,12 +1,13 @@
 import React, { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { X, CreditCard, Loader2, Calendar, Building2 } from 'lucide-react';
 import DatePickerInput from '@/components/common/DatePickerInput';
+import { AutocompleteInput } from '@/components/common/AutocompleteInput';
+import { useFrequentSupplierData } from '@/hooks/useFrequentSupplierData';
 import { usePendingPayments } from '@/hooks/usePendingPayments';
 import { useSuppliers } from '@/hooks/useSuppliers';
 import { PendingPaymentSelector } from './form/PendingPaymentSelector';
@@ -31,6 +32,7 @@ export const RegisterPaymentModal: React.FC<RegisterPaymentModalProps> = ({
   const [notes, setNotes] = useState<string>('');
 
   const { suppliers } = useSuppliers();
+  const { referenceSuggestions } = useFrequentSupplierData();
   const { 
     pendingPayments, 
     isLoading, 
@@ -182,9 +184,10 @@ export const RegisterPaymentModal: React.FC<RegisterPaymentModalProps> = ({
 
             <div className="md:col-span-2">
               <Label className="text-foreground mb-2 block">Referencia Bancaria</Label>
-              <Input
+              <AutocompleteInput
                 value={bankReference}
-                onChange={(e) => setBankReference(e.target.value)}
+                onValueChange={setBankReference}
+                suggestions={referenceSuggestions}
                 placeholder="Número de transferencia, cheque, etc."
               />
             </div>
