@@ -13,9 +13,11 @@ import { NotificationSettingsTab } from '@/components/settings/NotificationSetti
 import { InvoiceAlertSettings } from '@/components/invoices/InvoiceAlertSettings';
 import { UserManagementTab } from '@/components/settings/UserManagementTab';
 import { PaymentTermsSettings } from '@/components/settings/PaymentTermsSettings';
-import { Building2, User, Settings as SettingsIcon, Bell, Users, Globe, CreditCard, Tag } from 'lucide-react';
+import { Building2, User, Settings as SettingsIcon, Bell, Users, Globe, CreditCard, Tag, Unlock } from 'lucide-react';
 import { TimezoneSettingsTab } from '@/components/settings/TimezoneSettingsTab';
 import { CategoriesTab } from '@/components/settings/CategoriesTab';
+import { ServiceLiberationTool } from '@/components/admin/ServiceLiberationTool';
+import { useUserPermissions } from '@/hooks/useUserPermissions';
 
 const Settings = () => {
   const {
@@ -36,6 +38,7 @@ const Settings = () => {
     isUpdating: isLogoUpdating,
     updateLogo
   } = useLogoUpdater();
+  const { isAdmin } = useUserPermissions();
   const [activeTab, setActiveTab] = React.useState('company');
 
   const handleSystemSave = async () => {
@@ -80,7 +83,7 @@ const Settings = () => {
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <div className="overflow-x-auto">
-          <TabsList className="inline-flex w-auto min-w-full md:grid md:grid-cols-7 bg-card border h-auto p-1 gap-1">
+          <TabsList className={`inline-flex w-auto min-w-full ${isAdmin ? 'md:grid-cols-8' : 'md:grid-cols-7'} md:grid bg-card border h-auto p-1 gap-1`}>
             <TabsTrigger value="company" className="flex-shrink-0 flex flex-col items-center justify-center space-y-1 text-foreground data-[state=active]:text-primary-foreground data-[state=active]:bg-primary hover:bg-muted p-2 h-auto min-h-[52px] text-xs whitespace-nowrap">
               <Building2 className="w-4 h-4" />
               <span>Empresa</span>
@@ -109,6 +112,12 @@ const Settings = () => {
               <Tag className="w-4 h-4" />
               <span>Categorías</span>
             </TabsTrigger>
+            {isAdmin && (
+              <TabsTrigger value="liberation" className="flex-shrink-0 flex flex-col items-center justify-center space-y-1 text-foreground data-[state=active]:text-primary-foreground data-[state=active]:bg-primary hover:bg-muted p-2 h-auto min-h-[52px] text-xs whitespace-nowrap">
+                <Unlock className="w-4 h-4" />
+                <span>Liberación</span>
+              </TabsTrigger>
+            )}
           </TabsList>
         </div>
 
@@ -147,6 +156,12 @@ const Settings = () => {
         <TabsContent value="categories">
           <CategoriesTab />
         </TabsContent>
+
+        {isAdmin && (
+          <TabsContent value="liberation">
+            <ServiceLiberationTool />
+          </TabsContent>
+        )}
       </Tabs>
     </div>
   );
