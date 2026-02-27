@@ -1,37 +1,32 @@
 
 
-# Plan: Soporte para multiples patentes por item en Cotizaciones
+# Fix: Agregar prefijo COT- al numero de cotizacion
 
 ## Problema
-Cuando una linea de la cotizacion tiene multiples patentes separadas por "/" (ej: "Toyota Hilux TKFL-65/TKFL-67"), el sistema las trata como una sola patente y solo genera 1 match en vez de 2.
+El importador de cotizaciones guarda el numero tal como viene del PDF (ej: "4120") sin agregar el prefijo "COT-". El importador de OC si agrega "OC-" como prefijo. El BatchUpdateModal tambien usa "COT-" como prefijo por defecto.
 
-## Solucion (dos niveles de proteccion)
+## Solucion
 
-### 1. Edge Function: Mejorar prompt para separar items con multiples patentes
-**Archivo:** `supabase/functions/parse-quote-pdf/index.ts`
+### Archivo: `src/hooks/vip/useQuotePDFImport.ts` (linea 274-275)
 
-Agregar al prompt del sistema:
-- "Si un item tiene MULTIPLES patentes separadas por '/' o ',' (ej: TKFL-65/TKFL-67), genera UN ITEM SEPARADO por cada patente, con el mismo detalle y dividiendo el monto proporcionalmente por la cantidad."
-- Esto hace que la IA devuelva items ya separados desde la extraccion.
+Agregar logica de formato al numero de cotizacion antes de guardarlo, igual que hace el importador de OC:
 
-### 2. Hook: Fallback para separar patentes multiples en el matching
-**Archivo:** `src/hooks/vip/useQuotePDFImport.ts`
+```typescript
+// ANTES:
+quoteNumber: match.quoteNumber,
 
-En el loop de matching (linea ~168), antes de normalizar la patente:
-- Detectar si `item.patente` contiene "/" o ","
-- Si es asi, dividir en multiples patentes y crear un match entry por cada una
-- Dividir el monto proporcionalmente (amount / cantidad de patentes)
-- Esto actua como red de seguridad si la IA no separa los items correctamente
+// DESPUES:
+const formattedQuote = match.quoteNumber.startsWith('COT-')
+  ? match.quoteNumber
+  : `COT-${match.quoteNumber}`;
+quoteNumber: formattedQuote,
+```
 
-## Archivos a modificar
+Esto asegura que el numero siempre se guarde con el prefijo "COT-" (ej: "COT-4120"), manteniendo consistencia con el BatchUpdateModal y el formato visual del pipeline.
+
+## Archivo a modificar
 
 | Archivo | Cambio |
 |---|---|
-| `supabase/functions/parse-quote-pdf/index.ts` | Agregar instruccion al prompt para separar items con multiples patentes |
-| `src/hooks/vip/useQuotePDFImport.ts` | Agregar logica de split de patentes multiples en el matching loop |
-
-## Resultado esperado
-- Un item con "TKFL-65/TKFL-67" genera 2 matches separados (uno por patente)
-- El monto se divide proporcionalmente entre las patentes
-- Los 4 servicios aparecen correctamente en la tabla de preview
+| `src/hooks/vip/useQuotePDFImport.ts` | Agregar prefijo "COT-" al quoteNumber en applyMatches |
 
