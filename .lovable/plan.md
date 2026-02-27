@@ -1,76 +1,82 @@
 
 
-# Herramienta de Liberacion de Servicios (Admin)
+# Herramientas de Emergencia Adicionales para Administrador
 
-## Problema
-Cuando un cierre o factura necesita ser rehecho, actualmente se requiere ejecutar SQL manualmente para: eliminar relaciones en `invoice_services`, `invoice_closures`, `closure_services`, borrar la factura/cierre, y resetear el estado de los servicios. Esto es lento, propenso a errores y requiere acceso directo a la base de datos.
+## Herramientas Existentes
+- **Liberacion de Servicios** (ServiceLiberationTool) - Libera cierres/facturas y revierte servicios
+- **Eliminacion de Factura** (InvoiceEmergencyActions) - Elimina factura individual con dependencias
+- **Liberacion de Cierre** (ClosureEmergencyActions) - Libera cierre individual
+- **Correccion de Inventario** (InventoryFixPanel) - Limpia costos duplicados
+- **Diagnostico de Pagos** (PaymentReconciliation) - Detecta inconsistencias en pagos
 
-## Solucion Propuesta
-Crear una herramienta visual en la UI, accesible solo para administradores, que permita buscar una factura o cierre por folio y ejecutar la liberacion completa con un solo clic (con confirmacion de seguridad).
+## Herramientas Propuestas
 
-## Funcionalidad
+### 1. Cambio Forzado de Estado de Servicio
+**Problema que resuelve:** Servicios que quedan "atascados" en un estado incorrecto (ej: marcados como "facturado" pero sin factura real asociada, o "cerrado" sin cierre existente).
 
-### Busqueda
-- Campo de busqueda por folio de factura (ej: FACT-4298) o folio de cierre (ej: CIE-339)
-- Muestra informacion del registro encontrado: cliente, servicios asociados, montos, estado actual
+**Funcionalidad:**
+- Buscar servicio por folio (SRV-XXXX)
+- Mostrar estado actual y relaciones existentes (cierre, factura, pagos)
+- Permitir forzar el cambio de estado a cualquier estado valido
+- Limpiar automaticamente campos relacionados (invoice_folio, etc.) segun el estado destino
+- Confirmacion de seguridad con texto "FORZAR [FOLIO]"
 
-### Vista Previa del Impacto
-Antes de confirmar, se muestra exactamente que va a pasar:
-- Cantidad de servicios que seran liberados (con sus folios)
-- Relaciones que seran eliminadas (invoice_services, invoice_closures, closure_services)
-- Registros que seran eliminados (factura y/o cierre)
-- Estado al que volveran los servicios (with_purchase_order o completed segun corresponda)
+### 2. Reparacion Masiva de Estados
+**Problema que resuelve:** Multiples servicios quedan en estado inconsistente despues de una operacion fallida (ej: los 3 servicios de SRV-6413/6414/6415 que quedaron como "facturado" sin factura).
 
-### Acciones Disponibles
-1. **Liberar Factura**: Elimina la factura, sus relaciones, y revierte servicios/cierres
-2. **Liberar Cierre**: Elimina el cierre, sus relaciones, y revierte servicios
-3. **Liberar Ambos**: Cuando una factura tiene cierres asociados, elimina todo el arbol de dependencias
+**Funcionalidad:**
+- Escaner automatico que detecta inconsistencias: servicios marcados como "facturado" sin registro en invoice_services, servicios "cerrados" sin registro en closure_services, facturas con remaining_amount negativo o paid_amount mayor al total
+- Muestra listado de problemas encontrados con detalle
+- Boton para reparar todos los problemas detectados o reparar individualmente
+- Log de todas las correcciones realizadas
 
-### Confirmacion de Seguridad
-- Dialog de confirmacion con texto descriptivo del impacto
-- Requiere escribir "LIBERAR [FOLIO]" para confirmar (patron existente en ClosureEmergencyActions)
+### 3. Eliminacion Segura de Servicio Completo
+**Problema que resuelve:** Servicios creados por error que necesitan eliminarse junto con todas sus dependencias (costos, comisiones, inspecciones, historial).
 
-## Detalles Tecnicos
+**Funcionalidad:**
+- Buscar servicio por folio
+- Mostrar arbol completo de dependencias: costos asociados, comisiones, inspecciones, eventos de calendario, relaciones con cierres/facturas
+- Opcion de eliminar todo (usa el RPC `delete_service_cascade` existente) o solo desvincular de cierre/factura
+- Confirmacion con texto "ELIMINAR [FOLIO]"
+
+### 4. Reconexion de Pago a Factura
+**Problema que resuelve:** Pagos que quedaron "sueltos" o aplicados a la factura incorrecta, pagos duplicados que necesitan limpiarse.
+
+**Funcionalidad:**
+- Buscar pago por referencia, monto o cliente
+- Ver a que factura esta aplicado actualmente
+- Permitir reasignar el pago a otra factura del mismo cliente
+- Detectar y eliminar pagos duplicados (mismo monto, misma fecha, mismo cliente)
+- Recalcular automaticamente paid_amount y remaining_amount de las facturas afectadas
+
+## Implementacion
 
 ### Archivos a crear
-1. **`src/components/admin/ServiceLiberationTool.tsx`** - Componente principal con busqueda, vista previa y acciones
-2. **`src/hooks/useServiceLiberation.ts`** - Hook con la logica de busqueda y liberacion
+1. `src/components/admin/ForceStatusChangeTool.tsx` - Cambio forzado de estado
+2. `src/components/admin/BulkStatusRepairTool.tsx` - Reparacion masiva
+3. `src/components/admin/ServiceDeletionTool.tsx` - Eliminacion segura de servicios
+4. `src/components/admin/PaymentReassignmentTool.tsx` - Reconexion de pagos
+5. `src/components/admin/AdminEmergencyPanel.tsx` - Panel contenedor con tabs para todas las herramientas
 
 ### Archivos a modificar
-3. **`src/pages/Settings.tsx`** o pagina de administracion existente - Agregar acceso a la herramienta (dentro de una seccion visible solo para admin)
-
-### Logica de liberacion (hook)
-
-**Buscar por folio de factura:**
-- Query `invoices` por folio
-- Query `invoice_services` para obtener servicios vinculados
-- Query `invoice_closures` para obtener cierres vinculados
-- Query `closure_services` para servicios en esos cierres
-
-**Buscar por folio de cierre:**
-- Query `service_closures` por folio
-- Query `closure_services` para servicios vinculados
-- Query `invoice_closures` para facturas vinculadas
-
-**Ejecutar liberacion de factura:**
-1. DELETE `invoice_services` WHERE invoice_id
-2. DELETE `invoice_closures` WHERE invoice_id
-3. UPDATE `service_closures` SET status = 'closed' (si tenia cierres vinculados)
-4. DELETE `invoices` WHERE id
-5. UPDATE `services` SET status = 'with_purchase_order', invoice_folio = NULL
-
-**Ejecutar liberacion de cierre:**
-1. DELETE `closure_services` WHERE closure_id
-2. DELETE `invoice_closures` WHERE closure_id (si existe)
-3. DELETE `service_closures` WHERE id
-4. UPDATE `services` SET status = 'with_purchase_order', invoice_folio = NULL
-
-### Seguridad
-- Componente verifica `user.role === 'admin'` antes de renderizar
-- Se ubica dentro de seccion protegida por AdminOnlyRoute o verificacion de rol existente
+6. `src/pages/Settings.tsx` - Reemplazar la tab "Liberacion" por un panel completo de herramientas de emergencia que contenga todas las herramientas en sub-tabs
 
 ### Diseno
-- Sigue el patron visual del modulo de Costos (fuentes, colores, badges, modales)
-- Card con busqueda en la parte superior
-- Resultados en tabla/lista con badges de estado
-- Modal de confirmacion estilo AlertDialog (como ClosureEmergencyActions)
+- Todas las herramientas siguen el patron visual del modulo de Costos
+- Panel principal con pestanas para cada herramienta
+- Cada herramienta tiene: busqueda, vista previa del impacto, confirmacion de seguridad
+- Solo visible para usuarios con rol `admin`
+- Colores de advertencia (amarillo para precaucion, rojo para acciones destructivas)
+
+### Flujo General (todas las herramientas)
+```text
+[Buscar por folio/referencia]
+         |
+[Mostrar estado actual + dependencias]
+         |
+[Vista previa del impacto]
+         |
+[Confirmar con texto de seguridad]
+         |
+[Ejecutar + mostrar resultado]
+```
