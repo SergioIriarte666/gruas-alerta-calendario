@@ -1,92 +1,57 @@
 
 
-# Validacion de RUT del cliente en importadores de Cotizacion y OC
+# Fix: Priorizar matching por patente sobre matching por monto
 
 ## Problema
-Si se sube un PDF de cotizacion u OC en el pipeline de un cliente diferente, el sistema lo procesa sin advertir. Las cotizaciones y ordenes de compra contienen el RUT del cliente emisor/destinatario, por lo que se puede validar automaticamente.
+El importador procesa los items del PDF en orden secuencial. Cuando un item SIN patente aparece antes que uno CON patente, el fallback por monto ($15.000) consume el servicio SRV-6463 (VLZF-95). Luego, cuando llega el item con patente VLZF-95, el servicio ya esta usado y aparece "Sin match".
 
 ## Solucion
 
-### 1. Edge Functions - Extraer RUT del cliente del PDF
+### Archivo: `src/hooks/vip/useQuotePDFImport.ts`
 
-**Archivo: `supabase/functions/parse-quote-pdf/index.ts`**
-- Agregar campo `clientRut` al schema de la herramienta `extract_quote`
-- Agregar instruccion al prompt del sistema para que extraiga el RUT del cliente (destinatario de la cotizacion)
-- Incluir `clientRut` en el resultado devuelto
+Reordenar los items expandidos para procesar primero los que tienen patente y luego los que no:
 
-**Archivo: `supabase/functions/parse-purchase-order-pdf/index.ts`**
-- Agregar campo `clientRut` al schema de la herramienta `extract_purchase_order`
-- Agregar instruccion al prompt para extraer el RUT del emisor de la OC (la empresa que emite la orden de compra)
-- Incluir `clientRut` en el resultado devuelto
+Despues de expandir todos los items (linea ~210), antes del loop de matching:
 
-Instruccion de prompt agregada en ambos:
-```
-- Extrae el RUT del cliente/empresa que aparece en el documento (formato XX.XXX.XXX-X o similar).
-  En cotizaciones es el destinatario ("Señor(es)", "Cliente", "Razón Social").
-  En OC es el emisor de la orden.
-```
+1. Acumular todos los items expandidos de todas las cotizaciones en una lista plana
+2. Ordenar: items CON patente primero, items SIN patente despues
+3. Ejecutar el matching sobre la lista ordenada
 
-Nuevo campo en el schema de ambas herramientas:
-```json
-"clientRut": {
-  "type": "string",
-  "description": "RUT del cliente/empresa (ej: 76.XXX.XXX-X)"
-}
-```
+Cambio concreto en el loop de matching (~lineas 198-285):
 
-### 2. Interfaces TypeScript - Agregar `clientRut`
-
-**Archivo: `src/hooks/vip/useQuotePDFImport.ts`**
-- Agregar `clientRut: string` a la interfaz `ParsedQuote`
-
-**Archivo: `src/hooks/vip/usePurchaseOrderPDFImport.ts`**
-- Agregar `clientRut: string` a la interfaz `ParsedOC`
-
-### 3. Hooks de importacion - Validar RUT contra cliente actual
-
-En ambos hooks (`useQuotePDFImport` y `usePurchaseOrderPDFImport`), despues de parsear los PDFs y antes del matching:
-
-1. Obtener el RUT del cliente actual (ya se hace con `clientData.rut`)
-2. Comparar con el RUT extraido de cada PDF (normalizado: sin puntos, guiones ni espacios)
-3. Si no coincide, marcar el PDF como "cliente incorrecto" y mostrarlo como error via `toast.error`
-4. Excluir los PDFs con RUT incorrecto del proceso de matching
-
-Logica de validacion (igual en ambos hooks):
 ```typescript
-const normalizeRut = (r: string) => (r || '').replace(/[.\s-]/g, '').toUpperCase();
+// Collect all expanded items first
+const allItems: { item: ParsedQuoteItem; quoteNumber: string; fileName: string }[] = [];
 
-// Despues de parsear y obtener clientData:
-const clientRut = normalizeRut(clientData?.rut || '');
+for (const quote of validQuotes) {
+  for (const rawItem of quote.items) {
+    const patenteRaw = (rawItem.patente || '').trim();
+    const multiPatentes = patenteRaw.split(/[\/,]/).map(p => p.trim()).filter(p => p.length > 0);
+    
+    const expandedItems = multiPatentes.length > 1
+      ? multiPatentes.map(p => ({ ...rawItem, patente: p, amount: Math.round(rawItem.amount / multiPatentes.length) }))
+      : [rawItem];
 
-// Filtrar PDFs que no corresponden al cliente
-const validParsed = parsedDocs.filter(doc => {
-  const docRut = normalizeRut(doc.clientRut);
-  if (docRut && clientRut && docRut !== clientRut) {
-    toast.error(
-      `${doc.fileName}: La cotizacion/OC pertenece a otro cliente (RUT: ${doc.clientRut}). ` +
-      `El cliente actual tiene RUT: ${clientData?.rut}`
-    );
-    return false;
+    for (const item of expandedItems) {
+      allItems.push({ item, quoteNumber: quote.quoteNumber, fileName: quote.fileName });
+    }
   }
-  return true;
+}
+
+// Sort: items with patente first, without patente last
+allItems.sort((a, b) => {
+  const aHas = normalizePatente(a.item.patente) ? 0 : 1;
+  const bHas = normalizePatente(b.item.patente) ? 0 : 1;
+  return aHas - bHas;
 });
 
-if (validParsed.length === 0) {
-  setState(prev => ({ ...prev, step: 'idle', error: 'Ningun PDF corresponde a este cliente' }));
-  return;
-}
+// Then run matching loop over allItems instead of nested quote/item loops
 ```
 
-### 4. Archivos a modificar
+Esto asegura que VLZF-95 se matchea con SRV-6463 por patente antes de que el item sin patente intente consumirlo por monto.
 
-| Archivo | Cambio |
-|---|---|
-| `supabase/functions/parse-quote-pdf/index.ts` | Extraer `clientRut` del PDF via IA |
-| `supabase/functions/parse-purchase-order-pdf/index.ts` | Extraer `clientRut` del PDF via IA |
-| `src/hooks/vip/useQuotePDFImport.ts` | Agregar interfaz + validacion de RUT |
-| `src/hooks/vip/usePurchaseOrderPDFImport.ts` | Agregar interfaz + validacion de RUT |
-
-### Resultado esperado
-- Al subir un PDF de cotizacion/OC en el pipeline de un cliente incorrecto, se muestra un toast de error indicando que el documento pertenece a otro cliente y se detiene el proceso.
-- Si el RUT coincide o no se pudo extraer del PDF, el flujo continua normalmente.
-
+## Resultado esperado
+- Items con patente se matchean primero por patente (prioridad)
+- Items sin patente usan fallback por monto solo con servicios sobrantes
+- VLZF-95 encontrara SRV-6463 correctamente
+- El item sin patente se matcheara con otro servicio de $15.000 o quedara "Sin match"
