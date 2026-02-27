@@ -17,6 +17,7 @@ interface SearchHistory extends VehicleData {
 
 interface UsePatentLookupReturn {
   data: VehicleData | null;
+  dataPlate: string | null;
   loading: boolean;
   error: string | null;
   history: SearchHistory[];
@@ -28,6 +29,7 @@ interface UsePatentLookupReturn {
 
 export const usePatentLookup = (): UsePatentLookupReturn => {
   const [data, setData] = useState<VehicleData | null>(null);
+  const [dataPlate, setDataPlate] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [history, setHistory] = useState<SearchHistory[]>([]);
@@ -113,7 +115,9 @@ export const usePatentLookup = (): UsePatentLookupReturn => {
       }
 
       if (result.data) {
+        const normalizedPlate = licensePlate.trim().replace(/[-\s]/g, '').toUpperCase();
         setData(result.data);
+        setDataPlate(normalizedPlate);
         await saveToHistory(licensePlate.trim(), result.data);
         toast.success('Patente consultada exitosamente');
       }
@@ -128,6 +132,7 @@ export const usePatentLookup = (): UsePatentLookupReturn => {
 
   const reset = () => {
     setData(null);
+    setDataPlate(null);
     setError(null);
   };
 
@@ -163,6 +168,7 @@ export const usePatentLookup = (): UsePatentLookupReturn => {
 
   return {
     data,
+    dataPlate,
     loading,
     error,
     history,
