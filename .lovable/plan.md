@@ -1,26 +1,75 @@
 
 
-# Plan: Cambiar color de los items de navegacion a violeta
+# Plan: Foto de perfil con almacenamiento en DB
 
-## Cambio
-Actualizar el color de texto de los items internos del sidebar (los links de navegacion, no las etiquetas de grupo) para que usen un tono violeta (`text-violet-600`) en lugar del gris actual (`text-muted-foreground`). Esto creara mejor distincion visual entre las etiquetas de grupo (que permanecen en gris) y los elementos navegables.
+## Objetivo
+Agregar funcionalidad de foto de perfil que se pueda subir/cambiar desde la pagina de Perfil, se almacene en Supabase Storage, y se muestre en el sidebar (avatar).
+
+## Cambios necesarios
+
+### 1. Crear bucket de almacenamiento "avatars" (migracion SQL)
+- Crear bucket publico `avatars` en `storage.buckets`
+- Crear politicas RLS para que cada usuario pueda subir/actualizar/eliminar su propia foto (path: `{user_id}/avatar.*`)
+- Permitir lectura publica para que el avatar se muestre sin URLs firmadas
+
+### 2. Actualizar UserContext para incluir `avatar_url`
+**Archivo:** `src/contexts/UserContext.tsx`
+- Agregar `avatar_url` al tipo `UserProfile`
+- Incluir `avatar_url` en la query `select` de `fetchUserProfile`
+- Propagar `avatar_url` en el cache y en `updateUser`
+
+### 3. Agregar seccion de foto en la pagina de Perfil
+**Archivo:** `src/pages/Profile.tsx`
+- Agregar una seccion antes de "Informacion Personal" con:
+  - Avatar grande circular mostrando la foto actual o iniciales
+  - Boton "Cambiar foto" que abre un input de archivo (accept="image/*")
+  - Al seleccionar imagen: subirla a `avatars/{userId}/avatar.{ext}` en Supabase Storage
+  - Actualizar `profiles.avatar_url` con la URL publica
+  - Llamar `forceRefreshProfile` para que el sidebar refleje el cambio inmediatamente
+
+### 4. Mostrar avatar real en el Sidebar
+**Archivo:** `src/components/layout/Sidebar.tsx`
+- Reemplazar `<AvatarImage src={undefined} />` por `<AvatarImage src={user?.avatar_url} />`
+- Aplica tanto en `SidebarContent` como en `MobileSidebarContent`
 
 ## Detalle tecnico
 
-### Archivo: `src/components/layout/Sidebar.tsx`
+### Migracion SQL
+```sql
+INSERT INTO storage.buckets (id, name, public) VALUES ('avatars', 'avatars', true);
 
-Modificar el componente `NavItem` (linea ~194-204):
+CREATE POLICY "Users can upload own avatar"
+ON storage.objects FOR INSERT
+WITH CHECK (bucket_id = 'avatars' AND (storage.foldername(name))[1] = auth.uid()::text);
 
-- **Items inactivos**: cambiar de `text-muted-foreground` a `text-violet-600` (violeta como en la imagen SRV-6452)
-- **Items activos**: mantener `text-foreground` con `font-semibold` y fondo `bg-muted` (para que el activo se distinga claramente)
-- **Hover en inactivos**: cambiar de `hover:text-foreground` a `hover:text-violet-800` para mantener coherencia
-- **Iconos**: heredaran el color violeta del texto automaticamente
+CREATE POLICY "Users can update own avatar"
+ON storage.objects FOR UPDATE
+USING (bucket_id = 'avatars' AND (storage.foldername(name))[1] = auth.uid()::text);
 
-Esto aplica tanto al `SidebarContent` (desktop) como al `MobileSidebarContent` (movil), ya que ambos usan el mismo componente `NavItem`.
+CREATE POLICY "Users can delete own avatar"
+ON storage.objects FOR DELETE
+USING (bucket_id = 'avatars' AND (storage.foldername(name))[1] = auth.uid()::text);
 
-### Resultado visual
-- Etiquetas de grupo ("PRINCIPAL", "OPERACIONES", etc.) permanecen en gris claro uppercase
-- Items de navegacion ("Dashboard", "Servicios", etc.) se muestran en violeta
-- Item activo se distingue con fondo gris y texto oscuro en negrita
-- Consistente con el sistema de diseno violeta del proyecto
+CREATE POLICY "Anyone can view avatars"
+ON storage.objects FOR SELECT
+USING (bucket_id = 'avatars');
+```
+
+### UserProfile type update
+Agregar `avatar_url?: string | null` al interface y al select query (`avatar_url`).
+
+### Logica de upload en Profile.tsx
+- Usar `supabase.storage.from('avatars').upload(path, file, { upsert: true })`
+- Obtener URL publica con `getPublicUrl`
+- Actualizar `profiles.avatar_url` via `updateUser`
+
+### Sidebar
+- Linea 227 y 343: cambiar `src={undefined}` por `src={user?.avatar_url || undefined}`
+
+## Resultado esperado
+- El usuario puede subir una foto de perfil desde la pagina /profile
+- La foto se almacena en Supabase Storage (bucket `avatars`)
+- La URL se guarda en `profiles.avatar_url`
+- El sidebar muestra la foto real del usuario en el avatar circular
+- Si no hay foto, se muestran las iniciales como fallback (comportamiento actual)
 
