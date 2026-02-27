@@ -63,8 +63,11 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: `Eres un extractor de datos de Órdenes de Compra (OC) chilenas en formato PDF. 
+            content: `Eres un extractor de datos de Órdenes de Compra (OC) chilenas en formato PDF.
 Debes extraer la información estructurada del documento usando la herramienta extract_purchase_order.
+
+*** LEE EL DOCUMENTO COMPLETO: encabezado, tabla de items, observaciones, notas al pie, glosas, y CUALQUIER otro texto visible en el PDF. No omitas NINGUNA sección. ***
+
 - El número de OC suele aparecer como "N° de OC", "Orden de Compra", "Purchase Order" o similar, generalmente es un número de 10 dígitos.
 - Las patentes chilenas tienen formato de 4 letras + 2 dígitos (ej: VHZJ75, VJYG13) o 2 letras + 4 dígitos (ej: AB1234). Pueden tener guión (VJYG-13) o no (VJYG13).
 - Los montos están en pesos chilenos (CLP), sin decimales.
@@ -75,15 +78,23 @@ Debes extraer la información estructurada del documento usando la herramienta e
 - Si un ítem no tiene patente visible como campo separado, REVISA la descripción completa del ítem buscando estos patrones.
 - Si la OC tiene un solo ítem sin patente visible, revisa TODO el texto del documento buscando patentes.
 - NUNCA devuelvas patente vacía si hay una patente en la descripción del ítem.
-- IMPORTANTE: Busca referencias a presupuestos o cotizaciones en las observaciones, glosa, o cualquier parte del documento. Ejemplos: "PRESUPUESTOS 4090", "COTIZACION 4090", "COT-4090", "Presupuesto N° 4090". Extrae SOLO el número (ej: "4090").
-- Cada ítem puede tener una cantidad (quantity). Si la línea dice "2 x 80.000 = 160.000", el amount es 160.000 y quantity es 2.`
+- Cada ítem puede tener una cantidad (quantity). Si la línea dice "2 x 80.000 = 160.000", el amount es 160.000 y quantity es 2.
+
+*** CRÍTICO - REFERENCIAS A COTIZACIONES/PRESUPUESTOS (quoteReference): ***
+- Busca en TODO el documento (encabezado, items, observaciones, notas, glosas, pie de página) frases que referencien cotizaciones o presupuestos.
+- Patrones a buscar: "SEGUN COTIZACION", "SEGÚN COTIZACIÓN", "COTIZACION N", "COTIZACIÓN N°", "PRESUPUESTO", "PRESUPUESTOS", "COT-", "PPTO", "REF COTIZACION", "REF. COTIZACIÓN", "SEGUN COT", "SEGÚN PRESUPUESTO".
+- La referencia puede estar en la sección de Observaciones, Notas, Glosa, descripción del ítem, encabezado, o CUALQUIER parte del documento.
+- Ejemplo: "TRASLADO UNIDAD PLV SEGUN COTIZACION 4100" → quoteReference debe ser "4100".
+- Ejemplo: "PRESUPUESTOS 4090" → quoteReference debe ser "4090".
+- NUNCA devuelvas quoteReference vacío si hay una referencia a cotización o presupuesto en CUALQUIER parte del documento.
+- Extrae SOLO el número (ej: "4100", "4090").`
           },
           {
             role: 'user',
             content: [
               {
                 type: 'text',
-                text: 'Extrae todos los datos de esta Orden de Compra: número de OC, fecha, lista de items con patente/detalle/monto, y totales.'
+                text: 'Extrae todos los datos de esta Orden de Compra: número de OC, fecha, lista de items con patente/detalle/monto, totales, Y MUY IMPORTANTE busca en TODO el documento (especialmente en observaciones, notas, glosas y descripciones de items) cualquier referencia a cotizaciones o presupuestos y extrae el número como quoteReference.'
               },
               {
                 type: 'image_url',
