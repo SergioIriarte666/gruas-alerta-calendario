@@ -1,32 +1,21 @@
 
+# Plan: Hacer colapsable la seccion "Top Categorias"
 
-# Fix: Agregar prefijo COT- al numero de cotizacion
-
-## Problema
-El importador de cotizaciones guarda el numero tal como viene del PDF (ej: "4120") sin agregar el prefijo "COT-". El importador de OC si agrega "OC-" como prefijo. El BatchUpdateModal tambien usa "COT-" como prefijo por defecto.
-
-## Solucion
-
-### Archivo: `src/hooks/vip/useQuotePDFImport.ts` (linea 274-275)
-
-Agregar logica de formato al numero de cotizacion antes de guardarlo, igual que hace el importador de OC:
-
-```typescript
-// ANTES:
-quoteNumber: match.quoteNumber,
-
-// DESPUES:
-const formattedQuote = match.quoteNumber.startsWith('COT-')
-  ? match.quoteNumber
-  : `COT-${match.quoteNumber}`;
-quoteNumber: formattedQuote,
-```
-
-Esto asegura que el numero siempre se guarde con el prefijo "COT-" (ej: "COT-4120"), manteniendo consistencia con el BatchUpdateModal y el formato visual del pipeline.
+## Cambio
+Convertir la Card de "Top Categorias" en un componente colapsable usando `Collapsible` de Radix UI (ya disponible en el proyecto). La seccion iniciara colapsada por defecto para ahorrar espacio.
 
 ## Archivo a modificar
+**`src/components/costs/CostsDashboard.tsx`** (lineas 228-258)
 
-| Archivo | Cambio |
-|---|---|
-| `src/hooks/vip/useQuotePDFImport.ts` | Agregar prefijo "COT-" al quoteNumber en applyMatches |
+### Detalle
+- Importar `Collapsible`, `CollapsibleTrigger`, `CollapsibleContent` desde `@/components/ui/collapsible`
+- Importar `ChevronDown` de lucide-react (si no esta importado)
+- Envolver el contenido de la Card con `Collapsible` (defaultOpen={false})
+- El titulo "Top Categorias (periodo)" se convierte en `CollapsibleTrigger` con un icono chevron que rota al abrir
+- La lista de categorias va dentro de `CollapsibleContent`
+- Estilo del trigger: cursor pointer, flex con justify-between, chevron con transicion de rotacion
 
+### Resultado visual
+- Por defecto: se ve solo el titulo "Top Categorias (periodo)" con un chevron a la derecha
+- Al hacer clic: se expande mostrando las barras de progreso por categoria
+- Ocupa minimo espacio cuando esta cerrado
