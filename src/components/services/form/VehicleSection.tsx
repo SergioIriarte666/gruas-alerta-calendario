@@ -82,7 +82,7 @@ export const VehicleSection = ({
   const [isApplyingSuggestion, setIsApplyingSuggestion] = useState(false);
   const appliedPlatesRef = useRef<Set<string>>(new Set());
   const searchedPlatesRef = useRef<Set<string>>(new Set()); // Track plates we've already searched
-  const verifiedPlatesRef = useRef<Set<string>>(new Set()); // Track plates verified for cross-check
+  const verifiedPlatesRef = useRef<Set<string>>(new Set()); // Track plates verified for cross-check -- kept for future use
   const [pendingModel, setPendingModel] = useState<string | null>(null);
   
   // Cross-verification states
@@ -130,45 +130,48 @@ export const VehicleSection = ({
     }
   }, [licensePlate, isEditing, patentLoading]);
 
-  // Show suggestion dialog OR cross-verify when patent data arrives
+  // Show suggestion dialog when patent data arrives and NO brand selected
   useEffect(() => {
     const cleanPlate = licensePlate.replace(/[-\s]/g, '').toUpperCase();
     if (
       patentData &&
       patentData.marca !== 'No disponible' &&
       !appliedPlatesRef.current.has(cleanPlate) &&
+      !showSuggestionDialog &&
+      !vehicleBrand &&
       !isEditing
     ) {
-      if (!vehicleBrand) {
-        // No brand selected: show suggestion dialog
-        if (!showSuggestionDialog) {
-          setShowSuggestionDialog(true);
-        }
+      setShowSuggestionDialog(true);
+    }
+  }, [patentData, licensePlate, vehicleBrand, isEditing, showSuggestionDialog]);
+
+  // Cross-verify when patent data exists AND brand/model are already filled
+  useEffect(() => {
+    const cleanPlate = licensePlate.replace(/[-\s]/g, '').toUpperCase();
+    if (
+      patentData &&
+      patentData.marca !== 'No disponible' &&
+      vehicleBrand &&
+      cleanPlate.length >= 6 &&
+      !isEditing
+    ) {
+      const brandMatch = patentData.marca.toLowerCase() === vehicleBrand.toLowerCase();
+      const modelMatch = !vehicleModel || patentData.modelo.toLowerCase() === vehicleModel.toLowerCase();
+
+      if (brandMatch && modelMatch) {
+        setMismatchWarning(null);
+        setVerificationSuccess(true);
       } else {
-        // Brand already selected: cross-verify silently
-        const verifyKey = `${cleanPlate}_${vehicleBrand}_${vehicleModel}`;
-        if (!verifiedPlatesRef.current.has(verifyKey)) {
-          verifiedPlatesRef.current.add(verifyKey);
-          
-          const brandMatch = patentData.marca.toLowerCase() === vehicleBrand.toLowerCase();
-          const modelMatch = !vehicleModel || patentData.modelo.toLowerCase() === vehicleModel.toLowerCase();
-          
-          if (brandMatch && modelMatch) {
-            setMismatchWarning(null);
-            setVerificationSuccess(true);
-          } else {
-            setVerificationSuccess(false);
-            setMismatchWarning({
-              expectedBrand: patentData.marca,
-              expectedModel: patentData.modelo,
-              enteredBrand: vehicleBrand,
-              enteredModel: vehicleModel || '(sin modelo)',
-            });
-          }
-        }
+        setVerificationSuccess(false);
+        setMismatchWarning({
+          expectedBrand: patentData.marca,
+          expectedModel: patentData.modelo,
+          enteredBrand: vehicleBrand,
+          enteredModel: vehicleModel || '(sin modelo)',
+        });
       }
     }
-  }, [patentData, licensePlate, vehicleBrand, vehicleModel, isEditing, showSuggestionDialog]);
+  }, [patentData, vehicleBrand, vehicleModel, licensePlate, isEditing]);
 
   // Handle pending model after brand is set
   useEffect(() => {
@@ -223,13 +226,11 @@ export const VehicleSection = ({
     }
   }, [licensePlate, debouncedPlate]);
 
-  // Clear mismatch warning when user changes brand, model or plate
+  // Clear verification status only when plate changes (cross-verify effect handles brand/model changes)
   useEffect(() => {
     setMismatchWarning(null);
     setVerificationSuccess(false);
-    // Reset verified plates so re-verification can happen
-    verifiedPlatesRef.current.clear();
-  }, [vehicleBrand, vehicleModel, licensePlate]);
+  }, [licensePlate]);
 
   // Find brand ID from brand name when component loads
   useEffect(() => {
