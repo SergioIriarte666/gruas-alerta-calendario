@@ -628,7 +628,12 @@ const ReportsPage = () => {
                 .filter(c => c.isActive)
                 .sort((a, b) => a.name.localeCompare(b.name))
                 .map(client => (
-                  <SelectItem key={client.id} value={client.id}>{client.name}</SelectItem>
+                  <SelectItem key={client.id} value={client.id}>
+                    {client.name}
+                    {client.department && client.department !== 'General' && (
+                      <span className="text-xs text-muted-foreground ml-1">({client.department})</span>
+                    )}
+                  </SelectItem>
                 ))}
             </SelectContent>
           </Select>
