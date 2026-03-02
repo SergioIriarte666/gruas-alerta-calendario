@@ -198,7 +198,7 @@ export const FuelPriceForm = ({ open, onClose, editingPrice }: FuelPriceFormProp
             <Button
               type="submit"
               disabled={isAdding || isUpdating}
-              className="bg-tms-green hover:bg-tms-green/90 text-white"
+              className="bg-violet-600 hover:bg-violet-700 text-white"
             >
               {isEditing ? 'Actualizar' : 'Registrar'}
             </Button>
