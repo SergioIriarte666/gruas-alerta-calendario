@@ -13,7 +13,7 @@ import {
   LayoutDashboard, Calendar, Truck, Users, Building2, DollarSign, Target, 
   FileText, Receipt, BarChart3, Settings, X, LogOut, ChevronLeft, ChevronRight, 
   Tags, Car, Package, Zap, Percent, ClipboardList, ChevronDown, ChevronUp,
-  Briefcase, Warehouse, TrendingUp, Cog
+  Briefcase, Warehouse, TrendingUp, Cog, MapPin
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -70,6 +70,7 @@ export const Sidebar = ({
     '/quick-entries': 'settings',
     '/settings': 'settings',
     '/payments': 'payments',
+    '/trip-calculator': 'trip-calculator',
   };
 
   const navigationGroups = [
@@ -121,6 +122,7 @@ export const Sidebar = ({
         { name: 'Comisiones', href: '/commissions', icon: Percent, adminOnly: true },
         { name: 'Cierres', href: '/closures', icon: FileText, adminOnly: false },
         { name: 'Facturas', href: '/invoices', icon: Receipt, adminOnly: false },
+        { name: 'Cálculo de Viajes', href: '/trip-calculator', icon: MapPin, adminOnly: false },
       ]
     },
     {
