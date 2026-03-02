@@ -1,9 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Pencil, Trash2, Fuel } from 'lucide-react';
+import { Plus, Fuel, Pencil, Trash2, TrendingUp, TrendingDown } from 'lucide-react';
 import {
   useCurrentFuelPrices,
   useFuelPriceHistory,
@@ -26,23 +25,84 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 
 const formatCurrency = (amount: number) =>
   new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', maximumFractionDigits: 0 }).format(amount);
 
-const fuelTypeColors: Record<string, string> = {
-  diesel: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300',
-  gasolina_93: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
-  gasolina_95: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
+/** Get Monday of the week for a given date string (YYYY-MM-DD) */
+const getWeekMonday = (dateStr: string): string => {
+  const d = new Date(dateStr + 'T00:00:00');
+  const day = d.getDay();
+  const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+  const monday = new Date(d.setDate(diff));
+  return monday.toISOString().split('T')[0];
 };
+
+/** Format week label like "Sem 24-Feb" */
+const formatWeekLabel = (mondayStr: string): string => {
+  const d = new Date(mondayStr + 'T00:00:00');
+  const day = d.getDate();
+  const month = d.toLocaleDateString('es-CL', { month: 'short' });
+  return `Sem ${day}-${month.charAt(0).toUpperCase() + month.slice(1)}`;
+};
+
+const NUM_WEEKS = 10;
+
+interface WeeklyPivot {
+  weeks: string[]; // monday date strings, newest first
+  matrix: Record<string, Record<string, FuelPrice | undefined>>; // fuel_type -> week -> price
+}
+
+function buildWeeklyPivot(history: FuelPrice[]): WeeklyPivot {
+  // Collect all weeks
+  const weekSet = new Set<string>();
+  const byTypeAndWeek: Record<string, Record<string, FuelPrice>> = {};
+
+  for (const fp of history) {
+    const week = getWeekMonday(fp.price_date);
+    weekSet.add(week);
+    if (!byTypeAndWeek[fp.fuel_type]) byTypeAndWeek[fp.fuel_type] = {};
+    // Keep the most recent entry per type+week
+    const existing = byTypeAndWeek[fp.fuel_type][week];
+    if (!existing || fp.price_date > existing.price_date) {
+      byTypeAndWeek[fp.fuel_type][week] = fp;
+    }
+  }
+
+  const weeks = Array.from(weekSet).sort((a, b) => b.localeCompare(a)).slice(0, NUM_WEEKS);
+
+  const matrix: Record<string, Record<string, FuelPrice | undefined>> = {};
+  for (const { value } of FUEL_TYPES) {
+    matrix[value] = {};
+    for (const w of weeks) {
+      matrix[value][w] = byTypeAndWeek[value]?.[w];
+    }
+  }
+
+  return { weeks, matrix };
+}
 
 export const FuelPricesManager = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingPrice, setEditingPrice] = useState<FuelPrice | null>(null);
-  const [filterType, setFilterType] = useState('all');
   const { data: currentPrices = [], isLoading: loadingCurrent } = useCurrentFuelPrices();
-  const { data: history = [], isLoading: loadingHistory } = useFuelPriceHistory(filterType);
+  const { data: history = [], isLoading: loadingHistory } = useFuelPriceHistory();
   const { mutate: deletePrice } = useDeleteFuelPrice();
+
+  const pivot = useMemo(() => buildWeeklyPivot(history), [history]);
 
   const handleEdit = (price: FuelPrice) => {
     setEditingPrice(price);
@@ -117,107 +177,140 @@ export const FuelPricesManager = () => {
         })}
       </div>
 
-      {/* Filter */}
-      <div className="flex items-center gap-3">
-        <span className="text-sm text-muted-foreground">Filtrar por:</span>
-        <Select value={filterType} onValueChange={setFilterType}>
-          <SelectTrigger className="w-48">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todos los tipos</SelectItem>
-            {FUEL_TYPES.map(({ value, label }) => (
-              <SelectItem key={value} value={value}>{label}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      {/* History table */}
+      {/* Weekly pivot table */}
       <Card>
-        <CardContent className="pt-4">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm font-medium">Historial Semanal de Precios</CardTitle>
+        </CardHeader>
+        <CardContent>
           {loadingHistory ? (
             <Skeleton className="h-48 w-full" />
-          ) : history.length === 0 ? (
+          ) : pivot.weeks.length === 0 ? (
             <p className="text-center text-muted-foreground py-8">Sin registros históricos</p>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b text-left text-muted-foreground">
-                    <th className="pb-2 font-medium">Fecha</th>
-                    <th className="pb-2 font-medium">Tipo</th>
-                    <th className="pb-2 font-medium text-right">Precio/L</th>
-                    <th className="pb-2 font-medium">Región</th>
-                    <th className="pb-2 font-medium">Fuente</th>
-                    <th className="pb-2 font-medium">Estado</th>
-                    <th className="pb-2 font-medium text-right">Acciones</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {history.map((fp) => (
-                    <tr key={fp.id} className="border-b last:border-0 hover:bg-muted/50">
-                      <td className="py-2.5">
-                        {new Date(fp.price_date + 'T00:00:00').toLocaleDateString('es-CL')}
-                      </td>
-                      <td>
-                        <Badge variant="outline" className={fuelTypeColors[fp.fuel_type] || ''}>
-                          {getFuelTypeLabel(fp.fuel_type)}
-                        </Badge>
-                      </td>
-                      <td className="text-right font-medium">{formatCurrency(fp.price_per_liter)}</td>
-                      <td>{fp.region || '-'}</td>
-                      <td className="text-muted-foreground">{fp.source || '-'}</td>
-                      <td>
-                        {fp.is_current ? (
-                          <Badge className="bg-green-600 text-white text-xs">Vigente</Badge>
-                        ) : (
-                          <Badge variant="secondary" className="text-xs">Histórico</Badge>
-                        )}
-                      </td>
-                      <td className="text-right">
-                        <div className="flex justify-end gap-1">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8"
-                            onClick={() => handleEdit(fp)}
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="sticky left-0 bg-background z-10 min-w-[130px]">
+                      Tipo Combustible
+                    </TableHead>
+                    {pivot.weeks.map((week, idx) => (
+                      <TableHead
+                        key={week}
+                        className={`text-center min-w-[110px] ${idx === 0 ? 'bg-primary/5 font-semibold' : ''}`}
+                      >
+                        {formatWeekLabel(week)}
+                      </TableHead>
+                    ))}
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {FUEL_TYPES.map(({ value, label }) => (
+                    <TableRow key={value}>
+                      <TableCell className="sticky left-0 bg-background z-10 font-medium">
+                        <span className="flex items-center gap-2">
+                          <Fuel className="h-3.5 w-3.5 text-muted-foreground" />
+                          {label}
+                        </span>
+                      </TableCell>
+                      {pivot.weeks.map((week, weekIdx) => {
+                        const fp = pivot.matrix[value]?.[week];
+                        const prevWeek = pivot.weeks[weekIdx + 1];
+                        const prevFp = prevWeek ? pivot.matrix[value]?.[prevWeek] : undefined;
+                        const variation = fp && prevFp
+                          ? ((fp.price_per_liter - prevFp.price_per_liter) / prevFp.price_per_liter) * 100
+                          : null;
+
+                        return (
+                          <TableCell
+                            key={week}
+                            className={`text-center ${weekIdx === 0 ? 'bg-primary/5' : ''}`}
                           >
-                            <Pencil className="h-3.5 w-3.5" />
-                          </Button>
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive">
-                                <Trash2 className="h-3.5 w-3.5" />
-                              </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>¿Eliminar precio?</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  Se eliminará este registro de precio de combustible.
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                <AlertDialogAction
-                                  onClick={() =>
-                                    deletePrice(fp.id, {
-                                      onSuccess: () => toast.success('Precio eliminado'),
-                                    })
-                                  }
-                                >
-                                  Eliminar
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                        </div>
-                      </td>
-                    </tr>
+                            {fp ? (
+                              <Popover>
+                                <PopoverTrigger asChild>
+                                  <button className="w-full text-center hover:bg-muted/50 rounded px-1 py-0.5 transition-colors">
+                                    <span className="font-medium text-sm">
+                                      {formatCurrency(fp.price_per_liter)}
+                                    </span>
+                                    {variation !== null && variation !== 0 && (
+                                      <span className={`flex items-center justify-center gap-0.5 text-xs mt-0.5 ${
+                                        variation > 0 ? 'text-destructive' : 'text-green-600'
+                                      }`}>
+                                        {variation > 0 ? (
+                                          <TrendingUp className="h-3 w-3" />
+                                        ) : (
+                                          <TrendingDown className="h-3 w-3" />
+                                        )}
+                                        {Math.abs(variation).toFixed(1)}%
+                                      </span>
+                                    )}
+                                  </button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-48 p-2" align="center">
+                                  <div className="space-y-1 text-xs">
+                                    <p className="text-muted-foreground">
+                                      {new Date(fp.price_date + 'T00:00:00').toLocaleDateString('es-CL')}
+                                    </p>
+                                    {fp.region && <p>Región: {fp.region}</p>}
+                                    {fp.source && <p>Fuente: {fp.source}</p>}
+                                    <div className="flex gap-1 pt-1 border-t">
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className="h-7 text-xs flex-1"
+                                        onClick={() => handleEdit(fp)}
+                                      >
+                                        <Pencil className="h-3 w-3 mr-1" />
+                                        Editar
+                                      </Button>
+                                      <AlertDialog>
+                                        <AlertDialogTrigger asChild>
+                                          <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            className="h-7 text-xs text-destructive flex-1"
+                                          >
+                                            <Trash2 className="h-3 w-3 mr-1" />
+                                            Eliminar
+                                          </Button>
+                                        </AlertDialogTrigger>
+                                        <AlertDialogContent>
+                                          <AlertDialogHeader>
+                                            <AlertDialogTitle>¿Eliminar precio?</AlertDialogTitle>
+                                            <AlertDialogDescription>
+                                              Se eliminará este registro de precio de combustible.
+                                            </AlertDialogDescription>
+                                          </AlertDialogHeader>
+                                          <AlertDialogFooter>
+                                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                            <AlertDialogAction
+                                              onClick={() =>
+                                                deletePrice(fp.id, {
+                                                  onSuccess: () => toast.success('Precio eliminado'),
+                                                })
+                                              }
+                                            >
+                                              Eliminar
+                                            </AlertDialogAction>
+                                          </AlertDialogFooter>
+                                        </AlertDialogContent>
+                                      </AlertDialog>
+                                    </div>
+                                  </div>
+                                </PopoverContent>
+                              </Popover>
+                            ) : (
+                              <span className="text-muted-foreground text-xs">-</span>
+                            )}
+                          </TableCell>
+                        );
+                      })}
+                    </TableRow>
                   ))}
-                </tbody>
-              </table>
+                </TableBody>
+              </Table>
             </div>
           )}
         </CardContent>
