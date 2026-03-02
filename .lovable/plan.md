@@ -1,58 +1,53 @@
 
 
-## Fix: Toll API Categories Use Text Values, Not Numbers
+## Rediseno de Precios de Combustible: Tabla Semanal
 
-### Root Cause
-The GetAPI Chile toll API expects **text-based** category values like `LIVIANO`, `CAMION`, `MOTO`, etc. -- NOT numeric values like `1`, `2`, `3`, `4`.
+### Objetivo
+Redisenar la pestana "Combustible" del calculador de viajes para mostrar los precios historicos en una **tabla pivoteada por semanas** (filas = tipo de combustible, columnas = semanas), similar al formato de bencinaenlinea.cl. Se mantiene el ingreso manual de precios.
 
-From the OpenAPI spec (line 971): `example: LIVIANO`
+### Diseno de la Tabla
 
-The logs confirm this: `"Categoría inválida: 3"` -- the API rejects numeric categories, and the fallback retries without any category, returning default (car/LIVIANO) rates. That's why a heavy crane trip shows $7,900 instead of the correct higher amount.
-
-### Changes Required
-
-**1. Database migration -- update `toll_vehicle_category` values in both tables**
-
-Update `cranes` and `crane_consumption_rates` tables to use the correct text values:
-
-| Current (numeric) | Correct (text) | Applies to |
-|---|---|---|
-| `1` | `MOTO` | Motorcycles |
-| `2` | `LIVIANO` | Cars, pickups (VBPH-58, horquilla) |
-| `3` | `CAMION` | 2-axle trucks (TLYF-23, TDCJ-46, FYTR-49) |
-| `4` | `CAMION` | Heavy trucks (DCBV-94) |
-
-We need to query the `/categories` endpoint to confirm exact valid values, but based on the documentation, `LIVIANO` and `CAMION` are the two relevant ones.
-
-**2. Update the CraneForm.tsx toll category selector**
-
-Change the dropdown options from numeric (1-4) to text values (`LIVIANO`, `CAMION`, `MOTO`, etc.).
-
-**3. Update ConsumptionRatesManager.tsx toll category selector**
-
-Same change -- use text values instead of numbers.
-
-**4. Query the categories endpoint for confirmation**
-
-Call the `/categories` endpoint via the edge function to get the exact list of valid category strings, and ideally use those to populate the selectors dynamically or at least validate our mapping.
-
-### Technical Details
-
-**Migration SQL:**
-```sql
--- Update cranes table
-UPDATE cranes SET toll_vehicle_category = 'CAMION' WHERE toll_vehicle_category IN ('3', '4');
-UPDATE cranes SET toll_vehicle_category = 'LIVIANO' WHERE toll_vehicle_category IN ('1', '2');
-
--- Update crane_consumption_rates table
-UPDATE crane_consumption_rates SET toll_vehicle_category = 'CAMION' WHERE toll_vehicle_category IN ('3', '4');
-UPDATE crane_consumption_rates SET toll_vehicle_category = 'LIVIANO' WHERE toll_vehicle_category IN ('1', '2');
+```text
+Tipo Combustible | Sem 24-Feb | Sem 17-Feb | Sem 10-Feb | Sem 03-Feb | ...
+-----------------|------------|------------|------------|------------|----
+Diesel           |   $990     |   $986     |     -      |     -      | ...
+Gasolina 93      |     -      |     -      |     -      |     -      | ...
+Gasolina 95      |     -      |     -      |     -      |     -      | ...
 ```
 
-**Files to modify:**
-- New Supabase migration (update existing category values)
-- `src/components/cranes/CraneForm.tsx` -- change Select options to text values
-- `src/components/trip-calculator/ConsumptionRatesManager.tsx` -- change Select options to text values
+- Las columnas seran las ultimas N semanas (configurable, por defecto 8-10 semanas)
+- Se resalta la columna mas reciente (precio vigente)
+- Cada celda muestra el precio en $/L
+- Se incluye indicador de variacion (flecha arriba/abajo) respecto a la semana anterior
 
-No changes needed to the edge function or calculation hooks since they already pass the category string through as-is.
+### Cambios
 
+**1. Redisenar `FuelPricesManager.tsx`**
+
+- Mantener el header con boton "Nuevo Precio" y las 3 cards de precios vigentes actuales
+- Reemplazar la tabla historica plana por una tabla pivoteada:
+  - Filas: Diesel, Gasolina 93, Gasolina 95
+  - Columnas: semanas ordenadas de mas reciente a mas antigua
+  - Celdas: precio formateado en CLP + indicador de variacion
+- Eliminar el filtro por tipo (ya no es necesario, todos se muestran en la misma tabla)
+- Mantener acciones de editar/eliminar accesibles via click en celda o menu contextual
+
+**2. Logica de agrupacion semanal**
+
+- Agrupar los registros de `fuel_prices` por `price_date` redondeado a la semana (lunes de cada semana)
+- Pivotar: para cada semana, buscar el precio de cada tipo de combustible
+- Calcular variacion porcentual respecto a la semana anterior
+
+**3. Mantener sin cambios**
+
+- `FuelPriceForm.tsx` (modal de ingreso/edicion)
+- `useFuelPrices.ts` (hooks de datos)
+- Logica de calculo de viajes que consume precios vigentes
+
+### Archivos a Modificar
+
+| Archivo | Cambio |
+|---|---|
+| `src/components/trip-calculator/FuelPricesManager.tsx` | Rediseno completo de la seccion historica a tabla semanal pivoteada |
+
+No se requieren cambios en base de datos ni en hooks existentes.
