@@ -118,13 +118,21 @@ export const TripCostBreakdown = ({
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-bold text-foreground">{formatCurrency(result.tolls.total_cost)}</p>
-            <div className="mt-2 text-xs text-muted-foreground">
+            <div className="mt-2 text-xs text-muted-foreground space-y-1">
               {result.tolls.is_manual ? (
                 <Badge variant="outline" className="text-xs">Ingreso manual</Badge>
+              ) : result.tolls.details?.length ? (
+                <>
+                  <Badge variant="outline" className="text-xs mb-1">Cálculo automático</Badge>
+                  {result.tolls.details.map((t, i) => (
+                    <div key={i} className="flex justify-between">
+                      <span className="truncate mr-2">{t.name}</span>
+                      <span className="font-medium shrink-0">{formatCurrency(t.cost)}</span>
+                    </div>
+                  ))}
+                </>
               ) : (
-                result.tolls.details?.map((t, i) => (
-                  <p key={i}>{t.name}: {formatCurrency(t.cost)}</p>
-                ))
+                <Badge variant="outline" className="text-xs">Sin peajes</Badge>
               )}
             </div>
             <div className="mt-3">

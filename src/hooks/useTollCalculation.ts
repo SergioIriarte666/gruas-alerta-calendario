@@ -2,6 +2,22 @@ import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 
+export interface TollDetail {
+  peaje: string;
+  costo: number;
+  autopista: string;
+  type: string;
+  direction: string;
+}
+
+export interface TollApiResponse {
+  total: number;
+  currency: string;
+  tollsCount: number;
+  details: TollDetail[];
+  breakdown: Record<string, number>;
+}
+
 export interface TollResult {
   total_cost: number;
   tolls: Array<{
@@ -65,8 +81,19 @@ export function useTollCalculation() {
           return null;
         }
 
-        setTollResult(data);
-        return data as TollResult;
+        // Map API response (total, details) to our TollResult format
+        const apiData = data as TollApiResponse;
+        const mapped: TollResult = {
+          total_cost: apiData.total ?? 0,
+          tolls: (apiData.details ?? []).map((d) => ({
+            name: d.peaje,
+            cost: d.costo,
+            highway: d.autopista,
+          })),
+        };
+
+        setTollResult(mapped);
+        return mapped;
       } catch {
         setTollError('Error de conexión con API de peajes.');
         return null;

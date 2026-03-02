@@ -147,6 +147,7 @@ export const TripCalculatorForm = () => {
       craneType,
       vehicleConfig: twoVehicles ? '2_vehicles' : '1_vehicle',
       manualTollCost: tollCost,
+      tollDetails: tollData?.tolls,
       additionalCosts: additionalCosts ? Number(additionalCosts) : 0,
     };
 
