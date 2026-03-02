@@ -199,12 +199,24 @@ export const TripCalculatorForm = () => {
     const originCity = findBestTollMatch(originName);
     const destCity = findBestTollMatch(destName);
     const tollCategory = selectedCrane?.tollVehicleCategory || 'LIVIANO';
-    console.log('Toll lookup:', { originName, destName, matchedOrigin: originCity, matchedDest: destCity, tollCategory });
-    const tollData = await calculateTolls(originCity, destCity, tollCategory);
 
-    // If toll API failed, show manual fallback
-    if (!tollData) {
-      setShowManualToll(true);
+    // Check if both cities matched known toll locations
+    const originMatched = !!matchTollLocation(originCity, tollLocations);
+    const destMatched = !!matchTollLocation(destCity, tollLocations);
+    const bothMatchedTollLocations = originMatched && destMatched;
+
+    console.log('Toll lookup:', { originName, destName, matchedOrigin: originCity, matchedDest: destCity, tollCategory, originMatched, destMatched });
+
+    let tollData = null;
+    if (bothMatchedTollLocations) {
+      tollData = await calculateTolls(originCity, destCity, tollCategory);
+      // Only show manual fallback if both cities are in toll network but API failed
+      if (!tollData) {
+        setShowManualToll(true);
+      }
+    } else {
+      // No toll locations matched — route has no tolls, proceed with 0
+      resetTolls();
     }
 
     const tollCost = tollData?.total_cost ?? (manualToll ? Number(manualToll) : 0);
