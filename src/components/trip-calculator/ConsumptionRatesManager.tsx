@@ -57,6 +57,7 @@ export const ConsumptionRatesManager = () => {
     base_consumption_per_km: 0,
     loaded_consumption_factor: 1.3,
     towing_consumption_factor: 1.5,
+    toll_vehicle_category: '1',
   });
 
   const openNew = () => {
@@ -67,6 +68,7 @@ export const ConsumptionRatesManager = () => {
       base_consumption_per_km: 0,
       loaded_consumption_factor: 1.3,
       towing_consumption_factor: 1.5,
+      toll_vehicle_category: '1',
     });
     setIsFormOpen(true);
   };
@@ -79,6 +81,7 @@ export const ConsumptionRatesManager = () => {
       base_consumption_per_km: rate.base_consumption_per_km,
       loaded_consumption_factor: rate.loaded_consumption_factor,
       towing_consumption_factor: rate.towing_consumption_factor,
+      toll_vehicle_category: rate.toll_vehicle_category || '1',
     });
     setIsFormOpen(true);
   };
@@ -264,6 +267,21 @@ export const ConsumptionRatesManager = () => {
                   onChange={(e) => setForm((f) => ({ ...f, towing_consumption_factor: Number(e.target.value) }))}
                 />
               </div>
+            </div>
+
+            <div>
+              <Label>Categoría Peaje (Vehículo)</Label>
+              <Select value={form.toll_vehicle_category} onValueChange={(v) => setForm((f) => ({ ...f, toll_vehicle_category: v }))}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1">1 - Automóvil / Liviano</SelectItem>
+                  <SelectItem value="2">2 - Camioneta / Furgón</SelectItem>
+                  <SelectItem value="3">3 - Camión 2 ejes</SelectItem>
+                  <SelectItem value="4">4 - Camión 3+ ejes / Pesado</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="flex justify-end gap-2 pt-2">

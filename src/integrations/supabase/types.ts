@@ -721,6 +721,7 @@ export type Database = {
           id: string
           is_active: boolean
           loaded_consumption_factor: number
+          toll_vehicle_category: string
           towing_consumption_factor: number
           updated_at: string
         }
@@ -732,6 +733,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           loaded_consumption_factor?: number
+          toll_vehicle_category?: string
           towing_consumption_factor?: number
           updated_at?: string
         }
@@ -743,6 +745,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           loaded_consumption_factor?: number
+          toll_vehicle_category?: string
           towing_consumption_factor?: number
           updated_at?: string
         }

@@ -130,7 +130,9 @@ export const TripCalculatorForm = () => {
     // Try automatic toll calculation first
     const originCity = originName.split(',')[0]?.trim();
     const destCity = destName.split(',')[0]?.trim();
-    const tollData = await calculateTolls(originCity, destCity);
+    const selectedRate = rates.find(r => r.crane_type === craneType);
+    const tollCategory = selectedRate?.toll_vehicle_category || '1';
+    const tollData = await calculateTolls(originCity, destCity, tollCategory);
 
     // If toll API failed, show manual fallback
     if (!tollData) {
