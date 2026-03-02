@@ -1,60 +1,58 @@
 
 
-## Fix: Map Crane Types to Toll Vehicle Categories
+## Fix: Toll API Categories Use Text Values, Not Numbers
 
-### Problem
-The toll API (`GetAPI Chile`) supports a `category` parameter for vehicle type (cars, trucks, heavy vehicles pay different rates). Currently, `calculateTolls()` is called without this parameter, defaulting to standard car rates. This explains why the user saw $7,900 instead of ~$76,000 for a Copiapo-Calama trip with a heavy crane.
+### Root Cause
+The GetAPI Chile toll API expects **text-based** category values like `LIVIANO`, `CAMION`, `MOTO`, etc. -- NOT numeric values like `1`, `2`, `3`, `4`.
 
-### Solution
+From the OpenAPI spec (line 971): `example: LIVIANO`
 
-**1. Add a toll category mapping to `crane_consumption_rates` table**
+The logs confirm this: `"Categoría inválida: 3"` -- the API rejects numeric categories, and the fallback retries without any category, returning default (car/LIVIANO) rates. That's why a heavy crane trip shows $7,900 instead of the correct higher amount.
 
-Add a new column `toll_vehicle_category` to store the GetAPI category for each crane type:
+### Changes Required
 
-| crane_type | toll_vehicle_category |
-|---|---|
-| heavy | 4 (or matching heavy vehicle category) |
-| medium | 3 |
-| light | 2 |
-| horquilla | 3 |
-| taxi | 1 |
+**1. Database migration -- update `toll_vehicle_category` values in both tables**
 
-We'll first query the GetAPI categories endpoint to confirm exact category values, then add the column and populate it.
+Update `cranes` and `crane_consumption_rates` tables to use the correct text values:
 
-**2. Update `ConsumptionRate` interface** (`src/hooks/useConsumptionRates.ts`)
+| Current (numeric) | Correct (text) | Applies to |
+|---|---|---|
+| `1` | `MOTO` | Motorcycles |
+| `2` | `LIVIANO` | Cars, pickups (VBPH-58, horquilla) |
+| `3` | `CAMION` | 2-axle trucks (TLYF-23, TDCJ-46, FYTR-49) |
+| `4` | `CAMION` | Heavy trucks (DCBV-94) |
 
-Add `toll_vehicle_category: string` to the interface.
+We need to query the `/categories` endpoint to confirm exact valid values, but based on the documentation, `LIVIANO` and `CAMION` are the two relevant ones.
 
-**3. Pass category through the calculation flow**
+**2. Update the CraneForm.tsx toll category selector**
 
-- **`TripCalculatorForm.tsx`**: Look up the selected crane's `toll_vehicle_category` from the rates data, and pass it to `calculateTolls(originCity, destCity, category)`.
-- The `calculateTolls` function already accepts an optional `category` parameter -- it just needs to be provided.
+Change the dropdown options from numeric (1-4) to text values (`LIVIANO`, `CAMION`, `MOTO`, etc.).
 
-**4. Update the consumption rate management UI** (if exists)
+**3. Update ConsumptionRatesManager.tsx toll category selector**
 
-Add a field for `toll_vehicle_category` so admins can configure it per crane type.
+Same change -- use text values instead of numbers.
 
-### Files to modify
-- **Database**: `ALTER TABLE crane_consumption_rates ADD COLUMN toll_vehicle_category text DEFAULT '1';` + UPDATE rows
-- `src/hooks/useConsumptionRates.ts` -- add field to interface
-- `src/components/trip-calculator/TripCalculatorForm.tsx` -- pass category to `calculateTolls`
-- Any consumption rate admin form -- add the new field
+**4. Query the categories endpoint for confirmation**
 
-### Alternative (simpler, no DB change)
-Use a hardcoded mapping in the form component:
+Call the `/categories` endpoint via the edge function to get the exact list of valid category strings, and ideally use those to populate the selectors dynamically or at least validate our mapping.
 
-```text
-const CRANE_TOLL_CATEGORY: Record<string, string> = {
-  heavy: '4',
-  medium: '3',
-  light: '2',
-  horquilla: '3',
-  taxi: '1',
-};
+### Technical Details
+
+**Migration SQL:**
+```sql
+-- Update cranes table
+UPDATE cranes SET toll_vehicle_category = 'CAMION' WHERE toll_vehicle_category IN ('3', '4');
+UPDATE cranes SET toll_vehicle_category = 'LIVIANO' WHERE toll_vehicle_category IN ('1', '2');
+
+-- Update crane_consumption_rates table
+UPDATE crane_consumption_rates SET toll_vehicle_category = 'CAMION' WHERE toll_vehicle_category IN ('3', '4');
+UPDATE crane_consumption_rates SET toll_vehicle_category = 'LIVIANO' WHERE toll_vehicle_category IN ('1', '2');
 ```
 
-Then pass `CRANE_TOLL_CATEGORY[craneType]` to `calculateTolls()`. This is faster but less flexible. The DB approach is preferred for maintainability.
+**Files to modify:**
+- New Supabase migration (update existing category values)
+- `src/components/cranes/CraneForm.tsx` -- change Select options to text values
+- `src/components/trip-calculator/ConsumptionRatesManager.tsx` -- change Select options to text values
 
-### Recommended approach
-Use the DB column approach so categories can be adjusted without code changes. We'll also query the GetAPI `/categories` endpoint first to confirm the correct category identifiers.
+No changes needed to the edge function or calculation hooks since they already pass the category string through as-is.
 
