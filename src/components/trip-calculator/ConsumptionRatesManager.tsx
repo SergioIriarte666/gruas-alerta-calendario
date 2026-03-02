@@ -276,9 +276,14 @@ export const ConsumptionRatesManager = () => {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="LIVIANO">Liviano (Auto / Camioneta)</SelectItem>
-                  <SelectItem value="CAMION">Camión (2+ ejes)</SelectItem>
                   <SelectItem value="MOTO">Moto</SelectItem>
+                  <SelectItem value="LIVIANO">Liviano (Auto / Camioneta)</SelectItem>
+                  <SelectItem value="LIVIANO_REMOLQUE">Liviano con Remolque</SelectItem>
+                  <SelectItem value="CAMION_2_EJES">Camión 2 Ejes</SelectItem>
+                  <SelectItem value="CAMION_PESADO">Camión Pesado</SelectItem>
+                  <SelectItem value="BUS_2_EJES">Bus 2 Ejes</SelectItem>
+                  <SelectItem value="BUS_PESADO">Bus Pesado</SelectItem>
+                  <SelectItem value="SOBREDIMENSIONADO">Sobredimensionado</SelectItem>
                 </SelectContent>
               </Select>
             </div>
