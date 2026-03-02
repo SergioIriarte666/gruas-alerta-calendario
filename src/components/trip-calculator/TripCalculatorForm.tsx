@@ -133,10 +133,17 @@ export const TripCalculatorForm = () => {
 
     setShowManualToll(false);
 
-    // Try automatic toll calculation first
-    const originCity = originName.split(',')[0]?.trim();
-    const destCity = destName.split(',')[0]?.trim();
+    // Extract clean city name (first part before comma, trimmed)
+    const extractCity = (fullName: string) => {
+      const city = fullName.split(',')[0]?.trim();
+      // Remove common prefixes/suffixes and normalize
+      return city || fullName;
+    };
+    
+    const originCity = extractCity(originName);
+    const destCity = extractCity(destName);
     const tollCategory = selectedCrane?.tollVehicleCategory || 'LIVIANO';
+    console.log('Toll lookup cities:', { originCity, destCity, tollCategory });
     const tollData = await calculateTolls(originCity, destCity, tollCategory);
 
     // If toll API failed, show manual fallback
