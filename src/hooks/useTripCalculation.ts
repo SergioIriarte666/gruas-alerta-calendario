@@ -11,6 +11,7 @@ export interface TripCalculationInput {
   craneType: string;
   vehicleConfig: '1_vehicle' | '2_vehicles';
   manualTollCost?: number;
+  tollDetails?: Array<{ name: string; cost: number; highway?: string }>;
   additionalCosts?: number;
 }
 
@@ -116,7 +117,8 @@ export function useTripCalculation() {
           },
           tolls: {
             total_cost: tollCost,
-            is_manual: true,
+            is_manual: !input.tollDetails?.length,
+            details: input.tollDetails,
           },
           additional_costs: additionalCosts,
           total_estimate: Math.round(fuelCost + tollCost + additionalCosts),
