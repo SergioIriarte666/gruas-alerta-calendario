@@ -7,6 +7,7 @@ import { useServiceTransformer } from './services/useServiceTransformer';
 interface UseServicesForClosuresOptions {
   dateFrom?: Date;
   dateTo?: Date;
+  enabled?: boolean;
 }
 
 interface ServicesForClosuresData {
@@ -43,7 +44,7 @@ export const useServicesForClosures = (options: UseServicesForClosuresOptions = 
   const [searchingProcessed, setSearchingProcessed] = useState(false);
   const { transformRawServiceData } = useServiceTransformer();
   const { toast } = useToast();
-  const { dateFrom, dateTo } = options;
+  const { dateFrom, dateTo, enabled = true } = options;
   
   // Flag to indicate if this is a global search (no date filter)
   const isGlobalSearch = !dateFrom && !dateTo;
@@ -51,8 +52,6 @@ export const useServicesForClosures = (options: UseServicesForClosuresOptions = 
   const fetchServicesData = async () => {
     try {
       setLoading(true);
-      console.log('🔍 Fetching services data for closures with date filter:', { dateFrom, dateTo, isGlobalSearch });
-      
       // In global search mode (no dates selected), do not enforce a default date window.
       // This allows searching and closing older services by OC/folio/patente.
 
@@ -114,10 +113,6 @@ export const useServicesForClosures = (options: UseServicesForClosuresOptions = 
       const billableServices = billableResult.data || [];
       const pendingServices = pendingResult.data || [];
 
-      console.log('🔍 Billable services found (completed + with purchase order + failed):', billableServices.length);
-      console.log('🔍 Raw billable services sample:', billableServices.slice(0, 2));
-      console.log('🔍 Pending services found:', pendingServices.length);
-      console.log('🔍 Raw pending services sample:', pendingServices.slice(0, 2));
 
       // Get all service IDs that are already included in closures
       const { data: closureServices, error: closureError } = await supabase
@@ -132,16 +127,7 @@ export const useServicesForClosures = (options: UseServicesForClosuresOptions = 
       console.log('Services already in closures:', usedServiceIds.size);
 
       // Filter out services that are already in closures
-      const availableBillableServices = billableServices.filter(service => {
-        const isInClosure = usedServiceIds.has(service.id);
-        const isAvailable = !isInClosure;
-        
-        console.log(`Service ${service.folio} (${service.id}): status=${service.status}, inClosure=${isInClosure}, available=${isAvailable}`);
-        
-        return isAvailable;
-      });
-
-      console.log('Available billable services for new closures:', availableBillableServices.length);
+      const availableBillableServices = billableServices.filter(service => !usedServiceIds.has(service.id));
 
       // Transform the raw data to match the Service type
       const transformedBillable = transformRawServiceData(availableBillableServices);
@@ -226,11 +212,14 @@ export const useServicesForClosures = (options: UseServicesForClosuresOptions = 
   };
 
   useEffect(() => {
+    if (!enabled) return;
     fetchServicesData();
-  }, [dateFrom, dateTo]);
+  }, [dateFrom, dateTo, enabled]);
 
   // Refetch function that forces fresh data
   const refetchWithDebug = async () => {
+    if (!enabled) return;
+
     setLoading(true);
     // Clear current data to force fresh fetch
     setData({
@@ -251,10 +240,7 @@ export const useServicesForClosures = (options: UseServicesForClosuresOptions = 
 
     try {
       setSearchingProcessed(true);
-      console.log('🔍 [Hook] Searching processed services for:', searchTerm);
-
       const searchPattern = `%${searchTerm.trim()}%`;
-      console.log('🔍 [Hook] Search pattern:', searchPattern);
 
       // Query services that are already in closures - using explicit FK relationship
       const { data: processedData, error } = await supabase
@@ -290,7 +276,7 @@ export const useServicesForClosures = (options: UseServicesForClosuresOptions = 
         return;
       }
 
-      console.log('✅ [Hook] Processed services found:', processedData?.length || 0, processedData);
+      
 
       // Transform data to ProcessedServiceInfo format
       const transformed: ProcessedServiceInfo[] = (processedData || []).map((service: any) => {

@@ -61,7 +61,6 @@ const ClosureForm = ({
     loading: servicesLoading,
     completeService,
     completeMultipleServices,
-    refetch,
     isGlobalSearch,
     processedServices,
     searchingProcessed,
@@ -69,7 +68,8 @@ const ClosureForm = ({
     clearProcessedServices
   } = useServicesForClosures({
     dateFrom: formData.dateFrom,
-    dateTo: formData.dateTo
+    dateTo: formData.dateTo,
+    enabled: open
   });
   
   const [loading, setLoading] = useState(false);
@@ -119,7 +119,7 @@ const ClosureForm = ({
         purchaseOrder: ''
       });
       setCurrentStep(1);
-      refetch();
+      
       onOpenChange(false);
     } catch (error) {
       console.error('Error creating closure:', error);

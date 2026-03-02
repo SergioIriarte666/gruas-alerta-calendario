@@ -7,7 +7,7 @@ export const useClosureOperations = () => {
 
   const createClosure = async (closureData: Omit<ServiceClosure, 'id' | 'folio' | 'createdAt' | 'updatedAt'>) => {
     try {
-      console.log('Creating closure with data:', closureData);
+      
       
       // Get current user for created_by
       const { data: { user } } = await supabase.auth.getUser();
@@ -29,7 +29,7 @@ export const useClosureOperations = () => {
         }
       }
       
-      console.log('Last CIE closure found:', lastClosure?.folio, '-> Next number:', nextNumber);
+      
       
       const folio = `CIE-${String(nextNumber).padStart(3, '0')}`;
 
@@ -50,7 +50,7 @@ export const useClosureOperations = () => {
 
       if (error) throw error;
 
-      console.log('Created closure:', data);
+      
 
       // Create closure-service relationships
       if (closureData.serviceIds.length > 0) {

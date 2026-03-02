@@ -2,7 +2,7 @@
 import { ServiceClosure } from '@/types';
 
 export const formatClosureData = (data: any): ServiceClosure => {
-  console.log('Formatting closure data:', data);
+  
   
   try {
     const formatted: ServiceClosure = {
@@ -23,7 +23,7 @@ export const formatClosureData = (data: any): ServiceClosure => {
       creatorName: data.creator?.full_name || data.creator?.email || undefined
     };
     
-    console.log('Formatted closure:', formatted);
+    
     return formatted;
   } catch (error) {
     console.error('Error in formatClosureData:', error, data);
