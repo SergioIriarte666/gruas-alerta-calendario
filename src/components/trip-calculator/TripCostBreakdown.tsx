@@ -164,7 +164,7 @@ export const TripCostBreakdown = ({
           <Button
             onClick={handleSave}
             disabled={isSaving}
-            className="bg-tms-green hover:bg-tms-green/90 text-white"
+            className="bg-violet-600 hover:bg-violet-700 text-white"
           >
             <Save className="h-4 w-4 mr-2" />
             {isSaving ? 'Guardando...' : 'Guardar Estimación'}
