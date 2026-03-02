@@ -59,10 +59,10 @@ Deno.serve(async (req) => {
         );
       }
 
-      // Encode polyline for Mapbox Static API
       const coords: [number, number][] = geometry.coordinates;
-      // Simplify coords if too many (URL length limit)
-      const maxPoints = 300;
+      
+      // Aggressively simplify to keep URL short
+      const maxPoints = 100;
       let simplified = coords;
       if (coords.length > maxPoints) {
         const step = Math.ceil(coords.length / maxPoints);
@@ -72,29 +72,64 @@ Deno.serve(async (req) => {
         }
       }
 
-      // Build GeoJSON overlay
-      const geojsonOverlay = encodeURIComponent(JSON.stringify({
-        type: "FeatureCollection",
-        features: [
-          {
-            type: "Feature",
-            properties: { "stroke": "#7c3aed", "stroke-width": 4, "stroke-opacity": 0.8 },
-            geometry: { type: "LineString", coordinates: simplified },
-          },
-          {
-            type: "Feature",
-            properties: { "marker-color": "#16a34a", "marker-size": "large" },
-            geometry: { type: "Point", coordinates: origin },
-          },
-          {
-            type: "Feature",
-            properties: { "marker-color": "#dc2626", "marker-size": "large" },
-            geometry: { type: "Point", coordinates: destination },
-          },
-        ],
-      }));
+      // Encode polyline (Google format: lat,lng)
+      function encodePolyline(coordinates: [number, number][]): string {
+        let encoded = '';
+        let prevLat = 0;
+        let prevLng = 0;
+        for (const [lng, lat] of coordinates) {
+          const latE5 = Math.round(lat * 1e5);
+          const lngE5 = Math.round(lng * 1e5);
+          encoded += encodeSignedNumber(latE5 - prevLat);
+          encoded += encodeSignedNumber(lngE5 - prevLng);
+          prevLat = latE5;
+          prevLng = lngE5;
+        }
+        return encoded;
+      }
 
-      const mapUrl = `https://api.mapbox.com/styles/v1/mapbox/streets-v12/static/geojson(${geojsonOverlay})/auto/800x400@2x?access_token=${MAPBOX_TOKEN}&padding=40`;
+      function encodeSignedNumber(num: number): string {
+        let sgn = num << 1;
+        if (num < 0) sgn = ~sgn;
+        let encoded = '';
+        while (sgn >= 0x20) {
+          encoded += String.fromCharCode((0x20 | (sgn & 0x1f)) + 63);
+          sgn >>= 5;
+        }
+        encoded += String.fromCharCode(sgn + 63);
+        return encoded;
+      }
+
+      const polyline = encodePolyline(simplified);
+      const encodedPolyline = encodeURIComponent(polyline);
+
+      // Use path overlay with polyline encoding
+      const pathOverlay = `path-4+7c3aed-0.8(${encodedPolyline})`;
+      const originMarker = `pin-l-a+16a34a(${origin[0]},${origin[1]})`;
+      const destMarker = `pin-l-b+dc2626(${destination[0]},${destination[1]})`;
+
+      const overlays = `${originMarker},${destMarker},${pathOverlay}`;
+      const mapUrl = `https://api.mapbox.com/styles/v1/mapbox/streets-v12/static/${overlays}/auto/800x400@2x?access_token=${MAPBOX_TOKEN}&padding=50`;
+
+      // Check URL length — Mapbox limit is 8192
+      if (mapUrl.length > 8192) {
+        // Re-simplify with fewer points
+        const step2 = Math.ceil(coords.length / 50);
+        const simplified2 = coords.filter((_: unknown, i: number) => i % step2 === 0);
+        if (simplified2[simplified2.length - 1] !== coords[coords.length - 1]) {
+          simplified2.push(coords[coords.length - 1]);
+        }
+        const polyline2 = encodePolyline(simplified2);
+        const encodedPolyline2 = encodeURIComponent(polyline2);
+        const pathOverlay2 = `path-4+7c3aed-0.8(${encodedPolyline2})`;
+        const overlays2 = `${originMarker},${destMarker},${pathOverlay2}`;
+        const mapUrl2 = `https://api.mapbox.com/styles/v1/mapbox/streets-v12/static/${overlays2}/auto/800x400@2x?access_token=${MAPBOX_TOKEN}&padding=50`;
+        
+        return new Response(
+          JSON.stringify({ url: mapUrl2 }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
 
       return new Response(
         JSON.stringify({ url: mapUrl }),
