@@ -234,30 +234,34 @@ export const TripCalculatorForm = () => {
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
-            <Switch
-              checked={twoVehicles}
-              onCheckedChange={(v) => { setTwoVehicles(v); reset(); }}
-            />
-            <Label className="cursor-pointer">
-              {twoVehicles ? '2 Vehículos (grúa + arrastre)' : '1 Vehículo (solo grúa cargada)'}
-            </Label>
-          </div>
+          <div className="flex items-center justify-between flex-wrap gap-4 pt-2">
+            <div className="flex items-center gap-3">
+              <Switch
+                checked={twoVehicles}
+                onCheckedChange={(v) => { setTwoVehicles(v); reset(); }}
+              />
+              <Label className="cursor-pointer">
+                {twoVehicles ? '2 Vehículos (grúa + arrastre)' : '1 Vehículo (solo grúa cargada)'}
+              </Label>
+            </div>
 
-          <Button
-            onClick={handleCalculate}
-            disabled={!canCalculate || isCalculating || tollLoading}
-            className="w-full md:w-auto bg-tms-green hover:bg-tms-green/90 text-white"
-          >
-            {isCalculating || tollLoading ? (
-              <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Calculando...
-              </>
-            ) : (
-              'Calcular Viaje'
-            )}
-          </Button>
+            <Button
+              type="button"
+              onClick={handleCalculate}
+              disabled={!canCalculate || isCalculating || tollLoading}
+              className="w-full md:w-auto bg-tms-green hover:bg-tms-green/90 text-white font-semibold px-8 py-2.5"
+              size="lg"
+            >
+              {isCalculating || tollLoading ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Calculando...
+                </>
+              ) : (
+                'Calcular Viaje'
+              )}
+            </Button>
+          </div>
 
           {/* Manual toll fallback - only shown when API fails */}
           {showManualToll && (
