@@ -13,6 +13,7 @@ import { useCranes } from '@/hooks/useCranes';
 import { useTripCalculation, type TripCalculationInput } from '@/hooks/useTripCalculation';
 import { useTollCalculation, useTollLocations, matchTollLocation } from '@/hooks/useTollCalculation';
 import { TripCostBreakdown } from './TripCostBreakdown';
+import { TripRouteMap } from './TripRouteMap';
 import { useSavedLocations, type SavedLocation } from '@/hooks/useSavedLocations';
 
 interface GeoResult {
@@ -399,13 +400,26 @@ export const TripCalculatorForm = () => {
       </Card>
 
       {result && (
-        <TripCostBreakdown
-          result={result}
-          originName={originName}
-          destinationName={destName}
-          craneType={craneType}
-          vehicleConfig={twoVehicles ? '2_vehicles' : '1_vehicle'}
-        />
+        <>
+          {result.routeGeometry && result.originCoords && result.destinationCoords && (
+            <TripRouteMap
+              geometry={result.routeGeometry}
+              originCoords={result.originCoords}
+              destinationCoords={result.destinationCoords}
+              originName={originName}
+              destinationName={destName}
+              distanceKm={result.distance_km}
+              estimatedTimeHours={result.estimated_time_hours}
+            />
+          )}
+          <TripCostBreakdown
+            result={result}
+            originName={originName}
+            destinationName={destName}
+            craneType={craneType}
+            vehicleConfig={twoVehicles ? '2_vehicles' : '1_vehicle'}
+          />
+        </>
       )}
     </div>
   );

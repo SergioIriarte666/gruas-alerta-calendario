@@ -50,6 +50,14 @@ Deno.serve(async (req) => {
 
     const { action, origin, destination, query } = await req.json();
 
+    // Get token for client-side map rendering
+    if (action === "get_token") {
+      return new Response(
+        JSON.stringify({ token: MAPBOX_TOKEN }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     // Geocoding action
     if (action === "geocode") {
       if (!query) {
