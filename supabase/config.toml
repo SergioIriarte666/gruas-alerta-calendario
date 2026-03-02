@@ -105,3 +105,6 @@ verify_jwt = false
 
 [functions.parse-quote-pdf]
 verify_jwt = false
+
+[functions.tollroutes-proxy]
+verify_jwt = false
