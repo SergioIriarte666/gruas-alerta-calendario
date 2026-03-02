@@ -72,8 +72,8 @@ export const TripCostBreakdown = ({
             <MapPin className="h-4 w-4 text-red-600" />
             <span className="font-medium text-foreground">{destinationName.split(',')[0]}</span>
           </div>
-          <div className="flex gap-4 mt-2 text-sm text-muted-foreground">
-            <span>{result.distance_km} km (ida)</span>
+          <div className="flex flex-wrap gap-4 mt-2 text-sm text-muted-foreground">
+            <span>{result.distance_km} km (ida) · <span className="font-semibold text-foreground">{result.distance_km * 2} km total</span></span>
             <span>~{result.estimated_time_hours} hrs (ida)</span>
             <Badge variant="outline">{craneType}</Badge>
             <Badge variant="outline">
