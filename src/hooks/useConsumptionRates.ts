@@ -8,6 +8,7 @@ export interface ConsumptionRate {
   base_consumption_per_km: number;
   loaded_consumption_factor: number;
   towing_consumption_factor: number;
+  toll_vehicle_category: string;
   is_active: boolean;
   created_at: string;
   updated_at: string;
