@@ -134,16 +134,19 @@ export const TripCalculatorForm = () => {
 
     setShowManualToll(false);
 
-    // Try matching each comma-separated part of the address against valid toll locations
+    // Match location parts, prioritizing city-like tokens (without street numbers)
     const findBestTollMatch = (fullName: string): string => {
       const parts = fullName.split(',').map(p => p.trim()).filter(Boolean);
-      // Try each part against toll locations, return first match
-      for (const part of parts) {
+
+      const withoutNumbers = parts.filter(part => !/\d/.test(part));
+      const candidates = withoutNumbers.length > 0 ? withoutNumbers : parts;
+
+      for (const part of candidates) {
         const match = matchTollLocation(part, tollLocations);
         if (match) return match;
       }
-      // Fallback: return first part (city name guess)
-      return parts[0] || fullName;
+
+      return candidates[0] || fullName;
     };
 
     const originCity = findBestTollMatch(originName);
