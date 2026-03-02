@@ -48,12 +48,56 @@ Deno.serve(async (req) => {
       );
     }
 
-    const { action, origin, destination, query } = await req.json();
+    const { action, origin, destination, query, geometry } = await req.json();
 
-    // Get token for client-side map rendering
-    if (action === "get_token") {
+    // Static map image with route
+    if (action === "static_map") {
+      if (!geometry?.coordinates || !origin || !destination) {
+        return new Response(
+          JSON.stringify({ error: "geometry, origin and destination required" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // Encode polyline for Mapbox Static API
+      const coords: [number, number][] = geometry.coordinates;
+      // Simplify coords if too many (URL length limit)
+      const maxPoints = 300;
+      let simplified = coords;
+      if (coords.length > maxPoints) {
+        const step = Math.ceil(coords.length / maxPoints);
+        simplified = coords.filter((_: unknown, i: number) => i % step === 0);
+        if (simplified[simplified.length - 1] !== coords[coords.length - 1]) {
+          simplified.push(coords[coords.length - 1]);
+        }
+      }
+
+      // Build GeoJSON overlay
+      const geojsonOverlay = encodeURIComponent(JSON.stringify({
+        type: "FeatureCollection",
+        features: [
+          {
+            type: "Feature",
+            properties: { "stroke": "#7c3aed", "stroke-width": 4, "stroke-opacity": 0.8 },
+            geometry: { type: "LineString", coordinates: simplified },
+          },
+          {
+            type: "Feature",
+            properties: { "marker-color": "#16a34a", "marker-size": "large" },
+            geometry: { type: "Point", coordinates: origin },
+          },
+          {
+            type: "Feature",
+            properties: { "marker-color": "#dc2626", "marker-size": "large" },
+            geometry: { type: "Point", coordinates: destination },
+          },
+        ],
+      }));
+
+      const mapUrl = `https://api.mapbox.com/styles/v1/mapbox/streets-v12/static/geojson(${geojsonOverlay})/auto/800x400@2x?access_token=${MAPBOX_TOKEN}&padding=40`;
+
       return new Response(
-        JSON.stringify({ token: MAPBOX_TOKEN }),
+        JSON.stringify({ url: mapUrl }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
