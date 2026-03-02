@@ -35,7 +35,9 @@ export function useTollLocations() {
         body: { action: 'locations' },
       });
       if (error) throw error;
-      return data;
+      // The API may return { data: [...] } or just an array
+      const locations: string[] = Array.isArray(data) ? data : (data?.data ?? data?.locations ?? []);
+      return locations;
     },
     staleTime: 60 * 60 * 1000, // 1 hour cache
   });
@@ -53,6 +55,52 @@ export function useTollCategories() {
     },
     staleTime: 60 * 60 * 1000,
   });
+}
+
+/**
+ * Normalize a string for fuzzy matching: lowercase, remove accents, trim
+ */
+function normalize(str: string): string {
+  return str
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim();
+}
+
+/**
+ * Find the best matching location from the API's valid locations list.
+ * Tries: exact match, startsWith, includes, then first word match.
+ */
+export function matchTollLocation(cityName: string, locations: string[]): string | null {
+  if (!cityName || !locations.length) return null;
+
+  const normalizedCity = normalize(cityName);
+
+  // 1. Exact match (normalized)
+  const exact = locations.find(loc => normalize(loc) === normalizedCity);
+  if (exact) return exact;
+
+  // 2. Location starts with city name or vice-versa
+  const startsWith = locations.find(
+    loc => normalize(loc).startsWith(normalizedCity) || normalizedCity.startsWith(normalize(loc))
+  );
+  if (startsWith) return startsWith;
+
+  // 3. City name is contained in a location or vice-versa
+  const includes = locations.find(
+    loc => normalize(loc).includes(normalizedCity) || normalizedCity.includes(normalize(loc))
+  );
+  if (includes) return includes;
+
+  // 4. Match first word only (e.g. "Santiago" from "Santiago Centro")
+  const firstWord = normalizedCity.split(/\s+/)[0];
+  if (firstWord.length >= 3) {
+    const wordMatch = locations.find(loc => normalize(loc).startsWith(firstWord));
+    if (wordMatch) return wordMatch;
+  }
+
+  return null;
 }
 
 export function useTollCalculation() {
