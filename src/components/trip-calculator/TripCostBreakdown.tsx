@@ -37,6 +37,14 @@ export const TripCostBreakdown = ({
     : 0;
 
   const handleSave = () => {
+    // Safely serialize calculation_details by stripping non-JSON-safe values
+    let safeDetails: Record<string, unknown> | null = null;
+    try {
+      safeDetails = JSON.parse(JSON.stringify(result));
+    } catch {
+      safeDetails = null;
+    }
+
     saveEstimate(
       {
         origin: originName,
@@ -50,12 +58,15 @@ export const TripCostBreakdown = ({
         toll_cost: result.tolls.total_cost,
         additional_costs: result.additional_costs,
         total_estimate: result.total_estimate,
-        calculation_details: result as any,
+        calculation_details: safeDetails,
         service_id: null,
       },
       {
         onSuccess: () => toast.success('Estimación guardada'),
-        onError: () => toast.error('Error al guardar'),
+        onError: (err) => {
+          console.error('Error saving trip estimate:', err);
+          toast.error(`Error al guardar: ${err.message}`);
+        },
       }
     );
   };
