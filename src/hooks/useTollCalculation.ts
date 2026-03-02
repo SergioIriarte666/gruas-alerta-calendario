@@ -60,7 +60,8 @@ export function useTollCategories() {
 /**
  * Normalize a string for fuzzy matching: lowercase, remove accents, trim
  */
-function normalize(str: string): string {
+function normalize(str: unknown): string {
+  if (typeof str !== 'string') return '';
   return str
     .toLowerCase()
     .normalize('NFD')
@@ -72,31 +73,44 @@ function normalize(str: string): string {
  * Find the best matching location from the API's valid locations list.
  * Tries: exact match, startsWith, includes, then first word match.
  */
-export function matchTollLocation(cityName: string, locations: string[]): string | null {
+export function matchTollLocation(cityName: string, locations: unknown[]): string | null {
   if (!cityName || !locations.length) return null;
 
+  // Extract string names from locations (might be strings or objects with name/city property)
+  const locationNames: string[] = locations
+    .map((loc: unknown) => {
+      if (typeof loc === 'string') return loc;
+      if (loc && typeof loc === 'object') {
+        const obj = loc as Record<string, unknown>;
+        return (obj.name || obj.city || obj.location || '') as string;
+      }
+      return '';
+    })
+    .filter((n) => n.length > 0);
+
   const normalizedCity = normalize(cityName);
+  if (!normalizedCity) return null;
 
   // 1. Exact match (normalized)
-  const exact = locations.find(loc => normalize(loc) === normalizedCity);
+  const exact = locationNames.find(loc => normalize(loc) === normalizedCity);
   if (exact) return exact;
 
   // 2. Location starts with city name or vice-versa
-  const startsWith = locations.find(
+  const startsWith = locationNames.find(
     loc => normalize(loc).startsWith(normalizedCity) || normalizedCity.startsWith(normalize(loc))
   );
   if (startsWith) return startsWith;
 
   // 3. City name is contained in a location or vice-versa
-  const includes = locations.find(
+  const includes = locationNames.find(
     loc => normalize(loc).includes(normalizedCity) || normalizedCity.includes(normalize(loc))
   );
   if (includes) return includes;
 
-  // 4. Match first word only (e.g. "Santiago" from "Santiago Centro")
+  // 4. Match first word only
   const firstWord = normalizedCity.split(/\s+/)[0];
   if (firstWord.length >= 3) {
-    const wordMatch = locations.find(loc => normalize(loc).startsWith(firstWord));
+    const wordMatch = locationNames.find(loc => normalize(loc).startsWith(firstWord));
     if (wordMatch) return wordMatch;
   }
 
