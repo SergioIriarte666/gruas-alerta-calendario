@@ -1,56 +1,59 @@
 
+Objetivo: asegurar que la ruta se vea completa siempre, sin seguir “agrandando” el bloque en la página principal, y habilitar una vista ampliada en modal para recorridos largos.
 
-# Ubicaciones Guardadas con Coordenadas Exactas
+1) Diagnóstico confirmado
+- El componente actual (`TripRouteMap.tsx`) muestra una imagen estática con `object-contain`, pero el encuadre depende de `auto` en Mapbox Static API.
+- Para rutas muy largas (norte-sur), el encuadre horizontal puede dejar extremos visualmente fuera o demasiado pegados, aunque aumentemos alto/padding.
+- Subir solo el tamaño del mapa (420px, 500px, etc.) no resuelve de forma confiable el encuadre de rutas extremas.
 
-## Problema
-Mapbox no encuentra lugares especificos como "Mina La Coipa - Mantos de Oro". Google Maps si los encuentra y muestra coordenadas exactas (ej: -26.81029, -69.26946).
+2) Enfoque de solución (estable y sin “estirar” el layout)
+- Mantener una previa compacta en la tarjeta (alto fijo razonable, sin seguir creciendo).
+- Agregar botón “Ver mapa completo” que abra un modal grande (estilo módulo de costos).
+- En backend, dejar de depender de `auto` para la vista completa y construir un `bbox` calculado (min/max lng/lat de la geometría + margen configurable).  
+  Esto fuerza que la ruta completa entre en el encuadre.
 
-## Solucion
-Crear un sistema donde puedas guardar ubicaciones con nombre personalizado y coordenadas (obtenidas de Google Maps), que aparezcan como sugerencias prioritarias en el calculador.
+3) Cambios planeados en backend (`supabase/functions/mapbox-proxy/index.ts`)
+- Extender acción `static_map` para aceptar parámetros opcionales:
+  - `mode`: `"preview"` | `"full"`
+  - `width`, `height`, `padding`
+- Calcular bounding box real de la ruta:
+  - `minLng`, `minLat`, `maxLng`, `maxLat`
+  - aplicar margen porcentual (por ejemplo 8–12%) para que no queden extremos al borde.
+- Generar URL Mapbox:
+  - `preview`: puede seguir con `auto` (rápido/ligero) o bbox con margen menor.
+  - `full`: usar `bbox` explícito + dimensiones grandes (ej. 1280x900@2x), garantizando ruta completa.
+- Mantener lógica actual de simplificación/polyline y control de longitud URL.
 
-## Flujo de uso
-1. Buscas en Google Maps el lugar (ej: "Mina La Coipa"), copias las coordenadas
-2. En el calculador, haces clic en un boton "Gestionar ubicaciones" o en un icono de estrella junto al campo
-3. Aparece un dialogo donde ingresas: **nombre** ("Mina La Coipa - Mantos de Oro") y **coordenadas** (latitud: -26.81029, longitud: -69.26946)
-4. La ubicacion queda guardada en la base de datos
-5. La proxima vez que escribas "mantos" o "coipa" en el campo de origen/destino, aparece como primera sugerencia con sus coordenadas exactas -- sin depender de Mapbox
+4) Cambios planeados en frontend (`src/components/trip-calculator/TripRouteMap.tsx`)
+- Mantener tarjeta compacta en página principal (sin aumentar más alto).
+- Añadir botón secundario “Ver completo” junto a “Google Maps”.
+- Incorporar `Dialog` (patrón existente en proyecto):
+  - `DialogContent` con `w-[95vw] max-w-6xl max-h-[90vh]`.
+  - Encabezado con título/ruta/distancia.
+  - Imagen “full map” con `w-full h-auto object-contain`, dentro de contenedor con `max-h-[75vh]`.
+- Flujo de carga:
+  - al cargar resultado, pedir URL de `preview`.
+  - al abrir modal, pedir URL de `full` (lazy load para no penalizar rendimiento inicial).
+- Fallback UX:
+  - si falla “full”, mantener preview y mostrar acceso directo a Google Maps.
 
-## Cambios
+5) Ajuste en integración de formulario (`TripCalculatorForm.tsx`)
+- No requiere cambios de lógica de cálculo.
+- Solo asegurar que el `TripRouteMap` tenga lo necesario para abrir modal y pedir mapa full.
 
-### 1. Nueva tabla `saved_locations` (migracion SQL)
-- `id` (uuid, PK)
-- `name` (text) -- nombre personalizado
-- `latitude` (numeric)
-- `longitude` (numeric)
-- `created_by` (uuid) -- usuario que la creo
-- `created_at` (timestamptz)
-- RLS: todos los usuarios autenticados pueden leer y escribir (las ubicaciones son compartidas)
+6) Criterios de aceptación
+- En la tarjeta principal, el mapa no sigue creciendo de tamaño.
+- Al abrir modal, la ruta completa se visualiza de inicio a fin (incluyendo A/B) en recorridos largos.
+- No hay pantalla en blanco ni errores de importación.
+- Se mantiene estética visual del módulo de costos (tipografías, tonos, bordes, dialog).
 
-### 2. Nuevo hook `useSavedLocations.ts`
-- Query para listar todas las ubicaciones guardadas
-- Mutation para crear nueva ubicacion
-- Mutation para eliminar ubicacion
-- Funcion de busqueda local por nombre (filtro de texto)
+7) Validación funcional (E2E)
+- Probar al menos 3 rutas: corta, media, larga (como la de tu captura).
+- Confirmar:
+  - preview carga normal,
+  - modal abre correctamente,
+  - vista full incluye toda la ruta y marcadores,
+  - botón Google Maps funciona.
+- Verificar responsive en desktop y móvil (sin recortes del modal).
 
-### 3. Modificar `LocationInput` en `TripCalculatorForm.tsx`
-- Al escribir en el campo, mostrar dos secciones en el dropdown:
-  - **Guardadas** (icono estrella): ubicaciones guardadas filtradas por texto, con coordenadas exactas
-  - **Mapbox**: resultados de geocodificacion (igual que ahora)
-- Al seleccionar una ubicacion guardada, usar directamente sus coordenadas (lat/lng) sin hacer geocodificacion
-
-### 4. Nuevo componente `SavedLocationsManager.tsx`
-- Dialogo/modal para agregar nueva ubicacion:
-  - Campo "Nombre" (texto libre)
-  - Campo "Latitud" (numerico, ej: -26.81029)
-  - Campo "Longitud" (numerico, ej: -69.26946)
-- Lista de ubicaciones guardadas con opcion de eliminar
-- Boton de acceso desde la pagina del calculador (junto al titulo o en una pestana)
-
-### 5. Integrar en `TripCalculatorPage.tsx`
-- Agregar boton o enlace para abrir el gestor de ubicaciones guardadas
-
-## Detalles tecnicos
-- Las coordenadas se almacenan como `[longitude, latitude]` internamente (formato Mapbox), pero el usuario las ingresa como latitud/longitud (formato Google Maps) -- se hace la conversion automaticamente
-- El dropdown muestra maximo 5 ubicaciones guardadas y 5 resultados de Mapbox
-- Sigue el patron visual del modulo de Costos (colores, tipografia, modales)
-
+Se implementará así para que la visualización completa dependa de un encuadre matemático (bbox) en vez de “seguir agrandando” el contenedor.
