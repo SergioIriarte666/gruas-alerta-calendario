@@ -28,6 +28,9 @@ export interface FuelLegDetail {
 export interface TripCalculationResult {
   distance_km: number;
   estimated_time_hours: number;
+  routeGeometry?: { type: string; coordinates: [number, number][] };
+  originCoords?: [number, number];
+  destinationCoords?: [number, number];
   fuel: {
     liters: number;
     price_per_liter: number;
@@ -140,6 +143,9 @@ export function useTripCalculation() {
         const calculationResult: TripCalculationResult = {
           distance_km,
           estimated_time_hours,
+          routeGeometry: routeData.geometry,
+          originCoords: input.originCoords,
+          destinationCoords: input.destinationCoords,
           fuel: {
             liters: Math.round(totalLiters * 10) / 10,
             price_per_liter: fuelPrice.price_per_liter,
