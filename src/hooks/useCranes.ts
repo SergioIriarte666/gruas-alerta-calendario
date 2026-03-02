@@ -24,6 +24,7 @@ const fetchCranes = async (): Promise<Crane[]> => {
     brand: crane.brand,
     model: crane.model,
     type: crane.type as Crane['type'],
+    tollVehicleCategory: crane.toll_vehicle_category || '2',
     circulationPermitExpiry: crane.circulation_permit_expiry,
     insuranceExpiry: crane.insurance_expiry,
     technicalReviewExpiry: crane.technical_review_expiry,
@@ -57,6 +58,7 @@ export const useCranes = () => {
           brand: craneData.brand,
           model: craneData.model,
           type: craneData.type,
+          toll_vehicle_category: craneData.tollVehicleCategory || '2',
           circulation_permit_expiry: craneData.circulationPermitExpiry,
           insurance_expiry: craneData.insuranceExpiry,
           technical_review_expiry: craneData.technicalReviewExpiry,
@@ -72,6 +74,7 @@ export const useCranes = () => {
         brand: data.brand,
         model: data.model,
         type: data.type as Crane['type'],
+        tollVehicleCategory: data.toll_vehicle_category || '2',
         circulationPermitExpiry: data.circulation_permit_expiry,
         insuranceExpiry: data.insurance_expiry,
         technicalReviewExpiry: data.technical_review_expiry,
@@ -149,6 +152,7 @@ export const useCranes = () => {
       if (craneData.insuranceExpiry !== undefined) updateData.insurance_expiry = craneData.insuranceExpiry;
       if (craneData.technicalReviewExpiry !== undefined) updateData.technical_review_expiry = craneData.technicalReviewExpiry;
       if (craneData.isActive !== undefined) updateData.is_active = craneData.isActive;
+      if (craneData.tollVehicleCategory !== undefined) updateData.toll_vehicle_category = craneData.tollVehicleCategory;
 
       console.log('📝 Datos de actualización preparados:', updateData);
 

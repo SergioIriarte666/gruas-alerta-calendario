@@ -988,6 +988,7 @@ export type Database = {
           license_plate: string
           model: string
           technical_review_expiry: string
+          toll_vehicle_category: string
           type: Database["public"]["Enums"]["crane_type"]
           updated_at: string | null
         }
@@ -1002,6 +1003,7 @@ export type Database = {
           license_plate: string
           model: string
           technical_review_expiry: string
+          toll_vehicle_category?: string
           type: Database["public"]["Enums"]["crane_type"]
           updated_at?: string | null
         }
@@ -1016,6 +1018,7 @@ export type Database = {
           license_plate?: string
           model?: string
           technical_review_expiry?: string
+          toll_vehicle_category?: string
           type?: Database["public"]["Enums"]["crane_type"]
           updated_at?: string | null
         }
