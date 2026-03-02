@@ -105,7 +105,7 @@ export const TripRouteMap = ({
             <img
               src={mapUrl}
               alt={`Ruta de ${originName} a ${destinationName}`}
-              className="w-full h-full object-cover"
+              className="w-full h-full object-contain"
               onLoad={() => setLoading(false)}
               onError={() => { setError(true); }}
             />
