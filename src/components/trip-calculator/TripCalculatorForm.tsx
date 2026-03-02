@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
+import { type ReturnTripConfig } from '@/hooks/useTripCalculation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -113,6 +114,7 @@ export const TripCalculatorForm = () => {
   const [destCoords, setDestCoords] = useState<[number, number] | null>(null);
   const [selectedCraneId, setSelectedCraneId] = useState('');
   const [twoVehicles, setTwoVehicles] = useState(false);
+  const [returnConfig, setReturnConfig] = useState<ReturnTripConfig>('empty');
   const [manualToll, setManualToll] = useState('');
   const [showManualToll, setShowManualToll] = useState(false);
   const [additionalCosts, setAdditionalCosts] = useState('');
@@ -151,6 +153,7 @@ export const TripCalculatorForm = () => {
       destinationName: destName,
       craneType,
       vehicleConfig: twoVehicles ? '2_vehicles' : '1_vehicle',
+      returnConfig,
       manualTollCost: tollCost,
       tollDetails: tollData?.tolls,
       additionalCosts: additionalCosts ? Number(additionalCosts) : 0,
@@ -169,6 +172,7 @@ export const TripCalculatorForm = () => {
       destinationName: destName,
       craneType,
       vehicleConfig: twoVehicles ? '2_vehicles' : '1_vehicle',
+      returnConfig,
       manualTollCost: manualToll ? Number(manualToll) : 0,
       additionalCosts: additionalCosts ? Number(additionalCosts) : 0,
     };
@@ -248,6 +252,20 @@ export const TripCalculatorForm = () => {
             <Label className="cursor-pointer">
               {twoVehicles ? '2 Vehículos (grúa + arrastre)' : '1 Vehículo (solo grúa cargada)'}
             </Label>
+          </div>
+
+          <div>
+            <Label className="mb-1.5 block">Configuración de Vuelta</Label>
+            <Select value={returnConfig} onValueChange={(v) => { setReturnConfig(v as ReturnTripConfig); reset(); }}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="empty">Vacía (sin carga)</SelectItem>
+                <SelectItem value="1_vehicle">Cargada (1 vehículo)</SelectItem>
+                <SelectItem value="2_vehicles">Con arrastre (2 vehículos)</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           <Button

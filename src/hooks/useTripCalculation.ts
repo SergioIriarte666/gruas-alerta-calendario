@@ -3,6 +3,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useCurrentFuelPrices } from './useFuelPrices';
 import { useConsumptionRates, type ConsumptionRate } from './useConsumptionRates';
 
+export type ReturnTripConfig = 'empty' | '1_vehicle' | '2_vehicles';
+
 export interface TripCalculationInput {
   originCoords: [number, number];
   destinationCoords: [number, number];
@@ -10,9 +12,17 @@ export interface TripCalculationInput {
   destinationName: string;
   craneType: string;
   vehicleConfig: '1_vehicle' | '2_vehicles';
+  returnConfig: ReturnTripConfig;
   manualTollCost?: number;
   tollDetails?: Array<{ name: string; cost: number; highway?: string }>;
   additionalCosts?: number;
+}
+
+export interface FuelLegDetail {
+  label: string;
+  liters: number;
+  factor_used: number;
+  total_cost: number;
 }
 
 export interface TripCalculationResult {
@@ -25,11 +35,13 @@ export interface TripCalculationResult {
     total_cost: number;
     consumption_rate: number;
     factor_used: number;
+    legs: FuelLegDetail[];
   };
   tolls: {
     total_cost: number;
     is_manual: boolean;
     details?: Array<{ name: string; cost: number }>;
+    is_round_trip: boolean;
   };
   additional_costs: number;
   total_estimate: number;
@@ -79,13 +91,26 @@ export function useTripCalculation() {
           return null;
         }
 
-        // 3. Calculate fuel
-        const factor =
+        // 3. Calculate fuel — ida
+        const idaFactor =
           input.vehicleConfig === '2_vehicles'
             ? rate.towing_consumption_factor
             : rate.loaded_consumption_factor;
 
-        const liters = distance_km * rate.base_consumption_per_km * factor;
+        const idaLiters = distance_km * rate.base_consumption_per_km * idaFactor;
+
+        // 3b. Calculate fuel — vuelta
+        let vueltaFactor: number;
+        if (input.returnConfig === 'empty') {
+          vueltaFactor = 1.0; // base consumption, no load
+        } else if (input.returnConfig === '2_vehicles') {
+          vueltaFactor = rate.towing_consumption_factor;
+        } else {
+          vueltaFactor = rate.loaded_consumption_factor;
+        }
+        const vueltaLiters = distance_km * rate.base_consumption_per_km * vueltaFactor;
+
+        const totalLiters = idaLiters + vueltaLiters;
 
         // Find current fuel price
         const fuelPrice = fuelPrices?.find((fp) => fp.fuel_type === rate.fuel_type);
@@ -96,32 +121,42 @@ export function useTripCalculation() {
           return null;
         }
 
-        const fuelCost = liters * fuelPrice.price_per_liter;
+        const idaCost = idaLiters * fuelPrice.price_per_liter;
+        const vueltaCost = vueltaLiters * fuelPrice.price_per_liter;
+        const totalFuelCost = idaCost + vueltaCost;
 
-        // 4. Tolls
-        const tollCost = input.manualTollCost ?? 0;
+        // 4. Tolls (round trip = x2)
+        const oneWayTollCost = input.manualTollCost ?? 0;
+        const tollCost = oneWayTollCost * 2;
 
         // 5. Additional costs
         const additionalCosts = input.additionalCosts ?? 0;
+
+        const legs: FuelLegDetail[] = [
+          { label: 'Ida', liters: Math.round(idaLiters * 10) / 10, factor_used: idaFactor, total_cost: Math.round(idaCost) },
+          { label: 'Vuelta', liters: Math.round(vueltaLiters * 10) / 10, factor_used: vueltaFactor, total_cost: Math.round(vueltaCost) },
+        ];
 
         const calculationResult: TripCalculationResult = {
           distance_km,
           estimated_time_hours,
           fuel: {
-            liters: Math.round(liters * 10) / 10,
+            liters: Math.round(totalLiters * 10) / 10,
             price_per_liter: fuelPrice.price_per_liter,
             fuel_type: rate.fuel_type,
-            total_cost: Math.round(fuelCost),
+            total_cost: Math.round(totalFuelCost),
             consumption_rate: rate.base_consumption_per_km,
-            factor_used: factor,
+            factor_used: idaFactor,
+            legs,
           },
           tolls: {
             total_cost: tollCost,
             is_manual: !input.tollDetails?.length,
             details: input.tollDetails,
+            is_round_trip: true,
           },
           additional_costs: additionalCosts,
-          total_estimate: Math.round(fuelCost + tollCost + additionalCosts),
+          total_estimate: Math.round(totalFuelCost + tollCost + additionalCosts),
         };
 
         setResult(calculationResult);
