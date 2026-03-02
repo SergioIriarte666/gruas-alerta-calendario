@@ -112,14 +112,15 @@ Deno.serve(async (req) => {
 
       if (!res.ok) {
         console.log("Toll API error:", res.status, JSON.stringify(data));
+        // Return 200 with error payload so supabase.functions.invoke doesn't throw
         return new Response(
           JSON.stringify({
-            error: "Toll API error",
+            error: data?.message || "Toll API error",
             details: data,
-            status: res.status,
+            apiStatus: res.status,
           }),
           {
-            status: res.status,
+            status: 200,
             headers: { ...corsHeaders, "Content-Type": "application/json" },
           }
         );
