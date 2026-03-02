@@ -134,20 +134,22 @@ export const TripCalculatorForm = () => {
 
     setShowManualToll(false);
 
-    // Extract clean city name and match against valid API locations
-    const extractCity = (fullName: string) => {
-      const city = fullName.split(',')[0]?.trim();
-      return city || fullName;
+    // Try matching each comma-separated part of the address against valid toll locations
+    const findBestTollMatch = (fullName: string): string => {
+      const parts = fullName.split(',').map(p => p.trim()).filter(Boolean);
+      // Try each part against toll locations, return first match
+      for (const part of parts) {
+        const match = matchTollLocation(part, tollLocations);
+        if (match) return match;
+      }
+      // Fallback: return first part (city name guess)
+      return parts[0] || fullName;
     };
-    
-    const rawOrigin = extractCity(originName);
-    const rawDest = extractCity(destName);
-    
-    // Match against valid toll API locations
-    const originCity = matchTollLocation(rawOrigin, tollLocations) || rawOrigin;
-    const destCity = matchTollLocation(rawDest, tollLocations) || rawDest;
+
+    const originCity = findBestTollMatch(originName);
+    const destCity = findBestTollMatch(destName);
     const tollCategory = selectedCrane?.tollVehicleCategory || 'LIVIANO';
-    console.log('Toll lookup:', { rawOrigin, rawDest, matchedOrigin: originCity, matchedDest: destCity, tollCategory });
+    console.log('Toll lookup:', { originName, destName, matchedOrigin: originCity, matchedDest: destCity, tollCategory });
     const tollData = await calculateTolls(originCity, destCity, tollCategory);
 
     // If toll API failed, show manual fallback
