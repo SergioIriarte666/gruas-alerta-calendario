@@ -11,7 +11,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useConsumptionRates } from '@/hooks/useConsumptionRates';
 import { useCranes } from '@/hooks/useCranes';
 import { useTripCalculation, type TripCalculationInput } from '@/hooks/useTripCalculation';
-import { useTollCalculation } from '@/hooks/useTollCalculation';
+import { useTollCalculation, useTollLocations, matchTollLocation } from '@/hooks/useTollCalculation';
 import { TripCostBreakdown } from './TripCostBreakdown';
 
 interface GeoResult {
@@ -123,6 +123,7 @@ export const TripCalculatorForm = () => {
   const { cranes } = useCranes();
   const { calculate, result, error, isCalculating, reset } = useTripCalculation();
   const { calculateTolls, tollResult, tollError, isCalculating: tollLoading, resetTolls } = useTollCalculation();
+  const { data: tollLocations = [] } = useTollLocations();
 
   const activeCranes = cranes.filter(c => c.isActive);
   const selectedCrane = activeCranes.find(c => c.id === selectedCraneId);
@@ -133,17 +134,20 @@ export const TripCalculatorForm = () => {
 
     setShowManualToll(false);
 
-    // Extract clean city name (first part before comma, trimmed)
+    // Extract clean city name and match against valid API locations
     const extractCity = (fullName: string) => {
       const city = fullName.split(',')[0]?.trim();
-      // Remove common prefixes/suffixes and normalize
       return city || fullName;
     };
     
-    const originCity = extractCity(originName);
-    const destCity = extractCity(destName);
+    const rawOrigin = extractCity(originName);
+    const rawDest = extractCity(destName);
+    
+    // Match against valid toll API locations
+    const originCity = matchTollLocation(rawOrigin, tollLocations) || rawOrigin;
+    const destCity = matchTollLocation(rawDest, tollLocations) || rawDest;
     const tollCategory = selectedCrane?.tollVehicleCategory || 'LIVIANO';
-    console.log('Toll lookup cities:', { originCity, destCity, tollCategory });
+    console.log('Toll lookup:', { rawOrigin, rawDest, matchedOrigin: originCity, matchedDest: destCity, tollCategory });
     const tollData = await calculateTolls(originCity, destCity, tollCategory);
 
     // If toll API failed, show manual fallback
