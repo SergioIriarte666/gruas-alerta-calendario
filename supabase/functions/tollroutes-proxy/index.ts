@@ -8,6 +8,85 @@ const corsHeaders = {
 
 const GETAPI_BASE = "https://chile.getapi.cl/v1/tollroutes/api";
 
+const normalizeCategoryText = (value: string) =>
+  value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toUpperCase()
+    .trim();
+
+const extractCategoryValues = (payload: unknown): string[] => {
+  const values = new Set<string>();
+
+  const visit = (input: unknown) => {
+    if (!input) return;
+
+    if (typeof input === "string") {
+      const trimmed = input.trim();
+      if (trimmed) values.add(trimmed);
+      return;
+    }
+
+    if (Array.isArray(input)) {
+      input.forEach(visit);
+      return;
+    }
+
+    if (typeof input === "object") {
+      const obj = input as Record<string, unknown>;
+      ["category", "name", "code", "value", "label", "tipo"].forEach((key) => {
+        const maybe = obj[key];
+        if (typeof maybe === "string" && maybe.trim()) {
+          values.add(maybe.trim());
+        }
+      });
+
+      Object.values(obj).forEach((value) => {
+        if (Array.isArray(value) || (value && typeof value === "object")) {
+          visit(value);
+        }
+      });
+    }
+  };
+
+  visit(payload);
+  return [...values];
+};
+
+const resolveCategoryFromMaster = (
+  requestedCategory: string,
+  availableCategories: string[]
+): string | null => {
+  if (!requestedCategory || !availableCategories.length) return null;
+
+  const requestedNormalized = normalizeCategoryText(requestedCategory);
+  const normalizedMap = availableCategories.map((category) => ({
+    raw: category,
+    normalized: normalizeCategoryText(category),
+  }));
+
+  const exact = normalizedMap.find((c) => c.normalized === requestedNormalized);
+  if (exact) return exact.raw;
+
+  const keywordMap: Record<string, string[]> = {
+    CAMION: ["CAMION", "TRUCK", "PESADO", "EJE"],
+    LIVIANO: ["LIVIANO", "AUTO", "CAR"],
+    MOTO: ["MOTO", "MOTOCICLETA"],
+    BUS: ["BUS", "BUSES"],
+  };
+
+  const requestedKeywords = keywordMap[requestedNormalized] ?? [requestedNormalized];
+
+  const partial = normalizedMap.find((candidate) =>
+    requestedKeywords.some(
+      (keyword) =>
+        candidate.normalized.includes(keyword) || keyword.includes(candidate.normalized)
+    )
+  );
+
+  return partial?.raw ?? null;
+};
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -114,16 +193,46 @@ Deno.serve(async (req) => {
       });
       let data = await res.json();
 
-      // If category is invalid (400), retry without it. Don't retry for 404 (location not found).
+      // If category is invalid (400), try to resolve it against master categories.
+      // Never fallback to "no category" because that returns LIVIANO values and underestimates heavy vehicles.
       if (res.status === 400 && category) {
-        console.log(`Category "${category}" failed (${res.status}), retrying without category. Response:`, JSON.stringify(data));
-        const fallbackParams = new URLSearchParams({ origin, destination });
-        res = await fetch(`${GETAPI_BASE}/route-cost?${fallbackParams}`, {
+        console.log(
+          `Category "${category}" failed (${res.status}). Trying to resolve against /categories. Response:`,
+          JSON.stringify(data)
+        );
+
+        const categoriesRes = await fetch(`${GETAPI_BASE}/categories`, {
           headers: apiHeaders,
         });
-        data = await res.json();
-        if (res.ok) {
-          data._categoryFallback = true;
+
+        if (categoriesRes.ok) {
+          const categoriesData = await categoriesRes.json();
+          const availableCategories = extractCategoryValues(categoriesData);
+          const resolvedCategory = resolveCategoryFromMaster(category, availableCategories);
+
+          console.log(
+            "Available toll categories:",
+            JSON.stringify(availableCategories),
+            "Resolved category:",
+            resolvedCategory
+          );
+
+          if (resolvedCategory) {
+            const resolvedParams = new URLSearchParams({
+              origin,
+              destination,
+              category: resolvedCategory,
+            });
+
+            res = await fetch(`${GETAPI_BASE}/route-cost?${resolvedParams}`, {
+              headers: apiHeaders,
+            });
+            data = await res.json();
+
+            if (res.ok) {
+              data._resolvedCategory = resolvedCategory;
+            }
+          }
         }
       }
 
