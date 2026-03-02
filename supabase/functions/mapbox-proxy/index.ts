@@ -109,7 +109,7 @@ Deno.serve(async (req) => {
       const destMarker = `pin-l-b+dc2626(${destination[0]},${destination[1]})`;
 
       const overlays = `${originMarker},${destMarker},${pathOverlay}`;
-      const mapUrl = `https://api.mapbox.com/styles/v1/mapbox/streets-v12/static/${overlays}/auto/800x400@2x?access_token=${MAPBOX_TOKEN}&padding=50`;
+      const mapUrl = `https://api.mapbox.com/styles/v1/mapbox/streets-v12/static/${overlays}/auto/800x500@2x?access_token=${MAPBOX_TOKEN}&padding=80`;
 
       // Check URL length — Mapbox limit is 8192
       if (mapUrl.length > 8192) {
@@ -123,7 +123,7 @@ Deno.serve(async (req) => {
         const encodedPolyline2 = encodeURIComponent(polyline2);
         const pathOverlay2 = `path-4+7c3aed-0.8(${encodedPolyline2})`;
         const overlays2 = `${originMarker},${destMarker},${pathOverlay2}`;
-        const mapUrl2 = `https://api.mapbox.com/styles/v1/mapbox/streets-v12/static/${overlays2}/auto/800x400@2x?access_token=${MAPBOX_TOKEN}&padding=50`;
+        const mapUrl2 = `https://api.mapbox.com/styles/v1/mapbox/streets-v12/static/${overlays2}/auto/800x500@2x?access_token=${MAPBOX_TOKEN}&padding=80`;
         
         return new Response(
           JSON.stringify({ url: mapUrl2 }),
