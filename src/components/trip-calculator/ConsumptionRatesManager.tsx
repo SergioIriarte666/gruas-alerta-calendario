@@ -141,7 +141,7 @@ export const ConsumptionRatesManager = () => {
                 <thead>
                   <tr className="border-b text-left text-muted-foreground">
                     <th className="pb-2 font-medium">Tipo Grúa</th>
-                    <th className="pb-2 font-medium text-right">Consumo Base (L/km)</th>
+                    <th className="pb-2 font-medium text-right">Rendimiento (Km/L)</th>
                     <th className="pb-2 font-medium text-right">Factor Cargada</th>
                     <th className="pb-2 font-medium text-right">Factor Arrastre</th>
                     <th className="pb-2 font-medium">Combustible</th>
@@ -152,7 +152,7 @@ export const ConsumptionRatesManager = () => {
                   {rates.map((rate) => (
                     <tr key={rate.id} className="border-b last:border-0 hover:bg-muted/50">
                       <td className="py-2.5 font-medium">{rate.crane_type}</td>
-                      <td className="text-right">{rate.base_consumption_per_km}</td>
+                      <td className="text-right">{rate.base_consumption_per_km > 0 ? (1 / rate.base_consumption_per_km).toFixed(1) : '—'}</td>
                       <td className="text-right">{rate.loaded_consumption_factor}x</td>
                       <td className="text-right">{rate.towing_consumption_factor}x</td>
                       <td>
@@ -239,13 +239,18 @@ export const ConsumptionRatesManager = () => {
             </div>
 
             <div>
-              <Label>Consumo Base (L/km)</Label>
+              <Label>Rendimiento (Km/L)</Label>
               <Input
                 type="number"
-                step="0.01"
-                value={form.base_consumption_per_km}
-                onChange={(e) => setForm((f) => ({ ...f, base_consumption_per_km: Number(e.target.value) }))}
+                step="0.1"
+                value={form.base_consumption_per_km > 0 ? parseFloat((1 / form.base_consumption_per_km).toFixed(4)) : ''}
+                onChange={(e) => {
+                  const kmPerL = Number(e.target.value);
+                  setForm((f) => ({ ...f, base_consumption_per_km: kmPerL > 0 ? 1 / kmPerL : 0 }));
+                }}
+                placeholder="Ej: 4.5"
               />
+              <p className="text-xs text-muted-foreground mt-1">¿Cuántos km recorre con 1 litro?</p>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
