@@ -70,6 +70,7 @@ Deno.serve(async (req) => {
         headers: apiHeaders,
       });
       const data = await res.json();
+      console.log("GetAPI categories response:", JSON.stringify(data));
       return new Response(JSON.stringify(data), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -106,10 +107,26 @@ Deno.serve(async (req) => {
         params.append("category", category);
       }
 
-      const res = await fetch(`${GETAPI_BASE}/route-cost?${params}`, {
+      console.log("Toll route-cost request params:", params.toString());
+
+      let res = await fetch(`${GETAPI_BASE}/route-cost?${params}`, {
         headers: apiHeaders,
       });
-      const data = await res.json();
+      let data = await res.json();
+
+      // If category is invalid, retry without it (falls back to default/car rates)
+      if (!res.ok && category) {
+        console.log(`Category "${category}" failed (${res.status}), retrying without category. Response:`, JSON.stringify(data));
+        const fallbackParams = new URLSearchParams({ origin, destination });
+        res = await fetch(`${GETAPI_BASE}/route-cost?${fallbackParams}`, {
+          headers: apiHeaders,
+        });
+        data = await res.json();
+        if (res.ok) {
+          // Add a flag indicating we fell back to default category
+          data._categoryFallback = true;
+        }
+      }
 
       if (!res.ok) {
         return new Response(
@@ -124,6 +141,8 @@ Deno.serve(async (req) => {
           }
         );
       }
+
+      console.log("Toll route-cost response:", JSON.stringify(data));
 
       return new Response(JSON.stringify(data), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
