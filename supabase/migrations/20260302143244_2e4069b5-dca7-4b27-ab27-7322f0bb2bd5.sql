@@ -1,0 +1,1 @@
+UPDATE cranes SET toll_vehicle_category = 'CAMION_PESADO' WHERE license_plate = 'DCBV-94';
