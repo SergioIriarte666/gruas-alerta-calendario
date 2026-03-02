@@ -73,12 +73,13 @@ export const TripCostBreakdown = ({
             <span className="font-medium text-foreground">{destinationName.split(',')[0]}</span>
           </div>
           <div className="flex gap-4 mt-2 text-sm text-muted-foreground">
-            <span>{result.distance_km} km</span>
-            <span>~{result.estimated_time_hours} hrs</span>
+            <span>{result.distance_km} km (ida)</span>
+            <span>~{result.estimated_time_hours} hrs (ida)</span>
             <Badge variant="outline">{craneType}</Badge>
             <Badge variant="outline">
               {vehicleConfig === '2_vehicles' ? '2 Vehículos' : '1 Vehículo'}
             </Badge>
+            <Badge variant="secondary">Ida y vuelta</Badge>
           </div>
         </CardContent>
       </Card>
@@ -95,8 +96,14 @@ export const TripCostBreakdown = ({
           <CardContent>
             <p className="text-2xl font-bold text-foreground">{formatCurrency(result.fuel.total_cost)}</p>
             <div className="mt-2 space-y-1 text-xs text-muted-foreground">
-              <p>{result.fuel.liters} litros × {formatCurrency(result.fuel.price_per_liter)}/L</p>
-              <p>{getFuelTypeLabel(result.fuel.fuel_type)} • Consumo: {result.fuel.consumption_rate} L/km × {result.fuel.factor_used}</p>
+              {result.fuel.legs?.map((leg, i) => (
+                <div key={i} className="flex justify-between">
+                  <span>{leg.label}: {leg.liters}L × factor {leg.factor_used}</span>
+                  <span className="font-medium">{formatCurrency(leg.total_cost)}</span>
+                </div>
+              ))}
+              <p className="pt-1">{result.fuel.liters} litros total × {formatCurrency(result.fuel.price_per_liter)}/L</p>
+              <p>{getFuelTypeLabel(result.fuel.fuel_type)} • Consumo base: {result.fuel.consumption_rate} L/km</p>
             </div>
             <div className="mt-3">
               <div className="flex justify-between text-xs mb-1">
@@ -118,6 +125,9 @@ export const TripCostBreakdown = ({
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-bold text-foreground">{formatCurrency(result.tolls.total_cost)}</p>
+            {result.tolls.is_round_trip && (
+              <p className="text-xs text-muted-foreground mt-1">Peaje ida y vuelta (×2)</p>
+            )}
             <div className="mt-2 text-xs text-muted-foreground space-y-1">
               {result.tolls.is_manual ? (
                 <Badge variant="outline" className="text-xs">Ingreso manual</Badge>
