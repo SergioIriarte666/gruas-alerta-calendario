@@ -42,6 +42,10 @@ const CRANE_TYPE_OPTIONS = [
   { value: 'horquilla', label: 'Horquilla' },
 ];
 
+/** Capitaliza el tipo de grúa para mostrar en tablas */
+const formatCraneType = (type: string) =>
+  type.charAt(0).toUpperCase() + type.slice(1);
+
 export const ConsumptionRatesManager = () => {
   const { data: rates = [], isLoading } = useConsumptionRates();
   const { mutate: addRate, isPending: isAdding } = useAddConsumptionRate();
@@ -150,7 +154,7 @@ export const ConsumptionRatesManager = () => {
                 <tbody>
                   {rates.map((rate) => (
                     <tr key={rate.id} className="border-b last:border-0 hover:bg-muted/50">
-                      <td className="py-2.5 font-medium">{rate.crane_type}</td>
+                      <td className="py-2.5 font-medium">{formatCraneType(rate.crane_type)}</td>
                       <td className="text-right">{rate.base_consumption_per_km > 0 ? (1 / rate.base_consumption_per_km).toFixed(1) : '—'}</td>
                       <td className="text-right">{rate.loaded_consumption_factor}x</td>
                       <td className="text-right">{rate.towing_consumption_factor}x</td>
