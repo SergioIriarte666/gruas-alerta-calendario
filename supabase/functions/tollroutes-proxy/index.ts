@@ -114,8 +114,8 @@ Deno.serve(async (req) => {
       });
       let data = await res.json();
 
-      // If category is invalid, retry without it (falls back to default/car rates)
-      if (!res.ok && category) {
+      // If category is invalid (400), retry without it. Don't retry for 404 (location not found).
+      if (res.status === 400 && category) {
         console.log(`Category "${category}" failed (${res.status}), retrying without category. Response:`, JSON.stringify(data));
         const fallbackParams = new URLSearchParams({ origin, destination });
         res = await fetch(`${GETAPI_BASE}/route-cost?${fallbackParams}`, {
@@ -123,7 +123,6 @@ Deno.serve(async (req) => {
         });
         data = await res.json();
         if (res.ok) {
-          // Add a flag indicating we fell back to default category
           data._categoryFallback = true;
         }
       }
