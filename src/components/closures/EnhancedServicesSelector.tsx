@@ -53,7 +53,7 @@ const EnhancedServicesSelector = ({
   const [searchTerm, setSearchTerm] = useState('');
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  console.log('EnhancedServicesSelector render - services:', services.length, 'pendingServices:', pendingServices.length, 'loading:', loading, 'clientId:', clientId);
+  
 
   // Function to filter services by search term
   const filterServicesBySearch = useCallback((serviceList: Service[]) => {
@@ -123,7 +123,7 @@ const EnhancedServicesSelector = ({
     if (!hasAvailableResults && !hasPendingResults && onSearchProcessed) {
       // Debounce the search
       debounceTimeoutRef.current = setTimeout(() => {
-        console.log('🔍 Triggering processed services search for:', trimmedSearch);
+        
         onSearchProcessed(trimmedSearch);
       }, 500);
     } else {

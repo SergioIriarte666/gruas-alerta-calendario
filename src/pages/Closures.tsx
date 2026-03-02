@@ -43,7 +43,7 @@ const Closures = () => {
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [selectedClosure, setSelectedClosure] = useState<ServiceClosure | null>(null);
 
-  console.log('Closures page render - closures:', closures.length, 'loading:', loading, 'showCreateModal:', showCreateModal);
+  
 
   const handleSort = (field: ClosureSortField) => {
     if (sortField === field) {
@@ -152,7 +152,7 @@ const Closures = () => {
 
   const handleCreateClosure = async (closureData: Omit<ServiceClosure, 'id' | 'folio' | 'createdAt' | 'updatedAt'>) => {
     try {
-      console.log('Creating closure with data:', closureData);
+      
       const newClosure = await createClosure(closureData);
       setShowCreateModal(false);
       setCreatedClosure(newClosure);
@@ -188,7 +188,7 @@ const Closures = () => {
   };
 
   const handleShowCreateModal = () => {
-    console.log('Opening create modal...');
+    
     setShowCreateModal(true);
   };
   
