@@ -35,12 +35,11 @@ import {
 } from '@/components/ui/alert-dialog';
 
 const CRANE_TYPE_OPTIONS = [
-  'Plataforma',
-  'Pluma Articulada',
-  'Pluma Telescópica',
-  'Camión Pluma',
-  'Cama Baja',
-  'Grúa Horquilla',
+  { value: 'light', label: 'Light (Liviana)' },
+  { value: 'medium', label: 'Medium (Mediana)' },
+  { value: 'heavy', label: 'Heavy (Pesada)' },
+  { value: 'taxi', label: 'Taxi' },
+  { value: 'horquilla', label: 'Horquilla' },
 ];
 
 export const ConsumptionRatesManager = () => {
@@ -218,7 +217,7 @@ export const ConsumptionRatesManager = () => {
                 </SelectTrigger>
                 <SelectContent>
                   {CRANE_TYPE_OPTIONS.map((type) => (
-                    <SelectItem key={type} value={type}>{type}</SelectItem>
+                    <SelectItem key={type.value} value={type.value}>{type.label}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
