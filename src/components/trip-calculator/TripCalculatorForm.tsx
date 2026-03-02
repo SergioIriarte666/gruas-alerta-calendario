@@ -113,21 +113,31 @@ export const TripCalculatorForm = () => {
   const [craneType, setCraneType] = useState('');
   const [twoVehicles, setTwoVehicles] = useState(false);
   const [manualToll, setManualToll] = useState('');
+  const [showManualToll, setShowManualToll] = useState(false);
   const [additionalCosts, setAdditionalCosts] = useState('');
 
   const { data: rates = [] } = useConsumptionRates();
   const { calculate, result, error, isCalculating, reset } = useTripCalculation();
-  const { calculateTolls, tollResult, tollError, isCalculating: tollLoading } = useTollCalculation();
+  const { calculateTolls, tollResult, tollError, isCalculating: tollLoading, resetTolls } = useTollCalculation();
 
   const craneTypes = [...new Set(rates.map((r) => r.crane_type))];
 
   const handleCalculate = async () => {
     if (!originCoords || !destCoords || !craneType) return;
 
-    // Try tolls first
+    setShowManualToll(false);
+
+    // Try automatic toll calculation first
     const originCity = originName.split(',')[0]?.trim();
     const destCity = destName.split(',')[0]?.trim();
     const tollData = await calculateTolls(originCity, destCity);
+
+    // If toll API failed, show manual fallback
+    if (!tollData) {
+      setShowManualToll(true);
+    }
+
+    const tollCost = tollData?.total_cost ?? (manualToll ? Number(manualToll) : 0);
 
     const input: TripCalculationInput = {
       originCoords,
@@ -136,7 +146,24 @@ export const TripCalculatorForm = () => {
       destinationName: destName,
       craneType,
       vehicleConfig: twoVehicles ? '2_vehicles' : '1_vehicle',
-      manualTollCost: tollData?.total_cost ?? (manualToll ? Number(manualToll) : 0),
+      manualTollCost: tollCost,
+      additionalCosts: additionalCosts ? Number(additionalCosts) : 0,
+    };
+
+    await calculate(input);
+  };
+
+  const handleRecalculateWithManualToll = async () => {
+    if (!originCoords || !destCoords || !craneType) return;
+
+    const input: TripCalculationInput = {
+      originCoords,
+      destinationCoords: destCoords,
+      originName,
+      destinationName: destName,
+      craneType,
+      vehicleConfig: twoVehicles ? '2_vehicles' : '1_vehicle',
+      manualTollCost: manualToll ? Number(manualToll) : 0,
       additionalCosts: additionalCosts ? Number(additionalCosts) : 0,
     };
 
@@ -161,6 +188,8 @@ export const TripCalculatorForm = () => {
                 setOriginName(name);
                 setOriginCoords(coords);
                 reset();
+                resetTolls();
+                setShowManualToll(false);
               }}
             />
             <LocationInput
@@ -171,11 +200,13 @@ export const TripCalculatorForm = () => {
                 setDestName(name);
                 setDestCoords(coords);
                 reset();
+                resetTolls();
+                setShowManualToll(false);
               }}
             />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <Label className="mb-1.5 block">Tipo de Grúa</Label>
               <Select value={craneType} onValueChange={(v) => { setCraneType(v); reset(); }}>
@@ -190,19 +221,6 @@ export const TripCalculatorForm = () => {
                   ))}
                 </SelectContent>
               </Select>
-            </div>
-
-            <div>
-              <Label className="mb-1.5 block">Peajes Manual (CLP)</Label>
-              <Input
-                type="number"
-                placeholder="0"
-                value={manualToll}
-                onChange={(e) => setManualToll(e.target.value)}
-              />
-              {tollError && (
-                <p className="text-xs text-amber-600 mt-1">{tollError}</p>
-              )}
             </div>
 
             <div>
@@ -240,6 +258,34 @@ export const TripCalculatorForm = () => {
               'Calcular Viaje'
             )}
           </Button>
+
+          {/* Manual toll fallback - only shown when API fails */}
+          {showManualToll && (
+            <div className="p-4 rounded-lg border border-amber-300 bg-amber-50 dark:bg-amber-950/20 space-y-3">
+              <p className="text-sm text-amber-700 dark:text-amber-400">
+                ⚠️ No se pudieron calcular los peajes automáticamente. Puede ingresar el monto manualmente:
+              </p>
+              <div className="flex gap-3 items-end">
+                <div className="flex-1">
+                  <Label className="mb-1.5 block text-sm">Peajes Manual (CLP)</Label>
+                  <Input
+                    type="number"
+                    placeholder="Ingrese monto de peajes..."
+                    value={manualToll}
+                    onChange={(e) => setManualToll(e.target.value)}
+                  />
+                </div>
+                <Button
+                  onClick={handleRecalculateWithManualToll}
+                  disabled={isCalculating}
+                  variant="outline"
+                  className="shrink-0"
+                >
+                  Recalcular
+                </Button>
+              </div>
+            </div>
+          )}
 
           {error && (
             <div className="p-3 bg-destructive/10 text-destructive rounded-md text-sm">
