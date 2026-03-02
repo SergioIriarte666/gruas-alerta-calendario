@@ -5,6 +5,7 @@ import { TripCalculatorForm } from './TripCalculatorForm';
 import { TripEstimateHistory } from './TripEstimateHistory';
 import { FuelPricesManager } from './FuelPricesManager';
 import { ConsumptionRatesManager } from './ConsumptionRatesManager';
+import { SavedLocationsManager } from './SavedLocationsManager';
 
 export const TripCalculatorPage = () => {
   const [activeTab, setActiveTab] = useState('calculator');
@@ -12,11 +13,14 @@ export const TripCalculatorPage = () => {
   return (
     <div className="space-y-6 p-3 md:p-6">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">Cálculo de Viajes</h1>
-        <p className="text-muted-foreground mt-1">
-          Estima costos de viaje incluyendo combustible, peajes y costos adicionales
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">Cálculo de Viajes</h1>
+          <p className="text-muted-foreground mt-1">
+            Estima costos de viaje incluyendo combustible, peajes y costos adicionales
+          </p>
+        </div>
+        <SavedLocationsManager />
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">

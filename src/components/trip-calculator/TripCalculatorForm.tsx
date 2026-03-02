@@ -6,13 +6,14 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { MapPin, Navigation, Loader2 } from 'lucide-react';
+import { MapPin, Navigation, Loader2, Star } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useConsumptionRates } from '@/hooks/useConsumptionRates';
 import { useCranes } from '@/hooks/useCranes';
 import { useTripCalculation, type TripCalculationInput } from '@/hooks/useTripCalculation';
 import { useTollCalculation, useTollLocations, matchTollLocation } from '@/hooks/useTollCalculation';
 import { TripCostBreakdown } from './TripCostBreakdown';
+import { useSavedLocations, type SavedLocation } from '@/hooks/useSavedLocations';
 
 interface GeoResult {
   name: string;
@@ -53,9 +54,10 @@ interface LocationInputProps {
   icon: React.ReactNode;
   value: string;
   onSelect: (name: string, coords: [number, number]) => void;
+  savedLocations: SavedLocation[];
 }
 
-const LocationInput = ({ label, icon, value, onSelect }: LocationInputProps) => {
+const LocationInput = ({ label, icon, value, onSelect, savedLocations }: LocationInputProps) => {
   const { results, loading, search, setResults } = useGeocode();
   const [inputValue, setInputValue] = useState(value);
   const [showDropdown, setShowDropdown] = useState(false);
@@ -63,6 +65,13 @@ const LocationInput = ({ label, icon, value, onSelect }: LocationInputProps) => 
   useEffect(() => {
     setInputValue(value);
   }, [value]);
+
+  // Filter saved locations by input text
+  const filteredSaved = inputValue.length >= 2
+    ? savedLocations.filter((l) => l.name.toLowerCase().includes(inputValue.toLowerCase())).slice(0, 5)
+    : savedLocations.slice(0, 5);
+
+  const hasResults = filteredSaved.length > 0 || results.length > 0;
 
   return (
     <div className="relative">
@@ -78,29 +87,66 @@ const LocationInput = ({ label, icon, value, onSelect }: LocationInputProps) => 
           search(e.target.value);
           setShowDropdown(true);
         }}
-        onFocus={() => results.length > 0 && setShowDropdown(true)}
+        onFocus={() => setShowDropdown(true)}
         onBlur={() => setTimeout(() => setShowDropdown(false), 200)}
       />
       {loading && (
         <Loader2 className="absolute right-3 top-9 h-4 w-4 animate-spin text-muted-foreground" />
       )}
-      {showDropdown && results.length > 0 && (
-        <div className="absolute z-50 mt-1 w-full bg-popover border rounded-md shadow-lg max-h-48 overflow-auto">
-          {results.map((r, i) => (
-            <button
-              key={i}
-              type="button"
-              className="w-full px-3 py-2 text-left text-sm hover:bg-accent truncate"
-              onMouseDown={() => {
-                onSelect(r.name, r.coordinates);
-                setInputValue(r.name);
-                setResults([]);
-                setShowDropdown(false);
-              }}
-            >
-              {r.name}
-            </button>
-          ))}
+      {showDropdown && hasResults && (
+        <div className="absolute z-50 mt-1 w-full bg-popover border rounded-md shadow-lg max-h-60 overflow-auto">
+          {/* Saved locations section */}
+          {filteredSaved.length > 0 && (
+            <>
+              <div className="px-3 py-1.5 text-xs font-semibold text-muted-foreground flex items-center gap-1.5 border-b">
+                <Star className="h-3 w-3" />
+                Guardadas
+              </div>
+              {filteredSaved.map((loc) => (
+                <button
+                  key={loc.id}
+                  type="button"
+                  className="w-full px-3 py-2 text-left text-sm hover:bg-accent flex items-center gap-2"
+                  onMouseDown={() => {
+                    // Coordinates: [longitude, latitude] for Mapbox format
+                    onSelect(loc.name, [loc.longitude, loc.latitude]);
+                    setInputValue(loc.name);
+                    setResults([]);
+                    setShowDropdown(false);
+                  }}
+                >
+                  <Star className="h-3 w-3 shrink-0 text-amber-500" />
+                  <span className="truncate">{loc.name}</span>
+                </button>
+              ))}
+            </>
+          )}
+          {/* Mapbox results section */}
+          {results.length > 0 && (
+            <>
+              {filteredSaved.length > 0 && (
+                <div className="px-3 py-1.5 text-xs font-semibold text-muted-foreground flex items-center gap-1.5 border-b border-t">
+                  <MapPin className="h-3 w-3" />
+                  Mapa
+                </div>
+              )}
+              {results.slice(0, 5).map((r, i) => (
+                <button
+                  key={`mapbox-${i}`}
+                  type="button"
+                  className="w-full px-3 py-2 text-left text-sm hover:bg-accent truncate"
+                  onMouseDown={() => {
+                    onSelect(r.name, r.coordinates);
+                    setInputValue(r.name);
+                    setResults([]);
+                    setShowDropdown(false);
+                  }}
+                >
+                  {r.name}
+                </button>
+              ))}
+            </>
+          )}
         </div>
       )}
     </div>
@@ -124,6 +170,7 @@ export const TripCalculatorForm = () => {
   const { calculate, result, error, isCalculating, reset } = useTripCalculation();
   const { calculateTolls, tollResult, tollError, isCalculating: tollLoading, resetTolls } = useTollCalculation();
   const { data: tollLocations = [] } = useTollLocations();
+  const { locations: savedLocations } = useSavedLocations();
 
   const activeCranes = cranes.filter(c => c.isActive);
   const selectedCrane = activeCranes.find(c => c.id === selectedCraneId);
@@ -210,6 +257,7 @@ export const TripCalculatorForm = () => {
               label="Origen"
               icon={<MapPin className="h-4 w-4 text-green-600" />}
               value={originName}
+              savedLocations={savedLocations}
               onSelect={(name, coords) => {
                 setOriginName(name);
                 setOriginCoords(coords);
@@ -222,6 +270,7 @@ export const TripCalculatorForm = () => {
               label="Destino"
               icon={<Navigation className="h-4 w-4 text-red-600" />}
               value={destName}
+              savedLocations={savedLocations}
               onSelect={(name, coords) => {
                 setDestName(name);
                 setDestCoords(coords);
