@@ -15,6 +15,7 @@ import {
   FileText,
   Wallet,
   TrendingUp,
+  MapPin,
   type LucideIcon
 } from 'lucide-react';
 
@@ -115,6 +116,14 @@ export const APP_MODULES: AppModule[] = [
     description: 'Gestión de inventario',
     defaultRoles: ['admin', 'viewer', 'operator'],
     route: '/inventory'
+  },
+  { 
+    key: 'trip-calculator', 
+    label: 'Cálculo de Viajes', 
+    icon: MapPin, 
+    description: 'Calculadora de costos de viaje',
+    defaultRoles: ['admin', 'viewer'],
+    route: '/trip-calculator'
   },
   { 
     key: 'reports', 

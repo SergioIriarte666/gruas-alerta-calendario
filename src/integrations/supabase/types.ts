@@ -3960,6 +3960,85 @@ export type Database = {
         }
         Relationships: []
       }
+      trip_estimates: {
+        Row: {
+          additional_costs: number | null
+          calculation_details: Json | null
+          crane_type: string | null
+          created_at: string
+          created_by: string | null
+          destination: string
+          distance_km: number | null
+          estimated_time_hours: number | null
+          fuel_cost: number | null
+          id: string
+          origin: string
+          route_name: string | null
+          service_id: string | null
+          toll_cost: number | null
+          total_estimate: number | null
+          vehicle_config: string | null
+        }
+        Insert: {
+          additional_costs?: number | null
+          calculation_details?: Json | null
+          crane_type?: string | null
+          created_at?: string
+          created_by?: string | null
+          destination: string
+          distance_km?: number | null
+          estimated_time_hours?: number | null
+          fuel_cost?: number | null
+          id?: string
+          origin: string
+          route_name?: string | null
+          service_id?: string | null
+          toll_cost?: number | null
+          total_estimate?: number | null
+          vehicle_config?: string | null
+        }
+        Update: {
+          additional_costs?: number | null
+          calculation_details?: Json | null
+          crane_type?: string | null
+          created_at?: string
+          created_by?: string | null
+          destination?: string
+          distance_km?: number | null
+          estimated_time_hours?: number | null
+          fuel_cost?: number | null
+          id?: string
+          origin?: string
+          route_name?: string | null
+          service_id?: string | null
+          toll_cost?: number | null
+          total_estimate?: number | null
+          vehicle_config?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trip_estimates_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trip_estimates_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services_with_excess_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trip_estimates_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services_with_excess_summary"
+            referencedColumns: ["related_service_id_actual"]
+          },
+        ]
+      }
       user_invitations: {
         Row: {
           accepted_at: string | null

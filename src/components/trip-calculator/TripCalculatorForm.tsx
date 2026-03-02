@@ -1,0 +1,263 @@
+import React, { useState, useCallback, useRef, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { MapPin, Navigation, Loader2 } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { useConsumptionRates } from '@/hooks/useConsumptionRates';
+import { useTripCalculation, type TripCalculationInput } from '@/hooks/useTripCalculation';
+import { useTollCalculation } from '@/hooks/useTollCalculation';
+import { TripCostBreakdown } from './TripCostBreakdown';
+
+interface GeoResult {
+  name: string;
+  coordinates: [number, number];
+}
+
+function useGeocode() {
+  const [results, setResults] = useState<GeoResult[]>([]);
+  const [loading, setLoading] = useState(false);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
+
+  const search = useCallback((query: string) => {
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    if (!query || query.length < 3) {
+      setResults([]);
+      return;
+    }
+    timeoutRef.current = setTimeout(async () => {
+      setLoading(true);
+      try {
+        const { data, error } = await supabase.functions.invoke('mapbox-proxy', {
+          body: { action: 'geocode', query },
+        });
+        if (!error && data?.results) setResults(data.results);
+      } catch {
+        // silent
+      } finally {
+        setLoading(false);
+      }
+    }, 400);
+  }, []);
+
+  return { results, loading, search, setResults };
+}
+
+interface LocationInputProps {
+  label: string;
+  icon: React.ReactNode;
+  value: string;
+  onSelect: (name: string, coords: [number, number]) => void;
+}
+
+const LocationInput = ({ label, icon, value, onSelect }: LocationInputProps) => {
+  const { results, loading, search, setResults } = useGeocode();
+  const [inputValue, setInputValue] = useState(value);
+  const [showDropdown, setShowDropdown] = useState(false);
+
+  useEffect(() => {
+    setInputValue(value);
+  }, [value]);
+
+  return (
+    <div className="relative">
+      <Label className="flex items-center gap-2 mb-1.5">
+        {icon}
+        {label}
+      </Label>
+      <Input
+        value={inputValue}
+        placeholder="Buscar ciudad o dirección..."
+        onChange={(e) => {
+          setInputValue(e.target.value);
+          search(e.target.value);
+          setShowDropdown(true);
+        }}
+        onFocus={() => results.length > 0 && setShowDropdown(true)}
+        onBlur={() => setTimeout(() => setShowDropdown(false), 200)}
+      />
+      {loading && (
+        <Loader2 className="absolute right-3 top-9 h-4 w-4 animate-spin text-muted-foreground" />
+      )}
+      {showDropdown && results.length > 0 && (
+        <div className="absolute z-50 mt-1 w-full bg-popover border rounded-md shadow-lg max-h-48 overflow-auto">
+          {results.map((r, i) => (
+            <button
+              key={i}
+              type="button"
+              className="w-full px-3 py-2 text-left text-sm hover:bg-accent truncate"
+              onMouseDown={() => {
+                onSelect(r.name, r.coordinates);
+                setInputValue(r.name);
+                setResults([]);
+                setShowDropdown(false);
+              }}
+            >
+              {r.name}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+export const TripCalculatorForm = () => {
+  const [originName, setOriginName] = useState('');
+  const [originCoords, setOriginCoords] = useState<[number, number] | null>(null);
+  const [destName, setDestName] = useState('');
+  const [destCoords, setDestCoords] = useState<[number, number] | null>(null);
+  const [craneType, setCraneType] = useState('');
+  const [twoVehicles, setTwoVehicles] = useState(false);
+  const [manualToll, setManualToll] = useState('');
+  const [additionalCosts, setAdditionalCosts] = useState('');
+
+  const { data: rates = [] } = useConsumptionRates();
+  const { calculate, result, error, isCalculating, reset } = useTripCalculation();
+  const { calculateTolls, tollResult, tollError, isCalculating: tollLoading } = useTollCalculation();
+
+  const craneTypes = [...new Set(rates.map((r) => r.crane_type))];
+
+  const handleCalculate = async () => {
+    if (!originCoords || !destCoords || !craneType) return;
+
+    // Try tolls first
+    const originCity = originName.split(',')[0]?.trim();
+    const destCity = destName.split(',')[0]?.trim();
+    const tollData = await calculateTolls(originCity, destCity);
+
+    const input: TripCalculationInput = {
+      originCoords,
+      destinationCoords: destCoords,
+      originName,
+      destinationName: destName,
+      craneType,
+      vehicleConfig: twoVehicles ? '2_vehicles' : '1_vehicle',
+      manualTollCost: tollData?.total_cost ?? (manualToll ? Number(manualToll) : 0),
+      additionalCosts: additionalCosts ? Number(additionalCosts) : 0,
+    };
+
+    await calculate(input);
+  };
+
+  const canCalculate = originCoords && destCoords && craneType;
+
+  return (
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Datos del Viaje</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <LocationInput
+              label="Origen"
+              icon={<MapPin className="h-4 w-4 text-green-600" />}
+              value={originName}
+              onSelect={(name, coords) => {
+                setOriginName(name);
+                setOriginCoords(coords);
+                reset();
+              }}
+            />
+            <LocationInput
+              label="Destino"
+              icon={<Navigation className="h-4 w-4 text-red-600" />}
+              value={destName}
+              onSelect={(name, coords) => {
+                setDestName(name);
+                setDestCoords(coords);
+                reset();
+              }}
+            />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <Label className="mb-1.5 block">Tipo de Grúa</Label>
+              <Select value={craneType} onValueChange={(v) => { setCraneType(v); reset(); }}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Seleccionar..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {craneTypes.map((type) => (
+                    <SelectItem key={type} value={type}>
+                      {type}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label className="mb-1.5 block">Peajes Manual (CLP)</Label>
+              <Input
+                type="number"
+                placeholder="0"
+                value={manualToll}
+                onChange={(e) => setManualToll(e.target.value)}
+              />
+              {tollError && (
+                <p className="text-xs text-amber-600 mt-1">{tollError}</p>
+              )}
+            </div>
+
+            <div>
+              <Label className="mb-1.5 block">Costos Adicionales (CLP)</Label>
+              <Input
+                type="number"
+                placeholder="Viáticos, desgaste..."
+                value={additionalCosts}
+                onChange={(e) => setAdditionalCosts(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <Switch
+              checked={twoVehicles}
+              onCheckedChange={(v) => { setTwoVehicles(v); reset(); }}
+            />
+            <Label className="cursor-pointer">
+              {twoVehicles ? '2 Vehículos (grúa + arrastre)' : '1 Vehículo (solo grúa cargada)'}
+            </Label>
+          </div>
+
+          <Button
+            onClick={handleCalculate}
+            disabled={!canCalculate || isCalculating || tollLoading}
+            className="w-full md:w-auto bg-tms-green hover:bg-tms-green/90 text-white"
+          >
+            {isCalculating || tollLoading ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Calculando...
+              </>
+            ) : (
+              'Calcular Viaje'
+            )}
+          </Button>
+
+          {error && (
+            <div className="p-3 bg-destructive/10 text-destructive rounded-md text-sm">
+              {error}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {result && (
+        <TripCostBreakdown
+          result={result}
+          originName={originName}
+          destinationName={destName}
+          craneType={craneType}
+          vehicleConfig={twoVehicles ? '2_vehicles' : '1_vehicle'}
+        />
+      )}
+    </div>
+  );
+};
