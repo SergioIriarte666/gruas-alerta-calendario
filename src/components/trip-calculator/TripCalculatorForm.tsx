@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { MapPin, Navigation, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useConsumptionRates } from '@/hooks/useConsumptionRates';
+import { useCranes } from '@/hooks/useCranes';
 import { useTripCalculation, type TripCalculationInput } from '@/hooks/useTripCalculation';
 import { useTollCalculation } from '@/hooks/useTollCalculation';
 import { TripCostBreakdown } from './TripCostBreakdown';
@@ -110,17 +111,20 @@ export const TripCalculatorForm = () => {
   const [originCoords, setOriginCoords] = useState<[number, number] | null>(null);
   const [destName, setDestName] = useState('');
   const [destCoords, setDestCoords] = useState<[number, number] | null>(null);
-  const [craneType, setCraneType] = useState('');
+  const [selectedCraneId, setSelectedCraneId] = useState('');
   const [twoVehicles, setTwoVehicles] = useState(false);
   const [manualToll, setManualToll] = useState('');
   const [showManualToll, setShowManualToll] = useState(false);
   const [additionalCosts, setAdditionalCosts] = useState('');
 
   const { data: rates = [] } = useConsumptionRates();
+  const { cranes } = useCranes();
   const { calculate, result, error, isCalculating, reset } = useTripCalculation();
   const { calculateTolls, tollResult, tollError, isCalculating: tollLoading, resetTolls } = useTollCalculation();
 
-  const craneTypes = [...new Set(rates.map((r) => r.crane_type))];
+  const activeCranes = cranes.filter(c => c.isActive);
+  const selectedCrane = activeCranes.find(c => c.id === selectedCraneId);
+  const craneType = selectedCrane?.type || '';
 
   const handleCalculate = async () => {
     if (!originCoords || !destCoords || !craneType) return;
@@ -130,8 +134,7 @@ export const TripCalculatorForm = () => {
     // Try automatic toll calculation first
     const originCity = originName.split(',')[0]?.trim();
     const destCity = destName.split(',')[0]?.trim();
-    const selectedRate = rates.find(r => r.crane_type === craneType);
-    const tollCategory = selectedRate?.toll_vehicle_category || '1';
+    const tollCategory = selectedCrane?.tollVehicleCategory || '2';
     const tollData = await calculateTolls(originCity, destCity, tollCategory);
 
     // If toll API failed, show manual fallback
@@ -211,15 +214,15 @@ export const TripCalculatorForm = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <Label className="mb-1.5 block">Tipo de Grúa</Label>
-              <Select value={craneType} onValueChange={(v) => { setCraneType(v); reset(); }}>
+              <Label className="mb-1.5 block">Grúa</Label>
+              <Select value={selectedCraneId} onValueChange={(v) => { setSelectedCraneId(v); reset(); }}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Seleccionar..." />
+                  <SelectValue placeholder="Seleccionar grúa..." />
                 </SelectTrigger>
                 <SelectContent>
-                  {craneTypes.map((type) => (
-                    <SelectItem key={type} value={type}>
-                      {type}
+                  {activeCranes.map((crane) => (
+                    <SelectItem key={crane.id} value={crane.id}>
+                      {crane.licensePlate} — {crane.brand} {crane.model}
                     </SelectItem>
                   ))}
                 </SelectContent>

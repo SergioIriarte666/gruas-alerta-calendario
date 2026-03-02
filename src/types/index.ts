@@ -138,6 +138,7 @@ export interface Crane {
   brand: string;
   model: string;
   type: CraneType;
+  tollVehicleCategory?: string;
   circulationPermitExpiry: string;
   insuranceExpiry: string;
   technicalReviewExpiry: string;
