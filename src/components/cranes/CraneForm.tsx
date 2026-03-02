@@ -27,7 +27,7 @@ export const CraneForm = ({ crane, onSubmit, onCancel }: CraneFormProps) => {
     brand: '',
     model: '',
     type: 'light' as CraneType,
-    tollVehicleCategory: '2',
+    tollVehicleCategory: 'LIVIANO',
     circulationPermitExpiry: '',
     insuranceExpiry: '',
     technicalReviewExpiry: '',
@@ -41,7 +41,7 @@ export const CraneForm = ({ crane, onSubmit, onCancel }: CraneFormProps) => {
         brand: crane.brand || '',
         model: crane.model || '',
         type: crane.type || 'light',
-        tollVehicleCategory: crane.tollVehicleCategory || '2',
+        tollVehicleCategory: crane.tollVehicleCategory || 'LIVIANO',
         circulationPermitExpiry: crane.circulationPermitExpiry || '',
         insuranceExpiry: crane.insuranceExpiry || '',
         technicalReviewExpiry: crane.technicalReviewExpiry || '',
@@ -53,7 +53,7 @@ export const CraneForm = ({ crane, onSubmit, onCancel }: CraneFormProps) => {
         brand: '',
         model: '',
         type: 'light',
-        tollVehicleCategory: '2',
+        tollVehicleCategory: 'LIVIANO',
         circulationPermitExpiry: '',
         insuranceExpiry: '',
         technicalReviewExpiry: '',
@@ -127,9 +127,9 @@ export const CraneForm = ({ crane, onSubmit, onCancel }: CraneFormProps) => {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="2">Cat. 2 - Automóvil / Camioneta</SelectItem>
-                <SelectItem value="3">Cat. 3 - Bus / Camión 2 ejes</SelectItem>
-                <SelectItem value="4">Cat. 4 - Camión 3+ ejes / Pesado</SelectItem>
+                <SelectItem value="LIVIANO">Liviano (Auto / Camioneta)</SelectItem>
+                <SelectItem value="CAMION">Camión (2+ ejes)</SelectItem>
+                <SelectItem value="MOTO">Moto</SelectItem>
               </SelectContent>
             </Select>
           </div>

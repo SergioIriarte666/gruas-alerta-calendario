@@ -57,7 +57,7 @@ export const ConsumptionRatesManager = () => {
     base_consumption_per_km: 0,
     loaded_consumption_factor: 1.3,
     towing_consumption_factor: 1.5,
-    toll_vehicle_category: '1',
+    toll_vehicle_category: 'LIVIANO',
   });
 
   const openNew = () => {
@@ -68,7 +68,7 @@ export const ConsumptionRatesManager = () => {
       base_consumption_per_km: 0,
       loaded_consumption_factor: 1.3,
       towing_consumption_factor: 1.5,
-      toll_vehicle_category: '1',
+      toll_vehicle_category: 'LIVIANO',
     });
     setIsFormOpen(true);
   };
@@ -81,7 +81,7 @@ export const ConsumptionRatesManager = () => {
       base_consumption_per_km: rate.base_consumption_per_km,
       loaded_consumption_factor: rate.loaded_consumption_factor,
       towing_consumption_factor: rate.towing_consumption_factor,
-      toll_vehicle_category: rate.toll_vehicle_category || '1',
+      toll_vehicle_category: rate.toll_vehicle_category || 'LIVIANO',
     });
     setIsFormOpen(true);
   };
@@ -276,10 +276,9 @@ export const ConsumptionRatesManager = () => {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="1">1 - Automóvil / Liviano</SelectItem>
-                  <SelectItem value="2">2 - Camioneta / Furgón</SelectItem>
-                  <SelectItem value="3">3 - Camión 2 ejes</SelectItem>
-                  <SelectItem value="4">4 - Camión 3+ ejes / Pesado</SelectItem>
+                  <SelectItem value="LIVIANO">Liviano (Auto / Camioneta)</SelectItem>
+                  <SelectItem value="CAMION">Camión (2+ ejes)</SelectItem>
+                  <SelectItem value="MOTO">Moto</SelectItem>
                 </SelectContent>
               </Select>
             </div>
