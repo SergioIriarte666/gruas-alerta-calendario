@@ -99,7 +99,7 @@ export const useClosureAutomation = () => {
   const fetchClientsForMonth = useCallback(async (month: Date) => {
     try {
       setLoading(true);
-      console.log('🔄 Fetching clients data for month:', month);
+      
 
       const monthStart = startOfMonth(month);
       const monthEnd = endOfMonth(month);
@@ -127,25 +127,23 @@ export const useClosureAutomation = () => {
       }
 
       const services = transformRawServiceData(servicesData || []);
-      console.log('🔄 Transforming', (servicesData || []).length, 'services');
-      console.log('Services found for month:', services.length);
-      console.log('Raw services sample:', (servicesData || []).slice(0, 2).map(s => ({ 
-        id: s.id, 
-        folio: s.folio, 
-        client_name: s.client?.name || s.third_party_client?.name || 'NO CLIENT',
-        service_type: s.service_types?.name || 'NO TYPE'
-      })));
 
-      // Get services already in closures to exclude them
-      const { data: closureServices, error: closureError } = await supabase
-        .from('closure_services')
-        .select('service_id');
+      // Get only closure links for the candidate service IDs (not full table)
+      const candidateIds = services.map(s => s.id);
+      let usedServiceIds = new Set<string>();
 
-      if (closureError) {
-        console.error('Error fetching closure services:', closureError);
+      if (candidateIds.length > 0) {
+        const { data: closureServices, error: closureError } = await supabase
+          .from('closure_services')
+          .select('service_id')
+          .in('service_id', candidateIds);
+
+        if (closureError) {
+          console.error('Error fetching closure services:', closureError);
+        }
+
+        usedServiceIds = new Set(closureServices?.map(cs => cs.service_id) || []);
       }
-
-      const usedServiceIds = new Set(closureServices?.map(cs => cs.service_id) || []);
 
       // Filter out services already in closures
       const availableServices = services.filter(service => !usedServiceIds.has(service.id));
