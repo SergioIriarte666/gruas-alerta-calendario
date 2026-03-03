@@ -35,7 +35,8 @@ const EnhancedClosureSelector: React.FC<EnhancedClosureSelectorProps> = ({
   
   // Use hook only if closures are not provided via props
   const hookResult = useClosuresForInvoices({
-    includeInvoiced: isEditing
+    includeInvoiced: isEditing,
+    enabled: !propClosures
   });
 
   const closures = propClosures ?? hookResult.closures;

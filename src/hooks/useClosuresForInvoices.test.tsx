@@ -89,10 +89,9 @@ describe('useClosuresForInvoices', () => {
 
   it('should filter out invoiced closures when includeInvoiced is false', async () => {
     const mockClosures = [
-      { id: '1', status: 'closed' },
-      { id: '2', status: 'closed' }
+      { id: '1', status: 'closed', invoice_closures: [{ closure_id: '1' }] },
+      { id: '2', status: 'closed', invoice_closures: [] }
     ];
-    const mockInvoiced = [{ closure_id: '1' }];
 
     (supabase.from as jest.Mock).mockImplementation((table) => {
       if (table === 'service_closures') {
@@ -103,16 +102,15 @@ describe('useClosuresForInvoices', () => {
           limit: jest.fn().mockResolvedValue({ data: mockClosures, error: null })
         };
       }
-      if (table === 'invoice_closures') {
-        return {
-          select: jest.fn().mockReturnThis(),
-          in: jest.fn().mockResolvedValue({ data: mockInvoiced, error: null })
-        };
-      }
-      return { select: jest.fn() };
+      return {
+        select: jest.fn().mockReturnThis(),
+        in: jest.fn().mockReturnThis(),
+        order: jest.fn().mockReturnThis(),
+        limit: jest.fn().mockResolvedValue({ data: [], error: null })
+      };
     });
 
-    const { result } = renderHook(() => useClosuresForInvoices({ includeInvoiced: false }), { wrapper });
+    const { result } = renderHook(() => useClosuresForInvoices(), { wrapper });
 
     await waitFor(() => expect(result.current.loading).toBe(false));
 

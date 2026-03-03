@@ -7,6 +7,7 @@ import { formatClosureData } from '@/utils/closureUtils';
 
 interface UseClosuresForInvoicesProps {
   includeInvoiced?: boolean;
+  enabled?: boolean;
 }
 
 export interface ClosureWithClient extends ServiceClosure {
@@ -16,13 +17,14 @@ export interface ClosureWithClient extends ServiceClosure {
 const MAX_CLOSURES_FOR_INVOICES = 500;
 
 export const useClosuresForInvoices = (options: UseClosuresForInvoicesProps = {}) => {
-  const { includeInvoiced = false } = options;
+  const { includeInvoiced = false, enabled = true } = options;
 
   const { data: closures = [], isLoading: loading, refetch } = useQuery({
     queryKey: ['closures-for-invoices', includeInvoiced],
+    enabled,
     queryFn: async () => {
       try {
-        // 1. Fetch closures
+        // 1. Fetch closures with related invoice_closures data to optimize filtering
         let query = supabase
           .from('service_closures')
           .select(`
@@ -32,6 +34,9 @@ export const useClosuresForInvoices = (options: UseClosuresForInvoicesProps = {}
             ),
             clients:client_id (
               name
+            ),
+            invoice_closures (
+              closure_id
             )
           `);
 
@@ -63,28 +68,14 @@ export const useClosuresForInvoices = (options: UseClosuresForInvoicesProps = {}
         // 2. Filter out invoiced closures if not in edit mode
         if (!includeInvoiced) {
           if (formattedClosures.length === 0) return [];
-
-          const allClosureIds = formattedClosures.map(closure => closure.id);
-
-          const { data: invoicedClosures, error: invoicedError } = await supabase
-            .from('invoice_closures')
-            .select('closure_id')
-            .in('closure_id', allClosureIds);
-
-          if (invoicedError && !invoicedError.message.includes('permission denied')) {
-            console.error('Error fetching invoiced closures:', invoicedError);
-            // On error, we might return all closures or empty. 
-            // Returning all might show already invoiced ones. Safe to return all for now or handle error.
-            return formattedClosures; 
-          }
-
-          const invoicedClosureIds = new Set(
-            invoicedClosures?.map(ic => ic.closure_id) || []
-          );
-
-          return formattedClosures.filter(
-            closure => !invoicedClosureIds.has(closure.id)
-          );
+          
+          // Filter based on the loaded invoice_closures relation
+          // This avoids a second round-trip with a large ID list
+          return formattedClosures.filter((closure, index) => {
+             const rawData = closuresData![index];
+             const linkedInvoices = (rawData as any).invoice_closures || [];
+             return linkedInvoices.length === 0;
+          });
         }
 
         return formattedClosures;
