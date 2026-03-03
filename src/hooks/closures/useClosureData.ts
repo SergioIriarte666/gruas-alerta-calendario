@@ -5,6 +5,7 @@ import { formatClosureData } from '@/utils/closureUtils';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 const MAX_CLOSURES = 500;
+const MAX_CLOSURES_WITH_SERVICE_LINKS = 120;
 
 const fetchClosures = async (): Promise<ServiceClosure[]> => {
   const { data: basicClosures, error: basicError } = await supabase
@@ -24,25 +25,31 @@ const fetchClosures = async (): Promise<ServiceClosure[]> => {
 
   if (!basicClosures || basicClosures.length === 0) return [];
 
-  // Batch query: get ALL closure_services in a single request
-  const allClosureIds = basicClosures.map(c => c.id);
-  const { data: allClosureServices, error: servicesError } = await supabase
-    .from('closure_services')
-    .select('closure_id, service_id')
-    .in('closure_id', allClosureIds);
+  // Fetch closure->service links only for the most recent subset to avoid UI freezes
+  const closureIdsForServiceLinks = basicClosures
+    .slice(0, MAX_CLOSURES_WITH_SERVICE_LINKS)
+    .map(c => c.id);
 
-  if (servicesError) {
-    console.warn('Error fetching closure services batch:', servicesError);
-  }
+  let servicesByClosureId = new Map<string, { service_id: string }[]>();
 
-  // Group services by closure_id in memory
-  const servicesByClosureId = new Map<string, { service_id: string }[]>();
-  (allClosureServices || []).forEach(cs => {
-    if (!servicesByClosureId.has(cs.closure_id)) {
-      servicesByClosureId.set(cs.closure_id, []);
+  if (closureIdsForServiceLinks.length > 0) {
+    const { data: closureServicesSubset, error: servicesError } = await supabase
+      .from('closure_services')
+      .select('closure_id, service_id')
+      .in('closure_id', closureIdsForServiceLinks);
+
+    if (servicesError) {
+      console.warn('Error fetching closure services batch:', servicesError);
+    } else {
+      servicesByClosureId = new Map<string, { service_id: string }[]>();
+      (closureServicesSubset || []).forEach(cs => {
+        if (!servicesByClosureId.has(cs.closure_id)) {
+          servicesByClosureId.set(cs.closure_id, []);
+        }
+        servicesByClosureId.get(cs.closure_id)!.push(cs);
+      });
     }
-    servicesByClosureId.get(cs.closure_id)!.push(cs);
-  });
+  }
 
   const closuresWithServices = basicClosures.map(closure => ({
     ...closure,
