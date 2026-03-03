@@ -77,16 +77,3 @@ export interface ServiceCostDetail {
   date?: string; // Original date of the cost
   isExisting?: boolean; // To track if it's saved in database
 }
-
-// Constantes para las categorías de costos comunes en servicios
-export const SERVICE_COST_CATEGORIES = [
-  'Combustible',
-  'Peajes',
-  'Viáticos',
-  'Estacionamiento',
-  'Materiales',
-  'Comisiones',
-  'Otros'
-] as const;
-
-export type ServiceCostCategory = typeof SERVICE_COST_CATEGORIES[number];
