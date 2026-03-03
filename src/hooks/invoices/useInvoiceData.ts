@@ -30,20 +30,31 @@ const fetchInvoicesFromDB = async (): Promise<Invoice[]> => {
 
   if (invoicesError) throw invoicesError;
 
-  const { data: closuresData, error: closuresError } = await supabase
-    .from('invoice_closures')
-    .select('invoice_id, closure_id');
+  const invoiceIds = (invoicesData || []).map(invoice => invoice.id);
 
-  if (closuresError) throw closuresError;
+  let closuresData: Array<{ invoice_id: string; closure_id: string }> = [];
+  if (invoiceIds.length > 0) {
+    const { data, error: closuresError } = await supabase
+      .from('invoice_closures')
+      .select('invoice_id, closure_id')
+      .in('invoice_id', invoiceIds);
+
+    if (closuresError) throw closuresError;
+    closuresData = data || [];
+  }
+
+  const closureByInvoiceId = new Map(
+    closuresData.map(rel => [rel.invoice_id, rel.closure_id])
+  );
 
   const formattedInvoices: Invoice[] = [];
   const overdueInvoiceIds: string[] = [];
 
   invoicesData.forEach(invoice => {
-    const closureRelation = closuresData.find(rel => rel.invoice_id === invoice.id);
+    const closureId = closureByInvoiceId.get(invoice.id);
     const formattedInvoice = formatInvoiceData({
       ...invoice,
-      invoice_closures: closureRelation ? [{ closure_id: closureRelation.closure_id }] : []
+      invoice_closures: closureId ? [{ closure_id: closureId }] : []
     });
     
     if (invoice.status === 'sent' && formattedInvoice.status === 'overdue') {
