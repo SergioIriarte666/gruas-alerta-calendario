@@ -24,17 +24,13 @@ export const useClosuresForInvoices = (options: UseClosuresForInvoicesProps = {}
     enabled,
     queryFn: async () => {
       try {
-        // 1. Fetch closures with related invoice_closures data to optimize filtering
-        // Optimization: Select only necessary fields and avoid fetching all service links (which can be thousands)
+        // 1. Fetch closures basic data without nested relations that might cause ambiguity
         let query = supabase
           .from('service_closures')
           .select(`
             id, folio, total, status, client_id, created_at, updated_at, date_from, date_to, purchase_order,
             clients:client_id (
               name
-            ),
-            invoice_closures:invoice_closures!invoice_closures_closure_id_fkey (
-              closure_id
             )
           `);
 
@@ -58,22 +54,29 @@ export const useClosuresForInvoices = (options: UseClosuresForInvoicesProps = {}
           throw closuresError;
         }
 
-        const formattedClosures: ClosureWithClient[] = (closuresData || []).map(data => ({
+        let formattedClosures: ClosureWithClient[] = (closuresData || []).map(data => ({
           ...formatClosureData(data),
           clientName: (data.clients as any)?.name || ''
         }));
 
-        // 2. Filter out invoiced closures if not in edit mode
-        if (!includeInvoiced) {
-          if (formattedClosures.length === 0) return [];
+        // 2. Filter out invoiced closures using a separate query to avoid relation ambiguity
+        if (!includeInvoiced && formattedClosures.length > 0) {
+          // Get IDs of closures that are already linked to invoices
+          const closureIds = formattedClosures.map(c => c.id);
           
-          // Filter based on the loaded invoice_closures relation
-          // This avoids a second round-trip with a large ID list
-          return formattedClosures.filter((closure, index) => {
-             const rawData = closuresData![index];
-             const linkedInvoices = (rawData as any).invoice_closures || [];
-             return linkedInvoices.length === 0;
-          });
+          const { data: invoicedIds, error: invoiceError } = await supabase
+            .from('invoice_closures')
+            .select('closure_id')
+            .in('closure_id', closureIds);
+            
+          if (invoiceError) {
+            console.error('Error fetching invoice_closures:', invoiceError);
+            // We continue even if this fails, potentially showing invoiced closures
+            // is better than showing nothing or crashing
+          } else {
+            const invoicedSet = new Set(invoicedIds?.map(i => i.closure_id) || []);
+            formattedClosures = formattedClosures.filter(c => !invoicedSet.has(c.id));
+          }
         }
 
         return formattedClosures;
