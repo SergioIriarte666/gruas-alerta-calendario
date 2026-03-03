@@ -8,7 +8,10 @@ const MAX_CLOSURES = 200;
 const MAX_CLOSURES_WITH_SERVICE_LINKS = 50;
 
 const fetchClosures = async (): Promise<ServiceClosure[]> => {
-  const { data: basicClosures, error: basicError } = await supabase
+  console.log('Fetching closures with optimized strategy...');
+  
+  // 1. Fetch active closures (open/closed) - these are the priority
+  const { data: activeClosures, error: activeError } = await supabase
     .from('service_closures')
     .select(`
       *,
@@ -18,15 +21,38 @@ const fetchClosures = async (): Promise<ServiceClosure[]> => {
         email
       )
     `)
+    .in('status', ['open', 'closed'])
     .order('created_at', { ascending: false })
-    .limit(MAX_CLOSURES);
+    .limit(100);
 
-  if (basicError) throw basicError;
+  if (activeError) throw activeError;
 
-  if (!basicClosures || basicClosures.length === 0) return [];
+  // 2. Fetch recent invoiced closures - just for context/history
+  const { data: invoicedClosures, error: invoicedError } = await supabase
+    .from('service_closures')
+    .select(`
+      *,
+      creator:profiles!service_closures_created_by_fkey (
+        id,
+        full_name,
+        email
+      )
+    `)
+    .eq('status', 'invoiced')
+    .order('created_at', { ascending: false })
+    .limit(20);
+
+  if (invoicedError) throw invoicedError;
+
+  // Combine and sort
+  const allClosures = [...(activeClosures || []), ...(invoicedClosures || [])].sort((a, b) => 
+    new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+  );
+
+  if (allClosures.length === 0) return [];
 
   // Fetch closure->service links only for the most recent subset to avoid UI freezes
-  const closureIdsForServiceLinks = basicClosures
+  const closureIdsForServiceLinks = allClosures
     .slice(0, MAX_CLOSURES_WITH_SERVICE_LINKS)
     .map(c => c.id);
 
@@ -51,7 +77,7 @@ const fetchClosures = async (): Promise<ServiceClosure[]> => {
     }
   }
 
-  const closuresWithServices = basicClosures.map(closure => ({
+  const closuresWithServices = allClosures.map(closure => ({
     ...closure,
     closure_services: servicesByClosureId.get(closure.id) || []
   }));
