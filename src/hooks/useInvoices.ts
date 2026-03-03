@@ -11,16 +11,27 @@ export const useInvoices = () => {
   const { createInvoice: createInvoiceOp, updateInvoice: updateInvoiceOp, deleteInvoice: deleteInvoiceOp, markAsPaid } = useInvoiceOperations();
   const [closures, setClosures] = useState<any[]>([]);
   const [clients, setClients] = useState<any[]>([]);
-  const MAX_CLOSURES = 1000;
-  const MAX_CLIENTS = 2000;
 
-  // Fetch related data with simple queries
+  // Fetch only related closures/clients for currently loaded invoices
   useEffect(() => {
     const fetchRelatedData = async () => {
       try {
+        const closureIds = Array.from(
+          new Set(invoices.map(inv => inv.closureId).filter((id): id is string => Boolean(id)))
+        );
+        const clientIds = Array.from(
+          new Set(invoices.map(inv => inv.clientId).filter((id): id is string => Boolean(id)))
+        );
+
+        const emptyResult = { data: [] as any[], error: null as any };
+
         const [closuresData, clientsData] = await Promise.all([
-          supabase.from('service_closures').select('*').limit(MAX_CLOSURES),
-          supabase.from('clients').select('*').limit(MAX_CLIENTS)
+          closureIds.length > 0
+            ? supabase.from('service_closures').select('id, folio, date_from, date_to, total, status, client_id').in('id', closureIds)
+            : Promise.resolve(emptyResult),
+          clientIds.length > 0
+            ? supabase.from('clients').select('id, name, rut, email, phone').in('id', clientIds)
+            : Promise.resolve(emptyResult)
         ]);
 
         if (closuresData.error) throw closuresData.error;
@@ -37,7 +48,7 @@ export const useInvoices = () => {
     };
 
     fetchRelatedData();
-  }, []);
+  }, [invoices]);
 
   const createInvoice = async (data: any) => {
     try {
