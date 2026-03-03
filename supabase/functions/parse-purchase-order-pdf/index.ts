@@ -85,6 +85,7 @@ Debes extraer la información estructurada del documento usando la herramienta e
   Ejemplo: "Sail LZWADAGA9SF003022" -> patente="LZWADAGA9SF003022"
   Ejemplo: "GrooveLZWADAGA3TN041614" -> patente="LZWADAGA3TN041614"
   NUNCA incluyas letras del nombre del modelo como parte del VIN. NUNCA cortes el primer digito del VIN.
+  PRECISIÓN EN DÍGITOS DE VIN: Los VINs tienen dígitos que se confunden fácilmente en PDFs. Presta MÁXIMA atención a: 5 vs 6, 7 vs 1, 0 vs O, 8 vs B, 2 vs Z. Si un dígito es ambiguo, analiza el contexto (otros VINs similares en el documento, patrón del fabricante) para decidir.
   Si no hay patente chilena pero hay un codigo largo alfanumerico (16-17 chars), usalo como patente.
 
 *** CRÍTICO - REFERENCIAS A COTIZACIONES/PRESUPUESTOS (quoteReference): ***
