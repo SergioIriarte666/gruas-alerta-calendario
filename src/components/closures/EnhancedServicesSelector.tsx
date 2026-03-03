@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Service } from '@/types';
@@ -142,19 +142,22 @@ const EnhancedServicesSelector = ({
     };
   }, [searchTerm, services, pendingServices, clientId, filterServicesBySearch, onSearchProcessed, onClearProcessed]);
 
-  const filteredServices = filterServicesBySearch(
+  const filteredServices = useMemo(() => filterServicesBySearch(
     services.filter(service => {
       if (!clientId) return true;
       return service.client.id === clientId;
     })
-  );
+  ), [services, clientId, filterServicesBySearch]);
 
-  const filteredPendingServices = filterServicesBySearch(
+  const filteredPendingServices = useMemo(() => filterServicesBySearch(
     pendingServices.filter(service => {
       if (!clientId) return true;
       return service.client.id === clientId;
     })
-  );
+  ), [pendingServices, clientId, filterServicesBySearch]);
+
+  const visibleServices = useMemo(() => filteredServices.slice(0, 120), [filteredServices]);
+  const visiblePendingServices = useMemo(() => filteredPendingServices.slice(0, 80), [filteredPendingServices]);
 
   const handlePendingToggle = (serviceId: string, checked: boolean) => {
     setSelectedPendingIds(prev => 
@@ -534,7 +537,7 @@ const EnhancedServicesSelector = ({
             <div className="space-y-2">
               <div className="max-h-32 overflow-y-auto border rounded-md p-2 bg-muted">
                 <div className="space-y-1">
-                  {filteredPendingServices.map(service => (
+                  {visiblePendingServices.map(service => (
                     <div key={service.id} className="flex items-center space-x-2 py-1 px-1 rounded hover:bg-background">
                       <input
                         type="checkbox"
@@ -639,7 +642,7 @@ const EnhancedServicesSelector = ({
             </div>
           ) : (
             <div className="space-y-1">
-              {filteredServices.map(service => (
+              {visibleServices.map(service => (
                 <div
                   key={service.id}
                   className={`flex items-center space-x-2 py-2 px-1 rounded transition-colors ${
