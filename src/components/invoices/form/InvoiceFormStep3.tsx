@@ -1,4 +1,5 @@
 import React from 'react';
+// InvoiceFormStep3 component for closure selection
 import { ColoredSectionCard } from '@/components/services/form/ColoredSectionCard';
 import { FileCheck } from 'lucide-react';
 import EnhancedClosureSelector from '../EnhancedClosureSelector';

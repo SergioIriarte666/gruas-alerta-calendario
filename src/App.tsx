@@ -14,6 +14,10 @@ import { OperatorLayout } from '@/components/layout/OperatorLayout';
 import { PortalLayout } from '@/components/portal/layout/PortalLayout';
 import ProtectedRoute from '@/components/layout/ProtectedRoute';
 import AdminOnlyRoute from '@/components/layout/AdminOnlyRoute';
+import DebugFreeze from '@/pages/DebugFreeze';
+
+// Version check for production debugging
+console.log('App version: 1.0.2 - Fix freeze issue with useState refactor');
 
 // Route chunk imports - stored for preloading
 const routeImports = {
@@ -129,6 +133,7 @@ function AppContent() {
         <Route path="/auth" element={<Suspense fallback={null}><Auth /></Suspense>} />
         <Route path="/reset-password" element={<Suspense fallback={null}><ResetPassword /></Suspense>} />
         <Route path="/performance-test" element={<Suspense fallback={null}><PerformanceTest /></Suspense>} />
+        <Route path="/debug-freeze" element={<DebugFreeze />} />
         <Route path="/" element={<Suspense fallback={null}><Index /></Suspense>} />
 
         {/* All administrative routes share a single ProtectedRoute + Layout */}

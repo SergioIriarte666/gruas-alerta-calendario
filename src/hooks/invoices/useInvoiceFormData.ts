@@ -1,5 +1,5 @@
 
-import { useMemo, useRef } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { Invoice, InvoiceStatus } from '@/types';
 
 interface UseInvoiceFormDataProps {
@@ -8,12 +8,13 @@ interface UseInvoiceFormDataProps {
 }
 
 export const useInvoiceFormData = ({ invoice, preselectedClosureId }: UseInvoiceFormDataProps) => {
-  const initializedRef = useRef(false);
-  const prevClosureIdRef = useRef(preselectedClosureId);
+  // Use state to track initialization to ensure it persists across renders correctly
+  const [isInitialized, setIsInitialized] = useState(false);
+  const [prevClosureId, setPrevClosureId] = useState(preselectedClosureId);
   
-  // Memoized form data - only changes when invoice ID or preselectedClosureId changes
+  // Memoized form data
   const formData = useMemo(() => {
-    console.log('useInvoiceFormData - Creating form data for invoice:', invoice?.id);
+    // console.log('useInvoiceFormData - Creating form data for invoice:', invoice?.id);
     
     if (invoice) {
       return {
@@ -36,28 +37,26 @@ export const useInvoiceFormData = ({ invoice, preselectedClosureId }: UseInvoice
       paymentDate: '',
       numeroFiscal: ''
     };
-  }, [invoice?.id, preselectedClosureId]);
+  }, [invoice, preselectedClosureId]); // Removed specific props to be safe, though invoice?.id was fine
 
-  // Track if form has been initialized to prevent multiple resets
+  // Determine if reset is needed
   const shouldReset = useMemo(() => {
-    const shouldResetNow = !initializedRef.current;
+    // If not initialized yet, we should reset (initial load)
+    if (!isInitialized) return true;
     
-    // Also reset if preselectedClosureId changes (e.g. navigating between closures)
-    const closureIdChanged = preselectedClosureId !== prevClosureIdRef.current;
-    
-    if (shouldResetNow) {
-      initializedRef.current = true;
-      prevClosureIdRef.current = preselectedClosureId;
-      return true;
-    }
-    
-    if (closureIdChanged) {
-      prevClosureIdRef.current = preselectedClosureId;
-      return true;
-    }
+    // If preselectedClosureId changed, we should reset
+    if (preselectedClosureId !== prevClosureId) return true;
     
     return false;
-  }, [invoice?.id, preselectedClosureId]);
+  }, [isInitialized, preselectedClosureId, prevClosureId]);
+
+  // Effect to update tracking state AFTER render/reset
+  useEffect(() => {
+    if (shouldReset) {
+      setIsInitialized(true);
+      setPrevClosureId(preselectedClosureId);
+    }
+  }, [shouldReset, preselectedClosureId]);
 
   return {
     formData,
