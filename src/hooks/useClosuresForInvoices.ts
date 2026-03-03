@@ -25,63 +25,92 @@ export const useClosuresForInvoices = (options: UseClosuresForInvoicesProps = {}
     queryFn: async () => {
       try {
         console.log('Fetching closures for invoices, includeInvoiced:', includeInvoiced);
-        // 1. Fetch closures basic data without nested relations that might cause ambiguity
-        let query = supabase
+        
+        // Strategy: Fetch distinct sets to ensure we get relevant data without scanning everything
+        // 1. Fetch OPEN closures (Active work)
+        const { data: openClosures, error: openError } = await supabase
           .from('service_closures')
           .select(`
             id, folio, total, status, client_id, created_at, updated_at, date_from, date_to, purchase_order,
-            clients:client_id (
-              name
-            )
-          `);
+            clients:client_id ( name )
+          `)
+          .eq('status', 'open')
+          .order('created_at', { ascending: false });
 
-        if (includeInvoiced) {
-          query = query.in('status', ['closed', 'invoiced', 'open']);
-        } else {
-          query = query.in('status', ['closed', 'open']);
-        }
+        if (openError) throw openError;
 
-        const { data: closuresData, error: closuresError } = await query
+        // 2. Fetch CLOSED closures (Ready for invoicing)
+        // Limit to 50 to avoid performance issues
+        const { data: closedClosures, error: closedError } = await supabase
+          .from('service_closures')
+          .select(`
+            id, folio, total, status, client_id, created_at, updated_at, date_from, date_to, purchase_order,
+            clients:client_id ( name )
+          `)
+          .eq('status', 'closed')
           .order('created_at', { ascending: false })
-          .limit(MAX_CLOSURES_FOR_INVOICES);
+          .limit(50);
 
-        if (closuresError) {
-          console.error('Error in supabase query:', closuresError);
-          if (closuresError.message.includes('permission denied') || closuresError.message.includes('row-level security')) {
-            toast.error("Permisos insuficientes", {
-              description: "No tienes permisos para ver los cierres. Contacta a un administrador.",
-            });
-            return [];
-          }
-          throw closuresError;
-        }
+        if (closedError) throw closedError;
+
+        let invoicedClosures: any[] = [];
         
-        console.log('Fetched closures count:', closuresData?.length);
+        // 3. If editing, fetch specific invoiced closures or recent ones
+        if (includeInvoiced) {
+          const { data: invData, error: invError } = await supabase
+            .from('service_closures')
+            .select(`
+              id, folio, total, status, client_id, created_at, updated_at, date_from, date_to, purchase_order,
+              clients:client_id ( name )
+            `)
+            .eq('status', 'invoiced')
+            .order('created_at', { ascending: false })
+            .limit(20);
+            
+          if (invError) throw invError;
+          invoicedClosures = invData || [];
+        }
 
-        let formattedClosures: ClosureWithClient[] = (closuresData || []).map(data => ({
+        // Combine all results
+        const combinedData = [
+          ...(openClosures || []),
+          ...(closedClosures || []),
+          ...invoicedClosures
+        ];
+
+        // Dedup by ID (just in case)
+        const uniqueData = Array.from(new Map(combinedData.map(item => [item.id, item])).values());
+        
+        // Sort by creation date
+        uniqueData.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+        
+        console.log('Fetched closures count:', uniqueData.length);
+
+        let formattedClosures: ClosureWithClient[] = uniqueData.map(data => ({
           ...formatClosureData(data),
           clientName: (data.clients as any)?.name || ''
         }));
 
-        // 2. Filter out invoiced closures using a separate query to avoid relation ambiguity
+        // 4. Filter out invoiced closures using a separate query to avoid relation ambiguity
+        // Only if NOT explicitly including invoiced ones
         if (!includeInvoiced && formattedClosures.length > 0) {
           // Get IDs of closures that are already linked to invoices
           const closureIds = formattedClosures.map(c => c.id);
           
-          const { data: invoicedIds, error: invoiceError } = await supabase
-            .from('invoice_closures')
-            .select('closure_id')
-            .in('closure_id', closureIds);
-            
-          if (invoiceError) {
-            console.error('Error fetching invoice_closures:', invoiceError);
-            // We continue even if this fails, potentially showing invoiced closures
-            // is better than showing nothing or crashing
-          } else {
-            const invoicedSet = new Set(invoicedIds?.map(i => i.closure_id) || []);
-            const originalCount = formattedClosures.length;
-            formattedClosures = formattedClosures.filter(c => !invoicedSet.has(c.id));
-            console.log('Filtered invoiced closures:', originalCount - formattedClosures.length, 'removed');
+          if (closureIds.length > 0) {
+            const { data: invoicedIds, error: invoiceError } = await supabase
+              .from('invoice_closures')
+              .select('closure_id')
+              .in('closure_id', closureIds);
+              
+            if (invoiceError) {
+              console.error('Error fetching invoice_closures:', invoiceError);
+            } else {
+              const invoicedSet = new Set(invoicedIds?.map(i => i.closure_id) || []);
+              const originalCount = formattedClosures.length;
+              formattedClosures = formattedClosures.filter(c => !invoicedSet.has(c.id));
+              console.log('Filtered invoiced closures:', originalCount - formattedClosures.length, 'removed');
+            }
           }
         }
 

@@ -18,7 +18,7 @@ import DebugFreeze from '@/pages/DebugFreeze';
 import ConnectionTest from '@/pages/ConnectionTest';
 
 // Version check for production debugging
-  console.log('App version: 1.0.7 - Optimized Closure Loading (Active/Recent)');
+  console.log('App version: 1.0.8 - Optimized Invoice Selector (Fix Freeze)');
 
 // Route chunk imports - stored for preloading
 const routeImports = {
