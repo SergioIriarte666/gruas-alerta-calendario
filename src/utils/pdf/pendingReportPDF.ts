@@ -253,10 +253,9 @@ export const generatePendingReportPDF = async (): Promise<jsPDF> => {
   y += 8;
 
   // Helper: group rows by client column (index 1) with sub-headers
-  const groupAndInsertClientHeaders = (data: string[][], clientColIndex: number): { rows: string[][]; clientRowIndices: Set<number> } => {
-    if (data.length === 0) return { rows: [], clientRowIndices: new Set() };
+  const groupAndInsertClientHeaders = (data: string[][], clientColIndex: number): { rows: string[][]; clientRowIndices: Set<number>; clientNames: Map<number, string> } => {
+    if (data.length === 0) return { rows: [], clientRowIndices: new Set(), clientNames: new Map() };
     
-    // Group by client
     const groups: Record<string, string[][]> = {};
     data.forEach(row => {
       const client = row[clientColIndex] || 'N/A';
@@ -264,24 +263,21 @@ export const generatePendingReportPDF = async (): Promise<jsPDF> => {
       groups[client].push(row);
     });
 
-    // Sort groups alphabetically
     const sortedClients = Object.keys(groups).sort((a, b) => a.localeCompare(b, 'es'));
-
     const result: string[][] = [];
     const clientRowIndices = new Set<number>();
+    const clientNames = new Map<number, string>();
 
     sortedClients.forEach(client => {
       const clientRows = groups[client];
-      // Insert sub-header row (fill all columns with empty except first which has client name)
       const headerRow = Array(clientRows[0].length).fill('');
-      headerRow[0] = `▶ ${client} (${clientRows.length})`;
       clientRowIndices.add(result.length);
+      clientNames.set(result.length, `${client}  (${clientRows.length})`);
       result.push(headerRow);
-      // Add client rows (sorted by date column - index 2 typically)
       result.push(...clientRows);
     });
 
-    return { rows: result, clientRowIndices };
+    return { rows: result, clientRowIndices, clientNames };
   };
 
   const addSection = (title: string, count: number, headers: string[], data: string[][], colStyles?: any, groupByClient?: boolean) => {
@@ -300,18 +296,20 @@ export const generatePendingReportPDF = async (): Promise<jsPDF> => {
       doc.setFontSize(10);
       doc.setFont('helvetica', 'normal');
       doc.setTextColor(100, 100, 100);
-      doc.text('✅ Sin pendientes en esta categoría', 18, y);
+      doc.text('Sin pendientes en esta categoria', 18, y);
       y += 10;
       return;
     }
 
     let bodyData = data;
     let clientRowIndices = new Set<number>();
+    let clientNames = new Map<number, string>();
 
     if (groupByClient) {
       const grouped = groupAndInsertClientHeaders(data, 1);
       bodyData = grouped.rows;
       clientRowIndices = grouped.clientRowIndices;
+      clientNames = grouped.clientNames;
     }
 
     autoTable(doc, {
@@ -326,10 +324,30 @@ export const generatePendingReportPDF = async (): Promise<jsPDF> => {
       columnStyles: colStyles || {},
       didParseCell: (hookData: any) => {
         if (hookData.section === 'body' && clientRowIndices.has(hookData.row.index)) {
-          hookData.cell.styles.fillColor = [55, 65, 81];
+          hookData.cell.styles.fillColor = [34, 197, 94];
           hookData.cell.styles.textColor = [255, 255, 255];
           hookData.cell.styles.fontStyle = 'bold';
-          hookData.cell.styles.fontSize = 8;
+          hookData.cell.styles.fontSize = 8.5;
+          hookData.cell.styles.cellPadding = { top: 3, bottom: 3, left: 4, right: 2 };
+        }
+      },
+      didDrawCell: (hookData: any) => {
+        if (hookData.section === 'body' && hookData.column.index === 0 && clientRowIndices.has(hookData.row.index)) {
+          const name = clientNames.get(hookData.row.index) || '';
+          const cellY = hookData.cell.y;
+          const cellH = hookData.cell.height;
+          const startX = hookData.cell.x;
+          const tableWidth = hookData.table.getWidth(doc.internal.pageSize.getWidth());
+          
+          // Draw green background spanning full row
+          doc.setFillColor(34, 197, 94);
+          doc.rect(startX, cellY, tableWidth, cellH, 'F');
+          
+          // Draw client name text centered vertically
+          doc.setFont('helvetica', 'bold');
+          doc.setFontSize(8.5);
+          doc.setTextColor(255, 255, 255);
+          doc.text(name, startX + 5, cellY + cellH / 2 + 1);
         }
       },
     });
@@ -365,10 +383,26 @@ export const generatePendingReportPDF = async (): Promise<jsPDF> => {
       margin: { left: 14, right: 14 },
       didParseCell: (hookData: any) => {
         if (hookData.section === 'body' && todayGrouped.clientRowIndices.has(hookData.row.index)) {
-          hookData.cell.styles.fillColor = [55, 65, 81];
+          hookData.cell.styles.fillColor = [59, 130, 246];
           hookData.cell.styles.textColor = [255, 255, 255];
           hookData.cell.styles.fontStyle = 'bold';
-          hookData.cell.styles.fontSize = 8;
+          hookData.cell.styles.fontSize = 8.5;
+          hookData.cell.styles.cellPadding = { top: 3, bottom: 3, left: 4, right: 2 };
+        }
+      },
+      didDrawCell: (hookData: any) => {
+        if (hookData.section === 'body' && hookData.column.index === 0 && todayGrouped.clientRowIndices.has(hookData.row.index)) {
+          const name = todayGrouped.clientNames.get(hookData.row.index) || '';
+          const cellY = hookData.cell.y;
+          const cellH = hookData.cell.height;
+          const startX = hookData.cell.x;
+          const tableWidth = hookData.table.getWidth(doc.internal.pageSize.getWidth());
+          doc.setFillColor(59, 130, 246);
+          doc.rect(startX, cellY, tableWidth, cellH, 'F');
+          doc.setFont('helvetica', 'bold');
+          doc.setFontSize(8.5);
+          doc.setTextColor(255, 255, 255);
+          doc.text(name, startX + 5, cellY + cellH / 2 + 1);
         }
       },
     });
