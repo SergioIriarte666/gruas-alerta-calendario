@@ -2,7 +2,6 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { Service } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/custom-toast';
-import { useServiceTransformer } from './services/useServiceTransformer';
 
 interface UseServicesForClosuresOptions {
   dateFrom?: Date;
@@ -43,7 +42,6 @@ export const useServicesForClosures = (options: UseServicesForClosuresOptions = 
   const [loading, setLoading] = useState(false);
   const [processedServices, setProcessedServices] = useState<ProcessedServiceInfo[]>([]);
   const [searchingProcessed, setSearchingProcessed] = useState(false);
-  const { transformRawServiceData } = useServiceTransformer();
   const { toast } = useToast();
   const { dateFrom, dateTo, searchTerm = '', enabled = true } = options;
   
@@ -88,10 +86,7 @@ export const useServicesForClosures = (options: UseServicesForClosuresOptions = 
         created_at,
         updated_at,
         client:clients!services_client_id_fkey(id, name),
-        third_party_client:clients!services_third_party_client_id_fkey(id, name),
-        cranes!left(id, license_plate, brand, model, type, is_active),
-        operators!left(id, name, rut, phone, license_number, is_active),
-        service_types!left(id, name, description, is_active)
+        third_party_client:clients!services_third_party_client_id_fkey(id, name)
       `;
 
       let billableQuery = supabase
@@ -116,11 +111,11 @@ export const useServicesForClosures = (options: UseServicesForClosuresOptions = 
 
       // In global mode, avoid loading massive datasets until user searches
       if (isGlobalSearch && !hasSearch) {
-        billableQuery = billableQuery.order('service_date', { ascending: false }).limit(120);
-        pendingQuery = pendingQuery.order('service_date', { ascending: false }).limit(60);
+        billableQuery = billableQuery.order('service_date', { ascending: false }).limit(80);
+        pendingQuery = pendingQuery.order('service_date', { ascending: false }).limit(40);
       } else {
-        billableQuery = billableQuery.order('service_date', { ascending: false }).limit(300);
-        pendingQuery = pendingQuery.order('service_date', { ascending: false }).limit(120);
+        billableQuery = billableQuery.order('service_date', { ascending: false }).limit(180);
+        pendingQuery = pendingQuery.order('service_date', { ascending: false }).limit(80);
       }
 
       // Server-side search for heavy datasets
@@ -168,9 +163,66 @@ export const useServicesForClosures = (options: UseServicesForClosuresOptions = 
       // Filter out services that are already in closures
       const availableBillableServices = billableServices.filter(service => !usedServiceIds.has(service.id));
 
-      // Transform the raw data to match the Service type
-      const transformedBillable = transformRawServiceData(availableBillableServices);
-      const transformedPending = transformRawServiceData(pendingServices);
+      const nowIso = new Date().toISOString();
+      const mapServiceForClosure = (item: any): Service => ({
+        id: item.id,
+        folio: item.folio || 'Sin folio',
+        requestDate: item.request_date || item.service_date || nowIso,
+        serviceDate: item.service_date || item.request_date || nowIso,
+        client: {
+          id: item.client?.id || item.third_party_client?.id || item.client_id || '',
+          name: item.client?.name || item.third_party_client?.name || 'Cliente no disponible',
+          rut: '',
+          phone: '',
+          email: '',
+          address: '',
+          department: '',
+          isActive: true,
+          createdAt: nowIso,
+          updatedAt: nowIso,
+        },
+        purchaseOrder: item.purchase_order || '',
+        purchaseOrderNumber: item.purchase_order_number || '',
+        quoteNumber: item.quote_number || '',
+        vehicleBrand: item.vehicle_brand || '',
+        vehicleModel: item.vehicle_model || '',
+        licensePlate: item.license_plate || '',
+        origin: item.origin || '',
+        destination: item.destination || '',
+        serviceType: {
+          id: '',
+          name: 'Tipo no disponible',
+          description: '',
+          basePrice: 0,
+          isActive: true,
+          vehicleInfoOptional: false,
+          purchaseOrderRequired: false,
+          originRequired: true,
+          destinationRequired: true,
+          craneRequired: false,
+          operatorRequired: false,
+          vehicleBrandRequired: false,
+          vehicleModelRequired: false,
+          licensePlateRequired: false,
+          createdAt: nowIso,
+          updatedAt: nowIso,
+        },
+        value: Number(item.value || 0),
+        crane: null,
+        operator: null,
+        operatorCommission: Number(item.operator_commission || 0),
+        status: item.status || 'pending',
+        observations: '',
+        hasExcess: Boolean(item.has_excess),
+        clientCoveredAmount: item.client_covered_amount ?? null,
+        excessAmount: Number(item.excess_amount || 0),
+        createdAt: item.created_at || nowIso,
+        updatedAt: item.updated_at || nowIso,
+        createdBy: item.created_by || undefined,
+      });
+
+      const transformedBillable = availableBillableServices.map(mapServiceForClosure);
+      const transformedPending = pendingServices.map(mapServiceForClosure);
 
       if (fetchId !== fetchIdRef.current) return;
 
