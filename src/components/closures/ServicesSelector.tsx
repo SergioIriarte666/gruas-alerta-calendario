@@ -1,7 +1,6 @@
 import { Label } from '@/components/ui/label';
 import { Service } from '@/types';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { InfoIcon, CheckCircle } from 'lucide-react';
+import { CheckCircle } from 'lucide-react';
 import { getDisplayServiceValue } from '@/utils/serviceValueCalculations';
 interface ServicesSelectorProps {
   services: Service[];
@@ -17,14 +16,10 @@ const ServicesSelector = ({
   selectedServiceIds,
   onServiceToggle
 }: ServicesSelectorProps) => {
-  console.log('ServicesSelector render - services:', services.length, 'loading:', loading, 'clientId:', clientId);
   const filteredServices = services.filter(service => {
     if (!clientId) return true;
-    const matches = service.client.id === clientId;
-    console.log(`Service ${service.folio} - client ${service.client.id} matches ${clientId}: ${matches}`);
-    return matches;
+    return service.client.id === clientId;
   });
-  console.log('Filtered services for client:', filteredServices.length);
   if (loading) {
     return <div className="space-y-2">
         <Label className="text-gray-300">Servicios</Label>

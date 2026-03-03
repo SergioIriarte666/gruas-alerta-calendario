@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Service } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/custom-toast';
@@ -50,7 +50,11 @@ export const useServicesForClosures = (options: UseServicesForClosuresOptions = 
   // Flag to indicate if this is a global search (no date filter)
   const isGlobalSearch = !dateFrom && !dateTo;
 
+  const fetchIdRef = useRef(0);
+
   const fetchServicesData = async () => {
+    const fetchId = ++fetchIdRef.current;
+
     try {
       setLoading(true);
 
@@ -74,21 +78,17 @@ export const useServicesForClosures = (options: UseServicesForClosuresOptions = 
         license_plate,
         origin,
         destination,
-        service_type_id,
         value,
-        crane_id,
-        operator_id,
         operator_commission,
         status,
-        observations,
         has_excess,
         client_covered_amount,
         excess_amount,
         created_by,
         created_at,
         updated_at,
-        client:clients!services_client_id_fkey(id, name, rut, phone, email, address, department, is_active),
-        third_party_client:clients!services_third_party_client_id_fkey(id, name, rut, phone, email, address, department, is_active),
+        client:clients!services_client_id_fkey(id, name),
+        third_party_client:clients!services_third_party_client_id_fkey(id, name),
         cranes!left(id, license_plate, brand, model, type, is_active),
         operators!left(id, name, rut, phone, license_number, is_active),
         service_types!left(id, name, description, is_active)
@@ -116,11 +116,11 @@ export const useServicesForClosures = (options: UseServicesForClosuresOptions = 
 
       // In global mode, avoid loading massive datasets until user searches
       if (isGlobalSearch && !hasSearch) {
-        billableQuery = billableQuery.order('service_date', { ascending: false }).limit(250);
-        pendingQuery = pendingQuery.order('service_date', { ascending: false }).limit(100);
+        billableQuery = billableQuery.order('service_date', { ascending: false }).limit(120);
+        pendingQuery = pendingQuery.order('service_date', { ascending: false }).limit(60);
       } else {
-        billableQuery = billableQuery.order('service_date', { ascending: false }).limit(500);
-        pendingQuery = pendingQuery.order('service_date', { ascending: false }).limit(200);
+        billableQuery = billableQuery.order('service_date', { ascending: false }).limit(300);
+        pendingQuery = pendingQuery.order('service_date', { ascending: false }).limit(120);
       }
 
       // Server-side search for heavy datasets
@@ -172,6 +172,8 @@ export const useServicesForClosures = (options: UseServicesForClosuresOptions = 
       const transformedBillable = transformRawServiceData(availableBillableServices);
       const transformedPending = transformRawServiceData(pendingServices);
 
+      if (fetchId !== fetchIdRef.current) return;
+
       setData({
         availableServices: transformedBillable,
         pendingServices: transformedPending,
@@ -185,14 +187,18 @@ export const useServicesForClosures = (options: UseServicesForClosuresOptions = 
         title: "Error",
         description: "No se pudieron cargar los servicios disponibles para cierre.",
       });
-      setData({
-        availableServices: [],
-        pendingServices: [],
-        usedServiceIds: new Set(),
-        totalCompleted: 0
-      });
+      if (fetchId === fetchIdRef.current) {
+        setData({
+          availableServices: [],
+          pendingServices: [],
+          usedServiceIds: new Set(),
+          totalCompleted: 0
+        });
+      }
     } finally {
-      setLoading(false);
+      if (fetchId === fetchIdRef.current) {
+        setLoading(false);
+      }
     }
   };
 
