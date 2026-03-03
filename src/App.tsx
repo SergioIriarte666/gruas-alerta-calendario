@@ -53,6 +53,7 @@ const routeImports = {
   ServiceRates: () => import('@/pages/ServiceRates'),
   ResetPassword: () => import('@/pages/ResetPassword'),
   TripCalculator: () => import('@/pages/TripCalculator'),
+  PerformanceTest: () => import('@/pages/PerformanceTest'),
 };
 
 // Lazy components using the same import functions
@@ -92,6 +93,7 @@ const Incomes = lazy(routeImports.Incomes);
 const ServiceRates = lazy(routeImports.ServiceRates);
 const ResetPassword = lazy(routeImports.ResetPassword);
 const TripCalculator = lazy(routeImports.TripCalculator);
+const PerformanceTest = lazy(routeImports.PerformanceTest);
 
 // Preload all route chunks after initial render
 const preloadAllRoutes = () => {
@@ -126,6 +128,7 @@ function AppContent() {
         <Routes>
         <Route path="/auth" element={<Suspense fallback={null}><Auth /></Suspense>} />
         <Route path="/reset-password" element={<Suspense fallback={null}><ResetPassword /></Suspense>} />
+        <Route path="/performance-test" element={<Suspense fallback={null}><PerformanceTest /></Suspense>} />
         <Route path="/" element={<Suspense fallback={null}><Index /></Suspense>} />
 
         {/* All administrative routes share a single ProtectedRoute + Layout */}

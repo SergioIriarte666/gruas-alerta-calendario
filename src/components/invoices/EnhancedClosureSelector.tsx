@@ -42,9 +42,35 @@ const EnhancedClosureSelector: React.FC<EnhancedClosureSelectorProps> = ({
   const closures = propClosures ?? hookResult.closures;
   const loading = propLoading ?? hookResult.loading;
 
+  const [search, setSearch] = useState("");
+
   const getClientName = (closure: any) => {
     return closure.clientName || 'Todos los clientes';
   };
+  
+  const filteredClosures = React.useMemo(() => {
+    if (!closures) return [];
+    
+    let result = closures;
+    
+    if (search) {
+      const lowerSearch = search.toLowerCase();
+      result = closures.filter(closure => {
+        const clientName = getClientName(closure).toLowerCase();
+        const folio = closure.folio.toLowerCase();
+        const po = closure.purchaseOrder ? closure.purchaseOrder.toLowerCase() : '';
+        const dateStr = formatDateRange(closure.dateRange).toLowerCase();
+        
+        return folio.includes(lowerSearch) || 
+               clientName.includes(lowerSearch) || 
+               po.includes(lowerSearch) ||
+               dateStr.includes(lowerSearch);
+      });
+    }
+    
+    return result.slice(0, 50);
+  }, [closures, search]);
+
   const formatDateRange = (dateRange: {
     from: string;
     to: string;
@@ -85,14 +111,19 @@ const EnhancedClosureSelector: React.FC<EnhancedClosureSelectorProps> = ({
         </PopoverTrigger>
         
         <PopoverContent className="w-[600px] p-0 bg-card border" align="start">
-          <Command className="bg-card">
-            <CommandInput placeholder="Buscar por folio, cliente o fecha..." className="text-foreground placeholder:text-muted-foreground" />
+          <Command className="bg-card" shouldFilter={false}>
+            <CommandInput 
+              placeholder="Buscar por folio, cliente o fecha..." 
+              className="text-foreground placeholder:text-muted-foreground" 
+              value={search}
+              onValueChange={setSearch}
+            />
             <CommandList className="max-h-[400px]">
               <CommandEmpty className="text-muted-foreground text-center py-6">
                 No se encontraron cierres.
               </CommandEmpty>
               <CommandGroup>
-                {closures.map(closure => <CommandItem key={closure.id} value={`${closure.folio} ${getClientName(closure)} ${formatDateRange(closure.dateRange)} ${closure.purchaseOrder || ''}`} onSelect={() => {
+                {filteredClosures.map(closure => <CommandItem key={closure.id} value={`${closure.folio} ${getClientName(closure)} ${formatDateRange(closure.dateRange)} ${closure.purchaseOrder || ''}`} onSelect={() => {
                 onClosureChange(closure.id);
                 setOpen(false);
               }} className="p-0 cursor-pointer">
