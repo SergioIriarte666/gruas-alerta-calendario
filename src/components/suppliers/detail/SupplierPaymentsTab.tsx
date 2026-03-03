@@ -8,7 +8,6 @@ import { es } from 'date-fns/locale';
 import { formatCurrency } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useCostCategories } from '@/hooks/useCostCategories';
-import { useSupplierCategoryManager } from '@/hooks/useSupplierCategoryManager';
 import { resolveSupplierPaymentCategoryLabel } from '@/utils/suppliers/resolveSupplierPaymentCategory';
 
 interface SupplierPayment {
@@ -43,7 +42,6 @@ const getStatusLabel = (status: string, dueDate: string | null) => {
 
 export const SupplierPaymentsTab: React.FC<SupplierPaymentsTabProps> = ({ payments, isLoading }) => {
   const { data: costCategories = [] } = useCostCategories();
-  const { categories: supplierCategories = [] } = useSupplierCategoryManager();
   const [search, setSearch] = useState('');
 
   const filtered = useMemo(() => {
@@ -128,7 +126,7 @@ export const SupplierPaymentsTab: React.FC<SupplierPaymentsTabProps> = ({ paymen
                   {payment.due_date ? format(new Date(payment.due_date), 'dd/MM/yyyy', { locale: es }) : '-'}
                 </TableCell>
                 <TableCell className="text-foreground text-sm">
-                  {resolveSupplierPaymentCategoryLabel(payment.category, { supplierCategories, costCategories, fallback: '-' })}
+                  {resolveSupplierPaymentCategoryLabel(payment.category, costCategories, '-')}
                 </TableCell>
                 <TableCell className="text-foreground text-sm">
                   {payment.paid_date ? format(new Date(payment.paid_date), 'dd/MM/yyyy', { locale: es }) : '-'}

@@ -26,7 +26,7 @@ import {
 import { XMLSupplierParser } from '@/utils/xmlParser/xmlSupplierParser';
 import { XMLSupplierData, XMLSupplierParseResult } from '@/types/suppliers';
 import { useSuppliers } from '@/hooks/useSuppliers';
-import { useSupplierCategoryManager } from '@/hooks/useSupplierCategoryManager';
+import { useCostCategories } from '@/hooks/useCostCategories';
 import { getCategoryLabel } from '@/utils/categoryUtils';
 import { useSupplierDuplicateCheck, SupplierDuplicateResult } from '@/hooks/useDuplicateCheck';
 import { toast } from 'sonner';
@@ -52,7 +52,8 @@ export const XMLSupplierUpload = ({ isOpen, onClose, onSuccess }: XMLSupplierUpl
   const [selectedSuppliers, setSelectedSuppliers] = useState<Set<number>>(new Set());
   
   const { createSupplier } = useSuppliers();
-  const { activeCategories } = useSupplierCategoryManager();
+  const { data: costCategoriesData = [] } = useCostCategories();
+  const activeCategories = costCategoriesData.map(c => ({ id: c.id, label: c.name, name: c.name }));
   const { checkDuplicates } = useSupplierDuplicateCheck();
   const parser = new XMLSupplierParser();
 

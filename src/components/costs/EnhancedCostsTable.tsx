@@ -18,7 +18,7 @@ import { Cost } from '@/types/costs';
 import { Card, CardContent } from '@/components/ui/card';
 import { ServiceDetailsModal } from '@/components/services/ServiceDetailsModal';
 import { useServiceDetails } from '@/hooks/useServiceDetails';
-import { useSupplierCategoryManager } from '@/hooks/useSupplierCategoryManager';
+import { useCostCategories } from '@/hooks/useCostCategories';
 import { getCategoryLabel } from '@/utils/categoryUtils';
 import { CostBatchActionBar } from './CostBatchActionBar';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
@@ -67,7 +67,7 @@ export const EnhancedCostsTable = ({
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set(['all']));
   
   const { data: serviceDetails } = useServiceDetails(selectedServiceId);
-  const { activeCategories } = useSupplierCategoryManager();
+  const { data: activeCategories = [] } = useCostCategories();
 
   const handleSelectAll = (checked: boolean) => {
     if (!onSelectionChange) return;

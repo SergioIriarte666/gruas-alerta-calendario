@@ -15,7 +15,7 @@ import { Cost } from '@/types/costs';
 import { Card, CardContent } from '@/components/ui/card';
 import { ServiceDetailsModal } from '@/components/services/ServiceDetailsModal';
 import { useServiceDetails } from '@/hooks/useServiceDetails';
-import { useSupplierCategoryManager } from '@/hooks/useSupplierCategoryManager';
+import { useCostCategories } from '@/hooks/useCostCategories';
 import { getCategoryLabel } from '@/utils/categoryUtils';
 import { CostBatchActionBar } from './CostBatchActionBar';
 
@@ -55,8 +55,8 @@ export const CostsTableView = ({
   // Obtener detalles completos del servicio
   const { data: serviceDetails } = useServiceDetails(selectedServiceId);
   
-  // Obtener categorías de proveedores para resolver UUIDs
-  const { activeCategories } = useSupplierCategoryManager();
+  // Obtener categorías de costos para resolver UUIDs
+  const { data: activeCategories = [] } = useCostCategories();
 
   const handleSelectAll = (checked: boolean) => {
     if (!onSelectionChange) return;

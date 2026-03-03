@@ -6,7 +6,9 @@ import { format, addDays, isBefore, isAfter } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { fetchCompanyData } from '@/utils/pdf/companyDataFetcher';
 import { addCompanyHeader } from '@/utils/reports/reportUtils';
-import { isUuid } from '@/utils/suppliers/resolveSupplierPaymentCategory';
+
+const isUuid = (value: string): boolean =>
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
 
 export const exportSupplierPaymentReport = async ({
   format,

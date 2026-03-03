@@ -19,7 +19,7 @@ import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { XMLCompleteParseResult, XMLDocumentData, XMLSupplierData, XMLSupplierPaymentData } from '@/types/suppliers';
 import { useSuppliers } from '@/hooks/useSuppliers';
-import { useSupplierCategoryManager } from '@/hooks/useSupplierCategoryManager';
+import { useCostCategories } from '@/hooks/useCostCategories';
 import { getCategoryLabel } from '@/utils/categoryUtils';
 import { useSupplierPayments } from '@/hooks/useSupplierPayments';
 import { useSupplierInvoiceDuplicateCheck, SupplierInvoiceDuplicateResult } from '@/hooks/useDuplicateCheck';
@@ -64,7 +64,8 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
   } = useSuppliers();
   const { createPayment, updatePayment } = useSupplierPayments();
   const { checkDuplicates } = useSupplierInvoiceDuplicateCheck();
-  const { activeCategories } = useSupplierCategoryManager();
+  const { data: costCategoriesData = [] } = useCostCategories();
+  const activeCategories = costCategoriesData.map(c => ({ id: c.id, label: c.name, name: c.name }));
   const onDrop = useCallback((acceptedFiles: File[]) => {
     const file = acceptedFiles[0];
     if (file) {

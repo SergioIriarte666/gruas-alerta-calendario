@@ -3,7 +3,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Building2, Mail, Phone, MapPin, User, Calendar, FileText } from 'lucide-react';
 import { SupplierWithStats } from '@/types/suppliers';
-import { useSupplierCategoryManager } from '@/hooks/useSupplierCategoryManager';
+import { useCostCategories } from '@/hooks/useCostCategories';
 import { getCategoryLabel } from '@/utils/categoryUtils';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -13,7 +13,7 @@ interface SupplierGeneralTabProps {
 }
 
 export const SupplierGeneralTab: React.FC<SupplierGeneralTabProps> = ({ supplier }) => {
-  const { activeCategories } = useSupplierCategoryManager();
+  const { data: activeCategories = [] } = useCostCategories();
 
   const InfoItem = ({ icon: Icon, label, value }: { icon: React.ElementType; label: string; value?: string | null }) => {
     if (!value) return null;
