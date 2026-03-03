@@ -2,13 +2,12 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Button } from '@/components/ui/button';
-import { Building2, Upload, Plus, FileText, CreditCard, Calendar, Settings, Receipt } from 'lucide-react';
+import { Building2, Upload, Plus, FileText, CreditCard, Calendar, Receipt } from 'lucide-react';
 import { CustomTabs, CustomTabsList, CustomTabsTrigger, CustomTabsContent } from '@/components/ui/custom-tabs';
 import { XMLDocumentUpload } from '@/components/suppliers/XMLDocumentUpload';
 import { SupplierList } from '@/components/suppliers/SupplierList';
 import { PaymentList } from '@/components/suppliers/PaymentList';
 import { SupplierPaymentCalendar } from '@/components/suppliers/SupplierPaymentCalendar';
-import { SupplierCategoryList } from '@/components/suppliers/categories/SupplierCategoryList';
 import { SupplierForm } from '@/components/suppliers/SupplierForm';
 import { PaymentForm } from '@/components/suppliers/PaymentForm';
 import { RegisterPaymentModal } from '@/components/suppliers/RegisterPaymentModal';
@@ -163,7 +162,7 @@ export const Suppliers: React.FC = () => {
 
         {/* Main Content - Tabs */}
         <CustomTabs value={activeTab} onValueChange={setActiveTab}>
-          <CustomTabsList className="grid w-full grid-cols-2 sm:grid-cols-4 gap-1">
+          <CustomTabsList className="grid w-full grid-cols-3 gap-1">
             <CustomTabsTrigger value="suppliers">
               <Building2 className="w-4 h-4 sm:mr-2" />
               <span className="hidden sm:inline">Proveedores</span>
@@ -175,10 +174,6 @@ export const Suppliers: React.FC = () => {
             <CustomTabsTrigger value="calendar">
               <Calendar className="w-4 h-4 sm:mr-2" />
               <span className="hidden sm:inline">Calendario</span>
-            </CustomTabsTrigger>
-            <CustomTabsTrigger value="categories">
-              <Settings className="w-4 h-4 sm:mr-2" />
-              <span className="hidden sm:inline">Categorías</span>
             </CustomTabsTrigger>
           </CustomTabsList>
 
@@ -192,10 +187,6 @@ export const Suppliers: React.FC = () => {
 
           <CustomTabsContent value="calendar" className="mt-6">
             <SupplierPaymentCalendar />
-          </CustomTabsContent>
-
-          <CustomTabsContent value="categories" className="mt-6">
-            <SupplierCategoryList />
           </CustomTabsContent>
         </CustomTabs>
 

@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ChevronLeft, ChevronRight, Save, X, Loader2, Building2 } from 'lucide-react';
 import { useSuppliers } from '@/hooks/useSuppliers';
-import { useSupplierCategoryManager } from '@/hooks/useSupplierCategoryManager';
+import { useCostCategories } from '@/hooks/useCostCategories';
 import { SupplierFormData, Supplier } from '@/types/suppliers';
 import { SupplierFormStepNavigation, getSupplierFormSteps, SupplierFormStep } from './form/SupplierFormStepNavigation';
 import { SupplierSummaryPanel } from './form/SupplierSummaryPanel';
@@ -41,7 +41,8 @@ export const SupplierForm: React.FC<SupplierFormProps> = ({
 }) => {
   const [currentStep, setCurrentStep] = useState(1);
   const { createSupplier, updateSupplier, isCreating, isUpdating } = useSuppliers();
-  const { activeCategories, isLoading: categoriesLoading } = useSupplierCategoryManager();
+  const { data: costCategoriesData = [], isLoading: categoriesLoading } = useCostCategories();
+  const activeCategories = costCategoriesData.map(c => ({ id: c.id, label: c.name, name: c.name }));
   const isEditing = !!supplier;
 
   const form = useForm<FormData>({

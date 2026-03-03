@@ -1,13 +1,8 @@
-import { SupplierCategory } from '@/types/suppliers';
-
-// Utility function to get category label from ID
-export const getCategoryLabel = (categories: SupplierCategory[], categoryId: string): string => {
-  const category = categories.find(c => c.id === categoryId);
-  return category?.label || categoryId;
-};
-
-// Utility function to get category name from ID  
-export const getCategoryName = (categories: SupplierCategory[], categoryId: string): string => {
+// Utility function to get category name from ID (using cost_categories as single source of truth)
+export const getCategoryLabel = (categories: { id: string; name?: string | null }[], categoryId: string): string => {
   const category = categories.find(c => c.id === categoryId);
   return category?.name || categoryId;
 };
+
+// Alias for backward compatibility
+export const getCategoryName = getCategoryLabel;

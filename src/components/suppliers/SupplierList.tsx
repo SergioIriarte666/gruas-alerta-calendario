@@ -25,7 +25,7 @@ import {
   Eye
 } from 'lucide-react';
 import { useSuppliers } from '@/hooks/useSuppliers';
-import { useSupplierCategoryManager } from '@/hooks/useSupplierCategoryManager';
+import { useCostCategories } from '@/hooks/useCostCategories';
 import { SupplierForm } from './SupplierForm';
 import { SupplierDetailModal } from './SupplierDetailModal';
 import { SupplierWithStats } from '@/types/suppliers';
@@ -58,7 +58,8 @@ export const SupplierList: React.FC = () => {
     isDeleting 
   } = useSuppliers();
 
-  const { activeCategories, isLoading: categoriesLoading } = useSupplierCategoryManager();
+  const { data: costCategoriesData = [], isLoading: categoriesLoading } = useCostCategories();
+  const activeCategories = costCategoriesData.map(c => ({ id: c.id, label: c.name, name: c.name }));
 
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');

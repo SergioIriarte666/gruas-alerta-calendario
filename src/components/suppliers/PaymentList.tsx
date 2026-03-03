@@ -27,7 +27,6 @@ import {
 } from 'lucide-react';
 import { useSupplierPayments, getStatusLabel, getStatusColor } from '@/hooks/useSupplierPayments';
 import { useSuppliers } from '@/hooks/useSuppliers';
-import { useSupplierCategoryManager } from '@/hooks/useSupplierCategoryManager';
 import { useCostCategories } from '@/hooks/useCostCategories';
 import { resolveSupplierPaymentCategoryLabel } from '@/utils/suppliers/resolveSupplierPaymentCategory';
 import { PaymentForm } from './PaymentForm';
@@ -74,15 +73,11 @@ export const PaymentList: React.FC = () => {
   } = useSupplierPayments();
   
   const { suppliers } = useSuppliers();
-  const { categories: supplierCategories = [] } = useSupplierCategoryManager();
   const { data: costCategories = [] } = useCostCategories();
 
   const exportCategories = useMemo(
-    () => [
-      ...supplierCategories,
-      ...costCategories.map((c) => ({ id: c.id, label: c.name })),
-    ],
-    [supplierCategories, costCategories]
+    () => costCategories.map((c) => ({ id: c.id, label: c.name })),
+    [costCategories]
   );
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
@@ -515,9 +510,7 @@ export const PaymentList: React.FC = () => {
 
                         {payment.category && (
                           <Badge variant="outline" className="text-xs">
-                            {resolveSupplierPaymentCategoryLabel(payment.category, {
-                              supplierCategories, costCategories, fallback: 'Sin categoría',
-                            })}
+                            {resolveSupplierPaymentCategoryLabel(payment.category, costCategories, 'Sin categoría')}
                           </Badge>
                         )}
 
@@ -595,7 +588,7 @@ export const PaymentList: React.FC = () => {
                           <div className="text-foreground">{payment.description}</div>
                           {payment.category && (
                             <Badge variant="outline">
-                              {resolveSupplierPaymentCategoryLabel(payment.category, { supplierCategories, costCategories, fallback: 'Sin categoría' })}
+                              {resolveSupplierPaymentCategoryLabel(payment.category, costCategories, 'Sin categoría')}
                             </Badge>
                           )}
                         </div>

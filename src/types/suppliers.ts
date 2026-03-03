@@ -2,7 +2,6 @@ import { Database } from "@/integrations/supabase/types";
 
 // Tipos base desde Supabase (única fuente de verdad)
 export type Supplier = Database['public']['Tables']['suppliers']['Row'];
-export type SupplierCategory = Database['public']['Tables']['supplier_categories']['Row'];
 
 // SupplierPaymentStatus - definir antes de usarlo
 export type SupplierPaymentStatus = 'pending' | 'paid' | 'overdue' | 'cancelled';
