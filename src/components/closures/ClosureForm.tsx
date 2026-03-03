@@ -40,6 +40,7 @@ const ClosureForm = ({
   onSubmit
 }: ClosureFormProps) => {
   const [currentStep, setCurrentStep] = useState(1);
+  const [servicesSearchTerm, setServicesSearchTerm] = useState('');
   const [formData, setFormData] = useState<FormData>({
     dateFrom: undefined,
     dateTo: undefined,
@@ -69,6 +70,7 @@ const ClosureForm = ({
   } = useServicesForClosures({
     dateFrom: formData.dateFrom,
     dateTo: formData.dateTo,
+    searchTerm: servicesSearchTerm,
     enabled: open
   });
   
@@ -283,6 +285,7 @@ const ClosureForm = ({
                             usedServiceIds={usedServiceIds}
                             isGlobalSearch={isGlobalSearch}
                             onAutoFillDates={handleAutoFillDates}
+                            onSearchTermChange={setServicesSearchTerm}
                             processedServices={processedServices}
                             searchingProcessed={searchingProcessed}
                             onSearchProcessed={searchProcessedServices}

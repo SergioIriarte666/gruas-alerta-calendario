@@ -23,6 +23,7 @@ interface EnhancedServicesSelectorProps {
   usedServiceIds: Set<string>;
   isGlobalSearch?: boolean;
   onAutoFillDates?: (dateFrom: Date, dateTo: Date) => void;
+  onSearchTermChange?: (searchTerm: string) => void;
   // New props for processed services
   processedServices?: ProcessedServiceInfo[];
   searchingProcessed?: boolean;
@@ -43,6 +44,7 @@ const EnhancedServicesSelector = ({
   usedServiceIds,
   isGlobalSearch = false,
   onAutoFillDates,
+  onSearchTermChange,
   processedServices = [],
   searchingProcessed = false,
   onSearchProcessed,
@@ -53,7 +55,9 @@ const EnhancedServicesSelector = ({
   const [searchTerm, setSearchTerm] = useState('');
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  
+  useEffect(() => {
+    onSearchTermChange?.(searchTerm);
+  }, [searchTerm, onSearchTermChange]);
 
   // Function to filter services by search term
   const filterServicesBySearch = useCallback((serviceList: Service[]) => {
