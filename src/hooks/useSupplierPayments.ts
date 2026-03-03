@@ -105,6 +105,10 @@ export const useSupplierPayments = () => {
       queryClient.invalidateQueries({ queryKey: ['supplier-stats'] });
       queryClient.invalidateQueries({ queryKey: ['supplier-invoices'] });
       queryClient.invalidateQueries({ queryKey: ['supplier-invoices-pending'] });
+      // Sync: trigger crea cost automáticamente
+      queryClient.invalidateQueries({ queryKey: ['costs'] });
+      queryClient.invalidateQueries({ queryKey: ['crane-costs'] });
+      queryClient.invalidateQueries({ queryKey: ['service-costs'] });
       toast.success('Pago creado exitosamente');
     },
     onError: (error) => {
@@ -210,25 +214,56 @@ export const useSupplierPayments = () => {
 
     const totalAmount = partDetails.part_quantity * partDetails.part_unit_price;
 
-    // Crear costo específico para piezas
-    const { data: costData, error: costError } = await supabase
-      .from('costs')
-      .insert({
-        amount: totalAmount,
-        category_id: maintenanceCategory.id,
-        crane_id: partDetails.crane_id,
-        date: paymentData.paid_date || new Date().toISOString().split('T')[0],
-        description: `Compra de piezas: ${partDetails.part_name}`,
-        notes: `Pago a proveedor. Cantidad: ${partDetails.part_quantity}, Precio unitario: $${partDetails.part_unit_price}`,
-        subcategory: 'Piezas y Repuestos',
-        supplier_payment_id: paymentId,
-        supplier_id: paymentData.supplier_id,
-        created_by: (await supabase.auth.getUser()).data.user?.id
-      })
-      .select()
+    // Buscar si el payment ya tiene un cost vinculado (via cost_id en el payment)
+    const { data: paymentWithCost } = await supabase
+      .from('supplier_payments')
+      .select('cost_id')
+      .eq('id', paymentId)
       .single();
 
-    if (costError) throw costError;
+    let costId: string;
+
+    if (paymentWithCost?.cost_id) {
+      // Ya existe un cost vinculado → actualizar en vez de crear
+      const { data: updatedCost, error: updateError } = await supabase
+        .from('costs')
+        .update({
+          amount: totalAmount,
+          category_id: maintenanceCategory.id,
+          crane_id: partDetails.crane_id,
+          description: `Compra de piezas: ${partDetails.part_name}`,
+          notes: `Pago a proveedor. Cantidad: ${partDetails.part_quantity}, Precio unitario: $${partDetails.part_unit_price}`,
+          subcategory: 'Piezas y Repuestos',
+          payment_date: paymentData.paid_date || new Date().toISOString().split('T')[0],
+        })
+        .eq('id', paymentWithCost.cost_id)
+        .select()
+        .single();
+
+      if (updateError) throw updateError;
+      costId = updatedCost.id;
+    } else {
+      // No existe cost → crear uno nuevo con supplier_payment_id para evitar trigger circular
+      const { data: costData, error: costError } = await supabase
+        .from('costs')
+        .insert({
+          amount: totalAmount,
+          category_id: maintenanceCategory.id,
+          crane_id: partDetails.crane_id,
+          date: paymentData.paid_date || new Date().toISOString().split('T')[0],
+          description: `Compra de piezas: ${partDetails.part_name}`,
+          notes: `Pago a proveedor. Cantidad: ${partDetails.part_quantity}, Precio unitario: $${partDetails.part_unit_price}`,
+          subcategory: 'Piezas y Repuestos',
+          supplier_payment_id: paymentId,
+          supplier_id: paymentData.supplier_id,
+          created_by: (await supabase.auth.getUser()).data.user?.id
+        })
+        .select()
+        .single();
+
+      if (costError) throw costError;
+      costId = costData.id;
+    }
 
     // Si add_to_inventory es true, crear movimiento de inventario
     if (partDetails.add_to_inventory) {
@@ -281,7 +316,7 @@ export const useSupplierPayments = () => {
           total_cost: totalAmount,
           crane_id: partDetails.crane_id,
           supplier_id: paymentData.supplier_id,
-          cost_id: costData.id,
+          cost_id: costId,
           movement_date: paymentData.paid_date || new Date().toISOString().split('T')[0],
           reason: 'Compra desde módulo de proveedores',
           observations: `Pago: ${paymentData.reference_number || paymentData.description}`,
@@ -372,6 +407,11 @@ export const useSupplierPayments = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['supplier-payments'] });
       queryClient.invalidateQueries({ queryKey: ['supplier-stats'] });
+      // Sync: trigger desvincula cost, invalidar queries relacionadas
+      queryClient.invalidateQueries({ queryKey: ['costs'] });
+      queryClient.invalidateQueries({ queryKey: ['service-costs'] });
+      queryClient.invalidateQueries({ queryKey: ['inventory-movements'] });
+      queryClient.invalidateQueries({ queryKey: ['inventory-stock'] });
       toast.success('Pago eliminado exitosamente');
     },
     onError: (error) => {

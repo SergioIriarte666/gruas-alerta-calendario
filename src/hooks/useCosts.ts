@@ -416,6 +416,7 @@ export const useDeleteCost = () => {
       
       // Invalidate general queries
       queryClient.invalidateQueries({ queryKey: ['costs'] });
+      queryClient.invalidateQueries({ queryKey: ['crane-costs'] });
       queryClient.invalidateQueries({ queryKey: ['cost-centers-stats'] });
       queryClient.refetchQueries({ queryKey: ['reports'] });
       
@@ -423,9 +424,15 @@ export const useDeleteCost = () => {
       queryClient.invalidateQueries({ queryKey: ['services'] });
       queryClient.invalidateQueries({ queryKey: ['service-costs'] });
       
-      // If the deleted cost was associated with a service, invalidate that specific service's costs
+      // Sync: trigger elimina payment + cancela inventory
+      queryClient.invalidateQueries({ queryKey: ['supplier-payments'] });
+      queryClient.invalidateQueries({ queryKey: ['supplier-stats'] });
+      queryClient.invalidateQueries({ queryKey: ['pending-payments'] });
+      queryClient.invalidateQueries({ queryKey: ['inventory-movements'] });
+      queryClient.invalidateQueries({ queryKey: ['inventory-stock'] });
+      queryClient.invalidateQueries({ queryKey: ['inventory-stats'] });
+      
       if (serviceId) {
-        console.log('[useDeleteCost] Invalidating service-costs for service:', serviceId);
         queryClient.invalidateQueries({ queryKey: ['service-costs', serviceId] });
       }
     },
