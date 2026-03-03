@@ -39,7 +39,8 @@ const AutomatedClosureWorkflow = ({ onBack }: AutomatedClosureWorkflowProps) => 
     loading,
     clientsSummary,
     completeService,
-    refetch
+    refetch,
+    removeServicesFromState
   } = useClosureAutomation();
   
   const { createClosure } = useServiceClosures();
@@ -60,6 +61,7 @@ const AutomatedClosureWorkflow = ({ onBack }: AutomatedClosureWorkflowProps) => 
   };
 
   const handleCreateClosure = async (clientData: ClientClosureData, selectedServices?: any[]) => {
+    console.time('createClosureFlow');
     try {
       const servicesToInclude = selectedServices || clientData.services.filter(s => s.canInclude);
       
@@ -69,6 +71,7 @@ const AutomatedClosureWorkflow = ({ onBack }: AutomatedClosureWorkflowProps) => 
           title: "Error",
           description: "No hay servicios válidos para incluir en el cierre.",
         });
+        console.timeEnd('createClosureFlow');
         return;
       }
 
@@ -87,7 +90,9 @@ const AutomatedClosureWorkflow = ({ onBack }: AutomatedClosureWorkflowProps) => 
         purchaseOrder: detectPurchaseOrders(servicesToInclude)
       };
 
+      console.time('createClosureOp');
       const newClosure = await createClosure(closureData);
+      console.timeEnd('createClosureOp');
       
       toast({
         type: "success",
@@ -96,23 +101,29 @@ const AutomatedClosureWorkflow = ({ onBack }: AutomatedClosureWorkflowProps) => 
       });
 
       // Ask if user wants to proceed with invoicing
-      const proceed = window.confirm(
-        `¿Desea proceder con la facturación del cierre "${newClosure.folio}"?`
-      );
-      
-      if (proceed) {
-        navigate('/invoices', { 
-          state: { 
-            preselectedClosureId: newClosure.id 
-          } 
-        });
-      } else {
-        // Refresh data, save created closure, and return to dashboard
-        setCreatedClosure(newClosure);
-        await refetch();
-        setCurrentView('dashboard');
-        setSelectedClient(null);
-      }
+      // Use setTimeout to allow UI to update before showing alert
+      setTimeout(() => {
+        // Update local state to remove processed services without refetching
+        removeServicesFromState(closureData.serviceIds);
+        
+        const proceed = window.confirm(
+          `¿Desea proceder con la facturación del cierre "${newClosure.folio}"?`
+        );
+        
+        if (proceed) {
+          navigate('/invoices', { 
+            state: { 
+              preselectedClosureId: newClosure.id 
+            } 
+          });
+        } else {
+          // Refresh data, save created closure, and return to dashboard
+          setCreatedClosure(newClosure);
+          setCurrentView('dashboard');
+          setSelectedClient(null);
+        }
+      }, 100);
+
     } catch (error) {
       console.error('Error creating closure:', error);
       toast({
@@ -120,6 +131,8 @@ const AutomatedClosureWorkflow = ({ onBack }: AutomatedClosureWorkflowProps) => 
         title: "Error",
         description: "No se pudo crear el cierre. Inténtalo de nuevo.",
       });
+    } finally {
+      console.timeEnd('createClosureFlow');
     }
   };
 

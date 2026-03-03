@@ -63,15 +63,18 @@ export const useClosureOperations = () => {
           service_id: serviceId
         }));
 
-        const { error: relationError } = await supabase
-          .from('closure_services')
-          .insert(closureServices);
+        // Batch inserts to avoid payload limits or timeouts
+        const BATCH_SIZE = 50;
+        for (let i = 0; i < closureServices.length; i += BATCH_SIZE) {
+          const batch = closureServices.slice(i, i + BATCH_SIZE);
+          const { error: relationError } = await supabase
+            .from('closure_services')
+            .insert(batch);
 
-        if (relationError) {
-          console.error('Error creating closure-service relationships:', relationError);
-          // Note: The closure was created, but services weren't linked. 
-          // We might want to rollback or alert the user.
-          throw relationError;
+          if (relationError) {
+            console.error('Error creating closure-service relationships (batch):', relationError);
+            throw relationError;
+          }
         }
         console.log('Services linked successfully');
       }

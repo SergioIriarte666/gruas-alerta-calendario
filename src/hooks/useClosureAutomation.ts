@@ -120,7 +120,8 @@ export const useClosureAutomation = () => {
         .gte('service_date', monthStart.toISOString().split('T')[0])
         .lte('service_date', monthEnd.toISOString().split('T')[0])
         .in('status', ['completed', 'with_purchase_order', 'pending', 'failed'])
-        .order('service_date', { ascending: true });
+        .order('service_date', { ascending: true })
+        .limit(1000); // Add limit to prevent massive payloads
       console.timeEnd('fetchServices');
 
       if (servicesError) {
@@ -128,7 +129,19 @@ export const useClosureAutomation = () => {
         throw servicesError;
       }
 
+      if (servicesData && servicesData.length >= 1000) {
+        toast({
+          type: "warning",
+          title: "Límite de servicios alcanzado",
+          description: "Se han cargado los primeros 1000 servicios. Puede que algunos no se muestren.",
+        });
+      }
+
+      console.time('transformServices');
+      // Process in chunks to avoid blocking UI
       const services = transformRawServiceData(servicesData || []);
+      console.timeEnd('transformServices');
+      
       console.log(`Fetched ${services.length} services for automation`);
 
       // Get only closure links for the candidate service IDs (not full table)
@@ -137,17 +150,31 @@ export const useClosureAutomation = () => {
 
       if (candidateIds.length > 0) {
         console.time('fetchClosureLinks');
-        const { data: closureServices, error: closureError } = await supabase
-          .from('closure_services')
-          .select('service_id')
-          .in('service_id', candidateIds);
+        
+        // Batch requests if there are too many IDs
+        const BATCH_SIZE = 200;
+        const batches = [];
+        
+        for (let i = 0; i < candidateIds.length; i += BATCH_SIZE) {
+          const batchIds = candidateIds.slice(i, i + BATCH_SIZE);
+          batches.push(
+            supabase
+              .from('closure_services')
+              .select('service_id')
+              .in('service_id', batchIds)
+          );
+        }
+        
+        const results = await Promise.all(batches);
+        const closureServices = results.flatMap(r => r.data || []);
+        
         console.timeEnd('fetchClosureLinks');
 
-        if (closureError) {
-          console.error('Error fetching closure services:', closureError);
-        }
+        results.forEach(r => {
+          if (r.error) console.error('Error fetching closure services batch:', r.error);
+        });
 
-        usedServiceIds = new Set(closureServices?.map(cs => cs.service_id) || []);
+        usedServiceIds = new Set(closureServices.map(cs => cs.service_id));
       }
 
       // Filter out services already in closures
@@ -235,6 +262,48 @@ export const useClosureAutomation = () => {
     }
   }, [transformRawServiceData, toast]);
 
+  const removeServicesFromState = useCallback((serviceIds: string[]) => {
+    setClientsData(currentClientsData => {
+      const serviceIdsSet = new Set(serviceIds);
+      
+      const newClientsData = currentClientsData.map(clientData => {
+        const newServices = clientData.services.filter(s => !serviceIdsSet.has(s.id));
+        
+        if (newServices.length === clientData.services.length) {
+          return clientData;
+        }
+
+        // Recalculate stats for this client
+        const completedServices = newServices.filter(s => 
+          ['completed', 'with_purchase_order'].includes(s.status)
+        ).length;
+        
+        const pendingServices = newServices.filter(s => 
+          s.status === 'pending'
+        ).length;
+
+        const totalAmount = newServices.reduce((sum, s) => sum + s.value, 0);
+        
+        const hasIssues = newServices.some(s => s.issues.length > 0);
+        const issues = Array.from(new Set(
+          newServices.flatMap(s => s.issues.map(i => i.message))
+        ));
+
+        return {
+          ...clientData,
+          services: newServices,
+          completedServices,
+          pendingServices,
+          totalAmount,
+          hasIssues,
+          issues
+        };
+      }).filter(clientData => clientData.services.length > 0); // Remove clients with no services
+
+      return newClientsData;
+    });
+  }, []);
+
   const completeService = async (serviceId: string) => {
     try {
       const { error } = await supabase
@@ -279,6 +348,7 @@ export const useClosureAutomation = () => {
     loading,
     clientsSummary,
     completeService,
+    removeServicesFromState,
     refetch: () => fetchClientsForMonth(selectedMonth)
   };
 };

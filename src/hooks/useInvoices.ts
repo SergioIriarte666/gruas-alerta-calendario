@@ -34,12 +34,33 @@ export const useInvoices = () => {
           return;
         }
 
+        // Helper function to batch requests
+        const fetchInBatches = async (table: string, ids: string[], fields: string) => {
+          const BATCH_SIZE = 100;
+          const batches = [];
+          for (let i = 0; i < ids.length; i += BATCH_SIZE) {
+            batches.push(
+              (supabase.from(table as any) as any).select(fields).in('id', ids.slice(i, i + BATCH_SIZE))
+            );
+          }
+          const results = await Promise.all(batches);
+          const allData: any[] = [];
+          let error = null;
+          
+          results.forEach((res: any) => {
+            if (res.data) allData.push(...res.data);
+            if (res.error) error = res.error;
+          });
+          
+          return { data: allData, error };
+        };
+
         const [closuresData, clientsData] = await Promise.all([
           missingClosureIds.length > 0
-            ? supabase.from('service_closures').select('id, folio, date_from, date_to, total, status, client_id').in('id', missingClosureIds)
+            ? fetchInBatches('service_closures', missingClosureIds, 'id, folio, date_from, date_to, total, status, client_id')
             : Promise.resolve({ data: [], error: null }),
           missingClientIds.length > 0
-            ? supabase.from('clients').select('id, name, rut, email, phone').in('id', missingClientIds)
+            ? fetchInBatches('clients', missingClientIds, 'id, name, rut, email, phone')
             : Promise.resolve({ data: [], error: null })
         ]);
 

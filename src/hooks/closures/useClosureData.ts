@@ -4,8 +4,8 @@ import { toast } from 'sonner';
 import { formatClosureData } from '@/utils/closureUtils';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 
-const MAX_CLOSURES = 500;
-const MAX_CLOSURES_WITH_SERVICE_LINKS = 120;
+const MAX_CLOSURES = 200;
+const MAX_CLOSURES_WITH_SERVICE_LINKS = 50;
 
 const fetchClosures = async (): Promise<ServiceClosure[]> => {
   const { data: basicClosures, error: basicError } = await supabase

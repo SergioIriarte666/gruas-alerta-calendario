@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Edit, Trash2, FileText, ArrowUpDown, ArrowUp, ArrowDown, Eye, Users, List } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import { Edit, Trash2, FileText, ArrowUpDown, ArrowUp, ArrowDown, Eye, Users, List, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -39,9 +39,33 @@ const SortIcon = ({ field, currentSortField, sortDirection }: {
     <ArrowDown className="ml-2 h-4 w-4 text-primary" />;
 };
 
+const ITEMS_PER_PAGE = 50;
+
 const ClosuresTable = ({ closures, clients, onEdit, onDelete, onClose, onViewDetails, sortField, sortDirection, onSort }: ClosuresTableProps) => {
   const { isMobile } = useDeviceType();
   const [groupByClient, setGroupByClient] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+
+  // Reset page when grouping changes or closures change
+  useMemo(() => {
+    setCurrentPage(1);
+  }, [groupByClient, closures.length]);
+
+  const paginatedClosures = useMemo(() => {
+    if (groupByClient) return closures; // Grouped view handles its own rendering
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    return closures.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  }, [closures, currentPage, groupByClient]);
+
+  const totalPages = Math.ceil(closures.length / ITEMS_PER_PAGE);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    const tableElement = document.getElementById('closures-table-top');
+    if (tableElement) {
+      tableElement.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
 
   if (isMobile) {
     return (
@@ -94,21 +118,48 @@ const ClosuresTable = ({ closures, clients, onEdit, onDelete, onClose, onViewDet
   };
 
   return (
-    <Card className="bg-card border">
+    <Card className="bg-card border" id="closures-table-top">
       <CardHeader className="flex flex-row items-center justify-between space-y-0">
         <CardTitle className="text-foreground">
           Lista de Cierres ({closures.length})
         </CardTitle>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setGroupByClient(!groupByClient)}
-          className="gap-2"
-          title={groupByClient ? 'Vista plana' : 'Agrupar por cliente'}
-        >
-          {groupByClient ? <List className="h-4 w-4" /> : <Users className="h-4 w-4" />}
-          {groupByClient ? 'Vista plana' : 'Por cliente'}
-        </Button>
+        <div className="flex items-center gap-4">
+          {!groupByClient && totalPages > 1 && (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <span>Página {currentPage} de {totalPages}</span>
+              <div className="flex gap-1">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
+                  disabled={currentPage === 1}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
+                  disabled={currentPage === totalPages}
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          )}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setGroupByClient(!groupByClient)}
+            className="gap-2"
+            title={groupByClient ? 'Vista plana' : 'Agrupar por cliente'}
+          >
+            {groupByClient ? <List className="h-4 w-4" /> : <Users className="h-4 w-4" />}
+            {groupByClient ? 'Vista plana' : 'Por cliente'}
+          </Button>
+        </div>
       </CardHeader>
       <CardContent>
         {groupByClient ? (
@@ -121,140 +172,163 @@ const ClosuresTable = ({ closures, clients, onEdit, onDelete, onClose, onViewDet
             onViewDetails={onViewDetails}
           />
         ) : (
-        <Table>
-          <TableHeader>
-            <TableRow className="border-border">
-              <TableHead 
-                className="text-foreground cursor-pointer hover:text-primary transition-colors" 
-                onClick={() => onSort?.('folio')}
-              >
-                <div className="flex items-center">
-                  Folio
-                  <SortIcon field="folio" currentSortField={sortField} sortDirection={sortDirection} />
+          <>
+            <Table>
+              <TableHeader>
+                <TableRow className="border-border">
+                  <TableHead 
+                    className="text-foreground cursor-pointer hover:text-primary transition-colors" 
+                    onClick={() => onSort?.('folio')}
+                  >
+                    <div className="flex items-center">
+                      Folio
+                      <SortIcon field="folio" currentSortField={sortField} sortDirection={sortDirection} />
+                    </div>
+                  </TableHead>
+                  <TableHead 
+                    className="text-foreground cursor-pointer hover:text-primary transition-colors" 
+                    onClick={() => onSort?.('dateFrom')}
+                  >
+                    <div className="flex items-center">
+                      Período
+                      <SortIcon field="dateFrom" currentSortField={sortField} sortDirection={sortDirection} />
+                    </div>
+                  </TableHead>
+                  <TableHead 
+                    className="text-foreground cursor-pointer hover:text-primary transition-colors" 
+                    onClick={() => onSort?.('clientId')}
+                  >
+                    <div className="flex items-center">
+                      Cliente
+                      <SortIcon field="clientId" currentSortField={sortField} sortDirection={sortDirection} />
+                    </div>
+                  </TableHead>
+                  <TableHead 
+                    className="text-foreground cursor-pointer hover:text-primary transition-colors" 
+                    onClick={() => onSort?.('serviceCount')}
+                  >
+                    <div className="flex items-center">
+                      Servicios
+                      <SortIcon field="serviceCount" currentSortField={sortField} sortDirection={sortDirection} />
+                    </div>
+                  </TableHead>
+                  <TableHead 
+                    className="text-foreground cursor-pointer hover:text-primary transition-colors" 
+                    onClick={() => onSort?.('total')}
+                  >
+                    <div className="flex items-center">
+                      Total
+                      <SortIcon field="total" currentSortField={sortField} sortDirection={sortDirection} />
+                    </div>
+                  </TableHead>
+                  <TableHead 
+                    className="text-foreground cursor-pointer hover:text-primary transition-colors" 
+                    onClick={() => onSort?.('status')}
+                  >
+                    <div className="flex items-center">
+                      Estado
+                      <SortIcon field="status" currentSortField={sortField} sortDirection={sortDirection} />
+                    </div>
+                  </TableHead>
+                  <TableHead className="text-foreground text-right">Acciones</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {paginatedClosures.map((closure) => (
+                  <TableRow 
+                    key={closure.id} 
+                    className="border-border hover:bg-muted cursor-pointer"
+                    onClick={() => onViewDetails(closure)}
+                  >
+                    <TableCell className="text-foreground font-medium">
+                      {closure.folio}
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {formatDateRange(closure.dateRange)}
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {getClientName(closure.clientId)}
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {closure.serviceIds.length} servicios
+                    </TableCell>
+                    <TableCell className="text-foreground font-medium">
+                      {formatCurrency(closure.total)}
+                    </TableCell>
+                    <TableCell>
+                      {getStatusBadge(closure.status)}
+                    </TableCell>
+                    <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
+                      <div className="flex justify-end space-x-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => onViewDetails(closure)}
+                          title="Ver detalles"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </Button>
+                        {closure.status === 'open' && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => onClose(closure.id, closure.folio)}
+                            title="Cerrar periodo"
+                          >
+                            <FileText className="w-4 h-4" />
+                          </Button>
+                        )}
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => onEdit(closure)}
+                          title="Editar cierre"
+                        >
+                          <Edit className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => onDelete(closure.id, closure.folio)}
+                          className="text-destructive border-destructive/40 hover:bg-destructive/10"
+                          title="Eliminar cierre"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+            
+            {/* Bottom Pagination Controls */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-end space-x-2 py-4">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
+                  disabled={currentPage === 1}
+                >
+                  <ChevronLeft className="h-4 w-4 mr-2" />
+                  Anterior
+                </Button>
+                <div className="text-sm text-muted-foreground">
+                  Página {currentPage} de {totalPages}
                 </div>
-              </TableHead>
-              <TableHead 
-                className="text-foreground cursor-pointer hover:text-primary transition-colors" 
-                onClick={() => onSort?.('dateFrom')}
-              >
-                <div className="flex items-center">
-                  Período
-                  <SortIcon field="dateFrom" currentSortField={sortField} sortDirection={sortDirection} />
-                </div>
-              </TableHead>
-              <TableHead 
-                className="text-foreground cursor-pointer hover:text-primary transition-colors" 
-                onClick={() => onSort?.('clientId')}
-              >
-                <div className="flex items-center">
-                  Cliente
-                  <SortIcon field="clientId" currentSortField={sortField} sortDirection={sortDirection} />
-                </div>
-              </TableHead>
-              <TableHead 
-                className="text-foreground cursor-pointer hover:text-primary transition-colors" 
-                onClick={() => onSort?.('serviceCount')}
-              >
-                <div className="flex items-center">
-                  Servicios
-                  <SortIcon field="serviceCount" currentSortField={sortField} sortDirection={sortDirection} />
-                </div>
-              </TableHead>
-              <TableHead 
-                className="text-foreground cursor-pointer hover:text-primary transition-colors" 
-                onClick={() => onSort?.('total')}
-              >
-                <div className="flex items-center">
-                  Total
-                  <SortIcon field="total" currentSortField={sortField} sortDirection={sortDirection} />
-                </div>
-              </TableHead>
-              <TableHead 
-                className="text-foreground cursor-pointer hover:text-primary transition-colors" 
-                onClick={() => onSort?.('status')}
-              >
-                <div className="flex items-center">
-                  Estado
-                  <SortIcon field="status" currentSortField={sortField} sortDirection={sortDirection} />
-                </div>
-              </TableHead>
-              <TableHead className="text-foreground text-right">Acciones</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {closures.map((closure) => (
-              <TableRow 
-                key={closure.id} 
-                className="border-border hover:bg-muted cursor-pointer"
-                onClick={() => onViewDetails(closure)}
-              >
-                <TableCell className="text-foreground font-medium">
-                  {closure.folio}
-                </TableCell>
-                <TableCell className="text-muted-foreground">
-                  {formatDateRange(closure.dateRange)}
-                </TableCell>
-                <TableCell className="text-muted-foreground">
-                  {getClientName(closure.clientId)}
-                </TableCell>
-                <TableCell className="text-muted-foreground">
-                  {closure.serviceIds.length} servicios
-                </TableCell>
-                <TableCell className="text-foreground font-medium">
-                  {formatCurrency(closure.total)}
-                </TableCell>
-                <TableCell>
-                  {getStatusBadge(closure.status)}
-                </TableCell>
-                <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
-                  <div className="flex justify-end space-x-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => onViewDetails(closure)}
-                      title="Ver detalles"
-                    >
-                      <Eye className="w-4 h-4" />
-                    </Button>
-                    {closure.status === 'open' && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => onClose(closure.id, closure.folio)}
-                        title="Cerrar periodo"
-                      >
-                        <FileText className="w-4 h-4" />
-                      </Button>
-                    )}
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => onEdit(closure)}
-                      title="Editar cierre"
-                    >
-                      <Edit className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => onDelete(closure.id, closure.folio)}
-                      className="text-destructive border-destructive/40 hover:bg-destructive/10"
-                      title="Eliminar cierre"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-        )}
-
-        {closures.length === 0 && (
-          <div className="text-center py-8">
-            <p className="text-muted-foreground">No se encontraron cierres</p>
-          </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
+                  disabled={currentPage === totalPages}
+                >
+                  Siguiente
+                  <ChevronRight className="h-4 w-4 ml-2" />
+                </Button>
+              </div>
+            )}
+          </>
         )}
       </CardContent>
     </Card>

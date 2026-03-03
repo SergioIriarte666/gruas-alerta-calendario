@@ -152,20 +152,28 @@ const Closures = () => {
   };
 
   const handleCreateClosure = async (closureData: Omit<ServiceClosure, 'id' | 'folio' | 'createdAt' | 'updatedAt'>) => {
+    console.time('manualCreateClosure');
     try {
       
       const newClosure = await createClosure(closureData);
       setShowCreateModal(false);
       setCreatedClosure(newClosure);
-      setShowInvoiceDialog(true);
-      toast.success("Cierre creado", {
-        description: "El cierre ha sido creado exitosamente.",
-      });
+      
+      // Use setTimeout to allow modal to close and UI to update before showing dialog
+      setTimeout(() => {
+        setShowInvoiceDialog(true);
+        toast.success("Cierre creado", {
+          description: "El cierre ha sido creado exitosamente.",
+        });
+      }, 300);
+      
     } catch (error) {
       console.error('Error creating closure:', error);
       toast.error("Error", {
         description: "No se pudo crear el cierre.",
       });
+    } finally {
+      console.timeEnd('manualCreateClosure');
     }
   };
 
