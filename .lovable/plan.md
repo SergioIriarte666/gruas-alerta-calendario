@@ -1,40 +1,48 @@
 
 
-## Problema confirmado
+## Plan: Agrupar por Cliente en el Reporte de Pendientes
 
-Las fotos prueban que los dos vehículos son distintos con VINs reales:
-- `LZWCDAGA5TC811556`
-- `LZWCDAGA7TC811557`
+### Problema
+Actualmente las secciones del reporte (Sin OC, Sin Cotización, Pendientes de Facturar, Pendientes de Cierre) ordenan por fecha, mezclando todos los clientes. Esto dificulta la lectura.
 
-Ambos están registrados en la base de datos. Sin embargo, la IA que lee el PDF extrajo el segundo VIN como `LZWCDAGA**7**TC811557` cuando en la BD está como `LZWCDAGA**5**TC811557` — es decir, la IA confundió el dígito 5 con 7 al leer el PDF. Esto es un error de OCR/lectura, no un problema de vehículos diferentes.
+### Solución
+Modificar `src/utils/pdf/pendingReportPDF.ts` para que cada sección agrupe los registros por cliente alfabéticamente, y dentro de cada cliente ordene por fecha. Se usará un sub-encabezado visual (fila coloreada con el nombre del cliente) para separar los grupos.
 
-El matching actual es estrictamente exacto, por lo que ese 1 carácter de diferencia genera "Sin match".
+### Cambios en `src/utils/pdf/pendingReportPDF.ts`
 
-## Solución: Matching fuzzy para VINs (dos capas)
+1. **Crear función helper `groupByClient`**: Recibe un array de filas `[folio, cliente, fecha, días, ...]` y retorna el mismo array reordenado: primero agrupa por la columna "Cliente" (índice 1), ordena los grupos alfabéticamente, y dentro de cada grupo mantiene el orden por fecha.
 
-### Capa 1 — Mejorar el prompt de la IA (backend)
-En `supabase/functions/parse-purchase-order-pdf/index.ts`, agregar instrucción al prompt para que la IA sea más cuidadosa con dígitos similares (5/6, 7/1, 0/O, etc.) y que intente verificar consistencia interna del VIN.
+2. **Modificar `addSection`** para aceptar un flag `groupByClient` que inserte filas de sub-encabezado con el nombre del cliente (fondo gris oscuro, texto bold, colspan visual) antes de cada grupo. Esto crea separación visual clara.
 
-### Capa 2 — Fuzzy matching en frontend (tolerancia a errores de OCR)
-En `src/hooks/vip/usePurchaseOrderPDFImport.ts` y `src/hooks/vip/useQuotePDFImport.ts`:
+3. **Aplicar agrupación** a las 5 secciones que tienen columna "Cliente":
+   - Servicios Pendientes de Facturar
+   - Servicios sin Orden de Compra
+   - Servicios sin Cotización
+   - Facturas Pendientes de Pago
+   - Servicios Pendientes de Cierre
 
-1. Agregar función Levenshtein (~15 líneas).
-2. Cuando `matchingServices.length === 0` y el identificador tiene ≥16 caracteres (VIN):
-   - Buscar en `clientServices` el candidato con menor distancia de edición (≤2).
-   - Si hay exactamente 1 candidato claro, usarlo como match.
-   - Si hay ambigüedad o distancia >2, mantener "Sin match".
+4. **Servicios del Día** también se agrupará por cliente.
 
+### Resultado Visual
 ```text
-Flujo:
-  VIN del PDF → normalizar → match exacto → ✅ usar
-                                           → ❌ sin match
-    → si VIN ≥ 16 chars → buscar fuzzy (Levenshtein ≤ 2)
-      → 1 candidato → match
-      → 0 o ambiguo → "Sin match"
+2. Servicios sin Orden de Compra (15)
+┌─────────────────────────────────────┐
+│ ▶ Cliente ABC (5)                   │  ← sub-header row
+├───────┬────────────┬───────┬────────┤
+│ Folio │ Fecha      │ Días  │        │
+│ SRV-1 │ 01/01/2026 │ 60    │        │
+│ SRV-2 │ 05/01/2026 │ 56    │        │
+│ ...   │            │       │        │
+├─────────────────────────────────────┤
+│ ▶ Cliente XYZ (3)                   │  ← sub-header row
+├───────┬────────────┬───────┬────────┤
+│ SRV-8 │ 10/02/2026 │ 20    │        │
+│ ...   │            │       │        │
+└───────┴────────────┴───────┴────────┘
 ```
 
+La columna "Cliente" se elimina de las filas individuales (ya que el sub-header la muestra) para ganar espacio horizontal, o se mantiene si se prefiere redundancia. Optaré por **mantenerla** para que cada fila sea auto-contenida, pero el agrupamiento visual hará que sea fácil de leer.
+
 ### Archivos a modificar
-- `supabase/functions/parse-purchase-order-pdf/index.ts` — Agregar instrucción de cuidado con dígitos similares en VINs al system prompt.
-- `src/hooks/vip/usePurchaseOrderPDFImport.ts` — Agregar función Levenshtein y segunda pasada fuzzy tras fallo de match exacto.
-- `src/hooks/vip/useQuotePDFImport.ts` — Misma mejora para consistencia.
+- `src/utils/pdf/pendingReportPDF.ts` — única modificación
 
