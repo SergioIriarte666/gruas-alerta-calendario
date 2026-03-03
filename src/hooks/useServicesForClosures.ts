@@ -7,6 +7,7 @@ import { useServiceTransformer } from './services/useServiceTransformer';
 interface UseServicesForClosuresOptions {
   dateFrom?: Date;
   dateTo?: Date;
+  searchTerm?: string;
   enabled?: boolean;
 }
 
@@ -44,7 +45,7 @@ export const useServicesForClosures = (options: UseServicesForClosuresOptions = 
   const [searchingProcessed, setSearchingProcessed] = useState(false);
   const { transformRawServiceData } = useServiceTransformer();
   const { toast } = useToast();
-  const { dateFrom, dateTo, enabled = true } = options;
+  const { dateFrom, dateTo, searchTerm = '', enabled = true } = options;
   
   // Flag to indicate if this is a global search (no date filter)
   const isGlobalSearch = !dateFrom && !dateTo;
@@ -52,38 +53,56 @@ export const useServicesForClosures = (options: UseServicesForClosuresOptions = 
   const fetchServicesData = async () => {
     try {
       setLoading(true);
-      // In global search mode (no dates selected), do not enforce a default date window.
-      // This allows searching and closing older services by OC/folio/patente.
 
-      
-      // Build the query for billable services (completed and with purchase order)
-      // SIMPLIFIED QUERY: Remove inner join that was filtering out services
+      const normalizedSearch = searchTerm.trim();
+      const hasSearch = normalizedSearch.length > 0;
+      const safeSearchTerm = normalizedSearch.replace(/,/g, ' ');
+      const searchPattern = `%${safeSearchTerm}%`;
+      const serviceSearchFilter = `purchase_order.ilike.${searchPattern},purchase_order_number.ilike.${searchPattern},folio.ilike.${searchPattern},license_plate.ilike.${searchPattern},vehicle_brand.ilike.${searchPattern},vehicle_model.ilike.${searchPattern},origin.ilike.${searchPattern},destination.ilike.${searchPattern}`;
+
+      const baseServiceSelect = `
+        id,
+        folio,
+        request_date,
+        service_date,
+        client_id,
+        purchase_order,
+        purchase_order_number,
+        quote_number,
+        vehicle_brand,
+        vehicle_model,
+        license_plate,
+        origin,
+        destination,
+        service_type_id,
+        value,
+        crane_id,
+        operator_id,
+        operator_commission,
+        status,
+        observations,
+        has_excess,
+        client_covered_amount,
+        excess_amount,
+        created_by,
+        created_at,
+        updated_at,
+        client:clients!services_client_id_fkey(id, name, rut, phone, email, address, department, is_active),
+        third_party_client:clients!services_third_party_client_id_fkey(id, name, rut, phone, email, address, department, is_active),
+        cranes!left(id, license_plate, brand, model, type, is_active),
+        operators!left(id, name, rut, phone, license_number, is_active),
+        service_types!left(id, name, description, is_active)
+      `;
+
       let billableQuery = supabase
         .from('services')
-        .select(`
-          *,
-          client:clients!services_client_id_fkey(id, name, rut, phone, email, address, is_active),
-          third_party_client:clients!services_third_party_client_id_fkey(id, name, rut, phone, email, address, is_active),
-          cranes!left(id, license_plate, brand, model, type, is_active),
-          operators!left(id, name, rut, phone, license_number, is_active),
-          service_types!left(id, name, description, is_active)
-        `)
-        .in('status', ['completed', 'with_purchase_order', 'failed'])
-        .order('folio', { ascending: true });
+        .select(baseServiceSelect)
+        .in('status', ['completed', 'with_purchase_order', 'failed']);
 
-      // Build the query for pending services
       let pendingQuery = supabase
         .from('services')
-        .select(`
-          *,
-          client:clients!services_client_id_fkey(id, name, rut, phone, email, address, is_active),
-          third_party_client:clients!services_third_party_client_id_fkey(id, name, rut, phone, email, address, is_active),
-          cranes!left(id, license_plate, brand, model, type, is_active),
-          operators!left(id, name, rut, phone, license_number, is_active),
-          service_types!left(id, name, description, is_active)
-        `)
-        .eq('status', 'pending')
-        .order('folio', { ascending: true });
+        .select(baseServiceSelect)
+        .eq('status', 'pending');
 
       // Add explicit date range filter only when the user selects dates
       if (dateFrom) {
@@ -93,6 +112,21 @@ export const useServicesForClosures = (options: UseServicesForClosuresOptions = 
       if (dateTo) {
         billableQuery = billableQuery.lte('service_date', dateTo.toISOString().split('T')[0]);
         pendingQuery = pendingQuery.lte('service_date', dateTo.toISOString().split('T')[0]);
+      }
+
+      // In global mode, avoid loading massive datasets until user searches
+      if (isGlobalSearch && !hasSearch) {
+        billableQuery = billableQuery.order('service_date', { ascending: false }).limit(250);
+        pendingQuery = pendingQuery.order('service_date', { ascending: false }).limit(100);
+      } else {
+        billableQuery = billableQuery.order('service_date', { ascending: false }).limit(500);
+        pendingQuery = pendingQuery.order('service_date', { ascending: false }).limit(200);
+      }
+
+      // Server-side search for heavy datasets
+      if (hasSearch) {
+        billableQuery = billableQuery.or(serviceSearchFilter);
+        pendingQuery = pendingQuery.or(serviceSearchFilter);
       }
 
       const [billableResult, pendingResult] = await Promise.all([
@@ -124,7 +158,6 @@ export const useServicesForClosures = (options: UseServicesForClosuresOptions = 
       }
 
       const usedServiceIds = new Set(closureServices?.map(cs => cs.service_id) || []);
-      console.log('Services already in closures:', usedServiceIds.size);
 
       // Filter out services that are already in closures
       const availableBillableServices = billableServices.filter(service => !usedServiceIds.has(service.id));
@@ -214,7 +247,7 @@ export const useServicesForClosures = (options: UseServicesForClosuresOptions = 
   useEffect(() => {
     if (!enabled) return;
     fetchServicesData();
-  }, [dateFrom, dateTo, enabled]);
+  }, [dateFrom, dateTo, searchTerm, enabled]);
 
   // Refetch function that forces fresh data
   const refetchWithDebug = async () => {
