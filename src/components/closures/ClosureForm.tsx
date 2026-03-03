@@ -111,18 +111,22 @@ const ClosureForm = ({
         purchaseOrder: formData.purchaseOrder || undefined
       });
 
-      setFormData({
-        dateFrom: undefined,
-        dateTo: undefined,
-        clientId: '',
-        serviceIds: [],
-        total: 0,
-        status: 'open',
-        purchaseOrder: ''
-      });
-      setCurrentStep(1);
-      
+      // Cerrar primero evita re-fetch pesado con enabled=true durante el reset del formulario
       onOpenChange(false);
+
+      // Reset diferido para que el modal ya esté cerrado
+      setTimeout(() => {
+        setFormData({
+          dateFrom: undefined,
+          dateTo: undefined,
+          clientId: '',
+          serviceIds: [],
+          total: 0,
+          status: 'open',
+          purchaseOrder: ''
+        });
+        setCurrentStep(1);
+      }, 0);
     } catch (error) {
       console.error('Error creating closure:', error);
     } finally {

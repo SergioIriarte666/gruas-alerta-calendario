@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { EnhancedClosureSelector } from '@/components/invoices/EnhancedClosureSelector';
+import EnhancedClosureSelector from '@/components/invoices/EnhancedClosureSelector';
 import { ClosureWithClient } from '@/hooks/useClosuresForInvoices';
 
 const PerformanceTest = () => {
