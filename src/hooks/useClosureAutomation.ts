@@ -106,6 +106,7 @@ export const useClosureAutomation = () => {
 
       // Fetch services for the selected month
       // FIXED: Changed service_types!inner to service_types!left to include services without service type
+      console.time('fetchServices');
       const { data: servicesData, error: servicesError } = await supabase
         .from('services')
         .select(`
@@ -120,6 +121,7 @@ export const useClosureAutomation = () => {
         .lte('service_date', monthEnd.toISOString().split('T')[0])
         .in('status', ['completed', 'with_purchase_order', 'pending', 'failed'])
         .order('service_date', { ascending: true });
+      console.timeEnd('fetchServices');
 
       if (servicesError) {
         console.error('Error fetching services:', servicesError);
@@ -127,16 +129,19 @@ export const useClosureAutomation = () => {
       }
 
       const services = transformRawServiceData(servicesData || []);
+      console.log(`Fetched ${services.length} services for automation`);
 
       // Get only closure links for the candidate service IDs (not full table)
       const candidateIds = services.map(s => s.id);
       let usedServiceIds = new Set<string>();
 
       if (candidateIds.length > 0) {
+        console.time('fetchClosureLinks');
         const { data: closureServices, error: closureError } = await supabase
           .from('closure_services')
           .select('service_id')
           .in('service_id', candidateIds);
+        console.timeEnd('fetchClosureLinks');
 
         if (closureError) {
           console.error('Error fetching closure services:', closureError);

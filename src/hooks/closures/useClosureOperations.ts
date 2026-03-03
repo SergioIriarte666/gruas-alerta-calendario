@@ -13,14 +13,15 @@ export const useClosureOperations = () => {
       const { data: { user } } = await supabase.auth.getUser();
       
       // Generate folio by finding the highest CIE-XXX folio
+      // Optimization: Order by created_at instead of folio string to avoid ASCII sorting issues with CIE-1000 vs CIE-999
       const { data: lastClosure } = await supabase
         .from('service_closures')
         .select('folio')
         .like('folio', 'CIE-%')
-        .order('folio', { ascending: false })
+        .order('created_at', { ascending: false })
         .limit(1)
         .maybeSingle();
-      
+
       let nextNumber = 1;
       if (lastClosure?.folio) {
         const match = lastClosure.folio.match(/CIE-(\d+)/);
@@ -28,10 +29,9 @@ export const useClosureOperations = () => {
           nextNumber = parseInt(match[1]) + 1;
         }
       }
-      
-      
-      
+
       const folio = `CIE-${String(nextNumber).padStart(3, '0')}`;
+      console.log('Generating new closure with folio:', folio);
 
       const { data, error } = await supabase
         .from('service_closures')
@@ -48,12 +48,16 @@ export const useClosureOperations = () => {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error creating closure:', error);
+        throw error;
+      }
 
-      
+      console.log('Closure created successfully, ID:', data.id);
 
       // Create closure-service relationships
       if (closureData.serviceIds.length > 0) {
+        console.log(`Linking ${closureData.serviceIds.length} services to closure...`);
         const closureServices = closureData.serviceIds.map(serviceId => ({
           closure_id: data.id,
           service_id: serviceId
@@ -65,8 +69,11 @@ export const useClosureOperations = () => {
 
         if (relationError) {
           console.error('Error creating closure-service relationships:', relationError);
+          // Note: The closure was created, but services weren't linked. 
+          // We might want to rollback or alert the user.
           throw relationError;
         }
+        console.log('Services linked successfully');
       }
 
       const newClosure: ServiceClosure = formatClosureData(data);

@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/sheet";
 import ClosureReportForm from '@/components/closures/ClosureReportForm';
 import { Bot, Zap } from 'lucide-react';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 
 const Closures = () => {
   const { closures, loading, createClosure, updateClosure, deleteClosure, closeClosure } = useServiceClosures();
@@ -217,7 +218,11 @@ const Closures = () => {
   }
 
   if (showAutomation) {
-    return <AutomatedClosureWorkflow onBack={() => setShowAutomation(false)} />;
+    return (
+      <ErrorBoundary name="AutomatedClosureWorkflow">
+        <AutomatedClosureWorkflow onBack={() => setShowAutomation(false)} />
+      </ErrorBoundary>
+    );
   }
 
   return (
@@ -262,17 +267,19 @@ const Closures = () => {
         clients={clients}
       />
       
-      <ClosuresTable
-        closures={filteredAndSortedClosures}
-        clients={clients}
-        onEdit={handleEdit}
-        onDelete={handleDelete}
-        onClose={handleClose}
-        onViewDetails={setSelectedClosure}
-        sortField={sortField}
-        sortDirection={sortDirection}
-        onSort={handleSort}
-      />
+      <ErrorBoundary name="ClosuresTable">
+        <ClosuresTable
+          closures={filteredAndSortedClosures}
+          clients={clients}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+          onClose={handleClose}
+          onViewDetails={setSelectedClosure}
+          sortField={sortField}
+          sortDirection={sortDirection}
+          onSort={handleSort}
+        />
+      </ErrorBoundary>
 
       <ClosureDetailsModal
         closure={selectedClosure}

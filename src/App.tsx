@@ -18,7 +18,7 @@ import DebugFreeze from '@/pages/DebugFreeze';
 import ConnectionTest from '@/pages/ConnectionTest';
 
 // Version check for production debugging
-console.log('App version: 1.0.3 - Added ConnectionTest page');
+console.log('App version: 1.0.4');
 
 // Route chunk imports - stored for preloading
 const routeImports = {
