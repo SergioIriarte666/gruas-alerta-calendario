@@ -9,6 +9,7 @@ interface UseInvoiceFormDataProps {
 
 export const useInvoiceFormData = ({ invoice, preselectedClosureId }: UseInvoiceFormDataProps) => {
   const initializedRef = useRef(false);
+  const prevClosureIdRef = useRef(preselectedClosureId);
   
   // Memoized form data - only changes when invoice ID or preselectedClosureId changes
   const formData = useMemo(() => {
@@ -40,11 +41,23 @@ export const useInvoiceFormData = ({ invoice, preselectedClosureId }: UseInvoice
   // Track if form has been initialized to prevent multiple resets
   const shouldReset = useMemo(() => {
     const shouldResetNow = !initializedRef.current;
+    
+    // Also reset if preselectedClosureId changes (e.g. navigating between closures)
+    const closureIdChanged = preselectedClosureId !== prevClosureIdRef.current;
+    
     if (shouldResetNow) {
       initializedRef.current = true;
+      prevClosureIdRef.current = preselectedClosureId;
+      return true;
     }
-    return shouldResetNow;
-  }, [invoice?.id]);
+    
+    if (closureIdChanged) {
+      prevClosureIdRef.current = preselectedClosureId;
+      return true;
+    }
+    
+    return false;
+  }, [invoice?.id, preselectedClosureId]);
 
   return {
     formData,

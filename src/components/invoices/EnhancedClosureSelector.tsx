@@ -47,29 +47,6 @@ const EnhancedClosureSelector: React.FC<EnhancedClosureSelectorProps> = ({
   const getClientName = (closure: any) => {
     return closure.clientName || 'Todos los clientes';
   };
-  
-  const filteredClosures = React.useMemo(() => {
-    if (!closures) return [];
-    
-    let result = closures;
-    
-    if (search) {
-      const lowerSearch = search.toLowerCase();
-      result = closures.filter(closure => {
-        const clientName = getClientName(closure).toLowerCase();
-        const folio = closure.folio.toLowerCase();
-        const po = closure.purchaseOrder ? closure.purchaseOrder.toLowerCase() : '';
-        const dateStr = formatDateRange(closure.dateRange).toLowerCase();
-        
-        return folio.includes(lowerSearch) || 
-               clientName.includes(lowerSearch) || 
-               po.includes(lowerSearch) ||
-               dateStr.includes(lowerSearch);
-      });
-    }
-    
-    return result.slice(0, 50);
-  }, [closures, search]);
 
   const formatDateRange = (dateRange: {
     from: string;
@@ -79,6 +56,34 @@ const EnhancedClosureSelector: React.FC<EnhancedClosureSelectorProps> = ({
     const toDate = formatForDisplay(dateRange.to);
     return `${fromDate} - ${toDate}`;
   };
+  
+  const processedClosures = React.useMemo(() => {
+    if (!closures) return [];
+    return closures.map(c => {
+      const clientName = getClientName(c);
+      const dateRangeStr = formatDateRange(c.dateRange);
+      return {
+        ...c,
+        displayClientName: clientName,
+        displayDateRange: dateRangeStr,
+        searchString: `${c.folio} ${clientName} ${dateRangeStr} ${c.purchaseOrder || ''}`.toLowerCase()
+      };
+    });
+  }, [closures]);
+  
+  const filteredClosures = React.useMemo(() => {
+    if (!processedClosures.length) return [];
+    
+    let result = processedClosures;
+    
+    if (search) {
+      const lowerSearch = search.toLowerCase();
+      result = processedClosures.filter(closure => closure.searchString.includes(lowerSearch));
+    }
+    
+    return result.slice(0, 50);
+  }, [processedClosures, search]);
+
   const selectedClosure = closures.find(c => c.id === selectedClosureId);
   if (loading) {
     return <div>
@@ -123,7 +128,7 @@ const EnhancedClosureSelector: React.FC<EnhancedClosureSelectorProps> = ({
                 No se encontraron cierres.
               </CommandEmpty>
               <CommandGroup>
-                {filteredClosures.map(closure => <CommandItem key={closure.id} value={`${closure.folio} ${getClientName(closure)} ${formatDateRange(closure.dateRange)} ${closure.purchaseOrder || ''}`} onSelect={() => {
+                {filteredClosures.map(closure => <CommandItem key={closure.id} value={`${closure.folio} ${closure.displayClientName} ${closure.displayDateRange} ${closure.purchaseOrder || ''}`} onSelect={() => {
                 onClosureChange(closure.id);
                 setOpen(false);
               }} className="p-0 cursor-pointer">
@@ -139,13 +144,13 @@ const EnhancedClosureSelector: React.FC<EnhancedClosureSelectorProps> = ({
                       {/* Fechas */}
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <Calendar className="w-4 h-4 text-muted-foreground" />
-                        <span>{formatDateRange(closure.dateRange)}</span>
+                        <span>{closure.displayDateRange}</span>
                       </div>
                       
                       {/* Cliente */}
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <User className="w-4 h-4 text-muted-foreground" />
-                        <span className="truncate">{getClientName(closure)}</span>
+                        <span className="truncate">{closure.displayClientName}</span>
                       </div>
                       
                       {/* Orden de Compra */}
