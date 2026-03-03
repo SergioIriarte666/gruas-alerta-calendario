@@ -324,30 +324,33 @@ export const generatePendingReportPDF = async (): Promise<jsPDF> => {
       columnStyles: colStyles || {},
       didParseCell: (hookData: any) => {
         if (hookData.section === 'body' && clientRowIndices.has(hookData.row.index)) {
-          hookData.cell.styles.fillColor = [34, 197, 94];
-          hookData.cell.styles.textColor = [255, 255, 255];
-          hookData.cell.styles.fontStyle = 'bold';
-          hookData.cell.styles.fontSize = 8.5;
-          hookData.cell.styles.cellPadding = { top: 3, bottom: 3, left: 4, right: 2 };
+          hookData.cell.styles.fillColor = [245, 247, 250];
+          hookData.cell.styles.textColor = [245, 247, 250];
+          hookData.cell.styles.fontSize = 0.1;
+          hookData.cell.styles.cellPadding = { top: 4, bottom: 4, left: 0, right: 0 };
         }
       },
       didDrawCell: (hookData: any) => {
-        if (hookData.section === 'body' && hookData.column.index === 0 && clientRowIndices.has(hookData.row.index)) {
+        const lastColIndex = headers.length - 1;
+        if (hookData.section === 'body' && hookData.column.index === lastColIndex && clientRowIndices.has(hookData.row.index)) {
           const name = clientNames.get(hookData.row.index) || '';
+          const row = hookData.row;
+          const firstCell = row.cells[0];
+          const lastCell = row.cells[lastColIndex];
+          const startX = firstCell.x;
+          const endX = lastCell.x + lastCell.width;
           const cellY = hookData.cell.y;
           const cellH = hookData.cell.height;
-          const startX = hookData.cell.x;
-          const tableWidth = hookData.table.getWidth(doc.internal.pageSize.getWidth());
           
-          // Draw green background spanning full row
-          doc.setFillColor(34, 197, 94);
-          doc.rect(startX, cellY, tableWidth, cellH, 'F');
+          // Professional dark sub-header spanning full row
+          doc.setFillColor(55, 65, 81);
+          doc.rect(startX, cellY, endX - startX, cellH, 'F');
           
-          // Draw client name text centered vertically
+          // White text, left-aligned
           doc.setFont('helvetica', 'bold');
-          doc.setFontSize(8.5);
+          doc.setFontSize(8);
           doc.setTextColor(255, 255, 255);
-          doc.text(name, startX + 5, cellY + cellH / 2 + 1);
+          doc.text(name, startX + 4, cellY + cellH / 2 + 1);
         }
       },
     });
@@ -383,26 +386,30 @@ export const generatePendingReportPDF = async (): Promise<jsPDF> => {
       margin: { left: 14, right: 14 },
       didParseCell: (hookData: any) => {
         if (hookData.section === 'body' && todayGrouped.clientRowIndices.has(hookData.row.index)) {
-          hookData.cell.styles.fillColor = [59, 130, 246];
-          hookData.cell.styles.textColor = [255, 255, 255];
-          hookData.cell.styles.fontStyle = 'bold';
-          hookData.cell.styles.fontSize = 8.5;
-          hookData.cell.styles.cellPadding = { top: 3, bottom: 3, left: 4, right: 2 };
+          hookData.cell.styles.fillColor = [245, 247, 250];
+          hookData.cell.styles.textColor = [245, 247, 250];
+          hookData.cell.styles.fontSize = 0.1;
+          hookData.cell.styles.cellPadding = { top: 4, bottom: 4, left: 0, right: 0 };
         }
       },
       didDrawCell: (hookData: any) => {
-        if (hookData.section === 'body' && hookData.column.index === 0 && todayGrouped.clientRowIndices.has(hookData.row.index)) {
+        const lastColIndex = 2; // 3 columns: Folio, Cliente, Estado
+        if (hookData.section === 'body' && hookData.column.index === lastColIndex && todayGrouped.clientRowIndices.has(hookData.row.index)) {
           const name = todayGrouped.clientNames.get(hookData.row.index) || '';
+          const row = hookData.row;
+          const firstCell = row.cells[0];
+          const lastCell = row.cells[lastColIndex];
+          const startX = firstCell.x;
+          const endX = lastCell.x + lastCell.width;
           const cellY = hookData.cell.y;
           const cellH = hookData.cell.height;
-          const startX = hookData.cell.x;
-          const tableWidth = hookData.table.getWidth(doc.internal.pageSize.getWidth());
-          doc.setFillColor(59, 130, 246);
-          doc.rect(startX, cellY, tableWidth, cellH, 'F');
+          
+          doc.setFillColor(55, 65, 81);
+          doc.rect(startX, cellY, endX - startX, cellH, 'F');
           doc.setFont('helvetica', 'bold');
-          doc.setFontSize(8.5);
+          doc.setFontSize(8);
           doc.setTextColor(255, 255, 255);
-          doc.text(name, startX + 5, cellY + cellH / 2 + 1);
+          doc.text(name, startX + 4, cellY + cellH / 2 + 1);
         }
       },
     });
