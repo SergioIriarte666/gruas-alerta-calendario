@@ -38,6 +38,43 @@ interface ImportState {
 }
 
 const normalizePatente = (p: string | null | undefined) => (p || '').replace(/[-\s]/g, '').toUpperCase();
+
+// Levenshtein distance for fuzzy VIN matching (tolerates OCR errors)
+const levenshtein = (a: string, b: string): number => {
+  const m = a.length, n = b.length;
+  if (m === 0) return n;
+  if (n === 0) return m;
+  let prev = Array.from({ length: n + 1 }, (_, i) => i);
+  for (let i = 1; i <= m; i++) {
+    const curr = [i];
+    for (let j = 1; j <= n; j++) {
+      curr[j] = a[i - 1] === b[j - 1] ? prev[j - 1] : 1 + Math.min(prev[j - 1], prev[j], curr[j - 1]);
+    }
+    prev = curr;
+  }
+  return prev[n];
+};
+
+const findFuzzyVinMatch = (
+  patenteNorm: string,
+  candidates: Service[],
+  usedIds: Set<string>
+): Service | null => {
+  if (patenteNorm.length < 16) return null;
+  let bestMatch: Service | null = null;
+  let bestDist = 3;
+  for (const s of candidates) {
+    if (usedIds.has(s.id)) continue;
+    const sNorm = normalizePatente(s.licensePlate);
+    if (sNorm.length < 16) continue;
+    const d = levenshtein(patenteNorm, sNorm);
+    if (d > 0 && d < bestDist) {
+      bestDist = d;
+      bestMatch = s;
+    }
+  }
+  return bestMatch;
+};
 const normalizeQuote = (q: string | null | undefined) => (q || '').trim().toUpperCase().replace(/^COT[-\s]*/, '').trim();
 const normalizeRut = (r: string | null | undefined) => (r || '').replace(/[.\s-]/g, '').toUpperCase();
 
@@ -265,13 +302,27 @@ export function useQuotePDFImport(clientId: string | null, services: Service[]) 
           .sort((a, b) => new Date(b.serviceDate).getTime() - new Date(a.serviceDate).getTime());
 
         if (matchingServices.length === 0) {
-          matches.push({
-            parsedItem: item,
-            service: null,
-            quoteNumber,
-            fileName,
-            status: 'no_match',
-          });
+          // Fuzzy VIN matching (tolerates 1-2 OCR digit errors)
+          const fuzzyMatch = findFuzzyVinMatch(patenteNorm, clientServices, usedServiceIds);
+          if (fuzzyMatch) {
+            const hasQuote = !!fuzzyMatch.quoteNumber;
+            usedServiceIds.add(fuzzyMatch.id);
+            matches.push({
+              parsedItem: item,
+              service: fuzzyMatch,
+              quoteNumber,
+              fileName,
+              status: hasQuote ? 'already_has_quote' : 'matched',
+            });
+          } else {
+            matches.push({
+              parsedItem: item,
+              service: null,
+              quoteNumber,
+              fileName,
+              status: 'no_match',
+            });
+          }
         } else {
           const serviceWithoutQuote = matchingServices.find(s => !s.quoteNumber);
 
