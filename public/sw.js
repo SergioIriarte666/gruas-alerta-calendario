@@ -1,31 +1,26 @@
 
-const CACHE_NAME = 'tms-operador-v9';
-const SW_VERSION = '9.0.0';
+const CACHE_NAME = 'tms-operador-v10';
+const SW_VERSION = '10.0.0';
 
 self.addEventListener('install', (event) => {
-  console.log(`[Service Worker] Install v${SW_VERSION} - Push notifications stable`);
-  // Force immediate activation
+  console.log(`[Service Worker] Install v${SW_VERSION} - Clean install`);
   self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
-  console.log(`[Service Worker] Activate v${SW_VERSION} - Stable activation`);
+  console.log(`[Service Worker] Activate v${SW_VERSION} - Clearing ALL caches`);
   event.waitUntil(
     Promise.all([
-      // Clean old caches only
+      // Delete ALL caches to prevent stale chunk references
       caches.keys().then((cacheNames) => {
         return Promise.all(
           cacheNames.map((cacheName) => {
-            if (cacheName !== CACHE_NAME) {
-              console.log('[Service Worker] Deleting old cache:', cacheName);
-              return caches.delete(cacheName);
-            }
+            console.log('[Service Worker] Deleting cache:', cacheName);
+            return caches.delete(cacheName);
           })
         );
       }),
-      // Claim all clients immediately
       self.clients.claim()
-      // REMOVED: self-unregistration as it was causing conflicts
     ])
   );
 });
