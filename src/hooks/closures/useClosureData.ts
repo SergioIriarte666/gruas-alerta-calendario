@@ -8,9 +8,9 @@ const MAX_CLOSURES = 200;
 const MAX_CLOSURES_WITH_SERVICE_LINKS = 50;
 
 const fetchClosures = async (): Promise<ServiceClosure[]> => {
-  console.log('Fetching closures with optimized strategy...');
+  console.log('Fetching active closures only (excluding invoiced)...');
   
-  // 1. Fetch active closures (open/closed) - these are the priority
+  // Only fetch active closures (open/closed) — invoiced closures have completed their lifecycle
   const { data: activeClosures, error: activeError } = await supabase
     .from('service_closures')
     .select(`
@@ -27,27 +27,7 @@ const fetchClosures = async (): Promise<ServiceClosure[]> => {
 
   if (activeError) throw activeError;
 
-  // 2. Fetch recent invoiced closures - just for context/history
-  const { data: invoicedClosures, error: invoicedError } = await supabase
-    .from('service_closures')
-    .select(`
-      *,
-      creator:profiles!service_closures_created_by_fkey (
-        id,
-        full_name,
-        email
-      )
-    `)
-    .eq('status', 'invoiced')
-    .order('created_at', { ascending: false })
-    .limit(20);
-
-  if (invoicedError) throw invoicedError;
-
-  // Combine and sort
-  const allClosures = [...(activeClosures || []), ...(invoicedClosures || [])].sort((a, b) => 
-    new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-  );
+  const allClosures = activeClosures || [];
 
   if (allClosures.length === 0) return [];
 
