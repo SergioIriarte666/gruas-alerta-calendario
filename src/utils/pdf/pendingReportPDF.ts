@@ -343,7 +343,7 @@ export const generatePendingReportPDF = async (): Promise<jsPDF> => {
           const cellH = hookData.cell.height;
           
           // Professional dark sub-header spanning full row
-          doc.setFillColor(55, 65, 81);
+          doc.setFillColor(124, 58, 237);
           doc.rect(startX, cellY, endX - startX, cellH, 'F');
           
           // White text, left-aligned
@@ -404,7 +404,7 @@ export const generatePendingReportPDF = async (): Promise<jsPDF> => {
           const cellY = hookData.cell.y;
           const cellH = hookData.cell.height;
           
-          doc.setFillColor(55, 65, 81);
+          doc.setFillColor(124, 58, 237);
           doc.rect(startX, cellY, endX - startX, cellH, 'F');
           doc.setFont('helvetica', 'bold');
           doc.setFontSize(8);
