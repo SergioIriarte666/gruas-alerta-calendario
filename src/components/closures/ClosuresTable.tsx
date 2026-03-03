@@ -46,18 +46,58 @@ const ClosuresTable = ({ closures, clients, onEdit, onDelete, onClose, onViewDet
   const [groupByClient, setGroupByClient] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
 
+  const clientMap = useMemo(() => {
+    return clients.reduce((acc, client) => {
+      acc[client.id] = client;
+      return acc;
+    }, {} as Record<string, Client>);
+  }, [clients]);
+
+  const getClientName = (clientId?: string) => {
+    if (!clientId) return 'Todos los clientes';
+    const client = clientMap[clientId];
+    if (!client) return 'Cliente desconocido';
+    const dept = client.department;
+    if (!dept || dept === 'General') return client.name;
+    return `${client.name} - ${dept}`;
+  };
+
+  const groupedClosures = useMemo(() => {
+    if (!groupByClient) return [];
+    
+    const map = new Map<string, ServiceClosure[]>();
+    closures.forEach(c => {
+      const key = c.clientId || '__none__';
+      if (!map.has(key)) map.set(key, []);
+      map.get(key)!.push(c);
+    });
+    
+    // Sort groups alphabetically by client name
+    return Array.from(map.entries()).sort((a, b) => {
+      const nameA = getClientName(a[0] === '__none__' ? undefined : a[0]);
+      const nameB = getClientName(b[0] === '__none__' ? undefined : b[0]);
+      return nameA.localeCompare(nameB);
+    });
+  }, [closures, clientMap, groupByClient]);
+
   // Reset page when grouping changes or closures change
   useMemo(() => {
     setCurrentPage(1);
   }, [groupByClient, closures.length]);
 
   const paginatedClosures = useMemo(() => {
-    if (groupByClient) return closures; // Grouped view handles its own rendering
+    if (groupByClient) return [];
     const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
     return closures.slice(startIndex, startIndex + ITEMS_PER_PAGE);
   }, [closures, currentPage, groupByClient]);
 
-  const totalPages = Math.ceil(closures.length / ITEMS_PER_PAGE);
+  const paginatedGroups = useMemo(() => {
+    if (!groupByClient) return [];
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    return groupedClosures.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  }, [groupedClosures, currentPage, groupByClient]);
+
+  const totalPages = Math.ceil((groupByClient ? groupedClosures.length : closures.length) / ITEMS_PER_PAGE);
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
@@ -79,15 +119,6 @@ const ClosuresTable = ({ closures, clients, onEdit, onDelete, onClose, onViewDet
       />
     );
   }
-
-  const getClientName = (clientId?: string) => {
-    if (!clientId) return 'Todos los clientes';
-    const client = clients.find(c => c.id === clientId);
-    if (!client) return 'Cliente desconocido';
-    const dept = client.department;
-    if (!dept || dept === 'General') return client.name;
-    return `${client.name} - ${dept}`;
-  };
 
   const getStatusBadge = (status: ServiceClosure['status']) => {
     switch (status) {
@@ -164,8 +195,8 @@ const ClosuresTable = ({ closures, clients, onEdit, onDelete, onClose, onViewDet
       <CardContent>
         {groupByClient ? (
           <ClosuresGroupedView
-            closures={closures}
-            clients={clients}
+            groups={paginatedGroups}
+            clientMap={clientMap}
             onEdit={onEdit}
             onDelete={onDelete}
             onClose={onClose}

@@ -9,15 +9,15 @@ import { Client } from '@/types';
 import { formatForDisplay } from '@/utils/timezoneUtils';
 
 interface ClosuresGroupedViewProps {
-  closures: ServiceClosure[];
-  clients: Client[];
+  groups: [string, ServiceClosure[]][];
+  clientMap: Record<string, Client>;
   onEdit: (closure: ServiceClosure) => void;
   onDelete: (id: string, folio: string) => void;
   onClose: (id: string, folio: string) => void;
   onViewDetails: (closure: ServiceClosure) => void;
 }
 
-const ClosuresGroupedView = ({ closures, clients, onEdit, onDelete, onClose, onViewDetails }: ClosuresGroupedViewProps) => {
+const ClosuresGroupedView = ({ groups, clientMap, onEdit, onDelete, onClose, onViewDetails }: ClosuresGroupedViewProps) => {
   const [openGroups, setOpenGroups] = useState<Set<string>>(new Set());
 
   const toggleGroup = (key: string) => {
@@ -31,7 +31,7 @@ const ClosuresGroupedView = ({ closures, clients, onEdit, onDelete, onClose, onV
 
   const getClientName = (clientId?: string) => {
     if (!clientId) return 'Sin cliente asignado';
-    const client = clients.find(c => c.id === clientId);
+    const client = clientMap[clientId];
     if (!client) return 'Cliente desconocido';
     const dept = client.department;
     if (!dept || dept === 'General') return client.name;
@@ -64,24 +64,9 @@ const ClosuresGroupedView = ({ closures, clients, onEdit, onDelete, onClose, onV
     return `${formatForDisplay(dateRange.from)} - ${formatForDisplay(dateRange.to)}`;
   };
 
-  const grouped = useMemo(() => {
-    const map = new Map<string, ServiceClosure[]>();
-    closures.forEach(c => {
-      const key = c.clientId || '__none__';
-      if (!map.has(key)) map.set(key, []);
-      map.get(key)!.push(c);
-    });
-    // Sort groups alphabetically by client name
-    return Array.from(map.entries()).sort((a, b) => {
-      const nameA = getClientName(a[0] === '__none__' ? undefined : a[0]);
-      const nameB = getClientName(b[0] === '__none__' ? undefined : b[0]);
-      return nameA.localeCompare(nameB);
-    });
-  }, [closures, clients]);
-
   return (
     <div className="space-y-2">
-      {grouped.map(([clientKey, groupClosures]) => {
+      {groups.map(([clientKey, groupClosures]) => {
         const clientName = getClientName(clientKey === '__none__' ? undefined : clientKey);
         const total = groupClosures.reduce((sum, c) => sum + c.total, 0);
         const isOpen = openGroups.has(clientKey);
@@ -158,7 +143,7 @@ const ClosuresGroupedView = ({ closures, clients, onEdit, onDelete, onClose, onV
           </Collapsible>
         );
       })}
-      {grouped.length === 0 && (
+      {groups.length === 0 && (
         <div className="text-center py-8">
           <p className="text-muted-foreground">No se encontraron cierres</p>
         </div>
