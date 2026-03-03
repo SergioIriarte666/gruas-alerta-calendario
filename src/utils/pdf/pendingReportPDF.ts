@@ -73,12 +73,10 @@ export const generatePendingReportPDF = async (): Promise<jsPDF> => {
     servicesWithoutOCRes,
     servicesWithoutQuoteRes,
     allCompletedRes,
-    closedServiceIdsRes,
     completedOldRes,
     overdueRes,
     expiringCranesRes,
     expiringOperatorsRes,
-    invoicedServiceIdsRes,
     monthlyClientsRes,
     todayServicesSummary,
   ] = await Promise.all([
@@ -97,7 +95,6 @@ export const generatePendingReportPDF = async (): Promise<jsPDF> => {
       .select('id, folio, service_date, value, client:clients!services_client_id_fkey(name, department, billing_type)')
       .eq('status', 'completed')
       .order('service_date', { ascending: true }).limit(1000),
-    supabase.from('closure_services').select('service_id'),
     supabase.from('services')
       .select('id, folio, service_date, client:clients!services_client_id_fkey(name, department)')
       .eq('status', 'completed')
@@ -112,12 +109,24 @@ export const generatePendingReportPDF = async (): Promise<jsPDF> => {
       .select('id, name, exam_expiry')
       .eq('is_active', true)
       .lte('exam_expiry', alertDateStr),
-    supabase.from('invoice_services').select('service_id'),
     supabase.from('clients')
       .select('name, department')
       .eq('billing_type', 'monthly')
       .order('name', { ascending: true }),
     fetchTodayServices(todayStr),
+  ]);
+
+  const allCompletedIds = (allCompletedRes.data || []).map((s: any) => s.id);
+  const completedOldIds = (completedOldRes.data || []).map((s: any) => s.id);
+
+  const emptyServiceLinks = { data: [] as Array<{ service_id: string }>, error: null };
+  const [invoicedServiceIdsRes, closedServiceIdsRes] = await Promise.all([
+    allCompletedIds.length > 0
+      ? supabase.from('invoice_services').select('service_id').in('service_id', allCompletedIds)
+      : Promise.resolve(emptyServiceLinks),
+    completedOldIds.length > 0
+      ? supabase.from('closure_services').select('service_id').in('service_id', completedOldIds)
+      : Promise.resolve(emptyServiceLinks),
   ]);
 
   const clientLabel = (c: any) => {

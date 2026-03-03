@@ -60,7 +60,6 @@ const fetchPendingSummary = async (): Promise<PendingSummaryData> => {
 
   const [
     servicesWithoutOCRes,
-    closedServiceIdsRes,
     completedOldRes,
     overdueRes,
     expiringCranesRes,
@@ -75,7 +74,6 @@ const fetchPendingSummary = async (): Promise<PendingSummaryData> => {
       .order('service_date', { ascending: true })
       .order('service_date', { ascending: true })
       .limit(200),
-    supabase.from('closure_services').select('service_id'),
     supabase
       .from('services')
       .select('id, folio, service_date, client:clients!services_client_id_fkey(id, name)')
@@ -113,8 +111,21 @@ const fetchPendingSummary = async (): Promise<PendingSummaryData> => {
     daysSince: safeDaysSince(s.service_date, todayStr),
   }));
 
-  // Process pending closures
-  const closedIds = new Set((closedServiceIdsRes.data || []).map((item: any) => item.service_id));
+  // Process pending closures with targeted closure_links query
+  const completedOldIds = (completedOldRes.data || []).map((item: any) => item.id);
+  let closedIds = new Set<string>();
+
+  if (completedOldIds.length > 0) {
+    const { data: closureLinks, error: closureLinksError } = await supabase
+      .from('closure_services')
+      .select('service_id')
+      .in('service_id', completedOldIds);
+
+    if (!closureLinksError) {
+      closedIds = new Set((closureLinks || []).map((item: any) => item.service_id));
+    }
+  }
+
   const pendingClosures: PendingClosure[] = (completedOldRes.data || [])
     .filter((s: any) => !closedIds.has(s.id))
     .map((s: any) => ({
