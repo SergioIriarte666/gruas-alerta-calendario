@@ -25,17 +25,15 @@ export const useClosuresForInvoices = (options: UseClosuresForInvoicesProps = {}
     queryFn: async () => {
       try {
         // 1. Fetch closures with related invoice_closures data to optimize filtering
+        // Optimization: Select only necessary fields and avoid fetching all service links (which can be thousands)
         let query = supabase
           .from('service_closures')
           .select(`
-            *,
-            closure_services (
-              service_id
-            ),
+            id, folio, total, status, client_id, created_at, updated_at, date_from, date_to, purchase_order,
             clients:client_id (
               name
             ),
-            invoice_closures (
+            invoice_closures:invoice_closures!invoice_closures_closure_id_fkey (
               closure_id
             )
           `);
@@ -80,9 +78,10 @@ export const useClosuresForInvoices = (options: UseClosuresForInvoicesProps = {}
 
         return formattedClosures;
       } catch (error: any) {
+        console.error('Error fetching closures:', error);
         if (!error.message?.includes('permission denied')) {
-          toast.error("Error", {
-            description: "No se pudieron cargar los cierres disponibles para facturación.",
+          toast.error("Error al cargar cierres", {
+            description: error.message || "No se pudieron cargar los cierres disponibles para facturación.",
           });
         }
         return [];
