@@ -19,7 +19,6 @@ const fetchNotificationsData = async (): Promise<Omit<Notification, 'read'>[]> =
 
   const notifications: Omit<Notification, 'read'>[] = [];
 
-  // Execute all independent queries in parallel
   const [
     urgentServicesRes,
     weekServicesRes,
@@ -28,8 +27,6 @@ const fetchNotificationsData = async (): Promise<Omit<Notification, 'read'>[]> =
     oldDraftInvoicesRes,
     expiringCranesRes,
     expiringOperatorsRes,
-    closedServiceIdsRes,
-    invoicedClosureIdsRes,
     servicesWithoutOCRes
   ] = await Promise.all([
     // 1A. Services today/tomorrow
@@ -68,14 +65,6 @@ const fetchNotificationsData = async (): Promise<Omit<Notification, 'read'>[]> =
       .select('id, name, exam_expiry')
       .eq('is_active', true)
       .lte('exam_expiry', format(alertDateLimit, 'yyyy-MM-dd')),
-    // 4. Closed service IDs
-    supabase
-      .from('closure_services')
-      .select('service_id'),
-    // 6. Invoiced closure IDs
-    supabase
-      .from('invoice_closures')
-      .select('closure_id'),
     // 7. Services completed without purchase order
     supabase
       .from('services')
@@ -233,52 +222,48 @@ const fetchNotificationsData = async (): Promise<Omit<Notification, 'read'>[]> =
     }
   });
 
-  // 4. Services completed >30 days without closure (depends on closedServiceIds)
-  const closedIds = (closedServiceIdsRes.data || []).map(item => item.service_id);
-  
-  let pendingServicesQuery = supabase
-    .from('services')
-    .select('id, folio, service_date, client:clients(name)')
-    .eq('status', 'completed')
-    .lte('service_date', format(serviceClosureThreshold, 'yyyy-MM-dd'));
-  
-  if (closedIds.length > 0) {
-    pendingServicesQuery = pendingServicesQuery.not('id', 'in', `(${closedIds.join(',')})`);
-  }
-
-  // 5. Critical services >60 days (also depends on closedIds)
-  let criticalServicesQuery = supabase
-    .from('services')
-    .select('id, folio, service_date, client:clients(name)')
-    .eq('status', 'completed')
-    .lte('service_date', format(criticalServiceThreshold, 'yyyy-MM-dd'));
-  
-  if (closedIds.length > 0) {
-    criticalServicesQuery = criticalServicesQuery.not('id', 'in', `(${closedIds.join(',')})`);
-  }
-
-  // 6. Closures >15 days without invoicing (depends on invoicedClosureIds)
-  const invoicedIds = (invoicedClosureIdsRes.data || []).map(item => item.closure_id);
-  
-  let pendingClosuresQuery = supabase
-    .from('service_closures')
-    .select('id, folio, created_at, total, client:clients(name)')
-    .eq('status', 'closed')
-    .lte('created_at', format(closureInvoiceThreshold, 'yyyy-MM-dd'));
-  
-  if (invoicedIds.length > 0) {
-    pendingClosuresQuery = pendingClosuresQuery.not('id', 'in', `(${invoicedIds.join(',')})`);
-  }
-
-  // Execute dependent queries in parallel
-  const [pendingServicesRes, criticalServicesRes, pendingClosuresRes] = await Promise.all([
-    pendingServicesQuery,
-    criticalServicesQuery,
-    pendingClosuresQuery
+  // 4,5,6. Query only relevant old records first (avoid full-table scans)
+  const [pendingServicesBaseRes, criticalServicesBaseRes, pendingClosuresBaseRes] = await Promise.all([
+    supabase
+      .from('services')
+      .select('id, folio, service_date, client:clients(name)')
+      .eq('status', 'completed')
+      .lte('service_date', format(serviceClosureThreshold, 'yyyy-MM-dd')),
+    supabase
+      .from('services')
+      .select('id, folio, service_date, client:clients(name)')
+      .eq('status', 'completed')
+      .lte('service_date', format(criticalServiceThreshold, 'yyyy-MM-dd')),
+    supabase
+      .from('service_closures')
+      .select('id, folio, created_at, total, client:clients(name)')
+      .eq('status', 'closed')
+      .lte('created_at', format(closureInvoiceThreshold, 'yyyy-MM-dd')),
   ]);
 
-  const pendingServices = pendingServicesRes.data;
-  if (pendingServices && pendingServices.length > 0) {
+  const pendingServicesBase = pendingServicesBaseRes.data || [];
+  const criticalServicesBase = criticalServicesBaseRes.data || [];
+  const pendingClosuresBase = pendingClosuresBaseRes.data || [];
+
+  // Fetch only closure links for the service candidates above
+  const serviceCandidateIds = Array.from(
+    new Set([...pendingServicesBase, ...criticalServicesBase].map((s: any) => s.id))
+  );
+
+  let closedServiceIds = new Set<string>();
+  if (serviceCandidateIds.length > 0) {
+    const { data: closureLinks } = await supabase
+      .from('closure_services')
+      .select('service_id')
+      .in('service_id', serviceCandidateIds);
+
+    closedServiceIds = new Set((closureLinks || []).map((item: any) => item.service_id));
+  }
+
+  const pendingServices = pendingServicesBase.filter((service: any) => !closedServiceIds.has(service.id));
+  const criticalServices = criticalServicesBase.filter((service: any) => !closedServiceIds.has(service.id));
+
+  if (pendingServices.length > 0) {
     notifications.push({
       id: 'services-pending-closure',
       title: 'Servicios Pendientes de Cierre',
@@ -291,8 +276,7 @@ const fetchNotificationsData = async (): Promise<Omit<Notification, 'read'>[]> =
     });
   }
 
-  const criticalServices = criticalServicesRes.data;
-  if (criticalServices && criticalServices.length > 0) {
+  if (criticalServices.length > 0) {
     notifications.push({
       id: 'services-critical-old',
       title: 'Servicios Muy Antiguos Sin Cierre',
@@ -305,7 +289,22 @@ const fetchNotificationsData = async (): Promise<Omit<Notification, 'read'>[]> =
     });
   }
 
-  (pendingClosuresRes.data || []).forEach((closure: any) => {
+  // Fetch invoiced links only for the old closed closures candidates
+  let invoicedClosureIds = new Set<string>();
+  const closureCandidateIds = pendingClosuresBase.map((closure: any) => closure.id);
+
+  if (closureCandidateIds.length > 0) {
+    const { data: invoicedClosureLinks } = await supabase
+      .from('invoice_closures')
+      .select('closure_id')
+      .in('closure_id', closureCandidateIds);
+
+    invoicedClosureIds = new Set((invoicedClosureLinks || []).map((item: any) => item.closure_id));
+  }
+
+  const pendingClosures = pendingClosuresBase.filter((closure: any) => !invoicedClosureIds.has(closure.id));
+
+  pendingClosures.forEach((closure: any) => {
     const daysSince = Math.floor((today.getTime() - new Date(closure.created_at).getTime()) / (1000 * 60 * 60 * 24));
     notifications.push({
       id: `closure-pending-invoice-${closure.id}`,

@@ -89,9 +89,17 @@ export const useClosuresForInvoices = (options: UseClosuresForInvoicesProps = {}
       }
 
       try {
+        const allClosureIds = allClosures.map(closure => closure.id);
+
+        if (allClosureIds.length === 0) {
+          setFilteredClosures([]);
+          return;
+        }
+
         const { data: invoicedClosures, error: invoicedError } = await supabase
           .from('invoice_closures')
-          .select('closure_id');
+          .select('closure_id')
+          .in('closure_id', allClosureIds);
 
         if (invoicedError && !invoicedError.message.includes('permission denied')) {
           setFilteredClosures(allClosures);
