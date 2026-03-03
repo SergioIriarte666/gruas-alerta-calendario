@@ -163,6 +163,14 @@ export const useSupplierPayments = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['supplier-payments'] });
       queryClient.invalidateQueries({ queryKey: ['supplier-stats'] });
+      // Sync: puede crear/actualizar costs y crane_parts
+      queryClient.invalidateQueries({ queryKey: ['costs'] });
+      queryClient.invalidateQueries({ queryKey: ['crane-costs'] });
+      queryClient.invalidateQueries({ queryKey: ['service-costs'] });
+      queryClient.invalidateQueries({ queryKey: ['crane-parts'] });
+      queryClient.invalidateQueries({ queryKey: ['inventory-movements'] });
+      queryClient.invalidateQueries({ queryKey: ['inventory-stock'] });
+      queryClient.invalidateQueries({ queryKey: ['inventory-stats'] });
       toast.success('Pago actualizado exitosamente');
     },
     onError: (error) => {
@@ -380,11 +388,16 @@ export const useSupplierPayments = () => {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['supplier-payments'] });
       queryClient.invalidateQueries({ queryKey: ['supplier-stats'] });
-      // Invalidar también las queries de costos ya que se creará automáticamente un costo
+      // Invalidar costos, grúas e inventario
       invalidateAllCostQueries();
+      queryClient.invalidateQueries({ queryKey: ['crane-costs'] });
+      queryClient.invalidateQueries({ queryKey: ['crane-parts'] });
+      queryClient.invalidateQueries({ queryKey: ['inventory-movements'] });
+      queryClient.invalidateQueries({ queryKey: ['inventory-stock'] });
+      queryClient.invalidateQueries({ queryKey: ['inventory-stats'] });
       
       const message = variables.partDetails 
-        ? 'Pago marcado como pagado - Se registró automáticamente en costos y piezas'
+        ? 'Pago marcado como pagado - Se registró automáticamente en costos, piezas e inventario'
         : 'Pago marcado como pagado - Se registrará automáticamente en costos';
       
       toast.success(message);
