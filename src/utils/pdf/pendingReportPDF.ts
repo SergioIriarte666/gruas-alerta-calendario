@@ -252,7 +252,39 @@ export const generatePendingReportPDF = async (): Promise<jsPDF> => {
   doc.line(14, y, pageWidth - 14, y);
   y += 8;
 
-  const addSection = (title: string, count: number, headers: string[], data: string[][], colStyles?: any) => {
+  // Helper: group rows by client column (index 1) with sub-headers
+  const groupAndInsertClientHeaders = (data: string[][], clientColIndex: number): { rows: string[][]; clientRowIndices: Set<number> } => {
+    if (data.length === 0) return { rows: [], clientRowIndices: new Set() };
+    
+    // Group by client
+    const groups: Record<string, string[][]> = {};
+    data.forEach(row => {
+      const client = row[clientColIndex] || 'N/A';
+      if (!groups[client]) groups[client] = [];
+      groups[client].push(row);
+    });
+
+    // Sort groups alphabetically
+    const sortedClients = Object.keys(groups).sort((a, b) => a.localeCompare(b, 'es'));
+
+    const result: string[][] = [];
+    const clientRowIndices = new Set<number>();
+
+    sortedClients.forEach(client => {
+      const clientRows = groups[client];
+      // Insert sub-header row (fill all columns with empty except first which has client name)
+      const headerRow = Array(clientRows[0].length).fill('');
+      headerRow[0] = `▶ ${client} (${clientRows.length})`;
+      clientRowIndices.add(result.length);
+      result.push(headerRow);
+      // Add client rows (sorted by date column - index 2 typically)
+      result.push(...clientRows);
+    });
+
+    return { rows: result, clientRowIndices };
+  };
+
+  const addSection = (title: string, count: number, headers: string[], data: string[][], colStyles?: any, groupByClient?: boolean) => {
     if (y > doc.internal.pageSize.getHeight() - 40) {
       doc.addPage();
       y = 15;
@@ -273,16 +305,33 @@ export const generatePendingReportPDF = async (): Promise<jsPDF> => {
       return;
     }
 
+    let bodyData = data;
+    let clientRowIndices = new Set<number>();
+
+    if (groupByClient) {
+      const grouped = groupAndInsertClientHeaders(data, 1);
+      bodyData = grouped.rows;
+      clientRowIndices = grouped.clientRowIndices;
+    }
+
     autoTable(doc, {
       startY: y,
       head: [headers],
-      body: data,
+      body: bodyData,
       theme: 'striped',
       headStyles: { fillColor: [34, 197, 94], textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 8 },
       bodyStyles: { fontSize: 7.5, textColor: [51, 51, 51] },
       alternateRowStyles: { fillColor: [245, 245, 245] },
       margin: { left: 14, right: 14 },
       columnStyles: colStyles || {},
+      didParseCell: (hookData: any) => {
+        if (hookData.section === 'body' && clientRowIndices.has(hookData.row.index)) {
+          hookData.cell.styles.fillColor = [55, 65, 81];
+          hookData.cell.styles.textColor = [255, 255, 255];
+          hookData.cell.styles.fontStyle = 'bold';
+          hookData.cell.styles.fontSize = 8;
+        }
+      },
     });
     y = (doc as any).lastAutoTable.finalY + 10;
   };
@@ -302,15 +351,26 @@ export const generatePendingReportPDF = async (): Promise<jsPDF> => {
   y += 4;
 
   if (ts.todayServices.length > 0) {
+    const todayData = ts.todayServices.map(s => [s.folio, s.client, s.status]);
+    const todayGrouped = groupAndInsertClientHeaders(todayData, 1);
+
     autoTable(doc, {
       startY: y,
       head: [['Folio', 'Cliente', 'Estado']],
-      body: ts.todayServices.map(s => [s.folio, s.client, s.status]),
+      body: todayGrouped.rows,
       theme: 'striped',
       headStyles: { fillColor: [59, 130, 246], textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 8 },
       bodyStyles: { fontSize: 7.5, textColor: [51, 51, 51] },
       alternateRowStyles: { fillColor: [239, 246, 255] },
       margin: { left: 14, right: 14 },
+      didParseCell: (hookData: any) => {
+        if (hookData.section === 'body' && todayGrouped.clientRowIndices.has(hookData.row.index)) {
+          hookData.cell.styles.fillColor = [55, 65, 81];
+          hookData.cell.styles.textColor = [255, 255, 255];
+          hookData.cell.styles.fontStyle = 'bold';
+          hookData.cell.styles.fontSize = 8;
+        }
+      },
     });
     y = (doc as any).lastAutoTable.finalY + 10;
   } else {
@@ -351,15 +411,15 @@ export const generatePendingReportPDF = async (): Promise<jsPDF> => {
 
   // Pending sections
   addSection('1. Servicios Pendientes de Facturar', pendingInvoicing.length,
-    ['Folio', 'Cliente', 'Fecha', 'Días', 'Valor'], pendingInvoicing, { 0: { cellWidth: 25 }, 4: { halign: 'right' } });
+    ['Folio', 'Cliente', 'Fecha', 'Días', 'Valor'], pendingInvoicing, { 0: { cellWidth: 25 }, 4: { halign: 'right' } }, true);
   addSection('2. Servicios sin Orden de Compra', withoutOC.length,
-    ['Folio', 'Cliente', 'Fecha', 'Días'], withoutOC, { 0: { cellWidth: 25 } });
+    ['Folio', 'Cliente', 'Fecha', 'Días'], withoutOC, { 0: { cellWidth: 25 } }, true);
   addSection('3. Servicios sin Cotización', withoutQuote.length,
-    ['Folio', 'Cliente', 'Fecha', 'Días'], withoutQuote, { 0: { cellWidth: 25 } });
+    ['Folio', 'Cliente', 'Fecha', 'Días'], withoutQuote, { 0: { cellWidth: 25 } }, true);
   addSection('4. Facturas Pendientes de Pago', overdueInvoices.length,
-    ['Folio', 'Cliente', 'Atraso', 'Monto'], overdueInvoices, { 3: { halign: 'right' } });
+    ['Folio', 'Cliente', 'Atraso', 'Monto'], overdueInvoices, { 3: { halign: 'right' } }, true);
   addSection('5. Servicios Pendientes de Cierre', pendingClosures.length,
-    ['Folio', 'Cliente', 'Fecha', 'Días'], pendingClosures, { 0: { cellWidth: 25 } });
+    ['Folio', 'Cliente', 'Fecha', 'Días'], pendingClosures, { 0: { cellWidth: 25 } }, true);
   addSection('6. Documentación por Vencer', expiringDocs.length,
     ['Entidad', 'Documento', 'Vencimiento', 'Plazo'], expiringDocs);
 
