@@ -49,41 +49,9 @@ export type CostFormData = Omit<Database['public']['Tables']['costs']['Insert'],
   supplier_id?: string | null;
 };
 
-// Constantes para las categorías de servicios
-export const SERVICE_SUBCATEGORIES = [
-  'Combustible',
-  'Peajes',
-  'Viáticos',
-  'Estacionamiento',
-  'Materiales',
-  'Transporte',
-  'Hospedaje',
-  'Otros'
-] as const;
-
-// Constantes para las subcategorías de mantenimiento
-export const MAINTENANCE_SUBCATEGORIES = [
-  'Piezas y Repuestos',
-  'Mano de obra',
-  'Servicios externos',
-  'Lubricantes y Fluidos',
-  'Herramientas',
-  'Calibración',
-  'Inspecciones',
-  'Otros'
-] as const;
-
-export type ServiceSubcategory = typeof SERVICE_SUBCATEGORIES[number];
-export type MaintenanceSubcategory = typeof MAINTENANCE_SUBCATEGORIES[number];
-
-// Interface para datos de servicios especializados
-export interface ServiceExpenseData extends CostFormData {
-  subcategory: ServiceSubcategory;
-}
-
 // Interface para datos de piezas y repuestos
 export interface PartsExpenseData extends CostFormData {
-  subcategory: 'Piezas y Repuestos';
+  subcategory: string;
   part_name: string;
   supplier: string;
   supplier_phone?: string;
