@@ -35,6 +35,8 @@ const INVOICE_STATUS_MAP: { [key: string]: string } = {
   cancelled: 'Anulada',
 };
 
+import { ErrorBoundary } from '@/components/ErrorBoundary';
+
 const Invoices = () => {
   const { invoices, loading, createInvoice, updateInvoice, deleteInvoice, markAsPaid, getInvoiceWithDetails, refetch } = useInvoices();
   const isMobile = useIsMobile();
@@ -57,6 +59,9 @@ const Invoices = () => {
   const [markAsPaidInvoice, setMarkAsPaidInvoice] = useState<Invoice | null>(null);
   const batchProgress = useBatchProgress();
   const ITEMS_PER_PAGE = 10;
+  
+  // Use a delayed state for showing form when navigating from closures to allow UI to breathe
+  const [isFormReady, setIsFormReady] = useState(false);
 
   const isBasicView =
     searchTerm === '' &&
@@ -72,10 +77,21 @@ const Invoices = () => {
   // Check for preselected closure from navigation state
   useEffect(() => {
     if (location.state?.preselectedClosureId) {
+      console.log('Invoices page - Preselected closure detected:', location.state.preselectedClosureId);
       setPreselectedClosureId(location.state.preselectedClosureId);
-      setShowForm(true);
+      
+      // Delay showing the form slightly to allow initial render
+      const timer = setTimeout(() => {
+        setShowForm(true);
+        setIsFormReady(true);
+      }, 100);
+      
       // Clear the state to prevent it from persisting on page refresh
       window.history.replaceState({}, document.title);
+      
+      return () => clearTimeout(timer);
+    } else {
+      setIsFormReady(true);
     }
   }, [location.state]);
 
@@ -394,19 +410,31 @@ const Invoices = () => {
     };
   }, [filteredInvoices]);
 
-  if (showForm) {
+  if (showForm && isFormReady) {
     return (
       <div className="space-y-6">
-        <InvoiceForm
-          invoice={editingInvoice}
-          preselectedClosureId={preselectedClosureId}
-          onSubmit={editingInvoice ? handleUpdateInvoice : handleCreateInvoice}
-          onCancel={() => {
-            setShowForm(false);
-            setEditingInvoice(null);
-            setPreselectedClosureId(null);
-          }}
-        />
+        <ErrorBoundary name="InvoiceForm">
+          <InvoiceForm
+            invoice={editingInvoice}
+            preselectedClosureId={preselectedClosureId}
+            onSubmit={editingInvoice ? handleUpdateInvoice : handleCreateInvoice}
+            onCancel={() => {
+              setShowForm(false);
+              setEditingInvoice(null);
+              setPreselectedClosureId(null);
+              setIsFormReady(false);
+            }}
+            isLoading={false}
+          />
+        </ErrorBoundary>
+      </div>
+    );
+  }
+
+  if (showForm && !isFormReady) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-foreground">Preparando formulario...</div>
       </div>
     );
   }

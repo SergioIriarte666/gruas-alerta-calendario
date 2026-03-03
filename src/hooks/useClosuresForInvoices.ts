@@ -24,6 +24,7 @@ export const useClosuresForInvoices = (options: UseClosuresForInvoicesProps = {}
     enabled,
     queryFn: async () => {
       try {
+        console.log('Fetching closures for invoices, includeInvoiced:', includeInvoiced);
         // 1. Fetch closures basic data without nested relations that might cause ambiguity
         let query = supabase
           .from('service_closures')
@@ -45,6 +46,7 @@ export const useClosuresForInvoices = (options: UseClosuresForInvoicesProps = {}
           .limit(MAX_CLOSURES_FOR_INVOICES);
 
         if (closuresError) {
+          console.error('Error in supabase query:', closuresError);
           if (closuresError.message.includes('permission denied') || closuresError.message.includes('row-level security')) {
             toast.error("Permisos insuficientes", {
               description: "No tienes permisos para ver los cierres. Contacta a un administrador.",
@@ -53,6 +55,8 @@ export const useClosuresForInvoices = (options: UseClosuresForInvoicesProps = {}
           }
           throw closuresError;
         }
+        
+        console.log('Fetched closures count:', closuresData?.length);
 
         let formattedClosures: ClosureWithClient[] = (closuresData || []).map(data => ({
           ...formatClosureData(data),
@@ -75,7 +79,9 @@ export const useClosuresForInvoices = (options: UseClosuresForInvoicesProps = {}
             // is better than showing nothing or crashing
           } else {
             const invoicedSet = new Set(invoicedIds?.map(i => i.closure_id) || []);
+            const originalCount = formattedClosures.length;
             formattedClosures = formattedClosures.filter(c => !invoicedSet.has(c.id));
+            console.log('Filtered invoiced closures:', originalCount - formattedClosures.length, 'removed');
           }
         }
 
