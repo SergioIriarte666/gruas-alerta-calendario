@@ -45,7 +45,7 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
   const [currentStep, setCurrentStep] = useState(1);
   const isEditing = !!invoice;
   const { formData, shouldReset } = useInvoiceFormData({ invoice, preselectedClosureId });
-  const { closures } = useClosuresForInvoices({ includeInvoiced: isEditing });
+  const { closures, loading: closuresLoading } = useClosuresForInvoices({ includeInvoiced: isEditing });
   const { paymentTerms, loading: loadingTerms } = usePaymentTerms();
   
   const { watch, setValue, formState: { errors, isSubmitting }, reset, handleSubmit } = useForm<InvoiceFormData>({
@@ -138,7 +138,7 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
   const renderStepContent = () => {
     switch (currentStep) {
       case 1:
-        return <InvoiceFormStep3 selectedClosureId={selectedClosureId} isEditing={isEditing} currentInvoice={invoice ? { id: invoice.id, closureId: invoice.closureId } : undefined} canEditClosure={editableFields.canEditClosure} subtotal={subtotal} vat={vat} total={total} showSummary={!!selectedClosure} onClosureChange={(v) => setValue('closureId', v)} errors={{ closureId: errors.closureId?.message }} />;
+        return <InvoiceFormStep3 selectedClosureId={selectedClosureId} isEditing={isEditing} currentInvoice={invoice ? { id: invoice.id, closureId: invoice.closureId } : undefined} canEditClosure={editableFields.canEditClosure} subtotal={subtotal} vat={vat} total={total} showSummary={!!selectedClosure} onClosureChange={(v) => setValue('closureId', v)} errors={{ closureId: errors.closureId?.message }} closures={closures} loading={closuresLoading} />;
       case 2:
         return <InvoiceFormStep2 issueDate={watch('issueDate')} dueDate={watch('dueDate')} paymentDate={watch('paymentDate') || ''} paymentTermId={watch('paymentTermId') || ''} status={watch('status')} canEditDates={editableFields.canEditDates} canEditPaymentDate={editableFields.canEditPaymentDate} paymentTerms={paymentTerms} loadingTerms={loadingTerms} onIssueDateChange={(v) => setValue('issueDate', v)} onDueDateChange={(v) => setValue('dueDate', v)} onPaymentDateChange={(v) => setValue('paymentDate', v)} onPaymentTermIdChange={(v) => setValue('paymentTermId', v)} errors={{ issueDate: errors.issueDate?.message, dueDate: errors.dueDate?.message, paymentDate: errors.paymentDate?.message }} />;
       case 3:

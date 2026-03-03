@@ -4,10 +4,11 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
-import { useClosuresForInvoices } from '@/hooks/useClosuresForInvoices';
+import { useClosuresForInvoices, ClosureWithClient } from '@/hooks/useClosuresForInvoices';
 import { formatForDisplay } from '@/utils/timezoneUtils';
 import { Check, ChevronDown, FileText, Calendar, User, DollarSign, ShoppingCart } from 'lucide-react';
 import { cn } from '@/lib/utils';
+
 interface EnhancedClosureSelectorProps {
   selectedClosureId: string;
   onClosureChange: (closureId: string) => void;
@@ -17,21 +18,29 @@ interface EnhancedClosureSelectorProps {
     closureId: string;
   };
   disabled?: boolean;
+  closures?: ClosureWithClient[];
+  loading?: boolean;
 }
+
 const EnhancedClosureSelector: React.FC<EnhancedClosureSelectorProps> = ({
   selectedClosureId,
   onClosureChange,
   isEditing = false,
   currentInvoice,
-  disabled = false
+  disabled = false,
+  closures: propClosures,
+  loading: propLoading
 }) => {
   const [open, setOpen] = useState(false);
-  const {
-    closures,
-    loading
-  } = useClosuresForInvoices({
+  
+  // Use hook only if closures are not provided via props
+  const hookResult = useClosuresForInvoices({
     includeInvoiced: isEditing
   });
+
+  const closures = propClosures ?? hookResult.closures;
+  const loading = propLoading ?? hookResult.loading;
+
   const getClientName = (closure: any) => {
     return closure.clientName || 'Todos los clientes';
   };

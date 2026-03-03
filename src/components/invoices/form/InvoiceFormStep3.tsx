@@ -4,6 +4,7 @@ import { FileCheck } from 'lucide-react';
 import EnhancedClosureSelector from '../EnhancedClosureSelector';
 import InvoiceSummary from '../InvoiceSummary';
 import { Invoice } from '@/types';
+import { ClosureWithClient } from '@/hooks/useClosuresForInvoices';
 
 interface InvoiceFormStep3Props {
   selectedClosureId: string;
@@ -18,6 +19,8 @@ interface InvoiceFormStep3Props {
   errors: {
     closureId?: string;
   };
+  closures?: ClosureWithClient[];
+  loading?: boolean;
 }
 
 export const InvoiceFormStep3 = ({ 
@@ -30,7 +33,9 @@ export const InvoiceFormStep3 = ({
   total,
   showSummary,
   onClosureChange,
-  errors 
+  errors,
+  closures,
+  loading
 }: InvoiceFormStep3Props) => {
   return (
     <div className="space-y-4">
@@ -47,6 +52,8 @@ export const InvoiceFormStep3 = ({
           isEditing={isEditing}
           currentInvoice={currentInvoice}
           disabled={!canEditClosure}
+          closures={closures}
+          loading={loading}
         />
         
         {errors.closureId && (
