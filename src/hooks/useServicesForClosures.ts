@@ -148,16 +148,22 @@ export const useServicesForClosures = (options: UseServicesForClosuresOptions = 
       const pendingServices = pendingResult.data || [];
 
 
-      // Get all service IDs that are already included in closures
-      const { data: closureServices, error: closureError } = await supabase
-        .from('closure_services')
-        .select('service_id');
+      // Get only service IDs from the current candidate set that are already included in closures
+      const currentBillableIds = billableServices.map(service => service.id);
+      let usedServiceIds = new Set<string>();
 
-      if (closureError) {
-        console.error('Error fetching closure services:', closureError);
+      if (currentBillableIds.length > 0) {
+        const { data: closureServices, error: closureError } = await supabase
+          .from('closure_services')
+          .select('service_id')
+          .in('service_id', currentBillableIds);
+
+        if (closureError) {
+          console.error('Error fetching closure services:', closureError);
+        }
+
+        usedServiceIds = new Set(closureServices?.map(cs => cs.service_id) || []);
       }
-
-      const usedServiceIds = new Set(closureServices?.map(cs => cs.service_id) || []);
 
       // Filter out services that are already in closures
       const availableBillableServices = billableServices.filter(service => !usedServiceIds.has(service.id));
