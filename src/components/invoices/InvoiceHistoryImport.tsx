@@ -1,5 +1,5 @@
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Upload, FileText, CheckCircle, AlertTriangle, XCircle, Loader2, UserPlus, Users, Ban } from 'lucide-react';
 import { useDropzone } from 'react-dropzone';
 import { toast } from 'sonner';
@@ -33,6 +34,10 @@ type Step = 'upload' | 'preview' | 'importing' | 'done';
 const formatCLP = (amount: number) =>
   new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', maximumFractionDigits: 0 }).format(amount);
 
+// Shared RUT normalization — strips dots, spaces, dashes
+const normalizeRut = (rut: string): string =>
+  rut.replace(/[.\s-]/g, '').trim().toUpperCase();
+
 const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpenChange, onImportComplete }) => {
   const { clients, createClient } = useClients();
   const [step, setStep] = useState<Step>('upload');
@@ -41,6 +46,7 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
   const [importing, setImporting] = useState(false);
   const [importResult, setImportResult] = useState<{ imported: number; errors: number } | null>(null);
   const [fileName, setFileName] = useState('');
+  const [selectedInvoices, setSelectedInvoices] = useState<Set<string>>(new Set());
 
   const resetState = () => {
     setStep('upload');
@@ -49,7 +55,18 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
     setImporting(false);
     setImportResult(null);
     setFileName('');
+    setSelectedInvoices(new Set());
   };
+
+  // Initialize selection when preview changes
+  useEffect(() => {
+    if (preview) {
+      const allKeys = new Set<string>();
+      preview.matched.forEach((inv, i) => allKeys.add(`matched-${inv.folio}-${i}`));
+      preview.unmatched.forEach((inv, i) => allKeys.add(`unmatched-${inv.folio}-${i}`));
+      setSelectedInvoices(allKeys);
+    }
+  }, [preview]);
 
   const handleClose = () => {
     resetState();
@@ -63,7 +80,6 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
     setFileName(file.name);
 
     try {
-      // Parse file
       const isCSV = file.name.toLowerCase().endsWith('.csv');
       const rows = isCSV ? await parseCSVFile(file) : await parseXLSXFile(file);
 
@@ -72,7 +88,6 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
         return;
       }
 
-      // Get existing numero_fiscal values to detect duplicates
       const { data: existingInvoices } = await supabase
         .from('invoices')
         .select('numero_fiscal')
@@ -114,10 +129,60 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
     });
   };
 
+  const toggleInvoice = (key: string) => {
+    setSelectedInvoices(prev => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  };
+
+  const toggleAllMatched = (checked: boolean) => {
+    setSelectedInvoices(prev => {
+      const next = new Set(prev);
+      preview?.matched.forEach((inv, i) => {
+        const key = `matched-${inv.folio}-${i}`;
+        if (checked) next.add(key);
+        else next.delete(key);
+      });
+      return next;
+    });
+  };
+
+  const toggleAllUnmatched = (checked: boolean) => {
+    setSelectedInvoices(prev => {
+      const next = new Set(prev);
+      preview?.unmatched.forEach((inv, i) => {
+        const key = `unmatched-${inv.folio}-${i}`;
+        if (checked) next.add(key);
+        else next.delete(key);
+      });
+      return next;
+    });
+  };
+
+  const getSelectedMatchedCount = () => {
+    if (!preview) return 0;
+    return preview.matched.filter((inv, i) => selectedInvoices.has(`matched-${inv.folio}-${i}`)).length;
+  };
+
+  const getSelectedUnmatchedCount = () => {
+    if (!preview) return 0;
+    return preview.unmatched.filter((inv, i) => {
+      const key = `unmatched-${inv.folio}-${i}`;
+      if (!selectedInvoices.has(key)) return false;
+      const nRut = normalizeRut(inv.rut);
+      const uc = unmatchedClients.find(c => normalizeRut(c.rut) === nRut);
+      return uc?.resolution !== 'ignore';
+    }).length;
+  };
+
   const canImport = () => {
     if (!preview) return false;
     const hasPending = unmatchedClients.some(c => c.resolution === 'pending');
-    return !hasPending;
+    if (hasPending) return false;
+    return (getSelectedMatchedCount() + getSelectedUnmatchedCount()) > 0;
   };
 
   const handleImport = async () => {
@@ -133,7 +198,7 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
       const clientRutToId = new Map<string, string>();
       
       for (const uc of unmatchedClients) {
-        const normalizedRut = uc.rut.replace(/\./g, '').trim().toUpperCase();
+        const nRut = normalizeRut(uc.rut);
         
         if (uc.resolution === 'create') {
           try {
@@ -149,23 +214,26 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
               contactName: '',
             } as any);
             if (result.clients && result.clients.length > 0) {
-              clientRutToId.set(normalizedRut, result.clients[0].id);
+              clientRutToId.set(nRut, result.clients[0].id);
             }
           } catch (err) {
             console.error('Error creating client:', uc.rut, err);
             errors++;
           }
         } else if (uc.resolution === 'assign' && uc.assignedClientId) {
-          clientRutToId.set(normalizedRut, uc.assignedClientId);
+          clientRutToId.set(nRut, uc.assignedClientId);
         }
-        // 'ignore' → skip
       }
 
-      // Step 2: Build invoices to insert
+      // Step 2: Build invoices to insert (only selected ones)
       const invoicesToInsert: any[] = [];
 
-      // Add matched invoices
-      for (const inv of preview.matched) {
+      // Add selected matched invoices
+      for (let i = 0; i < preview.matched.length; i++) {
+        const inv = preview.matched[i];
+        const key = `matched-${inv.folio}-${i}`;
+        if (!selectedInvoices.has(key)) continue;
+
         invoicesToInsert.push({
           folio: inv.folio,
           numero_fiscal: inv.numeroFiscal,
@@ -183,15 +251,16 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
         });
       }
 
-      // Add unmatched invoices that have been resolved
-      for (const inv of preview.unmatched) {
-        const normalizedRut = inv.rut.replace(/\./g, '').trim().toUpperCase();
-        const clientId = clientRutToId.get(normalizedRut);
+      // Add selected unmatched invoices that have been resolved
+      for (let i = 0; i < preview.unmatched.length; i++) {
+        const inv = preview.unmatched[i];
+        const key = `unmatched-${inv.folio}-${i}`;
+        if (!selectedInvoices.has(key)) continue;
+
+        const nRut = normalizeRut(inv.rut);
+        const clientId = clientRutToId.get(nRut);
         
-        // Check if this client was ignored
-        const ucEntry = unmatchedClients.find(uc => 
-          uc.rut.replace(/\./g, '').trim().toUpperCase() === normalizedRut
-        );
+        const ucEntry = unmatchedClients.find(uc => normalizeRut(uc.rut) === nRut);
         
         if (ucEntry?.resolution === 'ignore') continue;
         if (!clientId) continue;
@@ -249,6 +318,8 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
       setImporting(false);
     }
   };
+
+  const totalToImport = getSelectedMatchedCount() + getSelectedUnmatchedCount();
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
@@ -396,16 +467,27 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
                 <>
                   <Separator />
                   <div>
-                    <h3 className="text-sm font-semibold text-foreground flex items-center gap-2 mb-3">
-                      <CheckCircle className="h-4 w-4 text-green-500" />
-                      Facturas listas para importar ({preview.matched.length})
-                    </h3>
-                    <InvoicePreviewTable invoices={preview.matched.slice(0, 10)} />
-                    {preview.matched.length > 10 && (
-                      <p className="text-xs text-muted-foreground mt-2">
-                        ...y {preview.matched.length - 10} facturas más
-                      </p>
-                    )}
+                    <div className="flex items-center justify-between mb-3">
+                      <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                        <CheckCircle className="h-4 w-4 text-green-500" />
+                        Facturas listas para importar ({getSelectedMatchedCount()}/{preview.matched.length})
+                      </h3>
+                      <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
+                        <Checkbox
+                          checked={getSelectedMatchedCount() === preview.matched.length}
+                          onCheckedChange={(checked) => toggleAllMatched(!!checked)}
+                        />
+                        Seleccionar todas
+                      </label>
+                    </div>
+                    <ScrollArea className="max-h-[250px]">
+                      <InvoicePreviewTable
+                        invoices={preview.matched}
+                        selectedKeys={selectedInvoices}
+                        keyPrefix="matched"
+                        onToggle={toggleInvoice}
+                      />
+                    </ScrollArea>
                   </div>
                 </>
               )}
@@ -437,10 +519,7 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
                 className="gap-2"
               >
                 {!canImport() && <AlertTriangle className="h-4 w-4" />}
-                Importar {preview.matched.length + preview.unmatched.filter(inv => {
-                  const uc = unmatchedClients.find(c => c.rut.replace(/\./g, '').trim().toUpperCase() === inv.rut.replace(/\./g, '').trim().toUpperCase());
-                  return uc?.resolution !== 'ignore';
-                }).length} facturas
+                Importar {totalToImport} factura{totalToImport !== 1 ? 's' : ''}
               </Button>
             </div>
           </div>
@@ -486,10 +565,18 @@ const ResolutionBadge: React.FC<{ resolution: string }> = ({ resolution }) => {
   }
 };
 
-const InvoicePreviewTable: React.FC<{ invoices: ProcessedInvoice[] }> = ({ invoices }) => (
+interface InvoicePreviewTableProps {
+  invoices: ProcessedInvoice[];
+  selectedKeys?: Set<string>;
+  keyPrefix?: string;
+  onToggle?: (key: string) => void;
+}
+
+const InvoicePreviewTable: React.FC<InvoicePreviewTableProps> = ({ invoices, selectedKeys, keyPrefix, onToggle }) => (
   <Table>
     <TableHeader>
       <TableRow>
+        {onToggle && <TableHead className="w-[40px]"></TableHead>}
         <TableHead className="text-xs">Folio</TableHead>
         <TableHead className="text-xs">Cliente</TableHead>
         <TableHead className="text-xs">Fecha</TableHead>
@@ -498,19 +585,31 @@ const InvoicePreviewTable: React.FC<{ invoices: ProcessedInvoice[] }> = ({ invoi
       </TableRow>
     </TableHeader>
     <TableBody>
-      {invoices.map((inv, i) => (
-        <TableRow key={`${inv.folio}-${i}`}>
-          <TableCell className="text-xs font-medium">{inv.numeroFiscal}</TableCell>
-          <TableCell className="text-xs truncate max-w-[200px]">{inv.razonSocial}</TableCell>
-          <TableCell className="text-xs">{inv.issueDate}</TableCell>
-          <TableCell className="text-xs text-right">{formatCLP(inv.total)}</TableCell>
-          <TableCell>
-            <Badge variant={inv.status === 'paid' ? 'default' : inv.status === 'overdue' ? 'destructive' : 'secondary'} className="text-[10px]">
-              {inv.status === 'paid' ? 'Pagada' : inv.status === 'overdue' ? 'Vencida' : 'Enviada'}
-            </Badge>
-          </TableCell>
-        </TableRow>
-      ))}
+      {invoices.map((inv, i) => {
+        const key = keyPrefix ? `${keyPrefix}-${inv.folio}-${i}` : `${inv.folio}-${i}`;
+        const isSelected = selectedKeys ? selectedKeys.has(key) : true;
+        return (
+          <TableRow key={key} className={!isSelected ? 'opacity-40' : ''}>
+            {onToggle && (
+              <TableCell className="pr-0">
+                <Checkbox
+                  checked={isSelected}
+                  onCheckedChange={() => onToggle(key)}
+                />
+              </TableCell>
+            )}
+            <TableCell className="text-xs font-medium">{inv.numeroFiscal}</TableCell>
+            <TableCell className="text-xs truncate max-w-[200px]">{inv.razonSocial}</TableCell>
+            <TableCell className="text-xs">{inv.issueDate}</TableCell>
+            <TableCell className="text-xs text-right">{formatCLP(inv.total)}</TableCell>
+            <TableCell>
+              <Badge variant={inv.status === 'paid' ? 'default' : inv.status === 'overdue' ? 'destructive' : 'secondary'} className="text-[10px]">
+                {inv.status === 'paid' ? 'Pagada' : inv.status === 'overdue' ? 'Vencida' : 'Enviada'}
+              </Badge>
+            </TableCell>
+          </TableRow>
+        );
+      })}
     </TableBody>
   </Table>
 );
