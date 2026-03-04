@@ -24,6 +24,7 @@ import InvoiceBatchActions from '@/components/invoices/InvoiceBatchActions';
 import InvoiceExportModal from '@/components/invoices/InvoiceExportModal';
 import { BatchProgressModal, useBatchProgress } from '@/components/ui/batch-progress-modal';
 import { useIsMobile } from '@/hooks/use-mobile';
+import InvoiceHistoryImport from '@/components/invoices/InvoiceHistoryImport';
 
 const INVOICE_STATUS_MAP: { [key: string]: string } = {
   all: 'Todas',
@@ -56,6 +57,7 @@ const Invoices = () => {
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const [selectedInvoiceIds, setSelectedInvoiceIds] = useState<string[]>([]);
   const [exportModalOpen, setExportModalOpen] = useState(false);
+  const [importHistoryOpen, setImportHistoryOpen] = useState(false);
   const [markAsPaidInvoice, setMarkAsPaidInvoice] = useState<Invoice | null>(null);
   const batchProgress = useBatchProgress();
   const ITEMS_PER_PAGE = 10;
@@ -479,6 +481,7 @@ const Invoices = () => {
           <InvoicesHeader 
             onCreateInvoice={() => setShowForm(true)} 
             onOpenExportModal={() => setExportModalOpen(true)}
+            onOpenImportHistory={() => setImportHistoryOpen(true)}
           />
           
           <InvoicesStats invoices={invoices} />
@@ -598,6 +601,12 @@ const Invoices = () => {
         isOpen={!!markAsPaidInvoice}
         onClose={() => setMarkAsPaidInvoice(null)}
         onConfirm={handleConfirmMarkAsPaid}
+      />
+
+      <InvoiceHistoryImport
+        open={importHistoryOpen}
+        onOpenChange={setImportHistoryOpen}
+        onImportComplete={() => refetch()}
       />
     </div>
   );
