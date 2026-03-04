@@ -421,7 +421,7 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
                   <div>
                     <h3 className="text-sm font-semibold text-foreground flex items-center gap-2 mb-3">
                       <AlertTriangle className="h-4 w-4 text-amber-500" />
-                      Clientes no encontrados ({unmatchedClients.length})
+                      Clientes no encontrados ({unmatchedClients.length}) — {preview.unmatched.length} factura{preview.unmatched.length !== 1 ? 's' : ''}
                     </h3>
                     <div className="space-y-3">
                       {unmatchedClients.map((uc, index) => (
