@@ -1,30 +1,29 @@
 
 
-# Fix: Normalización de RUT en el importador de historial
+# Fix: RUT normalization consistency + Invoice selection
 
-## Problema
+## Problem 1: RUT still not matching
+The `normalizeRut` function in the parser was fixed to strip dots, spaces, and dashes. But in `InvoiceHistoryImport.tsx`, there are 4 places that still use the old regex `replace(/\./g, '')` (only strips dots):
+- Line 136: creating client RUT map
+- Line 188: looking up unmatched invoice RUT
+- Line 193: finding unmatched client entry
+- Line 441: counting importable invoices in the button label
 
-El importador de historial usa una normalización de RUT incompleta. Solo quita puntos (`77.225.200-5` → `77225200-5`), pero el sistema `entityFinders` quita puntos, espacios Y guiones (`77225200-5` → `772252005`). Si en la BD el RUT está guardado con formato diferente (ej: `77225200-5` vs `77.225.200-5`), la comparación falla.
+All of these need to use the same normalization: `replace(/[.\s-]/g, '').trim().toUpperCase()`.
 
-## Solución
+## Problem 2: No invoice selection
+Currently all matched invoices are imported automatically with no way to exclude individual ones. The user wants checkboxes to select/deselect invoices.
 
-Alinear la función `normalizeRut` en `invoiceHistoryParser.ts` con el patrón existente en `entityFinders.ts`:
+### Changes to `InvoiceHistoryImport.tsx`:
+- Add `selectedInvoices` state (`Set<string>`) tracking selected invoice keys
+- Initialize all matched invoices as selected on preview load
+- Add select all / deselect all toggle
+- Add checkbox column to `InvoicePreviewTable`
+- Show all invoices (remove the slice(0,10) limit, keep scroll)
+- Filter by `selectedInvoices` during import
+- Update button count to reflect selection
+- Extract a shared `normalizeRut` helper used consistently everywhere
 
-```typescript
-// Antes (solo quita puntos)
-const normalizeRut = (rut: string): string => {
-  return rut.replace(/\./g, '').trim().toUpperCase();
-};
-
-// Después (quita puntos, espacios y guiones — igual que entityFinders)
-const normalizeRut = (rut: string): string => {
-  return rut.replace(/[.\s-]/g, '').trim().toUpperCase();
-};
-```
-
-## Archivo a modificar
-
-- `src/utils/invoiceHistoryParser.ts` — línea 66: cambiar regex de `\\.` a `[.\\s-]`
-
-Cambio de 1 línea. Esto hará que clientes como "ARRENDADORA DE VEHÍCULOS S.A." (RUT 77.225.200-5) se reconozcan correctamente contra el registro en la BD.
+## Files to modify
+- `src/components/invoices/InvoiceHistoryImport.tsx` — fix 4 normalization calls + add selection UI
 
