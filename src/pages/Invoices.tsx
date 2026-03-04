@@ -25,6 +25,7 @@ import InvoiceExportModal from '@/components/invoices/InvoiceExportModal';
 import { BatchProgressModal, useBatchProgress } from '@/components/ui/batch-progress-modal';
 import { useIsMobile } from '@/hooks/use-mobile';
 import InvoiceHistoryImport from '@/components/invoices/InvoiceHistoryImport';
+import InvoiceHistoricalTab from '@/components/invoices/InvoiceHistoricalTab';
 
 const INVOICE_STATUS_MAP: { [key: string]: string } = {
   all: 'Todas',
@@ -452,7 +453,7 @@ const Invoices = () => {
   return (
     <div className="space-y-6">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 max-w-4xl mx-auto bg-card border-border gap-1">
+        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 max-w-5xl mx-auto bg-card border-border gap-1">
           <TabsTrigger value="invoices" className="text-xs sm:text-sm text-foreground data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
             <span className="hidden sm:inline">Facturas</span>
             <span className="sm:hidden">Fact.</span>
@@ -475,13 +476,16 @@ const Invoices = () => {
             <span className="hidden sm:inline">Anulaciones</span>
             <span className="sm:hidden">Anul.</span>
           </TabsTrigger>
+          <TabsTrigger value="historical" className="text-xs sm:text-sm text-foreground data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+            <span className="hidden sm:inline">Histórico</span>
+            <span className="sm:hidden">Hist.</span>
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="invoices" className="space-y-6">
           <InvoicesHeader 
             onCreateInvoice={() => setShowForm(true)} 
             onOpenExportModal={() => setExportModalOpen(true)}
-            onOpenImportHistory={() => setImportHistoryOpen(true)}
           />
           
           <InvoicesStats invoices={invoices} />
@@ -582,6 +586,10 @@ const Invoices = () => {
 
         <TabsContent value="cancellations">
           <InvoiceCancellationsHistory />
+        </TabsContent>
+
+        <TabsContent value="historical">
+          <InvoiceHistoricalTab onOpenImportHistory={() => setImportHistoryOpen(true)} />
         </TabsContent>
       </Tabs>
 
