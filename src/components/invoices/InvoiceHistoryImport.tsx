@@ -37,6 +37,13 @@ const formatCLP = (amount: number) =>
 const normalizeRut = (rut: string): string =>
   rut.replace(/[^0-9Kk]/g, '').trim().toUpperCase();
 
+const formatClientWithDepartment = (client: Client): string => {
+  const department = client.department?.trim();
+  if (department && department.toLowerCase() !== 'general') {
+    return `${client.name} (${client.rut}) — ${department}`;
+  }
+  return `${client.name} (${client.rut})`;
+};
 const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpenChange, onImportComplete }) => {
   const { clients, createClient } = useClients();
   const [step, setStep] = useState<Step>('upload');
@@ -463,7 +470,7 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
                                   <SelectContent>
                                     {clients.filter(c => c.isActive).map(c => (
                                       <SelectItem key={c.id} value={c.id} className="text-xs">
-                                        {c.name} ({c.rut})
+                                        {formatClientWithDepartment(c)}
                                       </SelectItem>
                                     ))}
                                   </SelectContent>
