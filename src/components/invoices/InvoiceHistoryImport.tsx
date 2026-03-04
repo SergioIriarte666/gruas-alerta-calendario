@@ -34,9 +34,8 @@ type Step = 'upload' | 'preview' | 'importing' | 'done';
 const formatCLP = (amount: number) =>
   new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', maximumFractionDigits: 0 }).format(amount);
 
-// Shared RUT normalization — strips dots, spaces, dashes
 const normalizeRut = (rut: string): string =>
-  rut.replace(/[.\s-]/g, '').trim().toUpperCase();
+  rut.replace(/[^0-9Kk]/g, '').trim().toUpperCase();
 
 const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpenChange, onImportComplete }) => {
   const { clients, createClient } = useClients();
@@ -174,14 +173,12 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
       if (!selectedInvoices.has(key)) return false;
       const nRut = normalizeRut(inv.rut);
       const uc = unmatchedClients.find(c => normalizeRut(c.rut) === nRut);
-      return uc?.resolution !== 'ignore';
+      return !!uc && uc.resolution !== 'ignore' && uc.resolution !== 'pending';
     }).length;
   };
 
   const canImport = () => {
     if (!preview) return false;
-    const hasPending = unmatchedClients.some(c => c.resolution === 'pending');
-    if (hasPending) return false;
     return (getSelectedMatchedCount() + getSelectedUnmatchedCount()) > 0;
   };
 
@@ -382,6 +379,34 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
                 )}
               </div>
 
+              {/* Matched invoices preview */}
+              {preview.matched.length > 0 && (
+                <>
+                  <Separator />
+                  <div>
+                    <div className="flex items-center justify-between mb-3">
+                      <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                        <CheckCircle className="h-4 w-4 text-green-500" />
+                        Facturas listas para importar ({getSelectedMatchedCount()}/{preview.matched.length})
+                      </h3>
+                      <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
+                        <Checkbox
+                          checked={getSelectedMatchedCount() === preview.matched.length}
+                          onCheckedChange={(checked) => toggleAllMatched(!!checked)}
+                        />
+                        Seleccionar todas
+                      </label>
+                    </div>
+                    <InvoicePreviewTable
+                      invoices={preview.matched}
+                      selectedKeys={selectedInvoices}
+                      keyPrefix="matched"
+                      onToggle={toggleInvoice}
+                    />
+                  </div>
+                </>
+              )}
+
               {/* Unmatched clients section */}
               {unmatchedClients.length > 0 && (
                 <>
@@ -462,33 +487,6 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
                 </>
               )}
 
-              {/* Matched invoices preview */}
-              {preview.matched.length > 0 && (
-                <>
-                  <Separator />
-                  <div>
-                    <div className="flex items-center justify-between mb-3">
-                      <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
-                        <CheckCircle className="h-4 w-4 text-green-500" />
-                        Facturas listas para importar ({getSelectedMatchedCount()}/{preview.matched.length})
-                      </h3>
-                      <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
-                        <Checkbox
-                          checked={getSelectedMatchedCount() === preview.matched.length}
-                          onCheckedChange={(checked) => toggleAllMatched(!!checked)}
-                        />
-                        Seleccionar todas
-                      </label>
-                    </div>
-                    <InvoicePreviewTable
-                      invoices={preview.matched}
-                      selectedKeys={selectedInvoices}
-                      keyPrefix="matched"
-                      onToggle={toggleInvoice}
-                    />
-                  </div>
-                </>
-              )}
 
               {/* Duplicates */}
               {preview.duplicates.length > 0 && (

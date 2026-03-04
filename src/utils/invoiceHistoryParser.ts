@@ -63,7 +63,7 @@ export interface ImportPreview {
 
 // Normalize RUT for comparison (remove dots, keep dash)
 const normalizeRut = (rut: string): string => {
-  return rut.replace(/[.\s-]/g, '').trim().toUpperCase();
+  return rut.replace(/[^0-9Kk]/g, '').trim().toUpperCase();
 };
 
 // Parse date from DD-MM-YYYY format
