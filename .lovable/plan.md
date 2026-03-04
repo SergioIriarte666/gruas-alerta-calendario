@@ -1,73 +1,55 @@
 
 
-# Plan: Unificar Categorías — Una Sola Fuente de Verdad (`cost_categories`)
+# Manejo de Clientes No Encontrados en la Importación de Facturas
 
-## Problema
+## Situación
 
-Existen **dos tablas de categorías separadas** que gestionan conceptos superpuestos:
+Los archivos CSV/XLSX del sistema de facturación contienen RUT y RAZÓN SOCIAL de cada cliente. Al importar, se busca el cliente por RUT en la tabla `clients`. Hay tres escenarios posibles:
 
-| Tabla | Registros | Usado por |
+## Escenarios y Solución Propuesta
+
+| Escenario | Qué pasa | Acción |
 |---|---|---|
-| `cost_categories` | 17 | Costos (`costs.category_id` → UUID FK) |
-| `supplier_categories` | 22 | Proveedores (`suppliers.category` → TEXT libre), Pagos (`supplier_payments.category` → TEXT libre) |
+| **Cliente existe por RUT** | Match directo | Se asigna el `client_id` automáticamente |
+| **Cliente NO existe** | RUT no encontrado en `clients` | Se muestra en el preview para que el usuario decida |
+| **RUT ambiguo** | Mismo RUT, múltiples departamentos | Se muestra para selección manual |
 
-Ambas tienen nombres duplicados (Administrativos, Mantenimiento, Peajes, Inventario, etc.). Además, `suppliers.category` y `supplier_payments.category` son campos TEXT que almacenan una mezcla de UUIDs de ambas tablas y strings legacy ("administrativos", "otros"). El resolver `resolveSupplierPaymentCategoryLabel` intenta resolver de ambas fuentes, evidenciando la falta de fuente de verdad.
+## Opciones para clientes no encontrados
 
-En Configuración solo se gestionan `cost_categories` (pestaña Costos). En Proveedores hay otra pestaña "Categorías" que gestiona `supplier_categories` por separado.
+En el paso de preview (antes de confirmar la importación), el importador mostrará una sección de **"Clientes no encontrados"** con estas opciones por cada cliente:
 
-## Solución
+1. **Crear automáticamente**: El importador crea el cliente con los datos disponibles del CSV (RUT, Razón Social) y campos mínimos. El usuario puede completar datos (email, teléfono, dirección) después.
 
-**`cost_categories` será la única fuente de verdad** para categorías financieras en todo el sistema (costos, proveedores, pagos, inventario).
+2. **Asignar a cliente existente**: Dropdown para seleccionar manualmente un cliente ya registrado (útil si el nombre cambió o el RUT tiene formato diferente).
 
-### 1. Migración de Datos SQL
+3. **Ignorar**: Las facturas de ese cliente no se importan.
 
-- **Mapear** cada `supplier_categories` a su equivalente en `cost_categories` (por nombre). Crear en `cost_categories` las que no existan (ej: Créditos, TAG, Parcela, Insumos Lavado, Telefonia e Internet).
-- **Actualizar `supplier_payments.category`**: reemplazar UUIDs de `supplier_categories` y strings legacy por el UUID correspondiente de `cost_categories`.
-- **Actualizar `suppliers.category`**: mismo tratamiento.
-- **No eliminar `supplier_categories`** aún (mantener como respaldo temporal), pero marcar como deprecated.
+## Flujo del Importador
 
-### 2. Frontend — Eliminar `useSupplierCategoryManager` 
+```text
+1. Subir archivo CSV/XLSX
+2. Parsear y mostrar preview
+   ├── Facturas con cliente encontrado ✅ (listas para importar)
+   ├── Clientes no encontrados ⚠️
+   │   ├── [Crear cliente] → crea con RUT + nombre del CSV
+   │   ├── [Asignar existente] → selector de clientes
+   │   └── [Ignorar] → excluye esas facturas
+   └── Duplicados detectados 🔄 (ya importadas, se omiten)
+3. Confirmar importación
+```
 
-Reemplazar todas las referencias a `useSupplierCategoryManager` y `supplier_categories` por `useCostCategories`:
+## Datos para crear clientes automáticamente
 
-- **`PaymentList.tsx`**: Usar solo `costCategories` en vez de combinar ambas listas.
-- **`PaymentForm.tsx`**: Selector de categoría desde `cost_categories`.
-- **`SupplierForm.tsx`**: Selector de categoría desde `cost_categories`.
-- **`SupplierList.tsx`**: Resolver categoría desde `cost_categories`.
-- **`SupplierGeneralTab.tsx`**: Resolver desde `cost_categories`.
-- **`EnhancedCostsTable.tsx`**: Eliminar import de `useSupplierCategoryManager`.
-- **`XMLSupplierUpload.tsx`**: Usar `cost_categories` para mapeo.
+Del CSV se extraen:
+- `rut` → del campo RUT
+- `name` → del campo RAZÓN SOCIAL  
+- `department` → "General" (default)
+- `is_active` → true
+- `billing_type` → "standard"
 
-### 3. Eliminar `resolveSupplierPaymentCategoryLabel`
+Los campos como email, teléfono y dirección quedarían vacíos para completar después.
 
-Ya no será necesario resolver de múltiples fuentes. Una simple búsqueda por UUID en `cost_categories` + fallback es suficiente.
+## Implementación
 
-### 4. Configuración — Eliminar pestaña "Categorías" de Proveedores
-
-La pestaña "Categorías" en `/suppliers` (`SupplierCategoryList`) se elimina. Las categorías se gestionan solo desde Configuración → Categorías de Costos, que aplican globalmente a costos y proveedores.
-
-### 5. Archivos afectados
-
-| Archivo | Acción |
-|---|---|
-| `src/hooks/useSupplierCategoryManager.ts` | Eliminar |
-| `src/utils/suppliers/resolveSupplierPaymentCategory.ts` | Simplificar (solo buscar en cost_categories) |
-| `src/utils/categoryUtils.ts` | Actualizar para usar cost_categories |
-| `src/components/suppliers/categories/*` | Eliminar directorio |
-| `src/components/suppliers/PaymentList.tsx` | Refactorizar imports |
-| `src/components/suppliers/PaymentForm.tsx` | Refactorizar selector |
-| `src/components/suppliers/SupplierForm.tsx` | Refactorizar selector |
-| `src/components/suppliers/SupplierList.tsx` | Refactorizar resolución |
-| `src/components/suppliers/detail/SupplierGeneralTab.tsx` | Refactorizar |
-| `src/components/costs/EnhancedCostsTable.tsx` | Limpiar import |
-| `src/pages/Suppliers.tsx` | Eliminar tab "Categorías" |
-| `src/types/suppliers.ts` | Eliminar `SupplierCategory` type |
-| Migración SQL | Mapear datos + crear categorías faltantes |
-
-### Resultado
-
-- **Una sola tabla**: `cost_categories` gestiona categorías para costos, proveedores y pagos.
-- **Un solo lugar de administración**: Configuración → Categorías.
-- **Consistencia total**: Un pago a proveedor y su costo asociado siempre comparten la misma categoría.
-- **Sin resolver complejo**: Búsqueda directa por UUID.
+Todo esto se incluye dentro del componente `InvoiceHistoryImport.tsx` y el parser `invoiceHistoryParser.ts` que ya están planificados. No requiere cambios adicionales en la base de datos — usa la tabla `clients` existente y la función `createClient` del hook `useClients`.
 
