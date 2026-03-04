@@ -228,27 +228,14 @@ export const processInvoiceRows = (
     // Match client by RUT
     const matchingClients = clients.filter(c => normalizeRut(c.rut) === normalizedRut);
 
-    if (matchingClients.length === 1) {
+    if (matchingClients.length >= 1) {
+      // RUT is the primary key for matching, even when multiple departments exist
       processed.clientId = matchingClients[0].id;
-      processed.clientMatch = 'exact';
-      matched.push(processed);
-    } else if (matchingClients.length > 1) {
-      processed.clientMatch = 'multiple';
-      processed.matchedClients = matchingClients;
-      unmatched.push(processed);
-      // Track as unmatched client needing resolution
-      if (!unmatchedClientsMap.has(normalizedRut)) {
-        unmatchedClientsMap.set(normalizedRut, {
-          rut: row.rut,
-          razonSocial: row.razonSocial,
-          invoiceCount: 0,
-          totalAmount: 0,
-          resolution: 'pending',
-        });
+      processed.clientMatch = matchingClients.length > 1 ? 'multiple' : 'exact';
+      if (matchingClients.length > 1) {
+        processed.matchedClients = matchingClients;
       }
-      const uc = unmatchedClientsMap.get(normalizedRut)!;
-      uc.invoiceCount++;
-      uc.totalAmount += row.total;
+      matched.push(processed);
     } else {
       processed.clientMatch = 'none';
       unmatched.push(processed);

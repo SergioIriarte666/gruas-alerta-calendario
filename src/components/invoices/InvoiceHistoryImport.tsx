@@ -353,8 +353,8 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
 
         {step === 'preview' && preview && (
           <div className="flex flex-col flex-1 min-h-0 overflow-hidden">
-            <div className="flex-1 overflow-y-auto pr-2">
-            <div className="space-y-6">
+            <ScrollArea className="flex-1 pr-2">
+              <div className="space-y-6 pb-4">
               {/* Summary stats */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 <div className="bg-muted/50 rounded-lg p-3 text-center">
@@ -480,14 +480,12 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
                         Seleccionar todas
                       </label>
                     </div>
-                    <ScrollArea className="max-h-[250px]">
-                      <InvoicePreviewTable
-                        invoices={preview.matched}
-                        selectedKeys={selectedInvoices}
-                        keyPrefix="matched"
-                        onToggle={toggleInvoice}
-                      />
-                    </ScrollArea>
+                    <InvoicePreviewTable
+                      invoices={preview.matched}
+                      selectedKeys={selectedInvoices}
+                      keyPrefix="matched"
+                      onToggle={toggleInvoice}
+                    />
                   </div>
                 </>
               )}
@@ -505,8 +503,8 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
                   </div>
                 </>
               )}
-            </div>
-            </div>
+              </div>
+            </ScrollArea>
 
             {/* Action buttons — fixed at bottom */}
             <div className="flex justify-end gap-2 pt-4 border-t mt-4 flex-shrink-0">
