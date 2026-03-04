@@ -1,14 +1,13 @@
 
 import { Button } from '@/components/ui/button';
-import { Plus, FileDown, Upload } from 'lucide-react';
+import { Plus, FileDown } from 'lucide-react';
 
 interface InvoicesHeaderProps {
   onCreateInvoice: () => void;
   onOpenExportModal: () => void;
-  onOpenImportHistory?: () => void;
 }
 
-const InvoicesHeader = ({ onCreateInvoice, onOpenExportModal, onOpenImportHistory }: InvoicesHeaderProps) => {
+const InvoicesHeader = ({ onCreateInvoice, onOpenExportModal }: InvoicesHeaderProps) => {
   return (
     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
       <div>
@@ -16,17 +15,6 @@ const InvoicesHeader = ({ onCreateInvoice, onOpenExportModal, onOpenImportHistor
         <p className="text-muted-foreground mt-1">Gestión de facturación y pagos</p>
       </div>
       <div className="flex gap-2">
-        {onOpenImportHistory && (
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={onOpenImportHistory}
-            className="gap-2"
-          >
-            <Upload className="h-4 w-4" />
-            Importar Historial
-          </Button>
-        )}
         <Button 
           variant="outline" 
           size="sm" 

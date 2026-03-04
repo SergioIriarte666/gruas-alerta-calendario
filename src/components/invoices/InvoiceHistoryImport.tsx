@@ -281,8 +281,9 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
         )}
 
         {step === 'preview' && preview && (
-          <ScrollArea className="flex-1 max-h-[70vh]">
-            <div className="space-y-6 pr-4">
+          <div className="flex flex-col flex-1 min-h-0 overflow-hidden">
+            <div className="flex-1 overflow-y-auto pr-2">
+            <div className="space-y-6">
               {/* Summary stats */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 <div className="bg-muted/50 rounded-lg p-3 text-center">
@@ -423,9 +424,10 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
                 </>
               )}
             </div>
+            </div>
 
-            {/* Action buttons */}
-            <div className="flex justify-end gap-2 mt-6 pt-4 border-t">
+            {/* Action buttons — fixed at bottom */}
+            <div className="flex justify-end gap-2 pt-4 border-t mt-4 flex-shrink-0">
               <Button variant="outline" onClick={handleClose}>
                 Cancelar
               </Button>
@@ -441,7 +443,7 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
                 }).length} facturas
               </Button>
             </div>
-          </ScrollArea>
+          </div>
         )}
 
         {step === 'importing' && (
