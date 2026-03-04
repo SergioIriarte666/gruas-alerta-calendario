@@ -1,55 +1,28 @@
 
 
-# Manejo de Clientes No Encontrados en la Importación de Facturas
+# Plan: Pestaña "Histórico" + Fix scroll del modal
 
-## Situación
+## Problemas identificados
 
-Los archivos CSV/XLSX del sistema de facturación contienen RUT y RAZÓN SOCIAL de cada cliente. Al importar, se busca el cliente por RUT en la tabla `clients`. Hay tres escenarios posibles:
+1. **Pestaña "Historial"** actualmente muestra `PaymentHistory` (historial de pagos). El usuario quiere una pestaña nueva **"Histórico"** separada para las facturas importadas del sistema externo, sin mezclarlas con las facturas del sistema actual.
 
-## Escenarios y Solución Propuesta
+2. **Modal de importación no scrollea**: El `DialogContent` tiene `overflow-hidden` y el `ScrollArea` está dentro, pero los botones de acción están dentro del `ScrollArea` en lugar de estar fijos abajo, y el layout flex puede estar causando que no se expanda correctamente.
 
-| Escenario | Qué pasa | Acción |
-|---|---|---|
-| **Cliente existe por RUT** | Match directo | Se asigna el `client_id` automáticamente |
-| **Cliente NO existe** | RUT no encontrado en `clients` | Se muestra en el preview para que el usuario decida |
-| **RUT ambiguo** | Mismo RUT, múltiples departamentos | Se muestra para selección manual |
+## Cambios
 
-## Opciones para clientes no encontrados
+### 1. Crear componente `InvoiceHistoricalTab.tsx`
+- Nueva pestaña que muestra solo facturas históricas (filtradas por `notes = 'Importación historial 2025'`).
+- Tabla read-only con: Folio, N° Fiscal, Cliente, Fecha, Total, Estado.
+- Botón "Importar Historial" integrado en el header de esta pestaña.
+- Buscador y stats simples (total facturado, cantidad).
+- Sigue el patrón visual del Cost Module (badges, fonts, etc).
 
-En el paso de preview (antes de confirmar la importación), el importador mostrará una sección de **"Clientes no encontrados"** con estas opciones por cada cliente:
+### 2. Modificar `Invoices.tsx`
+- Agregar nueva pestaña "Histórico" al `TabsList` (renombrar la actual "Historial" que es de pagos para evitar confusión, o mantener ambas con nombres claros).
+- Mover el botón "Importar Historial" del header principal a la pestaña Histórico.
+- Grid de tabs pasa de 6 a 7 columnas.
 
-1. **Crear automáticamente**: El importador crea el cliente con los datos disponibles del CSV (RUT, Razón Social) y campos mínimos. El usuario puede completar datos (email, teléfono, dirección) después.
-
-2. **Asignar a cliente existente**: Dropdown para seleccionar manualmente un cliente ya registrado (útil si el nombre cambió o el RUT tiene formato diferente).
-
-3. **Ignorar**: Las facturas de ese cliente no se importan.
-
-## Flujo del Importador
-
-```text
-1. Subir archivo CSV/XLSX
-2. Parsear y mostrar preview
-   ├── Facturas con cliente encontrado ✅ (listas para importar)
-   ├── Clientes no encontrados ⚠️
-   │   ├── [Crear cliente] → crea con RUT + nombre del CSV
-   │   ├── [Asignar existente] → selector de clientes
-   │   └── [Ignorar] → excluye esas facturas
-   └── Duplicados detectados 🔄 (ya importadas, se omiten)
-3. Confirmar importación
-```
-
-## Datos para crear clientes automáticamente
-
-Del CSV se extraen:
-- `rut` → del campo RUT
-- `name` → del campo RAZÓN SOCIAL  
-- `department` → "General" (default)
-- `is_active` → true
-- `billing_type` → "standard"
-
-Los campos como email, teléfono y dirección quedarían vacíos para completar después.
-
-## Implementación
-
-Todo esto se incluye dentro del componente `InvoiceHistoryImport.tsx` y el parser `invoiceHistoryParser.ts` que ya están planificados. No requiere cambios adicionales en la base de datos — usa la tabla `clients` existente y la función `createClient` del hook `useClients`.
+### 3. Fix scroll del modal `InvoiceHistoryImport.tsx`
+- Separar los botones de acción fuera del `ScrollArea` para que queden fijos abajo.
+- Asegurar que el contenido del preview sea scrolleable con `overflow-y-auto` dentro del flex container.
 
