@@ -18,9 +18,18 @@ const handler = async (req: Request): Promise<Response> => {
   try {
     const { email } = await req.json();
 
-    if (!email) {
+    if (!email || typeof email !== 'string') {
       return new Response(
         JSON.stringify({ error: "Email es requerido" }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    // Validate email format to prevent abuse with invalid inputs
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email.trim()) || email.trim().length > 254) {
+      return new Response(
+        JSON.stringify({ error: "Formato de email inválido" }),
         { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
