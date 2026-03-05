@@ -212,7 +212,7 @@ const Profile = () => {
                 )} />
                 <div className="flex items-center space-x-2">
                   <span className="text-muted-foreground text-sm">Rol:</span>
-                  <span className="text-primary font-medium capitalize">{user?.role}</span>
+                  <span className="text-violet-600 dark:text-violet-400 font-medium capitalize">{user?.role}</span>
                 </div>
               </div>
             </CardContent>
