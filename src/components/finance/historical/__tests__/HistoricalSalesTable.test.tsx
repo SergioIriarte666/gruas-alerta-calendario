@@ -5,7 +5,7 @@ import { Invoice } from '@/types';
 
 // Mocking some dependencies if needed
 vi.mock('lucide-react', async (importOriginal) => {
-  const actual = await importOriginal();
+  const actual = await importOriginal<typeof import('lucide-react')>();
   return {
     ...actual,
     ArrowUpDown: () => <span data-testid="sort-icon-default">SortDefault</span>,

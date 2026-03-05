@@ -8,6 +8,9 @@ import { toTitleCase } from "@/lib/utils";
 interface DepartmentBadgeProps {
   department?: string;
   clientName?: string;
+  clientRut?: string;
+  allClients?: Client[];
+  className?: string;
 }
 
 export function DepartmentBadge({ department, clientName }: DepartmentBadgeProps) {
