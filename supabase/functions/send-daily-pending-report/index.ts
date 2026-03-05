@@ -48,6 +48,39 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
+    // ── Authentication: require CRON_SECRET or valid JWT ──
+    const cronSecret = Deno.env.get("CRON_SECRET");
+    const requestSecret = req.headers.get("x-cron-secret");
+    const authHeader = req.headers.get("Authorization");
+
+    let authenticated = false;
+
+    // Option 1: Cron secret header
+    if (cronSecret && requestSecret && cronSecret === requestSecret) {
+      authenticated = true;
+    }
+
+    // Option 2: Valid JWT (for manual triggers from the app)
+    if (!authenticated && authHeader?.startsWith("Bearer ")) {
+      const supabaseAuth = createClient(
+        Deno.env.get("SUPABASE_URL") ?? "",
+        Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+        { global: { headers: { Authorization: authHeader } } }
+      );
+      const token = authHeader.replace("Bearer ", "");
+      const { data: claimsData, error: claimsError } = await supabaseAuth.auth.getClaims(token);
+      if (!claimsError && claimsData?.claims) {
+        authenticated = true;
+      }
+    }
+
+    if (!authenticated) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    }
+
     console.log("🚀 Iniciando generación de reporte diario de pendientes...");
 
     const supabase = createClient(
