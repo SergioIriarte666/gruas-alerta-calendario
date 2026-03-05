@@ -26,6 +26,8 @@ import { PredictiveInsights } from '@/components/vip/PredictiveInsights';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 
+import { toTitleCase } from '@/lib/utils';
+
 export default function VipClientPipeline() {
   const { clientId } = useParams<{ clientId: string }>();
   const navigate = useNavigate();
@@ -199,7 +201,7 @@ export default function VipClientPipeline() {
           <div className="hidden sm:block h-8 w-px bg-border" />
           <div>
             <h1 className="text-xl sm:text-2xl font-bold text-foreground flex flex-wrap items-center gap-2 sm:gap-3">
-              {client.name}
+              {toTitleCase(client.name)}
               <Badge variant="secondary" className="text-xs sm:text-sm">
                 VIP Pipeline
               </Badge>
@@ -209,7 +211,7 @@ export default function VipClientPipeline() {
               <DepartmentBadge
                 department={client.department}
                 clientRut={client.rut}
-                clientName={client.name}
+                clientName={toTitleCase(client.name)}
                 allClients={clients}
               />
             </p>
@@ -226,7 +228,7 @@ export default function VipClientPipeline() {
       </div>
 
       {/* Pipeline Metrics */}
-      <PipelineMetrics services={services} clientName={client.name} />
+      <PipelineMetrics services={services} clientName={toTitleCase(client.name)} />
 
       {/* Main Content Tabs */}
       <Tabs defaultValue="pipeline" className="space-y-6">
@@ -251,7 +253,7 @@ export default function VipClientPipeline() {
               services={services} 
               loading={loading}
               clientId={clientId}
-              clientName={client.name}
+              clientName={toTitleCase(client.name)}
               onServiceUpdate={handleServiceUpdate}
               onServiceSelect={handleServiceSelect}
               onServiceEdit={handleServiceEdit}
@@ -263,13 +265,13 @@ export default function VipClientPipeline() {
         <TabsContent value="purchase-orders" className="space-y-6">
           <QuotePDFImporter
             clientId={clientId}
-            clientName={client.name}
+            clientName={toTitleCase(client.name)}
             services={services}
             onComplete={() => refetch()}
           />
           <PurchaseOrderPDFImporter
             clientId={clientId}
-            clientName={client.name}
+            clientName={toTitleCase(client.name)}
             services={services}
             onComplete={() => refetch()}
           />
@@ -284,11 +286,11 @@ export default function VipClientPipeline() {
           <div className="space-y-6">
             <ClientAnalytics 
               services={services}
-              clientName={client.name}
+              clientName={toTitleCase(client.name)}
             />
             <PredictiveInsights 
               services={services}
-              clientName={client.name}
+              clientName={toTitleCase(client.name)}
             />
           </div>
         </TabsContent>
@@ -297,7 +299,7 @@ export default function VipClientPipeline() {
           <ExecutiveReports 
             services={services}
             clientId={clientId}
-            clientName={client.name}
+            clientName={toTitleCase(client.name)}
           />
         </TabsContent>
       </Tabs>

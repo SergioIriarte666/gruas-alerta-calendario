@@ -11,6 +11,7 @@ import { useClientServices } from '@/hooks/useClientServices';
 import { useClientInvoices } from '@/hooks/useClientInvoices';
 import { useClientClosures } from '@/hooks/useClientClosures';
 import { useClientRequests } from '@/hooks/useClientRequests';
+import { toTitleCase } from '@/lib/utils';
 
 interface ClientTabsWithCountersProps {
   client: Client;
@@ -90,7 +91,7 @@ export const ClientTabsWithCounters = ({ client }: ClientTabsWithCountersProps) 
                             Nombre/Razón Social
                           </label>
                           <p className="text-foreground bg-card border-border rounded px-3 py-2">
-                            {client.name}
+                            {toTitleCase(client.name)}
                           </p>
                         </div>
                         
@@ -137,7 +138,7 @@ export const ClientTabsWithCounters = ({ client }: ClientTabsWithCountersProps) 
                             Dirección
                           </label>
                           <p className="text-foreground bg-card border-border rounded px-3 py-2">
-                            {client.address || 'No especificada'}
+                            {toTitleCase(client.address || 'No especificada')}
                           </p>
                         </div>
                         

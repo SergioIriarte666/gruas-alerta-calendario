@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Progress } from '@/components/ui/progress';
 import { Invoice } from '@/types';
-import { formatCurrency } from '@/lib/utils';
+import { formatCurrency, toTitleCase } from '@/lib/utils';
 import { format, isValid, parseISO, differenceInDays } from 'date-fns';
 import { es } from 'date-fns/locale';
 import {
@@ -272,7 +272,7 @@ export const InvoiceDetailsModal = ({ invoice, isOpen, onClose }: InvoiceDetails
               <Separator className="border-border" />
 
               <DetailSection title="Cliente" icon={User}>
-                <DetailItem icon={User} label="Nombre" value={invoice.client?.name} />
+                <DetailItem icon={User} label="Nombre" value={invoice.client?.name ? toTitleCase(invoice.client.name) : undefined} />
                 <DetailItem icon={Hash} label="RUT" value={invoice.client?.rut} />
                 {invoice.client?.email && (
                   <DetailItem icon={Mail} label="Email" value={invoice.client.email} />

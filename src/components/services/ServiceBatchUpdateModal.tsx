@@ -28,6 +28,8 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 
+import { toTitleCase } from '@/lib/utils';
+
 interface ServiceBatchUpdateModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -79,7 +81,7 @@ export const ServiceBatchUpdateModal = ({
   );
 
   // Get client name from first service
-  const clientName = selectedServices[0]?.client?.name || 'Cliente';
+  const clientName = selectedServices[0]?.client?.name ? toTitleCase(selectedServices[0].client.name) : 'Cliente';
 
   const toggleServiceExclusion = (serviceId: string) => {
     setExcludedServices(prev => {

@@ -10,6 +10,7 @@ import { useOperatorsData } from '@/hooks/operators/useOperatorsData';
 import { useCostCategories } from '@/hooks/useCostCategories';
 import { ReportFilters as ReportFiltersType } from '@/hooks/useReports';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { toTitleCase } from '@/lib/utils';
 
 interface ServiceReportFilters {
   dateRange: { from: string; to: string };
@@ -84,7 +85,7 @@ export const ReportFilters = ({
                       {clients.map(client => (
                         <SelectItem key={client.id} value={client.id}>
                           <div className="flex flex-col py-0.5">
-                            <span className="font-medium">{client.name}</span>
+                            <span className="font-medium">{toTitleCase(client.name)}</span>
                             {client.department && client.department !== 'General' && (
                               <span className="text-xs text-violet-600 dark:text-violet-400">{client.department}</span>
                             )}
@@ -154,7 +155,7 @@ export const ReportFilters = ({
                       {clients.map(client => (
                         <SelectItem key={client.id} value={client.id}>
                           <div className="flex flex-col py-0.5">
-                            <span className="font-medium">{client.name}</span>
+                            <span className="font-medium">{toTitleCase(client.name)}</span>
                             {client.department && client.department !== 'General' && (
                               <span className="text-xs text-violet-600 dark:text-violet-400">{client.department}</span>
                             )}

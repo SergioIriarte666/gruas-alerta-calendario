@@ -4,6 +4,7 @@ import { Client } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { User, Phone, Mail, MapPin, CheckCircle, XCircle, CalendarClock, Receipt } from 'lucide-react';
 import { formatForDisplayLong, parseFromDatabase } from '@/utils/timezoneUtils';
+import { toTitleCase } from '@/lib/utils';
 
 interface DetailItemProps {
   icon: React.ElementType;
@@ -13,10 +14,10 @@ interface DetailItemProps {
 
 const DetailItem = ({ icon: Icon, label, value }: DetailItemProps) => (
   <div className="flex items-start space-x-3">
-    <Icon className="w-5 h-5 text-gray-400 mt-1 flex-shrink-0" />
+    <Icon className="w-5 h-5 text-muted-foreground mt-1 flex-shrink-0" />
     <div className="min-w-0">
-      <p className="text-sm text-gray-400">{label}</p>
-      <p className="font-medium text-white truncate">{value}</p>
+      <p className="text-sm text-muted-foreground">{label}</p>
+      <p className="font-medium text-foreground truncate">{value}</p>
     </div>
   </div>
 );
@@ -37,11 +38,11 @@ export const ClientGeneralInfo = ({ client }: ClientGeneralInfoProps) => {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <DetailItem icon={User} label="Nombre Completo" value={client.name} />
+            <DetailItem icon={User} label="Nombre Completo" value={toTitleCase(client.name)} />
             <DetailItem icon={User} label="RUT" value={client.rut} />
             <DetailItem icon={Phone} label="Teléfono" value={client.phone || 'No especificado'} />
             <DetailItem icon={Mail} label="Email" value={client.email || 'No especificado'} />
-            <DetailItem icon={MapPin} label="Dirección" value={client.address || 'No especificada'} />
+            <DetailItem icon={MapPin} label="Dirección" value={toTitleCase(client.address || 'No especificada')} />
             <DetailItem 
               icon={client.isActive ? CheckCircle : XCircle} 
               label="Estado" 

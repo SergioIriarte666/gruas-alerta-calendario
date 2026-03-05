@@ -2,6 +2,7 @@ import { Label } from '@/components/ui/label';
 import { Service } from '@/types';
 import { CheckCircle } from 'lucide-react';
 import { getDisplayServiceValue } from '@/utils/serviceValueCalculations';
+import { toTitleCase } from '@/lib/utils';
 interface ServicesSelectorProps {
   services: Service[];
   loading: boolean;
@@ -63,7 +64,7 @@ const ServicesSelector = ({
                 <input type="checkbox" id={service.id} checked={selectedServiceIds.includes(service.id)} onChange={e => onServiceToggle(service.id, e.target.checked)} className="text-tms-green rounded" />
                 <label htmlFor={service.id} className="text-sm text-gray-300 flex-1 cursor-pointer">
                   <div className="flex justify-between items-center">
-                    <span>{service.folio} - {service.client.name}</span>
+                    <span>{service.folio} - {toTitleCase(service.client.name)}</span>
                     <span className="font-medium text-tms-green">${getDisplayServiceValue(service).toLocaleString()}</span>
                   </div>
                   <div className="text-xs text-gray-500">

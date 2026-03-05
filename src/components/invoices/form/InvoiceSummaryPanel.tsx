@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Receipt, Calendar, DollarSign, FileText, Building2 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn, toTitleCase } from '@/lib/utils';
 
 interface InvoiceSummaryPanelProps {
   status: string;
@@ -82,7 +82,7 @@ export const InvoiceSummaryPanel = ({
           <div className="flex items-center gap-2">
             <Building2 className="h-4 w-4 text-muted-foreground" />
             <span className="text-xs text-muted-foreground">Cliente:</span>
-            <span className="text-sm font-medium truncate">{clientName}</span>
+            <span className="text-sm font-medium truncate">{toTitleCase(clientName)}</span>
           </div>
         )}
 

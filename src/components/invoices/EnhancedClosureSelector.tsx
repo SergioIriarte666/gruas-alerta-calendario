@@ -7,7 +7,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { useClosuresForInvoices, ClosureWithClient } from '@/hooks/useClosuresForInvoices';
 import { formatForDisplay } from '@/utils/timezoneUtils';
 import { Check, ChevronDown, FileText, Calendar, User, DollarSign, ShoppingCart } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn, toTitleCase } from '@/lib/utils';
 
 interface EnhancedClosureSelectorProps {
   selectedClosureId: string;
@@ -45,7 +45,7 @@ const EnhancedClosureSelector: React.FC<EnhancedClosureSelectorProps> = ({
   const [search, setSearch] = useState("");
 
   const getClientName = (closure: any) => {
-    return closure.clientName || 'Todos los clientes';
+    return closure.clientName ? toTitleCase(closure.clientName) : 'Todos los clientes';
   };
 
   const formatDateRange = (dateRange: {

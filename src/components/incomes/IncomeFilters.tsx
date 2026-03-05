@@ -13,6 +13,7 @@ import { IncomeFilters as IIncomeFilters } from '@/types/incomes';
 import { useIncomeCategories } from '@/hooks/incomes/useIncomeCategories';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { toTitleCase } from '@/lib/utils';
 
 interface IncomeFiltersProps {
   filters: IIncomeFilters;
@@ -115,7 +116,7 @@ export const IncomeFilters = ({ filters, onFiltersChange, onSearch, searchTerm }
             <SelectItem value="all">Todos los clientes</SelectItem>
             {clients.map((client) => (
               <SelectItem key={client.id} value={client.id}>
-                {client.name}
+                {toTitleCase(client.name)}
               </SelectItem>
             ))}
           </SelectContent>

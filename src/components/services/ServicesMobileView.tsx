@@ -8,7 +8,7 @@ import { useUser } from '@/contexts/UserContext';
 import { useDeviceType } from '@/hooks/useDeviceType';
 import { shouldShowVehicleInfo, formatVehicleInfo, getServiceStatusBadge, formatCurrency } from '@/utils/statusHelpers';
 import { getDisplayServiceValue } from '@/utils/serviceValueCalculations';
-import { cn } from '@/lib/utils';
+import { cn, toTitleCase } from '@/lib/utils';
 
 interface ServicesMobileViewProps {
   services: Service[];
@@ -86,7 +86,7 @@ export const ServicesMobileView = ({
               <div className="flex items-start justify-between mb-3">
               <div className="flex-1">
                 <div className="mb-1"><Badge variant="tms" className="whitespace-nowrap" title={`Folio: ${service.folio}`}>#{service.folio}</Badge></div>
-                <p className="text-foreground font-medium">{service.client.name}</p>
+                <p className="text-foreground font-medium">{toTitleCase(service.client.name)}</p>
                 <p className="text-muted-foreground text-sm">{service.client.department} • {service.client.rut}</p>
                 </div>
                 {getServiceStatusBadge(service.status)}

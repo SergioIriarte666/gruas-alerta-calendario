@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { formatCurrency } from '@/lib/utils';
+import { formatCurrency, cn, toTitleCase } from '@/lib/utils';
 import { ServiceClosure } from '@/types';
 import { format, isValid, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -213,7 +213,7 @@ export const ClosureDetailsModal = ({ closure, clientName, isOpen, onClose }: Cl
               <Separator className="border-border" />
 
               <DetailSection title="Cliente" icon={User}>
-                <DetailItem icon={User} label="Nombre" value={client?.name || clientName || 'N/A'} />
+                <DetailItem icon={User} label="Nombre" value={client?.name ? toTitleCase(client.name) : (clientName ? toTitleCase(clientName) : 'N/A')} />
                 <DetailItem icon={Hash} label="RUT" value={client?.rut} />
                 {client?.email && <DetailItem icon={FileText} label="Email" value={client.email} />}
                 {client?.phone && <DetailItem icon={FileText} label="Teléfono" value={client.phone} />}

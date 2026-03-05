@@ -5,6 +5,7 @@ import { Edit, Eye, Plus, Users, Phone, Mail, User, MoreHorizontal, UserCheck, U
 import { Client } from '@/types';
 import { useNavigate } from 'react-router-dom';
 import { DepartmentBadge } from './DepartmentBadge';
+import { toTitleCase } from '@/lib/utils';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -68,12 +69,12 @@ export const ClientsMobileView = ({
               <div className="flex items-start justify-between mb-3">
                 <div className="flex-1">
                   <button onClick={() => handleViewPipeline(client)} className="font-semibold text-primary text-lg hover:underline text-left">
-                    {client.name}
+                    {toTitleCase(client.name)}
                   </button>
                   <div className="flex items-center gap-2 flex-wrap mt-0.5">
                     <p className="text-foreground text-sm font-medium">{client.rut}</p>
                     <span className="text-muted-foreground">•</span>
-                    <DepartmentBadge department={client.department} clientRut={client.rut} clientName={client.name} allClients={allClients} className="text-sm" />
+                    <DepartmentBadge department={client.department} clientRut={client.rut} clientName={toTitleCase(client.name)} allClients={allClients} className="text-sm" />
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
@@ -105,7 +106,7 @@ export const ClientsMobileView = ({
                 {client.contactName && (
                   <div className="flex items-center text-foreground text-sm">
                     <User className="w-4 h-4 mr-2 text-muted-foreground flex-shrink-0" />
-                    <span className="truncate">{client.contactName}</span>
+                    <span className="truncate">{toTitleCase(client.contactName)}</span>
                   </div>
                 )}
               </div>

@@ -3,6 +3,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Client, ServiceType } from '@/types';
 import { InsuredNameCombobox } from './InsuredNameCombobox';
+import { toTitleCase } from '@/lib/utils';
 
 interface ClientServiceSectionProps {
   clientId: string;
@@ -55,7 +56,7 @@ export const ClientServiceSection = ({
             {clients.filter(c => c.isActive).map((client) => (
               <SelectItem key={client.id} value={client.id}>
                 <div className="flex flex-col py-0.5">
-                  <span className="font-medium">{client.name}</span>
+                  <span className="font-medium">{toTitleCase(client.name)}</span>
                   {client.department && client.department !== 'General' && (
                     <span className="text-xs text-violet-600 dark:text-violet-400">
                       {client.department}

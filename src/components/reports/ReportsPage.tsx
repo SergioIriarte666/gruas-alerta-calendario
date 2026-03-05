@@ -21,7 +21,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { cn } from '@/lib/utils';
+import { cn, toTitleCase } from '@/lib/utils';
 import {
   BarChart3, TrendingUp, Users, HardHat, Truck, DollarSign, Receipt,
   Download, FileText, FileSpreadsheet, Calendar, RefreshCw, Wrench, Trophy,
@@ -211,7 +211,7 @@ const ReportsPage = () => {
         if (selectedClientData) {
           return (
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-              <ReportMetricCard title="Cliente" value={selectedClientData.clientName} />
+              <ReportMetricCard title="Cliente" value={toTitleCase(selectedClientData.clientName)} />
               <ReportMetricCard title="Servicios" value={selectedClientData.services} />
               <ReportMetricCard title="Ingresos" value={`$${selectedClientData.revenue.toLocaleString()}`} valueClassName="text-green-600 dark:text-green-400" />
               <ReportMetricCard title="Ticket Promedio" value={`$${selectedClientData.services > 0 ? Math.round(selectedClientData.revenue / selectedClientData.services).toLocaleString() : 0}`} />
@@ -300,7 +300,7 @@ const ReportsPage = () => {
           <>
             <DropdownMenuLabel className="flex items-center gap-2 text-muted-foreground">
               <Users className="w-3.5 h-3.5" />
-              {selectedClientData ? `Informe: ${selectedClientData.clientName}` : 'Informe de Clientes'}
+              {selectedClientData ? `Informe: ${toTitleCase(selectedClientData.clientName)}` : 'Informe de Clientes'}
             </DropdownMenuLabel>
             <DropdownMenuItem onClick={() => handleExport('pdf')}>
               <FileText className="w-4 h-4 mr-2" /> PDF
@@ -374,7 +374,7 @@ const ReportsPage = () => {
             <CardHeader>
               <CardTitle className="text-foreground flex items-center gap-2">
                 <Trophy className="w-5 h-5 text-yellow-500" />
-                {selectedClientData ? `Detalle: ${selectedClientData.clientName}` : 'Ranking de Clientes'}
+                {selectedClientData ? `Detalle: ${toTitleCase(selectedClientData.clientName)}` : 'Ranking de Clientes'}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -390,7 +390,7 @@ const ReportsPage = () => {
                           </span>
                           <div className="min-w-0">
                             <div className="font-medium text-foreground text-sm truncate">
-                              {client.clientName}
+                              {toTitleCase(client.clientName)}
                             </div>
                             {client.department && client.department !== 'General' && (
                               <div className="text-xs text-muted-foreground truncate">{client.department}</div>
@@ -629,7 +629,7 @@ const ReportsPage = () => {
                 .sort((a, b) => a.name.localeCompare(b.name))
                 .map(client => (
                   <SelectItem key={client.id} value={client.id}>
-                    {client.name}
+                    {toTitleCase(client.name)}
                     {client.department && client.department !== 'General' && (
                       <span className="text-xs text-muted-foreground ml-1">({client.department})</span>
                     )}

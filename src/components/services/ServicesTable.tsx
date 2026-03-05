@@ -11,6 +11,7 @@ import { useDeviceType } from '@/hooks/useDeviceType';
 import { ServicesMobileView } from './ServicesMobileView';
 import { shouldShowVehicleInfo, formatVehicleInfo, getServiceStatusBadge, formatCurrency } from '@/utils/statusHelpers';
 import { getDisplayServiceValue } from '@/utils/serviceValueCalculations';
+import { toTitleCase } from '@/lib/utils';
 
 interface ServicesTableProps {
   services: Service[];
@@ -225,7 +226,7 @@ export const ServicesTable = ({
                         {formatForDisplay(parseFromDatabase(service.serviceDate))}
                       </TableCell>
                       <TableCell>
-                        <div className="font-medium">{service.client.name}</div>
+                        <div className="font-medium">{toTitleCase(service.client.name)}</div>
                         <div className="text-sm text-muted-foreground">{service.client.department} • {service.client.rut}</div>
                       </TableCell>
                       <TableCell>

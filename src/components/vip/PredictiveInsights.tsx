@@ -19,6 +19,7 @@ import {
   Activity,
   BarChart3
 } from 'lucide-react';
+import { toTitleCase } from '@/lib/utils';
 import { format, addDays, addWeeks, addMonths } from 'date-fns';
 import { es } from 'date-fns/locale';
 
@@ -240,7 +241,7 @@ export const PredictiveInsights: React.FC<PredictiveInsightsProps> = ({
         <div>
           <h3 className="text-lg font-semibold text-black flex items-center gap-2">
             <Brain className="w-5 h-5 text-black" />
-            Insights Predictivos - {clientName}
+            Insights Predictivos - {toTitleCase(clientName)}
           </h3>
           <p className="text-sm text-black">
             Análisis inteligente y predicciones basadas en IA
@@ -428,7 +429,7 @@ export const PredictiveInsights: React.FC<PredictiveInsightsProps> = ({
               <div className="space-y-2">
                 <h4 className="font-medium text-white">Análisis Principal</h4>
                 <p className="text-sm text-black">
-                  Basado en los patrones de servicio de {clientName}, se detecta una tendencia positiva 
+                  Basado en los patrones de servicio de {toTitleCase(clientName)}, se detecta una tendencia positiva 
                   con oportunidades de optimización en el proceso de órdenes de compra. 
                   La demanda muestra estabilidad con picos estacionales predecibles.
                 </p>

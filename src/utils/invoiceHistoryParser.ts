@@ -1,6 +1,7 @@
 import Papa from 'papaparse';
 import * as XLSX from 'xlsx';
 import { Client } from '@/types';
+import { toTitleCase } from '@/lib/utils';
 
 export interface ParsedInvoiceRow {
   item: string;
@@ -45,10 +46,17 @@ export interface ProcessedInvoice {
 export interface UnmatchedClient {
   rut: string;
   razonSocial: string;
+  address?: string;
+  email?: string;
   invoiceCount: number;
   totalAmount: number;
   resolution: 'create' | 'assign' | 'ignore' | 'pending';
   assignedClientId?: string;
+  suggestion?: {
+    clientId: string;
+    name: string;
+    score: number;
+  };
 }
 
 export interface ImportPreview {
@@ -66,29 +74,75 @@ const normalizeRut = (rut: string): string => {
   return rut.replace(/[^0-9Kk]/g, '').trim().toUpperCase();
 };
 
-// Parse date from DD-MM-YYYY format
-const parseDateDMY = (dateStr: string): string | null => {
-  if (!dateStr) return null;
-  const parts = dateStr.split('-');
-  if (parts.length !== 3) return null;
-  const [day, month, year] = parts;
-  const d = new Date(`${year}-${month}-${day}`);
-  if (isNaN(d.getTime())) return null;
-  return `${year}-${month}-${day}`;
+// Parse date from various formats to YYYY-MM-DD
+const parseDate = (dateVal: any): string | null => {
+  if (!dateVal) return null;
+
+  // Handle Excel serial numbers
+  if (typeof dateVal === 'number') {
+    // Excel base date is 1899-12-30. JS is 1970-01-01.
+    // Difference is 25569 days.
+    const date = new Date((dateVal - 25569) * 86400 * 1000);
+    // Adjust for timezone offset to avoid previous day due to UTC
+    date.setMinutes(date.getMinutes() + date.getTimezoneOffset());
+    if (!isNaN(date.getTime())) {
+       return date.toISOString().split('T')[0];
+    }
+  }
+
+  const dateStr = String(dateVal).trim();
+  
+  // Try ISO YYYY-MM-DD
+  if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return dateStr;
+
+  // Try DD-MM-YYYY or DD/MM/YYYY
+  const parts = dateStr.split(/[-/]/);
+  if (parts.length === 3) {
+    let day, month, year;
+    
+    // Check for DD-MM-YYYY or DD/MM/YYYY
+    if (parts[0].length <= 2 && parts[2].length === 4) {
+       [day, month, year] = parts;
+    } 
+    // Check for YYYY-MM-DD or YYYY/MM/DD
+    else if (parts[0].length === 4 && parts[2].length <= 2) {
+       [year, month, day] = parts;
+    } else {
+       return null;
+    }
+    
+    // Ensure padding
+    const y = year;
+    const m = month.padStart(2, '0');
+    const d = day.padStart(2, '0');
+    
+    const date = new Date(`${y}-${m}-${d}`);
+    if (!isNaN(date.getTime())) {
+       return `${y}-${m}-${d}`;
+    }
+  }
+  
+  return null;
 };
 
 // Determine invoice status
-const determineStatus = (pagado: string, fechaVencimiento: string): 'paid' | 'sent' | 'overdue' => {
+const determineStatus = (pagado: string, fechaVencimiento: any): 'paid' | 'sent' | 'overdue' => {
   if (pagado?.toUpperCase() === 'SI') return 'paid';
   
   if (fechaVencimiento) {
-    const dueDate = parseDateDMY(fechaVencimiento);
-    if (dueDate) {
-      const due = new Date(dueDate);
+    const dueDateStr = parseDate(fechaVencimiento);
+    if (dueDateStr) {
+      const due = new Date(dueDateStr);
+      // Fix timezone issue for comparison
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       due.setHours(0, 0, 0, 0);
-      if (due < today) return 'overdue';
+      // Add a small buffer for timezone differences if needed, or just compare
+      // Assuming dates are local
+      const dueTime = due.getTime() + (due.getTimezoneOffset() * 60000);
+      const todayTime = today.getTime();
+      
+      if (dueTime < todayTime) return 'overdue';
     }
   }
   return 'sent';
@@ -108,31 +162,40 @@ export const parseCSVFile = (file: File): Promise<ParsedInvoiceRow[]> => {
   return new Promise((resolve, reject) => {
     Papa.parse(file, {
       delimiter: ';',
-      header: false,
+      header: true,
       skipEmptyLines: true,
       complete: (result) => {
-        const rows = result.data as string[][];
-        // Skip header row
-        const dataRows = rows.slice(1).map(row => ({
-          item: row[0] || '',
-          emitido: row[1] || '',
-          documento: row[2] || '',
-          folio: row[3] || '',
-          fecha: row[4] || '',
-          rut: row[5] || '',
-          codigoCliente: row[6] || '',
-          razonSocial: row[7] || '',
-          direccionCliente: row[8] || '',
-          formaPago: row[12] || '',
-          neto: parseNumber(row[17]),
-          iva: parseNumber(row[18]),
-          tasaIva: parseNumber(row[19]),
-          total: parseNumber(row[26]),
-          observacion: row[30] || '',
-          pagado: row[31] || '',
-          fechaCreacion: row[37] || '',
-          fechaVencimiento: row[41] || '',
-          correo: row[42] || '',
+        const rows = result.data as Record<string, any>[];
+        
+        // Helper to find column by multiple possible names
+        const findVal = (row: any, keys: string[]) => {
+          for (const key of keys) {
+            const foundKey = Object.keys(row).find(k => k.trim().toLowerCase() === key.toLowerCase());
+            if (foundKey) return row[foundKey];
+          }
+          return '';
+        };
+
+        const dataRows = rows.map(row => ({
+          item: findVal(row, ['Item', 'N°', 'No', '#']),
+          emitido: findVal(row, ['Emitido', 'Emision', 'Fecha Emision']),
+          documento: findVal(row, ['Documento', 'Tipo DTE', 'Tipo Documento']),
+          folio: findVal(row, ['Folio', 'Numero', 'N° Folio']),
+          fecha: findVal(row, ['Fecha', 'Fecha Emision', 'F. Emis']),
+          rut: findVal(row, ['RUT', 'R.U.T.', 'Rut Cliente']),
+          codigoCliente: findVal(row, ['Codigo', 'Cod. Cliente']),
+          razonSocial: findVal(row, ['Razon Social', 'Cliente', 'Nombre']),
+          direccionCliente: findVal(row, ['Direccion', 'Domicilio']),
+          formaPago: findVal(row, ['Forma Pago', 'F. Pago']),
+          neto: parseNumber(findVal(row, ['Neto', 'Monto Neto'])),
+          iva: parseNumber(findVal(row, ['IVA', 'Monto IVA'])),
+          tasaIva: parseNumber(findVal(row, ['Tasa IVA', '% IVA'])),
+          total: parseNumber(findVal(row, ['Total', 'Monto Total'])),
+          observacion: findVal(row, ['Observacion', 'Glosa', 'Nota']),
+          pagado: findVal(row, ['Pagado', 'Estado Pago']),
+          fechaCreacion: findVal(row, ['Fecha Creacion', 'Creado']),
+          fechaVencimiento: findVal(row, ['Fecha Vencimiento', 'Vencimiento', 'F. Venc']),
+          correo: findVal(row, ['Correo', 'Email', 'Email Cliente']),
         }));
         resolve(dataRows);
       },
@@ -150,28 +213,40 @@ export const parseXLSXFile = (file: File): Promise<ParsedInvoiceRow[]> => {
         const data = new Uint8Array(e.target?.result as ArrayBuffer);
         const workbook = XLSX.read(data, { type: 'array' });
         const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-        const rows = XLSX.utils.sheet_to_json<any>(firstSheet, { header: 1 });
+        const rows = XLSX.utils.sheet_to_json<any>(firstSheet); // header: 1 removed to get objects
         
-        const dataRows = (rows as any[][]).slice(1).map(row => ({
-          item: String(row[0] || ''),
-          emitido: String(row[1] || ''),
-          documento: String(row[2] || ''),
-          folio: String(row[3] || ''),
-          fecha: String(row[4] || ''),
-          rut: String(row[5] || ''),
-          codigoCliente: String(row[6] || ''),
-          razonSocial: String(row[7] || ''),
-          direccionCliente: String(row[8] || ''),
-          formaPago: String(row[12] || ''),
-          neto: parseNumber(row[17]),
-          iva: parseNumber(row[18]),
-          tasaIva: parseNumber(row[19]),
-          total: parseNumber(row[26]),
-          observacion: String(row[30] || ''),
-          pagado: String(row[31] || ''),
-          fechaCreacion: String(row[37] || ''),
-          fechaVencimiento: String(row[41] || ''),
-          correo: String(row[42] || ''),
+        // Helper to find column by multiple possible names
+        const findVal = (row: any, keys: string[]) => {
+          for (const key of keys) {
+            // Check exact match first
+            if (row[key] !== undefined) return row[key];
+            // Check case insensitive
+            const foundKey = Object.keys(row).find(k => k.trim().toLowerCase() === key.toLowerCase());
+            if (foundKey) return row[foundKey];
+          }
+          return '';
+        };
+        
+        const dataRows = rows.map(row => ({
+          item: String(findVal(row, ['Item', 'N°', 'No', '#']) || ''),
+          emitido: String(findVal(row, ['Emitido', 'Emision']) || ''),
+          documento: String(findVal(row, ['Documento', 'Tipo DTE', 'Tipo Documento']) || ''),
+          folio: String(findVal(row, ['Folio', 'Numero', 'N° Folio']) || ''),
+          fecha: String(findVal(row, ['Fecha', 'Fecha Emision', 'F. Emis']) || ''),
+          rut: String(findVal(row, ['RUT', 'R.U.T.', 'Rut Cliente']) || ''),
+          codigoCliente: String(findVal(row, ['Codigo', 'Cod. Cliente']) || ''),
+          razonSocial: String(findVal(row, ['Razon Social', 'Cliente', 'Nombre']) || ''),
+          direccionCliente: String(findVal(row, ['Direccion', 'Domicilio']) || ''),
+          formaPago: String(findVal(row, ['Forma Pago', 'F. Pago']) || ''),
+          neto: parseNumber(findVal(row, ['Neto', 'Monto Neto'])),
+          iva: parseNumber(findVal(row, ['IVA', 'Monto IVA'])),
+          tasaIva: parseNumber(findVal(row, ['Tasa IVA', '% IVA'])),
+          total: parseNumber(findVal(row, ['Total', 'Monto Total'])),
+          observacion: String(findVal(row, ['Observacion', 'Glosa', 'Nota']) || ''),
+          pagado: String(findVal(row, ['Pagado', 'Estado Pago']) || ''),
+          fechaCreacion: String(findVal(row, ['Fecha Creacion', 'Creado']) || ''),
+          fechaVencimiento: String(findVal(row, ['Fecha Vencimiento', 'Vencimiento', 'F. Venc']) || ''),
+          correo: String(findVal(row, ['Correo', 'Email', 'Email Cliente']) || ''),
         }));
         resolve(dataRows);
       } catch (err) {
@@ -200,15 +275,15 @@ export const processInvoiceRows = (
 
   for (const row of facturas) {
     const normalizedRut = normalizeRut(row.rut);
-    const issueDate = parseDateDMY(row.fecha) || '';
-    const dueDate = parseDateDMY(row.fechaVencimiento) || issueDate;
+    const issueDate = parseDate(row.fecha) || '';
+    const dueDate = parseDate(row.fechaVencimiento) || issueDate;
     const status = determineStatus(row.pagado, row.fechaVencimiento);
 
     const processed: ProcessedInvoice = {
       folio: `HIST-${row.folio}`,
       numeroFiscal: row.folio,
       rut: row.rut,
-      razonSocial: row.razonSocial,
+      razonSocial: toTitleCase(row.razonSocial),
       issueDate,
       dueDate,
       subtotal: row.neto,
@@ -242,7 +317,9 @@ export const processInvoiceRows = (
       if (!unmatchedClientsMap.has(normalizedRut)) {
         unmatchedClientsMap.set(normalizedRut, {
           rut: row.rut,
-          razonSocial: row.razonSocial,
+          razonSocial: toTitleCase(row.razonSocial),
+          address: toTitleCase(row.direccionCliente || ''),
+          email: row.correo || '',
           invoiceCount: 0,
           totalAmount: 0,
           resolution: 'pending',

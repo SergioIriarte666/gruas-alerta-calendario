@@ -3,6 +3,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ColoredSectionCard } from '@/components/services/form/ColoredSectionCard';
 import { Building2 } from 'lucide-react';
+import { toTitleCase } from '@/lib/utils';
 
 interface ClientFormStep1Props {
   name: string;
@@ -26,6 +27,7 @@ export const ClientFormStep1 = ({ name, rut, onChange }: ClientFormStep1Props) =
               id="name"
               value={name}
               onChange={(e) => onChange('name', e.target.value)}
+              onBlur={() => onChange('name', toTitleCase(name))}
               placeholder="Ingrese el nombre o razón social"
               className="bg-background"
               required

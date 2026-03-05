@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { IncomeWithDetails } from '@/types/incomes';
 import { formatForDisplay, parseFromDatabase } from '@/utils/timezoneUtils';
+import { toTitleCase } from '@/lib/utils';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -127,9 +128,9 @@ export const IncomesTable = ({ incomes, onEdit, onDelete, isLoading }: IncomesTa
                     </Badge>
                   )}
                   {income.occasional_client_name ? (
-                    <span className="text-xs text-muted-foreground">{income.occasional_client_name} (Ocasional)</span>
+                    <span className="text-xs text-muted-foreground">{toTitleCase(income.occasional_client_name)} (Ocasional)</span>
                   ) : income.client?.name ? (
-                    <span className="text-xs text-muted-foreground">{income.client.name}</span>
+                    <span className="text-xs text-muted-foreground">{toTitleCase(income.client.name)}</span>
                   ) : null}
                   {income.invoice && (
                     <Badge variant="outline" className="text-xs gap-1">
@@ -210,10 +211,10 @@ export const IncomesTable = ({ incomes, onEdit, onDelete, isLoading }: IncomesTa
                   {income.occasional_client_name ? (
                     <div className="flex items-center gap-1">
                       <span className="text-muted-foreground text-xs">(Ocasional)</span>
-                      <span>{income.occasional_client_name}</span>
+                      <span>{toTitleCase(income.occasional_client_name)}</span>
                     </div>
                   ) : income.client?.name ? (
-                    <span>{income.client.name}</span>
+                    <span>{toTitleCase(income.client.name)}</span>
                   ) : (
                     <span className="text-muted-foreground">-</span>
                   )}

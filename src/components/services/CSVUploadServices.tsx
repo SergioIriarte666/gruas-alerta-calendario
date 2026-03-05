@@ -18,8 +18,9 @@ import {
 import { useCSVUpload } from '@/hooks/useCSVUpload';
 import { ValidationError } from '@/utils/csvValidations';
 import { shouldShowVehicleInfo, formatVehicleInfo } from '@/utils/statusHelpers';
+import { toTitleCase } from '@/lib/utils';
 
-interface CSVUploadServicesProps {
+export interface CSVUploadServicesProps {
   onClose?: () => void;
   onSuccess?: (count: number) => void;
 }
@@ -286,7 +287,7 @@ export const CSVUploadServices = ({ onClose, onSuccess }: CSVUploadServicesProps
                         <TableRow key={index} className="border-gray-700">
                           <TableCell className="text-gray-300">{row.folio}</TableCell>
                           <TableCell className="text-gray-300">{row.serviceDate}</TableCell>
-                          <TableCell className="text-gray-300">{row.clientName}</TableCell>
+                          <TableCell className="text-gray-300">{toTitleCase(row.clientName)}</TableCell>
                           <TableCell className="text-gray-300">
                             {shouldShowVehicleInfo(row) ? `${row.vehicleBrand} ${row.vehicleModel}` : 'No aplica'}
                           </TableCell>

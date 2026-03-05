@@ -8,6 +8,7 @@ import { es } from 'date-fns/locale';
 import { useState, useEffect } from 'react';
 import { InvoiceDetailsModal } from './InvoiceDetailsModal';
 import { InvoiceCancellationModal } from './InvoiceCancellationModal';
+import { toTitleCase } from '@/lib/utils';
 
 interface InvoicesMobileViewProps {
   invoices: Invoice[];
@@ -94,7 +95,7 @@ export const InvoicesMobileView = ({
 
   const getClientName = (invoice: Invoice): string => {
     const details = getInvoiceWithDetails(invoice);
-    return details?.client?.name || 'Cliente no encontrado';
+    return details?.client?.name ? toTitleCase(details.client.name) : 'Cliente no encontrado';
   };
 
   if (invoices.length === 0) {
@@ -119,7 +120,7 @@ export const InvoicesMobileView = ({
       {invoices.map((invoice) => {
         if (!invoice?.id) return null;
         const invoiceWithDetails = getInvoiceWithDetails(invoice);
-        const clientName = invoiceWithDetails?.client?.name || 'Cliente no encontrado';
+        const clientName = invoiceWithDetails?.client?.name ? toTitleCase(invoiceWithDetails.client.name) : 'Cliente no encontrado';
 
         return (
           <Card key={invoice.id} className="border">

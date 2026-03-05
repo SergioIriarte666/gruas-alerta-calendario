@@ -6,6 +6,7 @@ import { AlertCircle, CheckCircle, Loader2 } from 'lucide-react';
 import { useFolioValidation } from '@/hooks/services/useFolioValidation';
 import { useDebounce } from '@/hooks/useDebounce';
 import { formatForDisplay, parseFromDatabase } from '@/utils/timezoneUtils';
+import { toTitleCase } from '@/lib/utils';
 
 interface FolioInputProps {
   folio: string;
@@ -95,7 +96,7 @@ export const FolioInput: React.FC<FolioInputProps> = ({
         <div className="text-sm text-red-600">
           <div className="font-medium">❌ {validation.error}</div>
           <div className="text-xs mt-1">
-            Cliente: {validation.existingService.clientName} • Creado: {createdDate}
+            Cliente: {toTitleCase(validation.existingService.clientName)} • Creado: {createdDate}
           </div>
         </div>
       );

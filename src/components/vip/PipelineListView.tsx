@@ -41,6 +41,7 @@ import { PipelineBatchActionBar } from './PipelineBatchActionBar';
 import { usePipelineServiceExport } from '@/hooks/vip/usePipelineServiceExport';
 import { toast } from 'sonner';
 import { getDisplayServiceValue } from '@/utils/serviceValueCalculations';
+import { toTitleCase } from '@/lib/utils';
 
 interface SubGroupConfig {
   fieldExtractor: (s: Service) => string;
@@ -268,7 +269,7 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
   // Hook para exportación del pipeline
   const { exportToPDF, exportToExcel } = usePipelineServiceExport(
     services,
-    clientName,
+    toTitleCase(clientName),
     clientId
   );
 
@@ -737,6 +738,9 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
                             </TableCell>
                             <TableCell>
                               <div className="text-foreground">{service.serviceType.name}</div>
+                            </TableCell>
+                            <TableCell>
+                              <div className="text-foreground">{toTitleCase(service.client?.name || '')}</div>
                             </TableCell>
                             <TableCell>
                               <div className="text-sm text-muted-foreground">

@@ -22,6 +22,8 @@ interface BatchUpdateModalProps {
   clientName: string;
 }
 
+import { toTitleCase } from '@/lib/utils';
+
 export interface BatchUpdateData {
   types: ('quote' | 'purchase_order')[];
   services: {
@@ -306,7 +308,7 @@ export const BatchUpdateModal: React.FC<BatchUpdateModalProps> = ({
               <DialogTitle className="text-lg font-semibold text-foreground">
                 Registro por Lotes
               </DialogTitle>
-              <p className="text-sm text-muted-foreground">{clientName}</p>
+              <p className="text-sm text-muted-foreground">{toTitleCase(clientName)}</p>
             </div>
           </div>
         </DialogHeader>

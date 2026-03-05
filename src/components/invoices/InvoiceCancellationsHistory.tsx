@@ -8,6 +8,7 @@ import { format, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useInvoiceCancellation, InvoiceCancellation, CANCELLATION_REASONS } from '@/hooks/invoices/useInvoiceCancellation';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { toTitleCase } from '@/lib/utils';
 
 const formatCurrency = (amount: number) => {
   return new Intl.NumberFormat('es-CL', {
@@ -164,7 +165,7 @@ export const InvoiceCancellationsHistory = () => {
                           {cancellation.creditNoteNumber}
                         </Badge>
                       </td>
-                      <td className="py-3 px-4 text-foreground">{cancellation.clientName}</td>
+                      <td className="py-3 px-4 text-foreground">{toTitleCase(cancellation.clientName)}</td>
                       <td className="py-3 px-4 text-right font-medium text-foreground">
                         {formatCurrency(cancellation.originalTotal)}
                       </td>
@@ -241,7 +242,7 @@ export const InvoiceCancellationsHistory = () => {
                   <Building2 className="h-4 w-4" />
                   Cliente
                 </div>
-                <p className="font-medium">{selectedCancellation.clientName}</p>
+                <p className="font-medium">{toTitleCase(selectedCancellation.clientName)}</p>
               </div>
 
               <div className="space-y-1">

@@ -21,7 +21,7 @@ import {
   AlertTriangle,
   Eye
 } from 'lucide-react';
-import { formatCurrency } from '@/lib/utils';
+import { formatCurrency, toTitleCase } from '@/lib/utils';
 import { toast } from 'sonner';
 import { PaymentApplicationsDetailModal } from './PaymentApplicationsDetailModal';
 import { PaymentWithDetails } from '@/types/payments';
@@ -144,7 +144,7 @@ export const PaymentHistory: React.FC<PaymentHistoryProps> = ({ onClose }) => {
               {clients.map(client => (
                 <SelectItem key={client.id} value={client.id}>
                   <div className="flex flex-col py-0.5">
-                    <span className="font-medium">{client.name}</span>
+                    <span className="font-medium">{toTitleCase(client.name)}</span>
                     {client.department && client.department !== 'General' && (
                       <span className="text-xs text-violet-600 dark:text-violet-400">
                         {client.department}

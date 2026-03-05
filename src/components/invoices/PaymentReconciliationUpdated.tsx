@@ -10,6 +10,7 @@ import { usePayments, usePagedPayments } from '@/hooks/usePayments';
 import { useClients } from '@/hooks/useClients';
 import { PaymentWithDetails } from '@/types/payments';
 import { PaymentApplicationModal } from './PaymentApplicationModal';
+import { PaymentApplicationsDetailModal } from './PaymentApplicationsDetailModal';
 import { SystemHealthIndicator } from './SystemHealthIndicator';
 import { toast } from 'sonner';
 import { AppPagination } from '@/components/shared/AppPagination';
@@ -27,9 +28,10 @@ import {
   ChevronDown,
   Zap,
   Edit,
-  DollarSign
+  DollarSign,
+  Eye
 } from 'lucide-react';
-import { formatCurrency } from '@/lib/utils';
+import { formatCurrency, toTitleCase } from '@/lib/utils';
 
 interface PaymentReconciliationProps {
   onClose?: () => void;
@@ -424,7 +426,7 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
             {clients.map(client => (
               <SelectItem key={client.id} value={client.id}>
                 <div className="flex flex-col py-0.5">
-                  <span className="font-medium">{client.name}</span>
+                  <span className="font-medium">{toTitleCase(client.name)}</span>
                   {client.department && client.department !== 'General' && (
                     <span className="text-xs text-violet-600 dark:text-violet-400">
                       {client.department}
@@ -471,7 +473,7 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
               ) : (
                 filteredPayments.map(payment => (
                   <TableRow key={payment.id}>
-                    <TableCell>{payment.client?.name || 'Cliente no encontrado'}</TableCell>
+                    <TableCell>{payment.client?.name ? toTitleCase(payment.client.name) : 'Cliente no encontrado'}</TableCell>
                     <TableCell>{formatCurrency(payment.amount)}</TableCell>
                     <TableCell>{new Date(payment.payment_date).toLocaleDateString()}</TableCell>
                     <TableCell>{getStatusBadge(payment.status)}</TableCell>
@@ -531,7 +533,7 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
                 ) : (
                   pagedHistory.payments.map(payment => (
                     <TableRow key={payment.id}>
-                      <TableCell>{payment.client?.name || 'Cliente no encontrado'}</TableCell>
+                      <TableCell>{payment.client?.name ? toTitleCase(payment.client.name) : 'Cliente no encontrado'}</TableCell>
                       <TableCell>{formatCurrency(payment.amount)}</TableCell>
                       <TableCell>{new Date(payment.payment_date).toLocaleDateString()}</TableCell>
                       <TableCell>{getStatusBadge(payment.status)}</TableCell>

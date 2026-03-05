@@ -4,6 +4,7 @@ import { useServiceClosures } from '@/hooks/useServiceClosures';
 import { useClients } from '@/hooks/useClients';
 import { ServiceClosure } from '@/types';
 import { toast } from 'sonner';
+import { toTitleCase } from '@/lib/utils';
 import ClosureForm from '@/components/closures/ClosureForm';
 import { EditClosureForm } from '@/components/closures/EditClosureForm';
 import ClosuresHeader from '@/components/closures/ClosuresHeader';
@@ -58,7 +59,7 @@ const Closures = () => {
   const getClientName = (clientId?: string) => {
     if (!clientId) return 'Todos los clientes';
     const client = clients.find(c => c.id === clientId);
-    return client?.name || 'Cliente desconocido';
+    return toTitleCase(client?.name || 'Cliente desconocido');
   };
 
   // Filter and sort closures

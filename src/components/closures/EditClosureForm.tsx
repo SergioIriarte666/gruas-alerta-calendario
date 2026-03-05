@@ -13,6 +13,7 @@ import { useClients } from '@/hooks/useClients';
 import { useEditClosure } from '@/hooks/closures/useEditClosure';
 import EnhancedServicesSelector from './EnhancedServicesSelector';
 import { getServiceValueForClosure } from '@/utils/serviceValueCalculations';
+import { toTitleCase } from '@/lib/utils';
 
 const editClosureSchema = z.object({
   dateFrom: z.string().min(1, 'Fecha de inicio es requerida'),
@@ -168,7 +169,7 @@ export const EditClosureForm: React.FC<EditClosureFormProps> = ({
                   <SelectItem value="all">Todos los clientes</SelectItem>
                   {activeClients.map((client) => (
                     <SelectItem key={client.id} value={client.id}>
-                      {client.name}
+                      {toTitleCase(client.name)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -210,7 +211,7 @@ export const EditClosureForm: React.FC<EditClosureFormProps> = ({
                     <div key={service.id} className="flex items-center justify-between py-2 px-2 rounded bg-primary/10 border border-primary/30">
                       <div className="flex-1">
                         <div className="flex justify-between items-center">
-                          <span className="text-sm text-foreground">{service.folio} - {service.client.name}</span>
+                          <span className="text-sm text-foreground">{service.folio} - {toTitleCase(service.client.name)}</span>
                           <span className="font-medium text-purple-600">${getServiceValueForClosure(service).toLocaleString()}</span>
                         </div>
                         <div className="text-xs text-muted-foreground">

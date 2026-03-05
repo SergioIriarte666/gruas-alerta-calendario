@@ -9,6 +9,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { getServiceValueForClosure } from '@/utils/serviceValueCalculations';
 import { ProcessedServiceInfo } from '@/hooks/useServicesForClosures';
+import { toTitleCase } from '@/lib/utils';
 
 interface EnhancedServicesSelectorProps {
   services: Service[];
@@ -440,7 +441,7 @@ const EnhancedServicesSelector = ({
                             </div>
                             <div className="flex items-center gap-2">
                               <span className="text-muted-foreground">👤 Cliente:</span>
-                              <span className="font-medium">{ps.clientName}</span>
+                              <span className="font-medium">{toTitleCase(ps.clientName)}</span>
                             </div>
                             {(ps.purchaseOrder || ps.purchaseOrderNumber) && (
                               <div className="flex items-center gap-2">
@@ -548,7 +549,7 @@ const EnhancedServicesSelector = ({
                       />
                       <label htmlFor={`pending-${service.id}`} className="text-sm text-foreground flex-1 cursor-pointer">
                      <div className="flex justify-between items-center">
-                          <span>{service.folio} - {service.client.name}</span>
+                          <span>{service.folio} - {toTitleCase(service.client.name)}</span>
                           <span className="font-medium text-secondary-foreground">${getServiceValueForClosure(service).toLocaleString()}</span>
                         </div>
                         <div className="text-xs text-muted-foreground flex flex-wrap gap-1 items-center">
@@ -660,7 +661,7 @@ const EnhancedServicesSelector = ({
                   />
                   <label htmlFor={service.id} className="text-sm text-foreground flex-1 cursor-pointer">
                     <div className="flex justify-between items-center">
-                      <span>{service.folio} - {service.client.name}</span>
+                      <span>{service.folio} - {toTitleCase(service.client.name)}</span>
                       <span className="font-medium text-violet-600">${getServiceValueForClosure(service).toLocaleString()}</span>
                     </div>
                     <div className="text-xs text-muted-foreground flex flex-wrap gap-1 items-center">

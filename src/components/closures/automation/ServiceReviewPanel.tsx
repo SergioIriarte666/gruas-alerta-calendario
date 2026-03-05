@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
+import { toTitleCase } from '@/lib/utils';
 import { 
   ArrowLeft, 
   CheckCircle, 
@@ -108,7 +109,7 @@ const ServiceReviewPanel = ({
             </Button>
             <FileText className="h-5 w-5 text-primary" />
             <CardTitle className="text-xl text-foreground">
-              Revisar Servicios - {clientName}
+              Revisar Servicios - {toTitleCase(clientName)}
             </CardTitle>
           </div>
           <Badge variant="outline" className="bg-muted">

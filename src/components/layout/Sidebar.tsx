@@ -122,6 +122,7 @@ export const Sidebar = ({
         { name: 'Comisiones', href: '/commissions', icon: Percent, adminOnly: true },
         { name: 'Cierres', href: '/closures', icon: FileText, adminOnly: false },
         { name: 'Facturas', href: '/invoices', icon: Receipt, adminOnly: false },
+        { name: 'Históricos', href: '/historical', icon: Briefcase, adminOnly: false },
         { name: 'Cálculo de Viajes', href: '/trip-calculator', icon: MapPin, adminOnly: false },
       ]
     },

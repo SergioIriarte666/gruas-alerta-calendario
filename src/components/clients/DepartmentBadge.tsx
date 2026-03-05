@@ -1,43 +1,31 @@
 import { Client } from '@/types';
 import { getDepartmentColor, hasMultipleDepartments } from '@/utils/departmentColors';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Badge } from "@/components/ui/badge";
+import { Building2 } from "lucide-react";
+import { toTitleCase } from "@/lib/utils";
 
 interface DepartmentBadgeProps {
-  department: string;
-  clientRut: string;
-  clientName: string;
-  allClients: Client[];
-  className?: string;
+  department?: string;
+  clientName?: string;
 }
 
-export const DepartmentBadge = ({
-  department,
-  clientRut,
-  clientName,
-  allClients,
-  className = ''
-}: DepartmentBadgeProps) => {
-  const color = getDepartmentColor(department, clientRut, allClients);
-  const hasMultiple = hasMultipleDepartments(clientRut, allClients);
-
-  if (!color || !hasMultiple) {
-    return <span className={className}>{department}</span>;
-  }
+export function DepartmentBadge({ department, clientName }: DepartmentBadgeProps) {
+  if (!department || department === 'General') return null;
 
   return (
     <TooltipProvider>
       <Tooltip>
-        <TooltipTrigger asChild>
-          <span
-            className={`inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium border ${color.bg} ${color.text} ${color.border} ${className}`}
-          >
+        <TooltipTrigger>
+          <Badge variant="outline" className="text-[10px] px-1 py-0 h-5 gap-1 font-normal text-muted-foreground">
+            <Building2 className="h-3 w-3" />
             {department}
-          </span>
+          </Badge>
         </TooltipTrigger>
         <TooltipContent>
-          <p className="text-xs">Sucursal de {clientName}</p>
+          <p className="text-xs">Sucursal de {clientName ? toTitleCase(clientName) : ''}</p>
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>
   );
-};
+}

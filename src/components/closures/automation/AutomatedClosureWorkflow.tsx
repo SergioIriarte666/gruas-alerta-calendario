@@ -12,6 +12,7 @@ import { detectPurchaseOrders } from '@/utils/closureUtils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Bot, Zap } from 'lucide-react';
+import { toTitleCase } from '@/lib/utils';
 
 interface ClientClosureData {
   client: any;
@@ -97,7 +98,7 @@ const AutomatedClosureWorkflow = ({ onBack }: AutomatedClosureWorkflowProps) => 
       toast({
         type: "success",
         title: "Cierre creado exitosamente",
-        description: `Se creó el cierre para ${clientData.client.name} con ${servicesToInclude.length} servicio(s).`,
+        description: `Se creó el cierre para ${toTitleCase(clientData.client.name)} con ${servicesToInclude.length} servicio(s).`,
       });
 
       // Ask if user wants to proceed with invoicing
@@ -165,7 +166,7 @@ const AutomatedClosureWorkflow = ({ onBack }: AutomatedClosureWorkflowProps) => 
       case 'review':
         return selectedClient ? (
           <ServiceReviewPanel
-            clientName={selectedClient.client.name}
+            clientName={toTitleCase(selectedClient.client.name)}
             services={selectedClient.services}
             totalAmount={selectedClient.totalAmount}
             onBack={() => {
@@ -239,7 +240,7 @@ const AutomatedClosureWorkflow = ({ onBack }: AutomatedClosureWorkflowProps) => 
                   </button>
                   <span className="text-muted-foreground">›</span>
                   <span className="text-foreground font-medium">
-                    Revisar servicios - {selectedClient?.client.name}
+                    Revisar servicios - {selectedClient?.client.name ? toTitleCase(selectedClient.client.name) : ''}
                   </span>
                 </>
               )}

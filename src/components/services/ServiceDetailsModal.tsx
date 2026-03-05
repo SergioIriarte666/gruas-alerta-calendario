@@ -37,6 +37,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { getDisplayServiceValue, getServiceValueBreakdown, isCustodyService, getCustodyInfo, isEquipmentRentalService } from '@/utils/serviceValueCalculations';
 import { formatForDisplay, formatForDisplayWithTime } from '@/utils/timezoneUtils';
+import { toTitleCase } from '@/lib/utils';
 
 interface ServiceDetailsModalProps {
   service: Service;
@@ -293,10 +294,10 @@ export const ServiceDetailsModal = ({ service, isOpen, onClose, onDuplicate }: S
             <TabsContent value="general" className="mt-0">
               <div className="space-y-6">
                   <DetailSection title="Cliente" icon={User}>
-                      <DetailItem icon={User} label="Nombre / Razón Social" value={serviceData.client.name} valueClass="text-lg" />
+                      <DetailItem icon={User} label="Nombre / Razón Social" value={toTitleCase(serviceData.client.name)} valueClass="text-lg" />
                       <DetailItem icon={Building} label="Departamento" value={serviceData.client.department} />
                       {serviceData.insuredName && (
-                        <DetailItem icon={Shield} label="Asegurado" value={serviceData.insuredName} />
+                        <DetailItem icon={Shield} label="Asegurado" value={toTitleCase(serviceData.insuredName)} />
                       )}
                       <DetailItem icon={IdCard} label="RUT" value={serviceData.client.rut} />
                       <DetailItem icon={Phone} label="Teléfono" value={serviceData.client.phone} />

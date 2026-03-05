@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { Skeleton } from '@/components/ui/skeleton';
+import { toTitleCase } from '@/lib/utils';
 
 const SESSION_KEY = 'pending_summary_dismissed';
 
@@ -88,7 +89,7 @@ export const PendingSummaryModal: React.FC = () => {
                   details={servicesWithoutOC.map(s => ({
                     id: s.id,
                     label: s.folio,
-                    sublabel: s.clientName,
+                    sublabel: toTitleCase(s.clientName),
                     extra: `${s.daysSince}d`,
                   }))}
                   onNavigate={handleClose}
@@ -106,7 +107,7 @@ export const PendingSummaryModal: React.FC = () => {
                   details={pendingClosures.map(s => ({
                     id: s.id,
                     label: s.folio,
-                    sublabel: s.clientName,
+                    sublabel: toTitleCase(s.clientName),
                     extra: `${s.daysSince}d`,
                   }))}
                   onNavigate={handleClose}
@@ -124,7 +125,7 @@ export const PendingSummaryModal: React.FC = () => {
                   details={overdueInvoices.map(inv => ({
                     id: inv.id,
                     label: inv.folio,
-                    sublabel: inv.clientName,
+                    sublabel: toTitleCase(inv.clientName),
                     extra: `${inv.daysOverdue}d vencida`,
                   }))}
                   onNavigate={handleClose}
@@ -141,7 +142,7 @@ export const PendingSummaryModal: React.FC = () => {
                   linkTo="/cranes"
                   details={expiringDocuments.map(d => ({
                     id: `${d.entityType}-${d.id}-${d.documentType}`,
-                    label: d.entityName,
+                    label: toTitleCase(d.entityName),
                     sublabel: d.documentType,
                     extra: d.daysUntil <= 0 ? 'Vencido' : `${d.daysUntil}d`,
                   }))}

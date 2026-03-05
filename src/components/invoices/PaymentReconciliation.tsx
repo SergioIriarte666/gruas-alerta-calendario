@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Plus, Zap, Edit, DollarSign, AlertTriangle, History, RefreshCw, Eye } from 'lucide-react';
-import { formatCurrency } from '@/lib/utils';
+import { formatCurrency, toTitleCase } from '@/lib/utils';
 import { toast } from 'sonner';
 import { PaymentApplicationsDetailModal } from './PaymentApplicationsDetailModal';
 
@@ -252,7 +252,7 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
             <SelectItem value="all">Todos los clientes</SelectItem>
             {clients.map((client) => (
               <SelectItem key={client.id} value={client.id}>
-                {client.name}
+                {toTitleCase(client.name)}
               </SelectItem>
             ))}
           </SelectContent>
@@ -289,7 +289,7 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
                   <TableRow key={payment.id}>
                     <TableCell>
                       <div>
-                        <div className="font-medium">{payment.client?.name}</div>
+                        <div className="font-medium">{payment.client?.name ? toTitleCase(payment.client.name) : 'Desconocido'}</div>
                         <div className="text-sm text-muted-foreground">
                           {payment.bank_reference}
                         </div>

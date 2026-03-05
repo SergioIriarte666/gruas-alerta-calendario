@@ -9,6 +9,7 @@ import { useClientInvoices } from '@/hooks/incomes/useClientInvoices';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { getCurrentChileDateString, formatForInput, parseFromInput, formatForDatabase } from '@/utils/timezoneUtils';
+import { toTitleCase } from '@/lib/utils';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import {
@@ -419,7 +420,7 @@ export const IncomeForm = ({ isOpen, onClose, income }: IncomeFormProps) => {
                             {clients.map((client) => (
                               <SelectItem key={client.id} value={client.id}>
                                 <div className="flex items-center gap-2">
-                                  <span className="font-medium">{client.name}</span>
+                                  <span className="font-medium">{toTitleCase(client.name)}</span>
                                   <span className="text-muted-foreground/30">•</span>
                                   <span className="text-xs text-muted-foreground">{client.rut}</span>
                                   {client.department && (

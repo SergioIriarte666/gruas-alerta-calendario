@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { FileText, DollarSign, FileWarning, FileCheck2 } from 'lucide-react';
 import { formatForDisplay, parseFromDatabase } from '@/utils/timezoneUtils';
 import { InvoiceReportExport } from './InvoiceReportExport';
+import { toTitleCase } from '@/lib/utils';
 
 interface MetricCardProps {
   icon: React.ElementType;
@@ -67,7 +68,7 @@ export const ClientInvoicing = ({ client }: { client: Client }) => {
       <div className="flex justify-end mb-4">
         <InvoiceReportExport 
           clientId={client.id}
-          clientName={client.name}
+          clientName={toTitleCase(client.name)}
           invoices={invoices}
           metrics={metrics}
         />

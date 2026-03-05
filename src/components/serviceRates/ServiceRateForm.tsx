@@ -32,6 +32,7 @@ import { ServiceRateWithRelations, ServiceRateFormData } from '@/types/serviceRa
 import { useClients } from '@/hooks/useClients';
 import { useServiceTypes } from '@/hooks/useServiceTypes';
 import { Loader2 } from 'lucide-react';
+import { toTitleCase } from '@/lib/utils';
 
 const formSchema = z.object({
   client_id: z.string().min(1, 'Seleccione un cliente'),
@@ -143,7 +144,7 @@ export const ServiceRateForm: React.FC<ServiceRateFormProps> = ({
                     <SelectContent>
                       {activeClients.map((client) => (
                         <SelectItem key={client.id} value={client.id}>
-                          {client.name} {client.department && `(${client.department})`}
+                          {toTitleCase(client.name)} {client.department && `(${client.department})`}
                         </SelectItem>
                       ))}
                     </SelectContent>

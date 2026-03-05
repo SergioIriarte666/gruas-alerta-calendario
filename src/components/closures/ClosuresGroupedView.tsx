@@ -7,6 +7,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { ServiceClosure } from '@/types';
 import { Client } from '@/types';
 import { formatForDisplay } from '@/utils/timezoneUtils';
+import { toTitleCase } from '@/lib/utils';
 
 interface ClosuresGroupedViewProps {
   groups: [string, ServiceClosure[]][];
@@ -34,8 +35,8 @@ const ClosuresGroupedView = ({ groups, clientMap, onEdit, onDelete, onClose, onV
     const client = clientMap[clientId];
     if (!client) return 'Cliente desconocido';
     const dept = client.department;
-    if (!dept || dept === 'General') return client.name;
-    return `${client.name} - ${dept}`;
+    if (!dept || dept === 'General') return toTitleCase(client.name);
+    return `${toTitleCase(client.name)} - ${dept}`;
   };
 
   const getStatusBadge = (status: ServiceClosure['status']) => {

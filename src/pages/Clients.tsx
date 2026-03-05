@@ -3,6 +3,7 @@ import { useClients, usePagedClients } from '@/hooks/useClients';
 import { useClientsDashboardMetrics } from '@/hooks/useClientsDashboardMetrics';
 import { Client } from '@/types';
 import { toast } from 'sonner';
+import { toTitleCase } from '@/lib/utils';
 import { ClientDetailsModal } from '@/components/clients/ClientDetailsModal';
 import { AppPagination } from '@/components/shared/AppPagination';
 import { ClientsHeader } from '@/components/clients/ClientsHeader';
@@ -121,7 +122,7 @@ const Clients = () => {
 
   const handleEditClient = React.useCallback((client: Client) => { setSelectedClient(client); setIsDialogOpen(true); }, []);
   const handleDeleteClient = React.useCallback((client: Client) => {
-    if (window.confirm(`¿Estás seguro de eliminar al cliente "${client.name}"?`)) {
+    if (window.confirm(`¿Estás seguro de eliminar al cliente "${toTitleCase(client.name)}"?`)) {
       deleteClient(client.id);
       toast.error("Cliente eliminado", { description: "El cliente ha sido eliminado del sistema." });
     }

@@ -23,6 +23,7 @@ import {
 import { formatForDisplay } from '@/utils/timezoneUtils';
 import { getDisplayServiceValue } from '@/utils/serviceValueCalculations';
 import { ServicesPipelineMetrics } from './ServicesPipelineMetrics';
+import { toTitleCase } from '@/lib/utils';
 
 interface ServiceGroup {
   status: ServiceStatus;
@@ -262,7 +263,7 @@ export const ServicesPipelineView: React.FC<ServicesPipelineViewProps> = ({
                               </div>
                               <div className="text-gray-600 flex items-center">
                                 <User className="w-3 h-3 mr-1" />
-                                {service.client.name}
+                                {toTitleCase(service.client.name)}
                               </div>
                             </div>
                             <div>

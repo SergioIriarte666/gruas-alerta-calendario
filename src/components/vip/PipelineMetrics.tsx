@@ -14,6 +14,8 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { getDisplayServiceValue } from '@/utils/serviceValueCalculations';
 
+import { toTitleCase } from '@/lib/utils';
+
 interface PipelineMetricsProps {
   services: Service[];
   clientName: string;
@@ -155,7 +157,7 @@ export const PipelineMetrics: React.FC<PipelineMetricsProps> = ({
               Resumen del Pipeline
             </CardTitle>
             <Badge variant="outline" className="text-purple-300 border-purple-500/30">
-              {clientName}
+              {toTitleCase(clientName)}
             </Badge>
           </div>
         </CardHeader>

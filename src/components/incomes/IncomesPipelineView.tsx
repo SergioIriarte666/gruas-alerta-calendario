@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { IncomeWithDetails } from '@/types/incomes';
+import { toTitleCase } from '@/lib/utils';
 import { IncomesPipelineMetrics } from './IncomesPipelineMetrics';
 import { IncomePipelineCard } from './IncomePipelineCard';
 import { Search, ChevronDown, ChevronRight, User } from 'lucide-react';
@@ -55,11 +56,11 @@ export const IncomesPipelineView = ({
       if (income.client_id && income.client) {
         // Cliente registrado en el sistema
         clientId = income.client.id;
-        clientName = income.client.name;
+        clientName = toTitleCase(income.client.name);
       } else if (income.occasional_client_name) {
         // Cliente ocasional
         clientId = `occasional_${income.occasional_client_name.toLowerCase().replace(/\s+/g, '_')}`;
-        clientName = income.occasional_client_name;
+        clientName = toTitleCase(income.occasional_client_name);
       } else {
         // Sin cliente
         clientId = 'no_client';

@@ -36,6 +36,7 @@ import {
 } from 'lucide-react';
 import { format, subDays, subWeeks, subMonths, startOfWeek, endOfWeek, eachDayOfInterval, eachWeekOfInterval, eachMonthOfInterval, startOfMonth, endOfMonth } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { toTitleCase } from '@/lib/utils';
 
 interface ClientAnalyticsProps {
   services: Service[];
@@ -310,7 +311,7 @@ export const ClientAnalytics: React.FC<ClientAnalyticsProps> = ({
         <div>
           <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
             <Activity className="w-5 h-5 text-blue-400" />
-            Analytics Avanzados - {clientName}
+            Analytics Avanzados - {toTitleCase(clientName)}
           </h3>
           <p className="text-sm text-muted-foreground">
             Análisis detallado de patrones y tendencias

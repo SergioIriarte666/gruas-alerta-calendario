@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ClientTabsWithCounters } from './ClientTabsWithCounters';
 import { formatForDisplayWithTime } from '@/utils/timezoneUtils';
+import { toTitleCase } from '@/lib/utils';
 
 interface ClientDetailsModalProps {
   client: Client;
@@ -17,7 +18,7 @@ export const ClientDetailsModal = ({ client, isOpen, onClose }: ClientDetailsMod
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-7xl w-[95vw] max-h-[90vh] overflow-y-auto p-3 sm:p-6">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-bold text-foreground mb-2">{client.name}</DialogTitle>
+          <DialogTitle className="text-2xl font-bold text-foreground mb-2">{toTitleCase(client.name)}</DialogTitle>
           <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
             <span>RUT: {client.rut}</span>
             <span>•</span>

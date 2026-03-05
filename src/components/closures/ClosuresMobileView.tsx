@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Edit, Trash2, Eye, FileText, Calendar, DollarSign, FolderOpen } from 'lucide-react';
 import { ServiceClosure, Client } from '@/types';
 import { formatForDisplay } from '@/utils/timezoneUtils';
-import { cn } from '@/lib/utils';
+import { cn, toTitleCase } from '@/lib/utils';
 import { useDeviceType } from '@/hooks/useDeviceType';
 
 interface ClosuresMobileViewProps {
@@ -29,7 +29,7 @@ export const ClosuresMobileView = ({
   const getClientName = (clientId?: string) => {
     if (!clientId) return 'Todos los clientes';
     const client = clients.find(c => c.id === clientId);
-    return client?.name || 'Cliente desconocido';
+    return client ? toTitleCase(client.name) : 'Cliente desconocido';
   };
 
   const getStatusBadge = (status: ServiceClosure['status']) => {

@@ -10,6 +10,7 @@ import { shouldShowVehicleInfo, getServiceStatusBadge, formatCurrency } from '@/
 import { getDisplayServiceValue } from '@/utils/serviceValueCalculations';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Badge } from '@/components/ui/badge';
+import { toTitleCase } from '@/lib/utils';
 
 interface RecentServicesTableProps {
   services: Service[];
@@ -39,7 +40,7 @@ export const RecentServicesTable = ({ services, onViewDetails }: RecentServicesT
               </div>
               <div className="flex items-center text-foreground">
                 <User className="w-3.5 h-3.5 mr-2 text-muted-foreground flex-shrink-0" />
-                <span className="truncate">{service.client?.name ?? 'N/A'}</span>
+                <span className="truncate">{service.client?.name ? toTitleCase(service.client.name) : 'N/A'}</span>
               </div>
               <div className="flex items-center text-tms-green font-semibold">
                 <DollarSign className="w-3.5 h-3.5 mr-2 flex-shrink-0" />
@@ -106,7 +107,7 @@ export const RecentServicesTable = ({ services, onViewDetails }: RecentServicesT
                       {formatForDisplay(service.serviceDate)}
                     </TableCell>
                     <TableCell className="text-gray-700 py-4">
-                      <div className="font-medium">{service.client?.name ?? 'N/A'}</div>
+                      <div className="font-medium">{service.client?.name ? toTitleCase(service.client.name) : 'N/A'}</div>
                     </TableCell>
                     <TableCell className="text-gray-700 py-4">
                       {shouldShowVehicleInfo(service) ? (

@@ -243,6 +243,9 @@ export const useInvoiceOperations = () => {
         // Convertir undefined o valores falsy a null
         updateData.payment_term_id = invoiceData.paymentTermId ? invoiceData.paymentTermId : null;
       }
+      if (invoiceData.notes !== undefined) {
+        updateData.notes = invoiceData.notes;
+      }
       
       // Handle calculated fields with validation
       if (invoiceData.subtotal !== undefined) {

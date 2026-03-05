@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Loader2, User, Mail, UserCog, Building, HardHat } from 'lucide-react';
 import { toast } from 'sonner';
+import { toTitleCase } from '@/lib/utils';
 
 interface Client {
   id: string;
@@ -202,7 +203,7 @@ export const CreateUserDialog = ({
                 <SelectContent>
                   {clients.map((client) => (
                     <SelectItem key={client.id} value={client.id}>
-                      {client.name} ({client.rut})
+                      {toTitleCase(client.name)} - {client.rut}
                     </SelectItem>
                   ))}
                 </SelectContent>

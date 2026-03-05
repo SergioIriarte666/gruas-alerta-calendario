@@ -4,7 +4,6 @@ import { useInvoices } from '@/hooks/useInvoices';
 import { usePagedInvoices } from '@/hooks/invoices/useInvoiceData';
 import { InvoiceForm } from '@/components/invoices/InvoiceForm';
 import { PaymentReconciliation } from '@/components/invoices/PaymentReconciliation';
-import { PaymentHistory } from '@/components/invoices/PaymentHistory';
 import { InvoiceAlertsDashboard } from '@/components/invoices/InvoiceAlertsDashboard';
 import { InvoiceCancellationsHistory } from '@/components/invoices/InvoiceCancellationsHistory';
 import { MarkAsPaidModal } from '@/components/invoices/MarkAsPaidModal';
@@ -24,8 +23,6 @@ import InvoiceBatchActions from '@/components/invoices/InvoiceBatchActions';
 import InvoiceExportModal from '@/components/invoices/InvoiceExportModal';
 import { BatchProgressModal, useBatchProgress } from '@/components/ui/batch-progress-modal';
 import { useIsMobile } from '@/hooks/use-mobile';
-import InvoiceHistoryImport from '@/components/invoices/InvoiceHistoryImport';
-import InvoiceHistoricalTab from '@/components/invoices/InvoiceHistoricalTab';
 
 const INVOICE_STATUS_MAP: { [key: string]: string } = {
   all: 'Todas',
@@ -58,7 +55,6 @@ const Invoices = () => {
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const [selectedInvoiceIds, setSelectedInvoiceIds] = useState<string[]>([]);
   const [exportModalOpen, setExportModalOpen] = useState(false);
-  const [importHistoryOpen, setImportHistoryOpen] = useState(false);
   const [markAsPaidInvoice, setMarkAsPaidInvoice] = useState<Invoice | null>(null);
   const batchProgress = useBatchProgress();
   const ITEMS_PER_PAGE = 10;
@@ -453,7 +449,7 @@ const Invoices = () => {
   return (
     <div className="space-y-6">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 max-w-5xl mx-auto bg-card border-border gap-1">
+        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 max-w-5xl mx-auto bg-card border-border gap-1">
           <TabsTrigger value="invoices" className="text-xs sm:text-sm text-foreground data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
             <span className="hidden sm:inline">Facturas</span>
             <span className="sm:hidden">Fact.</span>
@@ -468,17 +464,9 @@ const Invoices = () => {
             <span className="hidden sm:inline">Conciliación</span>
             <span className="sm:hidden">Conc.</span>
           </TabsTrigger>
-          <TabsTrigger value="history" className="text-xs sm:text-sm text-foreground data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-            <span className="hidden sm:inline">Historial</span>
-            <span className="sm:hidden">Hist.</span>
-          </TabsTrigger>
           <TabsTrigger value="cancellations" className="text-xs sm:text-sm text-foreground data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
             <span className="hidden sm:inline">Anulaciones</span>
             <span className="sm:hidden">Anul.</span>
-          </TabsTrigger>
-          <TabsTrigger value="historical" className="text-xs sm:text-sm text-foreground data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-            <span className="hidden sm:inline">Histórico</span>
-            <span className="sm:hidden">Hist.</span>
           </TabsTrigger>
         </TabsList>
 
@@ -580,16 +568,8 @@ const Invoices = () => {
           <PaymentReconciliation onClose={() => setActiveTab('invoices')} />
         </TabsContent>
 
-        <TabsContent value="history">
-          <PaymentHistory />
-        </TabsContent>
-
         <TabsContent value="cancellations">
           <InvoiceCancellationsHistory />
-        </TabsContent>
-
-        <TabsContent value="historical">
-          <InvoiceHistoricalTab onOpenImportHistory={() => setImportHistoryOpen(true)} />
         </TabsContent>
       </Tabs>
 
@@ -609,12 +589,6 @@ const Invoices = () => {
         isOpen={!!markAsPaidInvoice}
         onClose={() => setMarkAsPaidInvoice(null)}
         onConfirm={handleConfirmMarkAsPaid}
-      />
-
-      <InvoiceHistoryImport
-        open={importHistoryOpen}
-        onOpenChange={setImportHistoryOpen}
-        onImportComplete={() => refetch()}
       />
     </div>
   );

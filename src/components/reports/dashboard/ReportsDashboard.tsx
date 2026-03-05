@@ -5,6 +5,8 @@ import { ReportMetrics } from '@/hooks/useReports';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 
+import { toTitleCase } from '@/lib/utils';
+
 interface ReportsDashboardProps {
   metrics: ReportMetrics;
 }
@@ -77,7 +79,7 @@ export const ReportsDashboard = ({ metrics }: ReportsDashboardProps) => {
                       </span>
                       <div className="min-w-0">
                         <div className="font-medium text-foreground text-sm truncate">
-                          {client.clientName}
+                          {toTitleCase(client.clientName)}
                         </div>
                         {client.department && client.department !== 'General' && (
                           <div className="text-xs text-muted-foreground truncate">{client.department}</div>

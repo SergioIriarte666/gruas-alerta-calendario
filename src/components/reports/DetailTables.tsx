@@ -2,6 +2,7 @@ import * as React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Users, Truck, FileText } from 'lucide-react';
 import { ReportMetrics } from '@/hooks/useReports';
+import { toTitleCase } from '@/lib/utils';
 
 interface DetailTablesProps {
   metrics: ReportMetrics;
@@ -22,7 +23,7 @@ export const DetailTables = ({ metrics }: DetailTablesProps) => (
           {metrics.topClients.map((client, index) => (
             <div key={client.clientId} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
               <div>
-                <p className="font-medium text-foreground">{client.clientName}{client.department ? ` — ${client.department}` : ''}</p>
+                <p className="font-medium text-foreground">{toTitleCase(client.clientName)}{client.department ? ` — ${client.department}` : ''}</p>
                 <p className="text-sm text-foreground">{client.services} servicios</p>
               </div>
               <div className="text-right">

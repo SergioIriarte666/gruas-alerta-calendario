@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { formatCurrency, toTitleCase } from '@/lib/utils';
 import { useClients } from '@/hooks/useClients';
 import { usePayments } from '@/hooks/usePayments';
 import { Button } from '@/components/ui/button';
@@ -199,7 +200,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({ onClose, onCancel, pre
                   {clients.map(client => (
                     <SelectItem key={client.id} value={client.id}>
                       <div className="flex flex-col py-0.5">
-                        <span className="font-medium">{client.name}</span>
+                        <span className="font-medium">{toTitleCase(client.name)}</span>
                         {client.department && client.department !== 'General' && (
                           <span className="text-xs text-violet-600 dark:text-violet-400">
                             {client.department}

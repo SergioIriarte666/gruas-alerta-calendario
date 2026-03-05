@@ -8,6 +8,7 @@ import { format, isValid, parseISO, differenceInDays } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { InvoiceDetailsModal } from './InvoiceDetailsModal';
 import { InvoiceCancellationModal } from './InvoiceCancellationModal';
+import { toTitleCase } from '@/lib/utils';
 
 
 interface InvoicesTableProps {
@@ -189,7 +190,7 @@ const InvoicesTable = ({
 
   const getClientName = (invoice: Invoice): string => {
     const details = getInvoiceWithDetails(invoice);
-    return details?.client?.name || 'Cliente no encontrado';
+    return details?.client?.name ? toTitleCase(details.client.name) : 'Cliente no encontrado';
   };
 
   if (invoices.length === 0) {
@@ -265,7 +266,7 @@ const InvoicesTable = ({
                       )}
                     </td>
                     <td className="py-3 px-4 text-foreground">
-                      {invoiceWithDetails?.client?.name || (
+                      {invoiceWithDetails?.client?.name ? toTitleCase(invoiceWithDetails.client.name) : (
                         <span className="text-destructive italic">Cliente no encontrado</span>
                       )}
                     </td>

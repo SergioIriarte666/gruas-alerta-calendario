@@ -28,6 +28,7 @@ import {
   CheckCheck,
 } from 'lucide-react';
 import { format } from 'date-fns';
+import { toTitleCase } from '@/lib/utils';
 
 interface PurchaseOrderPDFImporterProps {
   clientId: string;
@@ -99,7 +100,7 @@ export const PurchaseOrderPDFImporter: React.FC<PurchaseOrderPDFImporterProps> =
       <CardHeader>
         <CardTitle className="text-foreground flex items-center gap-2 text-base">
           <Upload className="w-5 h-5" />
-          Importar OC desde PDF
+          Importar OC desde PDF - {toTitleCase(clientName)}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">

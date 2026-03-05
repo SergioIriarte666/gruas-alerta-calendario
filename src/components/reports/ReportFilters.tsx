@@ -11,6 +11,7 @@ import { useCranes } from '@/hooks/useCranes';
 import { useOperatorsData } from '@/hooks/operators/useOperatorsData';
 import { useCostCategories } from '@/hooks/useCostCategories';
 import { ReportFilters as ReportFiltersType } from '@/hooks/useReports';
+import { toTitleCase } from '@/lib/utils';
 
 interface ServiceReportFilters {
   dateRange: { from: string; to: string };
@@ -114,7 +115,7 @@ export const ReportFilters = ({
                                         value={client.id}
                                     className="text-foreground hover:bg-muted/50 focus:bg-muted/50"
                                     >
-                                        {client.name}
+                                        {toTitleCase(client.name)}
                                     </SelectItem>
                                 ))}
                             </SelectContent>
@@ -323,7 +324,7 @@ export const ReportFilters = ({
                                         value={client.id}
                                         className="text-foreground hover:bg-muted/50 focus:bg-muted/50"
                                     >
-                                        {client.name}
+                                        {toTitleCase(client.name)}
                                     </SelectItem>
                                 ))}
                             </SelectContent>

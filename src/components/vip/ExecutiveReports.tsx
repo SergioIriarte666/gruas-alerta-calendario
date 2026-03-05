@@ -42,6 +42,7 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { Service } from '@/types';
 import { getDisplayServiceValue } from '@/utils/serviceValueCalculations';
+import { toTitleCase } from '@/lib/utils';
 
 interface ExecutiveReportsProps {
   services: Service[];
@@ -231,7 +232,7 @@ export const ExecutiveReports: React.FC<ExecutiveReportsProps> = ({
 
     doc.setFontSize(14);
     doc.setFont("helvetica", "normal");
-    doc.text(`Cliente: ${clientName}`, pageWidth / 2, yPosition, { align: 'center' });
+    doc.text(`Cliente: ${toTitleCase(clientName)}`, pageWidth / 2, yPosition, { align: 'center' });
     yPosition += 8;
 
     doc.setFontSize(10);
@@ -302,7 +303,7 @@ export const ExecutiveReports: React.FC<ExecutiveReportsProps> = ({
 
     // Hoja 1: Resumen Ejecutivo
     const summaryData = [
-      ['REPORTE EJECUTIVO - ' + clientName.toUpperCase()],
+      ['REPORTE EJECUTIVO - ' + toTitleCase(clientName)],
       [''],
       ['Fecha de Generación:', format(new Date(), 'dd/MM/yyyy HH:mm')],
       [''],
@@ -339,7 +340,7 @@ export const ExecutiveReports: React.FC<ExecutiveReportsProps> = ({
       'Estado': service.status,
       'Tipo de Servicio': service.serviceType.name,
       'Valor': getDisplayServiceValue(service),
-      'Cliente': service.client.name,
+      'Cliente': toTitleCase(service.client.name),
       'Operador': service.operator?.name || 'Sin asignar',
       'Grúa': service.crane?.licensePlate || 'Sin asignar',
       'Origen': service.origin,
@@ -377,7 +378,7 @@ export const ExecutiveReports: React.FC<ExecutiveReportsProps> = ({
         <div>
           <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
             <FileText className="w-5 h-5 text-purple-400" />
-            Reportes Ejecutivos - {clientName}
+            Reportes Ejecutivos - {toTitleCase(clientName)}
           </h3>
           <p className="text-sm text-muted-foreground">
             Análisis avanzado y métricas de rendimiento

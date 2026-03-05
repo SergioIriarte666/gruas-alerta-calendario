@@ -1,6 +1,7 @@
 import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { toTitleCase } from '@/lib/utils';
 import { Client } from '@/types';
 
 interface ClientDetailModalProps {
@@ -21,7 +22,7 @@ export const ClientDetailModal: React.FC<ClientDetailModalProps> = ({
       <DialogContent className="max-w-4xl max-h-[90vh] bg-card">
         <DialogHeader>
           <DialogTitle className="text-foreground">
-            Detalles del Cliente: {client.name}
+            Detalles del Cliente: {toTitleCase(client.name)}
           </DialogTitle>
         </DialogHeader>
 
@@ -57,13 +58,13 @@ export const ClientDetailModal: React.FC<ClientDetailModalProps> = ({
 
               <div>
                 <label className="text-sm font-medium text-muted-foreground">Dirección</label>
-                <p className="text-foreground">{client.address}</p>
+                <p className="text-foreground">{client.address ? toTitleCase(client.address) : ''}</p>
               </div>
 
               {client.contactName && (
                 <div>
                   <label className="text-sm font-medium text-muted-foreground">Contacto</label>
-                  <p className="text-foreground">{client.contactName}</p>
+                  <p className="text-foreground">{toTitleCase(client.contactName)}</p>
                 </div>
               )}
             </div>

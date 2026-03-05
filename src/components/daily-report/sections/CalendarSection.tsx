@@ -12,6 +12,7 @@ import {
   MapPin
 } from 'lucide-react';
 import { formatForDisplayShort } from '@/utils/timezoneUtils';
+import { toTitleCase } from '@/lib/utils';
 
 interface CalendarSectionProps {
   data?: {
@@ -82,7 +83,7 @@ export const CalendarSection = ({ data, onViewEvent }: CalendarSectionProps) => 
               {event.client && (
                 <div className="flex items-center gap-1">
                   <Users className="w-3 h-3" />
-                  <span>Cliente: {event.client.name}</span>
+                  <span>Cliente: {toTitleCase(event.client.name)}</span>
                 </div>
               )}
               
@@ -278,7 +279,7 @@ export const CalendarSection = ({ data, onViewEvent }: CalendarSectionProps) => 
                           {event.client && (
                             <div className="flex items-center gap-1">
                               <Users className="w-3 h-3" />
-                              <span>Cliente: {event.client.name}</span>
+                              <span>Cliente: {toTitleCase(event.client.name)}</span>
                             </div>
                           )}
                           

@@ -16,6 +16,7 @@ import {
   Loader2, RotateCcw, ArrowRight, CheckCheck,
 } from 'lucide-react';
 import { format } from 'date-fns';
+import { toTitleCase } from '@/lib/utils';
 
 interface QuotePDFImporterProps {
   clientId: string;
@@ -86,7 +87,7 @@ export const QuotePDFImporter: React.FC<QuotePDFImporterProps> = ({
       <CardHeader>
         <CardTitle className="text-foreground flex items-center gap-2 text-base">
           <Upload className="w-5 h-5" />
-          Importar Cotización desde PDF
+          Importar Cotización desde PDF - {toTitleCase(clientName)}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">

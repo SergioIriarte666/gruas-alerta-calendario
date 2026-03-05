@@ -7,7 +7,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Search, X, DollarSign, Receipt, Target } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { PaymentWithDetails } from '@/types/payments';
-import { formatCurrency } from '@/lib/utils';
+import { formatCurrency, toTitleCase } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { BatchProgressModal, useBatchProgress } from '@/components/ui/batch-progress-modal';
@@ -133,8 +133,8 @@ export const SelectivePaymentModal: React.FC<SelectivePaymentModalProps> = ({
               Aplicar Pago a Facturas Específicas
             </DialogTitle>
             <div className="text-sm text-muted-foreground">
-              Cliente: {payment.client?.name} | Monto disponible: {formatCurrency(payment.remaining_amount)}
-            </div>
+            Cliente: {payment.client?.name ? toTitleCase(payment.client.name) : ''} | Monto disponible: {formatCurrency(payment.remaining_amount)}
+          </div>
           </DialogHeader>
 
           {/* Resumen */}

@@ -10,6 +10,7 @@ import { formatForDisplay } from '@/utils/timezoneUtils';
 import { useDeviceType } from '@/hooks/useDeviceType';
 import { ClosuresMobileView } from './ClosuresMobileView';
 import ClosuresGroupedView from './ClosuresGroupedView';
+import { toTitleCase } from '@/lib/utils';
 
 export type ClosureSortField = 'folio' | 'dateFrom' | 'clientId' | 'serviceCount' | 'total' | 'status';
 export type SortDirection = 'asc' | 'desc';
@@ -58,8 +59,8 @@ const ClosuresTable = ({ closures, clients, onEdit, onDelete, onClose, onViewDet
     const client = clientMap[clientId];
     if (!client) return 'Cliente desconocido';
     const dept = client.department;
-    if (!dept || dept === 'General') return client.name;
-    return `${client.name} - ${dept}`;
+    if (!dept || dept === 'General') return toTitleCase(client.name);
+    return `${toTitleCase(client.name)} - ${dept}`;
   };
 
   const groupedClosures = useMemo(() => {

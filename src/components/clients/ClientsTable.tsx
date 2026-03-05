@@ -8,6 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import { ClientsMobileView } from './ClientsMobileView';
 import { DepartmentBadge } from './DepartmentBadge';
 import { useClients } from '@/hooks/useClients';
+import { toTitleCase } from '@/lib/utils';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -159,7 +160,7 @@ export const ClientsTable = ({
                           className="font-medium text-violet-600 dark:text-violet-400 hover:underline text-left"
                           title="Ir al Pipeline VIP"
                         >
-                          {client.name}
+                          {toTitleCase(client.name)}
                         </button>
                         {client.billingType === 'monthly' && (
                           <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-blue-500/50 text-blue-500">
@@ -170,9 +171,9 @@ export const ClientsTable = ({
                     </td>
                     <td className="py-3 px-4 text-foreground">{client.rut}</td>
                     <td className="py-3 px-4">
-                      <DepartmentBadge department={client.department} clientRut={client.rut} clientName={client.name} allClients={allClients} />
+                      <DepartmentBadge department={client.department} clientRut={client.rut} clientName={toTitleCase(client.name)} allClients={allClients} />
                     </td>
-                    <td className="py-3 px-4 text-foreground">{client.contactName || <span className="text-muted-foreground">-</span>}</td>
+                    <td className="py-3 px-4 text-foreground">{toTitleCase(client.contactName || '') || <span className="text-muted-foreground">-</span>}</td>
                     {/* Services in pipeline column */}
                     <td className="py-3 px-4">
                       {svcCount > 0 ? (

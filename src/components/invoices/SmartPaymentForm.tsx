@@ -13,7 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { X, AlertTriangle, CheckCircle, Clock, Zap } from 'lucide-react';
 import { toast } from 'sonner';
-import { formatCurrency } from '@/lib/utils';
+import { formatCurrency, toTitleCase } from '@/lib/utils';
 import { BatchProgressModal, useBatchProgress } from '@/components/ui/batch-progress-modal';
 import DatePickerInput from '@/components/common/DatePickerInput';
 interface SmartPaymentFormProps {
@@ -323,7 +323,7 @@ export const SmartPaymentForm: React.FC<SmartPaymentFormProps> = ({
                   {clients.map(client => (
                     <SelectItem key={client.id} value={client.id}>
                       <div className="flex flex-col py-0.5">
-                        <span className="font-medium">{client.name}</span>
+                        <span className="font-medium">{toTitleCase(client.name)}</span>
                         {client.department && client.department !== 'General' && (
                           <span className="text-xs text-violet-600 dark:text-violet-400">
                             {client.department}
@@ -339,7 +339,7 @@ export const SmartPaymentForm: React.FC<SmartPaymentFormProps> = ({
             {/* Información del cliente y facturas */}
             {selectedClient && <Card className="bg-gray-50">
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-lg">{selectedClient.name}</CardTitle>
+                  <CardTitle className="text-lg">{toTitleCase(selectedClient.name)}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {clientInvoices.length > 0 ? <>

@@ -8,6 +8,7 @@ import { Service } from '@/types';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { parseFromDatabase } from '@/utils/timezoneUtils';
+import { toTitleCase } from '@/lib/utils';
 
 interface ServiceSelectorProps {
   services: Service[];
@@ -34,7 +35,7 @@ export const ServiceSelector = ({ services, value, onValueChange, isLoading }: S
   // Formatear texto del servicio para mostrar en el dropdown
   const formatServiceDisplay = (service: Service) => {
     const formattedDate = format(parseFromDatabase(service.serviceDate), 'dd/MM/yyyy', { locale: es });
-    return `${service.folio} - ${service.client.name} - ${formattedDate}`;
+    return `${service.folio} - ${toTitleCase(service.client.name)} - ${formattedDate}`;
   };
 
   return (

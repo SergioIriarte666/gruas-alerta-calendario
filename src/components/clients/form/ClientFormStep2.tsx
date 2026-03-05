@@ -3,6 +3,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ColoredSectionCard } from '@/components/services/form/ColoredSectionCard';
 import { Phone, Mail, MapPin, User } from 'lucide-react';
+import { toTitleCase } from '@/lib/utils';
 
 interface ClientFormStep2Props {
   phone: string;
@@ -73,6 +74,7 @@ export const ClientFormStep2 = ({
               id="address"
               value={address}
               onChange={(e) => onChange('address', e.target.value)}
+              onBlur={() => onChange('address', toTitleCase(address))}
               placeholder="Ingrese la dirección completa"
               className="bg-background"
             />
@@ -87,6 +89,7 @@ export const ClientFormStep2 = ({
               id="contactName"
               value={contactName}
               onChange={(e) => onChange('contactName', e.target.value)}
+              onBlur={() => onChange('contactName', toTitleCase(contactName))}
               placeholder="Nombre de la persona de contacto"
               className="bg-background"
             />

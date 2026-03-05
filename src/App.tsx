@@ -55,6 +55,7 @@ const routeImports = {
   NotFound: () => import('@/pages/NotFound'),
   DailyReport: () => import('@/pages/DailyReport'),
   Incomes: () => import('@/pages/Incomes'),
+  Historical: () => import('@/pages/Historical'),
   ServiceRates: () => import('@/pages/ServiceRates'),
   ResetPassword: () => import('@/pages/ResetPassword'),
   TripCalculator: () => import('@/pages/TripCalculator'),
@@ -95,6 +96,7 @@ const VipClientPipeline = lazy(routeImports.VipClientPipeline);
 const NotFound = lazy(routeImports.NotFound);
 const DailyReport = lazy(routeImports.DailyReport);
 const Incomes = lazy(routeImports.Incomes);
+const Historical = lazy(routeImports.Historical);
 const ServiceRates = lazy(routeImports.ServiceRates);
 const ResetPassword = lazy(routeImports.ResetPassword);
 const TripCalculator = lazy(routeImports.TripCalculator);
@@ -152,6 +154,7 @@ function AppContent() {
           <Route path="/clients" element={<Clients />} />
           <Route path="/cranes" element={<Cranes />} />
           <Route path="/invoices" element={<Invoices />} />
+          <Route path="/historical" element={<Historical />} />
           <Route path="/income-projections" element={<IncomeProjections />} />
           <Route path="/costs" element={<Costs />} />
           

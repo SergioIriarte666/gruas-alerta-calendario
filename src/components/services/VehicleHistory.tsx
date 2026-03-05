@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatForDisplay } from '@/utils/timezoneUtils';
 import { formatUserCurrency } from '@/utils/currencyUtils';
+import { toTitleCase } from '@/lib/utils';
 import { ServiceStatus } from '@/types';
 import { AlertCircle, History, Car, User } from 'lucide-react';
 
@@ -66,7 +67,7 @@ export const VehicleHistory = ({ licensePlate, currentServiceId, clientId, clien
           <h3 className="text-lg font-semibold text-foreground">
             {isVehicleSpecific 
               ? `Historial de Servicios - Patente ${licensePlate}`
-              : `Historial del Cliente${clientName ? ` - ${clientName}` : ''}`
+              : `Historial del Cliente${clientName ? ` - ${toTitleCase(clientName)}` : ''}`
             }
           </h3>
         </div>
@@ -99,7 +100,7 @@ export const VehicleHistory = ({ licensePlate, currentServiceId, clientId, clien
           <h3 className="text-lg font-semibold text-foreground">
             {isVehicleSpecific 
               ? `Historial de Servicios - Patente ${licensePlate}`
-              : `Historial del Cliente${clientName ? ` - ${clientName}` : ''}`
+              : `Historial del Cliente${clientName ? ` - ${toTitleCase(clientName)}` : ''}`
             }
           </h3>
         </div>
@@ -129,7 +130,7 @@ export const VehicleHistory = ({ licensePlate, currentServiceId, clientId, clien
           <h3 className="text-lg font-semibold text-foreground">
             {isVehicleSpecific 
               ? `Historial de Servicios - Patente ${licensePlate}`
-              : `Historial del Cliente${clientName ? ` - ${clientName}` : ''}`
+              : `Historial del Cliente${clientName ? ` - ${toTitleCase(clientName)}` : ''}`
             }
           </h3>
         </div>
@@ -178,7 +179,7 @@ export const VehicleHistory = ({ licensePlate, currentServiceId, clientId, clien
                 </TableCell>
                 {isVehicleSpecific && (
                   <TableCell className="text-foreground">
-                    {'client' in service ? service.client.name : 'N/A'}
+                    {'client' in service ? toTitleCase(service.client.name) : 'N/A'}
                   </TableCell>
                 )}
                 {!isVehicleSpecific && (

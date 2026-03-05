@@ -14,6 +14,7 @@ import UserPermissionsModal from './UserPermissionsModal';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { toTitleCase } from '@/lib/utils';
 
 export const UserManagementTab = () => {
   const isMobile = useIsMobile();
@@ -173,7 +174,7 @@ export const UserManagementTab = () => {
 
                     {/* Client + Date */}
                     <div className="flex items-center justify-between text-xs text-muted-foreground">
-                      <span>{user.role === 'client' ? (user.client_name || 'Sin asignar') : 'No aplica'}</span>
+                      <span>{user.role === 'client' ? (toTitleCase(user.client_name || 'Sin asignar')) : 'No aplica'}</span>
                       <span>{format(new Date(user.created_at), 'dd/MM/yyyy', { locale: es })}</span>
                     </div>
 
@@ -214,7 +215,7 @@ export const UserManagementTab = () => {
                               </Button>
                               {clients.map((client) => (
                                 <Button key={client.id} variant="outline" className="w-full justify-start text-sm" onClick={() => handleAssignClient(client.id)}>
-                                  {client.name} ({client.rut})
+                                  {toTitleCase(client.name)} ({client.rut})
                                 </Button>
                               ))}
                             </div>
@@ -262,7 +263,7 @@ export const UserManagementTab = () => {
                       <TableCell>
                         {user.role === 'client' ? (
                           <div className="flex items-center gap-2">
-                            <span className="text-sm text-foreground">{user.client_name || 'Sin asignar'}</span>
+                            <span className="text-sm text-foreground">{toTitleCase(user.client_name || 'Sin asignar')}</span>
                             <Dialog open={isClientAssignOpen && selectedUser?.id === user.id} onOpenChange={(open) => {
                               setIsClientAssignOpen(open);
                               if (!open) setSelectedUser(null);
@@ -282,7 +283,7 @@ export const UserManagementTab = () => {
                                     <Button variant="outline" className="w-full justify-start" onClick={() => handleAssignClient(null)}>Sin cliente asignado</Button>
                                     {clients.map((client) => (
                                       <Button key={client.id} variant="outline" className="w-full justify-start" onClick={() => handleAssignClient(client.id)}>
-                                        {client.name} ({client.rut})
+                                        {toTitleCase(client.name)} ({client.rut})
                                       </Button>
                                     ))}
                                   </div>
