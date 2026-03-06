@@ -18,10 +18,10 @@ const supplierSchema = z.object({
   name: z.string().min(1, 'El nombre es requerido'),
   rut: z.string().min(1, 'El RUT es requerido'),
   email: z.string().email('Email inválido').optional().or(z.literal('')),
-  phone: z.string().min(1, 'El teléfono es requerido'),
-  address: z.string().min(1, 'La dirección es requerida'),
-  contact_name: z.string().min(1, 'El nombre de contacto es requerido'),
-  category: z.string().min(1, 'La categoría es requerida'),
+  phone: z.string().optional().or(z.literal('')),
+  address: z.string().optional().or(z.literal('')),
+  contact_name: z.string().optional().or(z.literal('')),
+  category: z.string().optional().or(z.literal('')),
   notes: z.string().optional(),
   is_active: z.boolean()
 });
