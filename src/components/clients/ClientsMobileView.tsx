@@ -1,6 +1,7 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Edit, Eye, Plus, Users, Phone, Mail, User, MoreHorizontal, UserCheck, UserX, Trash2, TrendingUp } from 'lucide-react';
 import { Client } from '@/types';
 import { useNavigate } from 'react-router-dom';
@@ -24,10 +25,13 @@ interface ClientsMobileViewProps {
   searchTerm: string;
   allClients: Client[];
   serviceCountByClient?: Map<string, number>;
+  selectedClients?: Set<string>;
+  onToggleSelect?: (id: string) => void;
 }
 
 export const ClientsMobileView = ({
   clients, totalClients, onEdit, onDelete, onToggleStatus, onViewDetails, onNewClient, searchTerm, allClients, serviceCountByClient,
+  selectedClients, onToggleSelect,
 }: ClientsMobileViewProps) => {
   const navigate = useNavigate();
 
@@ -62,19 +66,29 @@ export const ClientsMobileView = ({
       
       {clients.map((client) => {
         const svcCount = serviceCountByClient?.get(client.id) || 0;
+        const isSelected = selectedClients?.has(client.id) ?? false;
         return (
-          <Card key={client.id} className="glass-card">
+          <Card key={client.id} className={`glass-card ${isSelected ? 'ring-2 ring-primary/50' : ''}`}>
             <CardContent className="p-4">
-              {/* Header: clickable name + status */}
+              {/* Header: checkbox + clickable name + status */}
               <div className="flex items-start justify-between mb-3">
-                <div className="flex-1">
-                  <button onClick={() => handleViewPipeline(client)} className="font-semibold text-primary text-lg hover:underline text-left">
-                    {toTitleCase(client.name)}
-                  </button>
-                  <div className="flex items-center gap-2 flex-wrap mt-0.5">
-                    <p className="text-foreground text-sm font-medium">{client.rut}</p>
-                    <span className="text-muted-foreground">•</span>
-                    <DepartmentBadge department={client.department} clientRut={client.rut} clientName={toTitleCase(client.name)} allClients={allClients} className="text-sm" />
+                <div className="flex items-start gap-3 flex-1">
+                  {onToggleSelect && (
+                    <Checkbox
+                      checked={isSelected}
+                      onCheckedChange={() => onToggleSelect(client.id)}
+                      className="mt-1"
+                    />
+                  )}
+                  <div className="flex-1">
+                    <button onClick={() => handleViewPipeline(client)} className="font-semibold text-primary text-lg hover:underline text-left">
+                      {toTitleCase(client.name)}
+                    </button>
+                    <div className="flex items-center gap-2 flex-wrap mt-0.5">
+                      <p className="text-foreground text-sm font-medium">{client.rut}</p>
+                      <span className="text-muted-foreground">•</span>
+                      <DepartmentBadge department={client.department} clientRut={client.rut} clientName={toTitleCase(client.name)} allClients={allClients} className="text-sm" />
+                    </div>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">

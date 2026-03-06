@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Edit, Eye, Plus, Users, ArrowUpDown, ArrowUp, ArrowDown, MoreHorizontal, UserCheck, UserX, Trash2 } from 'lucide-react';
 import { Client } from '@/types';
 import { useDeviceType } from '@/hooks/useDeviceType';
@@ -32,6 +33,10 @@ interface ClientsTableProps {
   sortDirection?: SortDirection;
   onSort?: (field: ClientSortField) => void;
   serviceCountByClient?: Map<string, number>;
+  selectedClients: Set<string>;
+  onToggleSelect: (id: string) => void;
+  onSelectAll: (ids: string[]) => void;
+  onDeselectAll: () => void;
 }
 
 const SortIcon = ({ field, currentSortField, sortDirection }: { 
@@ -60,6 +65,10 @@ export const ClientsTable = ({
   sortDirection,
   onSort,
   serviceCountByClient,
+  selectedClients,
+  onToggleSelect,
+  onSelectAll,
+  onDeselectAll,
 }: ClientsTableProps) => {
   const { isMobile } = useDeviceType();
   const navigate = useNavigate();
@@ -67,6 +76,17 @@ export const ClientsTable = ({
 
   const handleViewPipeline = (client: Client) => {
     navigate(`/clients/${client.id}/pipeline`);
+  };
+
+  const allPageSelected = clients.length > 0 && clients.every(c => selectedClients.has(c.id));
+  const somePageSelected = clients.some(c => selectedClients.has(c.id));
+
+  const handleHeaderCheckbox = () => {
+    if (allPageSelected) {
+      onDeselectAll();
+    } else {
+      onSelectAll(clients.map(c => c.id));
+    }
   };
 
   if (isMobile) {
@@ -82,6 +102,8 @@ export const ClientsTable = ({
         searchTerm={searchTerm}
         allClients={allClients}
         serviceCountByClient={serviceCountByClient}
+        selectedClients={selectedClients}
+        onToggleSelect={onToggleSelect}
       />
     );
   }
@@ -128,6 +150,14 @@ export const ClientsTable = ({
           <table className="w-full">
             <thead>
               <tr className="border-b">
+                <th className="py-3 px-2 w-10">
+                  <Checkbox
+                    checked={allPageSelected}
+                    onCheckedChange={handleHeaderCheckbox}
+                    aria-label="Seleccionar todos"
+                    className={somePageSelected && !allPageSelected ? 'opacity-50' : ''}
+                  />
+                </th>
                 <th className="text-left py-3 px-4 font-medium text-foreground cursor-pointer hover:text-primary transition-colors" onClick={() => onSort?.('name')}>
                   <div className="flex items-center">Nombre<SortIcon field="name" currentSortField={sortField} sortDirection={sortDirection} /></div>
                 </th>
@@ -150,9 +180,16 @@ export const ClientsTable = ({
             <tbody>
               {clients.map((client) => {
                 const svcCount = serviceCountByClient?.get(client.id) || 0;
+                const isSelected = selectedClients.has(client.id);
                 return (
-                  <tr key={client.id} className="border-b hover:bg-muted/50">
-                    {/* Clickable name -> Pipeline VIP */}
+                  <tr key={client.id} className={`border-b hover:bg-muted/50 ${isSelected ? 'bg-primary/5' : ''}`}>
+                    <td className="py-3 px-2">
+                      <Checkbox
+                        checked={isSelected}
+                        onCheckedChange={() => onToggleSelect(client.id)}
+                        aria-label={`Seleccionar ${client.name}`}
+                      />
+                    </td>
                     <td className="py-3 px-4">
                       <div className="flex items-center gap-2">
                         <button
@@ -174,7 +211,6 @@ export const ClientsTable = ({
                       <DepartmentBadge department={client.department} clientRut={client.rut} clientName={toTitleCase(client.name)} allClients={allClients} />
                     </td>
                     <td className="py-3 px-4 text-foreground">{toTitleCase(client.contactName || '') || <span className="text-muted-foreground">-</span>}</td>
-                    {/* Services in pipeline column */}
                     <td className="py-3 px-4">
                       {svcCount > 0 ? (
                         <button
@@ -195,7 +231,6 @@ export const ClientsTable = ({
                         {client.isActive ? 'Activo' : 'Inactivo'}
                       </Badge>
                     </td>
-                    {/* Simplified actions: View, Edit, Menu */}
                     <td className="py-3 px-4">
                       <div className="flex items-center justify-center space-x-1">
                         <Button variant="ghost" size="sm" onClick={() => onViewDetails(client)} className="text-blue-500 hover:text-blue-400 hover:bg-blue-500/10" title="Ver detalles">
