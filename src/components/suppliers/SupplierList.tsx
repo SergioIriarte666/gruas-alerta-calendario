@@ -577,10 +577,6 @@ export const SupplierList: React.FC = () => {
           supplier={selectedSupplier}
           isOpen={!!selectedSupplier}
           onClose={() => setSelectedSupplier(null)}
-          onEdit={() => {
-            setSelectedSupplier(null);
-            handleEdit(selectedSupplier);
-          }}
         />
       )}
 
@@ -588,7 +584,6 @@ export const SupplierList: React.FC = () => {
         isOpen={isBatchEditOpen}
         onClose={() => setIsBatchEditOpen(false)}
         selectedSuppliers={selectedSuppliers}
-        activeCategories={activeCategories}
       />
     </div>
   );
