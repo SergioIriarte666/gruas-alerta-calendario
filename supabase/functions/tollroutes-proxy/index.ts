@@ -39,10 +39,13 @@ Deno.serve(async (req) => {
       });
     }
 
-    const API_KEY = Deno.env.get("GETAPI_CHILE_API_KEY");
+    const API_KEY =
+      Deno.env.get("GETAPI_CHILE_TOLL_API_KEY") ??
+      Deno.env.get("GETAPI_CHILE_API_KEY");
+
     if (!API_KEY) {
       return new Response(
-        JSON.stringify({ error: "GetAPI key not configured" }),
+        JSON.stringify({ error: "GetAPI key not configured (GETAPI_CHILE_TOLL_API_KEY)" }),
         {
           status: 500,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
