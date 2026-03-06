@@ -26,7 +26,7 @@ const fetchClosures = async (): Promise<ServiceClosure[]> => {
 
   if (activeError) throw activeError;
 
-  const allClosures = activeClosures || [];
+  const allClosures = allClosuresData || [];
 
   if (allClosures.length === 0) return [];
 
