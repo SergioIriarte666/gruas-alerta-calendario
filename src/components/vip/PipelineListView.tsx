@@ -740,9 +740,6 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
                               <div className="text-foreground">{service.serviceType.name}</div>
                             </TableCell>
                             <TableCell>
-                              <div className="text-foreground">{toTitleCase(service.client?.name || '')}</div>
-                            </TableCell>
-                            <TableCell>
                               <div className="text-sm text-muted-foreground">
                                 {formatForDisplay(parseFromDatabase(service.serviceDate))}
                               </div>
