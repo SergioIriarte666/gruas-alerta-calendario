@@ -182,6 +182,7 @@ const SECTION_MAP: Record<string, DocumentType> = {
 const isLibroDeVentas = (rawRows: any[][]): boolean => {
   const searchRows = rawRows.slice(0, 30);
   for (const row of searchRows) {
+    if (!Array.isArray(row)) continue;
     const joined = row.map(c => String(c ?? '')).join(' ').toUpperCase();
     if (joined.includes('LIBRO DE VENTAS') || joined.includes('FACTURA ELECTRONICA')) {
       return true;
@@ -196,13 +197,14 @@ const isLibroDeVentas = (rawRows: any[][]): boolean => {
 const findHeaderRow = (rawRows: any[][]): { headerIdx: number; colMap: Record<string, number> } | null => {
   for (let i = 0; i < Math.min(rawRows.length, 20); i++) {
     const row = rawRows[i];
+    if (!Array.isArray(row)) continue;
     const upper = row.map(c => String(c ?? '').toUpperCase().trim());
     const folioIdx = upper.findIndex(c => c === 'FOLIO');
     const rutIdx = upper.findIndex(c => c.includes('R.U.T') || c === 'RUT');
     if (folioIdx >= 0 && rutIdx >= 0) {
-      // Build column map
       const colMap: Record<string, number> = {};
       upper.forEach((val, idx) => {
+        if (!val) return;
         if (val.includes('Nº') || val === 'N°' || val === 'NO' || val === '#') colMap['num'] = idx;
         if (val === 'FOLIO') colMap['folio'] = idx;
         if (val === 'FECHA') colMap['fecha'] = idx;
@@ -230,7 +232,7 @@ const parseLibroDeVentasXLSX = (rawRows: any[][]): ParsedInvoiceRow[] => {
   const results: ParsedInvoiceRow[] = [];
 
   for (const row of dataRows) {
-    // Check if this is a section header row
+    if (!Array.isArray(row)) continue;
     const joinedUpper = row.map(c => String(c ?? '').trim()).join(' ').toUpperCase();
     
     // Skip total/subtotal rows
