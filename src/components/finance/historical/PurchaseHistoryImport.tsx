@@ -568,11 +568,12 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
                 // B. Handle public.suppliers (For UI consistency)
                 // We do this 'best effort' - if it fails, we don't block the import
                 try {
-                    const { data: existingSup } = await supabase
+                    // Check by fetching all and normalizing (RUT format may differ)
+                    const { data: allSups } = await supabase
                         .from('suppliers')
-                        .select('id')
-                        .eq('rut', us.rut)
-                        .maybeSingle();
+                        .select('id, rut');
+                    
+                    const existingSup = allSups?.find(s => normalizeRut(s.rut || '') === nRut);
                     
                     if (!existingSup) {
                          const { error: supError } = await supabase
