@@ -553,10 +553,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
                         .insert({
                             name: us.razonSocial,
                             rut: us.rut,
-                            is_active: true,
-                            contact_name: '', // Optional defaults
-                            phone: '',
-                            email: ''
+                            is_active: true
                         })
                         .select('id')
                         .single();
