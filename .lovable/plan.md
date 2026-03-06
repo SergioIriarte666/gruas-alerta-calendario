@@ -1,43 +1,29 @@
 
 
-## Plan: Vista Pipeline por Cliente con Desglose Mensual para Históricos
+# Fix: RUT normalization consistency + Invoice selection
 
-### Objetivo
-Agregar una vista tipo "pipeline" (similar a `IncomesPipelineView`) en ambas pestañas de Históricos (Ventas y Compras), donde los datos se agrupan por cliente y dentro de cada cliente se desglosan por mes.
+## Problem 1: RUT still not matching
+The `normalizeRut` function in the parser was fixed to strip dots, spaces, and dashes. But in `InvoiceHistoryImport.tsx`, there are 4 places that still use the old regex `replace(/\./g, '')` (only strips dots):
+- Line 136: creating client RUT map
+- Line 188: looking up unmatched invoice RUT
+- Line 193: finding unmatched client entry
+- Line 441: counting importable invoices in the button label
 
-### Diseño
+All of these need to use the same normalization: `replace(/[.\s-]/g, '').trim().toUpperCase()`.
 
-**Vista general**: Cards colapsables por cliente (como `IncomesPipelineView`), con borde superior de color dinámico, icono de usuario, badge con cantidad, y monto total. Dentro de cada cliente, sub-agrupación por mes (ej: "Marzo 2026", "Febrero 2026") con sus totales.
+## Problem 2: No invoice selection
+Currently all matched invoices are imported automatically with no way to exclude individual ones. The user wants checkboxes to select/deselect invoices.
 
-### Cambios
+### Changes to `InvoiceHistoryImport.tsx`:
+- Add `selectedInvoices` state (`Set<string>`) tracking selected invoice keys
+- Initialize all matched invoices as selected on preview load
+- Add select all / deselect all toggle
+- Add checkbox column to `InvoicePreviewTable`
+- Show all invoices (remove the slice(0,10) limit, keep scroll)
+- Filter by `selectedInvoices` during import
+- Update button count to reflect selection
+- Extract a shared `normalizeRut` helper used consistently everywhere
 
-1. **Nuevo componente `HistoricalSalesPipelineView.tsx`**
-   - Recibe las facturas filtradas y las agrupa por cliente
-   - Dentro de cada cliente, agrupa por mes (usando `issue_date`)
-   - Cada mes muestra cards individuales con folio, monto, estado (badge), fecha
-   - Incluye métricas resumidas por cliente (total facturado, cantidad de facturas, promedio mensual)
-   - Usa `Collapsible` para clientes y sub-collapsibles para meses
-   - Colores dinámicos por cliente (hash del nombre, mismo patrón que `IncomesPipelineView`)
-
-2. **Nuevo componente `HistoricalPurchasesPipelineView.tsx`**
-   - Mismo concepto pero para compras (supplier_invoices)
-   - Agrupa por proveedor en vez de cliente
-   - Muestra invoice_number, monto, estado, fecha
-
-3. **Modificar `HistoricalSales.tsx`**
-   - Agregar un tercer modo de vista al toggle existente (tabla / agrupado / pipeline)
-   - O reemplazar el toggle "Agrupar por cliente" con un selector de 3 vistas: Tabla, Agrupado, Pipeline
-
-4. **Modificar `HistoricalPurchases.tsx`**
-   - Agregar toggle similar para alternar entre tabla y vista pipeline por proveedor/mes
-
-### Patrón de diseño
-- Seguir exactamente el estilo visual de `IncomesPipelineView`: bordes con color, iconos, badges, collapsibles, búsqueda integrada
-- Cards dentro de cada mes en grid responsive (1-4 columnas)
-- Cada card muestra: folio, fecha, monto, estado con badge de color
-
-### Componentes reutilizados
-- `Collapsible` / `CollapsibleTrigger` / `CollapsibleContent`
-- Badges de estado existentes
-- Función `formatCurrency` y `toTitleCase`
+## Files to modify
+- `src/components/invoices/InvoiceHistoryImport.tsx` — fix 4 normalization calls + add selection UI
 

@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { usePurchaseInvoices, usePurchaseInvoiceItems } from '@/hooks/usePurchaseInvoices';
 import { usePurchaseExport } from '@/hooks/finance/usePurchaseExport';
 import { Button } from '@/components/ui/button';
-import { Plus, Trash2, Edit, Upload, X, MoreHorizontal, Check, Download, FileSpreadsheet, FileText } from 'lucide-react';
+import { Plus, Trash2, Edit, Upload, X, MoreHorizontal, Check, Download, FileSpreadsheet, FileText, LayoutList, LayoutGrid } from 'lucide-react';
 import { SupplierInvoiceWithDetails } from '@/types/suppliers';
 import { toast } from 'sonner';
 import {
@@ -29,6 +29,9 @@ import { EditHistoricalPurchaseModal } from './historical/EditHistoricalPurchase
 import { BatchEditHistoricalPurchasesModal } from './historical/BatchEditHistoricalPurchasesModal';
 import { ReceiveInventoryModal } from './historical/ReceiveInventoryModal';
 import PurchaseHistoryImport from './historical/PurchaseHistoryImport';
+import { HistoricalPurchasesPipelineView } from './historical/HistoricalPurchasesPipelineView';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -53,6 +56,7 @@ export const HistoricalPurchases = () => {
   const [invoiceToDelete, setInvoiceToDelete] = useState<string | null>(null);
   const [isBatchDelete, setIsBatchDelete] = useState(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [viewMode, setViewMode] = useState<'table' | 'pipeline'>('table');
 
   const selectedInvoices = useMemo(
     () => invoices.filter((inv) => selectedIds.includes(inv.id)),
@@ -334,27 +338,62 @@ export const HistoricalPurchases = () => {
 
       <HistoricalPurchasesStats invoices={filteredAndSortedInvoices} />
 
-      <div className="bg-card p-4 rounded-lg border shadow-sm space-y-4">
-        <h3 className="font-semibold text-lg">Filtros de Búsqueda</h3>
-        <HistoricalPurchasesFilters
-          filters={filters}
-          onFilterChange={handleFilterChange}
-          onClearFilters={handleClearFilters}
-        />
+      <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
+        <div className="bg-card p-4 rounded-lg border shadow-sm space-y-4 flex-1">
+          <h3 className="font-semibold text-lg">Filtros de Búsqueda</h3>
+          <HistoricalPurchasesFilters
+            filters={filters}
+            onFilterChange={handleFilterChange}
+            onClearFilters={handleClearFilters}
+          />
+        </div>
+        <TooltipProvider>
+          <ToggleGroup
+            type="single"
+            value={viewMode}
+            onValueChange={(v) => v && setViewMode(v as any)}
+            className="bg-muted/50 p-1 rounded-lg border self-start"
+          >
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <ToggleGroupItem value="table" aria-label="Vista tabla" className="px-3">
+                  <LayoutList className="h-4 w-4" />
+                </ToggleGroupItem>
+              </TooltipTrigger>
+              <TooltipContent>Tabla</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <ToggleGroupItem value="pipeline" aria-label="Pipeline por proveedor" className="px-3">
+                  <LayoutGrid className="h-4 w-4" />
+                </ToggleGroupItem>
+              </TooltipTrigger>
+              <TooltipContent>Pipeline por proveedor</TooltipContent>
+            </Tooltip>
+          </ToggleGroup>
+        </TooltipProvider>
       </div>
 
-      <HistoricalPurchasesTable
-        invoices={filteredAndSortedInvoices}
-        invoiceItemsMap={invoiceItemsMap}
-        sortConfig={sortConfig}
-        onSort={handleSort}
-        onEdit={(inv) => setEditingInvoice(inv)}
-        onDelete={confirmDelete}
-        onReceiveInventory={setReceivingInventoryInvoice}
-        selectedIds={selectedIds}
-        onSelectId={handleSelectId}
-        onSelectAll={handleSelectAll}
-      />
+      {viewMode === 'pipeline' ? (
+        <HistoricalPurchasesPipelineView
+          invoices={filteredAndSortedInvoices}
+          onEdit={(inv) => setEditingInvoice(inv)}
+          onDelete={confirmDelete}
+        />
+      ) : (
+        <HistoricalPurchasesTable
+          invoices={filteredAndSortedInvoices}
+          invoiceItemsMap={invoiceItemsMap}
+          sortConfig={sortConfig}
+          onSort={handleSort}
+          onEdit={(inv) => setEditingInvoice(inv)}
+          onDelete={confirmDelete}
+          onReceiveInventory={setReceivingInventoryInvoice}
+          selectedIds={selectedIds}
+          onSelectId={handleSelectId}
+          onSelectAll={handleSelectAll}
+        />
+      )}
 
       {/* Batch Actions Bar */}
       {selectedIds.length > 0 && createPortal(
