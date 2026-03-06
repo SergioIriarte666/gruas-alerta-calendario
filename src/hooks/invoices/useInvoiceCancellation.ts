@@ -232,6 +232,7 @@ export const useInvoiceCancellation = () => {
         queryClient.invalidateQueries({ queryKey: ['invoices'] }),
         queryClient.invalidateQueries({ queryKey: ['services'] }),
         queryClient.invalidateQueries({ queryKey: ['closures'] }),
+        queryClient.invalidateQueries({ queryKey: ['closures-for-invoices'] }),
         queryClient.invalidateQueries({ queryKey: ['invoice-cancellations'] }),
         queryClient.invalidateQueries({ queryKey: ['enhanced-service-details'] }),
         queryClient.invalidateQueries({ queryKey: ['serviceDetails'] })
