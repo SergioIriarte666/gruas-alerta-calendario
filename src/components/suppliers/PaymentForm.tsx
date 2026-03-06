@@ -25,6 +25,7 @@ import { useSupplierPayments, getStatusLabel, getStatusColor } from '@/hooks/use
 import { useSuppliers } from '@/hooks/useSuppliers';
 import { usePaymentDuplicateCheck, DuplicatePayment } from '@/hooks/usePaymentDuplicateCheck';
 import { useCostCategories } from '@/hooks/useCostCategories';
+import { useCostSubcategories } from '@/hooks/useCostSubcategories';
 import { PaymentFormData, SupplierPayment, SupplierPaymentStatus } from '@/types/suppliers';
 import { useCranes } from '@/hooks/useCranes';
 import { formatCurrency } from '@/lib/utils';
@@ -39,6 +40,7 @@ const paymentSchema = z.object({
   due_date: z.string().min(1, 'La fecha de vencimiento es requerida'),
   description: z.string().min(1, 'La descripción es requerida'),
   category: z.string().min(1, 'La categoría es requerida'),
+  subcategory: z.string().optional(),
   reference_number: z.string().optional(),
   notes: z.string().optional(),
   status: z.string().min(1, 'El estado es requerido'),
