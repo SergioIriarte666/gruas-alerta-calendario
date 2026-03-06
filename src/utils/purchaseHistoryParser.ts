@@ -214,23 +214,76 @@ export const parseXLSXFile = (file: File): Promise<ParsedPurchaseRow[]> => {
         }
 
         const rows: ParsedPurchaseRow[] = [];
+        
+        // Track current document section type for "Libro de Compras" format
+        let currentDocType = 'FACTURA';
+        
+        // Keywords that indicate section headers or non-data rows
+        const sectionKeywords = ['FACTURA ELECTRONICA', 'FACTURA NO AFECTA', 'FACTURA EXENTA', 
+          'NOTA DE CREDITO', 'NOTA DE DEBITO', 'BOLETA', 'IMPUESTOS', 'CODIGO', 'DESCRIPCION',
+          'PERIODO LIBRO', 'TOTAL GENERAL'];
+        const skipKeywords = ['TOTAL', 'IMPUESTOS', 'CODIGO', 'PERIODO', 'Página'];
+        
         for (let i = headerRowIdx + 1; i < rawRows.length; i++) {
             const row = rawRows[i];
             if (!row || row.length === 0) continue;
             
-            // Skip totals
-            const firstCol = String(row[0] || '').toUpperCase();
-            if (firstCol.includes('TOTAL')) continue;
+            // Join all cells to check for section headers and skip keywords
+            const rowText = row.map((c: any) => String(c || '').trim()).join(' ').toUpperCase();
+            
+            // Skip empty rows (all cells empty)
+            if (rowText.replace(/\s/g, '').length === 0) continue;
+            
+            // Detect document type section changes
+            if (rowText.includes('NOTA DE CREDITO') || rowText.includes('NOTA CREDITO')) {
+                currentDocType = 'NOTA CREDITO';
+                continue;
+            }
+            if (rowText.includes('NOTA DE DEBITO') || rowText.includes('NOTA DEBITO')) {
+                currentDocType = 'NOTA DEBITO';
+                continue;
+            }
+            if (rowText.includes('FACTURA NO AFECTA') || rowText.includes('FACTURA EXENTA') || rowText.includes('EXENTA ELECTRONICA')) {
+                currentDocType = 'FACTURA EXENTA';
+                continue;
+            }
+            if (rowText.includes('FACTURA ELECTRONICA') || rowText.includes('FACTURA AFECTA')) {
+                currentDocType = 'FACTURA';
+                continue;
+            }
+            
+            // Skip rows that contain section keywords but no valid folio
+            if (sectionKeywords.some(kw => rowText.includes(kw))) continue;
+            
+            // Skip total rows (check ALL columns, not just first)
+            if (skipKeywords.some(kw => rowText.includes(kw))) continue;
+            
+            // Extract values from mapped columns
+            const folio = String(row[colMap.folio] || '').trim();
+            const rut = String(row[colMap.rut] || '').trim();
+            const total = parseNumber(row[colMap.total]);
+            
+            // Skip rows with empty folio or RUT (these are non-data rows)
+            if (!folio || !rut || folio === 'undefined' || rut === 'undefined') continue;
+            
+            // Skip rows with zero total (summary/empty rows)
+            if (total === 0) continue;
+            
+            // Determine document type: use section tracking or column if available
+            let documento = currentDocType;
+            if (colMap.documento !== undefined && row[colMap.documento]) {
+                documento = String(row[colMap.documento]).trim();
+            }
 
             rows.push({
-                folio: String(row[colMap.folio] || ''),
-                rut: String(row[colMap.rut] || ''),
+                folio,
+                rut,
                 razonSocial: String(row[colMap.razonSocial] || ''),
                 fecha: row[colMap.fecha],
                 neto: parseNumber(row[colMap.neto]),
                 iva: parseNumber(row[colMap.iva]),
-                total: parseNumber(row[colMap.total]),
-                documento: String(row[colMap.documento] || 'FACTURA'),
+                total,
+                documento,
                 fechaVencimiento: row[colMap.vencimiento],
                 descripcion: '',
                 pagado: ''
