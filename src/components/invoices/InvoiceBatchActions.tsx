@@ -7,7 +7,8 @@ import {
   Download, 
   FileSpreadsheet,
   X,
-  AlertTriangle
+  AlertTriangle,
+  ShieldAlert
 } from 'lucide-react';
 import { Invoice } from '@/types';
 
