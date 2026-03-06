@@ -532,11 +532,11 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
                 let inventorySupplierId: string | null = null;
                 
                 // @ts-ignore - inventory_suppliers missing in types but exists in DB
-                const { data: existingInvSup } = await (supabase as any)
+                const { data: allInvSups } = await (supabase as any)
                     .from('inventory_suppliers')
-                    .select('id')
-                    .eq('rut', us.rut)
-                    .maybeSingle();
+                    .select('id, rut');
+                
+                const existingInvSup = allInvSups?.find((s: any) => normalizeRut(s.rut || '') === nRut);
 
                 if (existingInvSup) {
                     inventorySupplierId = existingInvSup.id;
@@ -617,13 +617,13 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
             
             const nRut = normalizeRut(us.rut); // The RUT from the file
             
-            // Try to find in inventory_suppliers by RUT
+            // Try to find in inventory_suppliers by normalized RUT
             // @ts-ignore
-            const { data: existingInvSup } = await (supabase as any)
+            const { data: allInvSups } = await (supabase as any)
                 .from('inventory_suppliers')
-                .select('id')
-                .eq('rut', us.rut) 
-                .maybeSingle();
+                .select('id, rut');
+            
+            const existingInvSup = allInvSups?.find((s: any) => normalizeRut(s.rut || '') === nRut);
             
             if (existingInvSup) {
                 supplierRutToId.set(nRut, existingInvSup.id);
