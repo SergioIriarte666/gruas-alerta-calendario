@@ -124,6 +124,7 @@ export const useInvoiceOperations = () => {
       // Invalidar queries de facturación + servicios enhanced para sincronizar modals
       queryClient.invalidateQueries({ queryKey: ['invoices'] });
       queryClient.invalidateQueries({ queryKey: ['closures'] });
+      queryClient.invalidateQueries({ queryKey: ['closures-for-invoices'] });
       // Invalidar enhanced-service-details para que modals reflejen factura recién creada
       serviceIds.forEach(sid => {
         queryClient.invalidateQueries({ queryKey: ['enhanced-service-details', sid] });
@@ -421,6 +422,7 @@ export const useInvoiceOperations = () => {
       // Invalidar queries de facturación + enhanced details para sincronizar modals
       queryClient.invalidateQueries({ queryKey: ['invoices'] });
       queryClient.invalidateQueries({ queryKey: ['closures'] });
+      queryClient.invalidateQueries({ queryKey: ['closures-for-invoices'] });
       queryClient.invalidateQueries({ queryKey: ['enhanced-service-details'] });
       queryClient.invalidateQueries({ queryKey: ['serviceDetails'] });
 
@@ -581,6 +583,7 @@ export const useInvoiceOperations = () => {
       // Invalidar queries de facturación Y servicios (datos de factura cambiaron)
       queryClient.invalidateQueries({ queryKey: ['invoices'] });
       queryClient.invalidateQueries({ queryKey: ['closures'] });
+      queryClient.invalidateQueries({ queryKey: ['closures-for-invoices'] });
       queryClient.invalidateQueries({ queryKey: ['enhanced-service-details'] });
       queryClient.invalidateQueries({ queryKey: ['serviceDetails'] });
       queryClient.invalidateQueries({ queryKey: ['services'] });
