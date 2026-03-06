@@ -124,10 +124,8 @@ export const HistoricalSales = () => {
 
   // Memoized Data
   const filteredAndSortedInvoices = useMemo(() => {
-    // 1. Base Filter (Historical only)
-    let result = invoices.filter((inv) =>
-      inv.notes?.startsWith(HISTORICAL_NOTE)
-    );
+    // 1. All invoices (historical + app-created)
+    let result = [...invoices];
 
     // 2. Apply Filters
     if (filters.dateFrom) {
