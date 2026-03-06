@@ -12,6 +12,30 @@ export interface SupplierPayment extends Omit<SupplierPaymentBase, 'status'> {
   status: SupplierPaymentStatus;
 }
 
+// SupplierInvoice definition
+export interface SupplierInvoice {
+  id: string;
+  supplier_id: string | null;
+  invoice_number: string;
+  issue_date: string;
+  due_date: string;
+  amount: number;
+  currency: string | null;
+  status: string | null;
+  description: string | null;
+  tax_amount: number | null;
+  net_amount: number;
+  payment_terms: number | null;
+  paid_amount: number | null;
+  balance: number | null;
+  created_at: string | null;
+  updated_at: string | null;
+}
+
+export interface SupplierInvoiceWithDetails extends SupplierInvoice {
+  supplier?: Supplier;
+}
+
 // Stats type (computed/aggregated data not from a single table)
 export interface SupplierStats {
   total_suppliers: number;

@@ -9,6 +9,7 @@ interface CreateInventoryCostData {
   quantity: number;
   unit_cost: number;
   subcategory_name?: string;
+  inventory_item_id?: string; // Optional for linking to specific inventory item
 }
 
 export const createInventoryCost = async ({
@@ -19,7 +20,8 @@ export const createInventoryCost = async ({
   supplier_name,
   quantity,
   unit_cost,
-  subcategory_name
+  subcategory_name,
+  inventory_item_id
 }: CreateInventoryCostData) => {
   // Get or create "Inventario" cost category
   let { data: category } = await supabase
@@ -82,5 +84,24 @@ export const createInventoryCost = async ({
     .single();
 
   if (costError) throw costError;
+
+  // Create link in cost_inventory_items if inventory_item_id is provided
+  if (inventory_item_id) {
+    const { error: linkError } = await supabase
+      .from('cost_inventory_items')
+      .insert({
+        cost_id: cost.id,
+        inventory_item_id: inventory_item_id,
+        quantity: quantity,
+        unit_cost: unit_cost
+      });
+
+    if (linkError) {
+      console.error('Error creating cost_inventory_items link:', linkError);
+      // We don't throw here to avoid rolling back the cost creation, 
+      // but we log it. In a transaction this would be better.
+    }
+  }
+
   return cost;
 };

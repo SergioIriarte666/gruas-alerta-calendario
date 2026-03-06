@@ -338,9 +338,26 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
     }).length;
   };
 
+  const getSelectedDuplicatesCount = () => {
+    if (!preview) return 0;
+    return preview.duplicates.filter((inv, i) => selectedInvoices.has(`duplicates-${inv.folio}-${i}`)).length;
+  };
+
+  const toggleAllDuplicates = (checked: boolean) => {
+    setSelectedInvoices(prev => {
+      const next = new Set(prev);
+      preview?.duplicates.forEach((inv, i) => {
+        const key = `duplicates-${inv.folio}-${i}`;
+        if (checked) next.add(key);
+        else next.delete(key);
+      });
+      return next;
+    });
+  };
+
   const canImport = () => {
     if (!preview) return false;
-    return (getSelectedMatchedCount() + getSelectedUnmatchedCount()) > 0;
+    return (getSelectedMatchedCount() + getSelectedUnmatchedCount() + getSelectedDuplicatesCount()) > 0;
   };
 
   const handleImport = async () => {
@@ -470,6 +487,56 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
         });
       }
 
+      // Add selected duplicate invoices
+      if (preview.duplicates) {
+        for (let i = 0; i < preview.duplicates.length; i++) {
+          const inv = preview.duplicates[i];
+          const key = `duplicates-${inv.folio}-${i}`;
+          if (!selectedInvoices.has(key)) continue;
+
+          // Try to resolve client if not present (from newly created clients)
+          let clientId = inv.clientId;
+          if (!clientId) {
+            const nRut = normalizeRut(inv.rut);
+            clientId = clientRutToId.get(nRut);
+            
+            // If still not found, check existing clients
+             if (!clientId) {
+                const existingClient = clients.find(c => normalizeRut(c.rut) === nRut);
+                if (existingClient) clientId = existingClient.id;
+             }
+          }
+
+          if (!clientId) {
+             console.error('Factura duplicada omitida por falta de cliente:', inv);
+             errors++;
+             continue;
+          }
+
+          if (!inv.issueDate) {
+             console.error('Factura duplicada omitida por fecha inválida:', inv);
+             errors++;
+             continue;
+          }
+
+          invoicesToInsert.push({
+            folio: inv.folio,
+            numero_fiscal: inv.numeroFiscal,
+            client_id: clientId,
+            issue_date: inv.issueDate,
+            due_date: inv.dueDate || inv.issueDate,
+            subtotal: inv.subtotal,
+            vat: inv.iva,
+            total: inv.total,
+            status: inv.status,
+            paid_amount: inv.isPaid ? inv.total : 0,
+            payment_date: inv.isPaid ? inv.issueDate : null,
+            notes: inv.notes,
+            created_by: userId,
+          });
+        }
+      }
+
       // Step 3: Insert in batches of 50
       if (invoicesToInsert.length === 0 && errors > 0) {
           toast.error("No se pudieron preparar facturas para importar", {
@@ -531,10 +598,10 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
   };
 
   const invoicesToInsertCount = () => {
-      return getSelectedMatchedCount() + getSelectedUnmatchedCount();
+      return getSelectedMatchedCount() + getSelectedUnmatchedCount() + getSelectedDuplicatesCount();
   };
 
-  const totalToImport = getSelectedMatchedCount() + getSelectedUnmatchedCount();
+  const totalToImport = getSelectedMatchedCount() + getSelectedUnmatchedCount() + getSelectedDuplicatesCount();
 
   return (
     <>
@@ -882,10 +949,22 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
                           <div className="flex items-center justify-between mb-3">
                             <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
                               <XCircle className="h-4 w-4 text-muted-foreground" />
-                              Duplicados detectados — se omitirán ({preview.duplicates.length})
+                              Duplicados detectados ({getSelectedDuplicatesCount()}/{preview.duplicates.length})
                             </h3>
+                            <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
+                              <Checkbox
+                                checked={getSelectedDuplicatesCount() === preview.duplicates.length && preview.duplicates.length > 0}
+                                onCheckedChange={(checked) => toggleAllDuplicates(!!checked)}
+                              />
+                              Seleccionar todas
+                            </label>
                           </div>
-                          <InvoicePreviewTable invoices={preview.duplicates} />
+                          <InvoicePreviewTable 
+                            invoices={preview.duplicates} 
+                            selectedKeys={selectedInvoices}
+                            keyPrefix="duplicates"
+                            onToggle={toggleInvoice}
+                          />
                         </div>
                       ) : (
                         <div className="text-center py-8 text-muted-foreground">

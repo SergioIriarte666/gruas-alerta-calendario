@@ -4,7 +4,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ColoredSectionCard } from '@/components/services/form/ColoredSectionCard';
-import { Tag, FileText, Power } from 'lucide-react';
+import { Tag, FileText, Power, Star } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
 
 interface Category {
   id: string;
@@ -25,6 +28,16 @@ interface SupplierFormStep3Props {
   };
 }
 
+const EVALUATION_TAGS = [
+  { label: "Puntual", color: "bg-green-100 text-green-800 border-green-200" },
+  { label: "Económico", color: "bg-blue-100 text-blue-800 border-blue-200" },
+  { label: "Calidad Alta", color: "bg-purple-100 text-purple-800 border-purple-200" },
+  { label: "Respuesta Rápida", color: "bg-indigo-100 text-indigo-800 border-indigo-200" },
+  { label: "Retrasos", color: "bg-orange-100 text-orange-800 border-orange-200" },
+  { label: "Caro", color: "bg-red-100 text-red-800 border-red-200" },
+  { label: "Mala Comunicación", color: "bg-gray-100 text-gray-800 border-gray-200" },
+];
+
 export const SupplierFormStep3 = ({ 
   category, 
   notes, 
@@ -36,6 +49,32 @@ export const SupplierFormStep3 = ({
   onIsActiveChange,
   errors 
 }: SupplierFormStep3Props) => {
+
+  const handleRatingClick = (rating: number) => {
+    // Buscar si ya existe una línea de calificación
+    const ratingLineRegex = /^Calificación: .*\n?/;
+    const stars = "⭐".repeat(rating);
+    const newRatingLine = `Calificación: ${stars} (${rating}/5)\n`;
+    
+    let newNotes = notes;
+    if (ratingLineRegex.test(notes)) {
+      newNotes = notes.replace(ratingLineRegex, newRatingLine);
+    } else {
+      newNotes = newRatingLine + (notes ? "\n" + notes : "");
+    }
+    onNotesChange(newNotes);
+  };
+
+  const handleTagClick = (tagLabel: string) => {
+    if (notes.includes(tagLabel)) return;
+    const separator = notes && !notes.endsWith('\n') ? '\n' : '';
+    onNotesChange(`${notes}${separator}- ${tagLabel}`);
+  };
+
+  // Extract current rating for visualization
+  const currentRatingMatch = notes.match(/^Calificación: (?:⭐)+ \((\d)\/5\)/);
+  const currentRating = currentRatingMatch ? parseInt(currentRatingMatch[1]) : 0;
+
   return (
     <div className="space-y-4">
       <ColoredSectionCard
@@ -76,19 +115,67 @@ export const SupplierFormStep3 = ({
       </ColoredSectionCard>
 
       <ColoredSectionCard
-        title="Notas Adicionales"
+        title="Evaluación y Notas"
         icon={<FileText className="h-5 w-5" />}
         color="blue"
       >
-        <div className="space-y-2">
-          <Label className="text-foreground">Notas</Label>
-          <Textarea
-            value={notes}
-            onChange={(e) => onNotesChange(e.target.value)}
-            placeholder="Información adicional sobre el proveedor..."
-            rows={3}
-            className="bg-background resize-none"
-          />
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <Label className="text-foreground">Calificación General</Label>
+            <div className="flex items-center gap-1">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <button
+                  key={star}
+                  type="button"
+                  onClick={() => handleRatingClick(star)}
+                  className="focus:outline-none transition-transform hover:scale-110"
+                >
+                  <Star 
+                    className={cn(
+                      "h-6 w-6 transition-colors", 
+                      star <= currentRating ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground"
+                    )} 
+                  />
+                </button>
+              ))}
+              <span className="ml-2 text-sm text-muted-foreground">
+                {currentRating > 0 ? `${currentRating}/5` : 'Sin calificar'}
+              </span>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label className="text-foreground">Etiquetas Rápidas</Label>
+            <div className="flex flex-wrap gap-2">
+              {EVALUATION_TAGS.map((tag) => (
+                <Badge
+                  key={tag.label}
+                  variant="outline"
+                  className={cn(
+                    "cursor-pointer hover:opacity-80 transition-opacity", 
+                    tag.color
+                  )}
+                  onClick={() => handleTagClick(tag.label)}
+                >
+                  {tag.label}
+                </Badge>
+              ))}
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label className="text-foreground">Notas Detalladas</Label>
+            <Textarea
+              value={notes}
+              onChange={(e) => onNotesChange(e.target.value)}
+              placeholder="Ingrese información adicional, evaluación del proveedor, desempeño, incidencias, etc..."
+              rows={5}
+              className="bg-background resize-none"
+            />
+            <p className="text-xs text-muted-foreground">
+              Utilice este espacio para registrar evaluaciones periódicas, comentarios sobre el servicio o productos entregados.
+            </p>
+          </div>
         </div>
       </ColoredSectionCard>
 

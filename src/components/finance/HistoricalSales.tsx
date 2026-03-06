@@ -1,33 +1,63 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { useInvoices } from '@/hooks/useInvoices';
 import { supabase } from '@/integrations/supabase/client';
 import InvoiceHistoryImport from '@/components/invoices/InvoiceHistoryImport';
 import { Button } from '@/components/ui/button';
-import { Plus } from 'lucide-react';
+import { Plus, Check, X, MoreHorizontal, Edit2, Trash2 } from 'lucide-react';
 import { Invoice } from '@/types';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { toast } from 'sonner';
 import {
   HistoricalSalesFilters,
   FilterConfig,
 } from './historical/HistoricalSalesFilters';
+import { HistoricalSalesStats } from './historical/HistoricalSalesStats';
 import {
   HistoricalSalesTable,
   SortConfig,
   SortKey,
 } from './historical/HistoricalSalesTable';
 import { EditHistoricalInvoiceModal } from './historical/EditHistoricalInvoiceModal';
+import { BatchEditHistoricalInvoicesModal } from './historical/BatchEditHistoricalInvoicesModal';
 import { HistoricalSalesGroupedList } from './historical/HistoricalSalesGroupedList';
-import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { toTitleCase } from '@/lib/utils';
 
 const HISTORICAL_NOTE = 'Importación historial';
 
 export const HistoricalSales = () => {
-  const { invoices, refetch, updateInvoice } = useInvoices();
+  const { invoices, refetch, updateInvoice, deleteInvoice } = useInvoices();
   const [importHistoryOpen, setImportHistoryOpen] = useState(false);
   const [editingInvoice, setEditingInvoice] = useState<Invoice | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [invoiceToDelete, setInvoiceToDelete] = useState<string | null>(null);
+  const [isBatchDelete, setIsBatchDelete] = useState(false);
+  const [batchEditOpen, setBatchEditOpen] = useState(false);
   const [isGroupedByClient, setIsGroupedByClient] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  
+  // Reset selection when filters change or view changes
+  useEffect(() => {
+    setSelectedIds([]);
+  }, [isGroupedByClient]);
 
   // Real-time subscription
   useEffect(() => {
@@ -157,13 +187,83 @@ export const HistoricalSales = () => {
     await updateInvoice(id, updates);
   };
 
+  // Selection Handlers
+  const handleSelectId = useCallback((id: string, checked: boolean) => {
+    setSelectedIds((prev) => 
+      checked ? [...prev, id] : prev.filter((i) => i !== id)
+    );
+  }, []);
+
+  const handleSelectAll = useCallback((ids: string[], checked: boolean) => {
+    if (checked) {
+      // Add only unique IDs
+      setSelectedIds((prev) => {
+        const uniqueIds = new Set([...prev, ...ids]);
+        return Array.from(uniqueIds);
+      });
+    } else {
+      // Remove specified IDs
+      setSelectedIds((prev) => prev.filter((id) => !ids.includes(id)));
+    }
+  }, []);
+
+  const handleBatchUpdateStatus = async (status: Invoice['status']) => {
+    if (selectedIds.length === 0) return;
+    
+    const count = selectedIds.length;
+    toast.promise(
+      Promise.all(selectedIds.map((id) => updateInvoice(id, { status }))),
+      {
+        loading: `Actualizando ${count} facturas...`,
+        success: () => {
+          setSelectedIds([]);
+          return `${count} facturas actualizadas correctamente`;
+        },
+        error: 'Error al actualizar facturas',
+      }
+    );
+  };
+
+  const confirmDelete = (id: string) => {
+    setInvoiceToDelete(id);
+    setIsBatchDelete(false);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmBatchDelete = () => {
+    if (selectedIds.length === 0) return;
+    setIsBatchDelete(true);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDelete = async () => {
+    try {
+      if (isBatchDelete) {
+        const count = selectedIds.length;
+        await Promise.all(selectedIds.map((id) => deleteInvoice(id)));
+        toast.success(`${count} facturas eliminadas correctamente`);
+        setSelectedIds([]);
+      } else if (invoiceToDelete) {
+        await deleteInvoice(invoiceToDelete);
+        toast.success('Factura eliminada correctamente');
+      }
+    } catch (error) {
+      console.error('Error deleting invoice(s):', error);
+      toast.error('Error al eliminar factura(s)');
+    } finally {
+      setDeleteDialogOpen(false);
+      setInvoiceToDelete(null);
+      setIsBatchDelete(false);
+    }
+  };
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 relative pb-20">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="space-y-1">
-          <h3 className="text-lg font-medium leading-none">Gestión Histórica</h3>
-          <p className="text-sm text-muted-foreground">
-            {filteredAndSortedInvoices.length} registros encontrados
+          <h3 className="text-2xl font-bold tracking-tight">Historial de Ventas</h3>
+          <p className="text-muted-foreground">
+            Gestiona y analiza el registro histórico de facturación
           </p>
         </div>
         <Button onClick={() => setImportHistoryOpen(true)}>
@@ -172,37 +272,126 @@ export const HistoricalSales = () => {
         </Button>
       </div>
 
-      <Separator />
+      <HistoricalSalesStats invoices={filteredAndSortedInvoices} />
 
-      <HistoricalSalesFilters
-        filters={filters}
-        onFilterChange={setFilters}
-        onClearFilters={handleClearFilters}
-      />
+      <div className="space-y-4">
+        <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
+          <HistoricalSalesFilters
+            filters={filters}
+            onFilterChange={setFilters}
+            onClearFilters={handleClearFilters}
+          />
+          
+          <div className="flex items-center space-x-2 bg-muted/50 p-2 rounded-lg border">
+            <Switch
+              id="group-by-client"
+              checked={isGroupedByClient}
+              onCheckedChange={setIsGroupedByClient}
+            />
+            <Label htmlFor="group-by-client" className="cursor-pointer">Agrupar por cliente</Label>
+          </div>
+        </div>
 
-      <div className="flex items-center space-x-2">
-        <Switch
-          id="group-by-client"
-          checked={isGroupedByClient}
-          onCheckedChange={setIsGroupedByClient}
-        />
-        <Label htmlFor="group-by-client">Agrupar por cliente</Label>
+        <div className="rounded-md border bg-card">
+          {isGroupedByClient ? (
+            <HistoricalSalesGroupedList
+              invoices={filteredAndSortedInvoices}
+              sortConfig={sortConfig}
+              onSort={handleSort}
+              onEdit={setEditingInvoice}
+              onDelete={confirmDelete}
+              selectedIds={selectedIds}
+              onSelectId={handleSelectId}
+              onSelectAll={handleSelectAll}
+            />
+          ) : (
+            <HistoricalSalesTable
+              invoices={filteredAndSortedInvoices}
+              sortConfig={sortConfig}
+              onSort={handleSort}
+              onEdit={setEditingInvoice}
+              onDelete={confirmDelete}
+              selectedIds={selectedIds}
+              onSelectId={handleSelectId}
+              onSelectAll={(checked) => handleSelectAll(filteredAndSortedInvoices.map(i => i.id), checked)}
+            />
+          )}
+        </div>
       </div>
 
-      {isGroupedByClient ? (
-        <HistoricalSalesGroupedList
-          invoices={filteredAndSortedInvoices}
-          sortConfig={sortConfig}
-          onSort={handleSort}
-          onEdit={setEditingInvoice}
-        />
-      ) : (
-        <HistoricalSalesTable
-          invoices={filteredAndSortedInvoices}
-          sortConfig={sortConfig}
-          onSort={handleSort}
-          onEdit={setEditingInvoice}
-        />
+      {/* Batch Actions Bar */}
+      {selectedIds.length > 0 && createPortal(
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[100] animate-in slide-in-from-bottom-5 fade-in duration-300">
+          <div className="bg-foreground text-background px-4 py-3 rounded-full shadow-xl flex items-center gap-4 border border-border/10">
+            <div className="flex items-center gap-2 px-2">
+              <span className="bg-primary text-primary-foreground text-xs font-bold px-2 py-0.5 rounded-full min-w-[1.5rem] text-center">
+                {selectedIds.length}
+              </span>
+              <span className="font-medium text-sm whitespace-nowrap">seleccionados</span>
+            </div>
+            
+            <div className="h-4 w-px bg-background/20" />
+            
+            <Button 
+              variant="secondary" 
+              size="sm" 
+              className="h-8 gap-2"
+              onClick={() => setBatchEditOpen(true)}
+            >
+              <Edit2 className="h-4 w-4" />
+              Editar Lote
+            </Button>
+
+            <Button
+              variant="destructive"
+              size="sm"
+              className="h-8 gap-2"
+              onClick={confirmBatchDelete}
+            >
+              <Trash2 className="h-4 w-4" />
+              Eliminar
+            </Button>
+
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="secondary" size="sm" className="h-8 gap-2">
+                  <MoreHorizontal className="h-4 w-4" />
+                  Estado
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="center" className="w-48">
+                <DropdownMenuLabel>Cambiar estado</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => handleBatchUpdateStatus('paid')}>
+                  Marcar como Pagada
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleBatchUpdateStatus('sent')}>
+                  Marcar como Enviada
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleBatchUpdateStatus('overdue')}>
+                  Marcar como Vencida
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleBatchUpdateStatus('draft')}>
+                  Marcar como Borrador
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleBatchUpdateStatus('cancelled')} className="text-destructive focus:text-destructive">
+                  Marcar como Anulada
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="h-8 w-8 text-background hover:bg-background/20 hover:text-background rounded-full ml-1"
+              onClick={() => setSelectedIds([])}
+              title="Cancelar selección"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>,
+        document.body
       )}
 
       <InvoiceHistoryImport
@@ -217,6 +406,32 @@ export const HistoricalSales = () => {
         onClose={() => setEditingInvoice(null)}
         onSave={handleUpdateInvoice}
       />
+
+      <BatchEditHistoricalInvoicesModal
+        selectedInvoices={filteredAndSortedInvoices.filter(i => selectedIds.includes(i.id))}
+        isOpen={batchEditOpen}
+        onClose={() => setBatchEditOpen(false)}
+        onSave={handleUpdateInvoice}
+      />
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {isBatchDelete
+                ? `Estás a punto de eliminar ${selectedIds.length} facturas. Esta acción no se puede deshacer.`
+                : 'Estás a punto de eliminar esta factura. Esta acción no se puede deshacer.'}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Eliminar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

@@ -185,7 +185,7 @@ export const useInvoiceOperations = () => {
         .from('invoice_closures')
         .select('closure_id')
         .eq('invoice_id', id)
-        .single();
+        .maybeSingle();
 
       if (getCurrentClosureError) {
         throw new Error(`Error obteniendo cierre actual: ${getCurrentClosureError.message}`);
@@ -285,49 +285,72 @@ export const useInvoiceOperations = () => {
         }
       }
 
-      let finalClosureId = currentClosure.closure_id;
+      let finalClosureId = currentClosure?.closure_id;
 
       // Step 5: Handle closure relationship changes with atomic operations
-      if (invoiceData.closureId !== undefined && invoiceData.closureId !== currentClosure.closure_id) {
+      if (invoiceData.closureId !== undefined && invoiceData.closureId !== currentClosure?.closure_id) {
         console.log('Processing closure relationship change');
         
         try {
-          // Get old closure services for cleanup
-          const { data: oldClosureServices, error: oldServicesError } = await supabase
-            .from('closure_services')
-            .select('service_id')
-            .eq('closure_id', currentClosure.closure_id);
+          if (currentClosure?.closure_id) {
+            // Get old closure services for cleanup
+            const { data: oldClosureServices, error: oldServicesError } = await supabase
+              .from('closure_services')
+              .select('service_id')
+              .eq('closure_id', currentClosure.closure_id);
 
-          if (oldServicesError) {
-            throw new Error(`Error obteniendo servicios del cierre anterior: ${oldServicesError.message}`);
-          }
+            if (oldServicesError) {
+              throw new Error(`Error obteniendo servicios del cierre anterior: ${oldServicesError.message}`);
+            }
 
-          // Clear old services in batch
-          if (oldClosureServices && oldClosureServices.length > 0) {
-            const oldServiceIds = oldClosureServices.map(cs => cs.service_id);
-            
-            for (const serviceId of oldServiceIds) {
-              const { error: clearError } = await supabase
-                .rpc('force_update_service_to_invoiced', {
-                  p_service_id: serviceId,
-                  p_invoice_folio: null,
-                  p_numero_fiscal: null
-                });
+            // Clear old services in batch
+            if (oldClosureServices && oldClosureServices.length > 0) {
+              const oldServiceIds = oldClosureServices.map(cs => cs.service_id);
+              
+              for (const serviceId of oldServiceIds) {
+                const { error: clearError } = await supabase
+                  .rpc('force_update_service_to_invoiced', {
+                    p_service_id: serviceId,
+                    p_invoice_folio: null,
+                    p_numero_fiscal: null
+                  });
 
-              if (clearError) {
-                throw new Error(`Error limpiando servicio ${serviceId}: ${clearError.message}`);
+                if (clearError) {
+                  throw new Error(`Error limpiando servicio ${serviceId}: ${clearError.message}`);
+                }
               }
             }
           }
 
           // Update closure relationship
-          const { error: relationError } = await supabase
+          // First check if relationship exists
+          const { data: existingRelation } = await supabase
             .from('invoice_closures')
-            .update({ closure_id: invoiceData.closureId })
-            .eq('invoice_id', id);
+            .select('id')
+            .eq('invoice_id', id)
+            .maybeSingle();
 
-          if (relationError) {
-            throw new Error(`Error actualizando relación de cierre: ${relationError.message}`);
+          if (existingRelation) {
+            const { error: relationError } = await supabase
+              .from('invoice_closures')
+              .update({ closure_id: invoiceData.closureId })
+              .eq('invoice_id', id);
+
+            if (relationError) {
+              throw new Error(`Error actualizando relación de cierre: ${relationError.message}`);
+            }
+          } else {
+            // Create new relationship if it didn't exist
+            const { error: relationError } = await supabase
+              .from('invoice_closures')
+              .insert({ 
+                invoice_id: id,
+                closure_id: invoiceData.closureId 
+              });
+
+            if (relationError) {
+              throw new Error(`Error creando relación de cierre: ${relationError.message}`);
+            }
           }
 
           finalClosureId = invoiceData.closureId;

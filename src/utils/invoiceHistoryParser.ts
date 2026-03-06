@@ -510,12 +510,6 @@ export const processInvoiceRows = (
       documentType: docType,
     };
 
-    // Check duplicates by numero_fiscal
-    if (existingNumerosFiscales.has(row.folio)) {
-      duplicates.push(processed);
-      continue;
-    }
-
     // Match client by RUT
     const matchingClients = clients.filter(c => normalizeRut(c.rut) === normalizedRut);
 
@@ -525,9 +519,19 @@ export const processInvoiceRows = (
       if (matchingClients.length > 1) {
         processed.matchedClients = matchingClients;
       }
-      matched.push(processed);
     } else {
       processed.clientMatch = 'none';
+    }
+
+    // Check duplicates by numero_fiscal
+    if (existingNumerosFiscales.has(row.folio)) {
+      duplicates.push(processed);
+      continue;
+    }
+
+    if (processed.clientId) {
+      matched.push(processed);
+    } else {
       unmatched.push(processed);
       if (!unmatchedClientsMap.has(normalizedRut)) {
         unmatchedClientsMap.set(normalizedRut, {

@@ -5,20 +5,21 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion';
-import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Search, Calendar } from 'lucide-react';
+import { Search, User } from 'lucide-react';
 import { Invoice } from '@/types';
 import { formatCurrency, toTitleCase } from '@/lib/utils';
 import { HistoricalSalesTable, SortConfig, SortKey } from './HistoricalSalesTable';
-import { format } from 'date-fns';
-import { es } from 'date-fns/locale';
 
 interface HistoricalSalesGroupedListProps {
   invoices: Invoice[];
   sortConfig: SortConfig;
   onSort: (key: SortKey) => void;
   onEdit: (invoice: Invoice) => void;
+  onDelete?: (id: string) => void;
+  selectedIds?: string[];
+  onSelectId?: (id: string, checked: boolean) => void;
+  onSelectAll?: (ids: string[], checked: boolean) => void;
 }
 
 export const HistoricalSalesGroupedList = ({
@@ -26,10 +27,13 @@ export const HistoricalSalesGroupedList = ({
   sortConfig,
   onSort,
   onEdit,
+  onDelete,
+  selectedIds,
+  onSelectId,
+  onSelectAll,
 }: HistoricalSalesGroupedListProps) => {
   // Persistence for expanded groups
   const [expandedGroups, setExpandedGroups] = useState<string[]>([]);
-  const [expandedMonths, setExpandedMonths] = useState<string[]>([]);
   const [groupSearchTerms, setGroupSearchTerms] = useState<Record<string, string>>({});
 
   useEffect(() => {
@@ -41,26 +45,11 @@ export const HistoricalSalesGroupedList = ({
         console.error('Failed to parse expanded groups', e);
       }
     }
-    
-    // Also load expanded months
-    const savedMonths = localStorage.getItem('historical-sales-expanded-months');
-    if (savedMonths) {
-      try {
-        setExpandedMonths(JSON.parse(savedMonths));
-      } catch (e) {
-        console.error('Failed to parse expanded months', e);
-      }
-    }
   }, []);
 
   const handleExpansionChange = (value: string[]) => {
     setExpandedGroups(value);
     localStorage.setItem('historical-sales-expanded-groups', JSON.stringify(value));
-  };
-
-  const handleMonthExpansionChange = (value: string[]) => {
-    setExpandedMonths(value);
-    localStorage.setItem('historical-sales-expanded-months', JSON.stringify(value));
   };
 
   const handleGroupSearch = (clientName: string, term: string) => {
@@ -87,8 +76,10 @@ export const HistoricalSalesGroupedList = ({
 
   if (sortedGroupKeys.length === 0) {
     return (
-      <div className="text-center py-8 text-muted-foreground border rounded-md">
-        No se encontraron resultados para agrupar.
+      <div className="text-center py-12 text-muted-foreground border rounded-lg bg-muted/10 border-dashed">
+        <User className="mx-auto h-12 w-12 opacity-20 mb-3" />
+        <p className="text-lg font-medium">No se encontraron resultados para agrupar.</p>
+        <p className="text-sm">Intenta ajustar los filtros.</p>
       </div>
     );
   }
@@ -118,110 +109,70 @@ export const HistoricalSalesGroupedList = ({
 
         const totalAmount = allClientInvoices.reduce((sum, inv) => sum + inv.total, 0);
 
-        // Group by Month inside Client
-        const invoicesByMonth = filteredClientInvoices.reduce((acc, invoice) => {
-          const date = new Date(invoice.issueDate);
-          const monthKey = format(date, 'yyyy-MM'); // Sortable key
-          const monthLabel = format(date, 'MMMM yyyy', { locale: es });
-          
-          if (!acc[monthKey]) {
-            acc[monthKey] = {
-              label: toTitleCase(monthLabel),
-              invoices: [],
-              total: 0
-            };
-          }
-          acc[monthKey].invoices.push(invoice);
-          acc[monthKey].total += invoice.total;
-          return acc;
-        }, {} as Record<string, { label: string, invoices: Invoice[], total: number }>);
-
-        // Sort months descending (newest first)
-        const sortedMonthKeys = Object.keys(invoicesByMonth).sort().reverse();
-
         return (
           <AccordionItem 
             key={clientName} 
             value={clientName}
-            className="border rounded-lg bg-card"
+            className="border rounded-lg bg-card shadow-sm overflow-hidden"
           >
-            <AccordionTrigger className="px-4 py-3 hover:bg-muted/50 rounded-lg">
-              <div className="flex items-center gap-4 w-full pr-4">
-                <span className="font-semibold text-base truncate flex-1 text-left">
-                  {toTitleCase(clientName)}
-                </span>
-                <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                  <Badge variant="outline" className="text-xs">
-                    {allClientInvoices.length} facturas
-                  </Badge>
-                  <span className="font-medium text-foreground">
-                    {formatCurrency(totalAmount)}
-                  </span>
+            <AccordionTrigger className="px-6 py-4 hover:bg-muted/30 transition-colors [&[data-state=open]]:bg-muted/30">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-4 w-full pr-4">
+                <div className="flex items-center gap-3 flex-1 min-w-0">
+                  <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary flex-shrink-0">
+                    <User className="h-5 w-5" />
+                  </div>
+                  <div className="flex flex-col text-left">
+                    <span className="font-semibold text-lg truncate">
+                      {toTitleCase(clientName)}
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      {allClientInvoices.length} facturas registradas
+                    </span>
+                  </div>
+                </div>
+                
+                <div className="flex items-center gap-4 text-sm text-muted-foreground ml-14 sm:ml-0">
+                  <div className="flex flex-col sm:items-end min-w-[100px]">
+                    <span className="text-xs uppercase tracking-wider font-medium text-muted-foreground/70">Total Facturado</span>
+                    <span className="font-bold text-foreground text-lg">
+                      {formatCurrency(totalAmount)}
+                    </span>
+                  </div>
                 </div>
               </div>
             </AccordionTrigger>
-            <AccordionContent className="pb-4 px-2">
-              <div className="mt-2 space-y-4">
-                <div className="relative">
-                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    type="search"
-                    placeholder="Buscar facturas en este grupo..."
-                    className="pl-9 bg-background"
-                    value={searchTerm}
-                    onChange={(e) => handleGroupSearch(clientName, e.target.value)}
-                    onClick={(e) => e.stopPropagation()}
-                  />
+            
+            <AccordionContent className="pb-6 px-6 pt-2">
+              <div className="mt-4 space-y-4">
+                <div className="flex items-center gap-4">
+                  <div className="relative flex-1 max-w-md">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      type="search"
+                      placeholder="Filtrar documentos..."
+                      className="pl-9 bg-background"
+                      value={searchTerm}
+                      onChange={(e) => handleGroupSearch(clientName, e.target.value)}
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                  </div>
                 </div>
                 
                 {filteredClientInvoices.length > 0 ? (
-                  <Accordion
-                    type="multiple"
-                    className="w-full space-y-2 mt-4"
-                    value={expandedMonths}
-                    onValueChange={handleMonthExpansionChange}
-                  >
-                    {sortedMonthKeys.map((monthKey) => {
-                      const { label, invoices: monthInvoices, total: monthTotal } = invoicesByMonth[monthKey];
-                      const uniqueMonthKey = `${clientName}-${monthKey}`; // Unique key for persistence
-
-                      return (
-                        <AccordionItem 
-                          key={uniqueMonthKey} 
-                          value={uniqueMonthKey}
-                          className="border rounded-md bg-muted/20"
-                        >
-                          <AccordionTrigger className="px-3 py-2 hover:bg-muted/50 rounded-md text-sm">
-                            <div className="flex items-center gap-3 w-full pr-2">
-                              <Calendar className="h-4 w-4 text-muted-foreground" />
-                              <span className="font-medium flex-1 text-left">
-                                {label}
-                              </span>
-                              <div className="flex items-center gap-2 text-muted-foreground">
-                                <Badge variant="secondary" className="text-[10px] h-5">
-                                  {monthInvoices.length}
-                                </Badge>
-                                <span className="font-medium text-xs">
-                                  {formatCurrency(monthTotal)}
-                                </span>
-                              </div>
-                            </div>
-                          </AccordionTrigger>
-                          <AccordionContent className="pt-2 pb-3 px-2 bg-background/50">
-                            <HistoricalSalesTable
-                              invoices={monthInvoices}
-                              sortConfig={sortConfig}
-                              onSort={onSort}
-                              onEdit={onEdit}
-                            />
-                          </AccordionContent>
-                        </AccordionItem>
-                      );
-                    })}
-                  </Accordion>
+                  <HistoricalSalesTable
+                    invoices={filteredClientInvoices}
+                    sortConfig={sortConfig}
+                    onSort={onSort}
+                    onEdit={onEdit}
+                    onDelete={onDelete}
+                    hideClientColumn
+                    selectedIds={selectedIds}
+                    onSelectId={onSelectId}
+                    onSelectAll={(checked) => onSelectAll?.(filteredClientInvoices.map(i => i.id), checked)}
+                  />
                 ) : (
-                  <div className="text-center py-8 text-muted-foreground">
-                    No se encontraron facturas con "{searchTerm}" en este grupo.
+                  <div className="text-center py-12 text-muted-foreground border-2 border-dashed rounded-lg bg-muted/5">
+                    No se encontraron facturas con "{searchTerm}" para este cliente.
                   </div>
                 )}
               </div>

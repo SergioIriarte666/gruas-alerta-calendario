@@ -1,7 +1,9 @@
 import React, { useState, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -22,17 +24,22 @@ import {
   ArrowUpDown,
   ArrowUp,
   ArrowDown,
-  Eye
+  Eye,
+  X,
+  Check,
+  Star
 } from 'lucide-react';
 import { useSuppliers } from '@/hooks/useSuppliers';
 import { useCostCategories } from '@/hooks/useCostCategories';
 import { SupplierForm } from './SupplierForm';
 import { SupplierDetailModal } from './SupplierDetailModal';
+import { BatchEditSuppliersModal } from './BatchEditSuppliersModal';
 import { SupplierWithStats } from '@/types/suppliers';
-import { formatCurrency } from '@/lib/utils';
+import { formatCurrency, cn } from '@/lib/utils';
 import { getCategoryLabel } from '@/utils/categoryUtils';
+import { toast } from 'sonner';
 
-type SupplierSortField = 'name' | 'rut' | 'contactName' | 'category' | 'email' | 'phone' | 'isActive';
+type SupplierSortField = 'name' | 'rut' | 'contactName' | 'category' | 'email' | 'phone' | 'isActive' | 'rating';
 type SortDirection = 'asc' | 'desc';
 
 const SortIcon = ({ field, currentSortField, sortDirection }: { 
@@ -46,6 +53,13 @@ const SortIcon = ({ field, currentSortField, sortDirection }: {
   return sortDirection === 'asc' ? 
     <ArrowUp className="ml-2 h-4 w-4 text-primary" /> : 
     <ArrowDown className="ml-2 h-4 w-4 text-primary" />;
+};
+
+// Helper to extract rating
+const getRating = (notes?: string) => {
+  if (!notes) return 0;
+  const match = notes.match(/^Calificación: (?:⭐)+ \((\d)\/5\)/);
+  return match ? parseInt(match[1]) : 0;
 };
 
 export const SupplierList: React.FC = () => {
@@ -69,6 +83,68 @@ export const SupplierList: React.FC = () => {
   const [selectedSupplier, setSelectedSupplier] = useState<SupplierWithStats | null>(null);
   const [sortField, setSortField] = useState<SupplierSortField>('name');
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
+  
+  // Batch selection state
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [isBatchEditOpen, setIsBatchEditOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [supplierToDelete, setSupplierToDelete] = useState<string | null>(null);
+  const [isBatchDelete, setIsBatchDelete] = useState(false);
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedIds(filteredAndSortedSuppliers.map(s => s.id));
+    } else {
+      setSelectedIds([]);
+    }
+  };
+
+  const handleSelectId = (id: string, checked: boolean) => {
+    if (checked) {
+      setSelectedIds(prev => [...prev, id]);
+    } else {
+      setSelectedIds(prev => prev.filter(selectedId => selectedId !== id));
+    }
+  };
+
+  const selectedSuppliers = useMemo(() => 
+    suppliers.filter(s => selectedIds.includes(s.id)),
+    [suppliers, selectedIds]
+  );
+
+  const confirmDelete = (id: string) => {
+    setSupplierToDelete(id);
+    setIsBatchDelete(false);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmBatchDelete = () => {
+    if (selectedIds.length === 0) return;
+    setIsBatchDelete(true);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    try {
+      if (isBatchDelete) {
+        // Implement batch delete logic here - iterating for now as deleteSupplier might be single
+        // Ideally useSuppliers should expose a deleteSuppliers (plural) or we loop
+        await Promise.all(selectedIds.map(id => deleteSupplier(id)));
+        toast.success(`${selectedIds.length} proveedores eliminados`);
+        setSelectedIds([]);
+      } else if (supplierToDelete) {
+        await deleteSupplier(supplierToDelete);
+        toast.success('Proveedor eliminado correctamente');
+      }
+    } catch (error) {
+      console.error('Error deleting supplier(s):', error);
+      toast.error('Error al eliminar proveedor(s)');
+    } finally {
+      setDeleteDialogOpen(false);
+      setSupplierToDelete(null);
+      setIsBatchDelete(false);
+    }
+  };
 
   const handleSort = (field: SupplierSortField) => {
     if (sortField === field) {
@@ -127,6 +203,11 @@ export const SupplierList: React.FC = () => {
         case 'isActive':
           comparison = (b.is_active ? 1 : 0) - (a.is_active ? 1 : 0);
           break;
+        case 'rating':
+          const ratingA = getRating(a.notes || '');
+          const ratingB = getRating(b.notes || '');
+          comparison = ratingA - ratingB;
+          break;
       }
       
       return sortDirection === 'asc' ? comparison : -comparison;
@@ -168,13 +249,15 @@ export const SupplierList: React.FC = () => {
           <p className="text-muted-foreground">Gestiona los proveedores del sistema</p>
         </div>
 
-        <Button
-          onClick={() => setShowForm(true)}
-          variant="default"
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          Nuevo Proveedor
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            onClick={() => setShowForm(true)}
+            variant="default"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Nuevo Proveedor
+          </Button>
+        </div>
       </div>
 
       {/* Filters */}
@@ -315,21 +398,7 @@ export const SupplierList: React.FC = () => {
                       <div className="flex items-center justify-end gap-1 pt-1 border-t" onClick={(e) => e.stopPropagation()}>
                         <Button variant="ghost" size="sm" onClick={() => setSelectedSupplier(supplier)} className="text-primary"><Eye className="h-4 w-4" /></Button>
                         <Button variant="ghost" size="sm" onClick={() => handleEdit(supplier)} className="text-blue-400"><Edit2 className="h-4 w-4" /></Button>
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button variant="ghost" size="sm" className="text-red-400"><Trash2 className="h-4 w-4" /></Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>¿Eliminar proveedor?</AlertDialogTitle>
-                              <AlertDialogDescription>Esta acción no se puede deshacer. Se eliminará permanentemente el proveedor "{supplier.name}".</AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                              <AlertDialogAction onClick={() => handleDelete(supplier.id)} className="bg-red-600 hover:bg-red-700">Eliminar</AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
+                        <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); confirmDelete(supplier.id); }} className="text-red-400"><Trash2 className="h-4 w-4" /></Button>
                       </div>
                     </CardContent>
                   </Card>
@@ -340,6 +409,13 @@ export const SupplierList: React.FC = () => {
               <Table>
                 <TableHeader>
                   <TableRow className="border">
+                    <TableHead className="w-[50px]">
+                      <Checkbox
+                        checked={selectedIds.length > 0 && selectedIds.length === filteredAndSortedSuppliers.length}
+                        onCheckedChange={(checked) => handleSelectAll(!!checked)}
+                        aria-label="Seleccionar todos"
+                      />
+                    </TableHead>
                     <TableHead className="text-muted-foreground cursor-pointer hover:text-primary transition-colors" onClick={() => handleSort('name')}>
                       <div className="flex items-center">Proveedor<SortIcon field="name" currentSortField={sortField} sortDirection={sortDirection} /></div>
                     </TableHead>
@@ -348,6 +424,9 @@ export const SupplierList: React.FC = () => {
                     </TableHead>
                     <TableHead className="text-muted-foreground cursor-pointer hover:text-primary transition-colors" onClick={() => handleSort('category')}>
                       <div className="flex items-center">Categoría<SortIcon field="category" currentSortField={sortField} sortDirection={sortDirection} /></div>
+                    </TableHead>
+                    <TableHead className="text-muted-foreground cursor-pointer hover:text-primary transition-colors" onClick={() => handleSort('rating')}>
+                      <div className="flex items-center">Calif.<SortIcon field="rating" currentSortField={sortField} sortDirection={sortDirection} /></div>
                     </TableHead>
                     <TableHead className="text-muted-foreground">Pagos</TableHead>
                     <TableHead className="text-muted-foreground cursor-pointer hover:text-primary transition-colors" onClick={() => handleSort('isActive')}>
@@ -359,6 +438,13 @@ export const SupplierList: React.FC = () => {
                 <TableBody>
                 {filteredAndSortedSuppliers.map((supplier) => (
                     <TableRow key={supplier.id} className="border cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => setSelectedSupplier(supplier)}>
+                      <TableCell onClick={(e) => e.stopPropagation()}>
+                        <Checkbox
+                          checked={selectedIds.includes(supplier.id)}
+                          onCheckedChange={(checked) => handleSelectId(supplier.id, !!checked)}
+                          aria-label={`Seleccionar ${supplier.name}`}
+                        />
+                      </TableCell>
                       <TableCell>
                         <div className="space-y-1">
                           <div className="font-medium text-foreground">{supplier.name}</div>
@@ -373,6 +459,18 @@ export const SupplierList: React.FC = () => {
                         </div>
                       </TableCell>
                       <TableCell><Badge variant="outline">{getCategoryLabel(activeCategories || [], supplier.category)}</Badge></TableCell>
+                      <TableCell>
+                        {(() => {
+                          const rating = getRating(supplier.notes || '');
+                          if (rating === 0) return <span className="text-xs text-muted-foreground">-</span>;
+                          return (
+                            <div className="flex items-center" title={`${rating}/5`}>
+                              <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                              <span className="ml-1 text-xs">{rating}</span>
+                            </div>
+                          );
+                        })()}
+                      </TableCell>
                       <TableCell><div className="text-sm text-foreground">0 pagos</div></TableCell>
                       <TableCell>
                         <Button variant="ghost" size="sm" onClick={() => handleToggleStatus(supplier)} className="p-0 h-auto">
@@ -387,21 +485,7 @@ export const SupplierList: React.FC = () => {
                         <div className="flex items-center space-x-2">
                           <Button variant="ghost" size="sm" onClick={() => setSelectedSupplier(supplier)} className="text-primary hover:text-primary/80" title="Ver detalles"><Eye className="h-4 w-4" /></Button>
                           <Button variant="ghost" size="sm" onClick={() => handleEdit(supplier)} className="text-blue-400 hover:text-blue-300"><Edit2 className="h-4 w-4" /></Button>
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <Button variant="ghost" size="sm" className="text-red-400 hover:text-red-300"><Trash2 className="h-4 w-4" /></Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent className="bg-card border">
-                              <AlertDialogHeader>
-                                <AlertDialogTitle className="text-foreground">¿Eliminar proveedor?</AlertDialogTitle>
-                                <AlertDialogDescription className="text-muted-foreground">Esta acción no se puede deshacer. Se eliminará permanentemente el proveedor "{supplier.name}" del sistema.</AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                <AlertDialogAction onClick={() => handleDelete(supplier.id)} className="bg-red-600 hover:bg-red-700">Eliminar</AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
+                          <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); confirmDelete(supplier.id); }} className="text-red-400 hover:text-red-300"><Trash2 className="h-4 w-4" /></Button>
                         </div>
                       </TableCell>
                     </TableRow>
@@ -414,19 +498,97 @@ export const SupplierList: React.FC = () => {
         </CardContent>
       </Card>
 
-      {/* Form Modal */}
+      {/* Batch Actions Bar */}
+      {selectedIds.length > 0 && createPortal(
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[100] animate-in slide-in-from-bottom-5 fade-in duration-300">
+          <div className="bg-foreground text-background px-4 py-3 rounded-full shadow-xl flex items-center gap-4 border border-border/10">
+            <div className="flex items-center gap-2 px-2">
+              <span className="bg-primary text-primary-foreground text-xs font-bold px-2 py-0.5 rounded-full min-w-[1.5rem] text-center">
+                {selectedIds.length}
+              </span>
+              <span className="font-medium text-sm whitespace-nowrap">seleccionados</span>
+            </div>
+            
+            <div className="h-4 w-px bg-background/20" />
+            
+            <Button 
+              variant="secondary" 
+              size="sm" 
+              className="h-8 gap-2"
+              onClick={() => setIsBatchEditOpen(true)}
+            >
+              <Edit2 className="h-4 w-4" />
+              Editar Lote
+            </Button>
+
+            <Button
+              variant="destructive"
+              size="sm"
+              className="h-8 gap-2"
+              onClick={confirmBatchDelete}
+            >
+              <Trash2 className="h-4 w-4" />
+              Eliminar
+            </Button>
+
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="h-8 w-8 text-background hover:bg-background/20 hover:text-background rounded-full ml-1"
+              onClick={() => setSelectedIds([])}
+              title="Cancelar selección"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* Modals */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {isBatchDelete
+                ? `Estás a punto de eliminar ${selectedIds.length} proveedores. Esta acción no se puede deshacer.`
+                : 'Estás a punto de eliminar este proveedor. Esta acción no se puede deshacer.'}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Eliminar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       {showForm && (
-        <SupplierForm
+        <SupplierForm 
+          onClose={handleCloseForm} 
           supplier={editingSupplier || undefined}
-          onClose={handleCloseForm}
+        />
+      )}
+      
+      {selectedSupplier && (
+        <SupplierDetailModal
+          supplier={selectedSupplier}
+          isOpen={!!selectedSupplier}
+          onClose={() => setSelectedSupplier(null)}
+          onEdit={() => {
+            setSelectedSupplier(null);
+            handleEdit(selectedSupplier);
+          }}
         />
       )}
 
-      {/* Detail Modal */}
-      <SupplierDetailModal
-        supplier={selectedSupplier}
-        isOpen={!!selectedSupplier}
-        onClose={() => setSelectedSupplier(null)}
+      <BatchEditSuppliersModal
+        isOpen={isBatchEditOpen}
+        onClose={() => setIsBatchEditOpen(false)}
+        selectedSuppliers={selectedSuppliers}
+        activeCategories={activeCategories}
       />
     </div>
   );

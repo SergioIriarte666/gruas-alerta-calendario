@@ -250,6 +250,31 @@ export const useInventoryMovements = (limit = 50) => {
   });
 };
 
+export const useInventoryMovementsByReference = (reference: string | null) => {
+  return useQuery({
+    queryKey: ['inventory-movements', 'reference', reference],
+    queryFn: async () => {
+      if (!reference) return [];
+      
+      const { data, error } = await supabase
+        .from('inventory_movements')
+        .select(`
+          *,
+          item:inventory_items(id, name, sku, code),
+          location:inventory_locations(id, name, code)
+        `)
+        .eq('reference_document', reference)
+        .eq('movement_type', 'entry')
+        .eq('status', 'active')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      return data as unknown as InventoryMovement[];
+    },
+    enabled: !!reference,
+  });
+};
+
 export const usePagedInventoryMovements = (page: number, pageSize: number) => {
   return useQuery({
     queryKey: ['inventory-movements', 'paged', page, pageSize],
@@ -435,7 +460,8 @@ export const useCreateInventoryMovement = () => {
             item_name: itemData.name,
             supplier_name: movement.supplier_name,
             quantity: movement.quantity,
-            unit_cost: movement.unit_cost
+            unit_cost: movement.unit_cost,
+            inventory_item_id: movement.item_id
           });
           costId = cost.id;
         }

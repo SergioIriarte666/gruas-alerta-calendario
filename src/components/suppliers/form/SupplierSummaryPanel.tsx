@@ -2,7 +2,7 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Building2, User, Phone, Mail, MapPin, Tag, FileText } from 'lucide-react';
+import { Building2, User, Phone, Mail, MapPin, Tag, FileText, Star } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface SupplierSummaryPanelProps {
@@ -32,6 +32,11 @@ export const SupplierSummaryPanel = ({
   isActive,
   isEditing,
 }: SupplierSummaryPanelProps) => {
+  // Extract rating and clean notes
+  const ratingMatch = notes?.match(/^Calificación: (?:⭐)+ \((\d)\/5\)/);
+  const rating = ratingMatch ? parseInt(ratingMatch[1]) : 0;
+  const cleanNotes = notes?.replace(/^Calificación: .*\n?/, '').trim();
+
   return (
     <Card className="bg-gradient-to-b from-card to-muted/30 border-border/50">
       <CardHeader className="pb-3">
@@ -81,6 +86,25 @@ export const SupplierSummaryPanel = ({
           </div>
         )}
 
+        {/* Evaluación / Rating */}
+        {rating > 0 && (
+          <div className="flex items-center gap-2 mt-2 p-2 bg-yellow-500/5 rounded-md border border-yellow-500/10">
+            <span className="text-xs font-medium text-yellow-600 dark:text-yellow-400">Evaluación:</span>
+            <div className="flex">
+              {[1, 2, 3, 4, 5].map((s) => (
+                <Star 
+                  key={s} 
+                  className={cn(
+                    "w-3.5 h-3.5", 
+                    s <= rating ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground/30"
+                  )} 
+                />
+              ))}
+            </div>
+            <span className="text-xs text-muted-foreground ml-auto">({rating}/5)</span>
+          </div>
+        )}
+
         <Separator className="my-3" />
 
         {/* Contacto */}
@@ -118,8 +142,8 @@ export const SupplierSummaryPanel = ({
           )}
         </div>
 
-        {/* Notas */}
-        {notes && (
+        {/* Notas (limpias) */}
+        {cleanNotes && (
           <>
             <Separator className="my-3" />
             <div className="space-y-2">
@@ -127,7 +151,7 @@ export const SupplierSummaryPanel = ({
                 <FileText className="h-4 w-4 text-muted-foreground mt-0.5" />
                 <div>
                   <span className="text-xs text-muted-foreground block">Notas:</span>
-                  <span className="text-sm text-muted-foreground line-clamp-3">{notes}</span>
+                  <span className="text-sm text-muted-foreground line-clamp-3 whitespace-pre-wrap">{cleanNotes}</span>
                 </div>
               </div>
             </div>
