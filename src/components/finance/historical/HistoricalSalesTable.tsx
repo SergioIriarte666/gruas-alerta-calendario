@@ -95,14 +95,14 @@ export const HistoricalSalesTable = ({
                 aria-label="Seleccionar todo"
               />
             </TableHead>
-            <TableHead className="w-[100px]">
+            <TableHead className="w-[140px]">
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => onSort('folio')}
                 className="-ml-4 h-8 font-semibold hover:bg-transparent hover:text-primary"
               >
-                Folio
+                N° Fiscal
                 <SortIcon columnKey="folio" />
               </Button>
             </TableHead>
