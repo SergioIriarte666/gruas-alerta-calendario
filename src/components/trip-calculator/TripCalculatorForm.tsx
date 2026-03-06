@@ -201,17 +201,18 @@ export const TripCalculatorForm = () => {
     const destCity = findBestTollMatch(destName);
     const tollCategory = selectedCrane?.tollVehicleCategory || 'LIVIANO';
 
-    // Check if both cities matched known toll locations
-    const originMatched = !!matchTollLocation(originCity, tollLocations);
-    const destMatched = !!matchTollLocation(destCity, tollLocations);
-    const bothMatchedTollLocations = originMatched && destMatched;
+    // If we have toll locations, check matching; otherwise try anyway with city names
+    const hasLocations = tollLocations.length > 0;
+    const originMatched = hasLocations ? !!matchTollLocation(originCity, tollLocations) : true;
+    const destMatched = hasLocations ? !!matchTollLocation(destCity, tollLocations) : true;
+    const shouldAttemptTolls = originMatched && destMatched;
 
-    console.log('Toll lookup:', { originName, destName, matchedOrigin: originCity, matchedDest: destCity, tollCategory, originMatched, destMatched });
+    console.log('Toll lookup:', { originName, destName, matchedOrigin: originCity, matchedDest: destCity, tollCategory, originMatched, destMatched, hasLocations });
 
     let tollData = null;
-    if (bothMatchedTollLocations) {
+    if (shouldAttemptTolls) {
       tollData = await calculateTolls(originCity, destCity, tollCategory);
-      // Only show manual fallback if both cities are in toll network but API failed
+      // Show manual fallback if API failed
       if (!tollData) {
         setShowManualToll(true);
       }
