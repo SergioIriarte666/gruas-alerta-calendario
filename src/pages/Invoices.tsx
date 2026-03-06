@@ -415,30 +415,50 @@ const Invoices = () => {
   };
 
   const handleBatchDelete = async (invoiceIds: string[]) => {
-    batchProgress.start('Eliminando Facturas', invoiceIds.length);
-    let errorCount = 0;
-    
-    try {
-      for (let i = 0; i < invoiceIds.length; i++) {
-        const id = invoiceIds[i];
+    // Separar históricas de protegidas
+    const historicalIds = invoiceIds.filter(id => {
+      const inv = invoices.find(i => i.id === id);
+      return inv?.folio?.startsWith('HIST-');
+    });
+    const protectedIds = invoiceIds.filter(id => {
+      const inv = invoices.find(i => i.id === id);
+      return !inv?.folio?.startsWith('HIST-');
+    });
+
+    // Eliminar históricas directamente
+    if (historicalIds.length > 0) {
+      batchProgress.start('Eliminando Facturas Históricas', historicalIds.length);
+      let errorCount = 0;
+      for (let i = 0; i < historicalIds.length; i++) {
+        const id = historicalIds[i];
         const invoice = invoices.find(inv => inv.id === id);
         batchProgress.update(i + 1, invoice?.folio || id);
         try {
-          await deleteInvoice(id);
+          await deleteInvoice(id, { force: true });
         } catch (err) {
           errorCount++;
         }
       }
-      setSelectedInvoiceIds([]);
-      
       if (errorCount === 0) {
         batchProgress.complete();
       } else {
         batchProgress.error(`${errorCount} factura(s) con error`);
       }
-    } catch (error) {
-      console.error('Error deleting invoices:', error);
-      batchProgress.error('Error al eliminar');
+    }
+
+    // Protegidas: requieren confirmación reforzada
+    if (protectedIds.length > 0) {
+      const protectedFolios = protectedIds.map(id => {
+        const inv = invoices.find(i => i.id === id);
+        return inv?.folio || '';
+      }).filter(Boolean);
+      setPendingDeleteId(null);
+      setPendingDeleteFolio(protectedFolios.join(', '));
+      setPendingBatchDeleteIds(protectedIds);
+      setDeleteConfirmText('');
+      setDeleteDialogOpen(true);
+    } else {
+      setSelectedInvoiceIds([]);
     }
   };
 
