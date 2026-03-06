@@ -1057,11 +1057,23 @@ interface InvoicePreviewTableProps {
   onToggle?: (key: string) => void;
 }
 
+const DocTypeBadge: React.FC<{ type: DocumentType }> = ({ type }) => {
+  switch (type) {
+    case 'nota_credito':
+      return <Badge variant="outline" className="text-[9px] border-red-300 text-red-600">NC</Badge>;
+    case 'nota_debito':
+      return <Badge variant="outline" className="text-[9px] border-blue-300 text-blue-600">ND</Badge>;
+    default:
+      return <Badge variant="outline" className="text-[9px]">F</Badge>;
+  }
+};
+
 const InvoicePreviewTable: React.FC<InvoicePreviewTableProps> = ({ invoices, selectedKeys, keyPrefix, onToggle }) => (
   <Table>
     <TableHeader>
       <TableRow>
         {onToggle && <TableHead className="w-[40px]"></TableHead>}
+        <TableHead className="text-xs">Tipo</TableHead>
         <TableHead className="text-xs">Folio</TableHead>
         <TableHead className="text-xs">Cliente</TableHead>
         <TableHead className="text-xs">Fecha</TableHead>
@@ -1083,6 +1095,9 @@ const InvoicePreviewTable: React.FC<InvoicePreviewTableProps> = ({ invoices, sel
                 />
               </TableCell>
             )}
+            <TableCell className="text-xs">
+              <DocTypeBadge type={inv.documentType} />
+            </TableCell>
             <TableCell className="text-xs font-medium">{inv.numeroFiscal}</TableCell>
             <TableCell className="text-xs truncate max-w-[200px]">{toTitleCase(inv.razonSocial)}</TableCell>
             <TableCell className="text-xs">{inv.issueDate}</TableCell>
