@@ -168,7 +168,7 @@ export const HistoricalSalesPipelineView = ({ invoices, onEdit, onDelete }: Hist
       {/* Summary */}
       <div className="flex items-center justify-between text-sm text-muted-foreground">
         <span>{filteredInvoices.length} facturas en {clientGroups.length} clientes</span>
-        <span className="font-semibold text-primary">
+        <span className="font-semibold text-violet-600 dark:text-violet-400">
           Total: {formatCurrency(filteredInvoices.reduce((s, i) => s + i.total, 0))}
         </span>
       </div>
@@ -195,7 +195,7 @@ export const HistoricalSalesPipelineView = ({ invoices, onEdit, onDelete }: Hist
                             {group.count}
                           </span>
                         </div>
-                        <p className="text-sm text-primary font-semibold">
+                        <p className="text-sm text-violet-600 dark:text-violet-400 font-semibold">
                           {formatCurrency(group.totalAmount)} <span className="text-muted-foreground font-normal">· {group.months.length} {group.months.length === 1 ? 'mes' : 'meses'}</span>
                         </p>
                       </div>
@@ -220,7 +220,7 @@ export const HistoricalSalesPipelineView = ({ invoices, onEdit, onDelete }: Hist
                                 <span className="text-xs text-muted-foreground">({month.invoices.length})</span>
                               </div>
                               <div className="flex items-center gap-3">
-                                <span className="text-sm font-semibold text-primary">{formatCurrency(month.total)}</span>
+                                <span className="text-sm font-semibold text-violet-600 dark:text-violet-400">{formatCurrency(month.total)}</span>
                                 {isMonthExpanded ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
                               </div>
                             </div>
@@ -245,7 +245,7 @@ export const HistoricalSalesPipelineView = ({ invoices, onEdit, onDelete }: Hist
                                     <p className="text-xs text-muted-foreground mb-2">
                                       {format(parseISO(inv.issueDate), 'dd/MM/yyyy')}
                                     </p>
-                                    <p className="text-sm font-bold text-primary">{formatCurrency(inv.total)}</p>
+                                    <p className="text-sm font-bold text-violet-600 dark:text-violet-400">{formatCurrency(inv.total)}</p>
                                   </div>
                                 ))}
                               </div>

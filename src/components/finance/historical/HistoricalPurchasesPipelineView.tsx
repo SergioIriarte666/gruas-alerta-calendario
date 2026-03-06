@@ -164,7 +164,7 @@ export const HistoricalPurchasesPipelineView = ({ invoices, onEdit, onDelete }: 
 
       <div className="flex items-center justify-between text-sm text-muted-foreground">
         <span>{filteredInvoices.length} facturas en {supplierGroups.length} proveedores</span>
-        <span className="font-semibold text-primary">
+        <span className="font-semibold text-violet-600 dark:text-violet-400">
           Total: {formatCurrency(filteredInvoices.reduce((s, i) => s + i.amount, 0))}
         </span>
       </div>
@@ -190,8 +190,8 @@ export const HistoricalPurchasesPipelineView = ({ invoices, onEdit, onDelete }: 
                             {group.count}
                           </span>
                         </div>
-                        <p className="text-sm text-muted-foreground">
-                          {formatCurrency(group.totalAmount)} · {group.months.length} {group.months.length === 1 ? 'mes' : 'meses'}
+                        <p className="text-sm text-violet-600 dark:text-violet-400 font-semibold">
+                          {formatCurrency(group.totalAmount)} <span className="text-muted-foreground font-normal">· {group.months.length} {group.months.length === 1 ? 'mes' : 'meses'}</span>
                         </p>
                       </div>
                     </div>
@@ -215,7 +215,7 @@ export const HistoricalPurchasesPipelineView = ({ invoices, onEdit, onDelete }: 
                                 <span className="text-xs text-muted-foreground">({month.invoices.length})</span>
                               </div>
                               <div className="flex items-center gap-3">
-                                <span className="text-sm font-semibold text-primary">{formatCurrency(month.total)}</span>
+                                <span className="text-sm font-semibold text-violet-600 dark:text-violet-400">{formatCurrency(month.total)}</span>
                                 {isMonthExpanded ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
                               </div>
                             </div>
@@ -240,7 +240,7 @@ export const HistoricalPurchasesPipelineView = ({ invoices, onEdit, onDelete }: 
                                     <p className="text-xs text-muted-foreground mb-2">
                                       {format(parseISO(inv.issue_date), 'dd/MM/yyyy')}
                                     </p>
-                                    <p className="text-sm font-bold text-primary">{formatCurrency(inv.amount)}</p>
+                                    <p className="text-sm font-bold text-violet-600 dark:text-violet-400">{formatCurrency(inv.amount)}</p>
                                   </div>
                                 ))}
                               </div>
