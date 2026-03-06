@@ -745,7 +745,6 @@ export const PipelineListView: React.FC<PipelineListViewProps> = ({
                               </div>
                             </TableCell>
                             <TableCell>
-                            <TableCell>
                               <div className="flex items-center gap-1 text-muted-foreground">
                                 <Car className="w-3 h-3" />
                                 <span className="text-sm">
