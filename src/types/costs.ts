@@ -8,6 +8,7 @@ export type Cost = Database['public']['Tables']['costs']['Row'] & {
   payment_date?: string | null;  // Agregar explícitamente para claridad
   payment_batch_id?: string | null;  // Agregar explícitamente para claridad
   cost_categories: CostCategory;
+  cost_centers: Database['public']['Tables']['cost_centers']['Row'] | null;
   cranes: Database['public']['Tables']['cranes']['Row'] | null;
   operators: Database['public']['Tables']['operators']['Row'] | null;
   services: (Database['public']['Tables']['services']['Row'] & {

@@ -133,7 +133,7 @@ export const ConsolidatedCostDetails = ({
                   <div>
                     <p className="text-xs text-muted-foreground">Centro de Costo</p>
                     <p className="font-medium text-foreground">
-                      {cost.cost_center_id}
+                      {cost.cost_centers?.name || cost.cost_center_id}
                     </p>
                   </div>
                 </div>

@@ -12,6 +12,7 @@ const fetchCosts = async (): Promise<Cost[]> => {
     .select(`
       *,
       cost_categories (*),
+      cost_centers (*),
       cranes (*),
       operators (*),
       services (*, clients!services_client_id_fkey(*)),
@@ -70,6 +71,7 @@ export const usePagedCosts = (page: number, pageSize: number) => {
           `
           *,
           cost_categories (*),
+          cost_centers (*),
           cranes (*),
           operators (*),
           services (*, clients!services_client_id_fkey(*)),
