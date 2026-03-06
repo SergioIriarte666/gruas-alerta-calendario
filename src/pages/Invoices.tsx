@@ -681,6 +681,57 @@ const Invoices = () => {
         onClose={() => setMarkAsPaidInvoice(null)}
         onConfirm={handleConfirmMarkAsPaid}
       />
+
+      {/* Diálogo de confirmación reforzada para facturas protegidas */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent className="max-w-md">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-destructive">
+              <ShieldAlert className="w-5 h-5" />
+              Eliminar factura protegida
+            </AlertDialogTitle>
+            <AlertDialogDescription className="space-y-3">
+              <p>
+                {pendingBatchDeleteIds.length > 0
+                  ? `Está a punto de eliminar ${pendingBatchDeleteIds.length} factura(s) de la aplicación. Esto revertirá los cierres y servicios asociados.`
+                  : `Está a punto de eliminar la factura ${pendingDeleteFolio}. Esto revertirá los cierres y servicios asociados.`
+                }
+              </p>
+              <p className="font-medium text-destructive">
+                Esta acción NO se puede deshacer.
+              </p>
+              <div className="pt-2">
+                <label className="text-sm text-muted-foreground">
+                  Escriba <span className="font-mono font-bold text-foreground">ELIMINAR</span> para confirmar:
+                </label>
+                <Input
+                  value={deleteConfirmText}
+                  onChange={(e) => setDeleteConfirmText(e.target.value)}
+                  placeholder="ELIMINAR"
+                  className="mt-1"
+                  autoFocus
+                />
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => {
+              setDeleteConfirmText('');
+              setPendingDeleteId(null);
+              setPendingBatchDeleteIds([]);
+            }}>
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmProtectedDelete}
+              disabled={deleteConfirmText !== 'ELIMINAR'}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90 disabled:opacity-50"
+            >
+              Eliminar definitivamente
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
