@@ -104,6 +104,9 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
     }
   });
 
+  const selectedCategoryId = form.watch('category');
+  const { subcategories, isLoading: subcategoriesLoading } = useCostSubcategories(selectedCategoryId || undefined);
+
   const handleSubmit = async (data: PaymentFormData) => {
     // Only check for duplicates if reference_number is provided and creating a new payment
     if (!payment && data.reference_number && data.supplier_id) {
