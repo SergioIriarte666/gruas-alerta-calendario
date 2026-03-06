@@ -95,14 +95,14 @@ export const HistoricalSalesTable = ({
                 aria-label="Seleccionar todo"
               />
             </TableHead>
-            <TableHead className="w-[100px]">
+            <TableHead className="w-[140px]">
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => onSort('folio')}
                 className="-ml-4 h-8 font-semibold hover:bg-transparent hover:text-primary"
               >
-                Folio
+                N° Fiscal
                 <SortIcon columnKey="folio" />
               </Button>
             </TableHead>
@@ -185,7 +185,7 @@ export const HistoricalSalesTable = ({
                 </TableCell>
                 <TableCell className="font-medium font-mono text-xs">
                   <div className="flex items-center gap-1.5">
-                    {invoice.folio}
+                    {invoice.numeroFiscal || invoice.folio}
                     {invoice.folio.startsWith('HIST-') ? (
                       <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 text-[9px] px-1.5 py-0">
                         Histórica
