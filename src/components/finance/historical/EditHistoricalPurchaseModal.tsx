@@ -38,7 +38,7 @@ export const EditHistoricalPurchaseModal: React.FC<EditHistoricalPurchaseModalPr
   open,
   onOpenChange,
 }) => {
-  const { updateInvoiceMutation } = usePurchaseInvoices();
+  const { updateInvoice } = usePurchaseInvoices();
   
   const form = useForm<InvoiceFormValues>({
     resolver: zodResolver(invoiceSchema),
@@ -71,7 +71,7 @@ export const EditHistoricalPurchaseModal: React.FC<EditHistoricalPurchaseModalPr
     if (!invoice) return;
 
     try {
-      await updateInvoiceMutation.mutateAsync({
+      await updateInvoice({
         id: invoice.id,
         data: {
           invoice_number: data.invoice_number,

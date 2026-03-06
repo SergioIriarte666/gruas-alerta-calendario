@@ -21,9 +21,13 @@ export const useSuppliers = () => {
 
   const createSupplier = useMutation({
     mutationFn: async (newSupplier: SupplierFormData) => {
+      const insertData = {
+        ...newSupplier,
+        rut: newSupplier.rut || '',
+      };
       const { data, error } = await supabase
         .from('suppliers')
-        .insert([newSupplier])
+        .insert([insertData])
         .select()
         .single();
       

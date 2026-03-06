@@ -20,7 +20,7 @@ export const BatchEditHistoricalPurchasesModal: React.FC<BatchEditHistoricalPurc
   onOpenChange,
   onSuccess,
 }) => {
-  const { deleteInvoiceMutation, updateInvoiceMutation } = usePurchaseInvoices();
+  const { deleteInvoice, updateInvoice } = usePurchaseInvoices();
   const [action, setAction] = React.useState<'delete' | 'update_status'>('update_status');
   const [newStatus, setNewStatus] = React.useState<string>('pending');
   const [isProcessing, setIsProcessing] = React.useState(false);
@@ -31,14 +31,12 @@ export const BatchEditHistoricalPurchasesModal: React.FC<BatchEditHistoricalPurc
 
     try {
       if (action === 'delete') {
-        // Ejecutar eliminaciones en paralelo
-        await Promise.all(selectedIds.map(id => deleteInvoiceMutation.mutateAsync(id)));
+        await Promise.all(selectedIds.map(id => deleteInvoice(id)));
         toast.success(`${selectedIds.length} facturas eliminadas correctamente`);
       } else if (action === 'update_status') {
-        // Ejecutar actualizaciones en paralelo
         await Promise.all(
             selectedIds.map(id => 
-                updateInvoiceMutation.mutateAsync({
+                updateInvoice({
                     id,
                     data: { status: newStatus }
                 })
