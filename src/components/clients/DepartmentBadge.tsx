@@ -13,14 +13,25 @@ interface DepartmentBadgeProps {
   className?: string;
 }
 
-export function DepartmentBadge({ department, clientName }: DepartmentBadgeProps) {
+export function DepartmentBadge({ department, clientName, clientRut, allClients, className }: DepartmentBadgeProps) {
   if (!department || department === 'General') return null;
+
+  const color = clientRut && allClients 
+    ? getDepartmentColor(department, clientRut, allClients) 
+    : null;
 
   return (
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger>
-          <Badge variant="outline" className="text-[10px] px-1 py-0 h-5 gap-1 font-normal text-muted-foreground">
+          <Badge 
+            variant="outline" 
+            className={`text-[10px] px-1 py-0 h-5 gap-1 font-normal ${
+              color 
+                ? `${color.bg} ${color.text} ${color.border}` 
+                : 'text-muted-foreground'
+            } ${className ?? ''}`}
+          >
             <Building2 className="h-3 w-3" />
             {department}
           </Badge>
