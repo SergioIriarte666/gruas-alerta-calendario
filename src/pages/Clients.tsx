@@ -18,7 +18,7 @@ const Clients = () => {
   const { clients, loading, createClient, updateClient, deleteClient, toggleClientStatus } = useClients();
   const { metrics, serviceCountByClient } = useClientsDashboardMetrics(clients);
   const [searchTerm, setSearchTerm] = React.useState('');
-  const [statusFilter, setStatusFilter] = React.useState<StatusFilter>('all');
+  const [statusFilter, setStatusFilter] = React.useState<StatusFilter>('active');
   const [selectedDepartment, setSelectedDepartment] = React.useState('');
   const [selectedClient, setSelectedClient] = React.useState<Client | undefined>();
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
