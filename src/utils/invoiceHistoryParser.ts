@@ -183,7 +183,7 @@ const isLibroDeVentas = (rawRows: any[][]): boolean => {
   const searchRows = rawRows.slice(0, 30);
   for (const row of searchRows) {
     if (!Array.isArray(row)) continue;
-    const joined = row.map(c => String(c ?? '')).join(' ').toUpperCase();
+    const joined = Array.from(row, c => String(c ?? '')).join(' ').toUpperCase();
     if (joined.includes('LIBRO DE VENTAS') || joined.includes('FACTURA ELECTRONICA')) {
       return true;
     }
