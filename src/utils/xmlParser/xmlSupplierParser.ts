@@ -44,7 +44,7 @@ export class XMLSupplierParser {
 
   public parseXMLCompleteString(xmlString: string): XMLCompleteParseResult {
     try {
-      const doc = this.parser.parseFromString(xmlString, 'text/xml');
+      const doc = this.parser.parseFromString(this.stripNamespaces(xmlString), 'text/xml');
       
       const parseError = doc.querySelector('parsererror');
       if (parseError) {
@@ -98,7 +98,7 @@ export class XMLSupplierParser {
 
   public parseXMLString(xmlString: string): XMLSupplierParseResult {
     try {
-      const doc = this.parser.parseFromString(xmlString, 'text/xml');
+      const doc = this.parser.parseFromString(this.stripNamespaces(xmlString), 'text/xml');
       
       const parseError = doc.querySelector('parsererror');
       if (parseError) {
@@ -140,7 +140,11 @@ export class XMLSupplierParser {
     const uniqueSuppliers = new Map<string, XMLSupplierData>();
 
     // Detectar estructura DTE (facturas electrónicas chilenas)
-    const dteElements = doc.querySelectorAll('DTE');
+    let dteElements = Array.from(doc.querySelectorAll('DTE'));
+    // Fallback: si el root es DTE (archivo con un solo documento)
+    if (dteElements.length === 0 && doc.documentElement.localName === 'DTE') {
+      dteElements = [doc.documentElement];
+    }
     if (dteElements.length > 0) {
       dteElements.forEach(dte => {
         const supplier = this.extractSupplierFromDTE(dte);
@@ -401,7 +405,11 @@ export class XMLSupplierParser {
     const documents: XMLDocumentData[] = [];
 
     // Detectar estructura DTE (facturas electrónicas chilenas)
-    const dteElements = doc.querySelectorAll('DTE');
+    let dteElements = Array.from(doc.querySelectorAll('DTE'));
+    // Fallback: si el root es DTE (archivo con un solo documento)
+    if (dteElements.length === 0 && doc.documentElement.localName === 'DTE') {
+      dteElements = [doc.documentElement];
+    }
     if (dteElements.length > 0) {
       dteElements.forEach(dte => {
         const document = this.extractDocumentFromDTE(dte);
@@ -672,6 +680,10 @@ export class XMLSupplierParser {
     const date = new Date(issueDate);
     date.setDate(date.getDate() + 30); // 30 días por defecto
     return date.toISOString().split('T')[0];
+  }
+
+  private stripNamespaces(xml: string): string {
+    return xml.replace(/\sxmlns(:\w+)?="[^"]*"/g, '');
   }
 
   private readFileAsText(file: File): Promise<string> {
