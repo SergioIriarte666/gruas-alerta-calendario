@@ -338,21 +338,13 @@ export const HistoricalPurchases = () => {
 
       <HistoricalPurchasesStats invoices={filteredAndSortedInvoices} />
 
-      <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
-        <div className="bg-card p-4 rounded-lg border shadow-sm space-y-4 flex-1">
-          <h3 className="font-semibold text-lg">Filtros de Búsqueda</h3>
-          <HistoricalPurchasesFilters
-            filters={filters}
-            onFilterChange={handleFilterChange}
-            onClearFilters={handleClearFilters}
-          />
-        </div>
+      <div className="flex justify-end">
         <TooltipProvider>
           <ToggleGroup
             type="single"
             value={viewMode}
             onValueChange={(v) => v && setViewMode(v as any)}
-            className="bg-muted/50 p-1 rounded-lg border self-start"
+            className="bg-muted/50 p-1 rounded-lg border"
           >
             <Tooltip>
               <TooltipTrigger asChild>
