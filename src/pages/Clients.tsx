@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { useClients, usePagedClients } from '@/hooks/useClients';
 import { useClientsDashboardMetrics } from '@/hooks/useClientsDashboardMetrics';
+import { useUpdateClientsBatch, useDeleteClientsBatch } from '@/hooks/useUpdateClientsBatch';
 import { Client } from '@/types';
 import { toast } from 'sonner';
 import { toTitleCase } from '@/lib/utils';
@@ -10,6 +11,8 @@ import { ClientsHeader } from '@/components/clients/ClientsHeader';
 import { ClientsFilters, StatusFilter } from '@/components/clients/ClientsFilters';
 import { ClientsTable, ClientSortField, SortDirection } from '@/components/clients/ClientsTable';
 import { ClientsDashboard } from '@/components/clients/ClientsDashboard';
+import { ClientBatchActionBar } from '@/components/clients/ClientBatchActionBar';
+import { ClientBatchUpdateModal } from '@/components/clients/ClientBatchUpdateModal';
 
 const Clients = () => {
   const { clients, loading, createClient, updateClient, deleteClient, toggleClientStatus } = useClients();
@@ -24,26 +27,25 @@ const Clients = () => {
   const [currentPage, setCurrentPage] = React.useState(1);
   const [sortField, setSortField] = React.useState<ClientSortField>('name');
   const [sortDirection, setSortDirection] = React.useState<SortDirection>('asc');
+  const [selectedClients, setSelectedClients] = React.useState<Set<string>>(new Set());
+  const [isBatchEditOpen, setIsBatchEditOpen] = React.useState(false);
   const ITEMS_PER_PAGE = 50;
+
+  const batchUpdate = useUpdateClientsBatch();
+  const batchDelete = useDeleteClientsBatch();
 
   const isBasicView = searchTerm === '' && statusFilter === 'all' && selectedDepartment === '';
 
-  const { data: pagedData, isLoading: pagedLoading } = usePagedClients(
-    currentPage,
-    ITEMS_PER_PAGE
-  );
+  const { data: pagedData, isLoading: pagedLoading } = usePagedClients(currentPage, ITEMS_PER_PAGE);
 
   const baseClients = isBasicView && pagedData?.clients ? pagedData.clients : clients;
 
-  // Unique departments for filter
   const departments = React.useMemo(() => {
     const depts = new Set(clients.map(c => c.department).filter(Boolean));
     return Array.from(depts).sort();
   }, [clients]);
 
-  React.useEffect(() => {
-    setCurrentPage(1);
-  }, [searchTerm, statusFilter, selectedDepartment]);
+  React.useEffect(() => { setCurrentPage(1); }, [searchTerm, statusFilter, selectedDepartment]);
 
   const handleSort = React.useCallback((field: ClientSortField) => {
     if (sortField === field) {
@@ -60,12 +62,8 @@ const Clients = () => {
       client.rut.includes(searchTerm) ||
       client.email.toLowerCase().includes(searchTerm.toLowerCase())
     );
-
-    // Status filter
     if (statusFilter === 'active') filtered = filtered.filter(c => c.isActive);
     if (statusFilter === 'inactive') filtered = filtered.filter(c => !c.isActive);
-
-    // Department filter
     if (selectedDepartment) filtered = filtered.filter(c => c.department === selectedDepartment);
 
     return [...filtered].sort((a, b) => {
@@ -92,6 +90,64 @@ const Clients = () => {
     if (isBasicView && pagedData?.clients) return filteredAndSortedClients;
     return filteredAndSortedClients.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
   }, [isBasicView, pagedData, filteredAndSortedClients, currentPage, ITEMS_PER_PAGE]);
+
+  // Selection handlers
+  const handleToggleSelect = React.useCallback((id: string) => {
+    setSelectedClients(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  }, []);
+
+  const handleSelectAll = React.useCallback((ids: string[]) => {
+    setSelectedClients(prev => {
+      const next = new Set(prev);
+      ids.forEach(id => next.add(id));
+      return next;
+    });
+  }, []);
+
+  const handleDeselectAll = React.useCallback(() => {
+    setSelectedClients(new Set());
+  }, []);
+
+  // Batch actions
+  const handleBatchActivate = React.useCallback(() => {
+    const ids = Array.from(selectedClients);
+    batchUpdate.mutate({ ids, updates: { is_active: true } }, {
+      onSuccess: () => { toast.success(`${ids.length} cliente(s) activado(s)`); setSelectedClients(new Set()); }
+    });
+  }, [selectedClients, batchUpdate]);
+
+  const handleBatchDeactivate = React.useCallback(() => {
+    const ids = Array.from(selectedClients);
+    batchUpdate.mutate({ ids, updates: { is_active: false } }, {
+      onSuccess: () => { toast.success(`${ids.length} cliente(s) desactivado(s)`); setSelectedClients(new Set()); }
+    });
+  }, [selectedClients, batchUpdate]);
+
+  const handleBatchDelete = React.useCallback(() => {
+    const ids = Array.from(selectedClients);
+    if (!window.confirm(`¿Eliminar ${ids.length} cliente(s)? Esta acción no se puede deshacer.`)) return;
+    batchDelete.mutate(ids, {
+      onSuccess: () => { toast.success(`${ids.length} cliente(s) eliminado(s)`); setSelectedClients(new Set()); }
+    });
+  }, [selectedClients, batchDelete]);
+
+  const handleBatchEditConfirm = React.useCallback((updates: { department?: string; isActive?: boolean }) => {
+    const ids = Array.from(selectedClients);
+    const dbUpdates: Record<string, any> = {};
+    if (updates.department !== undefined) dbUpdates.department = updates.department;
+    if (updates.isActive !== undefined) dbUpdates.is_active = updates.isActive;
+    batchUpdate.mutate({ ids, updates: dbUpdates }, {
+      onSuccess: () => {
+        toast.success(`${ids.length} cliente(s) actualizado(s)`);
+        setSelectedClients(new Set());
+        setIsBatchEditOpen(false);
+      }
+    });
+  }, [selectedClients, batchUpdate]);
 
   const handleCreateClient = React.useCallback((clientData: Omit<Client, 'id' | 'createdAt' | 'updatedAt'>) => {
     createClient(clientData);
@@ -139,8 +195,22 @@ const Clients = () => {
     return <div className="flex items-center justify-center h-64"><div className="text-foreground">Cargando clientes...</div></div>;
   }
 
+  const isProcessing = batchUpdate.isPending || batchDelete.isPending;
+
   return (
     <div className="space-y-6 animate-fade-in">
+      {selectedClients.size > 0 && (
+        <ClientBatchActionBar
+          selectedCount={selectedClients.size}
+          onBatchActivate={handleBatchActivate}
+          onBatchDeactivate={handleBatchDeactivate}
+          onBatchEdit={() => setIsBatchEditOpen(true)}
+          onBatchDelete={handleBatchDelete}
+          onClearSelection={handleDeselectAll}
+          isProcessing={isProcessing}
+        />
+      )}
+
       <ClientsHeader
         isDialogOpen={isDialogOpen} setIsDialogOpen={setIsDialogOpen}
         selectedClient={selectedClient} setSelectedClient={setSelectedClient}
@@ -162,6 +232,10 @@ const Clients = () => {
         onViewDetails={handleViewDetails} onNewClient={handleNewClient} searchTerm={searchTerm}
         sortField={sortField} sortDirection={sortDirection} onSort={handleSort}
         serviceCountByClient={serviceCountByClient}
+        selectedClients={selectedClients}
+        onToggleSelect={handleToggleSelect}
+        onSelectAll={handleSelectAll}
+        onDeselectAll={handleDeselectAll}
       />
       
       <AppPagination className="py-4" currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
@@ -169,6 +243,15 @@ const Clients = () => {
       {selectedClientForDetails && (
         <ClientDetailsModal client={selectedClientForDetails} isOpen={isDetailsModalOpen} onClose={handleCloseDetailsModal} />
       )}
+
+      <ClientBatchUpdateModal
+        isOpen={isBatchEditOpen}
+        onClose={() => setIsBatchEditOpen(false)}
+        onConfirm={handleBatchEditConfirm}
+        selectedCount={selectedClients.size}
+        departments={departments}
+        isProcessing={isProcessing}
+      />
     </div>
   );
 };

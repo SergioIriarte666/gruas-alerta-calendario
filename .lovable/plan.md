@@ -1,45 +1,29 @@
 
 
-## Plan: Selección múltiple y acciones masivas en Clientes
+# Fix: RUT normalization consistency + Invoice selection
 
-### Objetivo
-Agregar checkboxes en la tabla de clientes para seleccionar múltiples registros y realizar operaciones masivas, siguiendo el mismo patrón visual y funcional del módulo de Servicios.
+## Problem 1: RUT still not matching
+The `normalizeRut` function in the parser was fixed to strip dots, spaces, and dashes. But in `InvoiceHistoryImport.tsx`, there are 4 places that still use the old regex `replace(/\./g, '')` (only strips dots):
+- Line 136: creating client RUT map
+- Line 188: looking up unmatched invoice RUT
+- Line 193: finding unmatched client entry
+- Line 441: counting importable invoices in the button label
 
-### Acciones masivas disponibles
-- **Activar/Desactivar** clientes seleccionados
-- **Eliminar** clientes seleccionados
-- **Cambiar departamento** en lote
-- **Limpiar selección**
+All of these need to use the same normalization: `replace(/[.\s-]/g, '').trim().toUpperCase()`.
 
-### Cambios técnicos
+## Problem 2: No invoice selection
+Currently all matched invoices are imported automatically with no way to exclude individual ones. The user wants checkboxes to select/deselect invoices.
 
-**1. `src/components/clients/ClientBatchActionBar.tsx`** (nuevo)
-- Barra flotante sticky (misma estructura que `ServiceBatchActionBar`)
-- Muestra cantidad seleccionada
-- Botones: Activar, Desactivar, Eliminar, Limpiar
+### Changes to `InvoiceHistoryImport.tsx`:
+- Add `selectedInvoices` state (`Set<string>`) tracking selected invoice keys
+- Initialize all matched invoices as selected on preview load
+- Add select all / deselect all toggle
+- Add checkbox column to `InvoicePreviewTable`
+- Show all invoices (remove the slice(0,10) limit, keep scroll)
+- Filter by `selectedInvoices` during import
+- Update button count to reflect selection
+- Extract a shared `normalizeRut` helper used consistently everywhere
 
-**2. `src/components/clients/ClientBatchUpdateModal.tsx`** (nuevo)
-- Modal para edición masiva de campos: departamento, estado (activo/inactivo)
-- Toggles para habilitar cada campo (patrón de `CostBatchUpdateModal`)
-
-**3. `src/hooks/useUpdateClientsBatch.ts`** (nuevo)
-- Hook con `useMutation` para actualizar múltiples clientes en Supabase
-- Recibe array de IDs y campos a modificar
-- Invalida query cache `['clients']` on success
-
-**4. `src/components/clients/ClientsTable.tsx`** (modificar)
-- Agregar estado `selectedClients: Set<string>` recibido como prop
-- Checkbox en header (select all / deselect all de la página visible)
-- Checkbox por fila
-- Pasar selección al componente padre
-
-**5. `src/pages/Clients.tsx`** (modificar)
-- Agregar estado `selectedClients` con `useState<Set<string>>`
-- Handlers para toggle individual, select all, clear
-- Renderizar `ClientBatchActionBar` cuando hay selección
-- Renderizar `ClientBatchUpdateModal`
-- Integrar con `useUpdateClientsBatch` para acciones masivas
-
-**6. `src/components/clients/ClientsMobileView.tsx`** (modificar)
-- Agregar checkboxes en la vista mobile para mantener consistencia
+## Files to modify
+- `src/components/invoices/InvoiceHistoryImport.tsx` — fix 4 normalization calls + add selection UI
 
