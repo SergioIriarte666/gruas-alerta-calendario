@@ -324,16 +324,21 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
         return;
       }
 
-      const { data: existingInvoices } = await supabase
-        .from('supplier_invoices')
-        .select('invoice_number, supplier:suppliers(rut)')
-        .not('invoice_number', 'is', null);
+      // Fetch existing invoices and inventory_suppliers separately (no FK join available)
+      const [{ data: existingInvoices }, { data: allInvSups }] = await Promise.all([
+        supabase.from('supplier_invoices').select('invoice_number, supplier_id').not('invoice_number', 'is', null),
+        (supabase as any).from('inventory_suppliers').select('id, rut'),
+      ]);
+
+      const supplierIdToRut = new Map<string, string>();
+      allInvSups?.forEach((s: any) => {
+        if (s.rut) supplierIdToRut.set(s.id, normalizeRut(s.rut));
+      });
 
       const existingKeys = new Set<string>();
-      
       existingInvoices?.forEach((inv: any) => {
-        if (inv.invoice_number && inv.supplier?.rut) {
-          const nRut = normalizeRut(inv.supplier.rut);
+        const nRut = supplierIdToRut.get(inv.supplier_id);
+        if (nRut && inv.invoice_number) {
           existingKeys.add(`${nRut}-${inv.invoice_number}`);
         }
       });
@@ -789,21 +794,29 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
         }
     });
 
-    // Pre-filter: check existing invoices to skip duplicates silently
+    // Pre-filter: check existing invoices using RUT normalization to skip duplicates
     if (invoicesToInsert.length > 0) {
-        const { data: existingInvs } = await supabase
-            .from('supplier_invoices')
-            .select('invoice_number, supplier_id');
+        const [{ data: existingInvs }, { data: invSups }] = await Promise.all([
+            supabase.from('supplier_invoices').select('invoice_number, supplier_id'),
+            (supabase as any).from('inventory_suppliers').select('id, rut'),
+        ]);
+        
+        const sidToRut = new Map<string, string>();
+        invSups?.forEach((s: any) => {
+            if (s.rut) sidToRut.set(s.id, normalizeRut(s.rut));
+        });
         
         const existingSet = new Set<string>();
         existingInvs?.forEach((inv: any) => {
-            if (inv.invoice_number && inv.supplier_id) {
-                existingSet.add(`${inv.supplier_id}-${inv.invoice_number}`);
+            const nRut = sidToRut.get(inv.supplier_id);
+            if (nRut && inv.invoice_number) {
+                existingSet.add(`${nRut}-${inv.invoice_number}`);
             }
         });
         
         const filteredInvoices = invoicesToInsert.filter(inv => {
-            const key = `${inv.supplier_id}-${inv.invoice_number}`;
+            const nRut = sidToRut.get(inv.supplier_id) || '';
+            const key = `${nRut}-${inv.invoice_number}`;
             if (existingSet.has(key)) {
                 console.log(`Omitiendo factura existente: ${inv.invoice_number}`);
                 return false;
