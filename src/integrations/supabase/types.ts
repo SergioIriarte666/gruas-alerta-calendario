@@ -3715,6 +3715,7 @@ export type Database = {
           part_unit_price: number | null
           reference_number: string | null
           status: string
+          subcategory: string | null
           supplier_id: string
           supplier_invoice_id: string | null
           updated_at: string | null
@@ -3739,6 +3740,7 @@ export type Database = {
           part_unit_price?: number | null
           reference_number?: string | null
           status?: string
+          subcategory?: string | null
           supplier_id: string
           supplier_invoice_id?: string | null
           updated_at?: string | null
@@ -3763,6 +3765,7 @@ export type Database = {
           part_unit_price?: number | null
           reference_number?: string | null
           status?: string
+          subcategory?: string | null
           supplier_id?: string
           supplier_invoice_id?: string | null
           updated_at?: string | null
@@ -3813,6 +3816,7 @@ export type Database = {
           notes: string | null
           phone: string | null
           rut: string
+          subcategory: string | null
           updated_at: string | null
           updated_by: string | null
         }
@@ -3829,6 +3833,7 @@ export type Database = {
           notes?: string | null
           phone?: string | null
           rut: string
+          subcategory?: string | null
           updated_at?: string | null
           updated_by?: string | null
         }
@@ -3845,6 +3850,7 @@ export type Database = {
           notes?: string | null
           phone?: string | null
           rut?: string
+          subcategory?: string | null
           updated_at?: string | null
           updated_by?: string | null
         }
