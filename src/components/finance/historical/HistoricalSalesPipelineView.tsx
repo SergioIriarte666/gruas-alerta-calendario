@@ -33,8 +33,8 @@ interface ClientGroup {
 
 const getClientColor = (name: string) => {
   const colors = [
-    '#10b981', '#3b82f6', '#8b5cf6', '#f59e0b',
-    '#ef4444', '#06b6d4', '#ec4899', '#84cc16',
+    '#8b5cf6', '#3b82f6', '#a855f7', '#f59e0b',
+    '#ef4444', '#06b6d4', '#ec4899', '#7c3aed',
   ];
   let hash = 0;
   for (let i = 0; i < name.length; i++) {
@@ -45,7 +45,7 @@ const getClientColor = (name: string) => {
 
 const getStatusBadge = (status: string) => {
   const map: Record<string, { label: string; className: string }> = {
-    paid: { label: 'Pagada', className: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' },
+    paid: { label: 'Pagada', className: 'bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400' },
     sent: { label: 'Enviada', className: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' },
     overdue: { label: 'Vencida', className: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' },
     draft: { label: 'Borrador', className: 'bg-muted text-muted-foreground' },
