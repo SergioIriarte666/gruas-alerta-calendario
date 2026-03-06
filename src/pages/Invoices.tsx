@@ -23,6 +23,18 @@ import InvoiceBatchActions from '@/components/invoices/InvoiceBatchActions';
 import InvoiceExportModal from '@/components/invoices/InvoiceExportModal';
 import { BatchProgressModal, useBatchProgress } from '@/components/ui/batch-progress-modal';
 import { useIsMobile } from '@/hooks/use-mobile';
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from '@/components/ui/alert-dialog';
+import { Input } from '@/components/ui/input';
+import { ShieldAlert } from 'lucide-react';
 
 const INVOICE_STATUS_MAP: { [key: string]: string } = {
   all: 'Todas',
