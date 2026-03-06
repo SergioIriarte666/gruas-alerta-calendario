@@ -655,16 +655,68 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
         }
     }
 
-    // 2. Prepare invoices to insert
+    // 2. Resolve inventory_suppliers IDs for MATCHED invoices
+    // The suppliers table IDs don't match - FK points to inventory_suppliers
+    const matchedRuts = new Set<string>();
+    preview.matched.forEach(inv => {
+        if (inv.rut) matchedRuts.add(normalizeRut(inv.rut));
+    });
+    preview.duplicates.forEach(inv => {
+        if (inv.rut && inv.supplierId) matchedRuts.add(normalizeRut(inv.rut));
+    });
+
+    for (const rut of matchedRuts) {
+        if (supplierRutToId.has(rut)) continue; // Already resolved from unmatched step
+        
+        try {
+            // @ts-ignore
+            const { data: existingInvSup } = await (supabase as any)
+                .from('inventory_suppliers')
+                .select('id')
+                .eq('rut', rut)
+                .maybeSingle();
+            
+            if (existingInvSup) {
+                supplierRutToId.set(rut, existingInvSup.id);
+            } else {
+                // Find supplier info from matched invoices
+                const matchedInv = preview.matched.find(inv => normalizeRut(inv.rut) === rut);
+                const supplierName = matchedInv?.razonSocial || 'Proveedor Desconocido';
+                
+                // @ts-ignore
+                const { data: newInvSup, error: invSupError } = await (supabase as any)
+                    .from('inventory_suppliers')
+                    .insert({
+                        name: supplierName,
+                        rut: rut,
+                        is_active: true
+                    })
+                    .select('id')
+                    .single();
+                    
+                if (!invSupError && newInvSup) {
+                    supplierRutToId.set(rut, newInvSup.id);
+                } else {
+                    console.error('Failed to create inventory_supplier for matched RUT:', rut, invSupError);
+                }
+            }
+        } catch (e) {
+            console.error('Error resolving inventory_supplier for matched RUT:', rut, e);
+        }
+    }
+
+    // 3. Prepare invoices to insert
     const invoicesToInsert: any[] = [];
     
     // Matched invoices
     preview.matched.forEach((inv, i) => {
         const key = `matched-${inv.invoice_number}-${i}`;
         if (selectedInvoices.has(key) && inv.supplierId) {
+            const nRut = normalizeRut(inv.rut);
+            const resolvedSupplierId = supplierRutToId.get(nRut) || inv.supplierId;
             invoicesToInsert.push({
                 invoice_number: inv.invoice_number,
-                supplier_id: inv.supplierId,
+                supplier_id: resolvedSupplierId,
                 issue_date: inv.issueDate,
                 due_date: inv.dueDate,
                 amount: inv.amount,
@@ -714,13 +766,9 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
     preview.duplicates.forEach((inv, i) => {
         const key = `duplicate-${inv.invoice_number}-${i}`;
         if (selectedInvoices.has(key)) {
-             let supplierId = inv.supplierId;
-             
-             // If duplicate didn't have supplier matched initially, check resolved map
-             if (!supplierId) {
-                 const nRut = normalizeRut(inv.rut);
-                 supplierId = supplierRutToId.get(nRut);
-             }
+             const nRut = normalizeRut(inv.rut);
+             // Always resolve through inventory_suppliers map first
+             let supplierId = supplierRutToId.get(nRut) || inv.supplierId;
 
              if (supplierId) {
                 invoicesToInsert.push({
