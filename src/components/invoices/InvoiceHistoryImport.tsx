@@ -24,6 +24,7 @@ import {
   ImportPreview,
   UnmatchedClient,
   ProcessedInvoice,
+  DocumentType,
 } from '@/utils/invoiceHistoryParser';
 import { Client } from '@/types';
 
@@ -258,8 +259,11 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
         setActiveTab('unmatched');
       }
 
+      const parts = [`${result.facturaCount} facturas`];
+      if (result.creditNoteCount > 0) parts.push(`${result.creditNoteCount} NC`);
+      if (result.debitNoteCount > 0) parts.push(`${result.debitNoteCount} ND`);
       toast.success('Archivo procesado', {
-        description: `${result.totalInvoices} facturas detectadas, ${result.skippedNonFactura} documentos no-factura omitidos.`,
+        description: `${result.totalInvoices} documentos detectados: ${parts.join(', ')}.`,
       });
     } catch (error) {
       console.error('Error parsing file:', error);
@@ -569,7 +573,7 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 <div className="bg-muted/50 rounded-lg p-3 text-center">
                   <p className="text-2xl font-bold text-foreground">{preview.totalInvoices}</p>
-                  <p className="text-xs text-muted-foreground">Facturas detectadas</p>
+                  <p className="text-xs text-muted-foreground">Documentos detectados</p>
                 </div>
                 <div className="bg-muted/50 rounded-lg p-3 text-center">
                   <p className="text-2xl font-bold text-green-500">{preview.matched.length}</p>
@@ -585,10 +589,29 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
                 </div>
               </div>
 
-              <div className="text-sm text-muted-foreground">
-                Total: <span className="font-semibold text-foreground">{formatCLP(preview.totalAmount)}</span>
-                {preview.skippedNonFactura > 0 && (
-                  <> — {preview.skippedNonFactura} documentos no-factura omitidos</>
+              <div className="text-sm text-muted-foreground space-y-1">
+                <div>
+                  Total: <span className="font-semibold text-foreground">{formatCLP(preview.totalAmount)}</span>
+                  {preview.skippedNonFactura > 0 && (
+                    <> — {preview.skippedNonFactura} documentos omitidos</>
+                  )}
+                </div>
+                {(preview.creditNoteCount > 0 || preview.debitNoteCount > 0) && (
+                  <div className="flex gap-3 flex-wrap">
+                    <Badge variant="outline" className="text-[10px]">
+                      {preview.facturaCount} Facturas
+                    </Badge>
+                    {preview.creditNoteCount > 0 && (
+                      <Badge variant="outline" className="text-[10px] border-red-300 text-red-600">
+                        {preview.creditNoteCount} Notas de Crédito
+                      </Badge>
+                    )}
+                    {preview.debitNoteCount > 0 && (
+                      <Badge variant="outline" className="text-[10px] border-blue-300 text-blue-600">
+                        {preview.debitNoteCount} Notas de Débito
+                      </Badge>
+                    )}
+                  </div>
                 )}
               </div>
             </div>
@@ -885,7 +908,7 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
                 className="gap-2"
               >
                 {!canImport() && <AlertTriangle className="h-4 w-4" />}
-                Importar {totalToImport} factura{totalToImport !== 1 ? 's' : ''}
+                Importar {totalToImport} documento{totalToImport !== 1 ? 's' : ''}
               </Button>
             </div>
           </div>
