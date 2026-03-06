@@ -53,6 +53,7 @@ export const useSupplierPayments = () => {
           due_date: data.due_date,
           description: data.description,
           category: data.category || null,
+          subcategory: data.subcategory || null,
           reference_number: data.reference_number || null,
           notes: data.notes || null,
           status: data.status || 'pending',
