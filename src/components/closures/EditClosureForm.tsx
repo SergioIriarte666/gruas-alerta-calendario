@@ -178,7 +178,7 @@ export const EditClosureForm: React.FC<EditClosureFormProps> = ({
 
             <div>
               <Label htmlFor="status" className="text-foreground">Estado</Label>
-              <Select onValueChange={(value) => setValue('status', value as any)}>
+              <Select value={watch('status')} onValueChange={(value) => setValue('status', value as any)}>
                 <SelectTrigger>
                   <SelectValue placeholder="Seleccionar estado" />
                 </SelectTrigger>
