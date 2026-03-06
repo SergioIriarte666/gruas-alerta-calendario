@@ -183,7 +183,7 @@ const isLibroDeVentas = (rawRows: any[][]): boolean => {
   const searchRows = rawRows.slice(0, 30);
   for (const row of searchRows) {
     if (!Array.isArray(row)) continue;
-    const joined = row.map(c => String(c ?? '')).join(' ').toUpperCase();
+    const joined = Array.from(row, c => String(c ?? '')).join(' ').toUpperCase();
     if (joined.includes('LIBRO DE VENTAS') || joined.includes('FACTURA ELECTRONICA')) {
       return true;
     }
@@ -198,7 +198,7 @@ const findHeaderRow = (rawRows: any[][]): { headerIdx: number; colMap: Record<st
   for (let i = 0; i < Math.min(rawRows.length, 20); i++) {
     const row = rawRows[i];
     if (!Array.isArray(row)) continue;
-    const upper = row.map(c => String(c ?? '').toUpperCase().trim());
+    const upper = Array.from(row, c => String(c ?? '').toUpperCase().trim());
     const folioIdx = upper.findIndex(c => c === 'FOLIO');
     const rutIdx = upper.findIndex(c => c.includes('R.U.T') || c === 'RUT');
     if (folioIdx >= 0 && rutIdx >= 0) {
@@ -233,7 +233,7 @@ const parseLibroDeVentasXLSX = (rawRows: any[][]): ParsedInvoiceRow[] => {
 
   for (const row of dataRows) {
     if (!Array.isArray(row)) continue;
-    const joinedUpper = row.map(c => String(c ?? '').trim()).join(' ').toUpperCase();
+    const joinedUpper = Array.from(row, c => String(c ?? '').trim()).join(' ').toUpperCase();
     
     // Skip total/subtotal rows
     if (joinedUpper.includes('TOTAL GENERAL') || joinedUpper.includes('TOTAL ')) {
