@@ -53,6 +53,7 @@ export const useSupplierPayments = () => {
           due_date: data.due_date,
           description: data.description,
           category: data.category || null,
+          subcategory: data.subcategory || null,
           reference_number: data.reference_number || null,
           notes: data.notes || null,
           status: data.status || 'pending',
@@ -241,7 +242,7 @@ export const useSupplierPayments = () => {
           crane_id: partDetails.crane_id,
           description: `Compra de piezas: ${partDetails.part_name}`,
           notes: `Pago a proveedor. Cantidad: ${partDetails.part_quantity}, Precio unitario: $${partDetails.part_unit_price}`,
-          subcategory: 'Piezas y Repuestos',
+          subcategory: paymentData.subcategory || 'Piezas y Repuestos',
           payment_date: paymentData.paid_date || new Date().toISOString().split('T')[0],
         })
         .eq('id', paymentWithCost.cost_id)
@@ -261,7 +262,7 @@ export const useSupplierPayments = () => {
           date: paymentData.paid_date || new Date().toISOString().split('T')[0],
           description: `Compra de piezas: ${partDetails.part_name}`,
           notes: `Pago a proveedor. Cantidad: ${partDetails.part_quantity}, Precio unitario: $${partDetails.part_unit_price}`,
-          subcategory: 'Piezas y Repuestos',
+          subcategory: paymentData.subcategory || 'Piezas y Repuestos',
           supplier_payment_id: paymentId,
           supplier_id: paymentData.supplier_id,
           created_by: (await supabase.auth.getUser()).data.user?.id

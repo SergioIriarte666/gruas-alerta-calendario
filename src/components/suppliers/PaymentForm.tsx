@@ -25,6 +25,7 @@ import { useSupplierPayments, getStatusLabel, getStatusColor } from '@/hooks/use
 import { useSuppliers } from '@/hooks/useSuppliers';
 import { usePaymentDuplicateCheck, DuplicatePayment } from '@/hooks/usePaymentDuplicateCheck';
 import { useCostCategories } from '@/hooks/useCostCategories';
+import { useCostSubcategories } from '@/hooks/useCostSubcategories';
 import { PaymentFormData, SupplierPayment, SupplierPaymentStatus } from '@/types/suppliers';
 import { useCranes } from '@/hooks/useCranes';
 import { formatCurrency } from '@/lib/utils';
@@ -39,6 +40,7 @@ const paymentSchema = z.object({
   due_date: z.string().min(1, 'La fecha de vencimiento es requerida'),
   description: z.string().min(1, 'La descripción es requerida'),
   category: z.string().min(1, 'La categoría es requerida'),
+  subcategory: z.string().optional(),
   reference_number: z.string().optional(),
   notes: z.string().optional(),
   status: z.string().min(1, 'El estado es requerido'),
@@ -88,6 +90,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
       due_date: payment?.due_date ? payment.due_date.split('T')[0] : '',
       description: payment?.description || '',
       category: payment?.category || (costCategories?.[0]?.id || ''),
+      subcategory: (payment as any)?.subcategory || '',
       reference_number: payment?.reference_number || '',
       notes: payment?.notes || '',
       status: payment?.status || 'pending' as SupplierPaymentStatus,
@@ -100,6 +103,9 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
       paid_date: payment?.paid_date ? payment.paid_date.split('T')[0] : new Date().toISOString().split('T')[0]
     }
   });
+
+  const selectedCategoryId = form.watch('category');
+  const { subcategories, isLoading: subcategoriesLoading } = useCostSubcategories(selectedCategoryId || undefined);
 
   const handleSubmit = async (data: PaymentFormData) => {
     // Only check for duplicates if reference_number is provided and creating a new payment
@@ -325,6 +331,32 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
                 </p>
               )}
             </div>
+
+            {/* Subcategoría - solo visible si hay subcategorías disponibles */}
+            {selectedCategoryId && subcategories.length > 0 && (
+              <div>
+                <Label className="text-foreground">Subcategoría</Label>
+                <Select
+                  value={form.watch('subcategory') || ''}
+                  onValueChange={(value) => form.setValue('subcategory', value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccionar subcategoría" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {subcategoriesLoading ? (
+                      <SelectItem value="loading" disabled>Cargando...</SelectItem>
+                    ) : (
+                      subcategories.map((sub) => (
+                        <SelectItem key={sub.id} value={sub.name}>
+                          {sub.name}
+                        </SelectItem>
+                      ))
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
 
             <div>
               <Label className="text-foreground">Descripción *</Label>

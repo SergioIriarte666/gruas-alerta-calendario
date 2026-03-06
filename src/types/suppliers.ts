@@ -66,6 +66,7 @@ export interface SupplierFormData {
   address?: string;
   contact_name?: string;
   category: string;
+  subcategory?: string;
   notes?: string;
   is_active: boolean;
 }
@@ -76,6 +77,7 @@ export interface PaymentFormData {
   due_date: string;
   description: string;
   category: string;
+  subcategory?: string;
   reference_number?: string;
   notes?: string;
   status: SupplierPaymentStatus;

@@ -22,6 +22,7 @@ const supplierSchema = z.object({
   address: z.string().optional().or(z.literal('')),
   contact_name: z.string().optional().or(z.literal('')),
   category: z.string().optional().or(z.literal('')),
+  subcategory: z.string().optional().or(z.literal('')),
   notes: z.string().optional(),
   is_active: z.boolean()
 });
@@ -55,6 +56,7 @@ export const SupplierForm: React.FC<SupplierFormProps> = ({
       address: supplier?.address || '',
       contact_name: supplier?.contact_name || '',
       category: supplier?.category || (activeCategories?.[0]?.id || ''),
+      subcategory: (supplier as any)?.subcategory || '',
       notes: supplier?.notes || '',
       is_active: supplier?.is_active ?? true
     }
@@ -72,6 +74,7 @@ export const SupplierForm: React.FC<SupplierFormProps> = ({
       address: data.address || '',
       contact_name: data.contact_name || '',
       category: data.category,
+      subcategory: data.subcategory || '',
       notes: data.notes || '',
       is_active: data.is_active
     };
@@ -173,11 +176,13 @@ export const SupplierForm: React.FC<SupplierFormProps> = ({
         return (
           <SupplierFormStep3
             category={formValues.category}
+            subcategory={formValues.subcategory || ''}
             notes={formValues.notes || ''}
             isActive={formValues.is_active}
             categories={activeCategories}
             categoriesLoading={categoriesLoading}
             onCategoryChange={(value) => form.setValue('category', value)}
+            onSubcategoryChange={(value) => form.setValue('subcategory', value)}
             onNotesChange={(value) => form.setValue('notes', value)}
             onIsActiveChange={(value) => form.setValue('is_active', value)}
             errors={{
