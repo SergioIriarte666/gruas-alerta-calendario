@@ -457,7 +457,8 @@ export const useInvoiceOperations = () => {
 
       const isHistorical = invoiceCheck?.folio?.startsWith('HIST-');
       if (!isHistorical && !options.force) {
-        const error = new Error('PROTECTED_INVOICE');
+        const error = new Error('Esta factura está protegida porque fue creada en la aplicación. Para eliminarla, usa la opción de eliminación con confirmación reforzada.');
+        (error as any).code = 'PROTECTED_INVOICE';
         (error as any).folio = invoiceCheck?.folio;
         throw error;
       }
