@@ -38,8 +38,10 @@ import {
 import { EditHistoricalInvoiceModal } from './historical/EditHistoricalInvoiceModal';
 import { BatchEditHistoricalInvoicesModal } from './historical/BatchEditHistoricalInvoicesModal';
 import { HistoricalSalesGroupedList } from './historical/HistoricalSalesGroupedList';
-import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
+import { HistoricalSalesPipelineView } from './historical/HistoricalSalesPipelineView';
+import { LayoutList, Users, LayoutGrid } from 'lucide-react';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
 
 const HISTORICAL_NOTE = 'Importación historial';
 
@@ -51,13 +53,13 @@ export const HistoricalSales = () => {
   const [invoiceToDelete, setInvoiceToDelete] = useState<string | null>(null);
   const [isBatchDelete, setIsBatchDelete] = useState(false);
   const [batchEditOpen, setBatchEditOpen] = useState(false);
-  const [isGroupedByClient, setIsGroupedByClient] = useState(false);
+  const [viewMode, setViewMode] = useState<'table' | 'grouped' | 'pipeline'>('table');
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   
   // Reset selection when filters change or view changes
   useEffect(() => {
     setSelectedIds([]);
-  }, [isGroupedByClient]);
+  }, [viewMode]);
 
   // Real-time subscription
   useEffect(() => {
@@ -282,41 +284,74 @@ export const HistoricalSales = () => {
             onClearFilters={handleClearFilters}
           />
           
-          <div className="flex items-center space-x-2 bg-muted/50 p-2 rounded-lg border">
-            <Switch
-              id="group-by-client"
-              checked={isGroupedByClient}
-              onCheckedChange={setIsGroupedByClient}
-            />
-            <Label htmlFor="group-by-client" className="cursor-pointer">Agrupar por cliente</Label>
-          </div>
+          <TooltipProvider>
+            <ToggleGroup
+              type="single"
+              value={viewMode}
+              onValueChange={(v) => v && setViewMode(v as any)}
+              className="bg-muted/50 p-1 rounded-lg border"
+            >
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <ToggleGroupItem value="table" aria-label="Vista tabla" className="px-3">
+                    <LayoutList className="h-4 w-4" />
+                  </ToggleGroupItem>
+                </TooltipTrigger>
+                <TooltipContent>Tabla</TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <ToggleGroupItem value="grouped" aria-label="Agrupado por cliente" className="px-3">
+                    <Users className="h-4 w-4" />
+                  </ToggleGroupItem>
+                </TooltipTrigger>
+                <TooltipContent>Agrupado por cliente</TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <ToggleGroupItem value="pipeline" aria-label="Pipeline por cliente" className="px-3">
+                    <LayoutGrid className="h-4 w-4" />
+                  </ToggleGroupItem>
+                </TooltipTrigger>
+                <TooltipContent>Pipeline por cliente</TooltipContent>
+              </Tooltip>
+            </ToggleGroup>
+          </TooltipProvider>
         </div>
 
-        <div className="rounded-md border bg-card">
-          {isGroupedByClient ? (
-            <HistoricalSalesGroupedList
-              invoices={filteredAndSortedInvoices}
-              sortConfig={sortConfig}
-              onSort={handleSort}
-              onEdit={setEditingInvoice}
-              onDelete={confirmDelete}
-              selectedIds={selectedIds}
-              onSelectId={handleSelectId}
-              onSelectAll={handleSelectAll}
-            />
-          ) : (
-            <HistoricalSalesTable
-              invoices={filteredAndSortedInvoices}
-              sortConfig={sortConfig}
-              onSort={handleSort}
-              onEdit={setEditingInvoice}
-              onDelete={confirmDelete}
-              selectedIds={selectedIds}
-              onSelectId={handleSelectId}
-              onSelectAll={(checked) => handleSelectAll(filteredAndSortedInvoices.map(i => i.id), checked)}
-            />
-          )}
-        </div>
+        {viewMode === 'pipeline' ? (
+          <HistoricalSalesPipelineView
+            invoices={filteredAndSortedInvoices}
+            onEdit={setEditingInvoice}
+            onDelete={confirmDelete}
+          />
+        ) : (
+          <div className="rounded-md border bg-card">
+            {viewMode === 'grouped' ? (
+              <HistoricalSalesGroupedList
+                invoices={filteredAndSortedInvoices}
+                sortConfig={sortConfig}
+                onSort={handleSort}
+                onEdit={setEditingInvoice}
+                onDelete={confirmDelete}
+                selectedIds={selectedIds}
+                onSelectId={handleSelectId}
+                onSelectAll={handleSelectAll}
+              />
+            ) : (
+              <HistoricalSalesTable
+                invoices={filteredAndSortedInvoices}
+                sortConfig={sortConfig}
+                onSort={handleSort}
+                onEdit={setEditingInvoice}
+                onDelete={confirmDelete}
+                selectedIds={selectedIds}
+                onSelectId={handleSelectId}
+                onSelectAll={(checked) => handleSelectAll(filteredAndSortedInvoices.map(i => i.id), checked)}
+              />
+            )}
+          </div>
+        )}
       </div>
 
       {/* Batch Actions Bar */}
