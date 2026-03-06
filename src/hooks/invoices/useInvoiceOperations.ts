@@ -457,7 +457,8 @@ export const useInvoiceOperations = () => {
 
       const isHistorical = invoiceCheck?.folio?.startsWith('HIST-');
       if (!isHistorical && !options.force) {
-        const error = new Error('PROTECTED_INVOICE');
+        const error = new Error('Esta factura está protegida porque fue creada en la aplicación. Para eliminarla, usa la opción de eliminación con confirmación reforzada.');
+        (error as any).code = 'PROTECTED_INVOICE';
         (error as any).folio = invoiceCheck?.folio;
         throw error;
       }
@@ -588,11 +589,15 @@ export const useInvoiceOperations = () => {
         description: "La factura ha sido anulada y los servicios están disponibles para nueva facturación.",
       });
     } catch (error: any) {
-      console.error('Error al anular factura:', error);
+      console.error('Error al eliminar factura:', error);
       
-      if (!error.message?.includes('permission denied')) {
-        toast.error("Error al anular factura", {
-          description: error.message || "No se pudo anular la factura.",
+      if (error.code === 'PROTECTED_INVOICE') {
+        toast.error("Factura protegida", {
+          description: "Esta factura fue creada en la app y no puede eliminarse directamente. Usa la confirmación reforzada.",
+        });
+      } else if (!error.message?.includes('permission denied')) {
+        toast.error("No se pudo eliminar la factura", {
+          description: error.message || "Ocurrió un error inesperado. Intenta nuevamente.",
         });
       }
       throw error;

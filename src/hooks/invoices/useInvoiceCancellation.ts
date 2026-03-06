@@ -243,8 +243,8 @@ export const useInvoiceCancellation = () => {
 
     } catch (error: any) {
       console.error('❌ Error en anulación:', error);
-      toast.error("Error al anular factura", {
-        description: error.message || "No se pudo completar la anulación.",
+      toast.error("No se pudo anular la factura", {
+        description: error.message || "Ocurrió un error inesperado. Por favor, intenta nuevamente.",
       });
       throw error;
     }

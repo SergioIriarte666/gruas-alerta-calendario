@@ -247,9 +247,17 @@ export const HistoricalPurchases = () => {
         await deleteInvoice(invoiceToDelete);
         toast.success('Factura eliminada correctamente');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error deleting invoice(s):', error);
-      toast.error('Error al eliminar factura(s)');
+      if (error?.code === 'PROTECTED_INVOICE') {
+        toast.error('Factura protegida', {
+          description: 'Esta factura fue creada en la app y requiere confirmación reforzada para ser eliminada.',
+        });
+      } else {
+        toast.error('No se pudo eliminar', {
+          description: 'Ocurrió un error al intentar eliminar la(s) factura(s). Intenta nuevamente.',
+        });
+      }
     } finally {
       setDeleteDialogOpen(false);
       setInvoiceToDelete(null);
