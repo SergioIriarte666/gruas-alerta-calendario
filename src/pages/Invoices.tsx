@@ -71,6 +71,13 @@ const Invoices = () => {
   const batchProgress = useBatchProgress();
   const ITEMS_PER_PAGE = 10;
   
+  // State for reinforced delete dialog
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+  const [pendingDeleteFolio, setPendingDeleteFolio] = useState<string>('');
+  const [pendingBatchDeleteIds, setPendingBatchDeleteIds] = useState<string[]>([]);
+  
   // Use a delayed state for showing form when navigating from closures to allow UI to breathe
   const [isFormReady, setIsFormReady] = useState(false);
 
@@ -268,15 +275,67 @@ const Invoices = () => {
   };
 
   const handleDeleteInvoice = async (id: string) => {
-    if (window.confirm('¿Está seguro de que desea eliminar esta factura?')) {
-      try {
-        await deleteInvoice(id);
+    const invoice = invoices.find(inv => inv.id === id);
+    const isHistorical = invoice?.folio?.startsWith('HIST-');
+    
+    if (isHistorical) {
+      // Históricas: confirmación simple
+      if (window.confirm('¿Está seguro de que desea eliminar esta factura histórica?')) {
+        try {
+          await deleteInvoice(id, { force: true });
+          toast.success("Factura eliminada", {
+            description: "La factura histórica ha sido eliminada.",
+          });
+        } catch (error) {
+          console.error('Error deleting invoice:', error);
+        }
+      }
+    } else {
+      // Protegidas: diálogo reforzado
+      setPendingDeleteId(id);
+      setPendingDeleteFolio(invoice?.folio || '');
+      setPendingBatchDeleteIds([]);
+      setDeleteConfirmText('');
+      setDeleteDialogOpen(true);
+    }
+  };
+
+  const handleConfirmProtectedDelete = async () => {
+    try {
+      if (pendingDeleteId) {
+        // Single delete
+        await deleteInvoice(pendingDeleteId, { force: true });
         toast.success("Factura eliminada", {
           description: "La factura ha sido eliminada exitosamente.",
         });
-      } catch (error) {
-        console.error('Error deleting invoice:', error);
+      } else if (pendingBatchDeleteIds.length > 0) {
+        // Batch delete of protected invoices
+        batchProgress.start('Eliminando Facturas Protegidas', pendingBatchDeleteIds.length);
+        let errorCount = 0;
+        for (let i = 0; i < pendingBatchDeleteIds.length; i++) {
+          const id = pendingBatchDeleteIds[i];
+          const inv = invoices.find(inv => inv.id === id);
+          batchProgress.update(i + 1, inv?.folio || id);
+          try {
+            await deleteInvoice(id, { force: true });
+          } catch (err) {
+            errorCount++;
+          }
+        }
+        setSelectedInvoiceIds([]);
+        if (errorCount === 0) {
+          batchProgress.complete();
+        } else {
+          batchProgress.error(`${errorCount} factura(s) con error`);
+        }
       }
+    } catch (error) {
+      console.error('Error deleting protected invoice:', error);
+    } finally {
+      setDeleteDialogOpen(false);
+      setDeleteConfirmText('');
+      setPendingDeleteId(null);
+      setPendingBatchDeleteIds([]);
     }
   };
 
