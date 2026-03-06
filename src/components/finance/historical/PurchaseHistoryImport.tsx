@@ -766,13 +766,9 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
     preview.duplicates.forEach((inv, i) => {
         const key = `duplicate-${inv.invoice_number}-${i}`;
         if (selectedInvoices.has(key)) {
-             let supplierId = inv.supplierId;
-             
-             // If duplicate didn't have supplier matched initially, check resolved map
-             if (!supplierId) {
-                 const nRut = normalizeRut(inv.rut);
-                 supplierId = supplierRutToId.get(nRut);
-             }
+             const nRut = normalizeRut(inv.rut);
+             // Always resolve through inventory_suppliers map first
+             let supplierId = supplierRutToId.get(nRut) || inv.supplierId;
 
              if (supplierId) {
                 invoicesToInsert.push({
