@@ -73,8 +73,6 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
   const { suppliers } = useSuppliers();
   const { cranes } = useCranes();
   const { data: costCategories = [], isLoading: categoriesLoading } = useCostCategories();
-  const selectedCategoryId = form.watch('category');
-  const { subcategories, isLoading: subcategoriesLoading } = useCostSubcategories(selectedCategoryId || undefined);
   const { checkDuplicate } = usePaymentDuplicateCheck();
   const { descriptionSuggestions, partNameSuggestions } = useFrequentSupplierData();
   
