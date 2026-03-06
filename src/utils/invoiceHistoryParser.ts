@@ -232,7 +232,7 @@ const parseLibroDeVentasXLSX = (rawRows: any[][]): ParsedInvoiceRow[] => {
   const results: ParsedInvoiceRow[] = [];
 
   for (const row of dataRows) {
-    // Check if this is a section header row
+    if (!Array.isArray(row)) continue;
     const joinedUpper = row.map(c => String(c ?? '').trim()).join(' ').toUpperCase();
     
     // Skip total/subtotal rows
