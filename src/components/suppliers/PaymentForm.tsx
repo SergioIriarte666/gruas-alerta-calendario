@@ -73,6 +73,8 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
   const { suppliers } = useSuppliers();
   const { cranes } = useCranes();
   const { data: costCategories = [], isLoading: categoriesLoading } = useCostCategories();
+  const selectedCategoryId = form.watch('category');
+  const { subcategories, isLoading: subcategoriesLoading } = useCostSubcategories(selectedCategoryId || undefined);
   const { checkDuplicate } = usePaymentDuplicateCheck();
   const { descriptionSuggestions, partNameSuggestions } = useFrequentSupplierData();
   
@@ -90,6 +92,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
       due_date: payment?.due_date ? payment.due_date.split('T')[0] : '',
       description: payment?.description || '',
       category: payment?.category || (costCategories?.[0]?.id || ''),
+      subcategory: (payment as any)?.subcategory || '',
       reference_number: payment?.reference_number || '',
       notes: payment?.notes || '',
       status: payment?.status || 'pending' as SupplierPaymentStatus,
