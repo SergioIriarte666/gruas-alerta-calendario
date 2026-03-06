@@ -7,7 +7,7 @@ import { ColoredSectionCard } from '@/components/services/form/ColoredSectionCar
 import { Tag, FileText, Power, Star } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
+import { useCostSubcategories } from '@/hooks/useCostSubcategories';
 
 interface Category {
   id: string;
@@ -16,11 +16,13 @@ interface Category {
 
 interface SupplierFormStep3Props {
   category: string;
+  subcategory: string;
   notes: string;
   isActive: boolean;
   categories: Category[];
   categoriesLoading: boolean;
   onCategoryChange: (value: string) => void;
+  onSubcategoryChange: (value: string) => void;
   onNotesChange: (value: string) => void;
   onIsActiveChange: (value: boolean) => void;
   errors: {
@@ -40,18 +42,26 @@ const EVALUATION_TAGS = [
 
 export const SupplierFormStep3 = ({ 
   category, 
+  subcategory,
   notes, 
   isActive,
   categories,
   categoriesLoading,
   onCategoryChange,
+  onSubcategoryChange,
   onNotesChange,
   onIsActiveChange,
   errors 
 }: SupplierFormStep3Props) => {
 
+  const { subcategories, isLoading: subcategoriesLoading } = useCostSubcategories(category || undefined);
+
+  const handleCategoryChange = (value: string) => {
+    onCategoryChange(value);
+    onSubcategoryChange(''); // Reset subcategory when category changes
+  };
+
   const handleRatingClick = (rating: number) => {
-    // Buscar si ya existe una línea de calificación
     const ratingLineRegex = /^Calificación: .*\n?/;
     const stars = "⭐".repeat(rating);
     const newRatingLine = `Calificación: ${stars} (${rating}/5)\n`;
@@ -71,7 +81,6 @@ export const SupplierFormStep3 = ({
     onNotesChange(`${notes}${separator}- ${tagLabel}`);
   };
 
-  // Extract current rating for visualization
   const currentRatingMatch = notes.match(/^Calificación: (?:⭐)+ \((\d)\/5\)/);
   const currentRating = currentRatingMatch ? parseInt(currentRatingMatch[1]) : 0;
 
@@ -84,32 +93,60 @@ export const SupplierFormStep3 = ({
         required
         hasError={!!errors.category}
       >
-        <div className="space-y-2">
-          <Label className="text-foreground">Categoría *</Label>
-          <Select
-            value={category}
-            onValueChange={onCategoryChange}
-          >
-            <SelectTrigger className="bg-background">
-              <SelectValue placeholder="Seleccionar categoría" />
-            </SelectTrigger>
-            <SelectContent>
-              {categoriesLoading ? (
-                <SelectItem value="loading" disabled>Cargando categorías...</SelectItem>
-              ) : (
-                categories.map((cat) => (
-                  <SelectItem 
-                    key={cat.id} 
-                    value={cat.id}
-                  >
-                    {cat.label}
-                  </SelectItem>
-                ))
-              )}
-            </SelectContent>
-          </Select>
-          {errors.category && (
-            <p className="text-destructive text-sm">{errors.category}</p>
+        <div className="space-y-3">
+          <div className="space-y-2">
+            <Label className="text-foreground">Categoría *</Label>
+            <Select
+              value={category}
+              onValueChange={handleCategoryChange}
+            >
+              <SelectTrigger className="bg-background">
+                <SelectValue placeholder="Seleccionar categoría" />
+              </SelectTrigger>
+              <SelectContent>
+                {categoriesLoading ? (
+                  <SelectItem value="loading" disabled>Cargando categorías...</SelectItem>
+                ) : (
+                  categories.map((cat) => (
+                    <SelectItem 
+                      key={cat.id} 
+                      value={cat.id}
+                    >
+                      {cat.label}
+                    </SelectItem>
+                  ))
+                )}
+              </SelectContent>
+            </Select>
+            {errors.category && (
+              <p className="text-destructive text-sm">{errors.category}</p>
+            )}
+          </div>
+
+          {/* Subcategoría - solo visible si hay subcategorías disponibles */}
+          {category && subcategories.length > 0 && (
+            <div className="space-y-2">
+              <Label className="text-foreground">Subcategoría</Label>
+              <Select
+                value={subcategory}
+                onValueChange={onSubcategoryChange}
+              >
+                <SelectTrigger className="bg-background">
+                  <SelectValue placeholder="Seleccionar subcategoría" />
+                </SelectTrigger>
+                <SelectContent>
+                  {subcategoriesLoading ? (
+                    <SelectItem value="loading" disabled>Cargando...</SelectItem>
+                  ) : (
+                    subcategories.map((sub) => (
+                      <SelectItem key={sub.id} value={sub.name}>
+                        {sub.name}
+                      </SelectItem>
+                    ))
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
           )}
         </div>
       </ColoredSectionCard>
