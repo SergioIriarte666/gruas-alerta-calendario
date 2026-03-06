@@ -195,8 +195,8 @@ export const HistoricalSalesPipelineView = ({ invoices, onEdit, onDelete }: Hist
                             {group.count}
                           </span>
                         </div>
-                        <p className="text-sm text-muted-foreground">
-                          {formatCurrency(group.totalAmount)} · {group.months.length} {group.months.length === 1 ? 'mes' : 'meses'}
+                        <p className="text-sm text-primary font-semibold">
+                          {formatCurrency(group.totalAmount)} <span className="text-muted-foreground font-normal">· {group.months.length} {group.months.length === 1 ? 'mes' : 'meses'}</span>
                         </p>
                       </div>
                     </div>
