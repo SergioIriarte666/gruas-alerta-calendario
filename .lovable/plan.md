@@ -1,29 +1,38 @@
 
 
-# Fix: RUT normalization consistency + Invoice selection
+## Plan: Corregir errores de importación en Historial de Compras
 
-## Problem 1: RUT still not matching
-The `normalizeRut` function in the parser was fixed to strip dots, spaces, and dashes. But in `InvoiceHistoryImport.tsx`, there are 4 places that still use the old regex `replace(/\./g, '')` (only strips dots):
-- Line 136: creating client RUT map
-- Line 188: looking up unmatched invoice RUT
-- Line 193: finding unmatched client entry
-- Line 441: counting importable invoices in the button label
+### Problema identificado
 
-All of these need to use the same normalization: `replace(/[.\s-]/g, '').trim().toUpperCase()`.
+Hay **3 problemas distintos** causando los 35 errores:
 
-## Problem 2: No invoice selection
-Currently all matched invoices are imported automatically with no way to exclude individual ones. The user wants checkboxes to select/deselect invoices.
+1. **Columna `created_by` no existe** en `supplier_invoices` — el código la envía y Supabase la rechaza (error PGRST204)
+2. **No existe constraint unique** en `(supplier_id, invoice_number)` — el upsert falla (error 42P10), y la lógica de fallback inserta el batch completo con plain insert, pero luego intenta re-insertar individualmente los mismos registros (duplicando conteo de errores)
+3. **Formato de RUT inconsistente**: la tabla `suppliers` guarda RUTs con formato (e.g., `77.225.200-5`) mientras el parser normaliza quitando puntos/guiones. Esto impide el match correcto por RUT
 
-### Changes to `InvoiceHistoryImport.tsx`:
-- Add `selectedInvoices` state (`Set<string>`) tracking selected invoice keys
-- Initialize all matched invoices as selected on preview load
-- Add select all / deselect all toggle
-- Add checkbox column to `InvoicePreviewTable`
-- Show all invoices (remove the slice(0,10) limit, keep scroll)
-- Filter by `selectedInvoices` during import
-- Update button count to reflect selection
-- Extract a shared `normalizeRut` helper used consistently everywhere
+### Cambios en `PurchaseHistoryImport.tsx`
 
-## Files to modify
-- `src/components/invoices/InvoiceHistoryImport.tsx` — fix 4 normalization calls + add selection UI
+1. **Eliminar `created_by`** de todos los objetos de inserción a `supplier_invoices` (no existe en la tabla)
+2. **Simplificar la estrategia de inserción**: Usar directamente `insert` (no `upsert`) ya que no hay constraint unique. Eliminar toda la cascada de fallbacks que genera errores falsos
+3. **Normalizar RUT al comparar con suppliers**: En `processPurchaseRows`, normalizar el RUT del supplier antes de comparar, para que `77.225.200-5` == `772252005`
+4. **Omitir duplicados silenciosamente**: Pre-verificar facturas existentes antes del insert y saltar las que ya existen, sin contarlas como error
+
+### Cambios en `purchaseHistoryParser.ts`
+
+5. **Normalizar RUT de suppliers** al buscar match: cambiar la línea que compara `suppliers.find(s => normalizeRut(s.rut || '') === rut)` — esto ya está correcto, pero verificar que el match con `inventory_suppliers` también normalice
+
+### Detalle técnico del flujo simplificado de inserción
+
+```text
+Antes (cascada de errores):
+  upsert + created_by → FAIL → upsert sin created_by → FAIL (no constraint)
+  → insert batch → OK pero error var set → individual retry → DUPLICATE errors
+
+Después (directo):
+  insert batch (sin created_by) → OK
+  Si falla batch → insert individual → cuenta errores reales
+```
+
+### Archivos a modificar
+- `src/components/finance/historical/PurchaseHistoryImport.tsx`
 
