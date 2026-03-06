@@ -669,26 +669,29 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
         if (supplierRutToId.has(rut)) continue; // Already resolved from unmatched step
         
         try {
+            // Fetch ALL inventory_suppliers and match by normalized RUT
+            // (DB may store formatted RUTs like "77.225.200-5")
             // @ts-ignore
-            const { data: existingInvSup } = await (supabase as any)
+            const { data: allInvSups } = await (supabase as any)
                 .from('inventory_suppliers')
-                .select('id')
-                .eq('rut', rut)
-                .maybeSingle();
+                .select('id, rut, name');
             
-            if (existingInvSup) {
-                supplierRutToId.set(rut, existingInvSup.id);
+            const matchedInvSup = allInvSups?.find((s: any) => normalizeRut(s.rut || '') === rut);
+            
+            if (matchedInvSup) {
+                supplierRutToId.set(rut, matchedInvSup.id);
             } else {
                 // Find supplier info from matched invoices
                 const matchedInv = preview.matched.find(inv => normalizeRut(inv.rut) === rut);
                 const supplierName = matchedInv?.razonSocial || 'Proveedor Desconocido';
+                const originalRut = matchedInv?.rut || rut;
                 
                 // @ts-ignore
                 const { data: newInvSup, error: invSupError } = await (supabase as any)
                     .from('inventory_suppliers')
                     .insert({
                         name: supplierName,
-                        rut: rut,
+                        rut: originalRut,
                         is_active: true
                     })
                     .select('id')
