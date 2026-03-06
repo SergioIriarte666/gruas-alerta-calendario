@@ -532,11 +532,11 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
                 let inventorySupplierId: string | null = null;
                 
                 // @ts-ignore - inventory_suppliers missing in types but exists in DB
-                const { data: existingInvSup } = await (supabase as any)
+                const { data: allInvSups } = await (supabase as any)
                     .from('inventory_suppliers')
-                    .select('id')
-                    .eq('rut', us.rut)
-                    .maybeSingle();
+                    .select('id, rut');
+                
+                const existingInvSup = allInvSups?.find((s: any) => normalizeRut(s.rut || '') === nRut);
 
                 if (existingInvSup) {
                     inventorySupplierId = existingInvSup.id;
@@ -568,11 +568,12 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
                 // B. Handle public.suppliers (For UI consistency)
                 // We do this 'best effort' - if it fails, we don't block the import
                 try {
-                    const { data: existingSup } = await supabase
+                    // Check by fetching all and normalizing (RUT format may differ)
+                    const { data: allSups } = await supabase
                         .from('suppliers')
-                        .select('id')
-                        .eq('rut', us.rut)
-                        .maybeSingle();
+                        .select('id, rut');
+                    
+                    const existingSup = allSups?.find(s => normalizeRut(s.rut || '') === nRut);
                     
                     if (!existingSup) {
                          const { error: supError } = await supabase
@@ -617,13 +618,13 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
             
             const nRut = normalizeRut(us.rut); // The RUT from the file
             
-            // Try to find in inventory_suppliers by RUT
+            // Try to find in inventory_suppliers by normalized RUT
             // @ts-ignore
-            const { data: existingInvSup } = await (supabase as any)
+            const { data: allInvSups } = await (supabase as any)
                 .from('inventory_suppliers')
-                .select('id')
-                .eq('rut', us.rut) 
-                .maybeSingle();
+                .select('id, rut');
+            
+            const existingInvSup = allInvSups?.find((s: any) => normalizeRut(s.rut || '') === nRut);
             
             if (existingInvSup) {
                 supplierRutToId.set(nRut, existingInvSup.id);
@@ -669,26 +670,29 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
         if (supplierRutToId.has(rut)) continue; // Already resolved from unmatched step
         
         try {
+            // Fetch ALL inventory_suppliers and match by normalized RUT
+            // (DB may store formatted RUTs like "77.225.200-5")
             // @ts-ignore
-            const { data: existingInvSup } = await (supabase as any)
+            const { data: allInvSups } = await (supabase as any)
                 .from('inventory_suppliers')
-                .select('id')
-                .eq('rut', rut)
-                .maybeSingle();
+                .select('id, rut, name');
             
-            if (existingInvSup) {
-                supplierRutToId.set(rut, existingInvSup.id);
+            const matchedInvSup = allInvSups?.find((s: any) => normalizeRut(s.rut || '') === rut);
+            
+            if (matchedInvSup) {
+                supplierRutToId.set(rut, matchedInvSup.id);
             } else {
                 // Find supplier info from matched invoices
                 const matchedInv = preview.matched.find(inv => normalizeRut(inv.rut) === rut);
                 const supplierName = matchedInv?.razonSocial || 'Proveedor Desconocido';
+                const originalRut = matchedInv?.rut || rut;
                 
                 // @ts-ignore
                 const { data: newInvSup, error: invSupError } = await (supabase as any)
                     .from('inventory_suppliers')
                     .insert({
                         name: supplierName,
-                        rut: rut,
+                        rut: originalRut,
                         is_active: true
                     })
                     .select('id')
@@ -724,7 +728,6 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
                 net_amount: inv.net_amount,
                 status: inv.status,
                 description: inv.description,
-                created_by: userId
             });
         }
     });
@@ -753,7 +756,6 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
                     net_amount: inv.net_amount,
                     status: inv.status,
                     description: inv.description,
-                    created_by: userId
                 });
             } else {
                 console.warn(`Skipping invoice ${inv.invoice_number}: Supplier not resolved for RUT ${inv.rut}`);
@@ -767,7 +769,6 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
         const key = `duplicate-${inv.invoice_number}-${i}`;
         if (selectedInvoices.has(key)) {
              const nRut = normalizeRut(inv.rut);
-             // Always resolve through inventory_suppliers map first
              let supplierId = supplierRutToId.get(nRut) || inv.supplierId;
 
              if (supplierId) {
@@ -781,7 +782,6 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
                     net_amount: inv.net_amount,
                     status: inv.status,
                     description: inv.description,
-                    created_by: userId
                 });
              } else {
                  errors++;
@@ -789,90 +789,59 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
         }
     });
 
-        // Batch insert/upsert
+    // Pre-filter: check existing invoices to skip duplicates silently
+    if (invoicesToInsert.length > 0) {
+        const { data: existingInvs } = await supabase
+            .from('supplier_invoices')
+            .select('invoice_number, supplier_id');
+        
+        const existingSet = new Set<string>();
+        existingInvs?.forEach((inv: any) => {
+            if (inv.invoice_number && inv.supplier_id) {
+                existingSet.add(`${inv.supplier_id}-${inv.invoice_number}`);
+            }
+        });
+        
+        const filteredInvoices = invoicesToInsert.filter(inv => {
+            const key = `${inv.supplier_id}-${inv.invoice_number}`;
+            if (existingSet.has(key)) {
+                console.log(`Omitiendo factura existente: ${inv.invoice_number}`);
+                return false;
+            }
+            return true;
+        });
+        
+        const skipped = invoicesToInsert.length - filteredInvoices.length;
+        if (skipped > 0) {
+            console.log(`${skipped} facturas omitidas por duplicado`);
+        }
+
+        // Simple batch insert (no upsert, no created_by)
         const batchSize = 50;
-        for (let i = 0; i < invoicesToInsert.length; i += batchSize) {
-            const batch = invoicesToInsert.slice(i, i + batchSize);
+        for (let i = 0; i < filteredInvoices.length; i += batchSize) {
+            const batch = filteredInvoices.slice(i, i + batchSize);
             
-            // Intento 1: Upsert completo
-            let { error } = await supabase
+            const { error } = await supabase
                 .from('supplier_invoices')
-                .upsert(batch, { onConflict: 'supplier_id,invoice_number' }); 
-            
-            let method = 'upsert';
+                .insert(batch);
 
-            // Si falla por falta de constraint unique (42P10), cambiamos a insert
-            if (error && (error.code === '42P10' || error.message?.includes('constraint') || error.message?.includes('conflict'))) {
-                 method = 'insert';
-                 const retry = await supabase
-                    .from('supplier_invoices')
-                    .insert(batch);
-                 error = retry.error;
-            }
-
-            // Fallback: Si falla por columna created_by inexistente
-            if (error && (error.message?.includes('column "created_by" does not exist') || error.message?.includes("Could not find the 'created_by' column"))) {
-                const cleanBatch = batch.map(({ created_by, ...rest }: any) => rest);
-                if (method === 'upsert') {
-                    const retry = await supabase
-                        .from('supplier_invoices')
-                        .upsert(cleanBatch, { onConflict: 'supplier_id,invoice_number' });
-                    error = retry.error;
-                    // Si falla upsert de nuevo por constraint, intentar insert
-                    if (error && (error.code === '42P10' || error.message?.includes('constraint'))) {
-                        method = 'insert';
-                        const retryInsert = await supabase.from('supplier_invoices').insert(cleanBatch);
-                        error = retryInsert.error;
-                    }
-                } else {
-                    const retry = await supabase
-                        .from('supplier_invoices')
-                        .insert(cleanBatch);
-                    error = retry.error;
-                }
-            }
-            
-            // Si sigue habiendo error (ej: FK, o cualquier otro), intentamos uno por uno
             if (error) {
-                console.error('Batch error, trying individual items:', error);
+                console.error('Batch insert error, trying individually:', error);
                 
+                // Fallback: insert one by one to identify specific failures
                 for (const item of batch) {
-                    let singleError;
-                    
-                    // Intentar con el método que decidimos (upsert o insert)
-                    if (method === 'upsert') {
-                         const res = await supabase
-                             .from('supplier_invoices')
-                             .upsert(item, { onConflict: 'supplier_id,invoice_number' });
-                         singleError = res.error;
-                         
-                         // Si falla upsert individual por constraint, cambiar a insert para este item
-                         if (singleError && singleError.code === '42P10') {
-                             const resInsert = await supabase.from('supplier_invoices').insert(item);
-                             singleError = resInsert.error;
-                         }
-                    } else {
-                         const res = await supabase.from('supplier_invoices').insert(item);
-                         singleError = res.error;
-                    }
-
-                    // Si falla, intentar sin created_by
-                    if (singleError && (singleError.message?.includes('created_by'))) {
-                        const { created_by, ...cleanItem } = item;
-                        if (method === 'upsert' && singleError.code !== '42P10') {
-                            const res = await supabase
-                                .from('supplier_invoices')
-                                .upsert(cleanItem, { onConflict: 'supplier_id,invoice_number' });
-                            singleError = res.error;
-                        } else {
-                            const res = await supabase.from('supplier_invoices').insert(cleanItem);
-                            singleError = res.error;
-                        }
-                    }
+                    const { error: singleError } = await supabase
+                        .from('supplier_invoices')
+                        .insert(item);
 
                     if (singleError) {
-                        console.error('Failed to insert single item:', item.invoice_number, singleError);
-                        errors++;
+                        // Skip duplicate key errors silently
+                        if (singleError.code === '23505') {
+                            console.log(`Omitiendo duplicado: ${item.invoice_number}`);
+                        } else {
+                            console.error('Failed to insert:', item.invoice_number, singleError);
+                            errors++;
+                        }
                     } else {
                         imported++;
                     }
@@ -881,6 +850,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
                 imported += batch.length;
             }
         }
+    }
 
     setImportResult({ imported, errors });
     setImporting(false);
