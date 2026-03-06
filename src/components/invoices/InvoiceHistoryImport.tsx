@@ -568,7 +568,7 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
         )}
 
         {step === 'preview' && preview && (
-          <div className="flex flex-col">
+          <div className="flex flex-col flex-1 min-h-0">
             <div className="flex-none px-1 py-4 space-y-4">
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 <div className="bg-muted/50 rounded-lg p-3 text-center">
