@@ -23,6 +23,18 @@ import InvoiceBatchActions from '@/components/invoices/InvoiceBatchActions';
 import InvoiceExportModal from '@/components/invoices/InvoiceExportModal';
 import { BatchProgressModal, useBatchProgress } from '@/components/ui/batch-progress-modal';
 import { useIsMobile } from '@/hooks/use-mobile';
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from '@/components/ui/alert-dialog';
+import { Input } from '@/components/ui/input';
+import { ShieldAlert } from 'lucide-react';
 
 const INVOICE_STATUS_MAP: { [key: string]: string } = {
   all: 'Todas',
@@ -58,6 +70,13 @@ const Invoices = () => {
   const [markAsPaidInvoice, setMarkAsPaidInvoice] = useState<Invoice | null>(null);
   const batchProgress = useBatchProgress();
   const ITEMS_PER_PAGE = 10;
+  
+  // State for reinforced delete dialog
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+  const [pendingDeleteFolio, setPendingDeleteFolio] = useState<string>('');
+  const [pendingBatchDeleteIds, setPendingBatchDeleteIds] = useState<string[]>([]);
   
   // Use a delayed state for showing form when navigating from closures to allow UI to breathe
   const [isFormReady, setIsFormReady] = useState(false);
@@ -256,15 +275,67 @@ const Invoices = () => {
   };
 
   const handleDeleteInvoice = async (id: string) => {
-    if (window.confirm('¿Está seguro de que desea eliminar esta factura?')) {
-      try {
-        await deleteInvoice(id);
+    const invoice = invoices.find(inv => inv.id === id);
+    const isHistorical = invoice?.folio?.startsWith('HIST-');
+    
+    if (isHistorical) {
+      // Históricas: confirmación simple
+      if (window.confirm('¿Está seguro de que desea eliminar esta factura histórica?')) {
+        try {
+          await deleteInvoice(id, { force: true });
+          toast.success("Factura eliminada", {
+            description: "La factura histórica ha sido eliminada.",
+          });
+        } catch (error) {
+          console.error('Error deleting invoice:', error);
+        }
+      }
+    } else {
+      // Protegidas: diálogo reforzado
+      setPendingDeleteId(id);
+      setPendingDeleteFolio(invoice?.folio || '');
+      setPendingBatchDeleteIds([]);
+      setDeleteConfirmText('');
+      setDeleteDialogOpen(true);
+    }
+  };
+
+  const handleConfirmProtectedDelete = async () => {
+    try {
+      if (pendingDeleteId) {
+        // Single delete
+        await deleteInvoice(pendingDeleteId, { force: true });
         toast.success("Factura eliminada", {
           description: "La factura ha sido eliminada exitosamente.",
         });
-      } catch (error) {
-        console.error('Error deleting invoice:', error);
+      } else if (pendingBatchDeleteIds.length > 0) {
+        // Batch delete of protected invoices
+        batchProgress.start('Eliminando Facturas Protegidas', pendingBatchDeleteIds.length);
+        let errorCount = 0;
+        for (let i = 0; i < pendingBatchDeleteIds.length; i++) {
+          const id = pendingBatchDeleteIds[i];
+          const inv = invoices.find(inv => inv.id === id);
+          batchProgress.update(i + 1, inv?.folio || id);
+          try {
+            await deleteInvoice(id, { force: true });
+          } catch (err) {
+            errorCount++;
+          }
+        }
+        setSelectedInvoiceIds([]);
+        if (errorCount === 0) {
+          batchProgress.complete();
+        } else {
+          batchProgress.error(`${errorCount} factura(s) con error`);
+        }
       }
+    } catch (error) {
+      console.error('Error deleting protected invoice:', error);
+    } finally {
+      setDeleteDialogOpen(false);
+      setDeleteConfirmText('');
+      setPendingDeleteId(null);
+      setPendingBatchDeleteIds([]);
     }
   };
 
@@ -344,30 +415,50 @@ const Invoices = () => {
   };
 
   const handleBatchDelete = async (invoiceIds: string[]) => {
-    batchProgress.start('Eliminando Facturas', invoiceIds.length);
-    let errorCount = 0;
-    
-    try {
-      for (let i = 0; i < invoiceIds.length; i++) {
-        const id = invoiceIds[i];
+    // Separar históricas de protegidas
+    const historicalIds = invoiceIds.filter(id => {
+      const inv = invoices.find(i => i.id === id);
+      return inv?.folio?.startsWith('HIST-');
+    });
+    const protectedIds = invoiceIds.filter(id => {
+      const inv = invoices.find(i => i.id === id);
+      return !inv?.folio?.startsWith('HIST-');
+    });
+
+    // Eliminar históricas directamente
+    if (historicalIds.length > 0) {
+      batchProgress.start('Eliminando Facturas Históricas', historicalIds.length);
+      let errorCount = 0;
+      for (let i = 0; i < historicalIds.length; i++) {
+        const id = historicalIds[i];
         const invoice = invoices.find(inv => inv.id === id);
         batchProgress.update(i + 1, invoice?.folio || id);
         try {
-          await deleteInvoice(id);
+          await deleteInvoice(id, { force: true });
         } catch (err) {
           errorCount++;
         }
       }
-      setSelectedInvoiceIds([]);
-      
       if (errorCount === 0) {
         batchProgress.complete();
       } else {
         batchProgress.error(`${errorCount} factura(s) con error`);
       }
-    } catch (error) {
-      console.error('Error deleting invoices:', error);
-      batchProgress.error('Error al eliminar');
+    }
+
+    // Protegidas: requieren confirmación reforzada
+    if (protectedIds.length > 0) {
+      const protectedFolios = protectedIds.map(id => {
+        const inv = invoices.find(i => i.id === id);
+        return inv?.folio || '';
+      }).filter(Boolean);
+      setPendingDeleteId(null);
+      setPendingDeleteFolio(protectedFolios.join(', '));
+      setPendingBatchDeleteIds(protectedIds);
+      setDeleteConfirmText('');
+      setDeleteDialogOpen(true);
+    } else {
+      setSelectedInvoiceIds([]);
     }
   };
 
@@ -590,6 +681,57 @@ const Invoices = () => {
         onClose={() => setMarkAsPaidInvoice(null)}
         onConfirm={handleConfirmMarkAsPaid}
       />
+
+      {/* Diálogo de confirmación reforzada para facturas protegidas */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent className="max-w-md">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-destructive">
+              <ShieldAlert className="w-5 h-5" />
+              Eliminar factura protegida
+            </AlertDialogTitle>
+            <AlertDialogDescription className="space-y-3">
+              <p>
+                {pendingBatchDeleteIds.length > 0
+                  ? `Está a punto de eliminar ${pendingBatchDeleteIds.length} factura(s) de la aplicación. Esto revertirá los cierres y servicios asociados.`
+                  : `Está a punto de eliminar la factura ${pendingDeleteFolio}. Esto revertirá los cierres y servicios asociados.`
+                }
+              </p>
+              <p className="font-medium text-destructive">
+                Esta acción NO se puede deshacer.
+              </p>
+              <div className="pt-2">
+                <label className="text-sm text-muted-foreground">
+                  Escriba <span className="font-mono font-bold text-foreground">ELIMINAR</span> para confirmar:
+                </label>
+                <Input
+                  value={deleteConfirmText}
+                  onChange={(e) => setDeleteConfirmText(e.target.value)}
+                  placeholder="ELIMINAR"
+                  className="mt-1"
+                  autoFocus
+                />
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => {
+              setDeleteConfirmText('');
+              setPendingDeleteId(null);
+              setPendingBatchDeleteIds([]);
+            }}>
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmProtectedDelete}
+              disabled={deleteConfirmText !== 'ELIMINAR'}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90 disabled:opacity-50"
+            >
+              Eliminar definitivamente
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

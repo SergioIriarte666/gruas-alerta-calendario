@@ -442,9 +442,25 @@ export const useInvoiceOperations = () => {
     }
   };
 
-  const deleteInvoice = async (id: string) => {
+  const deleteInvoice = async (id: string, options: { force?: boolean } = {}) => {
     try {
       console.log('Iniciando eliminación de factura con reversión de estados:', id);
+
+      // Guard: verificar si es factura protegida (no histórica)
+      const { data: invoiceCheck, error: checkError } = await supabase
+        .from('invoices')
+        .select('folio')
+        .eq('id', id)
+        .single();
+
+      if (checkError) throw checkError;
+
+      const isHistorical = invoiceCheck?.folio?.startsWith('HIST-');
+      if (!isHistorical && !options.force) {
+        const error = new Error('PROTECTED_INVOICE');
+        (error as any).folio = invoiceCheck?.folio;
+        throw error;
+      }
 
       // 1. Obtener relaciones invoice_closures
       const { data: invoiceClosures, error: closureError } = await supabase

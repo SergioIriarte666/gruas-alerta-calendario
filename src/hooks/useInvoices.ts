@@ -115,9 +115,9 @@ export const useInvoices = () => {
     }
   };
 
-  const deleteInvoice = async (id: string) => {
+  const deleteInvoice = async (id: string, options: { force?: boolean } = {}) => {
     try {
-      await deleteInvoiceOp(id);
+      await deleteInvoiceOp(id, options);
       removeInvoice(id);
     } catch (error) {
       console.error('Error deleting invoice:', error);

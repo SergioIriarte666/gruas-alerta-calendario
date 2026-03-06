@@ -7,7 +7,8 @@ import {
   Download, 
   FileSpreadsheet,
   X,
-  AlertTriangle
+  AlertTriangle,
+  ShieldAlert
 } from 'lucide-react';
 import { Invoice } from '@/types';
 
@@ -51,6 +52,7 @@ const InvoiceBatchActions = ({
   if (selectedInvoices.length === 0) return null;
 
   const totalAmount = selectedInvoices.reduce((sum, inv) => sum + Number(inv.total || 0), 0);
+  const protectedCount = selectedInvoices.filter(inv => !inv.folio?.startsWith('HIST-')).length;
   const statusCounts = selectedInvoices.reduce((counts, inv) => {
     counts[inv.status] = (counts[inv.status] || 0) + 1;
     return counts;
@@ -98,6 +100,13 @@ const InvoiceBatchActions = ({
                 );
               })}
             </div>
+            
+            {protectedCount > 0 && (
+              <div className="flex items-center gap-1.5 text-amber-400 text-xs">
+                <ShieldAlert className="w-4 h-4" />
+                <span>{protectedCount} factura(s) protegida(s) — requieren confirmación reforzada</span>
+              </div>
+            )}
           </div>
 
           <div className="flex items-center gap-2">
