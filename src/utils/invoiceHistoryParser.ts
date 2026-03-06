@@ -3,6 +3,8 @@ import * as XLSX from 'xlsx';
 import { Client } from '@/types';
 import { toTitleCase } from '@/lib/utils';
 
+export type DocumentType = 'factura' | 'nota_credito' | 'nota_debito';
+
 export interface ParsedInvoiceRow {
   item: string;
   emitido: string;
@@ -23,6 +25,7 @@ export interface ParsedInvoiceRow {
   fechaCreacion: string;
   fechaVencimiento: string;
   correo: string;
+  documentType?: DocumentType;
 }
 
 export interface ProcessedInvoice {
@@ -41,6 +44,7 @@ export interface ProcessedInvoice {
   clientId?: string;
   clientMatch?: 'exact' | 'multiple' | 'none';
   matchedClients?: Client[];
+  documentType: DocumentType;
 }
 
 export interface UnmatchedClient {
@@ -67,11 +71,31 @@ export interface ImportPreview {
   totalInvoices: number;
   totalAmount: number;
   skippedNonFactura: number;
+  creditNoteCount: number;
+  debitNoteCount: number;
+  facturaCount: number;
 }
 
-// Normalize RUT for comparison (remove dots, keep dash)
+// Normalize RUT for comparison (keep only digits and K)
 const normalizeRut = (rut: string): string => {
   return rut.replace(/[^0-9Kk]/g, '').trim().toUpperCase();
+};
+
+// Parse number handling Chilean format and parenthesized negatives: (181000) → -181000
+const parseNumber = (value: any): number => {
+  if (typeof value === 'number') return value;
+  if (!value) return 0;
+  const str = String(value).trim();
+  // Check for parenthesized negative: (123456)
+  const parenMatch = str.match(/^\((.+)\)$/);
+  if (parenMatch) {
+    const inner = parenMatch[1].replace(/\./g, '').replace(',', '.').trim();
+    const num = Number(inner);
+    return isNaN(num) ? 0 : -num;
+  }
+  const cleaned = str.replace(/\./g, '').replace(',', '.').trim();
+  const num = Number(cleaned);
+  return isNaN(num) ? 0 : num;
 };
 
 // Parse date from various formats to YYYY-MM-DD
@@ -80,13 +104,10 @@ const parseDate = (dateVal: any): string | null => {
 
   // Handle Excel serial numbers
   if (typeof dateVal === 'number') {
-    // Excel base date is 1899-12-30. JS is 1970-01-01.
-    // Difference is 25569 days.
     const date = new Date((dateVal - 25569) * 86400 * 1000);
-    // Adjust for timezone offset to avoid previous day due to UTC
     date.setMinutes(date.getMinutes() + date.getTimezoneOffset());
     if (!isNaN(date.getTime())) {
-       return date.toISOString().split('T')[0];
+      return date.toISOString().split('T')[0];
     }
   }
 
@@ -95,30 +116,30 @@ const parseDate = (dateVal: any): string | null => {
   // Try ISO YYYY-MM-DD
   if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return dateStr;
 
-  // Try DD-MM-YYYY or DD/MM/YYYY
+  // Try DD-MM-YYYY, DD/MM/YYYY, DD-MM-YY, DD/MM/YY
   const parts = dateStr.split(/[-/]/);
   if (parts.length === 3) {
-    let day, month, year;
+    let day: string, month: string, year: string;
     
-    // Check for DD-MM-YYYY or DD/MM/YYYY
-    if (parts[0].length <= 2 && parts[2].length === 4) {
-       [day, month, year] = parts;
-    } 
-    // Check for YYYY-MM-DD or YYYY/MM/DD
-    else if (parts[0].length === 4 && parts[2].length <= 2) {
-       [year, month, day] = parts;
+    if (parts[0].length <= 2 && (parts[2].length === 4 || parts[2].length === 2)) {
+      [day, month, year] = parts;
+      // Handle 2-digit year
+      if (year.length === 2) {
+        const y = parseInt(year, 10);
+        year = (y <= 50 ? '20' : '19') + year;
+      }
+    } else if (parts[0].length === 4 && parts[2].length <= 2) {
+      [year, month, day] = parts;
     } else {
-       return null;
+      return null;
     }
     
-    // Ensure padding
-    const y = year;
     const m = month.padStart(2, '0');
     const d = day.padStart(2, '0');
     
-    const date = new Date(`${y}-${m}-${d}`);
+    const date = new Date(`${year}-${m}-${d}`);
     if (!isNaN(date.getTime())) {
-       return `${y}-${m}-${d}`;
+      return `${year}-${m}-${d}`;
     }
   }
   
@@ -133,31 +154,155 @@ const determineStatus = (pagado: string, fechaVencimiento: any): 'paid' | 'sent'
     const dueDateStr = parseDate(fechaVencimiento);
     if (dueDateStr) {
       const due = new Date(dueDateStr);
-      // Fix timezone issue for comparison
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       due.setHours(0, 0, 0, 0);
-      // Add a small buffer for timezone differences if needed, or just compare
-      // Assuming dates are local
       const dueTime = due.getTime() + (due.getTimezoneOffset() * 60000);
       const todayTime = today.getTime();
-      
       if (dueTime < todayTime) return 'overdue';
     }
   }
   return 'sent';
 };
 
-// Parse number from string (handles Chilean format)
-const parseNumber = (value: any): number => {
-  if (typeof value === 'number') return value;
-  if (!value) return 0;
-  const cleaned = String(value).replace(/\./g, '').replace(',', '.').trim();
-  const num = Number(cleaned);
-  return isNaN(num) ? 0 : num;
+// ──────────────────────────────────────────────────────────
+// Libro de Ventas parser (section-based XLS/XLSX)
+// ──────────────────────────────────────────────────────────
+
+const SECTION_MAP: Record<string, DocumentType> = {
+  'FACTURA ELECTRONICA': 'factura',
+  'NOTA DE CREDITO ELECTRONICA': 'nota_credito',
+  'NOTA DE DEBITO ELECTRONICA': 'nota_debito',
 };
 
-// Parse CSV file
+/**
+ * Detect if a raw sheet looks like a "Libro de Ventas" format
+ * by searching for known section headers in the first rows.
+ */
+const isLibroDeVentas = (rawRows: any[][]): boolean => {
+  const searchRows = rawRows.slice(0, 30);
+  for (const row of searchRows) {
+    const joined = row.map(c => String(c ?? '')).join(' ').toUpperCase();
+    if (joined.includes('LIBRO DE VENTAS') || joined.includes('FACTURA ELECTRONICA')) {
+      return true;
+    }
+  }
+  return false;
+};
+
+/**
+ * Find header row index by looking for a row that contains "FOLIO" and "R.U.T" (or similar).
+ */
+const findHeaderRow = (rawRows: any[][]): { headerIdx: number; colMap: Record<string, number> } | null => {
+  for (let i = 0; i < Math.min(rawRows.length, 20); i++) {
+    const row = rawRows[i];
+    const upper = row.map(c => String(c ?? '').toUpperCase().trim());
+    const folioIdx = upper.findIndex(c => c === 'FOLIO');
+    const rutIdx = upper.findIndex(c => c.includes('R.U.T') || c === 'RUT');
+    if (folioIdx >= 0 && rutIdx >= 0) {
+      // Build column map
+      const colMap: Record<string, number> = {};
+      upper.forEach((val, idx) => {
+        if (val.includes('Nº') || val === 'N°' || val === 'NO' || val === '#') colMap['num'] = idx;
+        if (val === 'FOLIO') colMap['folio'] = idx;
+        if (val === 'FECHA') colMap['fecha'] = idx;
+        if (val.includes('RAZON SOCIAL') || val.includes('CLIENTE')) colMap['razonSocial'] = idx;
+        if (val.includes('R.U.T') || val === 'RUT') colMap['rut'] = idx;
+        if (val === 'EXENTO') colMap['exento'] = idx;
+        if (val === 'NETO') colMap['neto'] = idx;
+        if (val.includes('I.V.A') && !val.includes('PLAZO') && !val.includes('TERCERO')) colMap['iva'] = idx;
+        if (val === 'TOTAL') colMap['total'] = idx;
+      });
+      return { headerIdx: i, colMap };
+    }
+  }
+  return null;
+};
+
+const parseLibroDeVentasXLSX = (rawRows: any[][]): ParsedInvoiceRow[] => {
+  const headerInfo = findHeaderRow(rawRows);
+  if (!headerInfo) return [];
+
+  const { headerIdx, colMap } = headerInfo;
+  const dataRows = rawRows.slice(headerIdx + 1);
+
+  let currentDocType: DocumentType | null = null;
+  const results: ParsedInvoiceRow[] = [];
+
+  for (const row of dataRows) {
+    // Check if this is a section header row
+    const joinedUpper = row.map(c => String(c ?? '').trim()).join(' ').toUpperCase();
+    
+    // Skip total/subtotal rows
+    if (joinedUpper.includes('TOTAL GENERAL') || joinedUpper.includes('TOTAL ')) {
+      // But first check if it's a section start before the subtotal check
+    }
+
+    // Detect section headers
+    let foundSection = false;
+    for (const [sectionName, docType] of Object.entries(SECTION_MAP)) {
+      if (joinedUpper.includes(sectionName)) {
+        currentDocType = docType;
+        foundSection = true;
+        break;
+      }
+    }
+    if (foundSection) continue;
+
+    // Skip if no document type set yet
+    if (!currentDocType) continue;
+
+    // Skip total/subtotal rows
+    if (joinedUpper.includes('TOTAL GENERAL') || joinedUpper.match(/^\s*0\s+/)) continue;
+
+    // Extract folio - must be a valid number
+    const folioVal = colMap['folio'] !== undefined ? row[colMap['folio']] : null;
+    const folioStr = String(folioVal ?? '').trim();
+    if (!folioStr || isNaN(Number(folioStr))) continue;
+
+    // Extract fields
+    const fecha = colMap['fecha'] !== undefined ? row[colMap['fecha']] : '';
+    const razonSocial = colMap['razonSocial'] !== undefined ? String(row[colMap['razonSocial']] ?? '').trim() : '';
+    const rut = colMap['rut'] !== undefined ? String(row[colMap['rut']] ?? '').trim() : '';
+    const neto = colMap['neto'] !== undefined ? parseNumber(row[colMap['neto']]) : 0;
+    const iva = colMap['iva'] !== undefined ? parseNumber(row[colMap['iva']]) : 0;
+    const total = colMap['total'] !== undefined ? parseNumber(row[colMap['total']]) : 0;
+
+    if (!rut || !razonSocial) continue;
+
+    results.push({
+      item: '',
+      emitido: '',
+      documento: currentDocType === 'factura' ? 'FACTURA ELECTRONICA' : 
+                 currentDocType === 'nota_credito' ? 'NOTA DE CREDITO ELECTRONICA' :
+                 'NOTA DE DEBITO ELECTRONICA',
+      folio: folioStr,
+      fecha: String(fecha ?? ''),
+      rut,
+      codigoCliente: '',
+      razonSocial,
+      direccionCliente: '',
+      formaPago: '',
+      neto,
+      iva,
+      tasaIva: 19,
+      total,
+      observacion: '',
+      pagado: '',
+      fechaCreacion: '',
+      fechaVencimiento: '',
+      correo: '',
+      documentType: currentDocType,
+    });
+  }
+
+  return results;
+};
+
+// ──────────────────────────────────────────────────────────
+// CSV parser (original columnar format)
+// ──────────────────────────────────────────────────────────
+
 export const parseCSVFile = (file: File): Promise<ParsedInvoiceRow[]> => {
   return new Promise((resolve, reject) => {
     Papa.parse(file, {
@@ -167,7 +312,6 @@ export const parseCSVFile = (file: File): Promise<ParsedInvoiceRow[]> => {
       complete: (result) => {
         const rows = result.data as Record<string, any>[];
         
-        // Helper to find column by multiple possible names
         const findVal = (row: any, keys: string[]) => {
           for (const key of keys) {
             const foundKey = Object.keys(row).find(k => k.trim().toLowerCase() === key.toLowerCase());
@@ -204,7 +348,10 @@ export const parseCSVFile = (file: File): Promise<ParsedInvoiceRow[]> => {
   });
 };
 
-// Parse XLSX file
+// ──────────────────────────────────────────────────────────
+// XLSX parser with auto-detection
+// ──────────────────────────────────────────────────────────
+
 export const parseXLSXFile = (file: File): Promise<ParsedInvoiceRow[]> => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -213,14 +360,25 @@ export const parseXLSXFile = (file: File): Promise<ParsedInvoiceRow[]> => {
         const data = new Uint8Array(e.target?.result as ArrayBuffer);
         const workbook = XLSX.read(data, { type: 'array' });
         const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-        const rows = XLSX.utils.sheet_to_json<any>(firstSheet); // header: 1 removed to get objects
         
-        // Helper to find column by multiple possible names
+        // Get raw rows (array of arrays) for format detection
+        const rawRows = XLSX.utils.sheet_to_json<any[]>(firstSheet, { header: 1 });
+        
+        // Auto-detect: Libro de Ventas format?
+        if (isLibroDeVentas(rawRows)) {
+          console.log('Detected Libro de Ventas format');
+          const parsed = parseLibroDeVentasXLSX(rawRows);
+          resolve(parsed);
+          return;
+        }
+
+        // Fallback: original columnar format
+        console.log('Using columnar format parser');
+        const rows = XLSX.utils.sheet_to_json<any>(firstSheet);
+        
         const findVal = (row: any, keys: string[]) => {
           for (const key of keys) {
-            // Check exact match first
             if (row[key] !== undefined) return row[key];
-            // Check case insensitive
             const foundKey = Object.keys(row).find(k => k.trim().toLowerCase() === key.toLowerCase());
             if (foundKey) return row[foundKey];
           }
@@ -258,29 +416,84 @@ export const parseXLSXFile = (file: File): Promise<ParsedInvoiceRow[]> => {
   });
 };
 
+// ──────────────────────────────────────────────────────────
 // Process parsed rows against existing clients and invoices
+// ──────────────────────────────────────────────────────────
+
+const getDocumentType = (row: ParsedInvoiceRow): DocumentType => {
+  if (row.documentType) return row.documentType;
+  const doc = row.documento?.toUpperCase() || '';
+  if (doc.includes('NOTA DE CREDITO')) return 'nota_credito';
+  if (doc.includes('NOTA DE DEBITO')) return 'nota_debito';
+  if (doc.includes('FACTURA')) return 'factura';
+  return 'factura'; // default
+};
+
+const getFolioPrefix = (docType: DocumentType): string => {
+  switch (docType) {
+    case 'nota_credito': return 'HIST-NC';
+    case 'nota_debito': return 'HIST-ND';
+    default: return 'HIST-F';
+  }
+};
+
+const getDocumentLabel = (docType: DocumentType): string => {
+  switch (docType) {
+    case 'nota_credito': return 'Nota de Crédito';
+    case 'nota_debito': return 'Nota de Débito';
+    default: return 'Factura';
+  }
+};
+
 export const processInvoiceRows = (
   rows: ParsedInvoiceRow[],
   clients: Client[],
   existingNumerosFiscales: Set<string>
 ): ImportPreview => {
-  // Filter only FACTURA ELECTRONICA
-  const facturas = rows.filter(r => r.documento?.toUpperCase().includes('FACTURA ELECTRONICA'));
-  const skippedNonFactura = rows.length - facturas.length;
+  // If rows have documentType set (Libro de Ventas), process all of them.
+  // Otherwise (old columnar format), filter to FACTURA ELECTRONICA only.
+  const hasDocTypeField = rows.some(r => r.documentType);
+  
+  let processable: ParsedInvoiceRow[];
+  let skippedNonFactura: number;
+  
+  if (hasDocTypeField) {
+    // Libro de Ventas: all rows are already filtered by the parser
+    processable = rows;
+    skippedNonFactura = 0;
+  } else {
+    // Old format: filter only known document types
+    processable = rows.filter(r => {
+      const doc = r.documento?.toUpperCase() || '';
+      return doc.includes('FACTURA ELECTRONICA') || doc.includes('NOTA DE CREDITO') || doc.includes('NOTA DE DEBITO');
+    });
+    skippedNonFactura = rows.length - processable.length;
+  }
 
   const matched: ProcessedInvoice[] = [];
   const unmatched: ProcessedInvoice[] = [];
   const duplicates: ProcessedInvoice[] = [];
   const unmatchedClientsMap = new Map<string, UnmatchedClient>();
+  
+  let facturaCount = 0;
+  let creditNoteCount = 0;
+  let debitNoteCount = 0;
 
-  for (const row of facturas) {
+  for (const row of processable) {
+    const docType = getDocumentType(row);
     const normalizedRut = normalizeRut(row.rut);
     const issueDate = parseDate(row.fecha) || '';
     const dueDate = parseDate(row.fechaVencimiento) || issueDate;
     const status = determineStatus(row.pagado, row.fechaVencimiento);
+    const prefix = getFolioPrefix(docType);
+
+    // Count by type
+    if (docType === 'factura') facturaCount++;
+    else if (docType === 'nota_credito') creditNoteCount++;
+    else if (docType === 'nota_debito') debitNoteCount++;
 
     const processed: ProcessedInvoice = {
-      folio: `HIST-${row.folio}`,
+      folio: `${prefix}-${row.folio}`,
       numeroFiscal: row.folio,
       rut: row.rut,
       razonSocial: toTitleCase(row.razonSocial),
@@ -291,7 +504,8 @@ export const processInvoiceRows = (
       total: row.total,
       status,
       isPaid: row.pagado?.toUpperCase() === 'SI',
-      notes: `Importación historial 2025 — ${row.observacion || ''}`.trim(),
+      notes: `Importación historial — ${getDocumentLabel(docType)}${row.observacion ? ` — ${row.observacion}` : ''}`.trim(),
+      documentType: docType,
     };
 
     // Check duplicates by numero_fiscal
@@ -304,7 +518,6 @@ export const processInvoiceRows = (
     const matchingClients = clients.filter(c => normalizeRut(c.rut) === normalizedRut);
 
     if (matchingClients.length >= 1) {
-      // RUT is the primary key for matching, even when multiple departments exist
       processed.clientId = matchingClients[0].id;
       processed.clientMatch = matchingClients.length > 1 ? 'multiple' : 'exact';
       if (matchingClients.length > 1) {
@@ -336,8 +549,11 @@ export const processInvoiceRows = (
     unmatched,
     duplicates,
     unmatchedClients: Array.from(unmatchedClientsMap.values()),
-    totalInvoices: facturas.length,
-    totalAmount: facturas.reduce((sum, r) => sum + r.total, 0),
+    totalInvoices: processable.length,
+    totalAmount: processable.reduce((sum, r) => sum + r.total, 0),
     skippedNonFactura,
+    facturaCount,
+    creditNoteCount,
+    debitNoteCount,
   };
 };
