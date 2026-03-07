@@ -40,6 +40,21 @@ interface InvoiceMetadata {
   }>;
 }
 
+type OriginType = 'importada' | 'sistema';
+
+const getOriginFromFolio = (folio: string): OriginType => {
+  return folio.startsWith('HIST-') ? 'importada' : 'sistema';
+};
+
+const stripHistPrefix = (folio: string): string => {
+  return folio.replace(/^HIST-(F|NC|ND)-/, '');
+};
+
+const addHistPrefix = (folio: string): string => {
+  if (folio.startsWith('HIST-')) return folio;
+  return `HIST-F-${folio}`;
+};
+
 export const EditHistoricalInvoiceModal = ({
   invoice,
   isOpen,
@@ -50,14 +65,15 @@ export const EditHistoricalInvoiceModal = ({
   const [notes, setNotes] = useState<string>('');
   const [shippingInfo, setShippingInfo] = useState<string>('');
   const [paymentMethod, setPaymentMethod] = useState<string>('');
+  const [origin, setOrigin] = useState<OriginType>('sistema');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [metadata, setMetadata] = useState<InvoiceMetadata>({});
 
   useEffect(() => {
     if (invoice && isOpen) {
       setStatus(invoice.status);
-      
-      // Parse notes and metadata
+      setOrigin(getOriginFromFolio(invoice.folio));
+
       const fullNotes = invoice.notes || '';
       if (fullNotes.includes(METADATA_SEPARATOR)) {
         const [userNotes, metadataJson] = fullNotes.split(METADATA_SEPARATOR);
@@ -85,11 +101,21 @@ export const EditHistoricalInvoiceModal = ({
 
     setIsSubmitting(true);
     try {
-      // Create audit entry
+      const originalOrigin = getOriginFromFolio(invoice.folio);
+      const originChanged = origin !== originalOrigin;
+
+      const auditDetails: string[] = [];
+      if (invoice.status !== status) {
+        auditDetails.push(`Estado: ${invoice.status} -> ${status}`);
+      }
+      if (originChanged) {
+        auditDetails.push(`Origen: ${originalOrigin} -> ${origin}`);
+      }
+
       const newAuditEntry = {
         date: new Date().toISOString(),
         action: 'UPDATE',
-        details: `Updated via Historical Editor. Status: ${invoice.status} -> ${status}`,
+        details: `Editado vía Historical Editor. ${auditDetails.join('. ') || 'Sin cambios de estado/origen'}`,
       };
 
       const newMetadata: InvoiceMetadata = {
@@ -101,10 +127,25 @@ export const EditHistoricalInvoiceModal = ({
 
       const newNotes = `${notes}${METADATA_SEPARATOR}${JSON.stringify(newMetadata)}`;
 
-      await onSave(invoice.id, {
+      let newFolio = invoice.folio;
+      if (originChanged) {
+        if (origin === 'sistema') {
+          newFolio = stripHistPrefix(invoice.folio);
+        } else {
+          newFolio = addHistPrefix(invoice.folio);
+        }
+      }
+
+      const updates: Partial<Invoice> = {
         status: status as any,
         notes: newNotes,
-      });
+      };
+
+      if (originChanged) {
+        updates.folio = newFolio;
+      }
+
+      await onSave(invoice.id, updates);
       onClose();
     } catch (error) {
       console.error('Error saving invoice:', error);
@@ -115,90 +156,97 @@ export const EditHistoricalInvoiceModal = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[600px] w-[95vw]">
         <DialogHeader>
           <DialogTitle>Editar Factura Histórica {invoice?.folio}</DialogTitle>
           <DialogDescription>
             Modifique los detalles de la factura. Los cambios quedarán registrados en el historial de auditoría.
           </DialogDescription>
         </DialogHeader>
-        
-        <div className="grid gap-4 py-4">
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="status" className="text-right">
-              Estado
-            </Label>
-            <Select value={status} onValueChange={setStatus}>
-              <SelectTrigger className="col-span-3">
-                <SelectValue placeholder="Seleccionar estado" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="draft">Borrador</SelectItem>
-                <SelectItem value="sent">Enviada</SelectItem>
-                <SelectItem value="paid">Pagada</SelectItem>
-                <SelectItem value="overdue">Vencida</SelectItem>
-                <SelectItem value="cancelled">Anulada</SelectItem>
-              </SelectContent>
-            </Select>
+
+        <div className="space-y-4 py-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="status">Estado</Label>
+              <Select value={status} onValueChange={setStatus}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Seleccionar estado" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="draft">Borrador</SelectItem>
+                  <SelectItem value="sent">Enviada</SelectItem>
+                  <SelectItem value="paid">Pagada</SelectItem>
+                  <SelectItem value="overdue">Vencida</SelectItem>
+                  <SelectItem value="cancelled">Anulada</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="origin">Origen</Label>
+              <Select value={origin} onValueChange={(v) => setOrigin(v as OriginType)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Seleccionar origen" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="importada">Importada (Histórica)</SelectItem>
+                  <SelectItem value="sistema">Sistema</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="shipping" className="text-right">
-              Info. Envío
-            </Label>
-            <Input
-              id="shipping"
-              value={shippingInfo}
-              onChange={(e) => setShippingInfo(e.target.value)}
-              className="col-span-3"
-              placeholder="Ej: Chilexpress 123456"
-            />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="shipping">Info. Envío</Label>
+              <Input
+                id="shipping"
+                value={shippingInfo}
+                onChange={(e) => setShippingInfo(e.target.value)}
+                placeholder="Ej: Chilexpress 123456"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="payment">Método Pago</Label>
+              <Input
+                id="payment"
+                value={paymentMethod}
+                onChange={(e) => setPaymentMethod(e.target.value)}
+                placeholder="Ej: Transferencia Banco Chile"
+              />
+            </div>
           </div>
 
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="payment" className="text-right">
-              Método Pago
-            </Label>
-            <Input
-              id="payment"
-              value={paymentMethod}
-              onChange={(e) => setPaymentMethod(e.target.value)}
-              className="col-span-3"
-              placeholder="Ej: Transferencia Banco Chile"
-            />
-          </div>
-
-          <div className="grid grid-cols-4 items-start gap-4">
-            <Label htmlFor="notes" className="text-right pt-2">
-              Notas
-            </Label>
+          <div className="space-y-1.5">
+            <Label htmlFor="notes">Notas</Label>
             <Textarea
               id="notes"
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              className="col-span-3 min-h-[100px]"
+              className="min-h-[100px]"
               placeholder="Notas internas..."
             />
           </div>
-          
+
           {metadata.auditLog && metadata.auditLog.length > 0 && (
-             <div className="col-span-4 mt-4">
-                <Label className="mb-2 block">Historial de Cambios</Label>
-                <div className="bg-muted p-2 rounded-md text-xs max-h-32 overflow-y-auto space-y-1">
-                  {metadata.auditLog.slice().reverse().map((log, i) => (
-                    <div key={i} className="border-b border-border/50 pb-1 last:border-0">
-                      <span className="font-mono text-muted-foreground">
-                        {format(new Date(log.date), 'dd/MM HH:mm')}
-                      </span>
-                      : {log.details}
-                    </div>
-                  ))}
-                </div>
-             </div>
+            <div className="space-y-1.5">
+              <Label>Historial de Cambios</Label>
+              <div className="bg-muted p-2 rounded-md text-xs max-h-32 overflow-y-auto space-y-1">
+                {metadata.auditLog.slice().reverse().map((log, i) => (
+                  <div key={i} className="border-b border-border/50 pb-1 last:border-0">
+                    <span className="font-mono text-muted-foreground">
+                      {format(new Date(log.date), 'dd/MM HH:mm')}
+                    </span>
+                    : {log.details}
+                  </div>
+                ))}
+              </div>
+            </div>
           )}
         </div>
 
-        <DialogFooter>
+        <DialogFooter className="flex-col sm:flex-row gap-2">
           <Button variant="outline" onClick={onClose} disabled={isSubmitting}>
             Cancelar
           </Button>
