@@ -1,26 +1,29 @@
 
 
-## Plan: Separate department grouping for historical vs app invoices
+# Fix: RUT normalization consistency + Invoice selection
 
-### Problem
-Historical imported invoices (folio starting with `HIST-`) were assigned to arbitrary departments during import because SII data doesn't contain department info. Sub-grouping these by department is misleading.
+## Problem 1: RUT still not matching
+The `normalizeRut` function in the parser was fixed to strip dots, spaces, and dashes. But in `InvoiceHistoryImport.tsx`, there are 4 places that still use the old regex `replace(/\./g, '')` (only strips dots):
+- Line 136: creating client RUT map
+- Line 188: looking up unmatched invoice RUT
+- Line 193: finding unmatched client entry
+- Line 441: counting importable invoices in the button label
 
-### Solution
-In the department sub-grouping logic, treat historical invoices as department-agnostic while keeping department differentiation for app-created invoices.
+All of these need to use the same normalization: `replace(/[.\s-]/g, '').trim().toUpperCase()`.
 
-### Changes to `HistoricalSalesPipelineView.tsx`
+## Problem 2: No invoice selection
+Currently all matched invoices are imported automatically with no way to exclude individual ones. The user wants checkboxes to select/deselect invoices.
 
-**Grouping logic (lines 184-185)**: When building department sub-groups, check if the invoice folio starts with `HIST-`. If so, assign it to a special group (e.g., "Histórico") instead of using `inv.client?.department`. App invoices keep their real department.
+### Changes to `InvoiceHistoryImport.tsx`:
+- Add `selectedInvoices` state (`Set<string>`) tracking selected invoice keys
+- Initialize all matched invoices as selected on preview load
+- Add select all / deselect all toggle
+- Add checkbox column to `InvoicePreviewTable`
+- Show all invoices (remove the slice(0,10) limit, keep scroll)
+- Filter by `selectedInvoices` during import
+- Update button count to reflect selection
+- Extract a shared `normalizeRut` helper used consistently everywhere
 
-```text
-Current:  const dept = inv.client?.department || 'General';
-New:      const dept = inv.folio.startsWith('HIST-') ? 'Histórico' : (inv.client?.department || 'General');
-```
-
-**Department visibility (line 201)**: Update `hasMultipleDepartments` to consider whether there are multiple *non-historical* departments. If the only groups are "Histórico" + one real department, still show the department level so the user can distinguish imported vs app data.
-
-**Visual distinction**: The "Histórico" department group will use a different icon (e.g., `Archive` or `FileText`) instead of `Building2` to make it clear these are imported records without department assignment.
-
-### File to modify
-- `src/components/finance/historical/HistoricalSalesPipelineView.tsx`
+## Files to modify
+- `src/components/invoices/InvoiceHistoryImport.tsx` — fix 4 normalization calls + add selection UI
 
