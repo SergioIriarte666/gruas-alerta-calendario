@@ -11,6 +11,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { SupplierInvoiceWithDetails } from '@/types/suppliers';
 import { formatCurrency, toTitleCase } from '@/lib/utils';
 import { Edit, ArrowUpDown, ArrowUp, ArrowDown, FileText, Trash2, Package } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import {
@@ -93,7 +94,7 @@ export const HistoricalPurchasesTable = ({
                 onClick={() => onSort('invoice_number')}
                 className="-ml-4 h-8 font-semibold hover:bg-transparent hover:text-primary"
               >
-                N° Factura
+                N° Fiscal
                 <SortIcon columnKey="invoice_number" />
               </Button>
             </TableHead>
@@ -193,7 +194,27 @@ export const HistoricalPurchasesTable = ({
                     aria-label={`Seleccionar factura ${invoice.invoice_number}`}
                   />
                 </TableCell>
-                <TableCell className="font-medium font-mono text-xs">{invoice.invoice_number}</TableCell>
+                <TableCell className="font-medium font-mono text-xs">
+                  <div className="flex items-center gap-1.5">
+                    {(() => {
+                      const num = invoice.invoice_number.toUpperCase();
+                      const docType = num.startsWith('NC-') || num.startsWith('NC ') ? 'NC'
+                        : num.startsWith('ND-') || num.startsWith('ND ') ? 'ND'
+                        : 'FE';
+                      const badgeStyles = docType === 'NC'
+                        ? 'bg-amber-50 text-amber-700 border-amber-200'
+                        : docType === 'ND'
+                        ? 'bg-orange-50 text-orange-700 border-orange-200'
+                        : 'bg-gray-50 text-gray-600 border-gray-200';
+                      return (
+                        <Badge variant="outline" className={`${badgeStyles} text-[9px] px-1.5 py-0 font-semibold`}>
+                          {docType}
+                        </Badge>
+                      );
+                    })()}
+                    {invoice.invoice_number}
+                  </div>
+                </TableCell>
                 
                 <TableCell className="font-medium text-foreground/80">
                   {toTitleCase(invoice.supplier?.name || 'Proveedor Desconocido')}
