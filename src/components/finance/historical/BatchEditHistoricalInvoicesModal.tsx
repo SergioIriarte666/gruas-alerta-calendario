@@ -57,6 +57,8 @@ export const BatchEditHistoricalInvoicesModal = ({
   const [updateShipping, setUpdateShipping] = useState(false);
   const [updatePayment, setUpdatePayment] = useState(false);
   const [updateNote, setUpdateNote] = useState(false);
+  const [updateOrigin, setUpdateOrigin] = useState(false);
+  const [origin, setOrigin] = useState<string>('');
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
