@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Invoice } from '@/types';
 import { toTitleCase, formatCurrency } from '@/lib/utils';
-import { Search, ChevronDown, ChevronRight, User, Calendar } from 'lucide-react';
+import { Search, ChevronDown, ChevronRight, User, Calendar, Building2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -22,14 +22,22 @@ interface MonthGroup {
   total: number;
 }
 
-interface ClientGroup {
-  clientRut: string;
-  clientName: string;
-  departments: string[];
+interface DepartmentGroup {
+  department: string;
   invoices: Invoice[];
   totalAmount: number;
   count: number;
   months: MonthGroup[];
+}
+
+interface ClientGroup {
+  clientRut: string;
+  clientName: string;
+  invoices: Invoice[];
+  totalAmount: number;
+  count: number;
+  departmentGroups: DepartmentGroup[];
+  hasMultipleDepartments: boolean;
 }
 
 const getClientColor = (name: string) => {
@@ -56,9 +64,82 @@ const getStatusBadge = (status: string) => {
   return <Badge className={s.className}>{s.label}</Badge>;
 };
 
+const buildMonthGroups = (invoices: Invoice[]): MonthGroup[] => {
+  const monthMap = new Map<string, MonthGroup>();
+  invoices.forEach(inv => {
+    const date = parseISO(inv.issueDate);
+    const key = format(date, 'yyyy-MM');
+    const label = format(date, 'MMMM yyyy', { locale: es });
+    if (!monthMap.has(key)) {
+      monthMap.set(key, { key, label, invoices: [], total: 0 });
+    }
+    const m = monthMap.get(key)!;
+    m.invoices.push(inv);
+    m.total += inv.total;
+  });
+  return Array.from(monthMap.values()).sort((a, b) => b.key.localeCompare(a.key));
+};
+
+// Shared month+invoice rendering
+const MonthSection = ({
+  month,
+  monthKey,
+  isExpanded,
+  onToggle,
+  onEdit,
+}: {
+  month: MonthGroup;
+  monthKey: string;
+  isExpanded: boolean;
+  onToggle: (key: string) => void;
+  onEdit: (inv: Invoice) => void;
+}) => (
+  <Collapsible open={isExpanded} onOpenChange={() => onToggle(monthKey)}>
+    <CollapsibleTrigger asChild>
+      <div className="flex items-center justify-between px-6 py-3 cursor-pointer hover:bg-accent/30 transition-colors border-b last:border-b-0">
+        <div className="flex items-center gap-2">
+          <Calendar className="h-4 w-4 text-muted-foreground" />
+          <span className="font-medium text-sm capitalize">{month.label}</span>
+          <span className="text-xs text-muted-foreground">({month.invoices.length})</span>
+        </div>
+        <div className="flex items-center gap-3">
+          <span className="text-sm font-semibold text-violet-600 dark:text-violet-400">{formatCurrency(month.total)}</span>
+          {isExpanded ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
+        </div>
+      </div>
+    </CollapsibleTrigger>
+    <CollapsibleContent>
+      <div className="px-6 py-4 bg-accent/10">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+          {month.invoices.map(inv => (
+            <div
+              key={inv.id}
+              className="bg-card border rounded-lg p-3 hover:shadow-md transition-all cursor-pointer hover:-translate-y-0.5"
+              onClick={() => onEdit(inv)}
+            >
+              <div className="flex items-center justify-between mb-2">
+                <span className="font-mono text-sm font-semibold text-foreground">{inv.folio}</span>
+                {getStatusBadge(inv.status)}
+              </div>
+              {inv.numeroFiscal && (
+                <p className="text-xs text-muted-foreground mb-1">N° Fiscal: {inv.numeroFiscal}</p>
+              )}
+              <p className="text-xs text-muted-foreground mb-2">
+                {format(parseISO(inv.issueDate), 'dd/MM/yyyy')}
+              </p>
+              <p className="text-sm font-bold text-violet-600 dark:text-violet-400">{formatCurrency(inv.total)}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </CollapsibleContent>
+  </Collapsible>
+);
+
 export const HistoricalSalesPipelineView = ({ invoices, onEdit, onDelete }: HistoricalSalesPipelineViewProps) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [expandedClients, setExpandedClients] = useState<Set<string>>(new Set(['all']));
+  const [expandedDepartments, setExpandedDepartments] = useState<Set<string>>(new Set());
   const [expandedMonths, setExpandedMonths] = useState<Set<string>>(new Set());
 
   const filteredInvoices = useMemo(() => {
@@ -77,17 +158,16 @@ export const HistoricalSalesPipelineView = ({ invoices, onEdit, onDelete }: Hist
     filteredInvoices.forEach(inv => {
       const clientRut = inv.client?.rut || 'no_client';
       const clientName = inv.client?.name ? toTitleCase(inv.client.name) : 'Sin Cliente';
-      const department = inv.client?.department || '';
 
       if (!groupsMap.has(clientRut)) {
         groupsMap.set(clientRut, {
           clientRut,
           clientName,
-          departments: [],
           invoices: [],
           totalAmount: 0,
           count: 0,
-          months: [],
+          departmentGroups: [],
+          hasMultipleDepartments: false,
         });
       }
 
@@ -95,58 +175,64 @@ export const HistoricalSalesPipelineView = ({ invoices, onEdit, onDelete }: Hist
       group.invoices.push(inv);
       group.totalAmount += inv.total;
       group.count += 1;
-      if (department && department !== 'General' && !group.departments.includes(department)) {
-        group.departments.push(department);
-      }
     });
 
-    // Sub-group by month
+    // Build department sub-groups
     groupsMap.forEach(group => {
-      const monthMap = new Map<string, MonthGroup>();
-      group.invoices.forEach(inv => {
-        const date = parseISO(inv.issueDate);
-        const key = format(date, 'yyyy-MM');
-        const label = format(date, 'MMMM yyyy', { locale: es });
+      const deptMap = new Map<string, DepartmentGroup>();
 
-        if (!monthMap.has(key)) {
-          monthMap.set(key, { key, label, invoices: [], total: 0 });
+      group.invoices.forEach(inv => {
+        const dept = inv.client?.department || 'General';
+        if (!deptMap.has(dept)) {
+          deptMap.set(dept, { department: dept, invoices: [], totalAmount: 0, count: 0, months: [] });
         }
-        const m = monthMap.get(key)!;
-        m.invoices.push(inv);
-        m.total += inv.total;
+        const d = deptMap.get(dept)!;
+        d.invoices.push(inv);
+        d.totalAmount += inv.total;
+        d.count += 1;
       });
 
-      group.months = Array.from(monthMap.values()).sort((a, b) => b.key.localeCompare(a.key));
+      // Build months within each department
+      deptMap.forEach(dg => {
+        dg.months = buildMonthGroups(dg.invoices);
+      });
+
+      group.departmentGroups = Array.from(deptMap.values()).sort((a, b) => b.totalAmount - a.totalAmount);
+      group.hasMultipleDepartments = group.departmentGroups.length > 1;
     });
 
     return Array.from(groupsMap.values()).sort((a, b) => b.totalAmount - a.totalAmount);
   }, [filteredInvoices]);
 
   const toggleClient = (id: string) => {
-    setExpandedClients(prev => {
-      const s = new Set(prev);
-      s.has(id) ? s.delete(id) : s.add(id);
-      return s;
-    });
+    setExpandedClients(prev => { const s = new Set(prev); s.has(id) ? s.delete(id) : s.add(id); return s; });
   };
-
+  const toggleDepartment = (key: string) => {
+    setExpandedDepartments(prev => { const s = new Set(prev); s.has(key) ? s.delete(key) : s.add(key); return s; });
+  };
   const toggleMonth = (key: string) => {
-    setExpandedMonths(prev => {
-      const s = new Set(prev);
-      s.has(key) ? s.delete(key) : s.add(key);
-      return s;
-    });
+    setExpandedMonths(prev => { const s = new Set(prev); s.has(key) ? s.delete(key) : s.add(key); return s; });
   };
 
   const expandAll = () => {
-    const allKeys = new Set(['all', ...clientGroups.map(g => g.clientRut)]);
-    clientGroups.forEach(g => g.months.forEach(m => allKeys.add(`${g.clientRut}-${m.key}`)));
-    setExpandedClients(allKeys);
-    setExpandedMonths(allKeys);
+    const clients = new Set(['all', ...clientGroups.map(g => g.clientRut)]);
+    const depts = new Set<string>();
+    const months = new Set<string>();
+    clientGroups.forEach(g => {
+      g.departmentGroups.forEach(dg => {
+        const deptKey = `${g.clientRut}-${dg.department}`;
+        depts.add(deptKey);
+        dg.months.forEach(m => months.add(`${deptKey}-${m.key}`));
+      });
+    });
+    setExpandedClients(clients);
+    setExpandedDepartments(depts);
+    setExpandedMonths(months);
   };
 
   const collapseAll = () => {
     setExpandedClients(new Set());
+    setExpandedDepartments(new Set());
     setExpandedMonths(new Set());
   };
 
@@ -197,17 +283,19 @@ export const HistoricalSalesPipelineView = ({ invoices, onEdit, onDelete }: Hist
                       <div>
                         <div className="flex items-center gap-2">
                           <h3 className="font-semibold text-foreground">{group.clientName}</h3>
-                          {group.departments.length > 0 && (
-                            <span className="text-xs text-muted-foreground">
-                              ({group.departments.join(', ')})
-                            </span>
-                          )}
                           <span className="text-xs px-2 py-0.5 rounded-full font-medium" style={{ backgroundColor: `${color}20`, color }}>
                             {group.count}
                           </span>
                         </div>
                         <p className="text-sm text-violet-600 dark:text-violet-400 font-semibold">
-                          {formatCurrency(group.totalAmount)} <span className="text-muted-foreground font-normal">· {group.months.length} {group.months.length === 1 ? 'mes' : 'meses'}</span>
+                          {formatCurrency(group.totalAmount)}
+                          <span className="text-muted-foreground font-normal">
+                            {' · '}
+                            {group.hasMultipleDepartments
+                              ? `${group.departmentGroups.length} departamentos`
+                              : `${group.departmentGroups[0]?.months.length || 0} ${(group.departmentGroups[0]?.months.length || 0) === 1 ? 'mes' : 'meses'}`
+                            }
+                          </span>
                         </p>
                       </div>
                     </div>
@@ -217,54 +305,63 @@ export const HistoricalSalesPipelineView = ({ invoices, onEdit, onDelete }: Hist
 
                 <CollapsibleContent>
                   <div className="border-t">
-                    {group.months.map(month => {
-                      const monthKey = `${group.clientRut}-${month.key}`;
-                      const isMonthExpanded = expandedMonths.has(monthKey);
+                    {group.hasMultipleDepartments ? (
+                      // Render department level
+                      group.departmentGroups.map(dg => {
+                        const deptKey = `${group.clientRut}-${dg.department}`;
+                        const isDeptExpanded = expandedDepartments.has(deptKey);
 
-                      return (
-                        <Collapsible key={monthKey} open={isMonthExpanded} onOpenChange={() => toggleMonth(monthKey)}>
-                          <CollapsibleTrigger asChild>
-                            <div className="flex items-center justify-between px-6 py-3 cursor-pointer hover:bg-accent/30 transition-colors border-b last:border-b-0">
-                              <div className="flex items-center gap-2">
-                                <Calendar className="h-4 w-4 text-muted-foreground" />
-                                <span className="font-medium text-sm capitalize">{month.label}</span>
-                                <span className="text-xs text-muted-foreground">({month.invoices.length})</span>
+                        return (
+                          <Collapsible key={deptKey} open={isDeptExpanded} onOpenChange={() => toggleDepartment(deptKey)}>
+                            <CollapsibleTrigger asChild>
+                              <div className="flex items-center justify-between px-5 py-3 cursor-pointer hover:bg-accent/40 transition-colors border-b last:border-b-0">
+                                <div className="flex items-center gap-2">
+                                  <Building2 className="h-4 w-4 text-muted-foreground" />
+                                  <span className="font-medium text-sm">{dg.department}</span>
+                                  <span className="text-xs text-muted-foreground">({dg.count})</span>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                  <span className="text-sm font-semibold text-violet-600 dark:text-violet-400">{formatCurrency(dg.totalAmount)}</span>
+                                  {isDeptExpanded ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
+                                </div>
                               </div>
-                              <div className="flex items-center gap-3">
-                                <span className="text-sm font-semibold text-violet-600 dark:text-violet-400">{formatCurrency(month.total)}</span>
-                                {isMonthExpanded ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
+                            </CollapsibleTrigger>
+                            <CollapsibleContent>
+                              <div className="pl-4 border-l-2 border-muted ml-5">
+                                {dg.months.map(month => {
+                                  const monthKey = `${deptKey}-${month.key}`;
+                                  return (
+                                    <MonthSection
+                                      key={monthKey}
+                                      month={month}
+                                      monthKey={monthKey}
+                                      isExpanded={expandedMonths.has(monthKey)}
+                                      onToggle={toggleMonth}
+                                      onEdit={onEdit}
+                                    />
+                                  );
+                                })}
                               </div>
-                            </div>
-                          </CollapsibleTrigger>
-
-                          <CollapsibleContent>
-                            <div className="px-6 py-4 bg-accent/10">
-                              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-                                {month.invoices.map(inv => (
-                                  <div
-                                    key={inv.id}
-                                    className="bg-card border rounded-lg p-3 hover:shadow-md transition-all cursor-pointer hover:-translate-y-0.5"
-                                    onClick={() => onEdit(inv)}
-                                  >
-                                    <div className="flex items-center justify-between mb-2">
-                                      <span className="font-mono text-sm font-semibold text-foreground">{inv.folio}</span>
-                                      {getStatusBadge(inv.status)}
-                                    </div>
-                                    {inv.numeroFiscal && (
-                                      <p className="text-xs text-muted-foreground mb-1">N° Fiscal: {inv.numeroFiscal}</p>
-                                    )}
-                                    <p className="text-xs text-muted-foreground mb-2">
-                                      {format(parseISO(inv.issueDate), 'dd/MM/yyyy')}
-                                    </p>
-                                    <p className="text-sm font-bold text-violet-600 dark:text-violet-400">{formatCurrency(inv.total)}</p>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          </CollapsibleContent>
-                        </Collapsible>
-                      );
-                    })}
+                            </CollapsibleContent>
+                          </Collapsible>
+                        );
+                      })
+                    ) : (
+                      // Single department: skip department level, render months directly
+                      group.departmentGroups[0]?.months.map(month => {
+                        const monthKey = `${group.clientRut}-${month.key}`;
+                        return (
+                          <MonthSection
+                            key={monthKey}
+                            month={month}
+                            monthKey={monthKey}
+                            isExpanded={expandedMonths.has(monthKey)}
+                            onToggle={toggleMonth}
+                            onEdit={onEdit}
+                          />
+                        );
+                      })
+                    )}
                   </div>
                 </CollapsibleContent>
               </div>
