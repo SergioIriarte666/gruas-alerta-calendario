@@ -77,7 +77,7 @@ export const usePayments = () => {
 
   const createPayment = async (
     payment: Omit<Payment, 'id' | 'applied_amount' | 'remaining_amount' | 'created_at' | 'updated_at'>,
-    autoApply: boolean = false // CAMBIO: FIFO automático deshabilitado por defecto
+    autoApply: boolean = false // Compatibilidad: la aplicación automática está deshabilitada
   ) => {
     try {
       console.log('🔍 Creating payment:', payment);
