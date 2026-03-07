@@ -155,7 +155,7 @@ const Clients = () => {
     toast.success("Cliente creado", { description: "El cliente ha sido creado exitosamente." });
   }, [createClient]);
 
-  const handleUpdateClient = React.useCallback((clientData: any) => {
+  const handleUpdateClient = React.useCallback(async (clientData: any) => {
     if (selectedClient) {
       if (clientData._isAddingDepartment) {
         const newClientData = {
