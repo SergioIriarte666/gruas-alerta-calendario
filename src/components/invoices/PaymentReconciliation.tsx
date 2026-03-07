@@ -301,31 +301,10 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
                     <TableCell>{formatCurrency(payment.remaining_amount)}</TableCell>
                     <TableCell>
                       <div className="flex gap-2">
-                        {payment.status === 'pending' || payment.remaining_amount > 0 ? (
-                          <>
-                            <Button
-                              onClick={() => handleManualApplication(payment)}
-                              size="sm"
-                              variant="default"
-                              className="bg-blue-600 hover:bg-blue-700"
-                            >
-                              <Edit className="h-4 w-4 mr-1" />
-                              Aplicar Manualmente
-                            </Button>
-                            <Button
-                              onClick={() => {
-                                setSelectedPayment(payment);
-                                setSelectivePaymentModalOpen(true);
-                              }}
-                              size="sm"
-                              variant="outline"
-                              className="text-purple-600 border-purple-300 hover:bg-purple-50"
-                            >
-                              Selectivo
-                            </Button>
-                          </>
-                        ) : payment.status === 'applied' && payment.applied_amount > 0 ? (
+                        {payment.status === 'applied' && payment.applied_amount > 0 ? (
                           <span className="text-sm text-muted-foreground">Aplicado</span>
+                        ) : payment.status === 'pending' || payment.remaining_amount > 0 ? (
+                          <span className="text-sm text-muted-foreground">Pendiente</span>
                         ) : null}
                         
                         {/* Botón Ver Detalle */}
