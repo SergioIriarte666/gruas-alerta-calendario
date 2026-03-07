@@ -1,29 +1,29 @@
 
 
-## Diagnóstico
+# Fix: RUT normalization consistency + Invoice selection
 
-Febrero 2025 muestra $0 en ventas porque **no existen facturas con fecha de febrero 2025 en la base de datos**. El archivo Libro de Ventas importado saltó de Enero 2025 directamente a Marzo 2025. No es un error de código — es un vacío en los datos importados.
+## Problem 1: RUT still not matching
+The `normalizeRut` function in the parser was fixed to strip dots, spaces, and dashes. But in `InvoiceHistoryImport.tsx`, there are 4 places that still use the old regex `replace(/\./g, '')` (only strips dots):
+- Line 136: creating client RUT map
+- Line 188: looking up unmatched invoice RUT
+- Line 193: finding unmatched client entry
+- Line 441: counting importable invoices in the button label
 
-Resumen de datos por mes (ventas):
-```text
-Ene 25: 82 facturas → $36.4M (todas importadas)
-Feb 25: 0 facturas → $0 ← VACÍO
-Mar 25: 49 facturas → $35.0M (todas importadas)
-Abr 25: 49 facturas → $23.4M (todas importadas)
-```
+All of these need to use the same normalization: `replace(/[.\s-]/g, '').trim().toUpperCase()`.
 
-### Opciones para resolver
+## Problem 2: No invoice selection
+Currently all matched invoices are imported automatically with no way to exclude individual ones. The user wants checkboxes to select/deselect invoices.
 
-**Opción A — Reimportar el Libro de Ventas de Febrero 2025**: Subir el archivo que contenga los datos de ese mes. El sistema detectará duplicados automáticamente para los otros meses.
+### Changes to `InvoiceHistoryImport.tsx`:
+- Add `selectedInvoices` state (`Set<string>`) tracking selected invoice keys
+- Initialize all matched invoices as selected on preview load
+- Add select all / deselect all toggle
+- Add checkbox column to `InvoicePreviewTable`
+- Show all invoices (remove the slice(0,10) limit, keep scroll)
+- Filter by `selectedInvoices` during import
+- Update button count to reflect selection
+- Extract a shared `normalizeRut` helper used consistently everywhere
 
-**Opción B — Agregar alerta visual en el dashboard**: Modificar el componente `HistoricalResults.tsx` para que la tabla de Resumen Mensual muestre un indicador visual cuando un mes tiene $0 en ventas pero meses adyacentes tienen datos, sugiriendo que podría faltar información importada. Sería un badge tipo "⚠ Sin datos" en la celda de ventas.
-
-### Cambios técnicos (Opción B)
-
-**`src/components/finance/historical/HistoricalResults.tsx`** — En la sección de tabla de Resumen Mensual:
-- Agregar lógica que detecte meses con ventas = $0 cuando los meses anterior y posterior tienen ventas > 0
-- Mostrar un badge `"Sin datos - ¿Falta importación?"` en color amber/warning en esos meses
-- Mantener la alerta de margen negativo existente
-
-La Opción A (reimportar) es la solución definitiva. La Opción B es un complemento visual útil. Ambas se pueden hacer.
+## Files to modify
+- `src/components/invoices/InvoiceHistoryImport.tsx` — fix 4 normalization calls + add selection UI
 

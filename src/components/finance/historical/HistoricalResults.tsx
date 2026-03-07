@@ -221,10 +221,13 @@ export const HistoricalResults: React.FC = () => {
   const monthlySummary = useMemo(() => {
     return monthlyData.map((m, i) => {
       const prev = i > 0 ? monthlyData[i - 1] : null;
+      const next = i < monthlyData.length - 1 ? monthlyData[i + 1] : null;
       const variation = prev && prev.margen !== 0
         ? ((m.margen - prev.margen) / Math.abs(prev.margen)) * 100
         : null;
-      return { ...m, variation, isNegative: m.margen < 0 };
+      const isMissingData = m.ventas === 0 && m.compras === 0 &&
+        ((prev && (prev.ventas > 0 || prev.compras > 0)) || (next && (next.ventas > 0 || next.compras > 0)));
+      return { ...m, variation, isNegative: m.margen < 0, isMissingData };
     });
   }, [monthlyData]);
 
@@ -545,12 +548,19 @@ export const HistoricalResults: React.FC = () => {
             </TableHeader>
             <TableBody>
               {monthlySummary.map((m, i) => (
-                <TableRow key={i} className={m.isNegative ? 'bg-destructive/5' : ''}>
+                <TableRow key={i} className={cn(m.isNegative && 'bg-destructive/5', m.isMissingData && 'bg-amber-50/50 dark:bg-amber-950/20')}>
                   <TableCell className="text-xs font-medium capitalize">
                     {m.isNegative && <AlertTriangle className="h-3 w-3 text-destructive inline mr-1" />}
+                    {m.isMissingData && <AlertTriangle className="h-3 w-3 text-amber-500 inline mr-1" />}
                     {m.month}
                   </TableCell>
-                  <TableCell className="text-xs text-right">{formatCurrency(m.ventas)}</TableCell>
+                  <TableCell className="text-xs text-right">
+                    {m.isMissingData ? (
+                      <Badge variant="outline" className="text-[9px] px-1.5 py-0 border-amber-300 text-amber-600 bg-amber-50 dark:bg-amber-950/30 dark:text-amber-400">
+                        Sin datos - ¿Falta importación?
+                      </Badge>
+                    ) : formatCurrency(m.ventas)}
+                  </TableCell>
                   <TableCell className="text-xs text-right">{formatCurrency(m.compras)}</TableCell>
                   <TableCell className={cn("text-xs text-right font-semibold", m.isNegative ? 'text-destructive' : 'text-green-600')}>
                     {formatCurrency(m.margen)}
