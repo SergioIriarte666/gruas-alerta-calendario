@@ -90,7 +90,8 @@ export const formatInvoiceData = (data: any): Invoice => {
       name: data.client.name,
       rut: data.client.rut,
       email: data.client.email,
-      phone: data.client.phone
+      phone: data.client.phone,
+      department: data.client.department
     } : undefined,
     issueDate: safeDate(data.issue_date) || new Date().toISOString().split('T')[0],
     dueDate,
