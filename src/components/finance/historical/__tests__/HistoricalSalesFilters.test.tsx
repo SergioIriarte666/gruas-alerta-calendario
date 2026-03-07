@@ -13,6 +13,7 @@ describe('HistoricalSalesFilters', () => {
   const mockFilters: FilterConfig = {
     dateFrom: undefined,
     dateTo: undefined,
+    searchTerm: '',
     clientName: '',
     folio: '',
     minAmount: '',
