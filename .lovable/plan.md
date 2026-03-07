@@ -1,29 +1,23 @@
 
 
-# Fix: RUT normalization consistency + Invoice selection
+## Diagnóstico
 
-## Problem 1: RUT still not matching
-The `normalizeRut` function in the parser was fixed to strip dots, spaces, and dashes. But in `InvoiceHistoryImport.tsx`, there are 4 places that still use the old regex `replace(/\./g, '')` (only strips dots):
-- Line 136: creating client RUT map
-- Line 188: looking up unmatched invoice RUT
-- Line 193: finding unmatched client entry
-- Line 441: counting importable invoices in the button label
+Las facturas 4109, 4115 y la nota de crédito 183 muestran el badge **"Histórica"** porque fueron importadas desde el Libro de Ventas del SII y su folio interno tiene prefijo `HIST-` (ej: `HIST-F-4109`). El badge actual usa esa lógica: `folio.startsWith('HIST-')` = "Histórica", todo lo demás = "App".
 
-All of these need to use the same normalization: `replace(/[.\s-]/g, '').trim().toUpperCase()`.
+El problema es que **"Histórica"** implica que son registros antiguos, cuando en realidad son facturas recientes que simplemente fueron **importadas** desde un archivo externo.
 
-## Problem 2: No invoice selection
-Currently all matched invoices are imported automatically with no way to exclude individual ones. The user wants checkboxes to select/deselect invoices.
+## Solución
 
-### Changes to `InvoiceHistoryImport.tsx`:
-- Add `selectedInvoices` state (`Set<string>`) tracking selected invoice keys
-- Initialize all matched invoices as selected on preview load
-- Add select all / deselect all toggle
-- Add checkbox column to `InvoicePreviewTable`
-- Show all invoices (remove the slice(0,10) limit, keep scroll)
-- Filter by `selectedInvoices` during import
-- Update button count to reflect selection
-- Extract a shared `normalizeRut` helper used consistently everywhere
+Cambiar el badge de **"Histórica"** a **"Importada"** para reflejar correctamente el origen del registro. Opcionalmente, usar un color más neutro (azul) para diferenciarlo del badge verde "App".
 
-## Files to modify
-- `src/components/invoices/InvoiceHistoryImport.tsx` — fix 4 normalization calls + add selection UI
+### Cambios
+
+**`src/components/finance/historical/HistoricalSalesTable.tsx`** (líneas 189-192):
+- Cambiar el texto del badge de `Histórica` → `Importada`
+- Cambiar colores a azul neutro (`bg-blue-50 text-blue-700 border-blue-200`) para que no sugiera antigüedad
+
+**`src/components/finance/historical/HistoricalSalesPipelineView.tsx`** (línea 185):
+- Cambiar la etiqueta de agrupación de `'Histórico'` → `'Importado'` para consistencia
+
+Estos son los únicos dos archivos que usan la etiqueta "Histórica/Histórico" asociada al prefijo `HIST-`.
 
