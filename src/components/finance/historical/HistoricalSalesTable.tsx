@@ -11,7 +11,13 @@ import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Invoice } from '@/types';
 import { formatCurrency, toTitleCase } from '@/lib/utils';
-import { Edit, ArrowUpDown, ArrowUp, ArrowDown, FileText, Trash2 } from 'lucide-react';
+import { Edit, ArrowUpDown, ArrowUp, ArrowDown, FileText, Trash2, Lock } from 'lucide-react';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
@@ -219,6 +225,18 @@ export const HistoricalSalesTable = ({
                   </Badge>
                 </TableCell>
                 <TableCell className="text-right flex items-center justify-end gap-1">
+                {!invoice.folio.startsWith('HIST-') && (
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Lock className="h-3.5 w-3.5 text-amber-500 mr-1" />
+                      </TooltipTrigger>
+                      <TooltipContent side="left" className="max-w-[200px] text-xs">
+                        Factura del sistema — edición limitada a notas y metadatos
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                )}
                 <Button
                   variant="ghost"
                   size="icon"
