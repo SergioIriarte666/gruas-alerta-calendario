@@ -71,6 +71,8 @@ export const EditHistoricalInvoiceModal = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [metadata, setMetadata] = useState<InvoiceMetadata>({});
 
+  const isSystemInvoice = invoice ? !invoice.folio.startsWith('HIST-') : false;
+
   useEffect(() => {
     if (invoice && isOpen) {
       setStatus(invoice.status);
@@ -167,11 +169,21 @@ export const EditHistoricalInvoiceModal = ({
         </DialogHeader>
 
         <div className="space-y-4 py-4">
+          {isSystemInvoice && (
+            <Alert variant="destructive" className="border-amber-300 bg-amber-50">
+              <ShieldAlert className="h-4 w-4 !text-amber-600" />
+              <AlertDescription className="text-amber-800 text-xs">
+                Esta factura fue generada por el sistema y está vinculada a cierres, servicios y costos. 
+                Solo se permiten cambios en notas y metadatos. Para editar estado u origen, use el módulo de Facturación.
+              </AlertDescription>
+            </Alert>
+          )}
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <Label htmlFor="status">Estado</Label>
-              <Select value={status} onValueChange={setStatus}>
-                <SelectTrigger>
+              <Label htmlFor="status" className={isSystemInvoice ? 'text-muted-foreground' : ''}>Estado</Label>
+              <Select value={status} onValueChange={setStatus} disabled={isSystemInvoice}>
+                <SelectTrigger className={isSystemInvoice ? 'opacity-50 cursor-not-allowed' : ''}>
                   <SelectValue placeholder="Seleccionar estado" />
                 </SelectTrigger>
                 <SelectContent>
@@ -185,9 +197,9 @@ export const EditHistoricalInvoiceModal = ({
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="origin">Origen</Label>
-              <Select value={origin} onValueChange={(v) => setOrigin(v as OriginType)}>
-                <SelectTrigger>
+              <Label htmlFor="origin" className={isSystemInvoice ? 'text-muted-foreground' : ''}>Origen</Label>
+              <Select value={origin} onValueChange={(v) => setOrigin(v as OriginType)} disabled={isSystemInvoice}>
+                <SelectTrigger className={isSystemInvoice ? 'opacity-50 cursor-not-allowed' : ''}>
                   <SelectValue placeholder="Seleccionar origen" />
                 </SelectTrigger>
                 <SelectContent>
