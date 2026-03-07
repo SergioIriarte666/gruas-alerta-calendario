@@ -153,7 +153,8 @@ export const usePagedInvoices = (page: number, pageSize: number) => {
             name,
             rut,
             email,
-            phone
+            phone,
+            department
           ),
           creator:profiles!invoices_created_by_fkey (
             id,
