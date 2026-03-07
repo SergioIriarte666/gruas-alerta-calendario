@@ -216,6 +216,7 @@ export interface Invoice {
     rut: string;
     email?: string;
     phone?: string;
+    department?: string;
   };
   issueDate: string;
   dueDate: string;
