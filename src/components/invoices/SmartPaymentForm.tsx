@@ -131,7 +131,7 @@ export const SmartPaymentForm: React.FC<SmartPaymentFormProps> = ({
       const {
         data,
         error
-      } = await supabase.from('invoices').select('id, folio, numero_fiscal, total, remaining_amount, due_date, status').eq('client_id', formData.client_id).in('status', ['draft', 'sent', 'overdue', 'partial']).gt('remaining_amount', 0).order('due_date', {
+      } = await supabase.from('invoices').select('id, folio, numero_fiscal, total, remaining_amount, due_date, status').eq('client_id', formData.client_id).in('status', ['draft', 'sent', 'overdue', 'partial']).not('folio', 'like', 'HIST-%').gt('remaining_amount', 0).order('due_date', {
         ascending: true
       });
       if (error) throw error;
