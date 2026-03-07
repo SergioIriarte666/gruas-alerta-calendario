@@ -19,6 +19,7 @@ const Historical = () => {
         <TabsList>
           <TabsTrigger value="sales">Histórico de Ventas</TabsTrigger>
           <TabsTrigger value="purchases">Histórico de Compras</TabsTrigger>
+          <TabsTrigger value="results">Resultados</TabsTrigger>
         </TabsList>
         
         <TabsContent value="sales" className="space-y-4">
@@ -45,6 +46,20 @@ const Historical = () => {
             </CardHeader>
             <CardContent>
               <HistoricalPurchases />
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="results" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Resultados Financieros</CardTitle>
+              <CardDescription>
+                Panel financiero completo con visión cruzada de ventas y compras.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <HistoricalResults />
             </CardContent>
           </Card>
         </TabsContent>
