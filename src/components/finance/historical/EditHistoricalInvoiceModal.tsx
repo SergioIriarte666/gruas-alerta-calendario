@@ -18,8 +18,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Invoice } from '@/types';
 import { format } from 'date-fns';
+import { ShieldAlert } from 'lucide-react';
 
 interface EditHistoricalInvoiceModalProps {
   invoice: Invoice | null;
