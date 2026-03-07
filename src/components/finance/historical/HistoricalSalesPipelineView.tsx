@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Invoice } from '@/types';
 import { toTitleCase, formatCurrency } from '@/lib/utils';
-import { Search, ChevronDown, ChevronRight, User, Calendar, Building2 } from 'lucide-react';
+import { Search, ChevronDown, ChevronRight, User, Calendar, Building2, Archive } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -182,7 +182,7 @@ export const HistoricalSalesPipelineView = ({ invoices, onEdit, onDelete }: Hist
       const deptMap = new Map<string, DepartmentGroup>();
 
       group.invoices.forEach(inv => {
-        const dept = inv.client?.department || 'General';
+        const dept = inv.folio.startsWith('HIST-') ? 'Histórico' : (inv.client?.department || 'General');
         if (!deptMap.has(dept)) {
           deptMap.set(dept, { department: dept, invoices: [], totalAmount: 0, count: 0, months: [] });
         }
@@ -316,7 +316,11 @@ export const HistoricalSalesPipelineView = ({ invoices, onEdit, onDelete }: Hist
                             <CollapsibleTrigger asChild>
                               <div className="flex items-center justify-between px-5 py-3 cursor-pointer hover:bg-accent/40 transition-colors border-b last:border-b-0">
                                 <div className="flex items-center gap-2">
-                                  <Building2 className="h-4 w-4 text-muted-foreground" />
+                                  {dg.department === 'Histórico' ? (
+                                    <Archive className="h-4 w-4 text-muted-foreground" />
+                                  ) : (
+                                    <Building2 className="h-4 w-4 text-muted-foreground" />
+                                  )}
                                   <span className="font-medium text-sm">{dg.department}</span>
                                   <span className="text-xs text-muted-foreground">({dg.count})</span>
                                 </div>
