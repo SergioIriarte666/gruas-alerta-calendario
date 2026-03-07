@@ -23,8 +23,9 @@ interface MonthGroup {
 }
 
 interface ClientGroup {
-  clientId: string;
+  clientRut: string;
   clientName: string;
+  departments: string[];
   invoices: Invoice[];
   totalAmount: number;
   count: number;
