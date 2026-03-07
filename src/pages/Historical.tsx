@@ -2,6 +2,7 @@ import React from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { HistoricalSales } from '@/components/finance/HistoricalSales';
 import { HistoricalPurchases } from '@/components/finance/HistoricalPurchases';
+import { HistoricalResults } from '@/components/finance/historical/HistoricalResults';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 
 const Historical = () => {
