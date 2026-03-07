@@ -1,29 +1,36 @@
 
 
-# Fix: RUT normalization consistency + Invoice selection
+## Diagnóstico
 
-## Problem 1: RUT still not matching
-The `normalizeRut` function in the parser was fixed to strip dots, spaces, and dashes. But in `InvoiceHistoryImport.tsx`, there are 4 places that still use the old regex `replace(/\./g, '')` (only strips dots):
-- Line 136: creating client RUT map
-- Line 188: looking up unmatched invoice RUT
-- Line 193: finding unmatched client entry
-- Line 441: counting importable invoices in the button label
+Dos problemas en el modal `EditHistoricalInvoiceModal`:
 
-All of these need to use the same normalization: `replace(/[.\s-]/g, '').trim().toUpperCase()`.
+1. **Layout roto**: El `grid grid-cols-4` con labels en columna 1 y inputs en columnas 2-4 se rompe en pantallas pequeñas — los campos se superponen como muestra la captura.
 
-## Problem 2: No invoice selection
-Currently all matched invoices are imported automatically with no way to exclude individual ones. The user wants checkboxes to select/deselect invoices.
+2. **Falta campo "Origen"**: No hay forma de editar si una factura es "Importada" (prefijo `HIST-`) o "Sistema" (sin prefijo). El origen se determina por el prefijo del folio (`folio.startsWith('HIST-')`), por lo que cambiar el origen requiere modificar el folio.
 
-### Changes to `InvoiceHistoryImport.tsx`:
-- Add `selectedInvoices` state (`Set<string>`) tracking selected invoice keys
-- Initialize all matched invoices as selected on preview load
-- Add select all / deselect all toggle
-- Add checkbox column to `InvoicePreviewTable`
-- Show all invoices (remove the slice(0,10) limit, keep scroll)
-- Filter by `selectedInvoices` during import
-- Update button count to reflect selection
-- Extract a shared `normalizeRut` helper used consistently everywhere
+## Solución
 
-## Files to modify
-- `src/components/invoices/InvoiceHistoryImport.tsx` — fix 4 normalization calls + add selection UI
+### 1. Corregir layout del modal — `EditHistoricalInvoiceModal.tsx`
+
+- Cambiar de `grid grid-cols-4` a un layout vertical con `space-y-4` donde cada campo tiene su `Label` arriba y el input debajo (full width).
+- Aumentar el ancho máximo del modal a `sm:max-w-[600px]`.
+- Esto elimina la superposición y mejora la legibilidad.
+
+### 2. Agregar campo "Origen" — `EditHistoricalInvoiceModal.tsx`
+
+- Nuevo estado `origin` con valores `'importada'` | `'sistema'`.
+- Se inicializa leyendo si `invoice.folio.startsWith('HIST-')`.
+- Un `Select` permite cambiar entre "Importada" y "Sistema".
+- Al guardar, si el origen cambia:
+  - De Importada → Sistema: quitar prefijo `HIST-F-`, `HIST-NC-`, `HIST-ND-` del folio (ej: `HIST-F-4115` → `4115`).
+  - De Sistema → Importada: agregar prefijo `HIST-F-` al folio.
+- Incluir `folio` en el objeto `updates` pasado a `onSave`.
+- El audit log registrará el cambio de origen.
+
+### 3. Actualizar `onSave` en `HistoricalSales.tsx`
+
+- La función `handleUpdateInvoice` ya pasa `updates` genérico a `updateInvoice`, que acepta `Partial<Invoice>` incluyendo `folio`. No requiere cambios en el hook.
+
+### Archivos a modificar
+- `src/components/finance/historical/EditHistoricalInvoiceModal.tsx` — layout + campo origen
 
