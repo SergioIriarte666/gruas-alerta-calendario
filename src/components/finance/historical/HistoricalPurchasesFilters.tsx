@@ -76,9 +76,9 @@ export const HistoricalPurchasesFilters = ({
 
       {/* Search by Invoice Number */}
       <div className="space-y-2">
-        <label className="text-sm font-medium">N° Factura</label>
+        <label className="text-sm font-medium">N° Fiscal</label>
         <Input
-          placeholder="Buscar folio..."
+          placeholder="Buscar N° fiscal..."
           value={filters.invoiceNumber}
           onChange={(e) => handleChange('invoiceNumber', e.target.value)}
         />

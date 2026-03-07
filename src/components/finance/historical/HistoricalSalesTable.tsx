@@ -12,6 +12,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Invoice } from '@/types';
 import { formatCurrency, toTitleCase } from '@/lib/utils';
 import { Edit, ArrowUpDown, ArrowUp, ArrowDown, FileText, Trash2, Lock } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import {
   Tooltip,
   TooltipContent,
@@ -191,6 +192,21 @@ export const HistoricalSalesTable = ({
                 </TableCell>
                 <TableCell className="font-medium font-mono text-xs">
                   <div className="flex items-center gap-1.5">
+                    {(() => {
+                      const docType = invoice.folio.startsWith('HIST-NC-') ? 'NC'
+                        : invoice.folio.startsWith('HIST-ND-') ? 'ND'
+                        : 'FE';
+                      const badgeStyles = docType === 'NC'
+                        ? 'bg-amber-50 text-amber-700 border-amber-200'
+                        : docType === 'ND'
+                        ? 'bg-orange-50 text-orange-700 border-orange-200'
+                        : 'bg-gray-50 text-gray-600 border-gray-200';
+                      return (
+                        <Badge variant="outline" className={`${badgeStyles} text-[9px] px-1.5 py-0 font-semibold`}>
+                          {docType}
+                        </Badge>
+                      );
+                    })()}
                     {invoice.numeroFiscal || invoice.folio}
                     {invoice.folio.startsWith('HIST-') ? (
                       <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 text-[9px] px-1.5 py-0">

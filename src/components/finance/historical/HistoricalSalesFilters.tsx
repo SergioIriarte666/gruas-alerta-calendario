@@ -97,7 +97,7 @@ export const HistoricalSalesFilters = ({
         <div className="relative flex-1 w-full lg:max-w-md">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Buscar por cliente, folio, N° fiscal..."
+            placeholder="Buscar por N° fiscal, cliente o folio..."
             value={localFilters.searchTerm || ''}
             onChange={(e) => handleChange('searchTerm', e.target.value)}
             className="pl-9 w-full bg-background"
