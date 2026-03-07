@@ -134,8 +134,7 @@ const Invoices = () => {
     setSelectedInvoiceIds([]); // Clear selection when sorting
   };
 
-  const baseInvoices = (isBasicView && pagedData?.invoices ? pagedData.invoices : invoices)
-    .filter(inv => !inv.folio.startsWith('HIST-'));
+  const baseInvoices = (isBasicView && pagedData?.invoices ? pagedData.invoices : invoices);
 
   const filteredInvoices = baseInvoices.filter(invoice => {
     const invoiceWithDetails = getInvoiceWithDetails(invoice);
