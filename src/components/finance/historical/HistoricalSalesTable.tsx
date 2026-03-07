@@ -12,7 +12,6 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Invoice } from '@/types';
 import { formatCurrency, toTitleCase } from '@/lib/utils';
 import { Edit, ArrowUpDown, ArrowUp, ArrowDown, FileText, Trash2, Lock } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
 import {
   Tooltip,
   TooltipContent,
