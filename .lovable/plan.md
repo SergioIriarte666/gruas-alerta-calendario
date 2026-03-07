@@ -1,29 +1,29 @@
 
 
-## Diagnóstico
+# Fix: RUT normalization consistency + Invoice selection
 
-### Problema 1: Proveedores — Botón "Actualizar" deshabilitado
-En `SupplierForm.tsx`, la validación del paso 2 (`validateStep(2)`) exige que **teléfono, dirección y nombre de contacto** sean obligatorios:
-```typescript
-// Línea 107
-return formValues.phone?.trim() !== '' && formValues.address?.trim() !== '' && formValues.contact_name?.trim() !== '';
-```
-Pero el esquema Zod define estos campos como **opcionales**. Para proveedores importados con solo nombre+RUT, el botón de guardar queda permanentemente deshabilitado porque `canSubmit` requiere `validateStep(2) === true`.
+## Problem 1: RUT still not matching
+The `normalizeRut` function in the parser was fixed to strip dots, spaces, and dashes. But in `InvoiceHistoryImport.tsx`, there are 4 places that still use the old regex `replace(/\./g, '')` (only strips dots):
+- Line 136: creating client RUT map
+- Line 188: looking up unmatched invoice RUT
+- Line 193: finding unmatched client entry
+- Line 441: counting importable invoices in the button label
 
-### Problema 2: Clientes — Dialog se cierra antes de confirmar
-En `Clients.tsx`, `handleUpdateClient` cierra el diálogo y muestra toast de éxito **inmediatamente** (líneas 172-174), sin esperar a que la mutación termine. Si la mutación falla (por ejemplo, por RLS), el usuario ve "Cliente actualizado" pero los datos no se guardan realmente.
+All of these need to use the same normalization: `replace(/[.\s-]/g, '').trim().toUpperCase()`.
 
----
+## Problem 2: No invoice selection
+Currently all matched invoices are imported automatically with no way to exclude individual ones. The user wants checkboxes to select/deselect invoices.
 
-## Plan de corrección
+### Changes to `InvoiceHistoryImport.tsx`:
+- Add `selectedInvoices` state (`Set<string>`) tracking selected invoice keys
+- Initialize all matched invoices as selected on preview load
+- Add select all / deselect all toggle
+- Add checkbox column to `InvoicePreviewTable`
+- Show all invoices (remove the slice(0,10) limit, keep scroll)
+- Filter by `selectedInvoices` during import
+- Update button count to reflect selection
+- Extract a shared `normalizeRut` helper used consistently everywhere
 
-### 1. `src/components/suppliers/SupplierForm.tsx`
-- Cambiar `validateStep(2)` para retornar `true` (campos opcionales), consistente con el esquema Zod y los requisitos mínimos del proveedor.
-
-### 2. `src/pages/Clients.tsx`
-- Usar `await` en la llamada a `updateClient` y mover `setIsDialogOpen(false)` + `setSelectedClient(undefined)` + toast al bloque de éxito confirmado.
-- Agregar `try/catch` para mostrar error si la mutación falla, en lugar de mostrar éxito prematuro.
-
-### 3. `src/hooks/useClients.ts`
-- Eliminar el toast duplicado del `onSuccess` de `updateClientMutation` (ya que el componente lo maneja).
+## Files to modify
+- `src/components/invoices/InvoiceHistoryImport.tsx` — fix 4 normalization calls + add selection UI
 
