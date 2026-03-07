@@ -139,8 +139,8 @@ export const HistoricalSalesPipelineView = ({ invoices, onEdit, onDelete }: Hist
   };
 
   const expandAll = () => {
-    const allKeys = new Set(['all', ...clientGroups.map(g => g.clientId)]);
-    clientGroups.forEach(g => g.months.forEach(m => allKeys.add(`${g.clientId}-${m.key}`)));
+    const allKeys = new Set(['all', ...clientGroups.map(g => g.clientRut)]);
+    clientGroups.forEach(g => g.months.forEach(m => allKeys.add(`${g.clientRut}-${m.key}`)));
     setExpandedClients(allKeys);
     setExpandedMonths(allKeys);
   };
@@ -182,11 +182,11 @@ export const HistoricalSalesPipelineView = ({ invoices, onEdit, onDelete }: Hist
       {/* Client groups */}
       <div className="space-y-4">
         {clientGroups.map(group => {
-          const isExpanded = expandedClients.has(group.clientId);
-          const color = group.clientId === 'no_client' ? '#9ca3af' : getClientColor(group.clientName);
+          const isExpanded = expandedClients.has(group.clientRut);
+          const color = group.clientRut === 'no_client' ? '#9ca3af' : getClientColor(group.clientName);
 
           return (
-            <Collapsible key={group.clientId} open={isExpanded} onOpenChange={() => toggleClient(group.clientId)}>
+            <Collapsible key={group.clientRut} open={isExpanded} onOpenChange={() => toggleClient(group.clientRut)}>
               <div className="bg-card border rounded-lg overflow-hidden" style={{ borderTopWidth: '3px', borderTopColor: color }}>
                 <CollapsibleTrigger asChild>
                   <div className="flex items-center justify-between p-4 cursor-pointer hover:bg-accent/50 transition-colors">
@@ -197,6 +197,11 @@ export const HistoricalSalesPipelineView = ({ invoices, onEdit, onDelete }: Hist
                       <div>
                         <div className="flex items-center gap-2">
                           <h3 className="font-semibold text-foreground">{group.clientName}</h3>
+                          {group.departments.length > 0 && (
+                            <span className="text-xs text-muted-foreground">
+                              ({group.departments.join(', ')})
+                            </span>
+                          )}
                           <span className="text-xs px-2 py-0.5 rounded-full font-medium" style={{ backgroundColor: `${color}20`, color }}>
                             {group.count}
                           </span>
@@ -213,7 +218,7 @@ export const HistoricalSalesPipelineView = ({ invoices, onEdit, onDelete }: Hist
                 <CollapsibleContent>
                   <div className="border-t">
                     {group.months.map(month => {
-                      const monthKey = `${group.clientId}-${month.key}`;
+                      const monthKey = `${group.clientRut}-${month.key}`;
                       const isMonthExpanded = expandedMonths.has(monthKey);
 
                       return (
