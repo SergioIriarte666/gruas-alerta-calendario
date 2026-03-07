@@ -85,7 +85,7 @@ const fetchInvoicesFromDB = async (): Promise<Invoice[]> => {
       invoice_closures: closureId ? [{ closure_id: closureId }] : []
     });
     
-    if (invoice.status === 'sent' && formattedInvoice.status === 'overdue') {
+    if (invoice.status !== 'cancelled' && invoice.status !== 'overdue' && formattedInvoice.status === 'overdue') {
       overdueInvoiceIds.push(invoice.id);
     }
     
@@ -199,7 +199,7 @@ export const usePagedInvoices = (page: number, pageSize: number) => {
           invoice_closures: closureRelation ? [{ closure_id: closureRelation.closure_id }] : [],
         });
 
-        if (invoice.status === 'sent' && formattedInvoice.status === 'overdue') {
+        if (invoice.status !== 'cancelled' && invoice.status !== 'overdue' && formattedInvoice.status === 'overdue') {
           overdueInvoiceIds.push(invoice.id);
         }
 

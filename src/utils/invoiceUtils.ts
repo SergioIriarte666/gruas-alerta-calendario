@@ -25,15 +25,16 @@ const safeDate = (value: any): string | null => {
   }
 };
 
-// Check if an invoice should be marked as overdue
-const shouldBeOverdue = (status: string, dueDate: string): boolean => {
-  if (status !== 'sent') return false;
-  
+// Check if an invoice should be marked as overdue based on outstanding balance
+const shouldBeOverdue = (status: string, dueDate: string, remainingAmount: number): boolean => {
+  if (status === 'cancelled' || status === 'draft') return false;
+  if (remainingAmount <= 0) return false;
+
   const today = new Date();
   const due = new Date(dueDate);
   today.setHours(0, 0, 0, 0);
   due.setHours(0, 0, 0, 0);
-  
+
   return due < today;
 };
 
@@ -69,15 +70,29 @@ export const formatInvoiceData = (data: any): Invoice => {
   if (!data.client_id) throw new Error('ID de cliente es requerido');
 
   const dueDate = safeDate(data.due_date) || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-  
-  // Determine correct status, checking for overdue
-  let status = (['draft', 'sent', 'paid', 'overdue', 'cancelled'].includes(data.status) 
-    ? data.status 
+  const subtotal = safeNumber(data.subtotal);
+  const vat = safeNumber(data.vat);
+  const total = safeNumber(data.total);
+  const paidAmount = safeNumber(data.paid_amount);
+  const remainingAmount = data.remaining_amount !== null && data.remaining_amount !== undefined
+    ? safeNumber(data.remaining_amount)
+    : Math.max(0, total - paidAmount);
+
+  // Determine correct status with self-healing for inconsistent records
+  let status = (['draft', 'sent', 'paid', 'overdue', 'cancelled'].includes(data.status)
+    ? data.status
     : 'draft') as 'draft' | 'sent' | 'paid' | 'overdue' | 'cancelled';
-    
-  // Override status to overdue if conditions are met
-  if (shouldBeOverdue(status, dueDate)) {
-    status = 'overdue';
+
+  const hasPendingBalance = remainingAmount > 0;
+
+  if (status !== 'cancelled') {
+    if (!hasPendingBalance) {
+      status = 'paid';
+    } else if (shouldBeOverdue(status, dueDate, remainingAmount)) {
+      status = 'overdue';
+    } else if (status === 'paid' || status === 'overdue') {
+      status = 'sent';
+    }
   }
 
   return {
@@ -95,12 +110,12 @@ export const formatInvoiceData = (data: any): Invoice => {
     } : undefined,
     issueDate: safeDate(data.issue_date) || new Date().toISOString().split('T')[0],
     dueDate,
-    subtotal: safeNumber(data.subtotal),
-    vat: safeNumber(data.vat),
-    total: safeNumber(data.total),
+    subtotal,
+    vat,
+    total,
     status,
-    paidAmount: safeNumber(data.paid_amount),
-    remainingAmount: safeNumber(data.remaining_amount),
+    paidAmount,
+    remainingAmount,
     paymentDate: safeDate(data.payment_date),
     paymentTermId: data.payment_term_id || undefined,
     numeroFiscal: safeString(data.numero_fiscal) || null,
