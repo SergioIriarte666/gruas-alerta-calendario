@@ -89,6 +89,7 @@ export const HistoricalSales = () => {
   const [filters, setFilters] = useState<FilterConfig>({
     dateFrom: undefined,
     dateTo: undefined,
+    searchTerm: '',
     clientName: '',
     folio: '',
     minAmount: '',
@@ -114,6 +115,7 @@ export const HistoricalSales = () => {
     setFilters({
       dateFrom: undefined,
       dateTo: undefined,
+      searchTerm: '',
       clientName: '',
       folio: '',
       minAmount: '',
@@ -127,13 +129,22 @@ export const HistoricalSales = () => {
     // 1. All invoices (historical + app-created)
     let result = [...invoices];
 
-    // 2. Apply Filters
+    // 2. Apply search term (searches across client, folio, N° fiscal)
+    if (filters.searchTerm) {
+      const query = filters.searchTerm.toLowerCase();
+      result = result.filter((inv) =>
+        inv.client?.name?.toLowerCase().includes(query) ||
+        inv.folio.toLowerCase().includes(query) ||
+        inv.numeroFiscal?.toLowerCase().includes(query)
+      );
+    }
+
+    // 3. Apply specific filters
     if (filters.dateFrom) {
       const fromTime = filters.dateFrom.getTime();
       result = result.filter((inv) => new Date(inv.issueDate).getTime() >= fromTime);
     }
     if (filters.dateTo) {
-      // Set to end of day
       const toDate = new Date(filters.dateTo);
       toDate.setHours(23, 59, 59, 999);
       const toTime = toDate.getTime();
