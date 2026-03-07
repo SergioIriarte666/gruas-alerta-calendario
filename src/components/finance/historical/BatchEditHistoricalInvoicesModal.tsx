@@ -64,6 +64,12 @@ export const BatchEditHistoricalInvoicesModal = ({
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const systemInvoiceCount = useMemo(
+    () => selectedInvoices.filter(inv => !inv.folio.startsWith('HIST-')).length,
+    [selectedInvoices]
+  );
+  const hasSystemInvoices = systemInvoiceCount > 0;
+
   const resetForm = () => {
     setStatus('');
     setShippingInfo('');
@@ -93,9 +99,10 @@ export const BatchEditHistoricalInvoicesModal = ({
       const promises = selectedInvoices.map(async (invoice) => {
         const updates: any = {};
         const changes: string[] = [];
+        const isSystem = !invoice.folio.startsWith('HIST-');
 
-        // 1. Status Update
-        if (updateStatus && status) {
+        // 1. Status Update — skip for system invoices
+        if (updateStatus && status && !isSystem) {
           updates.status = status;
           changes.push(`Status: ${invoice.status} -> ${status}`);
         }
@@ -129,8 +136,8 @@ export const BatchEditHistoricalInvoicesModal = ({
           metadataChanged = true;
         }
 
-        // Origin update
-        if (updateOrigin && origin) {
+        // Origin update — skip for system invoices
+        if (updateOrigin && origin && !isSystem) {
           const currentOrigin = invoice.folio.startsWith('HIST-') ? 'importada' : 'sistema';
           if (currentOrigin !== origin) {
             if (origin === 'sistema') {
