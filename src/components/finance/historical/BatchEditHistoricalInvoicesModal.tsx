@@ -57,6 +57,8 @@ export const BatchEditHistoricalInvoicesModal = ({
   const [updateShipping, setUpdateShipping] = useState(false);
   const [updatePayment, setUpdatePayment] = useState(false);
   const [updateNote, setUpdateNote] = useState(false);
+  const [updateOrigin, setUpdateOrigin] = useState(false);
+  const [origin, setOrigin] = useState<string>('');
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -69,6 +71,8 @@ export const BatchEditHistoricalInvoicesModal = ({
     setUpdateShipping(false);
     setUpdatePayment(false);
     setUpdateNote(false);
+    setUpdateOrigin(false);
+    setOrigin('');
   };
 
   const handleClose = () => {
@@ -121,6 +125,19 @@ export const BatchEditHistoricalInvoicesModal = ({
           currentMetadata.paymentMethod = paymentMethod;
           changes.push(`Payment Method updated`);
           metadataChanged = true;
+        }
+
+        // Origin update
+        if (updateOrigin && origin) {
+          const currentOrigin = invoice.folio.startsWith('HIST-') ? 'importada' : 'sistema';
+          if (currentOrigin !== origin) {
+            if (origin === 'sistema') {
+              updates.folio = invoice.folio.replace(/^HIST-(F|NC|ND)-/, '');
+            } else {
+              updates.folio = invoice.folio.startsWith('HIST-') ? invoice.folio : `HIST-F-${invoice.folio}`;
+            }
+            changes.push(`Origen: ${currentOrigin} -> ${origin}`);
+          }
         }
 
         // Add audit log if there are changes
@@ -274,13 +291,41 @@ export const BatchEditHistoricalInvoicesModal = ({
               />
             </div>
           </div>
+
+          {/* Origin Section */}
+          <div className="flex items-start gap-4">
+            <Checkbox 
+              id="check-origin" 
+              checked={updateOrigin} 
+              onCheckedChange={(c) => setUpdateOrigin(c === true)}
+              className="mt-3"
+            />
+            <div className="grid gap-2 flex-1">
+              <Label htmlFor="origin" className={!updateOrigin ? 'text-muted-foreground' : ''}>
+                Origen
+              </Label>
+              <Select 
+                value={origin} 
+                onValueChange={setOrigin}
+                disabled={!updateOrigin}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Seleccionar origen" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="importada">Importada (Histórica)</SelectItem>
+                  <SelectItem value="sistema">Sistema</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
         </div>
 
         <DialogFooter>
           <Button variant="outline" onClick={handleClose} disabled={isSubmitting}>
             Cancelar
           </Button>
-          <Button onClick={handleSave} disabled={isSubmitting || (!updateStatus && !updateShipping && !updatePayment && !updateNote)}>
+          <Button onClick={handleSave} disabled={isSubmitting || (!updateStatus && !updateShipping && !updatePayment && !updateNote && !updateOrigin)}>
             {isSubmitting ? 'Guardando...' : 'Aplicar Cambios'}
           </Button>
         </DialogFooter>
