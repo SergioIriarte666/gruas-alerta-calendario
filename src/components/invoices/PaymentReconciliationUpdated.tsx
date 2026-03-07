@@ -42,7 +42,6 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
     payments, 
     loading, 
     paymentSystemAvailable, 
-    applyPaymentFIFO, 
     getUnpaidInvoicesForClient,
     cleanupDuplicatePayments,
     syncPaidInvoicesWithPayments,
@@ -127,20 +126,6 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
     }
   };
 
-  const handleAutoApply = async (payment: PaymentWithDetails) => {
-    try {
-      setIsProcessing(true);
-      await applyPaymentFIFO(payment.id, payment.client_id);
-      await loadReconciliationStats();
-      await loadSystemDiagnosis();
-      toast.success("Pago aplicado automáticamente");
-    } catch (error) {
-      console.error('Error applying payment:', error);
-      toast.error("Error al aplicar el pago");
-    } finally {
-      setIsProcessing(false);
-    }
-  };
 
   const handleManualApplication = async (payment: PaymentWithDetails) => {
     const invoices = await getUnpaidInvoicesForClient(payment.client_id);
