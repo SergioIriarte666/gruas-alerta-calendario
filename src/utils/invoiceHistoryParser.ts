@@ -450,7 +450,8 @@ const getDocumentLabel = (docType: DocumentType): string => {
 export const processInvoiceRows = (
   rows: ParsedInvoiceRow[],
   clients: Client[],
-  existingNumerosFiscales: Set<string>
+  existingNumerosFiscales: Set<string>,
+  existingFolios?: Set<string>
 ): ImportPreview => {
   // If rows have documentType set (Libro de Ventas), process all of them.
   // Otherwise (old columnar format), filter to FACTURA ELECTRONICA only.
@@ -523,8 +524,8 @@ export const processInvoiceRows = (
       processed.clientMatch = 'none';
     }
 
-    // Check duplicates by numero_fiscal
-    if (existingNumerosFiscales.has(row.folio)) {
+    // Check duplicates by numero_fiscal or by generated folio
+    if (existingNumerosFiscales.has(row.folio) || (existingFolios && existingFolios.has(processed.folio))) {
       duplicates.push(processed);
       continue;
     }

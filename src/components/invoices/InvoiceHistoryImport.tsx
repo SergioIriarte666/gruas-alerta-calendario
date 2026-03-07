@@ -242,14 +242,17 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
 
       const { data: existingInvoices } = await supabase
         .from('invoices')
-        .select('numero_fiscal')
-        .not('numero_fiscal', 'is', null);
+        .select('numero_fiscal, folio');
 
       const existingNumeros = new Set<string>(
         (existingInvoices || []).map((inv: any) => inv.numero_fiscal).filter(Boolean)
       );
 
-      const result = processInvoiceRows(rows, clients, existingNumeros);
+      const existingFolios = new Set<string>(
+        (existingInvoices || []).map((inv: any) => inv.folio).filter(Boolean)
+      );
+
+      const result = processInvoiceRows(rows, clients, existingNumeros, existingFolios);
       setPreview(result);
       setUnmatchedClients(result.unmatchedClients);
       setStep('preview');
