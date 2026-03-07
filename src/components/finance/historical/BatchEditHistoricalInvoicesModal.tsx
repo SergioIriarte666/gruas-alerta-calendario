@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -18,9 +18,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Invoice } from '@/types';
 import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
+import { ShieldAlert } from 'lucide-react';
 
 interface BatchEditHistoricalInvoicesModalProps {
   selectedInvoices: Invoice[];
