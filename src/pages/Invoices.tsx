@@ -568,7 +568,7 @@ const Invoices = () => {
             onOpenExportModal={() => setExportModalOpen(true)}
           />
           
-          <InvoicesStats invoices={invoices} />
+          <InvoicesStats invoices={baseInvoices} />
           
           <div className={`flex ${isMobile ? 'flex-col' : 'flex-row'} items-center gap-4`}>
             <div className="flex-grow w-full">

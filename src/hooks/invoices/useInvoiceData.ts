@@ -34,6 +34,7 @@ const fetchAllInvoices = async (): Promise<any[]> => {
           email
         )
       `)
+      .not('folio', 'like', 'HIST-%')
       .order('created_at', { ascending: false })
       .range(from, to);
 
