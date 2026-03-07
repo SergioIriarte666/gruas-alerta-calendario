@@ -121,6 +121,34 @@ export const useInvoiceOperations = () => {
         console.log('✅ Estado del cierre actualizado a "invoiced"');
       }
 
+      // Actualizar servicios a estado 'invoiced' con folio y número fiscal
+      try {
+        const updatePromises = serviceIds.map(async (serviceId) => {
+          const { error } = await supabase
+            .rpc('force_update_service_to_invoiced', {
+              p_service_id: serviceId,
+              p_invoice_folio: result.invoice_folio,
+              p_numero_fiscal: invoiceData.numeroFiscal || null
+            });
+          if (error) {
+            console.error(`❌ Error actualizando servicio ${serviceId}:`, error);
+          }
+          return { serviceId, error };
+        });
+        const results = await Promise.all(updatePromises);
+        const failed = results.filter(r => r.error);
+        if (failed.length > 0) {
+          console.warn(`⚠️ ${failed.length} servicios no se pudieron actualizar a invoiced`);
+        } else {
+          console.log(`✅ ${serviceIds.length} servicios actualizados a "invoiced"`);
+        }
+      } catch (servicesError) {
+        console.error('❌ Error actualizando servicios a invoiced:', servicesError);
+        toast.warning("Advertencia", {
+          description: "La factura se creó, pero algunos servicios pueden no haberse actualizado correctamente.",
+        });
+      }
+
       // Invalidar queries de facturación + servicios enhanced para sincronizar modals
       queryClient.invalidateQueries({ queryKey: ['invoices'] });
       queryClient.invalidateQueries({ queryKey: ['closures'] });
