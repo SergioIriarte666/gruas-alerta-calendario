@@ -105,20 +105,26 @@ export function toTitleCase(str: string): string {
     'ix': 'IX',
   };
 
-  return str.toLowerCase().trim().split(/\s+/).map((word, index) => {
+  return str.trim().split(/\s+/).map((word, index) => {
+    const lowerWord = word.toLowerCase();
     // Remove potential punctuation for checking (simple check)
-    const cleanWord = word.replace(/[.,]/g, '');
+    const cleanWord = lowerWord.replace(/[.,]/g, '');
     
     // Check exact match in special words
-    if (specialWords[word]) return specialWords[word];
+    if (specialWords[lowerWord]) return specialWords[lowerWord];
     if (specialWords[cleanWord]) return specialWords[cleanWord];
 
-    // Check if it's a small word
-    if (index > 0 && smallWords.includes(word)) {
+    // Preserve words that are all uppercase (likely acronyms like MCM, IBM, etc.)
+    if (word.length >= 2 && word === word.toUpperCase() && /[A-Z]/.test(word)) {
       return word;
     }
 
+    // Check if it's a small word
+    if (index > 0 && smallWords.includes(lowerWord)) {
+      return lowerWord;
+    }
+
     // Default title case
-    return word.charAt(0).toUpperCase() + word.slice(1);
+    return lowerWord.charAt(0).toUpperCase() + lowerWord.slice(1);
   }).join(' ');
 }
