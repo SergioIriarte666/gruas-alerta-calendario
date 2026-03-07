@@ -75,13 +75,15 @@ export const HistoricalSalesPipelineView = ({ invoices, onEdit, onDelete }: Hist
     const groupsMap = new Map<string, ClientGroup>();
 
     filteredInvoices.forEach(inv => {
-      const clientId = inv.client?.id || 'no_client';
+      const clientRut = inv.client?.rut || 'no_client';
       const clientName = inv.client?.name ? toTitleCase(inv.client.name) : 'Sin Cliente';
+      const department = inv.client?.department || '';
 
-      if (!groupsMap.has(clientId)) {
-        groupsMap.set(clientId, {
-          clientId,
+      if (!groupsMap.has(clientRut)) {
+        groupsMap.set(clientRut, {
+          clientRut,
           clientName,
+          departments: [],
           invoices: [],
           totalAmount: 0,
           count: 0,
@@ -89,10 +91,13 @@ export const HistoricalSalesPipelineView = ({ invoices, onEdit, onDelete }: Hist
         });
       }
 
-      const group = groupsMap.get(clientId)!;
+      const group = groupsMap.get(clientRut)!;
       group.invoices.push(inv);
       group.totalAmount += inv.total;
       group.count += 1;
+      if (department && department !== 'General' && !group.departments.includes(department)) {
+        group.departments.push(department);
+      }
     });
 
     // Sub-group by month
