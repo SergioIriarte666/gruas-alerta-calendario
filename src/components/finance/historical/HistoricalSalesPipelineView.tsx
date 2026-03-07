@@ -182,7 +182,7 @@ export const HistoricalSalesPipelineView = ({ invoices, onEdit, onDelete }: Hist
       const deptMap = new Map<string, DepartmentGroup>();
 
       group.invoices.forEach(inv => {
-        const dept = inv.folio.startsWith('HIST-') ? 'Histórico' : (inv.client?.department || 'General');
+        const dept = inv.folio.startsWith('HIST-') ? 'Importado' : (inv.client?.department || 'General');
         if (!deptMap.has(dept)) {
           deptMap.set(dept, { department: dept, invoices: [], totalAmount: 0, count: 0, months: [] });
         }
@@ -316,7 +316,7 @@ export const HistoricalSalesPipelineView = ({ invoices, onEdit, onDelete }: Hist
                             <CollapsibleTrigger asChild>
                               <div className="flex items-center justify-between px-5 py-3 cursor-pointer hover:bg-accent/40 transition-colors border-b last:border-b-0">
                                 <div className="flex items-center gap-2">
-                                  {dg.department === 'Histórico' ? (
+                                  {dg.department === 'Importado' ? (
                                     <Archive className="h-4 w-4 text-muted-foreground" />
                                   ) : (
                                     <Building2 className="h-4 w-4 text-muted-foreground" />

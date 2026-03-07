@@ -187,8 +187,8 @@ export const HistoricalSalesTable = ({
                   <div className="flex items-center gap-1.5">
                     {invoice.numeroFiscal || invoice.folio}
                     {invoice.folio.startsWith('HIST-') ? (
-                      <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 text-[9px] px-1.5 py-0">
-                        Histórica
+                      <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 text-[9px] px-1.5 py-0">
+                        Importada
                       </Badge>
                     ) : (
                       <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 text-[9px] px-1.5 py-0">
