@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -18,9 +18,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Invoice } from '@/types';
 import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
+import { ShieldAlert } from 'lucide-react';
 
 interface BatchEditHistoricalInvoicesModalProps {
   selectedInvoices: Invoice[];
@@ -62,6 +64,12 @@ export const BatchEditHistoricalInvoicesModal = ({
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const systemInvoiceCount = useMemo(
+    () => selectedInvoices.filter(inv => !inv.folio.startsWith('HIST-')).length,
+    [selectedInvoices]
+  );
+  const hasSystemInvoices = systemInvoiceCount > 0;
+
   const resetForm = () => {
     setStatus('');
     setShippingInfo('');
@@ -91,9 +99,10 @@ export const BatchEditHistoricalInvoicesModal = ({
       const promises = selectedInvoices.map(async (invoice) => {
         const updates: any = {};
         const changes: string[] = [];
+        const isSystem = !invoice.folio.startsWith('HIST-');
 
-        // 1. Status Update
-        if (updateStatus && status) {
+        // 1. Status Update — skip for system invoices
+        if (updateStatus && status && !isSystem) {
           updates.status = status;
           changes.push(`Status: ${invoice.status} -> ${status}`);
         }
@@ -127,8 +136,8 @@ export const BatchEditHistoricalInvoicesModal = ({
           metadataChanged = true;
         }
 
-        // Origin update
-        if (updateOrigin && origin) {
+        // Origin update — skip for system invoices
+        if (updateOrigin && origin && !isSystem) {
           const currentOrigin = invoice.folio.startsWith('HIST-') ? 'importada' : 'sistema';
           if (currentOrigin !== origin) {
             if (origin === 'sistema') {
@@ -194,6 +203,16 @@ export const BatchEditHistoricalInvoicesModal = ({
         </DialogHeader>
         
         <div className="grid gap-6 py-4">
+          {hasSystemInvoices && (
+            <Alert variant="destructive" className="border-amber-300 bg-amber-50">
+              <ShieldAlert className="h-4 w-4 !text-amber-600" />
+              <AlertDescription className="text-amber-800 text-xs">
+                {systemInvoiceCount} factura(s) del sistema serán excluidas de los cambios de Estado y Origen, 
+                ya que están vinculadas a cierres y servicios. Solo se aplicarán cambios de notas y metadatos.
+              </AlertDescription>
+            </Alert>
+          )}
+
           {/* Status Section */}
           <div className="flex items-start gap-4">
             <Checkbox 
