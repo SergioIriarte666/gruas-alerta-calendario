@@ -116,11 +116,9 @@ export const usePayments = () => {
       
       console.log('✅ Payment created successfully:', data);
       
-      // ADVERTENCIA: FIFO automático deprecado
+      // Compatibilidad: mantener parámetro sin aplicación automática
       if (autoApply && data?.id) {
-        console.warn('⚠️ ADVERTENCIA: La aplicación automática FIFO está deprecada.');
-        console.warn('⚠️ Se recomienda usar aplicación manual desde el módulo de Conciliación de Pagos.');
-        toast.warning('ADVERTENCIA: La aplicación automática FIFO está deprecada. Use aplicación manual.');
+        toast.warning('La aplicación automática está deshabilitada. Use aplicación manual o selectiva.');
       }
       
       // Siempre registrar sin aplicar automáticamente
