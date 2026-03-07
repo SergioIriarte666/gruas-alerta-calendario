@@ -286,6 +286,7 @@ export const usePayments = () => {
         .select('*')
         .eq('client_id', clientId)
         .in('status', ['draft', 'sent', 'overdue', 'partial'])
+        .not('folio', 'like', 'HIST-%')
         .gt('remaining_amount', 0)
         .order('due_date', { ascending: true });
 
@@ -412,7 +413,8 @@ export const usePayments = () => {
       const { data: invoicesData, error: invoicesError } = await supabase
         .from('invoices')
         .select('status, paid_amount')
-        .eq('status', 'paid');
+        .eq('status', 'paid')
+        .not('folio', 'like', 'HIST-%');
         
       if (invoicesError) throw invoicesError;
       
