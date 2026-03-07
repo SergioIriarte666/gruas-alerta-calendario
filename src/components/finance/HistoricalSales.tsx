@@ -99,8 +99,8 @@ export const HistoricalSales = () => {
 
   // Sort State
   const [sortConfig, setSortConfig] = useState<SortConfig>({
-    key: 'issueDate',
-    direction: 'desc',
+    key: 'folio',
+    direction: 'asc',
   });
 
   const handleSort = (key: SortKey) => {
@@ -184,6 +184,12 @@ export const HistoricalSales = () => {
       } else if (sortConfig.key === 'issueDate') {
         valA = new Date(valA).getTime();
         valB = new Date(valB).getTime();
+      } else if (sortConfig.key === 'folio') {
+        // Sort by numeroFiscal numerically when available
+        const numA = parseInt((a.numeroFiscal || a.folio).replace(/\D/g, ''), 10) || 0;
+        const numB = parseInt((b.numeroFiscal || b.folio).replace(/\D/g, ''), 10) || 0;
+        valA = numA;
+        valB = numB;
       }
 
       if (valA < valB) return sortConfig.direction === 'asc' ? -1 : 1;
