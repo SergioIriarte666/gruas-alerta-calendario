@@ -191,57 +191,10 @@ export const usePayments = () => {
     }
   };
 
-  const applyPaymentFIFO = async (paymentId: string, clientId?: string): Promise<any> => {
-    try {
-      console.log('🔍 Applying payment FIFO:', { paymentId, clientId });
-      
-      const { data, error } = await supabase.rpc('apply_payment_fifo', {
-        p_payment_id: paymentId,
-        p_client_id: clientId || null
-      });
-
-      if (error) throw error;
-
-      const result = data as any;
-      console.log('🔍 FIFO Result:', result);
-
-      if (result?.success) {
-        // Handle different success scenarios
-        if (result.total_applied === 0 && result.message?.includes('duplicadas')) {
-          toast.warning(result.message || 'El pago ya tiene aplicaciones existentes');
-          return {
-            ...result,
-            warning: true
-          };
-        } else if (result.total_applied > 0) {
-          toast.success(result.message || `Aplicados $${result.total_applied} mediante FIFO`);
-        } else {
-          toast.info(result.message || 'No se encontraron facturas pendientes para aplicar');
-        }
-        
-        await fetchPayments();
-        return result;
-      } else {
-        throw new Error(result?.error || result?.message || 'Error applying payment');
-      }
-    } catch (error: any) {
-      console.error('Error applying payment FIFO:', error);
-      
-      // Enhanced error handling for common issues
-      const errorMessage = error.message || '';
-      if (errorMessage.includes('duplicate key') || errorMessage.includes('payment_applications_payment_id_invoice_id_key')) {
-        const customMessage = 'Este pago ya tiene aplicaciones registradas. Use la aplicación manual para modificar los pagos existentes.';
-        toast.error(customMessage);
-        throw new Error(customMessage);
-      }
-      
-      handleError(error, {
-        customMessage: 'No se pudo aplicar el pago automáticamente',
-        title: 'Error en Aplicación Automática',
-        context: 'usePayments - applyPaymentFIFO'
-      });
-      throw error;
-    }
+  const applyPaymentFIFO = async (): Promise<any> => {
+    const message = 'La aplicación automática está deshabilitada en este módulo. Use aplicación manual o selectiva.';
+    toast.error(message);
+    throw new Error(message);
   };
 
   const applyPaymentManual = async (paymentId: string, applications: ManualApplication[]) => {
