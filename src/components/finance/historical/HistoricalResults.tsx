@@ -221,10 +221,13 @@ export const HistoricalResults: React.FC = () => {
   const monthlySummary = useMemo(() => {
     return monthlyData.map((m, i) => {
       const prev = i > 0 ? monthlyData[i - 1] : null;
+      const next = i < monthlyData.length - 1 ? monthlyData[i + 1] : null;
       const variation = prev && prev.margen !== 0
         ? ((m.margen - prev.margen) / Math.abs(prev.margen)) * 100
         : null;
-      return { ...m, variation, isNegative: m.margen < 0 };
+      const isMissingData = m.ventas === 0 && m.compras === 0 &&
+        ((prev && (prev.ventas > 0 || prev.compras > 0)) || (next && (next.ventas > 0 || next.compras > 0)));
+      return { ...m, variation, isNegative: m.margen < 0, isMissingData };
     });
   }, [monthlyData]);
 
