@@ -71,6 +71,8 @@ export const BatchEditHistoricalInvoicesModal = ({
     setUpdateShipping(false);
     setUpdatePayment(false);
     setUpdateNote(false);
+    setUpdateOrigin(false);
+    setOrigin('');
   };
 
   const handleClose = () => {
