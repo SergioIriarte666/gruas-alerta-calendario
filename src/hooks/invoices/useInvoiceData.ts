@@ -5,42 +5,68 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { formatInvoiceData, updateOverdueInvoices } from '@/utils/invoiceUtils';
 
-const MAX_INVOICES = 500;
+const PAGE_SIZE = 1000;
+
+const fetchAllInvoices = async (): Promise<any[]> => {
+  const allData: any[] = [];
+  let page = 0;
+  let hasMore = true;
+
+  while (hasMore) {
+    const from = page * PAGE_SIZE;
+    const to = from + PAGE_SIZE - 1;
+
+    const { data, error } = await supabase
+      .from('invoices')
+      .select(`
+        *,
+        client:clients!client_id (
+          id,
+          name,
+          rut,
+          email,
+          phone
+        ),
+        creator:profiles!invoices_created_by_fkey (
+          id,
+          full_name,
+          email
+        )
+      `)
+      .order('created_at', { ascending: false })
+      .range(from, to);
+
+    if (error) throw error;
+
+    if (data && data.length > 0) {
+      allData.push(...data);
+      hasMore = data.length === PAGE_SIZE;
+    } else {
+      hasMore = false;
+    }
+    page++;
+  }
+
+  return allData;
+};
 
 const fetchInvoicesFromDB = async (): Promise<Invoice[]> => {
-  const { data: invoicesData, error: invoicesError } = await supabase
-    .from('invoices')
-    .select(`
-      *,
-      client:clients!client_id (
-        id,
-        name,
-        rut,
-        email,
-        phone
-      ),
-      creator:profiles!invoices_created_by_fkey (
-        id,
-        full_name,
-        email
-      )
-    `)
-    .order('created_at', { ascending: false })
-    .limit(MAX_INVOICES);
+  const invoicesData = await fetchAllInvoices();
 
-  if (invoicesError) throw invoicesError;
-
-  const invoiceIds = (invoicesData || []).map(invoice => invoice.id);
+  const invoiceIds = invoicesData.map(invoice => invoice.id);
 
   let closuresData: Array<{ invoice_id: string; closure_id: string }> = [];
   if (invoiceIds.length > 0) {
-    const { data, error: closuresError } = await supabase
-      .from('invoice_closures')
-      .select('invoice_id, closure_id')
-      .in('invoice_id', invoiceIds);
-
-    if (closuresError) throw closuresError;
-    closuresData = data || [];
+    // Batch closure lookups in chunks of 500
+    const BATCH = 500;
+    for (let i = 0; i < invoiceIds.length; i += BATCH) {
+      const { data, error } = await supabase
+        .from('invoice_closures')
+        .select('invoice_id, closure_id')
+        .in('invoice_id', invoiceIds.slice(i, i + BATCH));
+      if (error) throw error;
+      if (data) closuresData.push(...data);
+    }
   }
 
   const closureByInvoiceId = new Map(
