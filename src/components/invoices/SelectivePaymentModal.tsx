@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Search, X, DollarSign, Receipt, Target } from 'lucide-react';
-import { Checkbox } from '@/components/ui/checkbox';
+
 import { PaymentWithDetails } from '@/types/payments';
 import { formatCurrency, toTitleCase } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
@@ -40,7 +40,7 @@ export const SelectivePaymentModal: React.FC<SelectivePaymentModalProps> = ({
   const [availableInvoices, setAvailableInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(false);
   const [isApplying, setIsApplying] = useState(false);
-  const [applyOnlyToSpecified, setApplyOnlyToSpecified] = useState(true);
+  
   const batchProgress = useBatchProgress();
 
   useEffect(() => {
@@ -57,6 +57,7 @@ export const SelectivePaymentModal: React.FC<SelectivePaymentModalProps> = ({
         .select('id, folio, numero_fiscal, total, paid_amount, status, due_date, remaining_amount')
         .eq('client_id', payment.client_id)
         .in('status', ['sent', 'overdue', 'partial'])
+        .not('folio', 'like', 'HIST-%')
         .gt('remaining_amount', 0)
         .order('due_date', { ascending: true });
 
@@ -101,7 +102,7 @@ export const SelectivePaymentModal: React.FC<SelectivePaymentModalProps> = ({
         await new Promise(resolve => setTimeout(resolve, 150));
       }
       
-      await onApply(selectedFiscalNumbers, applyOnlyToSpecified);
+      await onApply(selectedFiscalNumbers, true);
       batchProgress.complete();
       
       setTimeout(() => {
@@ -222,26 +223,12 @@ export const SelectivePaymentModal: React.FC<SelectivePaymentModalProps> = ({
             )}
           </div>
 
-          {/* Opciones de aplicación */}
           <div className="mt-4 p-4 border rounded-lg bg-amber-50 border-amber-200">
-            <div className="flex items-center space-x-2">
-              <Checkbox 
-                id="apply-only-specified"
-                checked={applyOnlyToSpecified}
-                onCheckedChange={(checked) => setApplyOnlyToSpecified(checked === true)}
-              />
-              <label 
-                htmlFor="apply-only-specified" 
-                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-              >
-                Solo aplicar a facturas especificadas (no continuar con FIFO automático)
-              </label>
-            </div>
+            <p className="text-sm font-medium text-amber-800">
+              La aplicación selectiva solo afecta las facturas que selecciones aquí.
+            </p>
             <p className="text-xs text-amber-700 mt-2">
-              {applyOnlyToSpecified 
-                ? "El pago se aplicará únicamente a las facturas seleccionadas. El saldo restante quedará pendiente."
-                : "Después de aplicar a las facturas seleccionadas, el saldo restante se aplicará automáticamente a otras facturas pendientes (FIFO)."
-              }
+              El saldo no asignado queda pendiente para aplicación manual posterior.
             </p>
           </div>
 

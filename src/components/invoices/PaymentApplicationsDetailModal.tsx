@@ -98,7 +98,7 @@ export const PaymentApplicationsDetailModal: React.FC<PaymentApplicationsDetailM
   const getMethodLabel = (method: string) => {
     const labels: Record<string, string> = {
       manual: 'Manual',
-      fifo: 'FIFO',
+      fifo: 'Automático (legado)',
       proportional: 'Proporcional'
     };
     return labels[method] || method;

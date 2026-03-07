@@ -224,7 +224,7 @@ export const InvoiceDetailsModal = ({ invoice, isOpen, onClose }: InvoiceDetails
   const statusConfig = getStatusConfig(invoice.status);
 
   const methodLabels: Record<string, string> = {
-    fifo: 'FIFO',
+    fifo: 'Automático (legado)',
     manual: 'Manual',
     proportional: 'Proporcional',
     transfer: 'Transferencia',
