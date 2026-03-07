@@ -168,10 +168,13 @@ const Clients = () => {
         setSelectedClient(undefined);
         toast.success("Departamento agregado", { description: `Se agregó el departamento "${clientData.department}" al cliente.` });
       } else {
-        updateClient(selectedClient.id, clientData);
-        setIsDialogOpen(false);
-        setSelectedClient(undefined);
-        toast.success("Cliente actualizado", { description: "Los datos del cliente han sido actualizados." });
+        try {
+          await updateClient(selectedClient.id, clientData);
+          setIsDialogOpen(false);
+          setSelectedClient(undefined);
+        } catch (error) {
+          console.error('Error updating client:', error);
+        }
       }
     }
   }, [selectedClient, updateClient, createClient]);

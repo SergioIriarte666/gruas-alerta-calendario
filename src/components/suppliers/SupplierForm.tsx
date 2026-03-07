@@ -104,7 +104,7 @@ export const SupplierForm: React.FC<SupplierFormProps> = ({
       case 1:
         return formValues.name?.trim() !== '' && formValues.rut?.trim() !== '';
       case 2:
-        return formValues.phone?.trim() !== '' && formValues.address?.trim() !== '' && formValues.contact_name?.trim() !== '';
+        return true; // All step 2 fields are optional per Zod schema
       case 3:
         return formValues.category?.trim() !== '';
       default:
