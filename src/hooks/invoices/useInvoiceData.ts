@@ -164,6 +164,7 @@ export const usePagedInvoices = (page: number, pageSize: number) => {
         `,
           { count: 'exact' }
         )
+        .not('folio', 'like', 'HIST-%')
         .order('created_at', { ascending: false })
         .range(from, to);
 
