@@ -559,11 +559,14 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
         if (error) {
           console.error('Batch insert error:', error);
           errors += batch.length;
-          const msg = error.message || 'Error desconocido al insertar facturas';
+          const isDuplicate = error.message?.includes('invoices_folio_key') || error.message?.includes('duplicate key');
+          const msg = isDuplicate
+            ? `Se encontraron ${batch.length} facturas que ya existen en el sistema. Estas facturas ya fueron importadas anteriormente.`
+            : (error.message || 'Error desconocido al insertar facturas');
           setLastError(msg);
-          toast.error(`Error en lote ${Math.floor(i/batchSize) + 1}`, {
-              description: msg
-          });
+          if (!isDuplicate) {
+            toast.error(`Error en lote ${Math.floor(i/batchSize) + 1}`, { description: msg });
+          }
         } else {
           imported += batch.length;
         }
@@ -1007,26 +1010,49 @@ const InvoiceHistoryImport: React.FC<InvoiceHistoryImportProps> = ({ open, onOpe
         {step === 'done' && importResult && (
           <div className="flex flex-col items-center justify-center py-12 text-center px-4">
             {importResult.errors > 0 && importResult.imported === 0 ? (
-                <AlertTriangle className="h-12 w-12 text-destructive mb-4" />
+              lastError?.includes('ya existen') || lastError?.includes('ya fueron importadas') ? (
+                <>
+                  <div className="h-12 w-12 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center mb-4">
+                    <Ban className="h-6 w-6 text-amber-600 dark:text-amber-400" />
+                  </div>
+                  <p className="text-lg font-medium text-foreground">
+                    Facturas ya importadas
+                  </p>
+                  <p className="text-sm text-muted-foreground mt-2 max-w-sm">
+                    Las {importResult.errors} facturas seleccionadas ya se encuentran registradas en el sistema. No se crearon duplicados.
+                  </p>
+                  <div className="mt-4 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-300 text-sm rounded-md max-w-md">
+                    💡 Si necesita re-importar, elimine primero las facturas existentes desde el historial de ventas.
+                  </div>
+                </>
+              ) : (
+                <>
+                  <AlertTriangle className="h-12 w-12 text-destructive mb-4" />
+                  <p className="text-lg font-medium text-foreground">Error en la importación</p>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    {importResult.imported} facturas importadas, {importResult.errors} con errores
+                  </p>
+                  {lastError && (
+                    <div className="mt-4 p-3 bg-destructive/10 text-destructive text-sm rounded-md max-w-md break-words">
+                      {lastError}
+                    </div>
+                  )}
+                </>
+              )
             ) : (
+              <>
                 <CheckCircle className="h-12 w-12 text-green-500 mb-4" />
-            )}
-            
-            <p className="text-lg font-medium text-foreground">
-                {importResult.errors > 0 && importResult.imported === 0 
-                    ? 'Error en la importación' 
-                    : 'Importación completada'}
-            </p>
-            
-            <p className="text-sm text-muted-foreground mt-2">
-              {importResult.imported} facturas importadas
-              {importResult.errors > 0 && `, ${importResult.errors} con errores`}
-            </p>
-            
-            {lastError && (
-                <div className="mt-4 p-3 bg-destructive/10 text-destructive text-sm rounded-md max-w-md break-words">
+                <p className="text-lg font-medium text-foreground">Importación completada</p>
+                <p className="text-sm text-muted-foreground mt-2">
+                  {importResult.imported} facturas importadas exitosamente
+                  {importResult.errors > 0 && `, ${importResult.errors} con errores`}
+                </p>
+                {lastError && (
+                  <div className="mt-4 p-3 bg-destructive/10 text-destructive text-sm rounded-md max-w-md break-words">
                     {lastError}
-                </div>
+                  </div>
+                )}
+              </>
             )}
 
             <Button onClick={handleClose} className="mt-6">
