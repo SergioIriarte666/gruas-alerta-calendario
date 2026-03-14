@@ -1,29 +1,29 @@
 
 
-## Problema Identificado
+# Fix: RUT normalization consistency + Invoice selection
 
-Hay **dos triggers en la base de datos** que fuerzan cambios de estado incorrectos en los servicios:
+## Problem 1: RUT still not matching
+The `normalizeRut` function in the parser was fixed to strip dots, spaces, and dashes. But in `InvoiceHistoryImport.tsx`, there are 4 places that still use the old regex `replace(/\./g, '')` (only strips dots):
+- Line 136: creating client RUT map
+- Line 188: looking up unmatched invoice RUT
+- Line 193: finding unmatched client entry
+- Line 441: counting importable invoices in the button label
 
-### Trigger 1: `auto_update_service_invoice_status`
-- Si se quita `invoice_folio` → fuerza el estado a `completed`
-- **Problema**: Un servicio `quoted` sin `invoice_folio` es válido, pero el trigger lo revierte a `completed`
+All of these need to use the same normalization: `replace(/[.\s-]/g, '').trim().toUpperCase()`.
 
-### Trigger 2: `validate_service_invoice_consistency`  
-- Si no hay `invoice_folio` y el estado es `invoiced` → fuerza a `completed`
-- Si hay `invoice_folio` y el estado NO es `invoiced` → fuerza a `invoiced`
-- **Problema**: No contempla los estados intermedios del flujo VIP (`quoted`, `purchase_order_pending`, `with_purchase_order`). Un servicio con `invoice_folio` en estado `quoted` sería forzado a `invoiced`.
+## Problem 2: No invoice selection
+Currently all matched invoices are imported automatically with no way to exclude individual ones. The user wants checkboxes to select/deselect invoices.
 
-### Solución
+### Changes to `InvoiceHistoryImport.tsx`:
+- Add `selectedInvoices` state (`Set<string>`) tracking selected invoice keys
+- Initialize all matched invoices as selected on preview load
+- Add select all / deselect all toggle
+- Add checkbox column to `InvoicePreviewTable`
+- Show all invoices (remove the slice(0,10) limit, keep scroll)
+- Filter by `selectedInvoices` during import
+- Update button count to reflect selection
+- Extract a shared `normalizeRut` helper used consistently everywhere
 
-Crear una migración SQL que actualice ambas funciones de trigger para respetar los estados del flujo post-servicio:
-
-1. **`auto_update_service_invoice_status`**: Solo revertir a `completed` cuando el estado actual ES `invoiced` y se quita el folio. No tocar otros estados como `quoted`, `purchase_order_pending`, `with_purchase_order`.
-
-2. **`validate_service_invoice_consistency`**: 
-   - Permitir que servicios con `invoice_folio` estén en estados post-servicio válidos (`quoted`, `purchase_order_pending`, `with_purchase_order`, `invoiced`, `completed`, `failed`)
-   - Solo auto-corregir a `completed` si el estado es `invoiced` y no hay folio (no si es `quoted`, etc.)
-
-### Cambios
-
-- **1 migración SQL** que redefine ambas funciones (`auto_update_service_invoice_status` y `validate_service_invoice_consistency`) con la lógica corregida que respeta los estados del flujo VIP.
+## Files to modify
+- `src/components/invoices/InvoiceHistoryImport.tsx` — fix 4 normalization calls + add selection UI
 
