@@ -214,6 +214,17 @@ export const QuotePDFImporter: React.FC<QuotePDFImporterProps> = ({
                         )}
                       </TableCell>
                       <TableCell className="font-mono text-xs">{match.quoteNumber}</TableCell>
+                      <TableCell className="font-mono text-xs text-right">
+                        {match.parsedItem.amount > 0
+                          ? formatCurrency(match.parsedItem.amount, getUserCurrencySync())
+                          : '—'}
+                      </TableCell>
+                      <TableCell className="font-mono text-xs text-right">
+                        {(() => {
+                          const quote = state.parsedQuotes.find(q => q.quoteNumber === match.quoteNumber);
+                          return quote ? formatCurrency(quote.totals.neto, getUserCurrencySync()) : '—';
+                        })()}
+                      </TableCell>
                       <TableCell>
                         {match.status === 'matched' && (
                           <Badge variant="secondary" className="bg-violet-600/10 text-violet-600 text-xs">
