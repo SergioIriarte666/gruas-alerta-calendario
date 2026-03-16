@@ -233,6 +233,11 @@ export const PurchaseOrderPDFImporter: React.FC<PurchaseOrderPDFImporterProps> =
                         )}
                       </TableCell>
                       <TableCell className="font-mono text-xs">{match.ocNumber}</TableCell>
+                      <TableCell className="text-right font-mono text-xs">
+                        {match.parsedItem.amount > 0
+                          ? formatCurrency(match.parsedItem.amount, getUserCurrencySync())
+                          : '—'}
+                      </TableCell>
                       <TableCell>
                         {match.status === 'matched' && (
                           <Badge variant="secondary" className="bg-violet-600/10 text-violet-600 text-xs">
