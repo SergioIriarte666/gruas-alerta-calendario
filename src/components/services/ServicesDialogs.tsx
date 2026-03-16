@@ -53,7 +53,7 @@ export const ServicesDialogs = ({
       </Dialog>
 
       <Dialog open={isFormOpen} onOpenChange={onFormOpenChange}>
-        <DialogContent className="max-w-6xl w-[95vw] max-h-[90vh] overflow-hidden p-3 sm:p-6">
+        <DialogContent className="w-[95vw] lg:max-w-[90vw] xl:max-w-[1400px] max-h-[95vh] overflow-hidden p-3 sm:p-6 lg:p-8">
           <DialogHeader className="sr-only">
             <DialogTitle>
               {editingService ? `Editar Servicio` : 'Nuevo Servicio'}
