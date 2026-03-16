@@ -1,29 +1,26 @@
 
 
-# Fix: RUT normalization consistency + Invoice selection
+## Confirmación: Conciliación SÍ está incluida en el plan
 
-## Problem 1: RUT still not matching
-The `normalizeRut` function in the parser was fixed to strip dots, spaces, and dashes. But in `InvoiceHistoryImport.tsx`, there are 4 places that still use the old regex `replace(/\./g, '')` (only strips dots):
-- Line 136: creating client RUT map
-- Line 188: looking up unmatched invoice RUT
-- Line 193: finding unmatched client entry
-- Line 441: counting importable invoices in the button label
+Revisando, los archivos de conciliación **ya están contemplados** en el plan original:
 
-All of these need to use the same normalization: `replace(/[.\s-]/g, '').trim().toUpperCase()`.
+| Archivo | Línea | Cambio |
+|---------|-------|--------|
+| `PaymentReconciliationUpdated.tsx` | 411 | `clients.map(` → `clients.filter(c => c.isActive).map(` |
+| `PaymentReconciliation.tsx` | 244 | `clients.map(` → `clients.filter(c => c.isActive).map(` |
 
-## Problem 2: No invoice selection
-Currently all matched invoices are imported automatically with no way to exclude individual ones. The user wants checkboxes to select/deselect invoices.
+### Lista completa de archivos a modificar (10 archivos, ~12 cambios)
 
-### Changes to `InvoiceHistoryImport.tsx`:
-- Add `selectedInvoices` state (`Set<string>`) tracking selected invoice keys
-- Initialize all matched invoices as selected on preview load
-- Add select all / deselect all toggle
-- Add checkbox column to `InvoicePreviewTable`
-- Show all invoices (remove the slice(0,10) limit, keep scroll)
-- Filter by `selectedInvoices` during import
-- Update button count to reflect selection
-- Extract a shared `normalizeRut` helper used consistently everywhere
+1. `src/components/invoices/SmartPaymentForm.tsx`
+2. `src/components/invoices/PaymentForm.tsx`
+3. `src/components/invoices/PaymentHistory.tsx`
+4. **`src/components/invoices/PaymentReconciliationUpdated.tsx`** ← incluido
+5. **`src/components/invoices/PaymentReconciliation.tsx`** ← incluido
+6. `src/components/closures/ClientSelector.tsx`
+7. `src/components/closures/ClosuresSearch.tsx`
+8. `src/components/settings/CreateUserDialog.tsx`
+9. `src/components/reports/ReportFilters.tsx` (2 ocurrencias)
+10. `src/components/reports/shared/ReportFilters.tsx` (2 ocurrencias)
 
-## Files to modify
-- `src/components/invoices/InvoiceHistoryImport.tsx` — fix 4 normalization calls + add selection UI
+Todos reciben el mismo cambio: agregar `.filter(c => c.isActive)` antes del `.map()`.
 
