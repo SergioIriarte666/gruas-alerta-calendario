@@ -142,6 +142,11 @@ export const QuotePDFImporter: React.FC<QuotePDFImporterProps> = ({
                 <CheckCircle className="w-3 h-3 mr-1" />
                 {matchedCount} coincidencias
               </Badge>
+              {state.parsedQuotes.length > 0 && (
+                <Badge variant="secondary" className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20">
+                  💰 Total Cot: {formatCurrency(state.parsedQuotes[0]?.totals.neto || 0, getUserCurrencySync())}
+                </Badge>
+              )}
               {sameQuoteCount > 0 && (
                 <Badge variant="secondary" className="bg-blue-500/10 text-blue-500 border-blue-500/20">
                   <CheckCheck className="w-3 h-3 mr-1" />
