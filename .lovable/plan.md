@@ -1,29 +1,21 @@
 
 
-# Fix: RUT normalization consistency + Invoice selection
+## Agrandar modal de Nuevo Servicio en desktop
 
-## Problem 1: RUT still not matching
-The `normalizeRut` function in the parser was fixed to strip dots, spaces, and dashes. But in `InvoiceHistoryImport.tsx`, there are 4 places that still use the old regex `replace(/\./g, '')` (only strips dots):
-- Line 136: creating client RUT map
-- Line 188: looking up unmatched invoice RUT
-- Line 193: finding unmatched client entry
-- Line 441: counting importable invoices in the button label
+El modal actual usa `max-w-6xl w-[95vw] max-h-[90vh]` — en desktop esto limita el ancho a ~1152px y la altura al 90% del viewport.
 
-All of these need to use the same normalization: `replace(/[.\s-]/g, '').trim().toUpperCase()`.
+### Cambio propuesto
 
-## Problem 2: No invoice selection
-Currently all matched invoices are imported automatically with no way to exclude individual ones. The user wants checkboxes to select/deselect invoices.
+En `src/components/services/ServicesDialogs.tsx` (línea 56), cambiar las clases del `DialogContent` del formulario de servicio:
 
-### Changes to `InvoiceHistoryImport.tsx`:
-- Add `selectedInvoices` state (`Set<string>`) tracking selected invoice keys
-- Initialize all matched invoices as selected on preview load
-- Add select all / deselect all toggle
-- Add checkbox column to `InvoicePreviewTable`
-- Show all invoices (remove the slice(0,10) limit, keep scroll)
-- Filter by `selectedInvoices` during import
-- Update button count to reflect selection
-- Extract a shared `normalizeRut` helper used consistently everywhere
+- **Ancho**: De `max-w-6xl` a `max-w-[95vw] lg:max-w-[90vw] xl:max-w-[1400px]` — más amplio en pantallas grandes
+- **Alto**: De `max-h-[90vh]` a `max-h-[95vh]` — aprovechar más espacio vertical
+- **Padding**: Ajustar padding en desktop: `lg:p-8`
 
-## Files to modify
-- `src/components/invoices/InvoiceHistoryImport.tsx` — fix 4 normalization calls + add selection UI
+Clase final:
+```
+w-[95vw] lg:max-w-[90vw] xl:max-w-[1400px] max-h-[95vh] overflow-hidden p-3 sm:p-6 lg:p-8
+```
+
+Esto solo afecta la vista desktop (>1024px), manteniendo el comportamiento móvil/tablet intacto. Un solo archivo modificado.
 
