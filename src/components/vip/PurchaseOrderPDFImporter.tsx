@@ -174,6 +174,11 @@ export const PurchaseOrderPDFImporter: React.FC<PurchaseOrderPDFImporterProps> =
                   {noMatchCount} sin match
                 </Badge>
               )}
+              {state.parsedOCs.length > 0 && (
+                <Badge variant="secondary" className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20">
+                  💰 Total OC: {formatCurrency(state.parsedOCs[0]?.totals.neto || 0, getUserCurrencySync())}
+                </Badge>
+              )}
             </div>
 
             {/* Matches table */}
