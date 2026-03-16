@@ -28,7 +28,7 @@ const ClientSelector = ({ clientId, onClientChange }: ClientSelectorProps) => {
           <SelectItem value="all">
             Todos los clientes
           </SelectItem>
-          {clients.map((client) => (
+          {clients.filter(c => c.isActive).map((client) => (
             <SelectItem 
               key={client.id} 
               value={client.id}

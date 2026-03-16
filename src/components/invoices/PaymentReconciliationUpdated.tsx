@@ -408,7 +408,7 @@ export const PaymentReconciliation: React.FC<PaymentReconciliationProps> = ({ on
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Todos los clientes</SelectItem>
-            {clients.map(client => (
+            {clients.filter(c => c.isActive).map(client => (
               <SelectItem key={client.id} value={client.id}>
                 <div className="flex flex-col py-0.5">
                   <span className="font-medium">{toTitleCase(client.name)}</span>

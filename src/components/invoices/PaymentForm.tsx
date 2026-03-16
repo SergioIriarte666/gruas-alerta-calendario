@@ -197,7 +197,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({ onClose, onCancel, pre
                   <SelectValue placeholder="Seleccionar cliente" />
                 </SelectTrigger>
                 <SelectContent className="bg-white border border-gray-200 shadow-lg z-50">
-                  {clients.map(client => (
+                  {clients.filter(c => c.isActive).map(client => (
                     <SelectItem key={client.id} value={client.id}>
                       <div className="flex flex-col py-0.5">
                         <span className="font-medium">{toTitleCase(client.name)}</span>
