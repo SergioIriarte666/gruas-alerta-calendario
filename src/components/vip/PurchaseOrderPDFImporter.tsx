@@ -28,7 +28,8 @@ import {
   CheckCheck,
 } from 'lucide-react';
 import { format } from 'date-fns';
-import { toTitleCase } from '@/lib/utils';
+import { toTitleCase, formatCurrency } from '@/lib/utils';
+import { getUserCurrencySync } from '@/utils/currencyUtils';
 
 interface PurchaseOrderPDFImporterProps {
   clientId: string;
@@ -173,6 +174,11 @@ export const PurchaseOrderPDFImporter: React.FC<PurchaseOrderPDFImporterProps> =
                   {noMatchCount} sin match
                 </Badge>
               )}
+              {state.parsedOCs.length > 0 && (
+                <Badge variant="secondary" className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20">
+                  💰 Total OC: {formatCurrency(state.parsedOCs[0]?.totals.neto || 0, getUserCurrencySync())}
+                </Badge>
+              )}
             </div>
 
             {/* Matches table */}
@@ -185,6 +191,7 @@ export const PurchaseOrderPDFImporter: React.FC<PurchaseOrderPDFImporterProps> =
                     <TableHead className="text-xs">Servicio</TableHead>
                     <TableHead className="text-xs">OC Actual</TableHead>
                     <TableHead className="text-xs">N° OC Nueva</TableHead>
+                    <TableHead className="text-xs text-right">Valor Servicio</TableHead>
                     <TableHead className="text-xs">Estado</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -226,6 +233,11 @@ export const PurchaseOrderPDFImporter: React.FC<PurchaseOrderPDFImporterProps> =
                         )}
                       </TableCell>
                       <TableCell className="font-mono text-xs">{match.ocNumber}</TableCell>
+                      <TableCell className="text-right font-mono text-xs">
+                        {match.parsedItem.amount > 0
+                          ? formatCurrency(match.parsedItem.amount, getUserCurrencySync())
+                          : '—'}
+                      </TableCell>
                       <TableCell>
                         {match.status === 'matched' && (
                           <Badge variant="secondary" className="bg-violet-600/10 text-violet-600 text-xs">
