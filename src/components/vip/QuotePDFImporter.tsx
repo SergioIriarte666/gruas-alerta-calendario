@@ -171,6 +171,8 @@ export const QuotePDFImporter: React.FC<QuotePDFImporterProps> = ({
                     <TableHead className="text-xs">Servicio</TableHead>
                     <TableHead className="text-xs">Cot. Actual</TableHead>
                     <TableHead className="text-xs">N° Cot. Nueva</TableHead>
+                    <TableHead className="text-xs text-right">Valor Servicio</TableHead>
+                    <TableHead className="text-xs text-right">Total Cotización</TableHead>
                     <TableHead className="text-xs">Estado</TableHead>
                   </TableRow>
                 </TableHeader>
