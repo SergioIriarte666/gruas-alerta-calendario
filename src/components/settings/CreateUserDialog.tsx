@@ -13,6 +13,7 @@ interface Client {
   id: string;
   name: string;
   rut: string;
+  isActive?: boolean;
 }
 
 interface Operator {
