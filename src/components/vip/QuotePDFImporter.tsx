@@ -16,7 +16,8 @@ import {
   Loader2, RotateCcw, ArrowRight, CheckCheck,
 } from 'lucide-react';
 import { format } from 'date-fns';
-import { toTitleCase } from '@/lib/utils';
+import { toTitleCase, formatCurrency } from '@/lib/utils';
+import { getUserCurrencySync } from '@/utils/currencyUtils';
 
 interface QuotePDFImporterProps {
   clientId: string;
@@ -170,6 +171,8 @@ export const QuotePDFImporter: React.FC<QuotePDFImporterProps> = ({
                     <TableHead className="text-xs">Servicio</TableHead>
                     <TableHead className="text-xs">Cot. Actual</TableHead>
                     <TableHead className="text-xs">N° Cot. Nueva</TableHead>
+                    <TableHead className="text-xs text-right">Valor Servicio</TableHead>
+                    <TableHead className="text-xs text-right">Total Cotización</TableHead>
                     <TableHead className="text-xs">Estado</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -211,6 +214,17 @@ export const QuotePDFImporter: React.FC<QuotePDFImporterProps> = ({
                         )}
                       </TableCell>
                       <TableCell className="font-mono text-xs">{match.quoteNumber}</TableCell>
+                      <TableCell className="font-mono text-xs text-right">
+                        {match.parsedItem.amount > 0
+                          ? formatCurrency(match.parsedItem.amount, getUserCurrencySync())
+                          : '—'}
+                      </TableCell>
+                      <TableCell className="font-mono text-xs text-right">
+                        {(() => {
+                          const quote = state.parsedQuotes.find(q => q.quoteNumber === match.quoteNumber);
+                          return quote ? formatCurrency(quote.totals.neto, getUserCurrencySync()) : '—';
+                        })()}
+                      </TableCell>
                       <TableCell>
                         {match.status === 'matched' && (
                           <Badge variant="secondary" className="bg-violet-600/10 text-violet-600 text-xs">
