@@ -28,7 +28,8 @@ import {
   CheckCheck,
 } from 'lucide-react';
 import { format } from 'date-fns';
-import { toTitleCase } from '@/lib/utils';
+import { toTitleCase, formatCurrency } from '@/lib/utils';
+import { getUserCurrencySync } from '@/utils/currencyUtils';
 
 interface PurchaseOrderPDFImporterProps {
   clientId: string;
