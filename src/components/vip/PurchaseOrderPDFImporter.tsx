@@ -191,6 +191,7 @@ export const PurchaseOrderPDFImporter: React.FC<PurchaseOrderPDFImporterProps> =
                     <TableHead className="text-xs">Servicio</TableHead>
                     <TableHead className="text-xs">OC Actual</TableHead>
                     <TableHead className="text-xs">N° OC Nueva</TableHead>
+                    <TableHead className="text-xs text-right">Valor Servicio</TableHead>
                     <TableHead className="text-xs">Estado</TableHead>
                   </TableRow>
                 </TableHeader>
