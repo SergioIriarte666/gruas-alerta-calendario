@@ -202,7 +202,7 @@ export const CreateUserDialog = ({
                   <SelectValue placeholder="Seleccionar cliente" />
                 </SelectTrigger>
                 <SelectContent>
-                  {clients.filter(c => c.isActive).map((client) => (
+                  {clients.filter(c => c.isActive !== false).map((client) => (
                     <SelectItem key={client.id} value={client.id}>
                       {toTitleCase(client.name)} - {client.rut}
                     </SelectItem>
