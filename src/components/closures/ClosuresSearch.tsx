@@ -17,7 +17,7 @@ interface ClosuresSearchProps {
 }
 
 const ClosuresSearch = ({ searchTerm, onSearchChange, statusFilter, onStatusFilterChange, clientFilter, onClientFilterChange, clients }: ClosuresSearchProps) => {
-  const sortedClients = [...clients].sort((a, b) => a.name.localeCompare(b.name));
+  const sortedClients = [...clients].filter(c => c.isActive).sort((a, b) => a.name.localeCompare(b.name));
 
   return (
     <Card>

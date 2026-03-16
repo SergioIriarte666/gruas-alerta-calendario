@@ -13,6 +13,7 @@ interface Client {
   id: string;
   name: string;
   rut: string;
+  isActive?: boolean;
 }
 
 interface Operator {
@@ -201,7 +202,7 @@ export const CreateUserDialog = ({
                   <SelectValue placeholder="Seleccionar cliente" />
                 </SelectTrigger>
                 <SelectContent>
-                  {clients.map((client) => (
+                  {clients.filter(c => c.isActive !== false).map((client) => (
                     <SelectItem key={client.id} value={client.id}>
                       {toTitleCase(client.name)} - {client.rut}
                     </SelectItem>
