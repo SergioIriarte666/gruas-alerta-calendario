@@ -55,7 +55,7 @@ export const useCraneMaintenance = (craneId: string) => {
 
 export const useCreateMaintenance = () => {
   const queryClient = useQueryClient();
-  const { invalidateAllCostQueries } = useCostInvalidation();
+  const { invalidateAll } = useUniversalSync();
   const { createMutationErrorHandler } = useErrorHandler();
 
   return useMutation({
