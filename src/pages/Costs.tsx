@@ -68,7 +68,7 @@ const CostsPage = () => {
     
     const { data: costs = [], isLoading } = useCosts();
     const { mutate: deleteCost } = useDeleteCost();
-    const { invalidateAllCostQueries } = useCostInvalidation();
+    const { invalidateAll } = useUniversalSync();
     const dateMetrics = useDateFilters(costs);
     const queryClient = useQueryClient();
 
