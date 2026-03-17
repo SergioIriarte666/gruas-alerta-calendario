@@ -1,5 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
+import { showSyncToast, type SyncAction } from '@/utils/syncToast';
 
 export interface UnifiedPurchaseData {
   // Item information
