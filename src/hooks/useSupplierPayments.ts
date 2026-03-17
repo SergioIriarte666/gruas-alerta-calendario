@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { PaymentFormData, SupplierPayment, SupplierPaymentStatus } from '@/types/suppliers';
 import { toast } from 'sonner';
-import { useCostInvalidation } from './useCostInvalidation';
+import { useUniversalSync } from './useUniversalSync';
 
 export const getStatusLabel = (status: SupplierPaymentStatus): string => {
   const labels = {
