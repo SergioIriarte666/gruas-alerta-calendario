@@ -13,7 +13,7 @@ import { CostsDashboard } from '@/components/costs/CostsDashboard';
 import { CostBatchUpdateModal } from '@/components/costs/CostBatchUpdateModal';
 import { DistributionAssistantDialog } from '@/components/costs/dialogs/DistributionAssistantDialog';
 import { useCosts, useDeleteCost } from '@/hooks/useCosts';
-import { useCostInvalidation } from '@/hooks/useCostInvalidation';
+import { useUniversalSync } from '@/hooks/useUniversalSync';
 import { useQueryClient } from '@tanstack/react-query';
 import { useDateFilters } from '@/hooks/useDateFilters';
 import { Cost } from '@/types/costs';
@@ -68,7 +68,7 @@ const CostsPage = () => {
     
     const { data: costs = [], isLoading } = useCosts();
     const { mutate: deleteCost } = useDeleteCost();
-    const { invalidateAllCostQueries } = useCostInvalidation();
+    const { invalidateAll } = useUniversalSync();
     const dateMetrics = useDateFilters(costs);
     const queryClient = useQueryClient();
 
@@ -468,7 +468,7 @@ const CostsPage = () => {
                 isOpen={isQuickFormOpen}
                 onClose={() => setIsQuickFormOpen(false)}
                 onSuccess={() => {
-                    invalidateAllCostQueries();
+                    invalidateAll();
                 }}
             />
 

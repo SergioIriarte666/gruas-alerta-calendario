@@ -24,12 +24,22 @@
 - `UnifiedPurchaseService.ts` - lookup de proveedor desde `inventory_suppliers`
 - `BatchEditSuppliersModal.tsx` - escribe a `inventory_suppliers`
 
-#### 🔲 Fase 4: Consolidar UnifiedPurchaseService (pendiente)
-- Extender para cubrir todos los flujos de compra
-- Refactorizar `useUnifiedParts`, `useSupplierPayments.createPartCostAndInventory`
+#### ✅ Fase 4: Invalidación centralizada
+- `useCostInvalidation.ts` eliminado
+- Todos los hooks usan `useUniversalSync.invalidateAll()` exclusivamente:
+  - `useCosts.ts` (addCost, updateCost, deleteCost)
+  - `useCraneMaintenance.ts` (create, update, delete)
+  - `usePendingPayments.ts` (registerPayment)
+  - `useSupplierPayments.ts`
+  - `useUnifiedPurchase.ts`
+  - `Costs.tsx` (page-level)
+- `useUniversalSync` ahora invalida `supplier-stats`, `pending-payments`, `commissions`
+- `usePendingPayments.ts` corregido: query usa `inventory_suppliers` en vez de `suppliers`
+- `useUnifiedParts.ts` invalidación ampliada con `inventory-stats`, `suppliers`, `supplier-payments`
 
 #### 🔲 Fase 5: UX sincronización + limpieza (pendiente)
 - Badges de sync, toasts unificados
+- Panel de trazabilidad en detalle de costo/pago/pieza
 - Script de reconciliación de históricos
 
 ### Archivos que aún pueden referenciar tabla `suppliers` directamente

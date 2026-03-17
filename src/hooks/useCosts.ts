@@ -411,28 +411,16 @@ const deleteCost = async (id: string) => {
 export const useDeleteCost = () => {
   const queryClient = useQueryClient();
   const { createMutationErrorHandler } = useErrorHandler();
+  const { invalidateAll } = useUniversalSync();
+  
   return useMutation({
     mutationFn: deleteCost,
     onSuccess: (serviceId) => {
       console.log('[useDeleteCost] Cost deleted successfully, service_id:', serviceId);
-      
-      // Invalidate general queries
-      queryClient.invalidateQueries({ queryKey: ['costs'] });
-      queryClient.invalidateQueries({ queryKey: ['crane-costs'] });
+      invalidateAll();
+      queryClient.invalidateQueries({ queryKey: ['pending-payments'] });
       queryClient.invalidateQueries({ queryKey: ['cost-centers-stats'] });
       queryClient.refetchQueries({ queryKey: ['reports'] });
-      
-      // Invalidate service-related queries
-      queryClient.invalidateQueries({ queryKey: ['services'] });
-      queryClient.invalidateQueries({ queryKey: ['service-costs'] });
-      
-      // Sync: trigger elimina payment + cancela inventory
-      queryClient.invalidateQueries({ queryKey: ['supplier-payments'] });
-      queryClient.invalidateQueries({ queryKey: ['supplier-stats'] });
-      queryClient.invalidateQueries({ queryKey: ['pending-payments'] });
-      queryClient.invalidateQueries({ queryKey: ['inventory-movements'] });
-      queryClient.invalidateQueries({ queryKey: ['inventory-stock'] });
-      queryClient.invalidateQueries({ queryKey: ['inventory-stats'] });
       
       if (serviceId) {
         queryClient.invalidateQueries({ queryKey: ['service-costs', serviceId] });

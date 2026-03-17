@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { useCostInvalidation } from './useCostInvalidation';
+import { useUniversalSync } from './useUniversalSync';
 import { useErrorHandler } from '@/hooks/useErrorHandler';
 
 export interface MaintenanceRecord {
@@ -55,7 +55,7 @@ export const useCraneMaintenance = (craneId: string) => {
 
 export const useCreateMaintenance = () => {
   const queryClient = useQueryClient();
-  const { invalidateAllCostQueries } = useCostInvalidation();
+  const { invalidateAll } = useUniversalSync();
   const { createMutationErrorHandler } = useErrorHandler();
 
   return useMutation({
@@ -83,7 +83,7 @@ export const useCreateMaintenance = () => {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['crane-maintenance', data.crane_id] });
       queryClient.invalidateQueries({ queryKey: ['crane-metrics', data.crane_id] });
-      invalidateAllCostQueries(); // Invalidar queries de costos cuando se crea mantenimiento
+      invalidateAll();
       toast.success('Registro de mantenimiento creado exitosamente');
     },
     onError: createMutationErrorHandler({
@@ -95,7 +95,7 @@ export const useCreateMaintenance = () => {
 
 export const useUpdateMaintenance = () => {
   const queryClient = useQueryClient();
-  const { invalidateAllCostQueries } = useCostInvalidation();
+  const { invalidateAll } = useUniversalSync();
   const { createMutationErrorHandler } = useErrorHandler();
 
   return useMutation({
@@ -123,7 +123,7 @@ export const useUpdateMaintenance = () => {
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['crane-maintenance', data.crane_id] });
       queryClient.invalidateQueries({ queryKey: ['crane-metrics', data.crane_id] });
-      invalidateAllCostQueries(); // Invalidar queries de costos cuando se actualiza mantenimiento
+      invalidateAll();
       
       // If maintenance was completed, show specific message about cost generation
       if (variables.updates.status === 'completed' && variables.updates.cost && variables.updates.cost > 0) {
@@ -142,7 +142,7 @@ export const useUpdateMaintenance = () => {
 // Hook to delete a maintenance record
 export const useDeleteMaintenance = () => {
   const queryClient = useQueryClient();
-  const { invalidateAllCostQueries } = useCostInvalidation();
+  const { invalidateAll } = useUniversalSync();
   const { createMutationErrorHandler } = useErrorHandler();
 
   return useMutation({
@@ -158,7 +158,7 @@ export const useDeleteMaintenance = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['crane-maintenance'] });
       queryClient.invalidateQueries({ queryKey: ['crane-metrics'] });
-      invalidateAllCostQueries(); // Invalidate costs in case there was an associated cost
+      invalidateAll();
       toast.success('Registro de mantenimiento eliminado exitosamente');
     },
     onError: createMutationErrorHandler({

@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { SupplierPayment } from '@/types/suppliers';
 import { toast } from 'sonner';
-import { useCostInvalidation } from './useCostInvalidation';
+import { useUniversalSync } from './useUniversalSync';
 
 export interface PendingPaymentWithSupplier extends SupplierPayment {
   supplier_name?: string;
@@ -10,7 +10,7 @@ export interface PendingPaymentWithSupplier extends SupplierPayment {
 
 export const usePendingPayments = (supplierId?: string) => {
   const queryClient = useQueryClient();
-  const { invalidateAllCostQueries } = useCostInvalidation();
+  const { invalidateAll } = useUniversalSync();
 
   // Fetch pending and overdue payments
   const pendingPaymentsQuery = useQuery({
@@ -20,7 +20,7 @@ export const usePendingPayments = (supplierId?: string) => {
         .from('supplier_payments')
         .select(`
           *,
-          suppliers!inner(name)
+          inventory_suppliers!inner(name)
         `)
         .in('status', ['pending', 'overdue'])
         .order('due_date', { ascending: true });
@@ -36,7 +36,7 @@ export const usePendingPayments = (supplierId?: string) => {
       // Transform to include supplier_name
       return (data || []).map(item => ({
         ...item,
-        supplier_name: (item.suppliers as any)?.name || 'Sin proveedor'
+        supplier_name: (item.inventory_suppliers as any)?.name || 'Sin proveedor'
       })) as PendingPaymentWithSupplier[];
     }
   });
@@ -84,10 +84,8 @@ export const usePendingPayments = (supplierId?: string) => {
       return paymentIds.length;
     },
     onSuccess: (count) => {
+      invalidateAll();
       queryClient.invalidateQueries({ queryKey: ['pending-payments'] });
-      queryClient.invalidateQueries({ queryKey: ['supplier-payments'] });
-      queryClient.invalidateQueries({ queryKey: ['supplier-stats'] });
-      invalidateAllCostQueries();
       toast.success(`${count} pago(s) registrado(s) exitosamente`);
     },
     onError: (error) => {
