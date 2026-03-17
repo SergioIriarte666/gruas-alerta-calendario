@@ -123,7 +123,7 @@ export const useUpdateMaintenance = () => {
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['crane-maintenance', data.crane_id] });
       queryClient.invalidateQueries({ queryKey: ['crane-metrics', data.crane_id] });
-      invalidateAllCostQueries(); // Invalidar queries de costos cuando se actualiza mantenimiento
+      invalidateAll();
       
       // If maintenance was completed, show specific message about cost generation
       if (variables.updates.status === 'completed' && variables.updates.cost && variables.updates.cost > 0) {
