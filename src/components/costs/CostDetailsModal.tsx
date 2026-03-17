@@ -25,6 +25,7 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { parseFromDatabase, formatForDisplayWithTime } from '@/utils/timezoneUtils';
 import { getCreatorDisplayName } from '@/types/common';
+import { CostTraceabilityPanel } from './CostTraceabilityPanel';
 
 interface CostDetailsModalProps {
   cost: Cost;
