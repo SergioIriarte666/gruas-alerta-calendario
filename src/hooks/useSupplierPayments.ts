@@ -157,16 +157,7 @@ export const useSupplierPayments = () => {
       return typedPayment;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['supplier-payments'] });
-      queryClient.invalidateQueries({ queryKey: ['supplier-stats'] });
-      // Sync: puede crear/actualizar costs y crane_parts
-      queryClient.invalidateQueries({ queryKey: ['costs'] });
-      queryClient.invalidateQueries({ queryKey: ['crane-costs'] });
-      queryClient.invalidateQueries({ queryKey: ['service-costs'] });
-      queryClient.invalidateQueries({ queryKey: ['crane-parts'] });
-      queryClient.invalidateQueries({ queryKey: ['inventory-movements'] });
-      queryClient.invalidateQueries({ queryKey: ['inventory-stock'] });
-      queryClient.invalidateQueries({ queryKey: ['inventory-stats'] });
+      invalidateAll();
       toast.success('Pago actualizado exitosamente');
     },
     onError: (error) => {
