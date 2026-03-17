@@ -237,7 +237,7 @@ export const useInventoryMovements = (limit = 50) => {
           *,
           item:inventory_items(id, name),
           location:inventory_locations(id, name, code),
-          supplier:suppliers(id, name),
+          supplier:inventory_suppliers(id, name),
           crane:cranes(id, license_plate)
         `)
         .eq('status', 'active')
