@@ -3,14 +3,13 @@ import { supabase } from '@/integrations/supabase/client';
 import { SupplierStats } from '@/types/suppliers';
 
 const fetchSupplierStats = async (): Promise<SupplierStats> => {
-  // Get basic supplier counts
-  const { data: suppliers, error: suppliersError } = await supabase
-    .from('suppliers')
+  // Read from inventory_suppliers (unified source of truth)
+  const { data: suppliers, error: suppliersError } = await (supabase as any)
+    .from('inventory_suppliers')
     .select('id, is_active, category');
 
   if (suppliersError) throw suppliersError;
 
-  // Get payment statistics
   const { data: payments, error: paymentsError } = await supabase
     .from('supplier_payments')
     .select('id, status, amount, due_date');
@@ -18,18 +17,16 @@ const fetchSupplierStats = async (): Promise<SupplierStats> => {
   if (paymentsError) throw paymentsError;
 
   const totalSuppliers = suppliers?.length || 0;
-  const activeSuppliers = suppliers?.filter(s => s.is_active).length || 0;
+  const activeSuppliers = suppliers?.filter((s: any) => s.is_active).length || 0;
 
-  // Process payments
   const pendingPayments = payments?.filter(p => p.status === 'pending') || [];
   const overduePayments = payments?.filter(p => p.status === 'overdue') || [];
 
   const totalPendingAmount = pendingPayments.reduce((sum, p) => sum + (p.amount || 0), 0);
   const totalOverdueAmount = overduePayments.reduce((sum, p) => sum + (p.amount || 0), 0);
 
-  // Group suppliers by category
   const suppliersByCategory: Record<string, number> = {};
-  suppliers?.forEach(supplier => {
+  suppliers?.forEach((supplier: any) => {
     if (supplier.category) {
       suppliersByCategory[supplier.category] = (suppliersByCategory[supplier.category] || 0) + 1;
     }
@@ -50,6 +47,6 @@ export const useSupplierStats = () => {
   return useQuery({
     queryKey: ['supplier-stats'],
     queryFn: fetchSupplierStats,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 5 * 60 * 1000,
   });
 };

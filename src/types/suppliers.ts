@@ -1,12 +1,30 @@
-import { Database } from "@/integrations/supabase/types";
-
-// Tipos base desde Supabase (única fuente de verdad)
-export type Supplier = Database['public']['Tables']['suppliers']['Row'];
+// Supplier type - unified on inventory_suppliers table
+export interface Supplier {
+  id: string;
+  name: string;
+  rut: string | null;
+  email: string | null;
+  phone: string | null;
+  address: string | null;
+  contact_person: string | null;
+  contact_name?: string | null; // UI alias for contact_person
+  category: string;
+  subcategory?: string | null;
+  notes?: string | null;
+  payment_terms: string | null;
+  delivery_time_days: number | null;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+  created_by: string | null;
+  updated_by?: string | null;
+}
 
 // SupplierPaymentStatus - definir antes de usarlo
 export type SupplierPaymentStatus = 'pending' | 'paid' | 'overdue' | 'cancelled';
 
-// SupplierPayment - override status field to use our specific type
+// SupplierPayment - from generated types but with specific status
+import { Database } from "@/integrations/supabase/types";
 type SupplierPaymentBase = Database['public']['Tables']['supplier_payments']['Row'];
 export interface SupplierPayment extends Omit<SupplierPaymentBase, 'status'> {
   status: SupplierPaymentStatus;
@@ -81,22 +99,16 @@ export interface PaymentFormData {
   reference_number?: string;
   notes?: string;
   status: SupplierPaymentStatus;
-  // Campos opcionales para detalles de piezas
   part_name?: string;
   part_quantity?: number;
   part_unit_price?: number;
   crane_id?: string;
-  // Nuevo: checkbox para agregar a inventario
   add_to_inventory?: boolean;
-  // Campos para cuando se marca como pagado
   paid_date?: string;
   paid_amount?: number;
-  // Campo para vincular con factura(s)
   supplier_invoice_id?: string;
   selected_invoice_ids?: string[];
 }
-
-// Remove duplicate SupplierStats - now defined at the top
 
 // Tipos para XML parsing de proveedores
 export interface XMLSupplierData {
@@ -185,8 +197,8 @@ export interface SupplierPaymentReportFilters {
   supplierId?: string;
   supplierName?: string;
   reportType: 'current' | 'future';
-  daysAhead?: number; // For future payments report
-  dateFrom?: string; // Fecha desde
-  dateTo?: string; // Fecha hasta
-  dateType?: 'due_date' | 'created_at' | 'paid_date'; // Tipo de fecha para filtrar
+  daysAhead?: number;
+  dateFrom?: string;
+  dateTo?: string;
+  dateType?: 'due_date' | 'created_at' | 'paid_date';
 }

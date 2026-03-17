@@ -3,17 +3,24 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Supplier, SupplierFormData } from '@/types/suppliers';
 
+/**
+ * Unified suppliers hook - reads from inventory_suppliers (single source of truth)
+ */
+
+const mapRowToSupplier = (row: any): Supplier => ({
+  ...row,
+  contact_name: row.contact_person, // UI alias
+  category: row.category || 'otros',
+});
+
 const fetchSuppliers = async (): Promise<Supplier[]> => {
-  const { data, error } = await supabase
-    .from('suppliers')
+  const { data, error } = await (supabase as any)
+    .from('inventory_suppliers')
     .select('*')
     .order('name', { ascending: true });
 
-  if (error) {
-    throw error;
-  }
-
-  return data || [];
+  if (error) throw error;
+  return (data || []).map(mapRowToSupplier);
 };
 
 export const useSuppliers = () => {
@@ -30,20 +37,29 @@ export const useSuppliers = () => {
 
   const createSupplierMutation = useMutation({
     mutationFn: async (data: SupplierFormData) => {
-      const { data: result, error } = await supabase
-        .from('suppliers')
+      const userId = (await supabase.auth.getUser()).data.user?.id;
+      const { data: result, error } = await (supabase as any)
+        .from('inventory_suppliers')
         .insert([{
-          ...data,
-          created_by: (await supabase.auth.getUser()).data.user?.id
-        } as any]) // Type assertion to bypass old enum constraint
+          name: data.name,
+          rut: data.rut || '',
+          email: data.email || null,
+          phone: data.phone || null,
+          address: data.address || null,
+          contact_person: data.contact_name || null,
+          category: data.category || 'otros',
+          subcategory: data.subcategory || null,
+          notes: data.notes || null,
+          is_active: data.is_active ?? true,
+          created_by: userId,
+        }])
         .select()
         .single();
 
       if (error) throw error;
-      return result;
+      return mapRowToSupplier(result);
     },
     onSuccess: (newSupplier) => {
-      // Optimistic cache update so newly created supplier appears immediately in dropdowns/lists
       queryClient.setQueryData<Supplier[]>(['suppliers'], (old) => {
         const prev = old || [];
         if (prev.some((s) => s.id === newSupplier.id)) return prev;
@@ -62,19 +78,23 @@ export const useSuppliers = () => {
 
   const updateSupplierMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: Partial<SupplierFormData> }) => {
-      const { data: result, error } = await supabase
-        .from('suppliers')
-        .update({
-          ...data,
-          updated_by: (await supabase.auth.getUser()).data.user?.id,
-          updated_at: new Date().toISOString()
-        } as any) // Type assertion to bypass old enum constraint
+      const userId = (await supabase.auth.getUser()).data.user?.id;
+      const updateData: any = { ...data, updated_by: userId };
+      // Remap contact_name → contact_person
+      if ('contact_name' in updateData) {
+        updateData.contact_person = updateData.contact_name;
+        delete updateData.contact_name;
+      }
+      
+      const { data: result, error } = await (supabase as any)
+        .from('inventory_suppliers')
+        .update(updateData)
         .eq('id', id)
         .select()
         .single();
 
       if (error) throw error;
-      return result;
+      return mapRowToSupplier(result);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['suppliers'] });
@@ -89,8 +109,8 @@ export const useSuppliers = () => {
 
   const deleteSupplierMutation = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase
-        .from('suppliers')
+      const { error } = await (supabase as any)
+        .from('inventory_suppliers')
         .delete()
         .eq('id', id);
 
@@ -109,29 +129,26 @@ export const useSuppliers = () => {
 
   const toggleSupplierStatusMutation = useMutation({
     mutationFn: async (id: string) => {
-      // Primero obtener el estado actual
-      const { data: currentSupplier, error: fetchError } = await supabase
-        .from('suppliers')
+      const { data: current, error: fetchError } = await (supabase as any)
+        .from('inventory_suppliers')
         .select('is_active')
         .eq('id', id)
         .single();
 
       if (fetchError) throw fetchError;
 
-      // Cambiar el estado
-      const { data, error } = await supabase
-        .from('suppliers')
+      const { data, error } = await (supabase as any)
+        .from('inventory_suppliers')
         .update({ 
-          is_active: !currentSupplier.is_active,
+          is_active: !current.is_active,
           updated_by: (await supabase.auth.getUser()).data.user?.id,
-          updated_at: new Date().toISOString()
         })
         .eq('id', id)
         .select()
         .single();
 
       if (error) throw error;
-      return data;
+      return mapRowToSupplier(data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['suppliers'] });
