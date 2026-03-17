@@ -36,7 +36,7 @@ export const usePendingPayments = (supplierId?: string) => {
       // Transform to include supplier_name
       return (data || []).map(item => ({
         ...item,
-        supplier_name: (item.suppliers as any)?.name || 'Sin proveedor'
+        supplier_name: (item.inventory_suppliers as any)?.name || 'Sin proveedor'
       })) as PendingPaymentWithSupplier[];
     }
   });
