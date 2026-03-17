@@ -289,7 +289,7 @@ export const usePagedInventoryMovements = (page: number, pageSize: number) => {
           *,
           item:inventory_items(id, name),
           location:inventory_locations(id, name, code),
-          supplier:suppliers(id, name),
+          supplier:inventory_suppliers(id, name),
           crane:cranes(id, license_plate)
         `,
           { count: 'exact' }
