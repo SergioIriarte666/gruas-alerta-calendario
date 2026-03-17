@@ -13,7 +13,7 @@ import { CostsDashboard } from '@/components/costs/CostsDashboard';
 import { CostBatchUpdateModal } from '@/components/costs/CostBatchUpdateModal';
 import { DistributionAssistantDialog } from '@/components/costs/dialogs/DistributionAssistantDialog';
 import { useCosts, useDeleteCost } from '@/hooks/useCosts';
-import { useCostInvalidation } from '@/hooks/useCostInvalidation';
+import { useUniversalSync } from '@/hooks/useUniversalSync';
 import { useQueryClient } from '@tanstack/react-query';
 import { useDateFilters } from '@/hooks/useDateFilters';
 import { Cost } from '@/types/costs';
