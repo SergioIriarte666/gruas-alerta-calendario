@@ -25,6 +25,7 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { parseFromDatabase, formatForDisplayWithTime } from '@/utils/timezoneUtils';
 import { getCreatorDisplayName } from '@/types/common';
+import { CostTraceabilityPanel } from './CostTraceabilityPanel';
 
 interface CostDetailsModalProps {
   cost: Cost;
@@ -332,6 +333,10 @@ export const CostDetailsModal = ({ cost, isOpen, onClose, onDuplicate }: CostDet
             </div>
           </TabsContent>
         </Tabs>
+
+        {/* Traceability Panel */}
+        <Separator className="border-border" />
+        <CostTraceabilityPanel costId={cost.id} />
 
         <div className="flex justify-between text-sm text-muted-foreground pt-4 mt-4 border-t">
           <span>

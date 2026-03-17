@@ -102,14 +102,9 @@ export const useSupplierPayments = () => {
       return payment as SupplierPayment;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['supplier-payments'] });
-      queryClient.invalidateQueries({ queryKey: ['supplier-stats'] });
+      invalidateAll();
       queryClient.invalidateQueries({ queryKey: ['supplier-invoices'] });
       queryClient.invalidateQueries({ queryKey: ['supplier-invoices-pending'] });
-      // Sync: trigger crea cost automáticamente
-      queryClient.invalidateQueries({ queryKey: ['costs'] });
-      queryClient.invalidateQueries({ queryKey: ['crane-costs'] });
-      queryClient.invalidateQueries({ queryKey: ['service-costs'] });
       toast.success('Pago creado exitosamente');
     },
     onError: (error) => {
@@ -162,16 +157,7 @@ export const useSupplierPayments = () => {
       return typedPayment;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['supplier-payments'] });
-      queryClient.invalidateQueries({ queryKey: ['supplier-stats'] });
-      // Sync: puede crear/actualizar costs y crane_parts
-      queryClient.invalidateQueries({ queryKey: ['costs'] });
-      queryClient.invalidateQueries({ queryKey: ['crane-costs'] });
-      queryClient.invalidateQueries({ queryKey: ['service-costs'] });
-      queryClient.invalidateQueries({ queryKey: ['crane-parts'] });
-      queryClient.invalidateQueries({ queryKey: ['inventory-movements'] });
-      queryClient.invalidateQueries({ queryKey: ['inventory-stock'] });
-      queryClient.invalidateQueries({ queryKey: ['inventory-stats'] });
+      invalidateAll();
       toast.success('Pago actualizado exitosamente');
     },
     onError: (error) => {
@@ -419,13 +405,7 @@ export const useSupplierPayments = () => {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['supplier-payments'] });
-      queryClient.invalidateQueries({ queryKey: ['supplier-stats'] });
-      // Sync: trigger desvincula cost, invalidar queries relacionadas
-      queryClient.invalidateQueries({ queryKey: ['costs'] });
-      queryClient.invalidateQueries({ queryKey: ['service-costs'] });
-      queryClient.invalidateQueries({ queryKey: ['inventory-movements'] });
-      queryClient.invalidateQueries({ queryKey: ['inventory-stock'] });
+      invalidateAll();
       toast.success('Pago eliminado exitosamente');
     },
     onError: (error) => {

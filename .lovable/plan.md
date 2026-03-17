@@ -28,6 +28,16 @@
 - `useCostInvalidation.ts` eliminado
 - Todos los hooks usan `useUniversalSync.invalidateAll()` exclusivamente:
   - `useCosts.ts` (addCost, updateCost, deleteCost)
+  - `useSupplierPayments.ts` (create, update, delete, markAsPaid)
+  - `useCraneMaintenance.ts`
+  - `usePendingPayments.ts`
+
+#### ✅ Fase 5: UX & Trazabilidad + Reconciliación
+- `syncToast.ts` - Toast unificado que lista todas las acciones cross-módulo ejecutadas
+- `CostTraceabilityPanel.tsx` - Panel visual Costo ↔ Pago ↔ Inventario ↔ Pieza en CostDetailsModal
+- `UnifiedPurchaseService.ts` - Usa `showSyncToast` en vez de toasts fragmentados
+- `reconcile_orphan_records()` - RPC SQL para vincular registros huérfanos entre costs, payments, movements, parts
+- Toda invalidación fragmentada restante en `useSupplierPayments` consolidada a `invalidateAll()`
   - `useCraneMaintenance.ts` (create, update, delete)
   - `usePendingPayments.ts` (registerPayment)
   - `useSupplierPayments.ts`

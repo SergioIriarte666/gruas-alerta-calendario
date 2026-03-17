@@ -5156,6 +5156,7 @@ export type Database = {
       preview_next_invoice_folio: { Args: never; Returns: string }
       recalculate_crane_parts_costs: { Args: never; Returns: Json }
       recalculate_payment_balances: { Args: never; Returns: Json }
+      reconcile_orphan_records: { Args: never; Returns: Json }
       remove_duplicate_payment_applications: { Args: never; Returns: Json }
       repair_commission_system: { Args: never; Returns: Json }
       repair_payment_application: {
