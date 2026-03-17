@@ -131,9 +131,19 @@ export class UnifiedPurchaseService {
       result.success = true;
       console.log('[UnifiedPurchase] Purchase registration completed successfully');
       
-      toast.success('Compra Registrada', {
-        description: `${data.itemName}: ${data.quantity} unidad(es) por $${(data.quantity * data.unitCost).toLocaleString('es-CL')}`,
-      });
+      // Build sync actions for unified toast
+      const syncActions: SyncAction[] = [
+        { module: 'costo', action: `Costo registrado: $${(data.quantity * data.unitCost).toLocaleString('es-CL')}`, success: true },
+        { module: 'inventario', action: `Entrada: ${data.quantity} ${data.itemName}`, success: true },
+      ];
+      if (result.cranePartId) {
+        syncActions.push({ module: 'pieza', action: `Pieza asignada a grúa`, success: true });
+      }
+      if (data.supplierId) {
+        syncActions.push({ module: 'pago', action: `Pago a proveedor creado`, success: true });
+      }
+      
+      showSyncToast('Compra Registrada', syncActions);
       
       return result;
       
