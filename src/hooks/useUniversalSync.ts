@@ -38,9 +38,12 @@ export const useUniversalSync = () => {
     // ========== PROVEEDORES ==========
     queryClient.invalidateQueries({ queryKey: ['supplier-payments'] });
     queryClient.invalidateQueries({ queryKey: ['suppliers'] });
+    queryClient.invalidateQueries({ queryKey: ['supplier-stats'] });
+    queryClient.invalidateQueries({ queryKey: ['pending-payments'] });
     
     // ========== SERVICIOS (por si hay comisiones o costos de servicio) ==========
     queryClient.invalidateQueries({ queryKey: ['services'] });
+    queryClient.invalidateQueries({ queryKey: ['commissions'] });
   };
 
   /**
