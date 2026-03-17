@@ -707,7 +707,7 @@ export type Database = {
             foreignKeyName: "costs_supplier_id_fkey"
             columns: ["supplier_id"]
             isOneToOne: false
-            referencedRelation: "suppliers"
+            referencedRelation: "inventory_suppliers"
             referencedColumns: ["id"]
           },
         ]
@@ -964,7 +964,7 @@ export type Database = {
             foreignKeyName: "crane_parts_supplier_id_fkey"
             columns: ["supplier_id"]
             isOneToOne: false
-            referencedRelation: "suppliers"
+            referencedRelation: "inventory_suppliers"
             referencedColumns: ["id"]
           },
           {
@@ -1077,7 +1077,7 @@ export type Database = {
             foreignKeyName: "creditors_supplier_id_fkey"
             columns: ["supplier_id"]
             isOneToOne: false
-            referencedRelation: "suppliers"
+            referencedRelation: "inventory_suppliers"
             referencedColumns: ["id"]
           },
         ]
@@ -2011,7 +2011,7 @@ export type Database = {
             foreignKeyName: "inventory_movements_supplier_id_fkey"
             columns: ["supplier_id"]
             isOneToOne: false
-            referencedRelation: "suppliers"
+            referencedRelation: "inventory_suppliers"
             referencedColumns: ["id"]
           },
         ]
@@ -2070,6 +2070,7 @@ export type Database = {
       inventory_suppliers: {
         Row: {
           address: string | null
+          category: string
           contact_person: string | null
           created_at: string
           created_by: string | null
@@ -2078,13 +2079,17 @@ export type Database = {
           id: string
           is_active: boolean
           name: string
+          notes: string | null
           payment_terms: string | null
           phone: string | null
           rut: string | null
+          subcategory: string | null
           updated_at: string
+          updated_by: string | null
         }
         Insert: {
           address?: string | null
+          category?: string
           contact_person?: string | null
           created_at?: string
           created_by?: string | null
@@ -2093,13 +2098,17 @@ export type Database = {
           id?: string
           is_active?: boolean
           name: string
+          notes?: string | null
           payment_terms?: string | null
           phone?: string | null
           rut?: string | null
+          subcategory?: string | null
           updated_at?: string
+          updated_by?: string | null
         }
         Update: {
           address?: string | null
+          category?: string
           contact_person?: string | null
           created_at?: string
           created_by?: string | null
@@ -2108,10 +2117,13 @@ export type Database = {
           id?: string
           is_active?: boolean
           name?: string
+          notes?: string | null
           payment_terms?: string | null
           phone?: string | null
           rut?: string | null
+          subcategory?: string | null
           updated_at?: string
+          updated_by?: string | null
         }
         Relationships: [
           {
@@ -3946,7 +3958,7 @@ export type Database = {
           reference_number: string | null
           status: string
           subcategory: string | null
-          supplier_id: string
+          supplier_id: string | null
           supplier_invoice_id: string | null
           updated_at: string | null
           updated_by: string | null
@@ -3971,7 +3983,7 @@ export type Database = {
           reference_number?: string | null
           status?: string
           subcategory?: string | null
-          supplier_id: string
+          supplier_id?: string | null
           supplier_invoice_id?: string | null
           updated_at?: string | null
           updated_by?: string | null
@@ -3996,7 +4008,7 @@ export type Database = {
           reference_number?: string | null
           status?: string
           subcategory?: string | null
-          supplier_id?: string
+          supplier_id?: string | null
           supplier_invoice_id?: string | null
           updated_at?: string | null
           updated_by?: string | null
@@ -4020,7 +4032,7 @@ export type Database = {
             foreignKeyName: "supplier_payments_supplier_id_fkey"
             columns: ["supplier_id"]
             isOneToOne: false
-            referencedRelation: "suppliers"
+            referencedRelation: "inventory_suppliers"
             referencedColumns: ["id"]
           },
           {
