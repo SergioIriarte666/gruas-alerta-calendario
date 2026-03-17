@@ -390,7 +390,7 @@ export const useSupplierPayments = () => {
       queryClient.invalidateQueries({ queryKey: ['supplier-payments'] });
       queryClient.invalidateQueries({ queryKey: ['supplier-stats'] });
       // Invalidar costos, grúas e inventario
-      invalidateAllCostQueries();
+      invalidateAll();
       queryClient.invalidateQueries({ queryKey: ['crane-costs'] });
       queryClient.invalidateQueries({ queryKey: ['crane-parts'] });
       queryClient.invalidateQueries({ queryKey: ['inventory-movements'] });

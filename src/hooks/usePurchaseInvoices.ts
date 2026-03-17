@@ -51,8 +51,8 @@ export const usePurchaseInvoices = () => {
         return invoices.map(inv => ({ ...inv, supplier: null })) as SupplierInvoiceWithDetails[];
       }
 
-      const { data: suppliers, error: suppliersError } = await supabase
-        .from('suppliers')
+      const { data: suppliers, error: suppliersError } = await (supabase as any)
+        .from('inventory_suppliers')
         .select('id, name, rut')
         .in('id', supplierIds);
 

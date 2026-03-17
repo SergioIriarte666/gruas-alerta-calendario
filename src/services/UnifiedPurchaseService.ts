@@ -362,8 +362,8 @@ export class UnifiedPurchaseService {
     // Get supplier name for crane_parts
     let supplierName = params.supplierName || 'Sin proveedor';
     if (params.supplierId && !params.supplierName) {
-      const { data: supplier } = await supabase
-        .from('suppliers')
+      const { data: supplier } = await (supabase as any)
+        .from('inventory_suppliers')
         .select('name')
         .eq('id', params.supplierId)
         .single();
