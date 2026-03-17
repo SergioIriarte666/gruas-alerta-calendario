@@ -20,7 +20,7 @@ export const usePendingPayments = (supplierId?: string) => {
         .from('supplier_payments')
         .select(`
           *,
-          suppliers!inner(name)
+          inventory_suppliers!inner(name)
         `)
         .in('status', ['pending', 'overdue'])
         .order('due_date', { ascending: true });
