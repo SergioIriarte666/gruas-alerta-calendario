@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { SupplierPayment } from '@/types/suppliers';
 import { toast } from 'sonner';
-import { useCostInvalidation } from './useCostInvalidation';
+import { useUniversalSync } from './useUniversalSync';
 
 export interface PendingPaymentWithSupplier extends SupplierPayment {
   supplier_name?: string;
@@ -10,7 +10,7 @@ export interface PendingPaymentWithSupplier extends SupplierPayment {
 
 export const usePendingPayments = (supplierId?: string) => {
   const queryClient = useQueryClient();
-  const { invalidateAllCostQueries } = useCostInvalidation();
+  const { invalidateAll } = useUniversalSync();
 
   // Fetch pending and overdue payments
   const pendingPaymentsQuery = useQuery({
