@@ -1032,6 +1032,236 @@ export type Database = {
           },
         ]
       }
+      creditors: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          id: string
+          is_active: boolean
+          metadata: Json | null
+          name: string
+          notes: string | null
+          supplier_id: string | null
+          type: string
+          updated_at: string | null
+          updated_by: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          is_active?: boolean
+          metadata?: Json | null
+          name: string
+          notes?: string | null
+          supplier_id?: string | null
+          type?: string
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          is_active?: boolean
+          metadata?: Json | null
+          name?: string
+          notes?: string | null
+          supplier_id?: string | null
+          type?: string
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "creditors_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      debt_installments: {
+        Row: {
+          adjustment_amount: number
+          created_at: string | null
+          created_by: string | null
+          debt_id: string
+          due_date: string
+          id: string
+          installment_number: number
+          interest_amount: number
+          paid_amount: number
+          paid_date: string | null
+          principal_amount: number
+          status: string
+          total_amount: number
+          updated_at: string | null
+          updated_by: string | null
+        }
+        Insert: {
+          adjustment_amount?: number
+          created_at?: string | null
+          created_by?: string | null
+          debt_id: string
+          due_date: string
+          id?: string
+          installment_number: number
+          interest_amount?: number
+          paid_amount?: number
+          paid_date?: string | null
+          principal_amount: number
+          status?: string
+          total_amount: number
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Update: {
+          adjustment_amount?: number
+          created_at?: string | null
+          created_by?: string | null
+          debt_id?: string
+          due_date?: string
+          id?: string
+          installment_number?: number
+          interest_amount?: number
+          paid_amount?: number
+          paid_date?: string | null
+          principal_amount?: number
+          status?: string
+          total_amount?: number
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "debt_installments_debt_id_fkey"
+            columns: ["debt_id"]
+            isOneToOne: false
+            referencedRelation: "debts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      debt_payments: {
+        Row: {
+          amount: number
+          created_at: string | null
+          created_by: string | null
+          debt_installment_id: string
+          id: string
+          method: string | null
+          notes: string | null
+          payment_date: string
+          updated_at: string | null
+          updated_by: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          created_by?: string | null
+          debt_installment_id: string
+          id?: string
+          method?: string | null
+          notes?: string | null
+          payment_date: string
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          created_by?: string | null
+          debt_installment_id?: string
+          id?: string
+          method?: string | null
+          notes?: string | null
+          payment_date?: string
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "debt_payments_debt_installment_id_fkey"
+            columns: ["debt_installment_id"]
+            isOneToOne: false
+            referencedRelation: "debt_installments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      debts: {
+        Row: {
+          adjustment_enabled: boolean
+          adjustment_rate: number | null
+          created_at: string | null
+          created_by: string | null
+          creditor_id: string
+          currency: string
+          description: string
+          first_due_date: string
+          frequency: string
+          id: string
+          installments_count: number
+          interest_enabled: boolean
+          interest_rate: number | null
+          metadata: Json | null
+          status: string
+          total_amount: number
+          updated_at: string | null
+          updated_by: string | null
+        }
+        Insert: {
+          adjustment_enabled?: boolean
+          adjustment_rate?: number | null
+          created_at?: string | null
+          created_by?: string | null
+          creditor_id: string
+          currency?: string
+          description: string
+          first_due_date: string
+          frequency?: string
+          id?: string
+          installments_count: number
+          interest_enabled?: boolean
+          interest_rate?: number | null
+          metadata?: Json | null
+          status?: string
+          total_amount: number
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Update: {
+          adjustment_enabled?: boolean
+          adjustment_rate?: number | null
+          created_at?: string | null
+          created_by?: string | null
+          creditor_id?: string
+          currency?: string
+          description?: string
+          first_due_date?: string
+          frequency?: string
+          id?: string
+          installments_count?: number
+          interest_enabled?: boolean
+          interest_rate?: number | null
+          metadata?: Json | null
+          status?: string
+          total_amount?: number
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "debts_creditor_id_fkey"
+            columns: ["creditor_id"]
+            isOneToOne: false
+            referencedRelation: "creditors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       document_alerts: {
         Row: {
           alert_days: number
