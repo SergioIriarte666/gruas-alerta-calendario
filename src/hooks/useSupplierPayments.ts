@@ -102,14 +102,9 @@ export const useSupplierPayments = () => {
       return payment as SupplierPayment;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['supplier-payments'] });
-      queryClient.invalidateQueries({ queryKey: ['supplier-stats'] });
+      invalidateAll();
       queryClient.invalidateQueries({ queryKey: ['supplier-invoices'] });
       queryClient.invalidateQueries({ queryKey: ['supplier-invoices-pending'] });
-      // Sync: trigger crea cost automáticamente
-      queryClient.invalidateQueries({ queryKey: ['costs'] });
-      queryClient.invalidateQueries({ queryKey: ['crane-costs'] });
-      queryClient.invalidateQueries({ queryKey: ['service-costs'] });
       toast.success('Pago creado exitosamente');
     },
     onError: (error) => {
