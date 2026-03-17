@@ -154,6 +154,7 @@ export class UnifiedPurchaseService {
       // Attempt rollback if possible
       await this.attemptRollback(result);
       
+      const { toast } = await import('sonner');
       toast.error('Error en Registro', {
         description: result.error,
       });

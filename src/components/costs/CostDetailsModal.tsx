@@ -334,6 +334,10 @@ export const CostDetailsModal = ({ cost, isOpen, onClose, onDuplicate }: CostDet
           </TabsContent>
         </Tabs>
 
+        {/* Traceability Panel */}
+        <Separator className="border-border" />
+        <CostTraceabilityPanel costId={cost.id} />
+
         <div className="flex justify-between text-sm text-muted-foreground pt-4 mt-4 border-t">
           <span>
             Creado: {formatForDisplayWithTime(cost.created_at)}

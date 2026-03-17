@@ -405,13 +405,7 @@ export const useSupplierPayments = () => {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['supplier-payments'] });
-      queryClient.invalidateQueries({ queryKey: ['supplier-stats'] });
-      // Sync: trigger desvincula cost, invalidar queries relacionadas
-      queryClient.invalidateQueries({ queryKey: ['costs'] });
-      queryClient.invalidateQueries({ queryKey: ['service-costs'] });
-      queryClient.invalidateQueries({ queryKey: ['inventory-movements'] });
-      queryClient.invalidateQueries({ queryKey: ['inventory-stock'] });
+      invalidateAll();
       toast.success('Pago eliminado exitosamente');
     },
     onError: (error) => {
