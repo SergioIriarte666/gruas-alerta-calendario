@@ -83,7 +83,7 @@ export const useCreateMaintenance = () => {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['crane-maintenance', data.crane_id] });
       queryClient.invalidateQueries({ queryKey: ['crane-metrics', data.crane_id] });
-      invalidateAllCostQueries(); // Invalidar queries de costos cuando se crea mantenimiento
+      invalidateAll();
       toast.success('Registro de mantenimiento creado exitosamente');
     },
     onError: createMutationErrorHandler({
