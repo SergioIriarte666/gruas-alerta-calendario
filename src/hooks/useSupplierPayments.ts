@@ -199,8 +199,8 @@ export const useSupplierPayments = () => {
     // Obtener nombre del proveedor
     let supplierName = 'Proveedor';
     if (paymentData.supplier_id) {
-      const { data: supplierData } = await supabase
-        .from('suppliers')
+      const { data: supplierData } = await (supabase as any)
+        .from('inventory_suppliers')
         .select('name')
         .eq('id', paymentData.supplier_id)
         .single();
