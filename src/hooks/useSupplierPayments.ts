@@ -26,7 +26,7 @@ export const getStatusColor = (status: SupplierPaymentStatus): string => {
 
 export const useSupplierPayments = () => {
   const queryClient = useQueryClient();
-  const { invalidateAllCostQueries } = useCostInvalidation();
+  const { invalidateAll } = useUniversalSync();
 
   const paymentsQuery = useQuery({
     queryKey: ['supplier-payments'],
