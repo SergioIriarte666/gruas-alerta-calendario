@@ -468,7 +468,7 @@ const CostsPage = () => {
                 isOpen={isQuickFormOpen}
                 onClose={() => setIsQuickFormOpen(false)}
                 onSuccess={() => {
-                    invalidateAllCostQueries();
+                    invalidateAll();
                 }}
             />
 

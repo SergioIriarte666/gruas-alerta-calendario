@@ -196,12 +196,16 @@ export const useUnifiedPartsPurchase = () => {
       return { cranePart, inventoryMovement };
     },
     onSuccess: (data) => {
+      // Use centralized invalidation
       queryClient.invalidateQueries({ queryKey: ['crane-parts'] });
       queryClient.invalidateQueries({ queryKey: ['inventory-movements'] });
       queryClient.invalidateQueries({ queryKey: ['inventory-stock'] });
       queryClient.invalidateQueries({ queryKey: ['inventory-items'] });
+      queryClient.invalidateQueries({ queryKey: ['inventory-stats'] });
       queryClient.invalidateQueries({ queryKey: ['parts-traceability'] });
       queryClient.invalidateQueries({ queryKey: ['costs'] });
+      queryClient.invalidateQueries({ queryKey: ['suppliers'] });
+      queryClient.invalidateQueries({ queryKey: ['supplier-payments'] });
       toast.success('Pieza registrada exitosamente. Se creó automáticamente la entrada de inventario.');
     },
     onError: (error: any) => {

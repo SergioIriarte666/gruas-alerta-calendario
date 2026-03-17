@@ -158,7 +158,7 @@ export const useDeleteMaintenance = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['crane-maintenance'] });
       queryClient.invalidateQueries({ queryKey: ['crane-metrics'] });
-      invalidateAllCostQueries(); // Invalidate costs in case there was an associated cost
+      invalidateAll();
       toast.success('Registro de mantenimiento eliminado exitosamente');
     },
     onError: createMutationErrorHandler({

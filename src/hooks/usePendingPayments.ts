@@ -84,10 +84,8 @@ export const usePendingPayments = (supplierId?: string) => {
       return paymentIds.length;
     },
     onSuccess: (count) => {
+      invalidateAll();
       queryClient.invalidateQueries({ queryKey: ['pending-payments'] });
-      queryClient.invalidateQueries({ queryKey: ['supplier-payments'] });
-      queryClient.invalidateQueries({ queryKey: ['supplier-stats'] });
-      invalidateAllCostQueries();
       toast.success(`${count} pago(s) registrado(s) exitosamente`);
     },
     onError: (error) => {
