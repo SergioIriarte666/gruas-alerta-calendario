@@ -76,8 +76,8 @@ export const BatchEditSuppliersModal = ({
       }
 
       const promises = selectedSuppliers.map(supplier => 
-        supabase
-          .from('suppliers')
+        (supabase as any)
+          .from('inventory_suppliers')
           .update(updates)
           .eq('id', supplier.id)
           .then(({ error }) => {

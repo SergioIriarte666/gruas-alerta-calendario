@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { PaymentFormData, SupplierPayment, SupplierPaymentStatus } from '@/types/suppliers';
 import { toast } from 'sonner';
-import { useCostInvalidation } from './useCostInvalidation';
+import { useUniversalSync } from './useUniversalSync';
 
 export const getStatusLabel = (status: SupplierPaymentStatus): string => {
   const labels = {
@@ -26,7 +26,7 @@ export const getStatusColor = (status: SupplierPaymentStatus): string => {
 
 export const useSupplierPayments = () => {
   const queryClient = useQueryClient();
-  const { invalidateAllCostQueries } = useCostInvalidation();
+  const { invalidateAll } = useUniversalSync();
 
   const paymentsQuery = useQuery({
     queryKey: ['supplier-payments'],
@@ -199,8 +199,8 @@ export const useSupplierPayments = () => {
     // Obtener nombre del proveedor
     let supplierName = 'Proveedor';
     if (paymentData.supplier_id) {
-      const { data: supplierData } = await supabase
-        .from('suppliers')
+      const { data: supplierData } = await (supabase as any)
+        .from('inventory_suppliers')
         .select('name')
         .eq('id', paymentData.supplier_id)
         .single();
@@ -390,7 +390,7 @@ export const useSupplierPayments = () => {
       queryClient.invalidateQueries({ queryKey: ['supplier-payments'] });
       queryClient.invalidateQueries({ queryKey: ['supplier-stats'] });
       // Invalidar costos, grúas e inventario
-      invalidateAllCostQueries();
+      invalidateAll();
       queryClient.invalidateQueries({ queryKey: ['crane-costs'] });
       queryClient.invalidateQueries({ queryKey: ['crane-parts'] });
       queryClient.invalidateQueries({ queryKey: ['inventory-movements'] });

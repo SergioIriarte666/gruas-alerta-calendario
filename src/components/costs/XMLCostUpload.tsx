@@ -338,20 +338,19 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
 
   // Función para buscar proveedor por RUT o nombre
   const findSupplierByRutOrName = async (rut: string, name: string): Promise<string | null> => {
-    // Primero buscar por RUT
+    // Buscar en inventory_suppliers (fuente única de verdad)
     if (rut && rut.trim()) {
-      const { data } = await supabase
-        .from('suppliers')
+      const { data } = await (supabase as any)
+        .from('inventory_suppliers')
         .select('id')
         .eq('rut', rut.trim())
         .maybeSingle();
       if (data) return data.id;
     }
     
-    // Luego buscar por nombre (similarity)
     if (name && name.trim()) {
-      const { data } = await supabase
-        .from('suppliers')
+      const { data } = await (supabase as any)
+        .from('inventory_suppliers')
         .select('id, name')
         .ilike('name', `%${name.trim()}%`)
         .limit(1)
