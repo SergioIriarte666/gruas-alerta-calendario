@@ -142,7 +142,7 @@ export const useUpdateMaintenance = () => {
 // Hook to delete a maintenance record
 export const useDeleteMaintenance = () => {
   const queryClient = useQueryClient();
-  const { invalidateAllCostQueries } = useCostInvalidation();
+  const { invalidateAll } = useUniversalSync();
   const { createMutationErrorHandler } = useErrorHandler();
 
   return useMutation({
