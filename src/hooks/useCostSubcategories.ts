@@ -46,7 +46,7 @@ export const useCostSubcategories = (categoryId?: string) => {
   } = useQuery({
     queryKey: ['cost-subcategories-all', categoryId],
     queryFn: async (): Promise<CostSubcategory[]> => {
-      if (!categoryId) return [];
+      if (!categoryId || !isValidUuid) return [];
       
       const { data, error } = await supabase
         .from('cost_subcategories')
@@ -57,7 +57,7 @@ export const useCostSubcategories = (categoryId?: string) => {
       if (error) throw error;
       return data || [];
     },
-    enabled: !!categoryId,
+    enabled: !!categoryId && isValidUuid,
   });
 
   // Mutation para crear subcategoría
