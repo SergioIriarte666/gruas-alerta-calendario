@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Supplier, SupplierFormData } from '@/types/suppliers';
+import { dedupeSuppliersByIdentity, findSupplierByIdentity, normalizeSupplierRut } from '@/utils/supplierIdentity';
 
 /**
  * Unified suppliers hook - reads from inventory_suppliers (single source of truth)
@@ -13,14 +14,44 @@ const mapRowToSupplier = (row: any): Supplier => ({
   category: row.category || 'otros',
 });
 
+const getSupplierCompletenessScore = (supplier: Partial<Supplier>) => {
+  const normalizedRut = normalizeSupplierRut(supplier.rut);
+
+  return [
+    normalizedRut.length >= 8 ? 3 : normalizedRut.length > 0 ? 2 : 0,
+    supplier.email ? 1 : 0,
+    supplier.phone ? 1 : 0,
+    supplier.address ? 1 : 0,
+    supplier.contact_name || (supplier as any).contact_person ? 1 : 0,
+    supplier.notes ? 1 : 0,
+  ].reduce((total, value) => total + value, 0);
+};
+
+const pickPreferredSupplier = (current: Supplier, incoming: Supplier): Supplier => {
+  const currentScore = getSupplierCompletenessScore(current);
+  const incomingScore = getSupplierCompletenessScore(incoming);
+
+  if (incomingScore > currentScore) return incoming;
+  if (currentScore > incomingScore) return current;
+
+  const currentDate = new Date(current.updated_at || current.created_at || 0).getTime();
+  const incomingDate = new Date(incoming.updated_at || incoming.created_at || 0).getTime();
+
+  return incomingDate >= currentDate ? incoming : current;
+};
+
+const sortSuppliers = (suppliers: Supplier[]) => suppliers.sort((a, b) => a.name.localeCompare(b.name, 'es'));
+
 const fetchSuppliers = async (): Promise<Supplier[]> => {
   const { data, error } = await (supabase as any)
     .from('inventory_suppliers')
     .select('*')
-    .order('name', { ascending: true });
+    .order('created_at', { ascending: false });
 
   if (error) throw error;
-  return (data || []).map(mapRowToSupplier);
+
+  const mappedSuppliers = (data || []).map(mapRowToSupplier);
+  return sortSuppliers(dedupeSuppliersByIdentity(mappedSuppliers, pickPreferredSupplier));
 };
 
 export const useSuppliers = () => {
@@ -37,6 +68,11 @@ export const useSuppliers = () => {
 
   const createSupplierMutation = useMutation({
     mutationFn: async (data: SupplierFormData) => {
+      const existingSupplier = findSupplierByIdentity(suppliers, data);
+      if (existingSupplier) {
+        return { ...existingSupplier, __reused: true } as Supplier & { __reused?: boolean };
+      }
+
       const userId = (await supabase.auth.getUser()).data.user?.id;
       const { data: result, error } = await (supabase as any)
         .from('inventory_suppliers')
@@ -60,15 +96,16 @@ export const useSuppliers = () => {
       return mapRowToSupplier(result);
     },
     onSuccess: (newSupplier) => {
+      const wasReused = (newSupplier as Supplier & { __reused?: boolean }).__reused === true;
+
       queryClient.setQueryData<Supplier[]>(['suppliers'], (old) => {
         const prev = old || [];
-        if (prev.some((s) => s.id === newSupplier.id)) return prev;
-        return [...prev, newSupplier].sort((a, b) => a.name.localeCompare(b.name, 'es'));
+        return sortSuppliers(dedupeSuppliersByIdentity([...prev, newSupplier], pickPreferredSupplier));
       });
 
       queryClient.invalidateQueries({ queryKey: ['suppliers'] });
       queryClient.invalidateQueries({ queryKey: ['supplier-stats'] });
-      toast.success('Proveedor creado exitosamente');
+      toast.success(wasReused ? 'Proveedor existente reutilizado' : 'Proveedor creado exitosamente');
     },
     onError: (error: any) => {
       console.error('Error creating supplier:', error);
