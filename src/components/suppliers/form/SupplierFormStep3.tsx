@@ -56,7 +56,13 @@ export const SupplierFormStep3 = ({
 
   const { subcategories, isLoading: subcategoriesLoading } = useCostSubcategories(category || undefined);
 
+  const validCategoryIds = categories.map((cat) => cat.id);
+  const validSubcategoryNames = subcategories.map((sub) => sub.name);
+  const safeCategoryValue = validCategoryIds.includes(category) ? category : undefined;
+  const safeSubcategoryValue = validSubcategoryNames.includes(subcategory) ? subcategory : undefined;
+
   const handleCategoryChange = (value: string) => {
+    if (!value || value === 'loading') return;
     onCategoryChange(value);
     onSubcategoryChange(''); // Reset subcategory when category changes
   };
