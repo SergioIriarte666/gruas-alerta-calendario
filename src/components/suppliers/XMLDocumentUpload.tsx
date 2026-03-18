@@ -20,6 +20,7 @@ import { safeParseDateOnly } from '@/utils/timezoneUtils';
 import { cn } from '@/lib/utils';
 import { dedupeSuppliersByIdentity, findSupplierByIdentity } from '@/utils/supplierIdentity';
 import { XMLCompleteParseResult, XMLDocumentData, XMLSupplierData, XMLSupplierPaymentData } from '@/types/suppliers';
+import { supabase } from '@/integrations/supabase/client';
 import { useSuppliers } from '@/hooks/useSuppliers';
 import { useCostCategories } from '@/hooks/useCostCategories';
 import { getCategoryLabel } from '@/utils/categoryUtils';
@@ -225,6 +226,15 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
           dueDateOverrides
         );
 
+        // Cache user ID and cost categories for performance
+        const cachedUserId = (await supabase.auth.getUser()).data.user?.id;
+        const { data: allCostCategories } = await supabase
+          .from('cost_categories')
+          .select('id, name');
+        const costCategoriesMap = new Map(
+          (allCostCategories || []).map(c => [c.name.toLowerCase(), c.id])
+        );
+
         let exactFolioUpdated = 0;
         let exactFolioSkipped = 0;
 
@@ -269,7 +279,7 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
               continue;
             }
             
-            await new Promise<void>((resolve, reject) => {
+            const createdPayment = await new Promise<any>((resolve, reject) => {
               createPayment({
                 supplier_id: supplierId,
                 amount: paymentData.amount,
@@ -282,10 +292,38 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
                 paid_date: paidDate,
                 paid_amount: status === 'paid' ? paymentData.amount : undefined
               }, {
-                onSuccess: () => resolve(),
+                onSuccess: (data) => resolve(data),
                 onError: reject
               });
             });
+
+            // Crear costo vinculado al pago (sincronización triangular)
+            if (createdPayment?.id) {
+              try {
+                const categoryName = (paymentData.category || 'pagos a proveedores').toLowerCase();
+                const categoryId = costCategoriesMap.get(categoryName) 
+                  || costCategoriesMap.get('pagos a proveedores') 
+                  || costCategoriesMap.get('otros');
+
+                if (categoryId) {
+                  await supabase
+                    .from('costs')
+                    .insert({
+                      amount: paymentData.amount,
+                      category_id: categoryId,
+                      date: paidDate || paymentData.due_date,
+                      description: paymentData.description,
+                      notes: paymentData.notes,
+                      supplier_id: supplierId,
+                      supplier_payment_id: createdPayment.id,
+                      payment_date: paidDate || null,
+                      created_by: cachedUserId
+                    });
+                }
+              } catch (costError) {
+                console.error('Error creating linked cost:', costError);
+              }
+            }
             processed++;
             setUploadProgress(processed / totalItems * 100);
           } catch (error) {
