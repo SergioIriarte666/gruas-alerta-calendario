@@ -103,15 +103,18 @@ export const SupplierFormStep3 = ({
           <div className="space-y-2">
             <Label className="text-foreground">Categoría *</Label>
             <Select
-              value={category}
+              value={safeCategoryValue}
               onValueChange={handleCategoryChange}
+              disabled={categoriesLoading || categories.length === 0}
             >
               <SelectTrigger className="bg-background">
-                <SelectValue placeholder="Seleccionar categoría" />
+                <SelectValue placeholder={categoriesLoading ? 'Cargando categorías...' : 'Seleccionar categoría'} />
               </SelectTrigger>
               <SelectContent>
                 {categoriesLoading ? (
                   <SelectItem value="loading" disabled>Cargando categorías...</SelectItem>
+                ) : categories.length === 0 ? (
+                  <SelectItem value="no-categories" disabled>Sin categorías disponibles</SelectItem>
                 ) : (
                   categories.map((cat) => (
                     <SelectItem 
