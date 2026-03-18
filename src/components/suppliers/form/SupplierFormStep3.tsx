@@ -138,6 +138,7 @@ export const SupplierFormStep3 = ({
             <div className="space-y-2">
               <Label className="text-foreground">Subcategoría</Label>
               <Select
+                key={`supplier-subcategory-${safeCategoryValue ?? 'no-category'}-${safeSubcategoryValue ?? 'empty'}-${subcategories.length}`}
                 value={safeSubcategoryValue}
                 onValueChange={(value) => {
                   if (!value || value === 'loading') return;

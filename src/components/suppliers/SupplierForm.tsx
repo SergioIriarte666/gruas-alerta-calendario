@@ -141,7 +141,7 @@ export const SupplierForm: React.FC<SupplierFormProps> = ({
       case 2:
         return true; // All step 2 fields are optional per Zod schema
       case 3:
-        return formValues.category?.trim() !== '';
+        return formValues.category?.trim() !== '' || activeCategories.length > 0;
       default:
         return true;
     }
