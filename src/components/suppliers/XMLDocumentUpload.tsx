@@ -226,14 +226,6 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
           dueDateOverrides
         );
 
-        // Cache user ID and cost categories for performance
-        const cachedUserId = (await supabase.auth.getUser()).data.user?.id;
-        const { data: allCostCategories } = await supabase
-          .from('cost_categories')
-          .select('id, name');
-        const costCategoriesMap = new Map(
-          (allCostCategories || []).map(c => [c.name.toLowerCase(), c.id])
-        );
 
         let exactFolioUpdated = 0;
         let exactFolioSkipped = 0;
@@ -297,33 +289,8 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
               });
             });
 
-            // Crear costo vinculado al pago (sincronización triangular)
-            if (createdPayment?.id) {
-              try {
-                const categoryName = (paymentData.category || 'pagos a proveedores').toLowerCase();
-                const categoryId = costCategoriesMap.get(categoryName) 
-                  || costCategoriesMap.get('pagos a proveedores') 
-                  || costCategoriesMap.get('otros');
-
-                if (categoryId) {
-                  await supabase
-                    .from('costs')
-                    .insert({
-                      amount: paymentData.amount,
-                      category_id: categoryId,
-                      date: paidDate || paymentData.due_date,
-                      description: paymentData.description,
-                      notes: paymentData.notes,
-                      supplier_id: supplierId,
-                      supplier_payment_id: createdPayment.id,
-                      payment_date: paidDate || null,
-                      created_by: cachedUserId
-                    });
-                }
-              } catch (costError) {
-                console.error('Error creating linked cost:', costError);
-              }
-            }
+            // Cost creation is handled automatically by the DB trigger
+            // create_cost_from_supplier_payment on supplier_payments INSERT
             processed++;
             setUploadProgress(processed / totalItems * 100);
           } catch (error) {
