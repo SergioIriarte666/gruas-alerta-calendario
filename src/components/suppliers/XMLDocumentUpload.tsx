@@ -853,7 +853,7 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
                                     <CalendarIcon className="mr-2 h-4 w-4" />
                                     {defaultDueDate ? (
                                       <span className="flex items-center gap-2">
-                                        {format(new Date(defaultDueDate), 'dd/MM/yyyy')}
+                                        {format(safeParseDateOnly(defaultDueDate), 'dd/MM/yyyy')}
                                         {hasCustomDate && (
                                           <Badge variant="secondary" className="text-xs">
                                             Personalizada
