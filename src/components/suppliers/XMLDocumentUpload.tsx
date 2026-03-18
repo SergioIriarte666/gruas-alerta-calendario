@@ -781,7 +781,7 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
                         const defaultDueDate = dueDateOverrides[document.folio] || 
                           document.due_date || 
                           (() => {
-                            const date = new Date(document.issue_date || new Date());
+                            const date = safeParseDateOnly(document.issue_date || format(new Date(), 'yyyy-MM-dd'));
                             date.setDate(date.getDate() + defaultDaysToAdd);
                             return format(date, 'yyyy-MM-dd');
                           })();
