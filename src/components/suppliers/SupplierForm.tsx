@@ -46,6 +46,18 @@ export const SupplierForm: React.FC<SupplierFormProps> = ({
   const activeCategories = costCategoriesData.map(c => ({ id: c.id, label: c.name, name: c.name }));
   const isEditing = !!supplier;
 
+  // Resolver categoría del proveedor: puede ser UUID o texto
+  const resolveCategory = (catValue?: string | null): string => {
+    if (!catValue) return activeCategories?.[0]?.id || '';
+    // Si ya es un UUID válido que existe en las categorías, usarlo
+    const byId = activeCategories.find(c => c.id === catValue);
+    if (byId) return byId.id;
+    // Si es texto (ej: "otros"), buscar por nombre
+    const byName = activeCategories.find(c => c.name.toLowerCase() === catValue.toLowerCase());
+    if (byName) return byName.id;
+    return activeCategories?.[0]?.id || '';
+  };
+
   const form = useForm<FormData>({
     resolver: zodResolver(supplierSchema),
     defaultValues: {
@@ -55,7 +67,7 @@ export const SupplierForm: React.FC<SupplierFormProps> = ({
       phone: supplier?.phone || '',
       address: supplier?.address || '',
       contact_name: supplier?.contact_name || '',
-      category: supplier?.category || (activeCategories?.[0]?.id || ''),
+      category: resolveCategory(supplier?.category),
       subcategory: (supplier as any)?.subcategory || '',
       notes: supplier?.notes || '',
       is_active: supplier?.is_active ?? true
