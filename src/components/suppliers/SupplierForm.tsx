@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -73,6 +73,20 @@ export const SupplierForm: React.FC<SupplierFormProps> = ({
       is_active: supplier?.is_active ?? true
     }
   });
+
+  // Cuando las categorías cargan (async), resolver la categoría del proveedor
+  useEffect(() => {
+    if (activeCategories.length > 0 && supplier?.category) {
+      const currentCategory = form.getValues('category');
+      // Si category está vacío o no matchea ningún UUID válido, resolver
+      if (!currentCategory || !activeCategories.find(c => c.id === currentCategory)) {
+        const resolved = resolveCategory(supplier.category);
+        if (resolved) {
+          form.setValue('category', resolved);
+        }
+      }
+    }
+  }, [activeCategories.length]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const formValues = form.watch();
   const errors = form.formState.errors;
