@@ -868,11 +868,11 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
                                 <PopoverContent className="w-auto p-0" align="end">
                                   <CalendarComponent
                                     mode="single"
-                                    selected={defaultDueDate ? new Date(defaultDueDate) : undefined}
+                                    selected={defaultDueDate ? safeParseDateOnly(defaultDueDate) : undefined}
                                     onSelect={(date) => handleDueDateChange(document.folio, date)}
                                     disabled={(date) => {
                                       if (!document.issue_date) return false;
-                                      return date < new Date(document.issue_date);
+                                      return date < safeParseDateOnly(document.issue_date);
                                     }}
                                     initialFocus
                                     className={cn("p-3 pointer-events-auto")}
