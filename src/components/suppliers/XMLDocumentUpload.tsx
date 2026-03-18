@@ -300,34 +300,10 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
             // Crear costo vinculado al pago (sincronización triangular)
             if (createdPayment?.id) {
               try {
-                const userId = (await supabase.auth.getUser()).data.user?.id;
-                // Buscar categoría apropiada (case-insensitive)
-                const categoryName = paymentData.category || 'pagos a proveedores';
-                const { data: costCategory } = await supabase
-                  .from('cost_categories')
-                  .select('id')
-                  .ilike('name', categoryName)
-                  .single();
-                
-                // Fallback a "Pagos a Proveedores"
-                let categoryId = costCategory?.id;
-                if (!categoryId) {
-                  const { data: fallbackCategory } = await supabase
-                    .from('cost_categories')
-                    .select('id')
-                    .eq('name', 'Pagos a Proveedores')
-                    .single();
-                  categoryId = fallbackCategory?.id;
-                }
-                // Fallback a "Otros"
-                if (!categoryId) {
-                  const { data: otherCategory } = await supabase
-                    .from('cost_categories')
-                    .select('id')
-                    .eq('name', 'Otros')
-                    .single();
-                  categoryId = otherCategory?.id;
-                }
+                const categoryName = (paymentData.category || 'pagos a proveedores').toLowerCase();
+                const categoryId = costCategoriesMap.get(categoryName) 
+                  || costCategoriesMap.get('pagos a proveedores') 
+                  || costCategoriesMap.get('otros');
 
                 if (categoryId) {
                   await supabase
@@ -341,7 +317,7 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
                       supplier_id: supplierId,
                       supplier_payment_id: createdPayment.id,
                       payment_date: paidDate || null,
-                      created_by: userId
+                      created_by: cachedUserId
                     });
                 }
               } catch (costError) {
