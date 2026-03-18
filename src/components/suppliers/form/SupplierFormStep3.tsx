@@ -137,11 +137,15 @@ export const SupplierFormStep3 = ({
             <div className="space-y-2">
               <Label className="text-foreground">Subcategoría</Label>
               <Select
-                value={subcategory}
-                onValueChange={onSubcategoryChange}
+                value={safeSubcategoryValue}
+                onValueChange={(value) => {
+                  if (!value || value === 'loading') return;
+                  onSubcategoryChange(value);
+                }}
+                disabled={subcategoriesLoading || subcategories.length === 0}
               >
                 <SelectTrigger className="bg-background">
-                  <SelectValue placeholder="Seleccionar subcategoría" />
+                  <SelectValue placeholder={subcategoriesLoading ? 'Cargando...' : 'Seleccionar subcategoría'} />
                 </SelectTrigger>
                 <SelectContent>
                   {subcategoriesLoading ? (

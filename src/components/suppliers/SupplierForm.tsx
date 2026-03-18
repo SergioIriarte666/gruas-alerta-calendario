@@ -74,19 +74,17 @@ export const SupplierForm: React.FC<SupplierFormProps> = ({
     }
   });
 
-  // Cuando las categorías cargan (async), resolver la categoría del proveedor
+  // Cuando las categorías cargan (async), resolver la categoría legacy del proveedor a un UUID válido
   useEffect(() => {
-    if (activeCategories.length > 0 && supplier?.category) {
-      const currentCategory = form.getValues('category');
-      // Si category está vacío o no matchea ningún UUID válido, resolver
-      if (!currentCategory || !activeCategories.find(c => c.id === currentCategory)) {
-        const resolved = resolveCategory(supplier.category);
-        if (resolved) {
-          form.setValue('category', resolved);
-        }
-      }
+    if (!supplier?.category || activeCategories.length === 0) return;
+
+    const resolved = resolveCategory(supplier.category);
+    const currentCategory = form.getValues('category');
+
+    if (resolved && currentCategory !== resolved) {
+      form.setValue('category', resolved, { shouldValidate: true, shouldDirty: false });
     }
-  }, [activeCategories.length]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [supplier?.id, supplier?.category, activeCategories, form]);
 
   const formValues = form.watch();
   const errors = form.formState.errors;
