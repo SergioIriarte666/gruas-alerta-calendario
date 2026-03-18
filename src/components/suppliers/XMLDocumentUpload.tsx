@@ -226,6 +226,15 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
           dueDateOverrides
         );
 
+        // Cache user ID and cost categories for performance
+        const cachedUserId = (await supabase.auth.getUser()).data.user?.id;
+        const { data: allCostCategories } = await supabase
+          .from('cost_categories')
+          .select('id, name');
+        const costCategoriesMap = new Map(
+          (allCostCategories || []).map(c => [c.name.toLowerCase(), c.id])
+        );
+
         let exactFolioUpdated = 0;
         let exactFolioSkipped = 0;
 
