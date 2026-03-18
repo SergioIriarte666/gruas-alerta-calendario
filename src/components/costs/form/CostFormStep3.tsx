@@ -156,6 +156,26 @@ export const CostFormStep3 = ({
             label="Proveedor"
             placeholder="Seleccionar proveedor"
           />
+
+          {form.watch('supplier_id') && form.watch('supplier_id') !== 'none' && (
+            <FormField
+              name="is_paid"
+              control={form.control}
+              render={({ field }) => (
+                <FormItem className="flex items-center gap-3 rounded-lg border border-border/50 bg-muted/30 p-3">
+                  <FormControl>
+                    <Checkbox
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                  <Label className="text-sm font-medium text-foreground cursor-pointer !mt-0" onClick={() => field.onChange(!field.value)}>
+                    Este gasto ya fue pagado al proveedor
+                  </Label>
+                </FormItem>
+              )}
+            />
+          )}
         </div>
       </ColoredSectionCard>
     </div>
