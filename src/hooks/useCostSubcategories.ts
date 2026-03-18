@@ -13,6 +13,9 @@ export interface CostSubcategoryFormData {
 
 export const useCostSubcategories = (categoryId?: string) => {
   const queryClient = useQueryClient();
+  
+  // Validate UUID format to prevent Supabase errors
+  const isValidUuid = categoryId ? /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(categoryId) : false;
 
   // Query para obtener subcategorías activas por categoría (para el formulario)
   const {
@@ -21,7 +24,7 @@ export const useCostSubcategories = (categoryId?: string) => {
   } = useQuery({
     queryKey: ['cost-subcategories', categoryId],
     queryFn: async (): Promise<CostSubcategory[]> => {
-      if (!categoryId) return [];
+      if (!categoryId || !isValidUuid) return [];
       
       const { data, error } = await supabase
         .from('cost_subcategories')
@@ -33,7 +36,7 @@ export const useCostSubcategories = (categoryId?: string) => {
       if (error) throw error;
       return data || [];
     },
-    enabled: !!categoryId,
+    enabled: !!categoryId && isValidUuid,
   });
 
   // Query para obtener TODAS las subcategorías de una categoría (para gestión)
