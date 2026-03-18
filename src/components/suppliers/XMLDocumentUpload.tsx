@@ -270,7 +270,7 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
               continue;
             }
             
-            await new Promise<void>((resolve, reject) => {
+            const createdPayment = await new Promise<any>((resolve, reject) => {
               createPayment({
                 supplier_id: supplierId,
                 amount: paymentData.amount,
@@ -283,10 +283,62 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
                 paid_date: paidDate,
                 paid_amount: status === 'paid' ? paymentData.amount : undefined
               }, {
-                onSuccess: () => resolve(),
+                onSuccess: (data) => resolve(data),
                 onError: reject
               });
             });
+
+            // Crear costo vinculado al pago (sincronización triangular)
+            if (createdPayment?.id) {
+              try {
+                const userId = (await supabase.auth.getUser()).data.user?.id;
+                // Buscar categoría apropiada
+                const categoryName = paymentData.category || 'Pagos a Proveedores';
+                const { data: costCategory } = await supabase
+                  .from('cost_categories')
+                  .select('id')
+                  .eq('name', categoryName)
+                  .single();
+                
+                // Fallback a "Pagos a Proveedores"
+                let categoryId = costCategory?.id;
+                if (!categoryId) {
+                  const { data: fallbackCategory } = await supabase
+                    .from('cost_categories')
+                    .select('id')
+                    .eq('name', 'Pagos a Proveedores')
+                    .single();
+                  categoryId = fallbackCategory?.id;
+                }
+                // Fallback a "Otros"
+                if (!categoryId) {
+                  const { data: otherCategory } = await supabase
+                    .from('cost_categories')
+                    .select('id')
+                    .eq('name', 'Otros')
+                    .single();
+                  categoryId = otherCategory?.id;
+                }
+
+                if (categoryId) {
+                  await supabase
+                    .from('costs')
+                    .insert({
+                      amount: paymentData.amount,
+                      category_id: categoryId,
+                      date: paidDate || paymentData.due_date,
+                      description: paymentData.description,
+                      notes: paymentData.notes,
+                      supplier_id: supplierId,
+                      supplier_payment_id: createdPayment.id,
+                      payment_date: paidDate || null,
+                      created_by: userId
+                    });
+                }
+              } catch (costError) {
+                console.error('Error creating linked cost:', costError);
+              }
+            }
             processed++;
             setUploadProgress(processed / totalItems * 100);
           } catch (error) {
