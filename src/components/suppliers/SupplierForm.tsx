@@ -74,17 +74,23 @@ export const SupplierForm: React.FC<SupplierFormProps> = ({
     }
   });
 
-  // Cuando las categorías cargan (async), resolver la categoría legacy del proveedor a un UUID válido
+  // Reset explícito para evitar valores stale/legacy en edición con datos async
   useEffect(() => {
-    if (!supplier?.category || activeCategories.length === 0) return;
+    const resolvedCategory = resolveCategory(supplier?.category);
 
-    const resolved = resolveCategory(supplier.category);
-    const currentCategory = form.getValues('category');
-
-    if (resolved && currentCategory !== resolved) {
-      form.setValue('category', resolved, { shouldValidate: true, shouldDirty: false });
-    }
-  }, [supplier?.id, supplier?.category, activeCategories, form]);
+    form.reset({
+      name: supplier?.name || '',
+      rut: supplier?.rut || '',
+      email: supplier?.email || '',
+      phone: supplier?.phone || '',
+      address: supplier?.address || '',
+      contact_name: supplier?.contact_name || '',
+      category: resolvedCategory,
+      subcategory: (supplier as any)?.subcategory || '',
+      notes: supplier?.notes || '',
+      is_active: supplier?.is_active ?? true,
+    });
+  }, [supplier, activeCategories, form]);
 
   const formValues = form.watch();
   const errors = form.formState.errors;
