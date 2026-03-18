@@ -184,11 +184,6 @@ export const SupplierList: React.FC = () => {
         case 'isActive':
           comparison = (b.is_active ? 1 : 0) - (a.is_active ? 1 : 0);
           break;
-        case 'rating':
-          const ratingA = getRating(a.notes || '');
-          const ratingB = getRating(b.notes || '');
-          comparison = ratingA - ratingB;
-          break;
       }
       
       return sortDirection === 'asc' ? comparison : -comparison;
