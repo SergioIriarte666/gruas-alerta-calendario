@@ -2,38 +2,24 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Button } from '@/components/ui/button';
-import { Building2, Upload, Plus, FileText, CreditCard, Calendar, Receipt } from 'lucide-react';
+import { Building2, Upload, Plus, CreditCard, Calendar, Receipt, AlertTriangle, CheckCircle2, Clock, TrendingUp } from 'lucide-react';
 import { CustomTabs, CustomTabsList, CustomTabsTrigger, CustomTabsContent } from '@/components/ui/custom-tabs';
 import { XMLDocumentUpload } from '@/components/suppliers/XMLDocumentUpload';
 import { SupplierList } from '@/components/suppliers/SupplierList';
 import { PaymentList } from '@/components/suppliers/PaymentList';
 import { SupplierPaymentCalendar } from '@/components/suppliers/SupplierPaymentCalendar';
 import { SupplierForm } from '@/components/suppliers/SupplierForm';
-import { PaymentForm } from '@/components/suppliers/PaymentForm';
 import { RegisterPaymentModal } from '@/components/suppliers/RegisterPaymentModal';
 import { useSupplierStats } from '@/hooks/useSupplierStats';
+import { formatCurrency } from '@/lib/utils';
 
 export const Suppliers: React.FC = () => {
   const [activeTab, setActiveTab] = useState('suppliers');
   const [showXMLUpload, setShowXMLUpload] = useState(false);
   const [showSupplierForm, setShowSupplierForm] = useState(false);
-  const [showPaymentForm, setShowPaymentForm] = useState(false);
   const [showRegisterPayment, setShowRegisterPayment] = useState(false);
-  const { data: stats, isLoading: statsLoading } = useSupplierStats();
+  const { data: stats } = useSupplierStats();
   const isMobile = useIsMobile();
-
-  const handleXMLUploadSuccess = (count: number) => {
-    console.log(`${count} proveedores importados exitosamente`);
-    setShowXMLUpload(false);
-  };
-
-  const handleSupplierCreated = () => {
-    setShowSupplierForm(false);
-  };
-
-  const handlePaymentCreated = () => {
-    setShowPaymentForm(false);
-  };
 
   return (
     <div className={`min-h-screen bg-background text-foreground ${isMobile ? 'p-3' : 'p-6'} suppliers-scope`}>
@@ -65,24 +51,15 @@ export const Suppliers: React.FC = () => {
             <Button 
               size="sm"
               onClick={() => setShowRegisterPayment(true)}
-              className="flex items-center gap-2 bg-violet-500 hover:bg-violet-600 text-white"
+              className="flex items-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground"
             >
               <Receipt className="w-4 h-4" />
               <span className="hidden sm:inline">Registrar Pago</span>
               <span className="sm:hidden">Pago</span>
             </Button>
             <Button 
+              size="sm"
               variant="outline"
-              size="sm"
-              onClick={() => setShowPaymentForm(true)}
-              className="flex items-center gap-2"
-            >
-              <CreditCard className="w-4 h-4" />
-              <span className="hidden sm:inline">Nuevo Pago</span>
-              <span className="sm:hidden">+ Pago</span>
-            </Button>
-            <Button 
-              size="sm"
               onClick={() => setShowSupplierForm(true)}
               className="flex items-center gap-2"
             >
@@ -95,12 +72,10 @@ export const Suppliers: React.FC = () => {
 
         {/* Stats Cards */}
         {stats && (
-          <div className={`grid ${isMobile ? 'grid-cols-2 gap-3' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6'}`}>
+          <div className={`grid ${isMobile ? 'grid-cols-2 gap-3' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4'}`}>
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
-                  Total Proveedores
-                </CardTitle>
+                <CardTitle className="text-sm font-medium">Proveedores</CardTitle>
                 <Building2 className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
@@ -113,40 +88,49 @@ export const Suppliers: React.FC = () => {
 
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
-                  Pagos Pendientes
-                </CardTitle>
-                <FileText className="h-4 w-4 text-muted-foreground" />
+                <CardTitle className="text-sm font-medium">Pendientes</CardTitle>
+                <Clock className="h-4 w-4 text-yellow-500" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{stats.total_pending_payments}</div>
+                <div className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">{stats.total_pending_payments}</div>
                 <p className="text-xs text-muted-foreground">
-                  ${stats.total_pending_amount.toLocaleString('es-CL')}
+                  {formatCurrency(stats.total_pending_amount)}
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className={stats.total_overdue_payments > 0 ? 'border-destructive/50 bg-destructive/5' : ''}>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Vencidos</CardTitle>
+                <AlertTriangle className={`h-4 w-4 ${stats.total_overdue_payments > 0 ? 'text-destructive animate-pulse' : 'text-muted-foreground'}`} />
+              </CardHeader>
+              <CardContent>
+                <div className={`text-2xl font-bold ${stats.total_overdue_payments > 0 ? 'text-destructive' : ''}`}>
+                  {stats.total_overdue_payments}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {formatCurrency(stats.total_overdue_amount)}
                 </p>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
-                  Pagos Vencidos
-                </CardTitle>
-                <FileText className="h-4 w-4 text-destructive" />
+                <CardTitle className="text-sm font-medium">Pagado este Mes</CardTitle>
+                <CheckCircle2 className="h-4 w-4 text-green-500" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-destructive">{stats.total_overdue_payments}</div>
+                <div className="text-2xl font-bold text-green-600 dark:text-green-400">{stats.paid_count_this_month}</div>
                 <p className="text-xs text-muted-foreground">
-                  ${stats.total_overdue_amount.toLocaleString('es-CL')}
+                  {formatCurrency(stats.total_paid_this_month)}
                 </p>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
-                  Categorías
-                </CardTitle>
-                <Building2 className="h-4 w-4 text-muted-foreground" />
+                <CardTitle className="text-sm font-medium">Categorías</CardTitle>
+                <TrendingUp className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
@@ -190,28 +174,18 @@ export const Suppliers: React.FC = () => {
           </CustomTabsContent>
         </CustomTabs>
 
-        {/* XML Document Upload Modal */}
         {showXMLUpload && (
           <XMLDocumentUpload
             isOpen={showXMLUpload}
             onClose={() => setShowXMLUpload(false)}
-            onSuccess={() => {
-              setShowXMLUpload(false);
-            }}
+            onSuccess={() => setShowXMLUpload(false)}
           />
         )}
 
         {showSupplierForm && (
           <SupplierForm
             onClose={() => setShowSupplierForm(false)}
-            onSave={handleSupplierCreated}
-          />
-        )}
-
-        {showPaymentForm && (
-          <PaymentForm
-            onClose={() => setShowPaymentForm(false)}
-            onSave={handlePaymentCreated}
+            onSave={() => setShowSupplierForm(false)}
           />
         )}
 

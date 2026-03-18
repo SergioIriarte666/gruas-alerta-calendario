@@ -8,29 +8,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { 
-  Search, 
-  Plus, 
-  Edit2, 
-  Trash2, 
-  Building2, 
-  Mail, 
-  Phone, 
-  MapPin,
-  ToggleLeft,
-  ToggleRight,
-  Loader2,
-  ArrowUpDown,
-  ArrowUp,
-  ArrowDown,
-  Eye,
-  X,
-  Check,
-  Star
+  Search, Plus, Edit2, Trash2, Building2, Mail, Phone,
+  ToggleLeft, ToggleRight, Loader2, ArrowUpDown, ArrowUp, ArrowDown,
+  Eye, X, AlertTriangle
 } from 'lucide-react';
 import { useSuppliers } from '@/hooks/useSuppliers';
 import { useCostCategories } from '@/hooks/useCostCategories';
+import { useSupplierPaymentStats } from '@/hooks/useSupplierPaymentStats';
 import { SupplierForm } from './SupplierForm';
 import { SupplierDetailModal } from './SupplierDetailModal';
 import { BatchEditSuppliersModal } from './BatchEditSuppliersModal';
