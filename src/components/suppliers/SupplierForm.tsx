@@ -13,6 +13,7 @@ import { SupplierSummaryPanel } from './form/SupplierSummaryPanel';
 import { SupplierFormStep1 } from './form/SupplierFormStep1';
 import { SupplierFormStep2 } from './form/SupplierFormStep2';
 import { SupplierFormStep3 } from './form/SupplierFormStep3';
+import { buildSupplierFormValues, resolveSupplierCategoryValue } from './form/supplierFormUtils';
 
 const supplierSchema = z.object({
   name: z.string().min(1, 'El nombre es requerido'),
@@ -49,20 +50,6 @@ export const SupplierForm: React.FC<SupplierFormProps> = ({
   );
   const isEditing = !!supplier;
 
-  // Resolver categoría del proveedor: puede ser UUID o texto legacy
-  const resolveCategory = (catValue?: string | null): string => {
-    if (!catValue) return '';
-
-    const byId = activeCategories.find(c => c.id === catValue);
-    if (byId) return byId.id;
-
-    const normalizedValue = catValue.trim().toLowerCase();
-    const byName = activeCategories.find(c => c.name.trim().toLowerCase() === normalizedValue);
-    if (byName) return byName.id;
-
-    return '';
-  };
-
   const form = useForm<FormData>({
     resolver: zodResolver(supplierSchema),
     defaultValues: {
@@ -79,28 +66,25 @@ export const SupplierForm: React.FC<SupplierFormProps> = ({
     }
   });
 
-  const normalizedSupplierValues = useMemo(() => ({
-    name: supplier?.name || '',
-    rut: supplier?.rut || '',
-    email: supplier?.email || '',
-    phone: supplier?.phone || '',
-    address: supplier?.address || '',
-    contact_name: supplier?.contact_name || '',
-    category: resolveCategory(supplier?.category),
-    subcategory: (supplier as any)?.subcategory || '',
-    notes: supplier?.notes || '',
-    is_active: supplier?.is_active ?? true,
-  }), [supplier, activeCategories]);
+  const normalizedSupplierValues = useMemo(
+    () => buildSupplierFormValues(supplier, activeCategories),
+    [supplier, activeCategories]
+  );
 
-  // Reset solo cuando cambian realmente el proveedor o las categorías cargadas
   useEffect(() => {
+    if (supplier && categoriesLoading) return;
     form.reset(normalizedSupplierValues);
-  }, [form, normalizedSupplierValues]);
+  }, [form, normalizedSupplierValues, supplier, categoriesLoading]);
 
   const formValues = form.watch();
   const errors = form.formState.errors;
 
   const onSubmit = (data: FormData) => {
+    const normalizedCategory = resolveSupplierCategoryValue(
+      activeCategories,
+      data.category || supplier?.category || ''
+    );
+
     const supplierData: SupplierFormData = {
       name: data.name,
       rut: data.rut,
@@ -108,8 +92,8 @@ export const SupplierForm: React.FC<SupplierFormProps> = ({
       phone: data.phone || '',
       address: data.address || '',
       contact_name: data.contact_name || '',
-      category: data.category,
-      subcategory: data.subcategory || '',
+      category: normalizedCategory,
+      subcategory: normalizedCategory ? data.subcategory || '' : '',
       notes: data.notes || '',
       is_active: data.is_active
     };
@@ -133,15 +117,15 @@ export const SupplierForm: React.FC<SupplierFormProps> = ({
 
   const isSubmitting = isCreating || isUpdating;
 
-  // Step validation
   const validateStep = (step: number): boolean => {
     switch (step) {
       case 1:
         return formValues.name?.trim() !== '' && formValues.rut?.trim() !== '';
       case 2:
-        return true; // All step 2 fields are optional per Zod schema
+        return true;
       case 3:
-        return formValues.category?.trim() !== '' || activeCategories.length > 0;
+        if (categoriesLoading) return false;
+        return activeCategories.length === 0 ? true : formValues.category?.trim() !== '';
       default:
         return true;
     }
@@ -233,7 +217,6 @@ export const SupplierForm: React.FC<SupplierFormProps> = ({
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <Card className="w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col bg-card border">
-        {/* Header */}
         <CardHeader className="bg-gradient-to-r from-violet-600 to-violet-500 text-white rounded-t-lg flex-shrink-0">
           <div className="flex items-center justify-between">
             <CardTitle className="text-white flex items-center gap-2">
@@ -258,7 +241,6 @@ export const SupplierForm: React.FC<SupplierFormProps> = ({
           <form onSubmit={form.handleSubmit(onSubmit)} className="h-full flex flex-col">
             <div className="flex-1 overflow-auto">
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 p-6">
-                {/* Left column - Navigation and Summary */}
                 <div className="lg:col-span-1 space-y-4">
                   <SupplierFormStepNavigation
                     steps={steps}
@@ -281,14 +263,12 @@ export const SupplierForm: React.FC<SupplierFormProps> = ({
                   />
                 </div>
 
-                {/* Right column - Step Content */}
                 <div className="lg:col-span-2">
                   {renderStepContent()}
                 </div>
               </div>
             </div>
 
-            {/* Footer */}
             <div className="border-t bg-muted/30 p-4 flex-shrink-0">
               <div className="flex items-center justify-between">
                 <Button
