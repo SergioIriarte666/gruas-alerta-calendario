@@ -103,6 +103,7 @@ export const SupplierFormStep3 = ({
           <div className="space-y-2">
             <Label className="text-foreground">Categoría *</Label>
             <Select
+              key={`supplier-category-${safeCategoryValue ?? 'empty'}-${categories.length}`}
               value={safeCategoryValue}
               onValueChange={handleCategoryChange}
               disabled={categoriesLoading || categories.length === 0}
