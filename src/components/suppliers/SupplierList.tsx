@@ -8,29 +8,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { 
-  Search, 
-  Plus, 
-  Edit2, 
-  Trash2, 
-  Building2, 
-  Mail, 
-  Phone, 
-  MapPin,
-  ToggleLeft,
-  ToggleRight,
-  Loader2,
-  ArrowUpDown,
-  ArrowUp,
-  ArrowDown,
-  Eye,
-  X,
-  Check,
-  Star
+  Search, Plus, Edit2, Trash2, Building2, Mail, Phone,
+  ToggleLeft, ToggleRight, Loader2, ArrowUpDown, ArrowUp, ArrowDown,
+  Eye, X, AlertTriangle
 } from 'lucide-react';
 import { useSuppliers } from '@/hooks/useSuppliers';
 import { useCostCategories } from '@/hooks/useCostCategories';
+import { useSupplierPaymentStats } from '@/hooks/useSupplierPaymentStats';
 import { SupplierForm } from './SupplierForm';
 import { SupplierDetailModal } from './SupplierDetailModal';
 import { BatchEditSuppliersModal } from './BatchEditSuppliersModal';
@@ -39,7 +25,7 @@ import { formatCurrency, cn } from '@/lib/utils';
 import { getCategoryLabel } from '@/utils/categoryUtils';
 import { toast } from 'sonner';
 
-type SupplierSortField = 'name' | 'rut' | 'contactName' | 'category' | 'email' | 'phone' | 'isActive' | 'rating';
+type SupplierSortField = 'name' | 'rut' | 'contactName' | 'category' | 'email' | 'phone' | 'isActive';
 type SortDirection = 'asc' | 'desc';
 
 const SortIcon = ({ field, currentSortField, sortDirection }: { 
@@ -55,12 +41,6 @@ const SortIcon = ({ field, currentSortField, sortDirection }: {
     <ArrowDown className="ml-2 h-4 w-4 text-primary" />;
 };
 
-// Helper to extract rating
-const getRating = (notes?: string) => {
-  if (!notes) return 0;
-  const match = notes.match(/^Calificación: (?:⭐)+ \((\d)\/5\)/);
-  return match ? parseInt(match[1]) : 0;
-};
 
 export const SupplierList: React.FC = () => {
   const isMobile = useIsMobile();
@@ -73,6 +53,7 @@ export const SupplierList: React.FC = () => {
   } = useSuppliers();
 
   const { data: costCategoriesData = [], isLoading: categoriesLoading } = useCostCategories();
+  const { data: paymentStats = {} } = useSupplierPaymentStats();
   const activeCategories = costCategoriesData.map(c => ({ id: c.id, label: c.name, name: c.name }));
 
   const [searchTerm, setSearchTerm] = useState('');
@@ -202,11 +183,6 @@ export const SupplierList: React.FC = () => {
           break;
         case 'isActive':
           comparison = (b.is_active ? 1 : 0) - (a.is_active ? 1 : 0);
-          break;
-        case 'rating':
-          const ratingA = getRating(a.notes || '');
-          const ratingB = getRating(b.notes || '');
-          comparison = ratingA - ratingB;
           break;
       }
       
@@ -425,9 +401,6 @@ export const SupplierList: React.FC = () => {
                     <TableHead className="text-muted-foreground cursor-pointer hover:text-primary transition-colors" onClick={() => handleSort('category')}>
                       <div className="flex items-center">Categoría<SortIcon field="category" currentSortField={sortField} sortDirection={sortDirection} /></div>
                     </TableHead>
-                    <TableHead className="text-muted-foreground cursor-pointer hover:text-primary transition-colors" onClick={() => handleSort('rating')}>
-                      <div className="flex items-center">Calif.<SortIcon field="rating" currentSortField={sortField} sortDirection={sortDirection} /></div>
-                    </TableHead>
                     <TableHead className="text-muted-foreground">Pagos</TableHead>
                     <TableHead className="text-muted-foreground cursor-pointer hover:text-primary transition-colors" onClick={() => handleSort('isActive')}>
                       <div className="flex items-center">Estado<SortIcon field="isActive" currentSortField={sortField} sortDirection={sortDirection} /></div>
@@ -436,7 +409,9 @@ export const SupplierList: React.FC = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                {filteredAndSortedSuppliers.map((supplier) => (
+                {filteredAndSortedSuppliers.map((supplier) => {
+                  const stats = paymentStats[supplier.id];
+                  return (
                     <TableRow key={supplier.id} className="border cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => setSelectedSupplier(supplier)}>
                       <TableCell onClick={(e) => e.stopPropagation()}>
                         <Checkbox
@@ -460,18 +435,20 @@ export const SupplierList: React.FC = () => {
                       </TableCell>
                       <TableCell><Badge variant="outline">{getCategoryLabel(activeCategories || [], supplier.category)}</Badge></TableCell>
                       <TableCell>
-                        {(() => {
-                          const rating = getRating(supplier.notes || '');
-                          if (rating === 0) return <span className="text-xs text-muted-foreground">-</span>;
-                          return (
-                            <div className="flex items-center" title={`${rating}/5`}>
-                              <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-                              <span className="ml-1 text-xs">{rating}</span>
+                        <div className="space-y-0.5">
+                          <div className="text-sm text-foreground font-medium">{stats?.total_payments || 0} pagos</div>
+                          {stats?.pending_amount > 0 && (
+                            <div className="text-xs text-yellow-600 dark:text-yellow-400">
+                              Pend: {formatCurrency(stats.pending_amount)}
                             </div>
-                          );
-                        })()}
+                          )}
+                          {stats?.overdue_count > 0 && (
+                            <Badge className="bg-destructive/20 text-destructive border-destructive/30 text-xs">
+                              <AlertTriangle className="h-3 w-3 mr-0.5" />{stats.overdue_count} vencidos
+                            </Badge>
+                          )}
+                        </div>
                       </TableCell>
-                      <TableCell><div className="text-sm text-foreground">0 pagos</div></TableCell>
                       <TableCell>
                         <Button variant="ghost" size="sm" onClick={() => handleToggleStatus(supplier)} className="p-0 h-auto">
                           {supplier.is_active ? (
@@ -489,7 +466,8 @@ export const SupplierList: React.FC = () => {
                         </div>
                       </TableCell>
                     </TableRow>
-                  ))}
+                  );
+                })}
                 </TableBody>
               </Table>
             </div>
