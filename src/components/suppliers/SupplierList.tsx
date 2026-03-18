@@ -25,7 +25,7 @@ import { formatCurrency, cn } from '@/lib/utils';
 import { getCategoryLabel } from '@/utils/categoryUtils';
 import { toast } from 'sonner';
 
-type SupplierSortField = 'name' | 'rut' | 'contactName' | 'category' | 'email' | 'phone' | 'isActive' | 'rating';
+type SupplierSortField = 'name' | 'rut' | 'contactName' | 'category' | 'email' | 'phone' | 'isActive';
 type SortDirection = 'asc' | 'desc';
 
 const SortIcon = ({ field, currentSortField, sortDirection }: { 
