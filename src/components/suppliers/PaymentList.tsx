@@ -349,7 +349,7 @@ export const PaymentList: React.FC = () => {
                         Pendiente: {formatCurrency(group.pendingAmount)}
                       </span>
                     )}
-                    <span className="text-sm font-bold text-primary">{formatCurrency(group.total)}</span>
+                    <span className="text-sm font-bold text-violet-600 dark:text-violet-400">{formatCurrency(group.total)}</span>
                   </div>
                 </button>
 
