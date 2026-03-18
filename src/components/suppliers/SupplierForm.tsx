@@ -43,19 +43,24 @@ export const SupplierForm: React.FC<SupplierFormProps> = ({
   const [currentStep, setCurrentStep] = useState(1);
   const { createSupplier, updateSupplier, isCreating, isUpdating } = useSuppliers();
   const { data: costCategoriesData = [], isLoading: categoriesLoading } = useCostCategories();
-  const activeCategories = costCategoriesData.map(c => ({ id: c.id, label: c.name, name: c.name }));
+  const activeCategories = useMemo(
+    () => costCategoriesData.map(c => ({ id: c.id, label: c.name, name: c.name })),
+    [costCategoriesData]
+  );
   const isEditing = !!supplier;
 
-  // Resolver categoría del proveedor: puede ser UUID o texto
+  // Resolver categoría del proveedor: puede ser UUID o texto legacy
   const resolveCategory = (catValue?: string | null): string => {
-    if (!catValue) return activeCategories?.[0]?.id || '';
-    // Si ya es un UUID válido que existe en las categorías, usarlo
+    if (!catValue) return '';
+
     const byId = activeCategories.find(c => c.id === catValue);
     if (byId) return byId.id;
-    // Si es texto (ej: "otros"), buscar por nombre
-    const byName = activeCategories.find(c => c.name.toLowerCase() === catValue.toLowerCase());
+
+    const normalizedValue = catValue.trim().toLowerCase();
+    const byName = activeCategories.find(c => c.name.trim().toLowerCase() === normalizedValue);
     if (byName) return byName.id;
-    return activeCategories?.[0]?.id || '';
+
+    return '';
   };
 
   const form = useForm<FormData>({
