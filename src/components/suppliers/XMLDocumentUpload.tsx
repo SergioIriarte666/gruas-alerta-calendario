@@ -368,7 +368,7 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
     const newOverrides: Record<string, string> = {};
     parseResult.documents.forEach(doc => {
       if (selectedDocuments.has(doc.folio) && doc.issue_date) {
-        const issueDate = new Date(doc.issue_date);
+        const issueDate = safeParseDateOnly(doc.issue_date);
         issueDate.setDate(issueDate.getDate() + defaultDaysToAdd);
         newOverrides[doc.folio] = format(issueDate, 'yyyy-MM-dd');
       }
