@@ -79,23 +79,23 @@ export const SupplierForm: React.FC<SupplierFormProps> = ({
     }
   });
 
-  // Reset explícito para evitar valores stale/legacy en edición con datos async
-  useEffect(() => {
-    const resolvedCategory = resolveCategory(supplier?.category);
+  const normalizedSupplierValues = useMemo(() => ({
+    name: supplier?.name || '',
+    rut: supplier?.rut || '',
+    email: supplier?.email || '',
+    phone: supplier?.phone || '',
+    address: supplier?.address || '',
+    contact_name: supplier?.contact_name || '',
+    category: resolveCategory(supplier?.category),
+    subcategory: (supplier as any)?.subcategory || '',
+    notes: supplier?.notes || '',
+    is_active: supplier?.is_active ?? true,
+  }), [supplier, activeCategories]);
 
-    form.reset({
-      name: supplier?.name || '',
-      rut: supplier?.rut || '',
-      email: supplier?.email || '',
-      phone: supplier?.phone || '',
-      address: supplier?.address || '',
-      contact_name: supplier?.contact_name || '',
-      category: resolvedCategory,
-      subcategory: (supplier as any)?.subcategory || '',
-      notes: supplier?.notes || '',
-      is_active: supplier?.is_active ?? true,
-    });
-  }, [supplier, activeCategories, form]);
+  // Reset solo cuando cambian realmente el proveedor o las categorías cargadas
+  useEffect(() => {
+    form.reset(normalizedSupplierValues);
+  }, [form, normalizedSupplierValues]);
 
   const formValues = form.watch();
   const errors = form.formState.errors;
