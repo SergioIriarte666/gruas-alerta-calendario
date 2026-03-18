@@ -215,12 +215,12 @@ export const SupplierForm: React.FC<SupplierFormProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/50 p-4 sm:p-6">
+    <div className="fixed inset-0 z-50 bg-foreground/40 p-4 sm:p-6">
       <div className="flex h-full w-full items-center justify-center">
         <Card className="flex h-[calc(100dvh-2rem)] w-full max-w-6xl flex-col overflow-hidden border bg-card shadow-xl sm:h-[calc(100dvh-3rem)] lg:max-h-[95vh]">
-          <CardHeader className="flex-shrink-0 bg-gradient-to-r from-violet-600 to-violet-500 text-white rounded-t-lg">
+          <CardHeader className="flex-shrink-0 rounded-t-lg bg-primary text-primary-foreground">
             <div className="flex items-center justify-between gap-4">
-              <CardTitle className="text-white flex items-center gap-2">
+              <CardTitle className="flex items-center gap-2 text-primary-foreground">
                 <Building2 className="h-5 w-5" />
                 {isEditing ? 'Editar Proveedor' : 'Nuevo Proveedor'}
               </CardTitle>
@@ -228,12 +228,12 @@ export const SupplierForm: React.FC<SupplierFormProps> = ({
                 variant="ghost" 
                 size="sm" 
                 onClick={onClose}
-                className="text-white/80 hover:text-white hover:bg-white/20"
+                className="text-primary-foreground/80 hover:bg-primary-foreground/10 hover:text-primary-foreground"
               >
                 <X className="h-4 w-4" />
               </Button>
             </div>
-            <p className="text-violet-200 text-sm mt-1">
+            <p className="mt-1 text-sm text-primary-foreground/80">
               {isEditing ? 'Modifica los datos del proveedor' : 'Ingresa los datos del nuevo proveedor'}
             </p>
           </CardHeader>
@@ -298,7 +298,7 @@ export const SupplierForm: React.FC<SupplierFormProps> = ({
                         type="button"
                         onClick={goToNextStep}
                         disabled={!canGoNext || isSubmitting}
-                        className="bg-violet-600 hover:bg-violet-700 text-white gap-2"
+                        className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90"
                       >
                         Siguiente
                         <ChevronRight className="h-4 w-4" />
@@ -308,7 +308,7 @@ export const SupplierForm: React.FC<SupplierFormProps> = ({
                         type="button"
                         onClick={form.handleSubmit(onSubmit)}
                         disabled={!canSubmit || isSubmitting}
-                        className="bg-violet-600 hover:bg-violet-700 text-white gap-2"
+                        className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90"
                       >
                         {isSubmitting ? (
                           <>
