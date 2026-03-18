@@ -192,7 +192,7 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
         if (!selectedSuppliers.has(supplier.rut)) continue;
         try {
           // Check if supplier already exists
-          const existingSupplier = suppliers.find(s => s.rut === supplier.rut);
+          const existingSupplier = findSupplierByIdentity(suppliers, supplier);
           if (!existingSupplier) {
             await new Promise<void>((resolve, reject) => {
               createSupplier({

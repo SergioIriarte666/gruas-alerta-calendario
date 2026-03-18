@@ -68,7 +68,7 @@ export const useSuppliers = () => {
 
   const createSupplierMutation = useMutation({
     mutationFn: async (data: SupplierFormData) => {
-      const existingSupplier = findSupplierByIdentity(suppliers, data);
+      const existingSupplier = findSupplierByIdentity(suppliers, { name: data.name, rut: data.rut || '' });
       if (existingSupplier) {
         return { ...existingSupplier, __reused: true } as Supplier & { __reused?: boolean };
       }

@@ -149,8 +149,9 @@ export class XMLSupplierParser {
     if (dteElements.length > 0) {
       dteElements.forEach(dte => {
         const supplier = this.extractSupplierFromDTE(dte);
-        if (supplier && supplier.rut) {
-          uniqueSuppliers.set(supplier.rut, supplier);
+        const identityKey = supplier ? getSupplierIdentityKey(supplier) : '';
+        if (supplier && identityKey) {
+          uniqueSuppliers.set(identityKey, supplier);
         }
       });
     }
@@ -160,8 +161,9 @@ export class XMLSupplierParser {
     if (proveedoresElements.length > 0) {
       proveedoresElements.forEach(element => {
         const supplier = this.extractSupplierFromGeneric(element);
-        if (supplier && supplier.rut) {
-          uniqueSuppliers.set(supplier.rut, supplier);
+        const identityKey = supplier ? getSupplierIdentityKey(supplier) : '';
+        if (supplier && identityKey) {
+          uniqueSuppliers.set(identityKey, supplier);
         }
       });
     }
@@ -171,8 +173,9 @@ export class XMLSupplierParser {
     if (facturaElements.length > 0) {
       facturaElements.forEach(factura => {
         const supplier = this.extractSupplierFromInvoice(factura);
-        if (supplier && supplier.rut) {
-          uniqueSuppliers.set(supplier.rut, supplier);
+        const identityKey = supplier ? getSupplierIdentityKey(supplier) : '';
+        if (supplier && identityKey) {
+          uniqueSuppliers.set(identityKey, supplier);
         }
       });
     }
