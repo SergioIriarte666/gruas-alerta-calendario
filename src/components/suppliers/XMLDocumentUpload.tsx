@@ -18,6 +18,7 @@ import { Upload, FileText, AlertCircle, CheckCircle, Loader2, X, FileSpreadsheet
 import { format } from 'date-fns';
 import { safeParseDateOnly } from '@/utils/timezoneUtils';
 import { cn } from '@/lib/utils';
+import { dedupeSuppliersByIdentity, findSupplierByIdentity } from '@/utils/supplierIdentity';
 import { XMLCompleteParseResult, XMLDocumentData, XMLSupplierData, XMLSupplierPaymentData } from '@/types/suppliers';
 import { useSuppliers } from '@/hooks/useSuppliers';
 import { useCostCategories } from '@/hooks/useCostCategories';

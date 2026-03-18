@@ -1,4 +1,5 @@
 import { XMLSupplierData, XMLSupplierParseResult, XMLCompleteParseResult, XMLDocumentData, XMLSupplierPaymentData, SupplierPaymentStatus, XMLDocumentItem } from '@/types/suppliers';
+import { getSupplierIdentityKey } from '@/utils/supplierIdentity';
 
 export class XMLSupplierParser {
   private parser: DOMParser;
