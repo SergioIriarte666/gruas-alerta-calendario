@@ -53,6 +53,7 @@ export const SupplierList: React.FC = () => {
   } = useSuppliers();
 
   const { data: costCategoriesData = [], isLoading: categoriesLoading } = useCostCategories();
+  const { data: paymentStats = {} } = useSupplierPaymentStats();
   const activeCategories = costCategoriesData.map(c => ({ id: c.id, label: c.name, name: c.name }));
 
   const [searchTerm, setSearchTerm] = useState('');
