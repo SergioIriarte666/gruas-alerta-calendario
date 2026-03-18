@@ -4,6 +4,7 @@ import { FormControl, FormField, FormItem, FormMessage } from '@/components/ui/f
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Building2 } from 'lucide-react';
 import { CostFormValues } from '@/schemas/costSchema';
 import { Crane, Operator, Service } from '@/types';
