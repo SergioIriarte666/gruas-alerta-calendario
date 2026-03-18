@@ -66,6 +66,9 @@ export const costSchema = z.object({
         (val) => (val === 'none' || val === '' || !val) ? null : val,
         z.string().nullable().optional()
     ),
+    
+    // Campo UI para indicar si el gasto ya fue pagado al proveedor
+    is_paid: z.boolean().optional().default(false),
 }).refine((data) => {
     // Si la subcategoría es "Piezas y Repuestos", validar campos requeridos
     if (data.subcategory === 'Piezas y Repuestos') {

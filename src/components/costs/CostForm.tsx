@@ -295,12 +295,14 @@ export const CostForm = ({ isOpen, onClose, cost, prefilledData, onInventoryCost
                 }
             }
             
+            const resolvedSupplierId = values.supplier_id === 'none' ? null : values.supplier_id || null;
+            
             const submissionData = {
                 ...values,
                 amount: validAmount,
                 description: values.description.trim(),
                 cost_center_id: values.cost_center_id === 'none' ? null : values.cost_center_id || null,
-                supplier_id: values.supplier_id === 'none' ? null : values.supplier_id || null,
+                supplier_id: resolvedSupplierId,
                 part_name: values.part_name?.trim() || null,
                 supplier: values.supplier?.trim() || null,
                 supplier_phone: values.supplier_phone?.trim() || null,
@@ -310,6 +312,8 @@ export const CostForm = ({ isOpen, onClose, cost, prefilledData, onInventoryCost
                 purchase_quantity: values.purchase_quantity || null,
                 purchase_unit_cost: values.purchase_unit_cost || null,
                 immediate_consumption: values.immediate_consumption || false,
+                // Si el usuario marcó "ya pagado" y hay proveedor, setear payment_date
+                payment_date: (values.is_paid && resolvedSupplierId) ? values.date : null,
             } as CostFormData;
         
             if (cost && cost.id) {
