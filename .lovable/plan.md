@@ -1,57 +1,37 @@
 
 
-## Plan: Unificación y Sincronización de Módulos Financieros
+## Problem
 
-### Estado actual
+When a cost is created with a supplier, the trigger `create_supplier_payment_from_cost` always marks the supplier payment as **"pending"** because `payment_date` is never set from the cost form. The form has no way for the user to indicate whether the expense has already been paid.
 
-#### ✅ Fase 1: Migración DB completada
-- Columnas `category`, `subcategory`, `notes`, `updated_by` agregadas a `inventory_suppliers`
-- Datos migrados de `suppliers` → `inventory_suppliers` (dedup por RUT normalizado)
-- FKs de `costs`, `crane_parts`, `creditors`, `supplier_payments`, `inventory_movements` redirigidas a `inventory_suppliers`
-- IDs remapeados en todas las tablas dependientes
+## Plan
 
-#### ✅ Fase 2: Hooks actualizados
-- `useSuppliers.ts` lee/escribe de `inventory_suppliers`
-- `useSupplierStats.ts` consulta `inventory_suppliers`
-- `useSupplierPayments.ts` usa `useUniversalSync` (elimina `useCostInvalidation`)
-- `usePurchaseInvoices.ts` consulta `inventory_suppliers`
-- `useInventory.ts` joins corregidos a `inventory_suppliers`
-- `finance/useSuppliers.ts` re-exporta del hook unificado
+### Step 1: Add `is_paid` checkbox to cost schema
 
-#### ✅ Fase 3: XML importers corregidos
-- `XMLCostUpload.tsx` - `findSupplierByRutOrName` busca en `inventory_suppliers`
-- `XMLDocumentUpload.tsx` - usa `useSuppliers` que ya lee de `inventory_suppliers`
-- `UnifiedPurchaseService.ts` - lookup de proveedor desde `inventory_suppliers`
-- `BatchEditSuppliersModal.tsx` - escribe a `inventory_suppliers`
+Add a boolean field `is_paid` to `costSchema.ts` (default `false`). This is a UI-only field that controls whether `payment_date` gets populated.
 
-#### ✅ Fase 4: Invalidación centralizada
-- `useCostInvalidation.ts` eliminado
-- Todos los hooks usan `useUniversalSync.invalidateAll()` exclusivamente:
-  - `useCosts.ts` (addCost, updateCost, deleteCost)
-  - `useSupplierPayments.ts` (create, update, delete, markAsPaid)
-  - `useCraneMaintenance.ts`
-  - `usePendingPayments.ts`
+### Step 2: Add checkbox to cost form (CostFormInputs.tsx)
 
-#### ✅ Fase 5: UX & Trazabilidad + Reconciliación
-- `syncToast.ts` - Toast unificado que lista todas las acciones cross-módulo ejecutadas
-- `CostTraceabilityPanel.tsx` - Panel visual Costo ↔ Pago ↔ Inventario ↔ Pieza en CostDetailsModal
-- `UnifiedPurchaseService.ts` - Usa `showSyncToast` en vez de toasts fragmentados
-- `reconcile_orphan_records()` - RPC SQL para vincular registros huérfanos entre costs, payments, movements, parts
-- Toda invalidación fragmentada restante en `useSupplierPayments` consolidada a `invalidateAll()`
-  - `useCraneMaintenance.ts` (create, update, delete)
-  - `usePendingPayments.ts` (registerPayment)
-  - `useSupplierPayments.ts`
-  - `useUnifiedPurchase.ts`
-  - `Costs.tsx` (page-level)
-- `useUniversalSync` ahora invalida `supplier-stats`, `pending-payments`, `commissions`
-- `usePendingPayments.ts` corregido: query usa `inventory_suppliers` en vez de `suppliers`
-- `useUnifiedParts.ts` invalidación ampliada con `inventory-stats`, `suppliers`, `supplier-payments`
+Below the **Proveedor** selector (line ~487), add a conditional checkbox that only appears when a supplier is selected:
 
-#### 🔲 Fase 5: UX sincronización + limpieza (pendiente)
-- Badges de sync, toasts unificados
-- Panel de trazabilidad en detalle de costo/pago/pieza
-- Script de reconciliación de históricos
+```text
+┌─────────────────────────────────┐
+│ Proveedor: [Dropdown]           │
+│ ☑ Este gasto ya fue pagado      │
+└─────────────────────────────────┘
+```
 
-### Archivos que aún pueden referenciar tabla `suppliers` directamente
-- `src/components/finance/historical/PurchaseHistoryImport.tsx` (tiene lógica dual, simplificar)
-- `src/utils/purchaseHistoryParser.ts`
+Uses the existing `Checkbox` component with a label "Este gasto ya fue pagado al proveedor".
+
+### Step 3: Set `payment_date` on submission (CostForm.tsx)
+
+In the submission logic (~line 298-313), when `is_paid` is checked and a `supplier_id` is set, populate `payment_date = values.date`. This makes the trigger create the supplier payment as "paid" with `paid_date` set.
+
+### Step 4: Fix trigger to set `paid_amount`
+
+Update `create_supplier_payment_from_cost` to also set `paid_amount = NEW.amount` when status is 'paid'. Currently it never sets `paid_amount`, causing the display bug. Also use `NEW.date` as fallback for status resolution.
+
+### Step 5: Fix existing orphaned records
+
+Data migration to update existing supplier payments created from costs that should be 'paid' but are 'pending'.
+
