@@ -238,7 +238,7 @@ export const SupplierForm: React.FC<SupplierFormProps> = ({
         </CardHeader>
 
         <CardContent className="flex-1 overflow-hidden p-0">
-          <form onSubmit={form.handleSubmit(onSubmit)} className="h-full flex flex-col">
+          <div className="h-full flex flex-col">
             <div className="flex-1 overflow-auto">
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 p-6">
                 <div className="lg:col-span-1 space-y-4">
@@ -304,7 +304,8 @@ export const SupplierForm: React.FC<SupplierFormProps> = ({
                     </Button>
                   ) : (
                     <Button
-                      type="submit"
+                      type="button"
+                      onClick={form.handleSubmit(onSubmit)}
                       disabled={!canSubmit || isSubmitting}
                       className="bg-violet-600 hover:bg-violet-700 text-white gap-2"
                     >
@@ -324,7 +325,7 @@ export const SupplierForm: React.FC<SupplierFormProps> = ({
                 </div>
               </div>
             </div>
-          </form>
+          </div>
         </CardContent>
       </Card>
     </div>
