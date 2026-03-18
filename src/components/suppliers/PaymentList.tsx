@@ -426,7 +426,7 @@ export const PaymentList: React.FC = () => {
                                 <TableCell className="text-sm text-muted-foreground">{payment.reference_number || '-'}</TableCell>
                                 <TableCell>
                                   <div className="space-y-0.5">
-                                    <div className="font-semibold text-primary">{formatCurrency(payment.amount)}</div>
+                                    <div className="font-semibold text-violet-600 dark:text-violet-400">{formatCurrency(payment.amount)}</div>
                                     {payment.paid_amount && payment.paid_amount !== payment.amount && (
                                       <div className="text-xs text-green-600 dark:text-green-400">Pagado: {formatCurrency(payment.paid_amount)}</div>
                                     )}
