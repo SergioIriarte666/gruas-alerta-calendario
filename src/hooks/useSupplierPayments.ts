@@ -45,6 +45,7 @@ export const useSupplierPayments = () => {
     mutationFn: async (data: PaymentFormData): Promise<SupplierPayment> => {
       const userId = (await supabase.auth.getUser()).data.user?.id;
       
+      const isPaid = data.status === 'paid';
       const { data: payment, error } = await supabase
         .from('supplier_payments')
         .insert({
@@ -57,6 +58,8 @@ export const useSupplierPayments = () => {
           reference_number: data.reference_number || null,
           notes: data.notes || null,
           status: data.status || 'pending',
+          paid_amount: isPaid ? data.amount : 0,
+          paid_date: isPaid ? (data.paid_date || new Date().toISOString().split('T')[0]) : null,
           part_name: data.part_name || null,
           part_quantity: data.part_quantity || null,
           part_unit_price: data.part_unit_price || null,
@@ -122,10 +125,11 @@ export const useSupplierPayments = () => {
         category: data.category === "" ? null : data.category,
       };
       
-      // Si se está marcando como paid, agregar paid_date y paid_amount
+      // Si se está marcando como paid, sincronizar paid_amount con amount total
       if (data.status === 'paid') {
         cleanedData.paid_date = cleanedData.paid_date || new Date().toISOString().split('T')[0];
-        cleanedData.paid_amount = cleanedData.paid_amount || data.amount || 0;
+        // Siempre igualar paid_amount al monto total cuando se marca como pagado
+        cleanedData.paid_amount = data.amount || cleanedData.paid_amount || 0;
       }
       
       const { data: payment, error } = await supabase
