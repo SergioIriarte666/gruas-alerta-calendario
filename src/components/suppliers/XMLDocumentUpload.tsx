@@ -16,6 +16,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Upload, FileText, AlertCircle, CheckCircle, Loader2, X, FileSpreadsheet, Users, Receipt, DollarSign, Calendar, Building, CalendarIcon, Banknote, CreditCard, ShieldAlert } from 'lucide-react';
 import { format } from 'date-fns';
+import { safeParseDateOnly } from '@/utils/timezoneUtils';
 import { cn } from '@/lib/utils';
 import { XMLCompleteParseResult, XMLDocumentData, XMLSupplierData, XMLSupplierPaymentData } from '@/types/suppliers';
 import { useSuppliers } from '@/hooks/useSuppliers';
@@ -367,7 +368,7 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
     const newOverrides: Record<string, string> = {};
     parseResult.documents.forEach(doc => {
       if (selectedDocuments.has(doc.folio) && doc.issue_date) {
-        const issueDate = new Date(doc.issue_date);
+        const issueDate = safeParseDateOnly(doc.issue_date);
         issueDate.setDate(issueDate.getDate() + defaultDaysToAdd);
         newOverrides[doc.folio] = format(issueDate, 'yyyy-MM-dd');
       }
@@ -617,13 +618,13 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
                                   )}
                                 >
                                   <CalendarIcon className="mr-2 h-4 w-4" />
-                                  {bulkPaidDate ? format(new Date(bulkPaidDate), 'dd/MM/yyyy') : 'Seleccionar fecha'}
+                                  {bulkPaidDate ? format(safeParseDateOnly(bulkPaidDate), 'dd/MM/yyyy') : 'Seleccionar fecha'}
                                 </Button>
                               </PopoverTrigger>
                               <PopoverContent className="w-auto p-0" align="start">
                                 <CalendarComponent
                                   mode="single"
-                                  selected={bulkPaidDate ? new Date(bulkPaidDate) : undefined}
+                                  selected={bulkPaidDate ? safeParseDateOnly(bulkPaidDate) : undefined}
                                   onSelect={(date) => date && setBulkPaidDate(format(date, 'yyyy-MM-dd'))}
                                   initialFocus
                                   className="pointer-events-auto"
@@ -780,7 +781,7 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
                         const defaultDueDate = dueDateOverrides[document.folio] || 
                           document.due_date || 
                           (() => {
-                            const date = new Date(document.issue_date || new Date());
+                            const date = safeParseDateOnly(document.issue_date || format(new Date(), 'yyyy-MM-dd'));
                             date.setDate(date.getDate() + defaultDaysToAdd);
                             return format(date, 'yyyy-MM-dd');
                           })();
@@ -852,7 +853,7 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
                                     <CalendarIcon className="mr-2 h-4 w-4" />
                                     {defaultDueDate ? (
                                       <span className="flex items-center gap-2">
-                                        {format(new Date(defaultDueDate), 'dd/MM/yyyy')}
+                                        {format(safeParseDateOnly(defaultDueDate), 'dd/MM/yyyy')}
                                         {hasCustomDate && (
                                           <Badge variant="secondary" className="text-xs">
                                             Personalizada
@@ -867,11 +868,11 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
                                 <PopoverContent className="w-auto p-0" align="end">
                                   <CalendarComponent
                                     mode="single"
-                                    selected={defaultDueDate ? new Date(defaultDueDate) : undefined}
+                                    selected={defaultDueDate ? safeParseDateOnly(defaultDueDate) : undefined}
                                     onSelect={(date) => handleDueDateChange(document.folio, date)}
                                     disabled={(date) => {
                                       if (!document.issue_date) return false;
-                                      return date < new Date(document.issue_date);
+                                      return date < safeParseDateOnly(document.issue_date);
                                     }}
                                     initialFocus
                                     className={cn("p-3 pointer-events-auto")}
