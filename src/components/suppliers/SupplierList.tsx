@@ -401,9 +401,6 @@ export const SupplierList: React.FC = () => {
                     <TableHead className="text-muted-foreground cursor-pointer hover:text-primary transition-colors" onClick={() => handleSort('category')}>
                       <div className="flex items-center">Categoría<SortIcon field="category" currentSortField={sortField} sortDirection={sortDirection} /></div>
                     </TableHead>
-                    <TableHead className="text-muted-foreground cursor-pointer hover:text-primary transition-colors" onClick={() => handleSort('rating')}>
-                      <div className="flex items-center">Calif.<SortIcon field="rating" currentSortField={sortField} sortDirection={sortDirection} /></div>
-                    </TableHead>
                     <TableHead className="text-muted-foreground">Pagos</TableHead>
                     <TableHead className="text-muted-foreground cursor-pointer hover:text-primary transition-colors" onClick={() => handleSort('isActive')}>
                       <div className="flex items-center">Estado<SortIcon field="isActive" currentSortField={sortField} sortDirection={sortDirection} /></div>
@@ -412,7 +409,9 @@ export const SupplierList: React.FC = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                {filteredAndSortedSuppliers.map((supplier) => (
+                {filteredAndSortedSuppliers.map((supplier) => {
+                  const stats = paymentStats[supplier.id];
+                  return (
                     <TableRow key={supplier.id} className="border cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => setSelectedSupplier(supplier)}>
                       <TableCell onClick={(e) => e.stopPropagation()}>
                         <Checkbox
@@ -436,18 +435,20 @@ export const SupplierList: React.FC = () => {
                       </TableCell>
                       <TableCell><Badge variant="outline">{getCategoryLabel(activeCategories || [], supplier.category)}</Badge></TableCell>
                       <TableCell>
-                        {(() => {
-                          const rating = getRating(supplier.notes || '');
-                          if (rating === 0) return <span className="text-xs text-muted-foreground">-</span>;
-                          return (
-                            <div className="flex items-center" title={`${rating}/5`}>
-                              <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-                              <span className="ml-1 text-xs">{rating}</span>
+                        <div className="space-y-0.5">
+                          <div className="text-sm text-foreground font-medium">{stats?.total_payments || 0} pagos</div>
+                          {stats?.pendingAmount > 0 && (
+                            <div className="text-xs text-yellow-600 dark:text-yellow-400">
+                              Pend: {formatCurrency(stats.pending_amount)}
                             </div>
-                          );
-                        })()}
+                          )}
+                          {stats?.overdue_count > 0 && (
+                            <Badge className="bg-destructive/20 text-destructive border-destructive/30 text-xs">
+                              <AlertTriangle className="h-3 w-3 mr-0.5" />{stats.overdue_count} vencidos
+                            </Badge>
+                          )}
+                        </div>
                       </TableCell>
-                      <TableCell><div className="text-sm text-foreground">0 pagos</div></TableCell>
                       <TableCell>
                         <Button variant="ghost" size="sm" onClick={() => handleToggleStatus(supplier)} className="p-0 h-auto">
                           {supplier.is_active ? (
