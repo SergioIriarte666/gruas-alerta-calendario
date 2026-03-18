@@ -61,32 +61,36 @@ export const SupplierForm: React.FC<SupplierFormProps> = ({
   const form = useForm<FormData>({
     resolver: zodResolver(supplierSchema),
     defaultValues: {
+      name: '',
+      rut: '',
+      email: '',
+      phone: '',
+      address: '',
+      contact_name: '',
+      category: '',
+      subcategory: '',
+      notes: '',
+      is_active: true
+    }
+  });
+
+  // Reset explícito para evitar valores stale/legacy en edición con datos async
+  useEffect(() => {
+    const resolvedCategory = resolveCategory(supplier?.category);
+
+    form.reset({
       name: supplier?.name || '',
       rut: supplier?.rut || '',
       email: supplier?.email || '',
       phone: supplier?.phone || '',
       address: supplier?.address || '',
       contact_name: supplier?.contact_name || '',
-      category: resolveCategory(supplier?.category),
+      category: resolvedCategory,
       subcategory: (supplier as any)?.subcategory || '',
       notes: supplier?.notes || '',
-      is_active: supplier?.is_active ?? true
-    }
-  });
-
-  // Cuando las categorías cargan (async), resolver la categoría del proveedor
-  useEffect(() => {
-    if (activeCategories.length > 0 && supplier?.category) {
-      const currentCategory = form.getValues('category');
-      // Si category está vacío o no matchea ningún UUID válido, resolver
-      if (!currentCategory || !activeCategories.find(c => c.id === currentCategory)) {
-        const resolved = resolveCategory(supplier.category);
-        if (resolved) {
-          form.setValue('category', resolved);
-        }
-      }
-    }
-  }, [activeCategories.length]); // eslint-disable-line react-hooks/exhaustive-deps
+      is_active: supplier?.is_active ?? true,
+    });
+  }, [supplier, activeCategories, form]);
 
   const formValues = form.watch();
   const errors = form.formState.errors;

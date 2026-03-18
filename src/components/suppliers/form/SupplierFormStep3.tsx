@@ -56,7 +56,13 @@ export const SupplierFormStep3 = ({
 
   const { subcategories, isLoading: subcategoriesLoading } = useCostSubcategories(category || undefined);
 
+  const validCategoryIds = categories.map((cat) => cat.id);
+  const validSubcategoryNames = subcategories.map((sub) => sub.name);
+  const safeCategoryValue = validCategoryIds.includes(category) ? category : undefined;
+  const safeSubcategoryValue = validSubcategoryNames.includes(subcategory) ? subcategory : undefined;
+
   const handleCategoryChange = (value: string) => {
+    if (!value || value === 'loading') return;
     onCategoryChange(value);
     onSubcategoryChange(''); // Reset subcategory when category changes
   };
@@ -97,15 +103,18 @@ export const SupplierFormStep3 = ({
           <div className="space-y-2">
             <Label className="text-foreground">Categoría *</Label>
             <Select
-              value={category}
+              value={safeCategoryValue}
               onValueChange={handleCategoryChange}
+              disabled={categoriesLoading || categories.length === 0}
             >
               <SelectTrigger className="bg-background">
-                <SelectValue placeholder="Seleccionar categoría" />
+                <SelectValue placeholder={categoriesLoading ? 'Cargando categorías...' : 'Seleccionar categoría'} />
               </SelectTrigger>
               <SelectContent>
                 {categoriesLoading ? (
                   <SelectItem value="loading" disabled>Cargando categorías...</SelectItem>
+                ) : categories.length === 0 ? (
+                  <SelectItem value="no-categories" disabled>Sin categorías disponibles</SelectItem>
                 ) : (
                   categories.map((cat) => (
                     <SelectItem 
@@ -128,11 +137,15 @@ export const SupplierFormStep3 = ({
             <div className="space-y-2">
               <Label className="text-foreground">Subcategoría</Label>
               <Select
-                value={subcategory}
-                onValueChange={onSubcategoryChange}
+                value={safeSubcategoryValue}
+                onValueChange={(value) => {
+                  if (!value || value === 'loading') return;
+                  onSubcategoryChange(value);
+                }}
+                disabled={subcategoriesLoading || subcategories.length === 0}
               >
                 <SelectTrigger className="bg-background">
-                  <SelectValue placeholder="Seleccionar subcategoría" />
+                  <SelectValue placeholder={subcategoriesLoading ? 'Cargando...' : 'Seleccionar subcategoría'} />
                 </SelectTrigger>
                 <SelectContent>
                   {subcategoriesLoading ? (
