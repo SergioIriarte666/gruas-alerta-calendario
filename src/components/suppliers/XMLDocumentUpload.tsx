@@ -292,12 +292,12 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
             if (createdPayment?.id) {
               try {
                 const userId = (await supabase.auth.getUser()).data.user?.id;
-                // Buscar categoría apropiada
-                const categoryName = paymentData.category || 'Pagos a Proveedores';
+                // Buscar categoría apropiada (case-insensitive)
+                const categoryName = paymentData.category || 'pagos a proveedores';
                 const { data: costCategory } = await supabase
                   .from('cost_categories')
                   .select('id')
-                  .eq('name', categoryName)
+                  .ilike('name', categoryName)
                   .single();
                 
                 // Fallback a "Pagos a Proveedores"
