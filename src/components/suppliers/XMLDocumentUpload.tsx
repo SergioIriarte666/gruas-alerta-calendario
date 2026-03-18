@@ -108,17 +108,24 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
     const parser = new XMLSupplierParser();
     try {
       const result = await parser.parseXMLCompleteFile(selectedFile);
-      setParseResult(result);
+      const uniqueSuppliers = dedupeSuppliersByIdentity(result.suppliers);
+      const normalizedResult = {
+        ...result,
+        suppliers: uniqueSuppliers,
+        totalSuppliers: uniqueSuppliers.length,
+        validSuppliers: uniqueSuppliers.filter(item => item.name && item.name.trim().length > 0).length,
+      };
+      setParseResult(normalizedResult);
 
       // Pre-select all valid suppliers and documents
-      const validSuppliers = new Set(result.suppliers.filter(s => s.name && s.rut).map(s => s.rut));
+      const validSuppliers = new Set(uniqueSuppliers.filter(s => s.name && s.rut).map(s => s.rut));
       const validDocuments = new Set(result.documents.filter(d => d.folio && d.total_amount > 0).map(d => d.folio));
       setSelectedSuppliers(validSuppliers);
       setSelectedDocuments(validDocuments);
 
       // Initialize category mapping
       const categoryMap: Record<string, string> = {};
-      result.suppliers.forEach(supplier => {
+      uniqueSuppliers.forEach(supplier => {
         categoryMap[supplier.rut] = supplier.category;
       });
       setSupplierCategoryMapping(categoryMap);
