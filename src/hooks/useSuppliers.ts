@@ -10,7 +10,7 @@ import { dedupeSuppliersByIdentity, findSupplierByIdentity, normalizeSupplierRut
 
 const mapRowToSupplier = (row: any): Supplier => ({
   ...row,
-  contact_name: row.contact_person, // UI alias
+  contact_name: row.contact_person,
   category: row.category || 'otros',
 });
 
@@ -116,11 +116,23 @@ export const useSuppliers = () => {
   const updateSupplierMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: Partial<SupplierFormData> }) => {
       const userId = (await supabase.auth.getUser()).data.user?.id;
-      const updateData: any = { ...data, updated_by: userId };
-      // Remap contact_name → contact_person
-      if ('contact_name' in updateData) {
-        updateData.contact_person = updateData.contact_name;
-        delete updateData.contact_name;
+      const updateData: Record<string, any> = { updated_by: userId };
+
+      if (data.name !== undefined) updateData.name = data.name;
+      if (data.rut !== undefined) updateData.rut = data.rut || '';
+      if (data.email !== undefined) updateData.email = data.email || null;
+      if (data.phone !== undefined) updateData.phone = data.phone || null;
+      if (data.address !== undefined) updateData.address = data.address || null;
+      if (data.notes !== undefined) updateData.notes = data.notes || null;
+      if (data.is_active !== undefined) updateData.is_active = data.is_active;
+      if (data.subcategory !== undefined) updateData.subcategory = data.subcategory || null;
+
+      if (data.contact_name !== undefined) {
+        updateData.contact_person = data.contact_name || null;
+      }
+
+      if (data.category !== undefined && data.category.trim() !== '') {
+        updateData.category = data.category;
       }
       
       const { data: result, error } = await (supabase as any)
