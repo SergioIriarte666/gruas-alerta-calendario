@@ -437,7 +437,7 @@ export const SupplierList: React.FC = () => {
                       <TableCell>
                         <div className="space-y-0.5">
                           <div className="text-sm text-foreground font-medium">{stats?.total_payments || 0} pagos</div>
-                          {stats?.pendingAmount > 0 && (
+                          {stats?.pending_amount > 0 && (
                             <div className="text-xs text-yellow-600 dark:text-yellow-400">
                               Pend: {formatCurrency(stats.pending_amount)}
                             </div>
