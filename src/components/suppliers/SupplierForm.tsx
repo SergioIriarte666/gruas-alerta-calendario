@@ -215,11 +215,11 @@ export const SupplierForm: React.FC<SupplierFormProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/50 overflow-y-auto p-4">
-      <div className="flex min-h-full items-start justify-center sm:items-center">
-        <Card className="w-full max-w-4xl max-h-[calc(100vh-2rem)] overflow-hidden flex flex-col bg-card border my-auto">
-          <CardHeader className="bg-gradient-to-r from-violet-600 to-violet-500 text-white rounded-t-lg flex-shrink-0">
-            <div className="flex items-center justify-between">
+    <div className="fixed inset-0 z-50 bg-black/50 p-4 sm:p-6">
+      <div className="flex h-full w-full items-center justify-center">
+        <Card className="flex h-[calc(100dvh-2rem)] w-full max-w-6xl flex-col overflow-hidden border bg-card shadow-xl sm:h-[calc(100dvh-3rem)] lg:max-h-[95vh]">
+          <CardHeader className="flex-shrink-0 bg-gradient-to-r from-violet-600 to-violet-500 text-white rounded-t-lg">
+            <div className="flex items-center justify-between gap-4">
               <CardTitle className="text-white flex items-center gap-2">
                 <Building2 className="h-5 w-5" />
                 {isEditing ? 'Editar Proveedor' : 'Nuevo Proveedor'}
@@ -238,11 +238,11 @@ export const SupplierForm: React.FC<SupplierFormProps> = ({
             </p>
           </CardHeader>
 
-          <CardContent className="flex-1 min-h-0 overflow-hidden p-0">
-            <div className="h-full min-h-0 flex flex-col">
-              <div className="flex-1 min-h-0 overflow-y-auto">
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 p-6">
-                  <div className="lg:col-span-1 space-y-4">
+          <CardContent className="flex min-h-0 flex-1 flex-col overflow-hidden p-0">
+            <div className="flex min-h-0 flex-1 flex-col">
+              <div className="flex-1 overflow-y-auto">
+                <div className="grid grid-cols-1 gap-6 p-4 sm:p-6 xl:grid-cols-[320px_minmax(0,1fr)] xl:gap-8 xl:p-8">
+                  <div className="space-y-4 xl:sticky xl:top-0 xl:self-start">
                     <SupplierFormStepNavigation
                       steps={steps}
                       currentStep={currentStep}
@@ -264,14 +264,14 @@ export const SupplierForm: React.FC<SupplierFormProps> = ({
                     />
                   </div>
 
-                  <div className="lg:col-span-2">
+                  <div className="min-h-0">
                     {renderStepContent()}
                   </div>
                 </div>
               </div>
 
-              <div className="border-t bg-muted/30 p-4 flex-shrink-0">
-                <div className="flex items-center justify-between">
+              <div className="flex-shrink-0 border-t bg-muted/30 p-4 sm:p-5">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <Button
                     type="button"
                     variant="outline"
@@ -283,7 +283,7 @@ export const SupplierForm: React.FC<SupplierFormProps> = ({
                     Anterior
                   </Button>
 
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-col-reverse gap-2 sm:flex-row sm:items-center">
                     <Button
                       type="button"
                       variant="outline"
