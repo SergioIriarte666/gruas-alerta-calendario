@@ -41,12 +41,6 @@ const SortIcon = ({ field, currentSortField, sortDirection }: {
     <ArrowDown className="ml-2 h-4 w-4 text-primary" />;
 };
 
-// Helper to extract rating
-const getRating = (notes?: string) => {
-  if (!notes) return 0;
-  const match = notes.match(/^Calificación: (?:⭐)+ \((\d)\/5\)/);
-  return match ? parseInt(match[1]) : 0;
-};
 
 export const SupplierList: React.FC = () => {
   const isMobile = useIsMobile();
