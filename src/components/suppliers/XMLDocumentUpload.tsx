@@ -20,6 +20,7 @@ import { safeParseDateOnly } from '@/utils/timezoneUtils';
 import { cn } from '@/lib/utils';
 import { dedupeSuppliersByIdentity, findSupplierByIdentity } from '@/utils/supplierIdentity';
 import { XMLCompleteParseResult, XMLDocumentData, XMLSupplierData, XMLSupplierPaymentData } from '@/types/suppliers';
+import { supabase } from '@/integrations/supabase/client';
 import { useSuppliers } from '@/hooks/useSuppliers';
 import { useCostCategories } from '@/hooks/useCostCategories';
 import { getCategoryLabel } from '@/utils/categoryUtils';
