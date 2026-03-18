@@ -61,16 +61,16 @@ export const SupplierForm: React.FC<SupplierFormProps> = ({
   const form = useForm<FormData>({
     resolver: zodResolver(supplierSchema),
     defaultValues: {
-      name: supplier?.name || '',
-      rut: supplier?.rut || '',
-      email: supplier?.email || '',
-      phone: supplier?.phone || '',
-      address: supplier?.address || '',
-      contact_name: supplier?.contact_name || '',
-      category: resolveCategory(supplier?.category),
-      subcategory: (supplier as any)?.subcategory || '',
-      notes: supplier?.notes || '',
-      is_active: supplier?.is_active ?? true
+      name: '',
+      rut: '',
+      email: '',
+      phone: '',
+      address: '',
+      contact_name: '',
+      category: '',
+      subcategory: '',
+      notes: '',
+      is_active: true
     }
   });
 
