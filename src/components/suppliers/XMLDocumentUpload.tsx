@@ -624,7 +624,7 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
                               <PopoverContent className="w-auto p-0" align="start">
                                 <CalendarComponent
                                   mode="single"
-                                  selected={bulkPaidDate ? new Date(bulkPaidDate) : undefined}
+                                  selected={bulkPaidDate ? safeParseDateOnly(bulkPaidDate) : undefined}
                                   onSelect={(date) => date && setBulkPaidDate(format(date, 'yyyy-MM-dd'))}
                                   initialFocus
                                   className="pointer-events-auto"
