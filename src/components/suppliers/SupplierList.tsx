@@ -466,7 +466,8 @@ export const SupplierList: React.FC = () => {
                         </div>
                       </TableCell>
                     </TableRow>
-                  ))}
+                  );
+                })}
                 </TableBody>
               </Table>
             </div>
