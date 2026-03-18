@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -43,19 +43,24 @@ export const SupplierForm: React.FC<SupplierFormProps> = ({
   const [currentStep, setCurrentStep] = useState(1);
   const { createSupplier, updateSupplier, isCreating, isUpdating } = useSuppliers();
   const { data: costCategoriesData = [], isLoading: categoriesLoading } = useCostCategories();
-  const activeCategories = costCategoriesData.map(c => ({ id: c.id, label: c.name, name: c.name }));
+  const activeCategories = useMemo(
+    () => costCategoriesData.map(c => ({ id: c.id, label: c.name, name: c.name })),
+    [costCategoriesData]
+  );
   const isEditing = !!supplier;
 
-  // Resolver categoría del proveedor: puede ser UUID o texto
+  // Resolver categoría del proveedor: puede ser UUID o texto legacy
   const resolveCategory = (catValue?: string | null): string => {
-    if (!catValue) return activeCategories?.[0]?.id || '';
-    // Si ya es un UUID válido que existe en las categorías, usarlo
+    if (!catValue) return '';
+
     const byId = activeCategories.find(c => c.id === catValue);
     if (byId) return byId.id;
-    // Si es texto (ej: "otros"), buscar por nombre
-    const byName = activeCategories.find(c => c.name.toLowerCase() === catValue.toLowerCase());
+
+    const normalizedValue = catValue.trim().toLowerCase();
+    const byName = activeCategories.find(c => c.name.trim().toLowerCase() === normalizedValue);
     if (byName) return byName.id;
-    return activeCategories?.[0]?.id || '';
+
+    return '';
   };
 
   const form = useForm<FormData>({
@@ -74,23 +79,23 @@ export const SupplierForm: React.FC<SupplierFormProps> = ({
     }
   });
 
-  // Reset explícito para evitar valores stale/legacy en edición con datos async
-  useEffect(() => {
-    const resolvedCategory = resolveCategory(supplier?.category);
+  const normalizedSupplierValues = useMemo(() => ({
+    name: supplier?.name || '',
+    rut: supplier?.rut || '',
+    email: supplier?.email || '',
+    phone: supplier?.phone || '',
+    address: supplier?.address || '',
+    contact_name: supplier?.contact_name || '',
+    category: resolveCategory(supplier?.category),
+    subcategory: (supplier as any)?.subcategory || '',
+    notes: supplier?.notes || '',
+    is_active: supplier?.is_active ?? true,
+  }), [supplier, activeCategories]);
 
-    form.reset({
-      name: supplier?.name || '',
-      rut: supplier?.rut || '',
-      email: supplier?.email || '',
-      phone: supplier?.phone || '',
-      address: supplier?.address || '',
-      contact_name: supplier?.contact_name || '',
-      category: resolvedCategory,
-      subcategory: (supplier as any)?.subcategory || '',
-      notes: supplier?.notes || '',
-      is_active: supplier?.is_active ?? true,
-    });
-  }, [supplier, activeCategories, form]);
+  // Reset solo cuando cambian realmente el proveedor o las categorías cargadas
+  useEffect(() => {
+    form.reset(normalizedSupplierValues);
+  }, [form, normalizedSupplierValues]);
 
   const formValues = form.watch();
   const errors = form.formState.errors;
@@ -136,7 +141,7 @@ export const SupplierForm: React.FC<SupplierFormProps> = ({
       case 2:
         return true; // All step 2 fields are optional per Zod schema
       case 3:
-        return formValues.category?.trim() !== '';
+        return formValues.category?.trim() !== '' || activeCategories.length > 0;
       default:
         return true;
     }
