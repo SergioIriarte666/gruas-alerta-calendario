@@ -34,7 +34,7 @@ export const useSupplierPayments = () => {
       const { data, error } = await supabase
         .from('supplier_payments')
         .select('*')
-        .order('due_date', { ascending: true });
+        .order('due_date', { ascending: false });
 
       if (error) throw error;
       return (data || []) as SupplierPayment[];
