@@ -215,119 +215,121 @@ export const SupplierForm: React.FC<SupplierFormProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <Card className="w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col bg-card border">
-        <CardHeader className="bg-gradient-to-r from-violet-600 to-violet-500 text-white rounded-t-lg flex-shrink-0">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-white flex items-center gap-2">
-              <Building2 className="h-5 w-5" />
-              {isEditing ? 'Editar Proveedor' : 'Nuevo Proveedor'}
-            </CardTitle>
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={onClose}
-              className="text-white/80 hover:text-white hover:bg-white/20"
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
-          <p className="text-violet-200 text-sm mt-1">
-            {isEditing ? 'Modifica los datos del proveedor' : 'Ingresa los datos del nuevo proveedor'}
-          </p>
-        </CardHeader>
+    <div className="fixed inset-0 z-50 bg-black/50 overflow-y-auto p-4">
+      <div className="flex min-h-full items-start justify-center sm:items-center">
+        <Card className="w-full max-w-4xl max-h-[calc(100vh-2rem)] overflow-hidden flex flex-col bg-card border my-auto">
+          <CardHeader className="bg-gradient-to-r from-violet-600 to-violet-500 text-white rounded-t-lg flex-shrink-0">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-white flex items-center gap-2">
+                <Building2 className="h-5 w-5" />
+                {isEditing ? 'Editar Proveedor' : 'Nuevo Proveedor'}
+              </CardTitle>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={onClose}
+                className="text-white/80 hover:text-white hover:bg-white/20"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+            <p className="text-violet-200 text-sm mt-1">
+              {isEditing ? 'Modifica los datos del proveedor' : 'Ingresa los datos del nuevo proveedor'}
+            </p>
+          </CardHeader>
 
-        <CardContent className="flex-1 overflow-hidden p-0">
-          <div className="h-full flex flex-col">
-            <div className="flex-1 overflow-auto">
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 p-6">
-                <div className="lg:col-span-1 space-y-4">
-                  <SupplierFormStepNavigation
-                    steps={steps}
-                    currentStep={currentStep}
-                    onStepClick={setCurrentStep}
-                  />
-                  
-                  <SupplierSummaryPanel
-                    name={formValues.name}
-                    rut={formValues.rut}
-                    phone={formValues.phone}
-                    email={formValues.email || ''}
-                    address={formValues.address}
-                    contactName={formValues.contact_name}
-                    category={formValues.category}
-                    categoryLabel={getCategoryLabel(formValues.category)}
-                    notes={formValues.notes || ''}
-                    isActive={formValues.is_active}
-                    isEditing={isEditing}
-                  />
-                </div>
+          <CardContent className="flex-1 min-h-0 overflow-hidden p-0">
+            <div className="h-full min-h-0 flex flex-col">
+              <div className="flex-1 min-h-0 overflow-y-auto">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 p-6">
+                  <div className="lg:col-span-1 space-y-4">
+                    <SupplierFormStepNavigation
+                      steps={steps}
+                      currentStep={currentStep}
+                      onStepClick={setCurrentStep}
+                    />
+                    
+                    <SupplierSummaryPanel
+                      name={formValues.name}
+                      rut={formValues.rut}
+                      phone={formValues.phone}
+                      email={formValues.email || ''}
+                      address={formValues.address}
+                      contactName={formValues.contact_name}
+                      category={formValues.category}
+                      categoryLabel={getCategoryLabel(formValues.category)}
+                      notes={formValues.notes || ''}
+                      isActive={formValues.is_active}
+                      isEditing={isEditing}
+                    />
+                  </div>
 
-                <div className="lg:col-span-2">
-                  {renderStepContent()}
+                  <div className="lg:col-span-2">
+                    {renderStepContent()}
+                  </div>
                 </div>
               </div>
-            </div>
 
-            <div className="border-t bg-muted/30 p-4 flex-shrink-0">
-              <div className="flex items-center justify-between">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={goToPreviousStep}
-                  disabled={currentStep === 1 || isSubmitting}
-                  className="gap-2"
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                  Anterior
-                </Button>
-
-                <div className="flex items-center gap-2">
+              <div className="border-t bg-muted/30 p-4 flex-shrink-0">
+                <div className="flex items-center justify-between">
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={onClose}
-                    disabled={isSubmitting}
+                    onClick={goToPreviousStep}
+                    disabled={currentStep === 1 || isSubmitting}
+                    className="gap-2"
                   >
-                    Cancelar
+                    <ChevronLeft className="h-4 w-4" />
+                    Anterior
                   </Button>
 
-                  {currentStep < 3 ? (
+                  <div className="flex items-center gap-2">
                     <Button
                       type="button"
-                      onClick={goToNextStep}
-                      disabled={!canGoNext || isSubmitting}
-                      className="bg-violet-600 hover:bg-violet-700 text-white gap-2"
+                      variant="outline"
+                      onClick={onClose}
+                      disabled={isSubmitting}
                     >
-                      Siguiente
-                      <ChevronRight className="h-4 w-4" />
+                      Cancelar
                     </Button>
-                  ) : (
-                    <Button
-                      type="button"
-                      onClick={form.handleSubmit(onSubmit)}
-                      disabled={!canSubmit || isSubmitting}
-                      className="bg-violet-600 hover:bg-violet-700 text-white gap-2"
-                    >
-                      {isSubmitting ? (
-                        <>
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                          {isEditing ? 'Actualizando...' : 'Creando...'}
-                        </>
-                      ) : (
-                        <>
-                          <Save className="h-4 w-4" />
-                          {isEditing ? 'Actualizar' : 'Crear'}
-                        </>
-                      )}
-                    </Button>
-                  )}
+
+                    {currentStep < 3 ? (
+                      <Button
+                        type="button"
+                        onClick={goToNextStep}
+                        disabled={!canGoNext || isSubmitting}
+                        className="bg-violet-600 hover:bg-violet-700 text-white gap-2"
+                      >
+                        Siguiente
+                        <ChevronRight className="h-4 w-4" />
+                      </Button>
+                    ) : (
+                      <Button
+                        type="button"
+                        onClick={form.handleSubmit(onSubmit)}
+                        disabled={!canSubmit || isSubmitting}
+                        className="bg-violet-600 hover:bg-violet-700 text-white gap-2"
+                      >
+                        {isSubmitting ? (
+                          <>
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            {isEditing ? 'Actualizando...' : 'Creando...'}
+                          </>
+                        ) : (
+                          <>
+                            <Save className="h-4 w-4" />
+                            {isEditing ? 'Actualizar' : 'Crear'}
+                          </>
+                        )}
+                      </Button>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 };
