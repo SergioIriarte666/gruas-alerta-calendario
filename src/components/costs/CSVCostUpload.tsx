@@ -163,11 +163,11 @@ export const CSVCostUpload = ({ isOpen, onClose, onSuccess }: CSVCostUploadProps
               {/* Template downloads */}
               <div className="flex items-center gap-2 justify-center">
                 <span className="text-xs text-muted-foreground">Descargar plantilla:</span>
-                <Button variant="outline" size="sm" onClick={generateCostCsvTemplate}>
+                <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); generateCostCsvTemplate(); }}>
                   <Download className="w-3 h-3 mr-1" />
                   CSV
                 </Button>
-                <Button variant="outline" size="sm" onClick={generateCostExcelTemplate}>
+                <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); generateCostExcelTemplate(); }}>
                   <Download className="w-3 h-3 mr-1" />
                   Excel
                 </Button>
