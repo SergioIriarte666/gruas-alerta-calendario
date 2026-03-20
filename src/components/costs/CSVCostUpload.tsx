@@ -13,10 +13,13 @@ import {
   AlertCircle,
   Download,
   Loader2,
+  X,
+  FileText,
 } from 'lucide-react';
 import { useDropzone } from 'react-dropzone';
 import { useCostCSVUpload } from '@/hooks/useCostCSVUpload';
 import { useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 
 interface CSVCostUploadProps {
   isOpen: boolean;
