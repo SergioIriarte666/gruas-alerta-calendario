@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { Switch } from '@/components/ui/switch';
+import { Checkbox } from '@/components/ui/checkbox';
 import DatePickerInput from '@/components/common/DatePickerInput';
 import { Zap, ChevronDown, ChevronUp, Loader2, Save, Plus } from 'lucide-react';
 import { useCostCategories } from '@/hooks/useCostCategories';
@@ -35,6 +35,7 @@ const quickCostSchema = z.object({
   supplier_id: z.string().optional(),
   cost_center_id: z.string().optional(),
   notes: z.string().optional(),
+  is_paid: z.boolean().optional().default(false),
 });
 
 type QuickCostFormValues = z.infer<typeof quickCostSchema>;
@@ -57,6 +58,8 @@ export const QuickCostForm = ({ isOpen, onClose, onSuccess }: QuickCostFormProps
   
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>('');
   const { subcategories } = useCostSubcategories(selectedCategoryId);
+
+  const [isPaid, setIsPaid] = useState(false);
 
   const {
     register,
@@ -106,9 +109,11 @@ export const QuickCostForm = ({ isOpen, onClose, onSuccess }: QuickCostFormProps
         supplier_id: 'none',
         cost_center_id: 'none',
         notes: '',
+        is_paid: false,
       });
       setShowAdvanced(false);
       setSelectedCategoryId('');
+      setIsPaid(false);
     }
   }, [isOpen, reset]);
 
@@ -134,6 +139,7 @@ export const QuickCostForm = ({ isOpen, onClose, onSuccess }: QuickCostFormProps
       notes: values.notes?.trim() || null,
       service_id: null,
       service_folio: null,
+      payment_date: isPaid ? values.date : null,
     };
 
     addCost(submissionData, {
@@ -251,6 +257,23 @@ export const QuickCostForm = ({ isOpen, onClose, onSuccess }: QuickCostFormProps
             {errors.amount && (
               <p className="text-xs text-destructive">{errors.amount.message}</p>
             )}
+          </div>
+
+          {/* Checkbox marcar como pagado */}
+          <div className="flex items-center gap-3 rounded-lg border border-border/50 bg-muted/30 p-3">
+            <Checkbox
+              id="quick-is-paid"
+              checked={isPaid}
+              onCheckedChange={(checked) => setIsPaid(Boolean(checked))}
+            />
+            <div className="space-y-0.5">
+              <label htmlFor="quick-is-paid" className="text-sm font-medium text-foreground cursor-pointer">
+                Marcar como pagado
+              </label>
+              <p className="text-xs text-muted-foreground">
+                Se registrará la fecha del costo como fecha de pago.
+              </p>
+            </div>
           </div>
 
           {/* Sección expandible de detalles */}
