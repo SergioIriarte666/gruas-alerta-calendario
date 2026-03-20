@@ -10,11 +10,12 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { MoreHorizontal, Edit, Trash2, Eye } from 'lucide-react';
+import { MoreHorizontal, Edit, Trash2, Eye, CheckCircle, Circle } from 'lucide-react';
 import { Cost } from '@/types/costs';
 import { useDeleteCost } from '@/hooks/useCosts';
 import { Card, CardContent } from '@/components/ui/card';
 import { formatForDisplay, parseFromDatabase } from '@/utils/timezoneUtils';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface CostsTableProps {
     costs: Cost[];
@@ -68,6 +69,7 @@ export const CostsTable = ({ costs, onEdit, onViewDetails }: CostsTableProps) =>
                             <TableHead className="text-white">Descripción</TableHead>
                             <TableHead className="text-white">Categoría</TableHead>
                             <TableHead className="text-white text-right">Monto</TableHead>
+                            <TableHead className="text-white text-center">Pagado</TableHead>
                             <TableHead className="text-white">Asociado a</TableHead>
                             <TableHead className="text-right text-white">Acciones</TableHead>
                         </TableRow>
@@ -75,7 +77,7 @@ export const CostsTable = ({ costs, onEdit, onViewDetails }: CostsTableProps) =>
                     <TableBody>
                         {costs.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={6} className="text-center text-gray-400 py-8">
+                                <TableCell colSpan={7} className="text-center text-gray-400 py-8">
                                     No se han registrado costos.
                                 </TableCell>
                             </TableRow>
@@ -91,6 +93,22 @@ export const CostsTable = ({ costs, onEdit, onViewDetails }: CostsTableProps) =>
                                     <TableCell className="text-white font-medium">{cost.description}</TableCell>
                                     <TableCell className="text-gray-300">{getCategoryDisplay(cost)}</TableCell>
                                     <TableCell className="text-white text-right">${Number(cost.amount).toLocaleString('es-CL')}</TableCell>
+                                    <TableCell className="text-center">
+                                        <TooltipProvider>
+                                            <Tooltip>
+                                                <TooltipTrigger>
+                                                    {cost.payment_date ? (
+                                                        <CheckCircle className="h-5 w-5 text-green-400 mx-auto" />
+                                                    ) : (
+                                                        <Circle className="h-5 w-5 text-gray-500 mx-auto" />
+                                                    )}
+                                                </TooltipTrigger>
+                                                <TooltipContent>
+                                                    {cost.payment_date ? 'Pagado' : 'Pendiente'}
+                                                </TooltipContent>
+                                            </Tooltip>
+                                        </TooltipProvider>
+                                    </TableCell>
                                     <TableCell className="text-gray-300">{getAssociatedTo(cost)}</TableCell>
                                     <TableCell className="text-right">
                                         <DropdownMenu>
