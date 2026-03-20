@@ -390,7 +390,7 @@ const handler = async (req: Request): Promise<Response> => {
         return;
       }
 
-      (doc as any).autoTable({
+      autoTable(doc, {
         startY: y,
         head: [headers],
         body: data,
