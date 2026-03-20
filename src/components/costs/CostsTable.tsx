@@ -69,6 +69,7 @@ export const CostsTable = ({ costs, onEdit, onViewDetails }: CostsTableProps) =>
                             <TableHead className="text-white">Descripción</TableHead>
                             <TableHead className="text-white">Categoría</TableHead>
                             <TableHead className="text-white text-right">Monto</TableHead>
+                            <TableHead className="text-white text-center">Pagado</TableHead>
                             <TableHead className="text-white">Asociado a</TableHead>
                             <TableHead className="text-right text-white">Acciones</TableHead>
                         </TableRow>
