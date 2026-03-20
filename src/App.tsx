@@ -36,6 +36,7 @@ const routeImports = {
   Invoices: () => import('@/pages/Invoices'),
   IncomeProjections: () => import('@/pages/IncomeProjections'),
   Costs: () => import('@/pages/Costs'),
+  AccountsPayable: () => import('@/pages/AccountsPayable'),
   CostCenters: () => import('@/pages/CostCenters'),
   Inventory: () => import('@/pages/Inventory'),
   Reports: () => import('@/pages/Reports'),
@@ -77,6 +78,7 @@ const Closures = lazy(routeImports.Closures);
 const Invoices = lazy(routeImports.Invoices);
 const IncomeProjections = lazy(routeImports.IncomeProjections);
 const Costs = lazy(routeImports.Costs);
+const AccountsPayable = lazy(routeImports.AccountsPayable);
 const CostCenters = lazy(routeImports.CostCenters);
 const Inventory = lazy(routeImports.Inventory);
 const Reports = lazy(routeImports.Reports);
@@ -157,6 +159,7 @@ function AppContent() {
           <Route path="/historical" element={<Historical />} />
           <Route path="/income-projections" element={<IncomeProjections />} />
           <Route path="/costs" element={<Costs />} />
+          <Route path="/accounts-payable" element={<AccountsPayable />} />
           
           <Route path="/incomes" element={<Incomes />} />
           <Route path="/trip-calculator" element={<TripCalculator />} />

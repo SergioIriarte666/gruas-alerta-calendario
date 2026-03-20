@@ -1,6 +1,7 @@
 import { 
   LayoutDashboard, 
   Truck, 
+  Landmark,
   Calendar, 
   FolderClosed, 
   Users, 
@@ -156,6 +157,14 @@ export const APP_MODULES: AppModule[] = [
     description: 'Gestión de pagos',
     defaultRoles: ['admin', 'viewer'],
     route: '/payments'
+  },
+  { 
+    key: 'accounts-payable', 
+    label: 'Cuentas por Pagar', 
+    icon: Landmark, 
+    description: 'Deudas, cuotas y obligaciones financieras',
+    defaultRoles: ['admin', 'viewer'],
+    route: '/accounts-payable'
   },
   { 
     key: 'service-rates', 
