@@ -171,8 +171,11 @@ const determineStatus = (pagado: string, fechaVencimiento: any): 'paid' | 'sent'
 
 const SECTION_MAP: Record<string, DocumentType> = {
   'FACTURA ELECTRONICA': 'factura',
+  'FACTURA': 'factura',
   'NOTA DE CREDITO ELECTRONICA': 'nota_credito',
+  'NOTA DE CREDITO': 'nota_credito',
   'NOTA DE DEBITO ELECTRONICA': 'nota_debito',
+  'NOTA DE DEBITO': 'nota_debito',
 };
 
 /**
@@ -240,9 +243,10 @@ const parseLibroDeVentasXLSX = (rawRows: any[][]): ParsedInvoiceRow[] => {
       // But first check if it's a section start before the subtotal check
     }
 
-    // Detect section headers
+    // Detect section headers (check longer names first to avoid partial matches)
     let foundSection = false;
-    for (const [sectionName, docType] of Object.entries(SECTION_MAP)) {
+    const sortedSections = Object.entries(SECTION_MAP).sort((a, b) => b[0].length - a[0].length);
+    for (const [sectionName, docType] of sortedSections) {
       if (joinedUpper.includes(sectionName)) {
         currentDocType = docType;
         foundSection = true;
