@@ -162,13 +162,18 @@ export const useCostCSVUpload = () => {
       const pagado = ['si', 'sí', 'yes', '1', 'true', 'x'].includes(normalizeText(pagadoRaw));
       const fechaPago = pagado ? (parseDate(fechaPagoRaw) || fecha) : undefined;
 
-      // Duplicate check
+      // Duplicate check - within file
       if (fecha && monto && descripcion) {
         const key = `${fecha}|${monto}|${descripcion.toLowerCase()}`;
         if (seen.has(key)) {
           warnings.push('Posible duplicado en el archivo');
         }
         seen.add(key);
+
+        // Duplicate check - against database
+        if (existingSet.has(key)) {
+          warnings.push('⚠️ Ya existe en la base de datos (misma fecha, monto y descripción)');
+        }
       }
 
       const costRow: CostRow = {
