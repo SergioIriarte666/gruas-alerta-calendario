@@ -95,10 +95,22 @@ export const useCostCSVUpload = () => {
     });
   }, []);
 
-  const validate = useCallback((data: any[]): CostCSVValidationResult => {
+  const validate = useCallback(async (data: any[]): Promise<CostCSVValidationResult> => {
     const categoryMap = new Map<string, string>();
     categories.forEach(c => {
       if (c.name) categoryMap.set(normalizeText(c.name), c.id);
+    });
+
+    // Fetch existing costs for duplicate detection
+    const { data: existingCosts } = await supabase
+      .from('costs')
+      .select('date, amount, description')
+      .order('date', { ascending: false })
+      .limit(5000);
+
+    const existingSet = new Set<string>();
+    existingCosts?.forEach(c => {
+      existingSet.add(`${c.date}|${Number(c.amount)}|${c.description?.toLowerCase().trim()}`);
     });
 
     const validRows: CostRow[] = [];
