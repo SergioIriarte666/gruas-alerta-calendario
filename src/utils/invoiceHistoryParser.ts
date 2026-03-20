@@ -171,8 +171,11 @@ const determineStatus = (pagado: string, fechaVencimiento: any): 'paid' | 'sent'
 
 const SECTION_MAP: Record<string, DocumentType> = {
   'FACTURA ELECTRONICA': 'factura',
+  'FACTURA': 'factura',
   'NOTA DE CREDITO ELECTRONICA': 'nota_credito',
+  'NOTA DE CREDITO': 'nota_credito',
   'NOTA DE DEBITO ELECTRONICA': 'nota_debito',
+  'NOTA DE DEBITO': 'nota_debito',
 };
 
 /**
