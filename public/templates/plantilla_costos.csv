@@ -1,0 +1,4 @@
+Fecha,Descripción,Monto,Categoría,Subcategoría,Notas,Pagado,Fecha Pago
+2026-03-20,Combustible grúa ABCD-12,150000,Gastos Operacionales,Combustible,Factura #4521,Sí,2026-03-20
+2026-03-19,Peaje Ruta 5,8500,Gastos Operacionales,Peajes,,No,
+2026-03-18,Mantención preventiva,320000,Mantenimiento,,Orden de trabajo #89,Sí,2026-03-18
