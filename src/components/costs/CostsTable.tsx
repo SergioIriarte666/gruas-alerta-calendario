@@ -77,7 +77,7 @@ export const CostsTable = ({ costs, onEdit, onViewDetails }: CostsTableProps) =>
                     <TableBody>
                         {costs.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={6} className="text-center text-gray-400 py-8">
+                                <TableCell colSpan={7} className="text-center text-gray-400 py-8">
                                     No se han registrado costos.
                                 </TableCell>
                             </TableRow>
