@@ -55,5 +55,9 @@ export const generateCostExcelTemplate = () => {
 
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Costos');
-  XLSX.writeFile(wb, 'plantilla_costos.xlsx');
+  const output = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+  triggerDownload(
+    new Blob([output], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }),
+    'plantilla_costos.xlsx'
+  );
 };
