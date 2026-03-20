@@ -10,7 +10,7 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { MoreHorizontal, Edit, Trash2, Eye } from 'lucide-react';
+import { MoreHorizontal, Edit, Trash2, Eye, CheckCircle, Circle } from 'lucide-react';
 import { Cost } from '@/types/costs';
 import { useDeleteCost } from '@/hooks/useCosts';
 import { Card, CardContent } from '@/components/ui/card';
