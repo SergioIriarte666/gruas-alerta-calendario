@@ -15,6 +15,7 @@ import { Cost } from '@/types/costs';
 import { useDeleteCost } from '@/hooks/useCosts';
 import { Card, CardContent } from '@/components/ui/card';
 import { formatForDisplay, parseFromDatabase } from '@/utils/timezoneUtils';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface CostsTableProps {
     costs: Cost[];
