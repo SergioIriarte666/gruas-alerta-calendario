@@ -67,6 +67,11 @@ export const EnhancedCostsTable = ({
   const [itemsPerPage, setItemsPerPage] = useState(20);
   const [groupBy, setGroupBy] = useState<GroupBy>('none');
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set(['all']));
+
+  // Reset page when costs change (e.g. search/filter)
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [costs]);
   
   const { data: serviceDetails } = useServiceDetails(selectedServiceId);
   const { data: activeCategories = [] } = useCostCategories();
