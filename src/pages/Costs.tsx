@@ -7,6 +7,7 @@ import { CostForm } from '@/components/costs/CostForm';
 import { QuickCostForm } from '@/components/costs/QuickCostForm';
 import { ConsolidatedCostDetails } from '@/components/costs/ConsolidatedCostDetails';
 import { XMLCostUpload } from '@/components/costs/XMLCostUpload';
+import { CSVCostUpload } from '@/components/costs/CSVCostUpload';
 import { CostFilters } from '@/components/costs/CostFilters';
 import { UnifiedCostFilters } from '@/components/costs/UnifiedCostFilters';
 import { CostsDashboard } from '@/components/costs/CostsDashboard';
@@ -19,7 +20,7 @@ import { useDateFilters } from '@/hooks/useDateFilters';
 import { Cost } from '@/types/costs';
 import { prepareCostForDuplication } from '@/utils/costHelpers';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Zap, FileEdit } from 'lucide-react';
+import { Zap, FileEdit, FileSpreadsheet } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import * as XLSX from 'xlsx';
 import { 
@@ -36,6 +37,7 @@ const CostsPage = () => {
     const [isQuickFormOpen, setIsQuickFormOpen] = useState(false);
     const [isDetailsOpen, setIsDetailsOpen] = useState(false);
     const [isXMLUploadOpen, setIsXMLUploadOpen] = useState(false);
+    const [isCSVUploadOpen, setIsCSVUploadOpen] = useState(false);
     const [isBatchUpdateOpen, setIsBatchUpdateOpen] = useState(false);
     const [isDistributionOpen, setIsDistributionOpen] = useState(false);
     const [selectedCostForEdit, setSelectedCostForEdit] = useState<Cost | null>(null);
@@ -364,6 +366,16 @@ const CostsPage = () => {
                     >
                         {isMobile ? 'XML' : 'Cargar XML'}
                     </Button>
+                    
+                    <Button 
+                        onClick={() => setIsCSVUploadOpen(true)}
+                        variant="outline"
+                        size={isMobile ? 'sm' : 'default'}
+                        className="border-green-500 text-green-600 hover:bg-green-50 dark:hover:bg-green-950"
+                    >
+                        <FileSpreadsheet className="w-4 h-4 mr-1" />
+                        {isMobile ? 'Excel' : 'Cargar Excel'}
+                    </Button>
                 </div>
             </div>
 
@@ -496,6 +508,12 @@ const CostsPage = () => {
                 isOpen={isXMLUploadOpen}
                 onClose={handleCloseXMLUpload}
                 onSuccess={handleXMLUploadSuccess}
+            />
+
+            <CSVCostUpload
+                isOpen={isCSVUploadOpen}
+                onClose={() => setIsCSVUploadOpen(false)}
+                onSuccess={(count) => setIsCSVUploadOpen(false)}
             />
 
             <CostBatchUpdateModal
