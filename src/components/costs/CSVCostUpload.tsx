@@ -13,8 +13,6 @@ import {
   AlertCircle,
   Download,
   Loader2,
-  X,
-  FileText,
 } from 'lucide-react';
 import { useDropzone } from 'react-dropzone';
 import { useCostCSVUpload, CostCSVValidationResult } from '@/hooks/useCostCSVUpload';
