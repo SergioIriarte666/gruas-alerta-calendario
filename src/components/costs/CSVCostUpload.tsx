@@ -163,13 +163,21 @@ export const CSVCostUpload = ({ isOpen, onClose, onSuccess }: CSVCostUploadProps
               <div className="flex items-center gap-2 justify-center">
                 <span className="text-xs text-muted-foreground">Descargar plantilla:</span>
                 <Button asChild type="button" variant="outline" size="sm" onMouseDown={(e) => e.stopPropagation()}>
-                  <a href="/templates/plantilla_costos.csv" target="_blank" rel="noopener noreferrer">
+                  <a
+                    href="/templates/plantilla_costos.csv"
+                    download="plantilla_costos.csv"
+                    onClick={(e) => e.stopPropagation()}
+                  >
                     <Download className="w-3 h-3 mr-1" />
                     CSV
                   </a>
                 </Button>
                 <Button asChild type="button" variant="outline" size="sm" onMouseDown={(e) => e.stopPropagation()}>
-                  <a href="/templates/plantilla_costos.xlsx" target="_blank" rel="noopener noreferrer">
+                  <a
+                    href="/templates/plantilla_costos.xlsx"
+                    download="plantilla_costos.xlsx"
+                    onClick={(e) => e.stopPropagation()}
+                  >
                     <Download className="w-3 h-3 mr-1" />
                     Excel
                   </a>
