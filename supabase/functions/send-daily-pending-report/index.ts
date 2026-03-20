@@ -443,7 +443,7 @@ const handler = async (req: Request): Promise<Response> => {
     y += 2;
 
     if (monthlyClientRows.length > 0) {
-      (doc as any).autoTable({
+      autoTable(doc, {
         startY: y,
         head: [["Cliente", "Servicios del Mes"]],
         body: monthlyClientRows,
