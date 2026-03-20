@@ -366,6 +366,16 @@ const CostsPage = () => {
                     >
                         {isMobile ? 'XML' : 'Cargar XML'}
                     </Button>
+                    
+                    <Button 
+                        onClick={() => setIsCSVUploadOpen(true)}
+                        variant="outline"
+                        size={isMobile ? 'sm' : 'default'}
+                        className="border-green-500 text-green-600 hover:bg-green-50 dark:hover:bg-green-950"
+                    >
+                        <FileSpreadsheet className="w-4 h-4 mr-1" />
+                        {isMobile ? 'Excel' : 'Cargar Excel'}
+                    </Button>
                 </div>
             </div>
 
