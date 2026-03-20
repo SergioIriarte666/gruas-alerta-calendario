@@ -2,7 +2,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.50.0";
 import { Resend } from "npm:resend@2.0.0";
-import jsPDF from "npm:jspdf@2.5.2";
+import jsPDF from "npm:jspdf";
 import "npm:jspdf-autotable@5.0.2";
 
 const corsHeaders = {
@@ -341,7 +341,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     // ──── GENERATE PDF ────
     console.log("📄 Generando PDF...");
-    const doc = new jsPDF.default();
+    const doc = new jsPDF();
     const companyName = companyData.business_name || "Grúas 5 Norte";
     const pageWidth = doc.internal.pageSize.getWidth();
     let y = 15;

@@ -5,6 +5,7 @@ import { FormControl, FormField, FormItem, FormMessage } from '@/components/ui/f
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent } from '@/components/ui/card';
 import { CostFormValues } from '@/schemas/costSchema';
 import { Calculator, Receipt } from 'lucide-react';
@@ -25,6 +26,8 @@ export const CostAmountSection = ({
   showServiceButton = false 
 }: CostAmountSectionProps) => {
   const amount = form.watch('amount');
+  const supplierId = form.watch('supplier_id');
+  const canMarkAsPaid = Boolean(supplierId && supplierId !== 'none');
   
   return (
     <div className="space-y-4">
@@ -57,6 +60,35 @@ export const CostAmountSection = ({
           <FormMessage />
         </FormItem>
       )} />
+
+      <FormField
+        name="is_paid"
+        control={form.control}
+        render={({ field }) => (
+          <FormItem className="flex items-center gap-3 rounded-lg border border-border/50 bg-muted/30 p-3">
+            <FormControl>
+              <Checkbox
+                checked={field.value}
+                onCheckedChange={(checked) => field.onChange(Boolean(checked))}
+                disabled={!canMarkAsPaid}
+              />
+            </FormControl>
+            <div className="space-y-1">
+              <Label
+                className={`text-sm font-medium text-foreground !mt-0 ${canMarkAsPaid ? 'cursor-pointer' : 'cursor-not-allowed opacity-70'}`}
+                onClick={() => canMarkAsPaid && field.onChange(!field.value)}
+              >
+                Marcar como pagado
+              </Label>
+              <p className="text-xs text-muted-foreground">
+                {canMarkAsPaid
+                  ? 'Al guardar, se registrará la fecha del costo como fecha de pago.'
+                  : 'Selecciona un proveedor en Asociaciones para habilitar esta opción.'}
+              </p>
+            </div>
+          </FormItem>
+        )}
+      />
 
       {/* Sección especial para Gastos de Servicios */}
       {isServiceExpense && showServiceButton && (
