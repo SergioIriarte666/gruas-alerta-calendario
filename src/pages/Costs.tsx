@@ -7,6 +7,7 @@ import { CostForm } from '@/components/costs/CostForm';
 import { QuickCostForm } from '@/components/costs/QuickCostForm';
 import { ConsolidatedCostDetails } from '@/components/costs/ConsolidatedCostDetails';
 import { XMLCostUpload } from '@/components/costs/XMLCostUpload';
+import { CSVCostUpload } from '@/components/costs/CSVCostUpload';
 import { CostFilters } from '@/components/costs/CostFilters';
 import { UnifiedCostFilters } from '@/components/costs/UnifiedCostFilters';
 import { CostsDashboard } from '@/components/costs/CostsDashboard';
