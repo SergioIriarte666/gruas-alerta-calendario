@@ -70,7 +70,7 @@ export const CSVCostUpload = ({ isOpen, onClose, onSuccess }: CSVCostUploadProps
         toast.error('El archivo está vacío');
         return;
       }
-      const result = validate(data);
+      const result = await validate(data);
       setStep('preview');
 
       if (result.validRows.length > 0 && result.invalidRows.length === 0) {
