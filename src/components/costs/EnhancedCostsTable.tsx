@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Eye, Edit, Trash2, Copy, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, MoreHorizontal, Layers } from 'lucide-react';
+import { Eye, Edit, Trash2, Copy, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, MoreHorizontal, Layers, CheckCircle, Circle } from 'lucide-react';
 import { Cost } from '@/types/costs';
 import { Card, CardContent } from '@/components/ui/card';
 import { ServiceDetailsModal } from '@/components/services/ServiceDetailsModal';
