@@ -47,7 +47,7 @@ export const CostAmountSection = ({
                 disabled={isServiceExpense && showServiceButton}
                 className={`text-lg h-12 pr-16 ${
                   isServiceExpense && showServiceButton 
-                    ? 'bg-blue-50 border-blue-300' 
+                      ? 'bg-accent/40 border-border' 
                     : ''
                 }`}
                 placeholder="0.00"
@@ -92,18 +92,18 @@ export const CostAmountSection = ({
 
       {/* Sección especial para Gastos de Servicios */}
       {isServiceExpense && showServiceButton && (
-        <Card className="bg-blue-50 border-blue-200">
+        <Card className="bg-accent/40 border-border">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div className="flex-1">
-                <h4 className="font-medium text-blue-800 mb-1">
+                <h4 className="font-medium text-foreground mb-1">
                   Gastos de Servicios
                 </h4>
-                <p className="text-sm text-blue-600">
+                <p className="text-sm text-muted-foreground">
                   Desglosa los gastos en combustible, peajes y otros conceptos
                 </p>
                 {calculatedTotal > 0 && (
-                  <p className="text-sm font-medium text-blue-800 mt-2">
+                  <p className="text-sm font-medium text-foreground mt-2">
                     Total calculado: <span className="text-lg">${calculatedTotal.toLocaleString()}</span>
                   </p>
                 )}
@@ -111,7 +111,7 @@ export const CostAmountSection = ({
               <Button
                 type="button"
                 onClick={onServiceExpenseClick}
-                className="ml-4 bg-blue-600 hover:bg-blue-700 text-white"
+                className="ml-4"
                 size="sm"
               >
                 <Calculator className="w-4 h-4 mr-2" />
@@ -124,8 +124,8 @@ export const CostAmountSection = ({
 
       {/* Mensaje informativo cuando el monto está calculado */}
       {isServiceExpense && amount > 0 && !showServiceButton && (
-        <div className="bg-green-50 border border-green-200 rounded-lg p-3">
-          <p className="text-sm text-green-700">
+        <div className="bg-accent/40 border border-border rounded-lg p-3">
+          <p className="text-sm text-foreground">
             ✅ Monto calculado desde el desglose de gastos de servicios
           </p>
         </div>
