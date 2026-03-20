@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Plus } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { APDashboardCards } from '@/components/accounts-payable/APDashboardCards';
 import { DebtList } from '@/components/accounts-payable/DebtList';
@@ -16,9 +18,14 @@ const AccountsPayable = () => {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">Cuentas por Pagar</h1>
-        <p className="text-sm text-muted-foreground">Gestión de deudas, cuotas y obligaciones financieras</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">Cuentas por Pagar</h1>
+          <p className="text-sm text-muted-foreground">Gestión de deudas, cuotas y obligaciones financieras</p>
+        </div>
+        <Button onClick={() => setIsDebtFormOpen(true)}>
+          <Plus className="h-4 w-4 mr-1" /> Nueva Deuda
+        </Button>
       </div>
 
       <APDashboardCards />
