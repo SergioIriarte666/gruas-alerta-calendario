@@ -18,22 +18,29 @@ const EXAMPLE_ROWS = [
 ];
 
 const triggerDownload = (blob: Blob, fileName: string) => {
+  if (typeof window === 'undefined' || typeof document === 'undefined') {
+    throw new Error('Descarga no disponible en este entorno');
+  }
+
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;
   link.download = fileName;
-  link.rel = 'noopener';
+  link.target = '_blank';
+  link.rel = 'noopener noreferrer';
   document.body.appendChild(link);
   link.click();
-  document.body.removeChild(link);
-  window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+  window.setTimeout(() => {
+    if (link.parentNode) link.parentNode.removeChild(link);
+    URL.revokeObjectURL(url);
+  }, 250);
 };
 
 export const generateCostCsvTemplate = () => {
   const csvContent = [
     TEMPLATE_COLUMNS.join(','),
     ...EXAMPLE_ROWS.map(row => row.map(cell => `"${cell}"`).join(',')),
-  ].join('\n');
+  ].join('\r\n');
 
   const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
   triggerDownload(blob, 'plantilla_costos.csv');
@@ -56,5 +63,9 @@ export const generateCostExcelTemplate = () => {
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Costos');
   const timestamp = new Date().toISOString().slice(0, 10);
-  XLSX.writeFile(wb, `plantilla_costos_${timestamp}.xlsx`);
+  const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+  const blob = new Blob([wbout], {
+    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  });
+  triggerDownload(blob, `plantilla_costos_${timestamp}.xlsx`);
 };
