@@ -462,6 +462,7 @@ export const EnhancedCostsTable = ({
                       <SortIcon field="amount" />
                     </div>
                   </TableHead>
+                  <TableHead className="text-center w-20">Pagado</TableHead>
                   <TableHead className="cursor-pointer" onClick={() => handleSort('associated')}>
                     <div className="flex items-center">
                       Asociado a
