@@ -281,6 +281,15 @@ export const CostBatchUpdateModal = ({
     setMarkPaidError('');
   };
 
+  React.useEffect(() => {
+    if (open) resetForm();
+  }, [open]);
+
+  const handleClose = () => {
+    resetForm();
+    onOpenChange(false);
+  };
+
   const hasChanges = 
     enableCategory || 
     enableSubcategory || 
@@ -294,8 +303,8 @@ export const CostBatchUpdateModal = ({
     <Dialog
       open={open}
       onOpenChange={(nextOpen) => {
-        if (!nextOpen) resetForm();
-        onOpenChange(nextOpen);
+        if (!nextOpen) handleClose();
+        else onOpenChange(true);
       }}
     >
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
@@ -759,7 +768,7 @@ export const CostBatchUpdateModal = ({
         <DialogFooter className="border-t pt-4 mt-4">
           <Button
             variant="outline"
-            onClick={() => onOpenChange(false)}
+            onClick={handleClose}
             disabled={isMarkPaidMode ? isMarkingPaid : isUpdating}
           >
             Cancelar
@@ -774,7 +783,7 @@ export const CostBatchUpdateModal = ({
                 {isMarkingPaid ? 'Marcando...' : `Marcar ${selectedCosts.length} como pagados`}
               </Button>
             ) : (
-              <Button onClick={() => onOpenChange(false)} className="bg-green-600 hover:bg-green-700 text-white">
+              <Button onClick={handleClose} className="bg-green-600 hover:bg-green-700 text-white">
                 Cerrar
               </Button>
             )
