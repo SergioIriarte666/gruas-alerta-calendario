@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Eye, Edit, Trash2, Copy, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, MoreHorizontal, Layers } from 'lucide-react';
+import { Eye, Edit, Trash2, Copy, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, MoreHorizontal, Layers, CheckCircle, Circle } from 'lucide-react';
 import { Cost } from '@/types/costs';
 import { Card, CardContent } from '@/components/ui/card';
 import { ServiceDetailsModal } from '@/components/services/ServiceDetailsModal';
@@ -297,6 +297,22 @@ export const EnhancedCostsTable = ({
       <TableCell className="text-right font-semibold text-foreground">
         {formatCurrency(Number(cost.amount))}
       </TableCell>
+      <TableCell className="text-center">
+        <TooltipProvider delayDuration={0}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span className="inline-flex">
+                {cost.payment_date ? (
+                  <CheckCircle className="h-5 w-5 text-green-500" />
+                ) : (
+                  <Circle className="h-5 w-5 text-muted-foreground/40" />
+                )}
+              </span>
+            </TooltipTrigger>
+            <TooltipContent>{cost.payment_date ? 'Pagado' : 'Pendiente'}</TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      </TableCell>
       <TableCell className="text-muted-foreground text-sm">
         {cost.services ? (
           <button
@@ -462,6 +478,7 @@ export const EnhancedCostsTable = ({
                       <SortIcon field="amount" />
                     </div>
                   </TableHead>
+                  <TableHead className="text-center w-20">Pagado</TableHead>
                   <TableHead className="cursor-pointer" onClick={() => handleSort('associated')}>
                     <div className="flex items-center">
                       Asociado a
@@ -476,7 +493,7 @@ export const EnhancedCostsTable = ({
                   if (groupBy === 'none') {
                     return groupCosts.length === 0 ? (
                       <TableRow key="empty">
-                        <TableCell colSpan={onSelectionChange ? 8 : 7} className="text-center text-muted-foreground py-8">
+                        <TableCell colSpan={onSelectionChange ? 9 : 8} className="text-center text-muted-foreground py-8">
                           No se encontraron costos que coincidan con los filtros aplicados.
                         </TableCell>
                       </TableRow>
@@ -494,7 +511,7 @@ export const EnhancedCostsTable = ({
                         className="bg-muted/30 cursor-pointer hover:bg-muted/50"
                         onClick={() => toggleGroup(groupKey)}
                       >
-                        <TableCell colSpan={onSelectionChange ? 8 : 7}>
+                        <TableCell colSpan={onSelectionChange ? 9 : 8}>
                           <div className="flex items-center justify-between py-1">
                             <div className="flex items-center gap-2">
                               <span className={cn(
