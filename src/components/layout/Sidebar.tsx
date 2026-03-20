@@ -119,6 +119,7 @@ export const Sidebar = ({
       icon: TrendingUp,
       items: [
         { name: 'Costos', href: '/costs', icon: DollarSign, adminOnly: false },
+        { name: 'Cuentas por Pagar', href: '/accounts-payable', icon: Landmark, adminOnly: false },
         { name: 'Comisiones', href: '/commissions', icon: Percent, adminOnly: true },
         { name: 'Cierres', href: '/closures', icon: FileText, adminOnly: false },
         { name: 'Facturas', href: '/invoices', icon: Receipt, adminOnly: false },
