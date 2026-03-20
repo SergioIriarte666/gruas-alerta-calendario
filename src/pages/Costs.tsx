@@ -510,6 +510,12 @@ const CostsPage = () => {
                 onSuccess={handleXMLUploadSuccess}
             />
 
+            <CSVCostUpload
+                isOpen={isCSVUploadOpen}
+                onClose={() => setIsCSVUploadOpen(false)}
+                onSuccess={(count) => setIsCSVUploadOpen(false)}
+            />
+
             <CostBatchUpdateModal
                 open={isBatchUpdateOpen}
                 onOpenChange={(open) => {
