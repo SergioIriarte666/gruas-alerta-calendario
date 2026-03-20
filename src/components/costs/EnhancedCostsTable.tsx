@@ -493,7 +493,7 @@ export const EnhancedCostsTable = ({
                   if (groupBy === 'none') {
                     return groupCosts.length === 0 ? (
                       <TableRow key="empty">
-                        <TableCell colSpan={onSelectionChange ? 8 : 7} className="text-center text-muted-foreground py-8">
+                        <TableCell colSpan={onSelectionChange ? 9 : 8} className="text-center text-muted-foreground py-8">
                           No se encontraron costos que coincidan con los filtros aplicados.
                         </TableCell>
                       </TableRow>
