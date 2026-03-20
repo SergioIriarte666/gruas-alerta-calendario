@@ -1,6 +1,7 @@
 import { 
   LayoutDashboard, 
   Truck, 
+  Landmark,
   Calendar, 
   FolderClosed, 
   Users, 
