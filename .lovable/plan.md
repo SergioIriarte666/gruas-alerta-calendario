@@ -1,57 +1,33 @@
 
 
-## Plan: Unificación y Sincronización de Módulos Financieros
+## Plan: Agregar columna "Pagado" en tabla de Costos
 
-### Estado actual
+### Objetivo
+Agregar una columna visual después de "Monto" que indique si el costo fue pagado, usando un ícono de check verde (pagado) o un indicador pendiente.
 
-#### ✅ Fase 1: Migración DB completada
-- Columnas `category`, `subcategory`, `notes`, `updated_by` agregadas a `inventory_suppliers`
-- Datos migrados de `suppliers` → `inventory_suppliers` (dedup por RUT normalizado)
-- FKs de `costs`, `crane_parts`, `creditors`, `supplier_payments`, `inventory_movements` redirigidas a `inventory_suppliers`
-- IDs remapeados en todas las tablas dependientes
+### Lógica
+Un costo se considera **pagado** cuando tiene `payment_date` con valor (no null). Esto ya existe en la base de datos.
 
-#### ✅ Fase 2: Hooks actualizados
-- `useSuppliers.ts` lee/escribe de `inventory_suppliers`
-- `useSupplierStats.ts` consulta `inventory_suppliers`
-- `useSupplierPayments.ts` usa `useUniversalSync` (elimina `useCostInvalidation`)
-- `usePurchaseInvoices.ts` consulta `inventory_suppliers`
-- `useInventory.ts` joins corregidos a `inventory_suppliers`
-- `finance/useSuppliers.ts` re-exporta del hook unificado
+### Previa visual
 
-#### ✅ Fase 3: XML importers corregidos
-- `XMLCostUpload.tsx` - `findSupplierByRutOrName` busca en `inventory_suppliers`
-- `XMLDocumentUpload.tsx` - usa `useSuppliers` que ya lee de `inventory_suppliers`
-- `UnifiedPurchaseService.ts` - lookup de proveedor desde `inventory_suppliers`
-- `BatchEditSuppliersModal.tsx` - escribe a `inventory_suppliers`
+```text
+Fecha | Descripción | Categoría | Monto    | Pagado | Asociado a | Acciones
+------|-------------|-----------|----------|--------|------------|--------
+21/03 | Factura...  | Pagos...  | $47.412  |   ✓    | N/A        | ...
+18/03 | Hotel Ibis  | Gastos... | $360.591 |   ○    | N/A        | ...
+17/03 | Combustible | Gastos... | $100.000 |   ✓    | Servicio   | ...
+```
 
-#### ✅ Fase 4: Invalidación centralizada
-- `useCostInvalidation.ts` eliminado
-- Todos los hooks usan `useUniversalSync.invalidateAll()` exclusivamente:
-  - `useCosts.ts` (addCost, updateCost, deleteCost)
-  - `useSupplierPayments.ts` (create, update, delete, markAsPaid)
-  - `useCraneMaintenance.ts`
-  - `usePendingPayments.ts`
+- **✓ verde** = tiene `payment_date` → Pagado
+- **○ gris** = sin `payment_date` → Pendiente
 
-#### ✅ Fase 5: UX & Trazabilidad + Reconciliación
-- `syncToast.ts` - Toast unificado que lista todas las acciones cross-módulo ejecutadas
-- `CostTraceabilityPanel.tsx` - Panel visual Costo ↔ Pago ↔ Inventario ↔ Pieza en CostDetailsModal
-- `UnifiedPurchaseService.ts` - Usa `showSyncToast` en vez de toasts fragmentados
-- `reconcile_orphan_records()` - RPC SQL para vincular registros huérfanos entre costs, payments, movements, parts
-- Toda invalidación fragmentada restante en `useSupplierPayments` consolidada a `invalidateAll()`
-  - `useCraneMaintenance.ts` (create, update, delete)
-  - `usePendingPayments.ts` (registerPayment)
-  - `useSupplierPayments.ts`
-  - `useUnifiedPurchase.ts`
-  - `Costs.tsx` (page-level)
-- `useUniversalSync` ahora invalida `supplier-stats`, `pending-payments`, `commissions`
-- `usePendingPayments.ts` corregido: query usa `inventory_suppliers` en vez de `suppliers`
-- `useUnifiedParts.ts` invalidación ampliada con `inventory-stats`, `suppliers`, `supplier-payments`
+### Cambios
 
-#### 🔲 Fase 5: UX sincronización + limpieza (pendiente)
-- Badges de sync, toasts unificados
-- Panel de trazabilidad en detalle de costo/pago/pieza
-- Script de reconciliación de históricos
+**Archivo: `src/components/costs/CostsTable.tsx`**
 
-### Archivos que aún pueden referenciar tabla `suppliers` directamente
-- `src/components/finance/historical/PurchaseHistoryImport.tsx` (tiene lógica dual, simplificar)
-- `src/utils/purchaseHistoryParser.ts`
+1. Agregar columna `<TableHead>` "Pagado" entre Monto y Asociado a
+2. Agregar `<TableCell>` con ícono condicional:
+   - `payment_date` existe → ícono `CheckCircle` verde + tooltip "Pagado"
+   - `payment_date` null → ícono `Circle` gris + tooltip "Pendiente"
+3. Actualizar `colSpan` del estado vacío de 6 a 7
+
