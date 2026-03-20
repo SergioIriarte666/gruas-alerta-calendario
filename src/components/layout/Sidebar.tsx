@@ -13,7 +13,7 @@ import {
   LayoutDashboard, Calendar, Truck, Users, Building2, DollarSign, Target, 
   FileText, Receipt, BarChart3, Settings, X, LogOut, ChevronLeft, ChevronRight, 
   Tags, Car, Package, Zap, Percent, ClipboardList, ChevronDown, ChevronUp,
-  Briefcase, Warehouse, TrendingUp, Cog, MapPin
+  Briefcase, Warehouse, TrendingUp, Cog, MapPin, Landmark
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -58,7 +58,8 @@ export const Sidebar = ({
     '/inventory': 'inventory',
     '/suppliers': 'suppliers',
     '/incomes': 'incomes',
-    '/costs': 'costs',
+    '/costs': 'finanzas',
+    '/accounts-payable': 'finanzas',
     '/commissions': 'commissions',
     '/closures': 'closures',
     '/invoices': 'invoices',
@@ -119,6 +120,7 @@ export const Sidebar = ({
       icon: TrendingUp,
       items: [
         { name: 'Costos', href: '/costs', icon: DollarSign, adminOnly: false },
+        { name: 'Cuentas por Pagar', href: '/accounts-payable', icon: Landmark, adminOnly: false },
         { name: 'Comisiones', href: '/commissions', icon: Percent, adminOnly: true },
         { name: 'Cierres', href: '/closures', icon: FileText, adminOnly: false },
         { name: 'Facturas', href: '/invoices', icon: Receipt, adminOnly: false },
