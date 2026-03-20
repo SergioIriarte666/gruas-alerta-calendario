@@ -26,8 +26,6 @@ export const CostAmountSection = ({
   showServiceButton = false 
 }: CostAmountSectionProps) => {
   const amount = form.watch('amount');
-  const supplierId = form.watch('supplier_id');
-  const canMarkAsPaid = Boolean(supplierId && supplierId !== 'none');
   
   return (
     <div className="space-y-4">
@@ -70,20 +68,17 @@ export const CostAmountSection = ({
               <Checkbox
                 checked={field.value}
                 onCheckedChange={(checked) => field.onChange(Boolean(checked))}
-                disabled={!canMarkAsPaid}
               />
             </FormControl>
             <div className="space-y-1">
               <Label
-                className={`text-sm font-medium text-foreground !mt-0 ${canMarkAsPaid ? 'cursor-pointer' : 'cursor-not-allowed opacity-70'}`}
-                onClick={() => canMarkAsPaid && field.onChange(!field.value)}
+                className="text-sm font-medium text-foreground !mt-0 cursor-pointer"
+                onClick={() => field.onChange(!field.value)}
               >
                 Marcar como pagado
               </Label>
               <p className="text-xs text-muted-foreground">
-                {canMarkAsPaid
-                  ? 'Al guardar, se registrará la fecha del costo como fecha de pago.'
-                  : 'Selecciona un proveedor en Asociaciones para habilitar esta opción.'}
+                Al guardar, se registrará la fecha del costo como fecha de pago.
               </p>
             </div>
           </FormItem>

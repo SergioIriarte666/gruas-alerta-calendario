@@ -314,8 +314,7 @@ export const CostForm = ({ isOpen, onClose, cost, prefilledData, onInventoryCost
                 purchase_quantity: values.purchase_quantity || null,
                 purchase_unit_cost: values.purchase_unit_cost || null,
                 immediate_consumption: values.immediate_consumption || false,
-                // Si el usuario marcó "ya pagado" y hay proveedor, setear payment_date
-                payment_date: (is_paid && resolvedSupplierId) ? values.date : null,
+                payment_date: is_paid ? values.date : null,
             } as CostFormData;
         
             if (cost && cost.id) {
