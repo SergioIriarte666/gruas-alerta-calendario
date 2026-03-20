@@ -416,7 +416,7 @@ const handler = async (req: Request): Promise<Response> => {
     doc.text(`Programados: ${todayScheduled}  |  En Curso: ${todayInProgress}  |  Completados: ${todayCompleted}  |  Cancelados: ${todayCancelled}`, 14, y);
     y += 4;
     if (todayServiceRows.length > 0) {
-      (doc as any).autoTable({
+      autoTable(doc, {
         startY: y,
         head: [["Folio", "Cliente", "Estado"]],
         body: todayServiceRows,
