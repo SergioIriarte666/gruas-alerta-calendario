@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/button';
+import { Plus } from 'lucide-react';
 import { APDashboardCards } from '@/components/accounts-payable/APDashboardCards';
 import { DebtList } from '@/components/accounts-payable/DebtList';
 import { MonthlyInstallments } from '@/components/accounts-payable/MonthlyInstallments';
