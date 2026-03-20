@@ -1,77 +1,70 @@
 
 
-## Plan: Módulo de Cuentas por Pagar (Deudas y Cuotas)
+## Plan: Carga Masiva de Costos por Excel/CSV
 
 ### Contexto
 
-Las tablas ya existen en la base de datos (`debts`, `debt_installments`, `debt_payments`, `creditors`) pero **no hay ninguna UI construida** para ellas. Este plan crea el módulo completo desde cero.
+Ya existe un sistema de carga masiva para **servicios** (`EnhancedCSVUploadServices.tsx`) con CSV/Excel, y un sistema de carga de costos por **XML** (`XMLCostUpload.tsx`). El objetivo es agregar una opción de carga masiva de costos desde **Excel/CSV**, siguiendo los mismos patrones.
 
-### Arquitectura
+### Flujo propuesto
 
 ```text
-/accounts-payable (nueva ruta en sidebar)
-├── Dashboard KPIs (total deuda, cuotas del mes, vencidas, pagado)
-├── Tab: Deudas (listado de deudas activas con progreso)
-├── Tab: Cuotas del Mes (vista mensual de cuotas pendientes)
-├── Tab: Calendario (vencimientos en vista calendario)
-└── Modales:
-    ├── Crear/Editar Deuda (acreedor, monto, cuotas, frecuencia, interés)
-    ├── Crear/Editar Acreedor
-    └── Registrar Pago de Cuota → crea costo automáticamente
+1. Usuario hace clic en "Cargar Excel" (nuevo botón en CostsHeader)
+2. Se abre modal con zona de drag & drop para archivo CSV/Excel
+3. Se parsea el archivo y se muestra previsualización
+4. Se validan los datos (categorías, montos, fechas)
+5. Se muestra resumen de validación (válidos, errores, advertencias)
+6. Usuario confirma → se insertan los costos en lote
+7. Progreso visual con barra animada
 ```
 
-### Flujo principal
+### Columnas del template Excel/CSV
 
-1. **Crear Acreedor** (SII, banco, leasing, etc.) — se guarda en `creditors`, opcionalmente vinculado a un `inventory_supplier`
-2. **Crear Deuda** — se define monto total, cantidad de cuotas, frecuencia, fecha primera cuota, interés opcional. Se generan automáticamente los registros en `debt_installments`
-3. **Vista mensual** — muestra todas las cuotas del mes actual con montos y estados
-4. **Registrar pago de cuota** — marca la cuota como pagada, crea registro en `debt_payments`, y **crea un costo** en la tabla `costs` con la categoría correspondiente y `payment_date` establecida
+| Columna | Requerida | Ejemplo |
+|---------|-----------|---------|
+| Fecha | Sí | 2026-03-20 |
+| Descripción | Sí | Combustible grúa |
+| Monto | Sí | 150000 |
+| Categoría | Sí | Gastos Operacionales |
+| Subcategoría | No | Combustible |
+| Notas | No | Factura #123 |
+| Pagado (Sí/No) | No | Sí |
+| Fecha Pago | No | 2026-03-20 |
 
 ### Archivos a crear
 
 | Archivo | Propósito |
 |---------|-----------|
-| `src/pages/AccountsPayable.tsx` | Página principal con tabs y KPIs |
-| `src/hooks/useDebts.ts` | CRUD de deudas con cuotas |
-| `src/hooks/useCreditors.ts` | CRUD de acreedores |
-| `src/hooks/useDebtInstallments.ts` | Consulta y pago de cuotas |
-| `src/components/accounts-payable/APDashboardCards.tsx` | KPIs: total deuda, cuotas mes, vencidas |
-| `src/components/accounts-payable/DebtList.tsx` | Tabla de deudas con barra de progreso |
-| `src/components/accounts-payable/MonthlyInstallments.tsx` | Cuotas del mes con acciones de pago |
-| `src/components/accounts-payable/DebtForm.tsx` | Modal crear/editar deuda + generar cuotas |
-| `src/components/accounts-payable/CreditorForm.tsx` | Modal crear/editar acreedor |
-| `src/components/accounts-payable/PayInstallmentModal.tsx` | Registrar pago → crear costo |
-| `src/components/accounts-payable/DebtCalendar.tsx` | Calendario de vencimientos |
+| `src/components/costs/CSVCostUpload.tsx` | Modal principal con drag & drop, previsualización, validación y carga |
+| `src/hooks/useCostCSVUpload.ts` | Hook que maneja parseo, validación contra categorías existentes, e inserción en lote |
+| `src/utils/costCsvTemplate.ts` | Generador de template CSV/Excel descargable |
 
 ### Archivos a modificar
 
 | Archivo | Cambio |
 |---------|--------|
-| `src/constants/modules.ts` | Agregar módulo `accounts-payable` |
-| `src/App.tsx` | Agregar ruta `/accounts-payable` |
-| Sidebar/navegación | Agregar link al nuevo módulo |
+| `src/components/costs/CostsHeader.tsx` | Agregar botón "Cargar Excel" junto al botón "Cargar XML" existente |
+| `src/pages/Costs.tsx` (o donde se renderiza) | Agregar estado y modal `CSVCostUpload` |
 
-### Sincronización con Costos
+### Validaciones incluidas
 
-Al registrar el pago de una cuota:
-1. Se actualiza `debt_installments.status = 'paid'`, `paid_date`, `paid_amount`
-2. Se inserta en `debt_payments` el registro del pago
-3. Se crea un **costo** en `costs` con:
-   - `description`: "Cuota N de [descripción deuda] - [acreedor]"
-   - `amount`: monto de la cuota
-   - `date`: fecha del pago
-   - `payment_date`: fecha del pago (marcado como pagado)
-   - `category_id`: categoría "Deudas y Obligaciones" (se busca o crea)
+- Formato de fecha válido
+- Monto numérico > 0
+- Categoría existente en `cost_categories` (match por nombre)
+- Detección de duplicados (misma fecha + monto + descripción)
+- Filas vacías ignoradas
 
-### Migración de datos
+### Lógica de inserción
 
-- Crear categoría de costos "Deudas y Obligaciones" si no existe
-- No se requieren cambios de schema — todas las tablas ya existen
+- Se usa `supabase.from('costs').insert()` en lotes de 50 registros
+- Si "Pagado = Sí", se establece `payment_date`
+- Se busca `category_id` por nombre de categoría
+- Barra de progreso durante la inserción
+- Resumen final: insertados, errores, advertencias
 
-### KPIs del Dashboard
+### UX
 
-- **Deuda Total Vigente**: suma de cuotas pendientes de todas las deudas activas
-- **Cuotas este Mes**: cantidad y monto de cuotas con vencimiento en el mes actual
-- **Vencidas**: cuotas con `due_date < hoy` y `status = 'pending'`
-- **Pagado este Mes**: cuotas pagadas en el mes actual
+- Reutiliza componentes existentes: `BatchProgressModal`, zona drag & drop similar a servicios
+- Template descargable en CSV y Excel
+- Previsualización de datos antes de confirmar
 
