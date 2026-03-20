@@ -36,6 +36,7 @@ const routeImports = {
   Invoices: () => import('@/pages/Invoices'),
   IncomeProjections: () => import('@/pages/IncomeProjections'),
   Costs: () => import('@/pages/Costs'),
+  AccountsPayable: () => import('@/pages/AccountsPayable'),
   CostCenters: () => import('@/pages/CostCenters'),
   Inventory: () => import('@/pages/Inventory'),
   Reports: () => import('@/pages/Reports'),
