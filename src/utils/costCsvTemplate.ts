@@ -17,6 +17,18 @@ const EXAMPLE_ROWS = [
   ['2026-03-18', 'Mantención preventiva', '320000', 'Mantenimiento', '', 'Orden de trabajo #89', 'Sí', '2026-03-18'],
 ];
 
+const triggerDownload = (blob: Blob, fileName: string) => {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = fileName;
+  link.rel = 'noopener';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+};
+
 export const generateCostCsvTemplate = () => {
   const csvContent = [
     TEMPLATE_COLUMNS.join(','),
@@ -24,16 +36,12 @@ export const generateCostCsvTemplate = () => {
   ].join('\n');
 
   const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
-  const link = document.createElement('a');
-  link.href = URL.createObjectURL(blob);
-  link.download = 'plantilla_costos.csv';
-  link.click();
-  URL.revokeObjectURL(link.href);
+  triggerDownload(blob, 'plantilla_costos.csv');
 };
 
 export const generateCostExcelTemplate = () => {
   const ws = XLSX.utils.aoa_to_sheet([TEMPLATE_COLUMNS, ...EXAMPLE_ROWS]);
-  
+
   ws['!cols'] = [
     { wch: 12 }, // Fecha
     { wch: 35 }, // Descripción
@@ -47,5 +55,9 @@ export const generateCostExcelTemplate = () => {
 
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Costos');
-  XLSX.writeFile(wb, 'plantilla_costos.xlsx');
+  const output = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+  triggerDownload(
+    new Blob([output], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }),
+    'plantilla_costos.xlsx'
+  );
 };
