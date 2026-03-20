@@ -37,6 +37,7 @@ const CostsPage = () => {
     const [isQuickFormOpen, setIsQuickFormOpen] = useState(false);
     const [isDetailsOpen, setIsDetailsOpen] = useState(false);
     const [isXMLUploadOpen, setIsXMLUploadOpen] = useState(false);
+    const [isCSVUploadOpen, setIsCSVUploadOpen] = useState(false);
     const [isBatchUpdateOpen, setIsBatchUpdateOpen] = useState(false);
     const [isDistributionOpen, setIsDistributionOpen] = useState(false);
     const [selectedCostForEdit, setSelectedCostForEdit] = useState<Cost | null>(null);
