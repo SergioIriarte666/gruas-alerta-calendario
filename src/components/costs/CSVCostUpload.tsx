@@ -20,6 +20,7 @@ import { useDropzone } from 'react-dropzone';
 import { useCostCSVUpload } from '@/hooks/useCostCSVUpload';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { generateCostCsvTemplate, generateCostExcelTemplate } from '@/utils/costCsvTemplate';
 
 interface CSVCostUploadProps {
   isOpen: boolean;
@@ -162,25 +163,33 @@ export const CSVCostUpload = ({ isOpen, onClose, onSuccess }: CSVCostUploadProps
               {/* Template downloads */}
               <div className="flex items-center gap-2 justify-center">
                 <span className="text-xs text-muted-foreground">Descargar plantilla:</span>
-                <Button asChild type="button" variant="outline" size="sm" onMouseDown={(e) => e.stopPropagation()}>
-                  <a
-                    href="/templates/plantilla_costos.csv"
-                    download="plantilla_costos.csv"
-                    onClick={(e) => e.stopPropagation()}
-                  >
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onMouseDown={(e) => e.stopPropagation()}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    generateCostCsvTemplate();
+                  }}
+                >
                     <Download className="w-3 h-3 mr-1" />
                     CSV
-                  </a>
                 </Button>
-                <Button asChild type="button" variant="outline" size="sm" onMouseDown={(e) => e.stopPropagation()}>
-                  <a
-                    href="/templates/plantilla_costos.xlsx"
-                    download="plantilla_costos.xlsx"
-                    onClick={(e) => e.stopPropagation()}
-                  >
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onMouseDown={(e) => e.stopPropagation()}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    generateCostExcelTemplate();
+                  }}
+                >
                     <Download className="w-3 h-3 mr-1" />
                     Excel
-                  </a>
                 </Button>
               </div>
 
