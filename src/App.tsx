@@ -78,6 +78,7 @@ const Closures = lazy(routeImports.Closures);
 const Invoices = lazy(routeImports.Invoices);
 const IncomeProjections = lazy(routeImports.IncomeProjections);
 const Costs = lazy(routeImports.Costs);
+const AccountsPayable = lazy(routeImports.AccountsPayable);
 const CostCenters = lazy(routeImports.CostCenters);
 const Inventory = lazy(routeImports.Inventory);
 const Reports = lazy(routeImports.Reports);
