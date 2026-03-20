@@ -86,13 +86,33 @@ export const CSVCostUpload = ({ isOpen, onClose, onSuccess }: CSVCostUploadProps
     }
   }, [parseFile, validate, setFile]);
 
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+  const handleDownloadCSVTemplate = useCallback(() => {
+    try {
+      generateCostCsvTemplate();
+    } catch (error) {
+      console.error('Error downloading cost CSV template:', error);
+      toast.error('Error al descargar la plantilla CSV');
+    }
+  }, []);
+
+  const handleDownloadExcelTemplate = useCallback(() => {
+    try {
+      generateCostExcelTemplate();
+    } catch (error) {
+      console.error('Error downloading cost Excel template:', error);
+      toast.error('Error al descargar la plantilla Excel');
+    }
+  }, []);
+
+  const { getRootProps, getInputProps, isDragActive, open } = useDropzone({
     onDrop,
     accept: {
       'text/csv': ['.csv'],
       'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
       'application/vnd.ms-excel': ['.xls'],
     },
+    noClick: true,
+    noKeyboard: true,
     maxFiles: 1,
     multiple: false,
   });
@@ -156,8 +176,17 @@ export const CSVCostUpload = ({ isOpen, onClose, onSuccess }: CSVCostUploadProps
                   {isDragActive ? 'Suelta el archivo aquí' : 'Arrastra un archivo CSV o Excel'}
                 </p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  o haz clic para seleccionar
+                  o usa el botón para seleccionar
                 </p>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  className="mt-4"
+                  onClick={open}
+                >
+                  Seleccionar archivo
+                </Button>
               </div>
 
               {/* Template downloads */}
@@ -167,12 +196,7 @@ export const CSVCostUpload = ({ isOpen, onClose, onSuccess }: CSVCostUploadProps
                   type="button"
                   variant="outline"
                   size="sm"
-                  onMouseDown={(e) => e.stopPropagation()}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    generateCostCsvTemplate();
-                  }}
+                  onClick={handleDownloadCSVTemplate}
                 >
                     <Download className="w-3 h-3 mr-1" />
                     CSV
@@ -181,12 +205,7 @@ export const CSVCostUpload = ({ isOpen, onClose, onSuccess }: CSVCostUploadProps
                   type="button"
                   variant="outline"
                   size="sm"
-                  onMouseDown={(e) => e.stopPropagation()}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    generateCostExcelTemplate();
-                  }}
+                  onClick={handleDownloadExcelTemplate}
                 >
                     <Download className="w-3 h-3 mr-1" />
                     Excel
