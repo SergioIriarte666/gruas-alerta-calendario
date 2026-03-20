@@ -162,33 +162,17 @@ export const CSVCostUpload = ({ isOpen, onClose, onSuccess }: CSVCostUploadProps
               {/* Template downloads */}
               <div className="flex items-center gap-2 justify-center">
                 <span className="text-xs text-muted-foreground">Descargar plantilla:</span>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onMouseDown={(e) => e.stopPropagation()}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    generateCostCsvTemplate();
-                  }}
-                >
-                  <Download className="w-3 h-3 mr-1" />
-                  CSV
+                <Button asChild type="button" variant="outline" size="sm" onMouseDown={(e) => e.stopPropagation()}>
+                  <a href="/templates/plantilla_costos.csv" target="_blank" rel="noopener noreferrer">
+                    <Download className="w-3 h-3 mr-1" />
+                    CSV
+                  </a>
                 </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onMouseDown={(e) => e.stopPropagation()}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    generateCostExcelTemplate();
-                  }}
-                >
-                  <Download className="w-3 h-3 mr-1" />
-                  Excel
+                <Button asChild type="button" variant="outline" size="sm" onMouseDown={(e) => e.stopPropagation()}>
+                  <a href="/templates/plantilla_costos.xlsx" target="_blank" rel="noopener noreferrer">
+                    <Download className="w-3 h-3 mr-1" />
+                    Excel
+                  </a>
                 </Button>
               </div>
 
