@@ -70,7 +70,7 @@ export const CSVCostUpload = ({ isOpen, onClose, onSuccess }: CSVCostUploadProps
         toast.error('El archivo está vacío');
         return;
       }
-      const result = validate(data);
+      const result = await validate(data);
       setStep('preview');
 
       if (result.validRows.length > 0 && result.invalidRows.length === 0) {
@@ -296,15 +296,37 @@ export const CSVCostUpload = ({ isOpen, onClose, onSuccess }: CSVCostUploadProps
                 </div>
               )}
 
-              {/* Warnings */}
-              {validationResult.validRows.some(r => r.warnings.length > 0) && (
-                <Alert>
-                  <AlertTriangle className="w-4 h-4" />
-                  <AlertDescription className="text-xs">
-                    Algunos registros tienen advertencias de posibles duplicados
-                  </AlertDescription>
-                </Alert>
-              )}
+              {/* Warnings - duplicates */}
+              {validationResult.validRows.some(r => r.warnings.length > 0) && (() => {
+                const dbDupes = validationResult.validRows.filter(r => r.warnings.some(w => w.includes('base de datos')));
+                const fileDupes = validationResult.validRows.filter(r => r.warnings.some(w => w.includes('archivo')));
+                return (
+                  <div className="space-y-2">
+                    {dbDupes.length > 0 && (
+                      <Alert className="border-amber-500 bg-amber-50 dark:bg-amber-950/20">
+                        <AlertTriangle className="w-4 h-4 text-amber-600" />
+                        <AlertDescription className="text-xs">
+                          <strong className="text-amber-700">{dbDupes.length} registro(s) ya existen en la base de datos</strong> (misma fecha, monto y descripción). Se cargarán igualmente si confirmas.
+                          <div className="mt-1 max-h-20 overflow-y-auto space-y-0.5">
+                            {dbDupes.slice(0, 5).map((r, i) => (
+                              <div key={i} className="text-amber-600">Fila {r.rowIndex}: {r.descripcion} - ${r.monto.toLocaleString()}</div>
+                            ))}
+                            {dbDupes.length > 5 && <div className="text-amber-500">... y {dbDupes.length - 5} más</div>}
+                          </div>
+                        </AlertDescription>
+                      </Alert>
+                    )}
+                    {fileDupes.length > 0 && (
+                      <Alert>
+                        <AlertTriangle className="w-4 h-4" />
+                        <AlertDescription className="text-xs">
+                          {fileDupes.length} registro(s) duplicados dentro del archivo
+                        </AlertDescription>
+                      </Alert>
+                    )}
+                  </div>
+                );
+              })()}
 
               {/* Actions */}
               <div className="flex justify-end gap-2 pt-2">

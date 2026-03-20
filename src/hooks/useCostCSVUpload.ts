@@ -95,10 +95,22 @@ export const useCostCSVUpload = () => {
     });
   }, []);
 
-  const validate = useCallback((data: any[]): CostCSVValidationResult => {
+  const validate = useCallback(async (data: any[]): Promise<CostCSVValidationResult> => {
     const categoryMap = new Map<string, string>();
     categories.forEach(c => {
       if (c.name) categoryMap.set(normalizeText(c.name), c.id);
+    });
+
+    // Fetch existing costs for duplicate detection
+    const { data: existingCosts } = await supabase
+      .from('costs')
+      .select('date, amount, description')
+      .order('date', { ascending: false })
+      .limit(5000);
+
+    const existingSet = new Set<string>();
+    existingCosts?.forEach(c => {
+      existingSet.add(`${c.date}|${Number(c.amount)}|${c.description?.toLowerCase().trim()}`);
     });
 
     const validRows: CostRow[] = [];
@@ -150,13 +162,18 @@ export const useCostCSVUpload = () => {
       const pagado = ['si', 'sí', 'yes', '1', 'true', 'x'].includes(normalizeText(pagadoRaw));
       const fechaPago = pagado ? (parseDate(fechaPagoRaw) || fecha) : undefined;
 
-      // Duplicate check
+      // Duplicate check - within file
       if (fecha && monto && descripcion) {
         const key = `${fecha}|${monto}|${descripcion.toLowerCase()}`;
         if (seen.has(key)) {
           warnings.push('Posible duplicado en el archivo');
         }
         seen.add(key);
+
+        // Duplicate check - against database
+        if (existingSet.has(key)) {
+          warnings.push('⚠️ Ya existe en la base de datos (misma fecha, monto y descripción)');
+        }
       }
 
       const costRow: CostRow = {
