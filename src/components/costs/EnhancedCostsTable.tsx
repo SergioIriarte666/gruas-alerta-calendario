@@ -297,6 +297,22 @@ export const EnhancedCostsTable = ({
       <TableCell className="text-right font-semibold text-foreground">
         {formatCurrency(Number(cost.amount))}
       </TableCell>
+      <TableCell className="text-center">
+        <TooltipProvider delayDuration={0}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span className="inline-flex">
+                {cost.payment_date ? (
+                  <CheckCircle className="h-5 w-5 text-green-500" />
+                ) : (
+                  <Circle className="h-5 w-5 text-muted-foreground/40" />
+                )}
+              </span>
+            </TooltipTrigger>
+            <TooltipContent>{cost.payment_date ? 'Pagado' : 'Pendiente'}</TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      </TableCell>
       <TableCell className="text-muted-foreground text-sm">
         {cost.services ? (
           <button
