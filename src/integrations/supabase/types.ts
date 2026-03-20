@@ -386,6 +386,48 @@ export type Database = {
         }
         Relationships: []
       }
+      cost_bulk_payment_operations: {
+        Row: {
+          already_paid_cost_ids: string[]
+          error_message: string | null
+          executed_at: string
+          executed_by: string
+          id: string
+          missing_cost_ids: string[]
+          payment_date: string | null
+          processed_cost_ids: string[]
+          requested_cost_ids: string[]
+          status: string
+          use_cost_date: boolean
+        }
+        Insert: {
+          already_paid_cost_ids?: string[]
+          error_message?: string | null
+          executed_at?: string
+          executed_by: string
+          id?: string
+          missing_cost_ids?: string[]
+          payment_date?: string | null
+          processed_cost_ids?: string[]
+          requested_cost_ids: string[]
+          status?: string
+          use_cost_date?: boolean
+        }
+        Update: {
+          already_paid_cost_ids?: string[]
+          error_message?: string | null
+          executed_at?: string
+          executed_by?: string
+          id?: string
+          missing_cost_ids?: string[]
+          payment_date?: string | null
+          processed_cost_ids?: string[]
+          requested_cost_ids?: string[]
+          status?: string
+          use_cost_date?: boolean
+        }
+        Relationships: []
+      }
       cost_categories: {
         Row: {
           created_at: string
@@ -5133,6 +5175,10 @@ export type Database = {
         Returns: undefined
       }
       mark_all_notifications_read: { Args: never; Returns: number }
+      mark_costs_paid_batch: {
+        Args: { p_cost_ids: string[]; p_payment_date?: string }
+        Returns: Json
+      }
       mark_notification_read: {
         Args: { p_notification_id: string }
         Returns: boolean
