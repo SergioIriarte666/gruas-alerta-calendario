@@ -23,6 +23,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Zap, FileEdit, FileSpreadsheet } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import * as XLSX from 'xlsx';
+import { useUser } from '@/contexts/UserContext';
+import { toast } from 'sonner';
 import { 
   getCurrentChileDate, 
   formatForDisplay,
@@ -39,6 +41,7 @@ const CostsPage = () => {
     const [isXMLUploadOpen, setIsXMLUploadOpen] = useState(false);
     const [isCSVUploadOpen, setIsCSVUploadOpen] = useState(false);
     const [isBatchUpdateOpen, setIsBatchUpdateOpen] = useState(false);
+    const [isBatchMarkPaidOpen, setIsBatchMarkPaidOpen] = useState(false);
     const [isDistributionOpen, setIsDistributionOpen] = useState(false);
     const [selectedCostForEdit, setSelectedCostForEdit] = useState<Cost | null>(null);
     const [prefilledDataForDuplication, setPrefilledDataForDuplication] = useState<ReturnType<typeof prepareCostForDuplication> | null>(null);
@@ -73,6 +76,7 @@ const CostsPage = () => {
     const { invalidateAll } = useUniversalSync();
     const dateMetrics = useDateFilters(costs);
     const queryClient = useQueryClient();
+    const { user } = useUser();
 
     const baseCosts = costs;
 
@@ -88,9 +92,13 @@ const CostsPage = () => {
     }, [searchParams]);
 
     const handleOpenForm = useCallback((cost: Cost | null = null) => {
+        if (cost?.payment_date && user?.role !== 'admin') {
+            toast.error('Este costo está marcado como pagado y no puede ser modificado sin autorización especial');
+            return;
+        }
         setSelectedCostForEdit(cost);
         setIsFormOpen(true);
-    }, []);
+    }, [user]);
 
     const handleCloseForm = useCallback(() => {
         setIsFormOpen(false);
@@ -133,8 +141,12 @@ const CostsPage = () => {
     }, []);
 
     const handleDeleteCost = useCallback((cost: Cost) => {
+        if (cost.payment_date && user?.role !== 'admin') {
+            toast.error('Este costo está marcado como pagado y no puede ser modificado sin autorización especial');
+            return;
+        }
         deleteCost(cost.id);
-    }, [deleteCost]);
+    }, [deleteCost, user]);
 
     const handleClearFilters = useCallback(() => {
         setFilters({
@@ -462,6 +474,7 @@ const CostsPage = () => {
                     selectedCosts={selectedCostIds}
                     onSelectionChange={setSelectedCostIds}
                     onBatchUpdate={() => setIsBatchUpdateOpen(true)}
+                    onBatchMarkPaid={() => setIsBatchMarkPaidOpen(true)}
                 />
             ) : (
                 <CostList 
@@ -520,6 +533,16 @@ const CostsPage = () => {
                 open={isBatchUpdateOpen}
                 onOpenChange={(open) => {
                     setIsBatchUpdateOpen(open);
+                    if (!open) setSelectedCostIds(new Set());
+                }}
+                selectedCosts={finalFilteredCosts.filter(c => selectedCostIds.has(c.id))}
+            />
+
+            <CostBatchUpdateModal
+                open={isBatchMarkPaidOpen}
+                mode="markPaid"
+                onOpenChange={(open) => {
+                    setIsBatchMarkPaidOpen(open);
                     if (!open) setSelectedCostIds(new Set());
                 }}
                 selectedCosts={finalFilteredCosts.filter(c => selectedCostIds.has(c.id))}

@@ -124,17 +124,21 @@ export const CSVCostUpload = ({ isOpen, onClose, onSuccess }: CSVCostUploadProps
     batchProgress.start('Cargando costos', validationResult.validRows.length);
 
     try {
-      const { success, errors } = await uploadCosts(validationResult.validRows);
+      const { created, updated, skipped, errors } = await uploadCosts(validationResult.validRows);
 
       if (errors === 0) {
         batchProgress.complete();
-        toast.success(`${success} costos cargados exitosamente`);
+        const parts = [];
+        if (created > 0) parts.push(`${created} creados`);
+        if (updated > 0) parts.push(`${updated} actualizados (marcados como pagados)`);
+        if (skipped > 0) parts.push(`${skipped} omitidos (duplicados)`);
+        toast.success(`Carga completada: ${parts.join(' · ') || 'sin cambios'}`);
         queryClient.invalidateQueries({ queryKey: ['costs'] });
-        onSuccess?.(success);
+        onSuccess?.(created + updated);
         setStep('done');
       } else {
         batchProgress.error(`${errors} registros con errores`);
-        toast.error(`${success} cargados, ${errors} con errores`);
+        toast.error(`${created + updated} procesados, ${skipped} omitidos, ${errors} con errores`);
         setStep('done');
       }
     } catch (err) {

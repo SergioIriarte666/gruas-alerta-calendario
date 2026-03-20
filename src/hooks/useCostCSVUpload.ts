@@ -15,6 +15,8 @@ interface CostRow {
   pagado: boolean;
   fechaPago?: string;
   categoryId?: string;
+  existingCostId?: string;
+  existingPaymentDate?: string | null;
   errors: string[];
   warnings: string[];
 }
@@ -28,6 +30,9 @@ export interface CostCSVValidationResult {
 
 const normalizeText = (text: string) =>
   text?.toString().trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '') || '';
+
+const normalizeDescription = (text: string) =>
+  normalizeText(text).replace(/\s+/g, ' ').trim();
 
 const parseDate = (value: string): string | null => {
   if (!value) return null;
@@ -60,6 +65,16 @@ const parseAmount = (value: string): number | null => {
   return isNaN(num) || num <= 0 ? null : num;
 };
 
+const parsePaidFlag = (value: string): boolean => {
+  const v = normalizeText(value);
+  if (!v) return false;
+  if (['1', 'true', 'x', 'y', 'yes', 'paid', 'pagado', 'p'].includes(v)) return true;
+  if (v === 'si' || v === 's') return true;
+  if (v.startsWith('si ')) return true;
+  if (v.startsWith('pag')) return true;
+  return false;
+};
+
 export const useCostCSVUpload = () => {
   const { data: categories = [] } = useCostCategories();
   const [file, setFile] = useState<File | null>(null);
@@ -74,9 +89,9 @@ export const useCostCSVUpload = () => {
       reader.onload = (e) => {
         try {
           const data = e.target?.result;
-          const wb = XLSX.read(data, { type: 'binary' });
+          const wb = XLSX.read(data, { type: 'binary', cellDates: true });
           const ws = wb.Sheets[wb.SheetNames[0]];
-          const jsonData = XLSX.utils.sheet_to_json(ws, { defval: '' });
+          const jsonData = XLSX.utils.sheet_to_json(ws, { defval: '', raw: false });
           
           // Filter out empty rows
           const filtered = jsonData.filter((row: any) => {
@@ -101,22 +116,45 @@ export const useCostCSVUpload = () => {
       if (c.name) categoryMap.set(normalizeText(c.name), c.id);
     });
 
-    // Fetch existing costs for duplicate detection
-    const { data: existingCosts } = await supabase
-      .from('costs')
-      .select('date, amount, description')
-      .order('date', { ascending: false })
-      .limit(5000);
-
-    const existingSet = new Set<string>();
-    existingCosts?.forEach(c => {
-      existingSet.add(`${c.date}|${Number(c.amount)}|${c.description?.toLowerCase().trim()}`);
-    });
-
+    const globalWarnings: string[] = [];
     const validRows: CostRow[] = [];
     const invalidRows: CostRow[] = [];
-    const globalWarnings: string[] = [];
     const seen = new Set<string>();
+
+    const getRowValue = (row: any, names: string[]) => {
+      const keys = Object.keys(row);
+      const key = keys.find(k => names.some(n => normalizeText(k).includes(normalizeText(n))));
+      return key ? String(row[key] ?? '') : '';
+    };
+
+    const parsedDates = data
+      .map((row) => parseDate(getRowValue(row, ['fecha'])))
+      .filter((d): d is string => !!d)
+      .sort();
+
+    const dateFrom = parsedDates[0];
+    const dateTo = parsedDates[parsedDates.length - 1];
+
+    const existingSet = new Set<string>();
+    const existingByKey = new Map<string, { id: string; payment_date: string | null }>();
+    if (dateFrom && dateTo) {
+      const { data: existingCosts, error } = await supabase
+        .from('costs')
+        .select('id, date, amount, description, payment_date')
+        .gte('date', dateFrom)
+        .lte('date', dateTo);
+
+      if (error) {
+        toast.error('No se pudo validar duplicados contra la base de datos');
+        globalWarnings.push('No se pudo validar duplicados contra la base de datos');
+      } else {
+        existingCosts?.forEach((c) => {
+          const k = `${c.date}|${Number(c.amount)}|${normalizeDescription(c.description || '')}`;
+          existingSet.add(k);
+          existingByKey.set(k, { id: c.id, payment_date: c.payment_date ?? null });
+        });
+      }
+    }
 
     data.forEach((row, index) => {
       const errors: string[] = [];
@@ -136,7 +174,7 @@ export const useCostCSVUpload = () => {
       const subcategoria = get(['subcategoria', 'subcategory']).trim() || undefined;
       const notas = get(['notas', 'notes', 'observaciones']).trim() || undefined;
       const pagadoRaw = get(['pagado', 'paid']);
-      const fechaPagoRaw = get(['fecha pago', 'fecha_pago', 'payment']);
+      const fechaPagoRaw = get(['fecha pago', 'fecha de pago', 'fecha_pago', 'fechapago', 'payment date', 'paid date']);
 
       // Validate fecha
       const fecha = parseDate(fechaRaw);
@@ -159,20 +197,30 @@ export const useCostCSVUpload = () => {
       }
 
       // Parse pagado
-      const pagado = ['si', 'sí', 'yes', '1', 'true', 'x'].includes(normalizeText(pagadoRaw));
-      const fechaPago = pagado ? (parseDate(fechaPagoRaw) || fecha) : undefined;
+      const parsedFechaPago = parseDate(fechaPagoRaw);
+      const pagado = parsePaidFlag(pagadoRaw) || !!parsedFechaPago;
+      const fechaPago = pagado ? (parsedFechaPago || fecha) : undefined;
 
       // Duplicate check - within file
-      if (fecha && monto && descripcion) {
-        const key = `${fecha}|${monto}|${descripcion.toLowerCase()}`;
+      if (fecha && monto !== null && descripcion) {
+        const key = `${fecha}|${monto}|${normalizeDescription(descripcion)}`;
         if (seen.has(key)) {
-          warnings.push('Posible duplicado en el archivo');
+          errors.push('Duplicado en el archivo (misma fecha, monto y descripción)');
         }
         seen.add(key);
 
         // Duplicate check - against database
         if (existingSet.has(key)) {
-          warnings.push('⚠️ Ya existe en la base de datos (misma fecha, monto y descripción)');
+          const existing = existingByKey.get(key);
+          if (existing) {
+            if (pagado && !existing.payment_date) {
+              warnings.push('Existe en base de datos (se actualizará a pagado)');
+            } else {
+              warnings.push('Existe en base de datos (se omitirá)');
+            }
+          } else {
+            warnings.push('Existe en base de datos (se omitirá)');
+          }
         }
       }
 
@@ -187,6 +235,16 @@ export const useCostCSVUpload = () => {
         pagado,
         fechaPago,
         categoryId,
+        existingCostId: (() => {
+          if (!fecha || monto === null || !descripcion) return undefined;
+          const key = `${fecha}|${monto}|${normalizeDescription(descripcion)}`;
+          return existingByKey.get(key)?.id;
+        })(),
+        existingPaymentDate: (() => {
+          if (!fecha || monto === null || !descripcion) return undefined;
+          const key = `${fecha}|${monto}|${normalizeDescription(descripcion)}`;
+          return existingByKey.get(key)?.payment_date ?? undefined;
+        })(),
         errors,
         warnings,
       };
@@ -209,36 +267,65 @@ export const useCostCSVUpload = () => {
     return result;
   }, [categories]);
 
-  const uploadCosts = useCallback(async (rows: CostRow[]): Promise<{ success: number; errors: number }> => {
+  const uploadCosts = useCallback(async (rows: CostRow[]): Promise<{ created: number; updated: number; skipped: number; errors: number }> => {
     setIsUploading(true);
     setUploadProgress({ current: 0, total: rows.length });
     
-    let success = 0;
+    let created = 0;
+    let updated = 0;
+    let skipped = 0;
     let errors = 0;
     const BATCH_SIZE = 50;
 
     try {
       for (let i = 0; i < rows.length; i += BATCH_SIZE) {
         const batch = rows.slice(i, i + BATCH_SIZE);
-        
-        const insertData = batch.map(row => ({
-          date: row.fecha,
-          description: row.descripcion,
-          amount: row.monto,
-          category_id: row.categoryId!,
-          subcategory: row.subcategoria || null,
-          notes: row.notas || null,
-          payment_date: row.pagado ? (row.fechaPago || row.fecha) : null,
-        }));
 
-        const { error } = await supabase.from('costs').insert(insertData);
-        
-        if (error) {
-          console.error('Batch insert error:', error);
-          errors += batch.length;
-        } else {
-          success += batch.length;
+        const toInsert = batch.filter((r) => !r.existingCostId);
+        const toUpdate = batch.filter((r) => !!r.existingCostId && r.pagado && !r.existingPaymentDate);
+        const toSkip = batch.filter((r) => !!r.existingCostId && (!r.pagado || !!r.existingPaymentDate));
+
+        if (toInsert.length > 0) {
+          const insertData = toInsert.map((row) => ({
+            date: row.fecha,
+            description: row.descripcion,
+            amount: row.monto,
+            category_id: row.categoryId!,
+            subcategory: row.subcategoria || null,
+            notes: row.notas || null,
+            payment_date: row.pagado ? (row.fechaPago || row.fecha) : null,
+          }));
+
+          const { error } = await supabase.from('costs').insert(insertData);
+          if (error) {
+            console.error('Batch insert error:', error);
+            errors += toInsert.length;
+          } else {
+            created += toInsert.length;
+          }
         }
+
+        if (toUpdate.length > 0) {
+          const updates = await Promise.all(
+            toUpdate.map((row) =>
+              supabase
+                .from('costs')
+                .update({ payment_date: row.fechaPago || row.fecha })
+                .eq('id', row.existingCostId!)
+                .is('payment_date', null)
+            )
+          );
+
+          const updateErrors = updates.filter((r) => r.error);
+          if (updateErrors.length > 0) {
+            console.error('Batch update payment_date error:', updateErrors);
+            errors += updateErrors.length;
+          }
+
+          updated += toUpdate.length - updateErrors.length;
+        }
+
+        skipped += toSkip.length;
 
         setUploadProgress({ current: Math.min(i + BATCH_SIZE, rows.length), total: rows.length });
       }
@@ -246,7 +333,7 @@ export const useCostCSVUpload = () => {
       setIsUploading(false);
     }
 
-    return { success, errors };
+    return { created, updated, skipped, errors };
   }, []);
 
   const reset = useCallback(() => {

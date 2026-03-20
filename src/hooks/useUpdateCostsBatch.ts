@@ -16,6 +16,29 @@ export interface CostBatchUpdateData {
   appendNotes?: boolean;
 }
 
+export interface MarkCostsPaidBatchData {
+  costIds: string[];
+  paymentDate: string | null;
+}
+
+export interface MarkCostsPaidBatchResult {
+  success: boolean;
+  operation_id: string;
+  executed_at: string;
+  executed_by: string;
+  payment_date: string | null;
+  use_cost_date?: boolean;
+  requested_ids: string[];
+  processed_ids: string[];
+  already_paid_ids: string[];
+  missing_ids: string[];
+  requested_count?: number;
+  processed_count?: number;
+  already_paid_count?: number;
+  missing_count?: number;
+  error?: string;
+}
+
 export const useUpdateCostsBatch = () => {
   const queryClient = useQueryClient();
 
@@ -76,6 +99,38 @@ export const useUpdateCostsBatch = () => {
     onError: (error: any) => {
       console.error('Error en actualización por lotes:', error);
       toast.error(error.message || 'Error al actualizar los costos');
+    },
+  });
+};
+
+export const useMarkCostsPaidBatch = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ costIds, paymentDate }: MarkCostsPaidBatchData) => {
+      const { data, error } = await (supabase as any).rpc('mark_costs_paid_batch', {
+        p_cost_ids: costIds,
+        p_payment_date: paymentDate,
+      });
+
+      if (error) throw error;
+
+      const result = data as MarkCostsPaidBatchResult;
+      if (!result?.success) {
+        throw new Error(result?.error || 'Error al marcar costos como pagados');
+      }
+
+      return result;
+    },
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: ['costs'] });
+      queryClient.invalidateQueries({ queryKey: ['service-costs'] });
+      queryClient.invalidateQueries({ queryKey: ['crane-costs'] });
+      toast.success(`${result.processed_count ?? result.processed_ids.length} costos marcados como pagados`);
+    },
+    onError: (error: any) => {
+      console.error('Error en marcado masivo de pagos:', error);
+      toast.error(error.message || 'Error al marcar costos como pagados');
     },
   });
 };

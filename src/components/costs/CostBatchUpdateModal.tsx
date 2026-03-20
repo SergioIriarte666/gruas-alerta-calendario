@@ -16,26 +16,32 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Cost } from '@/types/costs';
-import { CostBatchUpdateData, useUpdateCostsBatch } from '@/hooks/useUpdateCostsBatch';
+import { CostBatchUpdateData, MarkCostsPaidBatchResult, useMarkCostsPaidBatch, useUpdateCostsBatch } from '@/hooks/useUpdateCostsBatch';
 import { useCostCategories } from '@/hooks/useCostCategories';
 import { useCostSubcategories } from '@/hooks/useCostSubcategories';
 import { useCostCenters } from '@/hooks/useCostCenters';
 import { useInventorySuppliers } from '@/hooks/useInventory';
 import { BatchProgressModal, useBatchProgress } from '@/components/ui/batch-progress-modal';
-import { BarChart3, Calendar, Tag, Building2, User, FileText, Plus, Loader2 } from 'lucide-react';
+import { BarChart3, Calendar, CheckCircle, Download, Tag, Building2, User, FileText, Plus, Loader2 } from 'lucide-react';
 import DatePickerInput from '@/components/common/DatePickerInput';
+import { getCurrentChileDateString } from '@/utils/timezoneUtils';
+import * as XLSX from 'xlsx';
 interface CostBatchUpdateModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   selectedCosts: Cost[];
+  mode?: 'update' | 'markPaid';
 }
 
 export const CostBatchUpdateModal = ({
   open,
   onOpenChange,
   selectedCosts,
+  mode = 'update',
 }: CostBatchUpdateModalProps) => {
-  const { mutateAsync: updateBatch, isPending } = useUpdateCostsBatch();
+  const isMarkPaidMode = mode === 'markPaid';
+  const { mutateAsync: updateBatch, isPending: isUpdating } = useUpdateCostsBatch();
+  const { mutateAsync: markPaidBatch, isPending: isMarkingPaid } = useMarkCostsPaidBatch();
   const { data: categories = [] } = useCostCategories();
   const { data: costCenters = [] } = useCostCenters();
   const { data: suppliers = [] } = useInventorySuppliers();
@@ -59,6 +65,12 @@ export const CostBatchUpdateModal = ({
   const [supplierId, setSupplierId] = useState<string>('');
   const [notes, setNotes] = useState<string>('');
   const [appendNotes, setAppendNotes] = useState(false);
+
+  const [markPaidPaymentDate, setMarkPaidPaymentDate] = useState<string>(getCurrentChileDateString());
+  const [markPaidUseCostDate, setMarkPaidUseCostDate] = useState<boolean>(true);
+  const [markPaidStage, setMarkPaidStage] = useState<'confirm' | 'done'>('confirm');
+  const [markPaidResult, setMarkPaidResult] = useState<MarkCostsPaidBatchResult | null>(null);
+  const [markPaidError, setMarkPaidError] = useState<string>('');
 
   // Estado para crear nueva subcategoría
   const [newSubcategoryName, setNewSubcategoryName] = useState('');
@@ -103,6 +115,103 @@ export const CostBatchUpdateModal = ({
   const totalAmount = useMemo(() => {
     return selectedCosts.reduce((sum, cost) => sum + Number(cost.amount), 0);
   }, [selectedCosts]);
+
+  const markPaidSummary = useMemo(() => {
+    const alreadyPaid = selectedCosts.filter((c) => !!c.payment_date).map((c) => c.id);
+    const unpaid = selectedCosts.filter((c) => !c.payment_date).map((c) => c.id);
+    return { alreadyPaid, unpaid };
+  }, [selectedCosts]);
+
+  const downloadMarkPaidReport = (result: MarkCostsPaidBatchResult) => {
+    const statusById = new Map<string, 'Procesado' | 'Ya pagado' | 'No encontrado'>();
+    result.processed_ids.forEach((id) => statusById.set(id, 'Procesado'));
+    result.already_paid_ids.forEach((id) => statusById.set(id, 'Ya pagado'));
+    result.missing_ids.forEach((id) => statusById.set(id, 'No encontrado'));
+
+    const selectedById = new Map<string, Cost>();
+    selectedCosts.forEach((c) => selectedById.set(c.id, c));
+
+    const paymentDateLabel = result.use_cost_date ? 'Fecha del costo' : (result.payment_date || '');
+
+    const summaryRows: (string | number)[][] = [
+      ['Reporte', 'Marcación masiva de costos como pagados'],
+      ['Lote', result.operation_id],
+      ['Ejecutado el', result.executed_at],
+      ['Usuario', result.executed_by],
+      ['Fecha de pago aplicada', paymentDateLabel],
+      ['Total solicitados', result.requested_count ?? result.requested_ids.length],
+      ['Procesados', result.processed_count ?? result.processed_ids.length],
+      ['Ya pagados', result.already_paid_count ?? result.already_paid_ids.length],
+      ['No encontrados', result.missing_count ?? result.missing_ids.length],
+    ];
+
+    const requestedRows = (result.requested_ids || []).map((id) => {
+      const cost = selectedById.get(id);
+      const status = statusById.get(id) || '';
+      const appliedPaymentDate = result.use_cost_date ? (cost?.date || '') : (result.payment_date || '');
+
+      return {
+        status,
+        id,
+        fecha: cost?.date || '',
+        pago_aplicado: appliedPaymentDate,
+        descripcion: cost?.description || '',
+        monto: cost?.amount ?? '',
+        categoria: (cost as any)?.cost_categories?.name || '',
+        subcategoria: (cost as any)?.subcategory || '',
+      };
+    });
+
+    const wb = XLSX.utils.book_new();
+    const wsSummary = XLSX.utils.aoa_to_sheet(summaryRows);
+    XLSX.utils.book_append_sheet(wb, wsSummary, 'Resumen');
+
+    const wsDetails = XLSX.utils.json_to_sheet(requestedRows);
+    XLSX.utils.book_append_sheet(wb, wsDetails, 'Detalle');
+
+    const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+    const blob = new Blob([wbout], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    });
+
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `reporte_marcar_pagados_${result.operation_id}.xlsx`;
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
+    document.body.appendChild(link);
+    link.click();
+    if (link.parentNode) link.parentNode.removeChild(link);
+    window.setTimeout(() => URL.revokeObjectURL(url), 250);
+  };
+
+  const handleMarkPaidSubmit = async () => {
+    setMarkPaidError('');
+    setMarkPaidResult(null);
+
+    batchProgress.start('Marcando como pagados', selectedCosts.length);
+
+    try {
+      for (let i = 0; i < selectedCosts.length; i++) {
+        batchProgress.update(i + 1, selectedCosts[i].description.substring(0, 30));
+        await new Promise((resolve) => setTimeout(resolve, 20));
+      }
+
+      const result = await markPaidBatch({
+        costIds: selectedCosts.map((c) => c.id),
+        paymentDate: markPaidUseCostDate ? null : (markPaidPaymentDate || getCurrentChileDateString()),
+      });
+
+      setMarkPaidResult(result);
+      setMarkPaidStage('done');
+      batchProgress.complete();
+    } catch (error: any) {
+      const message = error?.message || 'Error al marcar costos como pagados';
+      setMarkPaidError(message);
+      batchProgress.error(message);
+    }
+  };
 
   const handleSubmit = async () => {
     const fields: CostBatchUpdateData['fields'] = {};
@@ -165,6 +274,11 @@ export const CostBatchUpdateModal = ({
     setSupplierId('');
     setNotes('');
     setAppendNotes(false);
+    setMarkPaidPaymentDate(getCurrentChileDateString());
+    setMarkPaidUseCostDate(true);
+    setMarkPaidStage('confirm');
+    setMarkPaidResult(null);
+    setMarkPaidError('');
   };
 
   const hasChanges = 
@@ -177,38 +291,162 @@ export const CostBatchUpdateModal = ({
     enableNotes;
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog
+      open={open}
+      onOpenChange={(nextOpen) => {
+        if (!nextOpen) resetForm();
+        onOpenChange(nextOpen);
+      }}
+    >
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader className="border-b pb-4 bg-gradient-to-r from-violet-500/10 to-purple-500/10 -mx-6 -mt-6 px-6 pt-6 rounded-t-lg">
           <DialogTitle className="flex items-center gap-2">
-            <BarChart3 className="h-5 w-5 text-violet-600" />
-            Actualización por Lotes
+            {isMarkPaidMode ? (
+              <CheckCircle className="h-5 w-5 text-green-600" />
+            ) : (
+              <BarChart3 className="h-5 w-5 text-violet-600" />
+            )}
+            {isMarkPaidMode ? 'Marcar como Pagados' : 'Actualización por Lotes'}
           </DialogTitle>
           <DialogDescription>
-            Modifica múltiples costos simultáneamente. Solo se actualizarán los campos que habilites.
+            {isMarkPaidMode
+              ? 'Marca múltiples costos como pagados en una operación segura y auditable.'
+              : 'Modifica múltiples costos simultáneamente. Solo se actualizarán los campos que habilites.'}
           </DialogDescription>
         </DialogHeader>
 
         {/* Resumen */}
-        <Card className="bg-violet-500/5 border-violet-500/20">
+        <Card className={isMarkPaidMode ? 'bg-green-500/5 border-green-500/20' : 'bg-violet-500/5 border-violet-500/20'}>
           <CardContent className="pt-6">
-            <div className="grid grid-cols-2 gap-4">
+            <div className={isMarkPaidMode ? 'grid grid-cols-3 gap-4' : 'grid grid-cols-2 gap-4'}>
               <div>
                 <p className="text-sm text-muted-foreground">Costos seleccionados</p>
                 <p className="text-2xl font-bold">{selectedCosts.length}</p>
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Total</p>
-                <p className="text-2xl font-bold text-violet-600">
+                <p className={isMarkPaidMode ? 'text-2xl font-bold text-green-600' : 'text-2xl font-bold text-violet-600'}>
                   ${totalAmount.toLocaleString('es-CL')}
                 </p>
               </div>
+              {isMarkPaidMode && (
+                <div>
+                  <p className="text-sm text-muted-foreground">Ya pagados</p>
+                  <p className="text-2xl font-bold">{markPaidSummary.alreadyPaid.length}</p>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
 
-        {/* Campos configurables */}
-        <div className="space-y-4">
+        {isMarkPaidMode ? (
+          <>
+            {markPaidStage === 'confirm' && (
+              <div className="space-y-4">
+                <Card>
+                  <CardContent className="pt-6">
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-2">
+                        <Switch
+                          id="use-cost-date"
+                          checked={markPaidUseCostDate}
+                          onCheckedChange={setMarkPaidUseCostDate}
+                        />
+                        <Label htmlFor="use-cost-date">Usar fecha del costo (mantener fecha de origen)</Label>
+                      </div>
+
+                      {!markPaidUseCostDate && (
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex items-center gap-3 flex-1">
+                            <Calendar className="h-5 w-5 text-muted-foreground" />
+                            <div className="space-y-1 flex-1">
+                              <Label>Fecha de Pago</Label>
+                              <DatePickerInput
+                                value={markPaidPaymentDate}
+                                onChange={setMarkPaidPaymentDate}
+                                placeholder="Seleccionar fecha de pago"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                      {markPaidUseCostDate && (
+                        <div className="text-sm text-muted-foreground">
+                          La fecha de pago se asignará usando la fecha original de cada costo seleccionado.
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {markPaidSummary.alreadyPaid.length > 0 && (
+                  <Card>
+                    <CardContent className="pt-6">
+                      <div className="text-sm">
+                        <span className="text-muted-foreground">Se omitirán </span>
+                        <span className="font-medium">{markPaidSummary.alreadyPaid.length}</span>
+                        <span className="text-muted-foreground"> costo(s) porque ya están pagados.</span>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {markPaidError && (
+                  <Card className="border-red-500/30 bg-red-50/50">
+                    <CardContent className="pt-6">
+                      <div className="text-sm text-red-700">{markPaidError}</div>
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
+            )}
+
+            {markPaidStage === 'done' && markPaidResult && (
+              <div className="space-y-4">
+                <Card className="border-green-500/30 bg-green-50/50">
+                  <CardContent className="pt-6 space-y-2">
+                    <div className="text-sm">
+                      <span className="text-muted-foreground">Procesados: </span>
+                      <span className="font-semibold">{markPaidResult.processed_count ?? markPaidResult.processed_ids.length}</span>
+                      <span className="text-muted-foreground"> | Ya pagados: </span>
+                      <span className="font-semibold">{markPaidResult.already_paid_count ?? markPaidResult.already_paid_ids.length}</span>
+                      <span className="text-muted-foreground"> | No encontrados: </span>
+                      <span className="font-semibold">{markPaidResult.missing_count ?? markPaidResult.missing_ids.length}</span>
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      Lote: {markPaidResult.operation_id} | Fecha pago: {markPaidResult.use_cost_date ? 'Fecha del costo' : (markPaidResult.payment_date || '—')} | Usuario: {markPaidResult.executed_by}
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardContent className="pt-6 space-y-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <Label>IDs procesados</Label>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => downloadMarkPaidReport(markPaidResult)}
+                      >
+                        <Download className="h-4 w-4 mr-2" />
+                        Descargar reporte (Excel)
+                      </Button>
+                    </div>
+                    <Textarea
+                      value={markPaidResult.processed_ids.join('\n')}
+                      readOnly
+                      className="font-mono text-xs"
+                      rows={6}
+                    />
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+          </>
+        ) : (
+          <>
+          <div className="space-y-4">
           {/* Categoría */}
           <Card>
             <CardContent className="pt-6">
@@ -515,17 +753,40 @@ export const CostBatchUpdateModal = ({
           </Card>
         )}
 
+          </>
+        )}
+
         <DialogFooter className="border-t pt-4 mt-4">
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isPending}>
+          <Button
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            disabled={isMarkPaidMode ? isMarkingPaid : isUpdating}
+          >
             Cancelar
           </Button>
-          <Button 
-            onClick={handleSubmit} 
-            disabled={!hasChanges || isPending}
-            className="bg-violet-600 hover:bg-violet-700"
-          >
-            {isPending ? 'Actualizando...' : `Actualizar ${selectedCosts.length} costos`}
-          </Button>
+          {isMarkPaidMode ? (
+            markPaidStage === 'confirm' ? (
+              <Button
+                onClick={handleMarkPaidSubmit}
+                disabled={selectedCosts.length === 0 || isMarkingPaid}
+                className="bg-green-600 hover:bg-green-700 text-white"
+              >
+                {isMarkingPaid ? 'Marcando...' : `Marcar ${selectedCosts.length} como pagados`}
+              </Button>
+            ) : (
+              <Button onClick={() => onOpenChange(false)} className="bg-green-600 hover:bg-green-700 text-white">
+                Cerrar
+              </Button>
+            )
+          ) : (
+            <Button
+              onClick={handleSubmit}
+              disabled={!hasChanges || isUpdating}
+              className="bg-violet-600 hover:bg-violet-700"
+            >
+              {isUpdating ? 'Actualizando...' : `Actualizar ${selectedCosts.length} costos`}
+            </Button>
+          )}
         </DialogFooter>
       </DialogContent>
 

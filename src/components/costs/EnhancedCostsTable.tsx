@@ -37,6 +37,7 @@ interface EnhancedCostsTableProps {
   selectedCosts?: Set<string>;
   onSelectionChange?: (selected: Set<string>) => void;
   onBatchUpdate?: () => void;
+  onBatchMarkPaid?: () => void;
 }
 
 type SortField = 'date' | 'description' | 'category' | 'subcategory' | 'amount' | 'associated';
@@ -55,7 +56,8 @@ export const EnhancedCostsTable = ({
   highlightedCostId,
   selectedCosts = new Set<string>(),
   onSelectionChange,
-  onBatchUpdate 
+  onBatchUpdate,
+  onBatchMarkPaid
 }: EnhancedCostsTableProps) => {
   const [sortField, setSortField] = useState<SortField>('date');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
@@ -389,6 +391,7 @@ export const EnhancedCostsTable = ({
           selectedCount={selectedCosts.size}
           totalAmount={calculateSelectedTotal()}
           onBatchUpdate={onBatchUpdate}
+          onBatchMarkPaid={onBatchMarkPaid}
           onClearSelection={() => onSelectionChange?.(new Set())}
         />
       )}

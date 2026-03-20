@@ -1,12 +1,13 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { RefreshCw, X } from 'lucide-react';
+import { CheckCircle, RefreshCw, X } from 'lucide-react';
 
 interface CostBatchActionBarProps {
   selectedCount: number;
   totalAmount: number;
   onBatchUpdate: () => void;
+  onBatchMarkPaid?: () => void;
   onClearSelection: () => void;
 }
 
@@ -14,6 +15,7 @@ export const CostBatchActionBar = ({
   selectedCount,
   totalAmount,
   onBatchUpdate,
+  onBatchMarkPaid,
   onClearSelection,
 }: CostBatchActionBarProps) => {
   return (
@@ -30,6 +32,17 @@ export const CostBatchActionBar = ({
           </div>
 
           <div className="flex items-center gap-2">
+            {onBatchMarkPaid && (
+              <Button
+                variant="default"
+                size="sm"
+                onClick={onBatchMarkPaid}
+                className="bg-green-600 hover:bg-green-700 text-white"
+              >
+                <CheckCircle className="h-4 w-4 mr-2" />
+                Marcar Pagados
+              </Button>
+            )}
             <Button
               variant="default"
               size="sm"
