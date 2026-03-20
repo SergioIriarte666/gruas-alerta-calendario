@@ -159,6 +159,7 @@ function AppContent() {
           <Route path="/historical" element={<Historical />} />
           <Route path="/income-projections" element={<IncomeProjections />} />
           <Route path="/costs" element={<Costs />} />
+          <Route path="/accounts-payable" element={<AccountsPayable />} />
           
           <Route path="/incomes" element={<Incomes />} />
           <Route path="/trip-calculator" element={<TripCalculator />} />
