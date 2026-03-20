@@ -511,7 +511,7 @@ export const EnhancedCostsTable = ({
                         className="bg-muted/30 cursor-pointer hover:bg-muted/50"
                         onClick={() => toggleGroup(groupKey)}
                       >
-                        <TableCell colSpan={onSelectionChange ? 8 : 7}>
+                        <TableCell colSpan={onSelectionChange ? 9 : 8}>
                           <div className="flex items-center justify-between py-1">
                             <div className="flex items-center gap-2">
                               <span className={cn(
