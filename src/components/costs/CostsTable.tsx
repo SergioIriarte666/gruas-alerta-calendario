@@ -93,6 +93,22 @@ export const CostsTable = ({ costs, onEdit, onViewDetails }: CostsTableProps) =>
                                     <TableCell className="text-white font-medium">{cost.description}</TableCell>
                                     <TableCell className="text-gray-300">{getCategoryDisplay(cost)}</TableCell>
                                     <TableCell className="text-white text-right">${Number(cost.amount).toLocaleString('es-CL')}</TableCell>
+                                    <TableCell className="text-center">
+                                        <TooltipProvider>
+                                            <Tooltip>
+                                                <TooltipTrigger>
+                                                    {cost.payment_date ? (
+                                                        <CheckCircle className="h-5 w-5 text-green-400 mx-auto" />
+                                                    ) : (
+                                                        <Circle className="h-5 w-5 text-gray-500 mx-auto" />
+                                                    )}
+                                                </TooltipTrigger>
+                                                <TooltipContent>
+                                                    {cost.payment_date ? 'Pagado' : 'Pendiente'}
+                                                </TooltipContent>
+                                            </Tooltip>
+                                        </TooltipProvider>
+                                    </TableCell>
                                     <TableCell className="text-gray-300">{getAssociatedTo(cost)}</TableCell>
                                     <TableCell className="text-right">
                                         <DropdownMenu>
