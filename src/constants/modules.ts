@@ -159,6 +159,14 @@ export const APP_MODULES: AppModule[] = [
     route: '/payments'
   },
   { 
+    key: 'accounts-payable', 
+    label: 'Cuentas por Pagar', 
+    icon: Landmark, 
+    description: 'Deudas, cuotas y obligaciones financieras',
+    defaultRoles: ['admin', 'viewer'],
+    route: '/accounts-payable'
+  },
+  { 
     key: 'service-rates', 
     label: 'Tarifas', 
     icon: FileText, 
