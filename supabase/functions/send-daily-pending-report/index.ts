@@ -2,8 +2,11 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.50.0";
 import { Resend } from "npm:resend@2.0.0";
-import jsPDF from "npm:jspdf";
+import jsPDFModule from "npm:jspdf@2.5.2";
 import "npm:jspdf-autotable@5.0.2";
+
+// Handle both ESM default export and CJS module.exports
+const jsPDF = (jsPDFModule as any).jsPDF || (jsPDFModule as any).default?.jsPDF || jsPDFModule;
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
