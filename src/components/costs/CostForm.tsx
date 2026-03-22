@@ -209,6 +209,7 @@ export const CostForm = ({ isOpen, onClose, cost, prefilledData, onInventoryCost
                 purchase_unit_cost: cost.purchase_unit_cost || null,
                 immediate_consumption: cost.immediate_consumption || false,
                 supplier_id: cost.supplier_id || 'none',
+                is_paid: !!cost.payment_date,
             });
         } else if (prefilledData) {
             reset({
@@ -314,7 +315,7 @@ export const CostForm = ({ isOpen, onClose, cost, prefilledData, onInventoryCost
                 purchase_quantity: values.purchase_quantity || null,
                 purchase_unit_cost: values.purchase_unit_cost || null,
                 immediate_consumption: values.immediate_consumption || false,
-                payment_date: is_paid ? values.date : null,
+                payment_date: is_paid ? (cost?.payment_date || values.date) : null,
             } as CostFormData;
         
             if (cost && cost.id) {
