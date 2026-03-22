@@ -1,32 +1,59 @@
 
 
-## Plan: Preservar estado de pago al editar costos
+## Plan: Auto-marcar gastos como pagados al crearlos desde el modal de servicios
 
 ### Problema
 
-Cuando se edita un costo que ya está pagado (tiene `payment_date`), el formulario no inicializa el campo `is_paid` con el valor correcto. El `reset()` en línea 190 nunca establece `is_paid`, así que queda en `false` (el default del schema). Al guardar, la línea 317 evalúa `is_paid ? values.date : null`, resultando en `payment_date: null` — borrando el estado de pago.
+Cuando se crean costos desde el formulario de servicios (peajes, viáticos, combustible, etc.), estos quedan sin `payment_date`, es decir, como "no pagados". Estos gastos operativos se pagan en el momento, por lo que deberían marcarse automáticamente como pagados.
+
+Las comisiones NO deben verse afectadas — se gestionan exclusivamente desde su propio módulo.
 
 ### Solución
 
-Agregar `is_paid: !!cost.payment_date` en el `reset()` cuando se edita un costo existente (línea 211 de `CostForm.tsx`).
+Agregar `payment_date` con la fecha del costo al momento de crearlo, en los dos puntos donde se generan costos desde servicios:
 
-Adicionalmente, ajustar la lógica de submit para que al guardar preserve el `payment_date` original si el costo ya estaba pagado y el usuario no desmarcó el checkbox:
-- Si `is_paid` está marcado → usar `cost.payment_date` existente o `values.date` como fallback
-- Si `is_paid` está desmarcado → `null`
-
-### Archivo a modificar
+### Archivos a modificar
 
 | Archivo | Cambio |
 |---------|--------|
-| `src/components/costs/CostForm.tsx` | Agregar `is_paid: !!cost.payment_date` en el reset (línea ~211), y preservar `payment_date` original en submit (línea ~317) |
+| `src/components/services/form/ServiceCostDetailsSection.tsx` | Agregar `payment_date: costData.date` en el objeto `costData` (línea ~217) al crear nuevos costos |
+| `src/components/costs/ServiceExpenseModals.tsx` | Agregar `payment_date: baseData.date` en el objeto `costData` (línea ~108) |
 
 ### Detalle técnico
 
+**ServiceCostDetailsSection.tsx** (línea ~210-218):
 ```typescript
-// En reset() al editar (línea ~211):
-is_paid: !!cost.payment_date,
-
-// En submit (línea ~317):
-payment_date: is_paid ? (cost?.payment_date || values.date) : null,
+const costData = {
+  service_id: serviceId,
+  category_id: costDetail.category_id,
+  description: costDetail.description.trim(),
+  amount: costDetail.amount,
+  date: costDetail.isExisting && costDetail.date ? costDetail.date : (serviceDate || getCurrentChileDateString()),
+  notes: costDetail.notes || '',
+  subcategory: costDetail.subcategory || '',
+  payment_date: costDetail.isExisting && costDetail.date ? costDetail.date : (serviceDate || getCurrentChileDateString()), // ← nuevo
+};
 ```
+
+**ServiceExpenseModals.tsx** (línea ~98-109):
+```typescript
+const costData: CostFormData = {
+  date: baseData.date,
+  description: getDefaultDescription(subcategoryName),
+  amount: parseFloat(val),
+  category_id: baseData.category_id,
+  crane_id: baseData.crane_id === 'none' ? null : baseData.crane_id,
+  operator_id: baseData.operator_id === 'none' ? null : baseData.operator_id,
+  service_id: baseData.service_id === 'none' ? null : baseData.service_id,
+  service_folio: baseData.service_folio || null,
+  subcategory: subcategoryName,
+  notes: null,
+  payment_date: baseData.date, // ← nuevo: marcar como pagado automáticamente
+};
+```
+
+### Lo que NO se modifica
+
+- Comisiones: se crean y pagan desde su propio módulo, sin cambios
+- Costos creados desde el módulo de Costos directamente: mantienen su lógica actual con checkbox
 
