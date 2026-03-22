@@ -504,7 +504,7 @@ const Invoices = () => {
                     key={statusKey}
                     variant="ghost"
                     size="sm"
-                    onClick={() => setStatusFilter(statusKey)}
+                    onClick={() => { setStatusFilter(statusKey); setCurrentPage(1); }}
                     className={cn(
                       'capitalize text-muted-foreground hover:text-foreground px-3 py-1 text-sm flex-shrink-0',
                       statusFilter === statusKey && 'bg-primary text-primary-foreground'
