@@ -524,4 +524,83 @@ export class UnifiedPurchaseService {
       cranePartId: cranePart?.id || null,
     };
   }
+
+  /**
+   * Register inventory movements and crane_parts for an EXISTING cost.
+   * Unlike registerPurchase(), this does NOT create a second cost entry.
+   * Used when CostForm already created the cost via addCost/updateCost.
+   */
+  static async registerForExistingCost(params: {
+    costId: string;
+    itemName: string;
+    quantity: number;
+    unitCost: number;
+    date: string;
+    craneId: string;
+    supplierId?: string | null;
+    supplierName?: string | null;
+  }): Promise<void> {
+    try {
+      console.log('[UnifiedPurchase] registerForExistingCost - costId:', params.costId);
+
+      // 1. Find or create inventory item
+      const inventoryItemId = await this.findOrCreateInventoryItem({
+        itemName: params.itemName,
+        quantity: params.quantity,
+        unitCost: params.unitCost,
+        date: params.date,
+        immediateConsumption: true,
+      });
+
+      // 2. Get warehouse location
+      const locationId = await this.getDefaultLocation();
+      if (!locationId) {
+        throw new Error('No hay ubicación de inventario activa');
+      }
+
+      // 3. Create entry movement linked to existing cost
+      const entryMovementId = await this.createEntryMovement({
+        inventoryItemId,
+        locationId,
+        costId: params.costId,
+        quantity: params.quantity,
+        unitCost: params.unitCost,
+        date: params.date,
+        supplierId: params.supplierId,
+        supplierName: params.supplierName,
+        itemName: params.itemName,
+      });
+
+      // 4. Link cost to entry movement
+      await this.linkCostToMovement(params.costId, entryMovementId);
+
+      // 5. Create exit movement + crane_parts
+      await this.createDirectConsumption({
+        inventoryItemId,
+        locationId,
+        costId: params.costId,
+        craneId: params.craneId,
+        quantity: params.quantity,
+        unitCost: params.unitCost,
+        date: params.date,
+        itemName: params.itemName,
+        supplierId: params.supplierId,
+        supplierName: params.supplierName,
+      });
+
+      console.log('[UnifiedPurchase] registerForExistingCost completed successfully');
+
+      const { showSyncToast } = await import('@/utils/syncToast');
+      showSyncToast('Inventario Sincronizado', [
+        { module: 'inventario', action: `Entrada: ${params.quantity} ${params.itemName}`, success: true },
+        { module: 'pieza', action: 'Pieza asignada a grúa', success: true },
+      ]);
+    } catch (error) {
+      console.error('[UnifiedPurchase] registerForExistingCost error:', error);
+      const { toast } = await import('sonner');
+      toast.error('Error de Inventario', {
+        description: error instanceof Error ? error.message : 'No se pudieron crear los movimientos de inventario',
+      });
+    }
+  }
 }

@@ -392,14 +392,14 @@ export const CostForm = ({ isOpen, onClose, cost, prefilledData, onInventoryCost
                                     date: submissionData.date,
                                 });
                             } else if (hasCraneSelected) {
-                                // Direct consumption to specific crane - create inventory movements
-                                await UnifiedPurchaseService.registerPurchase({
+                                // Direct consumption to specific crane - use existing cost, no duplicate
+                                await UnifiedPurchaseService.registerForExistingCost({
+                                    costId: data[0].id,
                                     itemName: submissionData.description,
                                     quantity: submissionData.purchase_quantity!,
                                     unitCost: submissionData.purchase_unit_cost!,
                                     date: submissionData.date,
                                     supplierId: submissionData.supplier_id,
-                                    immediateConsumption: true,
                                     craneId: submissionData.crane_id!,
                                 });
                                 queryClient.invalidateQueries({ queryKey: ['inventory'] });
