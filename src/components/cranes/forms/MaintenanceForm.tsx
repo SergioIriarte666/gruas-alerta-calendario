@@ -353,7 +353,7 @@ export const MaintenanceForm = ({ isOpen, onClose, craneId, editingRecord }: Mai
             <Textarea
               id="notes"
               {...register('notes')}
-              className="bg-white/5 border-tms-green/30 text-white"
+              className="bg-background border-border text-foreground"
               placeholder="Notas adicionales sobre el mantenimiento..."
               rows={3}
             />
@@ -365,14 +365,13 @@ export const MaintenanceForm = ({ isOpen, onClose, craneId, editingRecord }: Mai
               type="button"
               variant="outline"
               onClick={handleClose}
-              className="border-gray-600 text-gray-300 hover:bg-gray-700"
             >
               Cancelar
             </Button>
             <Button
               type="submit"
               disabled={createMutation.isPending || updateMutation.isPending}
-              className="bg-tms-green hover:bg-tms-green/80 text-black font-semibold"
+              className="bg-violet-600 hover:bg-violet-700 text-white font-semibold"
             >
               {createMutation.isPending || updateMutation.isPending ? 'Guardando...' : editingRecord ? 'Actualizar' : 'Guardar'}
             </Button>
