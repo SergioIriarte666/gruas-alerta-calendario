@@ -97,7 +97,7 @@ export const CostFiltersComponent = ({ filters, onFiltersChange, onClearFilters 
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todas</SelectItem>
-                  {subcategories.map((sub) => (
+                  {subcategories.filter(sub => sub && sub.trim() !== '').map((sub) => (
                     <SelectItem key={sub} value={sub}>
                       {sub}
                     </SelectItem>

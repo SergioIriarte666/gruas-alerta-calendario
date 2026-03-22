@@ -192,7 +192,7 @@ export const UnifiedCostFilters = ({
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="all">Todas las subcategorías</SelectItem>
-                        {subcategories.map((sub) => (
+                        {subcategories.filter(sub => sub.name && sub.name.trim() !== '').map((sub) => (
                           <SelectItem key={sub.id} value={sub.name}>
                             {sub.name}
                           </SelectItem>
