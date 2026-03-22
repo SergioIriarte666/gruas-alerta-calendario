@@ -228,6 +228,7 @@ export const useMovementReport = (filters?: InventoryReportFilters) => {
       if (filters?.movementType) {
         query = query.eq('movement_type', filters.movementType);
       }
+      query = query.eq('status', 'active');
 
       const { data: movements, error } = await query;
       if (error) throw error;
