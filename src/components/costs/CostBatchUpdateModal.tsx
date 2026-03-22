@@ -223,8 +223,8 @@ export const CostBatchUpdateModal = ({
     }
     if (enableDate && date) fields.date = date;
     if (enablePaymentDate) fields.payment_date = paymentDate || null;
-    if (enableCostCenter) fields.cost_center_id = costCenterId || null;
-    if (enableSupplier) fields.supplier_id = supplierId || null;
+    if (enableCostCenter) fields.cost_center_id = (costCenterId && costCenterId !== 'none') ? costCenterId : null;
+    if (enableSupplier) fields.supplier_id = (supplierId && supplierId !== 'none') ? supplierId : null;
     if (enableNotes && notes) fields.notes = notes;
 
     const updateData: CostBatchUpdateData = {
@@ -648,7 +648,7 @@ export const CostBatchUpdateModal = ({
                           <SelectValue placeholder="Seleccionar centro de costos" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="">Sin centro de costos</SelectItem>
+                          <SelectItem value="none">Sin centro de costos</SelectItem>
                           {costCenters.map((cc) => (
                             <SelectItem key={cc.id} value={cc.id}>
                               {cc.code} - {cc.name}
@@ -684,7 +684,7 @@ export const CostBatchUpdateModal = ({
                           <SelectValue placeholder="Seleccionar proveedor" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="">Sin proveedor</SelectItem>
+                          <SelectItem value="none">Sin proveedor</SelectItem>
                           {suppliers.map((sup) => (
                             <SelectItem key={sup.id} value={sup.id}>
                               {sup.name}
