@@ -488,7 +488,7 @@ const Invoices = () => {
             onOpenExportModal={() => setExportModalOpen(true)}
           />
           
-          <InvoicesStats invoices={baseInvoices} />
+          <InvoicesStats invoices={invoices.filter(inv => !inv.folio.startsWith('HIST-'))} />
           
           <div className={`flex ${isMobile ? 'flex-col' : 'flex-row'} items-center gap-4`}>
             <div className="flex-grow w-full">
