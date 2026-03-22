@@ -141,10 +141,10 @@ export const MaintenanceForm = ({ isOpen, onClose, craneId, editingRecord }: Mai
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="bg-black border-tms-green/30 max-w-2xl">
+      <DialogContent className="bg-card border-border max-w-2xl">
         <DialogHeader>
-          <DialogTitle className="text-white flex items-center gap-2">
-            <Wrench className="w-5 h-5 text-tms-green" />
+          <DialogTitle className="text-foreground flex items-center gap-2">
+            <Wrench className="w-5 h-5 text-violet-500" />
             {editingRecord ? 'Editar Mantenimiento' : 'Agregar Mantenimiento'}
           </DialogTitle>
         </DialogHeader>
