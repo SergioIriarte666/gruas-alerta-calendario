@@ -139,9 +139,10 @@ const Invoices = () => {
 
   const filteredInvoices = baseInvoices.filter(invoice => {
     const invoiceWithDetails = getInvoiceWithDetails(invoice);
+    const clientName = invoice.client?.name || invoiceWithDetails.client?.name || '';
     const matchesSearch = (
       invoice.folio.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      invoiceWithDetails.client?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      clientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (invoice.numeroFiscal && invoice.numeroFiscal.toLowerCase().includes(searchTerm.toLowerCase()))
     );
     const matchesStatus = (() => {
