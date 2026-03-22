@@ -223,8 +223,8 @@ export const CostBatchUpdateModal = ({
     }
     if (enableDate && date) fields.date = date;
     if (enablePaymentDate) fields.payment_date = paymentDate || null;
-    if (enableCostCenter) fields.cost_center_id = costCenterId || null;
-    if (enableSupplier) fields.supplier_id = supplierId || null;
+    if (enableCostCenter) fields.cost_center_id = (costCenterId && costCenterId !== 'none') ? costCenterId : null;
+    if (enableSupplier) fields.supplier_id = (supplierId && supplierId !== 'none') ? supplierId : null;
     if (enableNotes && notes) fields.notes = notes;
 
     const updateData: CostBatchUpdateData = {
