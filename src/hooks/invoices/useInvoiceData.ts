@@ -184,7 +184,7 @@ export const usePagedInvoices = (page: number, pageSize: number, filters?: Paged
 
       // Apply status filter server-side when possible
       if (statusFilter !== 'all' && statusFilter !== 'due_this_week') {
-        query = query.eq('status', statusFilter);
+        query = query.eq('status', statusFilter as any);
       }
 
       // Determine sort column for DB
