@@ -203,7 +203,7 @@ export const MaintenanceForm = ({ isOpen, onClose, craneId, editingRecord }: Mai
           {/* Cost, Kilometraje and Provider */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="cost" className="text-white flex items-center gap-2">
+              <Label htmlFor="cost" className="text-foreground flex items-center gap-2">
                 <DollarSign className="w-4 h-4" />
                 Costo
               </Label>
@@ -217,7 +217,7 @@ export const MaintenanceForm = ({ isOpen, onClose, craneId, editingRecord }: Mai
                   valueAsNumber: true,
                   min: { value: 0, message: 'El costo debe ser mayor o igual a 0' }
                 })}
-                className="bg-white/5 border-tms-green/30 text-white"
+                className="bg-background border-border text-foreground"
                 placeholder="0.00"
               />
               {errors.cost && (
@@ -226,7 +226,7 @@ export const MaintenanceForm = ({ isOpen, onClose, craneId, editingRecord }: Mai
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="kilometraje" className="text-white flex items-center gap-2">
+              <Label htmlFor="kilometraje" className="text-foreground flex items-center gap-2">
                 <Gauge className="w-4 h-4" />
                 Kilometraje (Opcional)
               </Label>
@@ -238,7 +238,7 @@ export const MaintenanceForm = ({ isOpen, onClose, craneId, editingRecord }: Mai
                   valueAsNumber: true,
                   min: { value: 0, message: 'El kilometraje debe ser mayor o igual a 0' }
                 })}
-                className="bg-white/5 border-tms-green/30 text-white"
+                className="bg-background border-border text-foreground"
                 placeholder="Ej: 50000"
               />
               {errors.kilometraje && (
@@ -247,14 +247,14 @@ export const MaintenanceForm = ({ isOpen, onClose, craneId, editingRecord }: Mai
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="provider" className="text-white flex items-center gap-2">
+              <Label htmlFor="provider" className="text-foreground flex items-center gap-2">
                 <User className="w-4 h-4" />
                 Proveedor (Opcional)
               </Label>
               <Input
                 id="provider"
                 {...register('provider')}
-                className="bg-white/5 border-tms-green/30 text-white"
+                className="bg-background border-border text-foreground"
                 placeholder="Nombre del proveedor"
               />
             </div>
