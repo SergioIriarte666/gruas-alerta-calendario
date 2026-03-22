@@ -152,14 +152,14 @@ export const MaintenanceForm = ({ isOpen, onClose, craneId, editingRecord }: Mai
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           {/* Description */}
           <div className="space-y-2">
-            <Label htmlFor="description" className="text-white flex items-center gap-2">
+            <Label htmlFor="description" className="text-foreground flex items-center gap-2">
               <FileText className="w-4 h-4" />
               Descripción
             </Label>
             <Textarea
               id="description"
               {...register('description', { required: 'La descripción es requerida' })}
-              className="bg-white/5 border-tms-green/30 text-white"
+              className="bg-background border-border text-foreground"
               placeholder="Descripción del mantenimiento..."
               rows={3}
             />
