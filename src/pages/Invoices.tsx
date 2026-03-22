@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useInvoices } from '@/hooks/useInvoices';
-import { usePagedInvoices } from '@/hooks/invoices/useInvoiceData';
+import { usePagedInvoices, PagedInvoiceFilters } from '@/hooks/invoices/useInvoiceData';
 import { InvoiceForm } from '@/components/invoices/InvoiceForm';
 import { PaymentReconciliation } from '@/components/invoices/PaymentReconciliation';
 import { InvoiceAlertsDashboard } from '@/components/invoices/InvoiceAlertsDashboard';
@@ -57,6 +57,7 @@ const Invoices = () => {
   const tabFromQuery = queryParams.get('tab') || 'invoices';
 
   const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState(statusFromQuery || 'all');
   const [showForm, setShowForm] = useState(false);
   const [editingInvoice, setEditingInvoice] = useState<Invoice | null>(null);
@@ -81,16 +82,24 @@ const Invoices = () => {
   // Use a delayed state for showing form when navigating from closures to allow UI to breathe
   const [isFormReady, setIsFormReady] = useState(false);
 
-  const isBasicView =
-    searchTerm === '' &&
-    (statusFilter === 'all' || !statusFilter) &&
-    sortField === 'issueDate' &&
-    sortDirection === 'desc';
+  // Debounce search term
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchTerm);
+      setCurrentPage(1);
+    }, 350);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
 
   const {
     data: pagedData,
     isLoading: loadingPaged,
-  } = usePagedInvoices(currentPage, ITEMS_PER_PAGE);
+  } = usePagedInvoices(currentPage, ITEMS_PER_PAGE, {
+    searchTerm: debouncedSearch,
+    statusFilter,
+    sortField,
+    sortDirection,
+  });
 
   // Check for preselected closure from navigation state
   useEffect(() => {
@@ -98,13 +107,11 @@ const Invoices = () => {
       console.log('Invoices page - Preselected closure detected:', location.state.preselectedClosureId);
       setPreselectedClosureId(location.state.preselectedClosureId);
       
-      // Delay showing the form slightly to allow initial render
       const timer = setTimeout(() => {
         setShowForm(true);
         setIsFormReady(true);
       }, 100);
       
-      // Clear the state to prevent it from persisting on page refresh
       window.history.replaceState({}, document.title);
       
       return () => clearTimeout(timer);
@@ -116,7 +123,7 @@ const Invoices = () => {
   // Clear selection when filters change
   useEffect(() => {
     setSelectedInvoiceIds([]);
-  }, [searchTerm, statusFilter]);
+  }, [debouncedSearch, statusFilter]);
 
   // Clear selection when page changes
   useEffect(() => {
@@ -130,106 +137,18 @@ const Invoices = () => {
       setSortField(field);
       setSortDirection('asc');
     }
-    setCurrentPage(1); // Reset to first page when sorting
-    setSelectedInvoiceIds([]); // Clear selection when sorting
+    setCurrentPage(1);
+    setSelectedInvoiceIds([]);
   };
 
-  const baseInvoices = (isBasicView && pagedData?.invoices ? pagedData.invoices : invoices)
-    .filter(inv => !inv.folio.startsWith('HIST-'));
-
-  const filteredInvoices = baseInvoices.filter(invoice => {
-    const invoiceWithDetails = getInvoiceWithDetails(invoice);
-    const clientName = invoice.client?.name || invoiceWithDetails.client?.name || '';
-    const matchesSearch = (
-      invoice.folio.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      clientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (invoice.numeroFiscal && invoice.numeroFiscal.toLowerCase().includes(searchTerm.toLowerCase()))
-    );
-    const matchesStatus = (() => {
-      if (statusFilter === 'all') return true;
-      if (statusFilter === 'due_this_week') {
-        if (invoice.status === 'paid' || invoice.status === 'cancelled') return false;
-        if (!invoice.dueDate) return false;
-        const today = new Date();
-        const day = today.getDay();
-        const monday = new Date(today);
-        monday.setDate(today.getDate() - (day === 0 ? 6 : day - 1));
-        monday.setHours(0, 0, 0, 0);
-        const sunday = new Date(monday);
-        sunday.setDate(monday.getDate() + 6);
-        sunday.setHours(23, 59, 59, 999);
-        const due = new Date(invoice.dueDate);
-        return due >= monday && due <= sunday;
-      }
-      return invoice.status === statusFilter;
-    })();
-    return matchesSearch && matchesStatus;
-  }).sort((a, b) => {
-    let aValue: any;
-    let bValue: any;
-
-    switch (sortField) {
-      case 'folio':
-        aValue = a.folio || '';
-        bValue = b.folio || '';
-        break;
-      case 'numeroFiscal':
-        aValue = a.numeroFiscal || '';
-        bValue = b.numeroFiscal || '';
-        break;
-      case 'client':
-        const aClient = getInvoiceWithDetails(a).client?.name || '';
-        const bClient = getInvoiceWithDetails(b).client?.name || '';
-        aValue = aClient;
-        bValue = bClient;
-        break;
-      case 'issueDate':
-        aValue = new Date(a.issueDate || 0);
-        bValue = new Date(b.issueDate || 0);
-        break;
-      case 'dueDate':
-        aValue = new Date(a.dueDate || 0);
-        bValue = new Date(b.dueDate || 0);
-        break;
-      case 'daysUntilDue':
-        const aDue = new Date(a.dueDate || 0);
-        const bDue = new Date(b.dueDate || 0);
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        aDue.setHours(0, 0, 0, 0);
-        bDue.setHours(0, 0, 0, 0);
-        aValue = Math.floor((aDue.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-        bValue = Math.floor((bDue.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-        break;
-      case 'total':
-        aValue = Number(a.total) || 0;
-        bValue = Number(b.total) || 0;
-        break;
-      case 'status':
-        aValue = a.status || '';
-        bValue = b.status || '';
-        break;
-      default:
-        return 0;
-    }
-
-    if (sortDirection === 'asc') {
-      return aValue > bValue ? 1 : aValue < bValue ? -1 : 0;
-    } else {
-      return aValue < bValue ? 1 : aValue > bValue ? -1 : 0;
-    }
-  });
-
-  const totalPages = isBasicView && pagedData
+  // Use paged data directly - search/filter/sort is handled server-side
+  const paginatedInvoices = pagedData?.invoices || [];
+  const totalPages = pagedData
     ? Math.max(1, Math.ceil(pagedData.total / ITEMS_PER_PAGE))
-    : Math.ceil(filteredInvoices.length / ITEMS_PER_PAGE || 1);
-
-  const paginatedInvoices = isBasicView
-    ? filteredInvoices
-    : filteredInvoices.slice(
-        (currentPage - 1) * ITEMS_PER_PAGE,
-        currentPage * ITEMS_PER_PAGE
-      );
+    : 1;
+  
+  // For stats and batch operations, use the full filtered set info
+  const filteredInvoices = paginatedInvoices;
 
   const handleCreateInvoice = async (data: any) => {
     try {
@@ -569,7 +488,7 @@ const Invoices = () => {
             onOpenExportModal={() => setExportModalOpen(true)}
           />
           
-          <InvoicesStats invoices={baseInvoices} />
+          <InvoicesStats invoices={invoices.filter(inv => !inv.folio.startsWith('HIST-'))} />
           
           <div className={`flex ${isMobile ? 'flex-col' : 'flex-row'} items-center gap-4`}>
             <div className="flex-grow w-full">
@@ -585,7 +504,7 @@ const Invoices = () => {
                     key={statusKey}
                     variant="ghost"
                     size="sm"
-                    onClick={() => setStatusFilter(statusKey)}
+                    onClick={() => { setStatusFilter(statusKey); setCurrentPage(1); }}
                     className={cn(
                       'capitalize text-muted-foreground hover:text-foreground px-3 py-1 text-sm flex-shrink-0',
                       statusFilter === statusKey && 'bg-primary text-primary-foreground'

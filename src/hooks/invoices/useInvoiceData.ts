@@ -137,14 +137,29 @@ export const useInvoiceData = () => {
   };
 };
 
-export const usePagedInvoices = (page: number, pageSize: number) => {
-  return useQuery({
-    queryKey: ['invoices', 'paged', page, pageSize],
-    queryFn: async (): Promise<{ invoices: Invoice[]; total: number }> => {
-      const from = (page - 1) * pageSize;
-      const to = from + pageSize - 1;
+export interface PagedInvoiceFilters {
+  searchTerm?: string;
+  statusFilter?: string;
+  sortField?: string;
+  sortDirection?: 'asc' | 'desc';
+}
 
-      const { data: invoicesData, error: invoicesError, count } = await supabase
+export const usePagedInvoices = (page: number, pageSize: number, filters?: PagedInvoiceFilters) => {
+  const searchTerm = filters?.searchTerm || '';
+  const statusFilter = filters?.statusFilter || 'all';
+  const sortField = filters?.sortField || 'issueDate';
+  const sortDirection = filters?.sortDirection || 'desc';
+
+  return useQuery({
+    queryKey: ['invoices', 'paged', page, pageSize, searchTerm, statusFilter, sortField, sortDirection],
+    queryFn: async (): Promise<{ invoices: Invoice[]; total: number }> => {
+      // If searching, we need to fetch matching invoices across ALL records
+      // We'll use a broader fetch and then paginate client-side
+      const isSearching = searchTerm.trim() !== '';
+      const isFiltering = statusFilter !== 'all';
+      const needsClientSidePagination = isSearching || isFiltering;
+
+      let query = supabase
         .from('invoices')
         .select(
           `
@@ -165,9 +180,35 @@ export const usePagedInvoices = (page: number, pageSize: number) => {
         `,
           { count: 'exact' }
         )
-        .not('folio', 'like', 'HIST-%')
-        .order('created_at', { ascending: false })
-        .range(from, to);
+        .not('folio', 'like', 'HIST-%');
+
+      // Apply status filter server-side when possible
+      if (statusFilter !== 'all' && statusFilter !== 'due_this_week') {
+        query = query.eq('status', statusFilter as any);
+      }
+
+      // Determine sort column for DB
+      let dbSortColumn = 'created_at';
+      if (sortField === 'folio') dbSortColumn = 'folio';
+      else if (sortField === 'numeroFiscal') dbSortColumn = 'numero_fiscal';
+      else if (sortField === 'issueDate') dbSortColumn = 'issue_date';
+      else if (sortField === 'dueDate') dbSortColumn = 'due_date';
+      else if (sortField === 'total') dbSortColumn = 'total';
+      else if (sortField === 'status') dbSortColumn = 'status';
+
+      query = query.order(dbSortColumn, { ascending: sortDirection === 'asc' });
+
+      if (needsClientSidePagination) {
+        // Fetch more records for client-side filtering (search + pagination)
+        // We fetch up to 5000 to cover search across all records
+        query = query.range(0, 4999);
+      } else {
+        const from = (page - 1) * pageSize;
+        const to = from + pageSize - 1;
+        query = query.range(from, to);
+      }
+
+      const { data: invoicesData, error: invoicesError, count } = await query;
 
       if (invoicesError) {
         console.error('Error fetching paged invoices:', invoicesError);
@@ -179,21 +220,27 @@ export const usePagedInvoices = (page: number, pageSize: number) => {
 
       const invoiceIds = (invoicesData || []).map(invoice => invoice.id);
 
-      const { data: closuresData, error: closuresError } = await supabase
-        .from('invoice_closures')
-        .select('invoice_id, closure_id')
-        .in('invoice_id', invoiceIds.length > 0 ? invoiceIds : ['']);
-
-      if (closuresError) {
-        console.error('Error fetching invoice closures for paged invoices:', closuresError);
-        throw closuresError;
+      let closuresData: Array<{ invoice_id: string; closure_id: string }> = [];
+      if (invoiceIds.length > 0) {
+        const BATCH = 500;
+        for (let i = 0; i < invoiceIds.length; i += BATCH) {
+          const { data, error } = await supabase
+            .from('invoice_closures')
+            .select('invoice_id, closure_id')
+            .in('invoice_id', invoiceIds.slice(i, i + BATCH));
+          if (error) {
+            console.error('Error fetching invoice closures:', error);
+          } else if (data) {
+            closuresData.push(...data);
+          }
+        }
       }
 
       const formattedInvoices: Invoice[] = [];
       const overdueInvoiceIds: string[] = [];
 
       (invoicesData || []).forEach(invoice => {
-        const closureRelation = (closuresData || []).find(rel => rel.invoice_id === invoice.id);
+        const closureRelation = closuresData.find(rel => rel.invoice_id === invoice.id);
         const formattedInvoice = formatInvoiceData({
           ...invoice,
           invoice_closures: closureRelation ? [{ closure_id: closureRelation.closure_id }] : [],
@@ -210,12 +257,49 @@ export const usePagedInvoices = (page: number, pageSize: number) => {
         await updateOverdueInvoices(overdueInvoiceIds);
       }
 
-      const total = typeof count === 'number' ? count : formattedInvoices.length;
+      // Apply client-side search filtering
+      let filtered = formattedInvoices;
+      if (isSearching) {
+        const search = searchTerm.toLowerCase().trim();
+        filtered = filtered.filter(invoice => {
+          const clientName = invoice.client?.name || '';
+          return (
+            invoice.folio.toLowerCase().includes(search) ||
+            clientName.toLowerCase().includes(search) ||
+            (invoice.numeroFiscal && invoice.numeroFiscal.toLowerCase().includes(search))
+          );
+        });
+      }
 
-      return { invoices: formattedInvoices, total };
+      // Apply due_this_week filter client-side
+      if (statusFilter === 'due_this_week') {
+        const today = new Date();
+        const day = today.getDay();
+        const monday = new Date(today);
+        monday.setDate(today.getDate() - (day === 0 ? 6 : day - 1));
+        monday.setHours(0, 0, 0, 0);
+        const sunday = new Date(monday);
+        sunday.setDate(monday.getDate() + 6);
+        sunday.setHours(23, 59, 59, 999);
+        filtered = filtered.filter(inv => {
+          if (inv.status === 'paid' || inv.status === 'cancelled') return false;
+          if (!inv.dueDate) return false;
+          const due = new Date(inv.dueDate);
+          return due >= monday && due <= sunday;
+        });
+      }
+
+      const total = needsClientSidePagination ? filtered.length : (typeof count === 'number' ? count : filtered.length);
+
+      // Apply client-side pagination when searching/filtering
+      const result = needsClientSidePagination
+        ? filtered.slice((page - 1) * pageSize, page * pageSize)
+        : filtered;
+
+      return { invoices: result, total };
     },
     enabled: page > 0 && pageSize > 0,
-    staleTime: 2 * 60 * 1000,
-    gcTime: 5 * 60 * 1000,
+    staleTime: 30 * 1000, // shorter stale time for search queries
+    gcTime: 2 * 60 * 1000,
   });
 };
