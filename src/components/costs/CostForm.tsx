@@ -209,6 +209,7 @@ export const CostForm = ({ isOpen, onClose, cost, prefilledData, onInventoryCost
                 purchase_unit_cost: cost.purchase_unit_cost || null,
                 immediate_consumption: cost.immediate_consumption || false,
                 supplier_id: cost.supplier_id || 'none',
+                is_paid: !!cost.payment_date,
             });
         } else if (prefilledData) {
             reset({
