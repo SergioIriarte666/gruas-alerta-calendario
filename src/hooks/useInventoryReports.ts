@@ -228,6 +228,7 @@ export const useMovementReport = (filters?: InventoryReportFilters) => {
       if (filters?.movementType) {
         query = query.eq('movement_type', filters.movementType);
       }
+      query = query.eq('status', 'active');
 
       const { data: movements, error } = await query;
       if (error) throw error;
@@ -328,7 +329,8 @@ export const useCostAnalysisReport = (filters?: InventoryReportFilters) => {
             inventory_categories (name)
           )
         `)
-        .not('total_cost', 'is', null);
+        .not('total_cost', 'is', null)
+        .eq('status', 'active');
 
       if (filters?.dateFrom) {
         query = query.gte('movement_date', filters.dateFrom);
@@ -426,7 +428,8 @@ export const usePredictiveAnalysis = (filters?: InventoryReportFilters) => {
           cranes (license_plate)
         `)
         .eq('movement_type', 'exit')
-        .gte('movement_date', sixMonthsAgo);
+        .gte('movement_date', sixMonthsAgo)
+        .eq('status', 'active');
 
       if (error) throw error;
 
