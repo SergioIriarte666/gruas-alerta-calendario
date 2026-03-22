@@ -57,6 +57,7 @@ const Invoices = () => {
   const tabFromQuery = queryParams.get('tab') || 'invoices';
 
   const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState(statusFromQuery || 'all');
   const [showForm, setShowForm] = useState(false);
   const [editingInvoice, setEditingInvoice] = useState<Invoice | null>(null);
