@@ -428,7 +428,8 @@ export const usePredictiveAnalysis = (filters?: InventoryReportFilters) => {
           cranes (license_plate)
         `)
         .eq('movement_type', 'exit')
-        .gte('movement_date', sixMonthsAgo);
+        .gte('movement_date', sixMonthsAgo)
+        .eq('status', 'active');
 
       if (error) throw error;
 
