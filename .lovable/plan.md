@@ -1,59 +1,74 @@
 
 
-## Plan: Auto-marcar gastos como pagados al crearlos desde el modal de servicios
+## Plan: Eliminar duplicación de costos al registrar piezas con consumo inmediato
 
-### Problema
+### Problema raíz
 
-Cuando se crean costos desde el formulario de servicios (peajes, viáticos, combustible, etc.), estos quedan sin `payment_date`, es decir, como "no pagados". Estos gastos operativos se pagan en el momento, por lo que deberían marcarse automáticamente como pagados.
+Cuando se crea un costo desde el CostForm con `immediate_consumption=true` y una grúa seleccionada, ocurre doble creación:
 
-Las comisiones NO deben verse afectadas — se gestionan exclusivamente desde su propio módulo.
+1. **`addCost` (useCosts.ts)** → crea **Costo #1** (ej. categoría Inventario, subcategoría "Partes y Piezas")
+2. **CostForm onSuccess** → llama `UnifiedPurchaseService.registerPurchase()` que crea **Costo #2** (categoría Mantenimiento, subcategoría "Piezas y Repuestos") + movimientos de inventario + crane_parts
+
+Resultado: 2 costos ($60,000 en vez de $30,000), 2 registros en Piezas (uno "Directo", otro "Desde Costo").
 
 ### Solución
 
-Agregar `payment_date` con la fecha del costo al momento de crearlo, en los dos puntos donde se generan costos desde servicios:
+Reemplazar la llamada a `UnifiedPurchaseService.registerPurchase()` en CostForm por una que solo cree movimientos de inventario y crane_parts usando el costo YA existente, sin crear un segundo costo.
 
 ### Archivos a modificar
 
 | Archivo | Cambio |
 |---------|--------|
-| `src/components/services/form/ServiceCostDetailsSection.tsx` | Agregar `payment_date: costData.date` en el objeto `costData` (línea ~217) al crear nuevos costos |
-| `src/components/costs/ServiceExpenseModals.tsx` | Agregar `payment_date: baseData.date` en el objeto `costData` (línea ~108) |
+| `src/services/UnifiedPurchaseService.ts` | Agregar método estático `registerForExistingCost()` que ejecuta los pasos 1,2,4,5,6 (sin paso 3 de crear costo) |
+| `src/components/costs/CostForm.tsx` | Reemplazar llamadas a `registerPurchase()` por `registerForExistingCost()` pasando el costId existente |
 
 ### Detalle técnico
 
-**ServiceCostDetailsSection.tsx** (línea ~210-218):
+**Nuevo método en UnifiedPurchaseService:**
 ```typescript
-const costData = {
-  service_id: serviceId,
-  category_id: costDetail.category_id,
-  description: costDetail.description.trim(),
-  amount: costDetail.amount,
-  date: costDetail.isExisting && costDetail.date ? costDetail.date : (serviceDate || getCurrentChileDateString()),
-  notes: costDetail.notes || '',
-  subcategory: costDetail.subcategory || '',
-  payment_date: costDetail.isExisting && costDetail.date ? costDetail.date : (serviceDate || getCurrentChileDateString()), // ← nuevo
-};
+static async registerForExistingCost(params: {
+  costId: string;
+  itemName: string;
+  quantity: number;
+  unitCost: number;
+  date: string;
+  craneId: string;
+  supplierId?: string | null;
+  supplierName?: string | null;
+}): Promise<void> {
+  // 1. Find or create inventory item
+  // 2. Get warehouse location
+  // 3. Create entry movement (linked to existing costId)
+  // 4. Create exit movement (consumption to crane)
+  // 5. Update cost with inventory_movement_id
+  // 6. Create crane_parts record linked to existing costId
+  // NO crea un segundo costo
+}
 ```
 
-**ServiceExpenseModals.tsx** (línea ~98-109):
+**CostForm.tsx** (líneas ~349 y ~396): cambiar de:
 ```typescript
-const costData: CostFormData = {
-  date: baseData.date,
-  description: getDefaultDescription(subcategoryName),
-  amount: parseFloat(val),
-  category_id: baseData.category_id,
-  crane_id: baseData.crane_id === 'none' ? null : baseData.crane_id,
-  operator_id: baseData.operator_id === 'none' ? null : baseData.operator_id,
-  service_id: baseData.service_id === 'none' ? null : baseData.service_id,
-  service_folio: baseData.service_folio || null,
-  subcategory: subcategoryName,
-  notes: null,
-  payment_date: baseData.date, // ← nuevo: marcar como pagado automáticamente
-};
+await UnifiedPurchaseService.registerPurchase({...});
+```
+a:
+```typescript
+await UnifiedPurchaseService.registerForExistingCost({
+  costId: cost.id, // usa el costo ya creado
+  itemName: submissionData.description,
+  ...
+});
 ```
 
-### Lo que NO se modifica
+### Limpieza de datos existentes (migración SQL)
 
-- Comisiones: se crean y pagan desde su propio módulo, sin cambios
-- Costos creados desde el módulo de Costos directamente: mantienen su lógica actual con checkbox
+Crear migración para limpiar los duplicados ya generados por este bug:
+- Identificar costos duplicados (mismo description, crane_id, date, amount, uno con categoría Mantenimiento/Piezas y Repuestos y otro diferente)
+- Eliminar el costo duplicado de Mantenimiento si ya existe el original
+
+### Resultado esperado
+
+- Un solo costo por compra con consumo inmediato
+- Un solo registro en Piezas (tipo "Directo")  
+- Movimientos de inventario correctos (entrada + salida)
+- Sin afectar flujos existentes que usen `registerPurchase()` directamente (desde PartsForm de grúas)
 
