@@ -1,43 +1,41 @@
 
 
-## Plan: Fix jspdf build error in send-daily-pending-report edge function
+## Plan: Filtrar movimientos cancelados en reportes de inventario
 
-### Problem
+### Problema
 
-The edge function `send-daily-pending-report` uses `npm:jspdf@2.5.2` and `npm:jspdf-autotable@5.0.2` but there's no `deno.json` file declaring these dependencies, causing the build error.
+Los reportes de Gestión de Bodega no filtran movimientos con `status = 'cancelled'`, lo que infla cantidades y valores. Ejemplo: "Bornes Baterias" muestra 24 unidades y $120.000 cuando debería mostrar 6 unidades y $30.000, porque cuenta 2 movimientos cancelados además de los activos.
 
-### Solution
+El stock real (`inventory_stock`) está correcto en 0 — el problema es exclusivamente en las consultas de reportes.
 
-Create `supabase/functions/send-daily-pending-report/deno.json` with the npm dependencies mapped, and update the import statements in `index.ts` to use the mapped names.
+### Solución
 
-### Files to modify
+Agregar `.eq('status', 'active')` a las 3 consultas de `useInventoryReports.ts` que no lo tienen.
 
-| File | Change |
-|------|--------|
-| `supabase/functions/send-daily-pending-report/deno.json` | **Create** — declare npm dependencies for jspdf, jspdf-autotable, resend, and supabase-js |
-| `supabase/functions/send-daily-pending-report/index.ts` | Update imports to use mapped names from deno.json |
+### Archivo a modificar
 
-### Detail
+| Archivo | Cambio |
+|---------|--------|
+| `src/hooks/useInventoryReports.ts` | Agregar `.eq('status', 'active')` en `useMovementReport` (línea ~232), `useCostAnalysisReport` (línea ~331), y `usePredictiveAnalysis` (línea ~429) |
 
-**New `deno.json`:**
-```json
-{
-  "imports": {
-    "jspdf": "npm:jspdf@2.5.2",
-    "jspdf-autotable": "npm:jspdf-autotable@5.0.2",
-    "resend": "npm:resend@2.0.0",
-    "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2.50.0"
-  },
-  "nodeModulesDir": "auto"
-}
-```
+### Detalle técnico
 
-**Updated imports in `index.ts`:**
 ```typescript
-import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { createClient } from "@supabase/supabase-js";
-import { Resend } from "resend";
-import jsPDFModule from "jspdf";
-import autoTableModule from "jspdf-autotable";
+// useMovementReport - después de los filtros existentes (~línea 231)
+query = query.eq('status', 'active');
+
+// useCostAnalysisReport - después del .not('total_cost'...) (~línea 331)
+query = query.eq('status', 'active');
+
+// usePredictiveAnalysis - después del .gte('movement_date'...) (~línea 429)
+.eq('status', 'active');
 ```
+
+### Lo que NO se toca
+
+- `useInventory.ts` — ya filtra por `status = 'active'` correctamente
+- `useCraneParts.ts` — ya filtra correctamente
+- `useCraneInventoryMetrics.ts` — ya filtra correctamente
+- Stock view, MovementsHistoryTable — funcionan bien
+- Ningún módulo dependiente (Costos, Grúas, Proveedores)
 
