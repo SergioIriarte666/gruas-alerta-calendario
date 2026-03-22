@@ -207,14 +207,16 @@ export const ServiceCostDetailsSection = ({
       return;
     }
 
+    const costDate = costDetail.isExisting && costDetail.date ? costDetail.date : (serviceDate || getCurrentChileDateString());
     const costData = {
       service_id: serviceId,
       category_id: costDetail.category_id,
       description: costDetail.description.trim(),
       amount: costDetail.amount,
-      date: costDetail.isExisting && costDetail.date ? costDetail.date : (serviceDate || getCurrentChileDateString()),
+      date: costDate,
       notes: costDetail.notes || '',
-      subcategory: costDetail.subcategory || ''
+      subcategory: costDetail.subcategory || '',
+      payment_date: costDate,
     };
 
     if (costDetail.isExisting) {
