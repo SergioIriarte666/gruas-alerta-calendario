@@ -264,7 +264,7 @@ export const MaintenanceForm = ({ isOpen, onClose, craneId, editingRecord }: Mai
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {/* Scheduled Date */}
             <div className="space-y-2">
-              <Label className="text-white flex items-center gap-2">
+              <Label className="text-foreground flex items-center gap-2">
                 <CalendarIcon className="w-4 h-4" />
                 Fecha Programada
               </Label>
@@ -272,13 +272,13 @@ export const MaintenanceForm = ({ isOpen, onClose, craneId, editingRecord }: Mai
                 <PopoverTrigger asChild>
                   <Button
                     variant="outline"
-                    className="w-full justify-start text-left font-normal border-tms-green/30 hover:bg-tms-green/10"
+                    className="w-full justify-start text-left font-normal"
                   >
                     <CalendarIcon className="mr-2 h-4 w-4" />
                     {scheduledDate ? formatForDisplayLong(scheduledDate) : 'Seleccionar fecha'}
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0 bg-black border-tms-green/30">
+                <PopoverContent className="w-auto p-0">
                   <Calendar
                     mode="single"
                     selected={scheduledDate}
@@ -291,7 +291,7 @@ export const MaintenanceForm = ({ isOpen, onClose, craneId, editingRecord }: Mai
 
             {/* Completed Date */}
             <div className="space-y-2">
-              <Label className="text-white flex items-center gap-2">
+              <Label className="text-foreground flex items-center gap-2">
                 <CalendarIcon className="w-4 h-4" />
                 Fecha Completado
               </Label>
@@ -299,13 +299,13 @@ export const MaintenanceForm = ({ isOpen, onClose, craneId, editingRecord }: Mai
                 <PopoverTrigger asChild>
                   <Button
                     variant="outline"
-                    className="w-full justify-start text-left font-normal border-tms-green/30 hover:bg-tms-green/10"
+                    className="w-full justify-start text-left font-normal"
                   >
                     <CalendarIcon className="mr-2 h-4 w-4" />
                     {completedDate ? formatForDisplayLong(completedDate) : 'Sin completar'}
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0 bg-black border-tms-green/30">
+                <PopoverContent className="w-auto p-0">
                   <Calendar
                     mode="single"
                     selected={completedDate}
@@ -318,7 +318,7 @@ export const MaintenanceForm = ({ isOpen, onClose, craneId, editingRecord }: Mai
 
             {/* Next Maintenance Date */}
             <div className="space-y-2">
-              <Label className="text-white flex items-center gap-2">
+              <Label className="text-foreground flex items-center gap-2">
                 <CalendarIcon className="w-4 h-4" />
                 Próximo Mantenimiento
               </Label>
@@ -326,13 +326,13 @@ export const MaintenanceForm = ({ isOpen, onClose, craneId, editingRecord }: Mai
                 <PopoverTrigger asChild>
                   <Button
                     variant="outline"
-                    className="w-full justify-start text-left font-normal border-tms-green/30 hover:bg-tms-green/10"
+                    className="w-full justify-start text-left font-normal"
                   >
                     <CalendarIcon className="mr-2 h-4 w-4" />
                     {nextMaintenanceDate ? formatForDisplayLong(nextMaintenanceDate) : 'Sin programar'}
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0 bg-black border-tms-green/30">
+                <PopoverContent className="w-auto p-0">
                   <Calendar
                     mode="single"
                     selected={nextMaintenanceDate}
