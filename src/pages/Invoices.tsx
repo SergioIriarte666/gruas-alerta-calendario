@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useInvoices } from '@/hooks/useInvoices';
-import { usePagedInvoices } from '@/hooks/invoices/useInvoiceData';
+import { usePagedInvoices, PagedInvoiceFilters } from '@/hooks/invoices/useInvoiceData';
 import { InvoiceForm } from '@/components/invoices/InvoiceForm';
 import { PaymentReconciliation } from '@/components/invoices/PaymentReconciliation';
 import { InvoiceAlertsDashboard } from '@/components/invoices/InvoiceAlertsDashboard';
