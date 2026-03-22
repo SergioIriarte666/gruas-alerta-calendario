@@ -1,9 +1,9 @@
 
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.50.0";
-import { Resend } from "npm:resend@2.0.0";
-import jsPDFModule from "npm:jspdf@2.5.2";
-import autoTableModule from "npm:jspdf-autotable@5.0.2";
+import { createClient } from "@supabase/supabase-js";
+import { Resend } from "resend";
+import jsPDFModule from "jspdf";
+import autoTableModule from "jspdf-autotable";
 
 // Handle both ESM default export and CJS module.exports
 const jsPDF = (jsPDFModule as any).jsPDF || (jsPDFModule as any).default?.jsPDF || jsPDFModule;
