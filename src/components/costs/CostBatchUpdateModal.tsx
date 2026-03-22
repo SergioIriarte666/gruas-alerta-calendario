@@ -648,7 +648,7 @@ export const CostBatchUpdateModal = ({
                           <SelectValue placeholder="Seleccionar centro de costos" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="">Sin centro de costos</SelectItem>
+                          <SelectItem value="none">Sin centro de costos</SelectItem>
                           {costCenters.map((cc) => (
                             <SelectItem key={cc.id} value={cc.id}>
                               {cc.code} - {cc.name}
