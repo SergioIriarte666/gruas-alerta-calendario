@@ -59,7 +59,7 @@ export const useCreateMaintenance = () => {
   const { createMutationErrorHandler } = useErrorHandler();
 
   return useMutation({
-    mutationFn: async (maintenance: Omit<MaintenanceRecord, 'id' | 'createdAt'>) => {
+    mutationFn: async (maintenance: Omit<MaintenanceRecord, 'id' | 'createdAt'> & { kilometraje?: number }) => {
       const { data, error } = await supabase
         .from('crane_maintenance')
         .insert({
@@ -67,12 +67,13 @@ export const useCreateMaintenance = () => {
           maintenance_type: maintenance.maintenanceType,
           description: maintenance.description,
           cost: maintenance.cost,
-          provider: maintenance.provider,
-          scheduled_date: maintenance.scheduledDate,
-          completed_date: maintenance.completedDate,
+          provider: maintenance.provider || null,
+          scheduled_date: maintenance.scheduledDate || null,
+          completed_date: maintenance.completedDate || null,
           status: maintenance.status,
-          next_maintenance_date: maintenance.nextMaintenanceDate,
-          notes: maintenance.notes
+          next_maintenance_date: maintenance.nextMaintenanceDate || null,
+          notes: maintenance.notes || null,
+          kilometraje: maintenance.kilometraje || null,
         })
         .select()
         .single();
