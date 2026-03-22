@@ -1,6 +1,6 @@
 
 import { useState, useMemo } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog } from '@/components/ui/dialog';
 import { CraneForm } from '@/components/cranes/CraneForm';
 import { CraneDetailsModal } from '@/components/cranes/CraneDetailsModal';
 import { useCranes } from '@/hooks/useCranes';
@@ -176,21 +176,14 @@ const Cranes = () => {
           setEditingCrane(undefined);
         }
       }}>
-        <DialogContent className="bg-card border max-w-2xl">
-          <DialogHeader>
-            <DialogTitle className="text-foreground">
-              {editingCrane ? 'Editar Grúa' : 'Nueva Grúa'}
-            </DialogTitle>
-          </DialogHeader>
-          <CraneForm
-            crane={editingCrane}
-            onSubmit={handleSubmit}
-            onCancel={() => {
-              setIsDialogOpen(false);
-              setEditingCrane(undefined);
-            }}
-          />
-        </DialogContent>
+        <CraneForm
+          crane={editingCrane}
+          onSubmit={handleSubmit}
+          onCancel={() => {
+            setIsDialogOpen(false);
+            setEditingCrane(undefined);
+          }}
+        />
       </Dialog>
     </div>
   );

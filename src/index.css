@@ -332,6 +332,66 @@ body {
   background-color: hsl(var(--card)) !important;
 }
 
+.cranes-modal {
+  border-radius: calc(var(--radius) + 10px) !important;
+  border-color: hsl(var(--border) / 0.75) !important;
+  background: linear-gradient(180deg, hsl(var(--card)) 0%, hsl(var(--card)) 55%, hsl(var(--secondary)) 120%) !important;
+  box-shadow: 0 24px 60px -20px rgb(15 23 42 / 0.35), 0 10px 24px -12px rgb(15 23 42 / 0.25), var(--shadow-glow) !important;
+}
+
+.cranes-modal > button.absolute.right-4.top-4 {
+  border-radius: 9999px !important;
+  opacity: 1 !important;
+  z-index: 70;
+  background-color: hsl(var(--card) / 0.9) !important;
+  border: 1px solid hsl(var(--border) / 0.8) !important;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 10px 24px -12px rgb(15 23 42 / 0.35);
+}
+
+.cranes-modal > button.absolute.right-4.top-4:hover {
+  background-color: hsl(var(--accent)) !important;
+}
+
+.cranes-modal__header {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: linear-gradient(135deg, hsl(var(--card)) 0%, hsl(var(--card)) 65%, hsl(var(--primary) / 0.08) 120%) !important;
+  border-bottom-color: hsl(var(--border) / 0.8) !important;
+  backdrop-filter: blur(10px);
+}
+
+.cranes-modal--form .cranes-modal__header {
+  background: linear-gradient(135deg, hsl(var(--card)) 0%, hsl(var(--card)) 55%, hsl(var(--primary) / 0.14) 120%) !important;
+}
+
+.cranes-modal--details .cranes-modal__meta {
+  background: linear-gradient(180deg, hsl(var(--card)) 0%, hsl(var(--secondary)) 140%) !important;
+  border-top-color: hsl(var(--border) / 0.8) !important;
+}
+
+.cranes-modal input,
+.cranes-modal [role="combobox"],
+.cranes-modal button[data-variant="outline"] {
+  border-radius: calc(var(--radius) + 6px) !important;
+  border-color: hsl(var(--border) / 0.9) !important;
+  background-color: hsl(var(--background)) !important;
+  box-shadow: 0 1px 0 rgb(15 23 42 / 0.03);
+}
+
+.cranes-modal input:focus-visible,
+.cranes-modal [role="combobox"]:focus-visible,
+.cranes-modal button[data-variant="outline"]:focus-visible {
+  border-color: hsl(var(--ring) / 0.55) !important;
+  box-shadow: 0 0 0 4px hsl(var(--ring) / 0.18), 0 1px 0 rgb(15 23 42 / 0.03) !important;
+}
+
+.cranes-modal__footer {
+  padding-top: 0.75rem;
+  border-top: 1px solid hsl(var(--border) / 0.7);
+}
+
 /* Operators Module Scope */
 .operators-scope {
   color: hsl(var(--foreground));

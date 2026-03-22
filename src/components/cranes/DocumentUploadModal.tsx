@@ -93,8 +93,8 @@ export const DocumentUploadModal = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
+      <DialogContent className="cranes-modal cranes-modal--upload sm:max-w-md">
+        <DialogHeader className="cranes-modal__header">
           <DialogTitle>Actualizar {documentName}</DialogTitle>
           <DialogDescription>
             Selecciona un nuevo archivo para actualizar el documento y opcionalmente establece una nueva fecha de vencimiento.
@@ -194,7 +194,7 @@ export const DocumentUploadModal = ({
         </div>
 
         {/* Actions */}
-        <div className="flex justify-end gap-2 pt-4">
+        <div className="cranes-modal__footer flex justify-end gap-2 pt-4">
           <Button variant="outline" onClick={handleClose} disabled={uploading}>
             Cancelar
           </Button>

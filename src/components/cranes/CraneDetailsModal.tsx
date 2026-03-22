@@ -21,8 +21,8 @@ export const CraneDetailsModal = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="bg-card border max-w-7xl max-h-[90vh] overflow-y-auto p-0">
-        <DialogHeader className="p-6 pb-4 border-b">
+      <DialogContent className="cranes-modal cranes-modal--details bg-card border max-w-7xl max-h-[90vh] overflow-y-auto p-0">
+        <DialogHeader className="cranes-modal__header p-6 pb-4 border-b">
           <div className="flex items-start justify-between gap-4">
             <div>
               <DialogTitle className="text-2xl font-bold text-foreground">
@@ -45,7 +45,7 @@ export const CraneDetailsModal = ({
         </div>
 
         {/* Footer con información de creación */}
-        <div className="flex justify-between text-sm text-muted-foreground px-6 py-4 border-t">
+        <div className="cranes-modal__meta flex justify-between text-sm text-muted-foreground px-6 py-4 border-t">
           <span>
             Creado: {formatForDisplayWithTime(crane.createdAt)}
             {crane.creatorName && ` por ${crane.creatorName}`}
@@ -53,7 +53,7 @@ export const CraneDetailsModal = ({
           <span>Actualizado: {formatForDisplayWithTime(crane.updatedAt)}</span>
         </div>
 
-        <div className="flex justify-end px-6 pb-4">
+        <div className="cranes-modal__actions flex justify-end px-6 pb-4">
           <Button onClick={onClose} variant="outline">
             Cerrar
           </Button>

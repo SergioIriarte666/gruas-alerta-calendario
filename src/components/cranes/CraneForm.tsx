@@ -81,8 +81,8 @@ export const CraneForm = ({ crane, onSubmit, onCancel }: CraneFormProps) => {
   ];
 
   return (
-    <DialogContent className="sm:max-w-[600px] bg-card border">
-      <DialogHeader className="bg-gradient-to-r from-violet-600 to-violet-500 text-white -mx-6 -mt-6 px-6 py-4 rounded-t-lg">
+    <DialogContent className="cranes-modal cranes-modal--form sm:max-w-[600px] bg-card border">
+      <DialogHeader className="cranes-modal__header bg-gradient-to-r from-violet-600 to-violet-500 text-white -mx-6 -mt-6 px-6 py-4 rounded-t-lg">
         <DialogTitle className="text-white">
           {crane ? 'Editar Grúa' : 'Nueva Grúa'}
         </DialogTitle>
@@ -91,7 +91,7 @@ export const CraneForm = ({ crane, onSubmit, onCancel }: CraneFormProps) => {
         </DialogDescription>
       </DialogHeader>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="cranes-modal__form space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label htmlFor="licensePlate" className="text-foreground">Patente *</Label>
@@ -205,7 +205,7 @@ export const CraneForm = ({ crane, onSubmit, onCancel }: CraneFormProps) => {
           </Label>
         </div>
 
-        <DialogFooter>
+        <DialogFooter className="cranes-modal__footer">
           <Button
             type="button"
             variant="outline"
