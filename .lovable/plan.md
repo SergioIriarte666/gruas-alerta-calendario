@@ -1,74 +1,38 @@
 
 
-## Plan: Eliminar duplicación de costos al registrar piezas con consumo inmediato
+## Plan: Backfill de movimientos de inventario para costos huérfanos con consumo inmediato
 
-### Problema raíz
+### Problema
 
-Cuando se crea un costo desde el CostForm con `immediate_consumption=true` y una grúa seleccionada, ocurre doble creación:
+Hay 8 costos con `immediate_consumption=true` que nunca generaron movimientos de inventario ni registros en `crane_parts`. Algunos (Aceite Hidráulico, Filtro, Mangueras) sí tienen movimientos pero el campo `costs.inventory_movement_id` no se actualizó. Otros (Bornes Baterias, Cubre Volante, Aceite Hidraulico equipo grua, Manguera Hidraulico, Aceite Hidraulico Implementos) no tienen movimientos en absoluto.
 
-1. **`addCost` (useCosts.ts)** → crea **Costo #1** (ej. categoría Inventario, subcategoría "Partes y Piezas")
-2. **CostForm onSuccess** → llama `UnifiedPurchaseService.registerPurchase()` que crea **Costo #2** (categoría Mantenimiento, subcategoría "Piezas y Repuestos") + movimientos de inventario + crane_parts
-
-Resultado: 2 costos ($60,000 en vez de $30,000), 2 registros en Piezas (uno "Directo", otro "Desde Costo").
+El sistema de Piezas ya funciona correctamente: muestra automáticamente los consumos de inventario (`inventory_movements` tipo `exit` con `crane_id`). El problema es que estos registros huérfanos nunca se crearon.
 
 ### Solución
 
-Reemplazar la llamada a `UnifiedPurchaseService.registerPurchase()` en CostForm por una que solo cree movimientos de inventario y crane_parts usando el costo YA existente, sin crear un segundo costo.
+Una migración SQL que:
 
-### Archivos a modificar
+1. **Para costos que YA tienen movimientos** (3 registros): actualizar `costs.inventory_movement_id` con el ID del movimiento de entrada correspondiente
+2. **Para costos SIN movimientos** (5 registros): crear los movimientos de entrada y salida + registro en `crane_parts`, y vincularlos al costo
+
+### Archivos
 
 | Archivo | Cambio |
 |---------|--------|
-| `src/services/UnifiedPurchaseService.ts` | Agregar método estático `registerForExistingCost()` que ejecuta los pasos 1,2,4,5,6 (sin paso 3 de crear costo) |
-| `src/components/costs/CostForm.tsx` | Reemplazar llamadas a `registerPurchase()` por `registerForExistingCost()` pasando el costId existente |
+| Nueva migración SQL | Backfill: crear movimientos de inventario y crane_parts para costos huérfanos con consumo inmediato |
 
-### Detalle técnico
+### Registros afectados
 
-**Nuevo método en UnifiedPurchaseService:**
-```typescript
-static async registerForExistingCost(params: {
-  costId: string;
-  itemName: string;
-  quantity: number;
-  unitCost: number;
-  date: string;
-  craneId: string;
-  supplierId?: string | null;
-  supplierName?: string | null;
-}): Promise<void> {
-  // 1. Find or create inventory item
-  // 2. Get warehouse location
-  // 3. Create entry movement (linked to existing costId)
-  // 4. Create exit movement (consumption to crane)
-  // 5. Update cost with inventory_movement_id
-  // 6. Create crane_parts record linked to existing costId
-  // NO crea un segundo costo
-}
-```
+- **Bornes Baterias** (DSBZ-85) — 6 uds x $5,000 — sin movimientos
+- **Aceite Hidraulico Implementos S.A.** (TLYF-23) — sin movimientos (sin quantity)
+- **Manguera Hidraulico** (TLYF-23) — sin movimientos  
+- **Cubre Volante y Ampolletas 24V** (TLYF-23) — sin movimientos
+- **Aceite Hidraulico equipo grua** (FYTR-49) — sin movimientos
+- **Aceite Hidraulico** (TDCJ-46) — ya tiene movimientos, solo falta vincular
+- **Filtro Hidraulico Plataforma** (TDCJ-46) — ya tiene movimientos, solo falta vincular
+- **Mangueras Hidraulico** (TLYF-23) — ya tiene movimientos, solo falta vincular
 
-**CostForm.tsx** (líneas ~349 y ~396): cambiar de:
-```typescript
-await UnifiedPurchaseService.registerPurchase({...});
-```
-a:
-```typescript
-await UnifiedPurchaseService.registerForExistingCost({
-  costId: cost.id, // usa el costo ya creado
-  itemName: submissionData.description,
-  ...
-});
-```
+### Resultado
 
-### Limpieza de datos existentes (migración SQL)
-
-Crear migración para limpiar los duplicados ya generados por este bug:
-- Identificar costos duplicados (mismo description, crane_id, date, amount, uno con categoría Mantenimiento/Piezas y Repuestos y otro diferente)
-- Eliminar el costo duplicado de Mantenimiento si ya existe el original
-
-### Resultado esperado
-
-- Un solo costo por compra con consumo inmediato
-- Un solo registro en Piezas (tipo "Directo")  
-- Movimientos de inventario correctos (entrada + salida)
-- Sin afectar flujos existentes que usen `registerPurchase()` directamente (desde PartsForm de grúas)
+Todos los consumos aparecerán automáticamente en la pestaña **Piezas** de cada grúa como bitácora de lo instalado/reemplazado, gracias al sistema existente en `useCraneParts` que ya lee los `inventory_movements` tipo `exit`.
 
