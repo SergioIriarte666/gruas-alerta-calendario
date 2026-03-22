@@ -329,7 +329,8 @@ export const useCostAnalysisReport = (filters?: InventoryReportFilters) => {
             inventory_categories (name)
           )
         `)
-        .not('total_cost', 'is', null);
+        .not('total_cost', 'is', null)
+        .eq('status', 'active');
 
       if (filters?.dateFrom) {
         query = query.gte('movement_date', filters.dateFrom);
