@@ -171,12 +171,12 @@ export const MaintenanceForm = ({ isOpen, onClose, craneId, editingRecord }: Mai
           {/* Type and Status */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label className="text-white">Tipo de Mantenimiento</Label>
+              <Label className="text-foreground">Tipo de Mantenimiento</Label>
               <Select onValueChange={(value) => setValue('maintenance_type', value as FormData['maintenance_type'])} defaultValue={watch('maintenance_type')}>
-                <SelectTrigger className="bg-white/5 border-tms-green/30 text-white">
+                <SelectTrigger className="bg-background border-border text-foreground">
                   <SelectValue placeholder="Seleccionar tipo" />
                 </SelectTrigger>
-                <SelectContent className="bg-black border-tms-green/30">
+                <SelectContent>
                   <SelectItem value="preventive">Preventivo</SelectItem>
                   <SelectItem value="corrective">Correctivo</SelectItem>
                   <SelectItem value="emergency">Emergencia</SelectItem>
@@ -185,12 +185,12 @@ export const MaintenanceForm = ({ isOpen, onClose, craneId, editingRecord }: Mai
             </div>
 
             <div className="space-y-2">
-              <Label className="text-white">Estado</Label>
+              <Label className="text-foreground">Estado</Label>
               <Select onValueChange={(value) => setValue('status', value as FormData['status'])} defaultValue={watch('status')}>
-                <SelectTrigger className="bg-white/5 border-tms-green/30 text-white">
+                <SelectTrigger className="bg-background border-border text-foreground">
                   <SelectValue placeholder="Seleccionar estado" />
                 </SelectTrigger>
-                <SelectContent className="bg-black border-tms-green/30">
+                <SelectContent>
                   <SelectItem value="scheduled">Programado</SelectItem>
                   <SelectItem value="in_progress">En Progreso</SelectItem>
                   <SelectItem value="completed">Completado</SelectItem>
