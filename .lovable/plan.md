@@ -1,38 +1,43 @@
 
 
-## Plan: Backfill de movimientos de inventario para costos huérfanos con consumo inmediato
+## Plan: Fix jspdf build error in send-daily-pending-report edge function
 
-### Problema
+### Problem
 
-Hay 8 costos con `immediate_consumption=true` que nunca generaron movimientos de inventario ni registros en `crane_parts`. Algunos (Aceite Hidráulico, Filtro, Mangueras) sí tienen movimientos pero el campo `costs.inventory_movement_id` no se actualizó. Otros (Bornes Baterias, Cubre Volante, Aceite Hidraulico equipo grua, Manguera Hidraulico, Aceite Hidraulico Implementos) no tienen movimientos en absoluto.
+The edge function `send-daily-pending-report` uses `npm:jspdf@2.5.2` and `npm:jspdf-autotable@5.0.2` but there's no `deno.json` file declaring these dependencies, causing the build error.
 
-El sistema de Piezas ya funciona correctamente: muestra automáticamente los consumos de inventario (`inventory_movements` tipo `exit` con `crane_id`). El problema es que estos registros huérfanos nunca se crearon.
+### Solution
 
-### Solución
+Create `supabase/functions/send-daily-pending-report/deno.json` with the npm dependencies mapped, and update the import statements in `index.ts` to use the mapped names.
 
-Una migración SQL que:
+### Files to modify
 
-1. **Para costos que YA tienen movimientos** (3 registros): actualizar `costs.inventory_movement_id` con el ID del movimiento de entrada correspondiente
-2. **Para costos SIN movimientos** (5 registros): crear los movimientos de entrada y salida + registro en `crane_parts`, y vincularlos al costo
+| File | Change |
+|------|--------|
+| `supabase/functions/send-daily-pending-report/deno.json` | **Create** — declare npm dependencies for jspdf, jspdf-autotable, resend, and supabase-js |
+| `supabase/functions/send-daily-pending-report/index.ts` | Update imports to use mapped names from deno.json |
 
-### Archivos
+### Detail
 
-| Archivo | Cambio |
-|---------|--------|
-| Nueva migración SQL | Backfill: crear movimientos de inventario y crane_parts para costos huérfanos con consumo inmediato |
+**New `deno.json`:**
+```json
+{
+  "imports": {
+    "jspdf": "npm:jspdf@2.5.2",
+    "jspdf-autotable": "npm:jspdf-autotable@5.0.2",
+    "resend": "npm:resend@2.0.0",
+    "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2.50.0"
+  },
+  "nodeModulesDir": "auto"
+}
+```
 
-### Registros afectados
-
-- **Bornes Baterias** (DSBZ-85) — 6 uds x $5,000 — sin movimientos
-- **Aceite Hidraulico Implementos S.A.** (TLYF-23) — sin movimientos (sin quantity)
-- **Manguera Hidraulico** (TLYF-23) — sin movimientos  
-- **Cubre Volante y Ampolletas 24V** (TLYF-23) — sin movimientos
-- **Aceite Hidraulico equipo grua** (FYTR-49) — sin movimientos
-- **Aceite Hidraulico** (TDCJ-46) — ya tiene movimientos, solo falta vincular
-- **Filtro Hidraulico Plataforma** (TDCJ-46) — ya tiene movimientos, solo falta vincular
-- **Mangueras Hidraulico** (TLYF-23) — ya tiene movimientos, solo falta vincular
-
-### Resultado
-
-Todos los consumos aparecerán automáticamente en la pestaña **Piezas** de cada grúa como bitácora de lo instalado/reemplazado, gracias al sistema existente en `useCraneParts` que ya lee los `inventory_movements` tipo `exit`.
+**Updated imports in `index.ts`:**
+```typescript
+import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { createClient } from "@supabase/supabase-js";
+import { Resend } from "resend";
+import jsPDFModule from "jspdf";
+import autoTableModule from "jspdf-autotable";
+```
 
