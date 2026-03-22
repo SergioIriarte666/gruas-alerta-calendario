@@ -106,6 +106,7 @@ export const ServiceExpenseModals = ({ isOpen, onClose, onComplete, baseData }: 
         service_folio: baseData.service_folio || null,
         subcategory: subcategoryName,
         notes: null,
+        payment_date: baseData.date,
       };
 
       addCost(costData, {
