@@ -684,7 +684,7 @@ export const CostBatchUpdateModal = ({
                           <SelectValue placeholder="Seleccionar proveedor" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="">Sin proveedor</SelectItem>
+                          <SelectItem value="none">Sin proveedor</SelectItem>
                           {suppliers.map((sup) => (
                             <SelectItem key={sup.id} value={sup.id}>
                               {sup.name}
