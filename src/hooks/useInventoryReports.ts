@@ -286,16 +286,29 @@ export const useMovementReport = (filters?: InventoryReportFilters) => {
       const itemGroups = movements?.reduce((acc, movement) => {
         const itemName = movement.inventory_items?.name || 'Unknown';
         if (!acc[itemName]) {
-          acc[itemName] = { total_quantity: 0, total_value: 0, movement_count: 0 };
+          acc[itemName] = { entries_quantity: 0, exits_quantity: 0, entries_value: 0, exits_value: 0, movement_count: 0 };
         }
-        acc[itemName].total_quantity += movement.quantity || 0;
-        acc[itemName].total_value += movement.total_cost || 0;
+        if (movement.movement_type === 'entry') {
+          acc[itemName].entries_quantity += movement.quantity || 0;
+          acc[itemName].entries_value += movement.total_cost || 0;
+        } else {
+          acc[itemName].exits_quantity += movement.quantity || 0;
+          acc[itemName].exits_value += movement.total_cost || 0;
+        }
         acc[itemName].movement_count++;
         return acc;
-      }, {} as Record<string, { total_quantity: number; total_value: number; movement_count: number }>);
+      }, {} as Record<string, { entries_quantity: number; exits_quantity: number; entries_value: number; exits_value: number; movement_count: number }>);
 
       const topMovedItems = Object.entries(itemGroups || {})
-        .map(([item_name, data]) => ({ item_name, ...data }))
+        .map(([item_name, data]) => ({
+          item_name,
+          total_quantity: data.entries_quantity,
+          total_value: data.entries_value,
+          net_quantity: data.entries_quantity - data.exits_quantity,
+          exits_quantity: data.exits_quantity,
+          exits_value: data.exits_value,
+          movement_count: data.movement_count
+        }))
         .sort((a, b) => b.total_quantity - a.total_quantity)
         .slice(0, 10);
 
