@@ -435,6 +435,7 @@ export const useLinkInvoiceToCost = () => {
       };
     }) => {
       // 1. Create supplier_invoice
+      const isPaid = invoiceData.status === 'paid';
       const { data: invoice, error: invoiceError } = await supabase
         .from('supplier_invoices')
         .insert({
@@ -447,9 +448,9 @@ export const useLinkInvoiceToCost = () => {
           tax_amount: invoiceData.taxAmount,
           description: invoiceData.description,
           currency: invoiceData.currency || 'CLP',
-          status: 'pending',
-          paid_amount: 0,
-          balance: invoiceData.amount,
+          status: isPaid ? 'paid' : 'pending',
+          paid_amount: isPaid ? invoiceData.amount : 0,
+          balance: isPaid ? 0 : invoiceData.amount,
         })
         .select()
         .single();
