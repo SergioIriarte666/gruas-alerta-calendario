@@ -24,6 +24,7 @@ import { XMLCompleteParseResult, XMLDocumentData, XMLSupplierData, XMLSupplierPa
 import { supabase } from '@/integrations/supabase/client';
 import { useSuppliers } from '@/hooks/useSuppliers';
 import { useCostCategories } from '@/hooks/useCostCategories';
+import { useCostSubcategories } from '@/hooks/useCostSubcategories';
 import { getCategoryLabel } from '@/utils/categoryUtils';
 import { useSupplierPayments } from '@/hooks/useSupplierPayments';
 import { useSupplierInvoiceDuplicateCheck, SupplierInvoiceDuplicateResult } from '@/hooks/useDuplicateCheck';
@@ -43,6 +44,31 @@ interface MatchedCost {
   has_invoice: boolean;
 }
 
+// Inline subcategory select that fetches its own data
+const SupplierSubcategorySelect: React.FC<{
+  categoryId: string;
+  value: string;
+  onValueChange: (val: string) => void;
+}> = ({ categoryId, value, onValueChange }) => {
+  const { subcategories, isLoading } = useCostSubcategories(categoryId);
+  
+  if (isLoading) return <SelectTrigger className="w-40"><SelectValue placeholder="Cargando..." /></SelectTrigger>;
+  if (subcategories.length === 0) return null;
+  
+  return (
+    <Select value={value} onValueChange={onValueChange}>
+      <SelectTrigger className="w-40">
+        <SelectValue placeholder="Subcategoría" />
+      </SelectTrigger>
+      <SelectContent>
+        {subcategories.map((sub) => (
+          <SelectItem key={sub.id} value={sub.name}>{sub.name}</SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+};
+
 interface XMLDocumentUploadProps {
   isOpen: boolean;
   onClose: () => void;
@@ -59,6 +85,7 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [supplierCategoryMapping, setSupplierCategoryMapping] = useState<Record<string, string>>({});
+  const [supplierSubcategoryMapping, setSupplierSubcategoryMapping] = useState<Record<string, string>>({});
   const [selectedSuppliers, setSelectedSuppliers] = useState<Set<string>>(new Set());
   const [selectedDocuments, setSelectedDocuments] = useState<Set<string>>(new Set());
   const [createPayments, setCreatePayments] = useState(true);
@@ -411,6 +438,7 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
                 due_date: paymentData.due_date,
                 description: paymentData.description,
                 category: paymentData.category,
+                subcategory: supplierSubcategoryMapping[paymentData.supplier_rut] || null,
                 reference_number: paymentData.reference_number,
                 notes: paymentData.notes,
                 status: status,
@@ -454,6 +482,18 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
       ...prev,
       [supplierRut]: category
     }));
+    // Reset subcategory when category changes
+    setSupplierSubcategoryMapping(prev => ({
+      ...prev,
+      [supplierRut]: ''
+    }));
+  };
+
+  const handleSubcategoryChange = (supplierRut: string, subcategory: string) => {
+    setSupplierSubcategoryMapping(prev => ({
+      ...prev,
+      [supplierRut]: subcategory
+    }));
   };
   const toggleSupplierSelection = (supplierRut: string) => {
     setSelectedSuppliers(prev => {
@@ -482,6 +522,7 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
     setParseResult(null);
     setUploadProgress(0);
     setSupplierCategoryMapping({});
+    setSupplierSubcategoryMapping({});
     setSelectedSuppliers(new Set());
     setSelectedDocuments(new Set());
     setCreatePayments(true);
@@ -800,6 +841,19 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
                                   </SelectItem>)}
                               </SelectContent>
                             </Select>
+                            {/* Subcategory Select */}
+                            {(() => {
+                              const catName = supplierCategoryMapping[supplier.rut] || supplier.category;
+                              const catObj = activeCategories?.find(c => c.name === catName);
+                              if (!catObj) return null;
+                              return (
+                                <SupplierSubcategorySelect
+                                  categoryId={catObj.id}
+                                  value={supplierSubcategoryMapping[supplier.rut] || ''}
+                                  onValueChange={(val) => handleSubcategoryChange(supplier.rut, val)}
+                                />
+                              );
+                            })()}
                           </div>
                         </div>)}
                     </div>
