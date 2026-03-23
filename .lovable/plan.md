@@ -1,77 +1,66 @@
 
 
-## Plan: Vincular XML a costos existentes (modo "Asociar Factura")
+## Plan: Unificar importadores XML y simplificar opciones de vencimiento
 
-### Problema actual
+### Problema
 
-Cuando se registra un costo manualmente (ej. compra de piezas) y el proveedor envía la factura XML 1-2 días después, no hay forma de vincular esa factura al costo existente. La única opción actual es importar el XML, lo que crea un NUEVO pago + costo duplicado.
+Existen dos importadores XML completamente independientes con lógica y UI diferentes:
+- **Costos** (`XMLCostUpload.tsx`, 1150 líneas): 3 modos de pago (inmediato/crédito/custom), botones [30,45,60,90]
+- **Proveedores** (`XMLDocumentUpload.tsx`, 1104 líneas): 2 modos (crédito/contado), botones [30,45,60,90], además maneja proveedores y matching
+
+El usuario quiere eliminar los botones 45, 60, 90 (dejar solo 30 + input personalizado) y unificar la experiencia.
 
 ### Solución
 
-Agregar un modo **"Asociar a costo existente"** en el importador XML (`XMLDocumentUpload`). El flujo sería:
+Crear un componente compartido de configuración de pago y usarlo en ambos importadores, asegurando que la UI y lógica sean idénticas.
 
-1. El usuario sube el XML como siempre
-2. El sistema detecta automáticamente costos existentes que coincidan (mismo proveedor/RUT + monto similar ±5% + fecha cercana ±7 días)
-3. Para cada documento con match, muestra la opción: **"Crear nuevo"** vs **"Vincular a costo existente #X"**
-4. Si se vincula, actualiza el costo existente con los datos del XML (folio, fecha exacta, descripción del DTE) y crea/actualiza la factura en `supplier_invoices`
-
-### Archivos a modificar
+### Cambios
 
 | Archivo | Cambio |
 |---------|--------|
-| `src/components/suppliers/XMLDocumentUpload.tsx` | Agregar lógica de matching contra costos existentes y opción de vincular vs crear nuevo |
-| `src/hooks/useCosts.ts` | Agregar función `linkInvoiceToCost(costId, invoiceData)` que actualiza el costo con datos del XML |
-| Nueva migración SQL | Función RPC `find_matching_costs_for_invoice(rut, amount, date_range)` para buscar costos candidatos eficientemente |
+| `src/components/common/XMLPaymentConfig.tsx` | **NUEVO** — Componente reutilizable con las opciones de pago unificadas: RadioGroup (Crédito/Contado), selector de días (solo botón 30 + input), selector de fecha de pago |
+| `src/components/costs/XMLCostUpload.tsx` | Reemplazar la sección "Condiciones de Pago" (líneas 760-840) por `XMLPaymentConfig`. Eliminar botones 45/60/90. Unificar terminología: "A Crédito (Pendiente)" y "Contado / Ya Pagado" |
+| `src/components/suppliers/XMLDocumentUpload.tsx` | Reemplazar la sección "Tipo de Pago" (líneas 680-806) por `XMLPaymentConfig`. Eliminar botones 45/60/90 |
 
-### Detalle técnico
+### Componente compartido `XMLPaymentConfig`
 
-**1. Función RPC para buscar costos candidatos:**
-```sql
-CREATE FUNCTION find_matching_costs_for_invoice(
-  p_supplier_rut text,
-  p_amount numeric,
-  p_date_from date,
-  p_date_to date
-) RETURNS TABLE (id uuid, description text, amount numeric, date date, ...)
--- Busca costos sin factura vinculada, del mismo proveedor, monto ±5%, fecha en rango
+```text
+┌─────────────────────────────────────────────────┐
+│ Tipo de Pago                                    │
+│ ○ A Crédito (Pendiente)  ○ Contado / Ya Pagado  │
+│                                                 │
+│ [Si Crédito]                                    │
+│ Días hasta vencimiento:                         │
+│ [30] [___] días        [Aplicar a todos]        │
+│                                                 │
+│ [Si Contado]                                    │
+│ Fecha de pago (defecto: fecha emisión XML):     │
+│ [📅 dd/mm/yyyy]        [Aplicar a todos]        │
+└─────────────────────────────────────────────────┘
 ```
 
-**2. En XMLDocumentUpload, después del análisis:**
-- Para cada documento parseado, llamar a la RPC para buscar matches
-- Mostrar un selector: "Vincular a [Descripción del costo - $Monto - Fecha]" o "Crear nuevo pago"
-- Los documentos vinculados actualizan el costo existente en vez de crear uno nuevo
+Props del componente:
+- `paymentType`: 'credit' | 'paid'
+- `onPaymentTypeChange`
+- `creditDays`: number
+- `onCreditDaysChange`
+- `paidDate`: string
+- `onPaidDateChange`
+- `onApplyToAll`
+- `selectedCount`: number
 
-**3. Al vincular un documento XML a un costo existente:**
-```typescript
-// Actualizar el costo con datos del XML
-await supabase.from('costs').update({
-  notes: `Factura ${folio} - ${description}`, // enriquecer notas
-  updated_at: new Date().toISOString()
-}).eq('id', costId);
+### Detalle de unificación en Costos
 
-// Crear la factura en supplier_invoices vinculada al pago existente
-await supabase.from('supplier_invoices').insert({
-  supplier_id, invoice_number: folio, 
-  amount, issue_date, ...
-});
+El importador de costos actualmente tiene 3 modos (`immediate`, `credit`, `custom`). Se simplificará a 2 modos como proveedores:
+- **"Contado / Ya Pagado"** = equivale al actual `immediate` (fecha pago = fecha emisión, editable)
+- **"A Crédito (Pendiente)"** = calcula vencimiento con días
 
-// Vincular factura al pago existente
-await supabase.from('supplier_payments').update({
-  supplier_invoice_id: newInvoice.id,
-  reference_number: folio
-}).eq('cost_id', costId);
-```
+El modo `custom` se elimina porque es redundante: en modo Contado se puede cambiar la fecha individualmente por registro.
 
-### UX en el importador
+### Resultado esperado
 
-En la sección de documentos del XML, cada tarjeta mostrará:
-- Badge azul "🔗 Costo encontrado" si hay match
-- Dropdown para seleccionar cuál costo vincular (puede haber más de uno)
-- El comportamiento por defecto será vincular si hay match exacto (mismo monto + mismo RUT)
-
-### Lo que NO se toca
-
-- Flujo de importación XML normal (crear nuevos) sigue funcionando igual
-- Triggers de sincronización existentes — la vinculación usa los mismos campos (`supplier_payment_id`, `cost_id`)
-- Módulos de Grúas, Bodega, Reportes — no afectados
+- Ambos importadores usan el mismo componente visual y la misma lógica de pago
+- Solo aparece el botón "30" + input numérico para días personalizados
+- Terminología idéntica en ambos módulos
+- La funcionalidad específica de cada importador (proveedores, matching, edición de campos) se mantiene intacta
 
