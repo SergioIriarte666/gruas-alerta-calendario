@@ -457,13 +457,17 @@ export const useLinkInvoiceToCost = () => {
 
       if (invoiceError) throw new Error(`Error creando factura: ${invoiceError.message}`);
 
-      // 2. Update cost notes with invoice reference
+      // 2. Update cost notes and payment_date with invoice reference
+      const costUpdate: Record<string, any> = {
+        notes: `Factura ${invoiceData.folio} - ${invoiceData.description}`,
+        updated_at: new Date().toISOString(),
+      };
+      if (isPaid && invoiceData.paidDate) {
+        costUpdate.payment_date = invoiceData.paidDate;
+      }
       const { error: costError } = await supabase
         .from('costs')
-        .update({
-          notes: `Factura ${invoiceData.folio} - ${invoiceData.description}`,
-          updated_at: new Date().toISOString(),
-        })
+        .update(costUpdate)
         .eq('id', costId);
 
       if (costError) throw new Error(`Error actualizando costo: ${costError.message}`);
