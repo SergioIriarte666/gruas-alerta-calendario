@@ -502,12 +502,18 @@ export const useLinkInvoiceToCost = () => {
           .maybeSingle();
 
         if (paymentByCostId) {
+          const paymentUpdate2: Record<string, any> = {
+            supplier_invoice_id: invoice.id,
+            reference_number: invoiceData.folio,
+          };
+          if (isPaid && invoiceData.paidDate) {
+            paymentUpdate2.status = 'paid';
+            paymentUpdate2.paid_date = invoiceData.paidDate;
+            paymentUpdate2.paid_amount = invoiceData.amount;
+          }
           await supabase
             .from('supplier_payments')
-            .update({
-              supplier_invoice_id: invoice.id,
-              reference_number: invoiceData.folio,
-            })
+            .update(paymentUpdate2)
             .eq('id', paymentByCostId.id);
         }
       }
