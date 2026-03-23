@@ -4869,6 +4869,24 @@ export type Database = {
           similitud: number
         }[]
       }
+      find_matching_costs_for_invoice: {
+        Args: {
+          p_amount: number
+          p_date_from: string
+          p_date_to: string
+          p_supplier_rut: string
+        }
+        Returns: {
+          amount: number
+          date: string
+          description: string
+          has_invoice: boolean
+          id: string
+          payment_date: string
+          supplier_name: string
+          supplier_payment_id: string
+        }[]
+      }
       fix_all_invoice_statuses: { Args: never; Returns: Json }
       fix_all_invoiced_services_status: { Args: never; Returns: Json }
       fix_all_maintenance_cost_descriptions: { Args: never; Returns: Json }
