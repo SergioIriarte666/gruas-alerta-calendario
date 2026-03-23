@@ -1,54 +1,77 @@
 
 
-## Plan: Sincronizar `paid_date` / `payment_date` bidireccionalmente
+## Plan: Vincular XML a costos existentes (modo "Asociar Factura")
 
-### Problema
+### Problema actual
 
-El costo muestra `payment_date = 21/03/2026` pero el pago de proveedor muestra `paid_date = 23/03/2026`. Son dos campos distintos en dos tablas que no se sincronizan entre sí:
+Cuando se registra un costo manualmente (ej. compra de piezas) y el proveedor envía la factura XML 1-2 días después, no hay forma de vincular esa factura al costo existente. La única opción actual es importar el XML, lo que crea un NUEVO pago + costo duplicado.
 
-- **costs.payment_date** → fecha de pago del costo
-- **supplier_payments.paid_date** → fecha de pago del proveedor
+### Solución
 
-Los triggers actuales sincronizan `amount`, `due_date`, `description`, pero **omiten completamente `paid_date` ↔ `payment_date`**.
+Agregar un modo **"Asociar a costo existente"** en el importador XML (`XMLDocumentUpload`). El flujo sería:
 
-### Triggers afectados
+1. El usuario sube el XML como siempre
+2. El sistema detecta automáticamente costos existentes que coincidan (mismo proveedor/RUT + monto similar ±5% + fecha cercana ±7 días)
+3. Para cada documento con match, muestra la opción: **"Crear nuevo"** vs **"Vincular a costo existente #X"**
+4. Si se vincula, actualiza el costo existente con los datos del XML (folio, fecha exacta, descripción del DTE) y crea/actualiza la factura en `supplier_invoices`
 
-| Trigger | Dirección | Falta |
-|---------|-----------|-------|
-| `create_supplier_payment_from_cost` (UPDATE) | Cost → Payment | Ya sincroniza `paid_date` cuando hay `payment_date` ✓ |
-| `sync_supplier_payment_update_to_cost` | Payment → Cost | **NO sincroniza `paid_date` → `payment_date`** ✗ |
-| `sync_supplier_invoice_update` | Invoice → Payment → Cost | **NO sincroniza `payment_date`** (no aplica directamente) |
-
-### Solución: 1 migración SQL
-
-Actualizar `sync_supplier_payment_update_to_cost` para incluir la sincronización de `paid_date` → `costs.payment_date`:
-
-```sql
--- Agregar paid_date al check de cambios
-IF (OLD.amount IS DISTINCT FROM NEW.amount) OR
-   (OLD.due_date IS DISTINCT FROM NEW.due_date) OR
-   (OLD.description IS DISTINCT FROM NEW.description) OR
-   (OLD.paid_date IS DISTINCT FROM NEW.paid_date) THEN
-
-  UPDATE costs SET
-    amount = ...,
-    date = ...,
-    description = ...,
-    payment_date = CASE WHEN OLD.paid_date IS DISTINCT FROM NEW.paid_date THEN NEW.paid_date ELSE payment_date END,
-    updated_at = now()
-  WHERE supplier_payment_id = NEW.id;
-  -- (mismo para cost_id)
-```
-
-Adicionalmente, corregir los datos existentes inconsistentes: actualizar `costs.payment_date` desde `supplier_payments.paid_date` donde difieran y estén vinculados.
-
-### Archivo
+### Archivos a modificar
 
 | Archivo | Cambio |
 |---------|--------|
-| Nueva migración SQL | Actualizar función `sync_supplier_payment_update_to_cost` + data fix para registros existentes |
+| `src/components/suppliers/XMLDocumentUpload.tsx` | Agregar lógica de matching contra costos existentes y opción de vincular vs crear nuevo |
+| `src/hooks/useCosts.ts` | Agregar función `linkInvoiceToCost(costId, invoiceData)` que actualiza el costo con datos del XML |
+| Nueva migración SQL | Función RPC `find_matching_costs_for_invoice(rut, amount, date_range)` para buscar costos candidatos eficientemente |
 
-### Resultado
+### Detalle técnico
 
-Editar la fecha de pago en Proveedores actualizará automáticamente la fecha de pago en Costos, y viceversa (el trigger cost→payment ya existe). Bidireccionalidad completa.
+**1. Función RPC para buscar costos candidatos:**
+```sql
+CREATE FUNCTION find_matching_costs_for_invoice(
+  p_supplier_rut text,
+  p_amount numeric,
+  p_date_from date,
+  p_date_to date
+) RETURNS TABLE (id uuid, description text, amount numeric, date date, ...)
+-- Busca costos sin factura vinculada, del mismo proveedor, monto ±5%, fecha en rango
+```
+
+**2. En XMLDocumentUpload, después del análisis:**
+- Para cada documento parseado, llamar a la RPC para buscar matches
+- Mostrar un selector: "Vincular a [Descripción del costo - $Monto - Fecha]" o "Crear nuevo pago"
+- Los documentos vinculados actualizan el costo existente en vez de crear uno nuevo
+
+**3. Al vincular un documento XML a un costo existente:**
+```typescript
+// Actualizar el costo con datos del XML
+await supabase.from('costs').update({
+  notes: `Factura ${folio} - ${description}`, // enriquecer notas
+  updated_at: new Date().toISOString()
+}).eq('id', costId);
+
+// Crear la factura en supplier_invoices vinculada al pago existente
+await supabase.from('supplier_invoices').insert({
+  supplier_id, invoice_number: folio, 
+  amount, issue_date, ...
+});
+
+// Vincular factura al pago existente
+await supabase.from('supplier_payments').update({
+  supplier_invoice_id: newInvoice.id,
+  reference_number: folio
+}).eq('cost_id', costId);
+```
+
+### UX en el importador
+
+En la sección de documentos del XML, cada tarjeta mostrará:
+- Badge azul "🔗 Costo encontrado" si hay match
+- Dropdown para seleccionar cuál costo vincular (puede haber más de uno)
+- El comportamiento por defecto será vincular si hay match exacto (mismo monto + mismo RUT)
+
+### Lo que NO se toca
+
+- Flujo de importación XML normal (crear nuevos) sigue funcionando igual
+- Triggers de sincronización existentes — la vinculación usa los mismos campos (`supplier_payment_id`, `cost_id`)
+- Módulos de Grúas, Bodega, Reportes — no afectados
 
