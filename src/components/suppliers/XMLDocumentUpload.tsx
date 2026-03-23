@@ -677,132 +677,31 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
                   
                   {createPayments && parseResult.documents.length > 0 && (
                     <div className="space-y-4 pt-3 border-t">
-                      {/* Tipo de pago */}
-                      <div className="space-y-3">
-                        <h4 className="text-sm font-medium text-foreground flex items-center gap-2">
-                          <CreditCard className="w-4 h-4" />
-                          Tipo de Pago
-                        </h4>
-                        <RadioGroup 
-                          value={paymentType} 
-                          onValueChange={(value) => setPaymentType(value as 'credit' | 'paid')}
-                          className="flex gap-6"
-                        >
-                          <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="credit" id="payment-type-credit" />
-                            <Label htmlFor="payment-type-credit" className="cursor-pointer">
-                              A Crédito (Pendiente)
-                            </Label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="paid" id="payment-type-paid" />
-                            <Label htmlFor="payment-type-paid" className="cursor-pointer">
-                              Contado / Ya Pagado
-                            </Label>
-                          </div>
-                        </RadioGroup>
-                      </div>
-
-                      {/* Si es Crédito: configurar días */}
-                      {paymentType === 'credit' && (
-                        <div className="space-y-3 pl-6 border-l-2 border-muted">
-                          <h4 className="text-sm font-medium text-foreground">Configuración de Fechas de Vencimiento</h4>
-                          <div className="flex items-end gap-3">
-                            <div className="flex-1">
-                              <label className="text-sm text-muted-foreground mb-1 block">
-                                Días hasta vencimiento por defecto
-                              </label>
-                              <div className="flex gap-2">
-                                {[30, 45, 60, 90].map(days => (
-                                  <Button
-                                    key={days}
-                                    variant={defaultDaysToAdd === days ? 'default' : 'outline'}
-                                    size="sm"
-                                    onClick={() => setDefaultDaysToAdd(days)}
-                                    className="w-12"
-                                  >
-                                    {days}
-                                  </Button>
-                                ))}
-                                <Input
-                                  type="number"
-                                  min="0"
-                                  max="365"
-                                  value={defaultDaysToAdd}
-                                  onChange={(e) => setDefaultDaysToAdd(parseInt(e.target.value) || 0)}
-                                  className="w-20"
-                                />
-                                <span className="text-sm text-muted-foreground self-center">días</span>
-                              </div>
-                            </div>
-                            <Button
-                              variant="outline"
-                              onClick={applyDefaultDaysToAll}
-                              disabled={selectedDocuments.size === 0}
-                            >
-                              Aplicar a todos
-                            </Button>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Si es Pagado: configurar fecha de pago */}
-                      {paymentType === 'paid' && (
-                        <div className="space-y-3 pl-6 border-l-2 border-green-200">
-                           <h4 className="text-sm font-medium text-foreground flex items-center gap-2">
-                             <Banknote className="w-4 h-4 text-green-600" />
-                             Fecha de Pago (por defecto: fecha de emisión del XML)
-                          </h4>
-                          <div className="flex items-center gap-3">
-                            <Popover>
-                              <PopoverTrigger asChild>
-                                <Button
-                                  variant="outline"
-                                  className={cn(
-                                    "w-[200px] justify-start text-left font-normal",
-                                    !bulkPaidDate && "text-muted-foreground"
-                                  )}
-                                >
-                                  <CalendarIcon className="mr-2 h-4 w-4" />
-                                  {bulkPaidDate ? format(safeParseDateOnly(bulkPaidDate), 'dd/MM/yyyy') : 'Fecha del XML'}
-                                </Button>
-                              </PopoverTrigger>
-                              <PopoverContent className="w-auto p-0" align="start">
-                                <CalendarComponent
-                                  mode="single"
-                                  selected={bulkPaidDate ? safeParseDateOnly(bulkPaidDate) : undefined}
-                                  onSelect={(date) => date && setBulkPaidDate(format(date, 'yyyy-MM-dd'))}
-                                  initialFocus
-                                  className="pointer-events-auto"
-                                />
-                              </PopoverContent>
-                            </Popover>
-                            <Button
-                              variant="outline"
-                              onClick={() => {
-                                const updates: Record<string, string> = {};
-                                selectedDocuments.forEach(folio => {
-                                  updates[folio] = bulkPaidDate;
-                                });
-                                setPaidDateOverrides(updates);
-                                // También marcar todos como pagados
-                                const statusUpdates: Record<string, 'paid'> = {};
-                                selectedDocuments.forEach(folio => {
-                                  statusUpdates[folio] = 'paid';
-                                });
-                                setStatusOverrides(statusUpdates);
-                                toast.success(`Fecha de pago aplicada a ${selectedDocuments.size} documentos`);
-                              }}
-                              disabled={selectedDocuments.size === 0}
-                            >
-                              Aplicar a todos
-                            </Button>
-                          </div>
-                          <p className="text-xs text-muted-foreground">
-                            Los documentos se importarán con estado "Pagado" y la fecha indicada.
-                          </p>
-                        </div>
-                      )}
+                      <XMLPaymentConfig
+                        paymentType={paymentType}
+                        onPaymentTypeChange={setPaymentType}
+                        creditDays={defaultDaysToAdd}
+                        onCreditDaysChange={setDefaultDaysToAdd}
+                        paidDate={bulkPaidDate}
+                        onPaidDateChange={setBulkPaidDate}
+                        onApplyToAll={() => {
+                          if (paymentType === 'credit') {
+                            applyDefaultDaysToAll();
+                          } else {
+                            const updates: Record<string, string> = {};
+                            const statusUpdates: Record<string, 'paid'> = {};
+                            selectedDocuments.forEach(folio => {
+                              updates[folio] = bulkPaidDate;
+                              statusUpdates[folio] = 'paid';
+                            });
+                            setPaidDateOverrides(updates);
+                            setStatusOverrides(statusUpdates);
+                            toast.success(`Fecha de pago aplicada a ${selectedDocuments.size} documentos`);
+                          }
+                        }}
+                        selectedCount={selectedDocuments.size}
+                        idPrefix="supplier-payment"
+                      />
                     </div>
                   )}
                 </CardContent>
