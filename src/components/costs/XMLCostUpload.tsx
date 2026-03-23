@@ -9,7 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { BatchProgressModal, useBatchProgress } from '@/components/ui/batch-progress-modal';
 import DatePickerInput from '@/components/common/DatePickerInput';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import XMLPaymentConfig from '@/components/common/XMLPaymentConfig';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { cn } from '@/lib/utils';
@@ -63,11 +63,11 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
   const [bulkAmountAdjustment, setBulkAmountAdjustment] = useState<string>('');
   const [showAllRows, setShowAllRows] = useState(false);
   
-  // Estados para fecha de pago
-  const [paymentDateMode, setPaymentDateMode] = useState<'immediate' | 'credit' | 'custom'>('immediate');
+  // Estados para fecha de pago (unificados: credit / paid)
+  const [paymentType, setPaymentType] = useState<'credit' | 'paid'>('paid');
   const [creditDays, setCreditDays] = useState<number>(30);
   const [bulkPaymentDate, setBulkPaymentDate] = useState<string>('');
-  const [paymentDateOverrides, setPaymentDateOverrides] = useState<Record<number, string>>({});
+  const [paymentDateOverrides, setPaymentDateOverrides] = useState<Record<number, string>>();
   
   // Estado para duplicados
   const [duplicateResults, setDuplicateResults] = useState<CostDuplicateResult[]>([]);
@@ -264,38 +264,39 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
     setBulkAmountAdjustment('');
   };
 
-  // Calcular fecha de pago según modo
+  // Calcular fecha de pago según tipo
   const getPaymentDate = (index: number, emissionDate: string): string | null => {
     // Si hay override individual, usarlo
-    if (paymentDateOverrides[index]) {
+    if (paymentDateOverrides?.[index]) {
       return paymentDateOverrides[index];
     }
     
-    // Según modo seleccionado
-    if (paymentDateMode === 'immediate') {
-      return emissionDate;
-    } else if (paymentDateMode === 'credit') {
+    if (paymentType === 'paid') {
+      return bulkPaymentDate || emissionDate;
+    } else if (paymentType === 'credit') {
       const date = new Date(emissionDate);
       date.setDate(date.getDate() + creditDays);
       return format(date, 'yyyy-MM-dd');
-    } else if (paymentDateMode === 'custom' && bulkPaymentDate) {
-      return bulkPaymentDate;
     }
     
-    return emissionDate; // fallback to emission date
+    return emissionDate;
   };
 
-  // Aplicar fecha de pago masiva
-  const handleBulkPaymentDateChange = () => {
-    if (!bulkPaymentDate || selectedRows.size === 0) return;
-    
-    const updates: Record<number, string> = {};
-    selectedRows.forEach(index => {
-      updates[index] = bulkPaymentDate;
-    });
-    
-    setPaymentDateOverrides(prev => ({ ...prev, ...updates }));
-    toast.success(`Fecha de pago actualizada en ${selectedRows.size} registros`);
+  // Aplicar configuración de pago masiva
+  const handleApplyPaymentToAll = () => {
+    if (selectedRows.size === 0) return;
+
+    if (paymentType === 'paid' && bulkPaymentDate) {
+      const updates: Record<number, string> = {};
+      selectedRows.forEach(index => {
+        updates[index] = bulkPaymentDate;
+      });
+      setPaymentDateOverrides(prev => ({ ...prev, ...updates }));
+      toast.success(`Fecha de pago aplicada a ${selectedRows.size} registros`);
+    } else if (paymentType === 'credit') {
+      // Credit days apply globally, just notify
+      toast.success(`${creditDays} días de crédito aplicados a todos los registros`);
+    }
   };
 
   const getDefaultCategoryId = (categoria?: string): string => {
@@ -478,7 +479,7 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
     setBulkDate('');
     setBulkAmountAdjustment('');
     setShowAllRows(false);
-    setPaymentDateMode('immediate');
+    setPaymentType('paid');
     setCreditDays(30);
     setBulkPaymentDate('');
     setPaymentDateOverrides({});
@@ -758,85 +759,17 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
 
                     {/* Separador */}
                     <div className="border-t pt-3 mt-3">
-                      <h4 className="text-sm font-medium text-muted-foreground mb-3 flex items-center gap-2">
-                        <Banknote className="w-4 h-4" />
-                        Condiciones de Pago
-                      </h4>
-                      
-                      {/* Modo de fecha de pago */}
-                      <RadioGroup 
-                        value={paymentDateMode} 
-                        onValueChange={(value) => setPaymentDateMode(value as 'immediate' | 'credit' | 'custom')}
-                        className="flex flex-wrap gap-4 mb-3"
-                      >
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="immediate" id="payment-immediate" />
-                          <Label htmlFor="payment-immediate" className="text-sm cursor-pointer">
-                            Pagado Inmediato (misma fecha)
-                          </Label>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="credit" id="payment-credit" />
-                          <Label htmlFor="payment-credit" className="text-sm cursor-pointer">
-                            A Crédito
-                          </Label>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="custom" id="payment-custom" />
-                          <Label htmlFor="payment-custom" className="text-sm cursor-pointer">
-                            Fecha Específica
-                          </Label>
-                        </div>
-                      </RadioGroup>
-
-                      {/* Opciones según modo */}
-                      {paymentDateMode === 'credit' && (
-                        <div className="flex items-center gap-3 flex-wrap pl-6">
-                          <span className="text-sm text-muted-foreground">Días de crédito:</span>
-                          <div className="flex items-center gap-2">
-                            {[30, 45, 60, 90].map(days => (
-                              <Button
-                                key={days}
-                                variant={creditDays === days ? 'default' : 'outline'}
-                                size="sm"
-                                onClick={() => setCreditDays(days)}
-                                className="w-12"
-                              >
-                                {days}
-                              </Button>
-                            ))}
-                            <Input
-                              type="number"
-                              value={creditDays}
-                              onChange={(e) => setCreditDays(parseInt(e.target.value) || 30)}
-                              className="w-20"
-                              min={1}
-                              max={365}
-                            />
-                            <span className="text-sm text-muted-foreground">días</span>
-                          </div>
-                        </div>
-                      )}
-
-                      {paymentDateMode === 'custom' && (
-                        <div className="flex items-center gap-3 flex-wrap pl-6">
-                          <span className="text-sm text-muted-foreground">Fecha de pago:</span>
-                          <DatePickerInput
-                            value={bulkPaymentDate}
-                            onChange={setBulkPaymentDate}
-                            placeholder="Seleccionar fecha"
-                            className="w-40"
-                          />
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={handleBulkPaymentDateChange}
-                            disabled={!bulkPaymentDate || selectedRows.size === 0}
-                          >
-                            Aplicar a seleccionados
-                          </Button>
-                        </div>
-                      )}
+                      <XMLPaymentConfig
+                        paymentType={paymentType}
+                        onPaymentTypeChange={setPaymentType}
+                        creditDays={creditDays}
+                        onCreditDaysChange={setCreditDays}
+                        paidDate={bulkPaymentDate}
+                        onPaidDateChange={setBulkPaymentDate}
+                        onApplyToAll={handleApplyPaymentToAll}
+                        selectedCount={selectedRows.size}
+                        idPrefix="cost-payment"
+                      />
                     </div>
 
                     {/* Sincronización con Inventario */}
