@@ -487,8 +487,8 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
     setCreatePayments(true);
     setDueDateOverrides({});
     setDefaultDaysToAdd(30);
-    setPaymentType('credit');
-    setBulkPaidDate('');
+    setPaymentTermId('none');
+    setBulkDueDate('');
     setPaidDateOverrides({});
     setStatusOverrides({});
     setDuplicateResults([]);
