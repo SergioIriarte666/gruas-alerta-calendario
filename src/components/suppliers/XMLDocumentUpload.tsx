@@ -150,6 +150,22 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
       });
       setSupplierCategoryMapping(categoryMap);
       
+      // Initialize bulkPaidDate from first document's issue_date
+      if (result.documents.length > 0 && result.documents[0].issue_date) {
+        setBulkPaidDate(result.documents[0].issue_date);
+      } else {
+        setBulkPaidDate(format(new Date(), 'yyyy-MM-dd'));
+      }
+      
+      // Initialize per-document paid date overrides from XML dates
+      const initialPaidOverrides: Record<string, string> = {};
+      result.documents.forEach(doc => {
+        if (doc.issue_date) {
+          initialPaidOverrides[doc.folio] = doc.issue_date;
+        }
+      });
+      setPaidDateOverrides(initialPaidOverrides);
+
       if (!result.success) {
         toast.error('Se encontraron errores en el archivo XML');
       } else {
