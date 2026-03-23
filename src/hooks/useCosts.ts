@@ -408,6 +408,110 @@ const deleteCost = async (id: string) => {
   return costData?.service_id;
 };
 
+// Link an XML invoice to an existing cost (instead of creating a new payment)
+export const useLinkInvoiceToCost = () => {
+  const queryClient = useQueryClient();
+  const { invalidateAll } = useUniversalSync();
+
+  return useMutation({
+    mutationFn: async ({
+      costId,
+      supplierId,
+      invoiceData,
+    }: {
+      costId: string;
+      supplierId: string;
+      invoiceData: {
+        folio: string;
+        issueDate: string;
+        dueDate: string;
+        amount: number;
+        netAmount: number;
+        taxAmount: number;
+        description: string;
+        currency?: string;
+      };
+    }) => {
+      // 1. Create supplier_invoice
+      const { data: invoice, error: invoiceError } = await supabase
+        .from('supplier_invoices')
+        .insert({
+          supplier_id: supplierId,
+          invoice_number: invoiceData.folio,
+          issue_date: invoiceData.issueDate,
+          due_date: invoiceData.dueDate,
+          amount: invoiceData.amount,
+          net_amount: invoiceData.netAmount,
+          tax_amount: invoiceData.taxAmount,
+          description: invoiceData.description,
+          currency: invoiceData.currency || 'CLP',
+          status: 'pending',
+          paid_amount: 0,
+          balance: invoiceData.amount,
+        })
+        .select()
+        .single();
+
+      if (invoiceError) throw new Error(`Error creando factura: ${invoiceError.message}`);
+
+      // 2. Update cost notes with invoice reference
+      const { error: costError } = await supabase
+        .from('costs')
+        .update({
+          notes: `Factura ${invoiceData.folio} - ${invoiceData.description}`,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', costId);
+
+      if (costError) throw new Error(`Error actualizando costo: ${costError.message}`);
+
+      // 3. Link invoice to existing supplier_payment if exists
+      const { data: costData } = await supabase
+        .from('costs')
+        .select('supplier_payment_id')
+        .eq('id', costId)
+        .single();
+
+      if (costData?.supplier_payment_id) {
+        await supabase
+          .from('supplier_payments')
+          .update({
+            supplier_invoice_id: invoice.id,
+            reference_number: invoiceData.folio,
+          })
+          .eq('id', costData.supplier_payment_id);
+      } else {
+        // Also check via cost_id
+        const { data: paymentByCostId } = await supabase
+          .from('supplier_payments')
+          .select('id')
+          .eq('cost_id', costId)
+          .maybeSingle();
+
+        if (paymentByCostId) {
+          await supabase
+            .from('supplier_payments')
+            .update({
+              supplier_invoice_id: invoice.id,
+              reference_number: invoiceData.folio,
+            })
+            .eq('id', paymentByCostId.id);
+        }
+      }
+
+      return { invoiceId: invoice.id, costId };
+    },
+    onSuccess: () => {
+      invalidateAll();
+      toast.success('Factura vinculada al costo existente');
+    },
+    onError: (error: Error) => {
+      console.error('Error linking invoice to cost:', error);
+      toast.error(error.message);
+    },
+  });
+};
+
 export const useDeleteCost = () => {
   const queryClient = useQueryClient();
   const { createMutationErrorHandler } = useErrorHandler();
