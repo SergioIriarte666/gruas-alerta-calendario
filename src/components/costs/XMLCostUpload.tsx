@@ -9,7 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { BatchProgressModal, useBatchProgress } from '@/components/ui/batch-progress-modal';
 import DatePickerInput from '@/components/common/DatePickerInput';
-import XMLPaymentConfig from '@/components/common/XMLPaymentConfig';
+
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { cn } from '@/lib/utils';
@@ -758,30 +758,6 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
                       </Button>
                     </div>
 
-                    {/* Condiciones de Pago */}
-                    <div className="border-t pt-3 mt-3">
-                      <XMLPaymentConfig
-                        paymentTerms={paymentTerms}
-                        loadingTerms={loadingTerms}
-                        paymentTermId={paymentTermId}
-                        onPaymentTermIdChange={(id) => {
-                          setPaymentTermId(id);
-                          // Auto-calculate bulkDueDate based on first item's emission date
-                          if (id !== 'none' && parseResult?.data?.[0]) {
-                            const term = paymentTerms.find(t => t.id === id);
-                            if (term) {
-                              const firstDate = formatDateForInput(parseResult.data[0].fecha);
-                              setBulkDueDate(format(addDays(new Date(firstDate), term.days), 'yyyy-MM-dd'));
-                            }
-                          }
-                        }}
-                        issueDate={parseResult?.data?.[0] ? formatDateForInput(parseResult.data[0].fecha) : format(new Date(), 'yyyy-MM-dd')}
-                        dueDate={bulkDueDate || (parseResult?.data?.[0] ? format(addDays(new Date(formatDateForInput(parseResult.data[0].fecha)), 30), 'yyyy-MM-dd') : '')}
-                        onDueDateChange={setBulkDueDate}
-                        onApplyToAll={handleApplyPaymentToAll}
-                        selectedCount={selectedRows.size}
-                      />
-                    </div>
 
                     {/* Sincronización con Inventario */}
                     <div className="border-t pt-3 mt-3">
@@ -1014,8 +990,37 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
                                 </div>
                               </div>
                               
-                              {/* Fecha de Vencimiento */}
+                              {/* Condición de Pago y Fecha de Vencimiento */}
                               <div className="flex flex-wrap items-end gap-4 pt-3 border-t">
+                                <div className="flex-1 min-w-[180px] max-w-[220px]">
+                                  <Label className="text-xs text-muted-foreground mb-1.5 block">Condición de Pago</Label>
+                                  <Select
+                                    value={paymentTermId}
+                                    onValueChange={(id) => {
+                                      setPaymentTermId(id);
+                                      if (id !== 'none') {
+                                        const term = paymentTerms.find(t => t.id === id);
+                                        if (term) {
+                                          const newDate = format(addDays(new Date(emissionDateStr), term.days), 'yyyy-MM-dd');
+                                          setPaymentDateOverrides(prev => ({...prev, [actualIndex]: newDate}));
+                                        }
+                                      }
+                                    }}
+                                    disabled={loadingTerms}
+                                  >
+                                    <SelectTrigger className="w-full">
+                                      <SelectValue placeholder={loadingTerms ? 'Cargando...' : 'Sin condición (manual)'} />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="none">Sin condición (manual)</SelectItem>
+                                      {paymentTerms.map((term) => (
+                                        <SelectItem key={term.id} value={term.id}>
+                                          {term.name} ({term.days} días)
+                                        </SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                </div>
                                 <div className="flex-1 min-w-[180px] max-w-[220px]">
                                   <Label className="text-xs text-muted-foreground mb-1.5 block">Fecha de Vencimiento</Label>
                                   <DatePickerInput

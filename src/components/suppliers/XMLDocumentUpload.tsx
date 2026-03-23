@@ -1,7 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { XMLSupplierParser } from '@/utils/xmlParser/xmlSupplierParser';
-import XMLPaymentConfig from '@/components/common/XMLPaymentConfig';
+
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -681,33 +681,6 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
                     </label>
                   </div>
                   
-                  {createPayments && parseResult.documents.length > 0 && (
-                    <div className="space-y-4 pt-3 border-t">
-                      <XMLPaymentConfig
-                        paymentTerms={paymentTerms}
-                        loadingTerms={loadingTerms}
-                        paymentTermId={paymentTermId}
-                        onPaymentTermIdChange={(id) => {
-                          setPaymentTermId(id);
-                          // Auto-calculate due dates when term changes
-                          if (id !== 'none' && parseResult) {
-                            const term = paymentTerms.find(t => t.id === id);
-                            if (term && parseResult.documents.length > 0) {
-                              const firstIssue = safeParseDateOnly(parseResult.documents[0].issue_date || format(new Date(), 'yyyy-MM-dd'));
-                              setBulkDueDate(format(addDays(firstIssue, term.days), 'yyyy-MM-dd'));
-                            }
-                          }
-                        }}
-                        issueDate={parseResult.documents[0]?.issue_date || format(new Date(), 'yyyy-MM-dd')}
-                        dueDate={bulkDueDate || format(addDays(safeParseDateOnly(parseResult.documents[0]?.issue_date || format(new Date(), 'yyyy-MM-dd')), 30), 'yyyy-MM-dd')}
-                        onDueDateChange={setBulkDueDate}
-                        onApplyToAll={() => {
-                          applyDefaultDaysToAll();
-                        }}
-                        selectedCount={selectedDocuments.size}
-                      />
-                    </div>
-                  )}
                 </CardContent>
               </Card>
 
@@ -936,13 +909,40 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
                               </div>
                             </div>
                             
-                            <div className="flex items-center gap-2 flex-shrink-0">
+                            <div className="flex items-center gap-2 flex-shrink-0 flex-wrap">
+                              <Select
+                                value={paymentTermId}
+                                onValueChange={(id) => {
+                                  setPaymentTermId(id);
+                                  if (id !== 'none') {
+                                    const term = paymentTerms.find(t => t.id === id);
+                                    if (term && document.issue_date) {
+                                      const issueDate = safeParseDateOnly(document.issue_date);
+                                      const newDate = format(addDays(issueDate, term.days), 'yyyy-MM-dd');
+                                      setDueDateOverrides(prev => ({...prev, [document.folio]: newDate}));
+                                    }
+                                  }
+                                }}
+                                disabled={loadingTerms}
+                              >
+                                <SelectTrigger className="min-w-[160px]" >
+                                  <SelectValue placeholder={loadingTerms ? 'Cargando...' : 'Condición'} />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="none">Manual</SelectItem>
+                                  {paymentTerms.map((term) => (
+                                    <SelectItem key={term.id} value={term.id}>
+                                      {term.name} ({term.days}d)
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
                               <Popover>
                                 <PopoverTrigger asChild>
                                   <Button
                                     variant="outline"
                                     className={cn(
-                                      "justify-start text-left font-normal min-w-[200px]",
+                                      "justify-start text-left font-normal min-w-[180px]",
                                       !defaultDueDate && "text-muted-foreground"
                                     )}
                                     size="sm"
