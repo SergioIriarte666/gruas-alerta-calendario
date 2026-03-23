@@ -38,8 +38,9 @@ import { XMLCostData, XMLParseResult } from '@/types/costs';
 import { useAddCost } from '@/hooks/useCosts';
 import { useCostCategories } from '@/hooks/useCostCategories';
 import { useCostDuplicateCheck, CostDuplicateResult } from '@/hooks/useDuplicateCheck';
+import { usePaymentTerms } from '@/hooks/usePaymentTerms';
 import { toast } from 'sonner';
-import { format, parse } from 'date-fns';
+import { format, parse, addDays } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
 import { Switch } from '@/components/ui/switch';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -63,10 +64,9 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
   const [bulkAmountAdjustment, setBulkAmountAdjustment] = useState<string>('');
   const [showAllRows, setShowAllRows] = useState(false);
   
-  // Estados para fecha de pago (unificados: credit / paid)
-  const [paymentType, setPaymentType] = useState<'credit' | 'paid'>('paid');
-  const [creditDays, setCreditDays] = useState<number>(30);
-  const [bulkPaymentDate, setBulkPaymentDate] = useState<string>('');
+  // Estados para condiciones de pago (tipo Facturas)
+  const [paymentTermId, setPaymentTermId] = useState<string>('none');
+  const [bulkDueDate, setBulkDueDate] = useState<string>('');
   const [paymentDateOverrides, setPaymentDateOverrides] = useState<Record<number, string>>({});
   
   // Estado para duplicados
@@ -82,6 +82,7 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
   const { mutate: addCost } = useAddCost();
   const { data: categories = [] } = useCostCategories();
   const { checkDuplicates } = useCostDuplicateCheck();
+  const { paymentTerms, loading: loadingTerms } = usePaymentTerms();
   const parser = new XMLCostParser();
 
   // Validación mejorada de archivos XML
@@ -264,39 +265,40 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
     setBulkAmountAdjustment('');
   };
 
-  // Calcular fecha de pago según tipo
-  const getPaymentDate = (index: number, emissionDate: string): string | null => {
+  // Calcular fecha de vencimiento según condición de pago
+  const getPaymentDate = (index: number, emissionDate: string): string => {
     // Si hay override individual, usarlo
     if (paymentDateOverrides?.[index]) {
       return paymentDateOverrides[index];
     }
     
-    if (paymentType === 'paid') {
-      return bulkPaymentDate || emissionDate;
-    } else if (paymentType === 'credit') {
-      const date = new Date(emissionDate);
-      date.setDate(date.getDate() + creditDays);
-      return format(date, 'yyyy-MM-dd');
+    // Si hay un término de pago seleccionado, calcular emisión + días
+    if (paymentTermId && paymentTermId !== 'none') {
+      const term = paymentTerms.find(t => t.id === paymentTermId);
+      if (term) {
+        const date = new Date(emissionDate);
+        return format(addDays(date, term.days), 'yyyy-MM-dd');
+      }
     }
     
-    return emissionDate;
+    // Default: emisión + 30 días
+    const date = new Date(emissionDate);
+    return format(addDays(date, 30), 'yyyy-MM-dd');
   };
 
   // Aplicar configuración de pago masiva
   const handleApplyPaymentToAll = () => {
-    if (selectedRows.size === 0) return;
+    if (selectedRows.size === 0 || !parseResult) return;
 
-    if (paymentType === 'paid' && bulkPaymentDate) {
-      const updates: Record<number, string> = {};
-      selectedRows.forEach(index => {
-        updates[index] = bulkPaymentDate;
-      });
-      setPaymentDateOverrides(prev => ({ ...prev, ...updates }));
-      toast.success(`Fecha de pago aplicada a ${selectedRows.size} registros`);
-    } else if (paymentType === 'credit') {
-      // Credit days apply globally, just notify
-      toast.success(`${creditDays} días de crédito aplicados a todos los registros`);
-    }
+    const updates: Record<number, string> = {};
+    selectedRows.forEach(index => {
+      const item = parseResult.data[index];
+      if (!item) return;
+      const emissionDateStr = formatDateForInput(editedData[index]?.fecha ?? item.fecha);
+      updates[index] = getPaymentDate(index, emissionDateStr);
+    });
+    setPaymentDateOverrides(prev => ({ ...prev, ...updates }));
+    toast.success(`Fecha de vencimiento aplicada a ${selectedRows.size} registros`);
   };
 
   const getDefaultCategoryId = (categoria?: string): string => {
@@ -479,9 +481,8 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
     setBulkDate('');
     setBulkAmountAdjustment('');
     setShowAllRows(false);
-    setPaymentType('paid');
-    setCreditDays(30);
-    setBulkPaymentDate('');
+    setPaymentTermId('none');
+    setBulkDueDate('');
     setPaymentDateOverrides({});
     setDuplicateResults([]);
     setShowDuplicateWarning(false);
@@ -757,18 +758,28 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
                       </Button>
                     </div>
 
-                    {/* Separador */}
+                    {/* Condiciones de Pago */}
                     <div className="border-t pt-3 mt-3">
                       <XMLPaymentConfig
-                        paymentType={paymentType}
-                        onPaymentTypeChange={setPaymentType}
-                        creditDays={creditDays}
-                        onCreditDaysChange={setCreditDays}
-                        paidDate={bulkPaymentDate}
-                        onPaidDateChange={setBulkPaymentDate}
+                        paymentTerms={paymentTerms}
+                        loadingTerms={loadingTerms}
+                        paymentTermId={paymentTermId}
+                        onPaymentTermIdChange={(id) => {
+                          setPaymentTermId(id);
+                          // Auto-calculate bulkDueDate based on first item's emission date
+                          if (id !== 'none' && parseResult?.data?.[0]) {
+                            const term = paymentTerms.find(t => t.id === id);
+                            if (term) {
+                              const firstDate = formatDateForInput(parseResult.data[0].fecha);
+                              setBulkDueDate(format(addDays(new Date(firstDate), term.days), 'yyyy-MM-dd'));
+                            }
+                          }
+                        }}
+                        issueDate={parseResult?.data?.[0] ? formatDateForInput(parseResult.data[0].fecha) : format(new Date(), 'yyyy-MM-dd')}
+                        dueDate={bulkDueDate || (parseResult?.data?.[0] ? format(addDays(new Date(formatDateForInput(parseResult.data[0].fecha)), 30), 'yyyy-MM-dd') : '')}
+                        onDueDateChange={setBulkDueDate}
                         onApplyToAll={handleApplyPaymentToAll}
                         selectedCount={selectedRows.size}
-                        idPrefix="cost-payment"
                       />
                     </div>
 
@@ -847,7 +858,7 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
                         const editedProveedor = getEditedValue(actualIndex, 'proveedor', item.proveedor);
                         const emissionDateStr = formatDateForInput(editedFecha);
                         const computedPaymentDate = paymentDateOverrides[actualIndex] || getPaymentDate(actualIndex, emissionDateStr);
-                        const isImmediate = computedPaymentDate === emissionDateStr;
+                        
                         
                         const isModified = isFieldModified(actualIndex, 'fecha') || 
                           isFieldModified(actualIndex, 'descripcion') || 
@@ -1003,22 +1014,16 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
                                 </div>
                               </div>
                               
-                              {/* Fecha de Pago */}
+                              {/* Fecha de Vencimiento */}
                               <div className="flex flex-wrap items-end gap-4 pt-3 border-t">
                                 <div className="flex-1 min-w-[180px] max-w-[220px]">
-                                  <Label className="text-xs text-gray-500 mb-1.5 block">Fecha de Pago</Label>
+                                  <Label className="text-xs text-muted-foreground mb-1.5 block">Fecha de Vencimiento</Label>
                                   <DatePickerInput
                                     value={computedPaymentDate || ''}
                                     onChange={(date) => setPaymentDateOverrides(prev => ({...prev, [actualIndex]: date}))}
                                     className="w-full"
                                   />
                                 </div>
-                                {isImmediate && (
-                                  <div className="flex items-center gap-1.5 text-green-600 text-sm pb-2">
-                                    <CheckCircle className="w-4 h-4" />
-                                    <span>Pago inmediato</span>
-                                  </div>
-                                )}
                               </div>
                             </div>
                           </div>

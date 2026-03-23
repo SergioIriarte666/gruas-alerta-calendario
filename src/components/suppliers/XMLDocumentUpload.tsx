@@ -16,7 +16,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Upload, FileText, AlertCircle, CheckCircle, Loader2, X, FileSpreadsheet, Users, Receipt, DollarSign, Calendar, Building, CalendarIcon, Banknote, CreditCard, ShieldAlert, Link2 } from 'lucide-react';
-import { format } from 'date-fns';
+import { format, addDays } from 'date-fns';
 import { safeParseDateOnly } from '@/utils/timezoneUtils';
 import { cn } from '@/lib/utils';
 import { dedupeSuppliersByIdentity, findSupplierByIdentity } from '@/utils/supplierIdentity';
@@ -28,6 +28,7 @@ import { getCategoryLabel } from '@/utils/categoryUtils';
 import { useSupplierPayments } from '@/hooks/useSupplierPayments';
 import { useSupplierInvoiceDuplicateCheck, SupplierInvoiceDuplicateResult } from '@/hooks/useDuplicateCheck';
 import { useLinkInvoiceToCost } from '@/hooks/useCosts';
+import { usePaymentTerms } from '@/hooks/usePaymentTerms';
 import { toast } from 'sonner';
 
 // Type for matched cost
@@ -64,9 +65,9 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
   const [dueDateOverrides, setDueDateOverrides] = useState<Record<string, string>>({});
   const [defaultDaysToAdd, setDefaultDaysToAdd] = useState<number>(30);
   
-  // Estados para tipo de pago (Crédito vs Contado)
-  const [paymentType, setPaymentType] = useState<'credit' | 'paid'>('credit');
-  const [bulkPaidDate, setBulkPaidDate] = useState<string>('');
+  // Estados para condiciones de pago (tipo Facturas)
+  const [paymentTermId, setPaymentTermId] = useState<string>('none');
+  const [bulkDueDate, setBulkDueDate] = useState<string>('');
   const [paidDateOverrides, setPaidDateOverrides] = useState<Record<string, string>>({});
   const [statusOverrides, setStatusOverrides] = useState<Record<string, 'pending' | 'paid'>>({});
   
@@ -87,6 +88,7 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
   const { createPayment, updatePayment } = useSupplierPayments();
   const { checkDuplicates } = useSupplierInvoiceDuplicateCheck();
   const linkInvoiceMutation = useLinkInvoiceToCost();
+  const { paymentTerms, loading: loadingTerms } = usePaymentTerms();
   const { data: costCategoriesData = [] } = useCostCategories();
   const activeCategories = costCategoriesData.map(c => ({ id: c.id, label: c.name, name: c.name }));
   const onDrop = useCallback((acceptedFiles: File[]) => {
@@ -151,21 +153,23 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
       });
       setSupplierCategoryMapping(categoryMap);
       
-      // Initialize bulkPaidDate from first document's issue_date
+      // Initialize bulkDueDate from first document's issue_date + 30 days
       if (result.documents.length > 0 && result.documents[0].issue_date) {
-        setBulkPaidDate(result.documents[0].issue_date);
+        const firstIssue = safeParseDateOnly(result.documents[0].issue_date);
+        setBulkDueDate(format(addDays(firstIssue, 30), 'yyyy-MM-dd'));
       } else {
-        setBulkPaidDate(format(new Date(), 'yyyy-MM-dd'));
+        setBulkDueDate(format(addDays(new Date(), 30), 'yyyy-MM-dd'));
       }
       
-      // Initialize per-document paid date overrides from XML dates
-      const initialPaidOverrides: Record<string, string> = {};
+      // Initialize per-document due date overrides from XML dates + default days
+      const initialDueOverrides: Record<string, string> = {};
       result.documents.forEach(doc => {
         if (doc.issue_date) {
-          initialPaidOverrides[doc.folio] = doc.issue_date;
+          const issueDate = safeParseDateOnly(doc.issue_date);
+          initialDueOverrides[doc.folio] = format(addDays(issueDate, defaultDaysToAdd), 'yyyy-MM-dd');
         }
       });
-      setPaidDateOverrides(initialPaidOverrides);
+      setDueDateOverrides(initialDueOverrides);
 
       if (!result.success) {
         toast.error('Se encontraron errores en el archivo XML');
@@ -319,9 +323,9 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
             
             // Determinar status y fecha de pago
             const docFolio = paymentData.reference_number || '';
-            const status = statusOverrides[docFolio] || (paymentType === 'paid' ? 'paid' : 'pending');
+            const status = statusOverrides[docFolio] || 'pending';
             const paidDate = status === 'paid' 
-              ? paidDateOverrides[docFolio] || bulkPaidDate || format(new Date(), 'yyyy-MM-dd')
+              ? paidDateOverrides[docFolio] || format(new Date(), 'yyyy-MM-dd')
               : undefined;
 
             // Pre-check: skip if supplier_payment with same folio already exists
@@ -483,8 +487,8 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
     setCreatePayments(true);
     setDueDateOverrides({});
     setDefaultDaysToAdd(30);
-    setPaymentType('credit');
-    setBulkPaidDate('');
+    setPaymentTermId('none');
+    setBulkDueDate('');
     setPaidDateOverrides({});
     setStatusOverrides({});
     setDuplicateResults([]);
@@ -512,16 +516,17 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
 
   const applyDefaultDaysToAll = () => {
     if (!parseResult) return;
+    const term = paymentTermId !== 'none' ? paymentTerms.find(t => t.id === paymentTermId) : null;
+    const daysToAdd = term ? term.days : defaultDaysToAdd;
     const newOverrides: Record<string, string> = {};
     parseResult.documents.forEach(doc => {
       if (selectedDocuments.has(doc.folio) && doc.issue_date) {
         const issueDate = safeParseDateOnly(doc.issue_date);
-        issueDate.setDate(issueDate.getDate() + defaultDaysToAdd);
-        newOverrides[doc.folio] = format(issueDate, 'yyyy-MM-dd');
+        newOverrides[doc.folio] = format(addDays(issueDate, daysToAdd), 'yyyy-MM-dd');
       }
     });
     setDueDateOverrides(newOverrides);
-    toast.success(`Fechas de vencimiento actualizadas a ${defaultDaysToAdd} días desde emisión`);
+    toast.success(`Fechas de vencimiento actualizadas a ${daysToAdd} días desde emisión`);
   };
   const formatFileSize = (bytes: number): string => {
     if (bytes === 0) return '0 Bytes';
@@ -679,29 +684,27 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
                   {createPayments && parseResult.documents.length > 0 && (
                     <div className="space-y-4 pt-3 border-t">
                       <XMLPaymentConfig
-                        paymentType={paymentType}
-                        onPaymentTypeChange={setPaymentType}
-                        creditDays={defaultDaysToAdd}
-                        onCreditDaysChange={setDefaultDaysToAdd}
-                        paidDate={bulkPaidDate}
-                        onPaidDateChange={setBulkPaidDate}
-                        onApplyToAll={() => {
-                          if (paymentType === 'credit') {
-                            applyDefaultDaysToAll();
-                          } else {
-                            const updates: Record<string, string> = {};
-                            const statusUpdates: Record<string, 'paid'> = {};
-                            selectedDocuments.forEach(folio => {
-                              updates[folio] = bulkPaidDate;
-                              statusUpdates[folio] = 'paid';
-                            });
-                            setPaidDateOverrides(updates);
-                            setStatusOverrides(statusUpdates);
-                            toast.success(`Fecha de pago aplicada a ${selectedDocuments.size} documentos`);
+                        paymentTerms={paymentTerms}
+                        loadingTerms={loadingTerms}
+                        paymentTermId={paymentTermId}
+                        onPaymentTermIdChange={(id) => {
+                          setPaymentTermId(id);
+                          // Auto-calculate due dates when term changes
+                          if (id !== 'none' && parseResult) {
+                            const term = paymentTerms.find(t => t.id === id);
+                            if (term && parseResult.documents.length > 0) {
+                              const firstIssue = safeParseDateOnly(parseResult.documents[0].issue_date || format(new Date(), 'yyyy-MM-dd'));
+                              setBulkDueDate(format(addDays(firstIssue, term.days), 'yyyy-MM-dd'));
+                            }
                           }
                         }}
+                        issueDate={parseResult.documents[0]?.issue_date || format(new Date(), 'yyyy-MM-dd')}
+                        dueDate={bulkDueDate || format(addDays(safeParseDateOnly(parseResult.documents[0]?.issue_date || format(new Date(), 'yyyy-MM-dd')), 30), 'yyyy-MM-dd')}
+                        onDueDateChange={setBulkDueDate}
+                        onApplyToAll={() => {
+                          applyDefaultDaysToAll();
+                        }}
                         selectedCount={selectedDocuments.size}
-                        idPrefix="supplier-payment"
                       />
                     </div>
                   )}
