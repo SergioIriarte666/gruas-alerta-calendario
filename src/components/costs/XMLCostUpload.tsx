@@ -82,6 +82,7 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
   const { mutate: addCost } = useAddCost();
   const { data: categories = [] } = useCostCategories();
   const { checkDuplicates } = useCostDuplicateCheck();
+  const { paymentTerms, loading: loadingTerms } = usePaymentTerms();
   const parser = new XMLCostParser();
 
   // Validación mejorada de archivos XML
