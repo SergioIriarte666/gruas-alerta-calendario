@@ -24,6 +24,7 @@ import { XMLCompleteParseResult, XMLDocumentData, XMLSupplierData, XMLSupplierPa
 import { supabase } from '@/integrations/supabase/client';
 import { useSuppliers } from '@/hooks/useSuppliers';
 import { useCostCategories } from '@/hooks/useCostCategories';
+import { useCostSubcategories } from '@/hooks/useCostSubcategories';
 import { getCategoryLabel } from '@/utils/categoryUtils';
 import { useSupplierPayments } from '@/hooks/useSupplierPayments';
 import { useSupplierInvoiceDuplicateCheck, SupplierInvoiceDuplicateResult } from '@/hooks/useDuplicateCheck';
