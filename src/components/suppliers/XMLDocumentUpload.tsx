@@ -190,6 +190,51 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
             setIsCheckingDuplicates(false);
           }
         }
+        
+        // Search for matching existing costs
+        if (result.documents.length > 0) {
+          setIsSearchingMatches(true);
+          try {
+            const matches: Record<string, MatchedCost[]> = {};
+            const decisions: Record<string, string | 'new'> = {};
+            
+            for (const doc of result.documents) {
+              if (!doc.supplier_rut || !doc.total_amount) continue;
+              
+              const issueDate = safeParseDateOnly(doc.issue_date || format(new Date(), 'yyyy-MM-dd'));
+              const dateFrom = new Date(issueDate);
+              dateFrom.setDate(dateFrom.getDate() - 7);
+              const dateTo = new Date(issueDate);
+              dateTo.setDate(dateTo.getDate() + 7);
+              
+              const { data, error } = await supabase.rpc('find_matching_costs_for_invoice', {
+                p_supplier_rut: doc.supplier_rut,
+                p_amount: doc.total_amount,
+                p_date_from: format(dateFrom, 'yyyy-MM-dd'),
+                p_date_to: format(dateTo, 'yyyy-MM-dd'),
+              });
+              
+              if (!error && data && data.length > 0) {
+                matches[doc.folio] = data as MatchedCost[];
+                // Auto-select exact match (same amount)
+                const exactMatch = data.find((m: any) => Math.abs(m.amount - doc.total_amount) < 1);
+                decisions[doc.folio] = exactMatch ? (exactMatch as any).id : 'new';
+              }
+            }
+            
+            setMatchedCosts(matches);
+            setLinkDecisions(decisions);
+            
+            const matchCount = Object.keys(matches).length;
+            if (matchCount > 0) {
+              toast.info(`🔗 Se encontraron ${matchCount} costos existentes que coinciden con documentos del XML`);
+            }
+          } catch (matchError) {
+            console.error('Error searching matches:', matchError);
+          } finally {
+            setIsSearchingMatches(false);
+          }
+        }
       }
     } catch (error) {
       console.error('Error analyzing XML:', error);
