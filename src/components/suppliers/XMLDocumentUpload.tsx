@@ -52,7 +52,7 @@ const SupplierSubcategorySelect: React.FC<{
 }> = ({ categoryId, value, onValueChange }) => {
   const { subcategories, isLoading } = useCostSubcategories(categoryId);
   
-  if (isLoading) return <SelectTrigger className="w-40"><SelectValue placeholder="Cargando..." /></SelectTrigger>;
+  if (isLoading) return <span className="text-xs text-muted-foreground px-2">Cargando...</span>;
   if (subcategories.length === 0) return null;
   
   return (
