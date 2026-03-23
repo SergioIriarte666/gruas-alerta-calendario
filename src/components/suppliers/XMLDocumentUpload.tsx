@@ -74,12 +74,18 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
   const [isCheckingDuplicates, setIsCheckingDuplicates] = useState(false);
   const [showDuplicateWarning, setShowDuplicateWarning] = useState(false);
   
+  // Estados para matching de costos existentes
+  const [matchedCosts, setMatchedCosts] = useState<Record<string, MatchedCost[]>>({});
+  const [linkDecisions, setLinkDecisions] = useState<Record<string, string | 'new'>>({});
+  const [isSearchingMatches, setIsSearchingMatches] = useState(false);
+  
   const {
     suppliers,
     createSupplier
   } = useSuppliers();
   const { createPayment, updatePayment } = useSupplierPayments();
   const { checkDuplicates } = useSupplierInvoiceDuplicateCheck();
+  const linkInvoiceMutation = useLinkInvoiceToCost();
   const { data: costCategoriesData = [] } = useCostCategories();
   const activeCategories = costCategoriesData.map(c => ({ id: c.id, label: c.name, name: c.name }));
   const onDrop = useCallback((acceptedFiles: File[]) => {
