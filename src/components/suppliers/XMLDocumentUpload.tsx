@@ -153,21 +153,23 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
       });
       setSupplierCategoryMapping(categoryMap);
       
-      // Initialize bulkPaidDate from first document's issue_date
+      // Initialize bulkDueDate from first document's issue_date + 30 days
       if (result.documents.length > 0 && result.documents[0].issue_date) {
-        setBulkPaidDate(result.documents[0].issue_date);
+        const firstIssue = safeParseDateOnly(result.documents[0].issue_date);
+        setBulkDueDate(format(addDays(firstIssue, 30), 'yyyy-MM-dd'));
       } else {
-        setBulkPaidDate(format(new Date(), 'yyyy-MM-dd'));
+        setBulkDueDate(format(addDays(new Date(), 30), 'yyyy-MM-dd'));
       }
       
-      // Initialize per-document paid date overrides from XML dates
-      const initialPaidOverrides: Record<string, string> = {};
+      // Initialize per-document due date overrides from XML dates + default days
+      const initialDueOverrides: Record<string, string> = {};
       result.documents.forEach(doc => {
         if (doc.issue_date) {
-          initialPaidOverrides[doc.folio] = doc.issue_date;
+          const issueDate = safeParseDateOnly(doc.issue_date);
+          initialDueOverrides[doc.folio] = format(addDays(issueDate, defaultDaysToAdd), 'yyyy-MM-dd');
         }
       });
-      setPaidDateOverrides(initialPaidOverrides);
+      setDueDateOverrides(initialDueOverrides);
 
       if (!result.success) {
         toast.error('Se encontraron errores en el archivo XML');
