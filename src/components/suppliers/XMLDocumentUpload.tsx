@@ -681,33 +681,6 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
                     </label>
                   </div>
                   
-                  {createPayments && parseResult.documents.length > 0 && (
-                    <div className="space-y-4 pt-3 border-t">
-                      <XMLPaymentConfig
-                        paymentTerms={paymentTerms}
-                        loadingTerms={loadingTerms}
-                        paymentTermId={paymentTermId}
-                        onPaymentTermIdChange={(id) => {
-                          setPaymentTermId(id);
-                          // Auto-calculate due dates when term changes
-                          if (id !== 'none' && parseResult) {
-                            const term = paymentTerms.find(t => t.id === id);
-                            if (term && parseResult.documents.length > 0) {
-                              const firstIssue = safeParseDateOnly(parseResult.documents[0].issue_date || format(new Date(), 'yyyy-MM-dd'));
-                              setBulkDueDate(format(addDays(firstIssue, term.days), 'yyyy-MM-dd'));
-                            }
-                          }
-                        }}
-                        issueDate={parseResult.documents[0]?.issue_date || format(new Date(), 'yyyy-MM-dd')}
-                        dueDate={bulkDueDate || format(addDays(safeParseDateOnly(parseResult.documents[0]?.issue_date || format(new Date(), 'yyyy-MM-dd')), 30), 'yyyy-MM-dd')}
-                        onDueDateChange={setBulkDueDate}
-                        onApplyToAll={() => {
-                          applyDefaultDaysToAll();
-                        }}
-                        selectedCount={selectedDocuments.size}
-                      />
-                    </div>
-                  )}
                 </CardContent>
               </Card>
 
