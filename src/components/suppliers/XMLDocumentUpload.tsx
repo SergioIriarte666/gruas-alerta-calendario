@@ -815,6 +815,19 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
                                   </SelectItem>)}
                               </SelectContent>
                             </Select>
+                            {/* Subcategory Select */}
+                            {(() => {
+                              const catName = supplierCategoryMapping[supplier.rut] || supplier.category;
+                              const catObj = activeCategories?.find(c => c.name === catName);
+                              if (!catObj) return null;
+                              return (
+                                <SupplierSubcategorySelect
+                                  categoryId={catObj.id}
+                                  value={supplierSubcategoryMapping[supplier.rut] || ''}
+                                  onValueChange={(val) => handleSubcategoryChange(supplier.rut, val)}
+                                />
+                              );
+                            })()}
                           </div>
                         </div>)}
                     </div>
