@@ -323,9 +323,9 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
             
             // Determinar status y fecha de pago
             const docFolio = paymentData.reference_number || '';
-            const status = statusOverrides[docFolio] || (paymentType === 'paid' ? 'paid' : 'pending');
+            const status = statusOverrides[docFolio] || 'pending';
             const paidDate = status === 'paid' 
-              ? paidDateOverrides[docFolio] || bulkPaidDate || format(new Date(), 'yyyy-MM-dd')
+              ? paidDateOverrides[docFolio] || format(new Date(), 'yyyy-MM-dd')
               : undefined;
 
             // Pre-check: skip if supplier_payment with same folio already exists
