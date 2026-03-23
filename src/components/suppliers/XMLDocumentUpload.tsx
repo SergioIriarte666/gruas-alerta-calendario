@@ -909,77 +909,46 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
                               </div>
                             </div>
                             
-                            <div className="flex items-center gap-2 flex-shrink-0 flex-wrap">
-                              <Select
-                                value={paymentTermId}
-                                onValueChange={(id) => {
-                                  setPaymentTermId(id);
-                                  if (id !== 'none') {
-                                    const term = paymentTerms.find(t => t.id === id);
-                                    if (term && document.issue_date) {
-                                      const issueDate = safeParseDateOnly(document.issue_date);
-                                      const newDate = format(addDays(issueDate, term.days), 'yyyy-MM-dd');
-                                      setDueDateOverrides(prev => ({...prev, [document.folio]: newDate}));
+                            {/* Condición de Pago y Fecha de Vencimiento */}
+                            <div className="flex flex-wrap items-end gap-4 pt-3 border-t">
+                              <div className="flex-1 min-w-[180px] max-w-[220px]">
+                                <Label className="text-xs text-muted-foreground mb-1.5 block">Condición de Pago</Label>
+                                <Select
+                                  value={paymentTermId}
+                                  onValueChange={(id) => {
+                                    setPaymentTermId(id);
+                                    if (id !== 'none') {
+                                      const term = paymentTerms.find(t => t.id === id);
+                                      if (term && document.issue_date) {
+                                        const issueDate = safeParseDateOnly(document.issue_date);
+                                        const newDate = format(addDays(issueDate, term.days), 'yyyy-MM-dd');
+                                        setDueDateOverrides(prev => ({...prev, [document.folio]: newDate}));
+                                      }
                                     }
-                                  }
-                                }}
-                                disabled={loadingTerms}
-                              >
-                                <SelectTrigger className="min-w-[160px]" >
-                                  <SelectValue placeholder={loadingTerms ? 'Cargando...' : 'Condición'} />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="none">Manual</SelectItem>
-                                  {paymentTerms.map((term) => (
-                                    <SelectItem key={term.id} value={term.id}>
-                                      {term.name} ({term.days}d)
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                              <Popover>
-                                <PopoverTrigger asChild>
-                                  <Button
-                                    variant="outline"
-                                    className={cn(
-                                      "justify-start text-left font-normal min-w-[180px]",
-                                      !defaultDueDate && "text-muted-foreground"
-                                    )}
-                                    size="sm"
-                                  >
-                                    <CalendarIcon className="mr-2 h-4 w-4" />
-                                    {defaultDueDate ? (
-                                      <span className="flex items-center gap-2">
-                                        {format(safeParseDateOnly(defaultDueDate), 'dd/MM/yyyy')}
-                                        {hasCustomDate && (
-                                          <Badge variant="secondary" className="text-xs">
-                                            Personalizada
-                                          </Badge>
-                                        )}
-                                      </span>
-                                    ) : (
-                                      <span>Seleccionar fecha</span>
-                                    )}
-                                  </Button>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-auto p-0" align="end">
-                                  <CalendarComponent
-                                    mode="single"
-                                    selected={defaultDueDate ? safeParseDateOnly(defaultDueDate) : undefined}
-                                    onSelect={(date) => handleDueDateChange(document.folio, date)}
-                                    disabled={(date) => {
-                                      if (!document.issue_date) return false;
-                                      return date < safeParseDateOnly(document.issue_date);
-                                    }}
-                                    initialFocus
-                                    className={cn("p-3 pointer-events-auto")}
-                                  />
-                                </PopoverContent>
-                              </Popover>
-                              
-                              <Badge variant="outline" className="whitespace-nowrap">
-                                {document.document_type}
-                              </Badge>
+                                  }}
+                                  disabled={loadingTerms}
+                                >
+                                  <SelectTrigger className="w-full">
+                                    <SelectValue placeholder={loadingTerms ? 'Cargando...' : 'Sin condición (manual)'} />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="none">Sin condición (manual)</SelectItem>
+                                    {paymentTerms.map((term) => (
+                                      <SelectItem key={term.id} value={term.id}>
+                                        {term.name} ({term.days} días)
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                              <div className="flex-1 min-w-[180px] max-w-[220px]">
+                                <Label className="text-xs text-muted-foreground mb-1.5 block">Fecha de Vencimiento</Label>
+                                <DatePickerInput
+                                  value={defaultDueDate || ''}
+                                  onChange={(date) => setDueDateOverrides(prev => ({...prev, [document.folio]: date}))}
+                                  className="w-full"
+                                />
+                              </div>
                             </div>
                             </div>
                           </div>
