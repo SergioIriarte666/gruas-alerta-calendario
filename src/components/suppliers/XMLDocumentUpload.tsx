@@ -1,6 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { XMLSupplierParser } from '@/utils/xmlParser/xmlSupplierParser';
+import XMLPaymentConfig from '@/components/common/XMLPaymentConfig';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
