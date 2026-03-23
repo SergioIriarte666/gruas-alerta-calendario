@@ -14,7 +14,7 @@ import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
-import { Upload, FileText, AlertCircle, CheckCircle, Loader2, X, FileSpreadsheet, Users, Receipt, DollarSign, Calendar, Building, CalendarIcon, Banknote, CreditCard, ShieldAlert } from 'lucide-react';
+import { Upload, FileText, AlertCircle, CheckCircle, Loader2, X, FileSpreadsheet, Users, Receipt, DollarSign, Calendar, Building, CalendarIcon, Banknote, CreditCard, ShieldAlert, Link2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { safeParseDateOnly } from '@/utils/timezoneUtils';
 import { cn } from '@/lib/utils';
@@ -26,7 +26,20 @@ import { useCostCategories } from '@/hooks/useCostCategories';
 import { getCategoryLabel } from '@/utils/categoryUtils';
 import { useSupplierPayments } from '@/hooks/useSupplierPayments';
 import { useSupplierInvoiceDuplicateCheck, SupplierInvoiceDuplicateResult } from '@/hooks/useDuplicateCheck';
+import { useLinkInvoiceToCost } from '@/hooks/useCosts';
 import { toast } from 'sonner';
+
+// Type for matched cost
+interface MatchedCost {
+  id: string;
+  description: string;
+  amount: number;
+  date: string;
+  payment_date: string | null;
+  supplier_name: string;
+  supplier_payment_id: string | null;
+  has_invoice: boolean;
+}
 
 interface XMLDocumentUploadProps {
   isOpen: boolean;
