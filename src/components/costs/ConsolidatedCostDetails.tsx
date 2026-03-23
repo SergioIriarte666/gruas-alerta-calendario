@@ -18,6 +18,8 @@ import {
   Building,
   ChevronDown,
   ChevronUp,
+  CheckCircle,
+  Clock,
   Copy,
   Edit,
   MapPin,
@@ -109,6 +111,24 @@ export const ConsolidatedCostDetails = ({
                   <p className="text-xs text-muted-foreground">Monto</p>
                   <p className="font-medium text-foreground">
                     {formatCurrency(Number(cost.amount))}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <div className={`p-2 rounded-lg ${cost.payment_date 
+                  ? 'bg-green-100 dark:bg-green-900/30' 
+                  : 'bg-orange-100 dark:bg-orange-900/30'}`}>
+                  {cost.payment_date 
+                    ? <CheckCircle className="w-4 h-4 text-green-600 dark:text-green-400" />
+                    : <Clock className="w-4 h-4 text-orange-600 dark:text-orange-400" />}
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Fecha de Pago</p>
+                  <p className="font-medium text-foreground">
+                    {cost.payment_date 
+                      ? format(new Date(cost.payment_date + 'T12:00:00'), "d 'de' MMMM, yyyy", { locale: es })
+                      : 'Pendiente'}
                   </p>
                 </div>
               </div>
