@@ -858,7 +858,7 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
                         const editedProveedor = getEditedValue(actualIndex, 'proveedor', item.proveedor);
                         const emissionDateStr = formatDateForInput(editedFecha);
                         const computedPaymentDate = paymentDateOverrides[actualIndex] || getPaymentDate(actualIndex, emissionDateStr);
-                        const isImmediate = computedPaymentDate === emissionDateStr;
+                        
                         
                         const isModified = isFieldModified(actualIndex, 'fecha') || 
                           isFieldModified(actualIndex, 'descripcion') || 
