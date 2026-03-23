@@ -481,9 +481,8 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
     setBulkDate('');
     setBulkAmountAdjustment('');
     setShowAllRows(false);
-    setPaymentType('paid');
-    setCreditDays(30);
-    setBulkPaymentDate('');
+    setPaymentTermId('none');
+    setBulkDueDate('');
     setPaymentDateOverrides({});
     setDuplicateResults([]);
     setShowDuplicateWarning(false);
