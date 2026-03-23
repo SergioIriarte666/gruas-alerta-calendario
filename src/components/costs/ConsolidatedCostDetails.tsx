@@ -18,6 +18,8 @@ import {
   Building,
   ChevronDown,
   ChevronUp,
+  CheckCircle,
+  Clock,
   Copy,
   Edit,
   MapPin,
