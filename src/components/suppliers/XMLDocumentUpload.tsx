@@ -14,7 +14,7 @@ import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
-import { Upload, FileText, AlertCircle, CheckCircle, Loader2, X, FileSpreadsheet, Users, Receipt, DollarSign, Calendar, Building, CalendarIcon, Banknote, CreditCard, ShieldAlert } from 'lucide-react';
+import { Upload, FileText, AlertCircle, CheckCircle, Loader2, X, FileSpreadsheet, Users, Receipt, DollarSign, Calendar, Building, CalendarIcon, Banknote, CreditCard, ShieldAlert, Link2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { safeParseDateOnly } from '@/utils/timezoneUtils';
 import { cn } from '@/lib/utils';
@@ -26,7 +26,20 @@ import { useCostCategories } from '@/hooks/useCostCategories';
 import { getCategoryLabel } from '@/utils/categoryUtils';
 import { useSupplierPayments } from '@/hooks/useSupplierPayments';
 import { useSupplierInvoiceDuplicateCheck, SupplierInvoiceDuplicateResult } from '@/hooks/useDuplicateCheck';
+import { useLinkInvoiceToCost } from '@/hooks/useCosts';
 import { toast } from 'sonner';
+
+// Type for matched cost
+interface MatchedCost {
+  id: string;
+  description: string;
+  amount: number;
+  date: string;
+  payment_date: string | null;
+  supplier_name: string;
+  supplier_payment_id: string | null;
+  has_invoice: boolean;
+}
 
 interface XMLDocumentUploadProps {
   isOpen: boolean;
@@ -61,12 +74,18 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
   const [isCheckingDuplicates, setIsCheckingDuplicates] = useState(false);
   const [showDuplicateWarning, setShowDuplicateWarning] = useState(false);
   
+  // Estados para matching de costos existentes
+  const [matchedCosts, setMatchedCosts] = useState<Record<string, MatchedCost[]>>({});
+  const [linkDecisions, setLinkDecisions] = useState<Record<string, string | 'new'>>({});
+  const [isSearchingMatches, setIsSearchingMatches] = useState(false);
+  
   const {
     suppliers,
     createSupplier
   } = useSuppliers();
   const { createPayment, updatePayment } = useSupplierPayments();
   const { checkDuplicates } = useSupplierInvoiceDuplicateCheck();
+  const linkInvoiceMutation = useLinkInvoiceToCost();
   const { data: costCategoriesData = [] } = useCostCategories();
   const activeCategories = costCategoriesData.map(c => ({ id: c.id, label: c.name, name: c.name }));
   const onDrop = useCallback((acceptedFiles: File[]) => {
@@ -171,6 +190,51 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
             setIsCheckingDuplicates(false);
           }
         }
+        
+        // Search for matching existing costs
+        if (result.documents.length > 0) {
+          setIsSearchingMatches(true);
+          try {
+            const matches: Record<string, MatchedCost[]> = {};
+            const decisions: Record<string, string | 'new'> = {};
+            
+            for (const doc of result.documents) {
+              if (!doc.supplier_rut || !doc.total_amount) continue;
+              
+              const issueDate = safeParseDateOnly(doc.issue_date || format(new Date(), 'yyyy-MM-dd'));
+              const dateFrom = new Date(issueDate);
+              dateFrom.setDate(dateFrom.getDate() - 7);
+              const dateTo = new Date(issueDate);
+              dateTo.setDate(dateTo.getDate() + 7);
+              
+              const { data, error } = await supabase.rpc('find_matching_costs_for_invoice', {
+                p_supplier_rut: doc.supplier_rut,
+                p_amount: doc.total_amount,
+                p_date_from: format(dateFrom, 'yyyy-MM-dd'),
+                p_date_to: format(dateTo, 'yyyy-MM-dd'),
+              });
+              
+              if (!error && data && data.length > 0) {
+                matches[doc.folio] = data as MatchedCost[];
+                // Auto-select exact match (same amount)
+                const exactMatch = data.find((m: any) => Math.abs(m.amount - doc.total_amount) < 1);
+                decisions[doc.folio] = exactMatch ? (exactMatch as any).id : 'new';
+              }
+            }
+            
+            setMatchedCosts(matches);
+            setLinkDecisions(decisions);
+            
+            const matchCount = Object.keys(matches).length;
+            if (matchCount > 0) {
+              toast.info(`🔗 Se encontraron ${matchCount} costos existentes que coinciden con documentos del XML`);
+            }
+          } catch (matchError) {
+            console.error('Error searching matches:', matchError);
+          } finally {
+            setIsSearchingMatches(false);
+          }
+        }
       }
     } catch (error) {
       console.error('Error analyzing XML:', error);
@@ -229,6 +293,7 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
 
         let exactFolioUpdated = 0;
         let exactFolioSkipped = 0;
+        let linkedCount = 0;
 
         for (const paymentData of paymentsData) {
           try {
@@ -241,6 +306,33 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
             const paidDate = status === 'paid' 
               ? paidDateOverrides[docFolio] || bulkPaidDate
               : undefined;
+
+            // Check if user chose to link to existing cost
+            const linkCostId = linkDecisions[docFolio];
+            if (linkCostId && linkCostId !== 'new') {
+              // Find the original document data
+              const originalDoc = parseResult.documents.find(d => d.folio === docFolio);
+              if (originalDoc) {
+                await linkInvoiceMutation.mutateAsync({
+                  costId: linkCostId,
+                  supplierId,
+                  invoiceData: {
+                    folio: docFolio,
+                    issueDate: originalDoc.issue_date,
+                    dueDate: originalDoc.due_date || paymentData.due_date,
+                    amount: originalDoc.total_amount,
+                    netAmount: originalDoc.net_amount,
+                    taxAmount: originalDoc.vat_amount,
+                    description: originalDoc.description,
+                    currency: originalDoc.currency,
+                  },
+                });
+                linkedCount++;
+              }
+              processed++;
+              setUploadProgress(processed / totalItems * 100);
+              continue;
+            }
 
             const duplicateInfo = docFolio ? getDuplicateInfoByFolio(docFolio) : undefined;
 
@@ -301,6 +393,9 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
         if (exactFolioUpdated > 0 || exactFolioSkipped > 0) {
           toast.message(`Duplicados por folio: ${exactFolioUpdated} actualizado(s), ${exactFolioSkipped} omitido(s)`);
         }
+        if (linkedCount > 0) {
+          toast.success(`🔗 ${linkedCount} factura(s) vinculada(s) a costos existentes`);
+        }
       }
       toast.success(`Importación completada: ${selectedSuppliers.size} proveedores${createPayments ? ` y ${selectedDocuments.size} pagos` : ''} procesados`);
       onSuccess();
@@ -357,6 +452,8 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
     setStatusOverrides({});
     setDuplicateResults([]);
     setShowDuplicateWarning(false);
+    setMatchedCosts({});
+    setLinkDecisions({});
   };
   
   // Helper para obtener info de duplicado por folio
@@ -713,7 +810,25 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
                 </div>
               )}
 
-              {/* Errors and Warnings */}
+              {/* Searching cost matches indicator */}
+              {isSearchingMatches && (
+                <div className="flex items-center gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg dark:bg-blue-950/30 dark:border-blue-800">
+                  <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
+                  <span className="text-sm text-blue-700 dark:text-blue-300">Buscando costos existentes que coincidan...</span>
+                </div>
+              )}
+
+              {/* Cost matching summary */}
+              {Object.keys(matchedCosts).length > 0 && (
+                <Alert className="border-blue-300 bg-blue-50 dark:bg-blue-950/20">
+                  <Link2 className="h-4 w-4 text-blue-600" />
+                  <AlertDescription className="text-blue-800 dark:text-blue-200">
+                    <strong>🔗 {Object.keys(matchedCosts).length} documento(s)</strong> coinciden con costos ya registrados.
+                    Puedes vincular la factura al costo existente o crear un pago nuevo.
+                  </AlertDescription>
+                </Alert>
+              )}
+
               {(parseResult.errors.length > 0 || parseResult.warnings.length > 0) && <div className="space-y-2">
                   {parseResult.errors.length > 0 && <Alert className="border-destructive bg-destructive/10">
                       <AlertCircle className="h-4 w-4 text-destructive" />
@@ -804,15 +919,45 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
                         const duplicateInfo = getDuplicateInfoByFolio(document.folio);
                         const isDuplicate = !!duplicateInfo;
                         
+                        // Obtener costos coincidentes
+                        const costsForDoc = matchedCosts[document.folio] || [];
+                        const hasMatches = costsForDoc.length > 0;
+                        const currentDecision = linkDecisions[document.folio] || 'new';
+                        
                         return (
                           <div key={index} className={cn(
                             "flex flex-col p-3 rounded gap-2",
-                            isDuplicate && duplicateInfo.matchType === 'exact_folio'
+                            hasMatches && currentDecision !== 'new'
+                              ? "bg-blue-50 border border-blue-200 dark:bg-blue-950/30 dark:border-blue-800"
+                              : isDuplicate && duplicateInfo.matchType === 'exact_folio'
                               ? "bg-red-50 border border-red-200"
                               : isDuplicate && duplicateInfo.matchType === 'similar'
                               ? "bg-yellow-50 border border-yellow-200"
                               : "bg-muted/50"
                           )}>
+                            {/* Matched cost selector */}
+                            {hasMatches && (
+                              <div className="flex items-center gap-2 text-xs px-2 py-1.5 rounded bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-200">
+                                <Link2 className="h-3.5 w-3.5 flex-shrink-0" />
+                                <span className="font-medium">🔗 Costo encontrado:</span>
+                                <Select 
+                                  value={currentDecision} 
+                                  onValueChange={(val) => setLinkDecisions(prev => ({ ...prev, [document.folio]: val }))}
+                                >
+                                  <SelectTrigger className="h-7 text-xs flex-1 min-w-[200px] bg-background">
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="new">➕ Crear nuevo pago</SelectItem>
+                                    {costsForDoc.map(cost => (
+                                      <SelectItem key={cost.id} value={cost.id}>
+                                        🔗 {cost.description} — ${Number(cost.amount).toLocaleString('es-CL')} — {cost.date}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            )}
                             {/* Duplicate warning */}
                             {isDuplicate && duplicateInfo.existingPayment && (
                               <div className={cn(
