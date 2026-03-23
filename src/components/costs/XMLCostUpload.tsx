@@ -265,39 +265,40 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
     setBulkAmountAdjustment('');
   };
 
-  // Calcular fecha de pago según tipo
-  const getPaymentDate = (index: number, emissionDate: string): string | null => {
+  // Calcular fecha de vencimiento según condición de pago
+  const getPaymentDate = (index: number, emissionDate: string): string => {
     // Si hay override individual, usarlo
     if (paymentDateOverrides?.[index]) {
       return paymentDateOverrides[index];
     }
     
-    if (paymentType === 'paid') {
-      return bulkPaymentDate || emissionDate;
-    } else if (paymentType === 'credit') {
-      const date = new Date(emissionDate);
-      date.setDate(date.getDate() + creditDays);
-      return format(date, 'yyyy-MM-dd');
+    // Si hay un término de pago seleccionado, calcular emisión + días
+    if (paymentTermId && paymentTermId !== 'none') {
+      const term = paymentTerms.find(t => t.id === paymentTermId);
+      if (term) {
+        const date = new Date(emissionDate);
+        return format(addDays(date, term.days), 'yyyy-MM-dd');
+      }
     }
     
-    return emissionDate;
+    // Default: emisión + 30 días
+    const date = new Date(emissionDate);
+    return format(addDays(date, 30), 'yyyy-MM-dd');
   };
 
   // Aplicar configuración de pago masiva
   const handleApplyPaymentToAll = () => {
-    if (selectedRows.size === 0) return;
+    if (selectedRows.size === 0 || !parseResult) return;
 
-    if (paymentType === 'paid' && bulkPaymentDate) {
-      const updates: Record<number, string> = {};
-      selectedRows.forEach(index => {
-        updates[index] = bulkPaymentDate;
-      });
-      setPaymentDateOverrides(prev => ({ ...prev, ...updates }));
-      toast.success(`Fecha de pago aplicada a ${selectedRows.size} registros`);
-    } else if (paymentType === 'credit') {
-      // Credit days apply globally, just notify
-      toast.success(`${creditDays} días de crédito aplicados a todos los registros`);
-    }
+    const updates: Record<number, string> = {};
+    selectedRows.forEach(index => {
+      const item = parseResult.data[index];
+      if (!item) return;
+      const emissionDateStr = formatDateForInput(editedData[index]?.fecha ?? item.fecha);
+      updates[index] = getPaymentDate(index, emissionDateStr);
+    });
+    setPaymentDateOverrides(prev => ({ ...prev, ...updates }));
+    toast.success(`Fecha de vencimiento aplicada a ${selectedRows.size} registros`);
   };
 
   const getDefaultCategoryId = (categoria?: string): string => {
