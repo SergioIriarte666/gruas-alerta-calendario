@@ -65,7 +65,7 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
   
   // Estados para tipo de pago (Crédito vs Contado)
   const [paymentType, setPaymentType] = useState<'credit' | 'paid'>('credit');
-  const [bulkPaidDate, setBulkPaidDate] = useState<string>(format(new Date(), 'yyyy-MM-dd'));
+  const [bulkPaidDate, setBulkPaidDate] = useState<string>('');
   const [paidDateOverrides, setPaidDateOverrides] = useState<Record<string, string>>({});
   const [statusOverrides, setStatusOverrides] = useState<Record<string, 'pending' | 'paid'>>({});
   
@@ -150,6 +150,22 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
       });
       setSupplierCategoryMapping(categoryMap);
       
+      // Initialize bulkPaidDate from first document's issue_date
+      if (result.documents.length > 0 && result.documents[0].issue_date) {
+        setBulkPaidDate(result.documents[0].issue_date);
+      } else {
+        setBulkPaidDate(format(new Date(), 'yyyy-MM-dd'));
+      }
+      
+      // Initialize per-document paid date overrides from XML dates
+      const initialPaidOverrides: Record<string, string> = {};
+      result.documents.forEach(doc => {
+        if (doc.issue_date) {
+          initialPaidOverrides[doc.folio] = doc.issue_date;
+        }
+      });
+      setPaidDateOverrides(initialPaidOverrides);
+
       if (!result.success) {
         toast.error('Se encontraron errores en el archivo XML');
       } else {
@@ -304,8 +320,26 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
             const docFolio = paymentData.reference_number || '';
             const status = statusOverrides[docFolio] || (paymentType === 'paid' ? 'paid' : 'pending');
             const paidDate = status === 'paid' 
-              ? paidDateOverrides[docFolio] || bulkPaidDate
+              ? paidDateOverrides[docFolio] || bulkPaidDate || format(new Date(), 'yyyy-MM-dd')
               : undefined;
+
+            // Pre-check: skip if supplier_payment with same folio already exists
+            if (docFolio) {
+              const { data: existingPayment } = await supabase
+                .from('supplier_payments')
+                .select('id')
+                .eq('supplier_id', supplierId)
+                .eq('reference_number', docFolio)
+                .maybeSingle();
+              
+              if (existingPayment) {
+                console.log(`Folio ${docFolio} ya existe en supplier_payments, omitiendo`);
+                toast.info(`Folio ${docFolio} ya registrado, omitido`);
+                processed++;
+                setUploadProgress(processed / totalItems * 100);
+                continue;
+              }
+            }
 
             // Check if user chose to link to existing cost
             const linkCostId = linkDecisions[docFolio];
@@ -325,6 +359,8 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
                     taxAmount: originalDoc.vat_amount,
                     description: originalDoc.description,
                     currency: originalDoc.currency,
+                    paidDate: paidDate,
+                    status: status as 'pending' | 'paid',
                   },
                 });
                 linkedCount++;
@@ -447,7 +483,7 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
     setDueDateOverrides({});
     setDefaultDaysToAdd(30);
     setPaymentType('credit');
-    setBulkPaidDate(format(new Date(), 'yyyy-MM-dd'));
+    setBulkPaidDate('');
     setPaidDateOverrides({});
     setStatusOverrides({});
     setDuplicateResults([]);
@@ -713,9 +749,9 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
                       {/* Si es Pagado: configurar fecha de pago */}
                       {paymentType === 'paid' && (
                         <div className="space-y-3 pl-6 border-l-2 border-green-200">
-                          <h4 className="text-sm font-medium text-foreground flex items-center gap-2">
-                            <Banknote className="w-4 h-4 text-green-600" />
-                            Fecha de Pago
+                           <h4 className="text-sm font-medium text-foreground flex items-center gap-2">
+                             <Banknote className="w-4 h-4 text-green-600" />
+                             Fecha de Pago (por defecto: fecha de emisión del XML)
                           </h4>
                           <div className="flex items-center gap-3">
                             <Popover>
@@ -728,7 +764,7 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
                                   )}
                                 >
                                   <CalendarIcon className="mr-2 h-4 w-4" />
-                                  {bulkPaidDate ? format(safeParseDateOnly(bulkPaidDate), 'dd/MM/yyyy') : 'Seleccionar fecha'}
+                                  {bulkPaidDate ? format(safeParseDateOnly(bulkPaidDate), 'dd/MM/yyyy') : 'Fecha del XML'}
                                 </Button>
                               </PopoverTrigger>
                               <PopoverContent className="w-auto p-0" align="start">

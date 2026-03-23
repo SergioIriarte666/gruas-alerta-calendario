@@ -430,9 +430,12 @@ export const useLinkInvoiceToCost = () => {
         taxAmount: number;
         description: string;
         currency?: string;
+        paidDate?: string;
+        status?: 'pending' | 'paid';
       };
     }) => {
       // 1. Create supplier_invoice
+      const isPaid = invoiceData.status === 'paid';
       const { data: invoice, error: invoiceError } = await supabase
         .from('supplier_invoices')
         .insert({
@@ -445,22 +448,26 @@ export const useLinkInvoiceToCost = () => {
           tax_amount: invoiceData.taxAmount,
           description: invoiceData.description,
           currency: invoiceData.currency || 'CLP',
-          status: 'pending',
-          paid_amount: 0,
-          balance: invoiceData.amount,
+          status: isPaid ? 'paid' : 'pending',
+          paid_amount: isPaid ? invoiceData.amount : 0,
+          balance: isPaid ? 0 : invoiceData.amount,
         })
         .select()
         .single();
 
       if (invoiceError) throw new Error(`Error creando factura: ${invoiceError.message}`);
 
-      // 2. Update cost notes with invoice reference
+      // 2. Update cost notes and payment_date with invoice reference
+      const costUpdate: Record<string, any> = {
+        notes: `Factura ${invoiceData.folio} - ${invoiceData.description}`,
+        updated_at: new Date().toISOString(),
+      };
+      if (isPaid && invoiceData.paidDate) {
+        costUpdate.payment_date = invoiceData.paidDate;
+      }
       const { error: costError } = await supabase
         .from('costs')
-        .update({
-          notes: `Factura ${invoiceData.folio} - ${invoiceData.description}`,
-          updated_at: new Date().toISOString(),
-        })
+        .update(costUpdate)
         .eq('id', costId);
 
       if (costError) throw new Error(`Error actualizando costo: ${costError.message}`);
@@ -473,12 +480,18 @@ export const useLinkInvoiceToCost = () => {
         .single();
 
       if (costData?.supplier_payment_id) {
+        const paymentUpdate: Record<string, any> = {
+          supplier_invoice_id: invoice.id,
+          reference_number: invoiceData.folio,
+        };
+        if (isPaid && invoiceData.paidDate) {
+          paymentUpdate.status = 'paid';
+          paymentUpdate.paid_date = invoiceData.paidDate;
+          paymentUpdate.paid_amount = invoiceData.amount;
+        }
         await supabase
           .from('supplier_payments')
-          .update({
-            supplier_invoice_id: invoice.id,
-            reference_number: invoiceData.folio,
-          })
+          .update(paymentUpdate)
           .eq('id', costData.supplier_payment_id);
       } else {
         // Also check via cost_id
@@ -489,12 +502,18 @@ export const useLinkInvoiceToCost = () => {
           .maybeSingle();
 
         if (paymentByCostId) {
+          const paymentUpdate2: Record<string, any> = {
+            supplier_invoice_id: invoice.id,
+            reference_number: invoiceData.folio,
+          };
+          if (isPaid && invoiceData.paidDate) {
+            paymentUpdate2.status = 'paid';
+            paymentUpdate2.paid_date = invoiceData.paidDate;
+            paymentUpdate2.paid_amount = invoiceData.amount;
+          }
           await supabase
             .from('supplier_payments')
-            .update({
-              supplier_invoice_id: invoice.id,
-              reference_number: invoiceData.folio,
-            })
+            .update(paymentUpdate2)
             .eq('id', paymentByCostId.id);
         }
       }
