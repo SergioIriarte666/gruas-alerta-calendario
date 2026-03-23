@@ -516,16 +516,17 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
 
   const applyDefaultDaysToAll = () => {
     if (!parseResult) return;
+    const term = paymentTermId !== 'none' ? paymentTerms.find(t => t.id === paymentTermId) : null;
+    const daysToAdd = term ? term.days : defaultDaysToAdd;
     const newOverrides: Record<string, string> = {};
     parseResult.documents.forEach(doc => {
       if (selectedDocuments.has(doc.folio) && doc.issue_date) {
         const issueDate = safeParseDateOnly(doc.issue_date);
-        issueDate.setDate(issueDate.getDate() + defaultDaysToAdd);
-        newOverrides[doc.folio] = format(issueDate, 'yyyy-MM-dd');
+        newOverrides[doc.folio] = format(addDays(issueDate, daysToAdd), 'yyyy-MM-dd');
       }
     });
     setDueDateOverrides(newOverrides);
-    toast.success(`Fechas de vencimiento actualizadas a ${defaultDaysToAdd} días desde emisión`);
+    toast.success(`Fechas de vencimiento actualizadas a ${daysToAdd} días desde emisión`);
   };
   const formatFileSize = (bytes: number): string => {
     if (bytes === 0) return '0 Bytes';
