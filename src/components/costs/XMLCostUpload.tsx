@@ -9,7 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { BatchProgressModal, useBatchProgress } from '@/components/ui/batch-progress-modal';
 import DatePickerInput from '@/components/common/DatePickerInput';
-import XMLPaymentConfig from '@/components/common/XMLPaymentConfig';
+
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { cn } from '@/lib/utils';
