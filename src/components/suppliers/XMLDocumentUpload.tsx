@@ -455,6 +455,18 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
       ...prev,
       [supplierRut]: category
     }));
+    // Reset subcategory when category changes
+    setSupplierSubcategoryMapping(prev => ({
+      ...prev,
+      [supplierRut]: ''
+    }));
+  };
+
+  const handleSubcategoryChange = (supplierRut: string, subcategory: string) => {
+    setSupplierSubcategoryMapping(prev => ({
+      ...prev,
+      [supplierRut]: subcategory
+    }));
   };
   const toggleSupplierSelection = (supplierRut: string) => {
     setSelectedSuppliers(prev => {
