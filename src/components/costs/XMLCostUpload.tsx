@@ -1014,22 +1014,16 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
                                 </div>
                               </div>
                               
-                              {/* Fecha de Pago */}
+                              {/* Fecha de Vencimiento */}
                               <div className="flex flex-wrap items-end gap-4 pt-3 border-t">
                                 <div className="flex-1 min-w-[180px] max-w-[220px]">
-                                  <Label className="text-xs text-gray-500 mb-1.5 block">Fecha de Pago</Label>
+                                  <Label className="text-xs text-muted-foreground mb-1.5 block">Fecha de Vencimiento</Label>
                                   <DatePickerInput
                                     value={computedPaymentDate || ''}
                                     onChange={(date) => setPaymentDateOverrides(prev => ({...prev, [actualIndex]: date}))}
                                     className="w-full"
                                   />
                                 </div>
-                                {isImmediate && (
-                                  <div className="flex items-center gap-1.5 text-green-600 text-sm pb-2">
-                                    <CheckCircle className="w-4 h-4" />
-                                    <span>Pago inmediato</span>
-                                  </div>
-                                )}
                               </div>
                             </div>
                           </div>
