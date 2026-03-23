@@ -306,6 +306,33 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
               ? paidDateOverrides[docFolio] || bulkPaidDate
               : undefined;
 
+            // Check if user chose to link to existing cost
+            const linkCostId = linkDecisions[docFolio];
+            if (linkCostId && linkCostId !== 'new') {
+              // Find the original document data
+              const originalDoc = parseResult.documents.find(d => d.folio === docFolio);
+              if (originalDoc) {
+                await linkInvoiceMutation.mutateAsync({
+                  costId: linkCostId,
+                  supplierId,
+                  invoiceData: {
+                    folio: docFolio,
+                    issueDate: originalDoc.issue_date,
+                    dueDate: originalDoc.due_date || paymentData.due_date,
+                    amount: originalDoc.total_amount,
+                    netAmount: originalDoc.net_amount,
+                    taxAmount: originalDoc.vat_amount,
+                    description: originalDoc.description,
+                    currency: originalDoc.currency,
+                  },
+                });
+                linkedCount++;
+              }
+              processed++;
+              setUploadProgress(processed / totalItems * 100);
+              continue;
+            }
+
             const duplicateInfo = docFolio ? getDuplicateInfoByFolio(docFolio) : undefined;
 
             // If the folio already exists (exact match), never create a new row.
