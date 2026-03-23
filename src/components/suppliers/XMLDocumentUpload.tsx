@@ -320,8 +320,26 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
             const docFolio = paymentData.reference_number || '';
             const status = statusOverrides[docFolio] || (paymentType === 'paid' ? 'paid' : 'pending');
             const paidDate = status === 'paid' 
-              ? paidDateOverrides[docFolio] || bulkPaidDate
+              ? paidDateOverrides[docFolio] || bulkPaidDate || format(new Date(), 'yyyy-MM-dd')
               : undefined;
+
+            // Pre-check: skip if supplier_payment with same folio already exists
+            if (docFolio) {
+              const { data: existingPayment } = await supabase
+                .from('supplier_payments')
+                .select('id')
+                .eq('supplier_id', supplierId)
+                .eq('reference_number', docFolio)
+                .maybeSingle();
+              
+              if (existingPayment) {
+                console.log(`Folio ${docFolio} ya existe en supplier_payments, omitiendo`);
+                toast.info(`Folio ${docFolio} ya registrado, omitido`);
+                processed++;
+                setUploadProgress(processed / totalItems * 100);
+                continue;
+              }
+            }
 
             // Check if user chose to link to existing cost
             const linkCostId = linkDecisions[docFolio];
