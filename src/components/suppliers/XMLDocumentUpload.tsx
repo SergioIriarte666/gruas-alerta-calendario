@@ -293,6 +293,7 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
 
         let exactFolioUpdated = 0;
         let exactFolioSkipped = 0;
+        let linkedCount = 0;
 
         for (const paymentData of paymentsData) {
           try {
