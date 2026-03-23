@@ -421,6 +421,8 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
     setStatusOverrides({});
     setDuplicateResults([]);
     setShowDuplicateWarning(false);
+    setMatchedCosts({});
+    setLinkDecisions({});
   };
   
   // Helper para obtener info de duplicado por folio
