@@ -810,7 +810,25 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
                 </div>
               )}
 
-              {/* Errors and Warnings */}
+              {/* Searching cost matches indicator */}
+              {isSearchingMatches && (
+                <div className="flex items-center gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg dark:bg-blue-950/30 dark:border-blue-800">
+                  <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
+                  <span className="text-sm text-blue-700 dark:text-blue-300">Buscando costos existentes que coincidan...</span>
+                </div>
+              )}
+
+              {/* Cost matching summary */}
+              {Object.keys(matchedCosts).length > 0 && (
+                <Alert className="border-blue-300 bg-blue-50 dark:bg-blue-950/20">
+                  <Link2 className="h-4 w-4 text-blue-600" />
+                  <AlertDescription className="text-blue-800 dark:text-blue-200">
+                    <strong>🔗 {Object.keys(matchedCosts).length} documento(s)</strong> coinciden con costos ya registrados.
+                    Puedes vincular la factura al costo existente o crear un pago nuevo.
+                  </AlertDescription>
+                </Alert>
+              )}
+
               {(parseResult.errors.length > 0 || parseResult.warnings.length > 0) && <div className="space-y-2">
                   {parseResult.errors.length > 0 && <Alert className="border-destructive bg-destructive/10">
                       <AlertCircle className="h-4 w-4 text-destructive" />
