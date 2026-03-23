@@ -59,6 +59,7 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [supplierCategoryMapping, setSupplierCategoryMapping] = useState<Record<string, string>>({});
+  const [supplierSubcategoryMapping, setSupplierSubcategoryMapping] = useState<Record<string, string>>({});
   const [selectedSuppliers, setSelectedSuppliers] = useState<Set<string>>(new Set());
   const [selectedDocuments, setSelectedDocuments] = useState<Set<string>>(new Set());
   const [createPayments, setCreatePayments] = useState(true);
