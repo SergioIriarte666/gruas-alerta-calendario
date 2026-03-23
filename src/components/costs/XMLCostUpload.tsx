@@ -264,38 +264,39 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
     setBulkAmountAdjustment('');
   };
 
-  // Calcular fecha de pago según modo
+  // Calcular fecha de pago según tipo
   const getPaymentDate = (index: number, emissionDate: string): string | null => {
     // Si hay override individual, usarlo
-    if (paymentDateOverrides[index]) {
+    if (paymentDateOverrides?.[index]) {
       return paymentDateOverrides[index];
     }
     
-    // Según modo seleccionado
-    if (paymentDateMode === 'immediate') {
-      return emissionDate;
-    } else if (paymentDateMode === 'credit') {
+    if (paymentType === 'paid') {
+      return bulkPaymentDate || emissionDate;
+    } else if (paymentType === 'credit') {
       const date = new Date(emissionDate);
       date.setDate(date.getDate() + creditDays);
       return format(date, 'yyyy-MM-dd');
-    } else if (paymentDateMode === 'custom' && bulkPaymentDate) {
-      return bulkPaymentDate;
     }
     
-    return emissionDate; // fallback to emission date
+    return emissionDate;
   };
 
-  // Aplicar fecha de pago masiva
-  const handleBulkPaymentDateChange = () => {
-    if (!bulkPaymentDate || selectedRows.size === 0) return;
-    
-    const updates: Record<number, string> = {};
-    selectedRows.forEach(index => {
-      updates[index] = bulkPaymentDate;
-    });
-    
-    setPaymentDateOverrides(prev => ({ ...prev, ...updates }));
-    toast.success(`Fecha de pago actualizada en ${selectedRows.size} registros`);
+  // Aplicar configuración de pago masiva
+  const handleApplyPaymentToAll = () => {
+    if (selectedRows.size === 0) return;
+
+    if (paymentType === 'paid' && bulkPaymentDate) {
+      const updates: Record<number, string> = {};
+      selectedRows.forEach(index => {
+        updates[index] = bulkPaymentDate;
+      });
+      setPaymentDateOverrides(prev => ({ ...prev, ...updates }));
+      toast.success(`Fecha de pago aplicada a ${selectedRows.size} registros`);
+    } else if (paymentType === 'credit') {
+      // Credit days apply globally, just notify
+      toast.success(`${creditDays} días de crédito aplicados a todos los registros`);
+    }
   };
 
   const getDefaultCategoryId = (categoria?: string): string => {
