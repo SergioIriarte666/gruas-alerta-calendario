@@ -116,6 +116,10 @@ export const usePurchaseInvoices = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['purchase-invoices'] });
+      queryClient.invalidateQueries({ queryKey: ['supplier-payments'] });
+      queryClient.invalidateQueries({ queryKey: ['costs'] });
+      queryClient.invalidateQueries({ queryKey: ['supplier-invoices'] });
+      queryClient.invalidateQueries({ queryKey: ['supplier-invoices-pending'] });
       toast.success('Factura de compra actualizada exitosamente');
     },
     onError: (error) => {
