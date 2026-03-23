@@ -332,13 +332,13 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
               )}
             </div>
 
-            {/* Subcategoría - solo visible si hay subcategorías disponibles */}
-            {selectedCategoryId && subcategories.length > 0 && (
+            {/* Subcategoría - visible cuando hay categoría seleccionada */}
+            {selectedCategoryId && (
               <div>
                 <Label className="text-foreground">Subcategoría</Label>
                 <Select
                   value={form.watch('subcategory') || ''}
-                  onValueChange={(value) => form.setValue('subcategory', value)}
+                  onValueChange={(value) => form.setValue('subcategory', value === 'none' ? '' : value)}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Seleccionar subcategoría" />
@@ -346,6 +346,8 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
                   <SelectContent>
                     {subcategoriesLoading ? (
                       <SelectItem value="loading" disabled>Cargando...</SelectItem>
+                    ) : subcategories.length === 0 ? (
+                      <SelectItem value="none" disabled>Sin subcategorías disponibles</SelectItem>
                     ) : (
                       subcategories.map((sub) => (
                         <SelectItem key={sub.id} value={sub.name}>

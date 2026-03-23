@@ -118,11 +118,19 @@ export const useSupplierPayments = () => {
 
   const updatePaymentMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: Partial<PaymentFormData> }): Promise<SupplierPayment> => {
-      // Clean up empty strings for UUID fields
-      const cleanedData = {
-        ...data,
-        crane_id: data.crane_id === "" ? null : data.crane_id,
-        category: data.category === "" ? null : data.category,
+      // Explicitly map only valid DB columns to avoid sending non-DB fields
+      const cleanedData: Record<string, any> = {
+        supplier_id: data.supplier_id,
+        amount: data.amount,
+        due_date: data.due_date,
+        description: data.description,
+        category: data.category === "" ? null : (data.category || null),
+        subcategory: data.subcategory || null,
+        reference_number: data.reference_number || null,
+        notes: data.notes || null,
+        status: data.status || 'pending',
+        crane_id: data.crane_id === "" ? null : (data.crane_id || null),
+        supplier_invoice_id: data.supplier_invoice_id || null,
       };
       
       // Si se está marcando como paid, sincronizar paid_amount con amount total
