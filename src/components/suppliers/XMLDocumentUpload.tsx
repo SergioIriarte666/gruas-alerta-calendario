@@ -43,6 +43,31 @@ interface MatchedCost {
   has_invoice: boolean;
 }
 
+// Inline subcategory select that fetches its own data
+const SupplierSubcategorySelect: React.FC<{
+  categoryId: string;
+  value: string;
+  onValueChange: (val: string) => void;
+}> = ({ categoryId, value, onValueChange }) => {
+  const { subcategories, isLoading } = useCostSubcategories(categoryId);
+  
+  if (isLoading) return <SelectTrigger className="w-40"><SelectValue placeholder="Cargando..." /></SelectTrigger>;
+  if (subcategories.length === 0) return null;
+  
+  return (
+    <Select value={value} onValueChange={onValueChange}>
+      <SelectTrigger className="w-40">
+        <SelectValue placeholder="Subcategoría" />
+      </SelectTrigger>
+      <SelectContent>
+        {subcategories.map((sub) => (
+          <SelectItem key={sub.id} value={sub.name}>{sub.name}</SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+};
+
 interface XMLDocumentUploadProps {
   isOpen: boolean;
   onClose: () => void;
