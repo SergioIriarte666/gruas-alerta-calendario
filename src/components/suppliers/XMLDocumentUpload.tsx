@@ -359,6 +359,8 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
                     taxAmount: originalDoc.vat_amount,
                     description: originalDoc.description,
                     currency: originalDoc.currency,
+                    paidDate: paidDate,
+                    status: status as 'pending' | 'paid',
                   },
                 });
                 linkedCount++;
