@@ -64,10 +64,9 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
   const [bulkAmountAdjustment, setBulkAmountAdjustment] = useState<string>('');
   const [showAllRows, setShowAllRows] = useState(false);
   
-  // Estados para fecha de pago (unificados: credit / paid)
-  const [paymentType, setPaymentType] = useState<'credit' | 'paid'>('paid');
-  const [creditDays, setCreditDays] = useState<number>(30);
-  const [bulkPaymentDate, setBulkPaymentDate] = useState<string>('');
+  // Estados para condiciones de pago (tipo Facturas)
+  const [paymentTermId, setPaymentTermId] = useState<string>('none');
+  const [bulkDueDate, setBulkDueDate] = useState<string>('');
   const [paymentDateOverrides, setPaymentDateOverrides] = useState<Record<number, string>>({});
   
   // Estado para duplicados
