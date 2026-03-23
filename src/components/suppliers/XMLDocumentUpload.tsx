@@ -28,6 +28,7 @@ import { getCategoryLabel } from '@/utils/categoryUtils';
 import { useSupplierPayments } from '@/hooks/useSupplierPayments';
 import { useSupplierInvoiceDuplicateCheck, SupplierInvoiceDuplicateResult } from '@/hooks/useDuplicateCheck';
 import { useLinkInvoiceToCost } from '@/hooks/useCosts';
+import { usePaymentTerms } from '@/hooks/usePaymentTerms';
 import { toast } from 'sonner';
 
 // Type for matched cost
