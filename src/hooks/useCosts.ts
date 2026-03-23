@@ -430,6 +430,8 @@ export const useLinkInvoiceToCost = () => {
         taxAmount: number;
         description: string;
         currency?: string;
+        paidDate?: string;
+        status?: 'pending' | 'paid';
       };
     }) => {
       // 1. Create supplier_invoice
