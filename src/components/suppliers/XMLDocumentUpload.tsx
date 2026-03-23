@@ -495,6 +495,7 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
     setParseResult(null);
     setUploadProgress(0);
     setSupplierCategoryMapping({});
+    setSupplierSubcategoryMapping({});
     setSelectedSuppliers(new Set());
     setSelectedDocuments(new Set());
     setCreatePayments(true);
