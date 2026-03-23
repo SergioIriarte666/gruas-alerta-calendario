@@ -990,8 +990,37 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
                                 </div>
                               </div>
                               
-                              {/* Fecha de Vencimiento */}
+                              {/* Condición de Pago y Fecha de Vencimiento */}
                               <div className="flex flex-wrap items-end gap-4 pt-3 border-t">
+                                <div className="flex-1 min-w-[180px] max-w-[220px]">
+                                  <Label className="text-xs text-muted-foreground mb-1.5 block">Condición de Pago</Label>
+                                  <Select
+                                    value={paymentTermId}
+                                    onValueChange={(id) => {
+                                      setPaymentTermId(id);
+                                      if (id !== 'none') {
+                                        const term = paymentTerms.find(t => t.id === id);
+                                        if (term) {
+                                          const newDate = format(addDays(new Date(emissionDateStr), term.days), 'yyyy-MM-dd');
+                                          setPaymentDateOverrides(prev => ({...prev, [actualIndex]: newDate}));
+                                        }
+                                      }
+                                    }}
+                                    disabled={loadingTerms}
+                                  >
+                                    <SelectTrigger className="w-full">
+                                      <SelectValue placeholder={loadingTerms ? 'Cargando...' : 'Sin condición (manual)'} />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="none">Sin condición (manual)</SelectItem>
+                                      {paymentTerms.map((term) => (
+                                        <SelectItem key={term.id} value={term.id}>
+                                          {term.name} ({term.days} días)
+                                        </SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                </div>
                                 <div className="flex-1 min-w-[180px] max-w-[220px]">
                                   <Label className="text-xs text-muted-foreground mb-1.5 block">Fecha de Vencimiento</Label>
                                   <DatePickerInput
