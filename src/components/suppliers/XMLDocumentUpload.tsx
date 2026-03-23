@@ -747,9 +747,9 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
                       {/* Si es Pagado: configurar fecha de pago */}
                       {paymentType === 'paid' && (
                         <div className="space-y-3 pl-6 border-l-2 border-green-200">
-                          <h4 className="text-sm font-medium text-foreground flex items-center gap-2">
-                            <Banknote className="w-4 h-4 text-green-600" />
-                            Fecha de Pago
+                           <h4 className="text-sm font-medium text-foreground flex items-center gap-2">
+                             <Banknote className="w-4 h-4 text-green-600" />
+                             Fecha de Pago (por defecto: fecha de emisión del XML)
                           </h4>
                           <div className="flex items-center gap-3">
                             <Popover>
