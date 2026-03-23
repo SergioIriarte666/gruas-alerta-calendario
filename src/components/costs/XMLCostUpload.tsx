@@ -67,7 +67,7 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
   const [paymentType, setPaymentType] = useState<'credit' | 'paid'>('paid');
   const [creditDays, setCreditDays] = useState<number>(30);
   const [bulkPaymentDate, setBulkPaymentDate] = useState<string>('');
-  const [paymentDateOverrides, setPaymentDateOverrides] = useState<Record<number, string>>();
+  const [paymentDateOverrides, setPaymentDateOverrides] = useState<Record<number, string>>({});
   
   // Estado para duplicados
   const [duplicateResults, setDuplicateResults] = useState<CostDuplicateResult[]>([]);
