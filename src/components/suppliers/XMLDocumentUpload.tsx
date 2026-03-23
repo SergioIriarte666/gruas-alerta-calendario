@@ -901,15 +901,45 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
                         const duplicateInfo = getDuplicateInfoByFolio(document.folio);
                         const isDuplicate = !!duplicateInfo;
                         
+                        // Obtener costos coincidentes
+                        const costsForDoc = matchedCosts[document.folio] || [];
+                        const hasMatches = costsForDoc.length > 0;
+                        const currentDecision = linkDecisions[document.folio] || 'new';
+                        
                         return (
                           <div key={index} className={cn(
                             "flex flex-col p-3 rounded gap-2",
-                            isDuplicate && duplicateInfo.matchType === 'exact_folio'
+                            hasMatches && currentDecision !== 'new'
+                              ? "bg-blue-50 border border-blue-200 dark:bg-blue-950/30 dark:border-blue-800"
+                              : isDuplicate && duplicateInfo.matchType === 'exact_folio'
                               ? "bg-red-50 border border-red-200"
                               : isDuplicate && duplicateInfo.matchType === 'similar'
                               ? "bg-yellow-50 border border-yellow-200"
                               : "bg-muted/50"
                           )}>
+                            {/* Matched cost selector */}
+                            {hasMatches && (
+                              <div className="flex items-center gap-2 text-xs px-2 py-1.5 rounded bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-200">
+                                <Link2 className="h-3.5 w-3.5 flex-shrink-0" />
+                                <span className="font-medium">🔗 Costo encontrado:</span>
+                                <Select 
+                                  value={currentDecision} 
+                                  onValueChange={(val) => setLinkDecisions(prev => ({ ...prev, [document.folio]: val }))}
+                                >
+                                  <SelectTrigger className="h-7 text-xs flex-1 min-w-[200px] bg-background">
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="new">➕ Crear nuevo pago</SelectItem>
+                                    {costsForDoc.map(cost => (
+                                      <SelectItem key={cost.id} value={cost.id}>
+                                        🔗 {cost.description} — ${Number(cost.amount).toLocaleString('es-CL')} — {cost.date}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            )}
                             {/* Duplicate warning */}
                             {isDuplicate && duplicateInfo.existingPayment && (
                               <div className={cn(
