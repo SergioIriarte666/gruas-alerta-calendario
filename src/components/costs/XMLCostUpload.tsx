@@ -758,18 +758,28 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
                       </Button>
                     </div>
 
-                    {/* Separador */}
+                    {/* Condiciones de Pago */}
                     <div className="border-t pt-3 mt-3">
                       <XMLPaymentConfig
-                        paymentType={paymentType}
-                        onPaymentTypeChange={setPaymentType}
-                        creditDays={creditDays}
-                        onCreditDaysChange={setCreditDays}
-                        paidDate={bulkPaymentDate}
-                        onPaidDateChange={setBulkPaymentDate}
+                        paymentTerms={paymentTerms}
+                        loadingTerms={loadingTerms}
+                        paymentTermId={paymentTermId}
+                        onPaymentTermIdChange={(id) => {
+                          setPaymentTermId(id);
+                          // Auto-calculate bulkDueDate based on first item's emission date
+                          if (id !== 'none' && parseResult?.data?.[0]) {
+                            const term = paymentTerms.find(t => t.id === id);
+                            if (term) {
+                              const firstDate = formatDateForInput(parseResult.data[0].fecha);
+                              setBulkDueDate(format(addDays(new Date(firstDate), term.days), 'yyyy-MM-dd'));
+                            }
+                          }
+                        }}
+                        issueDate={parseResult?.data?.[0] ? formatDateForInput(parseResult.data[0].fecha) : format(new Date(), 'yyyy-MM-dd')}
+                        dueDate={bulkDueDate || (parseResult?.data?.[0] ? format(addDays(new Date(formatDateForInput(parseResult.data[0].fecha)), 30), 'yyyy-MM-dd') : '')}
+                        onDueDateChange={setBulkDueDate}
                         onApplyToAll={handleApplyPaymentToAll}
                         selectedCount={selectedRows.size}
-                        idPrefix="cost-payment"
                       />
                     </div>
 
