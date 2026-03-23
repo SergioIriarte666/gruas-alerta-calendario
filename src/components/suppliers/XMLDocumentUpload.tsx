@@ -393,6 +393,9 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
         if (exactFolioUpdated > 0 || exactFolioSkipped > 0) {
           toast.message(`Duplicados por folio: ${exactFolioUpdated} actualizado(s), ${exactFolioSkipped} omitido(s)`);
         }
+        if (linkedCount > 0) {
+          toast.success(`🔗 ${linkedCount} factura(s) vinculada(s) a costos existentes`);
+        }
       }
       toast.success(`Importación completada: ${selectedSuppliers.size} proveedores${createPayments ? ` y ${selectedDocuments.size} pagos` : ''} procesados`);
       onSuccess();
