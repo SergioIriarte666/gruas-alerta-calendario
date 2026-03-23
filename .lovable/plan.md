@@ -1,50 +1,43 @@
 
 
-## Plan: Reemplazar XMLPaymentConfig con sistema de Condiciones de Pago tipo Facturas
+## Plan: Mover condiciones de pago desde Acciones Masivas a cada registro individual
 
 ### Problema
-El componente actual `XMLPaymentConfig` usa radio buttons (Crédito/Contado) + input de días + botón "Aplicar a todos", lo cual es confuso. El usuario prefiere el sistema simple de Facturas: un **dropdown de condiciones de pago** que auto-calcula la fecha de vencimiento, más campos de fecha de emisión y vencimiento editables.
+La sección "Acciones Masivas" con XMLPaymentConfig (Condición de Pago + Fechas + Aplicar a todos) queda confusa y alejada de los registros. El usuario quiere que las condiciones de pago estén directamente en cada tarjeta de registro, junto a la fecha de vencimiento ya existente.
 
 ### Solución
-Reemplazar `XMLPaymentConfig` en ambos importadores por el mismo patrón de Facturas:
-1. **Select dropdown** con las condiciones de pago de la BD (`usePaymentTerms`)
-2. **Fecha de Emisión** (read-only, viene del XML)
-3. **Fecha de Vencimiento** (auto-calculada desde emisión + días del término, editable)
-4. Botón "Aplicar a todos" para propagar la configuración a todos los registros seleccionados
+
+**Eliminar** el bloque XMLPaymentConfig de ambos importadores (Costos líneas 761-784, Proveedores líneas 684-709) y **agregar un Select de condiciones de pago por registro** junto al DatePicker de Fecha de Vencimiento que ya existe en cada tarjeta.
 
 ### Cambios
 
 | Archivo | Cambio |
 |---------|--------|
-| `src/components/common/XMLPaymentConfig.tsx` | Reescribir completamente: reemplazar RadioGroup por Select de `paymentTerms`, agregar DatePickers de Emisión y Vencimiento con layout tipo `InvoiceFormStep2` usando `ColoredSectionCard` |
-| `src/components/costs/XMLCostUpload.tsx` | Pasar `paymentTerms` al nuevo componente. Actualizar lógica: cuando se selecciona un término, calcular vencimiento = emisión + días. Eliminar estados `paymentType`/`creditDays` y reemplazar por `paymentTermId` |
-| `src/components/suppliers/XMLDocumentUpload.tsx` | Mismo cambio: integrar `usePaymentTerms`, pasar al componente, actualizar lógica de cálculo de fechas |
+| `src/components/costs/XMLCostUpload.tsx` | 1) Eliminar XMLPaymentConfig de Acciones Masivas (líneas 761-784). 2) En cada tarjeta de registro (línea 1017-1027), agregar un Select de condiciones de pago al lado del DatePicker. Al seleccionar un término, auto-calcula vencimiento = emisión + días. |
+| `src/components/suppliers/XMLDocumentUpload.tsx` | 1) Eliminar XMLPaymentConfig de Opciones de Importación (líneas 684-709). 2) En cada documento (línea 939-978), agregar un Select de condiciones de pago al lado del Popover de fecha existente. |
+| `src/components/common/XMLPaymentConfig.tsx` | Se puede eliminar o dejar sin uso (ya no se importa). |
 
-### UI resultante (igual a la imagen de Facturas)
+### UI por registro (Costos)
 
 ```text
-┌─ Condiciones de Pago ────────────────────────────┐
-│ Condición de Pago (Opcional)                      │
-│ [▾ Crédito 30 días (30 días)              ]       │
-│ Auto-calcula fecha de vencimiento según los días  │
-└───────────────────────────────────────────────────┘
-
-┌─ Fechas ─────────────────────────────────────────┐
-│ Fecha de Emisión          Fecha de Vencimiento    │
-│ [📅 20/03/2026]           [📅 19/04/2026]         │
-│                                                   │
-│            [Aplicar a todos los seleccionados]    │
+┌─ Registro 1 de 5 ──────────────────── $150,000 ─┐
+│ Descripción: [Compra combustible...]              │
+│ Proveedor: [Copec SA]                            │
+│ Fecha Emisión | Categoría       | Monto          │
+│ [10/03/2026]  | [Combustible▾]  | [150000]       │
+│ ─────────────────────────────────────────────── │
+│ Condición de Pago            Fecha de Vencimiento │
+│ [▾ Crédito 30 días (30d)]   [📅 09/04/2026]      │
 └───────────────────────────────────────────────────┘
 ```
 
-### Detalle técnico
+Al seleccionar una condición de pago, se auto-calcula la fecha de vencimiento (emisión + días del término). Si se elige "Sin condición (manual)", la fecha se edita libremente.
 
-El nuevo `XMLPaymentConfig` recibirá:
-- `paymentTerms: PaymentTerm[]` y `loadingTerms: boolean` (del hook existente)
-- `paymentTermId: string`, `onPaymentTermIdChange`
-- `issueDate: string` (read-only, del XML)
-- `dueDate: string`, `onDueDateChange`
-- `onApplyToAll`, `selectedCount`
+### UI por documento (Proveedores)
 
-La lógica de auto-cálculo (emisión + días = vencimiento) se maneja en el componente padre, igual que en `InvoiceForm.tsx`.
+Se agrega el Select de condiciones de pago junto al botón de fecha ya existente, en la misma línea.
+
+### Estado
+
+Se agrega `paymentTermOverrides: Record<number|string, string>` para rastrear el término seleccionado por cada registro. El override de fecha ya existe (`paymentDateOverrides` / `dueDateOverrides`).
 
