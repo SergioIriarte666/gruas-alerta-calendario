@@ -65,9 +65,9 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
   const [dueDateOverrides, setDueDateOverrides] = useState<Record<string, string>>({});
   const [defaultDaysToAdd, setDefaultDaysToAdd] = useState<number>(30);
   
-  // Estados para tipo de pago (Crédito vs Contado)
-  const [paymentType, setPaymentType] = useState<'credit' | 'paid'>('credit');
-  const [bulkPaidDate, setBulkPaidDate] = useState<string>('');
+  // Estados para condiciones de pago (tipo Facturas)
+  const [paymentTermId, setPaymentTermId] = useState<string>('none');
+  const [bulkDueDate, setBulkDueDate] = useState<string>('');
   const [paidDateOverrides, setPaidDateOverrides] = useState<Record<string, string>>({});
   const [statusOverrides, setStatusOverrides] = useState<Record<string, 'pending' | 'paid'>>({});
   
