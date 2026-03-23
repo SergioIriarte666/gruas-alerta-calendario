@@ -88,6 +88,7 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
   const { createPayment, updatePayment } = useSupplierPayments();
   const { checkDuplicates } = useSupplierInvoiceDuplicateCheck();
   const linkInvoiceMutation = useLinkInvoiceToCost();
+  const { paymentTerms, loading: loadingTerms } = usePaymentTerms();
   const { data: costCategoriesData = [] } = useCostCategories();
   const activeCategories = costCategoriesData.map(c => ({ id: c.id, label: c.name, name: c.name }));
   const onDrop = useCallback((acceptedFiles: File[]) => {
