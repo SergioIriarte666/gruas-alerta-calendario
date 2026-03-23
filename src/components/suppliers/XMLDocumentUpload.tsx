@@ -412,6 +412,7 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
                 due_date: paymentData.due_date,
                 description: paymentData.description,
                 category: paymentData.category,
+                subcategory: supplierSubcategoryMapping[paymentData.supplier_rut] || null,
                 reference_number: paymentData.reference_number,
                 notes: paymentData.notes,
                 status: status,
