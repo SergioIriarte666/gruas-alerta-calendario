@@ -46,28 +46,20 @@ export const CostDeleteConfirmDialog = ({ cost, open, onOpenChange, onConfirmDel
   const fetchRelatedData = async (cost: Cost) => {
     setLoading(true);
     try {
-      const queries: Promise<any>[] = [];
-
       // Supplier payments linked to this cost
-      queries.push(
-        supabase.from('supplier_payments' as any)
-          .select('id', { count: 'exact', head: true })
-          .or(`cost_id.eq.${cost.id}${cost.supplier_payment_id ? `,id.eq.${cost.supplier_payment_id}` : ''}`)
-      );
+      const paymentsQuery = supabase.from('supplier_payments' as any)
+        .select('id', { count: 'exact', head: true })
+        .or(`cost_id.eq.${cost.id}${cost.supplier_payment_id ? `,id.eq.${cost.supplier_payment_id}` : ''}`);
 
       // Active inventory movements
-      queries.push(
-        supabase.from('inventory_movements')
-          .select('id', { count: 'exact', head: true })
-          .eq('cost_id', cost.id)
-      );
+      const movementsQuery = supabase.from('inventory_movements')
+        .select('id', { count: 'exact', head: true })
+        .eq('cost_id', cost.id);
 
       // Crane parts
-      queries.push(
-        supabase.from('crane_parts')
-          .select('id', { count: 'exact', head: true })
-          .eq('cost_id', cost.id)
-      );
+      const partsQuery = supabase.from('crane_parts')
+        .select('id', { count: 'exact', head: true })
+        .eq('cost_id', cost.id);
 
       const [payments, movements, parts] = await Promise.all(queries);
 
