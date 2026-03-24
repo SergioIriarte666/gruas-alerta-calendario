@@ -574,6 +574,7 @@ export const useUpdateInventoryMovement = () => {
       queryClient.invalidateQueries({ queryKey: ['inventory-stock'] });
       queryClient.invalidateQueries({ queryKey: ['inventory-stats'] });
       queryClient.invalidateQueries({ queryKey: ['low-stock-items'] });
+      queryClient.invalidateQueries({ queryKey: ['supplier-detail-inventory'] });
       toast.success('Movimiento actualizado correctamente');
     },
     onError: createMutationErrorHandler({
@@ -602,6 +603,7 @@ export const useCancelInventoryMovement = () => {
       queryClient.invalidateQueries({ queryKey: ['inventory-stock'] });
       queryClient.invalidateQueries({ queryKey: ['inventory-stats'] });
       queryClient.invalidateQueries({ queryKey: ['low-stock-items'] });
+      queryClient.invalidateQueries({ queryKey: ['supplier-detail-inventory'] });
       toast.success('Movimiento anulado correctamente');
     },
     onError: createMutationErrorHandler({

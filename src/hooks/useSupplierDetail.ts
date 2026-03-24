@@ -62,6 +62,7 @@ export const useSupplierDetail = (supplierId: string | null, enabled = true) => 
           inventory_locations(name)
         `)
         .eq('supplier_id', supplierId)
+        .eq('status', 'active')
         .order('movement_date', { ascending: false });
       
       if (error) throw error;

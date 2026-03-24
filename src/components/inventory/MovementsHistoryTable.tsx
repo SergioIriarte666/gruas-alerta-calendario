@@ -44,8 +44,10 @@ export const MovementsHistoryTable = () => {
   const { data: categories = [] } = useInventoryCategories();
   const { data: locations = [] } = useInventoryLocations();
 
+  const activeMovements = movements.filter(movement => movement.status === 'active');
+
   // Filter movements
-  const filteredMovements = movements.filter(movement => {
+  const filteredMovements = activeMovements.filter(movement => {
     // If no search term, show all (don't filter by search)
     const matchesSearch = !searchTerm.trim() || (
       (movement.item?.name?.toLowerCase().includes(searchTerm.toLowerCase())) ||
@@ -299,9 +301,9 @@ export const MovementsHistoryTable = () => {
                             {movement.reference_document}
                           </code>
                           {/* Show if this document has multiple products */}
-                          {movements.filter(m => m.reference_document === movement.reference_document && m.reference_document).length > 1 && (
+                          {activeMovements.filter(m => m.reference_document === movement.reference_document && m.reference_document).length > 1 && (
                             <Badge variant="secondary" className="text-xs">
-                              Compra múltiple ({movements.filter(m => m.reference_document === movement.reference_document).length} productos)
+                              Compra múltiple ({activeMovements.filter(m => m.reference_document === movement.reference_document).length} productos)
                             </Badge>
                           )}
                         </div>
