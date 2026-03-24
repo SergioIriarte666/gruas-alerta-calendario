@@ -368,8 +368,28 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
 
         await new Promise<void>((resolve) => {
           addCost(costData, {
-            onSuccess: () => {
+            onSuccess: async (data) => {
               successCount++;
+
+              // Create inventory entry if sync is enabled
+              if (syncToInventory && data) {
+                const costRecord = Array.isArray(data) ? data[0] : data;
+                if (costRecord?.id) {
+                  try {
+                    await createDirectInventoryEntry({
+                      costId: costRecord.id,
+                      itemName: doc.description || `Factura ${doc.folio}`,
+                      quantity: 1,
+                      unitCost: doc.total_amount,
+                      date: emissionDate,
+                      supplierId: supplierId,
+                    });
+                  } catch (invErr) {
+                    console.warn('[XMLCostUpload] Inventory sync failed for cost:', costRecord.id, invErr);
+                  }
+                }
+              }
+
               resolve();
             },
             onError: (error) => {
