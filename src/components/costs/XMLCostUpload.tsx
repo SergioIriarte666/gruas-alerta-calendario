@@ -100,7 +100,8 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
   // Payment terms / due dates
   const [dueDateOverrides, setDueDateOverrides] = useState<Record<string, string>>({});
   const [defaultDaysToAdd, setDefaultDaysToAdd] = useState<number>(30);
-  const [paymentTermId, setPaymentTermId] = useState<string>('none');
+  const [supplierPaymentCondition, setSupplierPaymentCondition] = useState<Record<string, 'none' | 'credit' | string>>({});
+  const [supplierCreditDate, setSupplierCreditDate] = useState<Record<string, string>>({});
 
   // Duplicates
   const [duplicateResults, setDuplicateResults] = useState<CostDuplicateResult[]>([]);
@@ -121,6 +122,30 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
   const activeCategories = costCategoriesData.map(c => ({ id: c.id, label: c.name, name: c.name }));
   const { checkDuplicates } = useCostDuplicateCheck();
   const { paymentTerms, loading: loadingTerms } = usePaymentTerms();
+
+  const getSupplierCondition = (supplierRut: string) => supplierPaymentCondition[supplierRut] ?? 'none';
+
+  const applyConditionToSupplierDocuments = (supplierRut: string, condition: 'none' | 'credit' | string, creditDate?: string) => {
+    if (!parseResult) return;
+    if (condition === 'none') return;
+    const nextOverrides: Record<string, string> = {};
+    parseResult.documents.forEach((doc) => {
+      if (doc.supplier_rut !== supplierRut) return;
+      if (!doc.issue_date) return;
+
+      if (condition === 'credit') {
+        if (creditDate) nextOverrides[doc.folio] = creditDate;
+        return;
+      }
+
+      const term = paymentTerms.find(t => t.id === condition);
+      if (term) {
+        const issueDate = safeParseDateOnly(doc.issue_date);
+        nextOverrides[doc.folio] = format(addDays(issueDate, term.days), 'yyyy-MM-dd');
+      }
+    });
+    setDueDateOverrides(prev => ({ ...prev, ...nextOverrides }));
+  };
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     const file = acceptedFiles[0];
@@ -179,6 +204,42 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
       });
       setSupplierCategoryMapping(categoryMap);
 
+      const initialSupplierCondition: Record<string, 'none' | 'credit' | string> = {};
+      const initialSupplierCreditDate: Record<string, string> = {};
+
+      try {
+        const supplierRuts = uniqueSuppliers.map(s => s.rut).filter(Boolean);
+        if (supplierRuts.length > 0) {
+          const { data, error } = await (supabase as any)
+            .from('inventory_suppliers')
+            .select('rut, default_payment_term_id, credit_date')
+            .in('rut', supplierRuts);
+
+          if (!error && Array.isArray(data)) {
+            data.forEach((row: any) => {
+              if (!row?.rut) return;
+              if (row.credit_date) {
+                initialSupplierCondition[row.rut] = 'credit';
+                initialSupplierCreditDate[row.rut] = row.credit_date;
+              } else if (row.default_payment_term_id) {
+                initialSupplierCondition[row.rut] = row.default_payment_term_id;
+              } else {
+                initialSupplierCondition[row.rut] = 'none';
+              }
+            });
+          }
+        }
+      } catch (error) {
+        console.error('Error cargando configuración de crédito:', error);
+      }
+
+      uniqueSuppliers.forEach(s => {
+        if (!initialSupplierCondition[s.rut]) initialSupplierCondition[s.rut] = 'none';
+      });
+
+      setSupplierPaymentCondition(initialSupplierCondition);
+      setSupplierCreditDate(initialSupplierCreditDate);
+
       // Initialize per-document due date overrides
       const initialDueOverrides: Record<string, string> = {};
       result.documents.forEach(doc => {
@@ -188,6 +249,14 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
         }
       });
       setDueDateOverrides(initialDueOverrides);
+
+      Object.entries(initialSupplierCondition).forEach(([rut, condition]) => {
+        if (condition === 'credit') {
+          applyConditionToSupplierDocuments(rut, 'credit', initialSupplierCreditDate[rut]);
+        } else if (condition !== 'none') {
+          applyConditionToSupplierDocuments(rut, condition);
+        }
+      });
 
       if (!result.success) {
         toast.error('Se encontraron errores en el archivo XML');
@@ -313,13 +382,140 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
       return;
     }
 
+    const selectedSupplierRuts = Array.from(new Set(docsToImport.map(d => d.supplier_rut)));
+    const creditSuppliersMissingDate = selectedSupplierRuts.filter(rut => supplierPaymentCondition[rut] === 'credit' && !supplierCreditDate[rut]);
+    if (creditSuppliersMissingDate.length > 0) {
+      toast.error('Falta fecha de crédito para uno o más proveedores');
+      return;
+    }
+    const invalidCreditDateSuppliers = selectedSupplierRuts.filter(rut => {
+      if (supplierPaymentCondition[rut] !== 'credit') return false;
+      const creditDate = supplierCreditDate[rut];
+      if (!creditDate) return true;
+      const minIssue = docsToImport
+        .filter(d => d.supplier_rut === rut && d.issue_date)
+        .map(d => safeParseDateOnly(d.issue_date!))
+        .reduce<Date | null>((min, d) => (min && min.getTime() <= d.getTime() ? min : d), null);
+      if (!minIssue) return false;
+      const credit = safeParseDateOnly(creditDate);
+      return credit.getTime() < minIssue.getTime();
+    });
+    if (invalidCreditDateSuppliers.length > 0) {
+      toast.error('La fecha de crédito no puede ser anterior a la fecha de emisión');
+      return;
+    }
+
     setIsUploading(true);
     batchProgress.start('Cargando Gastos desde XML', docsToImport.length);
 
     let successCount = 0;
     let errorCount = 0;
+    let skippedDuplicatesCount = 0;
 
     try {
+      const supplierIdByRut = new Map<string, string>();
+      const userId = (await supabase.auth.getUser()).data.user?.id || null;
+
+      const getSelectedCondition = (rut: string) => supplierPaymentCondition[rut] ?? 'none';
+      const getComputedDueDate = (doc: XMLDocumentData) => {
+        const condition = getSelectedCondition(doc.supplier_rut);
+        if (condition === 'credit') {
+          const creditDate = supplierCreditDate[doc.supplier_rut];
+          if (creditDate) return creditDate;
+        } else if (condition !== 'none') {
+          const term = paymentTerms.find(t => t.id === condition);
+          if (term && doc.issue_date) {
+            const issueDate = safeParseDateOnly(doc.issue_date);
+            return format(addDays(issueDate, term.days), 'yyyy-MM-dd');
+          }
+        }
+        return null;
+      };
+
+      const ensureSupplierId = async (rut: string, name: string) => {
+        if (supplierIdByRut.has(rut)) return supplierIdByRut.get(rut)!;
+        const existingId = await findSupplierByRutOrName(rut, name);
+        if (existingId) {
+          supplierIdByRut.set(rut, existingId);
+          return existingId;
+        }
+
+        const { data: created, error } = await (supabase as any)
+          .from('inventory_suppliers')
+          .insert([{
+            name: name || 'Proveedor',
+            rut: rut || null,
+            category: 'otros',
+            is_active: true,
+            created_by: userId,
+          }])
+          .select('id')
+          .single();
+
+        if (error || !created?.id) {
+          throw error || new Error('No se pudo crear el proveedor');
+        }
+        supplierIdByRut.set(rut, created.id);
+        return created.id;
+      };
+
+      const updateSupplierCreditConfig = async (supplierId: string, supplierRut: string) => {
+        const condition = getSelectedCondition(supplierRut);
+        const updateData: Record<string, any> = { updated_by: userId };
+
+        if (condition === 'credit') {
+          updateData.credit_date = supplierCreditDate[supplierRut] || null;
+          updateData.default_payment_term_id = null;
+        } else if (condition !== 'none') {
+          updateData.default_payment_term_id = condition;
+          updateData.credit_date = null;
+        } else {
+          updateData.default_payment_term_id = null;
+          updateData.credit_date = null;
+        }
+
+        const { error } = await (supabase as any)
+          .from('inventory_suppliers')
+          .update(updateData)
+          .eq('id', supplierId);
+
+        if (error) throw error;
+      };
+
+      const supplierNameByRut = new Map<string, string>();
+      parseResult.suppliers.forEach(s => supplierNameByRut.set(s.rut, s.name || ''));
+
+      for (const supplierRut of selectedSupplierRuts) {
+        const supplierName = supplierNameByRut.get(supplierRut) || '';
+        const supplierId = await ensureSupplierId(supplierRut, supplierName);
+        await updateSupplierCreditConfig(supplierId, supplierRut);
+      }
+      
+      const existingCostKeys = new Set<string>();
+      const foliosBySupplierId = new Map<string, string[]>();
+      docsToImport.forEach((doc) => {
+        const supplierId = supplierIdByRut.get(doc.supplier_rut);
+        if (!supplierId) return;
+        if (!doc.folio) return;
+        const list = foliosBySupplierId.get(supplierId) || [];
+        list.push(doc.folio);
+        foliosBySupplierId.set(supplierId, list);
+      });
+      for (const [supplierId, folios] of foliosBySupplierId.entries()) {
+        const uniqueFolios = Array.from(new Set(folios)).filter(Boolean);
+        if (uniqueFolios.length === 0) continue;
+        const { data, error } = await (supabase as any)
+          .from('costs')
+          .select('service_folio')
+          .eq('supplier_id', supplierId)
+          .in('service_folio', uniqueFolios);
+        if (error) continue;
+        (data || []).forEach((row: any) => {
+          if (!row?.service_folio) return;
+          existingCostKeys.add(`${supplierId}|${row.service_folio}`);
+        });
+      }
+
       for (let i = 0; i < docsToImport.length; i++) {
         const doc = docsToImport[i];
         batchProgress.update(i + 1, `${doc.folio} - ${doc.description?.substring(0, 30) || ''}`);
@@ -340,10 +536,19 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
 
         // Find supplier ID
         const supplier = parseResult.suppliers.find(s => s.rut === doc.supplier_rut);
-        const supplierId = await findSupplierByRutOrName(doc.supplier_rut, supplier?.name || '');
+        const supplierId = supplierIdByRut.get(doc.supplier_rut) || await ensureSupplierId(doc.supplier_rut, supplier?.name || '');
+
+        const duplicateInfo = getDuplicateInfoByFolio(doc.folio);
+        const isDuplicateByCheck = duplicateInfo?.matchType === 'exact' || duplicateInfo?.matchType === 'folio';
+        const isDuplicateInDb = doc.folio ? existingCostKeys.has(`${supplierId}|${doc.folio}`) : false;
+        if (isDuplicateByCheck || isDuplicateInDb) {
+          skippedDuplicatesCount++;
+          continue;
+        }
 
         const emissionDate = doc.issue_date || format(new Date(), 'yyyy-MM-dd');
-        const paymentDate = dueDateOverrides[doc.folio] || format(addDays(safeParseDateOnly(emissionDate), 30), 'yyyy-MM-dd');
+        const computedDueDate = getComputedDueDate(doc);
+        const paymentDate = dueDateOverrides[doc.folio] || computedDueDate || format(addDays(safeParseDateOnly(emissionDate), 30), 'yyyy-MM-dd');
 
         const costData = {
           date: emissionDate,
@@ -407,6 +612,9 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
         batchProgress.complete();
         setTimeout(() => {
           onSuccess?.(successCount);
+          if (skippedDuplicatesCount > 0) {
+            toast.info(`Se omitieron ${skippedDuplicatesCount} duplicados`);
+          }
           onClose();
           batchProgress.close();
         }, 1500);
@@ -458,7 +666,8 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
     setSelectedDocuments(new Set());
     setDueDateOverrides({});
     setDefaultDaysToAdd(30);
-    setPaymentTermId('none');
+    setSupplierPaymentCondition({});
+    setSupplierCreditDate({});
     setDuplicateResults([]);
     setShowDuplicateWarning(false);
     setMatchedCosts({});
@@ -788,33 +997,80 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
                               <p className="text-sm text-muted-foreground">{supplier.rut}</p>
                             </div>
                           </div>
-                          <div className="flex items-center space-x-2">
-                            <Select
-                              value={supplierCategoryMapping[supplier.rut] || supplier.category}
-                              onValueChange={value => handleCategoryChange(supplier.rut, value)}
-                            >
-                              <SelectTrigger className="w-40">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {activeCategories?.map(category => (
-                                  <SelectItem key={category.id} value={category.name}>
-                                    {getCategoryLabel(activeCategories, category.name)}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 w-full md:max-w-[720px]">
+                            <div>
+                              <Label className="text-xs text-muted-foreground mb-1.5 block">Condición</Label>
+                              <Select
+                                value={getSupplierCondition(supplier.rut)}
+                                onValueChange={(val) => {
+                                  setSupplierPaymentCondition(prev => ({ ...prev, [supplier.rut]: val as any }));
+                                  if (val === 'credit') {
+                                    applyConditionToSupplierDocuments(supplier.rut, 'credit', supplierCreditDate[supplier.rut]);
+                                  } else {
+                                    applyConditionToSupplierDocuments(supplier.rut, val as any);
+                                  }
+                                }}
+                                disabled={loadingTerms}
+                              >
+                                <SelectTrigger className="w-full">
+                                  <SelectValue placeholder={loadingTerms ? 'Cargando...' : 'Sin condición (manual)'} />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="none">Sin condición (manual)</SelectItem>
+                                  <SelectItem value="credit">Crédito (fecha)</SelectItem>
+                                  {paymentTerms.map((term) => (
+                                    <SelectItem key={term.id} value={term.id}>
+                                      {term.name} ({term.days} días)
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            {getSupplierCondition(supplier.rut) === 'credit' && (
+                              <div>
+                                <Label className="text-xs text-muted-foreground mb-1.5 block">Fecha de Crédito</Label>
+                                <DatePickerInput
+                                  value={supplierCreditDate[supplier.rut] || ''}
+                                  onChange={(date) => {
+                                    setSupplierCreditDate(prev => ({ ...prev, [supplier.rut]: date }));
+                                    applyConditionToSupplierDocuments(supplier.rut, 'credit', date);
+                                  }}
+                                  className="w-full"
+                                />
+                              </div>
+                            )}
+                            <div>
+                              <Label className="text-xs text-muted-foreground mb-1.5 block">Categoría</Label>
+                              <Select
+                                value={supplierCategoryMapping[supplier.rut] || supplier.category}
+                                onValueChange={value => handleCategoryChange(supplier.rut, value)}
+                              >
+                                <SelectTrigger className="w-full">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {activeCategories?.map(category => (
+                                    <SelectItem key={category.id} value={category.name}>
+                                      {getCategoryLabel(activeCategories, category.name)}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
                             {/* Subcategory Select */}
                             {(() => {
                               const catName = supplierCategoryMapping[supplier.rut] || supplier.category;
                               const catObj = activeCategories?.find(c => c.name === catName);
                               if (!catObj) return null;
                               return (
-                                <CostSubcategorySelect
-                                  categoryId={catObj.id}
-                                  value={supplierSubcategoryMapping[supplier.rut] || ''}
-                                  onValueChange={(val) => handleSubcategoryChange(supplier.rut, val)}
-                                />
+                                <div>
+                                  <Label className="text-xs text-muted-foreground mb-1.5 block">Subcategoría</Label>
+                                  <CostSubcategorySelect
+                                    categoryId={catObj.id}
+                                    value={supplierSubcategoryMapping[supplier.rut] || ''}
+                                    onValueChange={(val) => handleSubcategoryChange(supplier.rut, val)}
+                                  />
+                                </div>
                               );
                             })()}
                           </div>
@@ -939,16 +1195,13 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
                                 <div className="flex-1 min-w-[180px] max-w-[220px]">
                                   <Label className="text-xs text-muted-foreground mb-1.5 block">Condición de Pago</Label>
                                   <Select
-                                    value={paymentTermId}
-                                    onValueChange={(id) => {
-                                      setPaymentTermId(id);
-                                      if (id !== 'none') {
-                                        const term = paymentTerms.find(t => t.id === id);
-                                        if (term && document.issue_date) {
-                                          const issueDate = safeParseDateOnly(document.issue_date);
-                                          const newDate = format(addDays(issueDate, term.days), 'yyyy-MM-dd');
-                                          setDueDateOverrides(prev => ({ ...prev, [document.folio]: newDate }));
-                                        }
+                                    value={getSupplierCondition(document.supplier_rut)}
+                                    onValueChange={(val) => {
+                                      setSupplierPaymentCondition(prev => ({ ...prev, [document.supplier_rut]: val as any }));
+                                      if (val === 'credit') {
+                                        applyConditionToSupplierDocuments(document.supplier_rut, 'credit', supplierCreditDate[document.supplier_rut]);
+                                      } else {
+                                        applyConditionToSupplierDocuments(document.supplier_rut, val as any);
                                       }
                                     }}
                                     disabled={loadingTerms}
@@ -958,6 +1211,7 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
                                     </SelectTrigger>
                                     <SelectContent>
                                       <SelectItem value="none">Sin condición (manual)</SelectItem>
+                                      <SelectItem value="credit">Crédito (fecha)</SelectItem>
                                       {paymentTerms.map((term) => (
                                         <SelectItem key={term.id} value={term.id}>
                                           {term.name} ({term.days} días)

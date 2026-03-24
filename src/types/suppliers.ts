@@ -12,6 +12,8 @@ export interface Supplier {
   subcategory?: string | null;
   notes?: string | null;
   payment_terms: string | null;
+  default_payment_term_id?: string | null;
+  credit_date?: string | null;
   delivery_time_days: number | null;
   is_active: boolean;
   created_at: string;
