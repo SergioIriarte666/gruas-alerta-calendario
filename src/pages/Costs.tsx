@@ -13,6 +13,7 @@ import { UnifiedCostFilters } from '@/components/costs/UnifiedCostFilters';
 import { CostsDashboard } from '@/components/costs/CostsDashboard';
 import { CostBatchUpdateModal } from '@/components/costs/CostBatchUpdateModal';
 import { DistributionAssistantDialog } from '@/components/costs/dialogs/DistributionAssistantDialog';
+import { CostDeleteConfirmDialog } from '@/components/costs/CostDeleteConfirmDialog';
 import { useCosts, useDeleteCost } from '@/hooks/useCosts';
 import { useUniversalSync } from '@/hooks/useUniversalSync';
 import { useQueryClient } from '@tanstack/react-query';
@@ -140,13 +141,22 @@ const CostsPage = () => {
         setIsDetailsOpen(false);
     }, []);
 
+    const [costToDelete, setCostToDelete] = useState<Cost | null>(null);
+    const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+
     const handleDeleteCost = useCallback((cost: Cost) => {
         if (cost.payment_date && user?.role !== 'admin') {
             toast.error('Este costo está marcado como pagado y no puede ser modificado sin autorización especial');
             return;
         }
+        setCostToDelete(cost);
+        setIsDeleteDialogOpen(true);
+    }, [user]);
+
+    const handleConfirmDelete = useCallback((cost: Cost) => {
         deleteCost(cost.id);
-    }, [deleteCost, user]);
+        setCostToDelete(null);
+    }, [deleteCost]);
 
     const handleClearFilters = useCallback(() => {
         setFilters({
@@ -553,6 +563,13 @@ const CostsPage = () => {
                 open={isDistributionOpen}
                 onOpenChange={setIsDistributionOpen}
                 inventoryData={distributionData}
+            />
+
+            <CostDeleteConfirmDialog
+                cost={costToDelete}
+                open={isDeleteDialogOpen}
+                onOpenChange={setIsDeleteDialogOpen}
+                onConfirmDelete={handleConfirmDelete}
             />
         </div>
     );

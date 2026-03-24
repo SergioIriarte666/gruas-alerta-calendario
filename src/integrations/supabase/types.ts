@@ -2190,6 +2190,8 @@ export type Database = {
           contact_person: string | null
           created_at: string
           created_by: string | null
+          credit_date: string | null
+          default_payment_term_id: string | null
           delivery_time_days: number | null
           email: string | null
           id: string
@@ -2209,6 +2211,8 @@ export type Database = {
           contact_person?: string | null
           created_at?: string
           created_by?: string | null
+          credit_date?: string | null
+          default_payment_term_id?: string | null
           delivery_time_days?: number | null
           email?: string | null
           id?: string
@@ -2228,6 +2232,8 @@ export type Database = {
           contact_person?: string | null
           created_at?: string
           created_by?: string | null
+          credit_date?: string | null
+          default_payment_term_id?: string | null
           delivery_time_days?: number | null
           email?: string | null
           id?: string
@@ -2247,6 +2253,13 @@ export type Database = {
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_suppliers_default_payment_term_id_fkey"
+            columns: ["default_payment_term_id"]
+            isOneToOne: false
+            referencedRelation: "payment_terms"
             referencedColumns: ["id"]
           },
         ]
@@ -4755,6 +4768,16 @@ export type Database = {
       can_view_notification: {
         Args: { target_user_id: string }
         Returns: boolean
+      }
+      cascade_delete_cost: {
+        Args: { p_cost_id: string }
+        Returns: {
+          deleted_costs: number
+          deleted_crane_parts: number
+          deleted_inventory_movements: number
+          deleted_supplier_invoices: number
+          deleted_supplier_payments: number
+        }[]
       }
       check_auth_health: { Args: never; Returns: Json }
       check_bidirectional_sync_status: { Args: never; Returns: Json }
