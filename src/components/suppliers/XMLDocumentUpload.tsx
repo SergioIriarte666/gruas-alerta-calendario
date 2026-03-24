@@ -431,14 +431,20 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
               continue;
             }
             
+            // Resolve category name to UUID for DB storage
+            const catName = supplierCategoryMapping[paymentData.supplier_rut] || paymentData.category;
+            const catObj = activeCategories?.find(c => c.name === catName);
+            const categoryId = catObj?.id || paymentData.category;
+            const subcatName = supplierSubcategoryMapping[paymentData.supplier_rut] || null;
+
             const createdPayment = await new Promise<any>((resolve, reject) => {
               createPayment({
                 supplier_id: supplierId,
                 amount: paymentData.amount,
                 due_date: paymentData.due_date,
                 description: paymentData.description,
-                category: paymentData.category,
-                subcategory: supplierSubcategoryMapping[paymentData.supplier_rut] || null,
+                category: categoryId,
+                subcategory: subcatName,
                 reference_number: paymentData.reference_number,
                 notes: paymentData.notes,
                 status: status,

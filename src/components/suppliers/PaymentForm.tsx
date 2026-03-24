@@ -89,7 +89,15 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
       amount: payment?.amount || 0,
       due_date: payment?.due_date ? payment.due_date.split('T')[0] : '',
       description: payment?.description || '',
-      category: payment?.category || (costCategories?.[0]?.id || ''),
+      category: (() => {
+        if (!payment?.category) return costCategories?.[0]?.id || '';
+        // If already a UUID, use as-is
+        const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-/.test(payment.category);
+        if (isUuid) return payment.category;
+        // Legacy: resolve name to UUID
+        const match = costCategories.find(c => c.name?.toLowerCase() === payment.category?.toLowerCase());
+        return match?.id || '';
+      })(),
       subcategory: (payment as any)?.subcategory || '',
       reference_number: payment?.reference_number || '',
       notes: payment?.notes || '',
