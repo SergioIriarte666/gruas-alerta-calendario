@@ -68,10 +68,11 @@ export const MovementEditModal: React.FC<MovementEditModalProps> = ({
 
   const validateField = (field: string, value: string): string => {
     switch (field) {
-      case 'quantity':
+      case 'quantity': {
         const qty = parseFloat(value);
         if (!qty || qty <= 0) return 'La cantidad debe ser mayor a 0';
         break;
+      }
       case 'unit_cost':
         if (value && parseFloat(value) < 0) return 'El costo no puede ser negativo';
         break;

@@ -24,10 +24,10 @@ export const ClientsHeader = ({
   handleCreateClient,
   handleUpdateClient,
 }: ClientsHeaderProps) => {
-  const handleCloseModal = () => {
+  const handleCloseModal = React.useCallback(() => {
     setIsDialogOpen(false);
     setSelectedClient(undefined);
-  };
+  }, [setIsDialogOpen, setSelectedClient]);
 
   // Handle escape key
   React.useEffect(() => {
@@ -46,7 +46,7 @@ export const ClientsHeader = ({
       document.removeEventListener('keydown', handleEscape);
       document.body.style.overflow = 'unset';
     };
-  }, [isDialogOpen]);
+  }, [isDialogOpen, handleCloseModal]);
 
   return (
     <>

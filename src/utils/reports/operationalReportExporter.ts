@@ -13,7 +13,7 @@ export const exportOperationalReport = async ({ format, metrics, settings, appli
 
   if (format === 'pdf') {
     const doc = new jsPDF();
-    let startY = await addCompanyHeader(doc, company, 15);
+    const startY = await addCompanyHeader(doc, company, 15);
 
     // Filters
     doc.setFontSize(11);

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { verifySessionConsistency, forceReAuthentication } from '@/utils/authCleanup';
@@ -18,7 +18,7 @@ export const SessionVerifier = ({
   const [lastCheck, setLastCheck] = useState<Date | null>(null);
   const [verificationStatus, setVerificationStatus] = useState<'unknown' | 'valid' | 'invalid'>('unknown');
 
-  const verifySession = async () => {
+  const verifySession = useCallback(async () => {
     if (!session || !user) {
       setVerificationStatus('invalid');
       return;
@@ -74,7 +74,7 @@ export const SessionVerifier = ({
       console.error('🚨 SessionVerifier: Error during verification:', error);
       setVerificationStatus('invalid');
     }
-  };
+  }, [session, user, autoRecover, refreshSession, addNotification]);
 
   // Periodic session verification
   useEffect(() => {
@@ -89,7 +89,7 @@ export const SessionVerifier = ({
     const interval = setInterval(verifySession, checkInterval);
 
     return () => clearInterval(interval);
-  }, [session, user, checkInterval]);
+  }, [session, user, checkInterval, verifySession]);
 
   // Log verification status for debugging
   useEffect(() => {

@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Edit, Trash2, FileText, ArrowUpDown, ArrowUp, ArrowDown, Eye, Users, List, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -54,14 +54,14 @@ const ClosuresTable = ({ closures, clients, onEdit, onDelete, onClose, onViewDet
     }, {} as Record<string, Client>);
   }, [clients]);
 
-  const getClientName = (clientId?: string) => {
+  const getClientName = useCallback((clientId?: string) => {
     if (!clientId) return 'Todos los clientes';
     const client = clientMap[clientId];
     if (!client) return 'Cliente desconocido';
     const dept = client.department;
     if (!dept || dept === 'General') return toTitleCase(client.name);
     return `${toTitleCase(client.name)} - ${dept}`;
-  };
+  }, [clientMap]);
 
   const groupedClosures = useMemo(() => {
     if (!groupByClient) return [];
@@ -79,10 +79,10 @@ const ClosuresTable = ({ closures, clients, onEdit, onDelete, onClose, onViewDet
       const nameB = getClientName(b[0] === '__none__' ? undefined : b[0]);
       return nameA.localeCompare(nameB);
     });
-  }, [closures, clientMap, groupByClient]);
+  }, [closures, getClientName, groupByClient]);
 
   // Reset page when grouping changes or closures change
-  useMemo(() => {
+  useEffect(() => {
     setCurrentPage(1);
   }, [groupByClient, closures.length]);
 

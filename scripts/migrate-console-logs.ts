@@ -90,7 +90,7 @@ function migrateFile(filePath: string): { updated: boolean; consoleLogsFound: nu
     }
     
     // Add logger creation after imports
-    const moduleNameMatch = filePath.match(/\/([^\/]+)\.tsx?$/);
+    const moduleNameMatch = filePath.match(/\/([^/]+)\.tsx?$/);
     const moduleName = moduleNameMatch ? moduleNameMatch[1] : 'unknown';
     
     const firstLineAfterImports = updatedContent.search(/\n\n/);

@@ -66,10 +66,11 @@ const Calendar = () => {
     switch (viewMode) {
       case 'day':
         return format(selectedDate, 'd MMMM yyyy', { locale: es });
-      case 'week':
+      case 'week': {
         const weekStartVal = startOfWeek(selectedDate, { weekStartsOn: 1 });
         const weekEndVal = endOfWeek(selectedDate, { weekStartsOn: 1 });
         return `${format(weekStartVal, 'd MMM', { locale: es })} - ${format(weekEndVal, 'd MMM yyyy', { locale: es })}`;
+      }
       case 'month':
         return format(currentMonth, 'MMMM yyyy', { locale: es });
       default:

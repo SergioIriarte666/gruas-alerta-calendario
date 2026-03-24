@@ -138,12 +138,16 @@ export const PaymentList: React.FC = () => {
   }, [filteredPayments, suppliers]);
 
   // Auto-expand groups with overdue on first render
+  const didAutoExpand = React.useRef(false);
   React.useEffect(() => {
+    if (didAutoExpand.current) return;
+    if (supplierGroups.length === 0) return;
     const overdueIds = supplierGroups.filter(g => g.hasOverdue).map(g => g.supplierId);
     if (overdueIds.length > 0 && expandedGroups.size === 0) {
       setExpandedGroups(new Set(overdueIds));
     }
-  }, [supplierGroups.length]); // eslint-disable-line
+    didAutoExpand.current = true;
+  }, [supplierGroups, expandedGroups.size]);
 
   const handleEdit = (payment: SupplierPayment) => { setEditingPayment(payment); setShowForm(true); };
   const handleCloseForm = () => { setShowForm(false); setEditingPayment(null); };

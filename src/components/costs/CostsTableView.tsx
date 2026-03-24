@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import {
   Table,
   TableBody,
@@ -93,12 +93,12 @@ export const CostsTableView = ({
     }
   };
 
-  const getAssociatedTo = (cost: Cost) => {
+  const getAssociatedTo = useCallback((cost: Cost) => {
     if (cost.services) return `Servicio: ${cost.services.folio}`;
     if (cost.cranes) return `Grúa: ${cost.cranes.brand} ${cost.cranes.model} (${cost.cranes.license_plate})`;
     if (cost.operators) return `Operador: ${cost.operators.name}`;
     return 'N/A';
-  };
+  }, []);
 
   const handleServiceClick = (cost: Cost) => {
     if (cost.services) {
@@ -108,13 +108,13 @@ export const CostsTableView = ({
   };
 
   // Función para detectar si una cadena es un UUID
-  const isUUID = (str: string) => {
+  const isUUID = useCallback((str: string) => {
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     return uuidRegex.test(str);
-  };
+  }, []);
 
   // Función para obtener el nombre legible de la subcategoría
-  const getSubcategoryDisplay = (subcategory: string) => {
+  const getSubcategoryDisplay = useCallback((subcategory: string) => {
     if (!subcategory) return null;
     
     // Si es un UUID, buscar en las categorías de proveedores
@@ -124,15 +124,15 @@ export const CostsTableView = ({
     
     // Si no es UUID, mostrar el valor directamente
     return subcategory;
-  };
+  }, [activeCategories, isUUID]);
 
-  const getCategoryDisplay = (cost: Cost) => {
+  const getCategoryDisplay = useCallback((cost: Cost) => {
     const categoryName = cost.cost_categories?.name || 'Sin categoría';
     if (cost.subcategory && categoryName === 'Gastos de Servicios') {
       return `${categoryName} - ${getSubcategoryDisplay(cost.subcategory)}`;
     }
     return categoryName;
-  };
+  }, [getSubcategoryDisplay]);
 
   const sortedCosts = useMemo(() => {
     return [...costs].sort((a, b) => {
@@ -172,7 +172,7 @@ export const CostsTableView = ({
       if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
       return 0;
     });
-  }, [costs, sortField, sortDirection]);
+  }, [costs, sortField, sortDirection, getAssociatedTo, getCategoryDisplay, getSubcategoryDisplay]);
 
   const SortIcon = ({ field }: { field: SortField }) => {
     if (sortField !== field) return <ArrowUpDown className="ml-2 h-4 w-4" />;

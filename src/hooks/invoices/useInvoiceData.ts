@@ -57,7 +57,7 @@ const fetchInvoicesFromDB = async (): Promise<Invoice[]> => {
 
   const invoiceIds = invoicesData.map(invoice => invoice.id);
 
-  let closuresData: Array<{ invoice_id: string; closure_id: string }> = [];
+  const closuresData: Array<{ invoice_id: string; closure_id: string }> = [];
   if (invoiceIds.length > 0) {
     // Batch closure lookups in chunks of 500
     const BATCH = 500;
@@ -220,7 +220,7 @@ export const usePagedInvoices = (page: number, pageSize: number, filters?: Paged
 
       const invoiceIds = (invoicesData || []).map(invoice => invoice.id);
 
-      let closuresData: Array<{ invoice_id: string; closure_id: string }> = [];
+      const closuresData: Array<{ invoice_id: string; closure_id: string }> = [];
       if (invoiceIds.length > 0) {
         const BATCH = 500;
         for (let i = 0; i < invoiceIds.length; i += BATCH) {

@@ -57,20 +57,22 @@ export const HistoricalSalesFilters = ({
         from = startOfMonth(today);
         to = endOfMonth(today);
         break;
-      case 'lastMonth':
+      case 'lastMonth': {
         const lastMonth = subMonths(today, 1);
         from = startOfMonth(lastMonth);
         to = endOfMonth(lastMonth);
         break;
+      }
       case 'thisYear':
         from = startOfYear(today);
         to = endOfYear(today);
         break;
-      case 'lastYear':
+      case 'lastYear': {
         const lastYear = subMonths(today, 12);
         from = startOfYear(lastYear);
         to = endOfYear(lastYear);
         break;
+      }
     }
     
     const newFilters = { ...localFilters, dateFrom: from, dateTo: to };

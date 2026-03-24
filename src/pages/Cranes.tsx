@@ -48,11 +48,12 @@ const Cranes = () => {
         case 'licensePlate':
           comparison = (a.licensePlate || '').localeCompare(b.licensePlate || '');
           break;
-        case 'brand':
+        case 'brand': {
           const brandA = `${a.brand} ${a.model}`;
           const brandB = `${b.brand} ${b.model}`;
           comparison = brandA.localeCompare(brandB);
           break;
+        }
         case 'type':
           comparison = a.type.localeCompare(b.type);
           break;

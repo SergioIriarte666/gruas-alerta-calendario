@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { 
@@ -27,7 +27,7 @@ export const useServicesMetrics = (dateFilter: DateFilter = 'all') => {
   const [services, setServices] = useState<any[]>([]);
   const [costs, setCosts] = useState<any[]>([]);
 
-  const getDateFilterInfo = (filter: DateFilter) => {
+  const getDateFilterInfo = useCallback((filter: DateFilter) => {
     const currentChileDate = getCurrentChileDate();
     const currentChileDateString = getCurrentChileDateString();
     
@@ -38,7 +38,7 @@ export const useServicesMetrics = (dateFilter: DateFilter = 'all') => {
           type: 'exact', 
           date: currentChileDateString 
         };
-      case 'week':
+      case 'week': {
         const weekRange = getCurrentWeekRange();
         const weekStartString = formatForDatabase(weekRange.start);
         const weekEndString = formatForDatabase(weekRange.end);
@@ -48,7 +48,8 @@ export const useServicesMetrics = (dateFilter: DateFilter = 'all') => {
           start: weekStartString, 
           end: weekEndString 
         };
-      case 'month':
+      }
+      case 'month': {
         const monthRange = getCurrentMonthRange();
         const monthStartString = formatForDatabase(monthRange.start);
         const monthEndString = formatForDatabase(monthRange.end);
@@ -58,14 +59,15 @@ export const useServicesMetrics = (dateFilter: DateFilter = 'all') => {
           start: monthStartString, 
           end: monthEndString 
         };
+      }
       case 'all':
       default:
         console.log('📅 Filtro ALL aplicado: sin restricciones de fecha');
         return null;
     }
-  };
+  }, []);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       setLoading(true);
       const dateFilterInfo = getDateFilterInfo(dateFilter);
@@ -136,11 +138,11 @@ export const useServicesMetrics = (dateFilter: DateFilter = 'all') => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [dateFilter, getDateFilterInfo]);
 
   useEffect(() => {
     fetchData();
-  }, [dateFilter]);
+  }, [fetchData]);
 
   // Escuchar evento global de refresh para actualizar metricas
   useEffect(() => {
@@ -151,7 +153,7 @@ export const useServicesMetrics = (dateFilter: DateFilter = 'all') => {
     
     window.addEventListener('global-data-refresh', handleGlobalRefresh);
     return () => window.removeEventListener('global-data-refresh', handleGlobalRefresh);
-  }, [dateFilter]);
+  }, [fetchData]);
 
   const metrics = useMemo((): ServicesMetrics => {
     const activeServices = services.filter(s => s.status !== 'cancelled');

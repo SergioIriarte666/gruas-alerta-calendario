@@ -180,7 +180,7 @@ const InvoicesTable = ({
         }
       }
     }
-  }, [invoices]);
+  }, [invoices, viewingInvoice, getInvoiceWithDetails]);
 
   const handleCancellationSuccess = () => {
     if (onRefresh) {

@@ -59,11 +59,12 @@ export const CostCategoryList = () => {
         case 'name':
           comparison = a.name.localeCompare(b.name);
           break;
-        case 'description':
+        case 'description': {
           const descA = a.description || '';
           const descB = b.description || '';
           comparison = descA.localeCompare(descB);
           break;
+        }
       }
       
       return sortDirection === 'asc' ? comparison : -comparison;

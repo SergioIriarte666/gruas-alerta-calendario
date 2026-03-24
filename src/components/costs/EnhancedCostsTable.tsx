@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Table,
   TableBody,
@@ -111,12 +111,12 @@ export const EnhancedCostsTable = ({
     }
   };
 
-  const getAssociatedTo = (cost: Cost) => {
+  const getAssociatedTo = useCallback((cost: Cost) => {
     if (cost.services) return `Servicio: ${cost.services.folio}`;
     if (cost.cranes) return `Grúa: ${cost.cranes.brand} ${cost.cranes.model} (${cost.cranes.license_plate})`;
     if (cost.operators) return `Operador: ${cost.operators.name}`;
     return 'N/A';
-  };
+  }, []);
 
   const handleServiceClick = (cost: Cost) => {
     if (cost.services) {
@@ -125,22 +125,22 @@ export const EnhancedCostsTable = ({
     }
   };
 
-  const isUUID = (str: string) => {
+  const isUUID = useCallback((str: string) => {
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     return uuidRegex.test(str);
-  };
+  }, []);
 
-  const getSubcategoryDisplay = (subcategory: string) => {
+  const getSubcategoryDisplay = useCallback((subcategory: string) => {
     if (!subcategory) return null;
     if (isUUID(subcategory)) {
       return getCategoryLabel(activeCategories || [], subcategory);
     }
     return subcategory;
-  };
+  }, [activeCategories, isUUID]);
 
-  const getCategoryDisplay = (cost: Cost) => {
+  const getCategoryDisplay = useCallback((cost: Cost) => {
     return cost.cost_categories?.name || 'Sin categoría';
-  };
+  }, []);
 
   // Ordenar costos
   const sortedCosts = useMemo(() => {
@@ -181,7 +181,7 @@ export const EnhancedCostsTable = ({
       if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
       return 0;
     });
-  }, [costs, sortField, sortDirection]);
+  }, [costs, sortField, sortDirection, getAssociatedTo, getCategoryDisplay, getSubcategoryDisplay]);
 
   // Agrupar costos si es necesario
   const groupedCosts = useMemo(() => {
@@ -206,7 +206,7 @@ export const EnhancedCostsTable = ({
     });
 
     return groups;
-  }, [sortedCosts, groupBy]);
+  }, [sortedCosts, groupBy, getCategoryDisplay]);
 
   // Paginación
   const paginatedGroups = useMemo(() => {

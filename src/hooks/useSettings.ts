@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Settings, defaultSettings } from '@/types/settings';
 import { useSettingsFetcher } from './settings/useSettingsFetcher';
 import { useSettingsSaver } from './settings/useSettingsSaver';
@@ -10,16 +10,16 @@ export const useSettings = () => {
   const { fetchSettings } = useSettingsFetcher();
   const { saveSettings: saveSettingsToDb, saving } = useSettingsSaver();
 
-  const loadSettings = async () => {
+  const loadSettings = useCallback(async () => {
     setLoading(true);
     const loadedSettings = await fetchSettings();
     setSettings(loadedSettings);
     setLoading(false);
-  };
+  }, [fetchSettings]);
 
   useEffect(() => {
     loadSettings();
-  }, []);
+  }, [loadSettings]);
 
   useEffect(() => {
     const refetch = () => {
@@ -29,7 +29,7 @@ export const useSettings = () => {
     return () => {
       window.removeEventListener('settings-updated', refetch);
     };
-  }, []);
+  }, [loadSettings]);
 
   const updateSettings = (updates: Partial<Settings>) => {
     setSettings(prev => {

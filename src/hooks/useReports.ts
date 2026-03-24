@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useServices } from './useServices';
 import { useInvoices } from './useInvoices';
 import { useClients } from './useClients';
@@ -47,6 +47,7 @@ export const useReports = (filters?: ReportFilters) => {
   const [metrics, setMetrics] = useState<ReportMetrics | null>(null);
   const [loading, setLoading] = useState(true);
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
+  const [refreshKey, setRefreshKey] = useState(0);
   
   const { services } = useServices();
   const { invoices } = useInvoices();
@@ -57,42 +58,37 @@ export const useReports = (filters?: ReportFilters) => {
   const { data: costCategories = [] } = useCostCategories();
 
   useEffect(() => {
-    // Siempre calcular métricas una vez que los datos estén disponibles (incluso si están vacíos)
-    calculateMetrics();
-    setLastUpdate(new Date());
-  }, [services, invoices, clients, cranes, operators, costs, costCategories, filters]);
-
-  const calculateMetrics = async () => {
-    setLoading(true);
+    const calculateMetrics = async () => {
+      setLoading(true);
     
-    let filteredServices = services;
-    if (filters) {
-      const { dateRange, clientId, department, craneId, operatorId, costCategoryId } = filters;
-      
-      filteredServices = services.filter(service => {
-        if (dateRange && dateRange.from && dateRange.to) {
-          if (service.serviceDate < dateRange.from || service.serviceDate > dateRange.to) {
+      let filteredServices = services;
+      if (filters) {
+        const { dateRange, clientId, department, craneId, operatorId, costCategoryId } = filters;
+        
+        filteredServices = services.filter(service => {
+          if (dateRange && dateRange.from && dateRange.to) {
+            if (service.serviceDate < dateRange.from || service.serviceDate > dateRange.to) {
+              return false;
+            }
+          }
+          if (clientId && clientId !== 'all' && service.client.id !== clientId) {
             return false;
           }
-        }
-        if (clientId && clientId !== 'all' && service.client.id !== clientId) {
-          return false;
-        }
-        if (department && department !== 'all' && service.client.department !== department) {
-          return false;
-        }
-        if (craneId && craneId !== 'all' && service.crane?.id !== craneId) {
-          return false;
-        }
-        if (operatorId && operatorId !== 'all' && service.operator?.id !== operatorId) {
-          return false;
-        }
-        if (costCategoryId && costCategoryId !== 'all' && costCategories.find(c => c.id === costCategoryId)) {
-          return false;
-        }
-        return true;
-      });
-    }
+          if (department && department !== 'all' && service.client.department !== department) {
+            return false;
+          }
+          if (craneId && craneId !== 'all' && service.crane?.id !== craneId) {
+            return false;
+          }
+          if (operatorId && operatorId !== 'all' && service.operator?.id !== operatorId) {
+            return false;
+          }
+          if (costCategoryId && costCategoryId !== 'all' && costCategories.find(c => c.id === costCategoryId)) {
+            return false;
+          }
+          return true;
+        });
+      }
 
     // Excluir servicios cancelados de todos los cálculos
     filteredServices = filteredServices.filter(s => s.status !== 'cancelled');
@@ -174,9 +170,13 @@ export const useReports = (filters?: ReportFilters) => {
       costRevenueRatio,
     };
 
-    setMetrics(calculatedMetrics);
-    setLoading(false);
-  };
+      setMetrics(calculatedMetrics);
+      setLoading(false);
+    };
+    
+    calculateMetrics();
+    setLastUpdate(new Date());
+  }, [clients, costCategories, costs, cranes, filters, invoices, operators, services, refreshKey]);
 
   const calculateServicesByMonth = (services: Service[]) => {
     const monthlyData: { [key: string]: { services: number; revenue: number } } = {};
@@ -395,26 +395,20 @@ export const useReports = (filters?: ReportFilters) => {
     }
   };
 
-  const forceRefresh = async () => {
+  const refreshMetrics = () => {
+    setRefreshKey(prev => prev + 1);
+  };
+
+  const forceRefresh = () => {
     console.log('Manual reports refresh triggered');
-    setLoading(true);
-    try {
-      // Force re-calculation of metrics
-      await calculateMetrics();
-      setLastUpdate(new Date());
-      console.log('Reports refresh completed successfully');
-    } catch (error) {
-      console.error('Error during reports refresh:', error);
-    } finally {
-      setLoading(false);
-    }
+    refreshMetrics();
   };
 
   return {
     metrics,
     loading,
     lastUpdate,
-    refreshMetrics: calculateMetrics,
+    refreshMetrics,
     forceRefresh
   };
 };

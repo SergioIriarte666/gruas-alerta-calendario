@@ -91,7 +91,7 @@ export const InvoicesMobileView = ({
         }
       }
     }
-  }, [invoices]);
+  }, [invoices, viewingInvoice, getInvoiceWithDetails]);
 
   const getClientName = (invoice: Invoice): string => {
     const details = getInvoiceWithDetails(invoice);

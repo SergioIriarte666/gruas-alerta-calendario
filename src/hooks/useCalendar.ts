@@ -23,7 +23,7 @@ export const useCalendar = () => {
 
   useEffect(() => {
     loadEvents();
-  }, []);
+  }, [loadEvents]);
 
   // Listen for global data refresh events (service/maintenance CRUD)
   useEffect(() => {

@@ -417,8 +417,6 @@ export const useServiceManager = () => {
             if (outsourcedCostError) {
               console.error('Error creating outsourced cost:', outsourcedCostError);
               // No lanzar error, solo log - el servicio ya se creó
-            } else {
-              
             }
           }
         }
@@ -718,7 +716,6 @@ export const useServiceManager = () => {
       if (serviceData.costDetails && Array.isArray(serviceData.costDetails)) {
       // ✅ NUEVO: Solo procesar costos si viene del formulario principal
       const isFromMainForm = (serviceData as any)._source === 'main_form' || (serviceData as any)._processCosts === true;
-      const isFromServiceModal = (serviceData as any)._source === 'service_modal';
       
       if (isFromMainForm) {
         
@@ -734,8 +731,6 @@ export const useServiceManager = () => {
       
         if (deleteCostsError) {
           console.error('[updateService] Error deleting existing service costs:', deleteCostsError);
-        } else {
-          
         }
       
         // Filter valid cost details
@@ -772,14 +767,8 @@ export const useServiceManager = () => {
       
           if (insertCostsError) {
             console.error('[updateService] Error inserting updated service costs:', insertCostsError);
-          } else {
-            
           }
         }
-      } else if (isFromServiceModal) {
-        
-      } else {
-        
       }
       }
 
@@ -822,8 +811,6 @@ export const useServiceManager = () => {
 
           if (deleteCommissionsError) {
             console.error('[SMART SYNC] Error deleting obsolete commissions:', deleteCommissionsError);
-          } else {
-            
           }
         }
 
@@ -888,8 +875,6 @@ export const useServiceManager = () => {
                 }
               }
             }
-          } else {
-            
           }
         }
         
@@ -924,8 +909,6 @@ export const useServiceManager = () => {
             
             if (deleteResourcesError) {
               console.error('[SERVICE_RESOURCES] Error deleting obsolete resources:', deleteResourcesError);
-            } else {
-              
             }
           }
         }
@@ -952,8 +935,6 @@ export const useServiceManager = () => {
             
             if (updateResourceError) {
               console.error('[SERVICE_RESOURCES] Error updating resource:', updateResourceError);
-            } else {
-              
             }
           } else {
             // Crear nuevo registro
@@ -970,8 +951,6 @@ export const useServiceManager = () => {
             
             if (createResourceError) {
               console.error('[SERVICE_RESOURCES] Error creating resource:', createResourceError);
-            } else {
-              
             }
           }
         }
@@ -1073,14 +1052,9 @@ export const useServiceManager = () => {
 
               if (updatePaymentError) {
                 console.error('[OUTSOURCED SYNC] Error actualizando supplier_payment:', updatePaymentError);
-              } else {
               }
-            } else {
-              
             }
           }
-        } else {
-          
         }
       }
 

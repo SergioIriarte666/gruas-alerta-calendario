@@ -85,7 +85,7 @@ export const useServicesPage = () => {
       newSearch.delete('newSale');
       navigate({ pathname: location.pathname, search: newSearch.toString() ? `?${newSearch.toString()}` : '' }, { replace: true });
     }
-  }, [location.search, navigate]);
+  }, [location.search, location.pathname, navigate]);
 
   const handleAdvancedFiltersChange = (filters: AdvancedFilters | null) => {
     setAdvancedFilters(filters);

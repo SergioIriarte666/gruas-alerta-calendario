@@ -536,7 +536,6 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
                 // A. Handle inventory_suppliers (CRITICAL for FK constraint)
                 let inventorySupplierId: string | null = null;
                 
-                // @ts-ignore - inventory_suppliers missing in types but exists in DB
                 const { data: allInvSups } = await (supabase as any)
                     .from('inventory_suppliers')
                     .select('id, rut');
@@ -547,7 +546,6 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
                     inventorySupplierId = existingInvSup.id;
                 } else {
                     // Create in inventory_suppliers
-                    // @ts-ignore
                     const { data: newInvSup, error: invSupError } = await (supabase as any)
                         .from('inventory_suppliers')
                         .insert({
@@ -621,7 +619,6 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
             const nRut = normalizeRut(us.rut); // The RUT from the file
             
             // Try to find in inventory_suppliers by normalized RUT
-            // @ts-ignore
             const { data: allInvSups } = await (supabase as any)
                 .from('inventory_suppliers')
                 .select('id, rut');
@@ -633,7 +630,6 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
             } else {
                 // If not found in inventory_suppliers, we must create it there too!
                 try {
-                    // @ts-ignore
                     const { data: newInvSup, error: invSupError } = await (supabase as any)
                         .from('inventory_suppliers')
                         .insert({
@@ -674,7 +670,6 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
         try {
             // Fetch ALL inventory_suppliers and match by normalized RUT
             // (DB may store formatted RUTs like "77.225.200-5")
-            // @ts-ignore
             const { data: allInvSups } = await (supabase as any)
                 .from('inventory_suppliers')
                 .select('id, rut, name');
@@ -689,7 +684,6 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
                 const supplierName = matchedInv?.razonSocial || 'Proveedor Desconocido';
                 const originalRut = matchedInv?.rut || rut;
                 
-                // @ts-ignore
                 const { data: newInvSup, error: invSupError } = await (supabase as any)
                     .from('inventory_suppliers')
                     .insert({
@@ -771,7 +765,7 @@ const PurchaseHistoryImport: React.FC<PurchaseHistoryImportProps> = ({ open, onO
         const key = `duplicate-${inv.invoice_number}-${i}`;
         if (selectedInvoices.has(key)) {
              const nRut = normalizeRut(inv.rut);
-             let supplierId = supplierRutToId.get(nRut) || inv.supplierId;
+             const supplierId = supplierRutToId.get(nRut) || inv.supplierId;
 
              if (supplierId) {
                 invoicesToInsert.push({

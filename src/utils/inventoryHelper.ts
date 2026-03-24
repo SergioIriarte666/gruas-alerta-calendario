@@ -32,7 +32,7 @@ export const normalizeItemName = (name: string): string => {
     // Normalizar espacios múltiples a uno solo
     .replace(/\s+/g, ' ')
     // Remover caracteres especiales comunes pero mantener espacios y guiones
-    .replace(/[^\w\s\-]/g, '')
+    .replace(/[^\w\s-]/g, '')
     // Normalizar variaciones comunes
     .replace(/\bY\b/g, 'y')
     .replace(/\bDE\b/g, 'de')

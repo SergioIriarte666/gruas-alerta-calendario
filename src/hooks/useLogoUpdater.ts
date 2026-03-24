@@ -20,7 +20,7 @@ export const useLogoUpdater = () => {
     try {
       // Paso 1: Obtener o crear el registro de la empresa
       console.log("useLogoUpdater: Buscando datos de la empresa...");
-      let { data: companyData, error: companySelectError } = await supabase
+      const { data: companyData, error: companySelectError } = await supabase
         .from('company_data')
         .select('id, logo_url')
         .limit(1)

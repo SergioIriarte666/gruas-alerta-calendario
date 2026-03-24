@@ -117,7 +117,11 @@ export const HistoricalPurchasesPipelineView = ({ invoices, onEdit, onDelete }: 
   const toggleSupplier = (id: string) => {
     setExpandedSuppliers(prev => {
       const s = new Set(prev);
-      s.has(id) ? s.delete(id) : s.add(id);
+      if (s.has(id)) {
+        s.delete(id);
+      } else {
+        s.add(id);
+      }
       return s;
     });
   };
@@ -125,7 +129,11 @@ export const HistoricalPurchasesPipelineView = ({ invoices, onEdit, onDelete }: 
   const toggleMonth = (key: string) => {
     setExpandedMonths(prev => {
       const s = new Set(prev);
-      s.has(key) ? s.delete(key) : s.add(key);
+      if (s.has(key)) {
+        s.delete(key);
+      } else {
+        s.add(key);
+      }
       return s;
     });
   };

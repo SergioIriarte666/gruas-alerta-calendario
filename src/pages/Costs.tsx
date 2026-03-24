@@ -186,13 +186,14 @@ const CostsPage = () => {
                     return costDate.toDateString() === today.toDateString();
                 });
                 break;
-            case 'week':
+            case 'week': {
                 const { start: weekStart, end: weekEnd } = getCurrentWeekRange();
                 filtered = baseCosts.filter(cost => {
                     const costDate = new Date(cost.date + 'T00:00:00');
                     return costDate >= weekStart && costDate <= weekEnd;
                 });
                 break;
+            }
             case 'month':
                 filtered = baseCosts.filter(cost => {
                     const costDate = new Date(cost.date + 'T00:00:00');

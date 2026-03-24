@@ -161,26 +161,30 @@ export const SupplierList: React.FC = () => {
         case 'rut':
           comparison = a.rut.localeCompare(b.rut);
           break;
-        case 'contactName':
+        case 'contactName': {
           const contactA = a.contact_name || '';
           const contactB = b.contact_name || '';
           comparison = contactA.localeCompare(contactB);
           break;
-        case 'category':
+        }
+        case 'category': {
           const catA = getCategoryLabel(activeCategories || [], a.category);
           const catB = getCategoryLabel(activeCategories || [], b.category);
           comparison = catA.localeCompare(catB);
           break;
-        case 'email':
+        }
+        case 'email': {
           const emailA = a.email || '';
           const emailB = b.email || '';
           comparison = emailA.localeCompare(emailB);
           break;
-        case 'phone':
+        }
+        case 'phone': {
           const phoneA = a.phone || '';
           const phoneB = b.phone || '';
           comparison = phoneA.localeCompare(phoneB);
           break;
+        }
         case 'isActive':
           comparison = (b.is_active ? 1 : 0) - (a.is_active ? 1 : 0);
           break;

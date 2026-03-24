@@ -218,7 +218,7 @@ export class HeaderMapper {
 
   // Método para verificar si un header es reconocido
   isRecognizedHeader(header: string): boolean {
-    return this.headerMap.hasOwnProperty(header.trim());
+    return Object.prototype.hasOwnProperty.call(this.headerMap, header.trim());
   }
 
   // Método para obtener todas las variaciones de un campo

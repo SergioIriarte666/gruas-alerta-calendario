@@ -186,7 +186,7 @@ export const parseXLSXFile = (file: File): Promise<ParsedPurchaseRow[]> => {
         
         // Find header row
         let headerRowIdx = -1;
-        let colMap: any = {};
+        const colMap: Record<string, number> = {};
         
         for (let i = 0; i < Math.min(rawRows.length, 20); i++) {
             const row = rawRows[i].map(c => String(c).toUpperCase().trim());
@@ -310,7 +310,7 @@ export const processPurchaseRows = (
   const duplicates: ProcessedPurchase[] = [];
   const unmatchedSuppliersMap = new Map<string, UnmatchedSupplier>();
 
-  let skippedNonFactura = 0;
+  const skippedNonFactura = 0;
   let creditNoteCount = 0;
   let debitNoteCount = 0;
   let facturaCount = 0;

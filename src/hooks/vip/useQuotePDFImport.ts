@@ -238,7 +238,7 @@ export function useQuotePDFImport(clientId: string | null, services: Service[]) 
     for (const quote of validQuotes) {
       for (const rawItem of quote.items) {
         const patenteRaw = (rawItem.patente || '').trim();
-        const multiPatentes = patenteRaw.split(/[\/,]/).map(p => p.trim()).filter(p => p.length > 0);
+        const multiPatentes = patenteRaw.split(/[/,]/).map(p => p.trim()).filter(p => p.length > 0);
         
         const expandedItems: ParsedQuoteItem[] = multiPatentes.length > 1
           ? multiPatentes.map(p => ({

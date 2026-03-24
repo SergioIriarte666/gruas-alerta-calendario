@@ -40,11 +40,12 @@ const getColumnValue = (service: Service, key: ColumnKey, config: ReportColumnsC
       return truncate(service.destination || 'N/A', maxChars);
     case 'estado':
       return service.status;
-    case 'valorBase':
+    case 'valorBase': {
       const breakdownBase = getServiceValueBreakdown(service);
       return breakdownBase.baseValue > 0 
         ? `$${breakdownBase.baseValue.toLocaleString('es-CL')}` 
         : '-';
+    }
     case 'custodiaInicio':
       return (service as any).custodyStartDate 
         ? formatDate(new Date((service as any).custodyStartDate + 'T00:00:00'), 'dd/MM/yy') 
@@ -57,11 +58,12 @@ const getColumnValue = (service: Service, key: ColumnKey, config: ReportColumnsC
       return (service as any).custodyDays > 0 
         ? (service as any).custodyDays.toString() 
         : '-';
-    case 'valorCustodia':
+    case 'valorCustodia': {
       const breakdownCustody = getServiceValueBreakdown(service);
       return breakdownCustody.custodyValue > 0 
         ? `$${breakdownCustody.custodyValue.toLocaleString('es-CL')}` 
         : '-';
+    }
     case 'valor':
       return `$${getDisplayServiceValue(service).toLocaleString('es-CL')}`;
     default:

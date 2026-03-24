@@ -83,7 +83,11 @@ export const ServiceExpenseModals = ({ isOpen, onClose, onComplete, baseData }: 
         if (successCount === validEntries.length) {
           toast.success("Costos Guardados", { description: `Se registraron ${successCount} costos por $${totalAmount.toLocaleString()}.` });
           setAmounts({});
-          onComplete ? onComplete(totalAmount) : onClose();
+          if (onComplete) {
+            onComplete(totalAmount);
+          } else {
+            onClose();
+          }
         } else if (successCount > 0) {
           toast.warning("Guardado Parcial", { description: `Se guardaron ${successCount} de ${validEntries.length} costos.` });
           onComplete?.(totalAmount);
@@ -120,7 +124,11 @@ export const ServiceExpenseModals = ({ isOpen, onClose, onComplete, baseData }: 
 
   const handleCancel = () => {
     setAmounts({});
-    onComplete ? onComplete(0) : onClose();
+    if (onComplete) {
+      onComplete(0);
+    } else {
+      onClose();
+    }
   };
 
   return (

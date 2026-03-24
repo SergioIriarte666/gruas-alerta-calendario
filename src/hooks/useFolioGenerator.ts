@@ -15,7 +15,7 @@ export const useFolioGenerator = () => {
       
       // Obtener el formato de folio y próximo número de la configuración de la empresa
       const folioFormat = settings.company?.folioFormat || 'SRV-{number}';
-      let nextNumber = settings.company?.nextServiceFolioNumber || 1000;
+      const nextNumber = settings.company?.nextServiceFolioNumber || 1000;
       
       console.log('📋 Using folio format:', folioFormat);
       console.log('🔢 Next number from settings:', nextNumber);

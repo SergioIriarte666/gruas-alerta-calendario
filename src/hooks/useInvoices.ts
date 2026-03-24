@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Invoice } from '@/types';
 import { toast } from 'sonner';
@@ -89,7 +89,7 @@ export const useInvoices = () => {
     };
 
     fetchRelatedData();
-  }, [invoices]); // We still depend on invoices, but we check for missing IDs inside
+  }, [invoices, closuresMap, clientsMap]); // We still depend on invoices, but we check for missing IDs inside
 
   // ... (createInvoice, updateInvoice, deleteInvoice implementation)
   const createInvoice = async (data: any) => {
@@ -125,13 +125,13 @@ export const useInvoices = () => {
     }
   };
 
-  const getInvoiceWithDetails = (invoice: Invoice) => {
+  const getInvoiceWithDetails = useCallback((invoice: Invoice) => {
     return {
       ...invoice,
       closure: invoice.closureId ? closuresMap[invoice.closureId] : undefined,
       client: invoice.clientId ? clientsMap[invoice.clientId] : undefined
     };
-  };
+  }, [closuresMap, clientsMap]);
 
   return {
     invoices,
@@ -140,14 +140,9 @@ export const useInvoices = () => {
     updateInvoice,
     deleteInvoice,
     markAsPaid: async (id: string, paymentDate?: string) => {
-      try {
-        const result = await markAsPaid(id, paymentDate);
-        // Refrescar datos después del pago
-        refetch();
-        return result;
-      } catch (error) {
-        throw error;
-      }
+      const result = await markAsPaid(id, paymentDate);
+      refetch();
+      return result;
     },
     getInvoiceWithDetails,
     refetch

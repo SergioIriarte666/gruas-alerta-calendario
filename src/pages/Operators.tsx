@@ -66,11 +66,12 @@ const Operators = () => {
         case 'phone':
           comparison = a.phone.localeCompare(b.phone);
           break;
-        case 'license':
+        case 'license': {
           const licenseA = a.operatorType === 'crane_operator' ? (a.licenseNumber || '') : (a.department || '');
           const licenseB = b.operatorType === 'crane_operator' ? (b.licenseNumber || '') : (b.department || '');
           comparison = licenseA.localeCompare(licenseB);
           break;
+        }
         case 'examExpiry':
           if (a.operatorType === 'crane_operator' && b.operatorType === 'crane_operator') {
             const dateA = a.examExpiry ? parseFromDatabase(a.examExpiry).getTime() : 0;

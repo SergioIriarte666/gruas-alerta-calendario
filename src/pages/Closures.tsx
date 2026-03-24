@@ -83,21 +83,23 @@ const Closures = () => {
         case 'dateFrom':
           comparison = parseFromDatabase(a.dateRange.from).getTime() - parseFromDatabase(b.dateRange.from).getTime();
           break;
-        case 'clientId':
+        case 'clientId': {
           const clientA = getClientName(a.clientId);
           const clientB = getClientName(b.clientId);
           comparison = clientA.localeCompare(clientB);
           break;
+        }
         case 'serviceCount':
           comparison = a.serviceIds.length - b.serviceIds.length;
           break;
         case 'total':
           comparison = a.total - b.total;
           break;
-        case 'status':
+        case 'status': {
           const statusOrder = { open: 0, closed: 1, invoiced: 2 };
           comparison = statusOrder[a.status] - statusOrder[b.status];
           break;
+        }
       }
       
       return sortDirection === 'asc' ? comparison : -comparison;

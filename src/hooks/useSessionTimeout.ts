@@ -25,14 +25,15 @@ export const useSessionTimeout = ({
 }: UseSessionTimeoutOptions = {}): UseSessionTimeoutReturn => {
   const { session, signOut } = useAuth();
   const [showWarning, setShowWarning] = useState(false);
-  const [remainingTime, setRemainingTime] = useState(timeoutTime - warningTime);
+  const safeWarningTime = Math.min(warningTime, timeoutTime);
+  const totalWarningTime = Math.max(0, timeoutTime - safeWarningTime);
+  const [remainingTime, setRemainingTime] = useState(totalWarningTime);
   
   const lastActivityRef = useRef<number>(Date.now());
+  const timeoutAtRef = useRef<number>(Date.now() + timeoutTime);
   const warningTimerRef = useRef<NodeJS.Timeout | null>(null);
   const countdownTimerRef = useRef<NodeJS.Timeout | null>(null);
   const logoutTimerRef = useRef<NodeJS.Timeout | null>(null);
-
-  const totalWarningTime = timeoutTime - warningTime;
 
   const clearAllTimers = useCallback(() => {
     if (warningTimerRef.current) {
@@ -55,40 +56,41 @@ export const useSessionTimeout = ({
     await signOut();
   }, [clearAllTimers, signOut]);
 
+  const updateRemainingTime = useCallback(() => {
+    const newTime = Math.max(0, timeoutAtRef.current - Date.now());
+    setRemainingTime(newTime);
+    if (newTime <= 0 && countdownTimerRef.current) {
+      clearInterval(countdownTimerRef.current);
+      countdownTimerRef.current = null;
+    }
+  }, []);
+
   const startWarningCountdown = useCallback(() => {
     setShowWarning(true);
-    setRemainingTime(totalWarningTime);
+    updateRemainingTime();
 
     // Countdown cada segundo
-    countdownTimerRef.current = setInterval(() => {
-      setRemainingTime(prev => {
-        const newTime = prev - 1000;
-        if (newTime <= 0) {
-          return 0;
-        }
-        return newTime;
-      });
-    }, 1000);
-
-    // Timer para logout automático
-    logoutTimerRef.current = setTimeout(() => {
-      handleLogout();
-    }, totalWarningTime);
-  }, [totalWarningTime, handleLogout]);
+    countdownTimerRef.current = setInterval(updateRemainingTime, 1000);
+  }, [updateRemainingTime]);
 
   const resetTimers = useCallback(() => {
     clearAllTimers();
     setShowWarning(false);
     setRemainingTime(totalWarningTime);
-    lastActivityRef.current = Date.now();
+    const now = Date.now();
+    lastActivityRef.current = now;
+    timeoutAtRef.current = now + timeoutTime;
 
     // Solo establecer timer si hay sesión activa
     if (session) {
       warningTimerRef.current = setTimeout(() => {
         startWarningCountdown();
-      }, warningTime);
+      }, safeWarningTime);
+      logoutTimerRef.current = setTimeout(() => {
+        handleLogout();
+      }, timeoutTime);
     }
-  }, [clearAllTimers, session, warningTime, startWarningCountdown, totalWarningTime]);
+  }, [clearAllTimers, session, startWarningCountdown, totalWarningTime, safeWarningTime, timeoutTime, handleLogout]);
 
   const extendSession = useCallback(() => {
     resetTimers();
@@ -108,7 +110,6 @@ export const useSessionTimeout = ({
         const now = Date.now();
         // Throttle: solo actualizar si pasaron más de 5 segundos
         if (now - lastActivityRef.current > 5000) {
-          lastActivityRef.current = now;
           resetTimers();
         }
       }

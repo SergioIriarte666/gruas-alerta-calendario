@@ -205,13 +205,37 @@ export const HistoricalSalesPipelineView = ({ invoices, onEdit, onDelete }: Hist
   }, [filteredInvoices]);
 
   const toggleClient = (id: string) => {
-    setExpandedClients(prev => { const s = new Set(prev); s.has(id) ? s.delete(id) : s.add(id); return s; });
+    setExpandedClients(prev => {
+      const s = new Set(prev);
+      if (s.has(id)) {
+        s.delete(id);
+      } else {
+        s.add(id);
+      }
+      return s;
+    });
   };
   const toggleDepartment = (key: string) => {
-    setExpandedDepartments(prev => { const s = new Set(prev); s.has(key) ? s.delete(key) : s.add(key); return s; });
+    setExpandedDepartments(prev => {
+      const s = new Set(prev);
+      if (s.has(key)) {
+        s.delete(key);
+      } else {
+        s.add(key);
+      }
+      return s;
+    });
   };
   const toggleMonth = (key: string) => {
-    setExpandedMonths(prev => { const s = new Set(prev); s.has(key) ? s.delete(key) : s.add(key); return s; });
+    setExpandedMonths(prev => {
+      const s = new Set(prev);
+      if (s.has(key)) {
+        s.delete(key);
+      } else {
+        s.add(key);
+      }
+      return s;
+    });
   };
 
   const expandAll = () => {

@@ -9,10 +9,6 @@ import { AlertTriangle, Clock, FileText, DollarSign, Truck, Calendar, User, Rece
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
-interface AlertsPanelProps {
-  // No props needed - we'll use the notification context directly
-}
-
 export const AlertsPanel = () => {
   const { notifications, unreadCount, loading, markAsRead, markAllAsRead } = useNotifications();
   const [showAllModal, setShowAllModal] = useState(false);
