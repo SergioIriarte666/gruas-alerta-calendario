@@ -61,7 +61,7 @@ export const CostDeleteConfirmDialog = ({ cost, open, onOpenChange, onConfirmDel
         .select('id', { count: 'exact', head: true })
         .eq('cost_id', cost.id);
 
-      const [payments, movements, parts] = await Promise.all(queries);
+      const [payments, movements, parts] = await Promise.all([paymentsQuery, movementsQuery, partsQuery]);
 
       setRelatedData({
         supplierPayments: payments.count || 0,
