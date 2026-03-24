@@ -273,7 +273,110 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
               description: doc.description || '',
               folio: doc.folio,
             }));
-            const duplicates = await checkDuplicates(itemsToCheck);
+            const duplicatesFromHeuristic = await checkDuplicates(itemsToCheck);
+            const duplicatesByIndex = new Map<number, CostDuplicateResult>();
+            const rank = (t: CostDuplicateResult['matchType']) => (t === 'exact' ? 3 : t === 'folio' ? 2 : t === 'similar' ? 1 : 0);
+            duplicatesFromHeuristic.forEach(d => duplicatesByIndex.set(d.index, d));
+
+            try {
+              const supplierRuts = Array.from(new Set(result.documents.map(d => d.supplier_rut).filter(Boolean)));
+              if (supplierRuts.length > 0) {
+                const { data: supplierRows, error: supplierError } = await (supabase as any)
+                  .from('inventory_suppliers')
+                  .select('id, rut')
+                  .in('rut', supplierRuts);
+
+                if (!supplierError && Array.isArray(supplierRows)) {
+                  const supplierIdByRut = new Map<string, string>();
+                  supplierRows.forEach((row: any) => {
+                    if (row?.rut && row?.id) supplierIdByRut.set(row.rut, row.id);
+                  });
+
+                  for (const rut of supplierRuts) {
+                    const supplierId = supplierIdByRut.get(rut);
+                    if (!supplierId) continue;
+                    const folios = Array.from(new Set(result.documents.filter(d => d.supplier_rut === rut).map(d => d.folio).filter(Boolean)));
+                    if (folios.length === 0) continue;
+
+                    const { data: existingPayments, error: paymentsError } = await (supabase as any)
+                      .from('supplier_payments')
+                      .select('id, due_date, description, amount, reference_number, created_at')
+                      .eq('supplier_id', supplierId)
+                      .in('reference_number', folios);
+
+                    const { data: existingCosts, error: costsError } = await (supabase as any)
+                      .from('costs')
+                      .select('id, date, description, amount, service_folio, created_at')
+                      .eq('supplier_id', supplierId)
+                      .in('service_folio', folios);
+
+                    if (!paymentsError && Array.isArray(existingPayments) && existingPayments.length > 0) {
+                      const existingByFolio = new Map<string, any>();
+                      existingPayments.forEach((p: any) => {
+                        if (p?.reference_number) existingByFolio.set(p.reference_number, p);
+                      });
+
+                      result.documents.forEach((doc, idx) => {
+                        if (doc.supplier_rut !== rut) return;
+                        if (!doc.folio) return;
+                        const existing = existingByFolio.get(doc.folio);
+                        if (!existing) return;
+                        const candidate: CostDuplicateResult = {
+                          index: idx,
+                          matchType: 'folio',
+                          existingCost: {
+                            id: existing.id,
+                            date: existing.due_date,
+                            description: existing.description,
+                            amount: existing.amount,
+                            service_folio: existing.reference_number,
+                            created_at: existing.created_at,
+                          },
+                        };
+                        const current = duplicatesByIndex.get(idx);
+                        if (!current || rank(candidate.matchType) > rank(current.matchType)) {
+                          duplicatesByIndex.set(idx, candidate);
+                        }
+                      });
+                    }
+
+                    if (costsError || !Array.isArray(existingCosts) || existingCosts.length === 0) continue;
+
+                    const existingByFolio = new Map<string, any>();
+                    existingCosts.forEach((c: any) => {
+                      if (c?.service_folio) existingByFolio.set(c.service_folio, c);
+                    });
+
+                    result.documents.forEach((doc, idx) => {
+                      if (doc.supplier_rut !== rut) return;
+                      if (!doc.folio) return;
+                      const existing = existingByFolio.get(doc.folio);
+                      if (!existing) return;
+                      const candidate: CostDuplicateResult = {
+                        index: idx,
+                        matchType: 'folio',
+                        existingCost: {
+                          id: existing.id,
+                          date: existing.date,
+                          description: existing.description,
+                          amount: existing.amount,
+                          service_folio: existing.service_folio,
+                          created_at: existing.created_at,
+                        },
+                      };
+                      const current = duplicatesByIndex.get(idx);
+                      if (!current || rank(candidate.matchType) > rank(current.matchType)) {
+                        duplicatesByIndex.set(idx, candidate);
+                      }
+                    });
+                  }
+                }
+              }
+            } catch (error) {
+              console.error('Error checking cost folio duplicates:', error);
+            }
+
+            const duplicates = Array.from(duplicatesByIndex.values());
             setDuplicateResults(duplicates);
 
             if (duplicates.length > 0) {
@@ -492,6 +595,7 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
       }
       
       const existingCostKeys = new Set<string>();
+      const existingPaymentKeys = new Set<string>();
       const foliosBySupplierId = new Map<string, string[]>();
       docsToImport.forEach((doc) => {
         const supplierId = supplierIdByRut.get(doc.supplier_rut);
@@ -504,6 +608,17 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
       for (const [supplierId, folios] of foliosBySupplierId.entries()) {
         const uniqueFolios = Array.from(new Set(folios)).filter(Boolean);
         if (uniqueFolios.length === 0) continue;
+        const { data: paymentData, error: paymentError } = await (supabase as any)
+          .from('supplier_payments')
+          .select('reference_number')
+          .eq('supplier_id', supplierId)
+          .in('reference_number', uniqueFolios);
+        if (!paymentError) {
+          (paymentData || []).forEach((row: any) => {
+            if (!row?.reference_number) return;
+            existingPaymentKeys.add(`${supplierId}|${row.reference_number}`);
+          });
+        }
         const { data, error } = await (supabase as any)
           .from('costs')
           .select('service_folio')
@@ -541,7 +656,8 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
         const duplicateInfo = getDuplicateInfoByFolio(doc.folio);
         const isDuplicateByCheck = duplicateInfo?.matchType === 'exact' || duplicateInfo?.matchType === 'folio';
         const isDuplicateInDb = doc.folio ? existingCostKeys.has(`${supplierId}|${doc.folio}`) : false;
-        if (isDuplicateByCheck || isDuplicateInDb) {
+        const isDuplicatePaymentInDb = doc.folio ? existingPaymentKeys.has(`${supplierId}|${doc.folio}`) : false;
+        if (isDuplicateByCheck || isDuplicateInDb || isDuplicatePaymentInDb) {
           skippedDuplicatesCount++;
           continue;
         }
