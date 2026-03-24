@@ -1,55 +1,52 @@
 
 
-## Plan: Fix category saving and add subcategory to Supplier Payment form
+## Plan: Fix category/subcategory not saving from XML import and not loading on edit
 
-### Problems identified
+### Root Causes
 
-1. **Category not saving on update**: The `updatePaymentMutation` spreads the entire form data (`...data`) into the Supabase update, including non-DB fields like `add_to_inventory`, `selected_invoice_ids`, `part_name`, etc. This can cause silent Supabase errors. The create mutation explicitly maps each field, but the update does not.
+1. **XML importer ignores user's category selection**: Line 440 in `XMLDocumentUpload.tsx` uses `paymentData.category` (from the parser — a generic name like "Pagos a Proveedores") instead of the user's selection from `supplierCategoryMapping`. The user selects "Pagos a Proveedores" with subcategory "Telefonia e Internet" but only the parser's default category is saved.
 
-2. **Subcategory field hidden**: The subcategory Select is only rendered when `subcategories.length > 0`. If no subcategories have been loaded yet (e.g., category not selected or still loading), the field is completely invisible. It should always be visible when a category is selected, showing "Sin subcategorías" if none exist.
+2. **Category saved as name, form expects UUID**: The XML importer saves category as a name string (e.g., "Pagos a Proveedores"), but the edit form's Select uses `category.id` (UUID) as option values. So when editing, `payment.category = "Pagos a Proveedores"` doesn't match any UUID option — the field appears empty.
+
+3. **Subcategory not passed from mapping to payment**: The subcategory from `supplierSubcategoryMapping` is passed (line 441), but since category is wrong, the whole chain breaks.
 
 ### Changes
 
 | File | Change |
 |------|--------|
-| `src/hooks/useSupplierPayments.ts` (lines 119-140) | Fix `updatePaymentMutation` to explicitly map only valid DB columns (matching the create mutation pattern) instead of spreading `...data`. Include `subcategory` in the mapped fields. |
-| `src/components/suppliers/PaymentForm.tsx` (lines 336-358) | Always show the subcategory field when a category is selected (remove `subcategories.length > 0` condition). Show "Sin subcategorías disponibles" as disabled option when empty. |
+| `src/components/suppliers/XMLDocumentUpload.tsx` (~line 440) | Replace `paymentData.category` with the user's mapped category: look up the category ID from `supplierCategoryMapping[paymentData.supplier_rut]` against `activeCategories`, and pass the **UUID** instead of the name string. Same for subcategory. |
+| `src/components/suppliers/PaymentForm.tsx` (~line 92) | On init, resolve `payment.category` — if it's a name string (not UUID), find the matching `costCategory.id` and use that. Same for subcategory: resolve name to name (already works if category is correct). |
 
 ### Technical detail
 
-**Update mutation fix** -- explicitly map fields like the create mutation does:
+**XMLDocumentUpload.tsx** — when creating payment, resolve category name to ID:
 ```typescript
-const cleanedData = {
-  supplier_id: data.supplier_id,
-  amount: data.amount,
-  due_date: data.due_date,
-  description: data.description,
-  category: data.category || null,
-  subcategory: data.subcategory || null,
-  reference_number: data.reference_number || null,
-  notes: data.notes || null,
-  status: data.status || 'pending',
-  crane_id: data.crane_id || null,
-  part_name: data.part_name || null,
-  part_quantity: data.part_quantity || null,
-  part_unit_price: data.part_unit_price || null,
-  add_to_inventory: data.add_to_inventory || false,
-};
+const catName = supplierCategoryMapping[paymentData.supplier_rut] || paymentData.category;
+const catObj = activeCategories?.find(c => c.name === catName);
+const categoryId = catObj?.id || paymentData.category;
+const subcatName = supplierSubcategoryMapping[paymentData.supplier_rut] || null;
+
+createPayment({
+  ...
+  category: categoryId,    // UUID instead of name
+  subcategory: subcatName,
+  ...
+});
 ```
 
-**Subcategory visibility** -- show field whenever a category is selected:
-```tsx
-{selectedCategoryId && (
-  <div>
-    <Label>Subcategoría</Label>
-    <Select ...>
-      {subcategories.length === 0 ? (
-        <SelectItem value="none" disabled>Sin subcategorías</SelectItem>
-      ) : (
-        subcategories.map(...)
-      )}
-    </Select>
-  </div>
-)}
+**PaymentForm.tsx** — resolve existing category on load:
+```typescript
+// In defaultValues
+const resolvedCategoryId = (() => {
+  if (!payment?.category) return '';
+  // If it's already a UUID, use as-is
+  const isUuid = /^[0-9a-f]{8}-/.test(payment.category);
+  if (isUuid) return payment.category;
+  // Otherwise, find by name
+  const match = costCategories.find(c => c.name?.toLowerCase() === payment.category?.toLowerCase());
+  return match?.id || '';
+})();
 ```
+
+This ensures categories are stored as UUIDs (matching the Select values) and resolved correctly when editing existing records.
 
