@@ -13,6 +13,7 @@ import { UnifiedCostFilters } from '@/components/costs/UnifiedCostFilters';
 import { CostsDashboard } from '@/components/costs/CostsDashboard';
 import { CostBatchUpdateModal } from '@/components/costs/CostBatchUpdateModal';
 import { DistributionAssistantDialog } from '@/components/costs/dialogs/DistributionAssistantDialog';
+import { CostDeleteConfirmDialog } from '@/components/costs/CostDeleteConfirmDialog';
 import { useCosts, useDeleteCost } from '@/hooks/useCosts';
 import { useUniversalSync } from '@/hooks/useUniversalSync';
 import { useQueryClient } from '@tanstack/react-query';
