@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Switch } from '@/components/ui/switch';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -88,6 +89,12 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [documentDescriptionOverrides, setDocumentDescriptionOverrides] = useState<Record<string, string>>({});
+  const autoResizeTextarea = (el: HTMLTextAreaElement | null) => {
+    if (!el) return;
+    el.style.height = 'auto';
+    el.style.height = `${el.scrollHeight}px`;
+  };
 
   // Supplier category/subcategory mapping
   const [supplierCategoryMapping, setSupplierCategoryMapping] = useState<Record<string, string>>({});
@@ -125,6 +132,47 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
 
   const getSupplierCondition = (supplierRut: string) => supplierPaymentCondition[supplierRut] ?? 'none';
 
+  const buildSuggestedGlosa = (doc: XMLDocumentData) => {
+    if (doc.items && doc.items.length > 0) {
+      const lines = doc.items
+        .map((it) => {
+          const desc = (it.description || '').trim();
+          if (!desc) return '';
+          const qty = typeof it.quantity === 'number' && isFinite(it.quantity) && it.quantity > 0 ? it.quantity : null;
+          const unit = typeof it.unit_price === 'number' && isFinite(it.unit_price) && it.unit_price > 0 ? it.unit_price : null;
+          const tot = typeof it.total === 'number' && isFinite(it.total) && it.total > 0 ? it.total : null;
+          const parts: string[] = [desc];
+          if (qty && unit && tot) {
+            parts.push(`— ${qty} x $${unit.toLocaleString('es-CL', { maximumFractionDigits: 0 })} = $${tot.toLocaleString('es-CL', { maximumFractionDigits: 0 })}`);
+          } else if (qty && unit) {
+            parts.push(`— ${qty} x $${unit.toLocaleString('es-CL', { maximumFractionDigits: 0 })}`);
+          } else if (qty) {
+            parts.push(`— ${qty} u.`);
+          } else if (tot) {
+            parts.push(`— $${tot.toLocaleString('es-CL', { maximumFractionDigits: 0 })}`);
+          }
+          return parts.join(' ');
+        })
+        .filter((t) => t.length > 0);
+      if (lines.length > 0) {
+        const body = lines.join('\n');
+        const folioLine = doc.folio ? `Folio ${doc.folio}` : '';
+        return [body, folioLine].filter(Boolean).join('\n').trim();
+      }
+    }
+
+    const typeLabel = (doc.document_type || 'Factura').trim();
+    if (doc.folio) return `${typeLabel} ${doc.folio}`.trim();
+    return typeLabel || 'Factura';
+  };
+
+  const getEffectiveGlosa = (doc: XMLDocumentData) => {
+    const hasOverride = Object.prototype.hasOwnProperty.call(documentDescriptionOverrides, doc.folio);
+    const override = hasOverride ? documentDescriptionOverrides[doc.folio] : undefined;
+    const value = (override ?? buildSuggestedGlosa(doc)).trim();
+    return value.length > 0 ? value : buildSuggestedGlosa(doc);
+  };
+
   const applyConditionToSupplierDocuments = (supplierRut: string, condition: 'none' | 'credit' | string, creditDate?: string) => {
     if (!parseResult) return;
     if (condition === 'none') return;
@@ -154,10 +202,12 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
         setSelectedFile(file);
         setParseResult(null);
         setUploadProgress(0);
+        setDocumentDescriptionOverrides({});
         setSupplierCategoryMapping({});
         setSupplierSubcategoryMapping({});
         setSelectedSuppliers(new Set());
         setSelectedDocuments(new Set());
+        handleAnalyzeFile(file);
       } else {
         toast.error('Por favor selecciona un archivo XML válido');
       }
@@ -176,12 +226,13 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
     if (file) onDrop([file]);
   };
 
-  const handleAnalyzeFile = async () => {
-    if (!selectedFile) return;
+  const handleAnalyzeFile = async (fileParam?: File) => {
+    const fileToAnalyze = fileParam ?? selectedFile;
+    if (!fileToAnalyze) return;
     setIsAnalyzing(true);
     const parser = new XMLSupplierParser();
     try {
-      const result = await parser.parseXMLCompleteFile(selectedFile);
+      const result = await parser.parseXMLCompleteFile(fileToAnalyze);
       const uniqueSuppliers = dedupeSuppliersByIdentity(result.suppliers);
       const normalizedResult: XMLCompleteParseResult = {
         ...result,
@@ -633,7 +684,8 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
 
       for (let i = 0; i < docsToImport.length; i++) {
         const doc = docsToImport[i];
-        batchProgress.update(i + 1, `${doc.folio} - ${doc.description?.substring(0, 30) || ''}`);
+        const effectiveGlosa = getEffectiveGlosa(doc);
+        batchProgress.update(i + 1, `${doc.folio} - ${effectiveGlosa.substring(0, 30)}`);
 
         // If user chose to link to existing cost, skip creation
         const linkCostId = linkDecisions[doc.folio];
@@ -668,7 +720,7 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
 
         const costData = {
           date: emissionDate,
-          description: doc.description || `Factura ${doc.folio}`,
+          description: effectiveGlosa,
           amount: doc.total_amount,
           category_id: categoryId,
           subcategory: subcatName,
@@ -699,7 +751,7 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
                   try {
                     await createDirectInventoryEntry({
                       costId: costRecord.id,
-                      itemName: doc.description || `Factura ${doc.folio}`,
+                      itemName: effectiveGlosa,
                       quantity: 1,
                       unitCost: doc.total_amount,
                       date: emissionDate,
@@ -866,7 +918,7 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
                     </div>
                   </div>
                   <div className="flex space-x-2">
-                    <Button onClick={handleAnalyzeFile} disabled={isAnalyzing} variant="default">
+                    <Button onClick={() => handleAnalyzeFile()} disabled={isAnalyzing} variant="default">
                       {isAnalyzing ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <FileText className="h-4 w-4 mr-2" />}
                       Analizar XML
                     </Button>
@@ -1224,6 +1276,10 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
                         const costsForDoc = matchedCosts[document.folio] || [];
                         const hasMatches = costsForDoc.length > 0;
                         const currentDecision = linkDecisions[document.folio] || 'new';
+                        const hasDescriptionOverride = Object.prototype.hasOwnProperty.call(documentDescriptionOverrides, document.folio);
+                        const descriptionValue = hasDescriptionOverride
+                          ? documentDescriptionOverrides[document.folio]
+                          : buildSuggestedGlosa(document);
 
                         return (
                           <div
@@ -1292,7 +1348,7 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
                                   onCheckedChange={() => toggleDocumentSelection(document.folio)}
                                 />
                                 <div className="min-w-0 flex-1">
-                                  <p className="text-foreground font-medium truncate">{document.description}</p>
+                                  <p className="text-foreground font-medium break-words whitespace-pre-wrap">{getEffectiveGlosa(document)}</p>
                                   <div className="flex items-center space-x-4 text-sm text-muted-foreground flex-wrap">
                                     <span>Folio: {document.folio}</span>
                                     <span>Total: ${document.total_amount.toLocaleString('es-CL')}</span>
@@ -1302,6 +1358,20 @@ export const XMLCostUpload = ({ isOpen, onClose, onSuccess }: XMLCostUploadProps
                                         Emisión: {document.issue_date}
                                       </span>
                                     )}
+                                  </div>
+                                  <div className="mt-2">
+                                    <Label className="text-xs text-muted-foreground mb-1.5 block">Glosa del costo</Label>
+                                    <Textarea
+                                      value={descriptionValue}
+                                      onChange={(e) =>
+                                        setDocumentDescriptionOverrides(prev => ({ ...prev, [document.folio]: e.target.value }))
+                                      }
+                                      onInput={(e) => autoResizeTextarea(e.currentTarget)}
+                                      ref={(el) => autoResizeTextarea(el)}
+                                      placeholder="Ej: Insumo - Mantención"
+                                      rows={3}
+                                      className="text-sm resize-y"
+                                    />
                                   </div>
                                 </div>
                               </div>

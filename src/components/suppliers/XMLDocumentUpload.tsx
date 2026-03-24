@@ -11,6 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import DatePickerInput from '@/components/common/DatePickerInput';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -98,6 +99,12 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
   const [bulkDueDate, setBulkDueDate] = useState<string>('');
   const [paidDateOverrides, setPaidDateOverrides] = useState<Record<string, string>>({});
   const [statusOverrides, setStatusOverrides] = useState<Record<string, 'pending' | 'paid'>>({});
+  const [documentDescriptionOverrides, setDocumentDescriptionOverrides] = useState<Record<string, string>>({});
+  const autoResizeTextarea = (el: HTMLTextAreaElement | null) => {
+    if (!el) return;
+    el.style.height = 'auto';
+    el.style.height = `${el.scrollHeight}px`;
+  };
   
   // Estados para duplicados
   const [duplicateResults, setDuplicateResults] = useState<SupplierInvoiceDuplicateResult[]>([]);
@@ -150,6 +157,8 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
         setSupplierCategoryMapping({});
         setSelectedSuppliers(new Set());
         setSelectedDocuments(new Set());
+        setDocumentDescriptionOverrides({});
+        handleAnalyzeFile(file);
       } else {
         toast.error('Por favor selecciona un archivo XML válido');
       }
@@ -174,12 +183,13 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
       onDrop([file]);
     }
   };
-  const handleAnalyzeFile = async () => {
-    if (!selectedFile) return;
+  const handleAnalyzeFile = async (fileParam?: File) => {
+    const fileToAnalyze = fileParam ?? selectedFile;
+    if (!fileToAnalyze) return;
     setIsAnalyzing(true);
     const parser = new XMLSupplierParser();
     try {
-      const result = await parser.parseXMLCompleteFile(selectedFile);
+      const result = await parser.parseXMLCompleteFile(fileToAnalyze);
       const uniqueSuppliers = dedupeSuppliersByIdentity(result.suppliers);
       const normalizedResult = {
         ...result,
@@ -351,6 +361,45 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
     } finally {
       setIsAnalyzing(false);
     }
+  };
+  
+  const buildSuggestedGlosa = (doc: XMLDocumentData) => {
+    if (doc.items && doc.items.length > 0) {
+      const lines = doc.items
+        .map((it) => {
+          const desc = (it.description || '').trim();
+          if (!desc) return '';
+          const qty = typeof it.quantity === 'number' && isFinite(it.quantity) && it.quantity > 0 ? it.quantity : null;
+          const unit = typeof it.unit_price === 'number' && isFinite(it.unit_price) && it.unit_price > 0 ? it.unit_price : null;
+          const tot = typeof it.total === 'number' && isFinite(it.total) && it.total > 0 ? it.total : null;
+          const parts: string[] = [desc];
+          if (qty && unit && tot) {
+            parts.push(`— ${qty} x $${unit.toLocaleString('es-CL', { maximumFractionDigits: 0 })} = $${tot.toLocaleString('es-CL', { maximumFractionDigits: 0 })}`);
+          } else if (qty && unit) {
+            parts.push(`— ${qty} x $${unit.toLocaleString('es-CL', { maximumFractionDigits: 0 })}`);
+          } else if (qty) {
+            parts.push(`— ${qty} u.`);
+          } else if (tot) {
+            parts.push(`— $${tot.toLocaleString('es-CL', { maximumFractionDigits: 0 })}`);
+          }
+          return parts.join(' ');
+        })
+        .filter((t) => t.length > 0);
+      if (lines.length > 0) {
+        const body = lines.join('\n');
+        const folioLine = doc.folio ? `Folio ${doc.folio}` : '';
+        return [body, folioLine].filter(Boolean).join('\n').trim();
+      }
+    }
+    const typeLabel = (doc.document_type || 'Factura').trim();
+    if (doc.folio) return `${typeLabel} ${doc.folio}`.trim();
+    return typeLabel || 'Factura';
+  };
+  const getEffectiveGlosa = (doc: XMLDocumentData) => {
+    const hasOverride = Object.prototype.hasOwnProperty.call(documentDescriptionOverrides, doc.folio);
+    const override = hasOverride ? documentDescriptionOverrides[doc.folio] : undefined;
+    const value = (override ?? buildSuggestedGlosa(doc)).trim();
+    return value.length > 0 ? value : buildSuggestedGlosa(doc);
   };
   const handleUploadData = async () => {
     if (!parseResult) return;
@@ -542,12 +591,17 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
             const categoryId = catObj?.id || paymentData.category;
             const subcatName = supplierSubcategoryMapping[paymentData.supplier_rut] || null;
 
+            const effectiveDescription = (() => {
+              const originalDoc = parseResult.documents.find(d => d.folio === docFolio);
+              return originalDoc ? getEffectiveGlosa(originalDoc) : paymentData.description;
+            })();
+
             const createdPayment = await new Promise<any>((resolve, reject) => {
               createPayment({
                 supplier_id: supplierId,
                 amount: paymentData.amount,
                 due_date: finalDueDate || paymentData.due_date,
-                description: paymentData.description,
+                description: effectiveDescription,
                 category: categoryId,
                 subcategory: subcatName,
                 reference_number: paymentData.reference_number,
@@ -733,7 +787,7 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
                     </div>
                   </div>
                   <div className="flex space-x-2">
-                    <Button onClick={handleAnalyzeFile} disabled={isAnalyzing} variant="default">
+                    <Button onClick={() => handleAnalyzeFile()} disabled={isAnalyzing} variant="default">
                       {isAnalyzing ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <FileText className="h-4 w-4 mr-2" />}
                       Analizar XML
                     </Button>
@@ -1107,7 +1161,7 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
                                 }} 
                               />
                               <div className="min-w-0 flex-1">
-                                <p className="text-foreground font-medium truncate">{document.description}</p>
+                                <p className="text-foreground font-medium break-words whitespace-pre-wrap">{getEffectiveGlosa(document)}</p>
                                 <div className="flex items-center space-x-4 text-sm text-muted-foreground flex-wrap">
                                   <span>Folio: {document.folio}</span>
                                   <span>Total: ${document.total_amount.toLocaleString()}</span>
@@ -1117,6 +1171,19 @@ export const XMLDocumentUpload: React.FC<XMLDocumentUploadProps> = ({
                                       Emisión: {document.issue_date}
                                     </span>
                                   )}
+                                </div>
+                                <div className="mt-2">
+                                  <Label className="text-xs text-muted-foreground mb-1.5 block">Glosa del documento</Label>
+                                  <Textarea
+                                    value={Object.prototype.hasOwnProperty.call(documentDescriptionOverrides, document.folio)
+                                      ? documentDescriptionOverrides[document.folio]
+                                      : buildSuggestedGlosa(document)}
+                                    onChange={(e) => setDocumentDescriptionOverrides(prev => ({ ...prev, [document.folio]: e.target.value }))}
+                                    onInput={(e) => autoResizeTextarea(e.currentTarget)}
+                                    ref={(el) => autoResizeTextarea(el)}
+                                    rows={3}
+                                    className="text-sm resize-y"
+                                  />
                                 </div>
                               </div>
                             </div>

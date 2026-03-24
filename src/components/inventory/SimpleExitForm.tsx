@@ -35,9 +35,10 @@ type ExitFormData = z.infer<typeof exitSchema>;
 
 interface SimpleExitFormProps {
   onSuccess?: () => void;
+  defaultCraneId?: string;
 }
 
-export const SimpleExitForm: React.FC<SimpleExitFormProps> = ({ onSuccess }) => {
+export const SimpleExitForm: React.FC<SimpleExitFormProps> = ({ onSuccess, defaultCraneId }) => {
   const { data: items = [] } = useInventoryItems();
   const { data: locations = [] } = useInventoryLocations();
   const { cranes = [] } = useCranes();
@@ -55,6 +56,7 @@ export const SimpleExitForm: React.FC<SimpleExitFormProps> = ({ onSuccess }) => 
       movement_date: new Date(),
       quantity: 1,
       destination_type: 'crane',
+      crane_id: defaultCraneId,
     },
   });
 
@@ -107,6 +109,11 @@ export const SimpleExitForm: React.FC<SimpleExitFormProps> = ({ onSuccess }) => 
     }
 
     try {
+      if (data.destination_type === 'crane' && !data.crane_id) {
+        toast.error('Selecciona una grúa');
+        return;
+      }
+
       const movementData: any = {
         item_id: data.item_id,
         location_id: data.location_id,
@@ -272,45 +279,47 @@ export const SimpleExitForm: React.FC<SimpleExitFormProps> = ({ onSuccess }) => 
             </Popover>
           </div>
 
-          {/* Tipo de Destino */}
-          <div className="space-y-2">
-            <Label htmlFor="destination_type">Destino *</Label>
-            <Select
-              value={watchedValues.destination_type}
-              onValueChange={(value: any) => setValue('destination_type', value)}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="crane">Consumo en Grúa</SelectItem>
-                <SelectItem value="sale">Venta</SelectItem>
-                <SelectItem value="adjustment">Ajuste de Inventario</SelectItem>
-                <SelectItem value="other">Otro</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          {!defaultCraneId && (
+            <>
+              <div className="space-y-2">
+                <Label htmlFor="destination_type">Destino *</Label>
+                <Select
+                  value={watchedValues.destination_type}
+                  onValueChange={(value: any) => setValue('destination_type', value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="crane">Consumo en Grúa</SelectItem>
+                    <SelectItem value="sale">Venta</SelectItem>
+                    <SelectItem value="adjustment">Ajuste de Inventario</SelectItem>
+                    <SelectItem value="other">Otro</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
 
-          {/* Grúa (solo si el destino es grúa) */}
-          {watchedValues.destination_type === 'crane' && (
-            <div className="space-y-2">
-              <Label htmlFor="crane_id">Grúa *</Label>
-              <Select
-                value={watchedValues.crane_id}
-                onValueChange={(value) => setValue('crane_id', value)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Seleccionar grúa" />
-                </SelectTrigger>
-                <SelectContent>
-                  {cranes.filter(c => c.isActive).map((crane) => (
-                    <SelectItem key={crane.id} value={crane.id}>
-                      {crane.licensePlate} - {crane.brand} {crane.model}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+              {watchedValues.destination_type === 'crane' && (
+                <div className="space-y-2">
+                  <Label htmlFor="crane_id">Grúa *</Label>
+                  <Select
+                    value={watchedValues.crane_id}
+                    onValueChange={(value) => setValue('crane_id', value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Seleccionar grúa" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {cranes.filter(c => c.isActive).map((crane) => (
+                        <SelectItem key={crane.id} value={crane.id}>
+                          {crane.licensePlate} - {crane.brand} {crane.model}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+            </>
           )}
         </div>
 

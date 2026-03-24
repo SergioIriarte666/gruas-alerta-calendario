@@ -7,7 +7,8 @@ import { CraneMaintenanceTab } from './CraneMaintenanceTab';
 import { CraneMetricsOverview } from './CraneMetricsOverview';
 import { CraneInventoryTab } from './CraneInventoryTab';
 import { Crane } from '@/types';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { BarChart3, Wrench, DollarSign, Package, Settings, Warehouse } from 'lucide-react';
 
@@ -16,6 +17,33 @@ interface CraneTabsWithCountersProps {
 }
 
 export const CraneTabsWithCounters = ({ crane }: CraneTabsWithCountersProps) => {
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    if (!crane?.id) return;
+    const channel = supabase
+      .channel(`crane-counters-${crane.id}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'services', filter: `crane_id=eq.${crane.id}` }, () => {
+        queryClient.invalidateQueries({ queryKey: ['crane-counters', crane.id] });
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'costs', filter: `crane_id=eq.${crane.id}` }, () => {
+        queryClient.invalidateQueries({ queryKey: ['crane-counters', crane.id] });
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'crane_parts', filter: `crane_id=eq.${crane.id}` }, () => {
+        queryClient.invalidateQueries({ queryKey: ['crane-counters', crane.id] });
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'inventory_movements', filter: `crane_id=eq.${crane.id}` }, () => {
+        queryClient.invalidateQueries({ queryKey: ['crane-counters', crane.id] });
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'crane_maintenance', filter: `crane_id=eq.${crane.id}` }, () => {
+        queryClient.invalidateQueries({ queryKey: ['crane-counters', crane.id] });
+      })
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [crane?.id, queryClient]);
+
   // Consulta para obtener contadores PRECISOS
   const { data: counters } = useQuery({
     queryKey: ['crane-counters', crane.id],
@@ -39,19 +67,13 @@ export const CraneTabsWithCounters = ({ crane }: CraneTabsWithCountersProps) => 
         .eq('crane_id', crane.id)
         .neq('category_id', commissionCategory?.id || '00000000-0000-0000-0000-000000000000');
 
-      // 3. Piezas (directas + consumos)
-      const [{ count: directPartsCount }, { count: consumptionsCount }] = await Promise.all([
-        supabase
-          .from('crane_parts')
-          .select('id', { count: 'exact' })
-          .eq('crane_id', crane.id),
-        supabase
-          .from('inventory_movements')
-          .select('id', { count: 'exact' })
-          .eq('crane_id', crane.id)
-          .eq('movement_type', 'exit')
-          .eq('status', 'active')
-      ]);
+      // 3. Piezas (consumos de inventario por grúa)
+      const { count: consumptionsCount } = await supabase
+        .from('inventory_movements')
+        .select('id', { count: 'exact' })
+        .eq('crane_id', crane.id)
+        .eq('movement_type', 'exit')
+        .eq('status', 'active');
 
       // 4. Mantenimientos
       const { count: maintenanceCount } = await supabase
@@ -62,7 +84,7 @@ export const CraneTabsWithCounters = ({ crane }: CraneTabsWithCountersProps) => 
       return {
         services: servicesCount || 0,
         costs: operationalCostsCount || 0,
-        parts: (directPartsCount || 0) + (consumptionsCount || 0),
+        parts: consumptionsCount || 0,
         maintenance: maintenanceCount || 0
       };
     }

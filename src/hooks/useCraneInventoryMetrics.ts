@@ -1,5 +1,6 @@
 
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
 export interface CraneInventoryMetrics {
@@ -29,6 +30,27 @@ export interface CraneInventoryMetrics {
 }
 
 export const useCraneInventoryMetrics = (craneId: string) => {
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    if (!craneId) return;
+    const channel = supabase
+      .channel(`crane-inventory-metrics-${craneId}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'crane_parts', filter: `crane_id=eq.${craneId}` }, () => {
+        queryClient.invalidateQueries({ queryKey: ['crane-inventory-metrics', craneId] });
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'inventory_movements', filter: `crane_id=eq.${craneId}` }, () => {
+        queryClient.invalidateQueries({ queryKey: ['crane-inventory-metrics', craneId] });
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'costs', filter: `crane_id=eq.${craneId}` }, () => {
+        queryClient.invalidateQueries({ queryKey: ['crane-inventory-metrics', craneId] });
+      })
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [craneId, queryClient]);
+
   return useQuery({
     queryKey: ['crane-inventory-metrics', craneId],
     queryFn: async (): Promise<CraneInventoryMetrics> => {

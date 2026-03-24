@@ -283,6 +283,74 @@ export class UnifiedPurchaseService {
     itemName: string;
   }): Promise<string> {
     const totalCost = params.quantity * params.unitCost;
+
+    const { data: existing } = await supabase
+      .from('inventory_movements')
+      .select('id')
+      .eq('cost_id', params.costId)
+      .eq('movement_type', 'entry')
+      .eq('status', 'active')
+      .maybeSingle();
+
+    if (existing?.id) {
+      const { error: updateError } = await supabase
+        .from('inventory_movements')
+        .update({
+          item_id: params.inventoryItemId,
+          location_id: params.locationId,
+          quantity: params.quantity,
+          unit_cost: params.unitCost,
+          total_cost: totalCost,
+          movement_date: params.date,
+          supplier_id: params.supplierId || null,
+          supplier_name: params.supplierName || null,
+          reference_document: params.referenceDocument || null,
+          batch_number: params.batchNumber || null,
+          expiration_date: params.expirationDate || null,
+          observations: params.observations || `Compra registrada: ${params.itemName}`,
+          reason: 'Compra de inventario',
+        })
+        .eq('id', existing.id);
+
+      if (updateError) {
+        throw new Error(`No se pudo actualizar el movimiento de entrada: ${updateError.message}`);
+      }
+
+      return existing.id;
+    }
+
+    const { data: similar } = await supabase
+      .from('inventory_movements')
+      .select('id')
+      .eq('movement_type', 'entry')
+      .eq('status', 'active')
+      .eq('item_id', params.inventoryItemId)
+      .eq('location_id', params.locationId)
+      .eq('quantity', params.quantity)
+      .eq('unit_cost', params.unitCost)
+      .eq('movement_date', params.date)
+      .maybeSingle();
+
+    if (similar?.id) {
+      const { error: updSimilarErr } = await supabase
+        .from('inventory_movements')
+        .update({
+          cost_id: params.costId,
+          total_cost: totalCost,
+          supplier_id: params.supplierId || null,
+          supplier_name: params.supplierName || null,
+          reference_document: params.referenceDocument || null,
+          batch_number: params.batchNumber || null,
+          expiration_date: params.expirationDate || null,
+          observations: params.observations || `Compra registrada: ${params.itemName}`,
+          reason: 'Compra de inventario',
+        })
+        .eq('id', similar.id);
+      if (updSimilarErr) {
+        throw new Error(`No se pudo actualizar el movimiento de entrada (similar): ${updSimilarErr.message}`);
+      }
+      return similar.id;
+    }
     
     const { data: movement, error } = await supabase
       .from('inventory_movements')
@@ -345,6 +413,66 @@ export class UnifiedPurchaseService {
     supplierName?: string | null;
   }): Promise<{ exitMovementId: string; cranePartId: string | null }> {
     const totalCost = params.quantity * params.unitCost;
+
+    const { data: existing } = await supabase
+      .from('inventory_movements')
+      .select('id')
+      .eq('cost_id', params.costId)
+      .eq('movement_type', 'exit')
+      .eq('status', 'active')
+      .eq('crane_id', params.craneId)
+      .maybeSingle();
+
+    if (existing?.id) {
+      const { error: updateError } = await supabase
+        .from('inventory_movements')
+        .update({
+          item_id: params.inventoryItemId,
+          location_id: params.locationId,
+          quantity: params.quantity,
+          unit_cost: params.unitCost,
+          total_cost: totalCost,
+          movement_date: params.date,
+          reason: 'Consumo inmediato',
+          observations: `Consumo inmediato (aplicado por UPDATE)`,
+        })
+        .eq('id', existing.id);
+
+      if (updateError) {
+        throw new Error(`No se pudo actualizar el movimiento de salida: ${updateError.message}`);
+      }
+
+      return { exitMovementId: existing.id, cranePartId: null };
+    }
+
+    const { data: similarExit } = await supabase
+      .from('inventory_movements')
+      .select('id')
+      .eq('movement_type', 'exit')
+      .eq('status', 'active')
+      .eq('item_id', params.inventoryItemId)
+      .eq('location_id', params.locationId)
+      .eq('crane_id', params.craneId)
+      .eq('quantity', params.quantity)
+      .eq('unit_cost', params.unitCost)
+      .eq('movement_date', params.date)
+      .maybeSingle();
+
+    if (similarExit?.id) {
+      const { error: updSimilarExitErr } = await supabase
+        .from('inventory_movements')
+        .update({
+          cost_id: params.costId,
+          total_cost: totalCost,
+          reason: 'Consumo inmediato',
+          observations: `Consumo inmediato (backfill)`,
+        })
+        .eq('id', similarExit.id);
+      if (updSimilarExitErr) {
+        throw new Error(`No se pudo actualizar el movimiento de salida (similar): ${updSimilarExitErr.message}`);
+      }
+      return { exitMovementId: similarExit.id, cranePartId: null };
+    }
     
     // Create exit movement
     const { data: exitMovement, error: exitError } = await supabase
@@ -369,48 +497,8 @@ export class UnifiedPurchaseService {
     if (exitError || !exitMovement) {
       throw new Error(`No se pudo crear el movimiento de salida: ${exitError?.message || 'Error desconocido'}`);
     }
-    
-    // Get supplier name for crane_parts
-    let supplierName = params.supplierName || 'Sin proveedor';
-    if (params.supplierId && !params.supplierName) {
-      const { data: supplier } = await (supabase as any)
-        .from('inventory_suppliers')
-        .select('name')
-        .eq('id', params.supplierId)
-        .single();
-      if (supplier) {
-        supplierName = supplier.name;
-      }
-    }
-    
-    // Create crane_parts record
-    const { data: cranePart, error: cranePartError } = await supabase
-      .from('crane_parts')
-      .insert({
-        crane_id: params.craneId,
-        part_name: params.itemName.trim(),
-        quantity: params.quantity,
-        unit_price: params.unitCost,
-        total_value: totalCost,
-        date: params.date,
-        supplier: supplierName,
-        supplier_id: params.supplierId || null,
-        cost_id: params.costId,
-        inventory_movement_id: exitMovement.id,
-        notes: 'Registrado desde compra unificada',
-      })
-      .select('id')
-      .single();
-    
-    if (cranePartError) {
-      console.warn('[UnifiedPurchase] Warning: Could not create crane_part:', cranePartError.message);
-      // Non-fatal, continue
-    }
-    
-    return {
-      exitMovementId: exitMovement.id,
-      cranePartId: cranePart?.id || null,
-    };
+
+    return { exitMovementId: exitMovement.id, cranePartId: null };
   }
 
   /**

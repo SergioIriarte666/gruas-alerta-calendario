@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -43,6 +44,29 @@ export interface InventoryConsumption {
 
 // Hook para obtener trazabilidad completa de piezas
 export const usePartsTraceability = (craneId?: string) => {
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    const channel = supabase
+      .channel(`parts-traceability-${craneId || 'all'}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'inventory_movements' }, () => {
+        queryClient.invalidateQueries({ queryKey: ['parts-traceability', craneId] });
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'inventory_items' }, () => {
+        queryClient.invalidateQueries({ queryKey: ['parts-traceability', craneId] });
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'crane_parts' }, () => {
+        queryClient.invalidateQueries({ queryKey: ['parts-traceability', craneId] });
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'costs' }, () => {
+        queryClient.invalidateQueries({ queryKey: ['parts-traceability', craneId] });
+      })
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [craneId, queryClient]);
+
   return useQuery({
     queryKey: ['parts-traceability', craneId],
     queryFn: async () => {
@@ -51,7 +75,69 @@ export const usePartsTraceability = (craneId?: string) => {
       });
 
       if (error) throw error;
-      return data as PartsTraceability[];
+      const rows = (data || []) as PartsTraceability[];
+
+      // Build set of inventory_item_ids present
+      const itemIds = Array.from(
+        new Set(rows.map(r => r.inventory_item_id).filter((v): v is string => !!v))
+      );
+
+      // Verify items still exist and active
+      let activeItemIds = new Set<string>();
+      if (itemIds.length > 0) {
+        const { data: items } = await supabase
+          .from('inventory_items')
+          .select('id, is_active')
+          .in('id', itemIds);
+        activeItemIds = new Set((items || []).filter(i => (i as any).is_active !== false).map(i => (i as any).id));
+      }
+
+      // Count active movements per item to detect items huérfanos (sin entradas/salidas)
+      const movementCountByItem: Record<string, number> = {};
+      if (itemIds.length > 0) {
+        const { data: movements } = await supabase
+          .from('inventory_movements')
+          .select('item_id')
+          .in('item_id', itemIds)
+          .eq('status', 'active');
+        (movements || []).forEach(m => {
+          const id = (m as any).item_id;
+          movementCountByItem[id] = (movementCountByItem[id] || 0) + 1;
+        });
+      }
+
+      // Filter out orphan records:
+      // - inventory_item_id points to non-existing/inactive item
+      // - rows with no stock, no totals and no inventory link
+      // - rows whose inventory_item_id has no active movements
+      const filtered = rows.filter(r => {
+        if (r.inventory_item_id && !activeItemIds.has(r.inventory_item_id)) return false;
+        if (r.inventory_item_id && (movementCountByItem[r.inventory_item_id] || 0) === 0 && (r.current_stock || 0) === 0) return false;
+        if (!r.inventory_item_id && (r.current_stock || 0) === 0 && (r.total_purchased || 0) === 0 && (r.total_consumed || 0) === 0) {
+          return false;
+        }
+        return true;
+      });
+
+      // Deduplicate potential duplicates from RPC joins
+      const dedupMap = new Map<string, PartsTraceability>();
+      for (const r of filtered) {
+        const key = r.inventory_item_id || `${r.crane_license_plate}|${r.part_name}|${r.purchase_date}|${r.purchase_cost}`;
+        const prev = dedupMap.get(key);
+        if (!prev) {
+          dedupMap.set(key, r);
+        } else {
+          const pick =
+            // Prefer row with inventory_item_id
+            (r.inventory_item_id && !prev.inventory_item_id) ? r :
+            // Prefer greater current_stock
+            ((r.current_stock || 0) > (prev.current_stock || 0)) ? r :
+            prev;
+          dedupMap.set(key, pick);
+        }
+      }
+
+      return Array.from(dedupMap.values());
     },
   });
 };

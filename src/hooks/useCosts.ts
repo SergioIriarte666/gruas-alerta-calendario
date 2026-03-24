@@ -309,54 +309,6 @@ const updateCost = async ({ id, ...costData }: { id: string } & any) => {
     throw new Error('No se pudo actualizar el costo - sin datos devueltos');
   }
 
-  // Si es una pieza y repuesto, sincronizar con crane_parts
-  if (validCostData.subcategory === 'Piezas y Repuestos' && part_name && supplier && quantity && unit_price) {
-    const total_value = quantity * unit_price;
-    
-    // Verificar si ya existe una pieza asociada a este costo
-    const { data: existingPart } = await supabase
-      .from('crane_parts')
-      .select('id')
-      .eq('cost_id', id)
-      .single();
-
-    if (existingPart) {
-      // Actualizar pieza existente
-      await supabase
-        .from('crane_parts')
-        .update({
-          part_name,
-          supplier,
-          phone: supplier_phone,
-          quantity,
-          unit_price,
-          // total_value se calcula automáticamente por la BD
-          date: validCostData.date || data[0].date,
-          crane_id: validCostData.crane_id || data[0].crane_id,
-          kilometraje,
-          notes: validCostData.notes
-        })
-        .eq('cost_id', id);
-    } else {
-      // Crear nueva pieza
-      await supabase
-        .from('crane_parts')
-        .insert({
-          cost_id: id,
-          part_name,
-          supplier,
-          phone: supplier_phone,
-          quantity,
-          unit_price,
-          // total_value se calcula automáticamente por la BD
-          date: validCostData.date || data[0].date,
-          crane_id: validCostData.crane_id || data[0].crane_id,
-          kilometraje,
-          notes: validCostData.notes
-        });
-    }
-  }
-
   console.log('[useCosts - updateCost] Cost updated successfully:', data);
   return data;
 };

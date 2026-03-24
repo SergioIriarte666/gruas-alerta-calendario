@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Database } from '@/integrations/supabase/types';
 import { toast } from 'sonner';
@@ -21,18 +22,106 @@ export type EnhancedCranePart = CranePart & {
 };
 
 // Hook to fetch crane parts for a specific crane
-export const useCraneParts = (craneId: string) => {
+export const useCraneParts = (craneId: string, options?: { source?: 'direct' | 'combined' }) => {
+  const queryClient = useQueryClient();
+  const sourceMode = options?.source ?? 'direct';
+
+  useEffect(() => {
+    if (!craneId) return;
+    const channel = supabase
+      .channel(`crane-parts-sync-${craneId}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'crane_parts', filter: `crane_id=eq.${craneId}` }, () => {
+        queryClient.invalidateQueries({ queryKey: ['crane-parts', craneId] });
+        queryClient.invalidateQueries({ queryKey: ['crane-metrics', craneId] });
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'costs', filter: `crane_id=eq.${craneId}` }, () => {
+        queryClient.invalidateQueries({ queryKey: ['crane-parts', craneId] });
+        queryClient.invalidateQueries({ queryKey: ['crane-metrics', craneId] });
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'inventory_movements', filter: `crane_id=eq.${craneId}` }, () => {
+        queryClient.invalidateQueries({ queryKey: ['crane-parts', craneId] });
+        queryClient.invalidateQueries({ queryKey: ['crane-metrics', craneId] });
+      })
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [craneId, queryClient]);
+
   return useQuery({
     queryKey: ['crane-parts', craneId],
     queryFn: async () => {
       // Obtener piezas directas (creadas en crane_parts)
-      const { data: directParts, error: directError } = await supabase
+      const { data: directPartsRaw, error: directError } = await supabase
         .from('crane_parts')
         .select('*')
         .eq('crane_id', craneId)
         .order('date', { ascending: false });
 
       if (directError) throw directError;
+
+      // Mapear IDs referenciados por piezas directas
+      const referencedMovementIds = (directPartsRaw || [])
+        .map(p => p.inventory_movement_id)
+        .filter((v): v is string => !!v);
+      const referencedCostIds = (directPartsRaw || [])
+        .map(p => p.cost_id)
+        .filter((v): v is string => !!v);
+
+      // Consultar existencias actuales para evitar mostrar huérfanos
+      const [activeMovementsResp, existingCostsResp] = await Promise.all([
+        referencedMovementIds.length > 0
+          ? supabase
+              .from('inventory_movements')
+              .select('id')
+              .in('id', referencedMovementIds)
+              .eq('status', 'active')
+          : Promise.resolve({ data: [] as { id: string }[] } as any),
+        referencedCostIds.length > 0
+          ? supabase
+              .from('costs')
+              .select('id')
+              .in('id', referencedCostIds)
+          : Promise.resolve({ data: [] as { id: string }[] } as any),
+      ]);
+
+      const activeMovementIds = new Set((activeMovementsResp as any).data?.map((m: any) => m.id) || []);
+      const existingCostIds = new Set((existingCostsResp as any).data?.map((c: any) => c.id) || []);
+
+      // Filtrar piezas directas que refieren a movimientos/costos eliminados
+      const directParts = (directPartsRaw || []).filter(part => {
+        if (part.inventory_movement_id && !activeMovementIds.has(part.inventory_movement_id)) {
+          return false;
+        }
+        if (part.cost_id && !existingCostIds.has(part.cost_id)) {
+          return false;
+        }
+        return true;
+      });
+
+      // Si solo queremos fuente directa, devolvemos aquí
+      if (sourceMode === 'direct') {
+        const byKey = new Map<string, CranePart>();
+        (directPartsRaw || []).forEach(part => {
+          const key =
+            part.inventory_movement_id
+              ? `m:${part.inventory_movement_id}`
+              : part.cost_id
+              ? `c:${part.cost_id}`
+              : `d:${part.crane_id}|${(part.part_name || '').trim().toLowerCase()}|${part.date}|${part.quantity}|${part.unit_price}|${part.total_value}`;
+          const existing = byKey.get(key);
+          if (!existing) {
+            byKey.set(key, part);
+          } else {
+            const tNew = part.created_at ? new Date(part.created_at).getTime() : 0;
+            const tOld = existing.created_at ? new Date(existing.created_at).getTime() : 0;
+            if (tNew > tOld) byKey.set(key, part);
+          }
+        });
+        const deduped = Array.from(byKey.values()).map(p => ({ ...p, origin: 'direct' as const }));
+        deduped.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+        return deduped as EnhancedCranePart[];
+      }
 
       // Obtener IDs de costos que ya están vinculados en crane_parts
       const linkedCostIds = (directParts || [])
@@ -151,8 +240,39 @@ export const useCraneParts = (craneId: string) => {
       }));
 
       // Combinar todas las listas y ordenar por fecha
-      const allParts = [...enhancedDirectParts, ...costBasedParts, ...consumptionBasedParts]
-        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      const combinedParts = [...enhancedDirectParts, ...costBasedParts, ...consumptionBasedParts];
+
+      const originPriority = (p: EnhancedCranePart) => (p.origin === 'direct' ? 3 : p.origin === 'cost' ? 2 : 1);
+      const partKey = (p: EnhancedCranePart) => {
+        if (p.inventory_movement_id) return `m:${p.inventory_movement_id}`;
+        if (p.cost_id) return `c:${p.cost_id}`;
+        const supplierPart = (p.supplier || '').trim().toLowerCase();
+        const namePart = (p.part_name || '').trim().toLowerCase();
+        return `d:${p.crane_id}|${namePart}|${supplierPart}|${p.date}|${p.quantity}|${p.unit_price}|${p.total_value}`;
+      };
+
+      const dedup = new Map<string, EnhancedCranePart>();
+      for (const p of combinedParts) {
+        const key = partKey(p);
+        const existing = dedup.get(key);
+        if (!existing) {
+          dedup.set(key, p);
+          continue;
+        }
+        const pPri = originPriority(p);
+        const ePri = originPriority(existing);
+        if (pPri > ePri) {
+          dedup.set(key, p);
+          continue;
+        }
+        if (pPri < ePri) continue;
+
+        const pTime = p.created_at ? new Date(p.created_at).getTime() : 0;
+        const eTime = existing.created_at ? new Date(existing.created_at).getTime() : 0;
+        if (pTime > eTime) dedup.set(key, p);
+      }
+
+      const allParts = Array.from(dedup.values()).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
       return allParts;
     },
