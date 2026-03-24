@@ -564,6 +564,13 @@ const CostsPage = () => {
                 onOpenChange={setIsDistributionOpen}
                 inventoryData={distributionData}
             />
+
+            <CostDeleteConfirmDialog
+                cost={costToDelete}
+                open={isDeleteDialogOpen}
+                onOpenChange={setIsDeleteDialogOpen}
+                onConfirmDelete={handleConfirmDelete}
+            />
         </div>
     );
 };
