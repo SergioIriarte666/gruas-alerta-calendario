@@ -141,13 +141,22 @@ const CostsPage = () => {
         setIsDetailsOpen(false);
     }, []);
 
+    const [costToDelete, setCostToDelete] = useState<Cost | null>(null);
+    const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+
     const handleDeleteCost = useCallback((cost: Cost) => {
         if (cost.payment_date && user?.role !== 'admin') {
             toast.error('Este costo está marcado como pagado y no puede ser modificado sin autorización especial');
             return;
         }
+        setCostToDelete(cost);
+        setIsDeleteDialogOpen(true);
+    }, [user]);
+
+    const handleConfirmDelete = useCallback((cost: Cost) => {
         deleteCost(cost.id);
-    }, [deleteCost, user]);
+        setCostToDelete(null);
+    }, [deleteCost]);
 
     const handleClearFilters = useCallback(() => {
         setFilters({
