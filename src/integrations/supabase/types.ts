@@ -1387,6 +1387,80 @@ export type Database = {
         }
         Relationships: []
       }
+      import_batch_records: {
+        Row: {
+          batch_id: string
+          created_at: string
+          id: number
+          record_id: string
+          table_name: string
+        }
+        Insert: {
+          batch_id: string
+          created_at?: string
+          id?: number
+          record_id: string
+          table_name: string
+        }
+        Update: {
+          batch_id?: string
+          created_at?: string
+          id?: number
+          record_id?: string
+          table_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "import_batch_records_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "import_batches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      import_batches: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          error: Json | null
+          filename: string | null
+          id: string
+          payload: Json | null
+          rolled_back_at: string | null
+          rolled_back_by: string | null
+          source_module: string
+          status: string
+          summary: Json | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          error?: Json | null
+          filename?: string | null
+          id?: string
+          payload?: Json | null
+          rolled_back_at?: string | null
+          rolled_back_by?: string | null
+          source_module: string
+          status?: string
+          summary?: Json | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          error?: Json | null
+          filename?: string | null
+          id?: string
+          payload?: Json | null
+          rolled_back_at?: string | null
+          rolled_back_by?: string | null
+          source_module?: string
+          status?: string
+          summary?: Json | null
+        }
+        Relationships: []
+      }
       income_categories: {
         Row: {
           color: string | null
@@ -4664,6 +4738,10 @@ export type Database = {
       apply_pending_payments_to_invoices: { Args: never; Returns: Json }
       audit_commission_system: { Args: never; Returns: Json }
       backfill_maintenance_costs: { Args: never; Returns: Json }
+      build_import_batch_summary: {
+        Args: { p_batch_id: string }
+        Returns: Json
+      }
       calculate_billing_date: {
         Args: {
           billing_cycle_day?: number
@@ -5010,6 +5088,7 @@ export type Database = {
         Args: never
         Returns: Database["public"]["Enums"]["app_role"]
       }
+      get_default_cost_category_id: { Args: never; Returns: string }
       get_document_expiry_alerts: {
         Args: never
         Returns: {
@@ -5060,6 +5139,21 @@ export type Database = {
         }[]
       }
       get_operator_id_by_user: { Args: { p_user_id: string }; Returns: string }
+      get_or_create_inventory_supplier: {
+        Args: {
+          p_address: string
+          p_category: string
+          p_contact_person: string
+          p_email: string
+          p_is_active: boolean
+          p_name: string
+          p_notes: string
+          p_phone: string
+          p_rut: string
+          p_subcategory: string
+        }
+        Returns: string
+      }
       get_overdue_invoices_for_alerts: {
         Args: never
         Returns: {
@@ -5142,6 +5236,12 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      import_xml_batch: { Args: { p_payload: Json }; Returns: Json }
+      import_xml_costs: { Args: { p_payload: Json }; Returns: undefined }
+      import_xml_supplier_documents: {
+        Args: { p_payload: Json }
+        Returns: undefined
       }
       insert_notification_if_not_exists: {
         Args: {
@@ -5235,6 +5335,7 @@ export type Database = {
         Args: { p_payment_id?: string }
         Returns: Json
       }
+      rollback_import_batch: { Args: { p_batch_id: string }; Returns: Json }
       safe_update_service: {
         Args: { service_id_param: string; update_data: Json }
         Returns: Json
