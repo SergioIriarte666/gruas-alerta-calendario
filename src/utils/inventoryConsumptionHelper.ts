@@ -165,6 +165,113 @@ export const createDirectInventoryConsumption = async ({
   }
 };
 
+interface CreateDirectEntryData {
+  costId: string;
+  itemName: string;
+  quantity: number;
+  unitCost: number;
+  date: string;
+  supplierId?: string | null;
+}
+
+/**
+ * Creates an inventory ENTRY movement only (no exit/consumption).
+ * Used by XML importers when "Sync with Inventory" is enabled,
+ * since no destination crane is selected during XML import.
+ */
+export const createDirectInventoryEntry = async ({
+  costId,
+  itemName,
+  quantity,
+  unitCost,
+  date,
+  supplierId,
+}: CreateDirectEntryData): Promise<boolean> => {
+  try {
+    console.log('[InventoryEntry] Starting entry for cost:', costId);
+
+    // 1. Find or create inventory item
+    let inventoryItemId: string;
+
+    const { data: existingItem } = await supabase
+      .from('inventory_items')
+      .select('id')
+      .ilike('name', itemName.trim())
+      .limit(1)
+      .single();
+
+    if (existingItem) {
+      inventoryItemId = existingItem.id;
+    } else {
+      const { data: newItem, error: createItemError } = await supabase
+        .from('inventory_items')
+        .insert({
+          name: itemName.trim(),
+          unit_of_measure: 'unidad',
+          unit_cost: unitCost,
+          is_active: true,
+        })
+        .select('id')
+        .single();
+
+      if (createItemError || !newItem) {
+        console.error('[InventoryEntry] Error creating item:', createItemError);
+        throw new Error('No se pudo crear el ítem de inventario');
+      }
+      inventoryItemId = newItem.id;
+    }
+
+    // 2. Get active warehouse location
+    const { data: location } = await supabase
+      .from('inventory_locations')
+      .select('id')
+      .eq('is_active', true)
+      .limit(1)
+      .single();
+
+    if (!location) {
+      throw new Error('No hay ubicación de inventario activa');
+    }
+
+    // 3. Create ENTRY movement only
+    const { data: entryMovement, error: entryError } = await supabase
+      .from('inventory_movements')
+      .insert({
+        item_id: inventoryItemId,
+        location_id: location.id,
+        movement_type: 'entry',
+        quantity,
+        unit_cost: unitCost,
+        total_cost: quantity * unitCost,
+        movement_date: date,
+        reason: 'Compra desde importación XML',
+        observations: `Entrada registrada desde costo ID: ${costId}`,
+        status: 'active',
+        cost_id: costId,
+        supplier_id: supplierId || null,
+      })
+      .select('id')
+      .single();
+
+    if (entryError || !entryMovement) {
+      console.error('[InventoryEntry] Error creating entry:', entryError);
+      throw new Error('No se pudo crear el movimiento de entrada');
+    }
+
+    // 4. Link cost to movement
+    await supabase
+      .from('costs')
+      .update({ inventory_movement_id: entryMovement.id })
+      .eq('id', costId);
+
+    console.log('[InventoryEntry] Entry created:', entryMovement.id);
+    return true;
+  } catch (error) {
+    console.error('[InventoryEntry] Error:', error);
+    return false;
+  }
+};
+
 /**
  * Syncs costs with immediate_consumption=true that don't have inventory movements.
  * This is used to retroactively fix records created before the fix was applied.

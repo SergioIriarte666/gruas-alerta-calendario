@@ -42,6 +42,7 @@ import { safeParseDateOnly } from '@/utils/timezoneUtils';
 import { dedupeSuppliersByIdentity, findSupplierByIdentity } from '@/utils/supplierIdentity';
 import { XMLCompleteParseResult, XMLDocumentData, XMLSupplierData } from '@/types/suppliers';
 import { supabase } from '@/integrations/supabase/client';
+import { createDirectInventoryEntry } from '@/utils/inventoryConsumptionHelper';
 import { useAddCost } from '@/hooks/useCosts';
 import { useCostCategories } from '@/hooks/useCostCategories';
 import { useCostSubcategories } from '@/hooks/useCostSubcategories';
