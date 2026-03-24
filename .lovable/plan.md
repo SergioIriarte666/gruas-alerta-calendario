@@ -1,52 +1,59 @@
 
 
-## Plan: Hacer que el importador XML de Costos realmente sincronice con Bodega/Inventario
+## Plan: Eliminación segura de costos con confirmación reforzada y resumen de impacto
 
-### Problema actual
-Cuando se activa "Sincronizar con Bodega/Inventario" en el importador XML, solo se guardan metadatos (`purchase_quantity`, `purchase_unit_cost`) en el registro de costo, pero **no se crean los movimientos de inventario** (entrada en bodega). Los movimientos solo se crean desde el formulario manual de costos cuando se selecciona la categoría "Inventario".
+### Problema
+Al eliminar un costo que tiene datos relacionados (pagos de proveedores, movimientos de inventario, piezas de grúa), la eliminación ocurre inmediatamente sin ningún diálogo de confirmación. El trigger `sync_cost_deletion_cascade` ya limpia los datos relacionados correctamente, pero el usuario no tiene visibilidad de lo que se va a eliminar ni oportunidad de cancelar.
 
 ### Solución
-Después de crear cada costo con la opción de sync activada, llamar a `createDirectInventoryConsumption` (de `inventoryConsumptionHelper.ts`) para crear automáticamente los movimientos de entrada en inventario. Como no hay grúa seleccionada en la importación XML, solo se creará el movimiento de **entrada** (sin salida/consumo inmediato).
+Implementar un diálogo de confirmación en dos niveles:
+
+1. **Primer nivel**: Modal que muestra un resumen del impacto (datos relacionados que serán afectados)
+2. **Segundo nivel**: Si hay datos relacionados, pedir la contraseña del usuario para confirmar (usando `supabase.auth.signInWithPassword`)
 
 ### Cambios
 
 | Archivo | Cambio |
 |---------|--------|
-| `src/components/costs/XMLCostUpload.tsx` (~líneas 361-380) | Después de crear exitosamente cada costo con `syncToInventory=true`, llamar a la función de inventario para crear el movimiento de entrada en bodega usando los datos del costo recién creado (ID, descripción, monto, fecha, supplier_id). |
+| `src/components/costs/CostDeleteConfirmDialog.tsx` | **Nuevo componente**. Dialog con: (1) resumen de impacto mostrando badges de lo que se eliminará/cancelará (pago proveedor, movimientos inventario, piezas grúa), (2) campo de contraseña para confirmar, (3) botón deshabilitado hasta ingresar contraseña. Consulta los datos relacionados al abrirse para mostrar el impacto real. |
+| `src/pages/Costs.tsx` | Reemplazar la llamada directa `deleteCost(cost.id)` en `handleDeleteCost` por abrir el nuevo `CostDeleteConfirmDialog`. Agregar estado para `costToDelete` y manejar la confirmación. |
+
+### Flujo
+
+```text
+1. Usuario hace clic en "Eliminar" en un costo
+2. Se abre modal con resumen:
+   - "Este costo tiene datos relacionados:"
+   - ⚠️ 1 pago de proveedor (será eliminado)
+   - ⚠️ 2 movimientos de inventario (serán cancelados)
+   - ⚠️ 1 pieza de grúa (será desvinculada)
+3. Campo: "Ingrese su contraseña para confirmar"
+4. Se valida contraseña con supabase.auth.signInWithPassword
+5. Si es correcta → ejecuta deleteCost → cierra modal
+6. Si es incorrecta → muestra error "Contraseña incorrecta"
+```
 
 ### Detalle técnico
 
-En el bloque `onSuccess` de `addCost` (línea 370), cuando `syncToInventory` es true:
-
+**Consulta de impacto** (al abrir el dialog):
 ```typescript
-onSuccess: async (data) => {
-  successCount++;
-  
-  if (syncToInventory && data?.[0]) {
-    try {
-      // Create inventory entry movement (no immediate consumption from XML)
-      await createDirectInventoryEntry({
-        costId: data[0].id,
-        itemName: doc.description || `Factura ${doc.folio}`,
-        quantity: 1,
-        unitCost: doc.total_amount,
-        date: emissionDate,
-        supplierId: supplierId,
-      });
-    } catch (invErr) {
-      console.warn('Inventory sync failed for cost:', data[0].id, invErr);
-    }
-  }
-  
-  resolve();
-}
+// Verificar datos relacionados
+const [payments, movements, parts] = await Promise.all([
+  supabase.from('supplier_payments').select('id').or(`cost_id.eq.${costId},id.eq.${cost.supplier_payment_id}`),
+  supabase.from('inventory_movements').select('id').eq('cost_id', costId).eq('status', 'active'),
+  supabase.from('crane_parts').select('id').eq('cost_id', costId)
+]);
 ```
 
-Se creará una función auxiliar `createDirectInventoryEntry` (adaptada de `createDirectInventoryConsumption`) que solo crea el movimiento de **entrada** sin el de salida, ya que desde XML no se selecciona grúa destino.
+**Validación de contraseña**:
+```typescript
+const { error } = await supabase.auth.signInWithPassword({
+  email: user.email,
+  password: inputPassword
+});
+if (error) throw new Error('Contraseña incorrecta');
+// Proceder con deleteCost
+```
 
-### Flujo resultante
-1. Usuario sube XML y activa "Sincronizar con Bodega/Inventario"
-2. Por cada documento, se crea el costo normalmente
-3. Adicionalmente se crea: item de inventario (si no existe) + movimiento de entrada
-4. El inventario refleja la compra sin consumo inmediato
+Si el costo NO tiene datos relacionados, se muestra solo una confirmación simple sin pedir contraseña (para no entorpecer eliminaciones de costos simples).
 
