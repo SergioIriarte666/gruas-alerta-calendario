@@ -47,6 +47,7 @@ const INVOICE_STATUS_MAP: { [key: string]: string } = {
 };
 
 import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { supabase } from '@/integrations/supabase/client';
 
 const Invoices = () => {
   const { invoices, loading, createInvoice, updateInvoice, deleteInvoice, markAsPaid, getInvoiceWithDetails, refetch } = useInvoices();
@@ -72,9 +73,11 @@ const Invoices = () => {
   const batchProgress = useBatchProgress();
   const ITEMS_PER_PAGE = 10;
   
-  // State for reinforced delete dialog
+  // State for reinforced delete dialog (password-based)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [deleteConfirmText, setDeleteConfirmText] = useState('');
+  const [deletePassword, setDeletePassword] = useState('');
+  const [deleteVerifying, setDeleteVerifying] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
   const [pendingDeleteFolio, setPendingDeleteFolio] = useState<string>('');
   const [pendingBatchDeleteIds, setPendingBatchDeleteIds] = useState<string[]>([]);
@@ -216,13 +219,32 @@ const Invoices = () => {
       setPendingDeleteId(id);
       setPendingDeleteFolio(invoice?.folio || '');
       setPendingBatchDeleteIds([]);
-      setDeleteConfirmText('');
+      setDeletePassword('');
+      setDeleteError('');
       setDeleteDialogOpen(true);
     }
   };
 
   const handleConfirmProtectedDelete = async () => {
     try {
+      if (!deletePassword.trim()) {
+        setDeleteError('Ingrese su contraseña');
+        return;
+      }
+      setDeleteVerifying(true);
+      setDeleteError('');
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user?.email) throw new Error('No se pudo obtener el email del usuario');
+      const { error } = await supabase.auth.signInWithPassword({
+        email: user.email,
+        password: deletePassword,
+      });
+      if (error) {
+        setDeleteError('Contraseña incorrecta');
+        setDeleteVerifying(false);
+        return;
+      }
+      setDeleteVerifying(false);
       if (pendingDeleteId) {
         // Single delete
         await deleteInvoice(pendingDeleteId, { force: true });
@@ -254,7 +276,8 @@ const Invoices = () => {
       console.error('Error deleting protected invoice:', error);
     } finally {
       setDeleteDialogOpen(false);
-      setDeleteConfirmText('');
+      setDeletePassword('');
+      setDeleteError('');
       setPendingDeleteId(null);
       setPendingBatchDeleteIds([]);
     }
@@ -376,7 +399,8 @@ const Invoices = () => {
       setPendingDeleteId(null);
       setPendingDeleteFolio(protectedFolios.join(', '));
       setPendingBatchDeleteIds(protectedIds);
-      setDeleteConfirmText('');
+      setDeletePassword('');
+      setDeleteError('');
       setDeleteDialogOpen(true);
     } else {
       setSelectedInvoiceIds([]);
@@ -603,7 +627,7 @@ const Invoices = () => {
         onConfirm={handleConfirmMarkAsPaid}
       />
 
-      {/* Diálogo de confirmación reforzada para facturas protegidas */}
+      {/* Diálogo de confirmación reforzada (con contraseña) para facturas protegidas */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent className="max-w-md">
           <AlertDialogHeader>
@@ -622,22 +646,23 @@ const Invoices = () => {
                 Esta acción NO se puede deshacer.
               </p>
               <div className="pt-2">
-                <label className="text-sm text-muted-foreground">
-                  Escriba <span className="font-mono font-bold text-foreground">ELIMINAR</span> para confirmar:
-                </label>
+                <label className="text-sm text-muted-foreground">Ingrese su contraseña para confirmar:</label>
                 <Input
-                  value={deleteConfirmText}
-                  onChange={(e) => setDeleteConfirmText(e.target.value)}
-                  placeholder="ELIMINAR"
+                  value={deletePassword}
+                  onChange={(e) => { setDeletePassword(e.target.value); setDeleteError(''); }}
+                  placeholder="Contraseña"
+                  type="password"
                   className="mt-1"
                   autoFocus
                 />
+                {deleteError && <p className="text-xs text-destructive mt-1">{deleteError}</p>}
               </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel onClick={() => {
-              setDeleteConfirmText('');
+              setDeletePassword('');
+              setDeleteError('');
               setPendingDeleteId(null);
               setPendingBatchDeleteIds([]);
             }}>
@@ -645,10 +670,10 @@ const Invoices = () => {
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleConfirmProtectedDelete}
-              disabled={deleteConfirmText !== 'ELIMINAR'}
+              disabled={deleteVerifying || !deletePassword.trim()}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90 disabled:opacity-50"
             >
-              Eliminar definitivamente
+              {deleteVerifying ? 'Verificando...' : 'Eliminar definitivamente'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

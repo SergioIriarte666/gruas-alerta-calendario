@@ -40,6 +40,8 @@ export const useServicesPage = () => {
   // Batch selection state
   const [selectedServiceIds, setSelectedServiceIds] = useState<Set<string>>(new Set());
   const [isBatchClosing, setIsBatchClosing] = useState(false);
+  const [serviceToDelete, setServiceToDelete] = useState<Service | null>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   const newSaleHandledRef = useRef(false);
 
@@ -454,19 +456,33 @@ export const useServicesPage = () => {
     setIsFormOpen(true);
   };
 
-  const handleDelete = async (service: Service) => {
+  const deleteServiceDirect = async (service: Service) => {
     if (service.status === 'invoiced') {
       toast.error('No se puede eliminar un servicio facturado');
       return;
     }
 
-    if (confirm(`¿Estás seguro de que deseas eliminar el servicio ${service.folio}?`)) {
-      try {
-        await deleteService(service.id);
-      } catch (error) {
-        console.error('Error deleting service:', error);
-      }
+    try {
+      await deleteService(service.id);
+    } catch (error) {
+      console.error('Error deleting service:', error);
+      throw error;
     }
+  };
+
+  const handleDelete = (service: Service) => {
+    if (service.status === 'invoiced') {
+      toast.error('No se puede eliminar un servicio facturado');
+      return;
+    }
+    setServiceToDelete(service);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleConfirmDelete = async (service: Service) => {
+    await deleteServiceDirect(service);
+    setServiceToDelete(null);
+    setIsDeleteDialogOpen(false);
   };
 
   const handleDuplicateService = (service: Service) => {
@@ -545,6 +561,9 @@ export const useServicesPage = () => {
     selectedServiceIds,
     selectedServicesTotal,
     isBatchClosing,
+    serviceToDelete,
+    isDeleteDialogOpen,
+    setIsDeleteDialogOpen,
     
     // Setters
     setSelectedService,
@@ -569,6 +588,8 @@ export const useServicesPage = () => {
     handleViewDetails,
     handleEdit,
     handleDelete,
+    handleConfirmDelete,
+    deleteServiceDirect,
     handleCSVSuccess,
     handleSort,
     handleDuplicateService,

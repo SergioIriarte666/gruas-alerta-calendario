@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useServicesPage } from '@/hooks/services/useServicesPage';
 import { useServicesPendingExport } from '@/hooks/services/useServicesPendingExport';
 import { ServicesHeader } from '@/components/services/ServicesHeader';
@@ -15,6 +15,12 @@ import { BatchProgressModal, useBatchProgress } from '@/components/ui/batch-prog
 import { useIsMobile } from '@/hooks/use-mobile';
 import { toast } from 'sonner';
 import { prepareServiceForDuplication } from '@/utils/serviceHelpers';
+import { ServiceDeleteConfirmDialog } from '@/components/services/ServiceDeleteConfirmDialog';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { supabase } from '@/integrations/supabase/client';
 
 type ViewMode = 'table' | 'pipeline';
 
@@ -23,6 +29,10 @@ const Services = () => {
   const [isBatchUpdateOpen, setIsBatchUpdateOpen] = useState(false);
   const [isBatchDeleting, setIsBatchDeleting] = useState(false);
   const [isBatchDuplicating, setIsBatchDuplicating] = useState(false);
+  const [isBatchDeletePasswordOpen, setIsBatchDeletePasswordOpen] = useState(false);
+  const [batchDeletePassword, setBatchDeletePassword] = useState('');
+  const [batchDeleteVerifying, setBatchDeleteVerifying] = useState(false);
+  const [batchDeleteError, setBatchDeleteError] = useState('');
   const batchProgress = useBatchProgress();
   
   const {
@@ -53,6 +63,9 @@ const Services = () => {
     selectedServiceIds,
     selectedServicesTotal,
     isBatchClosing,
+    serviceToDelete,
+    isDeleteDialogOpen,
+    setIsDeleteDialogOpen,
     
     // Setters
     setIsCSVUploadOpen,
@@ -75,6 +88,8 @@ const Services = () => {
     handleViewDetails,
     handleEdit,
     handleDelete,
+    handleConfirmDelete,
+    deleteServiceDirect,
     handleCSVSuccess,
     handleSort,
     handleDuplicateService,
@@ -114,6 +129,15 @@ const Services = () => {
 
     if (!confirmed) return;
 
+    setBatchDeletePassword('');
+    setBatchDeleteError('');
+    setIsBatchDeletePasswordOpen(true);
+  };
+
+  const runBatchDelete = async () => {
+    const count = selectedServiceIds.size;
+    if (count === 0) return;
+
     setIsBatchDeleting(true);
     batchProgress.start('Eliminando Servicios', count);
     let successCount = 0;
@@ -127,7 +151,7 @@ const Services = () => {
           const service = services.find(s => s.id === serviceId);
           if (service) {
             batchProgress.update(i + 1, service.folio);
-            await handleDelete(service);
+            await deleteServiceDirect(service);
             successCount++;
           }
         } catch (err) {
@@ -145,6 +169,39 @@ const Services = () => {
       }
     } finally {
       setIsBatchDeleting(false);
+    }
+  };
+
+  const handleBatchDeletePasswordConfirm = async () => {
+    if (!batchDeletePassword.trim()) {
+      setBatchDeleteError('Ingrese su contraseña');
+      return;
+    }
+
+    setBatchDeleteVerifying(true);
+    setBatchDeleteError('');
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user?.email) throw new Error('No se pudo obtener el email del usuario');
+
+      const { error } = await supabase.auth.signInWithPassword({
+        email: user.email,
+        password: batchDeletePassword,
+      });
+
+      if (error) {
+        setBatchDeleteError('Contraseña incorrecta');
+        setBatchDeleteVerifying(false);
+        return;
+      }
+
+      setIsBatchDeletePasswordOpen(false);
+      await runBatchDelete();
+    } catch {
+      setBatchDeleteError('Error al verificar contraseña');
+    } finally {
+      setBatchDeleteVerifying(false);
     }
   };
 
@@ -280,6 +337,54 @@ const Services = () => {
           )}
         </>
       )}
+
+      <ServiceDeleteConfirmDialog
+        service={serviceToDelete}
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+        onConfirmDelete={handleConfirmDelete}
+      />
+
+      <Dialog open={isBatchDeletePasswordOpen} onOpenChange={setIsBatchDeletePasswordOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-destructive">Eliminar servicios</DialogTitle>
+            <DialogDescription>
+              Ingrese su contraseña para confirmar la eliminación por lotes.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-2">
+            <Label htmlFor="batch-delete-password">Contraseña</Label>
+            <Input
+              id="batch-delete-password"
+              type="password"
+              value={batchDeletePassword}
+              onChange={(e) => {
+                setBatchDeletePassword(e.target.value);
+                setBatchDeleteError('');
+              }}
+              onKeyDown={(e) => e.key === 'Enter' && handleBatchDeletePasswordConfirm()}
+              placeholder="Contraseña"
+              disabled={batchDeleteVerifying || isBatchDeleting}
+            />
+            {batchDeleteError && <p className="text-xs text-destructive">{batchDeleteError}</p>}
+          </div>
+
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" onClick={() => setIsBatchDeletePasswordOpen(false)} disabled={batchDeleteVerifying || isBatchDeleting}>
+              Cancelar
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleBatchDeletePasswordConfirm}
+              disabled={batchDeleteVerifying || isBatchDeleting || !batchDeletePassword.trim()}
+            >
+              {batchDeleteVerifying ? 'Verificando...' : `Eliminar ${selectedServiceIds.size}`}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {viewMode === 'pipeline' && (
         <ServicesPipelineView

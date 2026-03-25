@@ -14,6 +14,7 @@ import ClosuresTable, { ClosureSortField, SortDirection } from '@/components/clo
 import InvoiceConfirmationDialog from '@/components/closures/InvoiceConfirmationDialog';
 import AutomatedClosureWorkflow from '@/components/closures/automation/AutomatedClosureWorkflow';
 import { ClosureDetailsModal } from '@/components/closures/ClosureDetailsModal';
+import { ClosureDeleteConfirmDialog } from '@/components/closures/ClosureDeleteConfirmDialog';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { parseFromDatabase } from '@/utils/timezoneUtils';
@@ -44,6 +45,8 @@ const Closures = () => {
   const [sortField, setSortField] = useState<ClosureSortField>('dateFrom');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [selectedClosure, setSelectedClosure] = useState<ServiceClosure | null>(null);
+  const [closureToDelete, setClosureToDelete] = useState<ServiceClosure | null>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   
 
@@ -107,12 +110,23 @@ const Closures = () => {
   }, [closures, searchTerm, statusFilter, clientFilter, sortField, sortDirection, clients]);
 
   const handleDelete = (id: string, folio: string) => {
-    if (window.confirm(`¿Está seguro de eliminar el cierre "${folio}"?`)) {
-      deleteClosure(id);
-      toast.success("Cierre eliminado", {
-        description: "El cierre ha sido eliminado exitosamente.",
-      });
+    const closure = closures.find(c => c.id === id);
+    if (!closure) return;
+    if (closure.status === 'invoiced') {
+      toast.error('No se puede eliminar un cierre facturado');
+      return;
     }
+    setClosureToDelete(closure);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleConfirmDelete = async (closure: ServiceClosure) => {
+    await deleteClosure(closure.id);
+    toast.success("Cierre eliminado", {
+      description: "El cierre ha sido eliminado exitosamente.",
+    });
+    setIsDeleteDialogOpen(false);
+    setClosureToDelete(null);
   };
 
   const handleClose = (id: string, folio: string) => {
@@ -297,6 +311,13 @@ const Closures = () => {
         clientName={selectedClosure ? getClientName(selectedClosure.clientId) : undefined}
         isOpen={!!selectedClosure}
         onClose={() => setSelectedClosure(null)}
+      />
+
+      <ClosureDeleteConfirmDialog
+        closure={closureToDelete}
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+        onConfirmDelete={handleConfirmDelete}
       />
 
       {closures.length === 0 && !loading && (
