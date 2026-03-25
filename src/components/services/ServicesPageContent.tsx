@@ -15,6 +15,7 @@ import { useUser } from '@/contexts/UserContext';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
+import { ServiceDeleteConfirmDialog } from '@/components/services/ServiceDeleteConfirmDialog';
 
 type ViewMode = 'table' | 'pipeline';
 
@@ -34,6 +35,8 @@ export const ServicesPageContent = () => {
   const [selectedService, setSelectedService] = useState<Service | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [isCSVUploadOpen, setIsCSVUploadOpen] = useState(false);
+  const [serviceToDelete, setServiceToDelete] = useState<Service | null>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   
   // Estados de filtros
   const [searchTerm, setSearchTerm] = useState('');
@@ -124,7 +127,12 @@ export const ServicesPageContent = () => {
   };
 
   // Función para eliminar servicio
-  const handleDeleteService = async (service: Service) => {
+  const handleDeleteService = (service: Service) => {
+    setServiceToDelete(service);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleConfirmDeleteService = async (service: Service) => {
     try {
       await deleteService(service.id);
       toast({
@@ -139,6 +147,9 @@ export const ServicesPageContent = () => {
         title: 'Error',
         description: 'No se pudo eliminar el servicio'
       });
+    } finally {
+      setServiceToDelete(null);
+      setIsDeleteDialogOpen(false);
     }
   };
 
@@ -309,6 +320,13 @@ export const ServicesPageContent = () => {
         selectedService={selectedService}
         isDetailsOpen={isDetailsOpen}
         onDetailsClose={() => setIsDetailsOpen(false)}
+      />
+
+      <ServiceDeleteConfirmDialog
+        service={serviceToDelete}
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+        onConfirmDelete={handleConfirmDeleteService}
       />
     </div>
   );
