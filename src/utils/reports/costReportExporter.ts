@@ -5,8 +5,8 @@ import { es } from 'date-fns/locale';
 import { ExportCostReportArgs } from './reportTypes';
 import { createExportFileName, addCompanyHeader } from './reportUtils';
 
-export const exportCostReport = async ({ format, costs, settings, appliedFilters }: ExportCostReportArgs) => {
-  const { company } = settings;
+export const exportCostReport = async ({ format, costs, settings, appliedFilters, headerCompany, headerLogoUrl }: ExportCostReportArgs) => {
+  const company = headerCompany || settings.company;
   const exportFileDefaultName = createExportFileName('informe-costos', appliedFilters.dateRange.from, appliedFilters.dateRange.to);
   
   const totalCosts = costs.reduce((acc, cost) => acc + (Number(cost.amount) || 0), 0);
@@ -14,7 +14,7 @@ export const exportCostReport = async ({ format, costs, settings, appliedFilters
   if (format === 'pdf') {
     const doc = new jsPDF('landscape', 'mm', 'a4');
     const pageWidth = doc.internal.pageSize.width;
-    let startY = await addCompanyHeader(doc, company, 15);
+    let startY = await addCompanyHeader(doc, company, 15, headerLogoUrl);
 
     doc.setFontSize(14);
     doc.text('Informe Detallado de Costos', 14, startY);
@@ -23,6 +23,7 @@ export const exportCostReport = async ({ format, costs, settings, appliedFilters
     // Filtros aplicados
     const filterLabels = [
       ['Período', `${formatDate(new Date(appliedFilters.dateRange.from + 'T00:00:00'), 'P', { locale: es })} - ${formatDate(new Date(appliedFilters.dateRange.to + 'T00:00:00'), 'P', { locale: es })}`],
+      ['Empresa', appliedFilters.companyName || 'Todas las empresas'],
       ['Categoría', appliedFilters.categoryName || 'Todas las categorías'],
       ['Grúa', appliedFilters.craneName || 'Todas las grúas'],
       ['Operador', appliedFilters.operatorName || 'Todos los operadores']

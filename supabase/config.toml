@@ -20,7 +20,7 @@ max_client_conn = 100
 
 [realtime]
 enabled = true
-ip_version = "ipv6"
+ip_version = "IPv6"
 
 [studio]
 enabled = true
@@ -43,32 +43,13 @@ site_url = "http://localhost:3000"
 additional_redirect_urls = ["https://localhost:3000"]
 jwt_expiry = 3600
 enable_signup = true
-enable_confirmations = false
 
 [auth.email]
 enable_signup = true
 double_confirm_changes = true
-enable_confirmations = false
 
 [edge_runtime]
 enabled = true
-ip_version = "ipv6"
-
-[[edge_runtime.policy]]
-entrypoint = "generate-backup"
-policy_id = 1
-
-[[edge_runtime.policy]]
-entrypoint = "send-service-confirmation"
-policy_id = 2
-
-[[edge_runtime.policy]]
-entrypoint = "send-inspection-email"
-policy_id = 3
-
-[[edge_runtime.policy]]
-entrypoint = "check-vehicle-patent"
-policy_id = 4
 
 [functions.generate-backup]
 verify_jwt = true

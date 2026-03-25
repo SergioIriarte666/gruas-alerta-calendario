@@ -121,6 +121,9 @@ export const CranesMobileView = ({
               <div className="flex-1">
                 <h4 className="font-semibold text-foreground text-lg">{crane.licensePlate}</h4>
                 <p className="text-primary text-sm font-medium">{crane.brand} {crane.model}</p>
+                <p className="text-muted-foreground text-sm">
+                  Empresa: {crane.ownerCompanyName || crane.ownerCompanyRut || 'Sin empresa'}
+                </p>
                 <p className="text-muted-foreground text-sm">Tipo: {crane.type}</p>
               </div>
               <Badge 

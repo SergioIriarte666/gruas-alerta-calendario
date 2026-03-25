@@ -24,6 +24,8 @@ export const useServiceTransformer = () => {
         folio: item.folio,
         requestDate: item.request_date,
         serviceDate: item.service_date,
+        companyRut: item.company_rut || undefined,
+        companyName: item.company_name || undefined,
         client: embeddedClient ? {
           id: embeddedClient.id,
           name: embeddedClient.name,
@@ -103,6 +105,8 @@ export const useServiceTransformer = () => {
           circulationPermitExpiry: embeddedCrane.circulation_permit_expiry,
           insuranceExpiry: embeddedCrane.insurance_expiry,
           technicalReviewExpiry: embeddedCrane.technical_review_expiry,
+          ownerCompanyRut: embeddedCrane.owner_company_rut || undefined,
+          ownerCompanyName: embeddedCrane.owner_company_name || undefined,
           createdAt: embeddedCrane.created_at,
           updatedAt: embeddedCrane.updated_at
         } : null,

@@ -15,6 +15,8 @@ import { useReportsRealtime } from '@/hooks/reports/useReportsRealtime';
 import { ReportFilters } from './shared/ReportFilters';
 import { useClients } from '@/hooks/useClients';
 import { useCostCategories } from '@/hooks/useCostCategories';
+import { useCranes } from '@/hooks/useCranes';
+import { useSettings } from '@/hooks/useSettings';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -110,6 +112,9 @@ const ReportsPage = () => {
   const { clients } = useClients();
   const { data: costCategories = [] } = useCostCategories();
   const [selectedCostCategoryId, setSelectedCostCategoryId] = useState<string>('all');
+  const { cranes } = useCranes();
+  const [selectedCompanyRut, setSelectedCompanyRut] = useState<string>('all');
+  const { settings } = useSettings();
 
   const periodDates = useMemo(() => {
     if (selectedPeriod === 'custom' && customFrom && customTo) {
@@ -133,7 +138,8 @@ const ReportsPage = () => {
     },
     clientId: (activeTab === 'clientes' || activeTab === 'servicios') ? selectedClientId : appliedFilters.clientId,
     costCategoryId: activeTab === 'costos' ? selectedCostCategoryId : 'all',
-  }), [appliedFilters, periodDates, selectedClientId, selectedCostCategoryId, activeTab]);
+    companyRut: selectedCompanyRut,
+  }), [appliedFilters, periodDates, selectedClientId, selectedCostCategoryId, activeTab, selectedCompanyRut]);
 
   const { metrics, loading, lastUpdate, forceRefresh } = useReports(effectiveFilters);
 
@@ -157,7 +163,8 @@ const ReportsPage = () => {
     categoryId: selectedCostCategoryId,
     craneId: 'all',
     operatorId: 'all',
-  }), [periodDates, selectedCostCategoryId]);
+    companyRut: selectedCompanyRut,
+  }), [periodDates, selectedCostCategoryId, selectedCompanyRut]);
 
   const { handleExportCostReport } = useCostReportActions({ costReportFilters: effectiveCostFilters });
 
@@ -638,6 +645,38 @@ const ReportsPage = () => {
             </SelectContent>
           </Select>
         )}
+
+        {/* Company selector */}
+        <Select value={selectedCompanyRut} onValueChange={setSelectedCompanyRut}>
+          <SelectTrigger className="w-full sm:w-[220px] h-9 text-sm bg-card border">
+            <Truck className="h-3.5 w-3.5 mr-1.5 text-muted-foreground" />
+            <SelectValue placeholder="Todas las empresas" />
+          </SelectTrigger>
+          <SelectContent className="bg-popover border z-50">
+            <SelectItem value="all">Todas las empresas</SelectItem>
+            <SelectItem value="__none__">Sin empresa</SelectItem>
+            {(() => {
+              const map = new Map<string, string>();
+              if (settings.company.taxId) {
+                map.set(settings.company.taxId, settings.company.name || settings.company.taxId);
+              }
+              cranes
+                .filter(c => !!c.ownerCompanyRut)
+                .forEach(c => {
+                  const rut = c.ownerCompanyRut as string;
+                  const name = c.ownerCompanyName || rut;
+                  if (!map.has(rut)) map.set(rut, name);
+                });
+              return Array.from(map.entries())
+                .sort((a, b) => a[1].localeCompare(b[1]))
+                .map(([rut, name]) => (
+                  <SelectItem key={rut} value={rut}>
+                    {`${name} (${rut})`}
+                  </SelectItem>
+                ));
+            })()}
+          </SelectContent>
+        </Select>
 
         {/* Cost category selector - only visible on Costos tab */}
         {activeTab === 'costos' && (

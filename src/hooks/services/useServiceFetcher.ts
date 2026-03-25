@@ -11,6 +11,7 @@ const SERVICE_SELECT = `
   service_type_id, value, crane_id, operator_id, operator_commission,
   status, observations, has_excess, client_covered_amount, excess_amount,
   invoice_folio, invoice_numero_fiscal,
+  company_rut, company_name,
   custody_mode, custody_days, custody_daily_rate, custody_start_date, custody_end_date,
   custody_vehicle_type, custody_discount_percentage, custody_total_amount, custody_notes, custody_rate_type,
   start_time, end_time, crane_mileage, insured_name,
@@ -18,7 +19,7 @@ const SERVICE_SELECT = `
   created_by, created_at, updated_at,
   client:clients!services_client_id_fkey(id, name, rut, phone, email, address, department, is_active),
   third_party_client:clients!services_third_party_client_id_fkey(id, name),
-  cranes(id, license_plate, brand, model, type, is_active),
+  cranes(id, license_plate, brand, model, type, is_active, owner_company_rut, owner_company_name),
   operators(id, name, rut, phone, license_number, is_active, exam_expiry),
   service_types(id, name, description, is_active, base_price, vehicle_info_optional, purchase_order_required, origin_required, destination_required, crane_required, operator_required, vehicle_brand_required, vehicle_model_required, license_plate_required),
   creator:profiles!services_created_by_fkey(id, full_name, email)

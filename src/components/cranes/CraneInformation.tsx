@@ -48,6 +48,12 @@ export const CraneInformation = ({ crane }: CraneInformationProps) => {
                 <p className="text-white font-medium">{crane.licensePlate}</p>
               </div>
               <div>
+                <label className="text-gray-300 text-sm">Empresa</label>
+                <p className="text-white">
+                  {crane.ownerCompanyName || crane.ownerCompanyRut || 'Sin empresa'}
+                </p>
+              </div>
+              <div>
                 <label className="text-gray-300 text-sm">Marca</label>
                 <p className="text-white">{crane.brand}</p>
               </div>

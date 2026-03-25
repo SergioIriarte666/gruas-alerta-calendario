@@ -25,6 +25,8 @@ const fetchCranes = async (): Promise<Crane[]> => {
     model: crane.model,
     type: crane.type as Crane['type'],
     tollVehicleCategory: crane.toll_vehicle_category || '2',
+    ownerCompanyRut: crane.owner_company_rut ?? undefined,
+    ownerCompanyName: crane.owner_company_name ?? undefined,
     circulationPermitExpiry: crane.circulation_permit_expiry,
     insuranceExpiry: crane.insurance_expiry,
     technicalReviewExpiry: crane.technical_review_expiry,
@@ -59,6 +61,8 @@ export const useCranes = () => {
           model: craneData.model,
           type: craneData.type,
           toll_vehicle_category: craneData.tollVehicleCategory || '2',
+          owner_company_rut: craneData.ownerCompanyRut || null,
+          owner_company_name: craneData.ownerCompanyName || null,
           circulation_permit_expiry: craneData.circulationPermitExpiry,
           insurance_expiry: craneData.insuranceExpiry,
           technical_review_expiry: craneData.technicalReviewExpiry,
@@ -75,6 +79,8 @@ export const useCranes = () => {
         model: data.model,
         type: data.type as Crane['type'],
         tollVehicleCategory: data.toll_vehicle_category || '2',
+        ownerCompanyRut: data.owner_company_rut ?? undefined,
+        ownerCompanyName: data.owner_company_name ?? undefined,
         circulationPermitExpiry: data.circulation_permit_expiry,
         insuranceExpiry: data.insurance_expiry,
         technicalReviewExpiry: data.technical_review_expiry,
@@ -148,6 +154,8 @@ export const useCranes = () => {
       if (craneData.brand !== undefined) updateData.brand = craneData.brand;
       if (craneData.model !== undefined) updateData.model = craneData.model;
       if (craneData.type !== undefined) updateData.type = craneData.type;
+      if (craneData.ownerCompanyRut !== undefined) updateData.owner_company_rut = craneData.ownerCompanyRut || null;
+      if (craneData.ownerCompanyName !== undefined) updateData.owner_company_name = craneData.ownerCompanyName || null;
       if (craneData.circulationPermitExpiry !== undefined) updateData.circulation_permit_expiry = craneData.circulationPermitExpiry;
       if (craneData.insuranceExpiry !== undefined) updateData.insurance_expiry = craneData.insuranceExpiry;
       if (craneData.technicalReviewExpiry !== undefined) updateData.technical_review_expiry = craneData.technicalReviewExpiry;

@@ -28,6 +28,8 @@ export const CraneForm = ({ crane, onSubmit, onCancel }: CraneFormProps) => {
     model: '',
     type: 'light' as CraneType,
     tollVehicleCategory: 'LIVIANO',
+    ownerCompanyName: '',
+    ownerCompanyRut: '',
     circulationPermitExpiry: '',
     insuranceExpiry: '',
     technicalReviewExpiry: '',
@@ -42,6 +44,8 @@ export const CraneForm = ({ crane, onSubmit, onCancel }: CraneFormProps) => {
         model: crane.model || '',
         type: crane.type || 'light',
         tollVehicleCategory: crane.tollVehicleCategory || 'LIVIANO',
+        ownerCompanyName: crane.ownerCompanyName || '',
+        ownerCompanyRut: crane.ownerCompanyRut || '',
         circulationPermitExpiry: crane.circulationPermitExpiry || '',
         insuranceExpiry: crane.insuranceExpiry || '',
         technicalReviewExpiry: crane.technicalReviewExpiry || '',
@@ -54,6 +58,8 @@ export const CraneForm = ({ crane, onSubmit, onCancel }: CraneFormProps) => {
         model: '',
         type: 'light',
         tollVehicleCategory: 'LIVIANO',
+        ownerCompanyName: '',
+        ownerCompanyRut: '',
         circulationPermitExpiry: '',
         insuranceExpiry: '',
         technicalReviewExpiry: '',
@@ -103,6 +109,17 @@ export const CraneForm = ({ crane, onSubmit, onCancel }: CraneFormProps) => {
               required
             />
           </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="ownerCompanyRut" className="text-foreground">Empresa (RUT) *</Label>
+            <Input
+              id="ownerCompanyRut"
+              value={formData.ownerCompanyRut}
+              onChange={(e) => handleChange('ownerCompanyRut', e.target.value)}
+              placeholder="76.123.456-7"
+              required
+            />
+          </div>
           
           <div className="space-y-2">
             <Label htmlFor="type" className="text-foreground">Tipo *</Label>
@@ -141,6 +158,16 @@ export const CraneForm = ({ crane, onSubmit, onCancel }: CraneFormProps) => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="ownerCompanyName" className="text-foreground">Empresa (Razón Social)</Label>
+            <Input
+              id="ownerCompanyName"
+              value={formData.ownerCompanyName}
+              onChange={(e) => handleChange('ownerCompanyName', e.target.value)}
+              placeholder="Empresa A"
+            />
+          </div>
+
           <div className="space-y-2">
             <Label htmlFor="brand" className="text-foreground">Marca *</Label>
             <Input

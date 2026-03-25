@@ -386,6 +386,39 @@ export type Database = {
         }
         Relationships: []
       }
+      company_profiles: {
+        Row: {
+          address: string | null
+          created_at: string
+          email: string | null
+          logo_url: string | null
+          name: string
+          phone: string | null
+          rut: string
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string
+          email?: string | null
+          logo_url?: string | null
+          name: string
+          phone?: string | null
+          rut: string
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          created_at?: string
+          email?: string | null
+          logo_url?: string | null
+          name?: string
+          phone?: string | null
+          rut?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       cost_bulk_payment_operations: {
         Row: {
           already_paid_cost_ids: string[]
@@ -1068,6 +1101,8 @@ export type Database = {
           is_active: boolean | null
           license_plate: string
           model: string
+          owner_company_name: string | null
+          owner_company_rut: string | null
           technical_review_expiry: string
           toll_vehicle_category: string
           type: Database["public"]["Enums"]["crane_type"]
@@ -1083,6 +1118,8 @@ export type Database = {
           is_active?: boolean | null
           license_plate: string
           model: string
+          owner_company_name?: string | null
+          owner_company_rut?: string | null
           technical_review_expiry: string
           toll_vehicle_category?: string
           type: Database["public"]["Enums"]["crane_type"]
@@ -1098,6 +1135,8 @@ export type Database = {
           is_active?: boolean | null
           license_plate?: string
           model?: string
+          owner_company_name?: string | null
+          owner_company_rut?: string | null
           technical_review_expiry?: string
           toll_vehicle_category?: string
           type?: Database["public"]["Enums"]["crane_type"]
@@ -3785,6 +3824,8 @@ export type Database = {
       }
       services: {
         Row: {
+          company_name: string | null
+          company_rut: string | null
           client_covered_amount: number | null
           client_id: string
           crane_id: string | null
@@ -3835,6 +3876,8 @@ export type Database = {
           vehicle_model: string | null
         }
         Insert: {
+          company_name?: string | null
+          company_rut?: string | null
           client_covered_amount?: number | null
           client_id: string
           crane_id?: string | null
@@ -3885,6 +3928,8 @@ export type Database = {
           vehicle_model?: string | null
         }
         Update: {
+          company_name?: string | null
+          company_rut?: string | null
           client_covered_amount?: number | null
           client_id?: string
           crane_id?: string | null

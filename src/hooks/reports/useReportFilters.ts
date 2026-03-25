@@ -18,6 +18,7 @@ const defaultFilters: ReportFiltersType = {
   craneId: 'all',
   operatorId: 'all',
   costCategoryId: 'all',
+  companyRut: 'all',
 };
 
 const defaultServiceReportFilters = {
@@ -42,7 +43,7 @@ export const useReportFilters = () => {
     setFilters(prev => ({ ...prev, dateRange: { ...prev.dateRange, [field]: value } }));
   };
 
-  const handleFilterChange = (field: 'clientId' | 'department' | 'craneId' | 'operatorId' | 'costCategoryId', value: string) => {
+  const handleFilterChange = (field: 'clientId' | 'department' | 'craneId' | 'operatorId' | 'costCategoryId' | 'companyRut', value: string) => {
     setFilters(prev => ({ ...prev, [field]: value }));
   };
 

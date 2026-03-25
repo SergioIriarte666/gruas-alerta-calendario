@@ -5,33 +5,34 @@ export const createExportFileName = (prefix: string, dateFrom: string, dateTo: s
   return `${prefix}-${dateFrom}-a-${dateTo}`;
 };
 
-export const addCompanyHeader = async (doc: any, company: Settings['company'], startY: number, logoUrl?: string): Promise<number> => {
+export const addCompanyHeader = async (doc: any, company: Settings['company'], startY: number, logoUrl?: string | null): Promise<number> => {
   const pageWidth = doc.internal.pageSize.width;
   const yPosition = startY;
 
   // Logo de la empresa
-  try {
-    // Usar el logo proporcionado o el logo por defecto
-    const finalLogoUrl = logoUrl || company.logo || '/logo-gruas-5-norte.png';
-    console.log('📄 [REPORT-HEADER] Usando logo:', finalLogoUrl);
-    
-    const img = new Image();
-    img.crossOrigin = 'Anonymous';
-    img.src = finalLogoUrl;
-    await new Promise((resolve, reject) => {
-      img.onload = () => {
-        const logoWidth = 35;
-        const logoHeight = (img.height * logoWidth) / img.width;
-        doc.addImage(img, 'PNG', pageWidth - 14 - logoWidth, yPosition, logoWidth, logoHeight);
-        resolve(true);
-      };
-      img.onerror = (e) => {
-        console.warn("Error loading logo for PDF, using text instead", e);
-        resolve(true); // Continue without logo
-      };
-    });
-  } catch (e) {
-    console.warn("Could not add logo to PDF, using text fallback.", e);
+  if (logoUrl !== null) {
+    try {
+      const finalLogoUrl = logoUrl || company.logo || '/logo-gruas-5-norte.png';
+      console.log('📄 [REPORT-HEADER] Usando logo:', finalLogoUrl);
+      
+      const img = new Image();
+      img.crossOrigin = 'Anonymous';
+      img.src = finalLogoUrl;
+      await new Promise((resolve) => {
+        img.onload = () => {
+          const logoWidth = 35;
+          const logoHeight = (img.height * logoWidth) / img.width;
+          doc.addImage(img, 'PNG', pageWidth - 14 - logoWidth, yPosition, logoWidth, logoHeight);
+          resolve(true);
+        };
+        img.onerror = (e) => {
+          console.warn("Error loading logo for PDF, using text instead", e);
+          resolve(true);
+        };
+      });
+    } catch (e) {
+      console.warn("Could not add logo to PDF, using text fallback.", e);
+    }
   }
   
   // Información de la empresa

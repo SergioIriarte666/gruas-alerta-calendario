@@ -41,6 +41,7 @@ export interface ReportFilters {
   craneId: string;
   operatorId: string;
   costCategoryId: string;
+  companyRut?: string;
 }
 
 export const useReports = (filters?: ReportFilters) => {
@@ -63,7 +64,7 @@ export const useReports = (filters?: ReportFilters) => {
     
       let filteredServices = services;
       if (filters) {
-        const { dateRange, clientId, department, craneId, operatorId, costCategoryId } = filters;
+        const { dateRange, clientId, department, craneId, operatorId, costCategoryId, companyRut } = filters;
         
         filteredServices = services.filter(service => {
           if (dateRange && dateRange.from && dateRange.to) {
@@ -82,6 +83,16 @@ export const useReports = (filters?: ReportFilters) => {
           }
           if (operatorId && operatorId !== 'all' && service.operator?.id !== operatorId) {
             return false;
+          }
+          if (companyRut && companyRut !== 'all') {
+            const serviceCompanyRut = service.companyRut || service.crane?.ownerCompanyRut;
+            if (companyRut === '__none__') {
+              if (serviceCompanyRut) return false;
+            } else {
+              if (!serviceCompanyRut || serviceCompanyRut !== companyRut) {
+                return false;
+              }
+            }
           }
           if (costCategoryId && costCategoryId !== 'all' && costCategories.find(c => c.id === costCategoryId)) {
             return false;
@@ -111,6 +122,12 @@ export const useReports = (filters?: ReportFilters) => {
             if (!cost.service_id) return false; // Costos sin servicio no son atribuibles
             const relatedService = filteredServices.find(s => s.id === cost.service_id);
             if (!relatedService) return false;
+        }
+        // Filtrar costos por empresa (dueña de la grúa del costo)
+        if (filters?.companyRut && filters.companyRut !== 'all') {
+            if (!cost.crane_id) return false;
+            const relatedCrane = cranes.find(c => c.id === cost.crane_id);
+            if (!relatedCrane || relatedCrane.ownerCompanyRut !== filters.companyRut) return false;
         }
         return true;
     });

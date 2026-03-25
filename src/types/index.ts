@@ -5,6 +5,8 @@ export interface Service {
   folio: string;
   requestDate: string;
   serviceDate: string;
+  companyRut?: string;
+  companyName?: string;
   startTime?: string;
   endTime?: string;
   craneMileage?: number;
@@ -139,6 +141,8 @@ export interface Crane {
   model: string;
   type: CraneType;
   tollVehicleCategory?: string;
+  ownerCompanyRut?: string;
+  ownerCompanyName?: string;
   circulationPermitExpiry: string;
   insuranceExpiry: string;
   technicalReviewExpiry: string;

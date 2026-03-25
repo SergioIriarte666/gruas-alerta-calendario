@@ -9,12 +9,14 @@ interface LogoUploadProps {
   currentLogo?: string;
   onLogoChange: (file: File | null) => void;
   disabled?: boolean;
+  labelClassName?: string;
 }
 
 export const LogoUpload: React.FC<LogoUploadProps> = ({
   currentLogo,
   onLogoChange,
   disabled = false,
+  labelClassName,
 }) => {
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -64,7 +66,7 @@ export const LogoUpload: React.FC<LogoUploadProps> = ({
 
   return (
     <div className="space-y-4">
-      <Label className="text-gray-300">Logotipo de la Empresa</Label>
+      <Label className={labelClassName || 'text-foreground'}>Logotipo de la Empresa</Label>
 
       {currentLogo ? (
         <LogoPreview

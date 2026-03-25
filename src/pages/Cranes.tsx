@@ -37,6 +37,8 @@ const Cranes = () => {
   const filteredAndSortedCranes = useMemo(() => {
     const filtered = cranes.filter(crane =>
       (crane.licensePlate || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (crane.ownerCompanyRut || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (crane.ownerCompanyName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
       crane.brand.toLowerCase().includes(searchTerm.toLowerCase()) ||
       crane.model.toLowerCase().includes(searchTerm.toLowerCase())
     );
@@ -47,6 +49,9 @@ const Cranes = () => {
       switch (sortField) {
         case 'licensePlate':
           comparison = (a.licensePlate || '').localeCompare(b.licensePlate || '');
+          break;
+        case 'ownerCompanyRut':
+          comparison = (a.ownerCompanyRut || a.ownerCompanyName || '').localeCompare(b.ownerCompanyRut || b.ownerCompanyName || '');
           break;
         case 'brand': {
           const brandA = `${a.brand} ${a.model}`;

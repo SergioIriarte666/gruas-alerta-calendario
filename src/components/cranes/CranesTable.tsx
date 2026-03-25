@@ -8,7 +8,7 @@ import { formatForDisplay } from '@/utils/timezoneUtils';
 import { useDeviceType } from '@/hooks/useDeviceType';
 import { CranesMobileView } from './CranesMobileView';
 
-export type CraneSortField = 'licensePlate' | 'brand' | 'type' | 'technicalReviewExpiry' | 'insuranceExpiry' | 'circulationPermitExpiry' | 'isActive';
+export type CraneSortField = 'licensePlate' | 'ownerCompanyRut' | 'brand' | 'type' | 'technicalReviewExpiry' | 'insuranceExpiry' | 'circulationPermitExpiry' | 'isActive';
 export type SortDirection = 'asc' | 'desc';
 
 interface CranesTableProps {
@@ -126,6 +126,15 @@ export const CranesTable = ({
                     <SortIcon field="licensePlate" currentSortField={sortField} sortDirection={sortDirection} />
                   </div>
                 </th>
+                <th
+                  className="text-left py-3 px-4 font-medium text-foreground cursor-pointer hover:text-primary transition-colors"
+                  onClick={() => onSort?.('ownerCompanyRut')}
+                >
+                  <div className="flex items-center">
+                    Empresa
+                    <SortIcon field="ownerCompanyRut" currentSortField={sortField} sortDirection={sortDirection} />
+                  </div>
+                </th>
                 <th 
                   className="text-left py-3 px-4 font-medium text-foreground cursor-pointer hover:text-primary transition-colors" 
                   onClick={() => onSort?.('brand')}
@@ -187,6 +196,9 @@ export const CranesTable = ({
               {cranes.map((crane) => (
                 <tr key={crane.id} className="border-b hover:bg-accent">
                   <td className="py-3 px-4 text-foreground font-medium">{crane.licensePlate}</td>
+                  <td className="py-3 px-4 text-foreground">
+                    {crane.ownerCompanyName || crane.ownerCompanyRut || 'Sin empresa'}
+                  </td>
                   <td className="py-3 px-4 text-foreground">{crane.brand} {crane.model}</td>
                   <td className="py-3 px-4 text-foreground">{crane.type}</td>
                   <td className="py-3 px-4 text-foreground">

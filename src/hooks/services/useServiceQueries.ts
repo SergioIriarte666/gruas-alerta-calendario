@@ -15,6 +15,8 @@ const transformCrane = (raw: any) => {
     circulationPermitExpiry: raw.circulation_permit_expiry,
     insuranceExpiry: raw.insurance_expiry,
     technicalReviewExpiry: raw.technical_review_expiry,
+    ownerCompanyRut: raw.owner_company_rut || undefined,
+    ownerCompanyName: raw.owner_company_name || undefined,
     createdAt: raw.created_at,
     updatedAt: raw.updated_at,
   };

@@ -44,6 +44,8 @@ export interface AppliedCostFilters {
   craneName?: string;
   operatorId: string;
   operatorName?: string;
+  companyRut?: string;
+  companyName?: string;
 }
 
 export interface ExportCostReportArgs {
@@ -51,6 +53,8 @@ export interface ExportCostReportArgs {
   costs: Cost[];
   settings: Settings;
   appliedFilters: AppliedCostFilters;
+  headerCompany?: Settings['company'];
+  headerLogoUrl?: string | null;
 }
 
 export interface ExportMaintenanceReportArgs {
