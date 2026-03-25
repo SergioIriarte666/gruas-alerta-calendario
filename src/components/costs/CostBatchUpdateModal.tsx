@@ -92,6 +92,16 @@ export const CostBatchUpdateModal = ({
     }
   }, [categoryId, enableCategory]);
 
+  React.useEffect(() => {
+    if (!enableCategory || !categoryId) return;
+    if (!enableCostCenter) return;
+    const selectedCat = categories.find(c => c.id === categoryId);
+    const defaultCenter = selectedCat?.default_cost_center_id || 'none';
+    if (!costCenterId || costCenterId === '' || costCenterId === 'none') {
+      setCostCenterId(defaultCenter);
+    }
+  }, [enableCategory, categoryId, enableCostCenter, categories, costCenterId]);
+
   // Función para crear nueva subcategoría
   const handleCreateSubcategory = () => {
     if (!newSubcategoryName.trim() || !categoryId) return;
@@ -656,6 +666,11 @@ export const CostBatchUpdateModal = ({
                           ))}
                         </SelectContent>
                       </Select>
+                    )}
+                    {enableCategory && enableCostCenter && categoryId && (!costCenterId || costCenterId === 'none') && (
+                      <p className="text-xs text-muted-foreground mt-2">
+                        Se sugerirá el centro por defecto de la categoría seleccionada.
+                      </p>
                     )}
                   </div>
                 </div>
