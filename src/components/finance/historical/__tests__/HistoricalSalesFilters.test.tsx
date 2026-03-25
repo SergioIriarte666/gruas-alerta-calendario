@@ -33,8 +33,8 @@ describe('HistoricalSalesFilters', () => {
       />
     );
 
-    expect(screen.getByPlaceholderText('Buscar por cliente o folio...')).toBeInTheDocument();
-    expect(screen.getByText('Filtros Avanzados')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('Buscar por N° fiscal, cliente o folio...')).toBeInTheDocument();
+    expect(screen.getByText('Filtros')).toBeInTheDocument();
   });
 
   it('calls onFilterChange when main search input changes', () => {
@@ -46,11 +46,11 @@ describe('HistoricalSalesFilters', () => {
       />
     );
 
-    const searchInput = screen.getByPlaceholderText('Buscar por cliente o folio...');
+    const searchInput = screen.getByPlaceholderText('Buscar por N° fiscal, cliente o folio...');
     fireEvent.change(searchInput, { target: { value: 'Test Client' } });
 
     expect(mockOnFilterChange).toHaveBeenCalledWith(expect.objectContaining({
-      clientName: 'Test Client'
+      searchTerm: 'Test Client'
     }));
   });
 
@@ -63,18 +63,18 @@ describe('HistoricalSalesFilters', () => {
       />
     );
 
-    const filterButton = screen.getByText('Filtros Avanzados');
+    const filterButton = screen.getByText('Filtros');
     fireEvent.click(filterButton);
 
     await waitFor(() => {
-      expect(screen.getByText('Filtros')).toBeInTheDocument();
+      expect(screen.getByText('Filtros Avanzados')).toBeInTheDocument();
     });
 
     expect(screen.getByPlaceholderText('Mínimo')).toBeInTheDocument();
     expect(screen.getByPlaceholderText('Máximo')).toBeInTheDocument();
     expect(screen.getByText('Desde')).toBeInTheDocument();
     expect(screen.getByText('Hasta')).toBeInTheDocument();
-    expect(screen.getByText('Limpiar')).toBeInTheDocument();
+    expect(screen.getByText('Limpiar todo')).toBeInTheDocument();
   });
 
   it('calls onFilterChange when amount inputs change in popover', async () => {
@@ -86,7 +86,7 @@ describe('HistoricalSalesFilters', () => {
       />
     );
 
-    const filterButton = screen.getByText('Filtros Avanzados');
+    const filterButton = screen.getByText('Filtros');
     fireEvent.click(filterButton);
 
     await waitFor(() => {

@@ -9,6 +9,14 @@ export interface CostSubcategoryFormData {
   description?: string;
   is_active?: boolean;
   display_order?: number;
+  requires_crane?: boolean;
+  requires_operator?: boolean;
+  requires_supplier?: boolean;
+  requires_document?: boolean;
+  requires_location?: boolean;
+  requires_other_reason?: boolean;
+  routes_to_inventory?: boolean;
+  other_reasons?: any;
 }
 
 export const useCostSubcategories = (categoryId?: string) => {

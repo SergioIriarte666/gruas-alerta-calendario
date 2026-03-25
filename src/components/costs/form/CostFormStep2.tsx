@@ -40,6 +40,7 @@ export const CostFormStep2 = ({
   const isInventario = selectedCategory?.name === 'Inventario';
   
   const hasSubcategories = subcategories.length > 0;
+  const selectedSubcategoryRow = subcategories.find(s => s.name === selectedSubcategory);
 
   const quantity = form.watch('quantity');
   const unitPrice = form.watch('unit_price');
@@ -124,6 +125,112 @@ export const CostFormStep2 = ({
                   />
                 </FormControl>
               )}
+              <FormMessage />
+            </FormItem>
+          )} />
+        </ColoredSectionCard>
+      )}
+
+      {selectedSubcategoryRow?.requires_location && (
+        <ColoredSectionCard
+          title="Ubicación / Tramo"
+          icon={<Tag className="h-4 w-4" />}
+          color="cyan"
+          required
+        >
+          <FormField name="location_text" control={form.control} render={({ field }) => (
+            <FormItem>
+              <Label className="text-foreground">Ubicación / Tramo *</Label>
+              <FormControl>
+                <Input
+                  {...field}
+                  value={field.value || ''}
+                  placeholder="Ej: Ruta 5 - Tramo X / Plaza Y"
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )} />
+        </ColoredSectionCard>
+      )}
+
+      {selectedSubcategoryRow?.requires_document && (
+        <ColoredSectionCard
+          title="Documento"
+          icon={<Tag className="h-4 w-4" />}
+          color="cyan"
+          required
+        >
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <FormField name="document_type" control={form.control} render={({ field }) => (
+              <FormItem>
+                <Label className="text-foreground">Tipo de Documento</Label>
+                <Select onValueChange={field.onChange} value={field.value || 'none'}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Seleccionar tipo" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="none">Sin tipo</SelectItem>
+                    <SelectItem value="Factura">Factura</SelectItem>
+                    <SelectItem value="Boleta">Boleta</SelectItem>
+                    <SelectItem value="Otro">Otro</SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )} />
+            <FormField name="document_number" control={form.control} render={({ field }) => (
+              <FormItem>
+                <Label className="text-foreground">Número de Documento *</Label>
+                <FormControl>
+                  <Input
+                    {...field}
+                    value={field.value || ''}
+                    placeholder="Ej: 243232"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )} />
+          </div>
+        </ColoredSectionCard>
+      )}
+
+      {selectedSubcategoryRow?.requires_other_reason && (
+        <ColoredSectionCard
+          title="Motivo"
+          icon={<Tag className="h-4 w-4" />}
+          color="cyan"
+          required
+        >
+          <FormField name="other_reason" control={form.control} render={({ field }) => (
+            <FormItem>
+              <Label className="text-foreground">Motivo *</Label>
+              <Select onValueChange={field.onChange} value={field.value || ''}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccionar motivo" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {(Array.isArray((selectedSubcategoryRow as any).other_reasons)
+                    ? ((selectedSubcategoryRow as any).other_reasons as any[]).map(v => String(v)).filter(Boolean)
+                    : [
+                        'Error de proveedor / documento pendiente',
+                        'Gasto extraordinario no recurrente',
+                        'Ajuste / regularización',
+                        'Diferencia de caja / vuelto',
+                        'Otro (justificar)'
+                      ]
+                  ).map((reason) => (
+                    <SelectItem key={reason} value={reason}>
+                      {reason}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <FormMessage />
             </FormItem>
           )} />

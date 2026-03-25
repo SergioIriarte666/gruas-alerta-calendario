@@ -116,6 +116,11 @@ export const CostFormInputs = ({
                                     onValueChange={(value) => {
                                         const category = categories.find(cat => cat.id === value);
                                         field.onChange(value);
+
+                                        const currentCostCenterId = form.getValues('cost_center_id');
+                                        if (!currentCostCenterId || currentCostCenterId === 'none') {
+                                            form.setValue('cost_center_id', category?.default_cost_center_id || 'none');
+                                        }
                                         
                                         // Si es nuevo costo y selecciona "Gastos de Servicios", preparar para desglose
                                         if (category?.name === 'Gastos de Servicios' && isNewCost && onServiceExpenseSelect) {

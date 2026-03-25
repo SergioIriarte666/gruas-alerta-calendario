@@ -431,18 +431,21 @@ export type Database = {
       cost_categories: {
         Row: {
           created_at: string
+          default_cost_center_id: string | null
           description: string | null
           id: string
           name: string
         }
         Insert: {
           created_at?: string
+          default_cost_center_id?: string | null
           description?: string | null
           id?: string
           name: string
         }
         Update: {
           created_at?: string
+          default_cost_center_id?: string | null
           description?: string | null
           id?: string
           name?: string
@@ -561,6 +564,14 @@ export type Database = {
           id: string
           is_active: boolean | null
           name: string
+          other_reasons: Json | null
+          requires_crane: boolean
+          requires_document: boolean
+          requires_location: boolean
+          requires_operator: boolean
+          requires_other_reason: boolean
+          requires_supplier: boolean
+          routes_to_inventory: boolean
           updated_at: string
         }
         Insert: {
@@ -572,6 +583,14 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           name: string
+          other_reasons?: Json | null
+          requires_crane?: boolean
+          requires_document?: boolean
+          requires_location?: boolean
+          requires_operator?: boolean
+          requires_other_reason?: boolean
+          requires_supplier?: boolean
+          routes_to_inventory?: boolean
           updated_at?: string
         }
         Update: {
@@ -583,6 +602,14 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           name?: string
+          other_reasons?: Json | null
+          requires_crane?: boolean
+          requires_document?: boolean
+          requires_location?: boolean
+          requires_operator?: boolean
+          requires_other_reason?: boolean
+          requires_supplier?: boolean
+          routes_to_inventory?: boolean
           updated_at?: string
         }
         Relationships: [
@@ -605,11 +632,15 @@ export type Database = {
           created_by: string | null
           date: string
           description: string
+          document_number: string | null
+          document_type: string | null
           id: string
           immediate_consumption: boolean | null
           inventory_movement_id: string | null
           maintenance_id: string | null
+          location_text: string | null
           notes: string | null
+          other_reason: string | null
           operator_id: string | null
           payment_batch_id: string | null
           payment_date: string | null
@@ -631,11 +662,15 @@ export type Database = {
           created_by?: string | null
           date: string
           description: string
+          document_number?: string | null
+          document_type?: string | null
           id?: string
           immediate_consumption?: boolean | null
           inventory_movement_id?: string | null
           maintenance_id?: string | null
+          location_text?: string | null
           notes?: string | null
+          other_reason?: string | null
           operator_id?: string | null
           payment_batch_id?: string | null
           payment_date?: string | null
@@ -657,11 +692,15 @@ export type Database = {
           created_by?: string | null
           date?: string
           description?: string
+          document_number?: string | null
+          document_type?: string | null
           id?: string
           immediate_consumption?: boolean | null
           inventory_movement_id?: string | null
           maintenance_id?: string | null
+          location_text?: string | null
           notes?: string | null
+          other_reason?: string | null
           operator_id?: string | null
           payment_batch_id?: string | null
           payment_date?: string | null

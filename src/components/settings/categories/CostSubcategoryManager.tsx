@@ -1,12 +1,15 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Trash2, Power, PowerOff, GripVertical } from 'lucide-react';
+import { Plus, Trash2, Power, PowerOff, GripVertical, SlidersHorizontal } from 'lucide-react';
 import { useCostSubcategories } from '@/hooks/useCostSubcategories';
 import { CostCategory } from '@/types/costs';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 interface CostSubcategoryManagerProps {
   category: CostCategory;
@@ -18,14 +21,27 @@ export const CostSubcategoryManager = ({ category, onClose }: CostSubcategoryMan
     allSubcategories,
     isLoadingAll,
     createSubcategory,
+    updateSubcategory,
     deleteSubcategory,
     toggleSubcategoryStatus,
     isCreating,
+    isUpdating,
     isDeleting,
     isToggling,
   } = useCostSubcategories(category.id);
 
   const [newSubcategoryName, setNewSubcategoryName] = useState('');
+  const [editingSubcategory, setEditingSubcategory] = useState<any | null>(null);
+  const [otherReasonsText, setOtherReasonsText] = useState('');
+  const [rules, setRules] = useState({
+    requires_crane: false,
+    requires_operator: false,
+    requires_supplier: false,
+    requires_document: false,
+    requires_location: false,
+    requires_other_reason: false,
+    routes_to_inventory: false,
+  });
 
   const handleAdd = () => {
     if (!newSubcategoryName.trim()) return;
@@ -47,6 +63,51 @@ export const CostSubcategoryManager = ({ category, onClose }: CostSubcategoryMan
 
   const handleToggleStatus = (subcategoryId: string) => {
     toggleSubcategoryStatus({ id: subcategoryId, category_id: category.id });
+  };
+
+  const openRulesEditor = (subcategory: any) => {
+    setEditingSubcategory(subcategory);
+
+    const currentOtherReasons = Array.isArray(subcategory.other_reasons)
+      ? (subcategory.other_reasons as any[]).map(v => String(v)).filter(Boolean)
+      : [];
+
+    setOtherReasonsText(currentOtherReasons.join('\n'));
+
+    setRules({
+      requires_crane: !!subcategory.requires_crane,
+      requires_operator: !!subcategory.requires_operator,
+      requires_supplier: !!subcategory.requires_supplier,
+      requires_document: !!subcategory.requires_document,
+      requires_location: !!subcategory.requires_location,
+      requires_other_reason: !!subcategory.requires_other_reason,
+      routes_to_inventory: !!subcategory.routes_to_inventory,
+    });
+  };
+
+  const saveRules = () => {
+    if (!editingSubcategory) return;
+
+    const otherReasons = otherReasonsText
+      .split('\n')
+      .map(s => s.trim())
+      .filter(Boolean);
+
+    updateSubcategory({
+      id: editingSubcategory.id,
+      category_id: category.id,
+      name: editingSubcategory.name,
+      requires_crane: rules.requires_crane,
+      requires_operator: rules.requires_operator,
+      requires_supplier: rules.requires_supplier,
+      requires_document: rules.requires_document,
+      requires_location: rules.requires_location,
+      requires_other_reason: rules.requires_other_reason,
+      routes_to_inventory: rules.routes_to_inventory,
+      other_reasons: otherReasons.length > 0 ? otherReasons : null,
+    });
+
+    setEditingSubcategory(null);
   };
 
   if (isLoadingAll) {
@@ -120,6 +181,15 @@ export const CostSubcategoryManager = ({ category, onClose }: CostSubcategoryMan
                       <Button
                         variant="ghost"
                         size="sm"
+                        onClick={() => openRulesEditor(subcategory)}
+                        className="h-8 w-8 p-0"
+                        title="Reglas"
+                      >
+                        <SlidersHorizontal className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
                         onClick={() => handleToggleStatus(subcategory.id)}
                         disabled={isToggling}
                         className="h-8 w-8 p-0"
@@ -168,6 +238,61 @@ export const CostSubcategoryManager = ({ category, onClose }: CostSubcategoryMan
           </Table>
         </div>
       )}
+
+      <Dialog open={!!editingSubcategory} onOpenChange={(open) => !open && setEditingSubcategory(null)}>
+        <DialogContent className="sm:max-w-xl">
+          <DialogHeader>
+            <DialogTitle>Reglas de "{editingSubcategory?.name}"</DialogTitle>
+          </DialogHeader>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div className="flex items-center gap-2 h-10 px-3 border rounded-md">
+              <Checkbox checked={rules.requires_crane} onCheckedChange={(v) => setRules(prev => ({ ...prev, requires_crane: !!v }))} />
+              <span className="text-sm">Requiere grúa</span>
+            </div>
+            <div className="flex items-center gap-2 h-10 px-3 border rounded-md">
+              <Checkbox checked={rules.requires_operator} onCheckedChange={(v) => setRules(prev => ({ ...prev, requires_operator: !!v }))} />
+              <span className="text-sm">Requiere operador</span>
+            </div>
+            <div className="flex items-center gap-2 h-10 px-3 border rounded-md">
+              <Checkbox checked={rules.requires_supplier} onCheckedChange={(v) => setRules(prev => ({ ...prev, requires_supplier: !!v }))} />
+              <span className="text-sm">Requiere proveedor</span>
+            </div>
+            <div className="flex items-center gap-2 h-10 px-3 border rounded-md">
+              <Checkbox checked={rules.requires_document} onCheckedChange={(v) => setRules(prev => ({ ...prev, requires_document: !!v }))} />
+              <span className="text-sm">Requiere documento</span>
+            </div>
+            <div className="flex items-center gap-2 h-10 px-3 border rounded-md">
+              <Checkbox checked={rules.requires_location} onCheckedChange={(v) => setRules(prev => ({ ...prev, requires_location: !!v }))} />
+              <span className="text-sm">Requiere ubicación</span>
+            </div>
+            <div className="flex items-center gap-2 h-10 px-3 border rounded-md">
+              <Checkbox checked={rules.routes_to_inventory} onCheckedChange={(v) => setRules(prev => ({ ...prev, routes_to_inventory: !!v }))} />
+              <span className="text-sm">Rutea a bodega</span>
+            </div>
+            <div className="flex items-center gap-2 h-10 px-3 border rounded-md md:col-span-2">
+              <Checkbox checked={rules.requires_other_reason} onCheckedChange={(v) => setRules(prev => ({ ...prev, requires_other_reason: !!v }))} />
+              <span className="text-sm">Requiere motivo (Otros)</span>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <div className="text-sm font-medium">Motivos (uno por línea)</div>
+            <Textarea
+              value={otherReasonsText}
+              onChange={(e) => setOtherReasonsText(e.target.value)}
+              rows={6}
+              placeholder="Ej: Error de proveedor / documento pendiente"
+              disabled={!rules.requires_other_reason}
+            />
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditingSubcategory(null)}>Cancelar</Button>
+            <Button onClick={saveRules} disabled={isUpdating}>Guardar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <div className="flex justify-end pt-4 border-t">
         <Button onClick={onClose} variant="outline">

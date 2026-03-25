@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Trash2, Plus, Receipt, Calculator, Info } from 'lucide-react';
 import { useServiceCosts } from '@/hooks/useServiceCosts';
 import { useAddCost, useUpdateCost, useDeleteCost } from '@/hooks/useCosts';
@@ -16,6 +17,10 @@ import { debounce } from 'lodash';
 import { supabase } from '@/integrations/supabase/client';
 import { AutocompleteInput } from '@/components/common/AutocompleteInput';
 import { useFrequentCostDescriptions } from '@/hooks/useFrequentFormData';
+import { useQuery } from '@tanstack/react-query';
+import { CostSubcategory } from '@/types/costs';
+import { useSuppliers } from '@/hooks/useSuppliers';
+import { useOperators } from '@/hooks/useOperators';
 
 interface ServiceCostDetail {
   id: string;
@@ -26,6 +31,15 @@ interface ServiceCostDetail {
   notes?: string;
   category_id: string;
   subcategory?: string;
+  supplier_id?: string;
+  operator_id?: string;
+  document_type?: string;
+  document_number?: string;
+  location_text?: string;
+  other_reason?: string;
+  purchase_quantity?: number;
+  purchase_unit_cost?: number;
+  immediate_consumption?: boolean;
   date?: string;
   isExisting?: boolean;
 }
@@ -56,9 +70,46 @@ export const ServiceCostDetailsSection = ({
   const { mutate: addCost } = useAddCost();
   const { mutate: updateCost } = useUpdateCost();
   const { mutate: deleteCost } = useDeleteCost();
+  const { suppliers = [] } = useSuppliers();
+  const { operators = [] } = useOperators();
+
+  const { data: serviceMeta } = useQuery({
+    queryKey: ['service-cost-meta', serviceId],
+    queryFn: async () => {
+      if (!serviceId) return null;
+      const { data, error } = await supabase
+        .from('services')
+        .select('id, folio, crane_id')
+        .eq('id', serviceId)
+        .single();
+      if (error) throw error;
+      return data as { id: string; folio: string; crane_id: string | null };
+    },
+    enabled: !!serviceId,
+    staleTime: 60 * 1000,
+  });
 
   // Track selected categories to load their subcategories dynamically
-  const [subcategoriesCache, setSubcategoriesCache] = useState<Record<string, string[]>>({});
+  const [subcategoriesCache, setSubcategoriesCache] = useState<Record<string, CostSubcategory[]>>({});
+  const inventoryKeywords = [
+    'filtro',
+    'racor',
+    'aceite',
+    'lubric',
+    'hidraul',
+    'repuesto',
+    'correa',
+    'rodamiento',
+    'manguera',
+    'bomba',
+    'alternador',
+    'bateria',
+    'pastilla',
+    'disco',
+    'embrague',
+    'neumatic',
+    'llanta',
+  ];
 
   // Filter out commission costs - these are handled by MultipleOperatorsSection
   const commissionCategoryId = categories.find(cat => 
@@ -91,6 +142,15 @@ export const ServiceCostDetailsSection = ({
         notes: cost.notes || '',
         category_id: cost.category_id,
         subcategory: cost.subcategory || '',
+        supplier_id: cost.supplier_id || undefined,
+        operator_id: cost.operator_id || undefined,
+        document_type: (cost as any).document_type || undefined,
+        document_number: (cost as any).document_number || undefined,
+        location_text: (cost as any).location_text || undefined,
+        other_reason: (cost as any).other_reason || undefined,
+        purchase_quantity: cost.purchase_quantity || undefined,
+        purchase_unit_cost: cost.purchase_unit_cost || undefined,
+        immediate_consumption: !!cost.immediate_consumption,
         date: cost.date, // Preserve original date
         isExisting: true
       }));
@@ -166,6 +226,14 @@ export const ServiceCostDetailsSection = ({
             const unitPrice = field === 'unitPrice' ? value : updated.unitPrice || 0;
             updated.amount = quantity * unitPrice;
           }
+
+          if (field === 'purchase_quantity' || field === 'purchase_unit_cost') {
+            const purchaseQuantity = field === 'purchase_quantity' ? value : updated.purchase_quantity || 0;
+            const purchaseUnitCost = field === 'purchase_unit_cost' ? value : updated.purchase_unit_cost || 0;
+            if (purchaseQuantity && purchaseUnitCost) {
+              updated.amount = Number(purchaseQuantity) * Number(purchaseUnitCost);
+            }
+          }
           
           // Si se cambia la categoría, limpiar la subcategoría
           if (field === 'category_id') {
@@ -179,9 +247,34 @@ export const ServiceCostDetailsSection = ({
     );
   };
 
+  const getSubcategoriesForCategory = (categoryId: string): CostSubcategory[] => {
+    if (!categoryId) return [];
+    return subcategoriesCache[categoryId] || [];
+  };
+
+  const getSubcategoryConfig = (categoryId: string, subcategoryName?: string) => {
+    if (!categoryId || !subcategoryName) return null;
+    return getSubcategoriesForCategory(categoryId).find(s => s.name === subcategoryName) || null;
+  };
+
   const saveCostDetail = async (costDetail: ServiceCostDetail) => {
     if (!serviceId) {
       console.log('[ServiceCostDetailsSection] No serviceId, cost will be saved on service creation');
+      return;
+    }
+
+    const selectedCategoryName = nonCommissionCategories.find(cat => cat.id === costDetail.category_id)?.name || '';
+    const inventarioCategoryId = nonCommissionCategories.find(cat => cat.name === 'Inventario')?.id;
+    const normalizedDesc = (costDetail.description || '').toLowerCase();
+    const matchesInventoryKeyword = inventoryKeywords.some(k => normalizedDesc.includes(k));
+
+    if (selectedCategoryName === 'Gastos de Servicios' && matchesInventoryKeyword && inventarioCategoryId) {
+      updateCostDetail(costDetail.id, 'category_id', inventarioCategoryId);
+      updateCostDetail(costDetail.id, 'subcategory', '');
+      updateCostDetail(costDetail.id, 'purchase_quantity', costDetail.quantity || 1);
+      updateCostDetail(costDetail.id, 'purchase_unit_cost', costDetail.unitPrice || 0);
+      updateCostDetail(costDetail.id, 'immediate_consumption', true);
+      toast.info('Se detectó una compra para grúa, se cambió a Inventario para registrar en bodega.');
       return;
     }
 
@@ -195,6 +288,43 @@ export const ServiceCostDetailsSection = ({
     if (requiredSubcategories.length > 0 && !costDetail.subcategory?.trim()) {
       toast.error("Debe seleccionar una subcategoría");
       return;
+    }
+
+    const subcategoryConfig = getSubcategoryConfig(costDetail.category_id, costDetail.subcategory);
+    if (subcategoryConfig?.requires_supplier && !costDetail.supplier_id) {
+      toast.error("Debe seleccionar un proveedor");
+      return;
+    }
+
+    if (subcategoryConfig?.requires_operator && !costDetail.operator_id) {
+      toast.error("Debe seleccionar un operador");
+      return;
+    }
+
+    if (subcategoryConfig?.requires_location && !costDetail.location_text?.trim()) {
+      toast.error("Debe indicar ubicación o tramo");
+      return;
+    }
+
+    if (subcategoryConfig?.requires_document && !costDetail.document_number?.trim()) {
+      toast.error("Debe indicar un documento (número)");
+      return;
+    }
+
+    if (subcategoryConfig?.requires_other_reason && !costDetail.other_reason?.trim()) {
+      toast.error("Debe seleccionar un motivo");
+      return;
+    }
+
+    if (subcategoryConfig?.routes_to_inventory) {
+      if (!costDetail.purchase_quantity || costDetail.purchase_quantity <= 0) {
+        toast.error("Debe indicar cantidad de compra");
+        return;
+      }
+      if (!costDetail.purchase_unit_cost || costDetail.purchase_unit_cost <= 0) {
+        toast.error("Debe indicar costo unitario");
+        return;
+      }
     }
 
     if (!costDetail.description.trim()) {
@@ -216,7 +346,17 @@ export const ServiceCostDetailsSection = ({
       date: costDate,
       notes: costDetail.notes || '',
       subcategory: costDetail.subcategory || '',
-      payment_date: costDate,
+      crane_id: serviceMeta?.crane_id || null,
+      service_folio: serviceMeta?.folio || null,
+      supplier_id: costDetail.supplier_id || null,
+      operator_id: costDetail.operator_id || null,
+      document_type: costDetail.document_type || null,
+      document_number: costDetail.document_number || null,
+      location_text: costDetail.location_text || null,
+      other_reason: costDetail.other_reason || null,
+      purchase_quantity: costDetail.purchase_quantity || null,
+      purchase_unit_cost: costDetail.purchase_unit_cost || null,
+      immediate_consumption: !!costDetail.immediate_consumption,
     };
 
     if (costDetail.isExisting) {
@@ -287,7 +427,7 @@ export const ServiceCostDetailsSection = ({
         if (!subcategoriesCache[categoryId]) {
           const { data } = await supabase
             .from('cost_subcategories')
-            .select('name')
+            .select('*')
             .eq('category_id', categoryId)
             .eq('is_active', true)
             .order('display_order', { ascending: true });
@@ -295,7 +435,7 @@ export const ServiceCostDetailsSection = ({
           if (data) {
             setSubcategoriesCache(prev => ({
               ...prev,
-              [categoryId]: data.map(sub => sub.name)
+              [categoryId]: data as CostSubcategory[]
             }));
           }
         }
@@ -306,12 +446,6 @@ export const ServiceCostDetailsSection = ({
       loadSubcategoriesForCategories();
     }
   }, [costDetails.map(c => c.category_id).join(',')]);
-
-  // Función para obtener subcategorías basadas en la categoría (dinámico desde cache)
-  const getSubcategoriesForCategory = (categoryId: string): string[] => {
-    if (!categoryId) return [];
-    return subcategoriesCache[categoryId] || [];
-  };
 
   return (
     <Card>
@@ -399,8 +533,8 @@ export const ServiceCostDetailsSection = ({
                     </SelectTrigger>
                     <SelectContent>
                       {getSubcategoriesForCategory(cost.category_id).map((subcategory) => (
-                        <SelectItem key={subcategory} value={subcategory}>
-                          {subcategory}
+                        <SelectItem key={subcategory.id} value={subcategory.name}>
+                          {subcategory.name}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -461,6 +595,183 @@ export const ServiceCostDetailsSection = ({
                 />
               </div>
 
+              {(() => {
+                const categoryName = nonCommissionCategories.find(cat => cat.id === cost.category_id)?.name || '';
+                const cfg = getSubcategoryConfig(cost.category_id, cost.subcategory);
+                const shouldShowInventoryFields = categoryName === 'Inventario' || !!cfg?.routes_to_inventory;
+                const shouldShowSupplier = !!cfg?.requires_supplier;
+                const shouldShowOperator = !!cfg?.requires_operator;
+                const shouldShowLocation = !!cfg?.requires_location;
+                const shouldShowDocument = !!cfg?.requires_document;
+                const shouldShowOtherReason = !!cfg?.requires_other_reason;
+
+                const otherReasons = Array.isArray((cfg as any)?.other_reasons)
+                  ? ((cfg as any).other_reasons as any[]).map(v => String(v)).filter(Boolean)
+                  : [];
+
+                return (
+                  <>
+                    {shouldShowSupplier && (
+                      <div className="space-y-2">
+                        <Label>Proveedor *</Label>
+                        <Select
+                          value={cost.supplier_id || 'none'}
+                          onValueChange={(value) => updateCostDetail(cost.id, 'supplier_id', value === 'none' ? undefined : value)}
+                          disabled={disabled}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Seleccionar proveedor" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="none">Sin proveedor</SelectItem>
+                            {suppliers.map((supplier) => (
+                              <SelectItem key={supplier.id} value={supplier.id}>
+                                {supplier.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
+
+                    {shouldShowOperator && (
+                      <div className="space-y-2">
+                        <Label>Operador *</Label>
+                        <Select
+                          value={cost.operator_id || 'none'}
+                          onValueChange={(value) => updateCostDetail(cost.id, 'operator_id', value === 'none' ? undefined : value)}
+                          disabled={disabled}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Seleccionar operador" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="none">Sin operador</SelectItem>
+                            {operators.map((operator) => (
+                              <SelectItem key={operator.id} value={operator.id}>
+                                {operator.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
+
+                    {shouldShowLocation && (
+                      <div className="space-y-2">
+                        <Label>Ubicación / Tramo *</Label>
+                        <Input
+                          value={cost.location_text || ''}
+                          onChange={(e) => updateCostDetail(cost.id, 'location_text', e.target.value)}
+                          placeholder="Ej: Ruta 5 - Tramo X / Plaza Y"
+                          disabled={disabled}
+                        />
+                      </div>
+                    )}
+
+                    {shouldShowDocument && (
+                      <>
+                        <div className="space-y-2">
+                          <Label>Tipo de Documento</Label>
+                          <Select
+                            value={cost.document_type || 'none'}
+                            onValueChange={(value) => updateCostDetail(cost.id, 'document_type', value === 'none' ? undefined : value)}
+                            disabled={disabled}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Seleccionar tipo" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="none">Sin tipo</SelectItem>
+                              <SelectItem value="Factura">Factura</SelectItem>
+                              <SelectItem value="Boleta">Boleta</SelectItem>
+                              <SelectItem value="Otro">Otro</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Número de Documento *</Label>
+                          <Input
+                            value={cost.document_number || ''}
+                            onChange={(e) => updateCostDetail(cost.id, 'document_number', e.target.value)}
+                            placeholder="Ej: 243232"
+                            disabled={disabled}
+                          />
+                        </div>
+                      </>
+                    )}
+
+                    {shouldShowOtherReason && (
+                      <div className="space-y-2">
+                        <Label>Motivo *</Label>
+                        <Select
+                          value={cost.other_reason || ''}
+                          onValueChange={(value) => updateCostDetail(cost.id, 'other_reason', value)}
+                          disabled={disabled}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Seleccionar motivo" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {(otherReasons.length > 0 ? otherReasons : [
+                              'Error de proveedor / documento pendiente',
+                              'Gasto extraordinario no recurrente',
+                              'Ajuste / regularización',
+                              'Diferencia de caja / vuelto',
+                              'Otro (justificar)'
+                            ]).map((reason) => (
+                              <SelectItem key={reason} value={reason}>
+                                {reason}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
+
+                    {shouldShowInventoryFields && (
+                      <>
+                        <div className="space-y-2">
+                          <Label>Cantidad (Bodega) *</Label>
+                          <Input
+                            type="number"
+                            value={cost.purchase_quantity ?? ''}
+                            onChange={(e) => updateCostDetail(cost.id, 'purchase_quantity', e.target.value ? Number(e.target.value) : undefined)}
+                            placeholder="1"
+                            min="1"
+                            step="1"
+                            disabled={disabled}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Costo Unitario (Bodega) *</Label>
+                          <Input
+                            type="number"
+                            value={cost.purchase_unit_cost ?? ''}
+                            onChange={(e) => updateCostDetail(cost.id, 'purchase_unit_cost', e.target.value ? Number(e.target.value) : undefined)}
+                            placeholder="0"
+                            min="0"
+                            step="0.01"
+                            disabled={disabled}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Consumo inmediato</Label>
+                          <div className="flex items-center gap-2 h-10 px-3 border rounded-md bg-background">
+                            <Checkbox
+                              checked={!!cost.immediate_consumption}
+                              onCheckedChange={(checked) => updateCostDetail(cost.id, 'immediate_consumption', !!checked)}
+                              disabled={disabled}
+                            />
+                            <span className="text-sm text-muted-foreground">Registrar salida automática a la grúa del servicio</span>
+                          </div>
+                        </div>
+                      </>
+                    )}
+                  </>
+                );
+              })()}
+
               {/* Notas */}
               <div className="space-y-2">
                 <Label>Notas</Label>
@@ -519,4 +830,3 @@ export const ServiceCostDetailsSection = ({
     </Card>
   );
 };
-

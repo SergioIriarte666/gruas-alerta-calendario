@@ -68,6 +68,10 @@ describe('useInvoiceOperations', () => {
           data: { closure_id: 'closure-123' },
           error: null,
         }),
+        maybeSingle: vi.fn().mockResolvedValue({
+          data: { closure_id: 'closure-123' },
+          error: null,
+        }),
       };
 
       // Setup supabase mock chain
@@ -131,6 +135,10 @@ describe('useInvoiceOperations', () => {
         select: vi.fn().mockReturnThis(),
         eq: vi.fn().mockReturnThis(),
         single: vi.fn().mockResolvedValue({
+          data: { closure_id: 'closure-123' },
+          error: null,
+        }),
+        maybeSingle: vi.fn().mockResolvedValue({
           data: { closure_id: 'closure-123' },
           error: null,
         }),

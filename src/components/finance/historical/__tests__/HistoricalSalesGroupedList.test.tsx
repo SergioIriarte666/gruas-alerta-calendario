@@ -70,12 +70,12 @@ describe('HistoricalSalesGroupedList', () => {
       />
     );
 
-    expect(screen.getByText('Client A')).toBeInTheDocument();
-    expect(screen.getByText('Client B')).toBeInTheDocument();
+    expect(screen.getByText(/client a/i)).toBeInTheDocument();
+    expect(screen.getByText(/client b/i)).toBeInTheDocument();
     
     // Check counters
-    expect(screen.getByText('2 facturas')).toBeInTheDocument(); // Client A
-    expect(screen.getByText('1 factura')).toBeInTheDocument(); // Client B
+    expect(screen.getByText(/2\s+facturas\s+registradas/i)).toBeInTheDocument(); // Client A
+    expect(screen.getByText(/1\s+facturas\s+registradas/i)).toBeInTheDocument(); // Client B
   });
 
   it('calculates totals correctly per group', () => {

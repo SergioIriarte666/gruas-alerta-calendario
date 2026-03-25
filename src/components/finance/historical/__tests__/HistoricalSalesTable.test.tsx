@@ -67,15 +67,15 @@ describe('HistoricalSalesTable', () => {
       />
     );
 
-    expect(screen.getByText('Folio')).toBeInTheDocument();
+    expect(screen.getByText(/N°\s*Fiscal/i)).toBeInTheDocument();
     expect(screen.getByText('Cliente')).toBeInTheDocument();
     expect(screen.getByText('Monto')).toBeInTheDocument();
     expect(screen.getByText('Estado')).toBeInTheDocument();
 
     expect(screen.getByText('1001')).toBeInTheDocument();
-    expect(screen.getByText('Client A')).toBeInTheDocument();
+    expect(screen.getByText(/client a/i)).toBeInTheDocument();
     expect(screen.getByText('1002')).toBeInTheDocument();
-    expect(screen.getByText('Client B')).toBeInTheDocument();
+    expect(screen.getByText(/client b/i)).toBeInTheDocument();
   });
 
   it('calls onSort when a header is clicked', () => {

@@ -164,6 +164,10 @@ const addCost = async (costData: CostFormData) => {
       subcategory: costData.subcategory,
       service_folio: costData.service_folio,
       cost_center_id: costData.cost_center_id,
+      document_type: (costData as any).document_type || null,
+      document_number: (costData as any).document_number || null,
+      location_text: (costData as any).location_text || null,
+      other_reason: (costData as any).other_reason || null,
       // FASE 2: Campos para sincronización con inventario
       purchase_quantity: costData.purchase_quantity,
       purchase_unit_cost: costData.purchase_unit_cost,

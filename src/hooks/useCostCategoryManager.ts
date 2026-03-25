@@ -6,6 +6,7 @@ import { CostCategory } from "@/types/costs";
 export interface CostCategoryFormData {
   name: string;
   description?: string;
+  default_cost_center_id?: string | null;
 }
 
 export const useCostCategoryManager = () => {

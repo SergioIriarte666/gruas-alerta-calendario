@@ -25,6 +25,7 @@ import { getCurrentChileDateString, formatForInput } from '@/utils/timezoneUtils
 import { useQueryClient } from '@tanstack/react-query';
 import { ChevronLeft, ChevronRight, Save, Loader2 } from 'lucide-react';
 import { UnifiedPurchaseService } from '@/services/UnifiedPurchaseService';
+import { supabase } from '@/integrations/supabase/client';
 
 interface CostFormProps {
     isOpen: boolean;
@@ -71,6 +72,10 @@ export const CostForm = ({ isOpen, onClose, cost, prefilledData, onInventoryCost
             service_folio: '',
             subcategory: '',
             notes: '',
+            document_type: 'none',
+            document_number: '',
+            location_text: '',
+            other_reason: '',
             cost_center_id: 'none',
             purchase_quantity: null,
             purchase_unit_cost: null,
@@ -198,6 +203,10 @@ export const CostForm = ({ isOpen, onClose, cost, prefilledData, onInventoryCost
                 service_folio: cost.service_folio || '',
                 subcategory: cost.subcategory || '',
                 notes: cost.notes || '',
+                document_type: (cost as any).document_type || 'none',
+                document_number: (cost as any).document_number || '',
+                location_text: (cost as any).location_text || '',
+                other_reason: (cost as any).other_reason || '',
                 cost_center_id: cost.cost_center_id || 'none',
                 part_name: cost.crane_parts?.[0]?.part_name || '',
                 supplier: cost.crane_parts?.[0]?.supplier || '',
@@ -223,6 +232,10 @@ export const CostForm = ({ isOpen, onClose, cost, prefilledData, onInventoryCost
                 service_folio: prefilledData.service_folio,
                 subcategory: prefilledData.subcategory,
                 notes: prefilledData.notes,
+                document_type: (prefilledData as any).document_type || 'none',
+                document_number: (prefilledData as any).document_number || '',
+                location_text: (prefilledData as any).location_text || '',
+                other_reason: (prefilledData as any).other_reason || '',
                 cost_center_id: prefilledData.cost_center_id,
                 purchase_quantity: prefilledData.purchase_quantity,
                 purchase_unit_cost: prefilledData.purchase_unit_cost,
@@ -242,6 +255,10 @@ export const CostForm = ({ isOpen, onClose, cost, prefilledData, onInventoryCost
                 service_folio: '',
                 subcategory: '',
                 notes: '',
+                document_type: 'none',
+                document_number: '',
+                location_text: '',
+                other_reason: '',
                 cost_center_id: 'none',
                 purchase_quantity: null,
                 purchase_unit_cost: null,
@@ -252,7 +269,7 @@ export const CostForm = ({ isOpen, onClose, cost, prefilledData, onInventoryCost
         }
     }, [cost, prefilledData, reset, isOpen]);
     
-    const onSubmit = (values: CostFormValues) => {
+    const onSubmit = async (values: CostFormValues) => {
         try {
             if (!values.category_id) {
                 toast.error("Campo Requerido", { description: "Debe seleccionar una categoría" });
@@ -271,6 +288,60 @@ export const CostForm = ({ isOpen, onClose, cost, prefilledData, onInventoryCost
                 toast.error("Valor Inválido", { description: "El monto debe ser mayor a 0" });
                 setCurrentStep(2);
                 return;
+            }
+
+            if (values.subcategory) {
+                const { data: subcategoryConfig, error: subcategoryError } = await supabase
+                    .from('cost_subcategories')
+                    .select('requires_crane, requires_operator, requires_supplier, requires_document, requires_location, requires_other_reason, routes_to_inventory')
+                    .eq('category_id', values.category_id)
+                    .eq('name', values.subcategory)
+                    .maybeSingle();
+
+                if (!subcategoryError && subcategoryConfig) {
+                    if (subcategoryConfig.requires_crane && !values.crane_id) {
+                        toast.error("Campo Requerido", { description: "Debe seleccionar una grúa" });
+                        setCurrentStep(3);
+                        return;
+                    }
+                    if (subcategoryConfig.requires_operator && !values.operator_id) {
+                        toast.error("Campo Requerido", { description: "Debe seleccionar un operador" });
+                        setCurrentStep(3);
+                        return;
+                    }
+                    if (subcategoryConfig.requires_supplier && !values.supplier_id) {
+                        toast.error("Campo Requerido", { description: "Debe seleccionar un proveedor" });
+                        setCurrentStep(3);
+                        return;
+                    }
+                    if (subcategoryConfig.requires_location && !values.location_text) {
+                        toast.error("Campo Requerido", { description: "Debe indicar ubicación o tramo" });
+                        setCurrentStep(2);
+                        return;
+                    }
+                    if (subcategoryConfig.requires_document && !values.document_number) {
+                        toast.error("Campo Requerido", { description: "Debe indicar número de documento" });
+                        setCurrentStep(2);
+                        return;
+                    }
+                    if (subcategoryConfig.requires_other_reason && !values.other_reason) {
+                        toast.error("Campo Requerido", { description: "Debe seleccionar un motivo" });
+                        setCurrentStep(2);
+                        return;
+                    }
+                    if (subcategoryConfig.routes_to_inventory) {
+                        if (!values.purchase_quantity || values.purchase_quantity <= 0) {
+                            toast.error("Campo Requerido", { description: "Debe indicar cantidad de compra" });
+                            setCurrentStep(2);
+                            return;
+                        }
+                        if (!values.purchase_unit_cost || values.purchase_unit_cost <= 0) {
+                            toast.error("Campo Requerido", { description: "Debe indicar costo unitario" });
+                            setCurrentStep(2);
+                            return;
+                        }
+                    }
+                }
             }
             
             if (values.subcategory === 'Piezas y Repuestos') {

@@ -36,6 +36,23 @@ export const costSchema = z.object({
         (val) => (val === '' || !val) ? null : val,
         z.string().nullable().optional()
     ),
+
+    document_type: z.preprocess(
+        (val) => (val === 'none' || val === '' || !val) ? null : val,
+        z.string().nullable().optional()
+    ),
+    document_number: z.preprocess(
+        (val) => (val === '' || !val) ? null : val,
+        z.string().nullable().optional()
+    ),
+    location_text: z.preprocess(
+        (val) => (val === '' || !val) ? null : val,
+        z.string().nullable().optional()
+    ),
+    other_reason: z.preprocess(
+        (val) => (val === '' || !val) ? null : val,
+        z.string().nullable().optional()
+    ),
     
     // Campos específicos para piezas y repuestos
     part_name: z.preprocess(
